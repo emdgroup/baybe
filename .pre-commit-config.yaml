@@ -1,0 +1,13 @@
+repos:
+- repo: https://github.com/omnilib/ufmt
+  rev: v1.3.2
+  hooks:
+    - id: ufmt
+- repo: https://github.com/pycqa/flake8
+  rev: 4.0.1
+  hooks:
+  - id: flake8
+- repo: https://github.com/pycqa/pylint
+  rev: v2.13.9
+  hooks:
+  - id: pylint
