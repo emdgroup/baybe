@@ -31,7 +31,6 @@ class Strategy(ABC):
         train_y : pd.DataFrame
             The corresponding response values.
         """
-        pass
 
     def recommend(self, candidates: pd.DataFrame, batch_size: int = 1) -> pd.Index:
         """
@@ -48,14 +47,13 @@ class Strategy(ABC):
         -------
         The DataFrame indices of the specific experiments selected by the DoE strategy.
         """
-        pass
 
 
 class GaussianProcessStrategy(ABC):
     """A DoE strategy using a Gaussian Process (GP) surrogate model."""
 
     def __init__(self):
-        self.gp: Optional[SingleTaskGP] = None
+        self.model: Optional[SingleTaskGP] = None
         self.best_f: Optional[float] = None
 
     def set_training_data(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
@@ -68,11 +66,11 @@ class GaussianProcessStrategy(ABC):
         # for an empty training set, reset the model
         if len(train_x) == 0:
             self.best_f = None
-            self.gp = None
+            self.model = None
             return
 
         # initialize the GP model and train it
-        self.gp = SingleTaskGP(train_x, train_y)
+        self.model = SingleTaskGP(train_x, train_y)
         self._fit()
 
         # store the current best response value
@@ -87,7 +85,7 @@ class GaussianProcessStrategy(ABC):
             )
 
         # if no training data exists, apply the strategy for initial recommendations
-        if self.gp is None:
+        if self.model is None:
             # TODO: add more options
             return np.random.choice(candidates.index)
 
@@ -96,13 +94,13 @@ class GaussianProcessStrategy(ABC):
 
         # construct and evaluate the acquisition function
         # TODO: add more options
-        acqf = ExpectedImprovement(self.gp, self.best_f)
-        f = acqf(candidates_tensor)
+        acqf = ExpectedImprovement(self.model, self.best_f)
+        acqf_values = acqf(candidates_tensor)
 
         # find the minimizer and extract the corresponding dataframe index
         # TODO: use botorch's built-in methods
         #   (problem: they do not return the indices but the candidate points)
-        min_iloc = torch.argmin(f).item()
+        min_iloc = torch.argmin(acqf_values).item()
         min_loc = candidates.index[min_iloc]
 
         return min_loc
@@ -117,5 +115,5 @@ class GaussianProcessStrategy(ABC):
 
     def _fit(self):
         """Fits the GP model with the current training data."""
-        mll = ExactMarginalLogLikelihood(self.gp.likelihood, self.gp)
+        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, options={"disp": False})

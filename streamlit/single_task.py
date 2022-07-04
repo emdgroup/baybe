@@ -31,10 +31,10 @@ progress_bar_experiments = st.sidebar.progress(1.0)
 st.sidebar.markdown("---")
 st.sidebar.markdown("# Settings")
 objective_name = st.sidebar.selectbox("Objective function", ["Quadratic", "Hartmann"])
-min_n_dims = 1 if objective_name == "Quadratic" else 3
+n_dims_min = 1 if objective_name == "Quadratic" else 3  # pylint: disable=invalid-name
 n_dims = int(
     st.sidebar.number_input(
-        "Number of dimensions", min_value=min_n_dims, value=min_n_dims
+        "Number of dimensions", min_value=n_dims_min, value=n_dims_min
     )
 )
 n_points_per_dim = int(
@@ -98,9 +98,9 @@ progress_bar_monte_carlo.progress(1.0)
 def plot_stats(arr: np.ndarray, color: str, label: str):
     """Plots the mean and quantiles of the running optimum from several experiments."""
     cumulative_min = np.minimum.accumulate(arr, axis=-1)
-    q = np.quantile(cumulative_min, [0.05, 0.95], axis=0)
+    quantiles = np.quantile(cumulative_min, [0.05, 0.95], axis=0)
     plt.fill_between(
-        np.arange(arr.shape[-1]), *q, alpha=0.1, color=color, edgecolor=None
+        np.arange(arr.shape[-1]), *quantiles, alpha=0.1, color=color, edgecolor=None
     )
     plt.plot(cumulative_min.mean(axis=0), color=color, label=label)
 

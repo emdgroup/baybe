@@ -20,3 +20,15 @@ dev = [
 
 [tool.black]
 line-length = 88
+
+[tool.pylint.TYPECHECK]
+# List of members which are set dynamically and missed by pylint inference
+# system, and so shouldn't trigger E1101 when accessed. Python regular
+# expressions are accepted.
+generated-members = "torch.*"
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+	"fixme",  # fixme hints should be allowed
+	"wrong-import-order",  # handled by ufmt
+	]	
