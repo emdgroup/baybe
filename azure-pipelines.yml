@@ -1,0 +1,54 @@
+# Format and lint code
+
+trigger:
+  branches:
+    include:
+    - master
+
+stages:
+
+- stage: Lint
+  displayName: Format and lint code
+
+  jobs:
+    - job: "Lint"
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      variables:
+        CONDA_ENV: baybe
+        CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
+
+      steps:
+      - checkout: self
+
+      - script: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conda to PATH
+
+      - task: Cache@2
+        displayName: Use cached conda environment
+        inputs:
+          key: conda | environment.yml
+          path: $(CONDA_HOME)
+          cacheHitVar: CONDA_CACHE_RESTORED
+
+      - script: |
+          conda env create --quiet --file environment.yml
+        displayName: Create conda environment (if not restored from cache)
+        condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
+
+      - script: |
+          source activate $(CONDA_ENV)
+          python -m ufmt .
+        displayName: "Run ufmt code formatter"
+
+      - script: |
+          source activate $(CONDA_ENV)
+          python -m flake8 .
+        displayName: "Run flake8 code linter"
+
+      - script: |
+          source activate $(CONDA_ENV)
+          python -m pylint --recursive=yes .
+        displayName: "Run pylint code linter"
