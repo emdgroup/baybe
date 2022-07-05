@@ -40,24 +40,26 @@ class BayBE:
         """
         comp_dfs = []
         for param in self.parameters:
-            comp_df = param.transform_rep_exp2comp(dataframe[[param.name]], do_fit=True)
+            comp_df = param.transform_rep_exp2comp(dataframe[param.name], do_fit=True)
             comp_dfs.append(comp_df)
 
         comp_rep = pd.concat(comp_dfs, axis=1)
         return comp_rep
 
-    def print_summary(self):
+    def __str__(self):
         """Print a simple summary of the BayBE object"""
-        print("\nTarget and Parameters:")
-        print(self.targets)
+        string = "\nTarget and Parameters:\n"
+        string += f"{self.targets}\n"
         for param in self.parameters:
-            print(param)
+            string += f"{param}\n"
 
-        print("\nSearchspace Exp Representation:")
-        print(self.searchspace_exp_rep)
+        string += "\n\nSearchspace Exp Representation:\n"
+        string += f"{self.searchspace_exp_rep}"
 
-        print("\nSearchspace Comp Representation:")
-        print(self.searchspace_comp_rep)
+        string += "\n\nSearchspace Comp Representation:\n"
+        string += f"{self.searchspace_comp_rep}"
+
+        return string
 
     def add_results(self):
         """

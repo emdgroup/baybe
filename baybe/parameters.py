@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 
 allowed_types = ["CAT", "NUM_DISCRETE"]
 # allowed_types = ["NUM_DISCRETE", "NUM_CONTINUOUS", "CAT", "GEN_SUBSTANCE", "CUSTOM"]
+allowed_encodings = ["OHE", "Integer"]
 
 log = logging.getLogger(__name__)
 
@@ -66,11 +67,17 @@ class Categorical(GenericParameter):
     Parameter class for categorical parameters
     """
 
-    def __init__(self, name: str = "Unnamed Parameter", values: list = None):
+    def __init__(
+        self,
+        name: str = "Unnamed Parameter",
+        values: list = None,
+        encoding: str = "OHE",
+    ):
         super().__init__(name)
 
         self.type = "CAT"
         self.values = [] if values is None else values
+        self.encoding = encoding
 
         if len(self.values) != len(np.unique(self.values)):
             log.warning(
@@ -82,8 +89,9 @@ class Categorical(GenericParameter):
     def __str__(self):
         string = (
             f"Categorical parameter\n"
-            f"   Name:   '{self.name}'\n"
-            f"   Values: {self.values}"
+            f"   Name:     '{self.name}'\n"
+            f"   Values:   {self.values}\n"
+            f"   Encoding: {self.encoding}"
         )
 
         return string
@@ -98,8 +106,9 @@ class Categorical(GenericParameter):
     def from_dict(cls, dat):
         param_name = dat.get("Name", "Unnamed Parameter")
         param_values = dat.get("Values", [])
+        param_encoding = dat.get("Encoding", "OHE")
 
-        return cls(name=param_name, values=param_values)
+        return cls(name=param_name, values=param_values, encoding=param_encoding)
 
     def transform_rep_exp2comp(self, series: pd.DataFrame = None, do_fit: bool = False):
         """
@@ -109,24 +118,36 @@ class Categorical(GenericParameter):
         :return: transformed: pandas dataframe
         """
         data = {}
-        for value in self.values:
-            row = []
-            for itm in series.values:
-                if itm not in self.values:
-                    log.error(
-                        "Value %s is not in list of permitted values %s for parameter"
-                        " %s",
-                        itm,
-                        self.values,
-                        self.name,
-                    )
-                    row.append(np.nan)
-                else:
+        if self.encoding == "OHE":
+            for value in self.values:
+                row = []
+                for itm in series.values:
+                    if itm not in self.values:
+                        raise ValueError(
+                            f"Value {itm} is not in list of permitted values "
+                            f"{self.values} for parameter {self.name}"
+                        )
                     if itm == value:
                         row.append(1)
                     else:
                         row.append(0)
-                data[f"{self.name}_val_{value}"] = row
+                    data[f"{self.name}_val_{value}"] = row
+        elif self.encoding == "Integer":
+            mapping = {val: k for k, val in enumerate(self.values)}
+            row = []
+            for itm in series.values:
+                if itm not in self.values:
+                    raise ValueError(
+                        f' "Value {itm} is not in list of permitted values'
+                        f" {self.values} for parameter {self.name}"
+                    )
+                row.append(mapping[itm])
+            data[f"{self.name}_encoded"] = row
+        else:
+            raise ValueError(
+                f"Parameter {self.name} has encoding {self.encoding} specified, "
+                f"but encoding must be one of {allowed_encodings}."
+            )
 
         transformed = pd.DataFrame(data)
         return transformed
@@ -189,12 +210,12 @@ class NumericDiscrete(GenericParameter):
         """
         if do_fit:
             if self.scaler_is_fitted:
-                log.error(
+                log.warning(
                     "Scaler for parameter %s is already fitted, refitting might result "
                     "in unwanted behavior",
                     self.name,
                 )
-            self.scaler.fit(series)
+            self.scaler.fit(series.values.reshape(-1, 1))
             self.scaler_is_fitted = True
 
         if not self.scaler_is_fitted:
@@ -204,8 +225,9 @@ class NumericDiscrete(GenericParameter):
                 self.name,
             )
 
-        transformed = pd.DataFrame(self.scaler.transform(series))
-        transformed.columns = series.columns
+        transformed = pd.DataFrame(
+            self.scaler.transform(series.values.reshape(-1, 1)), columns=[series.name]
+        )
         return transformed
 
 
