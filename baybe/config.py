@@ -27,19 +27,16 @@ def parse_config(config: dict) -> tuple:
     if mode == "SINGLE":
         objectives = objective.get("Objectives", [])
         if len(objectives) != 1:
-            log.error(
-                "Config with objective mode SINGLE must specify exactly one target"
+            raise ValueError(
+                f"Config with objective mode SINGLE must specify exactly one target, "
+                f"but specified several: {objectives}"
             )
-            params = []
-            targ = None
-        else:
-            target_dict = objectives[0]
-            targ = targets.parse_single_target(target_dict)
+
+        target_dict = objectives[0]
+        targ = targets.parse_single_target(target_dict)
     else:
-        log.error(
-            "Objective mode is %s, but must be one of %s", mode, targets.allowed_modes
+        raise ValueError(
+            f"Objective mode is {mode}, but must be one of {targets.allowed_modes}"
         )
-        params = []
-        targ = None
 
     return params, targ

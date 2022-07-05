@@ -114,11 +114,9 @@ def parse_single_target(target_dict: dict = None) -> GenericTarget:
     elif target_type == "CAT":
         target = Categorical.from_dict(target_dict)
     else:
-        log.error(
-            "Target type %s is not one of the allowed choices: %s",
-            target_type,
-            allowed_types,
+        raise ValueError(
+            f"Target type {target_type} is not one of the allowed "
+            f"choices: {allowed_types}",
         )
-        target = None
 
     return target

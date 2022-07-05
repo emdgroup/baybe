@@ -1,4 +1,4 @@
-# pylint: disable=R0903,W0235,E0401
+# pylint: disable=R0903,W0235,E0401,R0912
 """
 Functionality to deal wth different parameters
 """
@@ -78,6 +78,8 @@ class Categorical(GenericParameter):
         self.type = "CAT"
         self.values = [] if values is None else values
         self.encoding = encoding
+        self.scaler_is_fitted = False
+        self.scaler = StandardScaler()
 
         if len(self.values) != len(np.unique(self.values)):
             log.warning(
@@ -132,7 +134,10 @@ class Categorical(GenericParameter):
                     else:
                         row.append(0)
                     data[f"{self.name}_val_{value}"] = row
+            transformed = pd.DataFrame(data)
+
         elif self.encoding == "Integer":
+            # Map Values
             mapping = {val: k for k, val in enumerate(self.values)}
             row = []
             for itm in series.values:
@@ -143,13 +148,33 @@ class Categorical(GenericParameter):
                     )
                 row.append(mapping[itm])
             data[f"{self.name}_encoded"] = row
+
+            # Scale values
+            if do_fit:
+                if self.scaler_is_fitted:
+                    log.warning(
+                        "Scaler for parameter %s is already fitted, refitting might "
+                        "result in unwanted behavior",
+                        self.name,
+                    )
+                self.scaler.fit(np.array(row).reshape(-1, 1))
+                self.scaler_is_fitted = True
+
+            if not self.scaler_is_fitted:
+                raise AssertionError(
+                    f"Scaler for parameter {self.name} is not fitted yet but needs to "
+                    f"be before transforming. Check if do_fit=True on first use"
+                )
+
+            transformed = pd.DataFrame(
+                self.scaler.transform(np.array(row).reshape(-1, 1)),
+                columns=[series.name],
+            )
         else:
             raise ValueError(
                 f"Parameter {self.name} has encoding {self.encoding} specified, "
                 f"but encoding must be one of {allowed_encodings}."
             )
-
-        transformed = pd.DataFrame(data)
         return transformed
 
 
@@ -219,10 +244,9 @@ class NumericDiscrete(GenericParameter):
             self.scaler_is_fitted = True
 
         if not self.scaler_is_fitted:
-            log.error(
-                "Scaler for parameter %s is not fitted but needs to be before "
-                "transforming. Check if do_fit=True on first use",
-                self.name,
+            raise AssertionError(
+                f"Scaler for parameter {self.name} is not fitted yet but needs to be "
+                f"before transforming. Check if do_fit=True on first use"
             )
 
         transformed = pd.DataFrame(
@@ -310,12 +334,10 @@ def parse_parameter(param_dict: dict = None) -> GenericParameter:
     elif param_type == "NUM_DISCRETE":
         param = NumericDiscrete.from_dict(param_dict)
     else:
-        log.error(
-            "Parameter type %s is not in one of the allowed choices: %s",
-            param_type,
-            allowed_types,
+        raise ValueError(
+            f"Parameter type {param_type} is not in one of the allowed "
+            f"choices: {allowed_types}",
         )
-        param = None
 
     return param
 
