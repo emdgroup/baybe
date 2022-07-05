@@ -49,7 +49,8 @@ class BayBE:
     def __str__(self):
         """Print a simple summary of the BayBE object"""
         string = "\nTarget and Parameters:\n"
-        string += f"{self.targets}\n"
+        for target in self.targets:
+            string += f"{target}\n"
         for param in self.parameters:
             string += f"{param}\n"
 
@@ -75,6 +76,16 @@ class BayBE:
         """
         Get the recommendation of the next batch
         """
+
+        # Connect this part to the actual recommender strat
+        # so far these are just randomly selected
+        inds = self.searchspace_exp_rep.sample(n=batch_size).index
+
+        rec = self.searchspace_exp_rep.loc[inds, :]
+        for target in self.targets:
+            rec[target.name] = "<Enter value>"
+
+        return rec
 
     def load(self):
         """

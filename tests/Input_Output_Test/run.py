@@ -14,9 +14,14 @@ config = {
         {
             "Name": "Categorical_1",
             "Type": "CAT",
-            "Values": [1, 2],
+            "Values": [22, 33],
         },
-        {"Name": "Categorical_2", "Type": "CAT", "Values": ["on", "off"]},
+        {
+            "Name": "Categorical_2",
+            "Type": "CAT",
+            "Values": ["bad", "OK", "good"],
+            "Encoding": "Integer",
+        },
         {
             "Name": "Num_disc_1",
             "Type": "NUM_DISCRETE",
@@ -32,5 +37,10 @@ config = {
 
 # Create BayBE object and print a summary
 obj = BayBE(config=config)
+print(obj)
 
-obj.print_summary()
+rec = obj.recommend()
+print("\n\nRecommended Iteration 1\n", rec)
+
+rec = obj.recommend()
+print("\n\nRecommended Iteration 2\n", rec)
