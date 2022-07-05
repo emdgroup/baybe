@@ -44,3 +44,5 @@ print("\n\nRecommended Iteration 1\n", rec)
 
 rec = obj.recommend()
 print("\n\nRecommended Iteration 2\n", rec)
+
+print(obj.searchspace_metadata)

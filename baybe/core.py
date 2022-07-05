@@ -28,6 +28,13 @@ class BayBE:
 
         # Create the experimental dataframe
         self.searchspace_exp_rep = parameter_outer_prod_to_df(self.parameters)
+        self.searchspace_metadata = pd.DataFrame(
+            {
+                "has_been_recommended": [False] * len(self.searchspace_exp_rep),
+                "do_not_recommend": [False] * len(self.searchspace_exp_rep),
+            },
+            index=self.searchspace_exp_rep.index,
+        )
 
         # Convert exp to comp dataframe
         self.searchspace_comp_rep = self.convert_rep_exp2comp(self.searchspace_exp_rep)
@@ -77,11 +84,18 @@ class BayBE:
         Get the recommendation of the next batch
         """
 
+        # Get indices of recommended searchspace entries here
         # Connect this part to the actual recommender strat
         # so far these are just randomly selected
+        # strats should also have the capability to ignore some datapoints
+        # (look up do_not_recommend in metadata) or do not suggest repeated ones
+        # (lookup has_been_recommended in metadata)
         inds = self.searchspace_exp_rep.sample(n=batch_size).index
 
+        # Translate indices into labeled datapoints and update metadata
         rec = self.searchspace_exp_rep.loc[inds, :]
+        self.searchspace_metadata.loc[inds, "has_been_recommended"] = True
+
         for target in self.targets:
             rec[target.name] = "<Enter value>"
 
