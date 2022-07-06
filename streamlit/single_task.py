@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 import torch
 
-from baybe.strategy import GaussianProcessStrategy
+from baybe.strategy import Strategy
 from botorch.models.transforms import Standardize
 from botorch.test_functions import Hartmann
 from tqdm import trange
@@ -60,6 +60,9 @@ targets = target_transform(objective_function(points).unsqueeze(1))[0]
 features = pd.DataFrame(points, columns=[f"Param_{i}" for i in range(n_dims)])
 targets = pd.DataFrame(targets, columns=["Target"])
 
+# define the DoE strategy
+strategy = Strategy()
+
 # list to store the experimentation sequences
 sequences = []
 
@@ -67,10 +70,7 @@ sequences = []
 for mc in trange(n_monte_carlo, desc="Monte Carlo runs"):
 
     progress_bar_monte_carlo.progress(mc / n_monte_carlo)
-    sequence = []
-
-    # create a fresh model instance
-    model = GaussianProcessStrategy()
+    sequence = pd.Index([])
 
     # evaluate all experiments
     for i_experiment in range(len(points)):
@@ -83,11 +83,11 @@ for mc in trange(n_monte_carlo, desc="Monte Carlo runs"):
         candidates = features.drop(sequence)
 
         # train the model
-        model.set_training_data(train_x, train_y)
+        strategy.set_training_data(train_x, train_y)
 
         # get the next experiment recommendation from the model
-        new_loc = model.recommend(candidates)
-        sequence.append(new_loc)
+        new_loc = strategy.recommend(candidates)
+        sequence = sequence.append(new_loc)
 
     progress_bar_experiments.progress(1.0)
     sequences.append(sequence)
