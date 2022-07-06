@@ -1,4 +1,3 @@
-# pylint: disable=R0903,W0235,E0401,R0912
 """
 Functionality to deal wth different parameters
 """

@@ -1,4 +1,3 @@
-# pylint: disable=E0401
 """
 Core functionality of BayBE. Main point of interaction via Python
 """

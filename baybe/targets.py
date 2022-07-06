@@ -1,4 +1,3 @@
-# pylint: disable=R0903,W0235
 """
 Functionality for different type of targets
 """

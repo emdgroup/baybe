@@ -1,4 +1,3 @@
-# pylint: disable=R0903,W0235,E0401,R0912,R0801
 """Test for initial simple parameter parsing"""
 import logging
 
