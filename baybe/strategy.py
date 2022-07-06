@@ -3,7 +3,7 @@ Design-of-Experiment strategies, such as Gaussian processes, random forests, etc
 """
 
 from abc import ABC
-from typing import Iterable, Optional, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,8 @@ from botorch.fit import fit_gpytorch_model
 from botorch.models import SingleTaskGP
 from botorch.optim.fit import fit_gpytorch_torch
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from torch import Tensor
+
+from baybe.utils import to_tensor
 
 
 class Strategy(ABC):
@@ -61,7 +62,7 @@ class GaussianProcessStrategy(ABC):
         # TODO: assert correct input and target scaling
 
         # convert dataframes to tensors for the GP model
-        train_x, train_y = self._to_tensor(train_x, train_y)
+        train_x, train_y = to_tensor(train_x, train_y)
 
         # for an empty training set, reset the model
         if len(train_x) == 0:
@@ -90,7 +91,7 @@ class GaussianProcessStrategy(ABC):
             return np.random.choice(candidates.index)
 
         # prepare the candidates in t-batches
-        candidates_tensor = self._to_tensor(candidates).unsqueeze(1)
+        candidates_tensor = to_tensor(candidates).unsqueeze(1)
 
         # construct and evaluate the acquisition function
         # TODO: add more options
@@ -104,14 +105,6 @@ class GaussianProcessStrategy(ABC):
         min_loc = candidates.index[min_iloc]
 
         return min_loc
-
-    @staticmethod
-    def _to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
-        """Converts a given set of dataframes into tensors (dropping all indices)."""
-        out = (torch.from_numpy(df.values).to(torch.float32) for df in dfs)
-        if len(dfs) == 1:
-            out = next(out)
-        return out
 
     def _fit(self):
         """Fits the GP model with the current training data."""
