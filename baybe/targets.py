@@ -5,7 +5,7 @@ Functionality for different type of targets
 import logging
 from abc import ABC, abstractmethod
 
-allowed_types = ["NUM", "CAT"]
+allowed_types = ["NUM"]
 allowed_modes = ["SINGLE"]
 
 log = logging.getLogger(__name__)
@@ -67,37 +67,6 @@ class Numerical(GenericTarget):
         return cls(name=targ_name, bounds=targ_bounds)
 
 
-class Categorical(GenericTarget):
-    """
-    Class for categorical targets
-    """
-
-    def __init__(self, name: str = "Unnamed Target", labels: list = None):
-        super().__init__(name)
-
-        self.type = "CAT"
-        self.labels = [] if labels is None else labels
-
-    def __str__(self):
-        string = (
-            f"Categorical target\n"
-            f"   Name:   '{self.name}'\n"
-            f"   Labels: {self.labels}"
-        )
-        return string
-
-    @classmethod
-    def from_dict(cls, dat):
-        """
-        Creates a target of this type from a dictionary
-        :param dat: parameter dictionary
-        :return: class object
-        """
-        targ_name = dat.get("Name", "Unnamed Target")
-        targ_labels = dat.get("Labels", [])
-        return cls(name=targ_name, labels=targ_labels)
-
-
 def parse_single_target(target_dict: dict = None) -> GenericTarget:
     """
     Parses a dictionary into a target object in single target mode
@@ -110,8 +79,6 @@ def parse_single_target(target_dict: dict = None) -> GenericTarget:
     target_type = target_dict.get("Type", None)
     if target_type == "NUM":
         target = Numerical.from_dict(target_dict)
-    elif target_type == "CAT":
-        target = Categorical.from_dict(target_dict)
     else:
         raise ValueError(
             f"Target type {target_type} is not one of the allowed "

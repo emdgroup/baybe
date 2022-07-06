@@ -120,6 +120,7 @@ class Categorical(GenericParameter):
         """
         data = {}
         if self.encoding == "OHE":
+            data = {}
             for value in self.values:
                 row = []
                 for itm in series.values:
@@ -146,7 +147,6 @@ class Categorical(GenericParameter):
                         f" {self.values} for parameter {self.name}"
                     )
                 row.append(mapping[itm])
-            data[f"{self.name}_encoded"] = row
 
             # Scale values
             if do_fit:
@@ -167,7 +167,7 @@ class Categorical(GenericParameter):
 
             transformed = pd.DataFrame(
                 self.scaler.transform(np.array(row).reshape(-1, 1)),
-                columns=[series.name],
+                columns=[f"{self.name}_encoded_scaled"],
             )
         else:
             raise ValueError(

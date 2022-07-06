@@ -1,4 +1,4 @@
-"""Test for initial simple parameter parsing"""
+"""Test for initial simple input, reocmmendation and adding fake results"""
 import logging
 
 from baybe.core import BayBE
@@ -37,22 +37,42 @@ config = {
 }
 
 # Define some values where the fake results should be good
-good_values = [{"Parameter": "Categorical_2", "Value": "OK"}]
+good_reference_values = [
+    {"Parameter": "Categorical_2", "Value": "OK"},
+    {"Parameter": "Categorical_1", "Value": 22},
+]
 
 # Create BayBE object, add fake results and print what happens to internal data
 obj = BayBE(config=config)
 print(obj)
 
-rec = obj.recommend()
-print("\n\nRecommended in Iteration 1:\n", rec)
+N_ITERATIONS = 4
+for kIter in range(N_ITERATIONS):
+    print(f"\n\n##### ITERATION {kIter+1} #####")
 
-add_fake_results(rec, obj, good_values=good_values)
-print("\n\nAfter Adding Fake Results Iteration 1:\n", rec)
+    rec = obj.recommend()
+    print("\n\n### Recommended dataframe:\n", rec)
 
-rec = obj.recommend()
-print("\n\nRecommended in Iteration 1:\n", rec)
+    add_fake_results(rec, obj, good_reference_values=good_reference_values)
+    print("\n\n### Recommended dataframe with fake results:\n", rec)
 
-add_fake_results(rec, obj, good_values=good_values)
-print("\n\nAfter Adding Fake Results Iteration 2:\n", rec)
+    # uncomment below to test error throw for disallowed value
+    # obj.add_results(rec.replace(1, 11111))
+    obj.add_results(rec)
+    print(
+        "\n\n### Internal measurement dataframe after data ingestion:\n",
+        obj.measurements_exp_rep,
+    )
 
-print("\n\nSearch Space Metadata after all iterations\n", obj.searchspace_metadata)
+    print(
+        "\n\n### Internal measurement dataframe computational representation X:\n",
+        obj.measurements_comp_rep_x,
+    )
+
+    print(
+        "\n\n### Internal measurement dataframe computational representation Y:\n",
+        obj.measurements_comp_rep_y,
+    )
+
+# Show metadata
+print("\n\n### Search Space Metadata after all iterations\n", obj.searchspace_metadata)
