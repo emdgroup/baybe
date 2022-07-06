@@ -1,3 +1,4 @@
+# pylint: disable=R0903,W0235,E0401,R0912,R0801
 """Test for initial simple parameter parsing"""
 import logging
 
@@ -37,12 +38,5 @@ config = {
 
 # Create BayBE object and print a summary
 obj = BayBE(config=config)
+
 print(obj)
-
-rec = obj.recommend()
-print("\n\nRecommended Iteration 1\n", rec)
-
-rec = obj.recommend()
-print("\n\nRecommended Iteration 2\n", rec)
-
-print(obj.searchspace_metadata)

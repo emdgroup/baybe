@@ -2,6 +2,7 @@
 import logging
 
 from baybe.core import BayBE
+from baybe.utils import add_fake_results
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -35,7 +36,23 @@ config = {
     },
 }
 
-# Create BayBE object and print a summary
-obj = BayBE(config=config)
+# Define some values where the fake results should be good
+good_values = [{"Parameter": "Categorical_2", "Value": "OK"}]
 
+# Create BayBE object, add fake results and print what happens to internal data
+obj = BayBE(config=config)
 print(obj)
+
+rec = obj.recommend()
+print("\n\nRecommended in Iteration 1:\n", rec)
+
+add_fake_results(rec, obj, good_values=good_values)
+print("\n\nAfter Adding Fake Results Iteration 1:\n", rec)
+
+rec = obj.recommend()
+print("\n\nRecommended in Iteration 1:\n", rec)
+
+add_fake_results(rec, obj, good_values=good_values)
+print("\n\nAfter Adding Fake Results Iteration 2:\n", rec)
+
+print("\n\n", obj.searchspace_metadata)
