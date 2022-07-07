@@ -1,8 +1,10 @@
-"""Test for initial simple input, reocmmendation and adding fake results"""
+"""Test for initial simple input, reocmmendation and adding fake results.
+Fake target measurements are simulated as well as noise added to the parameters
+"""
 import logging
 
 from baybe.core import BayBE
-from baybe.utils import add_fake_results
+from baybe.utils import add_fake_results, add_noise
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -26,7 +28,7 @@ config = {
         {
             "Name": "Num_disc_1",
             "Type": "NUM_DISCRETE",
-            "Values": [1, 2, 8],
+            "Values": [1, 2],
             "Tolerance": 0.3,
         },
     ],
@@ -54,6 +56,9 @@ for kIter in range(N_ITERATIONS):
     print("\n\n### Recommended dataframe:\n", rec)
 
     add_fake_results(rec, obj, good_reference_values=good_reference_values)
+    if kIter % 2:
+        print(kIter)
+        add_noise(rec, obj, noise_level=0.1)
     print("\n\n### Recommended dataframe with fake results:\n", rec)
 
     # uncomment below to test error throw for disallowed value

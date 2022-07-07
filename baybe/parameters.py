@@ -133,7 +133,7 @@ class Categorical(GenericParameter):
                         row.append(1)
                     else:
                         row.append(0)
-                    data[f"{self.name}_val_{value}"] = row
+                    data[f"{self.name}_encoded_val_{value}"] = row
             transformed = pd.DataFrame(data)
 
         elif self.encoding == "Integer":
@@ -183,15 +183,39 @@ class NumericDiscrete(GenericParameter):
     """
 
     def __init__(
-        self, name: str = "Unnamed Parameter", values: list = None, input_tolerance=0.0
+        self,
+        name: str = "Unnamed Parameter",
+        values: list = None,
+        input_tolerance: float = 0.0,
     ):
         super().__init__(name)
 
         self.type = "NUM_DISCRETE"
+
         self.values = [] if values is None else values
+        if len(self.values) < 2:
+            raise AssertionError(
+                f"Numerical arameter {self.name} must have at least 2 " f"unqiue values"
+            )
 
         # allowed experimental uncertainty when reading in measured values
+        # if the requested tolerance is larger than half the minimum distance between
+        # parameter values a warning is printed because that could cause ambiguity when
+        # inputting datapoints later
+        max_tol = (
+            np.min([values[k] - values[k - 1] for k in range(1, len(values))]) / 2.0
+        )
+        if input_tolerance >= max_tol:
+            log.warning(
+                "Parameter %s is initialized with tolerance %s, but due to the "
+                "values %s a maximum tolerance of %s is suggested to avoid ambiguity.",
+                self.name,
+                input_tolerance,
+                self.values,
+                max_tol,
+            )
         self.input_tolerance = input_tolerance
+
         self.scaler_is_fitted = False
         self.scaler = StandardScaler()
 
@@ -343,10 +367,18 @@ def parse_parameter(param_dict: dict = None) -> GenericParameter:
 
 def parameter_outer_prod_to_df(parameters: list = None):
     """
-    Creates all possible combinations fo parameters (ignores non-discrete parameters).
-    :param parameters: List of Parameter objects
-    :return: pandas dataframe corresponding to the outer product of discrete parameter
-    values
+    Creates all possible combinations for parameters and their values
+    (ignores non-discrete parameters).
+
+    Parameters
+    ----------
+    parameters : List
+        List of Parameter objects
+    Returns :
+    pd.DataFrame
+        dataframe corresponding to the outer product of discrete parameter values
+    -------
+
     """
     lst_of_values = [p.values for p in parameters if p.type in allowed_types]
     lst_of_names = [p.name for p in parameters if p.type in allowed_types]

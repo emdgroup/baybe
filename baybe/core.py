@@ -24,6 +24,7 @@ class BayBE:
         self.parameters = parameters
         self.targets = targets
         self.config = config
+        self.flags = []  # ToDo add paarsing for this part
 
         # Create the experimental dataframe
         self.searchspace_exp_rep = parameter_outer_prod_to_df(self.parameters)
@@ -90,15 +91,13 @@ class BayBE:
         Parameters
         ----------
         data : pandas DataFrame
-               the dataframe with the measurements. Preferab ly created via the
-               recommend method and with filled values for targets
+               the dataframe with the measurements. Preferably created via the
+               recommend method and with filled values for targets.
 
         Returns
         -------
         Nothing
         """
-
-        self.batches_done += 1
 
         # Check whether all provided data points have acceptable parameter values
         for _, row in data.iterrows():
@@ -122,8 +121,9 @@ class BayBE:
                     "parameters."
                 )
 
-        # Read in measurements and transform
+        # Read in measurements and transform parameter values
         # ToDo match indices to search space and remember indices
+        self.batches_done += 1
         data["BatchNr"] = self.batches_done
         if self.measurements_exp_rep is None:
             self.measurements_exp_rep = data.reset_index(drop=True)
@@ -158,7 +158,7 @@ class BayBE:
 
         return rec
 
-    def load(self):
+    def load(self) -> None:
         """
         Load new internal state of a DOE from a specified file
         The load and save functions could also be omitted and the user would have to
@@ -166,7 +166,7 @@ class BayBE:
         potentially create problems when code versions are different
         """
 
-    def save(self):
+    def save(self) -> None:
         """
         Store the current state of the DOE on disk
         """

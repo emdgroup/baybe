@@ -10,7 +10,7 @@ import pandas as pd
 from baybe.core import BayBE
 
 
-def is_valid_smiles(smiles: str):
+def is_valid_smiles(smiles: str) -> bool:
     """
     Test if a SMILEs string is valid. Currently NOT IMPLEMENTED
     :param smiles: SMILES string to test
@@ -104,3 +104,47 @@ def add_fake_results(
             data.loc[final_mask, target.name] = np.random.randint(
                 good_intervals[0], good_intervals[1], final_mask.sum()
             )
+
+
+def add_noise(
+    data: pd.DataFrame,
+    obj: BayBE,
+    noise_type: str = "absolute",
+    noise_level: float = 1.0,
+):
+    """
+    Adds uniform noise to parameter values of a recommendation frame. Simulates
+    experimental noise and inputting numerical values that are slightly different
+    than the recommendations coming from the search space.
+
+    Parameters
+    ----------
+    data : pandas dataframe
+           output of the recommend function of a BayBE object
+    obj : BayBE class instance
+          the baybe object which provides configuration, targets, etc.
+    noise_type : str
+        Defines whether the noise should be additive
+    noise_level : float
+        Level/magnitude of the noise, numerical value for type absolute and percentage
+        for type relative_percent
+
+    Returns
+    -------
+
+    """
+    for param in obj.parameters:
+        if "NUM" in param.type:
+            if noise_type == "relative_percent":
+                data[param.name] *= np.random.uniform(
+                    1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)
+                )
+            elif noise_type == "absolute":
+                data[param.name] += np.random.uniform(
+                    -noise_level, noise_level, len(data)
+                )
+            else:
+                raise ValueError(
+                    f"Parameter noise_type was {noise_type} but must be either "
+                    f'"absolute" or "relative_percent"'
+                )
