@@ -8,11 +8,10 @@ from typing import Optional, Type, Union
 
 import numpy as np
 import pandas as pd
-import torch
 from botorch.acquisition import AcquisitionFunction, ExpectedImprovement
 
+from baybe.recommender import MarginalRankingRecommender, Recommender
 from baybe.surrogate import GaussianProcessModel, SurrogateModel
-from baybe.utils import to_tensor
 
 
 class InitialStrategy(ABC):
@@ -52,6 +51,7 @@ class Strategy:
         surrogate_model_cls: Union[str, Type[SurrogateModel]] = "gp",
         acquisition_function: Union[str, Type[AcquisitionFunction]] = "ei",
         initial_strategy: Union[str, InitialStrategy] = "random",
+        recommender_cls: Union[str, Type[Recommender]] = "ranking",
     ):
         # process input arguments
         self.surrogate_model_cls = self._select_surrogate_model_cls(surrogate_model_cls)
@@ -59,6 +59,7 @@ class Strategy:
             acquisition_function
         )
         self.initial_strategy = self._select_initial_strategy(initial_strategy)
+        self.recommender = self._select_recommender_cls(recommender_cls)
 
         # declare remaining members
         self.surrogate_model: Optional[SurrogateModel] = None
@@ -107,22 +108,16 @@ class Strategy:
         if self._use_initial_strategy:
             return self.initial_strategy.recommend(candidates, batch_size)
 
-        # prepare the candidates in t-batches
-        candidates_tensor = to_tensor(candidates).unsqueeze(1)
-
-        # construct and evaluate the acquisition function
+        # construct the acquisition function
         # TODO: the current approach only works for gpytorch GP surrogate models
         #   (for other surrogate models, some wrapper is required)
         acqf = self.acquisition_function_cls(self.surrogate_model.model, self._best_f)
-        acqf_values = acqf(candidates_tensor)
 
-        # find the minimizer and extract the corresponding dataframe index
-        # TODO: use botorch's built-in methods
-        #   (problem: they do not return the indices but the candidate points)
-        min_iloc = torch.argmin(acqf_values).item()
-        min_loc = candidates.index[[min_iloc]]
+        # select the next experiments using the given recommender approach
+        recommender = self.recommender(acqf)
+        idxs = recommender.recommend(candidates, batch_size)
 
-        return min_loc
+        return idxs
 
     @staticmethod
     def _select_surrogate_model_cls(
@@ -157,3 +152,15 @@ class Strategy:
         if initial_strategy.lower() == "random":
             return RandomInitialStrategy()
         raise ValueError("Undefined initial strategy.")
+
+    @staticmethod
+    def _select_recommender_cls(
+        recommender_cls: Union[str, Type[Recommender]]
+    ) -> Type[Recommender]:
+        if (not isinstance(recommender_cls, str)) and (
+            issubclass(recommender_cls, Recommender)
+        ):
+            return recommender_cls
+        if recommender_cls.lower() == "ranking":
+            return MarginalRankingRecommender
+        raise ValueError("Undefined recommender.")
