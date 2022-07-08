@@ -3,26 +3,49 @@ Config functionality
 """
 
 import logging
+from typing import Tuple
 
 from baybe import parameters, targets
 
 
 log = logging.getLogger(__name__)
 
+# dictionary for storing the allowed options and their default values
+_allowed_config_options = {
+    "Project_Name": "Unnamed Project",
+    "Allow_repeated_recommendations": True,
+    "Allow_recommending_already_measured": False,
+}
 
-def parse_config(config: dict) -> tuple:
+
+def parse_config(config: dict) -> Tuple[list, list]:
     """
-    :param config_file: file string to a json file
-    :return: tuple (list of parameters, list of targets)
+    Parses a BayBE config dictionary. Also sets default values for various flags and
+    options directly in the config variable.
+
+    Parameters
+    ----------
+    config : dict
+        A dictionary containing parameter and target info as well as flags and options
+        for the method.
+
+    Returns
+    -------
+    2-Tuple with lists for parsed parameters and targets. The config parameter can also
+    be altered because it is assured that all flags and options are set to default
+    values
     """
+
+    if ("Objective" not in config.keys()) or ("Parameters" not in config.keys()):
+        raise AssertionError("Your config must define 'Parameters' and 'Objective'")
 
     # Parameters
     params = []
-    for param in config.get("Parameters", []):
+    for param in config["Parameters"]:
         params.append(parameters.parse_parameter(param))
 
-    # Targets
-    objective = config.get("Objective", {})
+    # Objective
+    objective = config["Objective"]
     mode = objective.get("Mode", None)
     if mode == "SINGLE":
         objectives = objective.get("Objectives", [])
@@ -37,6 +60,23 @@ def parse_config(config: dict) -> tuple:
     else:
         raise ValueError(
             f"Objective mode is {mode}, but must be one of {targets.allowed_modes}"
+        )
+
+    # Options
+    for option, value in _allowed_config_options.items():
+        config.setdefault(option, value)
+
+    # Check for unknown options
+    unrecognized_options = [
+        key
+        for key in config.keys()
+        if key not in (list(_allowed_config_options) + ["Parameters", "Objective"])
+    ]
+    if len(unrecognized_options) > 0:
+        raise AssertionError(
+            f"The provided config option(s) '{unrecognized_options}'"
+            f" is/are not in the allowed "
+            f"options {list(_allowed_config_options)}"
         )
 
     return params, targs

@@ -30,9 +30,9 @@ class BayBE:
         self.searchspace_exp_rep = parameter_outer_prod_to_df(self.parameters)
         self.searchspace_metadata = pd.DataFrame(
             {
-                "recommended": [False] * len(self.searchspace_exp_rep),
-                "measured": [False] * len(self.searchspace_exp_rep),
-                "never_recommend": [False] * len(self.searchspace_exp_rep),
+                "was_recommended": [False] * len(self.searchspace_exp_rep),
+                "was_measured": [False] * len(self.searchspace_exp_rep),
+                "dont_recommend": [False] * len(self.searchspace_exp_rep),
             },
             index=self.searchspace_exp_rep.index,
         )
@@ -180,16 +180,16 @@ class BayBE:
         """
 
         # Filter searchspace before transferring to strategy
-        mask_todrop = self.searchspace_metadata["never_recommend"].copy()
+        mask_todrop = self.searchspace_metadata["dont_recommend"].copy()
         if not self.config["Allow_repeated_recommendations"]:
-            mask_todrop |= self.searchspace_metadata["recommended"]
+            mask_todrop |= self.searchspace_metadata["was_recommended"]
 
         if mask_todrop.sum() >= len(self.searchspace_exp_rep):
             raise AssertionError(
                 "With the current settings there are no more possible data points to"
                 " recommend. This can be either because all data points have been"
                 " measured at some point while not allowing repetitions or by all"
-                " data points being marked as 'never_recommend'"
+                " data points being marked as 'dont_recommend'"
             )
 
         # Get indices of recommended searchspace entries here
@@ -198,7 +198,7 @@ class BayBE:
 
         # Translate indices into labeled data points and update metadata
         rec = self.searchspace_exp_rep.loc[inds, :]
-        self.searchspace_metadata.loc[inds, "recommended"] = True
+        self.searchspace_metadata.loc[inds, "was_recommended"] = True
 
         for target in self.targets:
             rec[target.name] = "<Enter value>"

@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 # parameter
 config = {
     "Project_Name": "Input Output Debug Test",
-    "Allow_repeated_recommendations": True,
+    "Allow_repeated_recommendations": False,
     "Parameters": [
         {
             "Name": "Categorical_1",
