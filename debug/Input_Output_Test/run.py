@@ -35,7 +35,7 @@ config = {
     ],
     "Objective": {
         "Mode": "SINGLE",
-        "Objectives": [{"Name": "Target_1", "Type": "NUM", "Bounds": None}],
+        "Targets": [{"Name": "Target_1", "Bounds": None, "Mode": "Min"}],
     },
 }
 

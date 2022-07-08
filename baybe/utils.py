@@ -16,7 +16,7 @@ def is_valid_smiles(smiles: str) -> bool:
     :param smiles: SMILES string to test
     :return: True if the SMILES is valid according to RDKit
     """
-    return smiles
+    return "C" in smiles  # temporary until implemented
 
 
 def add_fake_results(
@@ -38,7 +38,7 @@ def add_fake_results(
            output of the recommend function of a BayBE object
     obj : BayBE class instance
           the baybe object which provides configuration, targets, etc.
-    good_reference_values : List
+    good_reference_values : list
                   A list of dictionaries which define parameters and respective values
                   which identify what will be considered good values
     good_intervals : 2-tuple

@@ -85,7 +85,7 @@ class BayBE:
 
     def __str__(self):
         """Print a simple summary of the BayBE object"""
-        # ToDo Add configuration info
+        # ToDo add options info
 
         string = "\nTarget and Parameters:\n"
         for target in self.targets:
@@ -183,6 +183,8 @@ class BayBE:
         mask_todrop = self.searchspace_metadata["dont_recommend"].copy()
         if not self.config["Allow_repeated_recommendations"]:
             mask_todrop |= self.searchspace_metadata["was_recommended"]
+        if not self.config["Allow_recommending_already_measured"]:
+            mask_todrop |= self.searchspace_metadata["was_measured"]
 
         if mask_todrop.sum() >= len(self.searchspace_exp_rep):
             raise AssertionError(

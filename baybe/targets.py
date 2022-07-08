@@ -3,8 +3,8 @@ Functionality for different type of targets
 """
 
 import logging
-from abc import ABC, abstractmethod
 
+import numpy as np
 import pandas as pd
 
 allowed_types = ["NUM"]
@@ -13,32 +13,45 @@ allowed_modes = ["SINGLE"]
 log = logging.getLogger(__name__)
 
 
-class GenericTarget(ABC):
+class NumericalTarget:
     """
-    Base class for different Targets. Will handle storing info about the type, the
-    range and constraints
+    Class for numerical targets
     """
 
-    def __init__(self, name: str = "Target"):
+    def __init__(
+        self, name: str = "Unnamed Target", mode: str = "Max", bounds: tuple = None
+    ):
         self.name = name
+        self.mode = mode
+
+        self.type = "NUM"
+
+        # ToDo Make sure bounds is a 2-sized vector of finite values
+        self.bounds = bounds
 
     def __str__(self):
-        string = f"Generic target\n" f"   Name: '{self.name}'"
+        string = (
+            f"Numerical target\n"
+            f"   Name:   '{self.name}'\n"
+            f"   Mode:   '{self.mode}'\n"
+            f"   Bounds: {self.bounds}"
+        )
         return string
 
     @classmethod
-    @abstractmethod
-    def from_dict(cls, dat):
+    def from_dict(cls, dat: dict):
         """
         Creates a target of this type from a dictionary
         :param dat: parameter dictionary
         :return: class object
         """
         targ_name = dat.get("Name", "Unnamed Target")
-        return cls(name=targ_name)
+        targ_mode = dat.get("Mode", "Max")
+        targ_bounds = dat.get("Bounds", None)
 
-    @staticmethod
-    def transform(data: pd.DataFrame):
+        return cls(name=targ_name, mode=targ_mode, bounds=targ_bounds)
+
+    def transform(self, data: pd.DataFrame):
         """
         Transform data tot he computational representation. The transformation depends
         on the target mode, e.g. minimization, maximization, matching, multi-target etc
@@ -52,41 +65,34 @@ class GenericTarget(ABC):
         The transformed data frame
         """
 
-        return data
+        # ToDo implement transforms for bounds
+        if self.mode == "Max":
+            if self.bounds is not None and np.isfinite(self.bounds).all():
+                # ToDo implement transform wth bounds here
+                return data * 3
+            return data
+        if self.mode == "Min":
+            if self.bounds is not None and np.isfinite(self.bounds).all():
+                # ToDo implement transform wth bounds here
+                return -data * 3
+            return -data
+        if self.mode == "Match":
+            if self.bounds is not None and np.isfinite(self.bounds).all():
+                # ToDo implement match transform here
+                return data
+            raise TypeError(
+                f"Match mode is not supported for this target named {self.name} of "
+                f"type {self.type} since it has non-finite bounds or bounds are not"
+                f" defined. Bounds need to be a finite 2-touple."
+            )
 
-
-class Numerical(GenericTarget):
-    """
-    Class for numerical targets
-    """
-
-    def __init__(self, name: str = "Unnamed Target", bounds: tuple = None):
-        super().__init__(name)
-
-        self.type = "NUM"
-        self.bounds = None if bounds is None else bounds
-
-    def __str__(self):
-        string = (
-            f"Numerical target\n"
-            f"   Name:   '{self.name}'\n"
-            f"   Bounds: {self.bounds}"
+        raise ValueError(
+            f"The mode '{self.mode}' set for target {self.name} is not recognized. "
+            f"Must be either Min, Max or Match"
         )
-        return string
-
-    @classmethod
-    def from_dict(cls, dat):
-        """
-        Creates a target of this type from a dictionary
-        :param dat: parameter dictionary
-        :return: class object
-        """
-        targ_name = dat.get("Name", "Unnamed Target")
-        targ_bounds = dat.get("Bounds", None)
-        return cls(name=targ_name, bounds=targ_bounds)
 
 
-def parse_single_target(target_dict: dict = None) -> GenericTarget:
+def parse_single_target(target_dict: dict = None) -> NumericalTarget:
     """
     Parses a dictionary into a target object in single target mode
     :param target_dict: dictionary containing the target info
@@ -95,9 +101,9 @@ def parse_single_target(target_dict: dict = None) -> GenericTarget:
     if target_dict is None:
         target_dict = {}
 
-    target_type = target_dict.get("Type", None)
+    target_type = target_dict.get("Type", "NUM")
     if target_type == "NUM":
-        target = Numerical.from_dict(target_dict)
+        target = NumericalTarget.from_dict(target_dict)
     else:
         raise ValueError(
             f"Target type {target_type} is not one of the allowed "
