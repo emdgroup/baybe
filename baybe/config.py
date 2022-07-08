@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 # dictionary for storing the allowed options and their default values
 _allowed_config_options = {
     "Project_Name": "Unnamed Project",
+    "Random_Seed": 1337,
     "Allow_repeated_recommendations": True,
     "Allow_recommending_already_measured": False,
 }

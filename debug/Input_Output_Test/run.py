@@ -60,7 +60,7 @@ for kIter in range(N_ITERATIONS):
     if kIter % 2:
         print(kIter)
         add_noise(rec, obj, noise_level=0.1)
-    print("\n\n### Recommended dataframe with fake results:\n", rec)
+    print("\n\n### Recommended dataframe with fake results and eventual noise:\n", rec)
 
     # uncomment below to test error throw for disallowed value
     # obj.add_results(rec.replace(1, 11111))

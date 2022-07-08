@@ -3,10 +3,10 @@ Functionality to deal wth different parameters
 """
 import logging
 from abc import ABC, abstractmethod
+from typing import List
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 
 allowed_types = ["CAT", "NUM_DISCRETE"]
 # allowed_types = ["NUM_DISCRETE", "NUM_CONTINUOUS", "CAT", "GEN_SUBSTANCE", "CUSTOM"]
@@ -51,7 +51,7 @@ class GenericParameter(ABC):
         return cls(name=param_name)
 
     @abstractmethod
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None, do_fit: bool = False):
+    def transform_rep_exp2comp(self, series: pd.DataFrame = None):
         """
         Takes a pandas series in experimental representation and transforms it into the
         computational representation
@@ -77,14 +77,11 @@ class Categorical(GenericParameter):
         self.type = "CAT"
         self.values = [] if values is None else values
         self.encoding = encoding
-        self.scaler_is_fitted = False
-        self.scaler = StandardScaler()
 
         if len(self.values) != len(np.unique(self.values)):
-            log.warning(
-                "Values for parameter %s are not unique. This will cause duplicates in "
-                "the possible experiments.",
-                self.name,
+            raise ValueError(
+                f"Values for parameter {self.name} are not unique. This would cause "
+                f"duplicates in the possible experiments."
             )
 
     def __str__(self):
@@ -111,18 +108,13 @@ class Categorical(GenericParameter):
 
         return cls(name=param_name, values=param_values, encoding=param_encoding)
 
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None, do_fit: bool = False):
-        """
-        Takes a pandas series in experimental representation and transforms it into the
-        computational representation
-        :param series: pandas series in experimental representation
-        :return: transformed: pandas dataframe
-        """
-        data = {}
+    def transform_rep_exp2comp(self, series: pd.DataFrame = None):
+        """bla"""
+
         if self.encoding == "OHE":
             data = {}
             for value in self.values:
-                row = []
+                coldata = []
                 for itm in series.values:
                     if itm not in self.values:
                         raise ValueError(
@@ -130,45 +122,25 @@ class Categorical(GenericParameter):
                             f"{self.values} for parameter {self.name}"
                         )
                     if itm == value:
-                        row.append(1)
+                        coldata.append(1)
                     else:
-                        row.append(0)
-                    data[f"{self.name}_encoded_val_{value}"] = row
+                        coldata.append(0)
+                    data[f"{self.name}_encoded_val_{value}"] = coldata
             transformed = pd.DataFrame(data)
 
         elif self.encoding == "Integer":
-            # Map Values
             mapping = {val: k for k, val in enumerate(self.values)}
-            row = []
+            coldata = []
+
             for itm in series.values:
                 if itm not in self.values:
                     raise ValueError(
                         f' "Value {itm} is not in list of permitted values'
                         f" {self.values} for parameter {self.name}"
                     )
-                row.append(mapping[itm])
+                coldata.append(mapping[itm])
 
-            # Scale values
-            if do_fit:
-                if self.scaler_is_fitted:
-                    log.warning(
-                        "Scaler for parameter %s is already fitted, refitting might "
-                        "result in unwanted behavior",
-                        self.name,
-                    )
-                self.scaler.fit(np.array(row).reshape(-1, 1))
-                self.scaler_is_fitted = True
-
-            if not self.scaler_is_fitted:
-                raise AssertionError(
-                    f"Scaler for parameter {self.name} is not fitted yet but needs to "
-                    f"be before transforming. Check if do_fit=True on first use"
-                )
-
-            transformed = pd.DataFrame(
-                self.scaler.transform(np.array(row).reshape(-1, 1)),
-                columns=[f"{self.name}_encoded_scaled"],
-            )
+            transformed = pd.DataFrame(coldata, columns=[f"{self.name}_encoded"])
         else:
             raise ValueError(
                 f"Parameter {self.name} has encoding {self.encoding} specified, "
@@ -216,9 +188,6 @@ class NumericDiscrete(GenericParameter):
             )
         self.input_tolerance = input_tolerance
 
-        self.scaler_is_fitted = False
-        self.scaler = StandardScaler()
-
     def is_in_range(self, item: float):
         differences_acceptable = [
             np.abs(bla - item) <= self.input_tolerance for bla in self.values
@@ -248,34 +217,15 @@ class NumericDiscrete(GenericParameter):
             name=param_name, values=param_values, input_tolerance=param_tolerance
         )
 
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None, do_fit: bool = False):
+    def transform_rep_exp2comp(self, series: pd.DataFrame = None):
         """
         Takes a pandas series in experimental representation and transforms it into the
         computational representation
         :param series: pandas series in experimental representation
-               do_fit: boolean that is true if the scaler needs to be fitted first
         :return: transformed: pandas dataframe with data in comp representation
         """
-        if do_fit:
-            if self.scaler_is_fitted:
-                log.warning(
-                    "Scaler for parameter %s is already fitted, refitting might result "
-                    "in unwanted behavior",
-                    self.name,
-                )
-            self.scaler.fit(series.values.reshape(-1, 1))
-            self.scaler_is_fitted = True
 
-        if not self.scaler_is_fitted:
-            raise AssertionError(
-                f"Scaler for parameter {self.name} is not fitted yet but needs to be "
-                f"before transforming. Check if do_fit=True on first use"
-            )
-
-        transformed = pd.DataFrame(
-            self.scaler.transform(series.values.reshape(-1, 1)), columns=[series.name]
-        )
-        return transformed
+        return series
 
 
 class GenericSubstance(GenericParameter):
@@ -365,24 +315,26 @@ def parse_parameter(param_dict: dict = None) -> GenericParameter:
     return param
 
 
-def parameter_outer_prod_to_df(parameters: list = None):
+def parameter_outer_prod_to_df(
+    parameters: List[GenericParameter],
+) -> pd.DataFrame:
     """
-    Creates all possible combinations for parameters and their values
-    (ignores non-discrete parameters).
+    Creates all possible combinations for parameters and their values (ignores
+    non-discrete parameters).
 
     Parameters
     ----------
-    parameters : List
-        List of Parameter objects
-    Returns :
-    pd.DataFrame
-        dataframe corresponding to the outer product of discrete parameter values
+    parameters: iteratable
+        List of parameter objects
+    Returns
     -------
-
+    ret: pd.DataFrame
+        The created data frame with the combinations
     """
     lst_of_values = [p.values for p in parameters if p.type in allowed_types]
     lst_of_names = [p.name for p in parameters if p.type in allowed_types]
 
     index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
+    ret = pd.DataFrame(index=index).reset_index()
 
-    return pd.DataFrame(index=index).reset_index()
+    return ret

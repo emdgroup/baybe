@@ -39,7 +39,7 @@ class BayBE:
 
         # Convert exp to comp dataframe
         self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
-            self.searchspace_exp_rep, do_fit=True
+            self.searchspace_exp_rep
         )
 
         # Reset measurement dataframes
@@ -48,7 +48,7 @@ class BayBE:
         self.measurements_comp_rep_y = None
 
     def transform_rep_exp2comp(
-        self, data: pd.DataFrame, do_fit: bool = False
+        self, data: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Transform a dataframe in experimental representation to the computational
@@ -67,7 +67,7 @@ class BayBE:
         # parameter part
         dfs = []
         for param in self.parameters:
-            comp_df = param.transform_rep_exp2comp(data[param.name], do_fit=do_fit)
+            comp_df = param.transform_rep_exp2comp(data[param.name])
             dfs.append(comp_df)
 
         comp_rep_x = pd.concat(dfs, axis=1)
@@ -170,7 +170,7 @@ class BayBE:
         (
             self.measurements_comp_rep_x,
             self.measurements_comp_rep_y,
-        ) = self.transform_rep_exp2comp(self.measurements_exp_rep, do_fit=False)
+        ) = self.transform_rep_exp2comp(self.measurements_exp_rep)
 
         # ToDo call strategy for training
 
