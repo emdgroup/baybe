@@ -37,7 +37,8 @@ class GenericTarget(ABC):
         targ_name = dat.get("Name", "Unnamed Target")
         return cls(name=targ_name)
 
-    def transform(self, data: pd.DataFrame):
+    @staticmethod
+    def transform(data: pd.DataFrame):
         """
         Transform data tot he computational representation. The transformation depends
         on the target mode, e.g. minimization, maximization, matching, multi-target etc
@@ -50,8 +51,7 @@ class GenericTarget(ABC):
         -------
         The transformed data frame
         """
-        if self is None:
-            print(self.name)
+
         return data
 
 
