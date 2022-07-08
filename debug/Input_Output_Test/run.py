@@ -1,5 +1,5 @@
-"""Test for initial simple input, reocmmendation and adding fake results.
-Fake target measurements are simulated as well as noise added to the parameters
+"""Test for initial simple input, recommendation and adding fake results.
+Fake target measurements are simulated as well as noise added to the parameters.
 """
 import logging
 
@@ -12,7 +12,8 @@ log = logging.getLogger(__name__)
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
 config = {
-    "Experiment_Name": "Initial Core Test",
+    "Project_Name": "Input Output Debug Test",
+    "Allow_repeated_recommendations": True,
     "Parameters": [
         {
             "Name": "Categorical_1",
@@ -28,7 +29,7 @@ config = {
         {
             "Name": "Num_disc_1",
             "Type": "NUM_DISCRETE",
-            "Values": [1, 2],
+            "Values": [1, 2, 8],
             "Tolerance": 0.3,
         },
     ],
@@ -52,7 +53,7 @@ N_ITERATIONS = 4
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
-    rec = obj.recommend()
+    rec = obj.recommend(batch_quantity=3)
     print("\n\n### Recommended dataframe:\n", rec)
 
     add_fake_results(rec, obj, good_reference_values=good_reference_values)

@@ -5,6 +5,8 @@ Functionality for different type of targets
 import logging
 from abc import ABC, abstractmethod
 
+import pandas as pd
+
 allowed_types = ["NUM"]
 allowed_modes = ["SINGLE"]
 
@@ -34,6 +36,23 @@ class GenericTarget(ABC):
         """
         targ_name = dat.get("Name", "Unnamed Target")
         return cls(name=targ_name)
+
+    def transform(self, data: pd.DataFrame):
+        """
+        Transform data tot he computational representation. The transformation depends
+        on the target mode, e.g. minimization, maximization, matching, multi-target etc
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to be transformed.
+        Returns
+        -------
+        The transformed data frame
+        """
+        if self is None:
+            print(self.name)
+        return data
 
 
 class Numerical(GenericTarget):

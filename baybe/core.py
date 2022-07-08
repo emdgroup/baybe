@@ -2,6 +2,7 @@
 Core functionality of BayBE. Main point of interaction via Python
 """
 import logging
+from typing import Tuple
 
 import pandas as pd
 
@@ -24,20 +25,20 @@ class BayBE:
         self.parameters = parameters
         self.targets = targets
         self.config = config
-        self.flags = []  # ToDo add paarsing for this part
 
         # Create the experimental dataframe
         self.searchspace_exp_rep = parameter_outer_prod_to_df(self.parameters)
         self.searchspace_metadata = pd.DataFrame(
             {
-                "has_been_recommended": [False] * len(self.searchspace_exp_rep),
-                "do_not_recommend": [False] * len(self.searchspace_exp_rep),
+                "recommended": [False] * len(self.searchspace_exp_rep),
+                "measured": [False] * len(self.searchspace_exp_rep),
+                "never_recommend": [False] * len(self.searchspace_exp_rep),
             },
             index=self.searchspace_exp_rep.index,
         )
 
         # Convert exp to comp dataframe
-        self.searchspace_comp_rep = self.convert_rep_exp2comp(
+        self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
             self.searchspace_exp_rep, do_fit=True
         )
 
@@ -46,22 +47,46 @@ class BayBE:
         self.measurements_comp_rep_x = None
         self.measurements_comp_rep_y = None
 
-    def convert_rep_exp2comp(self, dataframe: pd.DataFrame, do_fit: bool = False):
+    def transform_rep_exp2comp(
+        self, data: pd.DataFrame, do_fit: bool = False
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Converts data in experimental representation to computational representation
-        :param dataframe: dataframe in exp representation
-        :return: comp_rep: dataframe in comp representation
-        """
-        comp_dfs = []
-        for param in self.parameters:
-            comp_df = param.transform_rep_exp2comp(dataframe[param.name], do_fit=do_fit)
-            comp_dfs.append(comp_df)
+        Transform a dataframe in experimental representation to the computational
+        representation
 
-        comp_rep = pd.concat(comp_dfs, axis=1)
-        return comp_rep
+        Parameters
+        ----------
+        data: pd.DataFrame
+
+        Returns
+        -------
+        2-tuple. First part is the X part (representing the parameters) and the second
+        part is the Y part. The first part is ignored if the target columns are not in
+        the data (This is the case if data corresponds to the search space).
+        """
+        # parameter part
+        dfs = []
+        for param in self.parameters:
+            comp_df = param.transform_rep_exp2comp(data[param.name], do_fit=do_fit)
+            dfs.append(comp_df)
+
+        comp_rep_x = pd.concat(dfs, axis=1)
+
+        # target part, unlike parameters targets can be missing from the dataframe
+        comp_rep_y = None
+        if all(target in data.columns for target in self.targets):
+            dfs = []
+            for target in self.targets:
+                comp_df = target.transform(data[target.name])
+                dfs.append(comp_df)
+            comp_rep_y = pd.concat(dfs, axis=1)
+
+        return comp_rep_x, comp_rep_y
 
     def __str__(self):
         """Print a simple summary of the BayBE object"""
+        # ToDo Add configuration info
+
         string = "\nTarget and Parameters:\n"
         for target in self.targets:
             string += f"{target}\n"
@@ -85,14 +110,14 @@ class BayBE:
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
-        Adds results from a dataframe to the internal database. Each addition of data is
-         considered a batch.
+        Adds results from a dataframe to the internal database and retrains strategy.
+        Each addition of data is considered a new batch.
 
         Parameters
         ----------
         data : pandas DataFrame
-               the dataframe with the measurements. Preferably created via the
-               recommend method and with filled values for targets.
+            the dataframe with the measurements. Preferably created via the recommend
+            method and with filled values for targets.
 
         Returns
         -------
@@ -101,27 +126,36 @@ class BayBE:
 
         # Check whether all provided data points have acceptable parameter values
         for _, row in data.iterrows():
-            not_acceptable = [
+            unacceptable_parameters = [
                 param.name
                 for param in self.parameters
                 if not param.is_in_range(row[param.name])
             ]
-            if len(not_acceptable) > 0:
+            if len(unacceptable_parameters) > 0:
                 log.error(
                     "Parameter values for data point with index %s are not in the "
                     "allowed values for parameters %s",
                     row.name,
-                    not_acceptable,
+                    unacceptable_parameters,
                 )
                 raise ValueError(
                     "When adding measurement values it is required that all input "
                     "values for the parameters are allowed values. This means "
-                    "hard-match for categorical and substance parameters or within the"
+                    "exact match for categorical and substance parameters or within the"
                     " given tolerance/interval for numerical discrete/continuous "
                     "parameters."
                 )
 
-        # Read in measurements and transform parameter values
+        # Check if all targets have values provided
+        for target in self.targets:
+            if data[target.name].isna().any():
+                raise NotImplementedError(
+                    f"The target {target.name} has missing values or NaN in the"
+                    f" provided dataframe. Missing target values are not currently"
+                    f" supported."
+                )
+
+        # Read in measurements and add to database
         # ToDo match indices to search space and remember indices
         self.batches_done += 1
         data["BatchNr"] = self.batches_done
@@ -132,26 +166,39 @@ class BayBE:
                 [self.measurements_exp_rep, data], axis=0
             ).reset_index(drop=True)
 
-        self.measurements_comp_rep_x = self.convert_rep_exp2comp(
-            self.measurements_exp_rep, do_fit=False
-        )
+        # Transform measurement space to computational representation
+        (
+            self.measurements_comp_rep_x,
+            self.measurements_comp_rep_y,
+        ) = self.transform_rep_exp2comp(self.measurements_exp_rep, do_fit=False)
 
-    def recommend(self, batch_quantity=5) -> pd.DataFrame:
+        # ToDo call strategy for training
+
+    def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
         Get the recommendation of the next batch
         """
 
-        # Get indices of recommended searchspace entries here
-        # Connect this part to the actual recommender strat
-        # so far these are just randomly selected
-        # strats should also have the capability to ignore some datapoints
-        # (look up do_not_recommend in metadata) or do not suggest repeated ones
-        # (lookup has_been_recommended in metadata)
-        inds = self.searchspace_exp_rep.sample(n=batch_quantity).index
+        # Filter searchspace before transferring to strategy
+        mask_todrop = self.searchspace_metadata["never_recommend"].copy()
+        if not self.config["Allow_repeated_recommendations"]:
+            mask_todrop |= self.searchspace_metadata["recommended"]
 
-        # Translate indices into labeled datapoints and update metadata
+        if mask_todrop.sum() >= len(self.searchspace_exp_rep):
+            raise AssertionError(
+                "With the current settings there are no more possible data points to"
+                " recommend. This can be either because all data points have been"
+                " measured at some point while not allowing repetitions or by all"
+                " data points being marked as 'never_recommend'"
+            )
+
+        # Get indices of recommended searchspace entries here
+        # ToDo call actual strategy object
+        inds = self.searchspace_exp_rep.loc[~mask_todrop].sample(n=batch_quantity).index
+
+        # Translate indices into labeled data points and update metadata
         rec = self.searchspace_exp_rep.loc[inds, :]
-        self.searchspace_metadata.loc[inds, "has_been_recommended"] = True
+        self.searchspace_metadata.loc[inds, "recommended"] = True
 
         for target in self.targets:
             rec[target.name] = "<Enter value>"
