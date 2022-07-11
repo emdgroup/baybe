@@ -79,12 +79,13 @@ class NumericalTarget:
         if self.mode == "Match":
             if self.bounds is not None and np.isfinite(self.bounds).all():
                 # ToDo implement match transform here
-                return data
-            raise TypeError(
-                f"Match mode is not supported for this target named {self.name} of "
-                f"type {self.type} since it has non-finite bounds or bounds are not"
-                f" defined. Bounds need to be a finite 2-touple."
-            )
+                raise TypeError(
+                    f"Match mode is not supported for this target named {self.name} of "
+                    f"type {self.type} since it has non-finite bounds or bounds are not"
+                    f" defined. Bounds need to be a finite 2-touple."
+                )
+
+            raise NotImplementedError("Match mode for targets is not implemented yet.")
 
         raise ValueError(
             f"The mode '{self.mode}' set for target {self.name} is not recognized. "

@@ -3,7 +3,8 @@ Functionality to deal wth different parameters
 """
 import logging
 from abc import ABC, abstractmethod
-from typing import List
+from copy import deepcopy
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -21,13 +22,20 @@ class GenericParameter(ABC):
     type, range, constraints and in-range checks
     """
 
-    def __init__(self, name: str = "Parameter"):
+    def __init__(self, name: str = "Parameter", values: Optional[list] = None):
         self.type = "GENERIC"
         self.name = name
+        self.values = [] if values is None else values
+        self.comp_cols = []
+        self.comp_values = None
         super().__init__()
 
     def __str__(self):
-        string = f"Generic parameter\n" f"   Name: '{self.name}'"
+        string = (
+            f"Generic parameter\n"
+            f"   Name:     '{self.name}'\n"
+            f"   Values:   {self.values}\n"
+        )
         return string
 
     @abstractmethod
@@ -48,15 +56,13 @@ class GenericParameter(ABC):
         :return: class object
         """
         param_name = dat.get("Name", "Unnamed Parameter")
-        return cls(name=param_name)
+        param_values = dat.get("Values", [])
+        return cls(name=param_name, values=param_values)
 
     @abstractmethod
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
-        Takes a pandas series in experimental representation and transforms it into the
-        computational representation
-        :param series: pandas series in experimental representation
-        :return: None (since this si abstract method of base class)
+        Function to transform data from the experimental to computational representation
         """
         return None
 
@@ -72,11 +78,11 @@ class Categorical(GenericParameter):
         values: list = None,
         encoding: str = "OHE",
     ):
-        super().__init__(name)
+        super().__init__(name=name, values=values)
 
         self.type = "CAT"
-        self.values = [] if values is None else values
         self.encoding = encoding
+        self.comp_cols = []
 
         if len(self.values) != len(np.unique(self.values)):
             raise ValueError(
@@ -108,14 +114,14 @@ class Categorical(GenericParameter):
 
         return cls(name=param_name, values=param_values, encoding=param_encoding)
 
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """bla"""
 
         if self.encoding == "OHE":
-            data = {}
+            transformed_data = {}
             for value in self.values:
                 coldata = []
-                for itm in series.values:
+                for itm in data.values:
                     if itm not in self.values:
                         raise ValueError(
                             f"Value {itm} is not in list of permitted values "
@@ -125,14 +131,19 @@ class Categorical(GenericParameter):
                         coldata.append(1)
                     else:
                         coldata.append(0)
-                    data[f"{self.name}_encoded_val_{value}"] = coldata
-            transformed = pd.DataFrame(data)
+
+                    colname = f"{self.name}_encoded_val_{value}"
+                    transformed_data[colname] = coldata
+                    if colname not in self.comp_cols:
+                        self.comp_cols.append(colname)
+
+            transformed = pd.DataFrame(transformed_data)
 
         elif self.encoding == "Integer":
             mapping = {val: k for k, val in enumerate(self.values)}
             coldata = []
 
-            for itm in series.values:
+            for itm in data.values:
                 if itm not in self.values:
                     raise ValueError(
                         f' "Value {itm} is not in list of permitted values'
@@ -140,12 +151,16 @@ class Categorical(GenericParameter):
                     )
                 coldata.append(mapping[itm])
 
-            transformed = pd.DataFrame(coldata, columns=[f"{self.name}_encoded"])
+            colname = f"{self.name}_encoded"
+            transformed = pd.DataFrame(coldata, columns=[colname])
+            if colname not in self.comp_cols:
+                self.comp_cols.append(colname)
         else:
             raise ValueError(
                 f"Parameter {self.name} has encoding {self.encoding} specified, "
                 f"but encoding must be one of {allowed_encodings}."
             )
+
         return transformed
 
 
@@ -160,14 +175,16 @@ class NumericDiscrete(GenericParameter):
         values: list = None,
         input_tolerance: float = 0.0,
     ):
-        super().__init__(name)
+        super().__init__(name=name, values=values)
 
         self.type = "NUM_DISCRETE"
+        self.comp_cols = []
+        self.comp_values = None
 
-        self.values = [] if values is None else values
         if len(self.values) < 2:
             raise AssertionError(
-                f"Numerical arameter {self.name} must have at least 2 " f"unqiue values"
+                f"Numerical parameter {self.name} must have at least 2 "
+                f"unqiue values"
             )
 
         # allowed experimental uncertainty when reading in measured values
@@ -217,15 +234,15 @@ class NumericDiscrete(GenericParameter):
             name=param_name, values=param_values, input_tolerance=param_tolerance
         )
 
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None):
-        """
-        Takes a pandas series in experimental representation and transforms it into the
-        computational representation
-        :param series: pandas series in experimental representation
-        :return: transformed: pandas dataframe with data in comp representation
-        """
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
+        """bla"""
 
-        return series
+        # Comp column is identical with the experimental columns
+        self.comp_cols = [self.name]
+        self.comp_values = data.values
+
+        # There is nothing to transform for this parameter type
+        return data
 
 
 class GenericSubstance(GenericParameter):
@@ -234,13 +251,16 @@ class GenericSubstance(GenericParameter):
     """
 
     def __init__(
-        self, name: str = "Unnamed Parameter", values: list = None, smiles: list = None
+        self,
+        name: str = "Unnamed Parameter",
+        substances: dict = None,
     ):
-        super().__init__(name=name)
+        super().__init__(name=name, values=list(substances.keys()))
 
         self.type = "GEN_SUBSTANCE"
-        self.values = [] if values is None else values
-        self.smiles = [] if smiles is None else smiles
+        self.substances = {} if substances is None else substances
+
+        raise NotImplementedError("This parameter type is not implemented yet.")
 
     def is_in_range(self, item: str):
         if item in self.values:
@@ -261,13 +281,14 @@ class Custom(GenericParameter):
         values: list = None,
         repesentation: pd.DataFrame = None,
     ):
-        super().__init__(name=name)
+        super().__init__(name=name, values=values)
 
         self.type = "CUSTOM"
-        self.values = [] if values is None else values
         self.representation = (
             pd.DataFrame([]) if repesentation is None else repesentation
         )
+
+        raise NotImplementedError("This parameter type is not implemented yet.")
 
     def is_in_range(self, item: str):
         if item in self.values:
@@ -287,10 +308,12 @@ class NumericContinuous(GenericParameter):
         lbound: float = None,
         ubound: float = None,
     ):
-        super().__init__(name=name)
+        super().__init__(name=name, values=[])
         self.type = "NUM_CONTINUOUS"
         self.lbound = -np.inf if lbound is None else lbound  # lower bound
         self.ubound = np.inf if ubound is None else ubound  # upper bound
+
+        raise NotImplementedError("This parameter type is not implemented yet.")
 
     def is_in_range(self, item: float):
         return self.lbound <= item <= self.ubound
@@ -340,4 +363,74 @@ def parameter_outer_prod_to_df(
     return ret
 
 
-# ToDo Implement scaled view
+def scaled_view(
+    data_fit: Union[pd.DataFrame, pd.Series],
+    data_transform: Union[pd.DataFrame, pd.Series],
+    parameters: Optional[List[GenericParameter]] = None,
+    scalers: Optional[dict] = None,
+):
+    """
+
+    Parameters
+    ----------
+    data_fit:
+        data on which the scalers are fit
+    data_transform:
+        data to be transformed
+    parameters:
+        list with baybe parameter instances
+    scalers:
+        dict with parameter types as keys and sklearn scaler instances as values
+
+    Returns
+    -------
+    transformed: transformed data
+
+    Examples
+    --------
+    scalers = {"NUM_DISCRETE": StandardScaler(), "CAT": None}
+    scaled = scaled_view(
+        data_fit = searchspace_comp_rep,
+        data_transform = measurements_comp_rep,
+        parameters = parameters,
+        scalers = scalers,
+    )
+    """
+    transformed = deepcopy(data_transform)
+    if parameters is None:
+        log.warning("No parameters were provided, not performing any scaling")
+        return transformed
+    if scalers is None:
+        scalers = {}
+
+    for param in parameters:
+        print(f"{param}")
+        if (param.comp_cols is None) or (len(param.comp_cols) < 1):
+            # Instead of enforcing this one could automatically detect columns based
+            # on the starting of the name.
+            raise AttributeError(
+                "You are trying to scale parameters that have never used the "
+                "transformation from experimental to computational representation. "
+                "This means the needed columns cannot be identified."
+            )
+
+        # If no scaling instructions provided skip scaling
+        if (param.type not in scalers) or (scalers.get(param.type) is None):
+            continue
+
+        scaler = scalers.get(param.type)
+        print(param.comp_cols)
+        if len(param.comp_cols) == 1:
+            scaler.fit(data_fit[param.comp_cols].values.reshape(-1, 1))
+
+            transformed[param.comp_cols] = scaler.transform(
+                data_transform[param.comp_cols].values.reshape(-1, 1)
+            )
+        else:
+            scaler.fit(data_fit[param.comp_cols].values)
+
+            transformed[param.comp_cols] = scaler.transform(
+                data_transform[param.comp_cols].values
+            )
+
+    return transformed

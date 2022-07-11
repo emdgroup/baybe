@@ -33,7 +33,7 @@ config = {
         {
             "Name": "Num_disc_1",
             "Type": "NUM_DISCRETE",
-            "Values": [1, 2, 8],
+            "Values": [1, 2, 3],
             "Tolerance": 0.3,
         },
         {
@@ -51,7 +51,7 @@ config = {
     },
 }
 
-# Define some values where the fake results should be good
+# Define some parameter values to define rows where the fake results should be good
 good_reference_values = [
     {"Parameter": "Categorical_2", "Value": "OK"},
     {"Parameter": "Categorical_1", "Value": 22},

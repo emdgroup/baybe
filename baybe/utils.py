@@ -54,11 +54,30 @@ def add_fake_results(
     -------
     Nothing since it operated directly on the data
     """
+    # ToDo Add support for multiple targets
+
     # Sanity checks for good_bad_ratio
     if good_intervals is None:
-        good_intervals = (66, 100)
+        if obj.targets[0].mode == "Max":
+            good_intervals = (66, 100)
+        elif obj.targets[0].mode == "Min":
+            good_intervals = (0, 33)
+        elif obj.targets[0].mode == "Match":
+            good_intervals = tuple(*obj.targets[0].bounds)
+        else:
+            raise ValueError("Unrecognized target mode when trying to add fake values.")
     if bad_intervals is None:
-        bad_intervals = (0, 33)
+        if obj.targets[0].mode == "Max":
+            bad_intervals = (0, 50)
+        elif obj.targets[0].mode == "Min":
+            bad_intervals = (50, 100)
+        elif obj.targets[0].mode == "Match":
+            bad_intervals = (
+                0.05 * obj.targets[0].bounds[0],
+                0.3 * obj.targets[0].bounds[0],
+            )
+        else:
+            raise ValueError("Unrecognized target mode when trying to add fake values.")
     if not isinstance(good_intervals, Tuple) or (len(good_intervals) != 2):
         raise TypeError("Parameter good_intervals must be a 2-tuple")
     if not isinstance(bad_intervals, Tuple) or (len(bad_intervals) != 2):
