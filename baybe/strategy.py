@@ -45,6 +45,13 @@ class RandomInitialStrategy(InitialStrategy):
         )
 
 
+# define allowed quick selections
+SURROGATE_MODELS = {"gp": GaussianProcessModel}
+ACQUISITION_FUNCTIONS = {"ei": ExpectedImprovement}
+INITIAL_STRATEGIES = {"random": RandomInitialStrategy}
+RECOMMENDERS = {"ranking": MarginalRankingRecommender}
+
+
 class Strategy:
     """Abstract base class for all DoE strategies."""
 
@@ -125,44 +132,64 @@ class Strategy:
     def _select_surrogate_model_cls(
         surrogate_model_cls: Union[str, Type[SurrogateModel]]
     ) -> Type[SurrogateModel]:
-        if (not isinstance(surrogate_model_cls, str)) and (
-            issubclass(surrogate_model_cls, SurrogateModel)
-        ):
-            return surrogate_model_cls
-        if surrogate_model_cls.lower() == "gp":
-            return GaussianProcessModel
-        raise ValueError("Undefined surrogate model class.")
+        try:
+            if (not isinstance(surrogate_model_cls, str)) and (
+                issubclass(surrogate_model_cls, SurrogateModel)
+            ):
+                return surrogate_model_cls
+            return SURROGATE_MODELS[surrogate_model_cls]
+        except Exception as exc:
+            raise ValueError(
+                f"Undefined surrogate model '{surrogate_model_cls}'. "
+                f"Must be one of {set(SURROGATE_MODELS.keys())} "
+                f"or a proper 'SurrogateModel' subclass."
+            ) from exc
 
     @staticmethod
     def _select_acquisition_function_cls(
         acquisition_function_cls: Union[str, Type[AcquisitionFunction]]
     ) -> Type[AcquisitionFunction]:
-        if (not isinstance(acquisition_function_cls, str)) and (
-            issubclass(acquisition_function_cls, AcquisitionFunction)
-        ):
-            return acquisition_function_cls
-        if acquisition_function_cls.lower() == "ei":
-            return ExpectedImprovement
-        raise ValueError("Undefined acquisition function.")
+        try:
+            if (not isinstance(acquisition_function_cls, str)) and (
+                issubclass(acquisition_function_cls, AcquisitionFunction)
+            ):
+                return acquisition_function_cls
+            return ACQUISITION_FUNCTIONS[acquisition_function_cls]
+        except Exception as exc:
+            raise ValueError(
+                f"Undefined acquisition function '{acquisition_function_cls}'. "
+                f"Must be one of {set(ACQUISITION_FUNCTIONS.keys())} "
+                f"or a proper 'AcquisitionFunction' subclass."
+            ) from exc
 
     @staticmethod
     def _select_initial_strategy(
         initial_strategy: Union[str, InitialStrategy]
     ) -> InitialStrategy:
-        if isinstance(initial_strategy, InitialStrategy):
-            return initial_strategy
-        if initial_strategy.lower() == "random":
-            return RandomInitialStrategy()
-        raise ValueError("Undefined initial strategy.")
+        try:
+            if isinstance(initial_strategy, InitialStrategy):
+                return initial_strategy
+            return INITIAL_STRATEGIES[initial_strategy]()
+        except Exception as exc:
+            raise ValueError(
+                f"Undefined initial strategy '{initial_strategy}'. "
+                f"Must be one of {set(INITIAL_STRATEGIES.keys())} "
+                f"or a proper 'InitialStrategy' object."
+            ) from exc
 
     @staticmethod
     def _select_recommender_cls(
         recommender_cls: Union[str, Type[Recommender]]
     ) -> Type[Recommender]:
-        if (not isinstance(recommender_cls, str)) and (
-            issubclass(recommender_cls, Recommender)
-        ):
-            return recommender_cls
-        if recommender_cls.lower() == "ranking":
-            return MarginalRankingRecommender
-        raise ValueError("Undefined recommender.")
+        try:
+            if (not isinstance(recommender_cls, str)) and (
+                issubclass(recommender_cls, Recommender)
+            ):
+                return recommender_cls
+            return RECOMMENDERS[recommender_cls]
+        except Exception as exc:
+            raise ValueError(
+                f"Undefined recommender '{recommender_cls}'. "
+                f"Must be one of {set(RECOMMENDERS.keys())} "
+                f"or a proper 'Recommender' subclass."
+            ) from exc
