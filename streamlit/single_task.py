@@ -83,7 +83,7 @@ for mc in trange(n_monte_carlo, desc="Monte Carlo runs"):
         candidates = features.drop(sequence)
 
         # train the model
-        strategy.set_training_data(train_x, train_y)
+        strategy.fit(train_x, train_y)
 
         # get the next experiment recommendation from the model
         new_loc = strategy.recommend(candidates)

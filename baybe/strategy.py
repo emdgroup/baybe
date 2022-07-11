@@ -68,10 +68,10 @@ class Strategy:
         self._best_f: Optional[float] = None
         self._use_initial_strategy: bool = False
 
-    def set_training_data(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
+    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
         """
-        Sets the training data for the DoE strategy and trains a fresh surrogate
-        model instance. If available, existing training data will be overwritten.
+        Uses the given data to train a fresh surrogate model instance for the DoE
+        strategy. If available, existing training data will be overwritten.
 
         Parameters
         ----------
