@@ -7,3 +7,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Azure pipeline for code formatting and linting.
+- Single-task Gaussian process strategy.
+- Streamlit dashboard for comparing single-task strategies.
