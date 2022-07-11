@@ -2,12 +2,13 @@
 Core functionality of BayBE. Main point of interaction via Python
 """
 import logging
-from typing import Tuple
+from typing import List, Tuple
 
 import pandas as pd
 
-from baybe.config import parse_config
-from baybe.parameters import parameter_outer_prod_to_df
+import baybe.config as baybe_config
+import baybe.parameters as baybe_parameters
+import baybe.targets as baybe_targets
 
 log = logging.getLogger(__name__)
 
@@ -21,13 +22,15 @@ class BayBE:
         self.batches_done = 0  # current iteration/batch number
 
         # Parse everything from config
-        parameters, targets = parse_config(config)
-        self.parameters = parameters
-        self.targets = targets
-        self.config = config
+        parameters, targets = baybe_config.parse_config(config)
+        self.parameters: List[baybe_parameters.GenericParameter] = parameters
+        self.targets: List[baybe_targets.NumericalTarget] = targets
+        self.config: dict = config
 
         # Create the experimental dataframe
-        self.searchspace_exp_rep = parameter_outer_prod_to_df(self.parameters)
+        self.searchspace_exp_rep = baybe_parameters.parameter_outer_prod_to_df(
+            self.parameters
+        )
         self.searchspace_metadata = pd.DataFrame(
             {
                 "was_recommended": [False] * len(self.searchspace_exp_rep),
@@ -84,14 +87,18 @@ class BayBE:
         return comp_rep_x, comp_rep_y
 
     def __str__(self):
-        """Print a simple summary of the BayBE object"""
-        # ToDo add options info
+        """Print a simple summary of the BayBE object. Some info provided here might
+        not be relevant for production-ready code"""
 
         string = "\nTarget and Parameters:\n"
         for target in self.targets:
             string += f"{target}\n"
         for param in self.parameters:
             string += f"{param}\n"
+
+        string += "Options:\n"
+        for option in baybe_config.allowed_config_options:
+            string += f"   {option}: {self.config[option]}\n"
 
         string += "\n\nSearch Space Exp Representation:\n"
         string += f"{self.searchspace_exp_rep}"
@@ -108,10 +115,102 @@ class BayBE:
 
         return string
 
+    def _match_measurement_with_searchspace_indices(
+        self, data: pd.DataFrame
+    ) -> pd.Index:
+        """
+        Matches rows in a data frame (measurements to be added to the internal data)
+        to the indices in the searchspace. This is useful to have a validity check as
+        well as automatically match measurements to entries int he searchspace to
+        detect which ones have to be measured. For categorical parameters there needs
+        to be an exact match with any of the allowed values. For numerical parameters
+        the user can decide via a BayBE flag whether values falling outside of the
+        tolerance should be accepted. In that case no match with any searchspace entry
+        will be detected.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data that should be checked for matching entries in the searchspace
+
+        Returns
+        -------
+        inds_matched: pd.Index
+            The index of the matching searchspace entries
+        """
+        inds_matched = []
+
+        # Iterating over all input rows
+        for ind, row in data.iterrows():
+            # Check if row is valid input
+            test = True
+            for param in self.parameters:
+                if "NUM" in param.type:
+                    if self.config["Num_measurements_must_be_within_tolerance"]:
+                        test &= param.is_in_range(row[param.name])
+                else:
+                    test &= param.is_in_range(row[param.name])
+
+                if not test:
+                    raise ValueError(
+                        f"Input data on row with the index {row.name} has invalid "
+                        f"values in parameter {param.name}. For categorical parameters "
+                        f"values need to exactly match a valid choice defined in your "
+                        f"config. For numerical parameters a match is accepted only if "
+                        f"the input value is within the specified tolerance/range. Set "
+                        f"the flag 'Num_measurements_must_be_within_tolerance' to "
+                        f"False to turn this behavior off."
+                    )
+
+            # Find to what indices in the searchspace this row corresponds to
+            # Cat columns look for exact match. Num columns look to match the entry
+            # with min deviation.
+            # ToDo Discuss the different scenarios that are possible
+            cat_cols = [
+                param.name for param in self.parameters if "NUM" not in param.type
+            ]
+            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
+
+            match = (self.searchspace_exp_rep.loc[:, cat_cols] == row[cat_cols]).all(
+                axis=1, skipna=False
+            )
+
+            for numparam in list(num_cols):
+                match &= (
+                    self.searchspace_exp_rep.loc[match, numparam] - row[numparam]
+                ).abs() == (
+                    self.searchspace_exp_rep.loc[match, numparam] - row[numparam]
+                ).abs().min()
+
+            # We expect exactly one match, if thats not the case print a warning
+            inds_found = self.searchspace_exp_rep.index[match].to_list()
+            if len(inds_found) == 0:
+                log.warning(
+                    "Input row with index %s could not be matched to the "
+                    "search space. This could indicate that something went "
+                    "wrong.",
+                    ind,
+                )
+            elif len(inds_found) > 1:
+                log.warning(
+                    "Input row with index %s corresponds to multiple matches with "
+                    "the searcspace. This indicates that something could be wrong. "
+                    "Matching only first occurrence.",
+                    ind,
+                )
+                inds_matched.append(inds_found[0])
+            else:
+                inds_matched += inds_found
+
+        return pd.Index(inds_matched)
+
     def add_results(self, data: pd.DataFrame) -> None:
         """
-        Adds results from a dataframe to the internal database and retrains strategy.
-        Each addition of data is considered a new batch.
+        Adds results from a dataframe to the internal database and update strategy.
+        Each addition of data is considered a new batch. Added results are checked for
+        validity. Categorical values need to have an exact match. For numerical values
+        there is a flag so that values are only allowed if they are within the
+        specified tolerance or not.
 
         Parameters
         ----------
@@ -124,27 +223,10 @@ class BayBE:
         Nothing
         """
 
-        # Check whether all provided data points have acceptable parameter values
-        for _, row in data.iterrows():
-            unacceptable_parameters = [
-                param.name
-                for param in self.parameters
-                if not param.is_in_range(row[param.name])
-            ]
-            if len(unacceptable_parameters) > 0:
-                log.error(
-                    "Parameter values for data point with index %s are not in the "
-                    "allowed values for parameters %s",
-                    row.name,
-                    unacceptable_parameters,
-                )
-                raise ValueError(
-                    "When adding measurement values it is required that all input "
-                    "values for the parameters are allowed values. This means "
-                    "exact match for categorical and substance parameters or within the"
-                    " given tolerance/interval for numerical discrete/continuous "
-                    "parameters."
-                )
+        # Check whether all provided data points have acceptable parameter values and
+        # change the was_measured metadata
+        inds_matched = self._match_measurement_with_searchspace_indices(data)
+        self.searchspace_metadata.loc[inds_matched, "was_measured"] = True
 
         # Check if all targets have values provided
         for target in self.targets:
@@ -156,7 +238,6 @@ class BayBE:
                 )
 
         # Read in measurements and add to database
-        # ToDo match indices to search space and remember indices
         self.batches_done += 1
         data["BatchNr"] = self.batches_done
         if self.measurements_exp_rep is None:
@@ -172,7 +253,7 @@ class BayBE:
             self.measurements_comp_rep_y,
         ) = self.transform_rep_exp2comp(self.measurements_exp_rep)
 
-        # ToDo call strategy for training
+        # ToDo call strategy for retraining
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
@@ -186,12 +267,16 @@ class BayBE:
         if not self.config["Allow_recommending_already_measured"]:
             mask_todrop |= self.searchspace_metadata["was_measured"]
 
-        if mask_todrop.sum() >= len(self.searchspace_exp_rep):
+        if (mask_todrop.sum() >= len(self.searchspace_exp_rep)) or (
+            len(self.searchspace_exp_rep.loc[~mask_todrop]) < batch_quantity
+        ):
             raise AssertionError(
-                "With the current settings there are no more possible data points to"
+                f"With the current settings there are not at at least "
+                f"batch_quantity={batch_quantity} possible data points to"
                 " recommend. This can be either because all data points have been"
-                " measured at some point while not allowing repetitions or by all"
-                " data points being marked as 'dont_recommend'"
+                " measured at some point (while 'Allow_repeated_recommendations' or "
+                "'Allow_recommending_already_measured' being False) or because all"
+                " data points are marked as 'dont_recommend'"
             )
 
         # Get indices of recommended searchspace entries here
@@ -214,8 +299,10 @@ class BayBE:
         take care of simply storing the BayBE object eg via dill. This could
         potentially create problems when code versions are different
         """
+        # ToDo Implement
 
     def save(self) -> None:
         """
         Store the current state of the DOE on disk
         """
+        # ToDo Implement

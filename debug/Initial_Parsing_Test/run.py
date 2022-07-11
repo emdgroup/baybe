@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
 config = {
-    "Experiment_Name": "Initial Core Test",
+    "Project_Name": "Initial Core Test",
     "Parameters": [
         {
             "Name": "Categorical_1",
@@ -31,7 +31,7 @@ config = {
     ],
     "Objective": {
         "Mode": "SINGLE",
-        "Objectives": [{"Name": "Target_1", "Type": "NUM", "Bounds": None}],
+        "Targets": [{"Name": "Target_1", "Type": "NUM", "Bounds": None}],
     },
 }
 

@@ -1,5 +1,7 @@
-"""Test for initial simple input, recommendation and adding fake results.
-Fake target measurements are simulated as well as noise added to the parameters.
+"""Test for initial simple input, recommendation and adding fake results. Fake target
+measurements are simulated for each round. Noise is added every second round.
+From the three recommendations only one is actually added to test the matching and
+metadata. Target objective is minimize to test computational transformation.
 """
 import logging
 
@@ -12,8 +14,10 @@ log = logging.getLogger(__name__)
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
 config = {
-    "Project_Name": "Input Output Debug Test",
-    "Allow_repeated_recommendations": False,
+    "Project_Name": "Input Output Debug",
+    "Allow_repeated_recommendations": True,
+    "Allow_recommending_already_measured": True,
+    "Num_measurements_must_be_within_tolerance": True,
     "Parameters": [
         {
             "Name": "Categorical_1",
@@ -32,10 +36,18 @@ config = {
             "Values": [1, 2, 8],
             "Tolerance": 0.3,
         },
+        {
+            "Name": "Num_disc_2",
+            "Type": "NUM_DISCRETE",
+            "Values": [-1, -3, -6],
+            "Tolerance": 0.3,
+        },
     ],
     "Objective": {
         "Mode": "SINGLE",
-        "Targets": [{"Name": "Target_1", "Bounds": None, "Mode": "Min"}],
+        "Targets": [
+            {"Name": "Target_1", "Bounds": None, "Mode": "Min"},
+        ],
     },
 }
 
@@ -46,39 +58,42 @@ good_reference_values = [
 ]
 
 # Create BayBE object, add fake results and print what happens to internal data
-obj = BayBE(config=config)
-print(obj)
+baybe_obj = BayBE(config=config)
+print(baybe_obj)
 
 N_ITERATIONS = 4
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
-    rec = obj.recommend(batch_quantity=3)
+    rec = baybe_obj.recommend(batch_quantity=3)
     print("\n\n### Recommended dataframe:\n", rec)
 
-    add_fake_results(rec, obj, good_reference_values=good_reference_values)
+    add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
     if kIter % 2:
         print(kIter)
-        add_noise(rec, obj, noise_level=0.1)
+        add_noise(rec, baybe_obj, noise_level=0.1)
     print("\n\n### Recommended dataframe with fake results and eventual noise:\n", rec)
 
     # uncomment below to test error throw for disallowed value
-    # obj.add_results(rec.replace(1, 11111))
-    obj.add_results(rec)
+    # baybe_obj.add_results(rec.replace(1, 11111))
+    baybe_obj.add_results(rec.sample(n=1))
     print(
         "\n\n### Internal measurement dataframe after data ingestion:\n",
-        obj.measurements_exp_rep,
+        baybe_obj.measurements_exp_rep,
     )
 
     print(
         "\n\n### Internal measurement dataframe computational representation X:\n",
-        obj.measurements_comp_rep_x,
+        baybe_obj.measurements_comp_rep_x,
     )
 
     print(
         "\n\n### Internal measurement dataframe computational representation Y:\n",
-        obj.measurements_comp_rep_y,
+        baybe_obj.measurements_comp_rep_y,
     )
 
-# Show metadata
-print("\n\n### Search Space Metadata after all iterations\n", obj.searchspace_metadata)
+    # Show metadata
+    print(
+        "\n\n### Search Space Metadata\n",
+        baybe_obj.searchspace_metadata,
+    )

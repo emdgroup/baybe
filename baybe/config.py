@@ -11,11 +11,12 @@ from baybe import parameters, targets
 log = logging.getLogger(__name__)
 
 # dictionary for storing the allowed options and their default values
-_allowed_config_options = {
+allowed_config_options = {
     "Project_Name": "Unnamed Project",
     "Random_Seed": 1337,
     "Allow_repeated_recommendations": True,
-    "Allow_recommending_already_measured": False,
+    "Allow_recommending_already_measured": True,
+    "Num_measurements_must_be_within_tolerance": True,
 }
 
 
@@ -64,20 +65,20 @@ def parse_config(config: dict) -> Tuple[list, list]:
         )
 
     # Options
-    for option, value in _allowed_config_options.items():
+    for option, value in allowed_config_options.items():
         config.setdefault(option, value)
 
     # Check for unknown options
     unrecognized_options = [
         key
         for key in config.keys()
-        if key not in (list(_allowed_config_options) + ["Parameters", "Objective"])
+        if key not in (list(allowed_config_options) + ["Parameters", "Objective"])
     ]
     if len(unrecognized_options) > 0:
         raise AssertionError(
             f"The provided config option(s) '{unrecognized_options}'"
             f" is/are not in the allowed "
-            f"options {list(_allowed_config_options)}"
+            f"options {list(allowed_config_options)}"
         )
 
     return params, targs

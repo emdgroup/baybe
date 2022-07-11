@@ -1,13 +1,15 @@
 """
 Collection of small utilities
 """
-
+import logging
 from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
 
 from baybe.core import BayBE
+
+log = logging.getLogger(__name__)
 
 
 def is_valid_smiles(smiles: str) -> bool:
@@ -62,9 +64,12 @@ def add_fake_results(
     if not isinstance(bad_intervals, Tuple) or (len(bad_intervals) != 2):
         raise TypeError("Parameter bad_intervals must be a 2-tuple")
 
-    # Sanity check for good_values
+    # Sanity check for good_values. Assure we only consider columns that are in the data
     if good_reference_values is None:
         good_reference_values = []
+    good_reference_values = [
+        pair for pair in good_reference_values if pair["Parameter"] in data.columns
+    ]
 
     size = len(data)
     for target in obj.targets:
