@@ -30,7 +30,7 @@ class Recommender(ABC):
         self.acquisition_function = acquisition_function
 
     @abstractmethod
-    def recommend(self, candidates: pd.DataFrame, batch_size: int = 1) -> pd.Index:
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """
         Recommends the next experiments to be conducted.
 
@@ -38,7 +38,7 @@ class Recommender(ABC):
         ----------
         candidates : pd.DataFrame
             The features of all candidate experiments that could be conducted next.
-        batch_size : int
+        batch_quantity : int
             The number of experiments to be conducted in parallel.
 
         Returns
@@ -55,7 +55,7 @@ class MarginalRankingRecommender(Recommender):
     fashion.
     """
 
-    def recommend(self, candidates: pd.DataFrame, batch_size: int = 1) -> pd.Index:
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """See base class."""
         # prepare the candidates in t-batches
         candidates_tensor = to_tensor(candidates).unsqueeze(1)
@@ -65,5 +65,5 @@ class MarginalRankingRecommender(Recommender):
         ilocs = torch.argsort(acqf_values)
 
         # return the dataframe indices of the top ranked candidates
-        locs = candidates.index[ilocs[:batch_size].numpy()]
+        locs = candidates.index[ilocs[:batch_quantity].numpy()]
         return locs

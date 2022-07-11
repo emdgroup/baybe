@@ -18,7 +18,7 @@ class InitialStrategy(ABC):
     """Abstract base class for all initial design strategies."""
 
     @abstractmethod
-    def recommend(self, candidates: pd.DataFrame, batch_size: int = 1) -> pd.Index:
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """
         Selects a first subset of points from the given candidates.
 
@@ -26,7 +26,7 @@ class InitialStrategy(ABC):
         ----------
         candidates : pd.DataFrame
             The features of all candidate experiments that could be conducted first.
-        batch_size : int (default = 1)
+        batch_quantity : int (default = 1)
             The number of experiments to be conducted in parallel.
 
         Returns
@@ -38,9 +38,11 @@ class InitialStrategy(ABC):
 class RandomInitialStrategy(InitialStrategy):
     """An initial strategy that selects the candidates at random."""
 
-    def recommend(self, candidates: pd.DataFrame, batch_size: int = 1) -> pd.Index:
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """Uniform random selection of candidates."""
-        return pd.Index(np.random.choice(candidates.index, batch_size, replace=False))
+        return pd.Index(
+            np.random.choice(candidates.index, batch_quantity, replace=False)
+        )
 
 
 class Strategy:
@@ -84,7 +86,7 @@ class Strategy:
             self.surrogate_model.fit(train_x, train_y)
             self._best_f = train_y.min()
 
-    def recommend(self, candidates: pd.DataFrame, batch_size: int = 1) -> pd.Index:
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """
         Recommends the next experiments to be conducted.
 
@@ -92,21 +94,21 @@ class Strategy:
         ----------
         candidates : pd.DataFrame
             The features of all candidate experiments that could be conducted next.
-        batch_size : int (default = 1)
+        batch_quantity : int (default = 1)
             The number of experiments to be conducted in parallel.
 
         Returns
         -------
         The DataFrame indices of the specific experiments selected by the DoE strategy.
         """
-        if batch_size > 1:
+        if batch_quantity > 1:
             raise NotImplementedError(
                 "Batch sizes larger than 1 are not yet supported."
             )
 
         # if no training data exists, apply the strategy for initial recommendations
         if self._use_initial_strategy:
-            return self.initial_strategy.recommend(candidates, batch_size)
+            return self.initial_strategy.recommend(candidates, batch_quantity)
 
         # construct the acquisition function
         # TODO: the current approach only works for gpytorch GP surrogate models
@@ -115,7 +117,7 @@ class Strategy:
 
         # select the next experiments using the given recommender approach
         recommender = self.recommender(acqf)
-        idxs = recommender.recommend(candidates, batch_size)
+        idxs = recommender.recommend(candidates, batch_quantity)
 
         return idxs
 
