@@ -14,11 +14,17 @@ log = logging.getLogger(__name__)
 
 def is_valid_smiles(smiles: str) -> bool:
     """
-    Test if a SMILEs string is valid. Currently NOT IMPLEMENTED
-    :param smiles: SMILES string to test
-    :return: True if the SMILES is valid according to RDKit
+    Test if a SMILEs string is valid according to RDKit.
+
+    Parameters
+    ----------
+    smiles: str
+        SMILES string
+    Returns
+    -------
+        bool, True if smiles is valid, False else
     """
-    return "C" in smiles  # temporary until implemented
+    raise NotImplementedError("This function is not implemented yet")
 
 
 def add_fake_results(
@@ -37,9 +43,9 @@ def add_fake_results(
     Parameters
     ----------
     data : pandas dataframe
-           output of the recommend function of a BayBE object
+           Output of the recommend function of a BayBE object
     obj : BayBE class instance
-          the baybe object which provides configuration, targets, etc.
+          The baybe object which provides configuration, targets, etc.
     good_reference_values : list
                   A list of dictionaries which define parameters and respective values
                   which identify what will be considered good values
@@ -93,8 +99,6 @@ def add_fake_results(
     size = len(data)
     for target in obj.targets:
         # add bad values
-        # ToDo consider target direction (min, max, match) here too.
-        #  Will be done after multi-target mode has been implemented
         data[target.name] = np.random.randint(bad_intervals[0], bad_intervals[1], size)
 
         # add good values
@@ -114,11 +118,8 @@ def add_fake_results(
                 mask = data[pair["Parameter"]] == pair["Value"]
                 masks.append(mask)
 
-            # ToDo consider target direction (min, max, match) here too.
-            #  Will be done after multi-target mode has been implemented
             # Good values will be added where the parameters of the
-            # corresponding datapoints
-
+            # corresponding datapoints match the ones defined in good_reference_values
             for k, mask in enumerate(masks):
                 if k == 0:
                     final_mask = mask
@@ -155,7 +156,7 @@ def add_noise(
 
     Returns
     -------
-
+        Nothing
     """
     for param in obj.parameters:
         if "NUM" in param.type:

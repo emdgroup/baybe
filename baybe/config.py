@@ -10,7 +10,7 @@ from baybe import parameters, targets
 
 log = logging.getLogger(__name__)
 
-# dictionary for storing the allowed options and their default values
+# Allowed options and their default values
 allowed_config_options = {
     "Project_Name": "Unnamed Project",
     "Random_Seed": 1337,
@@ -33,8 +33,8 @@ def parse_config(config: dict) -> Tuple[list, list]:
 
     Returns
     -------
-    2-Tuple with lists for parsed parameters and targets. The config parameter can also
-    be altered because it is assured that all flags and options are set to default
+    2-Tuple with lists for parsed parameters and targets. The config parameter could
+    also be altered because it is assured that all flags and options are set to default
     values
     """
 
@@ -59,6 +59,12 @@ def parse_config(config: dict) -> Tuple[list, list]:
 
         target_dict = targs_dict[0]
         targs = [targets.parse_single_target(target_dict)]
+    elif mode == "MULTI_DESIRABILITY":
+        raise NotImplementedError("This objective mode is not implemented yet")
+    elif mode == "MULTI_PARETO":
+        raise NotImplementedError("This objective mode is not implemented yet")
+    elif mode == "MULTI_TASK":
+        raise NotImplementedError("This objective mode is not implemented yet")
     else:
         raise ValueError(
             f"Objective mode is {mode}, but must be one of {targets.allowed_modes}"

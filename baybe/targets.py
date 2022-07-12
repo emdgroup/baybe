@@ -9,6 +9,7 @@ import pandas as pd
 
 allowed_types = ["NUM"]
 allowed_modes = ["SINGLE"]
+# allowed_modes = ["SINGLE", "MULTI_DESIRABILITY", "MULTI_PARETO", "MULTI_TASK"]
 
 log = logging.getLogger(__name__)
 
@@ -42,8 +43,14 @@ class NumericalTarget:
     def from_dict(cls, dat: dict):
         """
         Creates a target of this type from a dictionary
-        :param dat: parameter dictionary
-        :return: class object
+
+        Parameters
+        ----------
+        dat: dict
+            Contains the info for the target
+        Returns
+        -------
+            Class instance
         """
         targ_name = dat.get("Name", "Unnamed Target")
         targ_mode = dat.get("Mode", "Max")
@@ -53,7 +60,7 @@ class NumericalTarget:
 
     def transform(self, data: pd.DataFrame):
         """
-        Transform data tot he computational representation. The transformation depends
+        Transform data to the computational representation. The transformation depends
         on the target mode, e.g. minimization, maximization, matching, multi-target etc
 
         Parameters
@@ -96,8 +103,15 @@ class NumericalTarget:
 def parse_single_target(target_dict: dict = None) -> NumericalTarget:
     """
     Parses a dictionary into a target object in single target mode
-    :param target_dict: dictionary containing the target info
-    :return: target class object
+
+    Parameters
+    ----------
+    target_dict: dict
+        Contains info for the target
+
+    Returns
+    -------
+        Target class instance
     """
     if target_dict is None:
         target_dict = {}

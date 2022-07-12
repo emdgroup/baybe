@@ -60,7 +60,8 @@ class BayBE:
         Parameters
         ----------
         data: pd.DataFrame
-
+            Data to be transformed. Must contain parameter columns. If it also contains
+            target columns these are transformed separately
         Returns
         -------
         2-tuple. First part is the X part (representing the parameters) and the second
@@ -122,7 +123,7 @@ class BayBE:
         Matches rows in a data frame (measurements to be added to the internal data)
         to the indices in the searchspace. This is useful to have a validity check as
         well as automatically match measurements to entries int he searchspace to
-        detect which ones have to be measured. For categorical parameters there needs
+        detect which ones have been measured. For categorical parameters there needs
         to be an exact match with any of the allowed values. For numerical parameters
         the user can decide via a BayBE flag whether values falling outside of the
         tolerance should be accepted. In that case no match with any searchspace entry
@@ -177,9 +178,9 @@ class BayBE:
 
             for numparam in list(num_cols):
                 match &= (
-                    self.searchspace_exp_rep.loc[match, numparam] - row[numparam]
+                    self.searchspace_exp_rep.loc[:, numparam] - row[numparam]
                 ).abs() == (
-                    self.searchspace_exp_rep.loc[match, numparam] - row[numparam]
+                    self.searchspace_exp_rep.loc[:, numparam] - row[numparam]
                 ).abs().min()
 
             # We expect exactly one match, if thats not the case print a warning
@@ -300,9 +301,11 @@ class BayBE:
         potentially create problems when code versions are different
         """
         # ToDo Implement
+        raise NotImplementedError("Loading a BayBE object is not implemented yet")
 
     def save(self) -> None:
         """
         Store the current state of the DOE on disk
         """
         # ToDo Implement
+        raise NotImplementedError("Saving a BayBE object is not implemented yet")

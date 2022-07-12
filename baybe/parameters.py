@@ -11,7 +11,7 @@ import pandas as pd
 
 allowed_types = ["CAT", "NUM_DISCRETE"]
 # allowed_types = ["NUM_DISCRETE", "NUM_CONTINUOUS", "CAT", "GEN_SUBSTANCE", "CUSTOM"]
-allowed_encodings = ["OHE", "Integer"]
+
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 class GenericParameter(ABC):
     """
     Abstract base class for different Parameters. Will handle storing info about the
-    type, range, constraints and in-range checks
+    type, range, constraints and in-range checks, transformations etc
     """
 
     def __init__(self, name: str = "Parameter", values: Optional[list] = None):
@@ -41,9 +41,7 @@ class GenericParameter(ABC):
     @abstractmethod
     def is_in_range(self, item: object):
         """
-        Tells whether an item is within the current parameter range. Its true by default
-        since the parameter is assumed unbound, but overridden by derived parameter
-        classes
+        Tells whether an item is within the current parameter range.
         """
         return True
 
@@ -52,8 +50,15 @@ class GenericParameter(ABC):
     def from_dict(cls, dat: dict):
         """
         Creates a parameter of this type from a dictionary
-        :param dat: parameter dictionary
-        :return: class object
+
+        Parameters
+        ----------
+        dat: dict
+            Dictionary with info describing the parameter
+
+        Returns
+        -------
+            Class instance
         """
         param_name = dat.get("Name", "Unnamed Parameter")
         param_values = dat.get("Values", [])
@@ -63,6 +68,11 @@ class GenericParameter(ABC):
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
         Function to transform data from the experimental to computational representation
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Data to be transformed
         """
         return None
 
@@ -81,6 +91,8 @@ class Categorical(GenericParameter):
         super().__init__(name=name, values=values)
 
         self.type = "CAT"
+        self.allowed_encodings = ["OHE", "Integer"]
+
         self.encoding = encoding
         self.comp_cols = []
 
@@ -101,6 +113,9 @@ class Categorical(GenericParameter):
         return string
 
     def is_in_range(self, item: str):
+        """
+        See base class
+        """
         if item in self.values:
             return True
 
@@ -108,6 +123,9 @@ class Categorical(GenericParameter):
 
     @classmethod
     def from_dict(cls, dat):
+        """
+        See base class
+        """
         param_name = dat.get("Name", "Unnamed Parameter")
         param_values = dat.get("Values", [])
         param_encoding = dat.get("Encoding", "OHE")
@@ -115,7 +133,9 @@ class Categorical(GenericParameter):
         return cls(name=param_name, values=param_values, encoding=param_encoding)
 
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
-        """bla"""
+        """
+        See base class
+        """
 
         if self.encoding == "OHE":
             transformed_data = {}
@@ -158,7 +178,7 @@ class Categorical(GenericParameter):
         else:
             raise ValueError(
                 f"Parameter {self.name} has encoding {self.encoding} specified, "
-                f"but encoding must be one of {allowed_encodings}."
+                f"but encoding must be one of {self.allowed_encodings}."
             )
 
         return transformed
@@ -206,6 +226,9 @@ class NumericDiscrete(GenericParameter):
         self.input_tolerance = input_tolerance
 
     def is_in_range(self, item: float):
+        """
+        See base class
+        """
         differences_acceptable = [
             np.abs(bla - item) <= self.input_tolerance for bla in self.values
         ]
@@ -226,6 +249,9 @@ class NumericDiscrete(GenericParameter):
 
     @classmethod
     def from_dict(cls, dat):
+        """
+        See base class
+        """
         param_name = dat.get("Name", "Unnamed Parameter")
         param_values = dat.get("Values", [])
         param_tolerance = dat.get("Tolerance", 0.0)
@@ -235,7 +261,9 @@ class NumericDiscrete(GenericParameter):
         )
 
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
-        """bla"""
+        """
+        See base class
+        """
 
         # Comp column is identical with the experimental columns
         self.comp_cols = [self.name]
@@ -258,6 +286,8 @@ class GenericSubstance(GenericParameter):
         super().__init__(name=name, values=list(substances.keys()))
 
         self.type = "GEN_SUBSTANCE"
+        self.allowed_encodings = ["Mordred", "RDKit", "Morgan_FP"]
+
         self.substances = {} if substances is None else substances
 
         raise NotImplementedError("This parameter type is not implemented yet.")
@@ -320,7 +350,17 @@ class NumericContinuous(GenericParameter):
 
 
 def parse_parameter(param_dict: dict = None) -> GenericParameter:
-    """Parses a dictionary into a parameter class object"""
+    """
+    Parses a dictionary into a parameter class object
+
+    Parameters
+    ----------
+    param_dict: dict
+
+    Returns
+    -------
+        Instance of a parameter class
+    """
     if param_dict is None:
         param_dict = {}
 
@@ -347,7 +387,7 @@ def parameter_outer_prod_to_df(
 
     Parameters
     ----------
-    parameters: iteratable
+    parameters: list
         List of parameter objects
     Returns
     -------
@@ -370,6 +410,8 @@ def scaled_view(
     scalers: Optional[dict] = None,
 ):
     """
+    Comfort function to scale data given different scaling methods for different
+    parameter types.
 
     Parameters
     ----------
@@ -389,7 +431,7 @@ def scaled_view(
     Examples
     --------
     scalers = {"NUM_DISCRETE": StandardScaler(), "CAT": None}
-    scaled = scaled_view(
+    scaled_data = scaled_view(
         data_fit = searchspace_comp_rep,
         data_transform = measurements_comp_rep,
         parameters = parameters,
@@ -404,7 +446,6 @@ def scaled_view(
         scalers = {}
 
     for param in parameters:
-        print(f"{param}")
         if (param.comp_cols is None) or (len(param.comp_cols) < 1):
             # Instead of enforcing this one could automatically detect columns based
             # on the starting of the name.
@@ -419,7 +460,6 @@ def scaled_view(
             continue
 
         scaler = scalers.get(param.type)
-        print(param.comp_cols)
         if len(param.comp_cols) == 1:
             scaler.fit(data_fit[param.comp_cols].values.reshape(-1, 1))
 
