@@ -34,7 +34,7 @@ stages:
           cacheHitVar: CONDA_CACHE_RESTORED
 
       - script: |
-          conda env create --quiet --file environment.yml
+          conda env create --file environment.yml
         displayName: Create conda environment (if not restored from cache)
         condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
 
