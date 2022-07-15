@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Code skeleton with a central object to access functionality.
+- Basic parser for categorical parameters with one-hot encoding.
+- Basic parser for discrete numerical parameters.
 - Azure pipeline for code formatting and linting.
 - Single-task Gaussian process strategy.
 - Streamlit dashboard for comparing single-task strategies.
+- Input functionality to read measurements including automatic matching to searchspace.
+- Integer encoding for categorical parameters.
+- Parser for numerical discrete parameters.
+- Single numerical target with Min and Max mode.
+- Recommendation functionality.
+- Parameter scaling depending on parameter types and user-chosen scalers.
+- Noise and fake-measurement utilities.
+- Internal metadata storing various info about datapoints in the searchspace.
+- BayBE options controlling recommendation and data addition behavior.

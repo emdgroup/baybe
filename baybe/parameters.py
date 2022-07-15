@@ -1,41 +1,47 @@
-# pylint: disable=R0903,W0235,E0401
 """
 Functionality to deal wth different parameters
 """
 import logging
 from abc import ABC, abstractmethod
+from copy import deepcopy
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 
 allowed_types = ["CAT", "NUM_DISCRETE"]
 # allowed_types = ["NUM_DISCRETE", "NUM_CONTINUOUS", "CAT", "GEN_SUBSTANCE", "CUSTOM"]
+
 
 log = logging.getLogger(__name__)
 
 
 class GenericParameter(ABC):
     """
-    Abstract base class for different Parameters. Will handle storing info about the
-    type, range, constraints and in-range checks
+    Abstract base class for different parameters. Will handle storing info about the
+    type, range, constraints and in-range checks, transformations etc
     """
 
-    def __init__(self, name: str = "Parameter"):
+    def __init__(self, name: str = "Unnamed Parameter", values: Optional[list] = None):
         self.type = "GENERIC"
         self.name = name
+        self.values = [] if values is None else values
+        self.comp_cols = []
+        self.comp_values = None
         super().__init__()
 
     def __str__(self):
-        string = f"Generic parameter\n" f"   Name: '{self.name}'"
+        string = (
+            f"Generic parameter\n"
+            f"   Name:     '{self.name}'\n"
+            f"   Values:   {self.values}\n"
+        )
         return string
 
     @abstractmethod
     def is_in_range(self, item: object):
         """
-        Tells whether an item is within the current parameter range. Its true by default
-        since the parameter is assumed unbound, but overridden by derived parameter
-        classes
+        Tells whether an item is within the current parameter range.
         """
         return True
 
@@ -44,19 +50,29 @@ class GenericParameter(ABC):
     def from_dict(cls, dat: dict):
         """
         Creates a parameter of this type from a dictionary
-        :param dat: parameter dictionary
-        :return: class object
+
+        Parameters
+        ----------
+        dat: dict
+            Dictionary with info describing the parameter
+
+        Returns
+        -------
+            Class instance
         """
-        param_name = dat.get("Name", "Unnamed Parameter")
-        return cls(name=param_name)
+        param_name = dat.get("name", "Unnamed Parameter")
+        param_values = dat.get("values", [])
+        return cls(name=param_name, values=param_values)
 
     @abstractmethod
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None, do_fit: bool = False):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
-        Takes a pandas series in experimental representation and transforms it into the
-        computational representation
-        :param series: pandas series in experimental representation
-        :return: None (since this si abstract method of base class)
+        Function to transform data from the experimental to computational representation
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Data to be transformed
         """
         return None
 
@@ -66,29 +82,40 @@ class Categorical(GenericParameter):
     Parameter class for categorical parameters
     """
 
-    def __init__(self, name: str = "Unnamed Parameter", values: list = None):
-        super().__init__(name)
+    def __init__(
+        self,
+        name: str = "Unnamed Parameter",
+        values: list = None,
+        encoding: str = "OHE",
+    ):
+        super().__init__(name=name, values=values)
 
         self.type = "CAT"
-        self.values = [] if values is None else values
+        self.allowed_encodings = ["OHE", "Integer"]
+
+        self.encoding = encoding
+        self.comp_cols = []
 
         if len(self.values) != len(np.unique(self.values)):
-            log.warning(
-                "Values for parameter %s are not unique. This will cause duplicates in "
-                "the possible experiments.",
-                self.name,
+            raise ValueError(
+                f"Values for parameter {self.name} are not unique. This would cause "
+                f"duplicates in the possible experiments."
             )
 
     def __str__(self):
         string = (
             f"Categorical parameter\n"
-            f"   Name:   '{self.name}'\n"
-            f"   Values: {self.values}"
+            f"   Name:     '{self.name}'\n"
+            f"   Values:   {self.values}\n"
+            f"   Encoding: {self.encoding}"
         )
 
         return string
 
     def is_in_range(self, item: str):
+        """
+        See base class
+        """
         if item in self.values:
             return True
 
@@ -96,39 +123,65 @@ class Categorical(GenericParameter):
 
     @classmethod
     def from_dict(cls, dat):
-        param_name = dat.get("Name", "Unnamed Parameter")
-        param_values = dat.get("Values", [])
-
-        return cls(name=param_name, values=param_values)
-
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None, do_fit: bool = False):
         """
-        Takes a pandas series in experimental representation and transforms it into the
-        computational representation
-        :param series: pandas series in experimental representation
-        :return: transformed: pandas dataframe
+        See base class
         """
-        data = {}
-        for value in self.values:
-            row = []
-            for itm in series.values:
-                if itm not in self.values:
-                    log.error(
-                        "Value %s is not in list of permitted values %s for parameter"
-                        " %s",
-                        itm,
-                        self.values,
-                        self.name,
-                    )
-                    row.append(np.nan)
-                else:
+        param_name = dat.get("name", "Unnamed Parameter")
+        param_values = dat.get("values", [])
+        param_encoding = dat.get("encoding", "OHE")
+
+        return cls(name=param_name, values=param_values, encoding=param_encoding)
+
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
+        """
+        See base class
+        """
+        # IMPROVE neater implementation eg via vectorized mapping
+
+        if self.encoding == "OHE":
+            transformed_data = {}
+            for value in self.values:
+                coldata = []
+                for itm in data.values:
+                    if itm not in self.values:
+                        raise ValueError(
+                            f"Value {itm} is not in list of permitted values "
+                            f"{self.values} for parameter {self.name}"
+                        )
                     if itm == value:
-                        row.append(1)
+                        coldata.append(1)
                     else:
-                        row.append(0)
-                data[f"{self.name}_val_{value}"] = row
+                        coldata.append(0)
 
-        transformed = pd.DataFrame(data)
+                    colname = f"{self.name}_encoded_val_{value}"
+                    transformed_data[colname] = coldata
+                    if colname not in self.comp_cols:
+                        self.comp_cols.append(colname)
+
+            transformed = pd.DataFrame(transformed_data)
+
+        elif self.encoding == "Integer":
+            mapping = {val: k for k, val in enumerate(self.values)}
+            coldata = []
+
+            for itm in data.values:
+                if itm not in self.values:
+                    raise ValueError(
+                        f' "Value {itm} is not in list of permitted values'
+                        f" {self.values} for parameter {self.name}"
+                    )
+                coldata.append(mapping[itm])
+
+            colname = f"{self.name}_encoded"
+            transformed = pd.DataFrame(coldata, columns=[colname])
+            if colname not in self.comp_cols:
+                self.comp_cols.append(colname)
+        else:
+            raise ValueError(
+                f"Parameter {self.name} has encoding {self.encoding} specified, "
+                f"but encoding must be one of {self.allowed_encodings}."
+            )
+
         return transformed
 
 
@@ -138,19 +191,46 @@ class NumericDiscrete(GenericParameter):
     """
 
     def __init__(
-        self, name: str = "Unnamed Parameter", values: list = None, input_tolerance=0.0
+        self,
+        name: str = "Unnamed Parameter",
+        values: list = None,
+        input_tolerance: float = 0.0,
     ):
-        super().__init__(name)
+        super().__init__(name=name, values=values)
 
         self.type = "NUM_DISCRETE"
-        self.values = [] if values is None else values
+        self.comp_cols = []
+        self.comp_values = None
+
+        if len(self.values) < 2:
+            raise AssertionError(
+                f"Numerical parameter {self.name} must have at least 2 "
+                f"unqiue values"
+            )
 
         # allowed experimental uncertainty when reading in measured values
+        # if the requested tolerance is larger than half the minimum distance between
+        # parameter values a warning is printed because that could cause ambiguity when
+        # inputting datapoints later
+        max_tol = (
+            np.min(np.abs([values[k] - values[k - 1] for k in range(1, len(values))]))
+            / 2.0
+        )
+        if input_tolerance >= max_tol:
+            log.warning(
+                "Parameter %s is initialized with tolerance %s, but due to the "
+                "values %s a maximum tolerance of %s is suggested to avoid ambiguity.",
+                self.name,
+                input_tolerance,
+                self.values,
+                max_tol,
+            )
         self.input_tolerance = input_tolerance
-        self.scaler_is_fitted = False
-        self.scaler = StandardScaler()
 
     def is_in_range(self, item: float):
+        """
+        See base class
+        """
         differences_acceptable = [
             np.abs(bla - item) <= self.input_tolerance for bla in self.values
         ]
@@ -171,42 +251,28 @@ class NumericDiscrete(GenericParameter):
 
     @classmethod
     def from_dict(cls, dat):
-        param_name = dat.get("Name", "Unnamed Parameter")
-        param_values = dat.get("Values", [])
-        param_tolerance = dat.get("Tolerance", 0.0)
+        """
+        See base class
+        """
+        param_name = dat.get("name", "Unnamed Parameter")
+        param_values = dat.get("values", [])
+        param_tolerance = dat.get("tolerance", 0.0)
 
         return cls(
             name=param_name, values=param_values, input_tolerance=param_tolerance
         )
 
-    def transform_rep_exp2comp(self, series: pd.DataFrame = None, do_fit: bool = False):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
-        Takes a pandas series in experimental representation and transforms it into the
-        computational representation
-        :param series: pandas series in experimental representation
-               do_fit: boolean that is true if the scaler needs to be fitted first
-        :return: transformed: pandas dataframe with data in comp representation
+        See base class
         """
-        if do_fit:
-            if self.scaler_is_fitted:
-                log.error(
-                    "Scaler for parameter %s is already fitted, refitting might result "
-                    "in unwanted behavior",
-                    self.name,
-                )
-            self.scaler.fit(series)
-            self.scaler_is_fitted = True
 
-        if not self.scaler_is_fitted:
-            log.error(
-                "Scaler for parameter %s is not fitted but needs to be before "
-                "transforming. Check if do_fit=True on first use",
-                self.name,
-            )
+        # Comp column is identical with the experimental columns
+        self.comp_cols = [self.name]
+        self.comp_values = data.values
 
-        transformed = pd.DataFrame(self.scaler.transform(series))
-        transformed.columns = series.columns
-        return transformed
+        # There is nothing to transform for this parameter type
+        return data
 
 
 class GenericSubstance(GenericParameter):
@@ -215,13 +281,18 @@ class GenericSubstance(GenericParameter):
     """
 
     def __init__(
-        self, name: str = "Unnamed Parameter", values: list = None, smiles: list = None
+        self,
+        name: str = "Unnamed Parameter",
+        substances: dict = None,
     ):
-        super().__init__(name=name)
+        super().__init__(name=name, values=list(substances.keys()))
 
         self.type = "GEN_SUBSTANCE"
-        self.values = [] if values is None else values
-        self.smiles = [] if smiles is None else smiles
+        self.allowed_encodings = ["Mordred", "RDKit", "Morgan_FP"]
+
+        self.substances = {} if substances is None else substances
+
+        raise NotImplementedError("This parameter type is not implemented yet.")
 
     def is_in_range(self, item: str):
         if item in self.values:
@@ -242,13 +313,14 @@ class Custom(GenericParameter):
         values: list = None,
         repesentation: pd.DataFrame = None,
     ):
-        super().__init__(name=name)
+        super().__init__(name=name, values=values)
 
         self.type = "CUSTOM"
-        self.values = [] if values is None else values
         self.representation = (
             pd.DataFrame([]) if repesentation is None else repesentation
         )
+
+        raise NotImplementedError("This parameter type is not implemented yet.")
 
     def is_in_range(self, item: str):
         if item in self.values:
@@ -268,46 +340,139 @@ class NumericContinuous(GenericParameter):
         lbound: float = None,
         ubound: float = None,
     ):
-        super().__init__(name=name)
+        super().__init__(name=name, values=[])
         self.type = "NUM_CONTINUOUS"
         self.lbound = -np.inf if lbound is None else lbound  # lower bound
         self.ubound = np.inf if ubound is None else ubound  # upper bound
+
+        raise NotImplementedError("This parameter type is not implemented yet.")
 
     def is_in_range(self, item: float):
         return self.lbound <= item <= self.ubound
 
 
 def parse_parameter(param_dict: dict = None) -> GenericParameter:
-    """Parses a dictionary into a parameter class object"""
+    """
+    Parses a dictionary into a parameter class object
+
+    Parameters
+    ----------
+    param_dict: dict
+
+    Returns
+    -------
+        Instance of a parameter class
+    """
     if param_dict is None:
         param_dict = {}
 
-    param_type = param_dict.get("Type", None)
+    param_type = param_dict.get("type", None)
     if param_type == "CAT":
         param = Categorical.from_dict(param_dict)
     elif param_type == "NUM_DISCRETE":
         param = NumericDiscrete.from_dict(param_dict)
     else:
-        log.error(
-            "Parameter type %s is not in one of the allowed choices: %s",
-            param_type,
-            allowed_types,
+        raise ValueError(
+            f"Parameter type {param_type} is not in one of the allowed "
+            f"choices: {allowed_types}",
         )
-        param = None
 
     return param
 
 
-def parameter_outer_prod_to_df(parameters: list = None):
+def parameter_outer_prod_to_df(
+    parameters: List[GenericParameter],
+) -> pd.DataFrame:
     """
-    Creates all possible combinations fo parameters (ignores non-discrete parameters).
-    :param parameters: List of Parameter objects
-    :return: pandas dataframe corresponding to the outer product of discrete parameter
-    values
+    Creates all possible combinations for parameters and their values (ignores
+    non-discrete parameters).
+
+    Parameters
+    ----------
+    parameters: list
+        List of parameter objects
+    Returns
+    -------
+    ret: pd.DataFrame
+        The created data frame with the combinations
     """
     lst_of_values = [p.values for p in parameters if p.type in allowed_types]
     lst_of_names = [p.name for p in parameters if p.type in allowed_types]
 
     index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
+    ret = pd.DataFrame(index=index).reset_index()
 
-    return pd.DataFrame(index=index).reset_index()
+    return ret
+
+
+def scaled_view(
+    data_fit: Union[pd.DataFrame, pd.Series],
+    data_transform: Union[pd.DataFrame, pd.Series],
+    parameters: Optional[List[GenericParameter]] = None,
+    scalers: Optional[dict] = None,
+):
+    """
+    Comfort function to scale data given different scaling methods for different
+    parameter types.
+
+    Parameters
+    ----------
+    data_fit:
+        data on which the scalers are fit
+    data_transform:
+        data to be transformed
+    parameters:
+        list with baybe parameter instances
+    scalers:
+        dict with parameter types as keys and sklearn scaler instances as values
+
+    Returns
+    -------
+    transformed: transformed data
+
+    Examples
+    --------
+    scalers = {"NUM_DISCRETE": StandardScaler(), "CAT": None}
+    scaled_data = scaled_view(
+        data_fit = searchspace_comp_rep,
+        data_transform = measurements_comp_rep,
+        parameters = parameters,
+        scalers = scalers,
+    )
+    """
+    transformed = deepcopy(data_transform)
+    if parameters is None:
+        log.warning("No parameters were provided, not performing any scaling")
+        return transformed
+    if scalers is None:
+        scalers = {}
+
+    for param in parameters:
+        if (param.comp_cols is None) or (len(param.comp_cols) < 1):
+            # Instead of enforcing this one could automatically detect columns based
+            # on the starting of the name.
+            raise AttributeError(
+                "You are trying to scale parameters that have never used the "
+                "transformation from experimental to computational representation. "
+                "This means the needed columns cannot be identified."
+            )
+
+        # If no scaling instructions provided skip scaling
+        if (param.type not in scalers) or (scalers.get(param.type) is None):
+            continue
+
+        scaler = scalers.get(param.type)
+        if len(param.comp_cols) == 1:
+            scaler.fit(data_fit[param.comp_cols].values.reshape(-1, 1))
+
+            transformed[param.comp_cols] = scaler.transform(
+                data_transform[param.comp_cols].values.reshape(-1, 1)
+            )
+        else:
+            scaler.fit(data_fit[param.comp_cols].values)
+
+            transformed[param.comp_cols] = scaler.transform(
+                data_transform[param.comp_cols].values
+            )
+
+    return transformed
