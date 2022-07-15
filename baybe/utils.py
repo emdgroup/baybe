@@ -2,7 +2,8 @@
 Collection of small utilities
 """
 import logging
-from typing import Dict, List, Tuple
+from functools import partial
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -30,9 +31,9 @@ def is_valid_smiles(smiles: str) -> bool:
 def add_fake_results(
     data: pd.DataFrame,
     obj: BayBE,
-    good_reference_values: List = None,
-    good_intervals: Tuple = None,
-    bad_intervals: Tuple = None,
+    good_reference_values: Optional[Dict[str, List]] = None,
+    good_intervals: Optional[Tuple] = None,
+    bad_intervals: Optional[Tuple] = None,
 ) -> None:
     """
     Add fake results to a dataframe which was the result of the BayBE recommendation
@@ -46,9 +47,10 @@ def add_fake_results(
            Output of the recommend function of a BayBE object
     obj : BayBE class instance
           The baybe object which provides configuration, targets, etc.
-    good_reference_values : list
-                  A list of dictionaries which define parameters and respective values
-                  which identify what will be considered good values
+    good_reference_values : dictionary
+                  A dictionaries which defines parameters and respective values
+                  which identify what will be considered good values.
+                  Example {'parameter1': [1,4,42]}
     good_intervals : 2-tuple
                      Good entries will get a random value in the range defined by this
                      tuple
@@ -91,10 +93,7 @@ def add_fake_results(
 
     # Sanity check for good_values. Assure we only consider columns that are in the data
     if good_reference_values is None:
-        good_reference_values = []
-    good_reference_values = [
-        pair for pair in good_reference_values if pair["parameter"] in data.columns
-    ]
+        good_reference_values = {}
 
     size = len(data)
     for target in obj.targets:
@@ -105,17 +104,20 @@ def add_fake_results(
         masks = []
 
         if len(good_reference_values) > 0:
-            for pair in good_reference_values:
-                if (
-                    not isinstance(pair, Dict)
-                    or ("parameter" not in pair.keys())
-                    or ("value" not in pair.keys())
-                ):
-                    raise TypeError(
-                        "Entries in parameter good_values (which is a list) must be"
-                        " dictionaries that provides the keys parameter and value"
+            for param, vals in good_reference_values.items():
+                if param not in data.columns:
+                    raise ValueError(
+                        f"When adding fake results you specified good "
+                        f"values for the parameter '{param}' but this "
+                        f"parameter is not in the dataframe."
                     )
-                mask = data[pair["parameter"]] == pair["value"]
+                if not isinstance(vals, list):
+                    raise TypeError(
+                        f"Entries in parameter good_reference_values "
+                        f"(which is a dictionary) must be lists, but you "
+                        f"provided {vals}"
+                    )
+                mask = data[param].apply(partial(lambda x, v: x in v, v=vals))
                 masks.append(mask)
 
             # Good values will be added where the parameters of the

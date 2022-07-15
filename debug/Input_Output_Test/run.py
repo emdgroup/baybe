@@ -48,10 +48,7 @@ config = {
 }
 
 # Define some parameter values to define rows where the fake results should be good
-good_reference_values = [
-    {"parameter": "Categorical_2", "value": "OK"},
-    {"parameter": "Categorical_1", "value": 22},
-]
+good_reference_values = {"Categorical_2": ["OK"], "Categorical_1": [22]}
 
 # Create BayBE object, add fake results and print what happens to internal data
 baybe_obj = BayBE(config=config)
