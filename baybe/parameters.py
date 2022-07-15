@@ -212,7 +212,8 @@ class NumericDiscrete(GenericParameter):
         # parameter values a warning is printed because that could cause ambiguity when
         # inputting datapoints later
         max_tol = (
-            np.min([values[k] - values[k - 1] for k in range(1, len(values))]) / 2.0
+            np.min(np.abs([values[k] - values[k - 1] for k in range(1, len(values))]))
+            / 2.0
         )
         if input_tolerance >= max_tol:
             log.warning(
