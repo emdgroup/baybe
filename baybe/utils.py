@@ -93,7 +93,7 @@ def add_fake_results(
     if good_reference_values is None:
         good_reference_values = []
     good_reference_values = [
-        pair for pair in good_reference_values if pair["Parameter"] in data.columns
+        pair for pair in good_reference_values if pair["parameter"] in data.columns
     ]
 
     size = len(data)
@@ -108,14 +108,14 @@ def add_fake_results(
             for pair in good_reference_values:
                 if (
                     not isinstance(pair, Dict)
-                    or ("Parameter" not in pair.keys())
-                    or ("Value" not in pair.keys())
+                    or ("parameter" not in pair.keys())
+                    or ("value" not in pair.keys())
                 ):
                     raise TypeError(
                         "Entries in parameter good_values (which is a list) must be"
-                        " dictionaries that provides the keys Parameter and Value"
+                        " dictionaries that provides the keys parameter and value"
                     )
-                mask = data[pair["Parameter"]] == pair["Value"]
+                mask = data[pair["parameter"]] == pair["value"]
                 masks.append(mask)
 
             # Good values will be added where the parameters of the

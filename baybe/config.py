@@ -12,11 +12,11 @@ log = logging.getLogger(__name__)
 
 # Allowed options and their default values
 allowed_config_options = {
-    "Project_Name": "Unnamed Project",
-    "Random_Seed": 1337,
-    "Allow_repeated_recommendations": True,
-    "Allow_recommending_already_measured": True,
-    "Num_measurements_must_be_within_tolerance": True,
+    "project_name": "Unnamed Project",
+    "random_seed": 1337,
+    "allow_repeated_recommendations": True,
+    "allow_recommending_already_measured": True,
+    "numerical_measurements_must_be_within_tolerance": True,
 }
 
 
@@ -38,19 +38,19 @@ def parse_config(config: dict) -> Tuple[list, list]:
     values
     """
 
-    if ("Objective" not in config.keys()) or ("Parameters" not in config.keys()):
-        raise AssertionError("Your config must define 'Parameters' and 'Objective'")
+    if ("objective" not in config.keys()) or ("parameters" not in config.keys()):
+        raise AssertionError("Your config must define 'parameters' and 'objective'")
 
     # Parameters
     params = []
-    for param in config["Parameters"]:
+    for param in config["parameters"]:
         params.append(parameters.parse_parameter(param))
 
     # Objective
-    objective = config["Objective"]
-    mode = objective.get("Mode", None)
+    objective = config["objective"]
+    mode = objective.get("mode", None)
     if mode == "SINGLE":
-        targs_dict = objective.get("Targets", [])
+        targs_dict = objective.get("targets", [])
         if len(targs_dict) != 1:
             raise ValueError(
                 f"Config with objective mode SINGLE must specify exactly one target, "
@@ -78,7 +78,7 @@ def parse_config(config: dict) -> Tuple[list, list]:
     unrecognized_options = [
         key
         for key in config.keys()
-        if key not in (list(allowed_config_options) + ["Parameters", "Objective"])
+        if key not in (list(allowed_config_options) + ["parameters", "objective"])
     ]
     if len(unrecognized_options) > 0:
         raise AssertionError(

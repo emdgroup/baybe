@@ -10,47 +10,47 @@ from baybe.utils import add_fake_results, add_noise
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
 config = {
-    "Project_Name": "Input Output Debug",
-    "Allow_repeated_recommendations": True,
-    "Allow_recommending_already_measured": True,
-    "Num_measurements_must_be_within_tolerance": True,
-    "Parameters": [
+    "project_name": "Input Output Debug",
+    "allow_repeated_recommendations": True,
+    "allow_recommending_already_measured": True,
+    "numerical_measurements_must_be_within_tolerance": True,
+    "parameters": [
         {
-            "Name": "Categorical_1",
-            "Type": "CAT",
-            "Values": [22, 33],
+            "name": "Categorical_1",
+            "type": "CAT",
+            "values": [22, 33],
         },
         {
-            "Name": "Categorical_2",
-            "Type": "CAT",
-            "Values": ["bad", "OK", "good"],
-            "Encoding": "Integer",
+            "name": "Categorical_2",
+            "type": "CAT",
+            "values": ["bad", "OK", "good"],
+            "encoding": "Integer",
         },
         {
-            "Name": "Num_disc_1",
-            "Type": "NUM_DISCRETE",
-            "Values": [1, 2, 3],
-            "Tolerance": 0.3,
+            "name": "Num_disc_1",
+            "type": "NUM_DISCRETE",
+            "values": [1, 2, 3],
+            "tolerance": 0.3,
         },
         {
-            "Name": "Num_disc_2",
-            "Type": "NUM_DISCRETE",
-            "Values": [-1, -3, -6],
-            "Tolerance": 0.3,
+            "name": "Num_disc_2",
+            "type": "NUM_DISCRETE",
+            "values": [-1, -3, -6],
+            "tolerance": 0.3,
         },
     ],
-    "Objective": {
-        "Mode": "SINGLE",
-        "Targets": [
-            {"Name": "Target_1", "Bounds": None, "Mode": "Min"},
+    "objective": {
+        "mode": "SINGLE",
+        "targets": [
+            {"name": "Target_1", "bounds": None, "mode": "Min"},
         ],
     },
 }
 
 # Define some parameter values to define rows where the fake results should be good
 good_reference_values = [
-    {"Parameter": "Categorical_2", "Value": "OK"},
-    {"Parameter": "Categorical_1", "Value": 22},
+    {"parameter": "Categorical_2", "value": "OK"},
+    {"parameter": "Categorical_1", "value": 22},
 ]
 
 # Create BayBE object, add fake results and print what happens to internal data

@@ -52,9 +52,9 @@ class NumericalTarget:
         -------
             Class instance
         """
-        targ_name = dat.get("Name", "Unnamed Target")
-        targ_mode = dat.get("Mode", "Max")
-        targ_bounds = dat.get("Bounds", None)
+        targ_name = dat.get("name", "Unnamed Target")
+        targ_mode = dat.get("mode", "Max")
+        targ_bounds = dat.get("bounds", None)
 
         return cls(name=targ_name, mode=targ_mode, bounds=targ_bounds)
 
@@ -116,7 +116,7 @@ def parse_single_target(target_dict: dict = None) -> NumericalTarget:
     if target_dict is None:
         target_dict = {}
 
-    target_type = target_dict.get("Type", "NUM")
+    target_type = target_dict.get("type", "NUM")
     if target_type == "NUM":
         target = NumericalTarget.from_dict(target_dict)
     else:

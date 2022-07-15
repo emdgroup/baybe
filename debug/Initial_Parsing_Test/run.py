@@ -6,29 +6,29 @@ from baybe.core import BayBE
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
 config = {
-    "Project_Name": "Initial Core Test",
-    "Parameters": [
+    "project_name": "Initial Core Test",
+    "parameters": [
         {
-            "Name": "Categorical_1",
-            "Type": "CAT",
-            "Values": [22, 33],
+            "name": "Categorical_1",
+            "type": "CAT",
+            "values": [22, 33],
         },
         {
-            "Name": "Categorical_2",
-            "Type": "CAT",
-            "Values": ["bad", "OK", "good"],
-            "Encoding": "Integer",
+            "name": "Categorical_2",
+            "type": "CAT",
+            "values": ["bad", "OK", "good"],
+            "encoding": "Integer",
         },
         {
-            "Name": "Num_disc_1",
-            "Type": "NUM_DISCRETE",
-            "Values": [1, 2, 8],
-            "Tolerance": 0.3,
+            "name": "Num_disc_1",
+            "type": "NUM_DISCRETE",
+            "values": [1, 2, 8],
+            "tolerance": 0.3,
         },
     ],
-    "Objective": {
-        "Mode": "SINGLE",
-        "Targets": [{"Name": "Target_1", "Type": "NUM", "Bounds": None}],
+    "objective": {
+        "mode": "SINGLE",
+        "targets": [{"name": "Target_1", "type": "NUM", "bounds": None}],
     },
 }
 

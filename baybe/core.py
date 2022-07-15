@@ -149,7 +149,7 @@ class BayBE:
             test = True
             for param in self.parameters:
                 if "NUM" in param.type:
-                    if self.config["Num_measurements_must_be_within_tolerance"]:
+                    if self.config["numerical_measurements_must_be_within_tolerance"]:
                         test &= param.is_in_range(row[param.name])
                 else:
                     test &= param.is_in_range(row[param.name])
@@ -161,8 +161,8 @@ class BayBE:
                         f"values need to exactly match a valid choice defined in your "
                         f"config. For numerical parameters a match is accepted only if "
                         f"the input value is within the specified tolerance/range. Set "
-                        f"the flag 'Num_measurements_must_be_within_tolerance' to "
-                        f"False to turn this behavior off."
+                        f"the flag 'numerical_measurements_must_be_within_tolerance' "
+                        f"to False to turn this behavior off."
                     )
 
             # Find to what indices in the searchspace this row corresponds to
@@ -265,9 +265,9 @@ class BayBE:
 
         # Filter searchspace before transferring to strategy
         mask_todrop = self.searchspace_metadata["dont_recommend"].copy()
-        if not self.config["Allow_repeated_recommendations"]:
+        if not self.config["allow_repeated_recommendations"]:
             mask_todrop |= self.searchspace_metadata["was_recommended"]
-        if not self.config["Allow_recommending_already_measured"]:
+        if not self.config["allow_recommending_already_measured"]:
             mask_todrop |= self.searchspace_metadata["was_measured"]
 
         if (mask_todrop.sum() >= len(self.searchspace_exp_rep)) or (
@@ -277,8 +277,8 @@ class BayBE:
                 f"With the current settings there are not at at least "
                 f"batch_quantity={batch_quantity} possible data points to"
                 " recommend. This can be either because all data points have been"
-                " measured at some point (while 'Allow_repeated_recommendations' or "
-                "'Allow_recommending_already_measured' being False) or because all"
+                " measured at some point (while 'allow_repeated_recommendations' or "
+                "'allow_recommending_already_measured' being False) or because all"
                 " data points are marked as 'dont_recommend'"
             )
 

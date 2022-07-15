@@ -18,11 +18,11 @@ log = logging.getLogger(__name__)
 
 class GenericParameter(ABC):
     """
-    Abstract base class for different Parameters. Will handle storing info about the
+    Abstract base class for different parameters. Will handle storing info about the
     type, range, constraints and in-range checks, transformations etc
     """
 
-    def __init__(self, name: str = "Parameter", values: Optional[list] = None):
+    def __init__(self, name: str = "Unnamed Parameter", values: Optional[list] = None):
         self.type = "GENERIC"
         self.name = name
         self.values = [] if values is None else values
@@ -60,8 +60,8 @@ class GenericParameter(ABC):
         -------
             Class instance
         """
-        param_name = dat.get("Name", "Unnamed Parameter")
-        param_values = dat.get("Values", [])
+        param_name = dat.get("name", "Unnamed Parameter")
+        param_values = dat.get("values", [])
         return cls(name=param_name, values=param_values)
 
     @abstractmethod
@@ -126,9 +126,9 @@ class Categorical(GenericParameter):
         """
         See base class
         """
-        param_name = dat.get("Name", "Unnamed Parameter")
-        param_values = dat.get("Values", [])
-        param_encoding = dat.get("Encoding", "OHE")
+        param_name = dat.get("name", "Unnamed Parameter")
+        param_values = dat.get("values", [])
+        param_encoding = dat.get("encoding", "OHE")
 
         return cls(name=param_name, values=param_values, encoding=param_encoding)
 
@@ -254,9 +254,9 @@ class NumericDiscrete(GenericParameter):
         """
         See base class
         """
-        param_name = dat.get("Name", "Unnamed Parameter")
-        param_values = dat.get("Values", [])
-        param_tolerance = dat.get("Tolerance", 0.0)
+        param_name = dat.get("name", "Unnamed Parameter")
+        param_values = dat.get("values", [])
+        param_tolerance = dat.get("tolerance", 0.0)
 
         return cls(
             name=param_name, values=param_values, input_tolerance=param_tolerance
@@ -366,7 +366,7 @@ def parse_parameter(param_dict: dict = None) -> GenericParameter:
     if param_dict is None:
         param_dict = {}
 
-    param_type = param_dict.get("Type", None)
+    param_type = param_dict.get("type", None)
     if param_type == "CAT":
         param = Categorical.from_dict(param_dict)
     elif param_type == "NUM_DISCRETE":
