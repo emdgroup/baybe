@@ -1,10 +1,7 @@
 """Test for initial simple parameter parsing"""
-import logging
 
 from baybe.core import BayBE
 
-logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger(__name__)
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter

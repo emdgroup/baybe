@@ -3,13 +3,9 @@ measurements are simulated for each round. Noise is added every second round.
 From the three recommendations only one is actually added to test the matching and
 metadata. Target objective is minimize to test computational transformation.
 """
-import logging
 
 from baybe.core import BayBE
 from baybe.utils import add_fake_results, add_noise
-
-logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger(__name__)
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
