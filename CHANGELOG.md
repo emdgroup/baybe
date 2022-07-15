@@ -6,11 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Code skeleton with a central objecct to access capabilities.
+- Basic parser for categorical parameters with one-hot encoding.
+- Basic parser for discrete numerical parameters.
 - Azure pipeline for code formatting and linting.
 - Single-task Gaussian process strategy.
 - Streamlit dashboard for comparing single-task strategies.
 - Input functionality to read measurements including automatic matching to searchspace.
-- Categorical parameters with either one-hot or integer encoding.
+- Integer encoding for categorical parameters.
 - Numerical discrete parameters.
 - Single numerical target with Min and Max mode.
 - Recommendation functionality.
