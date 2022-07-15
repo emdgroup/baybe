@@ -33,9 +33,9 @@ class BayBE:
         )
         self.searchspace_metadata = pd.DataFrame(
             {
-                "was_recommended": [False] * len(self.searchspace_exp_rep),
-                "was_measured": [False] * len(self.searchspace_exp_rep),
-                "dont_recommend": [False] * len(self.searchspace_exp_rep),
+                "was_recommended": False,
+                "was_measured": False,
+                "dont_recommend": False,
             },
             index=self.searchspace_exp_rep.index,
         )
