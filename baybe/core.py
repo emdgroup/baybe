@@ -139,6 +139,8 @@ class BayBE:
         inds_matched: pd.Index
             The index of the matching searchspace entries
         """
+        # IMPROVE neater implementation eg with fuzzy join
+
         inds_matched = []
 
         # Iterating over all input rows
@@ -166,7 +168,7 @@ class BayBE:
             # Find to what indices in the searchspace this row corresponds to
             # Cat columns look for exact match. Num columns look to match the entry
             # with min deviation.
-            # ToDo Discuss the different scenarios that are possible
+            # TODO Discuss the different scenarios that are possible
             cat_cols = [
                 param.name for param in self.parameters if "NUM" not in param.type
             ]
@@ -254,7 +256,7 @@ class BayBE:
             self.measurements_comp_rep_y,
         ) = self.transform_rep_exp2comp(self.measurements_exp_rep)
 
-        # ToDo call strategy for retraining
+        # TODO call strategy for retraining
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
@@ -281,7 +283,7 @@ class BayBE:
             )
 
         # Get indices of recommended searchspace entries here
-        # ToDo call actual strategy object
+        # TODO call actual strategy object
         inds = self.searchspace_exp_rep.loc[~mask_todrop].sample(n=batch_quantity).index
 
         # Translate indices into labeled data points and update metadata
@@ -300,12 +302,12 @@ class BayBE:
         take care of simply storing the BayBE object eg via dill. This could
         potentially create problems when code versions are different
         """
-        # ToDo Implement
+        # TODO Implement
         raise NotImplementedError("Loading a BayBE object is not implemented yet")
 
     def save(self) -> None:
         """
         Store the current state of the DOE on disk
         """
-        # ToDo Implement
+        # TODO Implement
         raise NotImplementedError("Saving a BayBE object is not implemented yet")

@@ -136,6 +136,7 @@ class Categorical(GenericParameter):
         """
         See base class
         """
+        # IMPROVE neater implementation eg via vectorized mapping
 
         if self.encoding == "OHE":
             transformed_data = {}

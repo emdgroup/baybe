@@ -27,7 +27,7 @@ class NumericalTarget:
 
         self.type = "NUM"
 
-        # ToDo Make sure bounds is a 2-sized vector of finite values
+        # TODO Make sure bounds is a 2-sized vector of finite values
         self.bounds = bounds
 
     def __str__(self):
@@ -72,20 +72,20 @@ class NumericalTarget:
         The transformed data frame
         """
 
-        # ToDo implement transforms for bounds
+        # TODO implement transforms for bounds
         if self.mode == "Max":
             if self.bounds is not None and np.isfinite(self.bounds).all():
-                # ToDo implement transform wth bounds here
+                # TODO implement transform wth bounds here
                 return data * 3
             return data
         if self.mode == "Min":
             if self.bounds is not None and np.isfinite(self.bounds).all():
-                # ToDo implement transform wth bounds here
+                # TODO implement transform wth bounds here
                 return -data * 3
             return -data
         if self.mode == "Match":
             if self.bounds is not None and np.isfinite(self.bounds).all():
-                # ToDo implement match transform here
+                # TODO implement match transform here
                 raise TypeError(
                     f"Match mode is not supported for this target named {self.name} of "
                     f"type {self.type} since it has non-finite bounds or bounds are not"

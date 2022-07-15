@@ -60,7 +60,7 @@ def add_fake_results(
     -------
     Nothing since it operated directly on the data
     """
-    # ToDo Add support for multiple targets
+    # TODO Add support for multiple targets
 
     # Sanity checks for good_bad_ratio
     if good_intervals is None:
