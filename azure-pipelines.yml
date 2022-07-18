@@ -34,7 +34,8 @@ stages:
           cacheHitVar: CONDA_CACHE_RESTORED
 
       - script: |
-          conda env create --file environment.yml
+          conda install --yes -c conda-forge mamba
+          mamba env create --file environment.yml
         displayName: Create conda environment (if not restored from cache)
         condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
 
