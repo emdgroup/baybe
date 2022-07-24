@@ -23,7 +23,7 @@ class ParameterConfig(BaseModel):
     type: str
     values: list
     tolerance: Optional[float]  # TODO: conditional validation depending on type
-    encoding: Optional[str]  # TODO: conditional validation depending on type
+    encoding: Optional[str]
 
     class Config:
         """Pydantic configuration."""
@@ -36,10 +36,18 @@ class ParameterConfig(BaseModel):
         check_if_in(val, Parameter.SUBCLASSES)
         return val
 
-    @validator("encoding")
+    @validator("encoding", always=True)
     def validate_encoding(cls, val, values):
-        """Validates if the given encoding exists for the selected parameter type."""
-        check_if_in(val, Parameter.ENCODINGS[values["type"]])
+        """Validates, for parameters that require an encoding, if an encoding is
+        provided and if the selection is possible for the parameter type."""
+        if values["type"] in Parameter.ENCODINGS:
+            if val is None:
+                raise ValueError(
+                    f"For parameter '{values['name']}' of type {values['type']}, an "
+                    f"encoding must be specified. Select one of "
+                    f"{Parameter.ENCODINGS[values['type']]}. "
+                )
+            check_if_in(val, Parameter.ENCODINGS[values["type"]])
         return val
 
 
