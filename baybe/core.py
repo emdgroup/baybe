@@ -9,6 +9,9 @@ import pandas as pd
 import baybe.config as baybe_config
 import baybe.parameters as baybe_parameters
 import baybe.targets as baybe_targets
+from baybe.config import BayBEConfig
+from baybe.parameters import GenericParameter
+from baybe.targets import Target
 
 log = logging.getLogger(__name__)
 
@@ -18,8 +21,12 @@ class BayBE:
     Main class for interaction with baybe
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config):
         self.batches_done = 0  # current iteration/batch number
+
+        config2 = BayBEConfig(**config)
+        parameters2 = [GenericParameter.create(p) for p in config2.parameters]
+        targets2 = [Target.create(t) for t in config2.objective.targets]
 
         # Parse everything from config
         parameters, targets = baybe_config.parse_config(config)

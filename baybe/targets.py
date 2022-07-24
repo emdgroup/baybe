@@ -4,6 +4,9 @@ Functionality for different type of targets
 
 import logging
 
+from abc import ABC
+from typing import Dict
+
 import numpy as np
 import pandas as pd
 
@@ -14,10 +17,34 @@ allowed_modes = ["SINGLE"]
 log = logging.getLogger(__name__)
 
 
-class NumericalTarget:
+class Target(ABC):
+    """
+    Abstract base class for all target variables. Stores information about the type,
+    range, transformations, etc.
+    """
+
+    TYPE: str
+    SUBCLASSES: Dict[str, "Target"] = {}
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.SUBCLASSES[cls.TYPE] = cls
+
+    @classmethod
+    # TODO: add type hint once circular import problem has been fixed
+    def create(cls, config) -> "Target":
+        """Creates a new target object matching the given specifications."""
+        config = config.dict(exclude_unset=True)
+        return cls.SUBCLASSES[config.pop("type")](**config)
+
+
+class NumericalTarget(Target):
     """
     Class for numerical targets
     """
+
+    TYPE = "NUM"
 
     def __init__(
         self, name: str = "Unnamed Target", mode: str = "Max", bounds: tuple = None

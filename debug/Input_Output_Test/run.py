@@ -42,7 +42,12 @@ config = {
     "objective": {
         "mode": "SINGLE",
         "targets": [
-            {"name": "Target_1", "bounds": None, "mode": "Min"},
+            {
+                "name": "Target_1",
+                "type": "NUM",
+                "bounds": None,
+                "mode": "Min",
+            },
         ],
     },
 }
@@ -51,7 +56,7 @@ config = {
 good_reference_values = {"Categorical_2": ["OK"], "Categorical_1": [22]}
 
 # Create BayBE object, add fake results and print what happens to internal data
-baybe_obj = BayBE(config=config)
+baybe_obj = BayBE(config)
 print(baybe_obj)
 
 N_ITERATIONS = 4

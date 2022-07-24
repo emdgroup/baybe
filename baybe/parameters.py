@@ -4,7 +4,7 @@ Functionality to deal wth different parameters
 import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,10 @@ class GenericParameter(ABC):
     type, range, constraints and in-range checks, transformations etc
     """
 
+    TYPE: str
+    SUBCLASSES: Dict[str, "GenericParameter"] = {}
+    ENCODINGS: Dict["GenericParameter", List[str]] = {}
+
     def __init__(self, name: str = "Unnamed Parameter", values: Optional[list] = None):
         self.type = "GENERIC"
         self.name = name
@@ -37,6 +41,20 @@ class GenericParameter(ABC):
             f"   Values:   {self.values}\n"
         )
         return string
+
+    @classmethod
+    # TODO: add type hint once circular import problem has been fixed
+    def create(cls, config) -> "GenericParameter":
+        """Creates a new parameter object matching the given specifications."""
+        config = config.dict(exclude_unset=True)
+        return cls.SUBCLASSES[config.pop("type")](**config)
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.SUBCLASSES[cls.TYPE] = cls
+        if hasattr(cls, "ALLOWED_ENCODINGS"):
+            cls.ENCODINGS[cls.TYPE] = cls.ALLOWED_ENCODINGS
 
     @abstractmethod
     def is_in_range(self, item: object):
@@ -81,6 +99,9 @@ class Categorical(GenericParameter):
     """
     Parameter class for categorical parameters
     """
+
+    TYPE = "CAT"
+    ALLOWED_ENCODINGS = ["OHE", "Integer"]
 
     def __init__(
         self,
@@ -190,6 +211,8 @@ class NumericDiscrete(GenericParameter):
     Parameter class for numerical but discrete parameters (aka setpoints)
     """
 
+    TYPE = "NUM_DISCRETE"
+
     def __init__(
         self,
         name: str = "Unnamed Parameter",
@@ -278,6 +301,9 @@ class GenericSubstance(GenericParameter):
     Parameter class for generic substances that will be treated with Mordred+PCA
     """
 
+    TYPE = "GEN_SUBSTANCE"
+    ALLOWED_ENCODINGS = ["Mordred", "RDKit", "Morgan_FP"]  # TODO: capitalize constants
+
     def __init__(
         self,
         name: str = "Unnamed Parameter",
@@ -305,6 +331,8 @@ class Custom(GenericParameter):
     representation for labels, e.g. from quantum chemistry
     """
 
+    TYPE = "CUSTOM"
+
     def __init__(
         self,
         name: str = "Unnamed Parameter",
@@ -331,6 +359,8 @@ class NumericContinuous(GenericParameter):
     """
     Parameter class for numerical parameters that are continuous
     """
+
+    TYPE = "NUM_CONTINUOUS"
 
     def __init__(
         self,
