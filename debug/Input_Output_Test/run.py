@@ -4,11 +4,12 @@ From the three recommendations only one is actually added to test the matching a
 metadata. Target objective is minimize to test computational transformation.
 """
 
+from baybe.config import BayBEConfig
 from baybe.core import add_fake_results, add_noise, BayBE
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
-config = {
+config_dict = {
     "project_name": "Input Output Debug",
     "allow_repeated_recommendations": True,
     "allow_recommending_already_measured": True,
@@ -18,6 +19,7 @@ config = {
             "name": "Categorical_1",
             "type": "CAT",
             "values": [22, 33],
+            "encoding": "OHE",
         },
         {
             "name": "Categorical_2",
@@ -55,6 +57,7 @@ config = {
 good_reference_values = {"Categorical_2": ["OK"], "Categorical_1": [22]}
 
 # Create BayBE object, add fake results and print what happens to internal data
+config = BayBEConfig(**config_dict)
 baybe_obj = BayBE(config)
 print(baybe_obj)
 

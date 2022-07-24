@@ -8,9 +8,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-import baybe.config as baybe_config
 import baybe.parameters as baybe_parameters
-import baybe.targets as baybe_targets
 from baybe.config import BayBEConfig
 from baybe.parameters import GenericParameter
 from baybe.targets import Target
@@ -23,18 +21,13 @@ class BayBE:
     Main class for interaction with baybe
     """
 
-    def __init__(self, config):
+    def __init__(self, config: BayBEConfig):
         self.batches_done = 0  # current iteration/batch number
 
-        config2 = BayBEConfig(**config)
-        parameters2 = [GenericParameter.create(p) for p in config2.parameters]
-        targets2 = [Target.create(t) for t in config2.objective.targets]
-
-        # Parse everything from config
-        parameters, targets = baybe_config.parse_config(config)
-        self.parameters: List[baybe_parameters.GenericParameter] = parameters
-        self.targets: List[baybe_targets.NumericalTarget] = targets
-        self.config: dict = config
+        # Create the parameter and target objects
+        self.config = config
+        self.parameters = [GenericParameter.create(p) for p in config.parameters]
+        self.targets = [Target.create(t) for t in config.objective.targets]
 
         # Create the experimental dataframe
         self.searchspace_exp_rep = baybe_parameters.parameter_outer_prod_to_df(
@@ -107,8 +100,8 @@ class BayBE:
             string += f"{param}\n"
 
         string += "Options:\n"
-        for option in baybe_config.allowed_config_options:
-            string += f"   {option}: {self.config[option]}\n"
+        for option, value in self.config.dict().items():
+            string += f"   {option}: {value}\n"
 
         string += "\n\nSearch Space Exp Representation:\n"
         string += f"{self.searchspace_exp_rep}"
@@ -157,8 +150,8 @@ class BayBE:
             # Check if row is valid input
             test = True
             for param in self.parameters:
-                if "NUM" in param.type:
-                    if self.config["numerical_measurements_must_be_within_tolerance"]:
+                if "NUM" in param.TYPE:
+                    if self.config.numerical_measurements_must_be_within_tolerance:
                         test &= param.is_in_range(row[param.name])
                 else:
                     test &= param.is_in_range(row[param.name])
@@ -179,9 +172,9 @@ class BayBE:
             # with min deviation.
             # TODO Discuss the different scenarios that are possible
             cat_cols = [
-                param.name for param in self.parameters if "NUM" not in param.type
+                param.name for param in self.parameters if "NUM" not in param.TYPE
             ]
-            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
+            num_cols = [param.name for param in self.parameters if "NUM" in param.TYPE]
 
             match = (self.searchspace_exp_rep.loc[:, cat_cols] == row[cat_cols]).all(
                 axis=1, skipna=False
@@ -274,9 +267,9 @@ class BayBE:
 
         # Filter searchspace before transferring to strategy
         mask_todrop = self.searchspace_metadata["dont_recommend"].copy()
-        if not self.config["allow_repeated_recommendations"]:
+        if not self.config.allow_repeated_recommendations:
             mask_todrop |= self.searchspace_metadata["was_recommended"]
-        if not self.config["allow_recommending_already_measured"]:
+        if not self.config.allow_recommending_already_measured:
             mask_todrop |= self.searchspace_metadata["was_measured"]
 
         if (mask_todrop.sum() >= len(self.searchspace_exp_rep)) or (
@@ -455,7 +448,7 @@ def add_noise(
         Nothing
     """
     for param in obj.parameters:
-        if "NUM" in param.type:
+        if "NUM" in param.TYPE:
             if noise_type == "relative_percent":
                 data[param.name] *= np.random.uniform(
                     1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)

@@ -2,11 +2,14 @@
 Collection of small utilities
 """
 
+import logging
 from typing import Iterable, Union
 
 import pandas as pd
 import torch
 from torch import Tensor
+
+log = logging.getLogger(__name__)
 
 
 def is_valid_smiles(smiles: str) -> bool:

@@ -9,9 +9,7 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-allowed_types = ["CAT", "NUM_DISCRETE"]
-# allowed_types = ["NUM_DISCRETE", "NUM_CONTINUOUS", "CAT", "GEN_SUBSTANCE", "CUSTOM"]
-
+from baybe.config import ParameterConfig
 
 log = logging.getLogger(__name__)
 
@@ -26,13 +24,11 @@ class GenericParameter(ABC):
     SUBCLASSES: Dict[str, "GenericParameter"] = {}
     ENCODINGS: Dict["GenericParameter", List[str]] = {}
 
-    def __init__(self, name: str = "Unnamed Parameter", values: Optional[list] = None):
-        self.type = "GENERIC"
-        self.name = name
-        self.values = [] if values is None else values
+    def __init__(self, config: ParameterConfig):
+        self.name = config.name
+        self.values = config.values or []
         self.comp_cols = []
         self.comp_values = None
-        super().__init__()
 
     def __str__(self):
         string = (
@@ -46,8 +42,7 @@ class GenericParameter(ABC):
     # TODO: add type hint once circular import problem has been fixed
     def create(cls, config) -> "GenericParameter":
         """Creates a new parameter object matching the given specifications."""
-        config = config.dict(exclude_unset=True)
-        return cls.SUBCLASSES[config.pop("type")](**config)
+        return cls.SUBCLASSES[config.type](config)
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -64,23 +59,9 @@ class GenericParameter(ABC):
         return True
 
     @classmethod
-    @abstractmethod
-    def from_dict(cls, dat: dict):
-        """
-        Creates a parameter of this type from a dictionary
-
-        Parameters
-        ----------
-        dat: dict
-            Dictionary with info describing the parameter
-
-        Returns
-        -------
-            Class instance
-        """
-        param_name = dat.get("name", "Unnamed Parameter")
-        param_values = dat.get("values", [])
-        return cls(name=param_name, values=param_values)
+    def from_dict(cls, config_dict: dict) -> "GenericParameter":
+        """Creates a parameter from a config dictionary."""
+        return cls(ParameterConfig(**config_dict))
 
     @abstractmethod
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
@@ -103,18 +84,10 @@ class Categorical(GenericParameter):
     TYPE = "CAT"
     ALLOWED_ENCODINGS = ["OHE", "Integer"]
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        values: list = None,
-        encoding: str = "OHE",
-    ):
-        super().__init__(name=name, values=values)
+    def __init__(self, config: ParameterConfig):
+        super().__init__(config)
 
-        self.type = "CAT"
-        self.allowed_encodings = ["OHE", "Integer"]
-
-        self.encoding = encoding
+        self.encoding = config.encoding
         self.comp_cols = []
 
         if len(self.values) != len(np.unique(self.values)):
@@ -141,17 +114,6 @@ class Categorical(GenericParameter):
             return True
 
         return False
-
-    @classmethod
-    def from_dict(cls, dat):
-        """
-        See base class
-        """
-        param_name = dat.get("name", "Unnamed Parameter")
-        param_values = dat.get("values", [])
-        param_encoding = dat.get("encoding", "OHE")
-
-        return cls(name=param_name, values=param_values, encoding=param_encoding)
 
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
@@ -197,11 +159,6 @@ class Categorical(GenericParameter):
             transformed = pd.DataFrame(coldata, columns=[colname])
             if colname not in self.comp_cols:
                 self.comp_cols.append(colname)
-        else:
-            raise ValueError(
-                f"Parameter {self.name} has encoding {self.encoding} specified, "
-                f"but encoding must be one of {self.allowed_encodings}."
-            )
 
         return transformed
 
@@ -213,15 +170,9 @@ class NumericDiscrete(GenericParameter):
 
     TYPE = "NUM_DISCRETE"
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        values: list = None,
-        tolerance: float = 0.0,
-    ):
-        super().__init__(name=name, values=values)
+    def __init__(self, config: ParameterConfig):
+        super().__init__(config)
 
-        self.type = "NUM_DISCRETE"
         self.comp_cols = []
         self.comp_values = None
 
@@ -236,19 +187,26 @@ class NumericDiscrete(GenericParameter):
         # parameter values a warning is printed because that could cause ambiguity when
         # inputting datapoints later
         max_tol = (
-            np.min(np.abs([values[k] - values[k - 1] for k in range(1, len(values))]))
+            np.min(
+                np.abs(
+                    [
+                        config.values[k] - config.values[k - 1]
+                        for k in range(1, len(config.values))
+                    ]
+                )
+            )
             / 2.0
         )
-        if tolerance >= max_tol:
+        if config.tolerance >= max_tol:
             log.warning(
                 "Parameter %s is initialized with tolerance %s, but due to the "
                 "values %s a maximum tolerance of %s is suggested to avoid ambiguity.",
-                self.name,
-                tolerance,
-                self.values,
+                config.name,
+                config.tolerance,
+                config.values,
                 max_tol,
             )
-        self.tolerance = tolerance
+        self.tolerance = config.tolerance
 
     def is_in_range(self, item: float):
         """
@@ -272,17 +230,6 @@ class NumericDiscrete(GenericParameter):
 
         return string
 
-    @classmethod
-    def from_dict(cls, dat):
-        """
-        See base class
-        """
-        param_name = dat.get("name", "Unnamed Parameter")
-        param_values = dat.get("values", [])
-        param_tolerance = dat.get("tolerance", 0.0)
-
-        return cls(name=param_name, values=param_values, tolerance=param_tolerance)
-
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
         See base class
@@ -304,25 +251,11 @@ class GenericSubstance(GenericParameter):
     TYPE = "GEN_SUBSTANCE"
     ALLOWED_ENCODINGS = ["Mordred", "RDKit", "Morgan_FP"]  # TODO: capitalize constants
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        substances: dict = None,
-    ):
-        super().__init__(name=name, values=list(substances.keys()))
-
-        self.type = "GEN_SUBSTANCE"
-        self.allowed_encodings = ["Mordred", "RDKit", "Morgan_FP"]
-
-        self.substances = {} if substances is None else substances
+    def __init__(self, config: ParameterConfig):
+        super().__init__(config)
+        # self.substances = {} if substances is None else substances
 
         raise NotImplementedError("This parameter type is not implemented yet.")
-
-    def is_in_range(self, item: str):
-        if item in self.values:
-            return True
-
-        return False
 
 
 class Custom(GenericParameter):
@@ -333,26 +266,13 @@ class Custom(GenericParameter):
 
     TYPE = "CUSTOM"
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        values: list = None,
-        repesentation: pd.DataFrame = None,
-    ):
-        super().__init__(name=name, values=values)
-
-        self.type = "CUSTOM"
-        self.representation = (
-            pd.DataFrame([]) if repesentation is None else repesentation
-        )
+    def __init__(self, config: ParameterConfig):
+        super().__init__(config)
+        # self.representation = (
+        #     pd.DataFrame([]) if repesentation is None else repesentation
+        # )
 
         raise NotImplementedError("This parameter type is not implemented yet.")
-
-    def is_in_range(self, item: str):
-        if item in self.values:
-            return True
-
-        return False
 
 
 class NumericContinuous(GenericParameter):
@@ -362,50 +282,16 @@ class NumericContinuous(GenericParameter):
 
     TYPE = "NUM_CONTINUOUS"
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        lbound: float = None,
-        ubound: float = None,
-    ):
-        super().__init__(name=name, values=[])
-        self.type = "NUM_CONTINUOUS"
-        self.lbound = -np.inf if lbound is None else lbound  # lower bound
-        self.ubound = np.inf if ubound is None else ubound  # upper bound
+    def __init__(self, config: ParameterConfig):
+        super().__init__(config)
+        # self.lbound = -np.inf if lbound is None else lbound  # lower bound
+        # self.ubound = np.inf if ubound is None else ubound  # upper bound
 
         raise NotImplementedError("This parameter type is not implemented yet.")
 
     def is_in_range(self, item: float):
-        return self.lbound <= item <= self.ubound
-
-
-def parse_parameter(param_dict: dict = None) -> GenericParameter:
-    """
-    Parses a dictionary into a parameter class object
-
-    Parameters
-    ----------
-    param_dict: dict
-
-    Returns
-    -------
-        Instance of a parameter class
-    """
-    if param_dict is None:
-        param_dict = {}
-
-    param_type = param_dict.get("type", None)
-    if param_type == "CAT":
-        param = Categorical.from_dict(param_dict)
-    elif param_type == "NUM_DISCRETE":
-        param = NumericDiscrete.from_dict(param_dict)
-    else:
-        raise ValueError(
-            f"Parameter type {param_type} is not in one of the allowed "
-            f"choices: {allowed_types}",
-        )
-
-    return param
+        # return self.lbound <= item <= self.ubound
+        raise NotImplementedError()
 
 
 def parameter_outer_prod_to_df(
@@ -424,8 +310,9 @@ def parameter_outer_prod_to_df(
     ret: pd.DataFrame
         The created data frame with the combinations
     """
-    lst_of_values = [p.values for p in parameters if p.type in allowed_types]
-    lst_of_names = [p.name for p in parameters if p.type in allowed_types]
+    allowed_types = GenericParameter.SUBCLASSES
+    lst_of_values = [p.values for p in parameters if p.TYPE in allowed_types]
+    lst_of_names = [p.name for p in parameters if p.TYPE in allowed_types]
 
     index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
     ret = pd.DataFrame(index=index).reset_index()

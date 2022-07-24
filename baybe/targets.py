@@ -2,19 +2,13 @@
 Functionality for different type of targets
 """
 
-import logging
-
 from abc import ABC
 from typing import Dict
 
 import numpy as np
 import pandas as pd
 
-allowed_types = ["NUM"]
-allowed_modes = ["SINGLE"]
-# allowed_modes = ["SINGLE", "MULTI_DESIRABILITY", "MULTI_PARETO", "MULTI_TASK"]
-
-log = logging.getLogger(__name__)
+from baybe.config import TargetConfig
 
 
 class Target(ABC):
@@ -26,6 +20,9 @@ class Target(ABC):
     TYPE: str
     SUBCLASSES: Dict[str, "Target"] = {}
 
+    def __init__(self, config: TargetConfig):
+        self.name = config.name
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -35,8 +32,12 @@ class Target(ABC):
     # TODO: add type hint once circular import problem has been fixed
     def create(cls, config) -> "Target":
         """Creates a new target object matching the given specifications."""
-        config = config.dict(exclude_unset=True)
-        return cls.SUBCLASSES[config.pop("type")](**config)
+        return cls.SUBCLASSES[config.type](config)
+
+    @classmethod
+    def from_dict(cls, config_dict: dict) -> "Target":
+        """Creates a target from a config dictionary."""
+        return cls(TargetConfig(**config_dict))
 
 
 class NumericalTarget(Target):
@@ -46,16 +47,12 @@ class NumericalTarget(Target):
 
     TYPE = "NUM"
 
-    def __init__(
-        self, name: str = "Unnamed Target", mode: str = "Max", bounds: tuple = None
-    ):
-        self.name = name
-        self.mode = mode
-
-        self.type = "NUM"
+    def __init__(self, config: TargetConfig):
+        super().__init__(config)
+        self.mode = config.mode
 
         # TODO Make sure bounds is a 2-sized vector of finite values
-        self.bounds = bounds
+        self.bounds = config.bounds
 
     def __str__(self):
         string = (
@@ -65,25 +62,6 @@ class NumericalTarget(Target):
             f"   Bounds: {self.bounds}"
         )
         return string
-
-    @classmethod
-    def from_dict(cls, dat: dict):
-        """
-        Creates a target of this type from a dictionary
-
-        Parameters
-        ----------
-        dat: dict
-            Contains the info for the target
-        Returns
-        -------
-            Class instance
-        """
-        targ_name = dat.get("name", "Unnamed Target")
-        targ_mode = dat.get("mode", "Max")
-        targ_bounds = dat.get("bounds", None)
-
-        return cls(name=targ_name, mode=targ_mode, bounds=targ_bounds)
 
     def transform(self, data: pd.DataFrame):
         """
@@ -115,7 +93,7 @@ class NumericalTarget(Target):
                 # TODO implement match transform here
                 raise TypeError(
                     f"Match mode is not supported for this target named {self.name} of "
-                    f"type {self.type} since it has non-finite bounds or bounds are not"
+                    f"type {self.TYPE} since it has non-finite bounds or bounds are not"
                     f" defined. Bounds need to be a finite 2-touple."
                 )
 
@@ -125,31 +103,3 @@ class NumericalTarget(Target):
             f"The mode '{self.mode}' set for target {self.name} is not recognized. "
             f"Must be either Min, Max or Match"
         )
-
-
-def parse_single_target(target_dict: dict = None) -> NumericalTarget:
-    """
-    Parses a dictionary into a target object in single target mode
-
-    Parameters
-    ----------
-    target_dict: dict
-        Contains info for the target
-
-    Returns
-    -------
-        Target class instance
-    """
-    if target_dict is None:
-        target_dict = {}
-
-    target_type = target_dict.get("type", "NUM")
-    if target_type == "NUM":
-        target = NumericalTarget.from_dict(target_dict)
-    else:
-        raise ValueError(
-            f"Target type {target_type} is not one of the allowed "
-            f"choices: {allowed_types}",
-        )
-
-    return target
