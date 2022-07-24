@@ -4,8 +4,7 @@ From the three recommendations only one is actually added to test the matching a
 metadata. Target objective is minimize to test computational transformation.
 """
 
-from baybe.core import BayBE
-from baybe.utils import add_fake_results, add_noise
+from baybe.core import add_fake_results, add_noise, BayBE
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
