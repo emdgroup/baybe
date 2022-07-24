@@ -33,25 +33,25 @@ class ParameterConfig(BaseModel):
     @validator("type")
     def validate_type(cls, val):
         """Validates if the given parameter type exists."""
-        check_if_in(val, GenericParameter.SUBCLASSES)
+        check_if_in(val, Parameter.SUBCLASSES)
         return val
 
     @validator("encoding")
     def validate_encoding(cls, val, values):
         """Validates if the given encoding exists for the selected parameter type."""
-        check_if_in(val, GenericParameter.ENCODINGS[values["type"]])
+        check_if_in(val, Parameter.ENCODINGS[values["type"]])
         return val
 
 
-class GenericParameter(ABC):
+class Parameter(ABC):
     """
     Abstract base class for different parameters. Will handle storing info about the
     type, range, constraints and in-range checks, transformations etc
     """
 
     TYPE: str
-    SUBCLASSES: Dict[str, "GenericParameter"] = {}
-    ENCODINGS: Dict["GenericParameter", List[str]] = {}
+    SUBCLASSES: Dict[str, "Parameter"] = {}
+    ENCODINGS: Dict["Parameter", List[str]] = {}
 
     def __init__(self, config: ParameterConfig):
         self.name = config.name
@@ -69,7 +69,7 @@ class GenericParameter(ABC):
 
     @classmethod
     # TODO: add type hint once circular import problem has been fixed
-    def create(cls, config) -> "GenericParameter":
+    def create(cls, config) -> "Parameter":
         """Creates a new parameter object matching the given specifications."""
         return cls.SUBCLASSES[config.type](config)
 
@@ -88,7 +88,7 @@ class GenericParameter(ABC):
         return True
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "GenericParameter":
+    def from_dict(cls, config_dict: dict) -> "Parameter":
         """Creates a parameter from a config dictionary."""
         return cls(ParameterConfig(**config_dict))
 
@@ -105,7 +105,7 @@ class GenericParameter(ABC):
         return None
 
 
-class Categorical(GenericParameter):
+class Categorical(Parameter):
     """
     Parameter class for categorical parameters
     """
@@ -192,7 +192,7 @@ class Categorical(GenericParameter):
         return transformed
 
 
-class NumericDiscrete(GenericParameter):
+class NumericDiscrete(Parameter):
     """
     Parameter class for numerical but discrete parameters (aka setpoints)
     """
@@ -272,7 +272,7 @@ class NumericDiscrete(GenericParameter):
         return data
 
 
-class GenericSubstance(GenericParameter):
+class GenericSubstance(Parameter):
     """
     Parameter class for generic substances that will be treated with Mordred+PCA
     """
@@ -287,7 +287,7 @@ class GenericSubstance(GenericParameter):
         raise NotImplementedError("This parameter type is not implemented yet.")
 
 
-class Custom(GenericParameter):
+class Custom(Parameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry
@@ -304,7 +304,7 @@ class Custom(GenericParameter):
         raise NotImplementedError("This parameter type is not implemented yet.")
 
 
-class NumericContinuous(GenericParameter):
+class NumericContinuous(Parameter):
     """
     Parameter class for numerical parameters that are continuous
     """
@@ -324,7 +324,7 @@ class NumericContinuous(GenericParameter):
 
 
 def parameter_outer_prod_to_df(
-    parameters: List[GenericParameter],
+    parameters: List[Parameter],
 ) -> pd.DataFrame:
     """
     Creates all possible combinations for parameters and their values (ignores
@@ -339,7 +339,7 @@ def parameter_outer_prod_to_df(
     ret: pd.DataFrame
         The created data frame with the combinations
     """
-    allowed_types = GenericParameter.SUBCLASSES
+    allowed_types = Parameter.SUBCLASSES
     lst_of_values = [p.values for p in parameters if p.TYPE in allowed_types]
     lst_of_names = [p.name for p in parameters if p.TYPE in allowed_types]
 
@@ -352,7 +352,7 @@ def parameter_outer_prod_to_df(
 def scaled_view(
     data_fit: Union[pd.DataFrame, pd.Series],
     data_transform: Union[pd.DataFrame, pd.Series],
-    parameters: Optional[List[GenericParameter]] = None,
+    parameters: Optional[List[Parameter]] = None,
     scalers: Optional[dict] = None,
 ):
     """

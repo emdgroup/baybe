@@ -10,7 +10,7 @@ import pandas as pd
 from pydantic import BaseModel, validator
 
 import baybe.parameters as baybe_parameters
-from baybe.parameters import GenericParameter, ParameterConfig
+from baybe.parameters import Parameter, ParameterConfig
 from baybe.targets import ObjectiveConfig, Target
 
 log = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class BayBE:
 
         # Create the parameter and target objects
         self.config = config
-        self.parameters = [GenericParameter.create(p) for p in config.parameters]
+        self.parameters = [Parameter.create(p) for p in config.parameters]
         self.targets = [Target.create(t) for t in config.objective.targets]
 
         # Create the experimental dataframe
