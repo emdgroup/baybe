@@ -194,7 +194,7 @@ class NumericDiscrete(GenericParameter):
         self,
         name: str = "Unnamed Parameter",
         values: list = None,
-        input_tolerance: float = 0.0,
+        tolerance: float = 0.0,
     ):
         super().__init__(name=name, values=values)
 
@@ -216,23 +216,23 @@ class NumericDiscrete(GenericParameter):
             np.min(np.abs([values[k] - values[k - 1] for k in range(1, len(values))]))
             / 2.0
         )
-        if input_tolerance >= max_tol:
+        if tolerance >= max_tol:
             log.warning(
                 "Parameter %s is initialized with tolerance %s, but due to the "
                 "values %s a maximum tolerance of %s is suggested to avoid ambiguity.",
                 self.name,
-                input_tolerance,
+                tolerance,
                 self.values,
                 max_tol,
             )
-        self.input_tolerance = input_tolerance
+        self.tolerance = tolerance
 
     def is_in_range(self, item: float):
         """
         See base class
         """
         differences_acceptable = [
-            np.abs(bla - item) <= self.input_tolerance for bla in self.values
+            np.abs(bla - item) <= self.tolerance for bla in self.values
         ]
         if any(differences_acceptable):
             return True
@@ -244,7 +244,7 @@ class NumericDiscrete(GenericParameter):
             f"Numerical discrete parameter\n"
             f"   Name:           '{self.name}'\n"
             f"   Values:          {self.values}\n"
-            f"   Input Tolerance: {self.input_tolerance}"
+            f"   Input Tolerance: {self.tolerance}"
         )
 
         return string
@@ -258,9 +258,7 @@ class NumericDiscrete(GenericParameter):
         param_values = dat.get("values", [])
         param_tolerance = dat.get("tolerance", 0.0)
 
-        return cls(
-            name=param_name, values=param_values, input_tolerance=param_tolerance
-        )
+        return cls(name=param_name, values=param_values, tolerance=param_tolerance)
 
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
