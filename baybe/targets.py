@@ -3,12 +3,43 @@ Functionality for different type of targets
 """
 
 from abc import ABC
-from typing import Dict
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
-from baybe.config import TargetConfig
+from pydantic import BaseModel, validator
+
+
+class TargetConfig(BaseModel):
+    """Configuration class for creating target objects."""
+
+    name: str
+    type: str
+    mode: str
+    bounds: Optional[str]
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class ObjectiveConfig(BaseModel):
+    """Configuration class for creating objective objects."""
+
+    mode: str
+    targets: List[dict]
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+    @validator("targets")
+    def validate_targets(cls, target_settings):
+        """Turns the given list of target specifications into config objects."""
+        return [TargetConfig(**s) for s in target_settings]
 
 
 class Target(ABC):

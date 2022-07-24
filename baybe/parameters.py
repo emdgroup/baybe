@@ -9,9 +9,38 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from baybe.config import ParameterConfig
+from pydantic import BaseModel, validator
+
+from baybe.utils import check_if_in
 
 log = logging.getLogger(__name__)
+
+
+class ParameterConfig(BaseModel):
+    """Configuration class for creating parameter objects."""
+
+    name: str
+    type: str
+    values: list
+    tolerance: Optional[float]  # TODO: conditional validation depending on type
+    encoding: Optional[str]  # TODO: conditional validation depending on type
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+    @validator("type")
+    def validate_type(cls, val):
+        """Validates if the given parameter type exists."""
+        check_if_in(val, GenericParameter.SUBCLASSES)
+        return val
+
+    @validator("encoding")
+    def validate_encoding(cls, val, values):
+        """Validates if the given encoding exists for the selected parameter type."""
+        check_if_in(val, GenericParameter.ENCODINGS[values["type"]])
+        return val
 
 
 class GenericParameter(ABC):

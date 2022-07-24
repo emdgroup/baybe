@@ -7,13 +7,40 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel, validator
 
 import baybe.parameters as baybe_parameters
-from baybe.config import BayBEConfig
-from baybe.parameters import GenericParameter
-from baybe.targets import Target
+from baybe.parameters import GenericParameter, ParameterConfig
+from baybe.targets import ObjectiveConfig, Target
 
 log = logging.getLogger(__name__)
+
+
+class BayBEConfig(BaseModel):
+    """Configuration class for BayBE."""
+
+    project_name: str
+    parameters: List[dict]
+    objective: dict
+    random_seed: int = 1337
+    allow_repeated_recommendations: bool = True
+    allow_recommending_already_measured: bool = True
+    numerical_measurements_must_be_within_tolerance: bool = True
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+    @validator("parameters")
+    def validate_parameters(cls, param_specs):
+        """Turns the given list of parameters specifications into config objects."""
+        return [ParameterConfig(**param) for param in param_specs]
+
+    @validator("objective")
+    def validate_objective(cls, objective_specs):
+        """Turns the given objective specifications into a config object."""
+        return ObjectiveConfig(**objective_specs)
 
 
 class BayBE:

@@ -2,14 +2,11 @@
 Collection of small utilities
 """
 
-import logging
-from typing import Iterable, Union
+from typing import Any, Iterable, Union
 
 import pandas as pd
 import torch
 from torch import Tensor
-
-log = logging.getLogger(__name__)
 
 
 def is_valid_smiles(smiles: str) -> bool:
@@ -33,3 +30,14 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     if len(dfs) == 1:
         out = next(out)
     return out
+
+
+def check_if_in(element: Any, allowed: list):
+    """
+    Checks if an element is in a given list of elements and raises a
+    context-specific exception if it is not.
+    """
+    if element not in allowed:
+        raise ValueError(
+            f"The value '{element}' is not allowed. Must be one of {allowed}."
+        )
