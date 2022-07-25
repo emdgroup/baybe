@@ -1,6 +1,8 @@
 """
 Functionality to deal wth different parameters
 """
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
@@ -8,7 +10,6 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-
 from pydantic import BaseModel, validator
 
 from baybe.utils import check_if_in
@@ -58,8 +59,8 @@ class Parameter(ABC):
     """
 
     TYPE: str
-    SUBCLASSES: Dict[str, "Parameter"] = {}
-    ENCODINGS: Dict["Parameter", List[str]] = {}
+    SUBCLASSES: Dict[str, Parameter] = {}
+    ENCODINGS: Dict[Parameter, List[str]] = {}
 
     def __init__(self, config: ParameterConfig):
         self.name = config.name
@@ -77,7 +78,7 @@ class Parameter(ABC):
 
     @classmethod
     # TODO: add type hint once circular import problem has been fixed
-    def create(cls, config) -> "Parameter":
+    def create(cls, config) -> Parameter:
         """Creates a new parameter object matching the given specifications."""
         return cls.SUBCLASSES[config.type](config)
 
@@ -96,7 +97,7 @@ class Parameter(ABC):
         return True
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "Parameter":
+    def from_dict(cls, config_dict: dict) -> Parameter:
         """Creates a parameter from a config dictionary."""
         return cls(ParameterConfig(**config_dict))
 

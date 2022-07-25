@@ -2,12 +2,13 @@
 Functionality for different type of targets
 """
 
+from __future__ import annotations
+
 from abc import ABC
 from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-
 from pydantic import BaseModel, validator
 
 
@@ -49,7 +50,7 @@ class Target(ABC):
     """
 
     TYPE: str
-    SUBCLASSES: Dict[str, "Target"] = {}
+    SUBCLASSES: Dict[str, Target] = {}
 
     def __init__(self, config: TargetConfig):
         self.name = config.name
@@ -61,12 +62,12 @@ class Target(ABC):
 
     @classmethod
     # TODO: add type hint once circular import problem has been fixed
-    def create(cls, config) -> "Target":
+    def create(cls, config) -> Target:
         """Creates a new target object matching the given specifications."""
         return cls.SUBCLASSES[config.type](config)
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "Target":
+    def from_dict(cls, config_dict: dict) -> Target:
         """Creates a target from a config dictionary."""
         return cls(TargetConfig(**config_dict))
 
