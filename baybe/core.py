@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Extra, validator
 
 import baybe.parameters as baybe_parameters
 from baybe.parameters import Parameter, ParameterConfig
@@ -16,7 +16,7 @@ from baybe.targets import ObjectiveConfig, Target
 log = logging.getLogger(__name__)
 
 
-class BayBEConfig(BaseModel):
+class BayBEConfig(BaseModel, extra=Extra.forbid):
     """Configuration class for BayBE."""
 
     project_name: str
@@ -26,11 +26,6 @@ class BayBEConfig(BaseModel):
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
     numerical_measurements_must_be_within_tolerance: bool = True
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
 
     @validator("parameters")
     def validate_parameters(cls, param_specs):

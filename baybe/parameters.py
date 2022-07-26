@@ -10,14 +10,14 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Extra, validator
 
 from baybe.utils import check_if_in
 
 log = logging.getLogger(__name__)
 
 
-class ParameterConfig(BaseModel):
+class ParameterConfig(BaseModel, extra=Extra.forbid):
     """Configuration class for creating parameter objects."""
 
     name: str
@@ -25,11 +25,6 @@ class ParameterConfig(BaseModel):
     values: list
     tolerance: Optional[float]  # TODO: conditional validation depending on type
     encoding: Optional[str]
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
 
     @validator("type")
     def validate_type(cls, val):
