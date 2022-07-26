@@ -21,3 +21,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Noise and fake-measurement utilities.
 - Internal metadata storing various info about datapoints in the searchspace.
 - BayBE options controlling recommendation and data addition behavior.
+- Config parsing and validation using pydantic.
