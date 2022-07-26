@@ -5,11 +5,13 @@ Functionality for different type of targets
 from __future__ import annotations
 
 from abc import ABC
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Extra, validator
+
+from baybe.utils import check_if_in
 
 
 class TargetConfig(BaseModel, extra=Extra.forbid):
@@ -17,8 +19,14 @@ class TargetConfig(BaseModel, extra=Extra.forbid):
 
     name: str
     type: str
-    mode: str
+    mode: Literal["MIN", "MAX", "MATCH"]
     bounds: Optional[str]
+
+    @validator("type")
+    def validate_type(cls, val):
+        """Validates if the given target type exists."""
+        check_if_in(val, Target.SUBCLASSES)
+        return val
 
 
 class ObjectiveConfig(BaseModel, extra=Extra.forbid):
@@ -100,28 +108,23 @@ class NumericalTarget(Target):
         """
 
         # TODO implement transforms for bounds
-        if self.mode == "Max":
+        if self.mode == "MAX":
             if self.bounds is not None and np.isfinite(self.bounds).all():
                 # TODO implement transform wth bounds here
-                return data * 3
+                raise NotImplementedError()
             return data
-        if self.mode == "Min":
+        if self.mode == "MIN":
             if self.bounds is not None and np.isfinite(self.bounds).all():
                 # TODO implement transform wth bounds here
-                return -data * 3
+                raise NotImplementedError()
             return -data
-        if self.mode == "Match":
+        if self.mode == "MATCH":
             if self.bounds is not None and np.isfinite(self.bounds).all():
                 # TODO implement match transform here
                 raise TypeError(
-                    f"Match mode is not supported for this target named {self.name} of "
+                    f"MATCH mode is not supported for this target named {self.name} of "
                     f"type {self.TYPE} since it has non-finite bounds or bounds are not"
-                    f" defined. Bounds need to be a finite 2-touple."
+                    f" defined. Bounds need to be a finite 2-tuple."
                 )
-
-            raise NotImplementedError("Match mode for targets is not implemented yet.")
-
-        raise ValueError(
-            f"The mode '{self.mode}' set for target {self.name} is not recognized. "
-            f"Must be either Min, Max or Match"
-        )
+            raise NotImplementedError("MATCH mode for targets is not implemented yet.")
+        return data

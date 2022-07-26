@@ -375,20 +375,20 @@ def add_fake_results(
 
     # Sanity checks for good_bad_ratio
     if good_intervals is None:
-        if obj.targets[0].mode == "Max":
+        if obj.targets[0].mode == "MAX":
             good_intervals = (66, 100)
-        elif obj.targets[0].mode == "Min":
+        elif obj.targets[0].mode == "MIN":
             good_intervals = (0, 33)
-        elif obj.targets[0].mode == "Match":
+        elif obj.targets[0].mode == "MATCH":
             good_intervals = tuple(*obj.targets[0].bounds)
         else:
             raise ValueError("Unrecognized target mode when trying to add fake values.")
     if bad_intervals is None:
-        if obj.targets[0].mode == "Max":
+        if obj.targets[0].mode == "MAX":
             bad_intervals = (0, 50)
-        elif obj.targets[0].mode == "Min":
+        elif obj.targets[0].mode == "MIN":
             bad_intervals = (50, 100)
-        elif obj.targets[0].mode == "Match":
+        elif obj.targets[0].mode == "MATCH":
             bad_intervals = (
                 0.05 * obj.targets[0].bounds[0],
                 0.3 * obj.targets[0].bounds[0],
