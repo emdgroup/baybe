@@ -45,7 +45,6 @@ config_dict = {
             {
                 "name": "Target_1",
                 "type": "NUM",
-                "bounds": None,
                 "mode": "MIN",
             },
         ],

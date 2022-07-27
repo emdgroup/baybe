@@ -5,7 +5,7 @@ Functionality for different type of targets
 from __future__ import annotations
 
 from abc import ABC
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -20,13 +20,20 @@ class TargetConfig(BaseModel, extra=Extra.forbid):
     name: str
     type: str
     mode: Literal["MIN", "MAX", "MATCH"]
-    bounds: Optional[str]
+    bounds: Optional[Tuple[float, float]]
 
     @validator("type")
     def validate_type(cls, val):
         """Validates if the given target type exists."""
         check_if_in(val, Target.SUBCLASSES)
         return val
+
+    @validator("bounds")
+    def validate_bounds(cls, bounds):
+        """Validates if the given bounds are specified correctly."""
+        if bounds[1] <= bounds[0]:
+            raise ValueError("The upper bound must be greater than the lower bound.")
+        return bounds
 
 
 class ObjectiveConfig(BaseModel, extra=Extra.forbid):
@@ -80,8 +87,6 @@ class NumericalTarget(Target):
     def __init__(self, config: TargetConfig):
         super().__init__(config)
         self.mode = config.mode
-
-        # TODO Make sure bounds is a 2-sized vector of finite values
         self.bounds = config.bounds
 
     def __str__(self):
