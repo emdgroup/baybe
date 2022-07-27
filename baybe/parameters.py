@@ -20,6 +20,7 @@ log = logging.getLogger(__name__)
 
 
 def _validate_value_list(lst: list, values: dict):
+    """A pydantic validator to verify parameter values."""
     if len(lst) < 2:
         raise ValueError(
             f"Parameter {values['name']} must have at least two unique values."
@@ -34,8 +35,8 @@ def _validate_value_list(lst: list, values: dict):
 
 class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """
-    Abstract base class for different parameters. Will handle storing info about the
-    type, range, constraints and in-range checks, transformations etc
+    Abstract base class for all parameters. Stores information about the
+    type, range, constraints, etc. and handles in-range checks, transformations etc.
     """
 
     # class variables
@@ -66,49 +67,52 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
-    def is_in_range(self, item: object):
+    def is_in_range(self, item: object) -> bool:
         """
-        Tells whether an item is within the current parameter range.
+        Tells whether an item is within the parameter range.
         """
-        return True
 
     @abstractmethod
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
         """
-        Function to transform data from the experimental to computational representation
+        Transforms data from experimental to computational representation.
 
         Parameters
         ----------
         data: pd.DataFrame
-            Data to be transformed
+            Data to be transformed.
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed version of the data.
         """
-        return None
 
 
 class Categorical(Parameter):
     """
-    Parameter class for categorical parameters
+    Parameter class for categorical parameters.
     """
 
+    # class variables
     type = "CAT"
 
+    # object variables
     values: list
     encoding: Literal["OHE", "INT"]
 
+    # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-    def is_in_range(self, item: str):
+    def is_in_range(self, item: str) -> bool:
         """
-        See base class
+        See base class.
         """
-        if item in self.values:
-            return True
+        return item in self.values
 
-        return False
-
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
         """
-        See base class
+        See base class.
         """
         # IMPROVE neater implementation eg via vectorized mapping
 
@@ -156,14 +160,17 @@ class Categorical(Parameter):
 
 class NumericDiscrete(Parameter):
     """
-    Parameter class for numerical but discrete parameters (aka setpoints)
+    Parameter class for discrete numerical parameters (a.k.a. setpoints).
     """
 
+    # class variables
     type = "NUM_DISCRETE"
 
+    # object variables
     values: list
     tolerance: float
 
+    # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
     @validator("tolerance")
@@ -189,21 +196,18 @@ class NumericDiscrete(Parameter):
 
         return tolerance
 
-    def is_in_range(self, item: float):
+    def is_in_range(self, item: float) -> bool:
         """
-        See base class
+        See base class.
         """
         differences_acceptable = [
             np.abs(bla - item) <= self.tolerance for bla in self.values
         ]
-        if any(differences_acceptable):
-            return True
+        return any(differences_acceptable)
 
-        return False
-
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
         """
-        See base class
+        See base class.
         """
 
         # Comp column is identical with the experimental columns
@@ -216,28 +220,32 @@ class NumericDiscrete(Parameter):
 
 class GenericSubstance(Parameter, ABC):
     """
-    Parameter class for generic substances that will be treated with Mordred+PCA
+    Parameter class for generic substances that are treated with Mordred+PCA.
     """
 
+    # class variables
     type = "GEN_SUBSTANCE"
 
-    encoding: Literal["Mordred", "RDKit", "Morgan_FP"]  # TODO: capitalize constants
+    # object variables
+    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"]
 
 
 class Custom(Parameter, ABC):
     """
     Parameter class for custom parameters where the user can read in a precomputed
-    representation for labels, e.g. from quantum chemistry
+    representation for labels, e.g. from quantum chemistry.
     """
 
+    # class variables
     type = "CUSTOM"
 
 
 class NumericContinuous(Parameter, ABC):
     """
-    Parameter class for numerical parameters that are continuous
+    Parameter class for continuous numerical parameters.
     """
 
+    # class variables
     type = "NUM_CONTINUOUS"
 
 
@@ -245,17 +253,18 @@ def parameter_outer_prod_to_df(
     parameters: List[Parameter],
 ) -> pd.DataFrame:
     """
-    Creates all possible combinations for parameters and their values (ignores
-    non-discrete parameters).
+    Creates the Cartesion product of all parameter values (ignoring non-discrete
+    parameters).
 
     Parameters
     ----------
-    parameters: list
-        List of parameter objects
+    parameters: List[Parameter]
+        List of parameter objects.
+
     Returns
     -------
-    ret: pd.DataFrame
-        The created data frame with the combinations
+    pd.DataFrame
+        A dataframe containing all parameter value combinations.
     """
     allowed_types = Parameter.SUBCLASSES
     lst_of_values = [p.values for p in parameters if p.type in allowed_types]
@@ -272,25 +281,26 @@ def scaled_view(
     data_transform: Union[pd.DataFrame, pd.Series],
     parameters: Optional[List[Parameter]] = None,
     scalers: Optional[dict] = None,
-):
+) -> pd.DataFrame:
     """
     Comfort function to scale data given different scaling methods for different
     parameter types.
 
     Parameters
     ----------
-    data_fit:
-        data on which the scalers are fit
-    data_transform:
-        data to be transformed
-    parameters:
-        list with baybe parameter instances
-    scalers:
-        dict with parameter types as keys and sklearn scaler instances as values
+    data_fit : Union[pd.DataFrame, pd.Series]
+        Data on which the scalers are fit.
+    data_transform : Union[pd.DataFrame, pd.Series]
+        Data to be transformed.
+    parameters : Optional[List[Parameter]]
+        List of baybe parameter objects.
+    scalers : Optional[dict]
+        Dict with parameter types as keys and sklearn scaler objects as values.
 
     Returns
     -------
-    transformed: transformed data
+    pd.DataFrame
+        The scaled parameter view.
 
     Examples
     --------

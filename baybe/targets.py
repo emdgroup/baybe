@@ -72,18 +72,20 @@ class NumericalTarget(Target):
             raise ValueError("The upper bound must be greater than the lower bound.")
         return bounds
 
-    def transform(self, data: pd.DataFrame):
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Transform data to the computational representation. The transformation depends
-        on the target mode, e.g. minimization, maximization, matching, multi-target etc
+        Transforms data to the computational representation. The transformation depends
+        on the target mode, e.g. minimization, maximization, matching, multi-target etc.
 
         Parameters
         ----------
-        data: pd.DataFrame
+        data : pd.DataFrame
             The data to be transformed.
+
         Returns
         -------
-        The transformed data frame
+        pd.DataFrame
+            The transformed data frame
         """
 
         # TODO implement transforms for bounds
