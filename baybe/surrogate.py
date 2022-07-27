@@ -22,7 +22,7 @@ class SurrogateModel(ABC):
     # TODO: to support other models than GPs, an interface to botorch's acquisition
     #  functions must be created (e.g. via a dedicated 'predict' method)
 
-    TYPE: str
+    type: str
     SUBCLASSES: Dict[str, SurrogateModel] = {}
 
     @abstractmethod
@@ -32,13 +32,13 @@ class SurrogateModel(ABC):
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.TYPE] = cls
+        cls.SUBCLASSES[cls.type] = cls
 
 
 class GaussianProcessModel(SurrogateModel):
     """A Gaussian process surrogate model."""
 
-    TYPE = "GP"
+    type = "GP"
 
     def __init__(self):
         self.model: Optional[SingleTaskGP] = None

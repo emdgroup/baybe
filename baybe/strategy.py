@@ -1,4 +1,4 @@
-# pylint: disable=too-few-public-methods
+# pylint: disable=not-callable, no-member  # TODO: due to validators --> find fix
 """
 Strategies for Design of Experiments (DoE).
 """
@@ -21,7 +21,7 @@ from baybe.utils import check_if_in
 class InitialStrategy(ABC):
     """Abstract base class for all initial design strategies."""
 
-    TYPE: str
+    type: str
     SUBCLASSES: Dict[str, InitialStrategy] = {}
 
     @abstractmethod
@@ -44,13 +44,13 @@ class InitialStrategy(ABC):
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.TYPE] = cls
+        cls.SUBCLASSES[cls.type] = cls
 
 
 class RandomInitialStrategy(InitialStrategy):
     """An initial strategy that selects the candidates at random."""
 
-    TYPE = "RANDOM"
+    type = "RANDOM"
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """Uniform random selection of candidates."""
@@ -59,26 +59,35 @@ class RandomInitialStrategy(InitialStrategy):
         )
 
 
-class StrategyConfig(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
-    """Configuration class for creating strategy objects."""
+class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+    """Abstract base class for all DoE strategies."""
 
     # TODO: consider adding validators for the individual component classes of the
     #  strategy or introducing config classes for them (-> disable arbitrary types)
 
-    surrogate_model: Union[str, Type[SurrogateModel]] = "GP"
-    acquisition_function: Union[Literal["EI"], Type[AcquisitionFunction]] = "EI"
+    # object variables
+    surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
+    acquisition_function_cls: Union[Literal["EI"], Type[AcquisitionFunction]] = "EI"
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
-    recommender: Union[str, Type[Recommender]] = "RANKING"
+    recommender_cls: Union[str, Type[Recommender]] = "RANKING"
 
-    @validator("surrogate_model", always=True)
+    # TODO: this becomes obsolete in pydantic 2.0 when the __post_init_post_parse__
+    #   is available:
+    #   - https://github.com/samuelcolvin/pydantic/issues/691
+    #   - https://github.com/samuelcolvin/pydantic/issues/1729
+    surrogate_model: Optional[SurrogateModel] = None
+    best_f: Optional[float] = None
+    use_initial_strategy: bool = False
+
+    @validator("surrogate_model_cls", always=True)
     def validate_type(cls, model):
         """Validates if the given surrogate model type exists."""
         if isinstance(model, str):
-            check_if_in(model, SurrogateModel.SUBCLASSES)
+            check_if_in(model, list(SurrogateModel.SUBCLASSES.keys()))
             return SurrogateModel.SUBCLASSES[model]
         return model
 
-    @validator("acquisition_function", always=True)
+    @validator("acquisition_function_cls", always=True)
     def validate_acquisition_function(cls, fun):
         """Validates if the given acquisition function type exists."""
         # TODO: change once an acquisition wrapper class has been introduced
@@ -90,33 +99,17 @@ class StrategyConfig(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
     def validate_initial_strategy(cls, strategy):
         """Validates if the given initial strategy type exists."""
         if isinstance(strategy, str):
-            check_if_in(strategy, InitialStrategy.SUBCLASSES)
+            check_if_in(strategy, list(InitialStrategy.SUBCLASSES.keys()))
             return InitialStrategy.SUBCLASSES[strategy]()
         return strategy
 
-    @validator("recommender", always=True)
+    @validator("recommender_cls", always=True)
     def validate_recommender(cls, recommender):
         """Validates if the given recommender model type exists."""
         if isinstance(recommender, str):
-            check_if_in(recommender, Recommender.SUBCLASSES)
+            check_if_in(recommender, list(Recommender.SUBCLASSES.keys()))
             return Recommender.SUBCLASSES[recommender]
         return recommender
-
-
-class Strategy:
-    """Abstract base class for all DoE strategies."""
-
-    def __init__(self, config: StrategyConfig):
-        # process input arguments
-        self.surrogate_model = config.surrogate_model
-        self.acquisition_function = config.acquisition_function
-        self.initial_strategy = config.initial_strategy
-        self.recommender = config.recommender
-
-        # declare remaining members
-        self._surrogate_model: Optional[SurrogateModel] = None
-        self._best_f: Optional[float] = None
-        self._use_initial_strategy: bool = False
 
     def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
         """
@@ -130,11 +123,11 @@ class Strategy:
         train_y : pd.DataFrame
             The corresponding response values.
         """
-        self._use_initial_strategy = len(train_x) == 0
-        if not self._use_initial_strategy:
-            self._surrogate_model = self.surrogate_model()
-            self._surrogate_model.fit(train_x, train_y)
-            self._best_f = train_y.min()
+        self.use_initial_strategy = len(train_x) == 0
+        if not self.use_initial_strategy:
+            self.surrogate_model = self.surrogate_model_cls()
+            self.surrogate_model.fit(train_x, train_y)
+            self.best_f = train_y.min()
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """
@@ -157,16 +150,16 @@ class Strategy:
             )
 
         # if no training data exists, apply the strategy for initial recommendations
-        if self._use_initial_strategy:
+        if self.use_initial_strategy:
             return self.initial_strategy.recommend(candidates, batch_quantity)
 
         # construct the acquisition function
         # TODO: the current approach only works for gpytorch GP surrogate models
         #   (for other surrogate models, some wrapper is required)
-        acqf = self.acquisition_function(self._surrogate_model.model, self._best_f)
+        acqf = self.acquisition_function_cls(self.surrogate_model.model, self.best_f)
 
         # select the next experiments using the given recommender approach
-        recommender = self.recommender(acqf)
+        recommender = self.recommender_cls(acqf)
         idxs = recommender.recommend(candidates, batch_quantity)
 
         return idxs

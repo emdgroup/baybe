@@ -10,7 +10,7 @@ import pandas as pd
 import streamlit as st
 import torch
 
-from baybe.strategy import Strategy, StrategyConfig
+from baybe.strategy import Strategy
 from botorch.models.transforms import Standardize
 from botorch.test_functions import Hartmann
 from tqdm import trange
@@ -61,8 +61,7 @@ features = pd.DataFrame(points, columns=[f"Param_{i}" for i in range(n_dims)])
 targets = pd.DataFrame(targets, columns=["Target"])
 
 # define the DoE strategy
-config = StrategyConfig()
-strategy = Strategy(config)
+strategy = Strategy()
 
 # list to store the experimentation sequences
 sequences = []

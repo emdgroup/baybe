@@ -5,7 +5,7 @@ Functionality for different type of targets
 from __future__ import annotations
 
 from abc import ABC
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -14,67 +14,45 @@ from pydantic import BaseModel, Extra, validator
 from baybe.utils import check_if_in
 
 
-class TargetConfig(BaseModel, extra=Extra.forbid):
-    """Configuration class for creating target objects."""
+class Objective(BaseModel, extra=Extra.forbid):
+    """Class for managing optimization objectives."""
 
-    name: str
-    type: str
-    mode: Literal["MIN", "MAX", "MATCH"]
-    bounds: Optional[Tuple[float, float]]
-
-    @validator("type")
-    def validate_type(cls, val):
-        """Validates if the given target type exists."""
-        check_if_in(val, Target.SUBCLASSES)
-        return val
-
-    @validator("bounds")
-    def validate_bounds(cls, bounds):
-        """Validates if the given bounds are specified correctly."""
-        if bounds[1] <= bounds[0]:
-            raise ValueError("The upper bound must be greater than the lower bound.")
-        return bounds
-
-
-class ObjectiveConfig(BaseModel, extra=Extra.forbid):
-    """Configuration class for creating objective objects."""
-
-    mode: str
+    mode: Literal["SINGLE"]
     targets: List[dict]
 
     @validator("targets")
-    def validate_targets(cls, target_settings):
-        """Turns the given list of target specifications into config objects."""
-        return [TargetConfig(**s) for s in target_settings]
+    def validate_targets(cls, targets):
+        """Validates that only one target has been specified."""
+        if len(targets) > 1:
+            raise ValueError("Currently, only one target is supported.")
+        return targets
 
 
-class Target(ABC):
+class Target(ABC, BaseModel, extra=Extra.forbid):
     """
     Abstract base class for all target variables. Stores information about the type,
     range, transformations, etc.
     """
 
-    TYPE: str
-    SUBCLASSES: Dict[str, Target] = {}
+    # class variables
+    type: ClassVar[str]
+    SUBCLASSES: ClassVar[Dict[str, Target]] = {}
 
-    def __init__(self, config: TargetConfig):
-        self.name = config.name
+    # object variables
+    name: str
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.TYPE] = cls
+        cls.SUBCLASSES[cls.type] = cls
 
     @classmethod
-    # TODO: add type hint once circular import problem has been fixed
-    def create(cls, config) -> Target:
+    def create(cls, config: dict) -> Target:
         """Creates a new target object matching the given specifications."""
-        return cls.SUBCLASSES[config.type](config)
-
-    @classmethod
-    def from_dict(cls, config_dict: dict) -> Target:
-        """Creates a target from a config dictionary."""
-        return cls(TargetConfig(**config_dict))
+        config = config.copy()
+        param_type = config.pop("type")
+        check_if_in(param_type, list(Target.SUBCLASSES.keys()))
+        return cls.SUBCLASSES[param_type](**config)
 
 
 class NumericalTarget(Target):
@@ -82,21 +60,17 @@ class NumericalTarget(Target):
     Class for numerical targets
     """
 
-    TYPE = "NUM"
+    type = "NUM"
 
-    def __init__(self, config: TargetConfig):
-        super().__init__(config)
-        self.mode = config.mode
-        self.bounds = config.bounds
+    mode: Literal["MIN", "MAX", "MATCH"]
+    bounds: Optional[Tuple[float, float]]
 
-    def __str__(self):
-        string = (
-            f"Numerical target\n"
-            f"   Name:   '{self.name}'\n"
-            f"   Mode:   '{self.mode}'\n"
-            f"   Bounds: {self.bounds}"
-        )
-        return string
+    @validator("bounds")
+    def validate_bounds(cls, bounds):
+        """Validates if the given bounds are specified correctly."""
+        if bounds[1] <= bounds[0]:
+            raise ValueError("The upper bound must be greater than the lower bound.")
+        return bounds
 
     def transform(self, data: pd.DataFrame):
         """
@@ -128,7 +102,7 @@ class NumericalTarget(Target):
                 # TODO implement match transform here
                 raise TypeError(
                     f"MATCH mode is not supported for this target named {self.name} of "
-                    f"type {self.TYPE} since it has non-finite bounds or bounds are not"
+                    f"type {self.type} since it has non-finite bounds or bounds are not"
                     f" defined. Bounds need to be a finite 2-tuple."
                 )
             raise NotImplementedError("MATCH mode for targets is not implemented yet.")

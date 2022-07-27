@@ -24,7 +24,7 @@ config_dict = {
             "name": "Categorical_2",
             "type": "CAT",
             "values": ["bad", "OK", "good"],
-            "encoding": "Integer",
+            "encoding": "INT",
         },
         {
             "name": "Num_disc_1",

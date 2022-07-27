@@ -26,7 +26,7 @@ class Recommender(ABC):
     experiments based on an underlying (batch) acquisition criterion.
     """
 
-    TYPE: str
+    type: str
     SUBCLASSES: Dict[str, Recommender] = {}
 
     def __init__(self, acquisition_function: AcquisitionFunction):
@@ -35,7 +35,7 @@ class Recommender(ABC):
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.TYPE] = cls
+        cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
@@ -63,7 +63,7 @@ class MarginalRankingRecommender(Recommender):
     fashion.
     """
 
-    TYPE = "RANKING"
+    type = "RANKING"
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """See base class."""

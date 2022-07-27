@@ -6,83 +6,64 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+
+from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Extra, validator
+from sklearn.metrics.pairwise import pairwise_distances
 
 from baybe.utils import check_if_in
 
 log = logging.getLogger(__name__)
 
 
-class ParameterConfig(BaseModel, extra=Extra.forbid):
-    """Configuration class for creating parameter objects."""
-
-    name: str
-    type: str
-    values: list
-    tolerance: Optional[float]  # TODO: conditional validation depending on type
-    encoding: Optional[str]
-
-    @validator("type")
-    def validate_type(cls, val):
-        """Validates if the given parameter type exists."""
-        check_if_in(val, Parameter.SUBCLASSES)
-        return val
-
-    @validator("encoding", always=True)
-    def validate_encoding(cls, val, values):
-        """Validates, for parameters that require an encoding, if an encoding is
-        provided and if the selection is possible for the parameter type."""
-        if values["type"] in Parameter.ENCODINGS:
-            if val is None:
-                raise ValueError(
-                    f"For parameter '{values['name']}' of type {values['type']}, an "
-                    f"encoding must be specified. Select one of "
-                    f"{Parameter.ENCODINGS[values['type']]}. "
-                )
-            check_if_in(val, Parameter.ENCODINGS[values["type"]])
-        return val
+def _validate_value_list(lst: list, values: dict):
+    if len(lst) < 2:
+        raise ValueError(
+            f"Parameter {values['name']} must have at least two unique values."
+        )
+    if len(lst) != len(np.unique(lst)):
+        raise ValueError(
+            f"Values for parameter {values['name']} are not unique. "
+            f"This would cause duplicates in the possible experiments."
+        )
+    return lst
 
 
-class Parameter(ABC):
+class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """
     Abstract base class for different parameters. Will handle storing info about the
     type, range, constraints and in-range checks, transformations etc
     """
 
-    TYPE: str
-    SUBCLASSES: Dict[str, Parameter] = {}
-    ENCODINGS: Dict[Parameter, List[str]] = {}
+    # class variables
+    type: ClassVar[str]
+    SUBCLASSES: ClassVar[Dict[str, Parameter]] = {}
 
-    def __init__(self, config: ParameterConfig):
-        self.name = config.name
-        self.values = config.values or []
-        self.comp_cols = []
-        self.comp_values = None
+    # object variables
+    name: str
 
-    def __str__(self):
-        string = (
-            f"Generic parameter\n"
-            f"   Name:     '{self.name}'\n"
-            f"   Values:   {self.values}\n"
-        )
-        return string
+    # TODO: this becomes obsolete in pydantic 2.0 when the __post_init_post_parse__
+    #   is available:
+    #   - https://github.com/samuelcolvin/pydantic/issues/691
+    #   - https://github.com/samuelcolvin/pydantic/issues/1729
+    comp_cols: list = []
+    comp_values: Optional[np.ndarray] = None
 
     @classmethod
-    # TODO: add type hint once circular import problem has been fixed
-    def create(cls, config) -> Parameter:
+    def create(cls, config: dict) -> Parameter:
         """Creates a new parameter object matching the given specifications."""
-        return cls.SUBCLASSES[config.type](config)
+        config = config.copy()
+        param_type = config.pop("type")
+        check_if_in(param_type, list(Parameter.SUBCLASSES.keys()))
+        return cls.SUBCLASSES[param_type](**config)
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.TYPE] = cls
-        if hasattr(cls, "ALLOWED_ENCODINGS"):
-            cls.ENCODINGS[cls.TYPE] = cls.ALLOWED_ENCODINGS
+        cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def is_in_range(self, item: object):
@@ -90,11 +71,6 @@ class Parameter(ABC):
         Tells whether an item is within the current parameter range.
         """
         return True
-
-    @classmethod
-    def from_dict(cls, config_dict: dict) -> Parameter:
-        """Creates a parameter from a config dictionary."""
-        return cls(ParameterConfig(**config_dict))
 
     @abstractmethod
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
@@ -114,30 +90,12 @@ class Categorical(Parameter):
     Parameter class for categorical parameters
     """
 
-    TYPE = "CAT"
-    ALLOWED_ENCODINGS = ["OHE", "Integer"]
+    type = "CAT"
 
-    def __init__(self, config: ParameterConfig):
-        super().__init__(config)
+    values: list
+    encoding: Literal["OHE", "INT"]
 
-        self.encoding = config.encoding
-        self.comp_cols = []
-
-        if len(self.values) != len(np.unique(self.values)):
-            raise ValueError(
-                f"Values for parameter {self.name} are not unique. This would cause "
-                f"duplicates in the possible experiments."
-            )
-
-    def __str__(self):
-        string = (
-            f"Categorical parameter\n"
-            f"   Name:     '{self.name}'\n"
-            f"   Values:   {self.values}\n"
-            f"   Encoding: {self.encoding}"
-        )
-
-        return string
+    _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
     def is_in_range(self, item: str):
         """
@@ -176,7 +134,7 @@ class Categorical(Parameter):
 
             transformed = pd.DataFrame(transformed_data)
 
-        elif self.encoding == "Integer":
+        elif self.encoding == "INT":
             mapping = {val: k for k, val in enumerate(self.values)}
             coldata = []
 
@@ -201,45 +159,35 @@ class NumericDiscrete(Parameter):
     Parameter class for numerical but discrete parameters (aka setpoints)
     """
 
-    TYPE = "NUM_DISCRETE"
+    type = "NUM_DISCRETE"
 
-    def __init__(self, config: ParameterConfig):
-        super().__init__(config)
+    values: list
+    tolerance: float
 
-        self.comp_cols = []
-        self.comp_values = None
+    _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-        if len(self.values) < 2:
-            raise AssertionError(
-                f"Numerical parameter {self.name} must have at least 2 "
-                f"unqiue values"
+    @validator("tolerance")
+    def validate_tolerance(cls, tolerance, values):
+        """
+        Validates that the tolerance (i.e. allowed experimental uncertainty when
+        reading in measured values) is safe. A tolerance larger than half the minimum
+        distance between parameter values is not allowed because that could cause
+        ambiguity when inputting datapoints later.
+        """
+        # NOTE: computing all pairwise distances can be avoided if we ensure that the
+        #   values are ordered (which is currently not the case)
+        dists = pairwise_distances(np.asarray(values["values"]).reshape(-1, 1))
+        np.fill_diagonal(dists, np.inf)
+        max_tol = dists.min() / 2.0
+
+        if tolerance >= max_tol:
+            raise ValueError(
+                f"Parameter {values['name']} is initialized with tolerance "
+                f"{tolerance} but due to the values {values['values']} a "
+                f"maximum tolerance of {max_tol} is suggested to avoid ambiguity."
             )
 
-        # allowed experimental uncertainty when reading in measured values
-        # if the requested tolerance is larger than half the minimum distance between
-        # parameter values a warning is printed because that could cause ambiguity when
-        # inputting datapoints later
-        max_tol = (
-            np.min(
-                np.abs(
-                    [
-                        config.values[k] - config.values[k - 1]
-                        for k in range(1, len(config.values))
-                    ]
-                )
-            )
-            / 2.0
-        )
-        if config.tolerance >= max_tol:
-            log.warning(
-                "Parameter %s is initialized with tolerance %s, but due to the "
-                "values %s a maximum tolerance of %s is suggested to avoid ambiguity.",
-                config.name,
-                config.tolerance,
-                config.values,
-                max_tol,
-            )
-        self.tolerance = config.tolerance
+        return tolerance
 
     def is_in_range(self, item: float):
         """
@@ -252,16 +200,6 @@ class NumericDiscrete(Parameter):
             return True
 
         return False
-
-    def __str__(self):
-        string = (
-            f"Numerical discrete parameter\n"
-            f"   Name:           '{self.name}'\n"
-            f"   Values:          {self.values}\n"
-            f"   Input Tolerance: {self.tolerance}"
-        )
-
-        return string
 
     def transform_rep_exp2comp(self, data: pd.DataFrame = None):
         """
@@ -276,55 +214,31 @@ class NumericDiscrete(Parameter):
         return data
 
 
-class GenericSubstance(Parameter):
+class GenericSubstance(Parameter, ABC):
     """
     Parameter class for generic substances that will be treated with Mordred+PCA
     """
 
-    TYPE = "GEN_SUBSTANCE"
-    ALLOWED_ENCODINGS = ["Mordred", "RDKit", "Morgan_FP"]  # TODO: capitalize constants
+    type = "GEN_SUBSTANCE"
 
-    def __init__(self, config: ParameterConfig):
-        super().__init__(config)
-        # self.substances = {} if substances is None else substances
-
-        raise NotImplementedError("This parameter type is not implemented yet.")
+    encoding: Literal["Mordred", "RDKit", "Morgan_FP"]  # TODO: capitalize constants
 
 
-class Custom(Parameter):
+class Custom(Parameter, ABC):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry
     """
 
-    TYPE = "CUSTOM"
-
-    def __init__(self, config: ParameterConfig):
-        super().__init__(config)
-        # self.representation = (
-        #     pd.DataFrame([]) if repesentation is None else repesentation
-        # )
-
-        raise NotImplementedError("This parameter type is not implemented yet.")
+    type = "CUSTOM"
 
 
-class NumericContinuous(Parameter):
+class NumericContinuous(Parameter, ABC):
     """
     Parameter class for numerical parameters that are continuous
     """
 
-    TYPE = "NUM_CONTINUOUS"
-
-    def __init__(self, config: ParameterConfig):
-        super().__init__(config)
-        # self.lbound = -np.inf if lbound is None else lbound  # lower bound
-        # self.ubound = np.inf if ubound is None else ubound  # upper bound
-
-        raise NotImplementedError("This parameter type is not implemented yet.")
-
-    def is_in_range(self, item: float):
-        # return self.lbound <= item <= self.ubound
-        raise NotImplementedError()
+    type = "NUM_CONTINUOUS"
 
 
 def parameter_outer_prod_to_df(
@@ -344,8 +258,8 @@ def parameter_outer_prod_to_df(
         The created data frame with the combinations
     """
     allowed_types = Parameter.SUBCLASSES
-    lst_of_values = [p.values for p in parameters if p.TYPE in allowed_types]
-    lst_of_names = [p.name for p in parameters if p.TYPE in allowed_types]
+    lst_of_values = [p.values for p in parameters if p.type in allowed_types]
+    lst_of_names = [p.name for p in parameters if p.type in allowed_types]
 
     index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
     ret = pd.DataFrame(index=index).reset_index()

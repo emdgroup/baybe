@@ -10,14 +10,22 @@ import pandas as pd
 from pydantic import BaseModel, Extra, validator
 
 import baybe.parameters as baybe_parameters
-from baybe.parameters import Parameter, ParameterConfig
-from baybe.targets import ObjectiveConfig, Target
+from baybe.parameters import Parameter
+from baybe.targets import Objective, Target
+from baybe.utils import check_if_in
 
 log = logging.getLogger(__name__)
 
 
 class BayBEConfig(BaseModel, extra=Extra.forbid):
     """Configuration class for BayBE."""
+
+    # TODO: Remove explicit config class when having found a way to blend the parsing
+    #   logic directly into BayBE. Currently, the problem is that additional members
+    #   (that do not need to be parsed) cannot be easily defined. This will be fixed
+    #   in pydantic 2.0.
+    #   - https://github.com/samuelcolvin/pydantic/issues/691
+    #   - https://github.com/samuelcolvin/pydantic/issues/1729
 
     project_name: str
     parameters: List[dict]
@@ -28,14 +36,19 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     numerical_measurements_must_be_within_tolerance: bool = True
 
     @validator("parameters")
-    def validate_parameters(cls, param_specs):
-        """Turns the given list of parameters specifications into config objects."""
-        return [ParameterConfig(**param) for param in param_specs]
-
-    @validator("objective")
-    def validate_objective(cls, objective_specs):
-        """Turns the given objective specifications into a config object."""
-        return ObjectiveConfig(**objective_specs)
+    def validate_parameter_types(cls, param_specs):
+        """
+        Validates that each parameter has a valid type.
+        All remaining parameter specifications are validated during instantiation.
+        """
+        try:
+            for param in param_specs:
+                check_if_in(param["type"], list(Parameter.SUBCLASSES.keys()))
+        except KeyError as exc:
+            raise ValueError(
+                "Each parameter needs a valid type specification."
+            ) from exc
+        return param_specs
 
 
 class BayBE:
@@ -49,7 +62,8 @@ class BayBE:
         # Create the parameter and target objects
         self.config = config
         self.parameters = [Parameter.create(p) for p in config.parameters]
-        self.targets = [Target.create(t) for t in config.objective.targets]
+        self.objective = Objective(**config.objective)
+        self.targets = [Target.create(t) for t in self.objective.targets]
 
         # Create the experimental dataframe
         self.searchspace_exp_rep = baybe_parameters.parameter_outer_prod_to_df(
@@ -172,7 +186,7 @@ class BayBE:
             # Check if row is valid input
             test = True
             for param in self.parameters:
-                if "NUM" in param.TYPE:
+                if "NUM" in param.type:
                     if self.config.numerical_measurements_must_be_within_tolerance:
                         test &= param.is_in_range(row[param.name])
                 else:
@@ -194,9 +208,9 @@ class BayBE:
             # with min deviation.
             # TODO Discuss the different scenarios that are possible
             cat_cols = [
-                param.name for param in self.parameters if "NUM" not in param.TYPE
+                param.name for param in self.parameters if "NUM" not in param.type
             ]
-            num_cols = [param.name for param in self.parameters if "NUM" in param.TYPE]
+            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
 
             match = (self.searchspace_exp_rep.loc[:, cat_cols] == row[cat_cols]).all(
                 axis=1, skipna=False
@@ -470,7 +484,7 @@ def add_noise(
         Nothing
     """
     for param in obj.parameters:
-        if "NUM" in param.TYPE:
+        if "NUM" in param.type:
             if noise_type == "relative_percent":
                 data[param.name] *= np.random.uniform(
                     1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)
