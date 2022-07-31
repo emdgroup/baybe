@@ -10,6 +10,7 @@ from baybe.core import add_fake_results, add_noise, BayBE, BayBEConfig
 # parameter
 config_dict = {
     "project_name": "Input Output Debug",
+    "random_seed": 1337,
     "allow_repeated_recommendations": True,
     "allow_recommending_already_measured": True,
     "numerical_measurements_must_be_within_tolerance": True,
