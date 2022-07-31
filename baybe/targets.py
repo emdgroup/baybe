@@ -68,8 +68,11 @@ class NumericalTarget(Target):
     @validator("bounds")
     def validate_bounds(cls, bounds):
         """Validates if the given bounds are specified correctly."""
-        if bounds[1] <= bounds[0]:
-            raise ValueError("The upper bound must be greater than the lower bound.")
+        if bounds is not None:
+            if bounds[1] <= bounds[0]:
+                raise ValueError(
+                    "The upper bound must be greater than the lower bound."
+                )
         return bounds
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
