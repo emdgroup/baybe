@@ -2,127 +2,110 @@
 Functionality for different type of targets
 """
 
-import logging
+from __future__ import annotations
+
+from abc import ABC
+from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel, Extra, validator
 
-allowed_types = ["NUM"]
-allowed_modes = ["SINGLE"]
-# allowed_modes = ["SINGLE", "MULTI_DESIRABILITY", "MULTI_PARETO", "MULTI_TASK"]
-
-log = logging.getLogger(__name__)
+from baybe.utils import check_if_in
 
 
-class NumericalTarget:
+class Objective(BaseModel, extra=Extra.forbid):
+    """Class for managing optimization objectives."""
+
+    mode: Literal["SINGLE"]
+    targets: List[dict]
+
+    @validator("targets")
+    def validate_targets(cls, targets):
+        """Validates that only one target has been specified."""
+        if len(targets) > 1:
+            raise ValueError("Currently, only one target is supported.")
+        return targets
+
+
+class Target(ABC, BaseModel, extra=Extra.forbid):
+    """
+    Abstract base class for all target variables. Stores information about the type,
+    range, transformations, etc.
+    """
+
+    # class variables
+    type: ClassVar[str]
+    SUBCLASSES: ClassVar[Dict[str, Target]] = {}
+
+    # object variables
+    name: str
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.SUBCLASSES[cls.type] = cls
+
+    @classmethod
+    def create(cls, config: dict) -> Target:
+        """Creates a new target object matching the given specifications."""
+        config = config.copy()
+        param_type = config.pop("type")
+        check_if_in(param_type, list(Target.SUBCLASSES.keys()))
+        return cls.SUBCLASSES[param_type](**config)
+
+
+class NumericalTarget(Target):
     """
     Class for numerical targets
     """
 
-    def __init__(
-        self, name: str = "Unnamed Target", mode: str = "Max", bounds: tuple = None
-    ):
-        self.name = name
-        self.mode = mode
+    type = "NUM"
 
-        self.type = "NUM"
+    mode: Literal["MIN", "MAX", "MATCH"]
+    bounds: Optional[Tuple[float, float]]
 
-        # TODO Make sure bounds is a 2-sized vector of finite values
-        self.bounds = bounds
+    @validator("bounds")
+    def validate_bounds(cls, bounds):
+        """Validates if the given bounds are specified correctly."""
+        if bounds[1] <= bounds[0]:
+            raise ValueError("The upper bound must be greater than the lower bound.")
+        return bounds
 
-    def __str__(self):
-        string = (
-            f"Numerical target\n"
-            f"   Name:   '{self.name}'\n"
-            f"   Mode:   '{self.mode}'\n"
-            f"   Bounds: {self.bounds}"
-        )
-        return string
-
-    @classmethod
-    def from_dict(cls, dat: dict):
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Creates a target of this type from a dictionary
+        Transforms data to the computational representation. The transformation depends
+        on the target mode, e.g. minimization, maximization, matching, multi-target etc.
 
         Parameters
         ----------
-        dat: dict
-            Contains the info for the target
-        Returns
-        -------
-            Class instance
-        """
-        targ_name = dat.get("name", "Unnamed Target")
-        targ_mode = dat.get("mode", "Max")
-        targ_bounds = dat.get("bounds", None)
-
-        return cls(name=targ_name, mode=targ_mode, bounds=targ_bounds)
-
-    def transform(self, data: pd.DataFrame):
-        """
-        Transform data to the computational representation. The transformation depends
-        on the target mode, e.g. minimization, maximization, matching, multi-target etc
-
-        Parameters
-        ----------
-        data: pd.DataFrame
+        data : pd.DataFrame
             The data to be transformed.
+
         Returns
         -------
-        The transformed data frame
+        pd.DataFrame
+            The transformed data frame
         """
 
         # TODO implement transforms for bounds
-        if self.mode == "Max":
+        if self.mode == "MAX":
             if self.bounds is not None and np.isfinite(self.bounds).all():
                 # TODO implement transform wth bounds here
-                return data * 3
+                raise NotImplementedError()
             return data
-        if self.mode == "Min":
+        if self.mode == "MIN":
             if self.bounds is not None and np.isfinite(self.bounds).all():
                 # TODO implement transform wth bounds here
-                return -data * 3
+                raise NotImplementedError()
             return -data
-        if self.mode == "Match":
+        if self.mode == "MATCH":
             if self.bounds is not None and np.isfinite(self.bounds).all():
                 # TODO implement match transform here
                 raise TypeError(
-                    f"Match mode is not supported for this target named {self.name} of "
+                    f"MATCH mode is not supported for this target named {self.name} of "
                     f"type {self.type} since it has non-finite bounds or bounds are not"
-                    f" defined. Bounds need to be a finite 2-touple."
+                    f" defined. Bounds need to be a finite 2-tuple."
                 )
-
-            raise NotImplementedError("Match mode for targets is not implemented yet.")
-
-        raise ValueError(
-            f"The mode '{self.mode}' set for target {self.name} is not recognized. "
-            f"Must be either Min, Max or Match"
-        )
-
-
-def parse_single_target(target_dict: dict = None) -> NumericalTarget:
-    """
-    Parses a dictionary into a target object in single target mode
-
-    Parameters
-    ----------
-    target_dict: dict
-        Contains info for the target
-
-    Returns
-    -------
-        Target class instance
-    """
-    if target_dict is None:
-        target_dict = {}
-
-    target_type = target_dict.get("type", "NUM")
-    if target_type == "NUM":
-        target = NumericalTarget.from_dict(target_dict)
-    else:
-        raise ValueError(
-            f"Target type {target_type} is not one of the allowed "
-            f"choices: {allowed_types}",
-        )
-
-    return target
+            raise NotImplementedError("MATCH mode for targets is not implemented yet.")
+        return data

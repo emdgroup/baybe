@@ -1,140 +1,118 @@
 """
 Functionality to deal wth different parameters
 """
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import List, Optional, Union
+
+from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel, Extra, validator
+from sklearn.metrics.pairwise import pairwise_distances
 
-allowed_types = ["CAT", "NUM_DISCRETE"]
-# allowed_types = ["NUM_DISCRETE", "NUM_CONTINUOUS", "CAT", "GEN_SUBSTANCE", "CUSTOM"]
-
+from baybe.utils import check_if_in
 
 log = logging.getLogger(__name__)
 
 
-class GenericParameter(ABC):
-    """
-    Abstract base class for different parameters. Will handle storing info about the
-    type, range, constraints and in-range checks, transformations etc
-    """
-
-    def __init__(self, name: str = "Unnamed Parameter", values: Optional[list] = None):
-        self.type = "GENERIC"
-        self.name = name
-        self.values = [] if values is None else values
-        self.comp_cols = []
-        self.comp_values = None
-        super().__init__()
-
-    def __str__(self):
-        string = (
-            f"Generic parameter\n"
-            f"   Name:     '{self.name}'\n"
-            f"   Values:   {self.values}\n"
+def _validate_value_list(lst: list, values: dict):
+    """A pydantic validator to verify parameter values."""
+    if len(lst) < 2:
+        raise ValueError(
+            f"Parameter {values['name']} must have at least two unique values."
         )
-        return string
+    if len(lst) != len(np.unique(lst)):
+        raise ValueError(
+            f"Values for parameter {values['name']} are not unique. "
+            f"This would cause duplicates in the possible experiments."
+        )
+    return lst
 
-    @abstractmethod
-    def is_in_range(self, item: object):
-        """
-        Tells whether an item is within the current parameter range.
-        """
-        return True
+
+class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+    """
+    Abstract base class for all parameters. Stores information about the
+    type, range, constraints, etc. and handles in-range checks, transformations etc.
+    """
+
+    # class variables
+    type: ClassVar[str]
+    SUBCLASSES: ClassVar[Dict[str, Parameter]] = {}
+
+    # object variables
+    name: str
+
+    # TODO: this becomes obsolete in pydantic 2.0 when the __post_init_post_parse__
+    #   is available:
+    #   - https://github.com/samuelcolvin/pydantic/issues/691
+    #   - https://github.com/samuelcolvin/pydantic/issues/1729
+    comp_cols: list = []
+    comp_values: Optional[np.ndarray] = None
 
     @classmethod
-    @abstractmethod
-    def from_dict(cls, dat: dict):
-        """
-        Creates a parameter of this type from a dictionary
+    def create(cls, config: dict) -> Parameter:
+        """Creates a new parameter object matching the given specifications."""
+        config = config.copy()
+        param_type = config.pop("type")
+        check_if_in(param_type, list(Parameter.SUBCLASSES.keys()))
+        return cls.SUBCLASSES[param_type](**config)
 
-        Parameters
-        ----------
-        dat: dict
-            Dictionary with info describing the parameter
-
-        Returns
-        -------
-            Class instance
-        """
-        param_name = dat.get("name", "Unnamed Parameter")
-        param_values = dat.get("values", [])
-        return cls(name=param_name, values=param_values)
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
+    def is_in_range(self, item: object) -> bool:
         """
-        Function to transform data from the experimental to computational representation
+        Tells whether an item is within the parameter range.
+        """
+
+    @abstractmethod
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
+        """
+        Transforms data from experimental to computational representation.
 
         Parameters
         ----------
         data: pd.DataFrame
-            Data to be transformed
+            Data to be transformed.
+
+        Returns
+        -------
+        pd.DataFrame
+            The transformed version of the data.
         """
-        return None
 
 
-class Categorical(GenericParameter):
+class Categorical(Parameter):
     """
-    Parameter class for categorical parameters
+    Parameter class for categorical parameters.
     """
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        values: list = None,
-        encoding: str = "OHE",
-    ):
-        super().__init__(name=name, values=values)
+    # class variables
+    type = "CAT"
 
-        self.type = "CAT"
-        self.allowed_encodings = ["OHE", "Integer"]
+    # object variables
+    values: list
+    encoding: Literal["OHE", "INT"]
 
-        self.encoding = encoding
-        self.comp_cols = []
+    # validators
+    _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-        if len(self.values) != len(np.unique(self.values)):
-            raise ValueError(
-                f"Values for parameter {self.name} are not unique. This would cause "
-                f"duplicates in the possible experiments."
-            )
-
-    def __str__(self):
-        string = (
-            f"Categorical parameter\n"
-            f"   Name:     '{self.name}'\n"
-            f"   Values:   {self.values}\n"
-            f"   Encoding: {self.encoding}"
-        )
-
-        return string
-
-    def is_in_range(self, item: str):
+    def is_in_range(self, item: str) -> bool:
         """
-        See base class
+        See base class.
         """
-        if item in self.values:
-            return True
+        return item in self.values
 
-        return False
-
-    @classmethod
-    def from_dict(cls, dat):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
         """
-        See base class
-        """
-        param_name = dat.get("name", "Unnamed Parameter")
-        param_values = dat.get("values", [])
-        param_encoding = dat.get("encoding", "OHE")
-
-        return cls(name=param_name, values=param_values, encoding=param_encoding)
-
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
-        """
-        See base class
+        See base class.
         """
         # IMPROVE neater implementation eg via vectorized mapping
 
@@ -160,7 +138,7 @@ class Categorical(GenericParameter):
 
             transformed = pd.DataFrame(transformed_data)
 
-        elif self.encoding == "Integer":
+        elif self.encoding == "INT":
             mapping = {val: k for k, val in enumerate(self.values)}
             coldata = []
 
@@ -176,95 +154,60 @@ class Categorical(GenericParameter):
             transformed = pd.DataFrame(coldata, columns=[colname])
             if colname not in self.comp_cols:
                 self.comp_cols.append(colname)
-        else:
-            raise ValueError(
-                f"Parameter {self.name} has encoding {self.encoding} specified, "
-                f"but encoding must be one of {self.allowed_encodings}."
-            )
 
         return transformed
 
 
-class NumericDiscrete(GenericParameter):
+class NumericDiscrete(Parameter):
     """
-    Parameter class for numerical but discrete parameters (aka setpoints)
+    Parameter class for discrete numerical parameters (a.k.a. setpoints).
     """
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        values: list = None,
-        input_tolerance: float = 0.0,
-    ):
-        super().__init__(name=name, values=values)
+    # class variables
+    type = "NUM_DISCRETE"
 
-        self.type = "NUM_DISCRETE"
-        self.comp_cols = []
-        self.comp_values = None
+    # object variables
+    values: list
+    tolerance: float
 
-        if len(self.values) < 2:
-            raise AssertionError(
-                f"Numerical parameter {self.name} must have at least 2 "
-                f"unqiue values"
-            )
+    # validators
+    _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-        # allowed experimental uncertainty when reading in measured values
-        # if the requested tolerance is larger than half the minimum distance between
-        # parameter values a warning is printed because that could cause ambiguity when
-        # inputting datapoints later
-        max_tol = (
-            np.min(np.abs([values[k] - values[k - 1] for k in range(1, len(values))]))
-            / 2.0
-        )
-        if input_tolerance >= max_tol:
-            log.warning(
-                "Parameter %s is initialized with tolerance %s, but due to the "
-                "values %s a maximum tolerance of %s is suggested to avoid ambiguity.",
-                self.name,
-                input_tolerance,
-                self.values,
-                max_tol,
-            )
-        self.input_tolerance = input_tolerance
-
-    def is_in_range(self, item: float):
+    @validator("tolerance")
+    def validate_tolerance(cls, tolerance, values):
         """
-        See base class
+        Validates that the tolerance (i.e. allowed experimental uncertainty when
+        reading in measured values) is safe. A tolerance larger than half the minimum
+        distance between parameter values is not allowed because that could cause
+        ambiguity when inputting datapoints later.
+        """
+        # NOTE: computing all pairwise distances can be avoided if we ensure that the
+        #   values are ordered (which is currently not the case)
+        dists = pairwise_distances(np.asarray(values["values"]).reshape(-1, 1))
+        np.fill_diagonal(dists, np.inf)
+        max_tol = dists.min() / 2.0
+
+        if tolerance >= max_tol:
+            raise ValueError(
+                f"Parameter {values['name']} is initialized with tolerance "
+                f"{tolerance} but due to the values {values['values']} a "
+                f"maximum tolerance of {max_tol} is suggested to avoid ambiguity."
+            )
+
+        return tolerance
+
+    def is_in_range(self, item: float) -> bool:
+        """
+        See base class.
         """
         differences_acceptable = [
-            np.abs(bla - item) <= self.input_tolerance for bla in self.values
+            np.abs(bla - item) <= self.tolerance for bla in self.values
         ]
-        if any(differences_acceptable):
-            return True
+        return any(differences_acceptable)
 
-        return False
-
-    def __str__(self):
-        string = (
-            f"Numerical discrete parameter\n"
-            f"   Name:           '{self.name}'\n"
-            f"   Values:          {self.values}\n"
-            f"   Input Tolerance: {self.input_tolerance}"
-        )
-
-        return string
-
-    @classmethod
-    def from_dict(cls, dat):
+    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
         """
-        See base class
-        """
-        param_name = dat.get("name", "Unnamed Parameter")
-        param_values = dat.get("values", [])
-        param_tolerance = dat.get("tolerance", 0.0)
-
-        return cls(
-            name=param_name, values=param_values, input_tolerance=param_tolerance
-        )
-
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None):
-        """
-        See base class
+        See base class.
         """
 
         # Comp column is identical with the experimental columns
@@ -275,127 +218,55 @@ class NumericDiscrete(GenericParameter):
         return data
 
 
-class GenericSubstance(GenericParameter):
+class GenericSubstance(Parameter, ABC):
     """
-    Parameter class for generic substances that will be treated with Mordred+PCA
+    Parameter class for generic substances that are treated with Mordred+PCA.
     """
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        substances: dict = None,
-    ):
-        super().__init__(name=name, values=list(substances.keys()))
+    # class variables
+    type = "GEN_SUBSTANCE"
 
-        self.type = "GEN_SUBSTANCE"
-        self.allowed_encodings = ["Mordred", "RDKit", "Morgan_FP"]
-
-        self.substances = {} if substances is None else substances
-
-        raise NotImplementedError("This parameter type is not implemented yet.")
-
-    def is_in_range(self, item: str):
-        if item in self.values:
-            return True
-
-        return False
+    # object variables
+    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"]
 
 
-class Custom(GenericParameter):
+class Custom(Parameter, ABC):
     """
     Parameter class for custom parameters where the user can read in a precomputed
-    representation for labels, e.g. from quantum chemistry
+    representation for labels, e.g. from quantum chemistry.
     """
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        values: list = None,
-        repesentation: pd.DataFrame = None,
-    ):
-        super().__init__(name=name, values=values)
-
-        self.type = "CUSTOM"
-        self.representation = (
-            pd.DataFrame([]) if repesentation is None else repesentation
-        )
-
-        raise NotImplementedError("This parameter type is not implemented yet.")
-
-    def is_in_range(self, item: str):
-        if item in self.values:
-            return True
-
-        return False
+    # class variables
+    type = "CUSTOM"
 
 
-class NumericContinuous(GenericParameter):
+class NumericContinuous(Parameter, ABC):
     """
-    Parameter class for numerical parameters that are continuous
+    Parameter class for continuous numerical parameters.
     """
 
-    def __init__(
-        self,
-        name: str = "Unnamed Parameter",
-        lbound: float = None,
-        ubound: float = None,
-    ):
-        super().__init__(name=name, values=[])
-        self.type = "NUM_CONTINUOUS"
-        self.lbound = -np.inf if lbound is None else lbound  # lower bound
-        self.ubound = np.inf if ubound is None else ubound  # upper bound
-
-        raise NotImplementedError("This parameter type is not implemented yet.")
-
-    def is_in_range(self, item: float):
-        return self.lbound <= item <= self.ubound
-
-
-def parse_parameter(param_dict: dict = None) -> GenericParameter:
-    """
-    Parses a dictionary into a parameter class object
-
-    Parameters
-    ----------
-    param_dict: dict
-
-    Returns
-    -------
-        Instance of a parameter class
-    """
-    if param_dict is None:
-        param_dict = {}
-
-    param_type = param_dict.get("type", None)
-    if param_type == "CAT":
-        param = Categorical.from_dict(param_dict)
-    elif param_type == "NUM_DISCRETE":
-        param = NumericDiscrete.from_dict(param_dict)
-    else:
-        raise ValueError(
-            f"Parameter type {param_type} is not in one of the allowed "
-            f"choices: {allowed_types}",
-        )
-
-    return param
+    # class variables
+    type = "NUM_CONTINUOUS"
 
 
 def parameter_outer_prod_to_df(
-    parameters: List[GenericParameter],
+    parameters: List[Parameter],
 ) -> pd.DataFrame:
     """
-    Creates all possible combinations for parameters and their values (ignores
-    non-discrete parameters).
+    Creates the Cartesion product of all parameter values (ignoring non-discrete
+    parameters).
 
     Parameters
     ----------
-    parameters: list
-        List of parameter objects
+    parameters: List[Parameter]
+        List of parameter objects.
+
     Returns
     -------
-    ret: pd.DataFrame
-        The created data frame with the combinations
+    pd.DataFrame
+        A dataframe containing all parameter value combinations.
     """
+    allowed_types = Parameter.SUBCLASSES
     lst_of_values = [p.values for p in parameters if p.type in allowed_types]
     lst_of_names = [p.name for p in parameters if p.type in allowed_types]
 
@@ -408,27 +279,28 @@ def parameter_outer_prod_to_df(
 def scaled_view(
     data_fit: Union[pd.DataFrame, pd.Series],
     data_transform: Union[pd.DataFrame, pd.Series],
-    parameters: Optional[List[GenericParameter]] = None,
+    parameters: Optional[List[Parameter]] = None,
     scalers: Optional[dict] = None,
-):
+) -> pd.DataFrame:
     """
     Comfort function to scale data given different scaling methods for different
     parameter types.
 
     Parameters
     ----------
-    data_fit:
-        data on which the scalers are fit
-    data_transform:
-        data to be transformed
-    parameters:
-        list with baybe parameter instances
-    scalers:
-        dict with parameter types as keys and sklearn scaler instances as values
+    data_fit : Union[pd.DataFrame, pd.Series]
+        Data on which the scalers are fit.
+    data_transform : Union[pd.DataFrame, pd.Series]
+        Data to be transformed.
+    parameters : Optional[List[Parameter]]
+        List of baybe parameter objects.
+    scalers : Optional[dict]
+        Dict with parameter types as keys and sklearn scaler objects as values.
 
     Returns
     -------
-    transformed: transformed data
+    pd.DataFrame
+        The scaled parameter view.
 
     Examples
     --------

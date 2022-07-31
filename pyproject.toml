@@ -27,11 +27,20 @@ line-length = 88
 # expressions are accepted.
 generated-members = "torch.*"
 
+[tool.pylint.MASTER]
+# Add pydantic to whitelist according to https://github.com/samuelcolvin/pydantic/issues/1961
+extension-pkg-whitelist = "pydantic"
+
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
 	"fixme",  # fixme hints should be allowed
 	"wrong-import-order",  # handled by ufmt
 	"duplicate-code",  # duplicate code happens eg in similar debug scripts
 	"too-many-instance-attributes",  # BayBE class has quite a few members
-    "too-many-branches",  # Can maybe be optimized later
+	"too-many-branches",  # can maybe be optimized later
+	"too-few-public-methods",  # this happens e.g. in pydantic BaseModel classes
+	"no-self-use",  # should be replaced with a more specific fix for pydantic validators
+	# -> https://github.com/PyCQA/pylint/issues/6900
+	"no-self-argument",  # should be replaced with a more specific fix for pydantic validators
+	# -> https://github.com/PyCQA/pylint/issues/6900
 	]

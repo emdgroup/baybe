@@ -2,15 +2,53 @@
 Core functionality of BayBE. Main point of interaction via Python
 """
 import logging
-from typing import List, Tuple
+from functools import partial
+from typing import Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
+from pydantic import BaseModel, Extra, validator
 
-import baybe.config as baybe_config
 import baybe.parameters as baybe_parameters
-import baybe.targets as baybe_targets
+from baybe.parameters import Parameter
+from baybe.targets import Objective, Target
+from baybe.utils import check_if_in
 
 log = logging.getLogger(__name__)
+
+
+class BayBEConfig(BaseModel, extra=Extra.forbid):
+    """Configuration class for BayBE."""
+
+    # TODO: Remove explicit config class when having found a way to blend the parsing
+    #   logic directly into BayBE. Currently, the problem is that additional members
+    #   (that do not need to be parsed) cannot be easily defined. This will be fixed
+    #   in pydantic 2.0.
+    #   - https://github.com/samuelcolvin/pydantic/issues/691
+    #   - https://github.com/samuelcolvin/pydantic/issues/1729
+
+    project_name: str
+    parameters: List[dict]
+    objective: dict
+    random_seed: int = 1337
+    allow_repeated_recommendations: bool = True
+    allow_recommending_already_measured: bool = True
+    numerical_measurements_must_be_within_tolerance: bool = True
+
+    @validator("parameters")
+    def validate_parameter_types(cls, param_specs):
+        """
+        Validates that each parameter has a valid type.
+        All remaining parameter specifications are validated during instantiation.
+        """
+        try:
+            for param in param_specs:
+                check_if_in(param["type"], list(Parameter.SUBCLASSES.keys()))
+        except KeyError as exc:
+            raise ValueError(
+                "Each parameter needs a valid type specification."
+            ) from exc
+        return param_specs
 
 
 class BayBE:
@@ -18,14 +56,14 @@ class BayBE:
     Main class for interaction with baybe
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: BayBEConfig):
         self.batches_done = 0  # current iteration/batch number
 
-        # Parse everything from config
-        parameters, targets = baybe_config.parse_config(config)
-        self.parameters: List[baybe_parameters.GenericParameter] = parameters
-        self.targets: List[baybe_targets.NumericalTarget] = targets
-        self.config: dict = config
+        # Create the parameter and target objects
+        self.config = config
+        self.parameters = [Parameter.create(p) for p in config.parameters]
+        self.objective = Objective(**config.objective)
+        self.targets = [Target.create(t) for t in self.objective.targets]
 
         # Create the experimental dataframe
         self.searchspace_exp_rep = baybe_parameters.parameter_outer_prod_to_df(
@@ -98,8 +136,8 @@ class BayBE:
             string += f"{param}\n"
 
         string += "Options:\n"
-        for option in baybe_config.allowed_config_options:
-            string += f"   {option}: {self.config[option]}\n"
+        for option, value in self.config.dict().items():
+            string += f"   {option}: {value}\n"
 
         string += "\n\nSearch Space Exp Representation:\n"
         string += f"{self.searchspace_exp_rep}"
@@ -149,7 +187,7 @@ class BayBE:
             test = True
             for param in self.parameters:
                 if "NUM" in param.type:
-                    if self.config["numerical_measurements_must_be_within_tolerance"]:
+                    if self.config.numerical_measurements_must_be_within_tolerance:
                         test &= param.is_in_range(row[param.name])
                 else:
                     test &= param.is_in_range(row[param.name])
@@ -265,9 +303,9 @@ class BayBE:
 
         # Filter searchspace before transferring to strategy
         mask_todrop = self.searchspace_metadata["dont_recommend"].copy()
-        if not self.config["allow_repeated_recommendations"]:
+        if not self.config.allow_repeated_recommendations:
             mask_todrop |= self.searchspace_metadata["was_recommended"]
-        if not self.config["allow_recommending_already_measured"]:
+        if not self.config.allow_recommending_already_measured:
             mask_todrop |= self.searchspace_metadata["was_measured"]
 
         if (mask_todrop.sum() >= len(self.searchspace_exp_rep)) or (
@@ -311,3 +349,152 @@ class BayBE:
         """
         # TODO Implement
         raise NotImplementedError("Saving a BayBE object is not implemented yet")
+
+
+def add_fake_results(
+    data: pd.DataFrame,
+    obj: BayBE,
+    good_reference_values: Optional[Dict[str, List]] = None,
+    good_intervals: Optional[Tuple] = None,
+    bad_intervals: Optional[Tuple] = None,
+) -> None:
+    """
+    Add fake results to a dataframe which was the result of the BayBE recommendation
+    action. It is possible to identify "good" values, which will be given a better
+    target value. With this the algorithm can be driven towards certain optimal values
+    whilst still being random. Useful for testing.
+
+    Parameters
+    ----------
+    data : pandas dataframe
+           Output of the recommend function of a BayBE object
+    obj : BayBE class instance
+          The baybe object which provides configuration, targets, etc.
+    good_reference_values : dictionary
+                  A dictionaries which defines parameters and respective values
+                  which identify what will be considered good values.
+                  Example {'parameter1': [1,4,42]}
+    good_intervals : 2-tuple
+                     Good entries will get a random value in the range defined by this
+                     tuple
+    bad_intervals : 2-tuple
+                    Bad entries will get a random value in the range defined by this
+                    tuple
+
+    Returns
+    -------
+    Nothing since it operated directly on the data
+    """
+    # TODO Add support for multiple targets
+
+    # Sanity checks for good_bad_ratio
+    if good_intervals is None:
+        if obj.targets[0].mode == "MAX":
+            good_intervals = (66, 100)
+        elif obj.targets[0].mode == "MIN":
+            good_intervals = (0, 33)
+        elif obj.targets[0].mode == "MATCH":
+            good_intervals = tuple(*obj.targets[0].bounds)
+        else:
+            raise ValueError("Unrecognized target mode when trying to add fake values.")
+    if bad_intervals is None:
+        if obj.targets[0].mode == "MAX":
+            bad_intervals = (0, 50)
+        elif obj.targets[0].mode == "MIN":
+            bad_intervals = (50, 100)
+        elif obj.targets[0].mode == "MATCH":
+            bad_intervals = (
+                0.05 * obj.targets[0].bounds[0],
+                0.3 * obj.targets[0].bounds[0],
+            )
+        else:
+            raise ValueError("Unrecognized target mode when trying to add fake values.")
+    if not isinstance(good_intervals, Tuple) or (len(good_intervals) != 2):
+        raise TypeError("Parameter good_intervals must be a 2-tuple")
+    if not isinstance(bad_intervals, Tuple) or (len(bad_intervals) != 2):
+        raise TypeError("Parameter bad_intervals must be a 2-tuple")
+
+    # Sanity check for good_values. Assure we only consider columns that are in the data
+    if good_reference_values is None:
+        good_reference_values = {}
+
+    size = len(data)
+    for target in obj.targets:
+        # add bad values
+        data[target.name] = np.random.randint(bad_intervals[0], bad_intervals[1], size)
+
+        # add good values
+        masks = []
+
+        if len(good_reference_values) > 0:
+            for param, vals in good_reference_values.items():
+                if param not in data.columns:
+                    raise ValueError(
+                        f"When adding fake results you specified good "
+                        f"values for the parameter '{param}' but this "
+                        f"parameter is not in the dataframe."
+                    )
+                if not isinstance(vals, list):
+                    raise TypeError(
+                        f"Entries in parameter good_reference_values "
+                        f"(which is a dictionary) must be lists, but you "
+                        f"provided {vals}"
+                    )
+                mask = data[param].apply(partial(lambda x, v: x in v, v=vals))
+                masks.append(mask)
+
+            # Good values will be added where the parameters of the
+            # corresponding datapoints match the ones defined in good_reference_values
+            for k, mask in enumerate(masks):
+                if k == 0:
+                    final_mask = mask
+
+                final_mask &= mask
+
+            data.loc[final_mask, target.name] = np.random.randint(
+                good_intervals[0], good_intervals[1], final_mask.sum()
+            )
+
+
+def add_noise(
+    data: pd.DataFrame,
+    obj: BayBE,
+    noise_type: str = "absolute",
+    noise_level: float = 1.0,
+):
+    """
+    Adds uniform noise to parameter values of a recommendation frame. Simulates
+    experimental noise and inputting numerical values that are slightly different
+    than the recommendations coming from the search space.
+
+    Parameters
+    ----------
+    data : pandas dataframe
+           output of the recommend function of a BayBE object
+    obj : BayBE class instance
+          the baybe object which provides configuration, targets, etc.
+    noise_type : str
+        Defines whether the noise should be additive
+    noise_level : float
+        Level/magnitude of the noise, numerical value for type absolute and percentage
+        for type relative_percent
+
+    Returns
+    -------
+        Nothing
+    """
+    for param in obj.parameters:
+        if "NUM" in param.type:
+            if noise_type == "relative_percent":
+                data[param.name] *= np.random.uniform(
+                    1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)
+                )
+            elif noise_type == "absolute":
+                data[param.name] += np.random.uniform(
+                    -noise_level, noise_level, len(data)
+                )
+            else:
+                raise ValueError(
+                    f"Parameter noise_type was {noise_type} but must be either "
+                    f'"absolute" or "relative_percent"'
+                )
