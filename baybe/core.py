@@ -2,11 +2,14 @@
 Core functionality of BayBE. Main point of interaction via Python
 """
 import logging
+import random
 from functools import partial
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+
+import torch
 from pydantic import BaseModel, Extra, validator
 
 import baybe.parameters as baybe_parameters
@@ -58,6 +61,11 @@ class BayBE:
 
     def __init__(self, config: BayBEConfig):
         self.batches_done = 0  # current iteration/batch number
+
+        # Set global random seeds
+        torch.manual_seed(config.random_seed)
+        random.seed(config.random_seed)
+        np.random.seed(config.random_seed)
 
         # Create the parameter and target objects
         self.config = config

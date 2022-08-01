@@ -12,13 +12,13 @@ config_dict = {
             "name": "Categorical_1",
             "type": "CAT",
             "values": [22, 33],
-            "encoding": "OHE",
+            # "encoding": "OHE",
         },
         {
             "name": "Categorical_2",
             "type": "CAT",
             "values": ["bad", "OK", "good"],
-            "encoding": "Integer",
+            "encoding": "INT",
         },
         {
             "name": "Num_disc_1",

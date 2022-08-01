@@ -99,7 +99,7 @@ class Categorical(Parameter):
 
     # object variables
     values: list
-    encoding: Literal["OHE", "INT"]
+    encoding: Literal["OHE", "INT"] = "OHE"
 
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
