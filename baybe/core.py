@@ -340,7 +340,7 @@ class BayBE:
         #     .index
         # )
         inds = self.strategy.recommend(
-            self.searchspace_comp_rep, batch_quantity=batch_quantity
+            self.searchspace_comp_rep.loc[~mask_todrop], batch_quantity=batch_quantity
         )
 
         # Translate indices into labeled data points and update metadata

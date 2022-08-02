@@ -144,10 +144,6 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         -------
         The DataFrame indices of the specific experiments selected by the DoE strategy.
         """
-        if batch_quantity > 1:
-            raise NotImplementedError(
-                "Batch sizes larger than 1 are not yet supported."
-            )
 
         # if no training data exists, apply the strategy for initial recommendations
         if self.use_initial_strategy:

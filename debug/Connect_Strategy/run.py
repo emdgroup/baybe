@@ -62,17 +62,17 @@ config = BayBEConfig(**config_dict)
 baybe_obj = BayBE(config)
 print(baybe_obj)
 
-N_ITERATIONS = 50
+N_ITERATIONS = 20
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
-    rec = baybe_obj.recommend(batch_quantity=1)
+    rec = baybe_obj.recommend(batch_quantity=5)
     # print("\n### Recommended dataframe:\n", rec)
 
     add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
     if kIter % 2:
         add_noise(rec, baybe_obj, noise_level=0.1)
-    print("\n\n### Recommended dataframe with fake results and eventual noise:\n", rec)
+    print("### Recommended dataframe with fake results and eventual noise:\n", rec)
 
     baybe_obj.add_results(rec)
     # print(

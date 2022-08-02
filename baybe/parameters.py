@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from copy import deepcopy
 
 from typing import ClassVar, Dict, List, Literal, Optional, Union
 
@@ -312,7 +311,7 @@ def scaled_view(
         scalers = scalers,
     )
     """
-    transformed = deepcopy(data_transform)
+    transformed = data_transform.copy()
     if parameters is None:
         log.warning("No parameters were provided, not performing any scaling")
         return transformed
