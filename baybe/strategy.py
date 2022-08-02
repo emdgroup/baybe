@@ -77,7 +77,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
     surrogate_model: Optional[SurrogateModel] = None
     best_f: Optional[float] = None
-    use_initial_strategy: bool = False
+    use_initial_strategy: bool = True
 
     @validator("surrogate_model_cls", always=True)
     def validate_type(cls, model):
