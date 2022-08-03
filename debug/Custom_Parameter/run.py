@@ -74,6 +74,7 @@ config_dict = {
     },
     "strategy": {
         # "surrogate_model_cls": "GP",
+        # "recommender_cls": "RANDOM"
     },
 }
 

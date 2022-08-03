@@ -77,3 +77,16 @@ class MarginalRankingRecommender(Recommender):
         # return the dataframe indices of the top ranked candidates
         locs = candidates.index[ilocs[:batch_quantity].numpy()]
         return locs
+
+
+class RandomRecommender(Recommender):
+    """
+    Recommends experiments randomly
+    """
+
+    type = "RANDOM"
+
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+        """See base class."""
+
+        return candidates.sample(n=batch_quantity).index
