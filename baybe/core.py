@@ -14,6 +14,7 @@ from pydantic import BaseModel, Extra, validator
 
 import baybe.parameters as baybe_parameters
 from baybe.parameters import Parameter
+from baybe.strategy import Strategy
 from baybe.targets import Objective, Target
 from baybe.utils import check_if_in
 
@@ -33,6 +34,7 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     project_name: str
     parameters: List[dict]
     objective: dict
+    strategy: dict
     random_seed: int = 1337
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
@@ -71,6 +73,7 @@ class BayBE:
         self.config = config
         self.parameters = [Parameter.create(p) for p in config.parameters]
         self.objective = Objective(**config.objective)
+        self.strategy = Strategy(**config.strategy)
         self.targets = [Target.create(t) for t in self.objective.targets]
 
         # Create the experimental dataframe
@@ -303,6 +306,7 @@ class BayBE:
         ) = self.transform_rep_exp2comp(self.measurements_exp_rep)
 
         # TODO call strategy for retraining
+        self.strategy.fit(self.measurements_comp_rep_x, self.measurements_comp_rep_y)
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
@@ -329,8 +333,15 @@ class BayBE:
             )
 
         # Get indices of recommended searchspace entries here
-        # TODO call actual strategy object
-        inds = self.searchspace_exp_rep.loc[~mask_todrop].sample(n=batch_quantity).index
+        # Radnom version:
+        # inds = (
+        #     self.searchspace_exp_rep.loc[~mask_todrop]
+        #     .sample(n=batch_quantity)
+        #     .index
+        # )
+        inds = self.strategy.recommend(
+            self.searchspace_comp_rep.loc[~mask_todrop], batch_quantity=batch_quantity
+        )
 
         # Translate indices into labeled data points and update metadata
         rec = self.searchspace_exp_rep.loc[inds, :]
@@ -407,9 +418,9 @@ def add_fake_results(
             raise ValueError("Unrecognized target mode when trying to add fake values.")
     if bad_intervals is None:
         if obj.targets[0].mode == "MAX":
-            bad_intervals = (0, 50)
+            bad_intervals = (0, 33)
         elif obj.targets[0].mode == "MIN":
-            bad_intervals = (50, 100)
+            bad_intervals = (66, 100)
         elif obj.targets[0].mode == "MATCH":
             bad_intervals = (
                 0.05 * obj.targets[0].bounds[0],

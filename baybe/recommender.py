@@ -63,7 +63,7 @@ class MarginalRankingRecommender(Recommender):
     fashion.
     """
 
-    type = "RANKING"
+    type = "UNRESTRICTED_RANKING"
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """See base class."""

@@ -69,7 +69,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
     acquisition_function_cls: Union[Literal["EI"], Type[AcquisitionFunction]] = "EI"
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
-    recommender_cls: Union[str, Type[Recommender]] = "RANKING"
+    recommender_cls: Union[str, Type[Recommender]] = "UNRESTRICTED_RANKING"
 
     # TODO: this becomes obsolete in pydantic 2.0 when the __post_init_post_parse__
     #   is available:
@@ -77,7 +77,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
     surrogate_model: Optional[SurrogateModel] = None
     best_f: Optional[float] = None
-    use_initial_strategy: bool = False
+    use_initial_strategy: bool = True
 
     @validator("surrogate_model_cls", always=True)
     def validate_type(cls, model):
@@ -96,12 +96,12 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         return fun
 
     @validator("initial_strategy", always=True)
-    def validate_initial_strategy(cls, strategy):
+    def validate_initial_strategy(cls, init_strategy):
         """Validates if the given initial strategy type exists."""
-        if isinstance(strategy, str):
-            check_if_in(strategy, list(InitialStrategy.SUBCLASSES.keys()))
-            return InitialStrategy.SUBCLASSES[strategy]()
-        return strategy
+        if isinstance(init_strategy, str):
+            check_if_in(init_strategy, list(InitialStrategy.SUBCLASSES.keys()))
+            return InitialStrategy.SUBCLASSES[init_strategy]()
+        return init_strategy
 
     @validator("recommender_cls", always=True)
     def validate_recommender(cls, recommender):
@@ -144,10 +144,6 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         -------
         The DataFrame indices of the specific experiments selected by the DoE strategy.
         """
-        if batch_quantity > 1:
-            raise NotImplementedError(
-                "Batch sizes larger than 1 are not yet supported."
-            )
 
         # if no training data exists, apply the strategy for initial recommendations
         if self.use_initial_strategy:

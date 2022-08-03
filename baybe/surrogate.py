@@ -56,6 +56,7 @@ class GaussianProcessModel(SurrogateModel):
         # convert dataframes to tensors for the GP model
         train_x, train_y = to_tensor(train_x, train_y)
 
+        # TODO take care of parameter scaling
         # initialize the GP model and train it
         self.model = SingleTaskGP(train_x, train_y)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)

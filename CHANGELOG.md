@@ -23,3 +23,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BayBE options controlling recommendation and data addition behavior.
 - Config parsing and validation using pydantic.
 - Global random seed control
+- Strategy connection with BayBE object
