@@ -72,13 +72,13 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         """
 
     @abstractmethod
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
+    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
         Transforms data from experimental to computational representation.
 
         Parameters
         ----------
-        data: pd.DataFrame
+        data: pd.Series
             Data to be transformed.
 
         Returns
@@ -109,7 +109,7 @@ class Categorical(Parameter):
         """
         return item in self.values
 
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
+    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
         See base class.
         """
@@ -204,7 +204,7 @@ class NumericDiscrete(Parameter):
         ]
         return any(differences_acceptable)
 
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
+    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
         See base class.
         """
@@ -214,7 +214,7 @@ class NumericDiscrete(Parameter):
         self.comp_values = data.values
 
         # There is nothing to transform for this parameter type
-        return data
+        return data.rename(self.name).to_frame()
 
 
 class GenericSubstance(Parameter, ABC):
@@ -237,6 +237,79 @@ class Custom(Parameter, ABC):
 
     # class variables
     type = "CUSTOM"
+
+    # object variables
+    data: pd.DataFrame
+    identifier_col_idx: int = 0
+    values: Optional[list] = None
+
+    @validator("data")
+    def validate_data(cls, data, values):
+        """
+        Validates the dataframe with the custom representaton
+        """
+        if data.isna().any().any():
+            # TODO Tried to trigger this with a Nan, but for some reason the Exception
+            #  is not raised. This leads to an error in the identifier_col_idx validator
+            #  since the 'data' entry is not in the dict
+            raise ValueError(
+                f"The custom dataframe for parameter {values['name']} contains NaN "
+                f"entires, this is not supported"
+            )
+
+        return data
+
+    @validator("identifier_col_idx", always=True)
+    def validate_identifier_col(cls, col, values):
+        """
+        Validates the column index which identifies the label column
+        """
+        if (col < 0) or (col >= len(values["data"].columns)):
+            raise ValueError(
+                f"identifier_col_idx was {col} but must be a column index between "
+                f"(inclusive) 0 and {len(values['data'].columns)-1}"
+            )
+
+        return col
+
+    @validator("values", always=True)
+    def validate_values(cls, vals, values):
+        """
+        Initializes the representing labels for this parameter
+        """
+        if vals is not None:
+            raise NotImplementedError(
+                "Currently with pydantic we declare 'values' as class variable but it "
+                "is a non-validated variable and should not be provided in the config"
+            )
+
+        data = values["data"]
+        idx_col = values["identifier_col_idx"]
+
+        return data.iloc[:, idx_col].to_list()
+
+    def is_in_range(self, item: object) -> bool:
+        """
+        See base class.
+        """
+        return item in self.data.iloc[:, self.identifier_col_idx].to_list()
+
+    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
+        """
+        See base class.
+        """
+
+        # Comp columns and columns names
+        mergecol = self.data.columns[self.identifier_col_idx]
+        self.comp_cols = self.data.drop(columns=mergecol).columns.to_list()
+        self.comp_values = self.data.drop(columns=mergecol).values
+
+        # Transformation is just lookup for this parameter type
+        transformed = pd.merge(
+            left=data.rename(mergecol).to_frame(), right=self.data, on=mergecol
+        ).drop(columns=mergecol)
+
+        return transformed
 
 
 class NumericContinuous(Parameter, ABC):

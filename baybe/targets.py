@@ -4,7 +4,7 @@ Functionality for different type of targets
 
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
@@ -53,6 +53,10 @@ class Target(ABC, BaseModel, extra=Extra.forbid):
         param_type = config.pop("type")
         check_if_in(param_type, list(Target.SUBCLASSES.keys()))
         return cls.SUBCLASSES[param_type](**config)
+
+    @abstractmethod
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Creates a new target object matching the given specifications."""
 
 
 class NumericalTarget(Target):
