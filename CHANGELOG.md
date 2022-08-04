@@ -22,5 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Internal metadata storing various info about datapoints in the searchspace.
 - BayBE options controlling recommendation and data addition behavior.
 - Config parsing and validation using pydantic.
-- Global random seed control
-- Strategy connection with BayBE object
+- Global random seed control.
+- Strategy connection with BayBE object.
+- Custom parameters as labels with user-provided encodings.
