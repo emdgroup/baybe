@@ -43,4 +43,5 @@ disable = [
 	# -> https://github.com/PyCQA/pylint/issues/6900
 	"no-self-argument",  # should be replaced with a more specific fix for pydantic validators
 	# -> https://github.com/PyCQA/pylint/issues/6900
+	"broad-except", # catching base exception is common for RDKit mol validation etc
 	]

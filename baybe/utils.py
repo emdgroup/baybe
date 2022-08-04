@@ -1,19 +1,19 @@
 """
 Collection of small utilities
 """
-
 from __future__ import annotations
+
 
 from functools import partial
 from typing import Any, Dict, Iterable, Optional, Tuple, TYPE_CHECKING, Union
+if TYPE_CHECKING:
+    from .core import BayBE
 
 import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
-
-if TYPE_CHECKING:
-    from .core import BayBE
+from urllib.request import urlopen
 
 
 def is_valid_smiles(smiles: str) -> bool:
@@ -48,6 +48,36 @@ def check_if_in(element: Any, allowed: list):
         raise ValueError(
             f"The value '{element}' is not allowed. Must be one of {allowed}."
         )
+
+
+def name_to_smiles(name: str) -> str:
+    """
+    Convert from chemical name to SMILES string using chemical identifier resolver.
+
+    Parameters
+    ----------
+    name : str
+        Name or nickname of compound.
+
+    Returns
+    ----------
+    str
+        SMILES string corresponding to chemical name.
+    """
+
+    name = name.replace(" ", "%20")
+
+    try:
+        url = "http://cactus.nci.nih.gov/chemical/structure/" + name + "/smiles"
+        with urlopen(url) as web:
+            smiles = web.read().decode("utf8")
+        smiles = str(smiles)
+        if "</div>" in smiles:
+            return ""
+
+        return smiles
+    except Exception:
+        return ""
 
 
 def add_fake_results(
