@@ -4,9 +4,20 @@ Collection of small utilities
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Type, Dict, List, Iterable, Optional, Tuple, TYPE_CHECKING, Union
-if TYPE_CHECKING:
-    from .core import BayBE
+
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TYPE_CHECKING,
+    Union,
+)
+
+from urllib.request import urlopen
 
 import numpy as np
 import pandas as pd
@@ -15,7 +26,9 @@ from mordred import Calculator, descriptors
 from rdkit import Chem, RDLogger
 from rdkit.Chem.AllChem import GetMorganFingerprintAsBitVect
 from torch import Tensor
-from urllib.request import urlopen
+
+if TYPE_CHECKING:
+    from .core import BayBE
 
 
 def is_valid_smiles(smiles: str) -> bool:

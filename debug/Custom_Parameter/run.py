@@ -5,7 +5,8 @@ metadata. Target objective is minimize to test computational transformation.
 """
 import pandas as pd
 
-from baybe.core import add_fake_results, add_noise, BayBE, BayBEConfig
+from baybe.core import BayBE, BayBEConfig
+from baybe.utils import add_fake_results, add_noise
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter

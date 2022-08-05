@@ -4,8 +4,10 @@ From the three recommendations only one is actually added to test the matching a
 metadata. Target objective is minimize to test computational transformation.
 """
 
-from baybe.core import add_fake_results, add_noise, BayBE, BayBEConfig
+from baybe.core import BayBE, BayBEConfig
 from baybe.utils import (
+    add_fake_results,
+    add_noise,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
