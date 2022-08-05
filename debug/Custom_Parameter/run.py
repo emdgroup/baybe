@@ -32,7 +32,7 @@ custom_df2 = pd.DataFrame(
 
 
 config_dict = {
-    "project_name": "Connect Strategy",
+    "project_name": "Custom Parameter",
     "allow_repeated_recommendations": False,
     "allow_recommending_already_measured": True,
     "numerical_measurements_must_be_within_tolerance": True,

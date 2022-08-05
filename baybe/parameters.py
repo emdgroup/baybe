@@ -13,7 +13,7 @@ import pandas as pd
 from pydantic import BaseModel, Extra, validator
 from sklearn.metrics.pairwise import pairwise_distances
 
-from .utils import check_if_in
+from .utils import check_if_in, df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
 
@@ -239,14 +239,29 @@ class Custom(Parameter, ABC):
     type = "CUSTOM"
 
     # object variables
+    decorrelate: Union[bool, float] = True
     data: pd.DataFrame
     identifier_col_idx: int = 0
     values: Optional[list] = None
 
+    @validator("decorrelate")
+    def validate_decorrelate(cls, flag):
+        """
+        Validates the decollelate flag
+        """
+        if isinstance(flag, float):
+            if not 0.0 < flag < 1.0:
+                raise ValueError(
+                    f"The decorrelate flag was set as a float to {flag} "
+                    f"but it must be between (excluding) 0.0 and 1.0"
+                )
+
+        return flag
+
     @validator("data")
     def validate_data(cls, data, values):
         """
-        Validates the dataframe with the custom representaton
+        Validates the dataframe with the custom representation
         """
         if data.isna().any().any():
             # TODO Tried to trigger this with a Nan, but for some reason the Exception
@@ -256,6 +271,13 @@ class Custom(Parameter, ABC):
                 f"The custom dataframe for parameter {values['name']} contains NaN "
                 f"entries, this is not supported"
             )
+
+        # Always Remove zero variance and non-numeric columns
+        # TODO find way to exclude the label column
+        # data = df_drop_string_columns(data)
+        data = df_drop_single_value_columns(data)
+
+        # TODO Include the feature decorrelation here or somewhere suitable
 
         return data
 

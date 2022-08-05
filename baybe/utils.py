@@ -4,7 +4,7 @@ Collection of small utilities
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Type, Dict, Iterable, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Type, Dict, List, Iterable, Optional, Tuple, TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from .core import BayBE
 
@@ -381,3 +381,99 @@ def smiles_to_fp_features(
     df = pd.DataFrame(res)
 
     return df
+
+
+def df_drop_single_value_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Drop dataframe columns with zero variance. Adapted from edbo.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe to be cleaned
+    Returns
+    -------
+    pandas.DataFrame
+        A new dataframe
+    """
+    to_keep = []
+    for i in range(len(df.columns)):
+        if len(df.iloc[:, i].drop_duplicates()) > 1:
+            to_keep.append(df.columns.values[i])
+
+    return df[to_keep]
+
+
+def df_drop_string_columns(
+    df: pd.DataFrame, ignore_list: Optional[list] = None
+) -> pd.DataFrame:
+    """
+    Drop dataframe columns with non-numeric values. Adapted from edbo.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe to be cleaned
+    ignore_list : list
+        List of columns that should not be dropped, even if they include strings
+    Returns
+    -------
+    pandas.DataFrame
+        A new dataframe
+    """
+    ignore_list = ignore_list or []
+
+    to_keep = []
+    for i in range(len(df.columns)):
+        unique = df.iloc[:, i].drop_duplicates()
+        keep_q = True
+        for k in range(len(unique)):
+            if isinstance(unique.iloc[k], str):
+                keep_q = False
+                break
+        if keep_q:
+            to_keep.append(df.columns.values[i])
+
+    return df[to_keep + ignore_list]
+
+
+def df_uncorrelated_features(
+    df: pd.DataFrame, exclude_list: Optional[List[str]] = None, threshold: float = 0.7
+):
+    """
+    Returns an uncorrelated set of features. Adapted from edbo.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe to be cleaned
+    exclude_list : list of strings or None
+        If provided this defines the columns that should be ignored
+    threshold : float
+        Threshold for column-column correlation above which columns should be dropped
+    Returns
+    -------
+    data : pandas.DataFrame
+        A new dataframe
+    """
+
+    if exclude_list is None:
+        data = df.copy()
+    else:
+        data = df.drop(columns=exclude_list)
+
+    corr = data.corr().abs()
+    to_keep = []
+    for i in range(len(corr.iloc[:, 0])):
+        above = corr.iloc[:i, i]
+        if len(to_keep) > 0:
+            above = above[to_keep]
+        if len(above[above < threshold]) == len(above):
+            to_keep.append(corr.columns.values[i])
+
+    data = data[to_keep]
+
+    if exclude_list is not None:
+        data[exclude_list] = list(df[exclude_list])
+
+    return data
