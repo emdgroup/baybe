@@ -3,15 +3,17 @@ Collection of small utilities
 """
 from __future__ import annotations
 
-
 from functools import partial
-from typing import Any, Dict, Iterable, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Type, Dict, Iterable, Optional, Tuple, TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from .core import BayBE
 
 import numpy as np
 import pandas as pd
 import torch
+from mordred import Calculator, descriptors
+from rdkit import Chem, RDLogger
+from rdkit.Chem.AllChem import GetMorganFingerprintAsBitVect
 from torch import Tensor
 from urllib.request import urlopen
 
@@ -227,3 +229,155 @@ def add_noise(
                     f"Parameter noise_type was {noise_type} but must be either "
                     f'"absolute" or "relative_percent"'
                 )
+
+
+def smiles_to_mordred_features(
+    smiles_list: list, prefix: str = "", dropna: bool = True
+) -> pd.DataFrame:
+    """
+    Compute Mordred chemical descriptors for a list of SMILES strings.
+
+    Parameters
+    ----------
+    smiles_list : list
+        List of SMILES strings.
+    prefix : str
+        Name prefix for each descriptor (e.g., nBase --> name_nBase).
+    dropna : bool
+        If true, drop columns which contain np.NaNs.
+
+    Returns
+    ----------
+    pandas.DataFrame
+        DataFrame containing overlapping Mordred descriptors for each SMILES
+        string.
+    """
+    calc = Calculator(descriptors)
+
+    output = []
+    for smiles in smiles_list:
+        try:
+            data_i = calc(Chem.MolFromSmiles(smiles)).fill_missing()
+        except Exception:
+            data_i = np.full(len(calc.descriptors), np.NaN)
+
+        output.append(list(data_i))
+
+    descriptor_names = list(calc.descriptors)
+    columns = []
+    for entry in descriptor_names:
+        columns.append(prefix + str(entry))
+
+    dataframe = pd.DataFrame(data=output, columns=columns)
+
+    if dropna:
+        dataframe = dataframe.dropna(axis=1)
+
+    return dataframe
+
+
+def smiles_to_rdkit_features(
+    smiles_list: list, prefix: str = "", dropna: bool = True
+) -> pd.DataFrame:
+    """
+    Compute RDKit chemical descriptors for a list of SMILES strings.
+
+    Parameters
+    ----------
+    smiles_list : list
+        List of SMILES strings.
+    prefix : str
+        Name prefix for each descriptor (e.g., nBase --> name_nBase).
+    dropna : bool
+        If true, drop columns which contain np.NaNs.
+
+    Returns
+    ----------
+    pandas.DataFrame
+        DataFrame containing overlapping RDKit descriptors for each SMILES
+        string.
+    """
+
+    mols = []
+    for smiles in smiles_list:
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                raise ValueError(
+                    f"The smiles {smiles} does not seem " f"to chemically valid"
+                )
+            mols.append(mol)
+        except Exception as ex:
+            raise ValueError(
+                f"The smiles {smiles} does not seem " f"to chemically valid"
+            ) from ex
+
+    res = []
+    for mol in mols:
+        desc = {prefix + dname: func(mol) for dname, func in Chem.Descriptors.descList}
+        res.append(desc)
+
+    df = pd.DataFrame(res)
+    if dropna:
+        df = df.dropna(axis=1)
+
+    return df
+
+
+def smiles_to_fp_features(
+    smiles_list: list,
+    prefix: str = "",
+    dtype: Union[Type[int], Type[float]] = int,
+    radius: int = 4,
+    n_bits: int = 1024,
+) -> pd.DataFrame:
+    """
+    Compute standard morgan molecule fingerprints for a list of SMILES strings.
+
+    Parameters
+    ----------
+    smiles_list : list
+        List of SMILES strings.
+    prefix : str
+        Name prefix for each descriptor (e.g., nBase --> name_nBase).
+    dtype : datatype int or float
+        Specifies whether fingerprints will have int or float datatype
+    radius : int
+        Radius for the Morgan Fingerprint
+    n_bits : int
+        Number of bits for the Morgan fingerprint
+
+    Returns
+    ----------
+    pandas.DataFrame
+        DataFrame containing Morgan fingerprints for each SMILES string.
+    """
+
+    mols = []
+    for smiles in smiles_list:
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                raise ValueError(
+                    f"The smiles {smiles} does not seem " f"to chemically valid"
+                )
+            mols.append(mol)
+        except Exception as ex:
+            raise ValueError(
+                f"The smiles {smiles} does not seem " f"to chemically valid"
+            ) from ex
+
+    res = []
+    for mol in mols:
+        RDLogger.logger().setLevel(RDLogger.CRITICAL)
+
+        fingerp = GetMorganFingerprintAsBitVect(mol, radius, nBits=n_bits).ToBitString()
+        fingerp = map(int, fingerp)
+        fpvec = np.array(list(fingerp))
+        res.append(
+            {prefix + "FP" + f"{k + 1}": dtype(bit) for k, bit in enumerate(fpvec)}
+        )
+
+    df = pd.DataFrame(res)
+
+    return df

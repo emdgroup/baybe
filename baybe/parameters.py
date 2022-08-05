@@ -254,7 +254,7 @@ class Custom(Parameter, ABC):
             #  since the 'data' entry is not in the dict
             raise ValueError(
                 f"The custom dataframe for parameter {values['name']} contains NaN "
-                f"entires, this is not supported"
+                f"entries, this is not supported"
             )
 
         return data
@@ -306,7 +306,10 @@ class Custom(Parameter, ABC):
 
         # Transformation is just lookup for this parameter type
         transformed = pd.merge(
-            left=data.rename(mergecol).to_frame(), right=self.data, on=mergecol
+            left=data.rename(mergecol).to_frame(),
+            right=self.data,
+            on=mergecol,
+            how="left",
         ).drop(columns=mergecol)
 
         return transformed
