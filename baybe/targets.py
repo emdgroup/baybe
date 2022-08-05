@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Extra, validator
 
-from baybe.utils import check_if_in
+from .utils import check_if_in
 
 
 class Objective(BaseModel, extra=Extra.forbid):

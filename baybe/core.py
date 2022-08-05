@@ -12,10 +12,10 @@ import torch
 from pydantic import BaseModel, Extra, validator
 
 import baybe.parameters as baybe_parameters
-from baybe.parameters import Parameter
-from baybe.strategy import Strategy
-from baybe.targets import Objective, Target
-from baybe.utils import check_if_in
+from .parameters import Parameter
+from .strategy import Strategy
+from .targets import Objective, Target
+from .utils import check_if_in
 
 log = logging.getLogger(__name__)
 

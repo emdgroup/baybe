@@ -13,9 +13,9 @@ import pandas as pd
 from botorch.acquisition import AcquisitionFunction, ExpectedImprovement
 from pydantic import BaseModel, Extra, validator
 
-from baybe.recommender import Recommender
-from baybe.surrogate import SurrogateModel
-from baybe.utils import check_if_in
+from .recommender import Recommender
+from .surrogate import SurrogateModel
+from .utils import check_if_in
 
 
 class InitialStrategy(ABC):

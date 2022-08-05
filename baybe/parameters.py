@@ -13,7 +13,7 @@ import pandas as pd
 from pydantic import BaseModel, Extra, validator
 from sklearn.metrics.pairwise import pairwise_distances
 
-from baybe.utils import check_if_in
+from .utils import check_if_in
 
 log = logging.getLogger(__name__)
 
