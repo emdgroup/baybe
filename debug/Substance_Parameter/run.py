@@ -48,7 +48,7 @@ config_dict = {
             "name": "Substance_1",
             "type": "SUBSTANCE",
             "data": substances,
-            "encoding": "RDKIT",
+            # "encoding": "RDKIT",
         },
     ],
     "objective": {

@@ -135,6 +135,7 @@ class Categorical(Parameter):
             comp_df = pd.DataFrame([k for k, _ in enumerate(vals)], columns=[name])
         else:
             raise ValueError(f"The provided encoding '{encoding}' is not supported")
+        comp_df.index = vals
 
         return comp_df
 
@@ -150,16 +151,13 @@ class Categorical(Parameter):
         """
 
         # Transformation is just lookup for this parameter type
-        mergecol = "Labels"
-        comp_df2 = self.comp_df.copy()
-        comp_df2[mergecol] = self.values
-
         transformed = pd.merge(
-            left=data.rename(mergecol).to_frame(),
-            right=comp_df2,
-            on=mergecol,
+            left=data.rename("Labels").to_frame(),
+            left_on="Labels",
+            right=self.comp_df,
+            right_index=True,
             how="left",
-        ).drop(columns=mergecol)
+        ).drop(columns="Labels")
 
         return transformed
 
@@ -219,7 +217,7 @@ class NumericDiscrete(Parameter):
         # Comp column is identical with the experimental columns
         name = values["name"]
         data = values["values"]
-        comp_df = pd.DataFrame({name: data})
+        comp_df = pd.DataFrame({name: data}, index=data)
 
         return comp_df
 
@@ -242,7 +240,11 @@ class NumericDiscrete(Parameter):
 
 class GenericSubstance(Parameter):
     """
-    Parameter class for generic substances that are treated with Mordred+PCA.
+    Parameter class for generic substances that are treated with cheminformatics
+    descriptors. Only a decorrelated subset of descriptors should be sued as otherwise
+    there is a large number of features. For a handful of molecules, keeping only
+    descriptors that have a max correlation of 0.7 with any other descriptor reduces the
+    descriptors to 5-20 ones. This might be substantially more with more labels given
     """
 
     # class variables
@@ -314,7 +316,8 @@ class GenericSubstance(Parameter):
 
         encoding = values["encoding"]
         data = values["data"]
-        vals = [smiles for _, smiles in data.items()]
+        vals = list(data.values())
+        names = list(data.keys())
         decorr = values["decorrelate"]
         pref = values["name"] + "_"
 
@@ -328,6 +331,7 @@ class GenericSubstance(Parameter):
             raise ValueError(f"The provided encoding '{encoding}' is not supported")
 
         comp_df = df_drop_single_value_columns(comp_df)
+        comp_df.index = names
         if decorr:
             if isinstance(decorr, bool):
                 comp_df = df_uncorrelated_features(comp_df)
@@ -348,16 +352,13 @@ class GenericSubstance(Parameter):
         """
 
         # Transformation is just lookup for this parameter type
-        mergecol = "Labels"
-        comp_df2 = self.comp_df.copy()
-        comp_df2[mergecol] = self.values
-
         transformed = pd.merge(
-            left=data.rename(mergecol).to_frame(),
-            right=comp_df2,
-            on=mergecol,
+            left=data.rename("Labels").to_frame(),
+            left_on="Labels",
+            right=self.comp_df,
+            right_index=True,
             how="left",
-        ).drop(columns=mergecol)
+        ).drop(columns="Labels")
 
         return transformed
 
@@ -446,6 +447,27 @@ class Custom(Parameter):
 
         return data.iloc[:, idx_col].to_list()
 
+    @validator("comp_df", always=True)
+    def validate_comp_df(cls, df, values):
+        """
+        Performs computations and initializes the comp
+        """
+        if df is not None:
+            raise ValueError(
+                "The 'comp_df' option cannot be declared in the config for this "
+                "parameter. It is automatically deducted from the 'data' parameter."
+            )
+
+        data = values["data"]
+        identifier_col_idx = values["identifier_col_idx"]
+        valcol = data.columns[identifier_col_idx]
+        vals = data[valcol].to_list()
+
+        comp_df = data.drop(columns=valcol)
+        comp_df.index = vals
+
+        return comp_df
+
     def is_in_range(self, item: object) -> bool:
         """
         See base class.
@@ -457,18 +479,13 @@ class Custom(Parameter):
         See base class.
         """
 
-        # TODO shift this to a once-called init function
-        # Create comp dataframe
-        mergecol = self.data.columns[self.identifier_col_idx]
-        self.comp_df = self.data.drop(columns=mergecol)
-
-        # Transformation is just lookup for this parameter type
         transformed = pd.merge(
-            left=data.rename(mergecol).to_frame(),
-            right=self.data,
-            on=mergecol,
+            left=data.rename("Labels").to_frame(),
+            left_on="Labels",
+            right=self.comp_df,
+            right_index=True,
             how="left",
-        ).drop(columns=mergecol)
+        ).drop(columns="Labels")
 
         return transformed
 
