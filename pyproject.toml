@@ -48,5 +48,5 @@ disable = [
 	"no-member", # seems RDKit objects in some modules can never be found by IDEs
 	]
 
-[tool.pylint.'BASIC']
-good-names=["i", "k", "ex", "df", "l", "l1", "l2", "l3"] # allow these variable names
+[tool.pylint.BASIC]
+good-names=["i", "j", "k", "ex", "df"] # allow these variable names

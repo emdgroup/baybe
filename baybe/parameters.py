@@ -13,7 +13,15 @@ import pandas as pd
 from pydantic import BaseModel, Extra, validator
 from sklearn.metrics.pairwise import pairwise_distances
 
-from .utils import check_if_in, df_drop_single_value_columns
+from .utils import (
+    check_if_in,
+    df_drop_single_value_columns,
+    df_uncorrelated_features,
+    is_valid_smiles,
+    smiles_to_fp_features,
+    smiles_to_mordred_features,
+    smiles_to_rdkit_features,
+)
 
 log = logging.getLogger(__name__)
 
@@ -45,12 +53,10 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
     # object variables
     name: str
 
-    # TODO: this becomes obsolete in pydantic 2.0 when the __post_init_post_parse__
-    #   is available:
+    # TODO: Dealing with un-parsed but initialized variables becomes obsolete in
+    #  pydantic 2.0 when the __post_init_post_parse__ is available:
     #   - https://github.com/samuelcolvin/pydantic/issues/691
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
-    comp_cols: list = []
-    comp_values: Optional[np.ndarray] = None
 
     @classmethod
     def create(cls, config: dict) -> Parameter:
@@ -96,12 +102,41 @@ class Categorical(Parameter):
     # class variables
     type = "CAT"
 
-    # object variables
+    # parsed object variables
     values: list
     encoding: Literal["OHE", "INT"] = "OHE"
 
+    # non-parsed object variables
+    comp_df: Optional[pd.DataFrame] = None
+
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
+
+    @validator("comp_df", always=True)
+    def validate_comp_df(cls, df, values):
+        """
+        Performs computations and initializes the comp
+        """
+        if df is not None:
+            raise ValueError(
+                "The 'comp_df' option cannot be declared in the config for this "
+                "parameter. It is automatically deducted from the 'data' parameter."
+            )
+
+        # Comp column is identical with the experimental columns
+        name = values["name"]
+        vals = values["values"]
+        encoding = values["encoding"]
+
+        if encoding == "OHE":
+            cols = [f"{name}_{val}" for val in vals]
+            comp_df = pd.DataFrame(np.eye(len(vals), dtype=int), columns=cols)
+        elif encoding == "INT":
+            comp_df = pd.DataFrame([k for k, _ in enumerate(vals)], columns=[name])
+        else:
+            raise ValueError(f"The provided encoding '{encoding}' is not supported")
+
+        return comp_df
 
     def is_in_range(self, item: str) -> bool:
         """
@@ -113,46 +148,18 @@ class Categorical(Parameter):
         """
         See base class.
         """
-        # IMPROVE neater implementation eg via vectorized mapping
 
-        if self.encoding == "OHE":
-            transformed_data = {}
-            for value in self.values:
-                coldata = []
-                for itm in data.values:
-                    if itm not in self.values:
-                        raise ValueError(
-                            f"Value {itm} is not in list of permitted values "
-                            f"{self.values} for parameter {self.name}"
-                        )
-                    if itm == value:
-                        coldata.append(1)
-                    else:
-                        coldata.append(0)
+        # Transformation is just lookup for this parameter type
+        mergecol = "Labels"
+        comp_df2 = self.comp_df.copy()
+        comp_df2[mergecol] = self.values
 
-                    colname = f"{self.name}_encoded_val_{value}"
-                    transformed_data[colname] = coldata
-                    if colname not in self.comp_cols:
-                        self.comp_cols.append(colname)
-
-            transformed = pd.DataFrame(transformed_data)
-
-        elif self.encoding == "INT":
-            mapping = {val: k for k, val in enumerate(self.values)}
-            coldata = []
-
-            for itm in data.values:
-                if itm not in self.values:
-                    raise ValueError(
-                        f' "Value {itm} is not in list of permitted values'
-                        f" {self.values} for parameter {self.name}"
-                    )
-                coldata.append(mapping[itm])
-
-            colname = f"{self.name}_encoded"
-            transformed = pd.DataFrame(coldata, columns=[colname])
-            if colname not in self.comp_cols:
-                self.comp_cols.append(colname)
+        transformed = pd.merge(
+            left=data.rename(mergecol).to_frame(),
+            right=comp_df2,
+            on=mergecol,
+            how="left",
+        ).drop(columns=mergecol)
 
         return transformed
 
@@ -165,9 +172,12 @@ class NumericDiscrete(Parameter):
     # class variables
     type = "NUM_DISCRETE"
 
-    # object variables
+    # parsed object variables
     values: list
     tolerance: float
+
+    # non-parsed object variables
+    comp_df: Optional[pd.DataFrame] = None
 
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
@@ -195,6 +205,24 @@ class NumericDiscrete(Parameter):
 
         return tolerance
 
+    @validator("comp_df", always=True)
+    def validate_comp_df(cls, df, values):
+        """
+        Performs computations and initializes the comp
+        """
+        if df is not None:
+            raise ValueError(
+                "The 'comp_df' option cannot be declared in the config for this "
+                "parameter. It is automatically deducted from the 'data' parameter."
+            )
+
+        # Comp column is identical with the experimental columns
+        name = values["name"]
+        data = values["values"]
+        comp_df = pd.DataFrame({name: data})
+
+        return comp_df
+
     def is_in_range(self, item: float) -> bool:
         """
         See base class.
@@ -208,28 +236,133 @@ class NumericDiscrete(Parameter):
         """
         See base class.
         """
-
-        # Comp column is identical with the experimental columns
-        self.comp_cols = [self.name]
-        self.comp_values = data.values
-
         # There is nothing to transform for this parameter type
-        return data.rename(self.name).to_frame()
+        return data.to_frame()
 
 
-class GenericSubstance(Parameter, ABC):
+class GenericSubstance(Parameter):
     """
     Parameter class for generic substances that are treated with Mordred+PCA.
     """
 
     # class variables
-    type = "GEN_SUBSTANCE"
+    type = "SUBSTANCE"
 
-    # object variables
-    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"]
+    # parsed object variables
+    decorrelate: Union[bool, float] = True
+    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
+    data: Dict[str, str]
+
+    # non-parsed object variables
+    values: Optional[list] = None
+    comp_df: Optional[pd.DataFrame] = None
+
+    @validator("decorrelate", always=True)
+    def validate_decorrelate(cls, flag):
+        """
+        Validates the decorrelate flag
+        """
+        if isinstance(flag, float):
+            if not 0.0 < flag < 1.0:
+                raise ValueError(
+                    f"The decorrelate flag was set as a float to {flag} "
+                    f"but it must be between (excluding) 0.0 and 1.0"
+                )
+
+        return flag
+
+    @validator("data", always=True)
+    def validate_data(cls, dat):
+        """
+        Validates the the substances
+        """
+        for name, smiles in dat.items():
+            if not is_valid_smiles(smiles):
+                raise ValueError(
+                    f"The SMILES '{smiles}' for molecule '{name}' does "
+                    f"not appear to be valid."
+                )
+
+        return dat
+
+    @validator("values", always=True)
+    def validate_values(cls, vals, values):
+        """
+        Initializes the molecule labels
+        """
+        if vals is not None:
+            raise ValueError(
+                "The 'value' option cannot be declared in the config for this "
+                "parameter. It is automatically deducted from the 'data' parameter."
+            )
+        data = values["data"]
+
+        # Since the order of dictionary key is important here, this will only work
+        # for Python 3.7 or higher
+        return list(data.keys())
+
+    @validator("comp_df", always=True)
+    def validate_comp_df(cls, df, values):
+        """
+        Performs computations and initializes the comp
+        """
+        if df is not None:
+            raise ValueError(
+                "The 'comp_df' option cannot be declared in the config for this "
+                "parameter. It is automatically deducted from the 'data' parameter."
+            )
+
+        encoding = values["encoding"]
+        data = values["data"]
+        vals = [smiles for _, smiles in data.items()]
+        decorr = values["decorrelate"]
+        pref = values["name"] + "_"
+
+        if encoding == "MORDRED":
+            comp_df = smiles_to_mordred_features(vals, prefix=pref)
+        elif encoding == "RDKIT":
+            comp_df = smiles_to_rdkit_features(vals, prefix=pref)
+        elif encoding == "MORGAN_FP":
+            comp_df = smiles_to_fp_features(vals, prefix=pref)
+        else:
+            raise ValueError(f"The provided encoding '{encoding}' is not supported")
+
+        comp_df = df_drop_single_value_columns(comp_df)
+        if decorr:
+            if isinstance(decorr, bool):
+                comp_df = df_uncorrelated_features(comp_df)
+            else:
+                comp_df = df_uncorrelated_features(comp_df, threshold=decorr)
+
+        return comp_df
+
+    def is_in_range(self, item: object) -> bool:
+        """
+        See base class.
+        """
+        return item in self.values
+
+    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
+        """
+        See base class.
+        """
+
+        # Transformation is just lookup for this parameter type
+        mergecol = "Labels"
+        comp_df2 = self.comp_df.copy()
+        comp_df2[mergecol] = self.values
+
+        transformed = pd.merge(
+            left=data.rename(mergecol).to_frame(),
+            right=comp_df2,
+            on=mergecol,
+            how="left",
+        ).drop(columns=mergecol)
+
+        return transformed
 
 
-class Custom(Parameter, ABC):
+class Custom(Parameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry.
@@ -238,11 +371,14 @@ class Custom(Parameter, ABC):
     # class variables
     type = "CUSTOM"
 
-    # object variables
+    # parsed object variables
     decorrelate: Union[bool, float] = True
     data: pd.DataFrame
     identifier_col_idx: int = 0
+
+    # non-parsed object variables
     values: Optional[list] = None
+    comp_df: Optional[pd.DataFrame] = None
 
     @validator("decorrelate")
     def validate_decorrelate(cls, flag):
@@ -300,9 +436,9 @@ class Custom(Parameter, ABC):
         Initializes the representing labels for this parameter
         """
         if vals is not None:
-            raise NotImplementedError(
-                "Currently with pydantic we declare 'values' as class variable but it "
-                "is a non-validated variable and should not be provided in the config"
+            raise ValueError(
+                "The 'value' option cannot be declared in the config for this "
+                "parameter. It is automatically deducted from the 'data' parameter."
             )
 
         data = values["data"]
@@ -314,17 +450,17 @@ class Custom(Parameter, ABC):
         """
         See base class.
         """
-        return item in self.data.iloc[:, self.identifier_col_idx].to_list()
+        return item in self.values
 
     def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
         See base class.
         """
 
-        # Comp columns and columns names
+        # TODO shift this to a once-called init function
+        # Create comp dataframe
         mergecol = self.data.columns[self.identifier_col_idx]
-        self.comp_cols = self.data.drop(columns=mergecol).columns.to_list()
-        self.comp_values = self.data.drop(columns=mergecol).values
+        self.comp_df = self.data.drop(columns=mergecol)
 
         # Transformation is just lookup for this parameter type
         transformed = pd.merge(
@@ -417,7 +553,7 @@ def scaled_view(
         scalers = {}
 
     for param in parameters:
-        if (param.comp_cols is None) or (len(param.comp_cols) < 1):
+        if param.comp_df is None:
             # Instead of enforcing this one could automatically detect columns based
             # on the starting of the name.
             raise AttributeError(
@@ -431,17 +567,36 @@ def scaled_view(
             continue
 
         scaler = scalers.get(param.type)
-        if len(param.comp_cols) == 1:
-            scaler.fit(data_fit[param.comp_cols].values.reshape(-1, 1))
+        if len(param.comp_df.columns) == 1:
+            scaler.fit(data_fit[param.comp_df.columns].values.reshape(-1, 1))
 
-            transformed[param.comp_cols] = scaler.transform(
-                data_transform[param.comp_cols].values.reshape(-1, 1)
+            transformed[param.comp_df.columns] = scaler.transform(
+                data_transform[param.comp_df.columns].values.reshape(-1, 1)
             )
         else:
-            scaler.fit(data_fit[param.comp_cols].values)
+            scaler.fit(data_fit[param.comp_df.columns].values)
 
-            transformed[param.comp_cols] = scaler.transform(
-                data_transform[param.comp_cols].values
+            transformed[param.comp_df.columns] = scaler.transform(
+                data_transform[param.comp_df.columns].values
             )
 
     return transformed
+
+
+# TODO self.values could be renamed into something else since its clashing with
+#  pydantic enforced syntax, for isntance 'labels' (but thats weird for numeric
+#  discrete parameters)
+
+# TODO self.values could be a variable of the base class since its shared between all
+#  parameter. Its essentially the list of labels, always one dimensional
+
+# TODO if self.values is part of the base class then is_in_range should also become a
+#  method of the base class
+
+# TODO Once a solution for pydantic initialization of instance variables is found, all
+#  parameters should initialize the comp_df. The transformation methods then only needs
+#  to apply a pd.merge on left and the comp_df also has all info needed for the scalers
+
+# TODO transform rep method can be a non-abstract method of the base class that simply
+#  merges the provided series (left) with the comp_df (right) based on a label column.
+#  The contents of the label column is defined by self.values

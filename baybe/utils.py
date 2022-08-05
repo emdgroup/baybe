@@ -30,7 +30,14 @@ def is_valid_smiles(smiles: str) -> bool:
     -------
         bool, True if smiles is valid, False else
     """
-    raise NotImplementedError("This function is not implemented yet")
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return False
+
+        return True
+    except Exception:
+        return False
 
 
 def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
@@ -397,9 +404,9 @@ def df_drop_single_value_columns(df: pd.DataFrame) -> pd.DataFrame:
         A new dataframe
     """
     to_keep = []
-    for i in range(len(df.columns)):
-        if len(df.iloc[:, i].drop_duplicates()) > 1:
-            to_keep.append(df.columns.values[i])
+    for k in range(len(df.columns)):
+        if len(df.iloc[:, k].drop_duplicates()) > 1:
+            to_keep.append(df.columns.values[k])
 
     return df[to_keep]
 
@@ -424,15 +431,15 @@ def df_drop_string_columns(
     ignore_list = ignore_list or []
 
     to_keep = []
-    for i in range(len(df.columns)):
-        unique = df.iloc[:, i].drop_duplicates()
+    for k in range(len(df.columns)):
+        unique = df.iloc[:, k].drop_duplicates()
         keep_q = True
-        for k in range(len(unique)):
-            if isinstance(unique.iloc[k], str):
+        for j in range(len(unique)):
+            if isinstance(unique.iloc[j], str):
                 keep_q = False
                 break
         if keep_q:
-            to_keep.append(df.columns.values[i])
+            to_keep.append(df.columns.values[k])
 
     return df[to_keep + ignore_list]
 
@@ -474,6 +481,6 @@ def df_uncorrelated_features(
     data = data[to_keep]
 
     if exclude_list is not None:
-        data[exclude_list] = list(df[exclude_list])
+        data[exclude_list] = df.loc[:, exclude_list]
 
     return data
