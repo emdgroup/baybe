@@ -16,11 +16,11 @@ from baybe.utils import add_fake_results, add_noise
 log = logging.getLogger(__name__)
 
 
-def simulate_variants(
+def simulate_from_configs(
     config_base: dict,
     n_exp_iterations: int,
     n_mc_iterations: int,
-    lookup: Optional[Union[pd.DataFrame, Callable[[pd.DataFrame], None]]] = None,
+    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     # missing_lookup: Literal["error", "worst", "best", "mean"] = "error",
     noise_percent: Optional[float] = None,
     batch_quantity: int = 5,
@@ -126,6 +126,28 @@ def simulate_variants(
                             noise_type="relative_percent",
                             noise_level=noise_percent,
                         )
+                elif isinstance(lookup, Callable):
+                    measured_targets = (
+                        measured.drop(columns=[t.name for t in baybe_obj.targets])
+                        .apply(lambda x: lookup(*x.values), axis=1)
+                        .to_frame()
+                    )
+                    if measured_targets.shape[1] != len(baybe_obj.targets):
+                        raise AssertionError(
+                            "If you look up from an analytical function make sure the "
+                            "configuration has the right amount of targets configured"
+                        )
+                    for k_target, target in enumerate(baybe_obj.targets):
+                        measured[target.name] = measured_targets.iloc[:, k_target]
+                elif isinstance(lookup, pd.DataFrame):
+                    raise NotImplementedError(
+                        "Lookup via dataframe not implemented yet"
+                    )
+                else:
+                    raise TypeError(
+                        "The lookup can either be None, a pandas dataframe or a "
+                        "callable analytical function"
+                    )
 
                 # Remember best results of the iteration and best results up to
                 # (including) this iteration

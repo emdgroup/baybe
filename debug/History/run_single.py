@@ -6,7 +6,7 @@ metadata. Target objective is minimize to test computational transformation.
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from baybe.history import simulate_variants
+from baybe.history import simulate_from_configs
 
 substances = {
     "Water": "O",
@@ -157,11 +157,11 @@ config_dict_v5 = {
 }
 
 
-results = simulate_variants(
+results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=None,
-    n_exp_iterations=15,
-    n_mc_iterations=50,
+    n_exp_iterations=25,
+    n_mc_iterations=200,
     batch_quantity=1,
     config_variants={
         "GP | Mordred": config_dict_v1,
