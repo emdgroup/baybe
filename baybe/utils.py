@@ -209,7 +209,7 @@ def add_noise(
     obj: BayBE,
     noise_type: str = "absolute",
     noise_level: float = 1.0,
-):
+) -> None:
     """
     Adds uniform noise to parameter values of a recommendation frame. Simulates
     experimental noise and inputting numerical values that are slightly different

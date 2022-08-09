@@ -46,6 +46,9 @@ disable = [
 	"broad-except", # catching base exception is common for RDKit mol validation etc
 	"no-name-in-module", # seems RDKit objects in some modules can never be found by IDEs
 	"no-member", # seems RDKit objects in some modules can never be found by IDEs
+	"too-many-nested-blocks", # too strict (encountered in history module)
+	"too-many-locals", # too strict (encountered in history module)
+	"too-many-arguments", # too strict (encountered in history module)
 	]
 
 [tool.pylint.BASIC]
