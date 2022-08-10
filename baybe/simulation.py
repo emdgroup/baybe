@@ -2,9 +2,11 @@
 Provides functions to simulate a Bayesian DOE with BayBE given a lookup
 """
 
+from __future__ import annotations
+
 import logging
 from copy import deepcopy
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, List, Literal, Optional, TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -12,6 +14,9 @@ from tqdm import tqdm
 
 from baybe.core import BayBE, BayBEConfig
 from baybe.utils import add_fake_results, add_noise
+
+if TYPE_CHECKING:
+    from .targets import NumericalTarget
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +26,7 @@ def simulate_from_configs(
     n_exp_iterations: int,
     n_mc_iterations: int,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
-    # missing_lookup: Literal["error", "worst", "best", "mean"] = "error",
+    impute_lookup: Literal["error", "worst", "best", "mean", "random"] = "error",
     noise_percent: Optional[float] = None,
     batch_quantity: int = 5,
     config_variants: Optional[Dict[str, dict]] = None,
@@ -41,12 +46,12 @@ def simulate_from_configs(
         have a different random seed
     lookup : pd.DataFrame
         A dataframe with all possible experiments and their target results
-    missing_lookup : str
+    impute_lookup : str
         If this is 'error' a missing looup value will result in an error. In case of
         'worst' the missing lookups will be the worst available value for that target.
         In case of 'best' the missing lookups will be the best available value for that
         target. In case of 'mean' the missing lookup is the mean of all available
-        values for that target.
+        values for that target. In case of 'random' a random row will be used as lookup.
     noise_percent : None or float
         If this is not None relative noise in percent of noise_percent will be added
         to measurements
@@ -141,28 +146,36 @@ def simulate_from_configs(
                     # IMPROVE Although its not too important for a simulation, this
                     #  could also be implemented for approximate matches
 
-                    match_inds = []
+                    all_match_vals = []
                     for _, row in measured.drop(columns=target_names).iterrows():
                         ind = lookup[
                             (lookup.loc[:, row.index] == row).all(axis=1, skipna=False)
                         ].index.values
+
                         if len(ind) > 1:
+                            # More than two instances of this parameter combination
+                            # have been measured
                             log.warning(
                                 "The lookup rows with indexes %s seem to be "
-                                "duplicates regarding parameter values",
+                                "duplicates regarding parameter values. Choosing a "
+                                "random one",
                                 ind,
                             )
-                            ind = ind[0]
+                            match_vals = lookup.loc[
+                                np.random.choice(ind), target_names
+                            ].values
                         elif len(ind) < 1:
-                            # TODO impement here what happens if no lookup entry is
-                            #  found
-                            pass
+                            # Parameter combination cannot be looked up and needs to be
+                            # imputed
+                            match_vals = _impute_lookup(
+                                row, lookup, baybe_obj.targets, impute_lookup
+                            )
+                        else:
+                            # Exactly one match has been found
+                            match_vals = lookup.loc[ind[0], target_names].values
+                        all_match_vals.append(match_vals)
 
-                        match_inds.append(ind[0])
-
-                    measured.loc[:, target_names] = lookup.loc[
-                        match_inds, target_names
-                    ].values
+                    measured.loc[:, target_names] = np.asarray(all_match_vals)
                 else:
                     raise TypeError(
                         "The lookup can either be None, a pandas dataframe or a "
@@ -229,3 +242,86 @@ def simulate_from_configs(
     results = pd.DataFrame(results)
 
     return results
+
+
+def _impute_lookup(
+    row: pd.Series,
+    lookup: pd.DataFrame,
+    targets: List[NumericalTarget],
+    mode: Literal["error", "best", "worst", "mean", "random"] = "error",
+):
+    """
+    If no lookup value is found this function will find other values to take depending
+     on the mode or raise an error.
+
+    Parameters
+    ----------
+    row: pd.Series
+        The row that should be matched in lookup
+    lookup: pd. DataFrame
+        A lookup dataframe
+    targets: list of BayeBE Target's
+        Targets from the BayBE object so their respective mdoes can be considered
+    mode: literal
+        Describing the fill-mode that should be applied
+
+    Returns
+    np.array
+        The filled-in lookup results
+    -------
+
+    """
+    target_names = [t.name for t in targets]
+    if mode == "mean":
+        match_vals = lookup.loc[:, target_names].mean(axis=0).values
+    elif mode == "worst":
+        worst_vals = []
+        for target in targets:
+            if target.mode == "MAX":
+                worst_vals.append(lookup.loc[:, target.name].min().flatten()[0])
+            elif target.mode == "MIN":
+                worst_vals.append(lookup.loc[:, target.name].max().flatten()[0])
+            if target.mode == "MATCH":
+                worst_vals.append(
+                    lookup.loc[
+                        lookup.loc[
+                            (lookup[target.name] - np.mean(target.bounds))
+                            .abs()
+                            .idxmax(),
+                        ],
+                        target.name,
+                    ].flatten()[0]
+                )
+        match_vals = np.array(worst_vals)
+    elif mode == "best":
+        best_vals = []
+        for target in targets:
+            if target.mode == "MAX":
+                best_vals.append(lookup.loc[:, target.name].max().flatten()[0])
+            elif target.mode == "MIN":
+                best_vals.append(lookup.loc[:, target.name].min().flatten()[0])
+            if target.mode == "MATCH":
+                best_vals.append(
+                    lookup.loc[
+                        lookup.loc[
+                            (lookup[target.name] - np.mean(target.bounds))
+                            .abs()
+                            .idxmin(),
+                        ],
+                        target.name,
+                    ].flatten()[0]
+                )
+        match_vals = np.array(best_vals)
+    elif mode == "random":
+        vals = []
+        randindex = np.random.choice(lookup.index)
+        for target in targets:
+            vals.append(lookup.loc[randindex, target.name].flatten()[0])
+        match_vals = np.array(vals)
+    else:
+        raise IndexError(
+            f"Cannot match the recommended row {row} to any of"
+            f" the rows in the lookup"
+        )
+
+    return match_vals
