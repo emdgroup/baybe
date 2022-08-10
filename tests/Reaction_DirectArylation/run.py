@@ -6,7 +6,7 @@ been measured
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from baybe.history import simulate_from_configs
+from baybe.simulation import simulate_from_configs
 
 # noinspection PyArgumentList
 lookup = pd.read_excel("./lookup.xlsx")

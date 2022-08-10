@@ -5,7 +5,7 @@ of measurements.
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from baybe.history import simulate_from_configs
+from baybe.simulation import simulate_from_configs
 
 substances = {
     "Water": "O",

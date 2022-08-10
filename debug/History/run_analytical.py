@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe.history import simulate_from_configs
+from baybe.simulation import simulate_from_configs
 
 DIMENSIONS = 3
 POINTS_PER_DIM = 20
