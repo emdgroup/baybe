@@ -235,7 +235,7 @@ results = simulate_from_configs(
     lookup=lookup,
     n_exp_iterations=20,
     n_mc_iterations=200,
-    batch_quantity=2,
+    batch_quantity=3,
     config_variants={
         "GP | Mordred": config_dict_v1,
         "GP | RDKit": config_dict_v2,

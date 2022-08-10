@@ -16,7 +16,7 @@ substances = {
 }
 
 config_dict_base = {
-    "project_name": "History Test",
+    "project_name": "Simulation Test",
     "allow_repeated_recommendations": False,
     "allow_recommending_already_measured": False,
     "numerical_measurements_must_be_within_tolerance": True,
