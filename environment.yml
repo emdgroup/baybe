@@ -7,6 +7,7 @@ dependencies:
 - flake8==4.0.1
 - matplotlib==3.5.2
 - mordred==1.2.0
+- openpyxl==3.0.9
 - pre-commit==2.19.0
 - pylint==2.13.9
 - pip==22.1.2

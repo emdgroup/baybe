@@ -264,7 +264,15 @@ class GenericSubstance(Parameter):
         elif self.encoding == "MORGAN_FP":
             comp_df = smiles_to_fp_features(vals, prefix=pref)
 
+        # Drop NaN and constant cols
+        comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
         comp_df = df_drop_single_value_columns(comp_df)
+
+        # If there are bool cols convert them to int (possible for Mordred)
+        comp_df.loc[:, comp_df.dtypes == bool] = comp_df.loc[
+            :, comp_df.dtypes == bool
+        ].astype(int)
+
         comp_df.index = names
         if self.decorrelate:
             if isinstance(self.decorrelate, bool):

@@ -1,7 +1,6 @@
-"""Test for initial simple input, recommendation and adding fake results. Fake target
-measurements are simulated for each round. Noise is added every second round.
-From the three recommendations only one is actually added to test the matching and
-metadata. Target objective is minimize to test computational transformation.
+"""
+Test for history simulation of a single target without a lookup, ie random addition
+of measurements.
 """
 
 import matplotlib.pyplot as plt
@@ -52,25 +51,17 @@ config_dict_base = {
         ],
     },
     "strategy": {
-        # "surrogate_model_cls": "GP",
-        # "recommender_cls": "RANDOM"
+        "surrogate_model_cls": "GP",
+        "recommender_cls": "UNRESTRICTED_RANKING",
     },
 }
 
 config_dict_v1 = {
     "project_name": "GP | Mordred",
-    "strategy": {
-        "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-    },
 }
 
 config_dict_v2 = {
     "project_name": "GP | RDKit",
-    "strategy": {
-        "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-    },
     "parameters": [
         {
             "name": "Flow_Strength",
@@ -95,10 +86,6 @@ config_dict_v2 = {
 
 config_dict_v3 = {
     "project_name": "GP | FP",
-    "strategy": {
-        "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-    },
     "parameters": [
         {
             "name": "Flow_Strength",
@@ -123,10 +110,6 @@ config_dict_v3 = {
 
 config_dict_v4 = {
     "project_name": "GP | OHE",
-    "strategy": {
-        "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-    },
     "parameters": [
         {
             "name": "Flow_Strength",
@@ -150,7 +133,7 @@ config_dict_v4 = {
 }
 
 config_dict_v5 = {
-    "project_name": "GP | OHE",
+    "project_name": "Random",
     "strategy": {
         "recommender_cls": "RANDOM",
     },
