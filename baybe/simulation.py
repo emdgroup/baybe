@@ -102,6 +102,7 @@ def simulate_from_configs(
             config_dict["random_seed"] = 1337 + k_mc
             config = BayBEConfig(**config_dict)
             baybe_obj = BayBE(config)
+            target_names = [t.name for t in baybe_obj.targets]
 
             best_mc_results = {}
             for target in baybe_obj.targets:
@@ -118,17 +119,12 @@ def simulate_from_configs(
 
                 # Lookup
                 if lookup is None:
+                    # Add fake results
                     add_fake_results(measured, baybe_obj)
-                    if noise_percent:
-                        add_noise(
-                            measured,
-                            baybe_obj,
-                            noise_type="relative_percent",
-                            noise_level=noise_percent,
-                        )
                 elif isinstance(lookup, Callable):
+                    # Get results via callable
                     measured_targets = (
-                        measured.drop(columns=[t.name for t in baybe_obj.targets])
+                        measured.drop(columns=target_names)
                         .apply(lambda x: lookup(*x.values), axis=1)
                         .to_frame()
                     )
@@ -140,13 +136,37 @@ def simulate_from_configs(
                     for k_target, target in enumerate(baybe_obj.targets):
                         measured[target.name] = measured_targets.iloc[:, k_target]
                 elif isinstance(lookup, pd.DataFrame):
-                    raise NotImplementedError(
-                        "Lookup via dataframe not implemented yet"
-                    )
+                    # Get results via dataframe lookup
+                    # This only works for exact match here
+                    # IMPROVE Although its not too important for a simulation, this
+                    #  could also be implemented for approximate matches
+
+                    match_inds = []
+                    for _, row in measured.drop(columns=target_names).iterrows():
+                        ind = lookup[
+                            (lookup.loc[:, row.index] == row).all(axis=1, skipna=False)
+                        ].index.values
+                        if len(ind) > 1:
+                            log.warning(
+                                "The lookup rows with indexes %s seem to be "
+                                "duplicates regarding parameter values",
+                                ind,
+                            )
+                            ind = ind[0]
+                        elif len(ind) < 1:
+                            # TODO impement here what happens if no lookup entry is
+                            #  found
+                            pass
+
+                        match_inds.append(ind[0])
+
+                    measured.loc[:, target_names] = lookup.loc[
+                        match_inds, target_names
+                    ].values
                 else:
                     raise TypeError(
                         "The lookup can either be None, a pandas dataframe or a "
-                        "callable analytical function"
+                        "callable function"
                     )
 
                 # Remember best results of the iteration and best results up to
@@ -156,6 +176,8 @@ def simulate_from_configs(
                     "Iteration": k_iteration,
                     "Num_Experiments": (k_iteration + 1) * batch_quantity,
                 }
+
+                # Remember iteration and cumulative best target values
                 for target in baybe_obj.targets:
                     if target.mode == "MAX":
                         best_iter = measured[target.name].max()
@@ -194,6 +216,14 @@ def simulate_from_configs(
                 results.append(tempres)
 
                 # Add results to BayBE object
+                if noise_percent:
+                    add_noise(
+                        measured,
+                        baybe_obj,
+                        noise_type="relative_percent",
+                        noise_level=noise_percent,
+                    )
+
                 baybe_obj.add_results(measured)
 
     results = pd.DataFrame(results)
