@@ -26,7 +26,9 @@ def simulate_from_configs(
     n_exp_iterations: int,
     n_mc_iterations: int,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
-    impute_lookup: Literal["error", "worst", "best", "mean", "random"] = "error",
+    impute_mode: Literal[
+        "error", "worst", "best", "mean", "random", "ignore"
+    ] = "error",
     noise_percent: Optional[float] = None,
     batch_quantity: int = 5,
     config_variants: Optional[Dict[str, dict]] = None,
@@ -46,12 +48,14 @@ def simulate_from_configs(
         have a different random seed
     lookup : pd.DataFrame
         A dataframe with all possible experiments and their target results
-    impute_lookup : str
+    impute_mode : str
         If this is 'error' a missing looup value will result in an error. In case of
         'worst' the missing lookups will be the worst available value for that target.
         In case of 'best' the missing lookups will be the best available value for that
         target. In case of 'mean' the missing lookup is the mean of all available
         values for that target. In case of 'random' a random row will be used as lookup.
+        In case of 'ignore' the searchspace is stripped before recommendations are made
+        so that unmeasured experiments cannot be recommended.
     noise_percent : None or float
         If this is not None relative noise in percent of noise_percent will be added
         to measurements
@@ -108,7 +112,9 @@ def simulate_from_configs(
             config = BayBEConfig(**config_dict)
             baybe_obj = BayBE(config)
             target_names = [t.name for t in baybe_obj.targets]
+            param_names = [p.name for p in baybe_obj.parameters]
 
+            # For remembering cumulative results
             best_mc_results = {}
             for target in baybe_obj.targets:
                 if target.mode == "MAX":
@@ -118,6 +124,25 @@ def simulate_from_configs(
                 elif target.mode == "MATCH":
                     best_mc_results[target.name] = np.inf
 
+            # Mark searchspace metadata if impute_mode is ignore
+            if impute_mode == "ignore":
+                searchspace = baybe_obj.searchspace_exp_rep
+
+                found_inds = []
+                for _, row in lookup[param_names].iterrows():
+                    inds = searchspace.loc[
+                        (searchspace.loc[:, row.index] == row).all(
+                            axis=1, skipna=False
+                        )  # E1136
+                    ].index.to_list()
+                    found_inds += inds
+
+                missing_inds = searchspace.index.difference(found_inds)
+                baybe_obj.searchspace_metadata.loc[
+                    missing_inds, "dont_recommend"
+                ] = True
+
+            # Run all experimental iterations
             for k_iteration in range(n_exp_iterations):
                 # Get recommendation
                 measured = baybe_obj.recommend(batch_quantity=batch_quantity)
@@ -166,9 +191,16 @@ def simulate_from_configs(
                             ].values
                         elif len(ind) < 1:
                             # Parameter combination cannot be looked up and needs to be
-                            # imputed
+                            # imputed.
+                            if impute_mode == "ignore":
+                                raise AssertionError(
+                                    "Something went wrong when "
+                                    "impute_mode was 'ignore'. It seems the searchspace"
+                                    " was not correctly reduced before recommendations"
+                                    " were performed."
+                                )
                             match_vals = _impute_lookup(
-                                row, lookup, baybe_obj.targets, impute_lookup
+                                row, lookup, baybe_obj.targets, impute_mode
                             )
                         else:
                             # Exactly one match has been found
@@ -192,6 +224,10 @@ def simulate_from_configs(
 
                 # Remember iteration and cumulative best target values
                 for target in baybe_obj.targets:
+                    tempres[f"Measurements_{target.name}"] = measured[
+                        target.name
+                    ].to_list()
+
                     if target.mode == "MAX":
                         best_iter = measured[target.name].max()
                         tempres[f"{target.name}_IterBest"] = best_iter

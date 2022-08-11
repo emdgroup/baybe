@@ -9,7 +9,7 @@ import seaborn as sns
 from baybe.simulation import simulate_from_configs
 
 # noinspection PyArgumentList
-lookup = pd.read_excel("./lookup.xlsx")
+lookup = pd.read_excel("./lookup_withmissing.xlsx")
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
@@ -218,9 +218,9 @@ config_dict_v5 = {
 results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=lookup,
-    impute_lookup="mean",
+    impute_mode="ignore",
     n_exp_iterations=20,
-    n_mc_iterations=200,
+    n_mc_iterations=2,
     batch_quantity=3,
     config_variants={
         "GP | Mordred": config_dict_v1,
