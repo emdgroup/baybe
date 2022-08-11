@@ -218,7 +218,7 @@ def add_fake_results(
                 )
 
 
-def add_noise(
+def add_parameter_noise(
     data: pd.DataFrame,
     obj: BayBE,
     noise_type: str = "absolute",

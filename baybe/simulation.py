@@ -13,7 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from baybe.core import BayBE, BayBEConfig
-from baybe.utils import add_fake_results, add_noise, name_to_smiles
+from baybe.utils import add_fake_results, add_parameter_noise, name_to_smiles
 
 if TYPE_CHECKING:
     from .targets import NumericalTarget
@@ -268,7 +268,7 @@ def simulate_from_configs(
 
                 # Add results to BayBE object
                 if noise_percent:
-                    add_noise(
+                    add_parameter_noise(
                         measured,
                         baybe_obj,
                         noise_type="relative_percent",

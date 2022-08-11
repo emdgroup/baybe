@@ -7,7 +7,7 @@ metadata. Target objective is minimize to test computational transformation.
 from baybe.core import BayBE, BayBEConfig
 from baybe.utils import (
     add_fake_results,
-    add_noise,
+    add_parameter_noise,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
@@ -86,7 +86,7 @@ for kIter in range(N_ITERATIONS):
 
     add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
     if kIter % 2:
-        add_noise(rec, baybe_obj, noise_level=0.1)
+        add_parameter_noise(rec, baybe_obj, noise_level=0.1)
     print("### Recommended dataframe with fake results and eventual noise:\n", rec)
 
     baybe_obj.add_results(rec)
