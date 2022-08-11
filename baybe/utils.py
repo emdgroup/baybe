@@ -3,6 +3,9 @@ Collection of small utilities
 """
 from __future__ import annotations
 
+import ssl
+import urllib.request
+
 from functools import partial
 
 from typing import (
@@ -16,8 +19,6 @@ from typing import (
     TYPE_CHECKING,
     Union,
 )
-
-from urllib.request import urlopen
 
 import numpy as np
 import pandas as pd
@@ -95,8 +96,14 @@ def name_to_smiles(name: str) -> str:
 
     try:
         url = "http://cactus.nci.nih.gov/chemical/structure/" + name + "/smiles"
-        with urlopen(url) as web:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        # with urlopen(url) as web:
+        with urllib.request.urlopen(url, context=ctx) as web:
             smiles = web.read().decode("utf8")
+
         smiles = str(smiles)
         if "</div>" in smiles:
             return ""

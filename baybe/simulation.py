@@ -13,7 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from baybe.core import BayBE, BayBEConfig
-from baybe.utils import add_fake_results, add_noise
+from baybe.utils import add_fake_results, add_noise, name_to_smiles
 
 if TYPE_CHECKING:
     from .targets import NumericalTarget
@@ -70,22 +70,24 @@ def simulate_from_configs(
     -------
     pd.DataFrame
         A dataframe supposed to be plotted with seaborn. It will contain a column
-        'Variant' which derives from the dict keys suedd in config_variants, a column
+        'Variant' which derives from the dict keys used in config_variants, a column
         'Num_Experiments' which corresponds to the number of experiments performed
         (usually x-axis), a columns 'Iteration' corresponding to the DOE Iteration
         (starting at 0), for each target a column '{targetname}_IterBest' corresponding
         to the best result for that target of that iteration; and for each target a
         column '{targetname}_CumBest' corresponding to the best result for that target
-        up to including that iteration.
+        up to including that iteration. The single measurements are stored in
+        'Measurements_{targetname}'
 
     Examples
     --------
-    results = simulate_variants(
+    results = simulate_from_configs(
         config_base=config_dict_base,
-        lookup=None,
-        n_exp_iterations=15,
-        n_mc_iterations=50,
-        batch_quantity=5,
+        lookup=lookup,
+        impute_mode="ignore",
+        n_exp_iterations=20,
+        n_mc_iterations=5,
+        batch_quantity=3,
         config_variants={
             "GP | Mordred": config_dict_v1,
             "GP | RDKit": config_dict_v2,
@@ -94,7 +96,7 @@ def simulate_from_configs(
             "RANDOM": config_dict_v5,
         },
     )
-    sns.lineplot(data=results, x="Num_Experiments", y="Target_Best", hue="Variant")
+    sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Variant")
     """
 
     if config_variants is None:
@@ -302,10 +304,9 @@ def _impute_lookup(
         Describing the fill-mode that should be applied
 
     Returns
+    -------
     np.array
         The filled-in lookup results
-    -------
-
     """
     target_names = [t.name for t in targets]
     if mode == "mean":
@@ -361,3 +362,109 @@ def _impute_lookup(
         )
 
     return match_vals
+
+
+def simulate_from_data(
+    config_base: dict,
+    n_exp_iterations: int,
+    n_mc_iterations: int,
+    parameter_types: Dict[str, List[dict]],
+    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
+    impute_mode: Literal[
+        "error", "worst", "best", "mean", "random", "ignore"
+    ] = "ignore",
+    noise_percent: Optional[float] = None,
+    batch_quantity: int = 5,
+    print_inference_summary: bool = True,
+) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    All same as simulate_from_configs, except for:
+    parameter_types: dict
+        Dictionary where keys are variant names. Entries contain lists which have
+        dictionaries describing the parameter configurations except their values.
+
+        Example:
+        parameter_types = {
+        'Variant1':[
+                {'name': 'Param1', 'type':'CAT', 'encoding': 'INT'},
+                {'name': 'Param2', 'type':'CAT'},
+            ],
+        'Variant2':[
+                {'name': 'Param1', 'type':'NUM_DISCRETE'},
+                {'name': 'Param2', 'type':'SUBSTANCE', 'encoding': 'RDKIT'},
+            ],
+        }
+
+    Returns
+    -------
+    pd.DataFrame
+        A dataframe supposed to be plotted with seaborn. It will contain a column
+        'Variant' which derives from the dict keys used in config_variants, a column
+        'Num_Experiments' which corresponds to the number of experiments performed
+        (usually x-axis), a columns 'Iteration' corresponding to the DOE Iteration
+        (starting at 0), for each target a column '{targetname}_IterBest' corresponding
+        to the best result for that target of that iteration; and for each target a
+        column '{targetname}_CumBest' corresponding to the best result for that target
+        up to including that iteration. The single measurements are stored in
+        'Measurements_{targetname}'
+    """
+    # Create the parameter configs from lookup data
+    config_variants = {}
+    for variant_name, parameter_list in parameter_types.items():
+        variant_parameter_configs = []
+        for param_dict in parameter_list:
+            assert "name" in param_dict, (
+                f"Parameter dictionary must contain the key 'name', "
+                f"parsed dictionary: {param_dict}"
+            )
+            assert "type" in param_dict, (
+                f"Parameter dictionary must contain the key 'type', "
+                f"parsed dictionary: {param_dict}"
+            )
+
+            param_vals = list(lookup[param_dict["name"]].unique())
+            parameter_config = deepcopy(param_dict)
+
+            if param_dict["type"] == "SUBSTANCE":
+                smiles = [name_to_smiles(itm) for itm in param_vals]
+                if any(s == "" for s in smiles):
+                    raise ValueError(
+                        f"For the parameter {param_dict['name']} in SUBSTANCE type "
+                        f"not all SMILES could be retrieved from the NCI. The "
+                        f"problematic substances are "
+                        f"{[name for k,name in enumerate(param_vals) if smiles[k]=='']}"
+                    )
+                dat = dict(zip(param_vals, smiles))
+                parameter_config["data"] = dat
+            elif param_dict["type"] == "CUSTOM":
+                raise ValueError(
+                    f"Custom parameter types are not supported for "
+                    f"simulation with automatic parameter value inference "
+                    f"(encountered in parameter {param_dict})."
+                )
+            else:
+                parameter_config["values"] = param_vals
+
+            variant_parameter_configs.append(parameter_config)
+
+        config_variants[variant_name] = {"parameters": variant_parameter_configs}
+
+    if print_inference_summary:
+        print("### Inferred configurations:")
+        print(config_variants)
+
+    results = simulate_from_configs(
+        config_base=config_base,
+        lookup=lookup,
+        n_exp_iterations=n_exp_iterations,
+        n_mc_iterations=n_mc_iterations,
+        batch_quantity=batch_quantity,
+        noise_percent=noise_percent,
+        impute_mode=impute_mode,
+        config_variants=config_variants,
+    )
+
+    return results

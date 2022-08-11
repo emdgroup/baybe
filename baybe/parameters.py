@@ -159,7 +159,7 @@ class NumericDiscrete(Parameter):
 
     # object variables
     values: list
-    tolerance: float
+    tolerance: float = 0.0
 
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)

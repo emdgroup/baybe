@@ -220,7 +220,7 @@ results = simulate_from_configs(
     lookup=lookup,
     impute_mode="ignore",
     n_exp_iterations=20,
-    n_mc_iterations=2,
+    n_mc_iterations=200,
     batch_quantity=3,
     config_variants={
         "GP | Mordred": config_dict_v1,
