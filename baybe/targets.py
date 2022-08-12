@@ -4,6 +4,7 @@ Functionality for different type of targets.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from functools import partial
 from typing import ClassVar, Dict, List, Literal, Optional, Tuple
@@ -14,6 +15,9 @@ from pydantic import BaseModel, Extra, validator
 from scipy.stats.mstats import gmean
 
 from .utils import check_if_in
+from .utils.boundtransforms import bound_bell, bound_lmu_linear, bound_lu_linear
+
+log = logging.getLogger(__name__)
 
 
 def _validate_bounds(bounds: Optional[Tuple[float, float]] = None):
@@ -174,6 +178,19 @@ class NumericalTarget(Target):
 
     mode: Literal["MIN", "MAX", "MATCH"]
     bounds: Optional[Tuple[float, float]] = None
+    bounds_transform_func: Optional[str] = None
+
+    _bound_transform_funcs = {
+        "luLINEAR": bound_lu_linear,
+        "lmuLINEAR": bound_lmu_linear,
+        "BELL": bound_bell,
+    }
+
+    _valid_transforms = {
+        "MAX": ["luLINEAR"],
+        "MIN": ["luLINEAR"],
+        "MATCH": ["lmuLINEAR", "BELL"],
+    }
 
     _validated_bounds = validator("bounds", allow_reuse=True)(_validate_bounds)
 
@@ -193,22 +210,94 @@ class NumericalTarget(Target):
             The transformed data frame
         """
 
-        # TODO implement transforms for bounds
+        transformed = data.copy()
         if self.mode == "MAX":
             if self.bounds is not None:
-                raise NotImplementedError()
-            return data
-        if self.mode == "MIN":
-            if self.bounds is not None:
-                # TODO implement transform wth bounds here
-                raise NotImplementedError()
-            return -data
-        if self.mode == "MATCH":
-            if self.bounds is None:
-                # TODO implement match transform here
-                raise ValueError(
-                    f"In MATCH mode bounds always needs to be a finite 2-tuple. "
-                    f"Encountered for target {self.name} of type {self.type}"
+                if self.bounds_transform_func is None:
+                    log.warning(
+                        "The bound transform function for target %s in mode %s"
+                        " has not been specified. Setting the bound transform "
+                        "function to %s",
+                        self.name,
+                        self.mode,
+                        self._valid_transforms[self.mode][0],
+                    )
+                    self.bounds_transform_func = self._valid_transforms[self.mode][0]
+                if self.bounds_transform_func not in self._valid_transforms[self.mode]:
+                    raise ValueError(
+                        f"You specified bounds for target {self.name}, but your "
+                        f"specified bound transform function "
+                        f"{self.bounds_transform_func} is not compatible with the "
+                        f"target mode {self.mode}. It must be one of "
+                        f"{self._valid_transforms[self.mode]}."
+                    )
+                transformed = self._bound_transform_funcs[self.bounds_transform_func](
+                    transformed,
+                    l=self.bounds[0],  # noqa: E741
+                    u=self.bounds[1],  # noqa: E741
+                    bMin=False,  # noqa: E741
                 )
-            raise NotImplementedError("MATCH mode for targets is not implemented yet.")
-        return data
+            # if in MAX mode without bounds no further transformation is needed
+        elif self.mode == "MIN":
+            if self.bounds is not None:
+                if self.bounds_transform_func is None:
+                    log.warning(
+                        "The bound transform function for target %s in mode %s"
+                        " has not been specified. Setting the bound transform "
+                        "function to %s",
+                        self.name,
+                        self.mode,
+                        self._valid_transforms[self.mode][0],
+                    )
+                    self.bounds_transform_func = self._valid_transforms[self.mode][0]
+                if self.bounds_transform_func not in self._valid_transforms[self.mode]:
+                    raise ValueError(
+                        f"You specified bounds for target {self.name}, but your "
+                        f"specified bound transform function "
+                        f"{self.bounds_transform_func} is not compatible with the "
+                        f"target mode {self.mode}. It must be one of "
+                        f"{self._valid_transforms[self.mode]}."
+                    )
+                transformed = self._bound_transform_funcs[self.bounds_transform_func](
+                    transformed,
+                    l=self.bounds[0],  # noqa: E741
+                    u=self.bounds[1],  # noqa: E741
+                    bMin=True,  # noqa: E741
+                )
+            else:
+                # If no bounds are given we can simply negate all target values
+                transformed = -transformed
+        elif self.mode == "MATCH":
+            if self.bounds is not None:
+                if self.bounds_transform_func is None:
+                    log.warning(
+                        "The bound transform function for target %s in mode %s"
+                        " has not been specified. Setting the bound transform "
+                        "function to %s",
+                        self.name,
+                        self.mode,
+                        self._valid_transforms[self.mode][0],
+                    )
+                    self.bounds_transform_func = self._valid_transforms[self.mode][0]
+                if self.bounds_transform_func not in self._valid_transforms[self.mode]:
+                    raise ValueError(
+                        f"You specified bounds for target {self.name}, but your "
+                        f"specified bound transform function "
+                        f"{self.bounds_transform_func} is not compatible with the "
+                        f"target mode {self.mode}. It must be one of "
+                        f"{self._valid_transforms[self.mode]}."
+                    )
+                transformed = self._bound_transform_funcs[self.bounds_transform_func](
+                    transformed, l=self.bounds[0], u=self.bounds[1]  # noqa: E741
+                )
+            else:
+                raise ValueError(
+                    f"Target {self.name} is in MATCH mode but no bounds were provided. "
+                    "Bounds for MATCH mode are mandatory."
+                )
+        else:
+            raise ValueError(
+                f"The specified mode {self.mode} for target {self.name} is invalid"
+            )
+
+        return transformed

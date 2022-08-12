@@ -117,8 +117,8 @@ def add_fake_results(
     data: pd.DataFrame,
     obj: BayBE,
     good_reference_values: Optional[Dict[str, list]] = None,
-    good_intervals: Optional[Tuple] = None,
-    bad_intervals: Optional[Tuple] = None,
+    good_intervals: Optional[List[Tuple[float, float]]] = None,
+    bad_intervals: Optional[List[Tuple[float, float]]] = None,
 ) -> None:
     """
     Add fake results to a dataframe which was the result of the BayBE recommendation
@@ -134,12 +134,14 @@ def add_fake_results(
           The baybe object which provides configuration, targets, etc.
     good_reference_values : dictionary
                   A dictionaries which defines parameters and respective values
-                  which identify what will be considered good values.
-                  Example {'parameter1': [1,4,42]}
-    good_intervals : 2-tuple
+                  which identify what will be considered good values. Conditions for
+                  different parameters connected via and logic, ie the entry will only
+                  get a good value if all parameters have the good reference values
+                  Example {'Param1': [1,4,42], 'Param2': ['A','C']}
+    good_intervals : list of 2-tuples
                      Good entries will get a random value in the range defined by this
                      tuple
-    bad_intervals : 2-tuple
+    bad_intervals : list of 2-tuples
                     Bad entries will get a random value in the range defined by this
                     tuple
 
@@ -147,47 +149,59 @@ def add_fake_results(
     -------
     Nothing since it operated directly on the data
     """
-    # TODO Add support for multiple targets
 
-    # Sanity checks for good_bad_ratio
+    # Sanity checks and standatds for good and bad intervals
     if good_intervals is None:
-        if obj.targets[0].mode == "MAX":
-            good_intervals = (66, 100)
-        elif obj.targets[0].mode == "MIN":
-            good_intervals = (0, 33)
-        elif obj.targets[0].mode == "MATCH":
-            good_intervals = tuple(*obj.targets[0].bounds)
-        else:
-            raise ValueError("Unrecognized target mode when trying to add fake values.")
+        good_intervals = []
+        for target in obj.targets:
+            if target.mode == "MAX":
+                interv = (66, 100)
+            elif target.mode == "MIN":
+                interv = (0, 33)
+            elif target.mode == "MATCH":
+                lbound = 0 if target.bounds is None else target.bounds[0]
+                ubound = 100 if target.bounds is None else target.bounds[1]
+                interv = (
+                    lbound + 0.2 * (ubound - lbound),
+                    lbound + 0.8 * (ubound - lbound),
+                )
+            else:
+                raise ValueError(
+                    "Unrecognized target mode when trying to add fake values."
+                )
+            good_intervals.append(interv)
     if bad_intervals is None:
-        if obj.targets[0].mode == "MAX":
-            bad_intervals = (0, 33)
-        elif obj.targets[0].mode == "MIN":
-            bad_intervals = (66, 100)
-        elif obj.targets[0].mode == "MATCH":
-            bad_intervals = (
-                0.05 * obj.targets[0].bounds[0],
-                0.3 * obj.targets[0].bounds[0],
-            )
-        else:
-            raise ValueError("Unrecognized target mode when trying to add fake values.")
-    if not isinstance(good_intervals, Tuple) or (len(good_intervals) != 2):
-        raise TypeError("Parameter good_intervals must be a 2-tuple")
-    if not isinstance(bad_intervals, Tuple) or (len(bad_intervals) != 2):
-        raise TypeError("Parameter bad_intervals must be a 2-tuple")
+        bad_intervals = []
+        for target in obj.targets:
+            if target.mode == "MAX":
+                interv = (0, 33)
+            elif target.mode == "MIN":
+                interv = (66, 100)
+            elif target.mode == "MATCH":
+                lbound = 0 if target.bounds is None else target.bounds[0]
+                ubound = 100 if target.bounds is None else target.bounds[1]
+                interv = (
+                    ubound + 0.5 * (ubound - lbound),
+                    ubound + 2.0 * (ubound - lbound),
+                )
+            else:
+                raise ValueError(
+                    "Unrecognized target mode when trying to add fake values."
+                )
+            bad_intervals.append(interv)
 
-    # Sanity check for good_values. Assure we only consider columns that are in the data
+    # Sanity check for reference values of good parameters
     if good_reference_values is None:
         good_reference_values = {}
 
-    size = len(data)
-    for target in obj.targets:
+    for k_target, target in enumerate(obj.targets):
         # add bad values
-        data[target.name] = np.random.randint(bad_intervals[0], bad_intervals[1], size)
+        data[target.name] = np.random.randint(
+            bad_intervals[k_target][0], bad_intervals[k_target][1], len(data)
+        )
 
         # add good values
         masks = []
-
         if len(good_reference_values) > 0:
             for param, vals in good_reference_values.items():
                 if param not in data.columns:
@@ -214,7 +228,9 @@ def add_fake_results(
                         final_mask &= mask
 
                 data.loc[final_mask, target.name] = np.random.randint(
-                    good_intervals[0], good_intervals[1], final_mask.sum()
+                    good_intervals[k_target][0],
+                    good_intervals[k_target][1],
+                    final_mask.sum(),
                 )
 
 
