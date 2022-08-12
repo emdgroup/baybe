@@ -7,31 +7,6 @@ trigger:
 
 stages:
 
-- stage: Changelog
-  displayName: Assert changelog entry exists
-
-  jobs:
-    - job: "Changelog"
-
-      pool:
-        vmImage: 'ubuntu-latest'
-
-      steps:
-      - script: |
-          CURRENT_COMMIT=`git rev-parse HEAD`
-          git checkout main
-          git checkout $CURRENT_COMMIT
-          NUM_ADDED=`git diff --numstat main CHANGELOG.md | cut -d$'\t' -f1`
-          echo $NUM_ADDED
-          if [ "$NUM_ADDED" -gt "0" ]; then
-            echo "$NUM_ADDED lines have been added to CHANGELOG.md"
-            exit 0
-          else
-            echo "Nothing has been added to CHANGELOG.md"
-            exit 1
-          fi
-        continueOnError: true
-
 - stage: Lint
   displayName: Format and lint code
 
@@ -78,3 +53,28 @@ stages:
           source activate $(CONDA_ENV)
           python -m pylint --recursive=yes .
         displayName: "Run pylint code linter"
+
+- stage: Changelog
+  displayName: Assert changelog entry exists
+
+  jobs:
+    - job: "Changelog"
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      steps:
+        - script: |
+            CURRENT_COMMIT=`git rev-parse HEAD`
+            git checkout main
+            git checkout $CURRENT_COMMIT
+            NUM_ADDED=`git diff --numstat main CHANGELOG.md | cut -d$'\t' -f1`
+            echo $NUM_ADDED
+            if [ "$NUM_ADDED" -gt "0" ]; then
+              echo "$NUM_ADDED lines have been added to CHANGELOG.md"
+              exit 0
+            else
+              echo "Nothing has been added to CHANGELOG.md"
+              exit 1
+            fi
+          continueOnError: false
