@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 from pydantic import BaseModel, Extra, validator
 
-import baybe.parameters as baybe_parameters
+from . import parameters as baybe_parameters
 from .parameters import Parameter
 from .strategy import Strategy
 from .targets import Objective, Target
