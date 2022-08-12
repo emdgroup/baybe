@@ -28,7 +28,7 @@ config_dict = {
         {
             "name": "Num_disc_1",
             "type": "NUM_DISCRETE",
-            "values": [1, 2, 3, 4, 6, 8, 10],
+            "values": [1, 2, 3, 4, 6],
             "tolerance": 0.3,
         },
         {
@@ -39,17 +39,26 @@ config_dict = {
         },
     ],
     "objective": {
-        "mode": "MULTI",
+        "mode": "DESIRABILITY",
+        "combine_func": "MEAN",
         "targets": [
             {
                 "name": "Target_1",
                 "type": "NUM",
                 "mode": "MAX",
+                "bounds": (0, 100),
             },
             {
                 "name": "Target_2",
                 "type": "NUM",
                 "mode": "MIN",
+                "bounds": (0, 100),
+            },
+            {
+                "name": "Target_3",
+                "type": "NUM",
+                "mode": "MATCH",
+                "bounds": [45, 55],
             },
         ],
     },
@@ -64,7 +73,7 @@ config = BayBEConfig(**config_dict)
 baybe_obj = BayBE(config)
 print(baybe_obj)
 
-N_ITERATIONS = 3
+N_ITERATIONS = 10
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
@@ -74,13 +83,13 @@ for kIter in range(N_ITERATIONS):
     add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
     if kIter % 2:
         add_parameter_noise(rec, baybe_obj, noise_level=0.1)
-    print("### Recommended dataframe with fake results and eventual noise:\n", rec)
+    # print("### Recommended dataframe with fake results and eventual noise:\n", rec)
 
     baybe_obj.add_results(rec)
-    # print(
-    #     "\n\n### Internal measurement dataframe after data ingestion:\n",
-    #     baybe_obj.measurements_exp_rep,
-    # )
+    print(
+        "\n\n### Internal measurement dataframe after data ingestion:\n",
+        baybe_obj.measurements_exp_rep,
+    )
 
     # print(
     #     "\n\n### Internal measurement dataframe computational representation X:\n",

@@ -51,7 +51,7 @@ class Objective(BaseModel, extra=Extra.forbid):
 
     mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
     targets: List[dict]
-    weights: Optional[List[float]]
+    weights: Optional[List[float]] = None
     combine_func: Optional[Literal["MEAN", "GEOM_MEAN"]] = "GEOM_MEAN"
 
     @validator("targets", always=True)
@@ -94,7 +94,7 @@ class Objective(BaseModel, extra=Extra.forbid):
             )
 
         # Normalize to sum = 100
-        weights = 100 * weights / np.sum(weights)
+        weights = [100.0 * w / np.sum(weights) for w in weights]
 
         return weights
 
@@ -132,7 +132,7 @@ class Objective(BaseModel, extra=Extra.forbid):
                     f"The specified averaging function {self.combine_func} is not know"
                 )
 
-            vals = func(transformed.data, weights=self.weights)
+            vals = func(transformed.values, weights=self.weights)
             transformed = pd.DataFrame({"Comp_Target": vals}, index=transformed.index)
 
         return transformed
