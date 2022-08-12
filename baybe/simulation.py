@@ -124,7 +124,7 @@ def simulate_from_configs(
                 elif target.mode == "MIN":
                     best_mc_results[target.name] = np.inf
                 elif target.mode == "MATCH":
-                    best_mc_results[target.name] = np.inf
+                    best_mc_results[target.name] = np.nan
 
             # Mark searchspace metadata if impute_mode is ignore
             if impute_mode == "ignore":
@@ -252,16 +252,13 @@ def simulate_from_configs(
                         ]
                         tempres[f"{target.name}_IterBest"] = best_iter
 
-                        if (
-                            measured.loc[
-                                measured[target.name] == best_iter, target.name
-                            ].values[0]
-                            < measured.loc[
-                                measured[target.name] == best_mc_results[target.name],
-                                target.name,
-                            ].values[0]
-                        ):
+                        if np.isnan(best_mc_results[target.name]):
                             best_mc_results[target.name] = best_iter
+                        else:
+                            if np.abs(best_iter - matchval) < np.abs(
+                                best_mc_results[target.name] - matchval
+                            ):
+                                best_mc_results[target.name] = best_iter
                         tempres[f"{target.name}_CumBest"] = best_mc_results[target.name]
 
                 results.append(tempres)
