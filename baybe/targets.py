@@ -12,9 +12,8 @@ from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Extra, validator
-from scipy.stats.mstats import gmean
 
-from .utils import check_if_in
+from .utils import check_if_in, geom_mean
 from .utils.boundtransforms import bound_bell, bound_lmu_linear, bound_lu_linear
 
 log = logging.getLogger(__name__)
@@ -124,7 +123,7 @@ class Objective(BaseModel, extra=Extra.forbid):
         # In desirability mode the targets are additionally combined further into one
         if self.mode == "DESIRABILITY":
             if self.combine_func == "GEOM_MEAN":
-                func = partial(gmean, axis=1)
+                func = geom_mean
             elif self.combine_func == "MEAN":
                 func = partial(np.average, axis=1)
             else:

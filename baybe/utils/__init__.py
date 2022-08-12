@@ -534,3 +534,17 @@ class StrictValidationError(Exception):
     The issue is described here:
     https://github.com/pydantic/pydantic/issues/3915
     """
+
+
+def geom_mean(x: np.ndarray, weights):
+    """
+    Calculate geometric mean. Own implementation instead of gmean from scistats due to
+    avoiding logarithm and division errors
+    """
+    # pylint: disable=invalid-name
+    res = 1.0
+
+    for k in range(x.shape[1]):
+        res *= x[:, k] ** (weights[k] / np.sum(weights))
+
+    return res
