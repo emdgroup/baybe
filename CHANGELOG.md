@@ -28,3 +28,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Substance parameters which are encoded via cheminformatics descriptors.
 - Data cleaning utilities useful for descriptors.
 - Simulation capabilities for testing the package on existing data.
+- Parsing and preprocessing for multiple targets / desirability ansatz.
