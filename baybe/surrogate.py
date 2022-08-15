@@ -13,7 +13,7 @@ from botorch.models import SingleTaskGP
 from botorch.optim.fit import fit_gpytorch_torch
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from baybe.utils import to_tensor
+from .utils import to_tensor
 
 
 class SurrogateModel(ABC):

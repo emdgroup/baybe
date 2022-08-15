@@ -31,6 +31,9 @@ config_dict = {
         "mode": "SINGLE",
         "targets": [{"name": "Target_1", "type": "NUM", "bounds": None, "mode": "MIN"}],
     },
+    "strategy": {
+        # "surrogate_model_cls": "GP",
+    },
 }
 
 # Create BayBE object and print a summary
