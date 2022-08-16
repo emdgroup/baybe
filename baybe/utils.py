@@ -494,3 +494,13 @@ def df_uncorrelated_features(
         data[exclude_list] = df.loc[:, exclude_list]
 
     return data
+
+
+class StrictValidationError(Exception):
+    """
+    This class is used as a workaround that can be used to stop pydantic from continuing
+    validating other members when the validation of a specific field fails.
+
+    The issue is described here:
+    https://github.com/pydantic/pydantic/issues/3915
+    """

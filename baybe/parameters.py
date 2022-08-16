@@ -21,6 +21,7 @@ from .utils import (
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
+    StrictValidationError,
 )
 
 log = logging.getLogger(__name__)
@@ -295,12 +296,9 @@ class Custom(Parameter):
         Validates the dataframe with the custom representation
         """
         if data.isna().any().any():
-            # TODO Tried to trigger this with a Nan, but for some reason the Exception
-            #  is not raised. This leads to an error in the identifier_col_idx validator
-            #  since the 'data' entry is not in the dict
-            raise ValueError(
+            raise StrictValidationError(
                 f"The custom dataframe for parameter {values['name']} contains NaN "
-                f"entries, this is not supported"
+                f"entries, which is not supported."
             )
 
         # Always Remove zero variance and non-numeric columns
