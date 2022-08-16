@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 def is_valid_smiles(smiles: str) -> bool:
     """
-    Test if a SMILEs string is valid according to RDKit.
+    Test if a SMILES string is valid according to RDKit.
 
     Parameters
     ----------
@@ -45,10 +45,7 @@ def is_valid_smiles(smiles: str) -> bool:
     """
     try:
         mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
-            return False
-
-        return True
+        return mol is not None
     except Exception:
         return False
 

@@ -150,14 +150,14 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         if self.use_initial_strategy:
             return self.initial_strategy.recommend(candidates, batch_quantity)
 
-        if self.recommender_cls.type == "RANDOM":
-            recommender = self.recommender_cls(None)
-            return recommender.recommend(candidates, batch_quantity)
-
         # construct the acquisition function
         # TODO: the current approach only works for gpytorch GP surrogate models
         #   (for other surrogate models, some wrapper is required)
-        acqf = self.acquisition_function_cls(self.surrogate_model.model, self.best_f)
+        acqf = (
+            self.acquisition_function_cls(self.surrogate_model.model, self.best_f)
+            if self.recommender_cls.type != "RANDOM"
+            else None
+        )
 
         # select the next experiments using the given recommender approach
         recommender = self.recommender_cls(acqf)

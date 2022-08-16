@@ -1,5 +1,5 @@
 """
-Functionality for different type of targets
+Functionality for different type of targets.
 """
 
 from __future__ import annotations
@@ -56,12 +56,12 @@ class Target(ABC, BaseModel, extra=Extra.forbid):
 
     @abstractmethod
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Creates a new target object matching the given specifications."""
+        """Creates a new target representation matching the given specifications."""
 
 
 class NumericalTarget(Target):
     """
-    Class for numerical targets
+    Class for numerical targets.
     """
 
     type = "NUM"
