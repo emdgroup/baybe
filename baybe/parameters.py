@@ -10,7 +10,7 @@ from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, confloat, Extra, StrictBool, validator
 from sklearn.metrics.pairwise import pairwise_distances
 
 from .utils import (
@@ -220,23 +220,9 @@ class GenericSubstance(Parameter):
     requires_encoding = True
 
     # object variables
-    decorrelate: Union[bool, float] = True
+    decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
     data: Dict[str, str]
-
-    @validator("decorrelate", always=True)
-    def validate_decorrelate(cls, flag):
-        """
-        Validates the decorrelate flag
-        """
-        if isinstance(flag, float):
-            if not 0.0 < flag < 1.0:
-                raise ValueError(
-                    f"The decorrelate flag was set as a float to {flag} "
-                    f"but it must be between (excluding) 0.0 and 1.0"
-                )
-
-        return flag
 
     @validator("data", always=True)
     def validate_data(cls, dat):
@@ -299,23 +285,9 @@ class Custom(Parameter):
     requires_encoding = True
 
     # object variables
-    decorrelate: Union[bool, float] = True
+    decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
     data: pd.DataFrame
     identifier_col_idx: int = 0
-
-    @validator("decorrelate")
-    def validate_decorrelate(cls, flag):
-        """
-        Validates the decollelate flag
-        """
-        if isinstance(flag, float):
-            if not 0.0 < flag < 1.0:
-                raise ValueError(
-                    f"The decorrelate flag was set as a float to {flag} "
-                    f"but it must be between (excluding) 0.0 and 1.0"
-                )
-
-        return flag
 
     @validator("data")
     def validate_data(cls, data, values):
