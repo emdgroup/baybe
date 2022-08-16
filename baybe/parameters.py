@@ -48,6 +48,7 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
 
     # class variables
     type: ClassVar[str]
+    requires_encoding: ClassVar[str]
     SUBCLASSES: ClassVar[Dict[str, Parameter]] = {}
 
     # object variables
@@ -79,7 +80,6 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         Returns the computational representation of the parameter.
         """
 
-    @abstractmethod
     def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
         Transforms data from experimental to computational representation.
@@ -94,6 +94,19 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         pd.DataFrame
             The transformed version of the data.
         """
+        if self.requires_encoding:
+            # replace each label with the corresponding encoding
+            transformed = pd.merge(
+                left=data.rename("Labels").to_frame(),
+                left_on="Labels",
+                right=self.comp_df,
+                right_index=True,
+                how="left",
+            ).drop(columns="Labels")
+        else:
+            transformed = data.to_frame()
+
+        return transformed
 
 
 class Categorical(Parameter):
@@ -103,6 +116,7 @@ class Categorical(Parameter):
 
     # class variables
     type = "CAT"
+    requires_encoding = True
 
     # object variables
     values: list
@@ -139,22 +153,6 @@ class Categorical(Parameter):
         """
         return item in self.values
 
-    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
-        """
-        See base class.
-        """
-
-        # Transformation is just lookup for this parameter type
-        transformed = pd.merge(
-            left=data.rename("Labels").to_frame(),
-            left_on="Labels",
-            right=self.comp_df,
-            right_index=True,
-            how="left",
-        ).drop(columns="Labels")
-
-        return transformed
-
 
 class NumericDiscrete(Parameter):
     """
@@ -163,6 +161,7 @@ class NumericDiscrete(Parameter):
 
     # class variables
     type = "NUM_DISCRETE"
+    requires_encoding = False
 
     # object variables
     values: list
@@ -213,13 +212,6 @@ class NumericDiscrete(Parameter):
         ]
         return any(differences_acceptable)
 
-    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
-        """
-        See base class.
-        """
-        # There is nothing to transform for this parameter type
-        return data.to_frame()
-
 
 class GenericSubstance(Parameter):
     """
@@ -232,6 +224,7 @@ class GenericSubstance(Parameter):
 
     # class variables
     type = "SUBSTANCE"
+    requires_encoding = True
 
     # object variables
     decorrelate: Union[bool, float] = True
@@ -311,22 +304,6 @@ class GenericSubstance(Parameter):
         """
         return item in self.values
 
-    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
-        """
-        See base class.
-        """
-
-        # Transformation is just lookup for this parameter type
-        transformed = pd.merge(
-            left=data.rename("Labels").to_frame(),
-            left_on="Labels",
-            right=self.comp_df,
-            right_index=True,
-            how="left",
-        ).drop(columns="Labels")
-
-        return transformed
-
 
 class Custom(Parameter):
     """
@@ -336,6 +313,7 @@ class Custom(Parameter):
 
     # class variables
     type = "CUSTOM"
+    requires_encoding = True
 
     # object variables
     decorrelate: Union[bool, float] = True
@@ -417,21 +395,6 @@ class Custom(Parameter):
         See base class.
         """
         return item in self.values
-
-    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
-        """
-        See base class.
-        """
-
-        transformed = pd.merge(
-            left=data.rename("Labels").to_frame(),
-            left_on="Labels",
-            right=self.comp_df,
-            right_index=True,
-            how="left",
-        ).drop(columns="Labels")
-
-        return transformed
 
 
 class NumericContinuous(Parameter, ABC):
@@ -553,7 +516,3 @@ def scaled_view(
 
 # TODO if self.values is part of the base class then is_in_range should also become a
 #  method of the base class
-
-# TODO transform rep method can be a non-abstract method of the base class that simply
-#  merges the provided series (left) with the comp_df (right) based on a label column.
-#  The contents of the label column is defined by self.values
