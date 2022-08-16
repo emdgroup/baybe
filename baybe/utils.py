@@ -3,6 +3,9 @@ Collection of small utilities
 """
 from __future__ import annotations
 
+import ssl
+import urllib.request
+
 from functools import partial
 
 from typing import (
@@ -16,8 +19,6 @@ from typing import (
     TYPE_CHECKING,
     Union,
 )
-
-from urllib.request import urlopen
 
 import numpy as np
 import pandas as pd
@@ -52,7 +53,14 @@ def is_valid_smiles(smiles: str) -> bool:
 
 def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     """Converts a given set of dataframes into tensors (dropping all indices)."""
-    out = (torch.from_numpy(df.values).to(torch.float32) for df in dfs)
+    # FIXME This function seems to trigger a problem when some columns in either of the
+    #  dfs have a dtype other than int or float (eg object, bool). This can weirdly
+    #  happen, even if all values are numeric, eg when a target column is looked up from
+    #  a df in simulation, it can have dtype object even if its all floats. As a simple
+    #  fix (this seems to be the most reasonable place to take care of this) I changed
+    #  df.values to df.values.astype(float), even though this seems like double casting
+    #  here
+    out = (torch.from_numpy(df.values.astype(float)).to(torch.float32) for df in dfs)
     if len(dfs) == 1:
         out = next(out)
     return out
@@ -88,8 +96,14 @@ def name_to_smiles(name: str) -> str:
 
     try:
         url = "http://cactus.nci.nih.gov/chemical/structure/" + name + "/smiles"
-        with urlopen(url) as web:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        # with urlopen(url) as web:
+        with urllib.request.urlopen(url, context=ctx) as web:
             smiles = web.read().decode("utf8")
+
         smiles = str(smiles)
         if "</div>" in smiles:
             return ""
@@ -193,15 +207,15 @@ def add_fake_results(
 
             # Good values will be added where the parameters of the
             # corresponding datapoints match the ones defined in good_reference_values
-            for k, mask in enumerate(masks):
-                if k == 0:
-                    final_mask = mask
+            if len(masks) > 0:
+                final_mask = masks[0]
+                if len(masks) > 1:
+                    for mask in masks[1:]:
+                        final_mask &= mask
 
-                final_mask &= mask
-
-            data.loc[final_mask, target.name] = np.random.randint(
-                good_intervals[0], good_intervals[1], final_mask.sum()
-            )
+                data.loc[final_mask, target.name] = np.random.randint(
+                    good_intervals[0], good_intervals[1], final_mask.sum()
+                )
 
 
 def add_noise(
@@ -209,7 +223,7 @@ def add_noise(
     obj: BayBE,
     noise_type: str = "absolute",
     noise_level: float = 1.0,
-):
+) -> None:
     """
     Adds uniform noise to parameter values of a recommendation frame. Simulates
     experimental noise and inputting numerical values that are slightly different
