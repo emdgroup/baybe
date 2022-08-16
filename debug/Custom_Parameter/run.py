@@ -3,42 +3,64 @@ measurements are simulated for each round. Noise is added every second round.
 From the three recommendations only one is actually added to test the matching and
 metadata. Target objective is minimize to test computational transformation.
 """
+import pandas as pd
 
 from baybe.core import BayBE, BayBEConfig
 from baybe.utils import add_fake_results, add_noise
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
+
+custom_df = pd.DataFrame(
+    {
+        "Mol": ["mol1", "mol2", "mol3", "mol4", "mol5"],
+        "D1": [1.1, 1.4, 1.7, 0.8, -0.2],
+        "D2": [11, 23, 55, 23, 3],
+        "D3": [-4, -13, 4, -2, 6],
+        "D4": [0.1, 0.4, -1.3, -0.5, 2.1],
+        "D5": [1, 2, 0, 0, 7],
+    }
+)
+custom_df2 = pd.DataFrame(
+    {
+        "BuildingBlock": ["A", "B", "C"],
+        "desc1": [1.1, 1.4, 1.7],
+        "desc2": [55, 23, 3],
+        "desc3": [4, 5, 6],
+        "desc4": [-1.3, -0.5, 2.1],
+    }
+)
+
+
 config_dict = {
-    "project_name": "Input Output Debug",
-    "random_seed": 1337,
-    "allow_repeated_recommendations": True,
+    "project_name": "Custom Parameter",
+    "allow_repeated_recommendations": False,
     "allow_recommending_already_measured": True,
     "numerical_measurements_must_be_within_tolerance": True,
     "parameters": [
         {
             "name": "Categorical_1",
             "type": "CAT",
-            "values": [22, 33],
-            "encoding": "OHE",
-        },
-        {
-            "name": "Categorical_2",
-            "type": "CAT",
-            "values": ["bad", "OK", "good"],
+            "values": ["very bad", "bad", "OK", "good", "very good"],
             "encoding": "INT",
         },
         {
             "name": "Num_disc_1",
             "type": "NUM_DISCRETE",
-            "values": [1, 2, 3],
+            "values": [1, 2, 3, 4],
             "tolerance": 0.3,
         },
         {
-            "name": "Num_disc_2",
-            "type": "NUM_DISCRETE",
-            "values": [-1, -3, -6],
-            "tolerance": 0.3,
+            "name": "Custom_1",
+            "type": "CUSTOM",
+            "data": custom_df,
+            # "identifier_col_idx": 0,
+        },
+        {
+            "name": "Custom_2",
+            "type": "CUSTOM",
+            "data": custom_df2,
+            # "identifier_col_idx": 0,
         },
     ],
     "objective": {
@@ -47,7 +69,7 @@ config_dict = {
             {
                 "name": "Target_1",
                 "type": "NUM",
-                "mode": "MIN",
+                "mode": "MAX",
             },
         ],
     },
@@ -58,29 +80,26 @@ config_dict = {
 }
 
 # Define some parameter values to define rows where the fake results should be good
-good_reference_values = {"Categorical_2": ["OK"], "Categorical_1": [22]}
+good_reference_values = {"Num_disc_1": [1, 2, 3], "Categorical_1": ["OK"]}
 
 # Create BayBE object, add fake results and print what happens to internal data
 config = BayBEConfig(**config_dict)
 baybe_obj = BayBE(config)
 print(baybe_obj)
 
-N_ITERATIONS = 4
+N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
     rec = baybe_obj.recommend(batch_quantity=3)
-    print("\n\n### Recommended dataframe:\n", rec)
+    # print("\n### Recommended dataframe:\n", rec)
 
     add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
     if kIter % 2:
-        print(kIter)
         add_noise(rec, baybe_obj, noise_level=0.1)
-    print("\n\n### Recommended dataframe with fake results and eventual noise:\n", rec)
+    print("### Recommended dataframe with fake results and eventual noise:\n", rec)
 
-    # uncomment below to test error throw for disallowed value
-    # baybe_obj.add_results(rec.replace(1, 11111))
-    baybe_obj.add_results(rec.sample(n=1))
+    baybe_obj.add_results(rec)
     print(
         "\n\n### Internal measurement dataframe after data ingestion:\n",
         baybe_obj.measurements_exp_rep,
@@ -96,7 +115,6 @@ for kIter in range(N_ITERATIONS):
         baybe_obj.measurements_comp_rep_y,
     )
 
-    # Show metadata
     print(
         "\n\n### Search Space Metadata\n",
         baybe_obj.searchspace_metadata,

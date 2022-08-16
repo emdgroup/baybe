@@ -43,4 +43,10 @@ disable = [
 	# -> https://github.com/PyCQA/pylint/issues/6900
 	"no-self-argument",  # should be replaced with a more specific fix for pydantic validators
 	# -> https://github.com/PyCQA/pylint/issues/6900
+	"broad-except", # catching base exception is common for RDKit mol validation etc
+	"no-name-in-module", # seems RDKit objects in some modules can never be found by IDEs
+	"no-member", # seems RDKit objects in some modules can never be found by IDEs
 	]
+
+[tool.pylint.BASIC]
+good-names=["i", "j", "k", "ex", "df"] # allow these variable names

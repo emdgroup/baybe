@@ -6,7 +6,7 @@ Recommender classes for optimizing acquisition functions.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Optional
 
 import pandas as pd
 import torch
@@ -29,7 +29,7 @@ class Recommender(ABC):
     type: str
     SUBCLASSES: Dict[str, Recommender] = {}
 
-    def __init__(self, acquisition_function: AcquisitionFunction):
+    def __init__(self, acquisition_function: Optional[AcquisitionFunction]):
         self.acquisition_function = acquisition_function
 
     @classmethod
@@ -77,3 +77,16 @@ class MarginalRankingRecommender(Recommender):
         # return the dataframe indices of the top ranked candidates
         locs = candidates.index[ilocs[:batch_quantity].numpy()]
         return locs
+
+
+class RandomRecommender(Recommender):
+    """
+    Recommends experiments randomly.
+    """
+
+    type = "RANDOM"
+
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+        """See base class."""
+
+        return candidates.sample(n=batch_quantity).index

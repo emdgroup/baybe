@@ -124,7 +124,8 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             The corresponding response values.
         """
         self.use_initial_strategy = len(train_x) == 0
-        if not self.use_initial_strategy:
+
+        if (not self.use_initial_strategy) and (self.recommender_cls.type != "RANDOM"):
             self.surrogate_model = self.surrogate_model_cls()
             self.surrogate_model.fit(train_x, train_y)
             self.best_f = train_y.min()
@@ -152,7 +153,11 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         # construct the acquisition function
         # TODO: the current approach only works for gpytorch GP surrogate models
         #   (for other surrogate models, some wrapper is required)
-        acqf = self.acquisition_function_cls(self.surrogate_model.model, self.best_f)
+        acqf = (
+            self.acquisition_function_cls(self.surrogate_model.model, self.best_f)
+            if self.recommender_cls.type != "RANDOM"
+            else None
+        )
 
         # select the next experiments using the given recommender approach
         recommender = self.recommender_cls(acqf)

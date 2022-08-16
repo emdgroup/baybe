@@ -10,10 +10,19 @@ from typing import ClassVar, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, confloat, Extra, StrictBool, validator
 from sklearn.metrics.pairwise import pairwise_distances
 
-from .utils import check_if_in
+from .utils import (
+    check_if_in,
+    df_drop_single_value_columns,
+    df_uncorrelated_features,
+    is_valid_smiles,
+    smiles_to_fp_features,
+    smiles_to_mordred_features,
+    smiles_to_rdkit_features,
+    StrictValidationError,
+)
 
 log = logging.getLogger(__name__)
 
@@ -40,17 +49,11 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
 
     # class variables
     type: ClassVar[str]
+    requires_encoding: ClassVar[str]
     SUBCLASSES: ClassVar[Dict[str, Parameter]] = {}
 
     # object variables
     name: str
-
-    # TODO: this becomes obsolete in pydantic 2.0 when the __post_init_post_parse__
-    #   is available:
-    #   - https://github.com/samuelcolvin/pydantic/issues/691
-    #   - https://github.com/samuelcolvin/pydantic/issues/1729
-    comp_cols: list = []
-    comp_values: Optional[np.ndarray] = None
 
     @classmethod
     def create(cls, config: dict) -> Parameter:
@@ -65,20 +68,29 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
-    @abstractmethod
     def is_in_range(self, item: object) -> bool:
         """
         Tells whether an item is within the parameter range.
         """
+        # TODO: in terms of coding style, this is not ideal: `values` is currently only
+        #  defined in the subclasses but not in the base class since it is either a
+        #  member or a property, depending on the parameter type --> better solution?
+        return item in self.values
 
+    @property
     @abstractmethod
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
+    def comp_df(self) -> pd.DataFrame:
+        """
+        Returns the computational representation of the parameter.
+        """
+
+    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
         Transforms data from experimental to computational representation.
 
         Parameters
         ----------
-        data: pd.DataFrame
+        data: pd.Series
             Data to be transformed.
 
         Returns
@@ -86,6 +98,19 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         pd.DataFrame
             The transformed version of the data.
         """
+        if self.requires_encoding:
+            # replace each label with the corresponding encoding
+            transformed = pd.merge(
+                left=data.rename("Labels").to_frame(),
+                left_on="Labels",
+                right=self.comp_df,
+                right_index=True,
+                how="left",
+            ).drop(columns="Labels")
+        else:
+            transformed = data.to_frame()
+
+        return transformed
 
 
 class Categorical(Parameter):
@@ -95,6 +120,7 @@ class Categorical(Parameter):
 
     # class variables
     type = "CAT"
+    requires_encoding = True
 
     # object variables
     values: list
@@ -103,58 +129,23 @@ class Categorical(Parameter):
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-    def is_in_range(self, item: str) -> bool:
+    @property
+    def comp_df(self) -> pd.DataFrame:
         """
         See base class.
         """
-        return item in self.values
-
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
-        """
-        See base class.
-        """
-        # IMPROVE neater implementation eg via vectorized mapping
+        # Comp column is identical with the experimental columns
 
         if self.encoding == "OHE":
-            transformed_data = {}
-            for value in self.values:
-                coldata = []
-                for itm in data.values:
-                    if itm not in self.values:
-                        raise ValueError(
-                            f"Value {itm} is not in list of permitted values "
-                            f"{self.values} for parameter {self.name}"
-                        )
-                    if itm == value:
-                        coldata.append(1)
-                    else:
-                        coldata.append(0)
-
-                    colname = f"{self.name}_encoded_val_{value}"
-                    transformed_data[colname] = coldata
-                    if colname not in self.comp_cols:
-                        self.comp_cols.append(colname)
-
-            transformed = pd.DataFrame(transformed_data)
-
+            cols = [f"{self.name}_{val}" for val in self.values]
+            comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
         elif self.encoding == "INT":
-            mapping = {val: k for k, val in enumerate(self.values)}
-            coldata = []
+            comp_df = pd.DataFrame(
+                [k for k, _ in enumerate(self.values)], columns=[self.name]
+            )
+        comp_df.index = self.values
 
-            for itm in data.values:
-                if itm not in self.values:
-                    raise ValueError(
-                        f' "Value {itm} is not in list of permitted values'
-                        f" {self.values} for parameter {self.name}"
-                    )
-                coldata.append(mapping[itm])
-
-            colname = f"{self.name}_encoded"
-            transformed = pd.DataFrame(coldata, columns=[colname])
-            if colname not in self.comp_cols:
-                self.comp_cols.append(colname)
-
-        return transformed
+        return comp_df
 
 
 class NumericDiscrete(Parameter):
@@ -164,6 +155,7 @@ class NumericDiscrete(Parameter):
 
     # class variables
     type = "NUM_DISCRETE"
+    requires_encoding = False
 
     # object variables
     values: list
@@ -195,6 +187,16 @@ class NumericDiscrete(Parameter):
 
         return tolerance
 
+    @property
+    def comp_df(self) -> pd.DataFrame:
+        """
+        See base class.
+        """
+        # Comp column is identical with the experimental columns
+        comp_df = pd.DataFrame({self.name: self.values}, index=self.values)
+
+        return comp_df
+
     def is_in_range(self, item: float) -> bool:
         """
         See base class.
@@ -204,32 +206,76 @@ class NumericDiscrete(Parameter):
         ]
         return any(differences_acceptable)
 
-    def transform_rep_exp2comp(self, data: pd.DataFrame = None) -> pd.DataFrame:
-        """
-        See base class.
-        """
 
-        # Comp column is identical with the experimental columns
-        self.comp_cols = [self.name]
-        self.comp_values = data.values
-
-        # There is nothing to transform for this parameter type
-        return data
-
-
-class GenericSubstance(Parameter, ABC):
+class GenericSubstance(Parameter):
     """
-    Parameter class for generic substances that are treated with Mordred+PCA.
+    Parameter class for generic substances that are treated with cheminformatics
+    descriptors. Only a decorrelated subset of descriptors should be sued as otherwise
+    there is a large number of features. For a handful of molecules, keeping only
+    descriptors that have a max correlation of 0.7 with any other descriptor reduces the
+    descriptors to 5-20 ones. This might be substantially more with more labels given
     """
 
     # class variables
-    type = "GEN_SUBSTANCE"
+    type = "SUBSTANCE"
+    requires_encoding = True
 
     # object variables
-    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"]
+    decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
+    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
+    data: Dict[str, str]
+
+    @validator("data", always=True)
+    def validate_data(cls, dat):
+        """
+        Validates the substances
+        """
+        for name, smiles in dat.items():
+            if not is_valid_smiles(smiles):
+                raise ValueError(
+                    f"The SMILES '{smiles}' for molecule '{name}' does "
+                    f"not appear to be valid."
+                )
+
+        return dat
+
+    @property
+    def values(self) -> list:
+        """
+        Initializes the molecule labels
+        """
+        # Since the order of dictionary key is important here, this will only work
+        # for Python 3.7 or higher
+        return list(self.data.keys())
+
+    @property
+    def comp_df(self) -> pd.DataFrame:
+        """
+        See base class.
+        """
+        vals = list(self.data.values())
+        names = list(self.data.keys())
+        pref = self.name + "_"
+
+        if self.encoding == "MORDRED":
+            comp_df = smiles_to_mordred_features(vals, prefix=pref)
+        elif self.encoding == "RDKIT":
+            comp_df = smiles_to_rdkit_features(vals, prefix=pref)
+        elif self.encoding == "MORGAN_FP":
+            comp_df = smiles_to_fp_features(vals, prefix=pref)
+
+        comp_df = df_drop_single_value_columns(comp_df)
+        comp_df.index = names
+        if self.decorrelate:
+            if isinstance(self.decorrelate, bool):
+                comp_df = df_uncorrelated_features(comp_df)
+            else:
+                comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
+
+        return comp_df
 
 
-class Custom(Parameter, ABC):
+class Custom(Parameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry.
@@ -237,6 +283,65 @@ class Custom(Parameter, ABC):
 
     # class variables
     type = "CUSTOM"
+    requires_encoding = True
+
+    # object variables
+    decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
+    data: pd.DataFrame
+    identifier_col_idx: int = 0
+
+    @validator("data")
+    def validate_data(cls, data, values):
+        """
+        Validates the dataframe with the custom representation
+        """
+        if data.isna().any().any():
+            raise StrictValidationError(
+                f"The custom dataframe for parameter {values['name']} contains NaN "
+                f"entries, which is not supported."
+            )
+
+        # Always Remove zero variance and non-numeric columns
+        # TODO find way to exclude the label column
+        # data = df_drop_string_columns(data)
+        data = df_drop_single_value_columns(data)
+
+        # TODO Include the feature decorrelation here or somewhere suitable
+
+        return data
+
+    @validator("identifier_col_idx", always=True)
+    def validate_identifier_col(cls, col, values):
+        """
+        Validates the column index which identifies the label column
+        """
+        if (col < 0) or (col >= len(values["data"].columns)):
+            raise ValueError(
+                f"identifier_col_idx was {col} but must be a column index between "
+                f"(inclusive) 0 and {len(values['data'].columns)-1}"
+            )
+
+        return col
+
+    @property
+    def values(self) -> list:
+        """
+        Returns the representing labels of the parameter.
+        """
+        return self.data.iloc[:, self.identifier_col_idx].to_list()
+
+    @property
+    def comp_df(self) -> pd.DataFrame:
+        """
+        See base class.
+        """
+        valcol = self.data.columns[self.identifier_col_idx]
+        vals = self.data[valcol].to_list()
+
+        comp_df = self.data.drop(columns=valcol)
+        comp_df.index = vals
+
+        return comp_df
 
 
 class NumericContinuous(Parameter, ABC):
@@ -319,7 +424,7 @@ def scaled_view(
         scalers = {}
 
     for param in parameters:
-        if (param.comp_cols is None) or (len(param.comp_cols) < 1):
+        if param.comp_df is None:
             # Instead of enforcing this one could automatically detect columns based
             # on the starting of the name.
             raise AttributeError(
@@ -333,17 +438,25 @@ def scaled_view(
             continue
 
         scaler = scalers.get(param.type)
-        if len(param.comp_cols) == 1:
-            scaler.fit(data_fit[param.comp_cols].values.reshape(-1, 1))
+        if len(param.comp_df.columns) == 1:
+            scaler.fit(data_fit[param.comp_df.columns].values.reshape(-1, 1))
 
-            transformed[param.comp_cols] = scaler.transform(
-                data_transform[param.comp_cols].values.reshape(-1, 1)
+            transformed[param.comp_df.columns] = scaler.transform(
+                data_transform[param.comp_df.columns].values.reshape(-1, 1)
             )
         else:
-            scaler.fit(data_fit[param.comp_cols].values)
+            scaler.fit(data_fit[param.comp_df.columns].values)
 
-            transformed[param.comp_cols] = scaler.transform(
-                data_transform[param.comp_cols].values
+            transformed[param.comp_df.columns] = scaler.transform(
+                data_transform[param.comp_df.columns].values
             )
 
     return transformed
+
+
+# TODO self.values could be renamed into something else since its clashing with
+#  pydantic enforced syntax, for isntance 'labels' (but thats weird for numeric
+#  discrete parameters)
+
+# TODO self.values could be a variable of the base class since its shared between all
+#  parameter. Its essentially the list of labels, always one dimensional
