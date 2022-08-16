@@ -142,10 +142,6 @@ class Categorical(Parameter):
             comp_df = pd.DataFrame(
                 [k for k, _ in enumerate(self.values)], columns=[self.name]
             )
-        else:
-            raise ValueError(
-                f"The provided encoding '{self.encoding}' is not supported"
-            )
         comp_df.index = self.values
 
         return comp_df
@@ -280,10 +276,6 @@ class GenericSubstance(Parameter):
             comp_df = smiles_to_rdkit_features(vals, prefix=pref)
         elif self.encoding == "MORGAN_FP":
             comp_df = smiles_to_fp_features(vals, prefix=pref)
-        else:
-            raise ValueError(
-                f"The provided encoding '{self.encoding}' is not supported"
-            )
 
         comp_df = df_drop_single_value_columns(comp_df)
         comp_df.index = names
