@@ -53,11 +53,6 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
     # object variables
     name: str
 
-    # TODO: Dealing with un-parsed but initialized variables becomes obsolete in
-    #  pydantic 2.0 when the __post_init_post_parse__ is available:
-    #   - https://github.com/samuelcolvin/pydantic/issues/691
-    #   - https://github.com/samuelcolvin/pydantic/issues/1729
-
     @classmethod
     def create(cls, config: dict) -> Parameter:
         """Creates a new parameter object matching the given specifications."""
@@ -238,13 +233,10 @@ class GenericSubstance(Parameter):
     # class variables
     type = "SUBSTANCE"
 
-    # parsed object variables
+    # object variables
     decorrelate: Union[bool, float] = True
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
     data: Dict[str, str]
-
-    # non-parsed object variables
-    values: Optional[list] = None
 
     @validator("decorrelate", always=True)
     def validate_decorrelate(cls, flag):
@@ -263,7 +255,7 @@ class GenericSubstance(Parameter):
     @validator("data", always=True)
     def validate_data(cls, dat):
         """
-        Validates the the substances
+        Validates the substances
         """
         for name, smiles in dat.items():
             if not is_valid_smiles(smiles):
@@ -274,21 +266,14 @@ class GenericSubstance(Parameter):
 
         return dat
 
-    @validator("values", always=True)
-    def validate_values(cls, vals, values):
+    @property
+    def values(self) -> list:
         """
         Initializes the molecule labels
         """
-        if vals is not None:
-            raise ValueError(
-                "The 'value' option cannot be declared in the config for this "
-                "parameter. It is automatically deducted from the 'data' parameter."
-            )
-        data = values["data"]
-
         # Since the order of dictionary key is important here, this will only work
         # for Python 3.7 or higher
-        return list(data.keys())
+        return list(self.data.keys())
 
     @property
     def comp_df(self) -> pd.DataFrame:
@@ -352,13 +337,10 @@ class Custom(Parameter):
     # class variables
     type = "CUSTOM"
 
-    # parsed object variables
+    # object variables
     decorrelate: Union[bool, float] = True
     data: pd.DataFrame
     identifier_col_idx: int = 0
-
-    # non-parsed object variables
-    values: Optional[list] = None
 
     @validator("decorrelate")
     def validate_decorrelate(cls, flag):
@@ -410,21 +392,12 @@ class Custom(Parameter):
 
         return col
 
-    @validator("values", always=True)
-    def validate_values(cls, vals, values):
+    @property
+    def values(self) -> list:
         """
-        Initializes the representing labels for this parameter
+        Returns the representing labels of the parameter.
         """
-        if vals is not None:
-            raise ValueError(
-                "The 'value' option cannot be declared in the config for this "
-                "parameter. It is automatically deducted from the 'data' parameter."
-            )
-
-        data = values["data"]
-        idx_col = values["identifier_col_idx"]
-
-        return data.iloc[:, idx_col].to_list()
+        return self.data.iloc[:, self.identifier_col_idx].to_list()
 
     @property
     def comp_df(self) -> pd.DataFrame:
