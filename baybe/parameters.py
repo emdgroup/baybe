@@ -67,11 +67,14 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
-    @abstractmethod
     def is_in_range(self, item: object) -> bool:
         """
         Tells whether an item is within the parameter range.
         """
+        # TODO: in terms of coding style, this is not ideal: `values` is currently only
+        #  defined in the subclasses but not in the base class since it is either a
+        #  member or a property, depending on the parameter type --> better solution?
+        return item in self.values
 
     @property
     @abstractmethod
@@ -146,12 +149,6 @@ class Categorical(Parameter):
         comp_df.index = self.values
 
         return comp_df
-
-    def is_in_range(self, item: str) -> bool:
-        """
-        See base class.
-        """
-        return item in self.values
 
 
 class NumericDiscrete(Parameter):
@@ -298,12 +295,6 @@ class GenericSubstance(Parameter):
 
         return comp_df
 
-    def is_in_range(self, item: object) -> bool:
-        """
-        See base class.
-        """
-        return item in self.values
-
 
 class Custom(Parameter):
     """
@@ -389,12 +380,6 @@ class Custom(Parameter):
         comp_df.index = vals
 
         return comp_df
-
-    def is_in_range(self, item: object) -> bool:
-        """
-        See base class.
-        """
-        return item in self.values
 
 
 class NumericContinuous(Parameter, ABC):
@@ -513,6 +498,3 @@ def scaled_view(
 
 # TODO self.values could be a variable of the base class since its shared between all
 #  parameter. Its essentially the list of labels, always one dimensional
-
-# TODO if self.values is part of the base class then is_in_range should also become a
-#  method of the base class
