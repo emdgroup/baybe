@@ -77,6 +77,13 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         Tells whether an item is within the parameter range.
         """
 
+    @property
+    @abstractmethod
+    def comp_df(self) -> pd.DataFrame:
+        """
+        Returns the computational representation of the parameter.
+        """
+
     @abstractmethod
     def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
@@ -102,40 +109,32 @@ class Categorical(Parameter):
     # class variables
     type = "CAT"
 
-    # parsed object variables
+    # object variables
     values: list
     encoding: Literal["OHE", "INT"] = "OHE"
-
-    # non-parsed object variables
-    comp_df: Optional[pd.DataFrame] = None
 
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-    @validator("comp_df", always=True)
-    def validate_comp_df(cls, df, values):
+    @property
+    def comp_df(self) -> pd.DataFrame:
         """
-        Performs computations and initializes the comp
+        See base class.
         """
-        if df is not None:
-            raise ValueError(
-                "The 'comp_df' option cannot be declared in the config for this "
-                "parameter. It is automatically deducted from the 'data' parameter."
-            )
-
         # Comp column is identical with the experimental columns
-        name = values["name"]
-        vals = values["values"]
-        encoding = values["encoding"]
 
-        if encoding == "OHE":
-            cols = [f"{name}_{val}" for val in vals]
-            comp_df = pd.DataFrame(np.eye(len(vals), dtype=int), columns=cols)
-        elif encoding == "INT":
-            comp_df = pd.DataFrame([k for k, _ in enumerate(vals)], columns=[name])
+        if self.encoding == "OHE":
+            cols = [f"{self.name}_{val}" for val in self.values]
+            comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
+        elif self.encoding == "INT":
+            comp_df = pd.DataFrame(
+                [k for k, _ in enumerate(self.values)], columns=[self.name]
+            )
         else:
-            raise ValueError(f"The provided encoding '{encoding}' is not supported")
-        comp_df.index = vals
+            raise ValueError(
+                f"The provided encoding '{self.encoding}' is not supported"
+            )
+        comp_df.index = self.values
 
         return comp_df
 
@@ -170,12 +169,9 @@ class NumericDiscrete(Parameter):
     # class variables
     type = "NUM_DISCRETE"
 
-    # parsed object variables
+    # object variables
     values: list
     tolerance: float
-
-    # non-parsed object variables
-    comp_df: Optional[pd.DataFrame] = None
 
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
@@ -203,21 +199,13 @@ class NumericDiscrete(Parameter):
 
         return tolerance
 
-    @validator("comp_df", always=True)
-    def validate_comp_df(cls, df, values):
+    @property
+    def comp_df(self) -> pd.DataFrame:
         """
-        Performs computations and initializes the comp
+        See base class.
         """
-        if df is not None:
-            raise ValueError(
-                "The 'comp_df' option cannot be declared in the config for this "
-                "parameter. It is automatically deducted from the 'data' parameter."
-            )
-
         # Comp column is identical with the experimental columns
-        name = values["name"]
-        data = values["values"]
-        comp_df = pd.DataFrame({name: data}, index=data)
+        comp_df = pd.DataFrame({self.name: self.values}, index=self.values)
 
         return comp_df
 
@@ -257,7 +245,6 @@ class GenericSubstance(Parameter):
 
     # non-parsed object variables
     values: Optional[list] = None
-    comp_df: Optional[pd.DataFrame] = None
 
     @validator("decorrelate", always=True)
     def validate_decorrelate(cls, flag):
@@ -303,40 +290,33 @@ class GenericSubstance(Parameter):
         # for Python 3.7 or higher
         return list(data.keys())
 
-    @validator("comp_df", always=True)
-    def validate_comp_df(cls, df, values):
+    @property
+    def comp_df(self) -> pd.DataFrame:
         """
-        Performs computations and initializes the comp
+        See base class.
         """
-        if df is not None:
-            raise ValueError(
-                "The 'comp_df' option cannot be declared in the config for this "
-                "parameter. It is automatically deducted from the 'data' parameter."
-            )
+        vals = list(self.data.values())
+        names = list(self.data.keys())
+        pref = self.name + "_"
 
-        encoding = values["encoding"]
-        data = values["data"]
-        vals = list(data.values())
-        names = list(data.keys())
-        decorr = values["decorrelate"]
-        pref = values["name"] + "_"
-
-        if encoding == "MORDRED":
+        if self.encoding == "MORDRED":
             comp_df = smiles_to_mordred_features(vals, prefix=pref)
-        elif encoding == "RDKIT":
+        elif self.encoding == "RDKIT":
             comp_df = smiles_to_rdkit_features(vals, prefix=pref)
-        elif encoding == "MORGAN_FP":
+        elif self.encoding == "MORGAN_FP":
             comp_df = smiles_to_fp_features(vals, prefix=pref)
         else:
-            raise ValueError(f"The provided encoding '{encoding}' is not supported")
+            raise ValueError(
+                f"The provided encoding '{self.encoding}' is not supported"
+            )
 
         comp_df = df_drop_single_value_columns(comp_df)
         comp_df.index = names
-        if decorr:
-            if isinstance(decorr, bool):
+        if self.decorrelate:
+            if isinstance(self.decorrelate, bool):
                 comp_df = df_uncorrelated_features(comp_df)
             else:
-                comp_df = df_uncorrelated_features(comp_df, threshold=decorr)
+                comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
         return comp_df
 
@@ -379,7 +359,6 @@ class Custom(Parameter):
 
     # non-parsed object variables
     values: Optional[list] = None
-    comp_df: Optional[pd.DataFrame] = None
 
     @validator("decorrelate")
     def validate_decorrelate(cls, flag):
@@ -447,23 +426,15 @@ class Custom(Parameter):
 
         return data.iloc[:, idx_col].to_list()
 
-    @validator("comp_df", always=True)
-    def validate_comp_df(cls, df, values):
+    @property
+    def comp_df(self) -> pd.DataFrame:
         """
-        Performs computations and initializes the comp
+        See base class.
         """
-        if df is not None:
-            raise ValueError(
-                "The 'comp_df' option cannot be declared in the config for this "
-                "parameter. It is automatically deducted from the 'data' parameter."
-            )
+        valcol = self.data.columns[self.identifier_col_idx]
+        vals = self.data[valcol].to_list()
 
-        data = values["data"]
-        identifier_col_idx = values["identifier_col_idx"]
-        valcol = data.columns[identifier_col_idx]
-        vals = data[valcol].to_list()
-
-        comp_df = data.drop(columns=valcol)
+        comp_df = self.data.drop(columns=valcol)
         comp_df.index = vals
 
         return comp_df
@@ -609,10 +580,6 @@ def scaled_view(
 
 # TODO if self.values is part of the base class then is_in_range should also become a
 #  method of the base class
-
-# TODO Once a solution for pydantic initialization of instance variables is found, all
-#  parameters should initialize the comp_df. The transformation methods then only needs
-#  to apply a pd.merge on left and the comp_df also has all info needed for the scalers
 
 # TODO transform rep method can be a non-abstract method of the base class that simply
 #  merges the provided series (left) with the comp_df (right) based on a label column.
