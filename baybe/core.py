@@ -127,11 +127,7 @@ class BayBE:
         # target part, unlike parameters targets can be missing from the dataframe
         comp_rep_y = None
         if all(target.name in data.columns for target in self.targets):
-            dfs = []
-            for target in self.targets:
-                comp_df = target.transform(data[[target.name]])
-                dfs.append(comp_df)
-            comp_rep_y = pd.concat(dfs, axis=1)
+            comp_rep_y = self.objective.transform(data=data, targets=self.targets)
 
         return comp_rep_x, comp_rep_y
 
