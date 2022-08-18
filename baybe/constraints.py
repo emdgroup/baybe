@@ -199,6 +199,16 @@ class SumTargetConstraint(Constraint):
     target_value: float
     tolerance: float = 0.0
 
+    @validator("parameters")
+    def validate_params(cls, parameters):
+        """Validate parameter list"""
+        if len(parameters) != len(set(parameters)):
+            raise AssertionError(
+                f"The 'parameter' list you gave for a constraint must have unique "
+                f"values, but was: {parameters}"
+            )
+        return parameters
+
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
         """see base class"""
         mask_bad = (
@@ -219,10 +229,46 @@ class ProdTargetConstraint(Constraint):
     target_value: float
     tolerance: float = 0.0
 
+    @validator("parameters")
+    def validate_params(cls, parameters):
+        """Validate parameter list"""
+        if len(parameters) != len(set(parameters)):
+            raise AssertionError(
+                f"The 'parameter' list you gave for a constraint must have unique "
+                f"values, but was: {parameters}"
+            )
+        return parameters
+
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
         """see base class"""
         mask_bad = (
             data[self.parameters].prod(axis=1) - self.target_value
         ).abs() > self.tolerance
+
+        return data.index[mask_bad]
+
+
+class NoDuplicatesConstraint(Constraint):
+    """
+    Constraint class for excluding combinations where parameters have identical values
+    """
+
+    # class variables
+    type = "NO_DUPLICATES"
+    parameters: List[str]
+
+    @validator("parameters")
+    def validate_params(cls, parameters):
+        """Validate parameter list"""
+        if len(parameters) != len(set(parameters)):
+            raise AssertionError(
+                f"The 'parameter' list you gave for a constraint must have unique "
+                f"values, but was: {parameters}"
+            )
+        return parameters
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
 
         return data.index[mask_bad]

@@ -47,19 +47,19 @@ config_dict = {
         {
             "name": "Fraction1",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, 21)),
+            "values": list(np.linspace(0, 100, 11)),
             "tolerance": 0.2,
         },
         {
             "name": "Fraction2",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, 21)),
+            "values": list(np.linspace(0, 100, 11)),
             "tolerance": 0.2,
         },
         {
             "name": "Fraction3",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, 21)),
+            "values": list(np.linspace(0, 100, 11)),
             "tolerance": 0.2,
         },
     ],
@@ -86,10 +86,10 @@ config_dict = {
             "target_value": 100.0,
             # 'tolerance': 0.5,
         },
-        # {
-        #     "type": "NO_DUPLICATES",
-        #     "parameters": ["Solvent1", "Solvent1", "Solvent1"],
-        # },
+        {
+            "type": "NO_DUPLICATES",
+            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
+        },
     ],
 }
 
@@ -106,6 +106,14 @@ for kIter in range(N_ITERATIONS):
             ~baybe_obj.searchspace_metadata["dont_recommend"],
             ["Fraction1", "Fraction2", "Fraction3"],
         ].sum(axis=1)
+    )
+    print(
+        baybe_obj.searchspace_exp_rep.loc[
+            ~baybe_obj.searchspace_metadata["dont_recommend"],
+            ["Solvent1", "Solvent2", "Solvent3"],
+        ]
+        .nunique(axis=1)
+        .min()
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)
