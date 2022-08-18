@@ -188,69 +188,9 @@ class ExcludeConstraint(Constraint):
         return data.index[res]
 
 
-class SumTargetConstraint(Constraint):
+class ParametersListConstraint(Constraint):
     """
-    Constraint class for product-constraints
-    """
-
-    # class variables
-    type = "SUM_TARGET"
-    parameters: List[str]
-    target_value: float
-    tolerance: float = 0.0
-
-    @validator("parameters")
-    def validate_params(cls, parameters):
-        """Validate parameter list"""
-        if len(parameters) != len(set(parameters)):
-            raise AssertionError(
-                f"The 'parameter' list you gave for a constraint must have unique "
-                f"values, but was: {parameters}"
-            )
-        return parameters
-
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
-        mask_bad = (
-            data[self.parameters].sum(axis=1) - self.target_value
-        ).abs() > self.tolerance
-
-        return data.index[mask_bad]
-
-
-class ProdTargetConstraint(Constraint):
-    """
-    Constraint class for sum-constraints
-    """
-
-    # class variables
-    type = "PROD_TARGET"
-    parameters: List[str]
-    target_value: float
-    tolerance: float = 0.0
-
-    @validator("parameters")
-    def validate_params(cls, parameters):
-        """Validate parameter list"""
-        if len(parameters) != len(set(parameters)):
-            raise AssertionError(
-                f"The 'parameter' list you gave for a constraint must have unique "
-                f"values, but was: {parameters}"
-            )
-        return parameters
-
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
-        mask_bad = (
-            data[self.parameters].prod(axis=1) - self.target_value
-        ).abs() > self.tolerance
-
-        return data.index[mask_bad]
-
-
-class NoDuplicatesConstraint(Constraint):
-    """
-    Constraint class for excluding combinations where parameters have identical values
+    Intermediate base class for constraints that need a parameters list
     """
 
     # class variables
@@ -267,8 +207,64 @@ class NoDuplicatesConstraint(Constraint):
             )
         return parameters
 
+    @abstractmethod
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
         """see base class"""
-        mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
+
+
+class SumTargetConstraint(ParametersListConstraint):
+    """
+    Constraint class for product-constraints
+    """
+
+    # class variables
+    type = "SUM_TARGET"
+    target_value: float
+    tolerance: float = 0.0
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        mask_bad = (
+            data[self.parameters].sum(axis=1) - self.target_value
+        ).abs() > self.tolerance
+
+        return data.index[mask_bad]
+
+
+class ProdTargetConstraint(ParametersListConstraint):
+    """
+    Constraint class for sum-constraints
+    """
+
+    # class variables
+    type = "PROD_TARGET"
+    target_value: float
+    tolerance: float = 0.0
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        mask_bad = (
+            data[self.parameters].prod(axis=1) - self.target_value
+        ).abs() > self.tolerance
+
+        return data.index[mask_bad]
+
+
+class DuplicatesConstraint(ParametersListConstraint):
+    """
+    Constraint class for excluding combinations where parameters have more than the
+    specified number of duplicates
+    """
+
+    # class variables
+    type = "MAX_N_DUPLICATES"
+    max_duplicates: int = 0
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        mask_bad = (
+            data[self.parameters].nunique(axis=1)
+            < len(self.parameters) - self.max_duplicates
+        )
 
         return data.index[mask_bad]

@@ -87,8 +87,9 @@ config_dict = {
             # 'tolerance': 0.5,
         },
         {
-            "type": "NO_DUPLICATES",
+            "type": "MAX_N_DUPLICATES",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
+            "max_duplicates": 0,
         },
     ],
 }
