@@ -95,6 +95,8 @@ class BayBE:
         )
 
         # Apply conditions to forbidden combinations
+        # IMPROVE Currently the searchspace stays the same, but in principle the part
+        #  forbidden by conditions could be entirely dropped to save space
         for constr in self.constraints:
             inds = constr.evaluate(self.searchspace_exp_rep)
             self.searchspace_metadata.loc[inds, "dont_recommend"] = True

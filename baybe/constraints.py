@@ -8,7 +8,7 @@ import operator as ops
 from abc import ABC, abstractmethod
 from functools import partial
 
-from typing import ClassVar, Dict, Literal, Union
+from typing import ClassVar, Dict, List, Literal, Union
 
 import pandas as pd
 from pydantic import BaseModel, conlist, Extra, validator
@@ -148,7 +148,7 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
 
 class ExcludeConstraint(Constraint):
     """
-    Constraint class for Exclusion-constraints
+    Constraint class for exclusion-constraints
     """
 
     # class variables
@@ -186,3 +186,43 @@ class ExcludeConstraint(Constraint):
             )
 
         return data.index[res]
+
+
+class SumTargetConstraint(Constraint):
+    """
+    Constraint class for product-constraints
+    """
+
+    # class variables
+    type = "SUM_TARGET"
+    parameters: List[str]
+    target_value: float
+    tolerance: float = 0.0
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        mask_bad = (
+            data[self.parameters].sum(axis=1) - self.target_value
+        ).abs() > self.tolerance
+
+        return data.index[mask_bad]
+
+
+class ProdTargetConstraint(Constraint):
+    """
+    Constraint class for sum-constraints
+    """
+
+    # class variables
+    type = "PROD_TARGET"
+    parameters: List[str]
+    target_value: float
+    tolerance: float = 0.0
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        mask_bad = (
+            data[self.parameters].prod(axis=1) - self.target_value
+        ).abs() > self.tolerance
+
+        return data.index[mask_bad]
