@@ -159,7 +159,6 @@ class ExcludeConstraint(Constraint):
     @validator("conditions")
     def validate_conditions(cls, conditions):
         """Validate the conditions"""
-        print("####### AAAAAAAAAAAAAAAAAA: ", conditions)
         return [Condition.create(c) for c in conditions]
 
     _combiner_dict = {
@@ -194,7 +193,7 @@ class ParametersListConstraint(Constraint):
     """
 
     # class variables
-    type = "NO_DUPLICATES"
+    type = "PARAMETER_LIST_CONSTRAINT"
     parameters: List[str]
 
     @validator("parameters")

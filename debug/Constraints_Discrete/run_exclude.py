@@ -39,7 +39,7 @@ config_dict = {
         {
             "name": "Temperature",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(100, 200, 21)),
+            "values": list(np.linspace(100, 200, 10)),
             "tolerance": 0.5,
         },
         {
@@ -72,7 +72,7 @@ config_dict = {
                 {
                     "type": "THRESHOLD",
                     "parameter": "Temperature",
-                    "threshold": 154,
+                    "threshold": 151,
                     "operator": ">",
                 },
                 {
@@ -93,6 +93,11 @@ print(baybe_obj)
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
+    print(
+        "### DEBUG: ",
+        len(baybe_obj.searchspace_exp_rep),
+        baybe_obj.searchspace_metadata["dont_recommend"].sum(),
+    )
 
     rec = baybe_obj.recommend(batch_quantity=5)
 
