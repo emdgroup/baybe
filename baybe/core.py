@@ -12,6 +12,7 @@ import torch
 from pydantic import BaseModel, Extra, validator
 
 from . import parameters as baybe_parameters
+from .constraints import Constraint
 from .parameters import Parameter
 from .strategy import Strategy
 from .targets import Objective, Target
@@ -34,6 +35,8 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     parameters: List[dict]
     objective: dict
     strategy: dict
+    constraints: List[dict] = []
+
     random_seed: int = 1337
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
@@ -74,11 +77,14 @@ class BayBE:
         self.objective = Objective(**config.objective)
         self.strategy = Strategy(**config.strategy)
         self.targets = [Target.create(t) for t in self.objective.targets]
+        self.constraints = [Constraint.create(c) for c in config.constraints]
 
         # Create the experimental dataframe
         self.searchspace_exp_rep = baybe_parameters.parameter_outer_prod_to_df(
             self.parameters
         )
+
+        # Create Metadata
         self.searchspace_metadata = pd.DataFrame(
             {
                 "was_recommended": False,
@@ -87,6 +93,11 @@ class BayBE:
             },
             index=self.searchspace_exp_rep.index,
         )
+
+        # Apply conditions to forbidden combinations
+        for constr in self.constraints:
+            inds = constr.evaluate(self.searchspace_exp_rep)
+            self.searchspace_metadata.loc[inds, "dont_recommend"] = True
 
         # Convert exp to comp dataframe
         self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
