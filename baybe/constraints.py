@@ -87,7 +87,7 @@ class ThresholdCondition(Condition):
         return data.apply(partial(self._operator_dict[self.operator], self.threshold))
 
 
-class SubselectionCondition(Condition):
+class SubSelectionCondition(Condition):
     """
     Constraint class for defining a list of valid entries
     """
@@ -102,6 +102,22 @@ class SubselectionCondition(Condition):
     def evaluate(self, data: pd.Series) -> pd.Series:
         """see base class"""
         return data.apply(lambda x: x in self.selection)
+
+
+class AllSelectionCondition(Condition):
+    """
+    Constraint class for selecting all values of a parameter
+    (useful eg for combining with other conditions)
+    """
+
+    # class variables
+    type = "ALLSELECTION"
+
+    def evaluate(self, data: pd.Series) -> pd.Series:
+        """see base class"""
+        ret = data.copy()
+        ret.loc[:] = True
+        return ret
 
 
 class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
