@@ -96,7 +96,12 @@ for kIter in range(N_ITERATIONS):
     print(
         "### DEBUG: ",
         len(baybe_obj.searchspace_exp_rep),
-        baybe_obj.searchspace_metadata["dont_recommend"].sum(),
+        (
+            baybe_obj.searchspace_exp_rep["Temperature"].apply(lambda x: x > 151)
+            & baybe_obj.searchspace_exp_rep["Solvent"].apply(
+                lambda x: x in ["C2", "C4"]
+            )
+        ).sum(),
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)

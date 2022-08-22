@@ -463,7 +463,7 @@ def scaled_view(
 
 
 # TODO self.values could be renamed into something else since its clashing with
-#  pydantic enforced syntax, for isntance 'labels' (but thats weird for numeric
+#  pydantic enforced syntax, for instance 'labels' (but thats weird for numeric
 #  discrete parameters)
 
 # TODO self.values could be a variable of the base class since its shared between all

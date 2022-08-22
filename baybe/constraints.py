@@ -106,12 +106,14 @@ class SubselectionCondition(Condition):
 
 class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """
-    Abstract base class for all constraints. Constraints use conidtions and chain them
+    Abstract base class for all constraints. Constraints use conditions and chain them
     together to filter unwanted entries in the searchspace.
     """
 
     # class variables
     type: ClassVar[str]
+    eval_during_creation: ClassVar[bool]
+    eval_during_modeling: ClassVar[bool]
     SUBCLASSES: ClassVar[Dict[str, Constraint]] = {}
 
     @classmethod
@@ -141,7 +143,7 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
         Returns
         -------
         pd.Index
-            Index of entries that fall udner the defined constraint and should thus
+            Index of entries that fall under the defined constraint and should thus
             be removed from the searchspace
         """
 
@@ -153,6 +155,8 @@ class ExcludeConstraint(Constraint):
 
     # class variables
     type = "EXCLUDE"
+    eval_during_creation = True
+    eval_during_modeling = False
     conditions: conlist(Union[dict, Condition], min_items=1)
     combiner: Literal["AND", "OR", "XOR"] = "AND"
 
@@ -194,6 +198,8 @@ class ParametersListConstraint(Constraint):
 
     # class variables
     type = "PARAMETER_LIST_CONSTRAINT"
+    eval_during_creation = False
+    eval_during_modeling = False
     parameters: List[str]
 
     @validator("parameters")
@@ -218,6 +224,8 @@ class SumTargetConstraint(ParametersListConstraint):
 
     # class variables
     type = "SUM_TARGET"
+    eval_during_creation = True
+    eval_during_modeling = False
     target_value: float
     tolerance: float = 0.0
 
@@ -237,6 +245,8 @@ class ProdTargetConstraint(ParametersListConstraint):
 
     # class variables
     type = "PROD_TARGET"
+    eval_during_creation = True
+    eval_during_modeling = False
     target_value: float
     tolerance: float = 0.0
 
@@ -257,6 +267,8 @@ class DuplicatesConstraint(ParametersListConstraint):
 
     # class variables
     type = "MAX_N_DUPLICATES"
+    eval_during_creation = True
+    eval_during_modeling = False
     max_duplicates: int = 0
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
@@ -267,3 +279,20 @@ class DuplicatesConstraint(ParametersListConstraint):
         )
 
         return data.index[mask_bad]
+
+
+class InvarianceConstraint(ParametersListConstraint):
+    """
+    Constraint class for declaring that a set of parameters are invariant, ie
+    (val_from_param1, val_from_param2) is equivalent to
+    (val_from_param2, val_from_param1). Is not evaluated during modeling.
+    """
+
+    # class variables
+    type = "INVARIANCE"
+    eval_during_creation = False
+    eval_during_modeling = True
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        raise NotImplementedError("The Invariance-Constraint is not implemented yet.")

@@ -18,6 +18,8 @@ solvs = {
     "C6": "CCCCCC",
 }
 
+N_GRID_POINTS = 5
+
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
 config_dict = {
@@ -47,19 +49,19 @@ config_dict = {
         {
             "name": "Fraction1",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, 11)),
+            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
             "tolerance": 0.2,
         },
         {
             "name": "Fraction2",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, 11)),
+            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
             "tolerance": 0.2,
         },
         {
             "name": "Fraction3",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, 11)),
+            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
             "tolerance": 0.2,
         },
     ],
@@ -81,15 +83,22 @@ config_dict = {
     # never be chosen twice.
     "constraints": [
         {
+            # This constraint will only affect serchspace creation
             "type": "SUM_TARGET",
             "parameters": ["Fraction1", "Fraction2", "Fraction3"],
             "target_value": 100.0,
             # 'tolerance': 0.5,
         },
         {
+            # This constraint will only affect serchspace creation
             "type": "MAX_N_DUPLICATES",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
             "max_duplicates": 0,
+        },
+        {
+            # This constraint will affect the modeling
+            "type": "INVARIANCE",
+            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
         },
     ],
 }

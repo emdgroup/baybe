@@ -94,12 +94,19 @@ class BayBE:
             index=self.searchspace_exp_rep.index,
         )
 
-        # Apply conditions to forbidden combinations
-        # IMPROVE Currently the searchspace stays the same, but in principle the part
-        #  forbidden by conditions could be entirely dropped to save space
-        for constr in self.constraints:
-            inds = constr.evaluate(self.searchspace_exp_rep)
+        # Apply conditions to forbidden combinations and delete invalid entries
+        for constraint in (c for c in self.constraints if c.eval_during_creation):
+            inds = constraint.evaluate(self.searchspace_exp_rep)
             self.searchspace_metadata.loc[inds, "dont_recommend"] = True
+
+        self.searchspace_exp_rep = self.searchspace_exp_rep.loc[
+            ~self.searchspace_metadata["dont_recommend"], :
+        ]
+        self.searchspace_metadata = self.searchspace_metadata.loc[
+            ~self.searchspace_metadata["dont_recommend"], :
+        ]
+        self.searchspace_exp_rep.reset_index(inplace=True)
+        self.searchspace_metadata.reset_index(inplace=True)
 
         # Convert exp to comp dataframe
         self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
