@@ -99,12 +99,18 @@ class BayBE:
             inds = constraint.evaluate(self.searchspace_exp_rep)
             self.searchspace_metadata.loc[inds, "dont_recommend"] = True
 
-        self.searchspace_exp_rep = self.searchspace_exp_rep.loc[
-            ~self.searchspace_metadata["dont_recommend"], :
-        ]
-        self.searchspace_metadata = self.searchspace_metadata.loc[
-            ~self.searchspace_metadata["dont_recommend"], :
-        ]
+        self.searchspace_exp_rep.drop(
+            index=self.searchspace_exp_rep.index[
+                self.searchspace_metadata["dont_recommend"]
+            ],
+            inplace=True,
+        )
+        self.searchspace_metadata.drop(
+            index=self.searchspace_metadata.index[
+                self.searchspace_metadata["dont_recommend"]
+            ],
+            inplace=True,
+        )
         self.searchspace_exp_rep.reset_index(inplace=True)
         self.searchspace_metadata.reset_index(inplace=True)
 
