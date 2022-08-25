@@ -297,6 +297,29 @@ class DuplicatesConstraint(ParametersListConstraint):
         return data.index[mask_bad]
 
 
+class LinkedParametersConstraint(ParametersListConstraint):
+    """
+    Constraint that enforces that values between certain parameters are linked.
+    With this you can create two parameters that however describe the same thing.
+    The two parameters could be different types or encodings. For instance if I have a
+    molecule and want to describe it with both RDKIT and MORDRED encodings then I can
+    just make two corresponding parameters and link them with this constraint.
+    This would delete all entries from the searchspace where the linked parameters have
+    different labels.
+    """
+
+    # class variables
+    type = "LINKED_PARAMETERS"
+    eval_during_creation = True
+    eval_during_modeling = False
+
+    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+        """see base class"""
+        mask_bad = data[self.parameters].nunique(axis=1) != 1
+
+        return data.index[mask_bad]
+
+
 class InvarianceConstraint(ParametersListConstraint):
     """
     Constraint class for declaring that a set of parameters are invariant, ie
