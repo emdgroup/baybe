@@ -8,8 +8,11 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
 import pandas as pd
+import torch
 from botorch.fit import fit_gpytorch_model
 from botorch.models import SingleTaskGP
+from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import fit_gpytorch_torch
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -40,24 +43,41 @@ class GaussianProcessModel(SurrogateModel):
 
     type = "GP"
 
-    def __init__(self):
+    def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[SingleTaskGP] = None
+        self.searchspace = searchspace
 
     def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
         """See base class."""
-        # TODO: assert correct input and target scaling
 
         # validate input
         if not train_x.index.equals(train_y.index):
             raise ValueError("Training inputs and targets must have the same index.")
         if len(train_x) == 0:
             raise ValueError("The training data set must be non-empty.")
+        if train_y.shape[1] != 1:
+            raise NotImplementedError("The model currently supports only one target.")
+
+        # get the input bounds from the search space
+        searchspace = to_tensor(self.searchspace)
+        bounds = torch.vstack(
+            [torch.min(searchspace, dim=0)[0], torch.max(searchspace, dim=0)[0]]
+        )
+        # TODO: use target value bounds when explicitly provided
+
+        # define the input and outcome transforms
+        input_transform = Normalize(train_x.shape[1], bounds=bounds)
+        outcome_transform = Standardize(train_y.shape[1])
 
         # convert dataframes to tensors for the GP model
         train_x, train_y = to_tensor(train_x, train_y)
 
-        # TODO take care of parameter scaling
-        # initialize the GP model and train it
-        self.model = SingleTaskGP(train_x, train_y)
+        # construct and fit the Gaussian process
+        self.model = SingleTaskGP(
+            train_x,
+            train_y,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
+        )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, options={"disp": False})
