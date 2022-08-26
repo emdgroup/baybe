@@ -66,6 +66,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     #  strategy or introducing config classes for them (-> disable arbitrary types)
 
     # object variables
+    searchspace: pd.DataFrame
     surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
     acquisition_function_cls: Union[Literal["EI"], Type[AcquisitionFunction]] = "EI"
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
@@ -126,9 +127,9 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         self.use_initial_strategy = len(train_x) == 0
 
         if (not self.use_initial_strategy) and (self.recommender_cls.type != "RANDOM"):
-            self.surrogate_model = self.surrogate_model_cls()
+            self.surrogate_model = self.surrogate_model_cls(self.searchspace)
             self.surrogate_model.fit(train_x, train_y)
-            self.best_f = train_y.min()
+            self.best_f = train_y.max()
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """

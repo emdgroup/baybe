@@ -68,11 +68,12 @@ class BayBE:
         random.seed(config.random_seed)
         np.random.seed(config.random_seed)
 
-        # Create the parameter and target objects
+        # Parse config and create all model components except the strategy (which
+        # currently needs the computational representation of the search space)
+        # TODO: derive the required information directly from the Parameter objects
         self.config = config
         self.parameters = [Parameter.create(p) for p in config.parameters]
         self.objective = Objective(**config.objective)
-        self.strategy = Strategy(**config.strategy)
         self.targets = [Target.create(t) for t in self.objective.targets]
 
         # Create the experimental dataframe
@@ -97,6 +98,11 @@ class BayBE:
         self.measurements_exp_rep = None
         self.measurements_comp_rep_x = None
         self.measurements_comp_rep_y = None
+
+        # Initialize the DOE strategy
+        self.strategy = Strategy(
+            **config.strategy, searchspace=self.searchspace_comp_rep
+        )
 
     def transform_rep_exp2comp(
         self, data: pd.DataFrame
