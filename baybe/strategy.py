@@ -128,7 +128,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         if (not self.use_initial_strategy) and (self.recommender_cls.type != "RANDOM"):
             self.surrogate_model = self.surrogate_model_cls()
             self.surrogate_model.fit(train_x, train_y)
-            self.best_f = train_y.min()
+            self.best_f = train_y.max()
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """

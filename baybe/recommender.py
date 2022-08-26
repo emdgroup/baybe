@@ -72,7 +72,7 @@ class MarginalRankingRecommender(Recommender):
 
         # evaluate the acquisition function for each t-batch and construct the ranking
         acqf_values = self.acquisition_function(candidates_tensor)
-        ilocs = torch.argsort(acqf_values)
+        ilocs = torch.argsort(acqf_values, descending=True)
 
         # return the dataframe indices of the top ranked candidates
         locs = candidates.index[ilocs[:batch_quantity].numpy()]
