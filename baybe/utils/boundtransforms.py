@@ -1,51 +1,100 @@
 """
-Function for bound transforms. All functions map into the interval (0,1)
+Functions for bound transforms.
 """
-# pylint: disable=invalid-name
-# flake8: noqa
-
 import numpy as np
+from numpy.typing import ArrayLike
 
 
-def bound_lu_linear(x, l, u, bMin):
+def bound_lu_linear(
+    arr: ArrayLike, lower: float, upper: float, descending: bool
+) -> np.ndarray:
     """
-    Performs transformation into an interval which is rising linearly from 0 to 1.
-    Bounds are lower (l) and upper (u)
+    A function that linearly maps input values in a specified interval
+    [lower, upper] to the interval [0, 1]. Outside the specified interval, the function
+    remains constant (that is, 0 or 1, depending on the side and selected mode).
+
+    Parameters
+    ----------
+    arr : ArrayLike
+        The values to be mapped.
+    lower : float
+        The lower boundary of the linear mapping interval.
+    upper : float
+        The upper boundary of the linear mapping interval.
+    descending : bool
+        If True, the function values decrease from 1 to 0 in the specified interval.
+        If False, they increase from 0 to 1. Outside the interval, the boundary function
+        values are extended.
+
+    Returns
+    -------
+    np.ndarray
+        An array containing the transformed values.
     """
-    x = np.array(x)
-    if bMin:
-        res = (u - x) / (u - l)
-        res[x > u] = 0.0
-        res[x < l] = 1.0
+    arr = np.array(arr)
+    if descending:
+        res = (upper - arr) / (upper - lower)
+        res[arr > upper] = 0.0
+        res[arr < lower] = 1.0
     else:
-        res = (x - l) / (u - l)
-        res[x > u] = 1.0
-        res[x < l] = 0.0
+        res = (arr - lower) / (upper - lower)
+        res[arr > upper] = 1.0
+        res[arr < lower] = 0.0
 
     return res
 
 
-def bound_lmu_linear(x, l, u):
+def bound_lmu_linear(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     """
-    Performs transformation into a centered interval which starts at u, linearly rises
-    to 1 at m and then linearly decreases to 0 at u.
+    A "triangular" function that is 0 outside a specified interval and linearly
+    increases to 1 from both interval ends, reaching the value 1 at the center of the
+    interval.
+
+    Parameters
+    ----------
+    arr : ArrayLike
+        The values to be mapped.
+    lower : float
+        The lower end of the triangle interval. Below, the mapped values are 0.
+    upper : float
+        The upper end of the triangle interval. Above, the mapped values are 0.
+
+    Returns
+    -------
+    np.ndarray
+        An array containing the transformed values.
     """
-    m = l + (u - l) / 2
-    x = np.array(x)
-    res = (x - l) / (m - l)
-    res[x > m] = (u - x[x > m]) / (u - m)
-    res[x > u] = 0.0
-    res[x < l] = 0.0
+    mid = lower + (upper - lower) / 2
+    arr = np.array(arr)
+    res = (arr - lower) / (mid - lower)
+    res[arr > mid] = (upper - arr[arr > mid]) / (upper - mid)
+    res[arr > upper] = 0.0
+    res[arr < lower] = 0.0
 
     return res
 
 
-# Bell curve
-def bound_bell(x, l, u):
+def bound_bell(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     """
-    Performs transformation into a centered interval which is 1 at mean and follows
-    the Gaussian distribution with standard deviation std.
+    A Gaussian bell curve, specified through the boundary values of the sigma interval.
+    Reaches the maximum value of 1 at the interval center.
+
+    Parameters
+    ----------
+    arr : ArrayLike
+        The values to be mapped.
+    lower : float
+        The input value corresponding to the upper sigma interval boundary.
+    upper : float
+        The input value corresponding to the lower sigma interval boundary.
+
+    Returns
+    -------
+    np.ndarray
+        An array containing the transformed values.
     """
-    mean = np.mean([l, u])
-    std = (u - l) / 2
-    return np.exp(-((x - mean) ** 2) / (2.0 * std**2))
+    mean = np.mean([lower, upper])
+    std = (upper - lower) / 2
+    res = np.exp(-((arr - mean) ** 2) / (2.0 * std**2))
+
+    return res

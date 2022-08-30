@@ -232,9 +232,8 @@ class NumericalTarget(Target):
                     )
                 transformed = self._bound_transform_funcs[self.bounds_transform_func](
                     transformed,
-                    l=self.bounds[0],  # noqa: E741
-                    u=self.bounds[1],  # noqa: E741
-                    bMin=False,  # noqa: E741
+                    *self.bounds,
+                    descending=False,
                 )
             # if in MAX mode without bounds no further transformation is needed
         elif self.mode == "MIN":
@@ -259,9 +258,8 @@ class NumericalTarget(Target):
                     )
                 transformed = self._bound_transform_funcs[self.bounds_transform_func](
                     transformed,
-                    l=self.bounds[0],  # noqa: E741
-                    u=self.bounds[1],  # noqa: E741
-                    bMin=True,  # noqa: E741
+                    *self.bounds,
+                    descending=True,
                 )
             else:
                 # If no bounds are given we can simply negate all target values
@@ -287,7 +285,7 @@ class NumericalTarget(Target):
                         f"{self._valid_transforms[self.mode]}."
                     )
                 transformed = self._bound_transform_funcs[self.bounds_transform_func](
-                    transformed, l=self.bounds[0], u=self.bounds[1]  # noqa: E741
+                    transformed, *self.bounds
                 )
             else:
                 raise ValueError(
