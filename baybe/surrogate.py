@@ -5,7 +5,7 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from typing import Dict, Optional, Type
 
 import pandas as pd
 import torch
@@ -26,14 +26,15 @@ class SurrogateModel(ABC):
     #  functions must be created (e.g. via a dedicated 'predict' method)
 
     type: str
-    SUBCLASSES: Dict[str, SurrogateModel] = {}
+    SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
 
     @abstractmethod
-    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
+    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
         """Trains the surrogate model on the provided data."""
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
+        """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
@@ -47,12 +48,10 @@ class GaussianProcessModel(SurrogateModel):
         self.model: Optional[SingleTaskGP] = None
         self.searchspace = searchspace
 
-    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
+    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
         """See base class."""
 
         # validate input
-        if not train_x.index.equals(train_y.index):
-            raise ValueError("Training inputs and targets must have the same index.")
         if len(train_x) == 0:
             raise ValueError("The training data set must be non-empty.")
         if train_y.shape[1] != 1:

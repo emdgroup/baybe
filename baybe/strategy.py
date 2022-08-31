@@ -124,6 +124,10 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         train_y : pd.DataFrame
             The corresponding response values.
         """
+        # validate input
+        if not train_x.index.equals(train_y.index):
+            raise ValueError("Training inputs and targets must have the same index.")
+
         self.use_initial_strategy = len(train_x) == 0
 
         if (not self.use_initial_strategy) and (self.recommender_cls.type != "RANDOM"):
