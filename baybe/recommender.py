@@ -6,7 +6,7 @@ Recommender classes for optimizing acquisition functions.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Optional
+from typing import Dict, Optional, Type
 
 import pandas as pd
 import torch
@@ -20,20 +20,21 @@ from .utils import to_tensor
 
 class Recommender(ABC):
     """
-    Abstract base class for all Recommenders.
+    Abstract base class for all recommenders.
 
-    The job of a Recommender is to select (i.e. "recommend") a subset of candidate
+    The job of a recommender is to select (i.e. "recommend") a subset of candidate
     experiments based on an underlying (batch) acquisition criterion.
     """
 
     type: str
-    SUBCLASSES: Dict[str, Recommender] = {}
+    SUBCLASSES: Dict[str, Type[Recommender]] = {}
 
     def __init__(self, acquisition_function: Optional[AcquisitionFunction]):
         self.acquisition_function = acquisition_function
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
+        """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
@@ -58,16 +59,16 @@ class Recommender(ABC):
 class MarginalRankingRecommender(Recommender):
     """
     Recommends the top experiments from the ranking obtained by evaluating the
-    acquisition function on the marginal posterior distribution of each candidate,
-    i.e. by computing the score for each candidate individually in a non-batch
-    fashion.
+    acquisition function on the marginal posterior predictive distribution of each
+    candidate, i.e. by computing the score for each candidate individually in a
+    non-batch fashion.
     """
 
     type = "UNRESTRICTED_RANKING"
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """See base class."""
-        # prepare the candidates in t-batches
+        # prepare the candidates in t-batches (= parallel marginal evaluation)
         candidates_tensor = to_tensor(candidates).unsqueeze(1)
 
         # evaluate the acquisition function for each t-batch and construct the ranking
