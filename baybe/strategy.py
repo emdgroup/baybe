@@ -10,7 +10,12 @@ from typing import Dict, Literal, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
-from botorch.acquisition import AcquisitionFunction, ExpectedImprovement
+from botorch.acquisition import (
+    AcquisitionFunction,
+    ExpectedImprovement,
+    PosteriorMean,
+    ProbabilityOfImprovement,
+)
 from pydantic import BaseModel, Extra, validator
 
 from .acquisition import debotorchize
@@ -73,7 +78,9 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     # object variables
     searchspace: pd.DataFrame
     surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
-    acquisition_function_cls: Union[Literal["EI"], Type[AcquisitionFunction]] = "EI"
+    acquisition_function_cls: Union[
+        Literal["PM", "PI", "EI"], Type[AcquisitionFunction]
+    ] = "EI"
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
     recommender_cls: Union[str, Type[Recommender]] = "UNRESTRICTED_RANKING"
 
@@ -98,8 +105,13 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     @validator("acquisition_function_cls", always=True)
     def validate_acquisition_function(cls, fun):
         """Validates if the given acquisition function type exists."""
-        if isinstance(fun, str) and fun == "EI":
-            return debotorchize(ExpectedImprovement)
+        if isinstance(fun, str):
+            mapping = {
+                "PM": PosteriorMean,
+                "PI": ProbabilityOfImprovement,
+                "EI": ExpectedImprovement,
+            }
+            fun = debotorchize(mapping[fun])
         return fun
 
     @validator("initial_strategy", always=True)
