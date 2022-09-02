@@ -5,8 +5,9 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Type
+from typing import Dict, Optional, Tuple, Type
 
+import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_model
@@ -29,6 +30,9 @@ class SurrogateModel(ABC):
     SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
 
     @abstractmethod
+    def posterior(self, candidates: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
+        """Evaluates the surrogate model at the given candidate points."""
+
     def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
         """Trains the surrogate model on the provided data."""
 
@@ -47,6 +51,17 @@ class GaussianProcessModel(SurrogateModel):
     def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[SingleTaskGP] = None
         self.searchspace = searchspace
+
+    def posterior(self, candidates: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
+        """See base class."""
+        posterior = self.model.posterior(candidates)
+
+        # use numpy output type to remain consistent with the function signature
+        # TODO: change signature to torch when implementing continuous parameters
+        mean = posterior.mvn.mean.detach().numpy()
+        covar = posterior.mvn.covariance_matrix.detach().numpy()
+
+        return mean, covar
 
     def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
         """See base class."""

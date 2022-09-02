@@ -13,6 +13,7 @@ import pandas as pd
 from botorch.acquisition import AcquisitionFunction, ExpectedImprovement
 from pydantic import BaseModel, Extra, validator
 
+from .acquisition import debotorchize
 from .recommender import Recommender
 from .surrogate import SurrogateModel
 from .utils import check_if_in
@@ -97,9 +98,8 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     @validator("acquisition_function_cls", always=True)
     def validate_acquisition_function(cls, fun):
         """Validates if the given acquisition function type exists."""
-        # TODO: change once an acquisition wrapper class has been introduced
         if isinstance(fun, str) and fun == "EI":
-            return ExpectedImprovement
+            return debotorchize(ExpectedImprovement)
         return fun
 
     @validator("initial_strategy", always=True)
@@ -163,10 +163,8 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             return self.initial_strategy.recommend(candidates, batch_quantity)
 
         # construct the acquisition function
-        # TODO: the current approach only works for gpytorch GP surrogate models
-        #   (for other surrogate models, some wrapper is required)
         acqf = (
-            self.acquisition_function_cls(self.surrogate_model.model, self.best_f)
+            self.acquisition_function_cls(self.surrogate_model, self.best_f)
             if self.recommender_cls.type != "RANDOM"
             else None
         )
