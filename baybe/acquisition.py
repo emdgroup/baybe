@@ -6,7 +6,6 @@ from inspect import signature
 from typing import Type
 
 import gpytorch.distributions
-import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -47,8 +46,6 @@ def debotorchize(acqf: Type[AcquisitionFunction]):
 
         def __call__(self, candidates):
             mean, var = self.surrogate.posterior(candidates)
-            mean = torch.from_numpy(mean)
-            var = torch.from_numpy(var)
             mvn = gpytorch.distributions.MultivariateNormal(mean, var)
             model = self.DummyModel(mvn)
             required_params = {

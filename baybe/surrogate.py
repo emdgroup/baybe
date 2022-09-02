@@ -7,7 +7,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple, Type
 
-import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_model
@@ -30,10 +29,11 @@ class SurrogateModel(ABC):
     SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
 
     @abstractmethod
-    def posterior(self, candidates: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
+    def posterior(self, candidates: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Evaluates the surrogate model at the given candidate points."""
 
-    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
+    @abstractmethod
+    def fit(self, train_x: torch.Tensor, train_y: torch.Tensor) -> None:
         """Trains the surrogate model on the provided data."""
 
     @classmethod
@@ -50,20 +50,17 @@ class GaussianProcessModel(SurrogateModel):
 
     def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[SingleTaskGP] = None
+        # TODO: the surrogate model should work entirely on Tensors (parameter name
+        #  agnostic) -> the scaling information should not be provided in form of a
+        #  DataFrame
         self.searchspace = searchspace
 
-    def posterior(self, candidates: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
+    def posterior(self, candidates: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """See base class."""
         posterior = self.model.posterior(candidates)
+        return posterior.mvn.mean, posterior.mvn.covariance_matrix
 
-        # use numpy output type to remain consistent with the function signature
-        # TODO: change signature to torch when implementing continuous parameters
-        mean = posterior.mvn.mean.detach().numpy()
-        covar = posterior.mvn.covariance_matrix.detach().numpy()
-
-        return mean, covar
-
-    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
+    def fit(self, train_x: torch.Tensor, train_y: torch.Tensor) -> None:
         """See base class."""
 
         # validate input
@@ -82,9 +79,6 @@ class GaussianProcessModel(SurrogateModel):
         # define the input and outcome transforms
         input_transform = Normalize(train_x.shape[1], bounds=bounds)
         outcome_transform = Standardize(train_y.shape[1])
-
-        # convert dataframes to tensors for the GP model
-        train_x, train_y = to_tensor(train_x, train_y)
 
         # construct and fit the Gaussian process
         self.model = SingleTaskGP(
