@@ -82,7 +82,7 @@ class BayBE:
         self.targets = [Target.create(t) for t in self.objective.targets]
 
         # Create the experimental dataframe
-        self.searchspace_exp_rep = baybe_parameters.parameter_outer_prod_to_df(
+        self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
             self.parameters
         )
         self.searchspace_metadata = pd.DataFrame(
