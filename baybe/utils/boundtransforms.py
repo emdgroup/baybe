@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 
-def bound_lu_linear(
+def bound_linear(
     arr: ArrayLike, lower: float, upper: float, descending: bool
 ) -> np.ndarray:
     """
@@ -44,7 +44,7 @@ def bound_lu_linear(
     return res
 
 
-def bound_lmu_linear(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
+def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     """
     A "triangular" function that is 0 outside a specified interval and linearly
     increases to 1 from both interval ends, reaching the value 1 at the center of the
