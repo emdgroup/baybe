@@ -1,5 +1,5 @@
 [project]
-name = "BayBE"
+name = "baybe"
 description = "Bayesian Back End for Design of Experiments"
 authors = [
     {name = "Martin Fitzner", email = "martin.fitzner@merckgroup.com"},
@@ -8,7 +8,22 @@ authors = [
 requires-python =">=3.8"
 dependencies = [
     "botorch>=0.6.4",
+    # Due to the following issue, need to have gpytorch<=1.8.1.
+    # https://github.com/pytorch/botorch/issues/1370
+    # Once resolved, update to version in environment.yml
+    "gpytorch<=1.8.1",
+    "matplotlib>=3.5.2",
+    "mordred>=1.2.0",
+    "openpyxl>=3.0.9",
+    "pandas>=1.4.2",
+    "pydantic>=1.9.1",
+    "rdkit>=2022.3.4",
+    "scikit-learn>=1.1.1",
+    "seaborn>=0.11.2",
+    "streamlit>=1.10.0",
+    "torch>=1.11.0",
 ]
+dynamic = ['version']
 
 [project.optional-dependencies]
 dev = [
@@ -17,6 +32,20 @@ dev = [
     "pylint>=2.13.9",
     "ufmt>=1.3.2",
 ]
+
+[build-system]
+requires = [
+    "setuptools>=45",
+	"setuptools_scm[toml]>=6.2"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+
+[tool.setuptools]
+packages = ["baybe"]
 
 [tool.black]
 line-length = 88

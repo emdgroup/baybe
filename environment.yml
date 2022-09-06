@@ -5,6 +5,7 @@ dependencies:
 - python==3.8.6
 - botorch==0.6.4
 - flake8==4.0.1
+- gpytorch==1.6.0
 - matplotlib==3.5.2
 - mordred==1.2.0
 - openpyxl==3.0.9
@@ -13,6 +14,7 @@ dependencies:
 - pip==22.1.2
 - pandas==1.4.2
 - pydantic==1.9.1
+- pytorch==1.11.0
 - rdkit==2022.3.4
 - scikit-learn==1.1.1
 - seaborn==0.11.2
