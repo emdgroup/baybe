@@ -3,7 +3,8 @@
 trigger:
   branches:
     include:
-    - master
+    - main
+    - refs/tags/*
 
 stages:
 
@@ -56,12 +57,6 @@ stages:
 
 - stage: Release  # taken from foundry-local
   displayName: Push new package version to Azure
-
-  trigger:
-    branches:
-      include:
-        - '*'  # must quote since "*" is a YAML reserved character; we want a string
-        - refs/tags/*
 
   jobs:
     - job: "Release"
