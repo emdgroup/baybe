@@ -30,3 +30,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simulation capabilities for testing the package on existing data.
 - Parsing and preprocessing for multiple targets / desirability ansatz.
 - Basic README file.
+- Automatic publishing of tagged versions.
+
