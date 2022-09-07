@@ -6,6 +6,7 @@ authors = [
     {name = "Adrian Šošić (Merck KGaA, Darmstadt, Germany)", email = "adrian.sosic@merckgroup.com"},
 ]
 readme = "README.md"
+license = {text = "Apache-2.0"}
 requires-python =">=3.8"
 dependencies = [
     "botorch>=0.6.4",

@@ -1,5 +1,5 @@
 # BayBE -- A Bayesian Back End for Design of Experiments
-This software package provides a general-purpose toolbox for **Design of Experiments 
+This software package provides a general-purpose toolbox for **Design of Experiments
 (DOE)**.
 
 It provides the necessary functionality to:
@@ -12,7 +12,7 @@ It provides the necessary functionality to:
 To get a batch of recommendations for the next set of experiments to be conducted,
 define the underlying search space by listing the associated experimental parameters.
 For example, a set of (discrete) numeric parameters, which can take only certain
-specified values, may be defined as follows (see `baybe.parameters` for alternative 
+specified values, may be defined as follows (see `baybe.parameters` for alternative
 options).
 ```
 parameters = [
@@ -32,7 +32,7 @@ parameters = [
 ```
 
 The corresponding optimization task is then specified through an `Objective`,
-which may comprise one or multiple (potentially competing) `Targets` and defines how 
+which may comprise one or multiple (potentially competing) `Targets` and defines how
 these should be balanced:
 ```
 objective = {
@@ -60,7 +60,7 @@ baybe = BayBE(config)
 baybe.recommend(batch_quantity=5)
 ```
 
-At any point in time (also before querying the first recommendations), available 
+At any point in time (also before querying the first recommendations), available
 measurements can be included into the design by passing a corresponding dataframe:
 ```
 import pandas as pd
@@ -72,3 +72,18 @@ measurements = pd.DataFrame.from_records(
 )
 baybe.add_results(measurements)
 ```
+
+### License
+Copyright 2022 Merck KGaA, Darmstadt, Germany
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
