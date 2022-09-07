@@ -3,7 +3,7 @@ Core functionality of BayBE. Main point of interaction via Python
 """
 import logging
 import random
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -30,10 +30,10 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     #   - https://github.com/samuelcolvin/pydantic/issues/691
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
 
-    project_name: str
+    project_name: str = "Untitled Project"
     parameters: List[dict]
     objective: dict
-    strategy: dict
+    strategy: Optional[dict] = None
     random_seed: int = 1337
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
@@ -53,6 +53,11 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
                 "Each parameter needs a valid type specification."
             ) from exc
         return param_specs
+
+    @validator("strategy", always=True)
+    def validate_strategy(cls, strategy):
+        """Sets the default strategy options to the empty set."""
+        return strategy or {}
 
 
 class BayBE:
