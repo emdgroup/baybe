@@ -9,11 +9,8 @@ readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python =">=3.8"
 dependencies = [
-    "botorch>=0.6.4",
-    # Due to the following issue, need to have gpytorch<=1.8.1.
-    # https://github.com/pytorch/botorch/issues/1370
-    # Once resolved, update to version in environment.yml
-    "gpytorch<=1.8.1",
+    "botorch>=0.7.0",
+    "gpytorch>=1.9.0",
     "matplotlib>=3.5.2",
     "mordred>=1.2.0",
     "openpyxl>=3.0.9",
