@@ -41,17 +41,17 @@ stages:
 
       - script: |
           source activate $(CONDA_ENV)
-          python -m ufmt .
+          ufmt check .
         displayName: "Run ufmt code formatter"
 
       - script: |
           source activate $(CONDA_ENV)
-          python -m flake8 .
+          flake8
         displayName: "Run flake8 code linter"
 
       - script: |
           source activate $(CONDA_ENV)
-          python -m pylint --recursive=yes .
+          pylint . --recursive=yes
         displayName: "Run pylint code linter"
 
 - stage: Changelog
