@@ -8,6 +8,21 @@ It provides the necessary functionality to:
 - handle measurements data and feeding it back into the experimental design.
 - compare different DOE strategies using simulation on synthetic and real data.
 
+### Installation
+BayBE can be directly installed from [Azure Artifacts](https://***REMOVED***/_artifacts/feed/artifacts). To do so, ensure 
+that all [prerequisites](https://pypi.org/project/artifacts-keyring/) of 
+`artifacts-keyring` are installed and run:
+```
+python -m pip install --upgrade pip
+pip install keyring artifacts-keyring
+```
+
+BayBE can now be installed via:
+```
+pip install --extra-index-url https://pkgs.***REMOVED***/_packaging/artifacts/pypi/simple/ baybe
+```
+
+
 ### Getting Started
 To get a batch of recommendations for the next set of experiments to be conducted,
 define the underlying search space by listing the associated experimental parameters.
