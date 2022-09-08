@@ -3,7 +3,8 @@
 trigger:
   branches:
     include:
-    - master
+    - main
+    - refs/tags/*
 
 stages:
 
@@ -53,6 +54,58 @@ stages:
           source activate $(CONDA_ENV)
           pylint . --recursive=yes
         displayName: "Run pylint code linter"
+
+- stage: Release  # taken from foundry-local
+  displayName: Push new package version to Azure
+
+  jobs:
+    - job: "Release"
+
+      pool:
+        vmImage: 'ubuntu-latest'
+
+      steps:
+        - task: PipAuthenticate@1
+          inputs:
+            artifactFeeds: 'artifacts' # Reactivate once upstream is up to date
+            # Setting this variable to "true" will force pip to get distributions from official python registry first and fallback to feeds mentioned above if distributions are not found there.
+            onlyAddExtraIndex: true
+          displayName: 'Pip Authenticate'
+
+        - script: |
+            pip wheel . --no-deps --wheel-dir dist
+            ls -lat dist
+          displayName: 'Run pip wheel .'
+
+        - script: |
+            WHL_PATH=$( find dist -name "*.whl")
+            echo $WHL_PATH
+            echo "##vso[task.setvariable variable=whlName]$WHL_PATH"
+          displayName: 'Get whl filename'
+
+        - publish: $(System.DefaultWorkingDirectory)/$(whlName)
+          artifact: baybe_pipeline_snapshot
+          displayName: 'Upload snapshot artifact'
+
+        # publish on tagged build
+        - script: |
+            pip install twine
+          condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+          displayName: "Run pip install twine"
+
+        - task: TwineAuthenticate@1
+          inputs:
+            artifactFeed: artifacts
+          condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+          displayName: "Twine Authenticate"
+
+        # https://docs.microsoft.com/en-us/azure/devops/pipelines/artifacts/pypi?view=azure-devops&tabs=yaml
+        - script: |
+            echo Uploading $(whlName)
+            cat $(PYPIRC_PATH)
+            twine upload -r artifacts --config-file $(PYPIRC_PATH) --verbose $(whlName)
+          condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
+          displayName: "Twine Upload"
 
 - stage: Changelog
   displayName: Assert changelog entry exists
