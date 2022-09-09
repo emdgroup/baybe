@@ -3,6 +3,9 @@ Collection of small utilities.
 """
 from __future__ import annotations
 
+import binascii
+import pickle
+
 import ssl
 import urllib.request
 from functools import lru_cache
@@ -584,3 +587,12 @@ def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
         A 1-D array containing the row-wise geometric means of the given array.
     """
     return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
+
+
+class HashableDict(dict):
+    """Allows hashing of (nested) dictionaries."""
+
+    # TODO: maybe there is a smarter way to achieve the same goal?
+
+    def __hash__(self) -> int:
+        return int(binascii.hexlify(pickle.dumps(self)), 16)

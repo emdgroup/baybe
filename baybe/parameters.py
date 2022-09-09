@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from functools import cached_property
+from functools import cached_property, lru_cache
 
 from typing import ClassVar, Dict, List, Literal, Optional, Type, Union
 
@@ -19,6 +19,7 @@ from .utils import (
     df_drop_single_value_columns,
     df_drop_string_columns,
     df_uncorrelated_features,
+    HashableDict,
     is_valid_smiles,
     smiles_to_fp_features,
     smiles_to_mordred_features,
@@ -68,6 +69,12 @@ class Parameter(
     @classmethod
     def create(cls, config: dict) -> Parameter:
         """Creates a new parameter object matching the given specifications."""
+        return cls._create(HashableDict(config))
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _create(cls, config: HashableDict) -> Parameter:
+        """Memory-cached parameter creation."""
         config = config.copy()
         param_type = config.pop("type")
         check_if_in(param_type, list(Parameter.SUBCLASSES.keys()))
