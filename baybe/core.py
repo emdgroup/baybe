@@ -75,10 +75,12 @@ class BayBE:
         # Parse config and create all model components except the strategy (which
         # currently needs the computational representation of the search space)
         # TODO: derive the required information directly from the Parameter objects
+        # TODO: find a better solution for the self._random property hack
         self.config = config
         self.parameters = [Parameter.create(p) for p in config.parameters]
         self.objective = Objective(**config.objective)
         self.targets = [Target.create(t) for t in self.objective.targets]
+        self._random = config.strategy["recommender_cls"] == "RANDOM"
 
         # Create a dataframe representing the experimental search space
         self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
@@ -109,7 +111,8 @@ class BayBE:
         )
 
     def transform_rep_exp2comp(
-        self, data: pd.DataFrame
+        self,
+        data: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
         """
         Transforms a dataframe from experimental to computational representation.
@@ -126,11 +129,14 @@ class BayBE:
             Transformed parameters and, if contained in the input, transformed targets.
         """
         # Transform the parameters
-        dfs = []
-        for param in self.parameters:
-            comp_df = param.transform_rep_exp2comp(data[param.name])
-            dfs.append(comp_df)
-        comp_rep_x = pd.concat(dfs, axis=1)
+        if self._random:
+            comp_rep_x = pd.DataFrame(index=data.index)
+        else:
+            dfs = []
+            for param in self.parameters:
+                comp_df = param.transform_rep_exp2comp(data[param.name])
+                dfs.append(comp_df)
+            comp_rep_x = pd.concat(dfs, axis=1)
 
         # Transform the (optional) targets
         comp_rep_y = None
