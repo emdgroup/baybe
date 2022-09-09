@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from functools import cached_property
 
 from typing import ClassVar, Dict, List, Literal, Optional, Type, Union
 
@@ -42,7 +43,15 @@ def _validate_value_list(lst: list, values: dict):
     return lst
 
 
-class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+class Parameter(
+    ABC,
+    BaseModel,
+    extra=Extra.forbid,
+    arbitrary_types_allowed=True,
+    keep_untouched=(
+        cached_property,
+    ),  # required due to: https://github.com/pydantic/pydantic/issues/1241
+):
     """
     Abstract base class for all parameters. Stores information about the
     type, range, constraints, etc. and handles in-range checks, transformations etc.
@@ -79,7 +88,7 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         #  member or a property, depending on the parameter type --> better solution?
         return item in self.values
 
-    @property
+    @cached_property
     @abstractmethod
     def comp_df(self) -> pd.DataFrame:
         """
@@ -131,7 +140,7 @@ class Categorical(Parameter):
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
@@ -185,7 +194,7 @@ class NumericDiscrete(Parameter):
 
         return tolerance
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
@@ -246,7 +255,7 @@ class GenericSubstance(Parameter):
         # for Python 3.7 or higher
         return list(self.data.keys())
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
@@ -322,7 +331,7 @@ class Custom(Parameter):
         """
         return self.data.index.to_list()
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
