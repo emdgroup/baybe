@@ -32,6 +32,8 @@ def debotorchize(acqf: Type[AcquisitionFunction]):
     --------
     from botorch.acquisition import ExpectedImprovement
     from baybe.surrogate import SurrogateModel
+    surrogate = ...  # add your own BayBE SurrogateModel here
+    best_f = ...  # the best (= highest) function value found so far
     acqf = debotorchize(ExpectedImprovement)(surrogate, best_f)
     acqf_scores = acqf(candidates)
     """

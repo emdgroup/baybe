@@ -15,6 +15,7 @@ from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import fit_gpytorch_torch
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from torch import Tensor
 
 from .utils import to_tensor
 
@@ -29,11 +30,27 @@ class SurrogateModel(ABC):
     SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
 
     @abstractmethod
-    def posterior(self, candidates: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Evaluates the surrogate model at the given candidate points."""
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """
+        Evaluates the surrogate model at the given candidate points.
+
+        Parameters
+        ----------
+        candidates : torch.Tensor
+            The candidate points, represented as a tensor of shape (*t, q, d), where
+            't' denotes the "t-batch" shape, 'q' denotes the "q-batch" shape, and
+            'd' is the input dimension. For more details about batch shapes, see:
+            https://botorch.org/docs/batching
+
+        Returns
+        -------
+        Tuple[Tensor, Tensor]
+            The posterior means and posterior covariance matrices of the t-batched
+            candidate points.
+        """
 
     @abstractmethod
-    def fit(self, train_x: torch.Tensor, train_y: torch.Tensor) -> None:
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
 
     @classmethod
@@ -55,12 +72,12 @@ class GaussianProcessModel(SurrogateModel):
         #  DataFrame
         self.searchspace = searchspace
 
-    def posterior(self, candidates: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         posterior = self.model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
 
-    def fit(self, train_x: torch.Tensor, train_y: torch.Tensor) -> None:
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
 
         # validate input
