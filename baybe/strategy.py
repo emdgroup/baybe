@@ -71,6 +71,105 @@ class RandomInitialStrategy(InitialStrategy):
             np.random.choice(candidates.index, batch_quantity, replace=False)
         )
 
+class AffinityPropagation(InitialStrategy):
+    def recommend(self, candidates: pd.DataFrame, batch_quantity) -> pd.Index:
+        # create the scaler
+        ss = StandardScaler()
+
+        # Affinity Propogation
+        model_AP = AffinityPropagation(damping=0.7)
+        model_AP.fit(candidates_scaled)
+
+        # assign each data point to a cluster
+        result_AP = model_AP.predict(candidates_scaled)
+
+        # get all of the unique clusters
+        clusters_AP = unique(result_AP)
+
+        for n in clusters_AP:
+            idxs = np.array(np.where(result == n))
+            # return original index
+            idxs = candidates.index[idxs]
+            random_val = random.choice(idxs)
+            random_val = random.choice(random_val)
+            cluster_random.append(random_val)
+
+    return pd.Index(cluster_random, batch_quantitu)
+
+class DBSCAN(InitialStrategy):
+    def recommend(self, candidates: pd.DataFrame, batch_quantity) -> pd.Index:
+        # create the scaler
+        ss = StandardScaler()
+
+        # DBSCAN - DEnsity Based Algorithm, takes radius of the neighbour (eps), min number of points within eps (MinPts)
+        model_DBS = DBSCAN(eps=0.25, min_samples=10)
+        model_DBS.fit(candidates_scaled)
+
+        # assign each data point to a cluster
+        result_DBS = model_DBS.predict(candidates_scaled)
+
+        # get all of the unique clusters
+        clusters_DBS = unique(result_DBS)
+
+        for n in clusters_DBS:
+            idxs = np.array(np.where(result == n))
+            # return original index
+            idxs = candidates.index[idxs]
+            random_val = random.choice(idxs)
+            random_val = random.choice(random_val)
+            cluster_random.append(random_val)
+
+    return pd.Index(cluster_random)
+
+class KMeans(InitialStrategy):
+    def recommend(self, candidates: pd.DataFrame, batch_quantity) -> pd.Index:
+        # create the scaler
+        ss = StandardScaler()
+
+        # KMeans - method of vector quantization, uses centroid(random K points in data
+        model_KM = KMeans(n_clusters=4, random_state=12345)
+        model_KM.fit(candidates_scaled)
+
+        # assign each data point to a cluster
+        result_KM = model_KM.predict(candidates_scaled)
+
+        # get all of the unique clusters
+        clusters_KM = unique(result_KM)
+
+        for n in clusters_KM:
+            idxs = np.array(np.where(result == n))
+            # return original index
+            idxs = candidates.index[idxs]
+            random_val = random.choice(idxs)
+            random_val = random.choice(random_val)
+            cluster_random.append(random_val)
+
+    return pd.Index(cluster_random)
+
+class GaussianMixture(InitialStrategy):
+    def recommend(self, candidates: pd.DataFrame, batch_quantity) -> pd.Index:
+        # create the scaler
+        ss = StandardScaler()
+
+        # DBSCAN - DEnsity Based Algorithm, takes radius of the neighbour (eps), min number of points within eps (MinPts)
+        model_GMM = GaussianMixture(n_components=4)
+        model_GMM.fit(candidates_scaled)
+
+        # assign each data point to a cluster
+        result_GMM = model_GMM.predict(candidates_scaled)
+
+        # get all of the unique clusters
+        clusters_GMM = unique(result_GMM)
+
+        for n in clusters_GMM:
+            idxs = np.array(np.where(result == n))
+            # return original index
+            idxs = candidates.index[idxs]
+            random_val = random.choice(idxs)
+            random_val = random.choice(random_val)
+            cluster_random.append(random_val)
+
+    return pd.Index(cluster_random)
 
 class FPSInitialStrategy(InitialStrategy):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
