@@ -15,6 +15,7 @@ from botorch.acquisition import (
     ExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
+    UpperConfidenceBound,
 )
 from pydantic import BaseModel, Extra, validator
 
@@ -79,7 +80,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     searchspace: pd.DataFrame
     surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
     acquisition_function_cls: Union[
-        Literal["PM", "PI", "EI"], Type[AcquisitionFunction]
+        Literal["PM", "PI", "EI", "UCB"], Type[AcquisitionFunction]
     ] = "EI"
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
     recommender_cls: Union[str, Type[Recommender]] = "UNRESTRICTED_RANKING"
@@ -110,6 +111,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
                 "PM": PosteriorMean,
                 "PI": ProbabilityOfImprovement,
                 "EI": ExpectedImprovement,
+                "UCB": UpperConfidenceBound,
             }
             fun = debotorchize(mapping[fun])
         return fun
