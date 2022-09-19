@@ -3,8 +3,13 @@ Collection of small utilities.
 """
 from __future__ import annotations
 
+import binascii
+import pickle
+
 import ssl
 import urllib.request
+from functools import lru_cache
+from pathlib import Path
 
 from typing import (
     Any,
@@ -22,6 +27,8 @@ from typing import (
 import numpy as np
 import pandas as pd
 import torch
+
+from joblib import Memory
 from mordred import Calculator, descriptors
 from rdkit import Chem, RDLogger
 from rdkit.Chem.AllChem import GetMorganFingerprintAsBitVect
@@ -29,6 +36,13 @@ from torch import Tensor
 
 if TYPE_CHECKING:
     from .core import BayBE  # TODO: fix unresolved import
+
+# Caching related objects
+cachedir = Path.home() / ".baybe_cache"
+memory_utils = Memory(cachedir / "utils")
+
+# Global Mordred calculator (variable could be replaced with a singleton pattern)
+mordred_calculator = Calculator(descriptors)
 
 
 def is_valid_smiles(smiles: str) -> bool:
@@ -291,6 +305,28 @@ def add_parameter_noise(
                 )
 
 
+@lru_cache(maxsize=None)
+@memory_utils.cache
+def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
+    """
+    Memory- and disk-cached computation of Mordred descriptors.
+
+    Parameters
+    ----------
+    smiles : str
+        SMILES string.
+
+    Returns
+    -------
+    np.ndarray
+        Mordred descriptors for the given smiles string.
+    """
+    try:
+        return np.asarray(mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing())
+    except Exception:
+        return np.full(len(mordred_calculator.descriptors), np.NaN)
+
+
 def smiles_to_mordred_features(
     smiles_list: List[str],
     prefix: str = "",
@@ -313,21 +349,10 @@ def smiles_to_mordred_features(
     pd.DataFrame
         Dataframe containing overlapping Mordred descriptors for each SMILES string.
     """
-    calc = Calculator(descriptors)
-
-    output = []
-    for smiles in smiles_list:
-        try:
-            data_i = calc(Chem.MolFromSmiles(smiles)).fill_missing()
-        except Exception:
-            data_i = np.full(len(calc.descriptors), np.NaN)
-        output.append(list(data_i))
-
-    descriptor_names = list(calc.descriptors)
-    columns = []
-    for entry in descriptor_names:
-        columns.append(prefix + str(entry))
-    dataframe = pd.DataFrame(data=output, columns=columns)
+    features = [_smiles_to_mordred_features(smiles) for smiles in smiles_list]
+    descriptor_names = list(mordred_calculator.descriptors)
+    columns = [prefix + str(name) for name in descriptor_names]
+    dataframe = pd.DataFrame(data=features, columns=columns)
 
     if dropna:
         dataframe = dataframe.dropna(axis=1)
@@ -562,3 +587,12 @@ def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
         A 1-D array containing the row-wise geometric means of the given array.
     """
     return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
+
+
+class HashableDict(dict):
+    """Allows hashing of (nested) dictionaries."""
+
+    # TODO: maybe there is a smarter way to achieve the same goal?
+
+    def __hash__(self) -> int:
+        return int(binascii.hexlify(pickle.dumps(self)), 16)

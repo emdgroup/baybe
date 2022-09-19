@@ -31,4 +31,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parsing and preprocessing for multiple targets / desirability ansatz.
 - Basic README file.
 - Automatic publishing of tagged versions.
+- Caching of experimental parameters and chemical descriptors.
 
