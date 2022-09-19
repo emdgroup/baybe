@@ -1,6 +1,6 @@
 # pylint: disable=not-callable, no-member  # TODO: due to validators --> find fix
 """
-Strategies for Design of Experiments (DoE).
+Strategies for Design of Experiments (DOE).
 """
 
 from __future__ import annotations
@@ -19,10 +19,13 @@ from .utils import check_if_in
 
 
 class InitialStrategy(ABC):
-    """Abstract base class for all initial design strategies."""
+    """
+    Abstract base class for all initial design strategies. They are used for selecting
+    initial sets of candidate experiments, i.e. without considering experimental data.
+    """
 
     type: str
-    SUBCLASSES: Dict[str, InitialStrategy] = {}
+    SUBCLASSES: Dict[str, Type[InitialStrategy]] = {}
 
     @abstractmethod
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
@@ -32,23 +35,24 @@ class InitialStrategy(ABC):
         Parameters
         ----------
         candidates : pd.DataFrame
-            The features of all candidate experiments that could be conducted first.
+            The features of all candidate experiments that could be conducted.
         batch_quantity : int (default = 1)
             The number of experiments to be conducted in parallel.
 
         Returns
         -------
-        The DataFrame indices of the specific experiments selected by the strategy.
+        The DataFrame indices of the specific experiments selected.
         """
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
+        """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
 
 class RandomInitialStrategy(InitialStrategy):
-    """An initial strategy that selects the candidates at random."""
+    """An initial strategy that selects candidates uniformly at random."""
 
     type = "RANDOM"
 
@@ -60,7 +64,7 @@ class RandomInitialStrategy(InitialStrategy):
 
 
 class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
-    """Abstract base class for all DoE strategies."""
+    """Abstract base class for all DOE strategies."""
 
     # TODO: consider adding validators for the individual component classes of the
     #  strategy or introducing config classes for them (-> disable arbitrary types)
@@ -72,16 +76,18 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
     recommender_cls: Union[str, Type[Recommender]] = "UNRESTRICTED_RANKING"
 
-    # TODO: this becomes obsolete in pydantic 2.0 when the __post_init_post_parse__
-    #   is available:
+    # TODO: The following member declarations become obsolete in pydantic 2.0 when
+    #  __post_init_post_parse__ is available:
     #   - https://github.com/samuelcolvin/pydantic/issues/691
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
     surrogate_model: Optional[SurrogateModel] = None
     best_f: Optional[float] = None
     use_initial_strategy: bool = True
 
+    # TODO: introduce a reusable validator once they all perform the same operation
+
     @validator("surrogate_model_cls", always=True)
-    def validate_type(cls, model):
+    def validate_surrogate_model(cls, model):
         """Validates if the given surrogate model type exists."""
         if isinstance(model, str):
             check_if_in(model, list(SurrogateModel.SUBCLASSES.keys()))
@@ -112,10 +118,10 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             return Recommender.SUBCLASSES[recommender]
         return recommender
 
-    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame):
+    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
         """
-        Uses the given data to train a fresh surrogate model instance for the DoE
-        strategy. If available, existing training data will be overwritten.
+        Uses the given data to train a fresh surrogate model instance for the DOE
+        strategy. If available, previous training data will be overwritten.
 
         Parameters
         ----------
@@ -124,8 +130,14 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         train_y : pd.DataFrame
             The corresponding response values.
         """
+        # validate input
+        if not train_x.index.equals(train_y.index):
+            raise ValueError("Training inputs and targets must have the same index.")
+
+        # if no data is provided, apply the initial selection strategy
         self.use_initial_strategy = len(train_x) == 0
 
+        # if data is provided (and the strategy is not random), train the surrogate
         if (not self.use_initial_strategy) and (self.recommender_cls.type != "RANDOM"):
             self.surrogate_model = self.surrogate_model_cls(self.searchspace)
             self.surrogate_model.fit(train_x, train_y)
@@ -144,9 +156,8 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
 
         Returns
         -------
-        The DataFrame indices of the specific experiments selected by the DoE strategy.
+        The DataFrame indices of the specific experiments selected.
         """
-
         # if no training data exists, apply the strategy for initial recommendations
         if self.use_initial_strategy:
             return self.initial_strategy.recommend(candidates, batch_quantity)
