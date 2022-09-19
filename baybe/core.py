@@ -202,7 +202,7 @@ class BayBE:
             # Check if the row represents a valid input
             valid = True
             for param in self.parameters:
-                if param.type == "NUM_DISCRETE":
+                if "NUM" in param.type:
                     if self.config.numerical_measurements_must_be_within_tolerance:
                         valid &= param.is_in_range(row[param.name])
                 else:
@@ -223,11 +223,9 @@ class BayBE:
             # TODO: This is error-prone. Add member to indicate discreteness or
             #  introduce corresponding super-classes.
             cat_cols = [
-                param.name for param in self.parameters if param.type != "NUM_DISCRETE"
+                param.name for param in self.parameters if "NUM" not in param.type
             ]
-            num_cols = [
-                param.name for param in self.parameters if param.type == "NUM_DISCRETE"
-            ]
+            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
 
             # Discrete parameters must match exactly
             match = (

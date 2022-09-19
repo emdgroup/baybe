@@ -191,9 +191,8 @@ def add_fake_results(
                 lbound = 0 if target.bounds is None else target.bounds[0]
                 ubound = 100 if target.bounds is None else target.bounds[1]
                 interv = (
-                    # CHECK: shouldn't this be +0.33 and +0.66 for consistency?
-                    lbound + 0.2 * (ubound - lbound),
-                    lbound + 0.8 * (ubound - lbound),
+                    lbound + 0.33 * (ubound - lbound),
+                    lbound + 0.66 * (ubound - lbound),
                 )
             else:
                 raise ValueError(
@@ -213,7 +212,7 @@ def add_fake_results(
                 lbound = 0 if target.bounds is None else target.bounds[0]
                 ubound = 100 if target.bounds is None else target.bounds[1]
                 interv = (
-                    # CHECK: does this interval make sense?
+                    # Take as bad values and arbitrary interval above the match interval
                     ubound + 0.5 * (ubound - lbound),
                     ubound + 2.0 * (ubound - lbound),
                 )
@@ -276,7 +275,7 @@ def add_parameter_noise(
     Nothing (the given dataframe is modified in-place).
     """
     for param in baybe.parameters:
-        if param.type == "NUM_DISCRETE":
+        if "NUM" in param.type:
             if noise_type == "relative_percent":
                 data[param.name] *= np.random.uniform(
                     1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)
@@ -485,9 +484,9 @@ def df_drop_string_columns(
         The cleaned dataframe.
     """
     ignore_list = ignore_list or []
-    contains_string = ~df.applymap(lambda x: isinstance(x, str)).any()
-    contains_string = contains_string[contains_string].index
-    to_keep = set(contains_string).union(set(ignore_list))
+    no_string = ~df.applymap(lambda x: isinstance(x, str)).any()
+    no_string = no_string[no_string].index
+    to_keep = set(no_string).union(set(ignore_list))
     ordered_cols = [col for col in df if col in to_keep]
     return df[ordered_cols]
 
@@ -562,5 +561,4 @@ def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
     np.ndarray
         A 1-D array containing the row-wise geometric means of the given array.
     """
-    # CHECK: why is this separate implementation required in the first place?
     return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
