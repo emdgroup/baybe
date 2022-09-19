@@ -24,7 +24,7 @@ from .acquisition import debotorchize
 from .recommender import Recommender
 from .surrogate import SurrogateModel
 from .utils import check_if_in, to_tensor
-from .utils.sampling_algorithms import _dpp, _fps
+from .utils.sampling_algorithms import _fps
 
 
 class InitialStrategy(ABC):
@@ -72,19 +72,6 @@ class RandomInitialStrategy(InitialStrategy):
         )
 
 
-class DPPInitialStrategy(InitialStrategy):
-    """An initial strategy that selects the candidates using determinantal point process
-    algorithm."""
-
-    type = "DPP"
-
-    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
-        """Uniform random selection of candidates."""
-        return _dpp(
-            candidates, batch_quantity, kernel="RBF", epsilon=1e-10, start_index=1
-        )
-
-
 class FPSInitialStrategy(InitialStrategy):
     """An initial strategy that selects the candidates using farthest point sampling
     algorithm."""
@@ -93,7 +80,7 @@ class FPSInitialStrategy(InitialStrategy):
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """Uniform random selection of candidates."""
-        return _fps(candidates, batch_quantity, start_index=1)
+        return _fps(candidates, batch_quantity, start_strategy="random")
 
 
 class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):

@@ -7,7 +7,7 @@ import numpy as np
 import seaborn as sns
 import torch
 from baybe.simulation import simulate_from_configs
-from baybe.strategy import DPPInitialStrategy, FPSInitialStrategy, RandomInitialStrategy
+from baybe.strategy import FPSInitialStrategy, RandomInitialStrategy
 from botorch.test_functions.synthetic import Branin
 
 DIMENSIONS = 2
@@ -169,11 +169,6 @@ config_dict_v0 = {
     "strategy": {"initial_strategy": RandomInitialStrategy()},
 }
 
-config_dict_v1 = {
-    "project_name": "DPP",
-    "strategy": {"initial_strategy": DPPInitialStrategy()},
-}
-
 config_dict_v2 = {
     "project_name": "FPS",
     "strategy": {"initial_strategy": FPSInitialStrategy()},
@@ -188,7 +183,6 @@ results = simulate_from_configs(
     batch_quantity=10,
     config_variants={
         "Random": config_dict_v0,
-        "DPP": config_dict_v1,
         "FPS": config_dict_v2,
     },
 )
