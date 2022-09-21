@@ -5,7 +5,7 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Type
+from typing import Dict, Optional, Tuple, Type
 
 import pandas as pd
 import torch
@@ -15,6 +15,7 @@ from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import fit_gpytorch_torch
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from torch import Tensor
 
 from .utils import to_tensor
 
@@ -29,7 +30,27 @@ class SurrogateModel(ABC):
     SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
 
     @abstractmethod
-    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """
+        Evaluates the surrogate model at the given candidate points.
+
+        Parameters
+        ----------
+        candidates : torch.Tensor
+            The candidate points, represented as a tensor of shape (*t, q, d), where
+            't' denotes the "t-batch" shape, 'q' denotes the "q-batch" shape, and
+            'd' is the input dimension. For more details about batch shapes, see:
+            https://botorch.org/docs/batching
+
+        Returns
+        -------
+        Tuple[Tensor, Tensor]
+            The posterior means and posterior covariance matrices of the t-batched
+            candidate points.
+        """
+
+    @abstractmethod
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
 
     @classmethod
@@ -46,9 +67,17 @@ class GaussianProcessModel(SurrogateModel):
 
     def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[SingleTaskGP] = None
+        # TODO: the surrogate model should work entirely on Tensors (parameter name
+        #  agnostic) -> the scaling information should not be provided in form of a
+        #  DataFrame
         self.searchspace = searchspace
 
-    def fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> None:
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See base class."""
+        posterior = self.model.posterior(candidates)
+        return posterior.mvn.mean, posterior.mvn.covariance_matrix
+
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
 
         # validate input
@@ -67,9 +96,6 @@ class GaussianProcessModel(SurrogateModel):
         # define the input and outcome transforms
         input_transform = Normalize(train_x.shape[1], bounds=bounds)
         outcome_transform = Standardize(train_y.shape[1])
-
-        # convert dataframes to tensors for the GP model
-        train_x, train_y = to_tensor(train_x, train_y)
 
         # construct and fit the Gaussian process
         self.model = SingleTaskGP(

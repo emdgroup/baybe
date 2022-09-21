@@ -10,12 +10,19 @@ from typing import Dict, Literal, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
-from botorch.acquisition import AcquisitionFunction, ExpectedImprovement
+from botorch.acquisition import (
+    AcquisitionFunction,
+    ExpectedImprovement,
+    PosteriorMean,
+    ProbabilityOfImprovement,
+    UpperConfidenceBound,
+)
 from pydantic import BaseModel, Extra, validator
 
+from .acquisition import debotorchize
 from .recommender import Recommender
 from .surrogate import SurrogateModel
-from .utils import check_if_in
+from .utils import check_if_in, to_tensor
 
 
 class InitialStrategy(ABC):
@@ -72,7 +79,9 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     # object variables
     searchspace: pd.DataFrame
     surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
-    acquisition_function_cls: Union[Literal["EI"], Type[AcquisitionFunction]] = "EI"
+    acquisition_function_cls: Union[
+        Literal["PM", "PI", "EI", "UCB"], Type[AcquisitionFunction]
+    ] = "EI"
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
     recommender_cls: Union[str, Type[Recommender]] = "UNRESTRICTED_RANKING"
 
@@ -97,9 +106,14 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     @validator("acquisition_function_cls", always=True)
     def validate_acquisition_function(cls, fun):
         """Validates if the given acquisition function type exists."""
-        # TODO: change once an acquisition wrapper class has been introduced
-        if isinstance(fun, str) and fun == "EI":
-            return ExpectedImprovement
+        if isinstance(fun, str):
+            mapping = {
+                "PM": PosteriorMean,
+                "PI": ProbabilityOfImprovement,
+                "EI": ExpectedImprovement,
+                "UCB": UpperConfidenceBound,
+            }
+            fun = debotorchize(mapping[fun])
         return fun
 
     @validator("initial_strategy", always=True)
@@ -140,7 +154,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         # if data is provided (and the strategy is not random), train the surrogate
         if (not self.use_initial_strategy) and (self.recommender_cls.type != "RANDOM"):
             self.surrogate_model = self.surrogate_model_cls(self.searchspace)
-            self.surrogate_model.fit(train_x, train_y)
+            self.surrogate_model.fit(*to_tensor(train_x, train_y))
             self.best_f = train_y.max()
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
@@ -163,10 +177,8 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             return self.initial_strategy.recommend(candidates, batch_quantity)
 
         # construct the acquisition function
-        # TODO: the current approach only works for gpytorch GP surrogate models
-        #   (for other surrogate models, some wrapper is required)
         acqf = (
-            self.acquisition_function_cls(self.surrogate_model.model, self.best_f)
+            self.acquisition_function_cls(self.surrogate_model, self.best_f)
             if self.recommender_cls.type != "RANDOM"
             else None
         )
