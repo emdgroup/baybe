@@ -7,6 +7,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple, Type
 
+import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_model
@@ -20,9 +21,26 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import ARDRegression
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler, MinMaxScaler
+from ngboost import NGBRegressor
+
 from torch import Tensor
 
 from .utils import isabstract, to_tensor
+
+def check_x(X: Tensor):
+    """Helper function to validate the input x"""
+    if len(X) == 0:
+        raise ValueError("The input dataset must be non-empty")
+        
+def check_y(Y: Tensor):
+    """Helper function to validate the input y"""
+    if Y.shape[1] != 1:
+        raise NotImplementedError("The model currently supports only one target.")
 
 
 class SurrogateModel(ABC):
@@ -177,3 +195,268 @@ class GaussianProcessModel(SurrogateModel):
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, options={"disp": False})
+
+
+class RandomForestModel(SurrogateModel):
+    """A random forest surrogate model"""
+
+    type = "RF"
+
+    def __init__(self, searchspace: pd.DataFrame):
+        self.model: Optional[RandomForestRegressor] = None
+        # TODO: the surrogate model should work entirely on Tensors (parameter name
+        #  agnostic) -> the scaling information should not be provided in form of a
+        #  DataFrame
+        self.searchspace = searchspace
+    
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See base class."""
+
+        # TODO: Input/Output Transforms
+        # Not Needed - Ensemble Methods
+
+        # TODO: Decide between the below methods (1,2,3)
+        # Method 1 (Old), can only handle q = 1
+        # candidates = candidates.squeeze(1)
+        # mean2 = Tensor(self.model.predict(candidates)).unsqueeze(1)
+
+        # epred = [self.model.estimators_[tree].predict(candidates) 
+        #             for tree in range(self.model.n_estimators)]
+        # Calculate variance
+        # var = torch.diag(Tensor(np.var(epred, axis=0))).unsqueeze(2)
+        # var2 = Tensor(np.var(epred, axis=0)).unsqueeze(1).unsqueeze(1)
+
+        # method 2, can only handle t spanning one dimension
+        # Predict mean (assuming size *t, q, d)
+        # means = [
+        #     Tensor(self.model.predict(t)).unsqueeze(-1) for t in candidates.unbind(dim=-2)
+        # ]
+
+        # mean = torch.cat(tuple(means),dim=-1)
+
+        # epreds = [
+        #     Tensor(np.var([self.model.estimators_[tree].predict(t) 
+        #             for tree in range(self.model.n_estimators)], axis=0))
+            
+        #     for t in candidates.unbind(dim=-2)
+        # ]
+
+        # vars = torch.cat(tuple([ep.unsqueeze(-1) for ep in epreds]), dim=-1)
+
+        # var = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
+
+        # Method 3
+        # TODO: Understand how multi-dimensional t-batch works
+
+        # Flatten t-batch
+        flattened = candidates.flatten(end_dim=-3)
+
+        # Get means for each q-batch
+        means = [
+            Tensor(self.model.predict(t)).unsqueeze(-1) for t in flattened.unbind(dim=-2)
+        ]
+
+        # Combine the means and reshape t-batch
+        mean = torch.cat(tuple(means),dim=-1).reshape(candidates.shape[:-1])
+
+        # Printouts
+        # print(mean)
+        # print(mean.size())
+        
+        # Get Ensemble predictions (assuming size *t, q, d)
+
+        # Get q-batch dimension
+        q = candidates.shape[-2]
+
+        # Get variance for each q-batch
+        epreds = [
+            Tensor(np.var([self.model.estimators_[tree].predict(t) 
+                    for tree in range(self.model.n_estimators)], axis=0))
+            
+            for t in flattened.unbind(dim=-2)
+        ]
+
+        # Combine variances
+        vars = torch.cat(tuple([ep.unsqueeze(-1) for ep in epreds]), dim=-1)
+
+        # Construct diagonal covariance matrices
+        covar = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
+        
+        # Reshape t-batch
+        covar = covar.reshape(candidates.shape[:-2]+(q,q))
+        
+        # Printouts
+        # print(var)
+        # print(var.size())
+
+        return mean,covar
+    
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        """See base class."""
+        # Validate Input
+        check_x(train_x)
+        check_y(train_y)
+
+        # TODO: Input/Output Transforms
+
+        # Create Model
+        self.model = RandomForestRegressor()
+        # Train model
+        self.model.fit(train_x, train_y.ravel())
+
+
+class NGBoostModel(SurrogateModel):
+    """A natural-gradient-boosting surrogate model"""
+
+    type = "NG"
+
+    def __init__(self, searchspace: pd.DataFrame):
+        self.model: Optional[NGBRegressor] = None
+        # TODO: the surrogate model should work entirely on Tensors (parameter name
+        #  agnostic) -> the scaling information should not be provided in form of a
+        #  DataFrame
+        self.searchspace = searchspace
+
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See base class."""
+
+        # TODO: Input/Output Transforms
+        # Not helpful - Ensemble method
+
+        # Method 1 (Old), can only handle q=1
+        # Predict
+        # candidates = candidates.squeeze(1)
+        # pred = self.model.pred_dist(candidates)
+        
+        # Get mean and variance
+        # mean = Tensor(pred.mean()).unsqueeze(1)
+        # var = torch.diag(Tensor(pred.std()**2))
+        # var = Tensor(pred.std()**2).unsqueeze(1).unsqueeze(1)
+
+        # Method 3
+        # TODO: Understand how multi-dimensional t-batch works
+
+        # Get q-batch dimension 
+        q = candidates.shape[-2]
+
+        # Flatten t-batch
+        flattened = candidates.flatten(end_dim=-3)
+
+        # Get distribution for each q-batch
+        dists = [
+            self.model.pred_dist(t) for t in flattened.unbind(dim=-2)
+        ]
+
+        # Extract means and vars
+        means = [Tensor(d.mean()).unsqueeze(-1) for d in dists]
+        vars = [Tensor(d.std()**2).unsqueeze(-1) for d in dists]
+
+        # Combine means and reshape t-batch
+        mean = torch.cat(tuple(means),dim=-1).reshape(candidates.shape[:-1])
+
+        # Combine variances
+        vars = torch.cat(tuple(vars), dim=-1)
+
+        # Construct diagonal covariance matrices
+        covar = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
+
+        # Reshape t-batch
+        covar = covar.reshape(candidates.shape[:-2]+(q,q))
+
+        return mean, covar
+    
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        """See base class."""
+        # Validate Input
+        check_x(train_x)
+        check_y(train_y)
+
+        # TODO: Input/Output Transforms
+
+        # Create and Train model
+        self.model = NGBRegressor(n_estimators=100,verbose=False).fit(train_x, train_y.ravel())
+
+
+class BayesianLinearModel(SurrogateModel):
+    """A Bayesian linear regression surrogate model"""
+    
+    type = "BL"
+
+    def __init__(self, searchspace: pd.DataFrame, degree=1):
+        self.model: Optional[Pipeline] = None
+        # TODO: the surrogate model should work entirely on Tensors (parameter name
+        #  agnostic) -> the scaling information should not be provided in form of a
+        #  DataFrame
+        self.searchspace = searchspace
+
+        # TODO: Add in degree option for the BL model
+        self.degree = degree
+    
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See base class."""
+
+        # TODO: Input/Output Transforms
+        # Added with SK-Learn Standard Scaler
+
+        # Method 1 (Old), can only handle q = 1
+        # Convert tensors to numpy array
+        # candidates = np.array(candidates.squeeze(1))
+
+        # Predict
+        # pred, std = self.model.predict(candidates, return_std=True)
+
+        # mean = Tensor(pred).unsqueeze(1)
+        # var = Tensor(std**2).unsqueeze(1).unsqueeze(1)
+
+        # Method 3
+        # TODO: Understand how multi-dimensional t-batch works
+
+        # Get q-batch dimension
+        q = candidates.shape[-2]
+
+        # Flatten t-batch
+        flattened = candidates.flatten(end_dim=-3)
+
+        # Get distribution for each q-batch
+        dists = [
+            self.model.predict(np.array(t), return_std=True) 
+                for t in flattened.unbind(dim=-2)
+        ]
+
+        # Extract means and vars
+        means = [Tensor(d[0]).unsqueeze(-1) for d in dists]
+        vars = [Tensor(d[1]**2).unsqueeze(-1) for d in dists]
+
+        # Combine means and reshape t-batch
+        mean = torch.cat(tuple(means),dim=-1).reshape(candidates.shape[:-1])
+
+        # Combine variances
+        vars = torch.cat(tuple(vars), dim=-1)
+
+        # Construct diagonal covariance matrices
+        covar = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
+
+        # Reshape t-batch
+        covar = covar.reshape(candidates.shape[:-2]+(q,q))
+
+        return mean, covar
+    
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        """See base class."""
+        # Validate Input
+        check_x(train_x)
+        check_y(train_y)
+
+        # TODO: Input/Output Transforms
+        # searchspace = self.searchspace.to_numpy()
+        # bounds = (np.min(searchspace), np.max(searchspace))
+
+        # Create Model
+        self.model = make_pipeline(
+            StandardScaler(),
+            PolynomialFeatures(degree=self.degree),
+            ARDRegression()
+        )
+
+        # Train model
+        self.model.fit(train_x, train_y.ravel())
