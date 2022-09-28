@@ -13,8 +13,9 @@ import pydantic
 import streamlit as st
 import torch
 
-from baybe.surrogate import GaussianProcessModel
+from baybe.surrogate import GaussianProcessModel, RandomForestModel, NGBoostModel, BayesianLinearModel
 from baybe.utils import to_tensor
+from gpytorch.distributions import MultivariateNormal
 
 # fix issue with streamlit and pydantic
 # https://github.com/streamlit/streamlit/issues/3218
@@ -26,6 +27,17 @@ plt.style.use("seaborn")
 # show docstring in dashboard
 st.info(__doc__)
 
+def cubic(arr: np.ndarray) -> np.ndarray:
+    """Cubic test function."""
+    out = (
+        function_amplitude
+        * np.power(
+            arr
+            / (upper_parameter_limit - lower_parameter_limit),
+        3)
+        + function_bias
+    )
+    return out
 
 def sin(arr: np.ndarray) -> np.ndarray:
     """Sinusoid test function."""
@@ -45,11 +57,15 @@ def sin(arr: np.ndarray) -> np.ndarray:
 # define all available test functions
 test_functions = {
     "Sine": sin,
+    "Cubic": cubic
 }
 
 # define all available surrogate models
 surrogate_models = {
     "Gaussian Process": GaussianProcessModel,
+    "Random Forest": RandomForestModel,
+    "Natural Gradient Boosting": NGBoostModel,
+    "Bayesian Linear Regression": BayesianLinearModel
 }
 
 # simulation parameters
@@ -86,20 +102,29 @@ targets = pd.DataFrame(fun(searchspace))
 
 # randomly select the specified number of training data points
 train_idx = np.random.choice(range(len(searchspace)), n_training_points, replace=False)
-train_x = searchspace.loc[train_idx]
-train_y = targets.loc[train_idx]
+train_x = to_tensor(searchspace.loc[train_idx])
+train_y = to_tensor(targets.loc[train_idx])
 
 # create the surrogate model, train it, and get its predictions
 surrogate_model = surrogate_model_cls(searchspace)
 surrogate_model.fit(train_x, train_y)
-mvn = surrogate_model.model.posterior(to_tensor(searchspace))
+
+# Keep original code for GP; Create a slightly different one for the rest
+if surrogate_name == "Gaussian Process":
+    mvn = surrogate_model.model.posterior(to_tensor(searchspace))
+    mean = mvn.mean.detach().numpy()[:, 0]
+    std = mvn.variance.sqrt().detach().numpy()[:, 0]
+else:
+    mean, covar = surrogate_model.posterior(to_tensor(searchspace).unsqueeze(1))
+    mvn = MultivariateNormal(mean, covar)
+    mean = mvn.mean.detach().numpy()[:, 0]
+    std = mvn.variance.sqrt().detach().numpy()[:, 0]
+    print(covar)
 
 # visualize the test function, training points, and model predictions
 fig = plt.figure()
 plt.plot(searchspace, targets, color="tab:blue", label="Test function")
 plt.plot(train_x, train_y, "o", color="tab:blue")
-mean = mvn.mean.detach().numpy()[:, 0]
-std = mvn.variance.sqrt().detach().numpy()[:, 0]
 plt.plot(searchspace, mean, color="tab:red", label="Surrogate model")
 plt.fill_between(
     searchspace.values[:, 0], mean - std, mean + std, alpha=0.2, color="tab:red"
