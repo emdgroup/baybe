@@ -43,6 +43,20 @@ def check_y(Y: Tensor):
         raise NotImplementedError("The model currently supports only one target.")
 
 
+def hallucinate(X: Tensor, Y: Tensor):
+    """Helper function to create an extra data point for certain models"""
+    # Previous approach: copy data point - theoretical variance of this is 0
+    # return (X.repeat((2,)+(1,)*(len(X.shape)-1)), Y.repeat((2,)+(1,)*(len(X.shape)-1)))
+    
+    # Current approach: add a zero data point
+    return (torch.cat((X,torch.zeros(X.shape))), torch.cat((Y,torch.zeros(Y.shape))))
+
+def add_noise(X: Tensor, Y: Tensor):
+    """Helper function to add noise to avoid variance nearing zero (numerical instability)"""
+    # Add noise of amplitude
+    AMP = 1e-3
+    return (X + AMP*torch.randn(X.shape), Y + AMP*torch.randn(Y.shape))
+    
 class SurrogateModel(ABC):
     """Abstract base class for all surrogate models."""
 
@@ -286,9 +300,8 @@ class RandomForestModel(SurrogateModel):
         covar = covar.reshape(candidates.shape[:-2]+(q,q))
         
         # Printouts
-        # print(var)
-        # print(var.size())
-
+        # print(covar)
+        # print(covar.size())
         return mean,covar
     
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -298,6 +311,13 @@ class RandomForestModel(SurrogateModel):
         check_y(train_y)
 
         # TODO: Input/Output Transforms
+        # Not needed - Ensemble Method
+
+        # Slightly modify input if necessary
+        if len(train_x) == 1:
+            train_x, train_y = hallucinate(train_x, train_y)
+        if train_x.var() < 1e-6:
+            train_x, train_y = add_noise(train_x, train_y)
 
         # Create Model
         self.model = RandomForestRegressor()
@@ -371,7 +391,14 @@ class NGBoostModel(SurrogateModel):
         check_x(train_x)
         check_y(train_y)
 
+        # Slightly modify input if necessary
+        if len(train_x) == 1:
+            train_x, train_y = hallucinate(train_x, train_y)
+        if train_x.var() < 1e-6:
+            train_x, train_y = add_noise(train_x, train_y)
+
         # TODO: Input/Output Transforms
+        # Not needed - Ensemble method
 
         # Create and Train model
         self.model = NGBRegressor(n_estimators=100,verbose=False).fit(train_x, train_y.ravel())
@@ -446,6 +473,12 @@ class BayesianLinearModel(SurrogateModel):
         # Validate Input
         check_x(train_x)
         check_y(train_y)
+
+        # Slightly modify input if necessary
+        if len(train_x) == 1:
+            train_x, train_y = hallucinate(train_x, train_y)
+        if train_x.var() < 1e-6:
+            train_x, train_y = add_noise(train_x, train_y)
 
         # TODO: Input/Output Transforms
         # searchspace = self.searchspace.to_numpy()
