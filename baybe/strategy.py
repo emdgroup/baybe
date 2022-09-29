@@ -5,15 +5,9 @@ Strategies for Design of Experiments (DOE).
 
 from __future__ import annotations
 
-from sklearn.preprocessing import StandardScaler
-from numpy import unique
-import random
-
-# model imports
-from sklearn.cluster import AffinityPropagation, DBSCAN, KMeans
-from sklearn.mixture import GaussianMixture
-
 from abc import ABC, abstractmethod
+
+from inspect import getfullargspec
 from functools import partial
 from typing import Dict, Literal, Optional, Type, Union
 
@@ -26,7 +20,15 @@ from botorch.acquisition import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from numpy import unique
 from pydantic import BaseModel, Extra, validator
+
+# model imports
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
+
+from sklearn.preprocessing import StandardScaler
+from sklearn_extra.cluster import KMedoids
 
 from .acquisition import debotorchize
 from .recommender import Recommender
@@ -80,92 +82,86 @@ class RandomInitialStrategy(InitialStrategy):
         )
 
 
-class ClusteringStrategy(InitialStrategy):
-    """An initial strategy that selects the candidates at random."""
+class BasicClusteringStrategy(InitialStrategy):
+    """Intermediate class for cluster-based initial selection of candidates."""
+
+    # TODO make somehow sure this class cannot be selected in the config
+    type = "BASIC_CLUSTERING"
+    model_class = None
+    model_params = None
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
-        """Uniform random selection of candidates."""
+        """
+        Initial candidate recommendation based on clustering.
 
-        result = self.fit()
-        clusters = unique(result)
-        cluster_random = []
+        Parameters
+        ----------
+        candidates : pandas data frame
+            A data frame describing the candidates in computational representation.
+        batch_quantity : int
+            The number of candidates that should be selected.
 
-        for n in clusters:
-            idxs = np.array(np.where(result == n))
-            # return original index
-            idxs = self.candidates.index[idxs]
-            random_val = random.choice(idxs)
-            random_val = random.choice(random_val)
-            cluster_random.append(random_val)
-        return cluster_random
+        Returns
+        -------
+        pandas index
+            Index of selected entries in candidates.
+        """
 
+        model_args = getfullargspec(self.model_class.__init__).args
+        if "n_clusters" in model_args:
+            self.model_params.update(n_clusters=batch_quantity)
+        elif "n_components" in model_args:
+            self.model_params.update(n_components=batch_quantity)
+        else:
+            raise ValueError(
+                f"Model class {self.model_class} not supported for initial clustering"
+            )
 
-class AffinityPropagationStrategy(ClusteringStrategy):
-    type = "Affi"
+        model = self.model_class(**self.model_params)
+        scaler = StandardScaler()
 
-    def fit(self, candidates: pd.DataFrame, batch_quantity: int = 1):
-        # create the scaler
-        ss = StandardScaler()
+        # A contiguous array is needed for example in PAM
+        candidates_scaled = np.ascontiguousarray(scaler.fit_transform(candidates))
+        model.fit(candidates_scaled)
 
-        candidates_scaled = ss.fit_transform(self.candidates)
-        # Affinity Propogation
-        model_AP = AffinityPropagation(damping=0.7)
-        model_AP.fit(candidates_scaled)
+        # If the model provides the points closest to the center then we take these,
+        # otherwise we store the labels of all points and select one candidate per
+        # cluster at random
+        if hasattr(model, "medoid_indices_"):
+            selection = pd.Index(model.medoid_indices_)
+        else:
+            result = model.predict(candidates_scaled)
+            selection = [
+                np.random.choice(np.argwhere(result == cluster).flatten())
+                for cluster in unique(result)
+            ]
 
-        # assign each data point to a cluster
-        result_AP = model_AP.predict(candidates_scaled)
-        return result_AP
-
-
-class DBSCANStrategy(ClusteringStrategy):
-    type: "DBSCAN"
-
-    def fit(self, candidates: pd.DataFrame, batch_quantity: int = 1):
-        # create the scaler
-        ss = StandardScaler()
-
-        candidates_scaled = ss.fit_transform(self.candidates)
-        # DBSCAN - DEnsity Based Algorithm, takes radius of the neighbour (eps), min number of points within eps (MinPts)
-        model_DBS = DBSCAN(eps=0.25, min_samples=10)
-        # model_DBS.fit(candidates_scaled)
-
-        # assign each data point to a cluster
-        result_DBS = model_DBS.fit_predict(candidates_scaled)
-        return result_DBS
+        return pd.Index(selection)
 
 
-class KMeansStrategy(ClusteringStrategy):
-    type = "Kmeans"
+class PAMInitialStrategy(BasicClusteringStrategy):
+    """Partitioning around Medoids (PAM) initial clustering strategy"""
 
-    def fit(self, candidates: pd.DataFrame, batch_quantity: int = 1):
-        # create the scaler
-        ss = StandardScaler()
-
-        candidates_scaled = ss.fit_transform(self.candidates)
-        # KMeans - method of vector quantization, uses centroid(random K points in data
-        model_KM = KMeans(n_clusters=4, random_state=12345)
-        model_KM.fit(candidates_scaled)
-
-        # assign each data point to a cluster
-        result_KM = model_KM.predict(candidates_scaled)
-        return result_KM
+    type = "PAM"
+    model_class = KMedoids
+    model_params = {"max_iter": 1000, "metric": "euclidean"}
 
 
-class GaussianMixtureStrategy(ClusteringStrategy):
+class KMeansInitialStrategy(BasicClusteringStrategy):
+    """K-means initial clustering strategy"""
+
+    type = "KMEANS"
+    model_class = KMeans
+    model_params = {"n_init": 50, "max_iter": 1000}
+
+
+class GaussianMixtureInitialStrategy(BasicClusteringStrategy):
+    """Gaussian mixture model (GMM) initial clustering strategy"""
+
     type = "GMM"
+    model_class = GaussianMixture
+    model_params = {}
 
-    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
-        # create the scaler
-        ss = StandardScaler()
-
-        candidates_scaled = ss.fit_transform(self.candidates)
-        # DBSCAN - DEnsity Based Algorithm, takes radius of the neighbour (eps), min number of points within eps (MinPts)
-        model_GMM = GaussianMixture(n_components=4)
-        model_GMM.fit(candidates_scaled)
-
-        # assign each data point to a cluster
-        result_GMM = model_GMM.predict(candidates_scaled)
-        return result_GMM
 
 class FPSInitialStrategy(InitialStrategy):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
