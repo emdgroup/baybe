@@ -80,27 +80,31 @@ class RandomInitialStrategy(InitialStrategy):
         )
 
 
-class Affinitypropagation_baybe(InitialStrategy):
-    """
-    Affinity propogation Clustering Method Class
-    Parameters
-    ----------
-    candidates : pd.DataFrame
-        The features of all candidate experiments that could be conducted.
-    batch_quantity : int (default = 1)
-        The number of experiments to be conducted in parallel.
+class ClusteringStrategy(InitialStrategy):
+    """An initial strategy that selects the candidates at random."""
 
-    Returns
-    -------
-    The DataFrame indices of the specific experiments selected.
-    """
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+        """Uniform random selection of candidates."""
 
-    def __init__(self, candidates, batch_quantity=1):
-        self.candidates = candidates
-        self.batch_quantity = batch_quantity
+        result = self.fit()
+        clusters = unique(result)
+        cluster_random = []
 
-    def recommend(self) -> pd.Index:
-        # create the scaler 
+        for n in clusters:
+            idxs = np.array(np.where(result == n))
+            # return original index
+            idxs = self.candidates.index[idxs]
+            random_val = random.choice(idxs)
+            random_val = random.choice(random_val)
+            cluster_random.append(random_val)
+        return cluster_random
+
+
+class AffinityPropagationStrategy(ClusteringStrategy):
+    type = "Affi"
+
+    def fit(self, candidates: pd.DataFrame, batch_quantity: int = 1):
+        # create the scaler
         ss = StandardScaler()
 
         candidates_scaled = ss.fit_transform(self.candidates)
@@ -110,28 +114,14 @@ class Affinitypropagation_baybe(InitialStrategy):
 
         # assign each data point to a cluster
         result_AP = model_AP.predict(candidates_scaled)
-
-        # get all of the unique clusters
-        clusters_AP = unique(result_AP)
-        cluster_random = []
-
-        for n in clusters_AP:
-            idxs = np.array(np.where(result_AP == n))
-            # return original index
-            idxs = self.candidates.index[idxs]
-            random_val = random.choice(idxs)
-            random_val = random.choice(random_val)
-            cluster_random.append(random_val)
-        return pd.Index(cluster_random)
+        return result_AP
 
 
-class DBSCAN_baybe(InitialStrategy):
-    def __init__(self, candidates, batch_quantity=1):
-        self.candidates = candidates
-        self.batch_quantity = batch_quantity
+class DBSCANStrategy(ClusteringStrategy):
+    type: "DBSCAN"
 
-    def recommend(self) -> pd.Index:
-        # create the scaler 
+    def fit(self, candidates: pd.DataFrame, batch_quantity: int = 1):
+        # create the scaler
         ss = StandardScaler()
 
         candidates_scaled = ss.fit_transform(self.candidates)
@@ -141,28 +131,14 @@ class DBSCAN_baybe(InitialStrategy):
 
         # assign each data point to a cluster
         result_DBS = model_DBS.fit_predict(candidates_scaled)
-
-        # get all of the unique clusters
-        clusters_DBS = unique(result_DBS)
-
-        cluster_random = []
-        for n in clusters_DBS:
-            idxs = np.array(np.where(result_DBS == n))
-            # return original index
-            idxs = self.candidates.index[idxs]
-            random_val = random.choice(idxs)
-            random_val = random.choice(random_val)
-            cluster_random.append(random_val)
-        return pd.Index(cluster_random)
+        return result_DBS
 
 
-class KMeans_baybe(InitialStrategy):
-    def __init__(self, candidates, batch_quantity=1):
-        self.candidates = candidates
-        self.batch_quantity = batch_quantity
+class KMeansStrategy(ClusteringStrategy):
+    type = "Kmeans"
 
-    def recommend(self) -> pd.Index:
-        # create the scaler 
+    def fit(self, candidates: pd.DataFrame, batch_quantity: int = 1):
+        # create the scaler
         ss = StandardScaler()
 
         candidates_scaled = ss.fit_transform(self.candidates)
@@ -172,27 +148,14 @@ class KMeans_baybe(InitialStrategy):
 
         # assign each data point to a cluster
         result_KM = model_KM.predict(candidates_scaled)
-
-        # get all of the unique clusters
-        clusters_KM = unique(result_KM)
-        cluster_random = []
-        for n in clusters_KM:
-            idxs = np.array(np.where(result_KM == n))
-            # return original index
-            idxs = self.candidates.index[idxs]
-            random_val = random.choice(idxs)
-            random_val = random.choice(random_val)
-            cluster_random.append(random_val)
-        return pd.Index(cluster_random)
+        return result_KM
 
 
-class GaussianMixture_baybe(InitialStrategy):
-    def __init__(self, candidates, batch_quantity=1):
-        self.candidates = candidates
-        self.batch_quantity = batch_quantity
+class GaussianMixtureStrategy(ClusteringStrategy):
+    type = "GMM"
 
-    def recommend(self) -> pd.Index:
-        # create the scaler 
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+        # create the scaler
         ss = StandardScaler()
 
         candidates_scaled = ss.fit_transform(self.candidates)
@@ -202,19 +165,7 @@ class GaussianMixture_baybe(InitialStrategy):
 
         # assign each data point to a cluster
         result_GMM = model_GMM.predict(candidates_scaled)
-
-        # get all of the unique clusters
-        clusters_GMM = unique(result_GMM)
-        cluster_random = []
-        for n in clusters_GMM:
-            idxs = np.array(np.where(result_GMM == n))
-            # return original index
-            idxs = self.candidates.index[idxs]
-            random_val = random.choice(idxs)
-            random_val = random.choice(random_val)
-            cluster_random.append(random_val)
-        return pd.Index(cluster_random)
-
+        return result_GMM
 
 class FPSInitialStrategy(InitialStrategy):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
