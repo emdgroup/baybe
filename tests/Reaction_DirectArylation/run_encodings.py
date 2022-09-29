@@ -9,7 +9,7 @@ import seaborn as sns
 from baybe.simulation import simulate_from_configs
 
 # noinspection PyArgumentList
-lookup = pd.read_excel("./lookup_withmissing.xlsx")
+lookup = pd.read_excel("./lookup.xlsx")
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
@@ -218,10 +218,10 @@ config_dict_v5 = {
 results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=lookup,
-    impute_mode="ignore",
-    n_exp_iterations=20,
+    impute_mode="worst",
+    n_exp_iterations=30,
     n_mc_iterations=200,
-    batch_quantity=3,
+    batch_quantity=2,
     config_variants={
         "GP | Mordred": config_dict_v1,
         "GP | RDKit": config_dict_v2,
@@ -233,6 +233,11 @@ results = simulate_from_configs(
 
 print(results)
 
-sns.lineplot(data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant")
-plt.gcf().set_size_inches(24, 8)
+max_yield = lookup["yield"].max()
+sns.lineplot(
+    data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
+)
+plt.plot([2, 2 * 30], [max_yield, max_yield], "--r")
+plt.legend(loc="lower right")
+plt.gcf().set_size_inches(20, 8)
 plt.savefig("./simulation_encodings.png")
