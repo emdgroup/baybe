@@ -136,7 +136,7 @@ class BasicClusteringStrategy(InitialStrategy):
                 for cluster in unique(result)
             ]
 
-        return pd.Index(selection)
+        return candidates.index[selection]
 
 
 class PAMInitialStrategy(BasicClusteringStrategy):
