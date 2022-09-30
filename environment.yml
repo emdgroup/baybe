@@ -17,6 +17,7 @@ dependencies:
 - scikit-learn==1.1.1
 - seaborn==0.11.2
 - streamlit==1.10.0
+- plotly==5.10.0
 - pip:
   # temporarily install botorch and gpytorch via pip until the linear_operator recipe
   # has been merged into conda-forge, which resolves the current dependency issues
