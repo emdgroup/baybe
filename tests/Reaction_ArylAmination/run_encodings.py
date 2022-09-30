@@ -220,6 +220,7 @@ config_dict_v5 = {
 results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=lookup,
+    impute_mode="mean",
     n_exp_iterations=30,
     n_mc_iterations=200,
     batch_quantity=2,
