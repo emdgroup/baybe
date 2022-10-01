@@ -80,7 +80,9 @@ class BayBE:
         self.parameters = [Parameter.create(p) for p in config.parameters]
         self.objective = Objective(**config.objective)
         self.targets = [Target.create(t) for t in self.objective.targets]
-        self._random = config.strategy["recommender_cls"] == "RANDOM"
+        self._random = (
+            config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
+        )
 
         # Create a dataframe representing the experimental search space
         self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
