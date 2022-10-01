@@ -351,7 +351,7 @@ def smiles_to_mordred_features(
     """
     features = [_smiles_to_mordred_features(smiles) for smiles in smiles_list]
     descriptor_names = list(mordred_calculator.descriptors)
-    columns = [prefix + str(name) for name in descriptor_names]
+    columns = [prefix + "MORDRED_" + str(name) for name in descriptor_names]
     dataframe = pd.DataFrame(data=features, columns=columns)
 
     if dropna:
@@ -412,7 +412,10 @@ def smiles_to_rdkit_features(
 
     res = []
     for mol in mols:
-        desc = {prefix + dname: func(mol) for dname, func in Chem.Descriptors.descList}
+        desc = {
+            prefix + "RDKIT_" + dname: func(mol)
+            for dname, func in Chem.Descriptors.descList
+        }
         res.append(desc)
 
     df = pd.DataFrame(res)
@@ -460,7 +463,7 @@ def smiles_to_fp_features(
         fingerp = map(int, fingerp)
         fpvec = np.array(list(fingerp))
         res.append(
-            {prefix + "FP" + f"{k + 1}": dtype(bit) for k, bit in enumerate(fpvec)}
+            {prefix + "FP_" + f"{k + 1}": dtype(bit) for k, bit in enumerate(fpvec)}
         )
 
     df = pd.DataFrame(res)
