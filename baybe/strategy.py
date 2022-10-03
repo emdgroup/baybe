@@ -6,6 +6,7 @@ Strategies for Design of Experiments (DOE).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import partial
 from typing import Dict, Literal, Optional, Type, Union
 
 import numpy as np
@@ -111,7 +112,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
                 "PM": PosteriorMean,
                 "PI": ProbabilityOfImprovement,
                 "EI": ExpectedImprovement,
-                "UCB": UpperConfidenceBound,
+                "UCB": partial(UpperConfidenceBound, beta=1.0),
             }
             fun = debotorchize(mapping[fun])
         return fun
