@@ -112,8 +112,8 @@ results = simulate_from_configs(
 )
 
 print(results)
-results.to_csv("model_results.txt")
+results.to_csv("model_results.csv")
 
 sns.lineplot(data=results, x="Num_Experiments", y="Target_1_CumBest", hue="Variant")
 plt.gcf().set_size_inches(24, 8)
-plt.savefig("./run_models.png")
+plt.savefig("./run_baybe.png")

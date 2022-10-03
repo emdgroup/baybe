@@ -32,18 +32,18 @@ from torch import Tensor
 
 from .utils import isabstract, to_tensor
 
-def check_x(X: Tensor):
+def _check_x(X: Tensor):
     """Helper function to validate the input x"""
     if len(X) == 0:
         raise ValueError("The input dataset must be non-empty")
         
-def check_y(Y: Tensor):
+def _check_y(Y: Tensor):
     """Helper function to validate the input y"""
     if Y.shape[1] != 1:
         raise NotImplementedError("The model currently supports only one target.")
 
 
-def hallucinate(X: Tensor, Y: Tensor):
+def _hallucinate(X: Tensor, Y: Tensor):
     """Helper function to create an extra data point for certain models"""
     # Previous approach: copy data point - theoretical variance of this is 0
     # return (X.repeat((2,)+(1,)*(len(X.shape)-1)), Y.repeat((2,)+(1,)*(len(X.shape)-1)))
@@ -51,7 +51,7 @@ def hallucinate(X: Tensor, Y: Tensor):
     # Current approach: add a zero data point
     return (torch.cat((X,torch.zeros(X.shape))), torch.cat((Y,torch.zeros(Y.shape))))
 
-def add_noise(X: Tensor, Y: Tensor):
+def _add_noise(X: Tensor, Y: Tensor):
     """Helper function to add noise to avoid variance nearing zero (numerical instability)"""
     # Add noise of amplitude
     AMP = 1e-3
@@ -307,17 +307,17 @@ class RandomForestModel(SurrogateModel):
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         # Validate Input
-        check_x(train_x)
-        check_y(train_y)
+        _check_x(train_x)
+        _check_y(train_y)
 
         # TODO: Input/Output Transforms
         # Not needed - Ensemble Method
 
         # Slightly modify input if necessary
         if len(train_x) == 1:
-            train_x, train_y = hallucinate(train_x, train_y)
+            train_x, train_y = _hallucinate(train_x, train_y)
         if train_x.var() < 1e-6:
-            train_x, train_y = add_noise(train_x, train_y)
+            train_x, train_y = _add_noise(train_x, train_y)
 
         # Create Model
         self.model = RandomForestRegressor()
@@ -388,14 +388,14 @@ class NGBoostModel(SurrogateModel):
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         # Validate Input
-        check_x(train_x)
-        check_y(train_y)
+        _check_x(train_x)
+        _check_y(train_y)
 
         # Slightly modify input if necessary
         if len(train_x) == 1:
-            train_x, train_y = hallucinate(train_x, train_y)
+            train_x, train_y = _hallucinate(train_x, train_y)
         if train_x.var() < 1e-6:
-            train_x, train_y = add_noise(train_x, train_y)
+            train_x, train_y = _add_noise(train_x, train_y)
 
         # TODO: Input/Output Transforms
         # Not needed - Ensemble method
@@ -471,14 +471,14 @@ class BayesianLinearModel(SurrogateModel):
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         # Validate Input
-        check_x(train_x)
-        check_y(train_y)
+        _check_x(train_x)
+        _check_y(train_y)
 
         # Slightly modify input if necessary
         if len(train_x) == 1:
-            train_x, train_y = hallucinate(train_x, train_y)
+            train_x, train_y = _hallucinate(train_x, train_y)
         if train_x.var() < 1e-6:
-            train_x, train_y = add_noise(train_x, train_y)
+            train_x, train_y = _add_noise(train_x, train_y)
 
         # TODO: Input/Output Transforms
         # searchspace = self.searchspace.to_numpy()

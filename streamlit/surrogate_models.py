@@ -119,7 +119,6 @@ else:
     mvn = MultivariateNormal(mean, covar)
     mean = mvn.mean.detach().numpy()[:, 0]
     std = mvn.variance.sqrt().detach().numpy()[:, 0]
-    print(covar)
 
 # visualize the test function, training points, and model predictions
 fig = plt.figure()
