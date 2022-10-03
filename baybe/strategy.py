@@ -6,9 +6,8 @@ Strategies for Design of Experiments (DOE).
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-
-from inspect import getfullargspec
 from functools import partial
+
 from typing import Dict, Literal, Optional, Type, Union
 
 import numpy as np
@@ -21,6 +20,7 @@ from botorch.acquisition import (
     UpperConfidenceBound,
 )
 from numpy import unique
+from numpy.typing import ArrayLike
 from pydantic import BaseModel, Extra, validator
 
 # model imports
@@ -82,13 +82,42 @@ class RandomInitialStrategy(InitialStrategy):
         )
 
 
-class BasicClusteringStrategy(InitialStrategy):
-    """Intermediate class for cluster-based initial selection of candidates."""
+class BasicClusteringInitialStrategy(InitialStrategy):
+    """Intermediate class for cluster-based initial selection of candidates. Suitable
+    for sklearn-like models that have a fit and predict method. Specific model
+    parameters and cluster sub-selection techniques can be declared in the derived
+    classes."""
 
     # TODO make somehow sure this class cannot be selected in the config
     type = "BASIC_CLUSTERING"
+
+    # Properties that need to be defined by derived classes
     model_class = None
     model_params = None
+    model_cluster_num_parameter_name = None
+
+    # Properties that are only relevant to this class
+    model = None
+    candidates_scaled = None
+
+    def _make_selection(self) -> ArrayLike:
+        """
+        Internal method selects one candidate from each cluster at random. Derived
+        classes are free to override this and implement different methods where
+        suitable.
+
+        Returns
+        -------
+        selection : numpy array
+           Positional indices of the selected candidates
+        """
+        print("#### Generic")
+        assigned_clusters = self.model.predict(self.candidates_scaled)
+        selection = [
+            np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
+            for cluster in unique(assigned_clusters)
+        ]
+        return selection
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """
@@ -107,60 +136,56 @@ class BasicClusteringStrategy(InitialStrategy):
             Index of selected entries in candidates.
         """
 
-        model_args = getfullargspec(self.model_class.__init__).args
-        if "n_clusters" in model_args:
-            self.model_params.update(n_clusters=batch_quantity)
-        elif "n_components" in model_args:
-            self.model_params.update(n_components=batch_quantity)
-        else:
-            raise ValueError(
-                f"Model class {self.model_class} not supported for initial clustering"
-            )
-
-        model = self.model_class(**self.model_params)
+        # Scale candidates. A contiguous array is needed for some methods.
         scaler = StandardScaler()
+        self.candidates_scaled = np.ascontiguousarray(scaler.fit_transform(candidates))
 
-        # A contiguous array is needed for example in PAM
-        candidates_scaled = np.ascontiguousarray(scaler.fit_transform(candidates))
-        model.fit(candidates_scaled)
+        # Set set model parameters and perform fit.
+        self.model_params.update(
+            {self.model_cluster_num_parameter_name: batch_quantity}
+        )
+        self.model = self.model_class(**self.model_params)
+        self.model.fit(self.candidates_scaled)
 
-        # If the model provides the points closest to the center then we take these,
-        # otherwise we store the labels of all points and select one candidate per
-        # cluster at random
-        if hasattr(model, "medoid_indices_"):
-            selection = pd.Index(model.medoid_indices_)
-        else:
-            result = model.predict(candidates_scaled)
-            selection = [
-                np.random.choice(np.argwhere(result == cluster).flatten())
-                for cluster in unique(result)
-            ]
+        # Perform algorithm-specific selection based on assigned clusters
+        selection = self._make_selection()
 
+        # Convert positional indices into absolute indices and return result
         return candidates.index[selection]
 
 
-class PAMInitialStrategy(BasicClusteringStrategy):
+class PAMInitialStrategy(BasicClusteringInitialStrategy):
     """Partitioning around Medoids (PAM) initial clustering strategy"""
 
     type = "PAM"
     model_class = KMedoids
     model_params = {"max_iter": 1000, "metric": "euclidean"}
+    model_cluster_num_parameter_name = "n_clusters"
+
+    def _make_selection(self) -> ArrayLike:
+        """see base class"""
+        # In PAM cluster centers correspond to data points which are returned here
+        print("#### PAM")
+        selection = self.model.medoid_indices_
+        return selection
 
 
-class KMeansInitialStrategy(BasicClusteringStrategy):
+class KMeansInitialStrategy(BasicClusteringInitialStrategy):
     """K-means initial clustering strategy"""
 
     type = "KMEANS"
     model_class = KMeans
     model_params = {"n_init": 50, "max_iter": 1000}
+    model_cluster_num_parameter_name = "n_clusters"
 
 
-class GaussianMixtureInitialStrategy(BasicClusteringStrategy):
+class GaussianMixtureInitialStrategy(BasicClusteringInitialStrategy):
     """Gaussian mixture model (GMM) initial clustering strategy"""
 
     type = "GMM"
     model_class = GaussianMixture
     model_params = {}
+    model_cluster_num_parameter_name = "n_components"
 
 
 class FPSInitialStrategy(InitialStrategy):
