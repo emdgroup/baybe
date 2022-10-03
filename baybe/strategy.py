@@ -25,6 +25,7 @@ from pydantic import BaseModel, Extra, validator
 
 # model imports
 from sklearn.cluster import KMeans
+from sklearn.metrics import pairwise_distances
 from sklearn.mixture import GaussianMixture
 
 from sklearn.preprocessing import StandardScaler
@@ -111,7 +112,7 @@ class BasicClusteringInitialStrategy(InitialStrategy):
         selection : numpy array
            Positional indices of the selected candidates
         """
-        print("#### Generic")
+
         assigned_clusters = self.model.predict(self.candidates_scaled)
         selection = [
             np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
@@ -164,8 +165,8 @@ class PAMInitialStrategy(BasicClusteringInitialStrategy):
 
     def _make_selection(self) -> ArrayLike:
         """see base class"""
+
         # In PAM cluster centers correspond to data points which are returned here
-        print("#### PAM")
         selection = self.model.medoid_indices_
         return selection
 
@@ -177,6 +178,17 @@ class KMeansInitialStrategy(BasicClusteringInitialStrategy):
     model_class = KMeans
     model_params = {"n_init": 50, "max_iter": 1000}
     model_cluster_num_parameter_name = "n_clusters"
+
+    def _make_selection(self) -> ArrayLike:
+        """see base class"""
+        # In PAM cluster centers correspond to data points which are returned here
+
+        distances = pairwise_distances(
+            self.candidates_scaled, self.model.cluster_centers_
+        )
+        selection = np.unique(np.argmin(distances, axis=0))
+
+        return selection
 
 
 class GaussianMixtureInitialStrategy(BasicClusteringInitialStrategy):

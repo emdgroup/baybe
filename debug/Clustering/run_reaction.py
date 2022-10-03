@@ -134,9 +134,9 @@ results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=lookup,
     impute_mode="worst",
-    n_exp_iterations=20,
+    n_exp_iterations=10,
     n_mc_iterations=200,
-    batch_quantity=3,
+    batch_quantity=5,
     config_variants={
         "PAM": config_dict_v1,
         "KMEANS": config_dict_v2,
@@ -147,6 +147,11 @@ results = simulate_from_configs(
 
 print(results)
 
-sns.lineplot(data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant")
-plt.gcf().set_size_inches(22, 8)
+max_yield = lookup["yield"].max()
+sns.lineplot(
+    data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
+)
+plt.plot([2, 5 * 10], [max_yield, max_yield], "--r")
+plt.legend(loc="lower right")
+plt.gcf().set_size_inches(20, 8)
 plt.savefig("./run_reaction.png")
