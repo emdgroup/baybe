@@ -8,7 +8,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from functools import partial
 
-from typing import Dict, Literal, Optional, Type, Union
+from typing import Dict, List, Literal, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,7 @@ from botorch.acquisition import (
 from numpy import unique
 from numpy.typing import ArrayLike
 from pydantic import BaseModel, Extra, validator
+from scipy.stats import multivariate_normal
 
 # model imports
 from sklearn.cluster import KMeans
@@ -101,7 +102,7 @@ class BasicClusteringInitialStrategy(InitialStrategy):
     model = None
     candidates_scaled = None
 
-    def _make_selection(self) -> ArrayLike:
+    def _make_selection(self) -> List:
         """
         Internal method selects one candidate from each cluster at random. Derived
         classes are free to override this and implement different methods where
@@ -134,7 +135,7 @@ class BasicClusteringInitialStrategy(InitialStrategy):
         Returns
         -------
         pandas index
-            Index of selected entries in candidates.
+            Index (actual, not positional) of selected entries in candidates.
         """
 
         # Scale candidates. A contiguous array is needed for some methods.
@@ -166,8 +167,8 @@ class PAMInitialStrategy(BasicClusteringInitialStrategy):
     def _make_selection(self) -> ArrayLike:
         """see base class"""
 
-        # In PAM cluster centers correspond to data points which are returned here
-        selection = self.model.medoid_indices_
+        # In PAM cluster centers (medoids) correspond to actual data points
+        selection = self.model.medoid_indices_.tolist()
         return selection
 
 
@@ -179,14 +180,14 @@ class KMeansInitialStrategy(BasicClusteringInitialStrategy):
     model_params = {"n_init": 50, "max_iter": 1000}
     model_cluster_num_parameter_name = "n_clusters"
 
-    def _make_selection(self) -> ArrayLike:
+    def _make_selection(self) -> List:
         """see base class"""
-        # In PAM cluster centers correspond to data points which are returned here
 
+        # In KMeans we pick the points closest to each cluster center
         distances = pairwise_distances(
             self.candidates_scaled, self.model.cluster_centers_
         )
-        selection = np.unique(np.argmin(distances, axis=0))
+        selection = np.unique(np.argmin(distances, axis=0)).tolist()
 
         return selection
 
@@ -198,6 +199,19 @@ class GaussianMixtureInitialStrategy(BasicClusteringInitialStrategy):
     model_class = GaussianMixture
     model_params = {}
     model_cluster_num_parameter_name = "n_components"
+
+    def _make_selection(self) -> List:
+        """see base class"""
+
+        # In GMM the most central point is the one with the highest density
+        selection = []
+        for k in range(self.model.n_components):
+            density = multivariate_normal(
+                cov=self.model.covariances_[k], mean=self.model.means_[k]
+            ).logpdf(self.candidates_scaled)
+            selection.append(np.argmax(density))
+
+        return selection
 
 
 class FPSInitialStrategy(InitialStrategy):
