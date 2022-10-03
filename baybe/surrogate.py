@@ -48,14 +48,17 @@ def _hallucinate(X: Tensor, Y: Tensor):
     # Previous approach: copy data point - theoretical variance of this is 0
     # return (X.repeat((2,)+(1,)*(len(X.shape)-1)), Y.repeat((2,)+(1,)*(len(X.shape)-1)))
     
-    # Current approach: add a zero data point
-    return (torch.cat((X,torch.zeros(X.shape))), torch.cat((Y,torch.zeros(Y.shape))))
-
-def _add_noise(X: Tensor, Y: Tensor):
-    """Helper function to add noise to avoid variance nearing zero (numerical instability)"""
-    # Add noise of amplitude
+    # Current approach: add a "noisy" zero data point
     AMP = 1e-3
-    return (X + AMP*torch.randn(X.shape), Y + AMP*torch.randn(Y.shape))
+    fake_X = (AMP*torch.randn(X.shape))
+    fake_Y = (AMP*torch.randn(Y.shape))
+    return (torch.cat((X,fake_X)), torch.cat((Y,fake_Y)))
+
+def _smooth_var(covar: Tensor):
+    """Helper function to smooth variance to avoid nearing zero (numerical instability)"""
+    # Add fixed var of amplitude
+    AMP = 1e-6
+    return covar + AMP
     
 class SurrogateModel(ABC):
     """Abstract base class for all surrogate models."""
@@ -299,6 +302,9 @@ class RandomForestModel(SurrogateModel):
         # Reshape t-batch
         covar = covar.reshape(candidates.shape[:-2]+(q,q))
         
+        # Smooth variance
+        covar = _smooth_var(covar)
+        
         # Printouts
         # print(covar)
         # print(covar.size())
@@ -316,8 +322,6 @@ class RandomForestModel(SurrogateModel):
         # Slightly modify input if necessary
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
-        if train_x.var() < 1e-6:
-            train_x, train_y = _add_noise(train_x, train_y)
 
         # Create Model
         self.model = RandomForestRegressor()
@@ -383,6 +387,9 @@ class NGBoostModel(SurrogateModel):
         # Reshape t-batch
         covar = covar.reshape(candidates.shape[:-2]+(q,q))
 
+        # Smooth variance
+        covar = _smooth_var(covar)
+
         return mean, covar
     
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -394,8 +401,6 @@ class NGBoostModel(SurrogateModel):
         # Slightly modify input if necessary
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
-        if train_x.var() < 1e-6:
-            train_x, train_y = _add_noise(train_x, train_y)
 
         # TODO: Input/Output Transforms
         # Not needed - Ensemble method
@@ -466,6 +471,9 @@ class BayesianLinearModel(SurrogateModel):
         # Reshape t-batch
         covar = covar.reshape(candidates.shape[:-2]+(q,q))
 
+        # Smooth variance
+        covar = _smooth_var(covar)
+
         return mean, covar
     
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -477,8 +485,6 @@ class BayesianLinearModel(SurrogateModel):
         # Slightly modify input if necessary
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
-        if train_x.var() < 1e-6:
-            train_x, train_y = _add_noise(train_x, train_y)
 
         # TODO: Input/Output Transforms
         # searchspace = self.searchspace.to_numpy()
