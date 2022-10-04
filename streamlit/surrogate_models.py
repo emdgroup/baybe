@@ -95,9 +95,10 @@ fun = test_functions[function_name]
 surrogate_model_cls = surrogate_models[surrogate_name]
 
 # define the search space and corresponding target values
-searchspace = pd.DataFrame(
-    np.linspace(lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES)
-)
+searchspace = pd.DataFrame({
+    "var": np.linspace(lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES)
+})
+
 targets = pd.DataFrame(fun(searchspace))
 
 # randomly select the specified number of training data points
