@@ -32,6 +32,8 @@ from torch import Tensor
 
 from .utils import isabstract, to_tensor
 
+from .scaler import DefaultScaler
+
 def _check_x(X: Tensor):
     """Helper function to validate the input x"""
     if len(X) == 0:
@@ -420,6 +422,7 @@ class BayesianLinearModel(SurrogateModel):
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
+        self.scaler = None
 
         # TODO: Add in degree option for the BL model
         self.degree = degree
@@ -443,6 +446,8 @@ class BayesianLinearModel(SurrogateModel):
         # Method 3
         # TODO: Understand how multi-dimensional t-batch works
 
+        # Scaling
+        candidates, _ = self.scaler.transform(candidates)
         # Get q-batch dimension
         q = candidates.shape[-2]
 
@@ -474,6 +479,9 @@ class BayesianLinearModel(SurrogateModel):
         # Smooth variance
         covar = _smooth_var(covar)
 
+        # Undo transform
+        mean, covar = self.scaler.untransform(mean, covar)
+
         return mean, covar
     
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -487,15 +495,16 @@ class BayesianLinearModel(SurrogateModel):
             train_x, train_y = _hallucinate(train_x, train_y)
 
         # TODO: Input/Output Transforms
-        # searchspace = self.searchspace.to_numpy()
-        # bounds = (np.min(searchspace), np.max(searchspace))
+        self.scaler = DefaultScaler(self.searchspace)
+        self.scaler.fit(train_x, train_y)
+        train_x, train_y = self.scaler.transform(train_x, train_y)
 
         # Create Model
-        self.model = make_pipeline(
-            StandardScaler(),
-            PolynomialFeatures(degree=self.degree),
-            ARDRegression()
-        )
+        self.model = ARDRegression()
+        # self.model = make_pipeline(
+        #     PolynomialFeatures(degree=self.degree),
+        #     ARDRegression()
+        # )
 
         # Train model
         self.model.fit(train_x, train_y.ravel())
