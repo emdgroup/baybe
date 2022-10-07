@@ -13,7 +13,12 @@ import pydantic
 import streamlit as st
 import torch
 
-from baybe.surrogate import GaussianProcessModel, RandomForestModel, NGBoostModel, BayesianLinearModel
+from baybe.surrogate import (
+    BayesianLinearModel,
+    GaussianProcessModel,
+    NGBoostModel,
+    RandomForestModel,
+)
 from baybe.utils import to_tensor
 from gpytorch.distributions import MultivariateNormal
 
@@ -27,17 +32,16 @@ plt.style.use("seaborn")
 # show docstring in dashboard
 st.info(__doc__)
 
+
 def cubic(arr: np.ndarray) -> np.ndarray:
     """Cubic test function."""
     out = (
         function_amplitude
-        * np.power(
-            arr
-            / (upper_parameter_limit - lower_parameter_limit),
-        3)
+        * np.power(arr / (upper_parameter_limit - lower_parameter_limit), 3)
         + function_bias
     )
     return out
+
 
 def sin(arr: np.ndarray) -> np.ndarray:
     """Sinusoid test function."""
@@ -55,17 +59,14 @@ def sin(arr: np.ndarray) -> np.ndarray:
 
 
 # define all available test functions
-test_functions = {
-    "Sine": sin,
-    "Cubic": cubic
-}
+test_functions = {"Sine": sin, "Cubic": cubic}
 
 # define all available surrogate models
 surrogate_models = {
     "Gaussian Process": GaussianProcessModel,
     "Random Forest": RandomForestModel,
     "Natural Gradient Boosting": NGBoostModel,
-    "Bayesian Linear Regression": BayesianLinearModel
+    "Bayesian Linear Regression": BayesianLinearModel,
 }
 
 # simulation parameters
@@ -95,9 +96,13 @@ fun = test_functions[function_name]
 surrogate_model_cls = surrogate_models[surrogate_name]
 
 # define the search space and corresponding target values
-searchspace = pd.DataFrame({
-    "var": np.linspace(lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES)
-})
+searchspace = pd.DataFrame(
+    {
+        "var": np.linspace(
+            lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES
+        )
+    }
+)
 
 targets = pd.DataFrame(fun(searchspace))
 

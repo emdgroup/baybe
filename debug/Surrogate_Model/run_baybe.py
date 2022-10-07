@@ -61,7 +61,7 @@ config_dict_v1 = {
     "strategy": {
         "surrogate_model_cls": "GP",
         "recommender_cls": "UNRESTRICTED_RANKING",
-    }
+    },
 }
 
 config_dict_v2 = {
@@ -69,7 +69,7 @@ config_dict_v2 = {
     "strategy": {
         "surrogate_model_cls": "RF",
         "recommender_cls": "UNRESTRICTED_RANKING",
-    }
+    },
 }
 
 config_dict_v3 = {
@@ -77,7 +77,7 @@ config_dict_v3 = {
     "strategy": {
         "surrogate_model_cls": "NG",
         "recommender_cls": "UNRESTRICTED_RANKING",
-    }
+    },
 }
 
 config_dict_v4 = {
@@ -85,7 +85,7 @@ config_dict_v4 = {
     "strategy": {
         "surrogate_model_cls": "BL",
         "recommender_cls": "UNRESTRICTED_RANKING",
-    }
+    },
 }
 
 config_dict_v5 = {

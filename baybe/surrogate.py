@@ -21,47 +21,52 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
+from ngboost import NGBRegressor
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ARDRegression
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler, MinMaxScaler
-from ngboost import NGBRegressor
+from sklearn.pipeline import Pipeline
 
 from torch import Tensor
 
+from .scaler import DefaultScaler
 from .utils import isabstract, to_tensor
 
-from .scaler import DefaultScaler
 
-def _check_x(X: Tensor):
+def _check_x(x: Tensor):
     """Helper function to validate the input x"""
-    if len(X) == 0:
+    if len(x) == 0:
         raise ValueError("The input dataset must be non-empty")
-        
-def _check_y(Y: Tensor):
+
+
+def _check_y(y: Tensor):
     """Helper function to validate the input y"""
-    if Y.shape[1] != 1:
+    if y.shape[1] != 1:
         raise NotImplementedError("The model currently supports only one target.")
 
 
-def _hallucinate(X: Tensor, Y: Tensor):
+def _hallucinate(x: Tensor, y: Tensor):
     """Helper function to create an extra data point for certain models"""
     # Previous approach: copy data point - theoretical variance of this is 0
-    # return (X.repeat((2,)+(1,)*(len(X.shape)-1)), Y.repeat((2,)+(1,)*(len(X.shape)-1)))
-    
+    # return
+    # (x.repeat((2,)+(1,)*(len(x.shape)-1)), y.repeat((2,)+(1,)*(len(x.shape)-1)))
+
     # Current approach: add a "noisy" zero data point
-    AMP = 1e-3
-    fake_X = (AMP*torch.randn(X.shape))
-    fake_Y = (AMP*torch.randn(Y.shape))
-    return (torch.cat((X,fake_X)), torch.cat((Y,fake_Y)))
+    amplitude = 1e-3
+    fake_x = amplitude * torch.randn(x.shape)
+    fake_y = amplitude * torch.randn(y.shape)
+    return (torch.cat((x, fake_x)), torch.cat((y, fake_y)))
+
 
 def _smooth_var(covar: Tensor):
-    """Helper function to smooth variance to avoid nearing zero (numerical instability)"""
+    """
+    Helper function to smooth variance to avoid nearing zero (numerical instability)
+    """
     # Add fixed var of amplitude
-    AMP = 1e-6
-    return covar + AMP
-    
+    amplitude = 1e-6
+    return covar + amplitude
+
+
 class SurrogateModel(ABC):
     """Abstract base class for all surrogate models."""
 
@@ -227,7 +232,7 @@ class RandomForestModel(SurrogateModel):
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
-    
+
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
 
@@ -239,7 +244,7 @@ class RandomForestModel(SurrogateModel):
         # candidates = candidates.squeeze(1)
         # mean2 = Tensor(self.model.predict(candidates)).unsqueeze(1)
 
-        # epred = [self.model.estimators_[tree].predict(candidates) 
+        # epred = [self.model.estimators_[tree].predict(candidates)
         #             for tree in range(self.model.n_estimators)]
         # Calculate variance
         # var = torch.diag(Tensor(np.var(epred, axis=0))).unsqueeze(2)
@@ -248,15 +253,16 @@ class RandomForestModel(SurrogateModel):
         # method 2, can only handle t spanning one dimension
         # Predict mean (assuming size *t, q, d)
         # means = [
-        #     Tensor(self.model.predict(t)).unsqueeze(-1) for t in candidates.unbind(dim=-2)
+        #     Tensor(self.model.predict(t)).unsqueeze(-1)
+        #     for t in candidates.unbind(dim=-2)
         # ]
 
         # mean = torch.cat(tuple(means),dim=-1)
 
         # epreds = [
-        #     Tensor(np.var([self.model.estimators_[tree].predict(t) 
+        #     Tensor(np.var([self.model.estimators_[tree].predict(t)
         #             for tree in range(self.model.n_estimators)], axis=0))
-            
+
         #     for t in candidates.unbind(dim=-2)
         # ]
 
@@ -272,46 +278,53 @@ class RandomForestModel(SurrogateModel):
 
         # Get means for each q-batch
         means = [
-            Tensor(self.model.predict(t)).unsqueeze(-1) for t in flattened.unbind(dim=-2)
+            Tensor(self.model.predict(t)).unsqueeze(-1)
+            for t in flattened.unbind(dim=-2)
         ]
 
         # Combine the means and reshape t-batch
-        mean = torch.cat(tuple(means),dim=-1).reshape(candidates.shape[:-1])
+        mean = torch.cat(tuple(means), dim=-1).reshape(candidates.shape[:-1])
 
         # Printouts
         # print(mean)
         # print(mean.size())
-        
+
         # Get Ensemble predictions (assuming size *t, q, d)
 
         # Get q-batch dimension
-        q = candidates.shape[-2]
+        q_batch = candidates.shape[-2]
 
         # Get variance for each q-batch
         epreds = [
-            Tensor(np.var([self.model.estimators_[tree].predict(t) 
-                    for tree in range(self.model.n_estimators)], axis=0))
-            
+            Tensor(
+                np.var(
+                    [
+                        self.model.estimators_[tree].predict(t)
+                        for tree in range(self.model.n_estimators)
+                    ],
+                    axis=0,
+                )
+            )
             for t in flattened.unbind(dim=-2)
         ]
 
         # Combine variances
-        vars = torch.cat(tuple([ep.unsqueeze(-1) for ep in epreds]), dim=-1)
+        var = torch.cat(tuple(ep.unsqueeze(-1) for ep in epreds), dim=-1)
 
         # Construct diagonal covariance matrices
-        covar = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
-        
+        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
+
         # Reshape t-batch
-        covar = covar.reshape(candidates.shape[:-2]+(q,q))
-        
+        covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
+
         # Smooth variance
         covar = _smooth_var(covar)
-        
+
         # Printouts
         # print(covar)
         # print(covar.size())
-        return mean,covar
-    
+        return mean, covar
+
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         # Validate Input
@@ -353,7 +366,7 @@ class NGBoostModel(SurrogateModel):
         # Predict
         # candidates = candidates.squeeze(1)
         # pred = self.model.pred_dist(candidates)
-        
+
         # Get mean and variance
         # mean = Tensor(pred.mean()).unsqueeze(1)
         # var = torch.diag(Tensor(pred.std()**2))
@@ -362,38 +375,36 @@ class NGBoostModel(SurrogateModel):
         # Method 3
         # TODO: Understand how multi-dimensional t-batch works
 
-        # Get q-batch dimension 
-        q = candidates.shape[-2]
+        # Get q-batch dimension
+        q_batch = candidates.shape[-2]
 
         # Flatten t-batch
         flattened = candidates.flatten(end_dim=-3)
 
         # Get distribution for each q-batch
-        dists = [
-            self.model.pred_dist(t) for t in flattened.unbind(dim=-2)
-        ]
+        dists = [self.model.pred_dist(t) for t in flattened.unbind(dim=-2)]
 
         # Extract means and vars
         means = [Tensor(d.mean()).unsqueeze(-1) for d in dists]
-        vars = [Tensor(d.std()**2).unsqueeze(-1) for d in dists]
+        var = [Tensor(d.std() ** 2).unsqueeze(-1) for d in dists]
 
         # Combine means and reshape t-batch
-        mean = torch.cat(tuple(means),dim=-1).reshape(candidates.shape[:-1])
+        mean = torch.cat(tuple(means), dim=-1).reshape(candidates.shape[:-1])
 
         # Combine variances
-        vars = torch.cat(tuple(vars), dim=-1)
+        var = torch.cat(tuple(var), dim=-1)
 
         # Construct diagonal covariance matrices
-        covar = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
+        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
 
         # Reshape t-batch
-        covar = covar.reshape(candidates.shape[:-2]+(q,q))
+        covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
 
         # Smooth variance
         covar = _smooth_var(covar)
 
         return mean, covar
-    
+
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         # Validate Input
@@ -408,12 +419,14 @@ class NGBoostModel(SurrogateModel):
         # Not needed - Ensemble method
 
         # Create and Train model
-        self.model = NGBRegressor(n_estimators=100,verbose=False).fit(train_x, train_y.ravel())
+        self.model = NGBRegressor(n_estimators=100, verbose=False).fit(
+            train_x, train_y.ravel()
+        )
 
 
 class BayesianLinearModel(SurrogateModel):
     """A Bayesian linear regression surrogate model"""
-    
+
     type = "BL"
 
     def __init__(self, searchspace: pd.DataFrame, degree=1):
@@ -426,7 +439,7 @@ class BayesianLinearModel(SurrogateModel):
 
         # TODO: Add in degree option for the BL model
         self.degree = degree
-    
+
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
 
@@ -449,32 +462,32 @@ class BayesianLinearModel(SurrogateModel):
         # Scaling
         candidates, _ = self.scaler.transform(candidates)
         # Get q-batch dimension
-        q = candidates.shape[-2]
+        q_batch = candidates.shape[-2]
 
         # Flatten t-batch
         flattened = candidates.flatten(end_dim=-3)
 
         # Get distribution for each q-batch
         dists = [
-            self.model.predict(np.array(t), return_std=True) 
-                for t in flattened.unbind(dim=-2)
+            self.model.predict(np.array(t), return_std=True)
+            for t in flattened.unbind(dim=-2)
         ]
 
         # Extract means and vars
         means = [Tensor(d[0]).unsqueeze(-1) for d in dists]
-        vars = [Tensor(d[1]**2).unsqueeze(-1) for d in dists]
+        var = [Tensor(d[1] ** 2).unsqueeze(-1) for d in dists]
 
         # Combine means and reshape t-batch
-        mean = torch.cat(tuple(means),dim=-1).reshape(candidates.shape[:-1])
+        mean = torch.cat(tuple(means), dim=-1).reshape(candidates.shape[:-1])
 
         # Combine variances
-        vars = torch.cat(tuple(vars), dim=-1)
+        var = torch.cat(tuple(var), dim=-1)
 
         # Construct diagonal covariance matrices
-        covar = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
+        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
 
         # Reshape t-batch
-        covar = covar.reshape(candidates.shape[:-2]+(q,q))
+        covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
 
         # Smooth variance
         covar = _smooth_var(covar)
@@ -483,7 +496,7 @@ class BayesianLinearModel(SurrogateModel):
         mean, covar = self.scaler.untransform(mean, covar)
 
         return mean, covar
-    
+
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         # Validate Input

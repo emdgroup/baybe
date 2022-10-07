@@ -10,6 +10,7 @@ from typing import Dict, Optional, Tuple, Type
 import pandas as pd
 import torch
 from torch import Tensor
+
 from .utils import to_tensor
 
 
@@ -22,24 +23,25 @@ class Scaler(ABC):
     def __init__(self, searchspace: pd.DataFrame):
         self.searchspace = searchspace
         self.fitted = False
-        self.scaleX = None
-        self.scaleY = None
-        self.unscaleX = None
-        self.unscaleY = None
-        self.unscaleS = None
+        self.scale_x = None
+        self.scale_y = None
+        self.unscale_x = None
+        self.unscale_y = None
+        self.unscale_m = None
+        self.unscale_s = None
 
     @abstractmethod
-    def fit(self, X: Tensor, Y: Tensor) -> None:
+    def fit(self, x: Tensor, y: Tensor) -> None:
         """
         Creates scaling functions based on the input data
         """
 
     @abstractmethod
-    def transform(self, X: Tensor, Y: Tensor) -> Tuple[Tensor, Tensor]:
+    def transform(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         """Transforms an input"""
-    
+
     @abstractmethod
-    def untransform(self, M: Tensor, S: Tensor) -> Tuple[Tensor, Tensor]:
+    def untransform(self, m_tensor: Tensor, s_tensor: Tensor) -> Tuple[Tensor, Tensor]:
         """Untransforms an output"""
 
     @classmethod
@@ -50,63 +52,62 @@ class Scaler(ABC):
 
 
 class DefaultScaler(Scaler):
-    """A simple scaler with X normalized, Y standardized"""
-    
+    """A simple scaler with x normalized, y standardized"""
+
     type = "DEFAULT"
 
-    def fit(self, X: Tensor, Y: Tensor) -> None:
+    def fit(self, x: Tensor, y: Tensor) -> None:
         """See base class."""
         # Get searchspace
         searchspace = to_tensor(self.searchspace)
-        # Find bounds of X
+        # Find bounds of x
         bounds = torch.vstack(
             [torch.min(searchspace, dim=0)[0], torch.max(searchspace, dim=0)[0]]
         )
 
-        
-        # Find mean, std of Y
-        mean = torch.mean(Y, dim=0)
-        std = torch.std(Y, dim=0)
+        # Find mean, std of y
+        mean = torch.mean(y, dim=0)
+        std = torch.std(y, dim=0)
 
         # Define scaling functions
-        self.scaleX = lambda X: (X-bounds[0])/(bounds[1]-bounds[0])
-        self.scaleY = lambda Y: (Y-mean)/std
+        self.scale_x = lambda l: (l - bounds[0]) / (bounds[1] - bounds[0])
+        self.scale_y = lambda l: (l - mean) / std
 
-        self.unscaleX = lambda X: X*(bounds[1]-bounds[0]) + bounds[0]
-        self.unscaleY = lambda Y: Y*std + mean
+        self.unscale_x = lambda l: l * (bounds[1] - bounds[0]) + bounds[0]
+        self.unscale_y = lambda l: l * std + mean
 
-        self.unscaleM = lambda M: M*std + mean
-        self.unscaleS = lambda S: S*std**2
+        self.unscale_m = lambda l: l * std + mean
+        self.unscale_s = lambda l: l * std**2
 
         self.fitted = True
 
-
-    def transform(self, X: Tensor, Y: Tensor = None) -> Tuple[Tensor, Tensor]:
+    def transform(self, x: Tensor, y: Tensor = None) -> Tuple[Tensor, Optional[Tensor]]:
         """See base class."""
 
         # Ensure scaler has been fitted
         if not self.fitted:
             raise RuntimeError("Scaler object must be fitted first")
 
-        if not Y == None:
+        if y is not None:
             # Training (fit) mode
-            return (self.scaleX(X), self.scaleY(Y))
-        else:
-            # Predict (posterior) mode
-            
-            # Flatten t-batch
-            flattened = X.flatten(end_dim=-3)
-            
-            # Get scaled values
-            scaled = [self.scaleX(t).unsqueeze(1) for t in flattened.unbind(dim=-2)]
+            return (self.scale_x(x), self.scale_y(y))
 
-            # Combine scaled values
-            scaled = torch.cat(tuple(scaled), dim=-1).reshape(X.shape)
+        # Predict (posterior) mode
+        # Flatten t-batch
+        flattened = x.flatten(end_dim=-3)
 
-            return (scaled, None)
-    
-    def untransform(self, M: Tensor, S: Tensor = None) -> Tuple[Tensor, Tensor]:
+        # Get scaled values
+        scaled = [self.scale_x(t).unsqueeze(1) for t in flattened.unbind(dim=-2)]
+
+        # Combine scaled values
+        scaled = torch.cat(tuple(scaled), dim=-1).reshape(x.shape)
+
+        return (scaled, None)
+
+    def untransform(
+        self, m_tensor: Tensor, s_tensor: Tensor = None
+    ) -> Tuple[Tensor, Tensor]:
         # Ensure scaler has been fitted
         if not self.fitted:
             raise RuntimeError("Scaler object must be fitted first")
-        return (self.unscaleM(M), self.unscaleS(S))
+        return (self.unscale_m(m_tensor), self.unscale_s(s_tensor))
