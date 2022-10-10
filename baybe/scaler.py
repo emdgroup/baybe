@@ -13,6 +13,13 @@ from torch import Tensor
 
 from .utils import to_tensor
 
+def _smooth_var(var: Tensor):
+    """
+    Helper function to smooth variance to avoid nearing zero (numerical instability)
+    """
+    # Add fixed var of amplitude
+    amplitude = 1e-6
+    return var + amplitude
 
 class Scaler(ABC):
     """Abstract base class for all surrogate models."""
@@ -68,6 +75,10 @@ class DefaultScaler(Scaler):
         # Find mean, std of y
         mean = torch.mean(y, dim=0)
         std = torch.std(y, dim=0)
+
+        # Add noise to std if very small
+        if std < 1e-6:
+            std = _smooth_var(std)
 
         # Define scaling functions
         self.scale_x = lambda l: (l - bounds[0]) / (bounds[1] - bounds[0])
