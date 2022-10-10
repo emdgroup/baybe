@@ -158,4 +158,4 @@ sns.lineplot(
 plt.plot([2, 2 * 30], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
-plt.savefig("./run_encodings.png")
+plt.savefig("./run_reaction.png")
