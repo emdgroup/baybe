@@ -5,7 +5,7 @@ Scaler class for input/output scaling
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Tuple, Type
+from typing import Dict, Tuple, Type
 
 import pandas as pd
 import torch
@@ -13,14 +13,15 @@ from torch import Tensor
 
 from .utils import to_tensor
 
+
 def _smooth_y(y: Tensor):
     """
     Helper function to smooth y to avoid variance nearing zero (numerical instability)
     """
     # Add small (random) tensor to y
     amplitude = 1e-3
-    fake_y = y + amplitude * torch.randn(y.shape)
-    return fake_y 
+    return y + amplitude * torch.randn(y.shape)
+
 
 class Scaler(ABC):
     """Abstract base class for all surrogate models."""
@@ -45,7 +46,7 @@ class Scaler(ABC):
         """
 
     @abstractmethod
-    def transform(self, x: Tensor, y: Tensor) -> Tensor:
+    def transform(self, x: Tensor) -> Tensor:
         """Transforms an input"""
 
     @abstractmethod
@@ -96,7 +97,7 @@ class DefaultScaler(Scaler):
 
         return (self.scale_x(x), self.scale_y(y))
 
-    def transform(self, x: Tensor) -> Tuple[Tensor, Optional[Tensor]]:
+    def transform(self, x: Tensor) -> Tensor:
         """See base class."""
 
         # Ensure scaler has been fitted
