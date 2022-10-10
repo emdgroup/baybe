@@ -355,6 +355,7 @@ class NGBoostModel(SurrogateModel):
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
+        self.scaler = None
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
@@ -376,7 +377,7 @@ class NGBoostModel(SurrogateModel):
         # TODO: Understand how multi-dimensional t-batch works
 
         # Scaling
-        candidates, _ = self.scaler.transform(candidates)
+        candidates = self.scaler.transform(candidates)
 
         # Get q-batch dimension
         q_batch = candidates.shape[-2]
@@ -403,11 +404,11 @@ class NGBoostModel(SurrogateModel):
         # Reshape t-batch
         covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
 
-        # Smooth variance
-        covar = _smooth_var(covar)
-
         # Undo transform
         mean, covar = self.scaler.untransform(mean, covar)
+
+        # Smooth variance
+        covar = _smooth_var(covar)
 
         return mean, covar
 
@@ -423,8 +424,7 @@ class NGBoostModel(SurrogateModel):
 
         # TODO: Input/Output Transforms
         self.scaler = DefaultScaler(self.searchspace)
-        self.scaler.fit(train_x, train_y)
-        train_x, train_y = self.scaler.transform(train_x, train_y)
+        train_x, train_y = self.scaler.fit_transform(train_x, train_y)
 
         # Create and Train model
         self.model = NGBRegressor(n_estimators=100, verbose=False).fit(
@@ -468,7 +468,7 @@ class BayesianLinearModel(SurrogateModel):
         # TODO: Understand how multi-dimensional t-batch works
 
         # Scaling
-        candidates, _ = self.scaler.transform(candidates)
+        candidates = self.scaler.transform(candidates)
 
         # Get q-batch dimension
         q_batch = candidates.shape[-2]
@@ -498,11 +498,11 @@ class BayesianLinearModel(SurrogateModel):
         # Reshape t-batch
         covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
 
-        # Smooth variance
-        covar = _smooth_var(covar)
-
         # Undo transform
         mean, covar = self.scaler.untransform(mean, covar)
+
+        # Smooth variance
+        covar = _smooth_var(covar)
 
         return mean, covar
 
@@ -518,8 +518,7 @@ class BayesianLinearModel(SurrogateModel):
 
         # TODO: Input/Output Transforms
         self.scaler = DefaultScaler(self.searchspace)
-        self.scaler.fit(train_x, train_y)
-        train_x, train_y = self.scaler.transform(train_x, train_y)
+        train_x, train_y = self.scaler.fit_transform(train_x, train_y)
 
         # Create Model
         self.model = ARDRegression()

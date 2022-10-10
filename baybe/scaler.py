@@ -13,13 +13,14 @@ from torch import Tensor
 
 from .utils import to_tensor
 
-def _smooth_var(var: Tensor):
+def _smooth_y(y: Tensor):
     """
-    Helper function to smooth variance to avoid nearing zero (numerical instability)
+    Helper function to smooth y to avoid variance nearing zero (numerical instability)
     """
-    # Add fixed var of amplitude
-    amplitude = 1e-6
-    return var + amplitude
+    # Add small (random) tensor to y
+    amplitude = 1e-3
+    fake_y = y + amplitude * torch.randn(y.shape)
+    return fake_y 
 
 class Scaler(ABC):
     """Abstract base class for all surrogate models."""
@@ -38,13 +39,13 @@ class Scaler(ABC):
         self.unscale_s = None
 
     @abstractmethod
-    def fit(self, x: Tensor, y: Tensor) -> None:
+    def fit_transform(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
         """
-        Creates scaling functions based on the input data
+        Creates scaling functions based on the input data and transforms input
         """
 
     @abstractmethod
-    def transform(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
+    def transform(self, x: Tensor, y: Tensor) -> Tensor:
         """Transforms an input"""
 
     @abstractmethod
@@ -63,7 +64,7 @@ class DefaultScaler(Scaler):
 
     type = "DEFAULT"
 
-    def fit(self, x: Tensor, y: Tensor) -> None:
+    def fit_transform(self, x: Tensor, y: Tensor) -> None:
         """See base class."""
         # Get searchspace
         searchspace = to_tensor(self.searchspace)
@@ -78,7 +79,8 @@ class DefaultScaler(Scaler):
 
         # Add noise to std if very small
         if std < 1e-6:
-            std = _smooth_var(std)
+            y = _smooth_y(y)
+            std = torch.std(y, dim=0)
 
         # Define scaling functions
         self.scale_x = lambda l: (l - bounds[0]) / (bounds[1] - bounds[0])
@@ -92,16 +94,14 @@ class DefaultScaler(Scaler):
 
         self.fitted = True
 
-    def transform(self, x: Tensor, y: Tensor = None) -> Tuple[Tensor, Optional[Tensor]]:
+        return (self.scale_x(x), self.scale_y(y))
+
+    def transform(self, x: Tensor) -> Tuple[Tensor, Optional[Tensor]]:
         """See base class."""
 
         # Ensure scaler has been fitted
         if not self.fitted:
             raise RuntimeError("Scaler object must be fitted first")
-
-        if y is not None:
-            # Training (fit) mode
-            return (self.scale_x(x), self.scale_y(y))
 
         # Predict (posterior) mode
         # Flatten t-batch
@@ -113,7 +113,7 @@ class DefaultScaler(Scaler):
         # Combine scaled values
         scaled = torch.cat(tuple(scaled), dim=-1).reshape(x.shape)
 
-        return (scaled, None)
+        return scaled
 
     def untransform(
         self, m_tensor: Tensor, s_tensor: Tensor = None
