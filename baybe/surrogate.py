@@ -375,6 +375,9 @@ class NGBoostModel(SurrogateModel):
         # Method 3
         # TODO: Understand how multi-dimensional t-batch works
 
+        # Scaling
+        candidates, _ = self.scaler.transform(candidates)
+
         # Get q-batch dimension
         q_batch = candidates.shape[-2]
 
@@ -403,6 +406,9 @@ class NGBoostModel(SurrogateModel):
         # Smooth variance
         covar = _smooth_var(covar)
 
+        # Undo transform
+        mean, covar = self.scaler.untransform(mean, covar)
+
         return mean, covar
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -416,7 +422,9 @@ class NGBoostModel(SurrogateModel):
             train_x, train_y = _hallucinate(train_x, train_y)
 
         # TODO: Input/Output Transforms
-        # Not needed - Ensemble method
+        self.scaler = DefaultScaler(self.searchspace)
+        self.scaler.fit(train_x, train_y)
+        train_x, train_y = self.scaler.transform(train_x, train_y)
 
         # Create and Train model
         self.model = NGBRegressor(n_estimators=100, verbose=False).fit(
@@ -461,6 +469,7 @@ class BayesianLinearModel(SurrogateModel):
 
         # Scaling
         candidates, _ = self.scaler.transform(candidates)
+
         # Get q-batch dimension
         q_batch = candidates.shape[-2]
 
