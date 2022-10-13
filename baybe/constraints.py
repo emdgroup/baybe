@@ -179,7 +179,9 @@ class ExcludeConstraint(Constraint):
     @validator("conditions")
     def validate_conditions(cls, conditions):
         """Validate the conditions"""
-        return [Condition.create(c) for c in conditions]
+        return [
+            c if isinstance(c, Condition) else Condition.create(c) for c in conditions
+        ]
 
     _combiner_dict = {
         "AND": ops.and_,
