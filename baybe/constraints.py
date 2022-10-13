@@ -199,7 +199,7 @@ class ExcludeConstraint(Constraint):
         """see base class"""
 
         res = self.conditions[0].evaluate(data[self.conditions[0].parameter])
-        for cond in self.conditions:
+        for cond in self.conditions[1:]:
             res = self._combiner_dict[self.combiner](
                 res, cond.evaluate(data[cond.parameter])
             )
