@@ -103,11 +103,12 @@ class BayBE:
             index=self.searchspace_exp_rep.index,
         )
 
-        # Apply conditions to forbidden combinations and delete invalid entries
+        # Mark entries that violate parameter constraints
         for constraint in (c for c in self.constraints if c.eval_during_creation):
             inds = constraint.evaluate(self.searchspace_exp_rep)
             self.searchspace_metadata.loc[inds, "dont_recommend"] = True
 
+        # Delete constraint-violating parameter combinations from the searchspace
         self.searchspace_exp_rep.drop(
             index=self.searchspace_exp_rep.index[
                 self.searchspace_metadata["dont_recommend"]
@@ -120,8 +121,8 @@ class BayBE:
             ],
             inplace=True,
         )
-        self.searchspace_exp_rep.reset_index(inplace=True)
-        self.searchspace_metadata.reset_index(inplace=True)
+        self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
+        self.searchspace_metadata.reset_index(inplace=True, drop=True)
 
         # Create a corresponding dataframe containing the computational representation
         self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(

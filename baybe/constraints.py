@@ -1,16 +1,17 @@
 """
-Functionality to deal wth constraints between parameters
+Functionality for parameter constraints.
 """
 from __future__ import annotations
 
 import logging
 import operator as ops
 from abc import ABC, abstractmethod
-from functools import partial
+from functools import reduce
 
-from typing import ClassVar, Dict, List, Literal, Union
+from typing import ClassVar, Dict, List, Literal, Type, Union
 
 import pandas as pd
+from funcy import rpartial
 from pydantic import BaseModel, conlist, Extra, validator
 
 from .utils import check_if_in
@@ -27,7 +28,7 @@ class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
     # class variables
     type: ClassVar[str]
     parameter: str
-    SUBCLASSES: ClassVar[Dict[str, Constraint]] = {}
+    SUBCLASSES: ClassVar[Dict[str, Type[Constraint]]] = {}
 
     @classmethod
     def create(cls, config: dict) -> Condition:
@@ -39,28 +40,30 @@ class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
+        """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def evaluate(self, data: pd.Series) -> pd.Series:
         """
-        Evaluates the condition on a series and returns True or False values as entries
+        Evaluates the condition on a given data series.
 
         Parameters
         ----------
-        data: pd.Series
-            Series with the parameter values
+        data : pd.Series
+            A series containing parameter values.
 
         Returns
         -------
-            pd.Series
+        pd.Series
+            A boolean series indicating which elements satisfy the condition.
         """
 
 
 class ThresholdCondition(Condition):
     """
-    Constraint class for threshold-based condition
+    Class for modelling threshold-based conditions.
     """
 
     # class variables
@@ -68,69 +71,52 @@ class ThresholdCondition(Condition):
     threshold: float
     operator: Literal["<", "<=", "=", "==", "!=", ">", ">="]
 
-    # Define valid operators. The order of the operands had to be switched because
-    # otherwise partial cannot define the second argument as partial always uses the
-    # first argument first for non-keyword arguments
+    # define the valid operators
     _operator_dict = {
-        # pylint: disable=arguments-out-of-order
-        "<": lambda a, b: ops.lt(b, a),
-        "<=": lambda a, b: ops.le(b, a),
-        "=": lambda a, b: ops.eq(b, a),
-        "==": lambda a, b: ops.eq(b, a),
-        "!=": lambda a, b: ops.ne(b, a),
-        ">": lambda a, b: ops.gt(b, a),
-        ">=": lambda a, b: ops.ge(b, a),
+        "<": ops.lt,
+        "<=": ops.le,
+        "=": ops.eq,
+        "==": ops.eq,
+        "!=": ops.ne,
+        ">": ops.gt,
+        ">=": ops.ge,
     }
 
     def evaluate(self, data: pd.Series) -> pd.Series:
-        """see base class"""
-        return data.apply(partial(self._operator_dict[self.operator], self.threshold))
+        """See base class."""
+        return data.apply(rpartial(self._operator_dict[self.operator], self.threshold))
 
 
 class SubSelectionCondition(Condition):
     """
-    Constraint class for defining a list of valid entries
+    Class for defining valid parameter entries.
     """
 
     # class variables
     type = "SUBSELECTION"
     selection: list
 
-    # TODO set up a validation that checks the sublist only contains valid entries.
-    #  As this depends on the Parameter it might be better to do that in Constraint
+    # TODO: Set up a validation that checks the sublist only contains valid entries.
+    #  As this depends on the `Parameter`, it might be better to do it in `Constraint`.
 
     def evaluate(self, data: pd.Series) -> pd.Series:
-        """see base class"""
-        return data.apply(lambda x: x in self.selection)
-
-
-class AllSelectionCondition(Condition):
-    """
-    Constraint class for selecting all values of a parameter
-    (useful eg for combining with other conditions)
-    """
-
-    # class variables
-    type = "ALLSELECTION"
-
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        """see base class"""
-        ret = data.copy()
-        ret.loc[:] = True
-        return ret
+        """See base class."""
+        return data.isin(self.selection)
 
 
 class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """
     Abstract base class for all constraints. Constraints use conditions and chain them
-    together to filter unwanted entries in the searchspace.
+    together to filter unwanted entries from the searchspace.
     """
 
     # class variables
     type: ClassVar[str]
+    SUBCLASSES: ClassVar[Dict[str, Constraint]] = {}
+
+    # TODO: it might turn out these are not needed at a later development stage
     eval_during_creation: ClassVar[bool]
     eval_during_modeling: ClassVar[bool]
-    SUBCLASSES: ClassVar[Dict[str, Constraint]] = {}
 
     @classmethod
     def create(cls, config: dict) -> Constraint:
@@ -142,31 +128,30 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
+        """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
         """
-        Evaluates all condition associated with this constraint and combine them in
-        the specified way
+        Evaluates the constraint on a given set of parameter combinations.
 
         Parameters
         ----------
-        data: pd.DataFrame
-            Contains datapoints in experimental representations
+        data : pd.DataFrame
+            A dataframe where each row represents a particular parameter combination.
 
         Returns
         -------
         pd.Index
-            Index of entries that fall under the defined constraint and should thus
-            be removed from the searchspace
+            The dataframe indices of rows where the constraint is violated.
         """
 
 
 class ExcludeConstraint(Constraint):
     """
-    Constraint class for exclusion-constraints
+    Class for modelling exclusion constraints.
     """
 
     # class variables
@@ -178,7 +163,7 @@ class ExcludeConstraint(Constraint):
 
     @validator("conditions")
     def validate_conditions(cls, conditions):
-        """Validate the conditions"""
+        """Validates the conditions."""
         return [
             c if isinstance(c, Condition) else Condition.create(c) for c in conditions
         ]
@@ -189,55 +174,45 @@ class ExcludeConstraint(Constraint):
         "XOR": ops.xor,
     }
 
+    # TODO: validate that condition types match with the allowed parameter types
+    # TODO: NUM_CONTINUOUS should also work for "THRESHOLD" but that requires
+    #  additional logic
     _conditions_allowed_parameters = {
-        "THRESHOLD": ["NUM_DISCRETE"],  # NUM_CONTINUOUS should also be here but that
-        # requires additonal logic
+        "THRESHOLD": ["NUM_DISCRETE"],
         "SUBSELECTION": ["CAT", "NUM_DISCRETE", "SUBSTANCE", "CUSTOM"],
     }
 
-    # TODO validate that condition types match with the allowed parameter types
-
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
-
-        res = self.conditions[0].evaluate(data[self.conditions[0].parameter])
-        for cond in self.conditions[1:]:
-            res = self._combiner_dict[self.combiner](
-                res, cond.evaluate(data[cond.parameter])
-            )
-
+        """See base class."""
+        satisfied = [cond.evaluate(data[cond.parameter]) for cond in self.conditions]
+        res = reduce(self._combiner_dict[self.combiner], satisfied)
         return data.index[res]
 
 
-class ParametersListConstraint(Constraint):
+class ParametersListConstraint(Constraint, ABC):
     """
-    Intermediate base class for constraints that need a parameters list
+    Intermediate base class for constraints that can only be defined on joint
+    parameter spaces.
     """
 
     # class variables
     type = "PARAMETER_LIST_CONSTRAINT"
-    eval_during_creation = False
-    eval_during_modeling = False
     parameters: List[str]
 
     @validator("parameters")
     def validate_params(cls, parameters):
-        """Validate parameter list"""
+        """Validates the parameter list."""
         if len(parameters) != len(set(parameters)):
             raise AssertionError(
-                f"The 'parameter' list you gave for a constraint must have unique "
-                f"values, but was: {parameters}"
+                f"The given 'parameter' list must have unique values "
+                f"but was: {parameters}."
             )
         return parameters
-
-    @abstractmethod
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
 
 
 class SumTargetConstraint(ParametersListConstraint):
     """
-    Constraint class for product-constraints
+    Class for modelling sum constraints.
     """
 
     # class variables
@@ -248,7 +223,7 @@ class SumTargetConstraint(ParametersListConstraint):
     tolerance: float = 0.0
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
+        """See base class."""
         mask_bad = (
             data[self.parameters].sum(axis=1) - self.target_value
         ).abs() > self.tolerance
@@ -258,7 +233,7 @@ class SumTargetConstraint(ParametersListConstraint):
 
 class ProdTargetConstraint(ParametersListConstraint):
     """
-    Constraint class for sum-constraints
+    Class for modelling product constraints.
     """
 
     # class variables
@@ -269,7 +244,7 @@ class ProdTargetConstraint(ParametersListConstraint):
     tolerance: float = 0.0
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
+        """See base class."""
         mask_bad = (
             data[self.parameters].prod(axis=1) - self.target_value
         ).abs() > self.tolerance
@@ -279,8 +254,8 @@ class ProdTargetConstraint(ParametersListConstraint):
 
 class DuplicatesConstraint(ParametersListConstraint):
     """
-    Constraint class for excluding combinations where parameters have more than the
-    specified number of duplicates
+    Constraint class for excluding combinations where parameter values appear more
+    often than a specified number of duplicates.
     """
 
     # class variables
@@ -290,7 +265,7 @@ class DuplicatesConstraint(ParametersListConstraint):
     max_duplicates: int = 0
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
+        """See base class."""
         mask_bad = (
             data[self.parameters].nunique(axis=1)
             < len(self.parameters) - self.max_duplicates
@@ -301,13 +276,11 @@ class DuplicatesConstraint(ParametersListConstraint):
 
 class LinkedParametersConstraint(ParametersListConstraint):
     """
-    Constraint that enforces that values between certain parameters are linked.
-    With this you can create two parameters that however describe the same thing.
-    The two parameters could be different types or encodings. For instance if I have a
-    molecule and want to describe it with both RDKIT and MORDRED encodings then I can
-    just make two corresponding parameters and link them with this constraint.
-    This would delete all entries from the searchspace where the linked parameters have
-    different labels.
+    Constraint class for linking the values of parameters. This constraint type
+    effectively allows generating parameter sets that relate to the same underlying
+    quantity, e.g. two parameters that represent the same molecule using different
+    encodings. Linking the parameters removes all entries from the searchspace where
+    the parameter values differ.
     """
 
     # class variables
@@ -316,24 +289,28 @@ class LinkedParametersConstraint(ParametersListConstraint):
     eval_during_modeling = False
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
+        """See base class."""
         mask_bad = data[self.parameters].nunique(axis=1) != 1
 
         return data.index[mask_bad]
 
 
-class InvarianceConstraint(ParametersListConstraint):
+class PermutationInvarianceConstraint(ParametersListConstraint):
     """
-    Constraint class for declaring that a set of parameters are invariant, ie
-    (val_from_param1, val_from_param2) is equivalent to
-    (val_from_param2, val_from_param1). Is not evaluated during modeling.
+    Constraint class for declaring that a set of parameters are permutation invariant,
+    that is, (val_from_param1, val_from_param2) is equivalent to
+    (val_from_param2, val_from_param1).
+
+    Note: This constraint cannot be evaluated during creation.
     """
 
     # class variables
-    type = "INVARIANCE"
+    type = "PERMUTATION_INVARIANCE"
     eval_during_creation = False
     eval_during_modeling = True
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
-        """see base class"""
-        raise NotImplementedError("The Invariance-Constraint is not implemented yet.")
+        """See base class."""
+        raise NotImplementedError(
+            "The permutation invariance constraint is not implemented yet."
+        )
