@@ -134,7 +134,7 @@ class Target(ABC, BaseModel, extra=Extra.forbid):
 
     @classmethod
     def create(cls, config: dict) -> Target:
-        """Creates a new target object matching the given specifications."""
+        """Creates a new object matching the given specifications."""
         config = config.copy()
         param_type = config.pop("type")
         check_if_in(param_type, list(Target.SUBCLASSES.keys()))

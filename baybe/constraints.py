@@ -31,7 +31,7 @@ class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
 
     @classmethod
     def create(cls, config: dict) -> Condition:
-        """Creates a new parameter object matching the given specifications."""
+        """Creates a new object matching the given specifications."""
         config = config.copy()
         condition_type = config.pop("type")
         check_if_in(condition_type, list(Condition.SUBCLASSES.keys()))
@@ -134,7 +134,7 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
 
     @classmethod
     def create(cls, config: dict) -> Constraint:
-        """Creates a new parameter object matching the given specifications."""
+        """Creates a new object matching the given specifications."""
         config = config.copy()
         constraint_type = config.pop("type")
         check_if_in(constraint_type, list(Constraint.SUBCLASSES.keys()))

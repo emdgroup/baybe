@@ -68,7 +68,7 @@ class Parameter(
 
     @classmethod
     def create(cls, config: dict) -> Parameter:
-        """Creates a new parameter object matching the given specifications."""
+        """Creates a new object matching the given specifications."""
         return cls._create(HashableDict(config))
 
     @classmethod
