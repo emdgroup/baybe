@@ -11,13 +11,13 @@ dependencies:
 - pylint==2.13.9
 - pip==22.1.2
 - pandas==1.4.2
+- plotly==5.10.0
 - pydantic==1.9.1
 - pytorch==1.11.0
 - rdkit==2022.3.4
 - scikit-learn==1.1.1
 - seaborn==0.11.2
 - streamlit==1.10.0
-- plotly==5.10.0
 - pip:
   # temporarily install botorch and gpytorch via pip until the linear_operator recipe
   # has been merged into conda-forge, which resolves the current dependency issues
