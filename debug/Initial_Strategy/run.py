@@ -1,5 +1,5 @@
 """
-Test for history simulation of a single target with a function as lookup
+Test to validate if the initial strategies work as expected
 """
 
 import matplotlib.pyplot as plt
@@ -151,18 +151,16 @@ config_dict_base = {
 }
 
 config_dict_v1 = {
-    "project_name": "GP",
+    "project_name": "Random",
     "strategy": {
-        "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
+        "initial_strategy": "RANDOM",
     },
 }
 
 config_dict_v2 = {
-    "project_name": "Random",
+    "project_name": "Farthest Point Sampling",
     "strategy": {
-        "surrogate_model_cls": "GP",
-        "recommender_cls": "RANDOM",
+        "initial_strategy": "FPS",
     },
 }
 
@@ -170,12 +168,12 @@ config_dict_v2 = {
 results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=hartmann3,
-    n_exp_iterations=30,
-    n_mc_iterations=200,
-    batch_quantity=3,
+    n_exp_iterations=10,
+    n_mc_iterations=10,
+    batch_quantity=40,
     config_variants={
-        "GP": config_dict_v1,
-        "RANDOM": config_dict_v2,
+        "RANDOM": config_dict_v1,
+        "FPS": config_dict_v2,
     },
 )
 
@@ -183,4 +181,4 @@ print(results)
 
 sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Variant")
 plt.gcf().set_size_inches(24, 8)
-plt.savefig("./run_analytical.png")
+plt.savefig("./initial_strategies.png")
