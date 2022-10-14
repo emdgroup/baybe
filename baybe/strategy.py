@@ -80,7 +80,8 @@ class FPSInitialStrategy(InitialStrategy):
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """Uniform random selection of candidates."""
-        return farthest_point_sampling(candidates, batch_quantity)
+        ilocs = farthest_point_sampling(candidates.values, batch_quantity)
+        return candidates.index[ilocs]
 
 
 class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
