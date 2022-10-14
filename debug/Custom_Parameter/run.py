@@ -13,22 +13,22 @@ from baybe.utils import add_fake_results, add_parameter_noise
 
 custom_df = pd.DataFrame(
     {
-        "Mol": ["mol1", "mol2", "mol3", "mol4", "mol5"],
         "D1": [1.1, 1.4, 1.7, 0.8, -0.2],
         "D2": [11, 23, 55, 23, 3],
         "D3": [-4, -13, 4, -2, 6],
         "D4": [0.1, 0.4, -1.3, -0.5, 2.1],
         "D5": [1, 2, 0, 0, 7],
-    }
+    },
+    index=["mol1", "mol2", "mol3", "mol4", "mol5"],
 )
 custom_df2 = pd.DataFrame(
     {
-        "BuildingBlock": ["A", "B", "C"],
         "desc1": [1.1, 1.4, 1.7],
         "desc2": [55, 23, 3],
         "desc3": [4, 5, 6],
         "desc4": [-1.3, -0.5, 2.1],
-    }
+    },
+    index=["A", "B", "C"],
 )
 
 
@@ -54,13 +54,11 @@ config_dict = {
             "name": "Custom_1",
             "type": "CUSTOM",
             "data": custom_df,
-            # "identifier_col_idx": 0,
         },
         {
             "name": "Custom_2",
             "type": "CUSTOM",
             "data": custom_df2,
-            # "identifier_col_idx": 0,
         },
     ],
     "objective": {

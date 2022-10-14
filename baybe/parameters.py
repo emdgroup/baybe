@@ -1,12 +1,13 @@
 """
-Functionality to deal wth different parameters
+Functionality for different experimental parameter types.
 """
 from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from functools import cached_property, lru_cache
 
-from typing import ClassVar, Dict, List, Literal, Optional, Union
+from typing import ClassVar, Dict, List, Literal, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -16,7 +17,9 @@ from sklearn.metrics.pairwise import pairwise_distances
 from .utils import (
     check_if_in,
     df_drop_single_value_columns,
+    df_drop_string_columns,
     df_uncorrelated_features,
+    HashableDict,
     is_valid_smiles,
     smiles_to_fp_features,
     smiles_to_mordred_features,
@@ -36,12 +39,20 @@ def _validate_value_list(lst: list, values: dict):
     if len(lst) != len(np.unique(lst)):
         raise ValueError(
             f"Values for parameter {values['name']} are not unique. "
-            f"This would cause duplicates in the possible experiments."
+            f"This would cause duplicates in the set of possible experiments."
         )
     return lst
 
 
-class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+class Parameter(
+    ABC,
+    BaseModel,
+    extra=Extra.forbid,
+    arbitrary_types_allowed=True,
+    keep_untouched=(
+        cached_property,
+    ),  # required due to: https://github.com/pydantic/pydantic/issues/1241
+):
     """
     Abstract base class for all parameters. Stores information about the
     type, range, constraints, etc. and handles in-range checks, transformations etc.
@@ -50,7 +61,7 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
     # class variables
     type: ClassVar[str]
     requires_encoding: ClassVar[str]
-    SUBCLASSES: ClassVar[Dict[str, Parameter]] = {}
+    SUBCLASSES: ClassVar[Dict[str, Type[Parameter]]] = {}
 
     # object variables
     name: str
@@ -58,6 +69,12 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
     @classmethod
     def create(cls, config: dict) -> Parameter:
         """Creates a new parameter object matching the given specifications."""
+        return cls._create(HashableDict(config))
+
+    @classmethod
+    @lru_cache(maxsize=None)
+    def _create(cls, config: HashableDict) -> Parameter:
+        """Memory-cached parameter creation."""
         config = config.copy()
         param_type = config.pop("type")
         check_if_in(param_type, list(Parameter.SUBCLASSES.keys()))
@@ -65,6 +82,7 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
+        """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
@@ -77,7 +95,7 @@ class Parameter(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         #  member or a property, depending on the parameter type --> better solution?
         return item in self.values
 
-    @property
+    @cached_property
     @abstractmethod
     def comp_df(self) -> pd.DataFrame:
         """
@@ -129,20 +147,16 @@ class Categorical(Parameter):
     # validators
     _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
         """
-        # Comp column is identical with the experimental columns
-
         if self.encoding == "OHE":
             cols = [f"{self.name}_{val}" for val in self.values]
             comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
         elif self.encoding == "INT":
-            comp_df = pd.DataFrame(
-                [k for k, _ in enumerate(self.values)], columns=[self.name]
-            )
+            comp_df = pd.DataFrame(range(len(self.values)), columns=[self.name])
         comp_df.index = self.values
 
         return comp_df
@@ -170,7 +184,7 @@ class NumericDiscrete(Parameter):
         Validates that the tolerance (i.e. allowed experimental uncertainty when
         reading in measured values) is safe. A tolerance larger than half the minimum
         distance between parameter values is not allowed because that could cause
-        ambiguity when inputting datapoints later.
+        ambiguity when inputting data points later.
         """
         # NOTE: computing all pairwise distances can be avoided if we ensure that the
         #   values are ordered (which is currently not the case)
@@ -187,14 +201,12 @@ class NumericDiscrete(Parameter):
 
         return tolerance
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
         """
-        # Comp column is identical with the experimental columns
         comp_df = pd.DataFrame({self.name: self.values}, index=self.values)
-
         return comp_df
 
     def is_in_range(self, item: float) -> bool:
@@ -202,7 +214,7 @@ class NumericDiscrete(Parameter):
         See base class.
         """
         differences_acceptable = [
-            np.abs(bla - item) <= self.tolerance for bla in self.values
+            np.abs(val - item) <= self.tolerance for val in self.values
         ]
         return any(differences_acceptable)
 
@@ -210,10 +222,13 @@ class NumericDiscrete(Parameter):
 class GenericSubstance(Parameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
-    descriptors. Only a decorrelated subset of descriptors should be sued as otherwise
-    there is a large number of features. For a handful of molecules, keeping only
-    descriptors that have a max correlation of 0.7 with any other descriptor reduces the
-    descriptors to 5-20 ones. This might be substantially more with more labels given
+    descriptors.
+
+    Only a decorrelated subset of descriptors should be used as otherwise this can
+    result in a large number of features. For a handful of molecules, keeping only
+    descriptors that have a maximum correlation of 0.7 reduces the number of
+    descriptors to about 5-20. The number might be substantially higher with more
+    labels given.
     """
 
     # class variables
@@ -228,7 +243,7 @@ class GenericSubstance(Parameter):
     @validator("data", always=True)
     def validate_data(cls, dat):
         """
-        Validates the substances
+        Validates the given substances.
         """
         for name, smiles in dat.items():
             if not is_valid_smiles(smiles):
@@ -236,27 +251,26 @@ class GenericSubstance(Parameter):
                     f"The SMILES '{smiles}' for molecule '{name}' does "
                     f"not appear to be valid."
                 )
-
         return dat
 
     @property
     def values(self) -> list:
         """
-        Initializes the molecule labels
+        Returns the labels of the given set of molecules.
         """
-        # Since the order of dictionary key is important here, this will only work
+        # Since the order of dictionary keys is important here, this will only work
         # for Python 3.7 or higher
         return list(self.data.keys())
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
         """
         vals = list(self.data.values())
-        names = list(self.data.keys())
         pref = self.name + "_"
 
+        # Get the raw fingerprints
         if self.encoding == "MORDRED":
             comp_df = smiles_to_mordred_features(vals, prefix=pref)
         elif self.encoding == "RDKIT":
@@ -264,16 +278,19 @@ class GenericSubstance(Parameter):
         elif self.encoding == "MORGAN_FP":
             comp_df = smiles_to_fp_features(vals, prefix=pref)
 
-        # Drop NaN and constant cols
+        # Drop NaN and constant columns
         comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
         comp_df = df_drop_single_value_columns(comp_df)
 
-        # If there are bool cols convert them to int (possible for Mordred)
+        # If there are bool columns, convert them to int (possible for Mordred)
         comp_df.loc[:, comp_df.dtypes == bool] = comp_df.loc[
             :, comp_df.dtypes == bool
         ].astype(int)
 
-        comp_df.index = names
+        # Label the rows with the molecule names
+        comp_df.index = self.values
+
+        # Get a decorrelated subset of the fingerprints
         if self.decorrelate:
             if isinstance(self.decorrelate, bool):
                 comp_df = df_uncorrelated_features(comp_df)
@@ -296,12 +313,11 @@ class Custom(Parameter):
     # object variables
     decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
     data: pd.DataFrame
-    identifier_col_idx: int = 0
 
     @validator("data")
     def validate_data(cls, data, values):
         """
-        Validates the dataframe with the custom representation
+        Validates the dataframe with the custom representation.
         """
         if data.isna().any().any():
             raise StrictValidationError(
@@ -309,64 +325,42 @@ class Custom(Parameter):
                 f"entries, which is not supported."
             )
 
-        # Always Remove zero variance and non-numeric columns
-        # TODO find way to exclude the label column
-        # data = df_drop_string_columns(data)
+        # Remove zero variance and string columns
+        data = df_drop_string_columns(data)
         data = df_drop_single_value_columns(data)
 
-        # TODO Include the feature decorrelation here or somewhere suitable
-
         return data
-
-    @validator("identifier_col_idx", always=True)
-    def validate_identifier_col(cls, col, values):
-        """
-        Validates the column index which identifies the label column
-        """
-        if (col < 0) or (col >= len(values["data"].columns)):
-            raise ValueError(
-                f"identifier_col_idx was {col} but must be a column index between "
-                f"(inclusive) 0 and {len(values['data'].columns)-1}"
-            )
-
-        return col
 
     @property
     def values(self) -> list:
         """
         Returns the representing labels of the parameter.
         """
-        return self.data.iloc[:, self.identifier_col_idx].to_list()
+        return self.data.index.to_list()
 
-    @property
+    @cached_property
     def comp_df(self) -> pd.DataFrame:
         """
         See base class.
         """
-        valcol = self.data.columns[self.identifier_col_idx]
-        vals = self.data[valcol].to_list()
+        # The encoding is directly provided by the user
+        comp_df = self.data
 
-        comp_df = self.data.drop(columns=valcol)
-        comp_df.index = vals
+        # Get a decorrelated subset of the provided features
+        if self.decorrelate:
+            if isinstance(self.decorrelate, bool):
+                comp_df = df_uncorrelated_features(comp_df)
+            else:
+                comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
         return comp_df
 
 
-class NumericContinuous(Parameter, ABC):
-    """
-    Parameter class for continuous numerical parameters.
-    """
-
-    # class variables
-    type = "NUM_CONTINUOUS"
-
-
-def parameter_outer_prod_to_df(
+def parameter_cartesian_prod_to_df(
     parameters: List[Parameter],
 ) -> pd.DataFrame:
     """
-    Creates the Cartesion product of all parameter values (ignoring non-discrete
-    parameters).
+    Creates the Cartesion product of all parameter values.
 
     Parameters
     ----------
@@ -378,9 +372,8 @@ def parameter_outer_prod_to_df(
     pd.DataFrame
         A dataframe containing all parameter value combinations.
     """
-    allowed_types = Parameter.SUBCLASSES
-    lst_of_values = [p.values for p in parameters if p.type in allowed_types]
-    lst_of_names = [p.name for p in parameters if p.type in allowed_types]
+    lst_of_values = [p.values for p in parameters]
+    lst_of_names = [p.name for p in parameters]
 
     index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
     ret = pd.DataFrame(index=index).reset_index()
@@ -395,6 +388,9 @@ def scaled_view(
     scalers: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
+    # TODO: Revise this function and its docstring. (Currently, the function is not used
+    #   at all. Hence, revision has been skipped in the code release process.)
+
     Comfort function to scale data given different scaling methods for different
     parameter types.
 
@@ -462,9 +458,9 @@ def scaled_view(
     return transformed
 
 
-# TODO self.values could be renamed into something else since its clashing with
-#  pydantic enforced syntax, for instance 'labels' (but thats weird for numeric
+# TODO: self.values could be renamed into something else since it's clashing with
+#  pydantic enforced syntax, for instance 'labels' (but that's weird for numeric
 #  discrete parameters)
 
-# TODO self.values could be a variable of the base class since its shared between all
-#  parameter. Its essentially the list of labels, always one dimensional
+# TODO: self.values could be a variable of the base class since it's shared between all
+#  parameter. It's essentially the list of labels, always one dimensional

@@ -7,3 +7,12 @@ __pycache__/
 # PyCharm
 .idea
 
+# Package files
+*.egg-info
+
+# Temporary and binary files
+*.swp
+
+# Build files
+build/*
+

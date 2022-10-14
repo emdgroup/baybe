@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Simple constraints for discrete parameters.
+
+### Fixed
+- UCB now usable as acquisition function, hard-set beta parameter to 1.0.
+
+## [0.1.0] - 2022-10-01
+### Added
 - Code skeleton with a central object to access functionality.
 - Basic parser for categorical parameters with one-hot encoding.
 - Basic parser for discrete numerical parameters.
@@ -29,4 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Data cleaning utilities useful for descriptors.
 - Simulation capabilities for testing the package on existing data.
 - Parsing and preprocessing for multiple targets / desirability ansatz.
-- Add simple constraints that provide functionality for discrete parameters.
+- Basic README file.
+- Automatic publishing of tagged versions.
+- Caching of experimental parameters and chemical descriptors.
+- Choices for acquisition functions and their usage with arbitrary surrogate models.
+- Temporary logic for selecting GP priors.
+
