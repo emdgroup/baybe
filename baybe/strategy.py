@@ -24,7 +24,7 @@ from .acquisition import debotorchize
 from .recommender import Recommender
 from .surrogate import SurrogateModel
 from .utils import check_if_in, to_tensor
-from .utils.sampling_algorithms import _fps
+from .utils.sampling_algorithms import farthest_point_sampling
 
 
 class InitialStrategy(ABC):
@@ -80,7 +80,7 @@ class FPSInitialStrategy(InitialStrategy):
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """Uniform random selection of candidates."""
-        return _fps(candidates, batch_quantity, start_strategy="random")
+        return farthest_point_sampling(candidates, batch_quantity)
 
 
 class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):

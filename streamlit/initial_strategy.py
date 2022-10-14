@@ -8,7 +8,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from baybe.utils.sampling_algorithms import _fps  # pylint: disable=import-error
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 from sklearn.datasets import make_blobs
 from sklearn.mixture import GaussianMixture
 
@@ -72,7 +72,7 @@ test_datas = {
 
 test_strategies = {
     "Random": random_strategy,
-    "FPS": _fps,
+    "FPS": farthest_point_sampling,
 }
 
 
