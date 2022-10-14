@@ -24,6 +24,7 @@ from .acquisition import debotorchize
 from .recommender import Recommender
 from .surrogate import SurrogateModel
 from .utils import check_if_in, to_tensor
+from .utils.sampling_algorithms import farthest_point_sampling
 
 
 class InitialStrategy(ABC):
@@ -65,10 +66,21 @@ class RandomInitialStrategy(InitialStrategy):
     type = "RANDOM"
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
-        """Uniform random selection of candidates."""
+        """See base class."""
         return pd.Index(
             np.random.choice(candidates.index, batch_quantity, replace=False)
         )
+
+
+class FPSInitialStrategy(InitialStrategy):
+    """An initial strategy that selects the candidates via Farthest Point Sampling."""
+
+    type = "FPS"
+
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+        """See base class."""
+        ilocs = farthest_point_sampling(candidates.values, batch_quantity)
+        return candidates.index[ilocs]
 
 
 class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
