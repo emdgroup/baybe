@@ -66,20 +66,19 @@ class RandomInitialStrategy(InitialStrategy):
     type = "RANDOM"
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
-        """Uniform random selection of candidates."""
+        """See base class."""
         return pd.Index(
             np.random.choice(candidates.index, batch_quantity, replace=False)
         )
 
 
 class FPSInitialStrategy(InitialStrategy):
-    """An initial strategy that selects the candidates using farthest point sampling
-    algorithm."""
+    """An initial strategy that selects the candidates via Farthest Point Sampling."""
 
     type = "FPS"
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
-        """Uniform random selection of candidates."""
+        """See base class."""
         ilocs = farthest_point_sampling(candidates.values, batch_quantity)
         return candidates.index[ilocs]
 
