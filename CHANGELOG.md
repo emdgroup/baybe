@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Initial strategy: farthest point sampling
+- Initial strategy: Farthest Point Sampling
+- Initial strategy: Partitioning Around Medoids
+- Initial strategy: K-means
+- Initial strategy: Gaussian Mixture Model
 
 ### Fixed
 - UCB now usable as acquisition function, hard-set beta parameter to 1.0.
@@ -42,5 +45,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Caching of experimental parameters and chemical descriptors.
 - Choices for acquisition functions and their usage with arbitrary surrogate models.
 - Temporary logic for selecting GP priors.
-- Various Clustering techniques for initial selection.
 
