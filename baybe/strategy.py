@@ -97,16 +97,16 @@ class BasicClusteringInitialStrategy(InitialStrategy, ABC):
 
     def __init__(self, **kwargs):
         self.model_params = kwargs
+        self._use_custom_selector = False
 
         # Members that will be initialized during the recommendation process
         self.model: Optional[Model] = None
         self.candidates_scaled: Optional[pd.DataFrame] = None
 
-    def _make_selection(self) -> List[int]:
+    def _make_selection_default(self) -> List[int]:
         """
-        Internal method that selects one candidate from each cluster at random. Derived
-        classes are free to override this and implement different methods where
-        suitable.
+        Basic model-agnostic method that selects one candidate from each cluster
+        uniformly at random.
 
         Returns
         -------
@@ -119,6 +119,13 @@ class BasicClusteringInitialStrategy(InitialStrategy, ABC):
             for cluster in unique(assigned_clusters)
         ]
         return selection
+
+    def _make_selection_custom(self) -> List[int]:
+        """
+        A model-specific method to select candidates from the computed clustering.
+        May be implemented by the derived class.
+        """
+        raise NotImplementedError()
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
         """See base class."""
@@ -135,8 +142,11 @@ class BasicClusteringInitialStrategy(InitialStrategy, ABC):
         self.model = self.model_class(**self.model_params)
         self.model.fit(self.candidates_scaled)
 
-        # Perform algorithm-specific selection based on assigned clusters
-        selection = self._make_selection()
+        # Perform selection based on assigned clusters
+        if self._use_custom_selector:
+            selection = self._make_selection_custom()
+        else:
+            selection = self._make_selection_default()
 
         # Convert positional indices into DataFrame indices and return result
         return candidates.index[selection]
@@ -149,13 +159,14 @@ class PAMInitialStrategy(BasicClusteringInitialStrategy):
     model_class = KMedoids
     model_cluster_num_parameter_name = "n_clusters"
 
-    def __init__(self, max_iter: int = 100, **kwargs):
+    def __init__(self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs):
         super().__init__(max_iter=max_iter, **kwargs)
+        self._use_custom_selector = use_custom_selector
 
-    def _make_selection(self) -> List[int]:
+    def _make_selection_custom(self) -> List[int]:
         """
-        Overrides the base method: In PAM, cluster centers (medoids) correspond to
-        actual data points, which means they can be directly used for the selection.
+        In PAM, cluster centers (medoids) correspond to actual data points,
+        which means they can be directly used for the selection.
         """
         selection = self.model.medoid_indices_.tolist()
         return selection
@@ -168,13 +179,20 @@ class KMeansInitialStrategy(BasicClusteringInitialStrategy):
     model_class = KMeans
     model_cluster_num_parameter_name = "n_clusters"
 
-    def __init__(self, n_init: int = 50, max_iter: int = 1000, **kwargs):
+    def __init__(
+        self,
+        use_custom_selector: bool = True,
+        n_init: int = 50,
+        max_iter: int = 1000,
+        **kwargs,
+    ):
         super().__init__(n_init=n_init, max_iter=max_iter, **kwargs)
+        self._use_custom_selector = use_custom_selector
 
-    def _make_selection(self) -> List[int]:
+    def _make_selection_custom(self) -> List[int]:
         """
-        Overrides the base method: For K-means, a reasonable choice is to pick the
-        points closest to each cluster center.
+        For K-means, a reasonable choice is to pick the points closest to each
+        cluster center.
         """
         distances = pairwise_distances(
             self.candidates_scaled, self.model.cluster_centers_
@@ -191,10 +209,14 @@ class GaussianMixtureInitialStrategy(BasicClusteringInitialStrategy):
     model_class = GaussianMixture
     model_cluster_num_parameter_name = "n_components"
 
-    def _make_selection(self) -> List[int]:
+    def __init__(self, use_custom_selector: bool = True, **kwargs):
+        super().__init__(**kwargs)
+        self._use_custom_selector = use_custom_selector
+
+    def _make_selection_custom(self) -> List[int]:
         """
-        Overrides the base method: In a GMM, a reasonable choice is to pick the
-        point with the highest probability densities for each cluster.
+        In a GMM, a reasonable choice is to pick the point with the highest
+        probability densities for each cluster.
         """
         selection = []
         for k in range(self.model.n_components):
