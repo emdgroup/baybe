@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import partial
+from inspect import isabstract
 from typing import Dict, Literal, Optional, Type, Union
 
 import numpy as np
@@ -56,7 +57,8 @@ class InitialStrategy(ABC):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
 
 class RandomInitialStrategy(InitialStrategy):

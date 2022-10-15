@@ -5,6 +5,7 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from inspect import isabstract
 from typing import Dict, Optional, Tuple, Type
 
 import pandas as pd
@@ -61,7 +62,8 @@ class SurrogateModel(ABC):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
 
 class GaussianProcessModel(SurrogateModel):

@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
+from inspect import isabstract
 from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
@@ -130,7 +131,8 @@ class Target(ABC, BaseModel, extra=Extra.forbid):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
     @classmethod
     def create(cls, config: dict) -> Target:

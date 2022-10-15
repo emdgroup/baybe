@@ -7,6 +7,7 @@ import logging
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
+from inspect import isabstract
 
 from typing import ClassVar, Dict, List, Literal, Type, Union
 
@@ -42,7 +43,8 @@ class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def evaluate(self, data: pd.Series) -> pd.Series:
@@ -130,7 +132,8 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
@@ -196,7 +199,6 @@ class ParametersListConstraint(Constraint, ABC):
     """
 
     # class variables
-    type = "PARAMETER_LIST_CONSTRAINT"
     parameters: List[str]
 
     @validator("parameters")
