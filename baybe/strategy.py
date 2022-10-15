@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import partial
-
-from typing import Dict, List, Literal, Optional, Type, Union
+from typing import Dict, List, Literal, Optional, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -20,15 +19,11 @@ from botorch.acquisition import (
     UpperConfidenceBound,
 )
 from numpy import unique
-from numpy.typing import ArrayLike
 from pydantic import BaseModel, Extra, validator
 from scipy.stats import multivariate_normal
-
-# model imports
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
 from sklearn.mixture import GaussianMixture
-
 from sklearn.preprocessing import StandardScaler
 from sklearn_extra.cluster import KMedoids
 
@@ -37,6 +32,8 @@ from .recommender import Recommender
 from .surrogate import SurrogateModel
 from .utils import check_if_in, isabstract, to_tensor
 from .utils.sampling_algorithms import farthest_point_sampling
+
+Model = TypeVar("SklearnModel")
 
 
 class InitialStrategy(ABC):
@@ -86,32 +83,36 @@ class RandomInitialStrategy(InitialStrategy):
 
 
 class BasicClusteringInitialStrategy(InitialStrategy, ABC):
-    """Intermediate class for cluster-based initial selection of candidates. Suitable
-    for sklearn-like models that have a fit and predict method. Specific model
-    parameters and cluster sub-selection techniques can be declared in the derived
-    classes."""
+    """
+    Intermediate class for cluster-based initial selection of candidates.
+
+    Suitable for sklearn-like models that have a `fit` and `predict` method. Specific
+    model parameters and cluster sub-selection techniques can be declared in the
+    derived classes.
+    """
 
     # Properties that need to be defined by derived classes
-    model_class = None
-    model_params = None
-    model_cluster_num_parameter_name = None
+    model_class: Type[Model]
+    model_cluster_num_parameter_name: str
 
-    # Properties that are only relevant to this class
-    model = None
-    candidates_scaled = None
+    def __init__(self, **kwargs):
+        self.model_params = kwargs
 
-    def _make_selection(self) -> List:
+        # Members that will be initialized during the recommendation process
+        self.model: Optional[Model] = None
+        self.candidates_scaled: Optional[pd.DataFrame] = None
+
+    def _make_selection(self) -> List[int]:
         """
-        Internal method selects one candidate from each cluster at random. Derived
+        Internal method that selects one candidate from each cluster at random. Derived
         classes are free to override this and implement different methods where
         suitable.
 
         Returns
         -------
-        selection : numpy array
-           Positional indices of the selected candidates
+        selection : List[int]
+           Positional indices of the selected candidates.
         """
-
         assigned_clusters = self.model.predict(self.candidates_scaled)
         selection = [
             np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
@@ -120,27 +121,14 @@ class BasicClusteringInitialStrategy(InitialStrategy, ABC):
         return selection
 
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
-        """
-        Initial candidate recommendation based on clustering.
-
-        Parameters
-        ----------
-        candidates : pandas data frame
-            A data frame describing the candidates in computational representation.
-        batch_quantity : int
-            The number of candidates that should be selected.
-
-        Returns
-        -------
-        pandas index
-            Index (actual, not positional) of selected entries in candidates.
-        """
+        """See base class."""
 
         # Scale candidates. A contiguous array is needed for some methods.
+        # TODO [Scaling]: scaling should be handled by searchspace object
         scaler = StandardScaler()
         self.candidates_scaled = np.ascontiguousarray(scaler.fit_transform(candidates))
 
-        # Set set model parameters and perform fit.
+        # Set model parameters and perform fit
         self.model_params.update(
             {self.model_cluster_num_parameter_name: batch_quantity}
         )
@@ -150,65 +138,70 @@ class BasicClusteringInitialStrategy(InitialStrategy, ABC):
         # Perform algorithm-specific selection based on assigned clusters
         selection = self._make_selection()
 
-        # Convert positional indices into absolute indices and return result
+        # Convert positional indices into DataFrame indices and return result
         return candidates.index[selection]
 
 
 class PAMInitialStrategy(BasicClusteringInitialStrategy):
-    """Partitioning around Medoids (PAM) initial clustering strategy"""
+    """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
     type = "PAM"
     model_class = KMedoids
-    model_params = {"max_iter": 1000, "metric": "euclidean"}
     model_cluster_num_parameter_name = "n_clusters"
 
-    def _make_selection(self) -> ArrayLike:
-        """see base class"""
+    def __init__(self, max_iter: int = 100, **kwargs):
+        super().__init__(max_iter=max_iter, **kwargs)
 
-        # In PAM cluster centers (medoids) correspond to actual data points
+    def _make_selection(self) -> List[int]:
+        """
+        Overrides the base method: In PAM, cluster centers (medoids) correspond to
+        actual data points, which means they can be directly used for the selection.
+        """
         selection = self.model.medoid_indices_.tolist()
         return selection
 
 
 class KMeansInitialStrategy(BasicClusteringInitialStrategy):
-    """K-means initial clustering strategy"""
+    """K-means initial clustering strategy."""
 
     type = "KMEANS"
     model_class = KMeans
-    model_params = {"n_init": 50, "max_iter": 1000}
     model_cluster_num_parameter_name = "n_clusters"
 
-    def _make_selection(self) -> List:
-        """see base class"""
+    def __init__(self, n_init: int = 50, max_iter: int = 1000, **kwargs):
+        super().__init__(n_init=n_init, max_iter=max_iter, **kwargs)
 
-        # In KMeans we pick the points closest to each cluster center
+    def _make_selection(self) -> List[int]:
+        """
+        Overrides the base method: For K-means, a reasonable choice is to pick the
+        points closest to each cluster center.
+        """
         distances = pairwise_distances(
             self.candidates_scaled, self.model.cluster_centers_
         )
+        # FIXME: applying `unique`, there can be fewer returned points than requested
         selection = np.unique(np.argmin(distances, axis=0)).tolist()
-
         return selection
 
 
 class GaussianMixtureInitialStrategy(BasicClusteringInitialStrategy):
-    """Gaussian mixture model (GMM) initial clustering strategy"""
+    """Gaussian mixture model (GMM) initial clustering strategy."""
 
     type = "GMM"
     model_class = GaussianMixture
-    model_params = {}
     model_cluster_num_parameter_name = "n_components"
 
-    def _make_selection(self) -> List:
-        """see base class"""
-
-        # In GMM the most central point is the one with the highest density
+    def _make_selection(self) -> List[int]:
+        """
+        Overrides the base method: In a GMM, a reasonable choice is to pick the
+        point with the highest probability densities for each cluster.
+        """
         selection = []
         for k in range(self.model.n_components):
             density = multivariate_normal(
                 cov=self.model.covariances_[k], mean=self.model.means_[k]
             ).logpdf(self.candidates_scaled)
-            selection.append(np.argmax(density))
-
+            selection.append(np.argmax(density).item())
         return selection
 
 

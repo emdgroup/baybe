@@ -101,6 +101,7 @@ class GaussianProcessModel(SurrogateModel):
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
+        # TODO [Scaling]: scaling should be handled by searchspace object
         input_transform = Normalize(train_x.shape[1], bounds=bounds)
         outcome_transform = Standardize(train_y.shape[1])
 
