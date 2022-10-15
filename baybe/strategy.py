@@ -35,7 +35,7 @@ from sklearn_extra.cluster import KMedoids
 from .acquisition import debotorchize
 from .recommender import Recommender
 from .surrogate import SurrogateModel
-from .utils import check_if_in, to_tensor
+from .utils import check_if_in, isabstract, to_tensor
 from .utils.sampling_algorithms import farthest_point_sampling
 
 
@@ -69,7 +69,8 @@ class InitialStrategy(ABC):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
 
 class RandomInitialStrategy(InitialStrategy):
@@ -84,14 +85,11 @@ class RandomInitialStrategy(InitialStrategy):
         )
 
 
-class BasicClusteringInitialStrategy(InitialStrategy):
+class BasicClusteringInitialStrategy(InitialStrategy, ABC):
     """Intermediate class for cluster-based initial selection of candidates. Suitable
     for sklearn-like models that have a fit and predict method. Specific model
     parameters and cluster sub-selection techniques can be declared in the derived
     classes."""
-
-    # TODO make somehow sure this class cannot be selected in the config
-    type = "BASIC_CLUSTERING"
 
     # Properties that need to be defined by derived classes
     model_class = None

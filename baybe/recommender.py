@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 from botorch.acquisition import AcquisitionFunction
 
-from .utils import to_tensor
+from .utils import isabstract, to_tensor
 
 # TODO: use botorch's built-in acquisition optimization methods
 #   (problem: they do not return the indices but the candidate points)
@@ -36,7 +36,8 @@ class Recommender(ABC):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
