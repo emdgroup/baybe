@@ -160,7 +160,7 @@ class PAMInitialStrategy(BasicClusteringInitialStrategy):
     model_cluster_num_parameter_name = "n_clusters"
 
     def __init__(self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs):
-        super().__init__(max_iter=max_iter, **kwargs)
+        super().__init__(max_iter=max_iter, init="k-medoids++", **kwargs)
         self._use_custom_selector = use_custom_selector
 
     def _make_selection_custom(self) -> List[int]:
