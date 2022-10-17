@@ -14,9 +14,11 @@ from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import fit_gpytorch_torch
-
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
+from gpytorch.likelihoods import GaussianLikelihood
+
+from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
@@ -101,9 +103,9 @@ class GaussianProcessModel(SurrogateModel):
         input_transform = Normalize(train_x.shape[1], bounds=bounds)
         outcome_transform = Standardize(train_y.shape[1])
 
-        # select priors
-        # TODO temporary prior choices adapted from edbo, replace later on
-        batch_shape = train_x.shape[:-2]
+        # ---------- GP prior selection ---------- #
+        # TODO: temporary prior choices adapted from edbo, replace later on
+
         mordred = any("MORDRED" in col for col in self.searchspace.columns) or any(
             "RDKIT" in col for col in self.searchspace.columns
         )
@@ -112,56 +114,55 @@ class GaussianProcessModel(SurrogateModel):
 
         # low D priors
         if train_x.shape[-1] < 5:
-            covar_module = ScaleKernel(
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=train_x.shape[-1],
-                    batch_shape=batch_shape,
-                    lengthscale_prior=GammaPrior(1.2, 1.1),
-                ),
-                batch_shape=batch_shape,
-                outputscale_prior=GammaPrior(5.0, 0.5),
-            )
-            # noise_prior = [GammaPrior(1.05, 0.5), 0.1]
+            lengthscale_prior = [GammaPrior(1.2, 1.1), 0.2]
+            outputscale_prior = [GammaPrior(5.0, 0.5), 8.0]
+            noise_prior = [GammaPrior(1.05, 0.5), 0.1]
+
         # DFT optimized priors
         elif mordred and train_x.shape[-1] < 100:
-            covar_module = ScaleKernel(
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=train_x.shape[-1],
-                    batch_shape=batch_shape,
-                    lengthscale_prior=GammaPrior(2.0, 0.2),
-                ),
-                batch_shape=batch_shape,
-                outputscale_prior=GammaPrior(5.0, 0.5),
-            )
-            # noise_prior = [GammaPrior(1.5, 0.1), 5.0]
+            lengthscale_prior = [GammaPrior(2.0, 0.2), 5.0]
+            outputscale_prior = [GammaPrior(5.0, 0.5), 8.0]
+            noise_prior = [GammaPrior(1.5, 0.1), 5.0]
+
         # Mordred optimized priors
         elif mordred:
-            covar_module = ScaleKernel(
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=train_x.shape[-1],
-                    batch_shape=batch_shape,
-                    lengthscale_prior=GammaPrior(2.0, 0.1),
-                ),
-                batch_shape=batch_shape,
-                outputscale_prior=GammaPrior(2.0, 0.1),
-            )
-            # noise_prior = [GammaPrior(1.5, 0.1), 5.0]
+            lengthscale_prior = [GammaPrior(2.0, 0.1), 10.0]
+            outputscale_prior = [GammaPrior(2.0, 0.1), 10.0]
+            noise_prior = [GammaPrior(1.5, 0.1), 5.0]
+
         # OHE optimized priors
         else:
-            covar_module = ScaleKernel(
-                MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=train_x.shape[-1],
-                    batch_shape=batch_shape,
-                    lengthscale_prior=GammaPrior(3.0, 1.0),
-                ),
+            lengthscale_prior = [GammaPrior(3.0, 1.0), 2.0]
+            outputscale_prior = [GammaPrior(5.0, 0.2), 20.0]
+            noise_prior = [GammaPrior(1.5, 0.1), 5.0]
+
+        # ---------- End: GP prior selection ---------- #
+
+        # extract the batch shape of the training data
+        batch_shape = train_x.shape[:-2]
+
+        # create GP mean
+        mean_module = ConstantMean(batch_shape=batch_shape)
+
+        # create GP covariance
+        covar_module = ScaleKernel(
+            MaternKernel(
+                nu=2.5,
+                ard_num_dims=train_x.shape[-1],
                 batch_shape=batch_shape,
-                outputscale_prior=GammaPrior(5.0, 0.2),
-            )
-            # noise_prior = [GammaPrior(1.5, 0.1), 5.0]
+                lengthscale_prior=lengthscale_prior[0],
+            ),
+            batch_shape=batch_shape,
+            outputscale_prior=outputscale_prior[0],
+        )
+        covar_module.outputscale = torch.tensor([outputscale_prior[1]])
+        covar_module.base_kernel.lengthscale = torch.tensor([lengthscale_prior[1]])
+
+        # create GP likelihood
+        likelihood = GaussianLikelihood(
+            noise_prior=noise_prior[0], batch_shape=batch_shape
+        )
+        likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
         self.model = SingleTaskGP(
@@ -169,7 +170,9 @@ class GaussianProcessModel(SurrogateModel):
             train_y,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
+            mean_module=mean_module,
             covar_module=covar_module,
+            likelihood=likelihood,
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, options={"disp": False})
