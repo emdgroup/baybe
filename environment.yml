@@ -12,6 +12,7 @@ dependencies:
 - pylint==2.13.9
 - pip==22.1.2
 - pandas==1.4.2
+- plotly==5.10.0
 - pydantic==1.9.1
 - pytorch==1.11.0
 - rdkit==2022.3.4

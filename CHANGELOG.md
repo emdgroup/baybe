@@ -6,10 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Initial strategy: farthest point sampling
 - Simple constraints for discrete parameters.
 
 ### Fixed
 - UCB now usable as acquisition function, hard-set beta parameter to 1.0.
+- Temporary GP priors now exactly reproduce EDBO setting.
 
 ## [0.1.0] - 2022-10-01
 ### Added
