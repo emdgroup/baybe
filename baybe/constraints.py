@@ -86,6 +86,13 @@ class ThresholdCondition(Condition):
 
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
+        if data.dtype.kind not in "iufb":
+            raise TypeError(
+                "You tried to apply a threshold condition to non-numeric data. "
+                "This operation is error-prone and not supported. Only use threshold "
+                "constraints with numerical parameters."
+            )
+
         return data.apply(rpartial(self._operator_dict[self.operator], self.threshold))
 
 
