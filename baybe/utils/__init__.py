@@ -471,23 +471,30 @@ def smiles_to_fp_features(
     return df
 
 
-def df_drop_single_value_columns(df: pd.DataFrame) -> pd.DataFrame:
+def df_drop_single_value_columns(
+    df: pd.DataFrame, lst_exclude: list = None
+) -> pd.DataFrame:
     """
     Drops dataframe columns with zero variance.
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df: pd.DataFrame
         The dataframe to be cleaned.
+    lst_exclude: list
+        List of column names that are excluded from this filter.
 
     Returns
     -------
     pd.DataFrame
         The cleaned dataframe.
     """
+    if lst_exclude is None:
+        lst_exclude = []
+
     to_keep = []
-    for col in df:
-        if len(df[col].drop_duplicates()) > 1:
+    for col in df.columns:
+        if (col in lst_exclude) or (df[col].nunique() > 1):
             to_keep.append(col)
 
     return df[to_keep]
