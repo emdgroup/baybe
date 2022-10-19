@@ -427,7 +427,7 @@ class NGBoostModel(SurrogateModel):
         train_x, train_y = self.scaler.fit_transform(train_x, train_y)
 
         # Create and Train model
-        self.model = NGBRegressor(n_estimators=100, verbose=False).fit(
+        self.model = NGBRegressor(n_estimators=25, verbose=False).fit(
             train_x, train_y.ravel()
         )
 
