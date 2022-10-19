@@ -12,10 +12,6 @@ solvs = {
     "C1": "C",
     "C2": "CC",
     "C3": "CCC",
-    "C4": "CCCC",
-    "C5": "CCCCC",
-    "c6": "c1ccccc1",
-    "C6": "CCCCCC",
 }
 
 N_GRID_POINTS = 5
@@ -125,6 +121,14 @@ for kIter in range(N_ITERATIONS):
         .ne(3)
         .sum(),
     )
+    # print(
+    #     "Number of searchspace entries with permutation-invariant combinations:  ",
+    #     baybe_obj.searchspace_exp_rep[["Solvent1", "Solvent2", "Solvent3"]].apply(
+    #         lambda x: frozenset(x), axis=1
+    #     )
+    #     # .duplicated()
+    #     # .sum(),
+    # )
 
     rec = baybe_obj.recommend(batch_quantity=5)
 

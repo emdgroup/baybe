@@ -311,11 +311,24 @@ class PermutationInvarianceConstraint(ParametersListConstraint):
 
     # class variables
     type = "PERMUTATION_INVARIANCE"
-    eval_during_creation = False
-    eval_during_modeling = True
+    # TODO update usage in different evaluation stages once that is implemented in
+    #  strategy and surrogate
+    eval_during_creation = True
+    eval_during_modeling = False
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
-        raise NotImplementedError(
-            "The permutation invariance constraint is not implemented yet."
+
+        # Merge a permutation invariant representation of all affected parameters with
+        # the other parameters and indicate duplicates
+        other_params = data.columns.drop(self.parameters).tolist()
+        df_eval = pd.concat(
+            [
+                data[other_params].copy(),
+                data[self.parameters].apply(frozenset, axis=1),
+            ],
+            axis=1,
         )
+        mask_bad = df_eval.duplicated(keep="first")
+
+        return data.index[mask_bad]

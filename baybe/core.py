@@ -333,9 +333,11 @@ class BayBE:
 
         # Read in measurements and add them to the database
         self.batches_done += 1
-        data["BatchNr"] = self.batches_done
+        to_insert = data.copy()
+        to_insert["BatchNr"] = self.batches_done
+
         self.measurements_exp_rep = pd.concat(
-            [self.measurements_exp_rep, data], axis=0, ignore_index=True
+            [self.measurements_exp_rep, to_insert], axis=0, ignore_index=True
         )
 
         # Transform measurement space to computational representation
