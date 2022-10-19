@@ -16,7 +16,7 @@ from .constraints import Constraint
 from .parameters import Parameter
 from .strategy import Strategy
 from .targets import Objective, Target
-from .utils import check_if_in
+from .utils import check_if_in, df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ class BayBE:
             for param in self.parameters:
                 comp_df = param.transform_rep_exp2comp(data[param.name])
                 dfs.append(comp_df)
-            comp_rep_x = pd.concat(dfs, axis=1)
+            comp_rep_x = df_drop_single_value_columns(pd.concat(dfs, axis=1))
 
         # Transform the (optional) targets
         comp_rep_y = None

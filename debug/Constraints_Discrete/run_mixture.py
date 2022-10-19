@@ -108,27 +108,28 @@ print("\n\n######## ALL FOLLOWING OUTPUTS SHOULD BE 0 ########")
 for kIter in range(N_ITERATIONS):
     print(f"\n##### ITERATION {kIter+1} #####")
     print(
-        "Number of searchspace entries where fractions do not sum to 100.0: ",
+        "Number of searchspace entries where fractions do not sum to 100.0:      ",
         baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
         .sum(axis=1)
         .ne(100.0)
         .sum(),
     )
     print(
-        "Number of searchspace entries that have duplicate solvent labels:  ",
+        "Number of searchspace entries that have duplicate solvent labels:       ",
         baybe_obj.searchspace_exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .nunique(axis=1)
         .ne(3)
         .sum(),
     )
-    # print(
-    #     "Number of searchspace entries with permutation-invariant combinations:  ",
-    #     baybe_obj.searchspace_exp_rep[["Solvent1", "Solvent2", "Solvent3"]].apply(
-    #         lambda x: frozenset(x), axis=1
-    #     )
-    #     # .duplicated()
-    #     # .sum(),
-    # )
+    print(
+        "Number of searchspace entries with permutation-invariant combinations:  ",
+        baybe_obj.searchspace_exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
+        .apply(frozenset, axis=1)
+        .to_frame()
+        .join(baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]])
+        .duplicated()
+        .sum(),
+    )
 
     rec = baybe_obj.recommend(batch_quantity=5)
 
