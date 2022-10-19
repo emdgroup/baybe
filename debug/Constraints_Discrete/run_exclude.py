@@ -94,8 +94,7 @@ N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
     print(
-        "### DEBUG: ",
-        len(baybe_obj.searchspace_exp_rep),
+        "Number of entries with either Solvents C2 or C4 and a temperature above 151: ",
         (
             baybe_obj.searchspace_exp_rep["Temperature"].apply(lambda x: x > 151)
             & baybe_obj.searchspace_exp_rep["Solvent"].apply(

@@ -136,9 +136,9 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
             cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """
-        Evaluates the constraint on a given set of parameter combinations.
+        Get the indices of data frame entries that are invalid under the constraint.
 
         Parameters
         ----------
@@ -185,7 +185,7 @@ class ExcludeConstraint(Constraint):
         "SUBSELECTION": ["CAT", "NUM_DISCRETE", "SUBSTANCE", "CUSTOM"],
     }
 
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
         satisfied = [cond.evaluate(data[cond.parameter]) for cond in self.conditions]
         res = reduce(self._combiner_dict[self.combiner], satisfied)
@@ -224,7 +224,7 @@ class SumTargetConstraint(ParametersListConstraint):
     target_value: float
     tolerance: float = 0.0
 
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
         mask_bad = (
             data[self.parameters].sum(axis=1) - self.target_value
@@ -245,7 +245,7 @@ class ProdTargetConstraint(ParametersListConstraint):
     target_value: float
     tolerance: float = 0.0
 
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
         mask_bad = (
             data[self.parameters].prod(axis=1) - self.target_value
@@ -272,7 +272,7 @@ class NoLabelDuplicatesConstraint(ParametersListConstraint):
     eval_during_creation = True
     eval_during_modeling = False
 
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
         mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
 
@@ -293,7 +293,7 @@ class LinkedParametersConstraint(ParametersListConstraint):
     eval_during_creation = True
     eval_during_modeling = False
 
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
         mask_bad = data[self.parameters].nunique(axis=1) != 1
 
@@ -316,7 +316,7 @@ class PermutationInvarianceConstraint(ParametersListConstraint):
     eval_during_creation = True
     eval_during_modeling = False
 
-    def evaluate(self, data: pd.DataFrame) -> pd.Index:
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
 
         # Merge a permutation invariant representation of all affected parameters with

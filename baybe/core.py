@@ -105,7 +105,7 @@ class BayBE:
 
         # Mark entries that violate parameter constraints
         for constraint in (c for c in self.constraints if c.eval_during_creation):
-            inds = constraint.evaluate(self.searchspace_exp_rep)
+            inds = constraint.get_invalid(self.searchspace_exp_rep)
             self.searchspace_metadata.loc[inds, "dont_recommend"] = True
 
         # Delete constraint-violating parameter combinations from the searchspace
