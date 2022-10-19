@@ -254,24 +254,27 @@ class ProdTargetConstraint(ParametersListConstraint):
         return data.index[mask_bad]
 
 
-class DuplicatesConstraint(ParametersListConstraint):
+class NoLabelDuplicatesConstraint(ParametersListConstraint):
     """
-    Constraint class for excluding combinations where parameter values appear more
-    often than a specified number of duplicates.
+    Constraint class for excluding entries where the occurring labels are not unique.
+    This can be useful to remove entries that arise from e.g. a permutation invariance.
+    Examples:
+        - A,B,C,D would remain
+        - A,A,B,C would be removed
+        - A,A,B,B would be removed
+        - A,A,B,A would be removed
+        - A,C,A,C would be removed
+        - A,C,B,C would be removed
     """
 
     # class variables
-    type = "MAX_N_DUPLICATES"
+    type = "NO_LABEL_DUPLICATES"
     eval_during_creation = True
     eval_during_modeling = False
-    max_duplicates: int = 0
 
     def evaluate(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
-        mask_bad = (
-            data[self.parameters].nunique(axis=1)
-            < len(self.parameters) - self.max_duplicates
-        )
+        mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
 
         return data.index[mask_bad]
 

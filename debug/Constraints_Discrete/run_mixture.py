@@ -83,7 +83,7 @@ config_dict = {
     # never be chosen twice.
     "constraints": [
         {
-            # This constraint will only affect serchspace creation
+            # This constraint will only affect searchspace creation
             "type": "SUM_TARGET",
             "parameters": ["Fraction1", "Fraction2", "Fraction3"],
             "target_value": 100.0,
@@ -91,13 +91,12 @@ config_dict = {
         },
         {
             # This constraint will only affect serchspace creation
-            "type": "MAX_N_DUPLICATES",
+            "type": "NO_LABEL_DUPLICATES",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-            "max_duplicates": 0,
         },
         {
-            # This constraint will affect the modeling
-            "type": "INVARIANCE",
+            # This constraint will affect searchspace creation
+            "type": "PERMUTATION_INVARIANCE",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
         },
     ],
@@ -109,21 +108,22 @@ baybe_obj = BayBE(config)
 print(baybe_obj)
 
 N_ITERATIONS = 3
+print("\n\n######## ALL FOLLOWING OUTPUTS SHOULD BE 0 ########")
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n##### ITERATION {kIter+1} #####")
+    print(f"\n##### ITERATION {kIter+1} #####")
     print(
-        baybe_obj.searchspace_exp_rep.loc[
-            ~baybe_obj.searchspace_metadata["dont_recommend"],
-            ["Fraction1", "Fraction2", "Fraction3"],
-        ].sum(axis=1)
+        "Number of searchspace entries where fractions do not sum to 100.0: ",
+        baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
+        .sum(axis=1)
+        .ne(100.0)
+        .sum(),
     )
     print(
-        baybe_obj.searchspace_exp_rep.loc[
-            ~baybe_obj.searchspace_metadata["dont_recommend"],
-            ["Solvent1", "Solvent2", "Solvent3"],
-        ]
+        "Number of searchspace entries that have duplicate solvent labels:  ",
+        baybe_obj.searchspace_exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .nunique(axis=1)
-        .min()
+        .ne(3)
+        .sum(),
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)

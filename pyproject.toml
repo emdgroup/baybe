@@ -79,6 +79,8 @@ disable = [
 	"too-many-locals", # too strict (encountered in history module)
 	"too-many-arguments", # too strict (encountered in history module)
 	"too-many-statements", # too strict (encountered in history module)
+	"unsubscriptable-object", # well known false positive
+	# -> see https://github.com/PyCQA/pylint/issues/1498
 	]
 
 [tool.pylint.BASIC]
