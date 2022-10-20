@@ -5,7 +5,8 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Tuple, Type
+from functools import wraps
+from typing import Callable, Dict, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -65,6 +66,47 @@ def _smooth_var(covar: Tensor):
     # Add fixed var of amplitude
     amplitude = 1e-6
     return covar + amplitude
+
+
+def batch_untransform(
+    posterior: Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]
+) -> Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]:
+    """A wrapper for posterior functions incompatible with t, q batchings"""
+
+    @wraps(posterior)
+    def decorated(model: SurrogateModel, candidates: Tensor) -> [Tensor, Tensor]:
+        """Helper function to remove t, q batching"""
+
+        # Keep track of dimension
+        t_shape = candidates.shape[:-2]
+        q_shape = candidates.shape[-2]
+
+        # Scale if needed
+        if hasattr(model, "scaler") and model.scaler is not None:
+            candidates = model.scaler.transform(candidates)
+
+        # Remove all batching
+        untransformed = candidates.flatten(end_dim=-2)
+
+        # Call function
+        mean, var = posterior(model, untransformed)
+
+        # Transform back
+        mean = mean.reshape(t_shape + (q_shape,))
+        var = var.reshape(t_shape + (q_shape,)).flatten(end_dim=-2)
+
+        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
+        covar = covar.reshape(t_shape + (q_shape, q_shape))
+
+        # Unscale
+        if hasattr(model, "scaler") and model.scaler is not None:
+            mean, covar = model.scaler.untransform(mean, covar)
+
+        covar = _smooth_var(covar)
+
+        return mean, covar
+
+    return decorated
 
 
 class SurrogateModel(ABC):
@@ -233,97 +275,25 @@ class RandomForestModel(SurrogateModel):
         #  DataFrame
         self.searchspace = searchspace
 
+    @batch_untransform
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
 
-        # TODO: Input/Output Transforms
-        # Not Needed - Ensemble Methods
+        # Get predictions
+        mean = Tensor(self.model.predict(candidates))
 
-        # TODO: Decide between the below methods (1,2,3)
-        # Method 1 (Old), can only handle q = 1
-        # candidates = candidates.squeeze(1)
-        # mean2 = Tensor(self.model.predict(candidates)).unsqueeze(1)
-
-        # epred = [self.model.estimators_[tree].predict(candidates)
-        #             for tree in range(self.model.n_estimators)]
-        # Calculate variance
-        # var = torch.diag(Tensor(np.var(epred, axis=0))).unsqueeze(2)
-        # var2 = Tensor(np.var(epred, axis=0)).unsqueeze(1).unsqueeze(1)
-
-        # method 2, can only handle t spanning one dimension
-        # Predict mean (assuming size *t, q, d)
-        # means = [
-        #     Tensor(self.model.predict(t)).unsqueeze(-1)
-        #     for t in candidates.unbind(dim=-2)
-        # ]
-
-        # mean = torch.cat(tuple(means),dim=-1)
-
-        # epreds = [
-        #     Tensor(np.var([self.model.estimators_[tree].predict(t)
-        #             for tree in range(self.model.n_estimators)], axis=0))
-
-        #     for t in candidates.unbind(dim=-2)
-        # ]
-
-        # vars = torch.cat(tuple([ep.unsqueeze(-1) for ep in epreds]), dim=-1)
-
-        # var = torch.cat(tuple([torch.diag(v).unsqueeze(0) for v in vars.unbind(-2)]))
-
-        # Method 3
-        # TODO: Understand how multi-dimensional t-batch works
-
-        # Flatten t-batch
-        flattened = candidates.flatten(end_dim=-3)
-
-        # Get means for each q-batch
-        means = [
-            Tensor(self.model.predict(t)).unsqueeze(-1)
-            for t in flattened.unbind(dim=-2)
-        ]
-
-        # Combine the means and reshape t-batch
-        mean = torch.cat(tuple(means), dim=-1).reshape(candidates.shape[:-1])
-
-        # Printouts
-        # print(mean)
-        # print(mean.size())
-
-        # Get Ensemble predictions (assuming size *t, q, d)
-
-        # Get q-batch dimension
-        q_batch = candidates.shape[-2]
-
-        # Get variance for each q-batch
-        epreds = [
-            Tensor(
-                np.var(
-                    [
-                        self.model.estimators_[tree].predict(t)
-                        for tree in range(self.model.n_estimators)
-                    ],
-                    axis=0,
-                )
+        # Get ensemble predictions
+        var = Tensor(
+            np.var(
+                [
+                    self.model.estimators_[tree].predict(candidates)
+                    for tree in range(self.model.n_estimators)
+                ],
+                axis=0,
             )
-            for t in flattened.unbind(dim=-2)
-        ]
+        )
 
-        # Combine variances
-        var = torch.cat(tuple(ep.unsqueeze(-1) for ep in epreds), dim=-1)
-
-        # Construct diagonal covariance matrices
-        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
-
-        # Reshape t-batch
-        covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
-
-        # Smooth variance
-        covar = _smooth_var(covar)
-
-        # Printouts
-        # print(covar)
-        # print(covar.size())
-        return mean, covar
+        return mean, var
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
@@ -357,60 +327,17 @@ class NGBoostModel(SurrogateModel):
         self.searchspace = searchspace
         self.scaler = None
 
+    @batch_untransform
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
+        # Get Predictions
+        dists = self.model.pred_dist(candidates)
 
-        # TODO: Input/Output Transforms
-        # Not helpful - Ensemble method
+        # Split into mean and variance
+        mean = Tensor([d.mean() for d in dists])
+        var = Tensor([d.std() ** 2 for d in dists])
 
-        # Method 1 (Old), can only handle q=1
-        # Predict
-        # candidates = candidates.squeeze(1)
-        # pred = self.model.pred_dist(candidates)
-
-        # Get mean and variance
-        # mean = Tensor(pred.mean()).unsqueeze(1)
-        # var = torch.diag(Tensor(pred.std()**2))
-        # var = Tensor(pred.std()**2).unsqueeze(1).unsqueeze(1)
-
-        # Method 3
-        # TODO: Understand how multi-dimensional t-batch works
-
-        # Scaling
-        candidates = self.scaler.transform(candidates)
-
-        # Get q-batch dimension
-        q_batch = candidates.shape[-2]
-
-        # Flatten t-batch
-        flattened = candidates.flatten(end_dim=-3)
-
-        # Get distribution for each q-batch
-        dists = [self.model.pred_dist(t) for t in flattened.unbind(dim=-2)]
-
-        # Extract means and vars
-        means = [Tensor(d.mean()).unsqueeze(-1) for d in dists]
-        var = [Tensor(d.std() ** 2).unsqueeze(-1) for d in dists]
-
-        # Combine means and reshape t-batch
-        mean = torch.cat(tuple(means), dim=-1).reshape(candidates.shape[:-1])
-
-        # Combine variances
-        var = torch.cat(tuple(var), dim=-1)
-
-        # Construct diagonal covariance matrices
-        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
-
-        # Reshape t-batch
-        covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
-
-        # Undo transform
-        mean, covar = self.scaler.untransform(mean, covar)
-
-        # Smooth variance
-        covar = _smooth_var(covar)
-
-        return mean, covar
+        return mean, var
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
@@ -448,63 +375,17 @@ class BayesianLinearModel(SurrogateModel):
         # TODO: Add in degree option for the BL model
         self.degree = degree
 
+    @batch_untransform
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
+        # Get predictions
+        dists = self.model.predict(np.array(candidates), return_std=True)
 
-        # TODO: Input/Output Transforms
-        # Added with SK-Learn Standard Scaler
+        # Split into mean and variance
+        mean = Tensor(dists[0])
+        var = Tensor([d**2 for d in dists[1]])
 
-        # Method 1 (Old), can only handle q = 1
-        # Convert tensors to numpy array
-        # candidates = np.array(candidates.squeeze(1))
-
-        # Predict
-        # pred, std = self.model.predict(candidates, return_std=True)
-
-        # mean = Tensor(pred).unsqueeze(1)
-        # var = Tensor(std**2).unsqueeze(1).unsqueeze(1)
-
-        # Method 3
-        # TODO: Understand how multi-dimensional t-batch works
-
-        # Scaling
-        candidates = self.scaler.transform(candidates)
-
-        # Get q-batch dimension
-        q_batch = candidates.shape[-2]
-
-        # Flatten t-batch
-        flattened = candidates.flatten(end_dim=-3)
-
-        # Get distribution for each q-batch
-        dists = [
-            self.model.predict(np.array(t), return_std=True)
-            for t in flattened.unbind(dim=-2)
-        ]
-
-        # Extract means and vars
-        means = [Tensor(d[0]).unsqueeze(-1) for d in dists]
-        var = [Tensor(d[1] ** 2).unsqueeze(-1) for d in dists]
-
-        # Combine means and reshape t-batch
-        mean = torch.cat(tuple(means), dim=-1).reshape(candidates.shape[:-1])
-
-        # Combine variances
-        var = torch.cat(tuple(var), dim=-1)
-
-        # Construct diagonal covariance matrices
-        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
-
-        # Reshape t-batch
-        covar = covar.reshape(candidates.shape[:-2] + (q_batch, q_batch))
-
-        # Undo transform
-        mean, covar = self.scaler.untransform(mean, covar)
-
-        # Smooth variance
-        covar = _smooth_var(covar)
-
-        return mean, covar
+        return mean, var
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
