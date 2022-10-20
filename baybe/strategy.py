@@ -197,8 +197,14 @@ class KMeansInitialStrategy(BasicClusteringInitialStrategy):
         distances = pairwise_distances(
             self.candidates_scaled, self.model.cluster_centers_
         )
-        # FIXME: applying `unique`, there can be fewer returned points than requested
-        selection = np.unique(np.argmin(distances, axis=0)).tolist()
+        # Set the distances of points that were not assigned by the model to that
+        # cluster to infinity. This assures that one unique point per cluster is
+        # assigned.
+        predicted_clusters = self.model.predict(self.candidates_scaled)
+        for k_cluster in range(self.model.cluster_centers_.shape[0]):
+            inds = predicted_clusters != k_cluster
+            distances[inds, k_cluster] = np.inf
+        selection = np.argmin(distances, axis=0).tolist()
         return selection
 
 
@@ -218,11 +224,19 @@ class GaussianMixtureInitialStrategy(BasicClusteringInitialStrategy):
         In a GMM, a reasonable choice is to pick the point with the highest
         probability densities for each cluster.
         """
+        predicted_clusters = self.model.predict(self.candidates_scaled)
         selection = []
-        for k in range(self.model.n_components):
+        for k_cluster in range(self.model.n_components):
             density = multivariate_normal(
-                cov=self.model.covariances_[k], mean=self.model.means_[k]
+                cov=self.model.covariances_[k_cluster],
+                mean=self.model.means_[k_cluster],
             ).logpdf(self.candidates_scaled)
+
+            # For selecting a point from this cluster we only consider points that were
+            # assigned to the current cluster by the model, hence set the density of
+            # others to 0
+            density[predicted_clusters != k_cluster] = 0.0
+
             selection.append(np.argmax(density).item())
         return selection
 
