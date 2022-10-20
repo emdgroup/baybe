@@ -274,6 +274,7 @@ class RandomForestModel(SurrogateModel):
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
+        self.scaler = None
 
     @batch_untransform
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -301,12 +302,13 @@ class RandomForestModel(SurrogateModel):
         _check_x(train_x)
         _check_y(train_y)
 
-        # TODO: Input/Output Transforms
-        # Not needed - Ensemble Method
-
         # Slightly modify input if necessary
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
+
+        # Input/Output Transforms
+        self.scaler = DefaultScaler(self.searchspace)
+        train_x, train_y = self.scaler.fit_transform(train_x, train_y)
 
         # Create Model
         self.model = RandomForestRegressor()
@@ -349,7 +351,7 @@ class NGBoostModel(SurrogateModel):
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
 
-        # TODO: Input/Output Transforms
+        # Input/Output Transforms
         self.scaler = DefaultScaler(self.searchspace)
         train_x, train_y = self.scaler.fit_transform(train_x, train_y)
 
@@ -397,7 +399,7 @@ class BayesianLinearModel(SurrogateModel):
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
 
-        # TODO: Input/Output Transforms
+        # Input/Output Transforms
         self.scaler = DefaultScaler(self.searchspace)
         train_x, train_y = self.scaler.fit_transform(train_x, train_y)
 
