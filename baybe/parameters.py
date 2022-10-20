@@ -21,6 +21,7 @@ from .utils import (
     df_uncorrelated_features,
     HashableDict,
     is_valid_smiles,
+    isabstract,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
@@ -84,7 +85,8 @@ class Parameter(
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
     def is_in_range(self, item: object) -> bool:
         """

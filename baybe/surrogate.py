@@ -23,7 +23,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
-from .utils import to_tensor
+from .utils import isabstract, to_tensor
 
 
 class SurrogateModel(ABC):
@@ -63,7 +63,8 @@ class SurrogateModel(ABC):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
 
 class GaussianProcessModel(SurrogateModel):
@@ -100,6 +101,7 @@ class GaussianProcessModel(SurrogateModel):
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
+        # TODO [Scaling]: scaling should be handled by searchspace object
         input_transform = Normalize(train_x.shape[1], bounds=bounds)
         outcome_transform = Standardize(train_y.shape[1])
 

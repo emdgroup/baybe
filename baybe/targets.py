@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Extra, validator
 
-from .utils import check_if_in, geom_mean, StrictValidationError
+from .utils import check_if_in, geom_mean, isabstract, StrictValidationError
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
 log = logging.getLogger(__name__)
@@ -130,7 +130,8 @@ class Target(ABC, BaseModel, extra=Extra.forbid):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        cls.SUBCLASSES[cls.type] = cls
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
     @classmethod
     def create(cls, config: dict) -> Target:
