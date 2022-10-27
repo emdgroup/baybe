@@ -72,7 +72,19 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
 class BayBE:
     """Main class for interaction with BayBE."""
 
-    def __init__(self, config: BayBEConfig):
+    def __init__(self, config: BayBEConfig, create_searchspace: bool = True):
+        """
+        Constructor of the BayBE class.
+
+        Parameters
+        ----------
+        config: BayBEConfig
+            Pydantic-validated config object.
+        create_searchspace: bool
+            Indicator that allows skipping the creation of searchspace and strategy.
+            Useful when using the constructor to create a BayBE object from stored data
+            (in that case searchspace is loaded from disk and not created from config).
+        """
         # Set global random seeds
         torch.manual_seed(config.random_seed)
         random.seed(config.random_seed)
@@ -100,50 +112,58 @@ class BayBE:
             key=lambda x: _constraints_order.index(x.type),
         )
 
-        # Create a dataframe representing the experimental search space
-        self.searchspace_exp_rep: pd.DataFrame = (
-            baybe_parameters.parameter_cartesian_prod_to_df(self.parameters)
-        )
+        if create_searchspace:
+            # Create a dataframe representing the experimental search space
+            self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
+                self.parameters
+            )
 
-        # Create Metadata
-        self.searchspace_metadata = pd.DataFrame(
-            {
-                "was_recommended": False,
-                "was_measured": False,
-                "dont_recommend": False,
-            },
-            index=self.searchspace_exp_rep.index,
-        )
+            # Create Metadata
+            self.searchspace_metadata = pd.DataFrame(
+                {
+                    "was_recommended": False,
+                    "was_measured": False,
+                    "dont_recommend": False,
+                },
+                index=self.searchspace_exp_rep.index,
+            )
 
-        # Remove entries that violate parameter constraints
-        for constraint in (c for c in self.constraints if c.eval_during_creation):
-            inds = constraint.get_invalid(self.searchspace_exp_rep)
-            self.searchspace_exp_rep.drop(index=inds, inplace=True)
-            self.searchspace_metadata.drop(index=inds, inplace=True)
-        self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
-        self.searchspace_metadata.reset_index(inplace=True, drop=True)
+            # Remove entries that violate parameter constraints
+            for constraint in (c for c in self.constraints if c.eval_during_creation):
+                inds = constraint.get_invalid(self.searchspace_exp_rep)
+                self.searchspace_exp_rep.drop(index=inds, inplace=True)
+                self.searchspace_metadata.drop(index=inds, inplace=True)
+            self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
+            self.searchspace_metadata.reset_index(inplace=True, drop=True)
 
-        # Create a corresponding dataframe containing the computational representation
-        self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
-            self.searchspace_exp_rep
-        )
+            # Create a corresponding dataframe containing the computational
+            # representation
+            self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
+                self.searchspace_exp_rep
+            )
 
-        # Drop all columns that do not carry any covariate information
-        # TODO [searchspace]: this is a temporary fix and should be handled by the
-        #   yet to be implemented `Searchspace` class
-        self.searchspace_comp_rep = df_drop_single_value_columns(
-            self.searchspace_comp_rep
-        )
+            # Drop all columns that do not carry any covariate information
+            # TODO [searchspace]: this is a temporary fix and should be handled by the
+            #   yet to be implemented `Searchspace` class
+            self.searchspace_comp_rep = df_drop_single_value_columns(
+                self.searchspace_comp_rep
+            )
+
+            # Initialize the DOE strategy
+            self.strategy = Strategy(
+                **config.strategy, searchspace=self.searchspace_comp_rep
+            )
+
+        else:
+            self.searchspace_exp_rep = None
+            self.searchspace_comp_rep = None
+            self.searchspace_metadata = None
+            self.strategy = None
 
         # Declare measurement dataframes
         self.measurements_exp_rep = None
         self.measurements_comp_rep_x = None
         self.measurements_comp_rep_y = None
-
-        # Initialize the DOE strategy
-        self.strategy = Strategy(
-            **config.strategy, searchspace=self.searchspace_comp_rep
-        )
 
     def transform_rep_exp2comp(
         self,
@@ -423,22 +443,31 @@ class BayBE:
             (
                 config_dict,
                 batches_done,
+                searchspace_exp_rep,
                 searchspace_metadata,
                 measurements_exp_rep,
             ) = cPickle.load(file)
 
         # Create the BayBE object via constructor and stored config
         config = BayBEConfig(**config_dict)
-        baybe_object = cls(config)
+        baybe_object = cls(config, create_searchspace=False)
 
         # Update relevant data from previous iterations
         baybe_object.batches_done = batches_done
+        baybe_object.searchspace_exp_rep = searchspace_exp_rep
+        baybe_object.searchspace_comp_rep, _ = baybe_object.transform_rep_exp2comp(
+            baybe_object.searchspace_exp_rep
+        )
         baybe_object.searchspace_metadata = searchspace_metadata
         baybe_object.measurements_exp_rep = measurements_exp_rep
         (
             baybe_object.measurements_comp_rep_x,
             baybe_object.measurements_comp_rep_y,
         ) = baybe_object.transform_rep_exp2comp(baybe_object.measurements_exp_rep)
+        baybe_object.strategy = Strategy(
+            **config.strategy,  # pylint: disable=not-a-mapping
+            searchspace=baybe_object.searchspace_comp_rep,
+        )
 
         # Fit the strategy object
         baybe_object.strategy.fit(
@@ -474,6 +503,7 @@ class BayBE:
             to_dump = [
                 self.config.dict(),
                 self.batches_done,
+                self.searchspace_exp_rep,
                 self.searchspace_metadata,
                 self.measurements_exp_rep,
             ]
