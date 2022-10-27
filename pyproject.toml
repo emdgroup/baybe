@@ -10,6 +10,7 @@ license = {text = "Apache-2.0"}
 requires-python =">=3.8"
 dependencies = [
     "botorch>=0.7.0",
+    "fsspec>=2022.10.0",
     "funcy>=1.17",
     "gpytorch>=1.9.0",
     "matplotlib>=3.5.2",
