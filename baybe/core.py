@@ -1,9 +1,15 @@
 """
 Core functionality of BayBE. Main point of interaction via Python.
 """
+from __future__ import annotations
+
+import _pickle as cPickle
+
 import logging
 import random
 from typing import List, Optional, Tuple
+
+import fsspec
 
 import numpy as np
 import pandas as pd
@@ -95,8 +101,8 @@ class BayBE:
         )
 
         # Create a dataframe representing the experimental search space
-        self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
-            self.parameters
+        self.searchspace_exp_rep: pd.DataFrame = (
+            baybe_parameters.parameter_cartesian_prod_to_df(self.parameters)
         )
 
         # Create Metadata
@@ -396,19 +402,79 @@ class BayBE:
 
         return rec
 
-    def load(self) -> None:
+    @classmethod
+    def from_stored(cls, path: str, **kwargs) -> BayBE:
         """
-        Load new internal state of a DOE from a specified file
-        The load and save functions could also be omitted and the user would have to
-        take care of simply storing the BayBE object eg via dill. This could
-        potentially create problems when code versions are different
-        """
-        # TODO: Implement and revise docstring + type hints accordingly
-        raise NotImplementedError("Loading a BayBE object is not implemented yet")
+        Class method to create a BayBE object from a stored object.
+        Parameters
+        ----------
+        path: str
+            Main path to the stored object.
+        kwargs: keyword arguments
+            Additional arguments passed to fsspec.open, useful for instance for
+            accessing remote or s3 file systems.
 
-    def save(self) -> None:
+        Returns
+        -------
+            BayBE instance.
         """
-        Store the current state of the DOE on disk
+        # Load stored data
+        with fsspec.open(path, "rb", **kwargs) as file:
+            (
+                config_dict,
+                batches_done,
+                searchspace_metadata,
+                measurements_exp_rep,
+            ) = cPickle.load(file)
+
+        # Create the BayBE object via constructor and stored config
+        config = BayBEConfig(**config_dict)
+        baybe_object = cls(config)
+
+        # Update relevant data from previous iterations
+        baybe_object.batches_done = batches_done
+        baybe_object.searchspace_metadata = searchspace_metadata
+        baybe_object.measurements_exp_rep = measurements_exp_rep
+        (
+            baybe_object.measurements_comp_rep_x,
+            baybe_object.measurements_comp_rep_y,
+        ) = baybe_object.transform_rep_exp2comp(baybe_object.measurements_exp_rep)
+
+        # Fit the strategy object
+        baybe_object.strategy.fit(
+            baybe_object.measurements_comp_rep_x, baybe_object.measurements_comp_rep_y
+        )
+
+        return baybe_object
+
+    def save(self, path: Optional[str] = None, **kwargs) -> None:
         """
-        # TODO: Implement and revise docstring + type hints accordingly
-        raise NotImplementedError("Saving a BayBE object is not implemented yet")
+        Store the current state of the BayBE instance on disk.
+
+        Parameters
+        ----------
+        path: str
+            Main path to where the object should be stored.
+        kwargs: keyword arguments
+            Additional arguments passed to fsspec.open, useful for instance for
+            accessing remote or s3 file systems.
+
+        Returns
+        -------
+            Nothing.
+        """
+        if path is None:
+            path = "./baybe_object.baybe"
+            log.warning(
+                "No path was specified when storing BayBE object. Will use '%s''",
+                path,
+            )
+
+        with fsspec.open(path, "wb", **kwargs) as file:
+            to_dump = [
+                self.config.dict(),
+                self.batches_done,
+                self.searchspace_metadata,
+                self.measurements_exp_rep,
+            ]
+            cPickle.dump(to_dump, file)
