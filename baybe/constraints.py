@@ -311,9 +311,12 @@ class PermutationInvarianceConstraint(ParametersListConstraint):
     """
     Constraint class for declaring that a set of parameters are permutation invariant,
     that is, (val_from_param1, val_from_param2) is equivalent to
-    (val_from_param2, val_from_param1).
+    (val_from_param2, val_from_param1). Since it does not make sense to have this
+    constraint with duplicated labels this implementation also drops duplicated labels
+    similar to the NoLabelDuplicatesConstraint constraint.
 
-    Note: This constraint cannot be evaluated during creation.
+    Note: This constraint is evaluated during creation. In the future it might also be
+    evaluated during modeling to make use of the invariance.
     """
 
     # class variables
@@ -325,9 +328,15 @@ class PermutationInvarianceConstraint(ParametersListConstraint):
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
+        # Get indices of entries with duplicate label entries. These will also be
+        # dropped by this constraint.
+        mask_duplicate_labels = data[self.parameters].nunique(axis=1) != len(
+            self.parameters
+        )
 
         # Merge a permutation invariant representation of all affected parameters with
-        # the other parameters and indicate duplicates
+        # the other parameters and indicate duplicates. This ensures that variation in
+        # other parameters is also accounted for.
         other_params = data.columns.drop(self.parameters).tolist()
         df_eval = pd.concat(
             [
@@ -335,7 +344,10 @@ class PermutationInvarianceConstraint(ParametersListConstraint):
                 data[self.parameters].apply(frozenset, axis=1),
             ],
             axis=1,
-        )
-        mask_bad = df_eval.duplicated(keep="first")
+        ).loc[~mask_duplicate_labels]
+        mask_duplicate_invariant = df_eval.duplicated(keep="first")
 
-        return data.index[mask_bad]
+        inds_duplicate_labels = data.index[mask_duplicate_labels]
+        inds_duplicate_invariant = df_eval.index[mask_duplicate_invariant]
+
+        return inds_duplicate_labels.union(inds_duplicate_invariant)

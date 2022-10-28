@@ -85,11 +85,11 @@ config_dict = {
             "target_value": 100.0,
             # 'tolerance': 0.5,
         },
-        {
-            # This constraint will only affect serchspace creation
-            "type": "NO_LABEL_DUPLICATES",
-            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-        },
+        # {
+        #     # This constraint will only affect searchspace creation
+        #     "type": "NO_LABEL_DUPLICATES",
+        #     "parameters": ["Solvent1", "Solvent2", "Solvent3"],
+        # },
         {
             # This constraint will affect searchspace creation
             "type": "PERMUTATION_INVARIANCE",
