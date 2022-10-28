@@ -145,7 +145,7 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """
-        Get the indices of data frame entries that are invalid under the constraint.
+        Get the indices of dataframe entries that are invalid under the constraint.
 
         Parameters
         ----------
