@@ -20,7 +20,6 @@ from baybe.surrogate import (
     RandomForestModel,
 )
 from baybe.utils import to_tensor
-from gpytorch.distributions import MultivariateNormal
 
 # fix issue with streamlit and pydantic
 # https://github.com/streamlit/streamlit/issues/3218
@@ -119,16 +118,11 @@ train_y = to_tensor(targets.loc[train_idx])
 surrogate_model = surrogate_model_cls(searchspace)
 surrogate_model.fit(train_x, train_y)
 
-# Keep original code for GP; Create a slightly different one for the rest
-if surrogate_name == "Gaussian Process":
-    mvn = surrogate_model.model.posterior(to_tensor(searchspace))
-    mean = mvn.mean.detach().numpy()[:, 0]
-    std = mvn.variance.sqrt().detach().numpy()[:, 0]
-else:
-    mean, covar = surrogate_model.posterior(to_tensor(searchspace).unsqueeze(1))
-    mvn = MultivariateNormal(mean, covar)
-    mean = mvn.mean.detach().numpy()[:, 0]
-    std = mvn.variance.sqrt().detach().numpy()[:, 0]
+# create the mean and standard deviation predictions for the entire search space
+test_x = to_tensor(searchspace)
+mean, covar = surrogate_model.posterior(test_x)
+mean = mean.detach().numpy()
+std = covar.diag().sqrt().detach().numpy()
 
 # visualize the test function, training points, and model predictions
 fig = plt.figure()
