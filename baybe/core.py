@@ -129,6 +129,13 @@ class BayBE:
             self.searchspace_exp_rep
         )
 
+        # Drop all columns that do not carry any covariate information
+        # TODO [searchspace]: this is a temporary fix and should be handled by the
+        #   yet to be implemented `Searchspace` class
+        self.searchspace_comp_rep = df_drop_single_value_columns(
+            self.searchspace_comp_rep
+        )
+
         # Declare measurement dataframes
         self.measurements_exp_rep = None
         self.measurements_comp_rep_x = None
@@ -165,11 +172,7 @@ class BayBE:
             for param in self.parameters:
                 comp_df = param.transform_rep_exp2comp(data[param.name])
                 dfs.append(comp_df)
-            # TODO [searchspace]: Dropping single value columns at this place is
-            #  potentially dangerous since it can lead to different computational
-            #  representations of the same parameters for different data sets.
-            #  --> Find fix when introducing the `Searchspace` class
-            comp_rep_x = df_drop_single_value_columns(pd.concat(dfs, axis=1))
+            comp_rep_x = pd.concat(dfs, axis=1)
 
         # Transform the (optional) targets
         comp_rep_y = None
@@ -349,6 +352,13 @@ class BayBE:
             self.measurements_comp_rep_x,
             self.measurements_comp_rep_y,
         ) = self.transform_rep_exp2comp(self.measurements_exp_rep)
+
+        # Use the column representation defined by the searchspace
+        # TODO: This is a temporary fix. See TODO for computational transformation
+        #  in constructor.
+        self.measurements_comp_rep_x = self.measurements_comp_rep_x[
+            self.searchspace_comp_rep.columns
+        ]
 
         # Update the strategy object
         self.strategy.fit(self.measurements_comp_rep_x, self.measurements_comp_rep_y)
