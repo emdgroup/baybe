@@ -37,7 +37,11 @@ def cubic(arr: np.ndarray) -> np.ndarray:
     """Cubic test function."""
     out = (
         function_amplitude
-        * np.power(arr / (upper_parameter_limit - lower_parameter_limit), 3)
+        * np.power(
+            (arr - lower_parameter_limit)
+            / (upper_parameter_limit - lower_parameter_limit),
+            3,
+        )
         + function_bias
     )
     return out
