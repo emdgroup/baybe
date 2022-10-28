@@ -165,6 +165,10 @@ class BayBE:
             for param in self.parameters:
                 comp_df = param.transform_rep_exp2comp(data[param.name])
                 dfs.append(comp_df)
+            # TODO [searchspace]: Dropping single value columns at this place is
+            #  potentially dangerous since it can lead to different computational
+            #  representations of the same parameters for different data sets.
+            #  --> Find fix when introducing the `Searchspace` class
             comp_rep_x = df_drop_single_value_columns(pd.concat(dfs, axis=1))
 
         # Transform the (optional) targets
