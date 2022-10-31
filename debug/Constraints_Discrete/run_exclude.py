@@ -7,8 +7,7 @@ import numpy as np
 from baybe.core import BayBE, BayBEConfig
 from baybe.utils import add_fake_results, add_parameter_noise
 
-# Simple example with one numerical target, two categorical and one numerical discrete
-# parameter
+N_GRID_POINTS = 15
 config_dict = {
     "project_name": "Exclusion Constraints Test (Discrete)",
     "allow_repeated_recommendations": False,
@@ -39,7 +38,7 @@ config_dict = {
         {
             "name": "Temperature",
             "type": "NUM_DISCRETE",
-            "values": list(np.linspace(100, 200, 10)),
+            "values": list(np.linspace(100, 200, N_GRID_POINTS)),
             "tolerance": 0.5,
         },
         {
@@ -62,23 +61,59 @@ config_dict = {
     "strategy": {
         # "surrogate_model_cls": "GP",
     },
-    # The constrains simulate a situation where solvents C2 and C4 are not compatible
-    # with temperatures > 154 and should thus be excluded
     "constraints": [
+        # This constraint simulates a situation where solvents C2 and C4 are not
+        # compatible with temperatures > 154 and should thus be excluded
         {
             "type": "EXCLUDE",
+            "parameters": ["Temperature", "Solvent"],
             "combiner": "AND",
             "conditions": [
                 {
                     "type": "THRESHOLD",
-                    "parameter": "Temperature",
                     "threshold": 151,
                     "operator": ">",
                 },
                 {
                     "type": "SUBSELECTION",
-                    "parameter": "Solvent",
                     "selection": ["C2", "C4"],
+                },
+            ],
+        },
+        # This constraint simulates a situation where solvents C5 and C6 are not
+        # compatible with pressures >= 5 and should thus be excluded
+        {
+            "type": "EXCLUDE",
+            "parameters": ["Pressure", "Solvent"],
+            "combiner": "AND",
+            "conditions": [
+                {
+                    "type": "THRESHOLD",
+                    "threshold": 5,
+                    "operator": ">",
+                },
+                {
+                    "type": "SUBSELECTION",
+                    "selection": ["C5", "C6"],
+                },
+            ],
+        },
+        # This constraint simulates a situation where pressures below 3 should never be
+        # combined with temperatures above 120
+        {
+            "type": "EXCLUDE",
+            "parameters": ["Pressure", "Temperature"],
+            "combiner": "AND",
+            "conditions": [
+                {
+                    "type": "THRESHOLD",
+                    "threshold": 3.0,
+                    "operator": "<",
+                },
+                {
+                    "type": "THRESHOLD",
+                    "threshold": 120.0,
+                    "operator": ">",
                 },
             ],
         },
@@ -93,6 +128,8 @@ print(baybe_obj)
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
+
+    print("### ASSERTS ###")
     print(
         "Number of entries with either Solvents C2 or C4 and a temperature above 151: ",
         (
@@ -100,6 +137,22 @@ for kIter in range(N_ITERATIONS):
             & baybe_obj.searchspace_exp_rep["Solvent"].apply(
                 lambda x: x in ["C2", "C4"]
             )
+        ).sum(),
+    )
+    print(
+        "Number of entries with either Solvents C5 or C6 and a pressure above 5:      ",
+        (
+            baybe_obj.searchspace_exp_rep["Pressure"].apply(lambda x: x > 5)
+            & baybe_obj.searchspace_exp_rep["Solvent"].apply(
+                lambda x: x in ["C5", "C6"]
+            )
+        ).sum(),
+    )
+    print(
+        "Number of entries with pressure below 3 and temperature above 120:           ",
+        (
+            baybe_obj.searchspace_exp_rep["Pressure"].apply(lambda x: x < 3)
+            & baybe_obj.searchspace_exp_rep["Temperature"].apply(lambda x: x > 120)
         ).sum(),
     )
 

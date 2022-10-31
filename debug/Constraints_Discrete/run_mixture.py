@@ -80,16 +80,18 @@ config_dict = {
     "constraints": [
         {
             # This constraint will only affect searchspace creation
-            "type": "SUM_TARGET",
+            "type": "SUM",
             "parameters": ["Fraction1", "Fraction2", "Fraction3"],
-            "target_value": 100.0,
-            # 'tolerance': 0.5,
+            "condition": {
+                "threshold": 100.0,
+                "operator": "=",
+            },
         },
-        # {
-        #     # This constraint will only affect searchspace creation
-        #     "type": "NO_LABEL_DUPLICATES",
-        #     "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-        # },
+        {
+            # This constraint will only affect searchspace creation
+            "type": "NO_LABEL_DUPLICATES",
+            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
+        },
         {
             # This constraint will affect searchspace creation
             "type": "PERMUTATION_INVARIANCE",
@@ -104,9 +106,10 @@ baybe_obj = BayBE(config)
 print(baybe_obj)
 
 N_ITERATIONS = 3
-print("\n\n######## ALL FOLLOWING OUTPUTS SHOULD BE 0 ########")
 for kIter in range(N_ITERATIONS):
     print(f"\n##### ITERATION {kIter+1} #####")
+
+    print("### ASSERTS ###")
     print(
         "Number of searchspace entries where fractions do not sum to 100.0:      ",
         baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]]

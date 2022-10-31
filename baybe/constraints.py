@@ -28,7 +28,6 @@ class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
 
     # class variables
     type: ClassVar[str]
-    parameter: str
     SUBCLASSES: ClassVar[Dict[str, Type[Constraint]]] = {}
 
     @classmethod
@@ -90,7 +89,7 @@ class ThresholdCondition(Condition):
             raise TypeError(
                 "You tried to apply a threshold condition to non-numeric data. "
                 "This operation is error-prone and not supported. Only use threshold "
-                "constraints with numerical parameters."
+                "conditions with numerical parameters."
             )
 
         return data.apply(rpartial(self._operator_dict[self.operator], self.threshold))
@@ -121,11 +120,23 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
 
     # class variables
     type: ClassVar[str]
+    parameters: List[str]
+
     SUBCLASSES: ClassVar[Dict[str, Constraint]] = {}
 
     # TODO: it might turn out these are not needed at a later development stage
     eval_during_creation: ClassVar[bool]
     eval_during_modeling: ClassVar[bool]
+
+    @validator("parameters")
+    def validate_params(cls, parameters):
+        """Validates the parameter list."""
+        if len(parameters) != len(set(parameters)):
+            raise AssertionError(
+                f"The given 'parameter' list must have unique values "
+                f"but was: {parameters}."
+            )
+        return parameters
 
     @classmethod
     def create(cls, config: dict) -> Constraint:
@@ -184,84 +195,55 @@ class ExcludeConstraint(Constraint):
         "XOR": ops.xor,
     }
 
-    # TODO: validate that condition types match with the allowed parameter types
-    # TODO: NUM_CONTINUOUS should also work for "THRESHOLD" but that requires
-    #  additional logic
-    _conditions_allowed_parameters = {
-        "THRESHOLD": ["NUM_DISCRETE"],
-        "SUBSELECTION": ["CAT", "NUM_DISCRETE", "SUBSTANCE", "CUSTOM"],
-    }
-
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
-        satisfied = [cond.evaluate(data[cond.parameter]) for cond in self.conditions]
+        satisfied = [
+            cond.evaluate(data[self.parameters[k]])
+            for k, cond in enumerate(self.conditions)
+        ]
         res = reduce(self._combiner_dict[self.combiner], satisfied)
         return data.index[res]
 
 
-class ParametersListConstraint(Constraint, ABC):
-    """
-    Intermediate base class for constraints that can only be defined on joint
-    parameter spaces.
-    """
-
-    # class variables
-    parameters: List[str]
-
-    @validator("parameters")
-    def validate_params(cls, parameters):
-        """Validates the parameter list."""
-        if len(parameters) != len(set(parameters)):
-            raise AssertionError(
-                f"The given 'parameter' list must have unique values "
-                f"but was: {parameters}."
-            )
-        return parameters
-
-
-class SumTargetConstraint(ParametersListConstraint):
+class SumConstraint(Constraint):
     """
     Class for modelling sum constraints.
     """
 
     # class variables
-    type = "SUM_TARGET"
+    type = "SUM"
     eval_during_creation = True
     eval_during_modeling = False
-    target_value: float
-    tolerance: float = 0.0
+    condition: ThresholdCondition
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
-        mask_bad = (
-            data[self.parameters].sum(axis=1) - self.target_value
-        ).abs() > self.tolerance
+        evaluate_data = data[self.parameters].sum(axis=1)
+        mask_bad = ~self.condition.evaluate(evaluate_data)
 
         return data.index[mask_bad]
 
 
-class ProdTargetConstraint(ParametersListConstraint):
+class ProductConstraint(Constraint):
     """
     Class for modelling product constraints.
     """
 
     # class variables
-    type = "PROD_TARGET"
+    type = "PRODUCT"
     eval_during_creation = True
     eval_during_modeling = False
-    target_value: float
-    tolerance: float = 0.0
+    condition: ThresholdCondition
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
-        mask_bad = (
-            data[self.parameters].prod(axis=1) - self.target_value
-        ).abs() > self.tolerance
+        evaluate_data = data[self.parameters].prod(axis=1)
+        mask_bad = ~self.condition.evaluate(evaluate_data)
 
         return data.index[mask_bad]
 
 
-class NoLabelDuplicatesConstraint(ParametersListConstraint):
+class NoLabelDuplicatesConstraint(Constraint):
     """
     Constraint class for excluding entries where the occurring labels are not unique.
     This can be useful to remove entries that arise from e.g. a permutation invariance.
@@ -286,7 +268,7 @@ class NoLabelDuplicatesConstraint(ParametersListConstraint):
         return data.index[mask_bad]
 
 
-class LinkedParametersConstraint(ParametersListConstraint):
+class LinkedParametersConstraint(Constraint):
     """
     Constraint class for linking the values of parameters. This constraint type
     effectively allows generating parameter sets that relate to the same underlying
@@ -307,7 +289,7 @@ class LinkedParametersConstraint(ParametersListConstraint):
         return data.index[mask_bad]
 
 
-class PermutationInvarianceConstraint(ParametersListConstraint):
+class PermutationInvarianceConstraint(Constraint):
     """
     Constraint class for declaring that a set of parameters are permutation invariant,
     that is, (val_from_param1, val_from_param2) is equivalent to
