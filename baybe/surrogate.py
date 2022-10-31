@@ -77,32 +77,28 @@ def batch_untransform(
     def decorated(model: SurrogateModel, candidates: Tensor) -> [Tensor, Tensor]:
         """Helper function to remove t, q batching"""
 
-        # Keep track of dimension
-        t_shape = candidates.shape[:-2]
-        q_shape = candidates.shape[-2]
+        # Check if batching is needed
+        if len(candidates.shape) > 2:
+            # Keep track of dimension
+            t_shape = candidates.shape[:-2]
+            q_shape = candidates.shape[-2]
 
-        # Scale if needed
-        if hasattr(model, "scaler") and model.scaler is not None:
-            candidates = model.scaler.transform(candidates)
+            # Remove all batching
+            untransformed = candidates.flatten(end_dim=-2)
 
-        # Remove all batching
-        untransformed = candidates.flatten(end_dim=-2)
+            # Call function
+            mean, covar = posterior(model, untransformed)
+            var = covar.diag()
 
-        # Call function
-        mean, var = posterior(model, untransformed)
+            # Transform back
+            mean = mean.reshape(t_shape + (q_shape,))
+            var = var.reshape(t_shape + (q_shape,)).flatten(end_dim=-2)
 
-        # Transform back
-        mean = mean.reshape(t_shape + (q_shape,))
-        var = var.reshape(t_shape + (q_shape,)).flatten(end_dim=-2)
+            covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
+            covar = covar.reshape(t_shape + (q_shape, q_shape))
 
-        covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
-        covar = covar.reshape(t_shape + (q_shape, q_shape))
-
-        # Unscale
-        if hasattr(model, "scaler") and model.scaler is not None:
-            mean, covar = model.scaler.untransform(mean, covar)
-
-        covar = _smooth_var(covar)
+        else:
+            mean, covar = posterior(model, candidates)
 
         return mean, covar
 
@@ -294,7 +290,7 @@ class RandomForestModel(SurrogateModel):
             )
         )
 
-        return mean, var
+        return mean, torch.diag(var)
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
@@ -339,7 +335,7 @@ class NGBoostModel(SurrogateModel):
         mean = Tensor([d.mean() for d in dists])
         var = Tensor([d.std() ** 2 for d in dists])
 
-        return mean, var
+        return mean, torch.diag(var)
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
@@ -387,7 +383,7 @@ class BayesianLinearModel(SurrogateModel):
         mean = Tensor(dists[0])
         var = Tensor([d**2 for d in dists[1]])
 
-        return mean, var
+        return mean, torch.diag(var)
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
