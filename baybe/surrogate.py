@@ -259,6 +259,30 @@ class GaussianProcessModel(SurrogateModel):
         fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, options={"disp": False})
 
 
+class TrivialModel(SurrogateModel):
+    """A trivial surrogate model"""
+
+    type = "TM"
+
+    def __init__(self, searchspace: pd.DataFrame):
+        self.model = None
+        self.searchspace = searchspace
+
+    @batch_untransform
+    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See base class."""
+        # Predicts the mean of training data
+        mean = self.model * torch.ones([len(candidates)])
+        # Covariance is the identity matrix
+        covar = torch.eye(len(candidates))
+        return mean, covar
+
+    def fit(self, train_x: Tensor, train_y: Tensor):
+        """See base class."""
+        # Keep track of training data
+        self.model = float(torch.mean(train_y.ravel()))
+
+
 class RandomForestModel(SurrogateModel):
     """A random forest surrogate model"""
 
