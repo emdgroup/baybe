@@ -19,6 +19,15 @@ from .utils import check_if_in
 
 log = logging.getLogger(__name__)
 
+_constraints_order = [
+    "EXCLUDE",
+    "NO_LABEL_DUPLICATES",
+    "LINKED_PARAMETERS",
+    "SUM",
+    "PRODUCT",
+    "PERMUTATION_INVARIANCE",
+]
+
 
 class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """

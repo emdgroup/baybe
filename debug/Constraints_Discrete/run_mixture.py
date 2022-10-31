@@ -79,6 +79,11 @@ config_dict = {
     # never be chosen twice.
     "constraints": [
         {
+            # This constraint will affect searchspace creation
+            "type": "PERMUTATION_INVARIANCE",
+            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
+        },
+        {
             # This constraint will only affect searchspace creation
             "type": "SUM",
             "parameters": ["Fraction1", "Fraction2", "Fraction3"],
@@ -90,11 +95,6 @@ config_dict = {
         {
             # This constraint will only affect searchspace creation
             "type": "NO_LABEL_DUPLICATES",
-            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-        },
-        {
-            # This constraint will affect searchspace creation
-            "type": "PERMUTATION_INVARIANCE",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
         },
     ],

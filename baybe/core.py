@@ -12,7 +12,7 @@ import torch
 from pydantic import BaseModel, Extra, validator
 
 from . import parameters as baybe_parameters
-from .constraints import Constraint
+from .constraints import _constraints_order, Constraint
 from .parameters import Parameter
 from .strategy import Strategy
 from .targets import Objective, Target
@@ -75,17 +75,23 @@ class BayBE:
         # Current iteration/batch number
         self.batches_done = 0
 
-        # Parse config and create all model components except the strategy (which
-        # currently needs the computational representation of the search space)
+        # Config
         # TODO: derive the required information directly from the Parameter objects
         # TODO: find a better solution for the self._random property hack
         self.config = config
+        self._random = (
+            config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
+        )
+
+        # Parameter, Objective and Target objects
         self.parameters = [Parameter.create(p) for p in config.parameters]
         self.objective = Objective(**config.objective)
         self.targets = [Target.create(t) for t in self.objective.targets]
-        self.constraints = [Constraint.create(c) for c in config.constraints]
-        self._random = (
-            config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
+
+        # Constraints including possible resorting
+        self.constraints = sorted(
+            [Constraint.create(c) for c in config.constraints],
+            key=lambda x: _constraints_order.index(x.type),
         )
 
         # Create a dataframe representing the experimental search space
