@@ -78,11 +78,6 @@ class DefaultScaler(Scaler):
         mean = torch.mean(y, dim=0)
         std = torch.std(y, dim=0)
 
-        # Add noise to std if very small
-        if std < 1e-6:
-            y = _smooth_y(y)
-            std = torch.std(y, dim=0)
-
         # Define scaling functions
         self.scale_x = lambda l: (l - bounds[0]) / (bounds[1] - bounds[0])
         self.scale_y = lambda l: (l - mean) / std

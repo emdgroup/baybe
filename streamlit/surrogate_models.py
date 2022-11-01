@@ -62,7 +62,7 @@ def main():
     surrogate_name = st.sidebar.selectbox(
         "Surrogate model", list(surrogate_models.keys())
     )
-    n_training_points = st.sidebar.slider("Number of training points", 2, 20, 5)
+    n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         """
