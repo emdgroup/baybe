@@ -62,7 +62,7 @@ def split_model(model: Type[SurrogateModel]):
         """Model splitting into two cases"""
 
         def __init__(self, *args, **kwargs):
-            """Init with underlying surrogate and scaler"""
+            """Init with underlying model"""
             self.model = model(*args, **kwargs)
 
         def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -78,6 +78,7 @@ def split_model(model: Type[SurrogateModel]):
             _check_y(train_y)
 
             # https://github.com/pytorch/pytorch/issues/29372
+            # Needs unbiased = True (otherwise it'll be nan)
             if torch.std(train_y.ravel(), unbiased=False) < 1e-6:
                 self.model = TrivialModel(self.model.searchspace)
 
@@ -177,6 +178,7 @@ def batch_untransform(
             covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
             covar = covar.reshape(t_shape + (q_shape, q_shape))
 
+        # When batching is not needed
         else:
             mean, covar = posterior(model, candidates)
 
@@ -354,6 +356,7 @@ class TrivialModel(SurrogateModel):
         # Predicts the mean of training data
         mean = self.model * torch.ones([len(candidates)])
         # Covariance is the identity matrix
+        # TODO: use target value bounds when explicitly provided
         covar = torch.eye(len(candidates))
         return mean, covar
 
