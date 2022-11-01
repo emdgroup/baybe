@@ -104,15 +104,19 @@ class DefaultScaler(Scaler):
         if not self.fitted:
             raise RuntimeError("Scaler object must be fitted first")
 
-        # Predict (posterior) mode
-        # Flatten t-batch
-        flattened = x.flatten(end_dim=-3)
+        # Check if batching is needed
+        if len(x.shape) > 2:
+            # Predict (posterior) mode
+            # Flatten t-batch
+            flattened = x.flatten(end_dim=-3)
 
-        # Get scaled values
-        scaled = [self.scale_x(t).unsqueeze(1) for t in flattened.unbind(dim=-2)]
+            # Get scaled values
+            scaled = [self.scale_x(t).unsqueeze(1) for t in flattened.unbind(dim=-2)]
 
-        # Combine scaled values
-        scaled = torch.cat(tuple(scaled), dim=-1).reshape(x.shape)
+            # Combine scaled values
+            scaled = torch.cat(tuple(scaled), dim=-1).reshape(x.shape)
+        else:
+            scaled = self.scale_x(x)
 
         return scaled
 

@@ -68,6 +68,55 @@ def _smooth_var(covar: Tensor):
     return covar + amplitude
 
 
+def scale_model(model: Type[SurrogateModel]):
+    """A wrapper for models to be scaled"""
+
+    class ScaledModel(model):
+        """A scaled model"""
+
+        def __init__(self, *args):
+            """Init with underlying surrogate and scaler"""
+            self.model = model
+            self.scaler = None
+            self.searchspace = args[0]  # searchspace as an argument
+
+        def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+            """Scaled posterior"""
+            # Scale input
+            candidates = self.scaler.transform(candidates)
+            # Call posterior
+            mean, covar = self.model.posterior(self.model, candidates)
+            # Unscale output
+            mean, covar = self.scaler.untransform(mean, covar)
+            # Smooth variance
+            covar = _smooth_var(covar)
+            return mean, covar
+
+        def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+            """Fit scaler and model"""
+            # Initialize scaler
+            self.scaler = DefaultScaler(self.searchspace)
+            # Scale inputs
+            train_x, train_y = self.scaler.fit_transform(train_x, train_y)
+            # Call model fit
+            self.model.fit(self.model, train_x, train_y)
+
+        def __getattribute__(self, attr):
+            """Getter for all other attributes"""
+            # Attributes for Scaled Model
+            try:
+                val = super().__getattribute__(attr)
+            except AttributeError:
+                pass
+            else:
+                return val
+
+            # Additional attributes for underlying scaled model, if needed
+            return self.model.__getattribute__(attr)
+
+    return ScaledModel
+
+
 def batch_untransform(
     posterior: Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]
 ) -> Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]:
@@ -283,6 +332,7 @@ class TrivialModel(SurrogateModel):
         self.model = float(torch.mean(train_y.ravel()))
 
 
+@scale_model
 class RandomForestModel(SurrogateModel):
     """A random forest surrogate model"""
 
@@ -294,7 +344,6 @@ class RandomForestModel(SurrogateModel):
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
-        self.scaler = None
 
     @batch_untransform
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -326,16 +375,13 @@ class RandomForestModel(SurrogateModel):
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
 
-        # Input/Output Transforms
-        self.scaler = DefaultScaler(self.searchspace)
-        train_x, train_y = self.scaler.fit_transform(train_x, train_y)
-
         # Create Model
         self.model = RandomForestRegressor()
         # Train model
         self.model.fit(train_x, train_y.ravel())
 
 
+@scale_model
 class NGBoostModel(SurrogateModel):
     """A natural-gradient-boosting surrogate model"""
 
@@ -347,7 +393,6 @@ class NGBoostModel(SurrogateModel):
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
-        self.scaler = None
 
     @batch_untransform
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -371,16 +416,13 @@ class NGBoostModel(SurrogateModel):
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
 
-        # Input/Output Transforms
-        self.scaler = DefaultScaler(self.searchspace)
-        train_x, train_y = self.scaler.fit_transform(train_x, train_y)
-
         # Create and Train model
         self.model = NGBRegressor(n_estimators=25, verbose=False).fit(
             train_x, train_y.ravel()
         )
 
 
+@scale_model
 class BayesianLinearModel(SurrogateModel):
     """A Bayesian linear regression surrogate model"""
 
@@ -392,7 +434,6 @@ class BayesianLinearModel(SurrogateModel):
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
-        self.scaler = None
 
         # TODO: Add in degree option for the BL model
         self.degree = degree
@@ -418,10 +459,6 @@ class BayesianLinearModel(SurrogateModel):
         # Slightly modify input if necessary
         if len(train_x) == 1:
             train_x, train_y = _hallucinate(train_x, train_y)
-
-        # Input/Output Transforms
-        self.scaler = DefaultScaler(self.searchspace)
-        train_x, train_y = self.scaler.fit_transform(train_x, train_y)
 
         # Create Model
         self.model = ARDRegression()
