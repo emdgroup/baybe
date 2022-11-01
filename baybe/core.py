@@ -109,24 +109,11 @@ class BayBE:
             index=self.searchspace_exp_rep.index,
         )
 
-        # Mark entries that violate parameter constraints
+        # Remove entries that violate parameter constraints
         for constraint in (c for c in self.constraints if c.eval_during_creation):
             inds = constraint.get_invalid(self.searchspace_exp_rep)
-            self.searchspace_metadata.loc[inds, "dont_recommend"] = True
-
-        # Delete constraint-violating parameter combinations from the searchspace
-        self.searchspace_exp_rep.drop(
-            index=self.searchspace_exp_rep.index[
-                self.searchspace_metadata["dont_recommend"]
-            ],
-            inplace=True,
-        )
-        self.searchspace_metadata.drop(
-            index=self.searchspace_metadata.index[
-                self.searchspace_metadata["dont_recommend"]
-            ],
-            inplace=True,
-        )
+            self.searchspace_exp_rep.drop(index=inds, inplace=True)
+            self.searchspace_metadata.drop(index=inds, inplace=True)
         self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
         self.searchspace_metadata.reset_index(inplace=True, drop=True)
 
