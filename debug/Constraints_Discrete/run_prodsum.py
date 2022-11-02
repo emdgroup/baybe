@@ -23,17 +23,13 @@ config_dict = {
                 "C1": "C",
                 "C2": "CC",
                 "C3": "CCC",
-                "C4": "CCCC",
-                "C5": "CCCCC",
-                "c6": "c1ccccc1",
-                "C6": "CCCCCC",
             },
             "encoding": "RDKIT",
         },
         {
             "name": "SomeSetting",
             "type": "CAT",
-            "values": ["very slow", "slow", "normal", "fast", "very fast"],
+            "values": ["slow", "normal", "fast"],
             "encoding": "INT",
         },
         {
@@ -110,6 +106,7 @@ config_dict = {
             "condition": {
                 "threshold": 100.0,
                 "operator": "=",
+                "tolerance": 1.0,
             },
         },
     ],
@@ -126,7 +123,7 @@ for kIter in range(N_ITERATIONS):
 
     print("### ASSERTS ###")
     print(
-        "Number of entries with 1,2,sum above 150:      ",
+        "Number of entries with 1,2-sum above 150:      ",
         (
             baybe_obj.searchspace_exp_rep[["NumParameter1", "NumParameter2"]].sum(
                 axis=1
@@ -145,11 +142,12 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         "Number of entries with 5,6-sum unequal to 100: ",
-        (
-            baybe_obj.searchspace_exp_rep[["NumParameter5", "NumParameter6"]]
-            .sum(axis=1)
-            .ne(100.0)
-        ).sum(),
+        baybe_obj.searchspace_exp_rep[["NumParameter5", "NumParameter6"]]
+        .sum(axis=1)
+        .apply(lambda x: x - 100.0)
+        .abs()
+        .gt(1.0)
+        .sum(),
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)

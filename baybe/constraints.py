@@ -378,7 +378,6 @@ class DependenciesConstraint(Constraint):
     (e.g. 'on'). All dependencies must be declared in a single constraint.
     """
 
-    # class variables
     type = "DEPENDENCIES"
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
@@ -398,15 +397,17 @@ class DependenciesConstraint(Constraint):
         """See base class."""
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value (None) to cause degeneracy.
-        # TODO verify if also a censoring of the dependency-causing values might be
-        #  necessary. If there is just one (e.g. 0.0) is should be fine but if there
-        #  are multiple (e.g. "off" and "unpowered") it might not work as intended
         censored_data = data.copy()
         for k, _ in enumerate(self.parameters):
             censored_data.loc[
                 ~self.conditions[k].evaluate(data[self.parameters[k]]),
                 self.affected_parameters[k],
-            ] = None
+            ] = (
+                # picking None as dummy value here does not work because it will be
+                # converted to nan for float columns, evading comparison later
+                np.finfo(float).eps
+                * np.pi
+            )
 
         # Create an invariant indicator: pair each value of an affected parameter with
         # the corresponding value of the parameter it depends on. These indicators
@@ -430,7 +431,6 @@ class DependenciesConstraint(Constraint):
             ],
             axis=1,
         )
-
         inds_bad = data.index[df_eval.duplicated(keep="first")]
 
         return inds_bad

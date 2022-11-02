@@ -19,6 +19,7 @@ solvs = {
 }
 
 N_GRID_POINTS = 7
+SUM_TOLERANCE = 1.0
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
@@ -94,7 +95,7 @@ config_dict = {
             "condition": {
                 "threshold": 100.0,
                 "operator": "=",
-                "tolerance": 1.0,
+                "tolerance": SUM_TOLERANCE,
             },
         },
         {
@@ -146,7 +147,9 @@ for kIter in range(N_ITERATIONS):
         "Number of searchspace entries where fractions do not sum to 100.0:      ",
         baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
         .sum(axis=1)
-        .ne(100.0)
+        .apply(lambda x: x - 100.0)
+        .abs()
+        .gt(SUM_TOLERANCE)
         .sum(),
     )
     print(
@@ -165,13 +168,9 @@ for kIter in range(N_ITERATIONS):
         .duplicated()
         .sum(),
     )
-    # The following asserts only work if N_GRID_POINTS splits the range into partitions
-    # that can be displayed without rounding errors. If this is not the case
-    # (for instance with N_GRID_POINTS = 13) then the sum constraint will throw out
-    # entries that do not exactly match. This can be solved by using a tolerance or
-    # better values for N_GRID_POINTS. The reference values are the number of
-    # X-combinations times the number of possible partitions for X entries
-    # (depends on N_GRID_POINTS)
+    # The following asserts only work if the tolerance for the threshold condition in
+    # the constraint are not 0. Otherwise the sum/prod constraints will remove more
+    # points than intended due to numeric rounding
     print(
         f"Number of unique 1-solvent entries (expected {math.comb(len(solvs), 1)*1})",
         (baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
