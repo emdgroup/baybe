@@ -219,6 +219,8 @@ class SumConstraint(Constraint):
     Class for modelling sum constraints.
     """
 
+    # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
+
     # class variables
     type = "SUM"
     eval_during_creation = True
@@ -237,6 +239,8 @@ class ProductConstraint(Constraint):
     """
     Class for modelling product constraints.
     """
+
+    # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
     type = "PRODUCT"
