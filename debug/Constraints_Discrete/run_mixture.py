@@ -18,7 +18,7 @@ solvs = {
     # "C5": "CCCCC",
 }
 
-N_GRID_POINTS = 13
+N_GRID_POINTS = 7
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter

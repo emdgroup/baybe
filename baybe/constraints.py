@@ -33,8 +33,9 @@ _constraints_order = [
 
 class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """
-    Abstract base class for all conditions. Conditions are part of constraints,
-    a constraint can have multiple conditions.
+    Abstract base class for all conditions. Conditions always evaluate an expression
+    regarding a single parameter. Conditions are part of constraints, a constraint
+    can have multiple conditions.
     """
 
     # class variables
@@ -88,8 +89,8 @@ class ThresholdCondition(Condition):
     _operator_dict = {
         "<": ops.lt,
         "<=": ops.le,
-        "=": np.isclose,
-        "==": np.isclose,
+        "=": rpartial(np.isclose, rtol=0.0),
+        "==": rpartial(np.isclose, rtol=0.0),
         "!=": ops.ne,
         ">": ops.gt,
         ">=": ops.ge,
@@ -97,7 +98,7 @@ class ThresholdCondition(Condition):
 
     @validator("tolerance")
     def validate_tolerance(cls, tolerance, values):
-        """Validates the parameter list."""
+        """Assures tolerance can only be set with '=' and '==' operators"""
         if values["operator"] not in ["=", "=="]:
             raise StrictValidationError(
                 "Tolerance for a threshold condition is only valid with operators "
