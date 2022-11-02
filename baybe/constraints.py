@@ -308,8 +308,8 @@ class PermutationInvarianceConstraint(Constraint):
     Constraint class for declaring that a set of parameters are permutation invariant,
     that is, (val_from_param1, val_from_param2) is equivalent to
     (val_from_param2, val_from_param1). Since it does not make sense to have this
-    constraint with duplicated labels this implementation also drops duplicated labels
-    similar to the NoLabelDuplicatesConstraint constraint.
+    constraint with duplicated labels this implementation also internally applies the
+    NoDuplicatesConstraint.
 
     Note: This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
@@ -326,9 +326,10 @@ class PermutationInvarianceConstraint(Constraint):
         """See base class."""
         # Get indices of entries with duplicate label entries. These will also be
         # dropped by this constraint.
-        mask_duplicate_labels = data[self.parameters].nunique(axis=1) != len(
-            self.parameters
-        )
+        mask_duplicate_labels = pd.Series(False, index=data.index)
+        mask_duplicate_labels[
+            NoLabelDuplicatesConstraint(parameters=self.parameters).get_invalid(data)
+        ] = True
 
         # Merge a permutation invariant representation of all affected parameters with
         # the other parameters and indicate duplicates. This ensures that variation in
