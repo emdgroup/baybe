@@ -11,11 +11,12 @@ from inspect import isabstract
 
 from typing import ClassVar, Dict, List, Literal, Type, Union
 
+import numpy as np
 import pandas as pd
 from funcy import rpartial
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import check_if_in
+from .utils import check_if_in, StrictValidationError
 
 log = logging.getLogger(__name__)
 
@@ -81,28 +82,42 @@ class ThresholdCondition(Condition):
     type = "THRESHOLD"
     threshold: float
     operator: Literal["<", "<=", "=", "==", "!=", ">", ">="]
+    tolerance: float = 1e-8
 
     # define the valid operators
     _operator_dict = {
         "<": ops.lt,
         "<=": ops.le,
-        "=": ops.eq,
-        "==": ops.eq,
+        "=": np.isclose,
+        "==": np.isclose,
         "!=": ops.ne,
         ">": ops.gt,
         ">=": ops.ge,
     }
 
+    @validator("tolerance")
+    def validate_tolerance(cls, tolerance, values):
+        """Validates the parameter list."""
+        if values["operator"] not in ["=", "=="]:
+            raise StrictValidationError(
+                "Tolerance for a threshold condition is only valid with operators "
+                "'=' and '=='"
+            )
+        return tolerance
+
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
         if data.dtype.kind not in "iufb":
-            raise TypeError(
+            raise StrictValidationError(
                 "You tried to apply a threshold condition to non-numeric data. "
                 "This operation is error-prone and not supported. Only use threshold "
                 "conditions with numerical parameters."
             )
+        func = rpartial(self._operator_dict[self.operator], self.threshold)
+        if self.operator in ["=", "=="]:
+            func = rpartial(func, atol=self.tolerance)
 
-        return data.apply(rpartial(self._operator_dict[self.operator], self.threshold))
+        return data.apply(func)
 
 
 class SubSelectionCondition(Condition):

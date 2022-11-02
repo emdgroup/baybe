@@ -18,7 +18,7 @@ solvs = {
     # "C5": "CCCCC",
 }
 
-N_GRID_POINTS = 5
+N_GRID_POINTS = 13
 
 # Simple example with one numerical target, two categorical and one numerical discrete
 # parameter
@@ -94,6 +94,7 @@ config_dict = {
             "condition": {
                 "threshold": 100.0,
                 "operator": "=",
+                "tolerance": 1.0,
             },
         },
         {
