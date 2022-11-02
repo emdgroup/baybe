@@ -341,13 +341,18 @@ class PermutationInvarianceConstraint(Constraint):
                 data[self.parameters].apply(frozenset, axis=1),
             ],
             axis=1,
-        ).loc[~mask_duplicate_labels]
-        mask_duplicate_invariant = df_eval.duplicated(keep="first")
+        ).loc[
+            ~mask_duplicate_labels  # only consider label-duplicate-free part
+        ]
+        mask_duplicate_permutations = df_eval.duplicated(keep="first")
 
+        # Indices of entries with label-duplicates
         inds_duplicate_labels = data.index[mask_duplicate_labels]
-        inds_duplicate_invariant = df_eval.index[mask_duplicate_invariant]
 
-        return inds_duplicate_labels.union(inds_duplicate_invariant)
+        # Indices of duplicate permutations in the (already label-duplicate-free) data
+        inds_duplicate_permutations = df_eval.index[mask_duplicate_permutations]
+
+        return inds_duplicate_labels.union(inds_duplicate_permutations)
 
 
 class DependenciesConstraint(Constraint):
