@@ -26,6 +26,7 @@ _constraints_order = [
     "SUM",
     "PRODUCT",
     "PERMUTATION_INVARIANCE",
+    "DEPENDENCIES",
 ]
 
 
@@ -346,3 +347,68 @@ class PermutationInvarianceConstraint(Constraint):
         inds_duplicate_invariant = df_eval.index[mask_duplicate_invariant]
 
         return inds_duplicate_labels.union(inds_duplicate_invariant)
+
+
+class DependenciesConstraint(Constraint):
+    """
+    Constraint that specifies dependencies between parameters. For instance some
+    parameters might only be relevant when another parameter has a certain value
+    (e.g. 'on'). All dependencies must be declared in a single constraint.
+    """
+
+    # class variables
+    type = "DEPENDENCIES"
+    # TODO update usage in different evaluation stages once that is implemented in
+    #  strategy and surrogate
+    eval_during_creation = True
+    eval_during_modeling = False
+    conditions: List[Union[dict, Condition]]
+    affected_parameters: List[List[str]]
+
+    @validator("conditions")
+    def validate_conditions(cls, conditions):
+        """Validates the conditions."""
+        return [
+            c if isinstance(c, Condition) else Condition.create(c) for c in conditions
+        ]
+
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        """See base class."""
+        # Create data copy and mark entries where the dependency conditions are negative
+        # with a dummy value (None) to cause degeneracy.
+        # TODO verify if also a censoring of the dependency-causing values might be
+        #  necessary. If there is just one (e.g. 0.0) is should be fine but if there
+        #  are multiple (e.g. "off" and "unpowered") it might not work as intended
+        censored_data = data.copy()
+        for k, _ in enumerate(self.parameters):
+            censored_data.loc[
+                ~self.conditions[k].evaluate(data[self.parameters[k]]),
+                self.affected_parameters[k],
+            ] = None
+
+        # Create an invariant indicator: pair each value of an affected parameter with
+        # the corresponding value of the parameter it depends on. These indicators
+        # will become invariant when frozenset is applied to them.
+        for k, param in enumerate(self.parameters):
+            for affected_param in self.affected_parameters[k]:
+                censored_data[affected_param] = list(
+                    zip(censored_data[affected_param], censored_data[param])
+                )
+
+        # Merge the invariant indicator with all other parameters (i.e. neither the
+        # affected nor the dependency-causing ones) and detect duplicates in that space.
+        all_affected_params = [col for cols in self.affected_parameters for col in cols]
+        other_params = (
+            data.columns.drop(all_affected_params).drop(self.parameters).tolist()
+        )
+        df_eval = pd.concat(
+            [
+                censored_data[other_params],
+                censored_data[all_affected_params].apply(frozenset, axis=1),
+            ],
+            axis=1,
+        )
+
+        inds_bad = data.index[df_eval.duplicated(keep="first")]
+
+        return inds_bad

@@ -2,6 +2,8 @@
 Test for imposing sum constraints for discrete parameters, e.g. for mixture fractions
 that need to sum up to 1
 """
+import math
+
 import numpy as np
 
 from baybe.core import BayBE, BayBEConfig
@@ -12,6 +14,8 @@ solvs = {
     "C1": "C",
     "C2": "CC",
     "C3": "CCC",
+    # "C4": "CCCC",
+    # "C5": "CCCCC",
 }
 
 N_GRID_POINTS = 5
@@ -97,6 +101,33 @@ config_dict = {
             "type": "NO_LABEL_DUPLICATES",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
         },
+        {
+            # Test specifying dependencies. Also test the possibility to specify via
+            # different conditions
+            "type": "DEPENDENCIES",
+            "parameters": ["Fraction1", "Fraction2", "Fraction3"],
+            "conditions": [
+                {
+                    "type": "THRESHOLD",
+                    "threshold": 0.0,
+                    "operator": ">",
+                },
+                {
+                    "type": "THRESHOLD",
+                    "threshold": 0.0,
+                    "operator": ">",
+                },
+                {
+                    "type": "SUBSELECTION",
+                    "selection": list(np.linspace(0, 100, N_GRID_POINTS)[1:]),
+                },
+            ],
+            "affected_parameters": [
+                ["Solvent1"],
+                ["Solvent2"],
+                ["Solvent3"],
+            ],
+        },
     ],
 }
 
@@ -131,6 +162,36 @@ for kIter in range(N_ITERATIONS):
         .to_frame()
         .join(baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]])
         .duplicated()
+        .sum(),
+    )
+    # The following asserts only work if N_GRID_POINTS splits the range into partitions
+    # that can be displayed without rounding errors. If this is not the case
+    # (for instance with N_GRID_POINTS = 13) then the sum constraint will throw out
+    # entries that do not exactly match. This can be solved by using a tolerance or
+    # better values for N_GRID_POINTS. The reference values are the number of
+    # X-combinations times the number of possible partitions for X entries
+    # (depends on N_GRID_POINTS)
+    print(
+        f"Number of unique 1-solvent entries (expected {math.comb(len(solvs), 1)*1})",
+        (baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        .sum(axis=1)
+        .eq(2)
+        .sum(),
+    )
+    print(
+        f"Number of unique 2-solvent entries (expected"
+        f" {math.comb(len(solvs), 2)*(N_GRID_POINTS-2)})",
+        (baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        .sum(axis=1)
+        .eq(1)
+        .sum(),
+    )
+    print(
+        f"Number of unique 3-solvent entries (expected"
+        f" {math.comb(len(solvs), 3)*((N_GRID_POINTS-3)*(N_GRID_POINTS-2))//2})",
+        (baybe_obj.searchspace_exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        .sum(axis=1)
+        .eq(0)
         .sum(),
     )
 
