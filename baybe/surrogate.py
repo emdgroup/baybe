@@ -152,42 +152,42 @@ def scale_model(model_cls: Type[SurrogateModel]):
     return ScaledModel
 
 
-def batch_untransform(
+def batchify(
     posterior: Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]
 ) -> Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]:
-    """A wrapper for posterior functions incompatible with t, q batchings"""
+    """
+    Wraps `SurrogateModel` posterior functions that are incompatible with t- and
+    q-batching such that they become able to process batched inputs.
+    """
 
     @wraps(posterior)
-    def decorated(model: SurrogateModel, candidates: Tensor) -> [Tensor, Tensor]:
-        """Helper function to remove t, q batching"""
+    def sequential_posterior(
+        model: SurrogateModel, candidates: Tensor
+    ) -> [Tensor, Tensor]:
+        """A posterior function replacement that processes batches sequentially."""
 
-        # Check if batching is needed
-        if len(candidates.shape) > 2:
-            # Keep track of dimension
-            t_shape = candidates.shape[:-2]
-            q_shape = candidates.shape[-2]
+        # If no batch dimensions are given, call the model directly
+        if candidates.ndim == 2:
+            return posterior(model, candidates)
 
-            # Remove all batching
-            untransformed = candidates.flatten(end_dim=-2)
+        # Keep track of batch dimensions
+        t_shape = candidates.shape[:-2]
+        q_shape = candidates.shape[-2]
 
-            # Call function
-            mean, covar = posterior(model, untransformed)
-            var = covar.diag()
+        # Flatten all t-batch dimensions into a single one
+        flattened = candidates.flatten(end_dim=-3)
 
-            # Transform back
-            mean = mean.reshape(t_shape + (q_shape,))
-            var = var.reshape(t_shape + (q_shape,)).flatten(end_dim=-2)
+        # Call the model on each (flattened) t-batch
+        out = (posterior(model, batch) for batch in flattened)
 
-            covar = torch.cat(tuple(torch.diag(v).unsqueeze(0) for v in var.unbind(-2)))
-            covar = covar.reshape(t_shape + (q_shape, q_shape))
-
-        # When batching is not needed
-        else:
-            mean, covar = posterior(model, candidates)
+        # Collect the results and restore the batch dimensions
+        mean, covar = zip(*out)
+        mean = torch.reshape(torch.stack(mean), t_shape + (q_shape,))
+        covar = torch.reshape(torch.stack(covar), t_shape + (q_shape, q_shape))
 
         return mean, covar
 
-    return decorated
+    return sequential_posterior
 
 
 class SurrogateModel(ABC):
@@ -356,7 +356,7 @@ class MeanPredictionModel(SurrogateModel):
     def __init__(self, searchspace: pd.DataFrame):  # pylint: disable=unused-argument
         self.target_value = None
 
-    @batch_untransform
+    @batchify
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # TODO: use target value bounds for covariance scaling when explicitly provided
@@ -383,7 +383,7 @@ class RandomForestModel(SurrogateModel):
         #  DataFrame
         self.searchspace = searchspace
 
-    @batch_untransform
+    @batchify
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
 
@@ -425,7 +425,7 @@ class NGBoostModel(SurrogateModel):
         #  DataFrame
         self.searchspace = searchspace
 
-    @batch_untransform
+    @batchify
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get Predictions
@@ -462,7 +462,7 @@ class BayesianLinearModel(SurrogateModel):
         # TODO: Add in degree option for the BL model
         self.degree = degree
 
-    @batch_untransform
+    @batchify
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
