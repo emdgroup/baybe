@@ -23,25 +23,26 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
 from ngboost import NGBRegressor
-
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ARDRegression
 from sklearn.pipeline import Pipeline
-
 from torch import Tensor
 
 from .scaler import DefaultScaler
 from .utils import isabstract, to_tensor
 
 
-def _check_x(x: Tensor):
-    """Helper function to validate the input x"""
+MIN_TARGET_STD = 1e-6
+
+
+def _check_x(x: Tensor) -> None:
+    """Helper function to validate the model input."""
     if len(x) == 0:
-        raise ValueError("The input dataset must be non-empty")
+        raise ValueError("The model input must be non-empty.")
 
 
-def _check_y(y: Tensor):
-    """Helper function to validate the input y"""
+def _check_y(y: Tensor) -> None:
+    """Helper function to validate the model targets."""
     if y.shape[1] != 1:
         raise NotImplementedError("The model currently supports only one target.")
 
@@ -55,39 +56,50 @@ def _smooth_var(covar: Tensor):
     return covar + amplitude
 
 
-def split_model(model: Type[SurrogateModel]):
-    """A wrapper for models that require std(y) > 0"""
+def catch_constant_targets(model_cls: Type[SurrogateModel]):
+    """
+    Wraps a given `SurrogateModel` class that cannot handle constant training target
+    values such that these cases are handled by a separate model type.
+    """
 
-    class SplitModel(model):
-        """Model splitting into two cases"""
+    class SplitModel(SurrogateModel):
+        """
+        A surrogate model that applies a separate strategy for cases where the training
+        targets are all constant and no variance can be estimated.
+        """
+
+        # Overwrite the registered subclass with the wrapped version
+        type = model_cls.type
 
         def __init__(self, *args, **kwargs):
-            """Init with underlying model"""
-            self.model = model(*args, **kwargs)
+            """Stores an instance of the underlying model class."""
+            self.model = model_cls(*args, **kwargs)
 
         def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-            """Scaled posterior"""
-            # Call posterior
-            mean, covar = self.model.posterior(candidates)
-            return mean, covar
+            """Calls the posterior function of the internal model instance."""
+            return self.model.posterior(candidates)
 
         def fit(self, train_x: Tensor, train_y: Tensor) -> None:
-            """Fit model if std(y) is not 0"""
-            # Validate Input
+            """Selects a model based on the variance of the targets and fits it."""
+            # Validate the training data
+            # TODO: move the validation to the surrogate model class
             _check_x(train_x)
             _check_y(train_y)
 
             # https://github.com/pytorch/pytorch/issues/29372
-            # Needs unbiased = True (otherwise it'll be nan)
-            if torch.std(train_y.ravel(), unbiased=False) < 1e-6:
-                self.model = TrivialModel(self.model.searchspace)
+            # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
+            if torch.std(train_y.ravel(), unbiased=False) < MIN_TARGET_STD:
+                self.model = MeanPredictionModel(self.model.searchspace)
 
-            # Fit
+            # Fit the selected model with the training data
             self.model.fit(train_x, train_y)
 
         def __getattribute__(self, attr):
-            """Getter for all other attributes"""
-            # Attributes for Scaled Model
+            """
+            Accesses the attributes of the class instance if available, otherwise uses
+            the attributes of the internal model instance.
+            """
+            # Try to retrieve the attribute in the class
             try:
                 val = super().__getattribute__(attr)
             except AttributeError:
@@ -95,7 +107,7 @@ def split_model(model: Type[SurrogateModel]):
             else:
                 return val
 
-            # Additional attributes for underlying scaled model, if needed
+            # If the attribute has not been overwritten, use that of the internal model
             return self.model.__getattribute__(attr)
 
     return SplitModel
@@ -341,33 +353,32 @@ class GaussianProcessModel(SurrogateModel):
         fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, options={"disp": False})
 
 
-class TrivialModel(SurrogateModel):
-    """A trivial surrogate model"""
+class MeanPredictionModel(SurrogateModel):
+    """
+    A trivial surrogate model that uses the average value of the training targets as
+    posterior mean and a (data-independent) identity covariance matrix as posterior
+    covariance.
+    """
 
-    type = "TM"
+    type = "MP"
 
-    def __init__(self, searchspace: pd.DataFrame):
-        self.model = None
-        self.searchspace = searchspace
+    def __init__(self, searchspace: pd.DataFrame):  # pylint: disable=unused-argument
+        self.target_value = None
 
     @batch_untransform
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
-        # Predicts the mean of training data
-        mean = self.model * torch.ones([len(candidates)])
-        # Covariance is the identity matrix
-        # TODO: use target value bounds when explicitly provided
+        # TODO: use target value bounds for covariance scaling when explicitly provided
+        mean = self.target_value * torch.ones([len(candidates)])
         covar = torch.eye(len(candidates))
         return mean, covar
 
-    def fit(self, train_x: Tensor, train_y: Tensor):
+    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        # Keep track of training data
-        self.model = float(torch.mean(train_y.ravel()))
+        self.target_value = train_y.mean().item()
 
 
-@split_model
-@scale_model
+@catch_constant_targets
 class RandomForestModel(SurrogateModel):
     """A random forest surrogate model"""
 
@@ -408,7 +419,7 @@ class RandomForestModel(SurrogateModel):
         self.model.fit(train_x, train_y.ravel())
 
 
-@split_model
+@catch_constant_targets
 @scale_model
 class NGBoostModel(SurrogateModel):
     """A natural-gradient-boosting surrogate model"""
@@ -442,7 +453,7 @@ class NGBoostModel(SurrogateModel):
         )
 
 
-@split_model
+@catch_constant_targets
 @scale_model
 class BayesianLinearModel(SurrogateModel):
     """A Bayesian linear regression surrogate model"""
