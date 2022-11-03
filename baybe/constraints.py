@@ -8,12 +8,12 @@ import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
 from inspect import isabstract
-
 from typing import ClassVar, Dict, List, Literal, Type, Union
 
 import numpy as np
 import pandas as pd
 from funcy import rpartial
+from numpy.typing import ArrayLike
 from pydantic import BaseModel, conlist, Extra, validator
 
 from .utils import check_if_in, StrictValidationError
@@ -29,6 +29,11 @@ _constraints_order = [
     "PERMUTATION_INVARIANCE",
     "DEPENDENCIES",
 ]
+
+
+def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
+    """The counterpart to `numpy.isclose`."""
+    return np.logical_not(np.isclose(x, y, rtol=rtol, atol=atol))
 
 
 class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
@@ -91,18 +96,21 @@ class ThresholdCondition(Condition):
         "<=": ops.le,
         "=": rpartial(np.isclose, rtol=0.0),
         "==": rpartial(np.isclose, rtol=0.0),
-        "!=": ops.ne,
+        "!=": rpartial(_is_not_close, rtol=0.0),
         ">": ops.gt,
         ">=": ops.ge,
     }
 
+    # define operators that are eligible for tolerance
+    _tolerance_operators = ["=", "==", "!="]
+
     @validator("tolerance")
     def validate_tolerance(cls, tolerance, values):
-        """Assures tolerance can only be set with '=' and '==' operators"""
-        if values["operator"] not in ["=", "=="]:
+        """Ensures tolerance can only be set with appropriate operators."""
+        if values["operator"] not in cls._tolerance_operators:
             raise StrictValidationError(
-                "Tolerance for a threshold condition is only valid with operators "
-                "'=' and '=='"
+                f"Tolerance for a threshold condition is only valid with the following "
+                f"operators: {cls._tolerance_operators}."
             )
         return tolerance
 
@@ -115,7 +123,7 @@ class ThresholdCondition(Condition):
                 "conditions with numerical parameters."
             )
         func = rpartial(self._operator_dict[self.operator], self.threshold)
-        if self.operator in ["=", "=="]:
+        if self.operator in self._tolerance_operators:
             func = rpartial(func, atol=self.tolerance)
 
         return data.apply(func)
