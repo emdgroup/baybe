@@ -87,6 +87,32 @@ config_dict = {
             # This constraint will affect searchspace creation
             "type": "PERMUTATION_INVARIANCE",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
+            "dependencies": {
+                "parameters": ["Fraction1", "Fraction2", "Fraction3"],
+                "conditions": [
+                    {
+                        "type": "THRESHOLD",
+                        "threshold": 0.0,
+                        "operator": ">",
+                    },
+                    {
+                        "type": "THRESHOLD",
+                        "threshold": 0.0,
+                        "operator": ">",
+                    },
+                    {
+                        # This is just to test whether the specification via
+                        # subselection condition also works
+                        "type": "SUBSELECTION",
+                        "selection": list(np.linspace(0, 100, N_GRID_POINTS)[1:]),
+                    },
+                ],
+                "affected_parameters": [
+                    ["Solvent1"],
+                    ["Solvent2"],
+                    ["Solvent3"],
+                ],
+            },
         },
         {
             # This constraint will only affect searchspace creation
@@ -102,33 +128,6 @@ config_dict = {
             # This constraint will only affect searchspace creation
             "type": "NO_LABEL_DUPLICATES",
             "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-        },
-        {
-            # Test specifying dependencies. Also test the possibility to specify via
-            # different conditions
-            "type": "DEPENDENCIES",
-            "parameters": ["Fraction1", "Fraction2", "Fraction3"],
-            "conditions": [
-                {
-                    "type": "THRESHOLD",
-                    "threshold": 0.0,
-                    "operator": ">",
-                },
-                {
-                    "type": "THRESHOLD",
-                    "threshold": 0.0,
-                    "operator": ">",
-                },
-                {
-                    "type": "SUBSELECTION",
-                    "selection": list(np.linspace(0, 100, N_GRID_POINTS)[1:]),
-                },
-            ],
-            "affected_parameters": [
-                ["Solvent1"],
-                ["Solvent2"],
-                ["Solvent3"],
-            ],
         },
     ],
 }
