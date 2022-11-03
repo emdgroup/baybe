@@ -8,7 +8,6 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Callable, Dict, Optional, Tuple, Type
 
-import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_model
@@ -25,7 +24,6 @@ from gpytorch.priors.torch_priors import GammaPrior
 from ngboost import NGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ARDRegression
-from sklearn.pipeline import Pipeline
 from torch import Tensor
 
 from .scaler import DefaultScaler
@@ -372,7 +370,7 @@ class MeanPredictionModel(SurrogateModel):
 @catch_constant_targets
 @scale_model
 class RandomForestModel(SurrogateModel):
-    """A random forest surrogate model"""
+    """A random forest surrogate model."""
 
     type = "RF"
 
@@ -387,34 +385,30 @@ class RandomForestModel(SurrogateModel):
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
 
-        # Get predictions
-        mean = Tensor(self.model.predict(candidates))
-
-        # Get ensemble predictions
-        var = Tensor(
-            np.var(
-                [
-                    self.model.estimators_[tree].predict(candidates)
-                    for tree in range(self.model.n_estimators)
-                ],
-                axis=0,
-            )
+        # Evaluate all trees
+        predictions = torch.as_tensor(
+            [
+                self.model.estimators_[tree].predict(candidates)
+                for tree in range(self.model.n_estimators)
+            ]
         )
+
+        # Compute posterior mean and variance
+        mean = predictions.mean(dim=0)
+        var = predictions.var(dim=0)
 
         return mean, torch.diag(var)
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        # Create Model
         self.model = RandomForestRegressor()
-        # Train model
         self.model.fit(train_x, train_y.ravel())
 
 
 @catch_constant_targets
 @scale_model
 class NGBoostModel(SurrogateModel):
-    """A natural-gradient-boosting surrogate model"""
+    """A natural-gradient-boosting surrogate model."""
 
     type = "NG"
 
@@ -428,18 +422,17 @@ class NGBoostModel(SurrogateModel):
     @batchify
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
-        # Get Predictions
+        # Get predictions
         dists = self.model.pred_dist(candidates)
 
-        # Split into mean and variance
-        mean = Tensor([d.mean() for d in dists])
-        var = Tensor([d.std() ** 2 for d in dists])
+        # Split into posterior mean and variance
+        mean = torch.from_numpy(dists.mean())
+        var = torch.from_numpy(dists.var)
 
         return mean, torch.diag(var)
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        # Create and Train model
         self.model = NGBRegressor(n_estimators=25, verbose=False).fit(
             train_x, train_y.ravel()
         )
@@ -448,40 +441,30 @@ class NGBoostModel(SurrogateModel):
 @catch_constant_targets
 @scale_model
 class BayesianLinearModel(SurrogateModel):
-    """A Bayesian linear regression surrogate model"""
+    """A Bayesian linear regression surrogate model."""
 
     type = "BL"
 
-    def __init__(self, searchspace: pd.DataFrame, degree=1):
-        self.model: Optional[Pipeline] = None
+    def __init__(self, searchspace: pd.DataFrame):
+        self.model: Optional[ARDRegression] = None
         # TODO: the surrogate model should work entirely on Tensors (parameter name
         #  agnostic) -> the scaling information should not be provided in form of a
         #  DataFrame
         self.searchspace = searchspace
 
-        # TODO: Add in degree option for the BL model
-        self.degree = degree
-
     @batchify
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
-        dists = self.model.predict(np.array(candidates), return_std=True)
+        dists = self.model.predict(candidates.numpy(), return_std=True)
 
-        # Split into mean and variance
-        mean = Tensor(dists[0])
-        var = Tensor([d**2 for d in dists[1]])
+        # Split into posterior mean and variance
+        mean = torch.from_numpy(dists[0])
+        var = torch.from_numpy(dists[1]).pow(2)
 
         return mean, torch.diag(var)
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        # Create Model
         self.model = ARDRegression()
-        # self.model = make_pipeline(
-        #     PolynomialFeatures(degree=self.degree),
-        #     ARDRegression()
-        # )
-
-        # Train model
         self.model.fit(train_x, train_y.ravel())
