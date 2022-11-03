@@ -47,15 +47,6 @@ def _check_y(y: Tensor) -> None:
         raise NotImplementedError("The model currently supports only one target.")
 
 
-def _smooth_var(covar: Tensor):
-    """
-    Helper function to smooth variance to avoid nearing zero (numerical instability)
-    """
-    # Add fixed var of amplitude
-    amplitude = 1e-6
-    return covar + amplitude
-
-
 def catch_constant_targets(model_cls: Type[SurrogateModel]):
     """
     Wraps a given `SurrogateModel` class that cannot handle constant training target
@@ -113,41 +104,41 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
     return SplitModel
 
 
-def scale_model(model: Type[SurrogateModel]):
-    """A wrapper for models to be scaled"""
+def scale_model(model_cls: Type[SurrogateModel]):
+    """
+    Wraps a given `SurrogateModel` class such that it operates with scaled
+    representations of the training and test data.
+    """
 
-    class ScaledModel(model):
-        """A scaled model"""
+    class ScaledModel(model_cls):
+        """Overrides the methods of the given model class such the use scaled data."""
 
         def __init__(self, *args, **kwargs):
-            """Init with underlying surrogate and scaler"""
-            self.model = model(*args, **kwargs)
+            """Stores an instance of the underlying model class and a scaler object."""
+            self.model = model_cls(*args, **kwargs)
             self.scaler = None
 
         def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-            """Scaled posterior"""
-            # Scale input
+            """
+            Calls the posterior function of the internal model instance on
+            a scaled version of the test data and rescales the output accordingly.
+            """
             candidates = self.scaler.transform(candidates)
-            # Call posterior
             mean, covar = self.model.posterior(candidates)
-            # Unscale output
-            mean, covar = self.scaler.untransform(mean, covar)
-            # Smooth variance
-            covar = _smooth_var(covar)
-            return mean, covar
+            return self.scaler.untransform(mean, covar)
 
         def fit(self, train_x: Tensor, train_y: Tensor) -> None:
-            """Fit scaler and model"""
-            # Initialize scaler
+            """Fits the scaler and the model using the scaled training data."""
             self.scaler = DefaultScaler(self.model.searchspace)
-            # Scale inputs
             train_x, train_y = self.scaler.fit_transform(train_x, train_y)
-            # Call model fit
             self.model.fit(train_x, train_y)
 
         def __getattribute__(self, attr):
-            """Getter for all other attributes"""
-            # Attributes for Scaled Model
+            """
+            Accesses the attributes of the class instance if available, otherwise uses
+            the attributes of the internal model instance.
+            """
+            # Try to retrieve the attribute in the class
             try:
                 val = super().__getattribute__(attr)
             except AttributeError:
@@ -155,7 +146,7 @@ def scale_model(model: Type[SurrogateModel]):
             else:
                 return val
 
-            # Additional attributes for underlying scaled model, if needed
+            # If the attribute has not been overwritten, use that of the internal model
             return self.model.__getattribute__(attr)
 
     return ScaledModel
@@ -379,6 +370,7 @@ class MeanPredictionModel(SurrogateModel):
 
 
 @catch_constant_targets
+@scale_model
 class RandomForestModel(SurrogateModel):
     """A random forest surrogate model"""
 
