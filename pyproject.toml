@@ -13,6 +13,7 @@ dependencies = [
     "gpytorch>=1.9.0",
     "matplotlib>=3.5.2",
     "mordred>=1.2.0",
+    "ngboost>=0.3.12",
     "openpyxl>=3.0.9",
     "pandas>=1.4.2",
     "pydantic>=1.9.1",
