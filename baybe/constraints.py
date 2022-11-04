@@ -339,7 +339,10 @@ class DependenciesConstraint(Constraint):
     eval_during_modeling = False
     conditions: List[Union[dict, Condition]]
     affected_parameters: List[List[str]]
-    invariant = False
+
+    # Flag that indicates whether the affected parameters are permutation invariant.
+    # Not to be set by the user but by other constraints reusing this class.
+    permutation_invariant = False
 
     @validator("conditions")
     def validate_conditions(cls, conditions):
@@ -378,7 +381,7 @@ class DependenciesConstraint(Constraint):
             [
                 censored_data[other_params],
                 censored_data[all_affected_params].apply(
-                    frozenset if self.invariant else tuple, axis=1
+                    frozenset if self.permutation_invariant else tuple, axis=1
                 ),
             ],
             axis=1,
@@ -442,7 +445,7 @@ class PermutationInvarianceConstraint(Constraint):
         # here and remove resulting duplicates with a DependenciesConstraint
         inds_invalid = inds_duplicate_labels.union(inds_duplicate_permutations)
         if self.dependencies:
-            self.dependencies.invariant = True
+            self.dependencies.permutation_invariant = True
             inds_duplicate_independency_adjusted = self.dependencies.get_invalid(
                 data.drop(index=inds_invalid)
             )
