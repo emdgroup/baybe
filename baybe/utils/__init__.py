@@ -8,6 +8,7 @@ import pickle
 
 import ssl
 import urllib.request
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
@@ -577,6 +578,17 @@ class StrictValidationError(Exception):
     The issue is described here:
     https://github.com/pydantic/pydantic/issues/3915
     """
+
+
+@dataclass(frozen=True, repr=False)
+class Dummy:
+    """
+    Placeholder element for array-like data types. Useful e.g. for detecting
+    duplicates in constraints.
+    """
+
+    def __repr__(self):
+        return "<dummy>"
 
 
 def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:

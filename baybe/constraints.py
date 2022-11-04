@@ -17,7 +17,7 @@ from funcy import rpartial
 from numpy.typing import ArrayLike
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import check_if_in, StrictValidationError
+from .utils import check_if_in, Dummy, StrictValidationError
 
 log = logging.getLogger(__name__)
 
@@ -351,18 +351,13 @@ class DependenciesConstraint(Constraint):
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
         # Create data copy and mark entries where the dependency conditions are negative
-        # with a dummy value (None) to cause degeneracy.
+        # with a dummy value to cause degeneracy.
         censored_data = data.copy()
         for k, _ in enumerate(self.parameters):
             censored_data.loc[
                 ~self.conditions[k].evaluate(data[self.parameters[k]]),
                 self.affected_parameters[k],
-            ] = (
-                # picking None as dummy value here does not work because it will be
-                # converted to nan for float columns, evading comparison later
-                np.finfo(float).eps
-                * np.pi
-            )
+            ] = Dummy()
 
         # Create an invariant indicator: pair each value of an affected parameter with
         # the corresponding value of the parameter it depends on. These indicators
