@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Callable, Dict, Optional, Tuple, Type
 
+import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_model
@@ -28,7 +29,6 @@ from torch import Tensor
 
 from .scaler import DefaultScaler
 from .utils import isabstract, to_tensor
-
 
 MIN_TARGET_STD = 1e-6
 
@@ -386,11 +386,16 @@ class RandomForestModel(SurrogateModel):
         """See base class."""
 
         # Evaluate all trees
-        predictions = torch.as_tensor(
-            [
-                self.model.estimators_[tree].predict(candidates)
-                for tree in range(self.model.n_estimators)
-            ]
+        # NOTE: explicit conversion to ndarray is needed due to a pytorch issue:
+        # https://github.com/pytorch/pytorch/pull/51731
+        # https://github.com/pytorch/pytorch/issues/13918
+        predictions = torch.from_numpy(
+            np.asarray(
+                [
+                    self.model.estimators_[tree].predict(candidates)
+                    for tree in range(self.model.n_estimators)
+                ]
+            )
         )
 
         # Compute posterior mean and variance
