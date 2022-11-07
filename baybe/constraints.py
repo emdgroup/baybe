@@ -216,7 +216,7 @@ class ExcludeConstraint(Constraint):
 
     @validator("conditions")
     def validate_conditions(cls, conditions):
-        """Validates the conditions."""
+        """Instantiates the conditions."""
         return [
             c if isinstance(c, Condition) else Condition.create(c) for c in conditions
         ]
