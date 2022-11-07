@@ -236,9 +236,6 @@ def batchify(
 class SurrogateModel(ABC):
     """Abstract base class for all surrogate models."""
 
-    # TODO: to support other models than GPs, an interface to botorch's acquisition
-    #  functions must be created (e.g. via a dedicated 'predict' method)
-
     # Dictionary for bookkeeping of subclasses
     SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
 
