@@ -5,13 +5,12 @@ from __future__ import annotations
 
 import binascii
 import pickle
-
 import ssl
 import urllib.request
 from abc import ABC
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-
 from typing import (
     Any,
     Dict,
@@ -28,7 +27,6 @@ from typing import (
 import numpy as np
 import pandas as pd
 import torch
-
 from joblib import Memory
 from mordred import Calculator, descriptors
 from rdkit import Chem, RDLogger
@@ -494,23 +492,30 @@ def smiles_to_fp_features(
     return df
 
 
-def df_drop_single_value_columns(df: pd.DataFrame) -> pd.DataFrame:
+def df_drop_single_value_columns(
+    df: pd.DataFrame, lst_exclude: list = None
+) -> pd.DataFrame:
     """
     Drops dataframe columns with zero variance.
 
     Parameters
     ----------
-    df : pd.DataFrame
+    df: pd.DataFrame
         The dataframe to be cleaned.
+    lst_exclude: list
+        List of column names that are excluded from this filter.
 
     Returns
     -------
     pd.DataFrame
         The cleaned dataframe.
     """
+    if lst_exclude is None:
+        lst_exclude = []
+
     to_keep = []
-    for col in df:
-        if len(df[col].drop_duplicates()) > 1:
+    for col in df.columns:
+        if (col in lst_exclude) or (df[col].nunique() > 1):
             to_keep.append(col)
 
     return df[to_keep]
@@ -593,6 +598,17 @@ class StrictValidationError(Exception):
     The issue is described here:
     https://github.com/pydantic/pydantic/issues/3915
     """
+
+
+@dataclass(frozen=True, repr=False)
+class Dummy:
+    """
+    Placeholder element for array-like data types. Useful e.g. for detecting
+    duplicates in constraints.
+    """
+
+    def __repr__(self):
+        return "<dummy>"
 
 
 def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:

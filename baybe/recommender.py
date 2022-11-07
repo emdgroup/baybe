@@ -14,6 +14,7 @@ from botorch.acquisition import AcquisitionFunction
 
 from .utils import isabstract, to_tensor
 
+
 # TODO: use botorch's built-in acquisition optimization methods
 #   (problem: they do not return the indices but the candidate points)
 

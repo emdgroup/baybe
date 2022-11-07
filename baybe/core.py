@@ -12,10 +12,11 @@ import torch
 from pydantic import BaseModel, Extra, validator
 
 from . import parameters as baybe_parameters
+from .constraints import _constraints_order, Constraint
 from .parameters import Parameter
 from .strategy import Strategy
 from .targets import Objective, Target
-from .utils import check_if_in
+from .utils import check_if_in, df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +35,8 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     parameters: List[dict]
     objective: dict
     strategy: Optional[dict] = None
+    constraints: List[dict] = []
+
     random_seed: int = 1337
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
@@ -72,22 +75,31 @@ class BayBE:
         # Current iteration/batch number
         self.batches_done = 0
 
-        # Parse config and create all model components except the strategy (which
-        # currently needs the computational representation of the search space)
+        # Config
         # TODO: derive the required information directly from the Parameter objects
         # TODO: find a better solution for the self._random property hack
         self.config = config
+        self._random = (
+            config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
+        )
+
+        # Parameter, Objective and Target objects
         self.parameters = [Parameter.create(p) for p in config.parameters]
         self.objective = Objective(**config.objective)
         self.targets = [Target.create(t) for t in self.objective.targets]
-        self._random = (
-            config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
+
+        # Constraints including possible resorting
+        self.constraints = sorted(
+            [Constraint.create(c) for c in config.constraints],
+            key=lambda x: _constraints_order.index(x.type),
         )
 
         # Create a dataframe representing the experimental search space
         self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
             self.parameters
         )
+
+        # Create Metadata
         self.searchspace_metadata = pd.DataFrame(
             {
                 "was_recommended": False,
@@ -97,9 +109,24 @@ class BayBE:
             index=self.searchspace_exp_rep.index,
         )
 
+        # Remove entries that violate parameter constraints
+        for constraint in (c for c in self.constraints if c.eval_during_creation):
+            inds = constraint.get_invalid(self.searchspace_exp_rep)
+            self.searchspace_exp_rep.drop(index=inds, inplace=True)
+            self.searchspace_metadata.drop(index=inds, inplace=True)
+        self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
+        self.searchspace_metadata.reset_index(inplace=True, drop=True)
+
         # Create a corresponding dataframe containing the computational representation
         self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
             self.searchspace_exp_rep
+        )
+
+        # Drop all columns that do not carry any covariate information
+        # TODO [searchspace]: this is a temporary fix and should be handled by the
+        #   yet to be implemented `Searchspace` class
+        self.searchspace_comp_rep = df_drop_single_value_columns(
+            self.searchspace_comp_rep
         )
 
         # Declare measurement dataframes
@@ -306,9 +333,11 @@ class BayBE:
 
         # Read in measurements and add them to the database
         self.batches_done += 1
-        data["BatchNr"] = self.batches_done
+        to_insert = data.copy()
+        to_insert["BatchNr"] = self.batches_done
+
         self.measurements_exp_rep = pd.concat(
-            [self.measurements_exp_rep, data], axis=0, ignore_index=True
+            [self.measurements_exp_rep, to_insert], axis=0, ignore_index=True
         )
 
         # Transform measurement space to computational representation
@@ -316,6 +345,13 @@ class BayBE:
             self.measurements_comp_rep_x,
             self.measurements_comp_rep_y,
         ) = self.transform_rep_exp2comp(self.measurements_exp_rep)
+
+        # Use the column representation defined by the searchspace
+        # TODO: This is a temporary fix. See TODO for computational transformation
+        #  in constructor.
+        self.measurements_comp_rep_x = self.measurements_comp_rep_x[
+            self.searchspace_comp_rep.columns
+        ]
 
         # Update the strategy object
         self.strategy.fit(self.measurements_comp_rep_x, self.measurements_comp_rep_y)

@@ -6,7 +6,6 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property, lru_cache
-
 from typing import ClassVar, Dict, List, Literal, Optional, Type, Union
 
 import numpy as np
@@ -69,7 +68,7 @@ class Parameter(
 
     @classmethod
     def create(cls, config: dict) -> Parameter:
-        """Creates a new parameter object matching the given specifications."""
+        """Creates a new object matching the given specifications."""
         return cls._create(HashableDict(config))
 
     @classmethod
