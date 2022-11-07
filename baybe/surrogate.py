@@ -5,7 +5,6 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from inspect import isabstract
 from typing import Dict, Optional, Tuple, Type
 
 import pandas as pd
@@ -18,13 +17,12 @@ from botorch.optim.fit import fit_gpytorch_torch
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
-
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
-from .utils import to_tensor
+from .utils import isabstract, to_tensor
 
 
 class SurrogateModel(ABC):
@@ -102,6 +100,7 @@ class GaussianProcessModel(SurrogateModel):
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
+        # TODO [Scaling]: scaling should be handled by searchspace object
         input_transform = Normalize(train_x.shape[1], bounds=bounds)
         outcome_transform = Standardize(train_y.shape[1])
 

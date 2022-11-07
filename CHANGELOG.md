@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Initial strategy: farthest point sampling
-- Simple constraints for discrete parameters.
+- Initial strategy: Farthest Point Sampling
+- Initial strategy: Partitioning Around Medoids
+- Initial strategy: K-means
+- Initial strategy: Gaussian Mixture Model
+- Constraints and conditions for discrete parameters.
 
 ### Fixed
 - UCB now usable as acquisition function, hard-set beta parameter to 1.0.

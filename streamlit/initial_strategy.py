@@ -3,16 +3,13 @@ This script allows comparing initial selection strategies on different data sets
 """
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
+import pydantic
 import streamlit as st
 
-from baybe.utils.sampling_algorithms import farthest_point_sampling
+from baybe.strategy import InitialStrategy
 from sklearn.datasets import make_blobs
-
-
-def random_strategy(points: np.ndarray, n_samples: int = 1) -> np.ndarray:
-    """Random point selection strategy."""
-    return np.random.choice(range(len(points)), n_samples, replace=False)
 
 
 def uniform_distribution(n_points: int) -> np.ndarray:
@@ -65,21 +62,22 @@ data_distributions = {
 }
 
 # collect all available strategies
-selection_strategies = {
-    "FPS": farthest_point_sampling,
-    "Random": random_strategy,
-}
+selection_strategies = InitialStrategy.SUBCLASSES
 
 
 def main():
     """Creates the streamlit dashboard."""
+
+    # fix issue with streamlit and pydantic
+    # https://github.com/streamlit/streamlit/issues/3218
+    pydantic.class_validators._FUNCS.clear()  # pylint: disable=protected-access
 
     # show docstring in dashboard
     st.info(__doc__)
 
     # simulation parameters
     random_seed = int(st.sidebar.number_input("Random seed", value=42))
-    strategy = st.sidebar.selectbox("Strategy", list(selection_strategies.keys()))
+    strategy_name = st.sidebar.selectbox("Strategy", list(selection_strategies.keys()))
     n_points = st.sidebar.slider("Number of points to be generated", 10, 100, value=50)
     n_selected = st.sidebar.slider(
         "Number of points to be selected",
@@ -105,10 +103,11 @@ def main():
 
     # create the points and the selection
     points = data_distributions[distribution](n_points, **distribution_params)
-    selection = selection_strategies[strategy](points, n_selected)
+    strategy = selection_strategies[strategy_name]()
+    selection = strategy.recommend(pd.DataFrame(points), n_selected)
 
     # show the result
-    fig = plot_point_selection(points, selection, strategy)
+    fig = plot_point_selection(points, selection, strategy_name)
     st.plotly_chart(fig)
 
 

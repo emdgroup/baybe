@@ -7,14 +7,13 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
-from inspect import isabstract
 from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Extra, validator
 
-from .utils import check_if_in, geom_mean, StrictValidationError
+from .utils import check_if_in, geom_mean, isabstract, StrictValidationError
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
 log = logging.getLogger(__name__)

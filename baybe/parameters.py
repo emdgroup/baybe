@@ -6,8 +6,6 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property, lru_cache
-from inspect import isabstract
-
 from typing import ClassVar, Dict, List, Literal, Optional, Type, Union
 
 import numpy as np
@@ -22,6 +20,7 @@ from .utils import (
     df_uncorrelated_features,
     HashableDict,
     is_valid_smiles,
+    isabstract,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,

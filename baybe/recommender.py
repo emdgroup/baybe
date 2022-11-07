@@ -6,14 +6,14 @@ Recommender classes for optimizing acquisition functions.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from inspect import isabstract
 from typing import Dict, Optional, Type
 
 import pandas as pd
 import torch
 from botorch.acquisition import AcquisitionFunction
 
-from .utils import to_tensor
+from .utils import isabstract, to_tensor
+
 
 # TODO: use botorch's built-in acquisition optimization methods
 #   (problem: they do not return the indices but the candidate points)
