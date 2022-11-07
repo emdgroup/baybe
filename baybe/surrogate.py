@@ -34,13 +34,13 @@ MIN_TARGET_STD = 1e-6
 MIN_VARIANCE = 1e-6
 
 
-def _check_x(x: Tensor) -> None:
+def _validate_inputs(x: Tensor) -> None:
     """Helper function to validate the model input."""
     if len(x) == 0:
         raise ValueError("The model input must be non-empty.")
 
 
-def _check_y(y: Tensor) -> None:
+def _validate_targets(y: Tensor) -> None:
     """Helper function to validate the model targets."""
     if y.shape[1] != 1:
         raise NotImplementedError("The model currently supports only one target.")
@@ -91,12 +91,8 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
 
             return mean, var
 
-        def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
             """Selects a model based on the variance of the targets and fits it."""
-            # Validate the training data
-            # TODO: move the validation to the surrogate model class
-            _check_x(train_x)
-            _check_y(train_y)
 
             # https://github.com/pytorch/pytorch/issues/29372
             # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
@@ -150,7 +146,7 @@ def scale_model(model_cls: Type[SurrogateModel]):
             )
             return self.scaler.untransform(mean, covar)
 
-        def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
             """Fits the scaler and the model using the scaled training data."""
             self.scaler = DefaultScaler(self.model.searchspace)
             train_x, train_y = self.scaler.fit_transform(train_x, train_y)
@@ -288,9 +284,22 @@ class SurrogateModel(ABC):
         optional conversion to a covariance matrix is handled by the public method.
         """
 
-    @abstractmethod
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
+
+        # Validate the training data
+        _validate_inputs(train_x)
+        _validate_targets(train_y)
+
+        return self._fit(train_x, train_y)
+
+    @abstractmethod
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        """
+        Implements the actual fitting logic. In contrast to its public counterpart,
+        no data validation/transformation is carried out but only the raw fitting
+        operation is conducted.
+        """
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -318,14 +327,8 @@ class GaussianProcessModel(SurrogateModel):
         posterior = self.model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
 
-    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-
-        # validate input
-        if len(train_x) == 0:
-            raise ValueError("The training data set must be non-empty.")
-        if train_y.shape[1] != 1:
-            raise NotImplementedError("The model currently supports only one target.")
 
         # get the input bounds from the search space
         searchspace = to_tensor(self.searchspace)
@@ -434,7 +437,7 @@ class MeanPredictionModel(SurrogateModel):
         var = torch.ones(len(candidates))
         return mean, var
 
-    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         self.target_value = train_y.mean().item()
 
@@ -477,7 +480,7 @@ class RandomForestModel(SurrogateModel):
 
         return mean, var
 
-    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         self.model = RandomForestRegressor()
         self.model.fit(train_x, train_y.ravel())
@@ -510,7 +513,7 @@ class NGBoostModel(SurrogateModel):
 
         return mean, var
 
-    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         self.model = NGBRegressor(n_estimators=25, verbose=False).fit(
             train_x, train_y.ravel()
@@ -544,7 +547,7 @@ class BayesianLinearModel(SurrogateModel):
 
         return mean, var
 
-    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         self.model = ARDRegression()
         self.model.fit(train_x, train_y.ravel())
