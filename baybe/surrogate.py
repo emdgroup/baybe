@@ -31,6 +31,7 @@ from .scaler import DefaultScaler
 from .utils import isabstract, to_tensor
 
 MIN_TARGET_STD = 1e-6
+MIN_VARIANCE = 1e-6
 
 
 def _check_x(x: Tensor) -> None:
@@ -43,6 +44,15 @@ def _check_y(y: Tensor) -> None:
     """Helper function to validate the model targets."""
     if y.shape[1] != 1:
         raise NotImplementedError("The model currently supports only one target.")
+
+
+def _var_to_covar(var: Tensor) -> Tensor:
+    """
+    Converts a tensor (with optional batch dimensions) that contains (marginal)
+    variances along its last dimension into one that contains corresponding diagonal
+    covariance matrices along its last two dimensions.
+    """
+    return torch.diag_embed(var)
 
 
 def catch_constant_targets(model_cls: Type[SurrogateModel]):
@@ -60,13 +70,26 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
         # Overwrite the registered subclass with the wrapped version
         type = model_cls.type
 
+        # The posterior mode is chosen to match that of the wrapped model class
+        joint_posterior = model_cls.joint_posterior
+
         def __init__(self, *args, **kwargs):
             """Stores an instance of the underlying model class."""
             self.model = model_cls(*args, **kwargs)
 
-        def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
             """Calls the posterior function of the internal model instance."""
-            return self.model.posterior(candidates)
+            mean, var = self.model._posterior(  # pylint: disable=protected-access
+                candidates
+            )
+
+            # If a joint posterior is expected but the model has been overriden by one
+            # that does not provide covariance information, construct a diagonal
+            # covariance matrix
+            if self.joint_posterior and not self.model.joint_posterior:
+                var = _var_to_covar(var)
+
+            return mean, var
 
         def fit(self, train_x: Tensor, train_y: Tensor) -> None:
             """Selects a model based on the variance of the targets and fits it."""
@@ -116,13 +139,15 @@ def scale_model(model_cls: Type[SurrogateModel]):
             self.model = model_cls(*args, **kwargs)
             self.scaler = None
 
-        def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
             """
             Calls the posterior function of the internal model instance on
             a scaled version of the test data and rescales the output accordingly.
             """
             candidates = self.scaler.transform(candidates)
-            mean, covar = self.model.posterior(candidates)
+            mean, covar = self.model._posterior(  # pylint: disable=protected-access
+                candidates
+            )
             return self.scaler.untransform(mean, covar)
 
         def fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -172,18 +197,38 @@ def batchify(
         t_shape = candidates.shape[:-2]
         q_shape = candidates.shape[-2]
 
-        # Flatten all t-batch dimensions into a single one
-        flattened = candidates.flatten(end_dim=-3)
+        # If the posterior function provides full covariance information, call it
+        # t-batch by t-batch
+        if model.joint_posterior:  # pylint: disable=no-else-return
 
-        # Call the model on each (flattened) t-batch
-        out = (posterior(model, batch) for batch in flattened)
+            # Flatten all t-batch dimensions into a single one
+            flattened = candidates.flatten(end_dim=-3)
 
-        # Collect the results and restore the batch dimensions
-        mean, covar = zip(*out)
-        mean = torch.reshape(torch.stack(mean), t_shape + (q_shape,))
-        covar = torch.reshape(torch.stack(covar), t_shape + (q_shape, q_shape))
+            # Call the model on each (flattened) t-batch
+            out = (posterior(model, batch) for batch in flattened)
 
-        return mean, covar
+            # Collect the results and restore the batch dimensions
+            mean, covar = zip(*out)
+            mean = torch.reshape(torch.stack(mean), t_shape + (q_shape,))
+            covar = torch.reshape(torch.stack(covar), t_shape + (q_shape, q_shape))
+
+            return mean, covar
+
+        # Otherwise, flatten all t- and q-batches into a single q-batch dimension
+        # and evaluate the posterior function in one go
+        else:
+
+            # Flatten *all* batches into the q-batch dimension
+            flattened = candidates.flatten(end_dim=-2)
+
+            # Call the model on the entire input
+            mean, var = posterior(model, flattened)
+
+            # Restore the batch dimensions
+            mean = torch.reshape(mean, t_shape + (q_shape,))
+            var = torch.reshape(var, t_shape + (q_shape,))
+
+            return mean, var
 
     return sequential_posterior
 
@@ -194,10 +239,13 @@ class SurrogateModel(ABC):
     # TODO: to support other models than GPs, an interface to botorch's acquisition
     #  functions must be created (e.g. via a dedicated 'predict' method)
 
-    type: str
+    # Dictionary for bookkeeping of subclasses
     SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
 
-    @abstractmethod
+    # Class properties
+    type: str
+    joint_posterior: bool
+
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """
         Evaluates the surrogate model at the given candidate points.
@@ -216,6 +264,32 @@ class SurrogateModel(ABC):
             The posterior means and posterior covariance matrices of the t-batched
             candidate points.
         """
+        # Evaluate the posterior distribution
+        mean, covar = self._posterior(candidates)
+
+        # Apply covariance transformation for marginal posterior models
+        if not self.joint_posterior:
+            covar = _var_to_covar(covar)
+
+        # Add small diagonal variances for numerical stability
+        covar.add_(torch.eye(covar.shape[-1]) * MIN_VARIANCE)
+
+        return mean, covar
+
+    @abstractmethod
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """
+        Implements the actual posterior evaluation logic. In contrast to its public
+        counterpart, no data validation/transformation is carried out but only the raw
+        posterior computation is conducted.
+
+        Note:
+        -----
+        The public `posterior` method *always* returns a full covariance matrix. By
+        contrast, this method may return either a covariance matrix or a tensor
+        of marginal variances, depending on the models `joint_posterior` flag. The
+        optional conversion to a covariance matrix is handled by the public method.
+        """
 
     @abstractmethod
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
@@ -233,6 +307,7 @@ class GaussianProcessModel(SurrogateModel):
     """A Gaussian process surrogate model."""
 
     type = "GP"
+    joint_posterior = True
 
     def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[SingleTaskGP] = None
@@ -241,7 +316,7 @@ class GaussianProcessModel(SurrogateModel):
         #  DataFrame
         self.searchspace = searchspace
 
-    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         posterior = self.model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
@@ -344,23 +419,23 @@ class GaussianProcessModel(SurrogateModel):
 
 class MeanPredictionModel(SurrogateModel):
     """
-    A trivial surrogate model that uses the average value of the training targets as
-    posterior mean and a (data-independent) identity covariance matrix as posterior
-    covariance.
+    A trivial surrogate model that provides the average value of the training targets
+    as posterior mean and a (data-independent) constant posterior variance.
     """
 
     type = "MP"
+    joint_posterior = False
 
     def __init__(self, searchspace: pd.DataFrame):  # pylint: disable=unused-argument
         self.target_value = None
 
     @batchify
-    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # TODO: use target value bounds for covariance scaling when explicitly provided
         mean = self.target_value * torch.ones([len(candidates)])
-        covar = torch.eye(len(candidates))
-        return mean, covar
+        var = torch.ones(len(candidates))
+        return mean, var
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
@@ -373,6 +448,7 @@ class RandomForestModel(SurrogateModel):
     """A random forest surrogate model."""
 
     type = "RF"
+    joint_posterior = False
 
     def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[RandomForestRegressor] = None
@@ -382,7 +458,7 @@ class RandomForestModel(SurrogateModel):
         self.searchspace = searchspace
 
     @batchify
-    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
 
         # Evaluate all trees
@@ -402,7 +478,7 @@ class RandomForestModel(SurrogateModel):
         mean = predictions.mean(dim=0)
         var = predictions.var(dim=0)
 
-        return mean, torch.diag(var)
+        return mean, var
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
@@ -416,6 +492,7 @@ class NGBoostModel(SurrogateModel):
     """A natural-gradient-boosting surrogate model."""
 
     type = "NG"
+    joint_posterior = False
 
     def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[NGBRegressor] = None
@@ -425,7 +502,7 @@ class NGBoostModel(SurrogateModel):
         self.searchspace = searchspace
 
     @batchify
-    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
         dists = self.model.pred_dist(candidates)
@@ -434,7 +511,7 @@ class NGBoostModel(SurrogateModel):
         mean = torch.from_numpy(dists.mean())
         var = torch.from_numpy(dists.var)
 
-        return mean, torch.diag(var)
+        return mean, var
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
@@ -449,6 +526,7 @@ class BayesianLinearModel(SurrogateModel):
     """A Bayesian linear regression surrogate model."""
 
     type = "BL"
+    joint_posterior = False
 
     def __init__(self, searchspace: pd.DataFrame):
         self.model: Optional[ARDRegression] = None
@@ -458,7 +536,7 @@ class BayesianLinearModel(SurrogateModel):
         self.searchspace = searchspace
 
     @batchify
-    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
         dists = self.model.predict(candidates.numpy(), return_std=True)
@@ -467,7 +545,7 @@ class BayesianLinearModel(SurrogateModel):
         mean = torch.from_numpy(dists[0])
         var = torch.from_numpy(dists[1]).pow(2)
 
-        return mean, torch.diag(var)
+        return mean, var
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
