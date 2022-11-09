@@ -3,17 +3,14 @@ Core functionality of BayBE. Main point of interaction via Python.
 """
 from __future__ import annotations
 
-import _pickle as cPickle
-
 import logging
+import pickle
 import random
 from typing import List, Optional, Tuple
 
 import fsspec
-
 import numpy as np
 import pandas as pd
-
 import torch
 from pydantic import BaseModel, Extra, validator
 
@@ -446,7 +443,7 @@ class BayBE:
                 searchspace_exp_rep,
                 searchspace_metadata,
                 measurements_exp_rep,
-            ) = cPickle.load(file)
+            ) = pickle.load(file)
 
         # Create the BayBE object via constructor and stored config
         config = BayBEConfig(**config_dict)
@@ -507,4 +504,4 @@ class BayBE:
                 self.searchspace_metadata,
                 self.measurements_exp_rep,
             ]
-            cPickle.dump(to_dump, file)
+            pickle.dump(to_dump, file)
