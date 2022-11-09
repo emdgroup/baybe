@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial strategy: K-means
 - Initial strategy: Gaussian Mixture Model
 - Constraints and conditions for discrete parameters.
+- Data scaling functionality
+- Decorator for automatic model scaling
+- Decorator for handling constant targets
+- Decorator for handling batched model input
+- Surrogate model: Mean prediction
+- Surrogate model: Random forrest
+- Surrogate model: NGBoost
+- Surrogate model: Bayesian linear
+
 
 ### Fixed
 - UCB now usable as acquisition function, hard-set beta parameter to 1.0.
@@ -46,4 +55,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Caching of experimental parameters and chemical descriptors.
 - Choices for acquisition functions and their usage with arbitrary surrogate models.
 - Temporary logic for selecting GP priors.
-

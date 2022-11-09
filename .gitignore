@@ -16,3 +16,5 @@ __pycache__/
 # Build files
 build/*
 
+# VSCode
+.vscode
