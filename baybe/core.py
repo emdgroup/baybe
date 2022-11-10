@@ -75,12 +75,12 @@ class BayBE:
 
         Parameters
         ----------
-        config: BayBEConfig
+        config : BayBEConfig
             Pydantic-validated config object.
-        create_searchspace: bool
+        create_searchspace : bool
             Indicator that allows skipping the creation of searchspace and strategy.
             Useful when using the constructor to create a BayBE object from stored data
-            (in that case searchspace is loaded from disk and not created from config).
+            (in that case, searchspace is loaded from disk and not created from config).
         """
         # Set global random seeds
         torch.manual_seed(config.random_seed)
@@ -423,17 +423,19 @@ class BayBE:
     def from_stored(cls, path: str, **kwargs) -> BayBE:
         """
         Class method to create a BayBE object from a stored object.
+
         Parameters
         ----------
-        path: str
-            Main path to the stored object.
-        kwargs: keyword arguments
-            Additional arguments passed to fsspec.open, useful for instance for
+        path : str
+            Path to the stored object.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
             accessing remote or s3 file systems.
 
         Returns
         -------
-            BayBE instance.
+        BayBE
+            The restored BayBE instance.
         """
         # Load stored data
         with fsspec.open(path, "rb", **kwargs) as file:
@@ -467,6 +469,7 @@ class BayBE:
         )
 
         # Fit the strategy object
+        # TODO: add mechanism for saving/storing all BayBE attributes, e.g. strategy
         baybe_object.strategy.fit(
             baybe_object.measurements_comp_rep_x, baybe_object.measurements_comp_rep_y
         )
@@ -479,23 +482,25 @@ class BayBE:
 
         Parameters
         ----------
-        path: str
-            Main path to where the object should be stored.
-        kwargs: keyword arguments
-            Additional arguments passed to fsspec.open, useful for instance for
+        path : str
+            Path to where the object should be stored.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
             accessing remote or s3 file systems.
 
         Returns
         -------
-            Nothing.
+        Nothing.
         """
+        # If no path is provided, use a default file path
         if path is None:
             path = "./baybe_object.baybe"
             log.warning(
-                "No path was specified when storing BayBE object. Will use '%s'",
+                "No path was specified when storing BayBE object. Will use '%s'.",
                 path,
             )
 
+        # Write the BayBE object to disk
         with fsspec.open(path, "wb", **kwargs) as file:
             to_dump = [
                 self.config.dict(),
