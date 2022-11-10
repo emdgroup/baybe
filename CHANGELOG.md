@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Surrogate model: Random forrest
 - Surrogate model: NGBoost
 - Surrogate model: Bayesian linear
+- Save/load functionality for BayBE objects
 
 
 ### Fixed
