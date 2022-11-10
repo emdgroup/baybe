@@ -495,7 +495,7 @@ class BayBE:
         if path is None:
             path = "./baybe_object.baybe"
             log.warning(
-                "No path was specified when storing BayBE object. Will use '%s''",
+                "No path was specified when storing BayBE object. Will use '%s'",
                 path,
             )
 

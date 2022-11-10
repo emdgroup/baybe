@@ -111,7 +111,7 @@ for kIter2 in range(N_ITERATIONS):
     add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
     rec2.Target_1 = rec.Target_1
     print("### Recommended dataframe based on original:\n", rec)
-    print("### Recommended dataframe based on laoded:\n", rec2)
+    print("### Recommended dataframe based on loaded:\n", rec2)
 
     baybe_obj.add_results(rec)
     baybe_obj2.add_results(rec2)
