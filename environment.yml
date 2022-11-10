@@ -4,6 +4,7 @@ channels:
 dependencies:
 - python==3.8.6
 - flake8==4.0.1
+- fsspec==2022.10.0
 - funcy==1.17
 - matplotlib==3.5.2
 - mordred==1.2.0

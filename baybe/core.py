@@ -1,13 +1,16 @@
 """
 Core functionality of BayBE. Main point of interaction via Python.
 """
+from __future__ import annotations
+
 import logging
+import pickle
 import random
 from typing import List, Optional, Tuple
 
+import fsspec
 import numpy as np
 import pandas as pd
-
 import torch
 from pydantic import BaseModel, Extra, validator
 
@@ -66,7 +69,19 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
 class BayBE:
     """Main class for interaction with BayBE."""
 
-    def __init__(self, config: BayBEConfig):
+    def __init__(self, config: BayBEConfig, create_searchspace: bool = True):
+        """
+        Constructor of the BayBE class.
+
+        Parameters
+        ----------
+        config : BayBEConfig
+            Pydantic-validated config object.
+        create_searchspace : bool
+            Indicator that allows skipping the creation of searchspace and strategy.
+            Useful when using the constructor to create a BayBE object from stored data
+            (in that case, searchspace is loaded from disk and not created from config).
+        """
         # Set global random seeds
         torch.manual_seed(config.random_seed)
         random.seed(config.random_seed)
@@ -94,50 +109,58 @@ class BayBE:
             key=lambda x: _constraints_order.index(x.type),
         )
 
-        # Create a dataframe representing the experimental search space
-        self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
-            self.parameters
-        )
+        if create_searchspace:
+            # Create a dataframe representing the experimental search space
+            self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
+                self.parameters
+            )
 
-        # Create Metadata
-        self.searchspace_metadata = pd.DataFrame(
-            {
-                "was_recommended": False,
-                "was_measured": False,
-                "dont_recommend": False,
-            },
-            index=self.searchspace_exp_rep.index,
-        )
+            # Create Metadata
+            self.searchspace_metadata = pd.DataFrame(
+                {
+                    "was_recommended": False,
+                    "was_measured": False,
+                    "dont_recommend": False,
+                },
+                index=self.searchspace_exp_rep.index,
+            )
 
-        # Remove entries that violate parameter constraints
-        for constraint in (c for c in self.constraints if c.eval_during_creation):
-            inds = constraint.get_invalid(self.searchspace_exp_rep)
-            self.searchspace_exp_rep.drop(index=inds, inplace=True)
-            self.searchspace_metadata.drop(index=inds, inplace=True)
-        self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
-        self.searchspace_metadata.reset_index(inplace=True, drop=True)
+            # Remove entries that violate parameter constraints
+            for constraint in (c for c in self.constraints if c.eval_during_creation):
+                inds = constraint.get_invalid(self.searchspace_exp_rep)
+                self.searchspace_exp_rep.drop(index=inds, inplace=True)
+                self.searchspace_metadata.drop(index=inds, inplace=True)
+            self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
+            self.searchspace_metadata.reset_index(inplace=True, drop=True)
 
-        # Create a corresponding dataframe containing the computational representation
-        self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
-            self.searchspace_exp_rep
-        )
+            # Create a corresponding dataframe containing the computational
+            # representation
+            self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
+                self.searchspace_exp_rep
+            )
 
-        # Drop all columns that do not carry any covariate information
-        # TODO [searchspace]: this is a temporary fix and should be handled by the
-        #   yet to be implemented `Searchspace` class
-        self.searchspace_comp_rep = df_drop_single_value_columns(
-            self.searchspace_comp_rep
-        )
+            # Drop all columns that do not carry any covariate information
+            # TODO [searchspace]: this is a temporary fix and should be handled by the
+            #   yet to be implemented `Searchspace` class
+            self.searchspace_comp_rep = df_drop_single_value_columns(
+                self.searchspace_comp_rep
+            )
+
+            # Initialize the DOE strategy
+            self.strategy = Strategy(
+                **config.strategy, searchspace=self.searchspace_comp_rep
+            )
+
+        else:
+            self.searchspace_exp_rep = None
+            self.searchspace_comp_rep = None
+            self.searchspace_metadata = None
+            self.strategy = None
 
         # Declare measurement dataframes
         self.measurements_exp_rep = None
         self.measurements_comp_rep_x = None
         self.measurements_comp_rep_y = None
-
-        # Initialize the DOE strategy
-        self.strategy = Strategy(
-            **config.strategy, searchspace=self.searchspace_comp_rep
-        )
 
     def transform_rep_exp2comp(
         self,
@@ -396,19 +419,94 @@ class BayBE:
 
         return rec
 
-    def load(self) -> None:
+    @classmethod
+    def from_stored(cls, path: str, **kwargs) -> BayBE:
         """
-        Load new internal state of a DOE from a specified file
-        The load and save functions could also be omitted and the user would have to
-        take care of simply storing the BayBE object eg via dill. This could
-        potentially create problems when code versions are different
-        """
-        # TODO: Implement and revise docstring + type hints accordingly
-        raise NotImplementedError("Loading a BayBE object is not implemented yet")
+        Class method to create a BayBE object from a stored object.
 
-    def save(self) -> None:
+        Parameters
+        ----------
+        path : str
+            Path to the stored object.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
+            accessing remote or s3 file systems.
+
+        Returns
+        -------
+        BayBE
+            The restored BayBE instance.
         """
-        Store the current state of the DOE on disk
+        # Load stored data
+        with fsspec.open(path, "rb", **kwargs) as file:
+            (
+                config_dict,
+                batches_done,
+                searchspace_exp_rep,
+                searchspace_metadata,
+                measurements_exp_rep,
+            ) = pickle.load(file)
+
+        # Create the BayBE object via constructor and stored config
+        config = BayBEConfig(**config_dict)
+        baybe_object = cls(config, create_searchspace=False)
+
+        # Update relevant data from previous iterations
+        baybe_object.batches_done = batches_done
+        baybe_object.searchspace_exp_rep = searchspace_exp_rep
+        baybe_object.searchspace_comp_rep, _ = baybe_object.transform_rep_exp2comp(
+            baybe_object.searchspace_exp_rep
+        )
+        baybe_object.searchspace_metadata = searchspace_metadata
+        baybe_object.measurements_exp_rep = measurements_exp_rep
+        (
+            baybe_object.measurements_comp_rep_x,
+            baybe_object.measurements_comp_rep_y,
+        ) = baybe_object.transform_rep_exp2comp(baybe_object.measurements_exp_rep)
+        baybe_object.strategy = Strategy(
+            **config.strategy,  # pylint: disable=not-a-mapping
+            searchspace=baybe_object.searchspace_comp_rep,
+        )
+
+        # Fit the strategy object
+        # TODO: add mechanism for saving/storing all BayBE attributes, e.g. strategy
+        baybe_object.strategy.fit(
+            baybe_object.measurements_comp_rep_x, baybe_object.measurements_comp_rep_y
+        )
+
+        return baybe_object
+
+    def save(self, path: Optional[str] = None, **kwargs) -> None:
         """
-        # TODO: Implement and revise docstring + type hints accordingly
-        raise NotImplementedError("Saving a BayBE object is not implemented yet")
+        Store the current state of the BayBE instance on disk.
+
+        Parameters
+        ----------
+        path : str
+            Path to where the object should be stored.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
+            accessing remote or s3 file systems.
+
+        Returns
+        -------
+        Nothing.
+        """
+        # If no path is provided, use a default file path
+        if path is None:
+            path = "./baybe_object.baybe"
+            log.warning(
+                "No path was specified when storing BayBE object. Will use '%s'.",
+                path,
+            )
+
+        # Write the BayBE object to disk
+        with fsspec.open(path, "wb", **kwargs) as file:
+            to_dump = [
+                self.config.dict(),
+                self.batches_done,
+                self.searchspace_exp_rep,
+                self.searchspace_metadata,
+                self.measurements_exp_rep,
+            ]
+            pickle.dump(to_dump, file)
