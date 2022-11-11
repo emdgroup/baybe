@@ -326,6 +326,13 @@ class Custom(Parameter):
                 f"entries, which is not supported."
             )
 
+        if len(data) != len(set(data.index)):
+            raise StrictValidationError(
+                f"The custom dataframe for parameter {values['name']} contains "
+                f"duplicated indices. Please only provide dataframes with unique"
+                f" indices."
+            )
+
         # Remove zero variance and string columns
         data = df_drop_string_columns(data)
         data = df_drop_single_value_columns(data)
