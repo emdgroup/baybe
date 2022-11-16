@@ -96,11 +96,9 @@ class BayBE:
             config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
         )
 
-        # Parameter, Objective and Target objects
+        # Create Parameter, Objective and Constraint objects
         self.parameters = [Parameter.create(p) for p in config.parameters]
         self.objective = Objective(**config.objective)
-        self.targets = [Target.create(t) for t in self.objective.targets]
-
         self.constraints = [Constraint.create(c) for c in config.constraints]
 
         if create_searchspace:
@@ -118,6 +116,11 @@ class BayBE:
         self.measurements_exp_rep = None
         self.measurements_comp_rep_x = None
         self.measurements_comp_rep_y = None
+
+    @property
+    def targets(self) -> List[Target]:
+        """Returns the targets of the underlying objective."""
+        return self.objective.targets
 
     def __str__(self):
         """

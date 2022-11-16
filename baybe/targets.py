@@ -30,16 +30,18 @@ class Objective(BaseModel, extra=Extra.forbid):
     @validator("targets", always=True)
     def validate_targets(cls, targets, values):
         """
-        Validates targets depending on the objective mode.
+        Validates (and instantiates) targets depending on the objective mode.
         """
+
+        # Validate the target specification
         mode = values["mode"]
         if (mode == "SINGLE") and (len(targets) != 1):
             raise StrictValidationError(
-                "For objective mode 'SINGLE', you must specify exactly one target."
+                "For objective mode 'SINGLE', exactly one target must be specified."
             )
         if (mode == "MULTI") and (len(targets) <= 1):
             raise StrictValidationError(
-                "For objective mode 'MULTI', you must specify more than one target."
+                "For objective mode 'MULTI', more than one target must be specified."
             )
         if mode == "DESIRABILITY":
             for target in targets:
@@ -48,6 +50,9 @@ class Objective(BaseModel, extra=Extra.forbid):
                         "In 'DESIRABILITY' mode for multiple targets, each target must "
                         "have bounds defined."
                     )
+
+        # Instantiate the targets
+        targets = [Target.create(t) for t in targets]
 
         return targets
 
