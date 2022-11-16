@@ -87,7 +87,7 @@ def is_valid_smiles(smiles: str) -> bool:
         return False
 
 
-def to_tensor(*dfs: Iterable[pd.DataFrame]) -> Union[Tensor, Iterable[Tensor]]:
+def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     """Converts a given set of dataframes into tensors (dropping all indices)."""
     # FIXME This function seems to trigger a problem when some columns in either of
     #  the dfs have a dtype other than int or float (e.g. object, bool). This can
