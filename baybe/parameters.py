@@ -470,27 +470,35 @@ def scaled_view(
 def transform_parameters_exp2comp(
     data: pd.DataFrame,
     parameters: List[Parameter],
+    no_encoding: bool = False,
 ) -> pd.DataFrame:
     """
-    Transforms a dataframe from experimental to computational representation.
+    Transforms parameters from experimental to computational representation.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Data to be transformed. Must contain all parameter columns. Can additionally
-        contain all target columns, which get transformed separately.
+        The data to be transformed. Must contain all specified parameters, can contain
+        more columns.
+    parameters : List[Parameter]
+        The list of parameter to be transformed in the given dataframe.
+    no_encoding : bool
+        If True, an empty dataframe with matching index is returned. This is useful,
+        for instance, when used in combination with random search strategies that
+        do not make use of the actual parameter values, since it avoids the
+        (potentially costly) transformation to the computational representation.
 
     Returns
     -------
-    Tuple[pd.DataFrame, Optional[pd.DataFrame]]
-        Transformed parameters and, if contained in the input, transformed targets.
+    pd.DataFrame
+        A dataframe with the parameters in computational representation.
     """
-    # TODO: reactivate
-    # # Transform the parameters
-    # if self._random:
-    #     comp_rep_x = pd.DataFrame(index=data.index)
-    #     return comp_rep_x
+    # If the transformed values are not required, return an empty dataframe
+    if no_encoding:
+        comp_rep_x = pd.DataFrame(index=data.index)
+        return comp_rep_x
 
+    # Transform the parameters
     dfs = []
     for param in parameters:
         comp_df = param.transform_rep_exp2comp(data[param.name])

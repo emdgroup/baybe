@@ -30,8 +30,10 @@ class SearchSpace:
         self,
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
+        no_encoding: bool = False,
     ):
         self.parameters = parameters
+        self.no_encoding = no_encoding
 
         # Create a dataframe representing the experimental search space
         self.exp_rep = parameter_cartesian_prod_to_df(parameters)
@@ -61,7 +63,9 @@ class SearchSpace:
 
         # Create a corresponding dataframe containing the computational
         # representation
-        self.comp_rep = transform_parameters_exp2comp(self.exp_rep, self.parameters)
+        self.comp_rep = transform_parameters_exp2comp(
+            self.exp_rep, self.parameters, self.no_encoding
+        )
 
         # Drop all columns that do not carry any covariate information
         # TODO [searchspace]: this is a temporary fix and should be handled by the

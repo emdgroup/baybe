@@ -103,7 +103,9 @@ class BayBE:
 
         if create_searchspace:
 
-            self.searchspace = SearchSpace(self.parameters, self.constraints)
+            self.searchspace = SearchSpace(
+                self.parameters, self.constraints, self._random
+            )
 
             # Initialize the DOE strategy
             self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
@@ -197,7 +199,7 @@ class BayBE:
 
         # Transform measurement space to computational representation
         self.measurements_comp_rep_x = transform_parameters_exp2comp(
-            self.measurements_exp_rep, self.searchspace.parameters
+            self.measurements_exp_rep, self.searchspace.parameters, self._random
         )
         self.measurements_comp_rep_y = self.objective.transform(
             self.measurements_exp_rep,
