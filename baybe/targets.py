@@ -78,17 +78,15 @@ class Objective(BaseModel, extra=Extra.forbid):
 
         return weights
 
-    def transform(self, data: pd.DataFrame, targets: List[Target]) -> pd.DataFrame:
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Transforms targets from experimental to computational representation.
 
         Parameters
         ----------
         data : pd.DataFrame
-            The data to be transformed. Must contain all target values, can contain more
-             columns.
-        targets : List[Target]
-            A list of BayBE targets.
+            The data to be transformed. Must contain all target values, can contain
+            more columns.
 
         Returns
         -------
@@ -97,8 +95,8 @@ class Objective(BaseModel, extra=Extra.forbid):
             be as in the input (except when objective mode is 'DESIRABILITY').
         """
         # Perform transformations that are required independent of the mode
-        transformed = data[[t.name for t in targets]].copy()
-        for target in targets:
+        transformed = data[[t.name for t in self.targets]].copy()
+        for target in self.targets:
             transformed[target.name] = target.transform(data[target.name])
 
         # In desirability mode, the targets are additionally combined further into one
@@ -280,30 +278,3 @@ class NumericalTarget(Target):
             transformed = -transformed
 
         return transformed
-
-
-def transform_targets_exp2comp(
-    data: pd.DataFrame,
-    targets: List[Target],
-    objective: Objective,
-) -> pd.DataFrame:
-    """
-    Transforms a dataframe from experimental to computational representation.
-
-    Parameters
-    ----------
-    data : pd.DataFrame
-        Data to be transformed. Must contain all parameter columns. Can additionally
-        contain all target columns, which get transformed separately.
-
-    Returns
-    -------
-    Tuple[pd.DataFrame, Optional[pd.DataFrame]]
-        Transformed parameters and, if contained in the input, transformed targets.
-    """
-    # Transform the (optional) targets
-    comp_rep_y = None
-    if all(target.name in data.columns for target in targets):
-        comp_rep_y = objective.transform(data=data, targets=targets)
-
-    return comp_rep_y

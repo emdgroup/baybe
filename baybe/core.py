@@ -16,7 +16,7 @@ from .constraints import Constraint
 from .parameters import Parameter, transform_parameters_exp2comp
 from .searchspace import SearchSpace
 from .strategy import Strategy
-from .targets import Objective, Target, transform_targets_exp2comp
+from .targets import Objective, Target
 from .utils import check_if_in
 
 log = logging.getLogger(__name__)
@@ -199,8 +199,8 @@ class BayBE:
         self.measurements_comp_rep_x = transform_parameters_exp2comp(
             self.measurements_exp_rep, self.searchspace.parameters
         )
-        self.measurements_comp_rep_y = transform_targets_exp2comp(
-            self.measurements_exp_rep, self.targets, self.objective
+        self.measurements_comp_rep_y = self.objective.transform(
+            self.measurements_exp_rep,
         )
 
         # Use the column representation defined by the searchspace
