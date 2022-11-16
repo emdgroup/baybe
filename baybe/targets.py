@@ -275,3 +275,30 @@ class NumericalTarget(Target):
             transformed = -transformed
 
         return transformed
+
+
+def transform_targets_exp2comp(
+    data: pd.DataFrame,
+    targets: List[Target],
+    objective: Objective,
+) -> pd.DataFrame:
+    """
+    Transforms a dataframe from experimental to computational representation.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Data to be transformed. Must contain all parameter columns. Can additionally
+        contain all target columns, which get transformed separately.
+
+    Returns
+    -------
+    Tuple[pd.DataFrame, Optional[pd.DataFrame]]
+        Transformed parameters and, if contained in the input, transformed targets.
+    """
+    # Transform the (optional) targets
+    comp_rep_y = None
+    if all(target.name in data.columns for target in targets):
+        comp_rep_y = objective.transform(data=data, targets=targets)
+
+    return comp_rep_y

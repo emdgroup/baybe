@@ -146,12 +146,12 @@ def simulate_from_configs(
                     raise ValueError(
                         "Impute mode 'ignore' is only available for dataframe lookups."
                     )
-                searchspace = baybe_obj.searchspace_exp_rep
+                searchspace = baybe_obj.searchspace.exp_rep
                 missing_inds = searchspace.index[
                     searchspace.merge(lookup, how="left", indicator=True)["_merge"]
                     == "left_only"
                 ]
-                baybe_obj.searchspace_metadata.loc[
+                baybe_obj.searchspace.metadata.loc[
                     missing_inds, "dont_recommend"
                 ] = True
 
