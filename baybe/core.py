@@ -69,7 +69,7 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
 class BayBE:
     """Main class for interaction with BayBE."""
 
-    def __init__(self, config: BayBEConfig, create_searchspace: bool = True):
+    def __init__(self, config: BayBEConfig):
         """
         Constructor of the BayBE class.
 
@@ -77,46 +77,31 @@ class BayBE:
         ----------
         config : BayBEConfig
             Pydantic-validated config object.
-        create_searchspace : bool
-            Indicator that allows skipping the creation of searchspace and strategy.
-            Useful when using the constructor to create a BayBE object from stored data
-            (in that case, searchspace is loaded from disk and not created from config).
         """
         # Set global random seeds
         torch.manual_seed(config.random_seed)
         random.seed(config.random_seed)
         np.random.seed(config.random_seed)
 
+        # Store the configuration
+        self.config = config
+
         # Current iteration/batch number
         self.batches_done = 0
 
-        # Config
-        # TODO: derive the required information directly from the Parameter objects
-        # TODO: find a better solution for the self._random property hack
-        self.config = config
-        self._random = (
-            config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
-        )
+        # Flag to indicate if the specified recommendation strategy is "random", in
+        # which case certain operation can be skipped, such as the (potentially
+        # costly) transformation of the parameters into computation representation.
+        self._random = config.strategy.get("recommender_cls", "") == "RANDOM"
 
-        # Create Parameter, Objective and Constraint objects
+        # Initialize all subcomponents
         self.parameters = [Parameter.create(p) for p in config.parameters]
-        self.objective = Objective(**config.objective)
         self.constraints = [Constraint.create(c) for c in config.constraints]
+        self.searchspace = SearchSpace(self.parameters, self.constraints, self._random)
+        self.objective = Objective(**config.objective)
+        self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
 
-        if create_searchspace:
-
-            self.searchspace = SearchSpace(
-                self.parameters, self.constraints, self._random
-            )
-
-            # Initialize the DOE strategy
-            self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
-
-        else:
-            self.searchspace = None
-            self.strategy = None
-
-        # Declare measurement dataframe
+        # Declare variable for storing measurements
         self.measurements = None
 
     @property
@@ -222,7 +207,7 @@ class BayBE:
 
         # Create the BayBE object via constructor and stored config
         config = BayBEConfig(**state_dict["config_dict"])
-        baybe = cls(config, create_searchspace=False)
+        baybe = cls(config)
 
         # Restore its state
         state_dict["config"] = config
