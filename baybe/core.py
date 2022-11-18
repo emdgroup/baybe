@@ -313,10 +313,13 @@ class BayBE:
         idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
 
         # Translate indices into labeled data points and update metadata
-        rec = candidates_exp.loc[idxs, :]  # TODO: do we need a copy here?
-        self.searchspace.metadata.loc[
-            idxs, "was_recommended"
-        ] = True  # TODO: don't modify searchspace members directly
+        # TODO: Don't modify searchspace members directly. Probably, the metadata
+        #   should become part of the BayBE class, which would cleanly separate
+        #   responsibilities. That is, BayBE would capture all data-related information,
+        #   reflecting the progress of an experiment, whereas the SearchSpace class
+        #   would be a stateless representation of the mathematical search space.
+        rec = candidates_exp.loc[idxs, :]
+        self.searchspace.metadata.loc[idxs, "was_recommended"] = True
 
         # Query user input
         for target in self.targets:
