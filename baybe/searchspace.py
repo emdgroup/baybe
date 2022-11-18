@@ -2,7 +2,7 @@
 Functionality for managing search spaces.
 """
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 
@@ -29,18 +29,20 @@ class SearchSpace:
         empty_encoding: bool = False,
     ):
         """
-        # TODO: finish docstring
-
         Parameters
         ----------
-        parameters
-        constraints
-        empty_encoding : bool
+        parameters : List[Parameter]
+            The parameters spanning the search space.
+        constraints : List[Constraint], optional
+            An optional set of constraints restricting the valid parameter space.
+        empty_encoding : bool, default: False
             If True, uses an "empty" encoding for all parameters. This is useful,
-            for instance, when used in combination with random search strategies that
-            do not make use of the actual parameter values, since it avoids the
-            (potentially costly) transformation to the computational representation.
+            for instance, in combination with random search strategies that
+            do not read the actual parameter values, since it avoids the
+            (potentially costly) transformation of the parameter values to their
+            computational representation.
         """
+        # Store the input
         self.parameters = parameters
         self.empty_encoding = empty_encoding
 
@@ -49,18 +51,27 @@ class SearchSpace:
 
         # Remove entries that violate parameter constraints
         if constraints is not None:
-            # Constraints including possible resorting
+
+            # Reorder the constraints according to their execution order
             self.constraints = sorted(
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
+
+            # Apply the constraints one after another
             for constraint in (c for c in self.constraints if c.eval_during_creation):
                 inds = constraint.get_invalid(self.exp_rep)
                 self.exp_rep.drop(index=inds, inplace=True)
             self.exp_rep.reset_index(inplace=True, drop=True)
+
         else:
             self.constraints = None
 
-        # Create Metadata
+        # Create a dataframe containing the computational parameter representation
+        # (ignoring all columns that do not carry any covariate information).
+        self.comp_rep = self.transform(self.exp_rep)
+        self.comp_rep = df_drop_single_value_columns(self.comp_rep)
+
+        # Create a dataframe storing the experiment metadata
         self.metadata = pd.DataFrame(
             {
                 "was_recommended": False,
@@ -69,12 +80,6 @@ class SearchSpace:
             },
             index=self.exp_rep.index,
         )
-
-        # Create a corresponding dataframe containing the computational
-        # representation (ignoring all columns that do not carry any covariate
-        # information)
-        self.comp_rep = self.transform(self.exp_rep)
-        self.comp_rep = df_drop_single_value_columns(self.comp_rep)
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
@@ -88,37 +93,53 @@ class SearchSpace:
         self.metadata = state_dict["metadata"]
 
     def mark_as_measured(
-        self, df: pd.DataFrame, numerical_measurements_must_be_within_tolerance: bool
-    ):
-        """TODO: add docstring"""
+        self,
+        measurements: pd.DataFrame,
+        numerical_measurements_must_be_within_tolerance: bool,
+    ) -> None:
+        """
+        Marks the given elements of the search space as measured.
+
+        Parameters
+        ----------
+        measurements : pd.DataFrame
+            A dataframe containing parameter settings that should be marked as measured.
+        numerical_measurements_must_be_within_tolerance : bool
+            See `_match_measurement_with_searchspace_indices`.
+
+        Returns
+        -------
+        Nothing.
+        """
         inds_matched = self._match_measurement_with_searchspace_indices(
-            self.parameters,
-            self.exp_rep,
-            df,
+            measurements,
             numerical_measurements_must_be_within_tolerance,
         )
         self.metadata.loc[inds_matched, "was_measured"] = True
 
     def _match_measurement_with_searchspace_indices(
         self,
-        parameters,
-        searchspace_exp_rep,
-        data: pd.DataFrame,
+        df: pd.DataFrame,
         numerical_measurements_must_be_within_tolerance: bool,
     ) -> pd.Index:
         """
-        Matches rows of a dataframe (e.g. measurements to be added to the internal data)
-        to the indices of the search space dataframe. This is useful for validity checks
-        and to automatically match measurements to entries in the search space, e.g. to
-        detect which ones have been measured. For categorical parameters, there needs
-        to be an exact match with any of the allowed values. For numerical parameters,
-        the user can decide via a BayBE flag whether values outside the tolerance should
-        be accepted.
+        Matches rows of a dataframe (e.g. measurements from an experiment)
+        to the indices of the search space dataframe.
+
+        This is useful for validity checks and to automatically match measurements to
+        entries in the search space, e.g. to detect which ones have been measured.
+        For categorical parameters, there needs to be an exact match with any of the
+        allowed values. For numerical parameters, the user can decide via a flag
+        whether values outside the tolerance should be accepted.
 
         Parameters
         ----------
-        data : pd.DataFrame
+        df : pd.DataFrame
             The data that should be checked for matching entries in the search space.
+        numerical_measurements_must_be_within_tolerance : bool
+            If True, numerical parameters are matched with the search space elements
+            only if there is a match within the parameter tolerance. If False,
+            the closest match is considered, irrespective of the distance.
 
         Returns
         -------
@@ -127,14 +148,20 @@ class SearchSpace:
         """
         # IMPROVE: neater implementation (e.g. via fuzzy join)
 
+        # Assert that all parameters appear in the given dataframe
+        if not all(col in df.columns for col in self.exp_rep.columns):
+            raise ValueError(
+                "Values for all parameter must be specified in the given dataframe."
+            )
+
         inds_matched = []
 
         # Iterate over all input rows
-        for ind, row in data.iterrows():
+        for ind, row in df.iterrows():
 
             # Check if the row represents a valid input
             valid = True
-            for param in parameters:
+            for param in self.parameters:
                 if "NUM" in param.type:
                     if numerical_measurements_must_be_within_tolerance:
                         valid &= param.is_in_range(row[param.name])
@@ -155,24 +182,22 @@ class SearchSpace:
             # Identify discrete and numeric parameters
             # TODO: This is error-prone. Add member to indicate discreteness or
             #  introduce corresponding super-classes.
-            cat_cols = [param.name for param in parameters if "NUM" not in param.type]
-            num_cols = [param.name for param in parameters if "NUM" in param.type]
+            cat_cols = [
+                param.name for param in self.parameters if "NUM" not in param.type
+            ]
+            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
 
             # Discrete parameters must match exactly
-            match = (
-                searchspace_exp_rep[cat_cols]
-                .eq(row[cat_cols])
-                .all(axis=1, skipna=False)
-            )
+            match = self.exp_rep[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
 
             # For numeric parameters, match the entry with the smallest deviation
             # TODO: allow alternative distance metrics
             for param in num_cols:
-                abs_diff = (searchspace_exp_rep[param] - row[param]).abs()
+                abs_diff = (self.exp_rep[param] - row[param]).abs()
                 match &= abs_diff == abs_diff.min()
 
             # We expect exactly one match. If that's not the case, print a warning.
-            inds_found = searchspace_exp_rep.index[match].to_list()
+            inds_found = self.exp_rep.index[match].to_list()
             if len(inds_found) == 0:
                 log.warning(
                     "Input row with index %s could not be matched to the search space. "
@@ -196,9 +221,29 @@ class SearchSpace:
         self,
         allow_repeated_recommendations: bool,
         allow_recommending_already_measured: bool,
-    ):
-        """TODO: add docstring"""
-        # Filter the search space before passing it to the strategy
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Returns the set of candidate parameter settings that can be tested.
+
+        Parameters
+        ----------
+        allow_repeated_recommendations : bool
+            If True, parameter settings that have already been recommended in an
+            earlier iteration are still considered as valid candidates. This is
+            relevant, for instance, when an earlier recommended parameter setting has
+            not been measured by the user (for any reason) after the corresponding
+            recommendation was made.
+        allow_recommending_already_measured : bool
+            If True, parameters settings for which there are already target values
+            available are still considered as valid candidates.
+
+        Returns
+        -------
+        Tuple[pd.DataFrame, pd.DataFrame]
+            The candidate parameter settings both in experimental and computational
+            representation.
+        """
+        # Filter the search space down to the candidates
         mask_todrop = self.metadata["dont_recommend"].copy()
         if not allow_repeated_recommendations:
             mask_todrop |= self.metadata["was_recommended"]
