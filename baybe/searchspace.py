@@ -76,6 +76,17 @@ class SearchSpace:
         self.comp_rep = self.transform(self.exp_rep)
         self.comp_rep = df_drop_single_value_columns(self.comp_rep)
 
+    def state_dict(self) -> dict:
+        """Creates a dictionary representing the object's internal state."""
+        state_dict = dict(
+            metadata=self.metadata,
+        )
+        return state_dict
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        """Restores a given object state."""
+        self.metadata = state_dict["metadata"]
+
     def mark_as_measured(
         self, df: pd.DataFrame, numerical_measurements_must_be_within_tolerance: bool
     ):

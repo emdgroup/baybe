@@ -4,9 +4,11 @@ Core functionality of BayBE. Main point of interaction via Python.
 from __future__ import annotations
 
 import logging
+import pickle
 import random
 from typing import List, Optional
 
+import fsspec
 import numpy as np
 import pandas as pd
 import torch
@@ -163,6 +165,99 @@ class BayBE:
 
         return string
 
+    def state_dict(self) -> dict:
+        """Creates a dictionary representing the object's internal state."""
+        state_dict = dict(
+            config_dict=self.config.dict(),
+            batches_done=self.batches_done,
+            searchspace=self.searchspace.state_dict(),
+            measurements=self.measurements,
+        )
+        return state_dict
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        """Restores a given object state."""
+
+        # Overwrite the member variables with the given state information
+        self.config = state_dict["config"]
+        self.batches_done = state_dict["batches_done"]
+        self.measurements = state_dict["measurements"]
+
+        # Restore the search space state
+        # TODO: Extend the load_state_dict function of SearchSpace such that it takes
+        #   care of everything. For that, we need state_dict functionality for all
+        #   BayBE components.
+        self.searchspace = SearchSpace(self.parameters, self.constraints, self._random)
+        self.searchspace.load_state_dict(state_dict["searchspace"])
+
+        # Restore the strategy state
+        # TODO: implement state_dict functionality for Strategy
+        self.strategy = Strategy(
+            searchspace=self.searchspace,
+            **self.config.strategy,
+        )
+        self.strategy.fit(self.measured_parameters_comp, self.measured_targets_comp)
+
+    @classmethod
+    def from_file(cls, path: str, **kwargs) -> BayBE:
+        """
+        Class method to restore a BayBE object that has been saved to disk.
+
+        Parameters
+        ----------
+        path : str
+            Path to the stored BayBE object.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
+            accessing remote or s3 file systems.
+
+        Returns
+        -------
+        BayBE
+            The restored BayBE instance.
+        """
+        # Load stored BayBE state
+        with fsspec.open(path, **kwargs) as file:
+            state_dict = pickle.load(file)
+
+        # Create the BayBE object via constructor and stored config
+        config = BayBEConfig(**state_dict["config_dict"])
+        baybe = cls(config, create_searchspace=False)
+
+        # Restore its state
+        state_dict["config"] = config
+        baybe.load_state_dict(state_dict)
+
+        return baybe
+
+    def save(self, path: Optional[str] = None, **kwargs) -> None:
+        """
+        Store the current state of the BayBE instance on disk.
+
+        Parameters
+        ----------
+        path : str
+            Path to where the BayBE object should be stored.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
+            accessing remote or s3 file systems.
+
+        Returns
+        -------
+        Nothing.
+        """
+        # If no path is provided, use a default file path
+        if path is None:
+            path = "./baybe_object.baybe"
+            log.warning(
+                "No path was specified for storing the BayBE object. Will use '%s'.",
+                path,
+            )
+
+        # Write the BayBE state to disk
+        with fsspec.open(path, "wb", **kwargs) as file:
+            pickle.dump(self.state_dict(), file)
+
     def add_results(self, data: pd.DataFrame) -> None:
         """
         Adds results from a dataframe to the internal database and updates the strategy
@@ -243,41 +338,3 @@ class BayBE:
             rec[target.name] = "<Enter value>"
 
         return rec
-
-    @classmethod
-    def from_stored(cls, path: str, **kwargs) -> BayBE:
-        """
-        Class method to create a BayBE object from a stored object.
-
-        Parameters
-        ----------
-        path : str
-            Path to the stored object.
-        kwargs : keyword arguments
-            Additional arguments passed to fsspec.open. Useful, for instance, for
-            accessing remote or s3 file systems.
-
-        Returns
-        -------
-        BayBE
-            The restored BayBE instance.
-        """
-        raise NotImplementedError("This method is currently not functional.")
-
-    def save(self, path: Optional[str] = None, **kwargs) -> None:
-        """
-        Store the current state of the BayBE instance on disk.
-
-        Parameters
-        ----------
-        path : str
-            Path to where the object should be stored.
-        kwargs : keyword arguments
-            Additional arguments passed to fsspec.open. Useful, for instance, for
-            accessing remote or s3 file systems.
-
-        Returns
-        -------
-        Nothing.
-        """
-        raise NotImplementedError("This method is currently not functional.")
