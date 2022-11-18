@@ -217,28 +217,25 @@ class BayBE:
             self.config.allow_recommending_already_measured,
         )
 
-        # TODO: reactivate warning
-        # # Assert that there are enough points left for recommendation
-        # # TODO: use available of points left and show a warning
-        # if (mask_todrop.sum() >= len(self.searchspace_exp_rep)) or (
-        #         len(self.searchspace_exp_rep.loc[~mask_todrop]) < batch_quantity
-        # ):
-        #     raise AssertionError(
-        #     f"Using the current settings, there are fewer than '{batch_quantity=}' "
-        #     f"possible data points left to recommend. This can be either because "
-        #     f"all data points have been measured at some point (while "
-        #     f"'allow_repeated_recommendations' or "
-        #     "'allow_recommending_already_measured' being False) or because all "
-        #     "data points are marked as 'dont_recommend'."
-        #     )
+        # Assert that there are enough points left for recommendation
+        if len(candidates_exp) < batch_quantity:
+            log.warning(
+                "Using the current settings, there are fewer than %s "
+                "possible data points left to recommend. This can be "
+                "either because all data points have been measured at some point "
+                "(while 'allow_repeated_recommendations' or "
+                "'allow_recommending_already_measured' being False) "
+                "or because all data points are marked as 'dont_recommend'.",
+                batch_quantity,
+            )
 
         # Get the indices of the recommended search space entries
-        inds = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
+        idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
 
         # Translate indices into labeled data points and update metadata
-        rec = candidates_exp.loc[inds, :]  # TODO: do we need a copy here?
+        rec = candidates_exp.loc[idxs, :]  # TODO: do we need a copy here?
         self.searchspace.metadata.loc[
-            inds, "was_recommended"
+            idxs, "was_recommended"
         ] = True  # TODO: don't modify searchspace members directly
 
         # Query user input
