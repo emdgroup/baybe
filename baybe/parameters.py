@@ -61,7 +61,7 @@ class Parameter(
 
     # class variables
     type: ClassVar[str]
-    requires_encoding: ClassVar[str]
+    requires_encoding: ClassVar[bool]
     SUBCLASSES: ClassVar[Dict[str, Type[Parameter]]] = {}
 
     # object variables

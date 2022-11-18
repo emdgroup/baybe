@@ -349,9 +349,7 @@ class GaussianProcessModel(SurrogateModel):
         # ---------- GP prior selection ---------- #
         # TODO: temporary prior choices adapted from edbo, replace later on
 
-        mordred = any(
-            "MORDRED" in col for col in self.searchspace.comp_rep.columns
-        ) or any("RDKIT" in col for col in self.searchspace.comp_rep.columns)
+        mordred = self.searchspace.contains_mordred or self.searchspace.contains_rdkit
         if mordred and train_x.shape[-1] < 50:
             mordred = False
 
