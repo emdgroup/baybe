@@ -73,9 +73,10 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
         # The posterior mode is chosen to match that of the wrapped model class
         joint_posterior = model_cls.joint_posterior
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, searchspace: SearchSpace, *args, **kwargs):
             """Stores an instance of the underlying model class."""
-            self.model = model_cls(*args, **kwargs)
+            super().__init__(searchspace)
+            self.model = model_cls(searchspace, *args, **kwargs)
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
             """Calls the posterior function of the internal model instance."""
@@ -239,6 +240,12 @@ class SurrogateModel(ABC):
     type: str
     joint_posterior: bool
 
+    def __init__(self, searchspace: SearchSpace):
+        # TODO: consider alternative architecture where the surrogate model really only
+        #   represents the "mathematical" surrogate, i.e. where it has no dependencies
+        #   to other objects like the search space
+        self.searchspace = searchspace
+
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """
         Evaluates the surrogate model at the given candidate points.
@@ -316,11 +323,8 @@ class GaussianProcessModel(SurrogateModel):
     joint_posterior = True
 
     def __init__(self, searchspace: SearchSpace):
+        super().__init__(searchspace)
         self.model: Optional[SingleTaskGP] = None
-        # TODO: the surrogate model should work entirely on Tensors (parameter name
-        #  agnostic) -> the scaling information should not be provided in form of a
-        #  DataFrame
-        self.searchspace = searchspace
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
@@ -426,7 +430,8 @@ class MeanPredictionModel(SurrogateModel):
     type = "MP"
     joint_posterior = False
 
-    def __init__(self, searchspace: SearchSpace):  # pylint: disable=unused-argument
+    def __init__(self, searchspace: SearchSpace):
+        super().__init__(searchspace)
         self.target_value = None
 
     @batchify
@@ -451,11 +456,8 @@ class RandomForestModel(SurrogateModel):
     joint_posterior = False
 
     def __init__(self, searchspace: SearchSpace):
+        super().__init__(searchspace)
         self.model: Optional[RandomForestRegressor] = None
-        # TODO: the surrogate model should work entirely on Tensors (parameter name
-        #  agnostic) -> the scaling information should not be provided in form of a
-        #  DataFrame
-        self.searchspace = searchspace
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -495,11 +497,8 @@ class NGBoostModel(SurrogateModel):
     joint_posterior = False
 
     def __init__(self, searchspace: SearchSpace):
+        super().__init__(searchspace)
         self.model: Optional[NGBRegressor] = None
-        # TODO: the surrogate model should work entirely on Tensors (parameter name
-        #  agnostic) -> the scaling information should not be provided in form of a
-        #  DataFrame
-        self.searchspace = searchspace
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -529,11 +528,8 @@ class BayesianLinearModel(SurrogateModel):
     joint_posterior = False
 
     def __init__(self, searchspace: SearchSpace):
+        super().__init__(searchspace)
         self.model: Optional[ARDRegression] = None
-        # TODO: the surrogate model should work entirely on Tensors (parameter name
-        #  agnostic) -> the scaling information should not be provided in form of a
-        #  DataFrame
-        self.searchspace = searchspace
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
