@@ -13,7 +13,7 @@ import torch
 from pydantic import BaseModel, Extra, validator
 
 from .constraints import Constraint
-from .parameters import Parameter, transform_parameters_exp2comp
+from .parameters import Parameter
 from .searchspace import SearchSpace
 from .strategy import Strategy
 from .targets import Objective, Target
@@ -198,19 +198,12 @@ class BayBE:
         )
 
         # Transform measurement space to computational representation
-        self.measurements_comp_rep_x = transform_parameters_exp2comp(
-            self.measurements_exp_rep, self.searchspace.parameters, self._random
+        self.measurements_comp_rep_x = self.searchspace.transform(
+            self.measurements_exp_rep
         )
         self.measurements_comp_rep_y = self.objective.transform(
-            self.measurements_exp_rep,
+            self.measurements_exp_rep
         )
-
-        # Use the column representation defined by the searchspace
-        # TODO: This is a temporary fix. See TODO for computational transformation
-        #  in constructor.
-        self.measurements_comp_rep_x = self.measurements_comp_rep_x[
-            self.searchspace.comp_rep.columns
-        ]
 
         # Update the strategy object
         self.strategy.fit(self.measurements_comp_rep_x, self.measurements_comp_rep_y)

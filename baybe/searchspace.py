@@ -7,11 +7,7 @@ from typing import List, Optional
 import pandas as pd
 
 from .constraints import _constraints_order, Constraint
-from .parameters import (
-    Parameter,
-    parameter_cartesian_prod_to_df,
-    transform_parameters_exp2comp,
-)
+from .parameters import Parameter, parameter_cartesian_prod_to_df
 from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
@@ -30,10 +26,23 @@ class SearchSpace:
         self,
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
-        no_encoding: bool = False,
+        empty_encoding: bool = False,
     ):
+        """
+        # TODO: finish docstring
+
+        Parameters
+        ----------
+        parameters
+        constraints
+        empty_encoding : bool
+            If True, uses an "empty" encoding for all parameters. This is useful,
+            for instance, when used in combination with random search strategies that
+            do not make use of the actual parameter values, since it avoids the
+            (potentially costly) transformation to the computational representation.
+        """
         self.parameters = parameters
-        self.no_encoding = no_encoding
+        self.empty_encoding = empty_encoding
 
         # Create a dataframe representing the experimental search space
         self.exp_rep = parameter_cartesian_prod_to_df(parameters)
@@ -62,14 +71,9 @@ class SearchSpace:
         )
 
         # Create a corresponding dataframe containing the computational
-        # representation
-        self.comp_rep = transform_parameters_exp2comp(
-            self.exp_rep, self.parameters, self.no_encoding
-        )
-
-        # Drop all columns that do not carry any covariate information
-        # TODO [searchspace]: this is a temporary fix and should be handled by the
-        #   yet to be implemented `Searchspace` class
+        # representation (ignoring all columns that do not carry any covariate
+        # information)
+        self.comp_rep = self.transform(self.exp_rep)
         self.comp_rep = df_drop_single_value_columns(self.comp_rep)
 
     def mark_as_measured(
@@ -191,3 +195,51 @@ class SearchSpace:
             mask_todrop |= self.metadata["was_measured"]
 
         return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
+
+    def transform(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Transforms parameters from experimental to computational representation.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to be transformed. Must contain all specified parameters, can
+            contain more columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe with the parameters in computational representation.
+        """
+        # If the transformed values are not required, return an empty dataframe
+        if self.empty_encoding:
+            comp_rep = pd.DataFrame(index=data.index)
+            return comp_rep
+
+        # Transform the parameters
+        dfs = []
+        for param in self.parameters:
+            comp_df = param.transform_rep_exp2comp(data[param.name])
+            dfs.append(comp_df)
+        comp_rep = pd.concat(dfs, axis=1)
+
+        # IMPROVE: The following is a simple mechanism to implement statefulness of
+        #   the transformation. However, the state is effectively implemented through
+        #   the presence of the `comp_rep` member and hence outside of this function.
+        #   Also, the effective column subset is determined outside of this function.
+        #   A slightly better alternative would be to use transformation object that
+        #   internally keeps track of the state.
+        try:
+            # If this does not raise an error, the search space constructor has
+            # already been called and the columns to be kept are known. Hence,
+            # every subsequent transformation should adhere to the same column subset.
+            comp_rep = comp_rep[self.comp_rep.columns]
+        except AttributeError:
+            # Otherwise, the transformation is being called by the search space
+            # constructor so that no column filtering is needed.
+            pass
+
+        return comp_rep

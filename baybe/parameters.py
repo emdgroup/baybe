@@ -467,47 +467,6 @@ def scaled_view(
     return transformed
 
 
-def transform_parameters_exp2comp(
-    data: pd.DataFrame,
-    parameters: List[Parameter],
-    no_encoding: bool = False,
-) -> pd.DataFrame:
-    """
-    Transforms parameters from experimental to computational representation.
-
-    Parameters
-    ----------
-    data : pd.DataFrame
-        The data to be transformed. Must contain all specified parameters, can contain
-        more columns.
-    parameters : List[Parameter]
-        The list of parameter to be transformed in the given dataframe.
-    no_encoding : bool
-        If True, an empty dataframe with matching index is returned. This is useful,
-        for instance, when used in combination with random search strategies that
-        do not make use of the actual parameter values, since it avoids the
-        (potentially costly) transformation to the computational representation.
-
-    Returns
-    -------
-    pd.DataFrame
-        A dataframe with the parameters in computational representation.
-    """
-    # If the transformed values are not required, return an empty dataframe
-    if no_encoding:
-        comp_rep_x = pd.DataFrame(index=data.index)
-        return comp_rep_x
-
-    # Transform the parameters
-    dfs = []
-    for param in parameters:
-        comp_df = param.transform_rep_exp2comp(data[param.name])
-        dfs.append(comp_df)
-    comp_rep_x = pd.concat(dfs, axis=1)
-
-    return comp_rep_x
-
-
 # TODO: self.values could be renamed into something else since it's clashing with
 #  pydantic enforced syntax, for instance 'labels' (but that's weird for numeric
 #  discrete parameters)
