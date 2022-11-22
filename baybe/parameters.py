@@ -6,11 +6,12 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property, lru_cache
-from typing import ClassVar, Dict, List, Literal, Optional, Type, Union
+from typing import Any, ClassVar, Dict, List, Literal, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, confloat, Extra, StrictBool, validator
+from pydantic.types import conlist
 from sklearn.metrics.pairwise import pairwise_distances
 
 from .utils import (
@@ -142,7 +143,7 @@ class Categorical(Parameter):
     requires_encoding = True
 
     # object variables
-    values: list
+    values: conlist(Any, unique_items=True)
     encoding: Literal["OHE", "INT"] = "OHE"
 
     # validators
@@ -173,7 +174,7 @@ class NumericDiscrete(Parameter):
     requires_encoding = False
 
     # object variables
-    values: list
+    values: conlist(float, unique_items=True)
     tolerance: float = 0.0
 
     # validators
@@ -324,6 +325,13 @@ class Custom(Parameter):
             raise StrictValidationError(
                 f"The custom dataframe for parameter {values['name']} contains NaN "
                 f"entries, which is not supported."
+            )
+
+        if len(data) != len(set(data.index)):
+            raise StrictValidationError(
+                f"The custom dataframe for parameter {values['name']} contains "
+                f"duplicated indices. Please only provide dataframes with unique"
+                f" indices."
             )
 
         # Remove zero variance and string columns
