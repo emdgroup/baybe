@@ -12,7 +12,7 @@ import fsspec
 import numpy as np
 import pandas as pd
 import torch
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, conlist, Extra, validator
 
 from .constraints import Constraint
 from .parameters import Parameter
@@ -40,7 +40,7 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
 
     project_name: str = "Untitled Project"
-    parameters: List[dict]
+    parameters: conlist(dict, min_items=1)
     objective: dict
     strategy: Optional[dict] = None
     constraints: List[dict] = []
