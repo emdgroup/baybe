@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 from baybe.simulation import simulate_from_configs
 
-lookup = pd.read_excel("../../examples/Reaction_DirectArylation/lookup.xlsx")
+lookup = pd.read_excel("../examples/Reaction_DirectArylation/lookup.xlsx")
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
