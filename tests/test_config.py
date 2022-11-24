@@ -1,6 +1,7 @@
 """
 Tests for basic input-output nad iterative loop.
 """
+import pandas as pd
 import pytest
 
 from baybe.core import BayBEConfig
@@ -74,6 +75,25 @@ invalid_tests = {
         },
         ValidationError,
     ),
+    "custom_duplicated_index": (
+        {
+            "parameters": [
+                {
+                    "name": "Custom_1",
+                    "type": "CUSTOM",
+                    "data": pd.DataFrame(
+                        {
+                            "D1": [1.1, 1.4, 1.7, 0.8],
+                            "D2": [11, 23, 55, 23],
+                            "D3": [-4, -13, 4, -2],
+                        },
+                        index=["mol1", "mol2", "mol3", "mol1"],
+                    ),
+                },
+            ],
+        },
+        StrictValidationError,
+    ),
 }
 
 
@@ -86,8 +106,5 @@ def test_invalid_config(config_basic_1target, config_update_key):
     config_update, expected_error = invalid_tests[config_update_key]
     config_basic_1target.update(config_update)
 
-    # print(config_update_key, expected_error)
-    # print(invalid_tests[config_update_key])
-    # print(config_basic_1target)
     with pytest.raises(expected_error):
         BayBEConfig(**config_basic_1target)
