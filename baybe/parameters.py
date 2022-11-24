@@ -247,7 +247,7 @@ class GenericSubstance(Parameter):
         """
         for name, smiles in dat.items():
             if not is_valid_smiles(smiles):
-                raise ValueError(
+                raise StrictValidationError(
                     f"The SMILES '{smiles}' for molecule '{name}' does "
                     f"not appear to be valid."
                 )

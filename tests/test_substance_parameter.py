@@ -8,9 +8,8 @@ from baybe.core import BayBE, BayBEConfig
 from baybe.utils import add_fake_results, add_parameter_noise
 
 
-@pytest.mark.parametrize("batch_quantity", [1, 3])
 @pytest.mark.parametrize("encoding", ["MORDRED", "RDKIT", "MORGAN_FP"])
-def test_substance_parameter_run_iterations(
+def test_run_iterations(
     config_basic_1target,
     mock_substances,
     encoding,
