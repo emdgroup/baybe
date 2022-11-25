@@ -218,6 +218,16 @@ invalid_config_updates = {
             ],
         }
     },
+    "strat_invalid_init_strat": {
+        "strategy": {
+            "initial_strategy": "INVALID_CHOICE",
+        },
+    },
+    "strat_invalid_surrogate": {
+        "strategy": {
+            "surrogate_model_cls": "INVALID_CHOICE",
+        },
+    },
 }
 
 
