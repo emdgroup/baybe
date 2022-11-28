@@ -8,8 +8,8 @@ from baybe.utils import add_fake_results
 
 
 # List of tests that are expected to fail (still missing implementation etc)
-param_xfails = ["string_instead_float"]
-target_xfails = ["string_instead_float"]
+param_xfails = []
+target_xfails = []
 
 
 @pytest.mark.parametrize(
