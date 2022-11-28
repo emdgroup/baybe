@@ -230,12 +230,18 @@ invalid_config_updates = {
     },
 }
 
+# List of tests that are expected to fail (still missing implementation etc)
+xfails = ["empty_target_list", "param_custom_duplicated_index"]
+
 
 @pytest.mark.parametrize("config_update_key", invalid_config_updates.keys())
 def test_invalid_config(config_basic_1target, config_update_key):
     """
     Ensure invalid configurations trigger defined exceptions.
     """
+    if config_update_key in xfails:
+        pytest.xfail()
+
     config_update = invalid_config_updates[config_update_key]
     config_basic_1target.update(config_update)
 

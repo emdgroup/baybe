@@ -13,7 +13,7 @@ from baybe.utils import add_fake_results, add_parameter_noise
 
 
 # Independent Fixtures
-@pytest.fixture(scope="session", params=[2], name="n_iterations", ids=["iter2"])
+@pytest.fixture(params=[2], name="n_iterations", ids=["iter2"])
 def fixture_n_iterations(request):
     """
     Number of iterations ran in tests.
@@ -21,9 +21,7 @@ def fixture_n_iterations(request):
     return request.param
 
 
-@pytest.fixture(
-    scope="session", params=[1, 3], name="batch_quantity", ids=["batch1", "batch3"]
-)
+@pytest.fixture(params=[1, 3], name="batch_quantity", ids=["batch1", "batch3"])
 def fixture_batch_quantity(request):
     """
     Number of recommendations requested per iteration. Testing 1 as edge case and 3
@@ -33,7 +31,6 @@ def fixture_batch_quantity(request):
 
 
 @pytest.fixture(
-    scope="session",
     params=[5, 8],
     name="n_grid_points",
     ids=["grid5", "grid8"],
@@ -48,7 +45,7 @@ def fixture_n_grid_points(request):
     return request.param
 
 
-@pytest.fixture(scope="session", name="good_reference_values")
+@pytest.fixture(name="good_reference_values")
 def fixture_good_reference_values():
     """
     Define some good reference values which are used by the utility function to
