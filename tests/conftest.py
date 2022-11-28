@@ -12,6 +12,34 @@ from baybe.utils import add_fake_results, add_parameter_noise
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
 
 
+# Add option to only run fast tests
+def pytest_addoption(parser):
+    """
+    Changes pytest parser.
+    """
+    parser.addoption("--fast", action="store_true", help="fast: Runs reduced tests")
+
+
+def pytest_configure(config):
+    """
+    Changes pytest marker configuration.
+    """
+    config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+
+def pytest_collection_modifyitems(config, items):
+    """
+    Marks slow tests as skip of flag is set.
+    """
+    if not config.getoption("--fast"):
+        return
+
+    skip_slow = pytest.mark.skip(reason="skip with --fast")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip_slow)
+
+
 # Independent Fixtures
 @pytest.fixture(params=[2], name="n_iterations", ids=["iter2"])
 def fixture_n_iterations(request):
@@ -21,7 +49,11 @@ def fixture_n_iterations(request):
     return request.param
 
 
-@pytest.fixture(params=[1, 3], name="batch_quantity", ids=["batch1", "batch3"])
+@pytest.fixture(
+    params=[pytest.param(1, marks=pytest.mark.slow), 3],
+    name="batch_quantity",
+    ids=["batch1", "batch3"],
+)
 def fixture_batch_quantity(request):
     """
     Number of recommendations requested per iteration. Testing 1 as edge case and 3
@@ -31,7 +63,7 @@ def fixture_batch_quantity(request):
 
 
 @pytest.fixture(
-    params=[5, 8],
+    params=[5, pytest.param(8, marks=pytest.mark.slow)],
     name="n_grid_points",
     ids=["grid5", "grid8"],
 )

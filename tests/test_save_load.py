@@ -9,7 +9,7 @@ from baybe.utils import add_fake_results
 
 
 def test_data_consistency(
-    baybe_object_batch3_iterations2, good_reference_values, batch_quantity
+    baybe_object_batch3_iterations2, good_reference_values, batch_quantity, n_iterations
 ):
     """
     Test equality after storing and loading a BayBE object.
@@ -48,7 +48,7 @@ def test_data_consistency(
     ), "Problem directly after loading"
 
     # Run some more iterations
-    for _ in range(batch_quantity):
+    for _ in range(n_iterations):
         rec = baybe_obj_reference.recommend(batch_quantity=batch_quantity)
         rec2 = baybe_obj_loaded.recommend(batch_quantity=batch_quantity)
 

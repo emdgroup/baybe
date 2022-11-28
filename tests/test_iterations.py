@@ -215,6 +215,7 @@ config_updates = {
 xfails = ["target_multi"]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("config_update_key", config_updates.keys())
 def test_run_iteration(
     config_basic_1target,
