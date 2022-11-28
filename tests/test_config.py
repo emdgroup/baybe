@@ -14,6 +14,15 @@ from baybe.utils import StrictValidationError
 from pydantic import ValidationError
 
 invalid_config_updates = {
+    "param_invalid_type": {
+        "parameters": [
+            {
+                "name": "Numerical_New",
+                "type": "INVALID_TYPE",
+                "values": [1, 2, 3, 2],
+            }
+        ],
+    },
     "param_num_duplicated": {
         "parameters": [
             {
@@ -67,15 +76,24 @@ invalid_config_updates = {
             },
         ],
     },  #
-    "empty_parameter_list": {
+    "param_empty_list": {
         "parameters": [],
     },
-    "empty_target_list": {
+    "param_list_wrong_type": {
+        "parameters": {"A": 1, "B": 2},
+    },
+    "target_empty_list": {
         "objective": {
             "mode": "SINGLE",
             "targets": [],
         }
-    },  #
+    },
+    "target_list_wrong_type": {
+        "objective": {
+            "mode": "SINGLE",
+            "targets": {"A": 1, "B": 2},
+        }
+    },
     "targets_match_no_bounds": {
         "objective": {
             "mode": "SINGLE",
@@ -231,7 +249,7 @@ invalid_config_updates = {
 }
 
 # List of tests that are expected to fail (still missing implementation etc)
-xfails = ["empty_target_list", "param_custom_duplicated_index"]
+xfails = ["param_custom_duplicated_index"]
 
 
 @pytest.mark.parametrize("config_update_key", invalid_config_updates.keys())

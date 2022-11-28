@@ -27,7 +27,7 @@ class Objective(BaseModel, extra=Extra.forbid):
     weights: Optional[List[float]] = None
     combine_func: Literal["MEAN", "GEOM_MEAN"] = "GEOM_MEAN"
 
-    @validator("targets", always=True)
+    @validator("targets", always=True, pre=True)
     def validate_targets(cls, targets, values):
         """
         Validates (and instantiates) targets depending on the objective mode.
