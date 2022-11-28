@@ -51,10 +51,15 @@ class Objective(BaseModel, extra=Extra.forbid):
                         "have bounds defined."
                     )
 
-        # Instantiate the targets
-        targets = [Target.create(t) for t in targets]
-
         return targets
+
+    @validator("targets", always=True)
+    def instantiate_targets(
+        cls,
+        targets,
+    ):
+        """Instantiate targets."""
+        return [Target.create(t) for t in targets]
 
     @validator("weights", always=True)
     def validate_weights(cls, weights, values):
