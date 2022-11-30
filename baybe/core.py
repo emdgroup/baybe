@@ -24,6 +24,11 @@ from .utils import check_if_in
 log = logging.getLogger(__name__)
 
 
+class NotEnoughPointsLeftError(Exception):
+    """An exception raised when more recommendations are requested than there are
+    viable parameter configurations left in the search space."""
+
+
 class BayBEConfig(BaseModel, extra=Extra.forbid):
     """Configuration class for BayBE."""
 
@@ -299,14 +304,13 @@ class BayBE:
 
         # Assert that there are enough points left for recommendation
         if len(candidates_exp) < batch_quantity:
-            log.warning(
-                "Using the current settings, there are fewer than %s "
+            raise NotEnoughPointsLeftError(
+                f"Using the current settings, there are fewer than {batch_quantity} "
                 "possible data points left to recommend. This can be "
                 "either because all data points have been measured at some point "
                 "(while 'allow_repeated_recommendations' or "
                 "'allow_recommending_already_measured' being False) "
-                "or because all data points are marked as 'dont_recommend'.",
-                batch_quantity,
+                "or because all data points are marked as 'dont_recommend'."
             )
 
         # Get the indices of the recommended search space entries
