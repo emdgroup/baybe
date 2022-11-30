@@ -91,12 +91,17 @@ print("Asserts checking data consistency after loading (must all be true):")
 print("1 - ", baybe_obj.searchspace.metadata.equals(baybe_obj2.searchspace.metadata))
 print("2 - ", baybe_obj.searchspace.exp_rep.equals(baybe_obj2.searchspace.exp_rep))
 print("3 - ", baybe_obj.searchspace.comp_rep.equals(baybe_obj2.searchspace.comp_rep))
-print("4 - ", baybe_obj.measurements.equals(baybe_obj2.measurements))
+print("4 - ", baybe_obj.measurements_exp.equals(baybe_obj2.measurements_exp))
 print(
     "5 - ",
-    baybe_obj.measured_parameters_comp.equals(baybe_obj2.measured_parameters_comp),
+    baybe_obj.measurements_parameters_comp.equals(
+        baybe_obj2.measurements_parameters_comp
+    ),
 )
-print("6 - ", baybe_obj.measured_targets_comp.equals(baybe_obj2.measured_targets_comp))
+print(
+    "6 - ",
+    baybe_obj.measurements_targets_comp.equals(baybe_obj2.measurements_targets_comp),
+)
 print("7 - ", baybe_obj.batches_done == baybe_obj2.batches_done)
 print("8 - ", baybe_obj.config.dict() == baybe_obj2.config.dict())
 
@@ -117,17 +122,22 @@ for kIter2 in range(N_ITERATIONS):
 
 
 print("\n\nMeasurements of loaded after everything ran:")
-print(baybe_obj2.measurements)
+print(baybe_obj2.measurements_exp)
 
 print("\n\nAsserts checking final  (must all be true):")
 print("1 - ", baybe_obj.searchspace.metadata.equals(baybe_obj2.searchspace.metadata))
 print("2 - ", baybe_obj.searchspace.exp_rep.equals(baybe_obj2.searchspace.exp_rep))
 print("3 - ", baybe_obj.searchspace.comp_rep.equals(baybe_obj2.searchspace.comp_rep))
-print("4 - ", baybe_obj.measurements.equals(baybe_obj2.measurements))
+print("4 - ", baybe_obj.measurements_exp.equals(baybe_obj2.measurements_exp))
 print(
     "5 - ",
-    baybe_obj.measured_parameters_comp.equals(baybe_obj2.measured_parameters_comp),
+    baybe_obj.measurements_parameters_comp.equals(
+        baybe_obj2.measurements_parameters_comp
+    ),
 )
-print("6 - ", baybe_obj.measured_targets_comp.equals(baybe_obj2.measured_targets_comp))
+print(
+    "6 - ",
+    baybe_obj.measurements_targets_comp.equals(baybe_obj2.measurements_targets_comp),
+)
 print("7 - ", baybe_obj.batches_done == baybe_obj2.batches_done)
 print("8 - ", baybe_obj.config.dict() == baybe_obj2.config.dict())

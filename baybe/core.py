@@ -106,8 +106,8 @@ class BayBE:
         self.objective = Objective(**config.objective)
         self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
 
-        # Declare variable for storing measurements
-        self.measurements = None
+        # Declare variable for storing measurements (in experimental representation)
+        self.measurements_exp = None
 
     @property
     def targets(self) -> List[Target]:
@@ -115,14 +115,14 @@ class BayBE:
         return self.objective.targets
 
     @property
-    def measured_parameters_comp(self) -> pd.DataFrame:
+    def measurements_parameters_comp(self) -> pd.DataFrame:
         """Returns the computational representation of the measured parameters."""
-        return self.searchspace.transform(self.measurements)
+        return self.searchspace.transform(self.measurements_exp)
 
     @property
-    def measured_targets_comp(self) -> pd.DataFrame:
+    def measurements_targets_comp(self) -> pd.DataFrame:
         """Returns the computational representation of the measured targets."""
-        return self.objective.transform(self.measurements)
+        return self.objective.transform(self.measurements_exp)
 
     def __str__(self):
         """
@@ -147,11 +147,11 @@ class BayBE:
         string += f"{self.searchspace.comp_rep}"
 
         string += "\n\nMeasurement Space (Experimental Representation):\n"
-        string += f"{self.measurements}"
+        string += f"{self.measurements_exp}"
 
         string += "\n\nMeasurement Space (Computational Representation):\n"
-        string += f"{self.measured_parameters_comp}\n"
-        string += f"{self.measured_targets_comp}"
+        string += f"{self.measurements_parameters_comp}\n"
+        string += f"{self.measurements_targets_comp}"
 
         return string
 
@@ -161,7 +161,7 @@ class BayBE:
             config_dict=self.config.dict(),
             batches_done=self.batches_done,
             searchspace=self.searchspace.state_dict(),
-            measurements=self.measurements,
+            measurements=self.measurements_exp,
         )
         return state_dict
 
@@ -171,7 +171,7 @@ class BayBE:
         # Overwrite the member variables with the given state information
         self.config = state_dict["config"]
         self.batches_done = state_dict["batches_done"]
-        self.measurements = state_dict["measurements"]
+        self.measurements_exp = state_dict["measurements"]
 
         # Restore the search space state
         # TODO: Extend the load_state_dict function of SearchSpace such that it takes
@@ -186,7 +186,9 @@ class BayBE:
             searchspace=self.searchspace,
             **self.config.strategy,
         )
-        self.strategy.fit(self.measured_parameters_comp, self.measured_targets_comp)
+        self.strategy.fit(
+            self.measurements_parameters_comp, self.measurements_targets_comp
+        )
 
     @classmethod
     def from_file(cls, path: str, **kwargs) -> BayBE:
@@ -286,12 +288,14 @@ class BayBE:
         to_insert = data.copy()
         to_insert["BatchNr"] = self.batches_done
 
-        self.measurements = pd.concat(
-            [self.measurements, to_insert], axis=0, ignore_index=True
+        self.measurements_exp = pd.concat(
+            [self.measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
         # Update the strategy object
-        self.strategy.fit(self.measured_parameters_comp, self.measured_targets_comp)
+        self.strategy.fit(
+            self.measurements_parameters_comp, self.measurements_targets_comp
+        )
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """

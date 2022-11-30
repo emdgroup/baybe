@@ -89,7 +89,7 @@ for kIter in range(N_ITERATIONS):
 
     print(
         "\n\n### Internal measurement dataframe computational representation Y:\n",
-        baybe_obj.measured_targets_comp,
+        baybe_obj.measurements_targets_comp,
     )
 
     # Show metadata

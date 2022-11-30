@@ -88,7 +88,7 @@ for kIter in range(N_ITERATIONS):
     baybe_obj.add_results(rec)
     print(
         "\n\n### Internal measurement dataframe after data ingestion:\n",
-        baybe_obj.measurements,
+        baybe_obj.measurements_exp,
     )
 
     # print(
@@ -98,7 +98,7 @@ for kIter in range(N_ITERATIONS):
 
     print(
         "\n\n### Internal measurement dataframe computational representation Y:\n",
-        baybe_obj.measured_targets_comp,
+        baybe_obj.measurements_targets_comp,
     )
 
     # Show metadata
