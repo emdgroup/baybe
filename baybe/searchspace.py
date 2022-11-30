@@ -64,7 +64,7 @@ class SearchSpace:
             self.exp_rep.reset_index(inplace=True, drop=True)
 
         else:
-            self.constraints = None
+            self.constraints = []
 
         # Create a dataframe containing the computational parameter representation
         # (ignoring all columns that do not carry any covariate information).
