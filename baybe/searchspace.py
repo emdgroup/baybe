@@ -84,18 +84,16 @@ class SearchSpace:
     @property
     def contains_mordred(self) -> bool:
         """Indicates if any of the parameters uses MORDRED encoding."""
-        mordred = any(
+        return any(
             p.encoding == "MORDRED" for p in self.parameters if p.requires_encoding
         )
-        return mordred
 
     @property
     def contains_rdkit(self) -> bool:
         """Indicates if any of the parameters uses RDKIT encoding."""
-        rdkit = any(
+        return any(
             p.encoding == "RDKIT" for p in self.parameters if p.requires_encoding
         )
-        return rdkit
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
