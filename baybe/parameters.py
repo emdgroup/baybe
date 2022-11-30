@@ -310,7 +310,7 @@ class Custom(Parameter):
 
     # class variables
     type = "CUSTOM"
-    requires_encoding = True
+    requires_encoding = False
 
     # object variables
     decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
