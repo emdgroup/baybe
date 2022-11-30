@@ -1,93 +1,20 @@
 """
 Tests for error -free running of some iterations
 """
+from abc import ABC
+from typing import get_args, get_type_hints
 
 import pytest
 from baybe.core import BayBE, BayBEConfig
+from baybe.strategy import InitialStrategy, Strategy
+from baybe.surrogate import SurrogateModel
+from baybe.utils import add_fake_results, add_parameter_noise, subclasses_recursive
 
 # Dictionary containing items describing config tests that should throw an error.
 # Key is a string describing the test and is displayed by pytest. Each value is a pair
 # of the first item being the config dictionary update that is done to the default
 # fixture and the second item being the expected exception type.
-from baybe.utils import add_fake_results, add_parameter_noise
-
 config_updates = {
-    "aq_posterior_mean": {
-        "strategy": {
-            "acquisition_function_cls": "PM",
-        }
-    },
-    "aq_expected_improvement": {
-        "strategy": {
-            "acquisition_function_cls": "EI",
-        }
-    },
-    "aq_probability_of_improvement": {
-        "strategy": {
-            "acquisition_function_cls": "PI",
-        }
-    },
-    "aq_upper_confidence_bound": {
-        "strategy": {
-            "acquisition_function_cls": "UCB",
-        }
-    },
-    "aq_random": {
-        "strategy": {
-            "recommender_cls": "RANDOM",
-            "initial_strategy": "RANDOM",
-        }
-    },
-    "init_random": {
-        "strategy": {
-            "initial_strategy": "RANDOM",
-        }
-    },
-    "init_kmedoids": {
-        "strategy": {
-            "initial_strategy": "PAM",
-        }
-    },
-    "init_kmeans": {
-        "strategy": {
-            "initial_strategy": "KMEANS",
-        }
-    },
-    "init_gaussian_mixture_model": {
-        "strategy": {
-            "initial_strategy": "GMM",
-        }
-    },
-    "init_farthest_point_sampling": {
-        "strategy": {
-            "initial_strategy": "FPS",
-        }
-    },
-    "surrogate_gaussian_process": {
-        "strategy": {
-            "surrogate_model_cls": "GP",
-        }
-    },
-    "surrogate_mean_prediction": {
-        "strategy": {
-            "surrogate_model_cls": "MP",
-        }
-    },
-    "surrogate_random_forest": {
-        "strategy": {
-            "surrogate_model_cls": "RF",
-        }
-    },
-    "surrogate_ngboost": {
-        "strategy": {
-            "surrogate_model_cls": "NG",
-        }
-    },
-    "surrogate_bayesian_linear": {
-        "strategy": {
-            "surrogate_model_cls": "BL",
-        }
-    },
     "target_single_max": {
         "objective": {
             "mode": "SINGLE",
@@ -209,7 +136,60 @@ config_updates = {
             ],
         }
     },
+    "aq_random": {  # is not covered by the loop below hence added manually
+        "strategy": {
+            "recommender_cls": "RANDOM",
+            "initial_strategy": "RANDOM",
+        }
+    },
 }
+
+
+# Generate dynamic lists of configurations based on implementation
+valid_surrogate_models = [
+    cls.type for cls in subclasses_recursive(SurrogateModel) if ABC not in cls.__bases__
+]
+valid_init_strats = [
+    cls.type
+    for cls in subclasses_recursive(InitialStrategy)
+    if ABC not in cls.__bases__
+]
+# AQ function type hint looks like this:
+# Union[Literal["PM", ...], Type[AcquisitionFunction]]
+valid_aq_functions = get_args(
+    get_args(get_type_hints(Strategy)["acquisition_function_cls"])[0]
+)
+
+for itm in valid_aq_functions:
+    config_updates.update(
+        {
+            f"aq_{itm}": {
+                "strategy": {
+                    "acquisition_function_cls": itm,
+                }
+            }
+        }
+    )
+for itm in valid_surrogate_models:
+    config_updates.update(
+        {
+            f"surrogate_{itm}": {
+                "strategy": {
+                    "surrogate_model_cls": itm,
+                }
+            },
+        }
+    )
+for itm in valid_init_strats:
+    config_updates.update(
+        {
+            f"init_{itm}": {
+                "strategy": {
+                    "initial_strategy": itm,
+                }
+            },
+        }
+    )
 
 # List of tests that are expected to fail (still missing implementation etc)
 xfails = ["target_multi"]

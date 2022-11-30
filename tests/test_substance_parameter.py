@@ -1,14 +1,18 @@
 """
 Tests for teh generic substance parameter.
 """
+from typing import get_args, get_type_hints
 
 import pytest
 
 from baybe.core import BayBE, BayBEConfig
+from baybe.parameters import GenericSubstance
 from baybe.utils import add_fake_results, add_parameter_noise
 
+valid_encodings = get_args(get_type_hints(GenericSubstance)["encoding"])
 
-@pytest.mark.parametrize("encoding", ["MORDRED", "RDKIT", "MORGAN_FP"])
+
+@pytest.mark.parametrize("encoding", valid_encodings)
 def test_run_iterations(
     config_basic_1target,
     mock_substances,

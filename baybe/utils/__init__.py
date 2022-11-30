@@ -638,3 +638,22 @@ class HashableDict(dict):
 
     def __hash__(self) -> int:
         return int(binascii.hexlify(pickle.dumps(self)), 16)
+
+
+def subclasses_recursive(cls):
+    """
+    Returns a recursive list of all subclasses of a given class
+
+    Parameters
+    ----------
+    cls: A class object
+
+    Returns
+    -------
+    list of class objects
+    """
+    direct = cls.__subclasses__()
+    indirect = []
+    for subclass in direct:
+        indirect.extend(subclasses_recursive(subclass))
+    return direct + indirect
