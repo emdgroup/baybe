@@ -15,7 +15,7 @@ stages:
     - job: "Lint"
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: ubuntu-20.04
 
       variables:
         CONDA_ENV: baybe
@@ -62,7 +62,7 @@ stages:
     - job: "Release"
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: ubuntu-20.04
 
       steps:
         - task: PipAuthenticate@1
@@ -114,7 +114,7 @@ stages:
     - job: "Changelog"
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: ubuntu-20.04
 
       steps:
         - script: |
