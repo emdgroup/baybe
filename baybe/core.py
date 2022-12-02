@@ -74,7 +74,7 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
 class BayBE:
     """Main class for interaction with BayBE."""
 
-    def __init__(self, config: BayBEConfig):
+    def __init__(self, config: BayBEConfig, searchspace: Optional[SearchSpace] = None):
         """
         Constructor of the BayBE class.
 
@@ -82,6 +82,9 @@ class BayBE:
         ----------
         config : BayBEConfig
             Pydantic-validated config object.
+        searchspace : SearchSpace (optional)
+            An optional search space object. If provided, the search space will not
+            be created from the config but instead the given object is used.
         """
         # Set global random seeds
         torch.manual_seed(config.random_seed)
@@ -100,9 +103,12 @@ class BayBE:
         self._random = config.strategy.get("recommender_cls", "") == "RANDOM"
 
         # Initialize all subcomponents
-        self.parameters = [Parameter.create(p) for p in config.parameters]
-        self.constraints = [Constraint.create(c) for c in config.constraints]
-        self.searchspace = SearchSpace(self.parameters, self.constraints, self._random)
+        if searchspace is None:
+            parameters = [Parameter.create(p) for p in config.parameters]
+            constraints = [Constraint.create(c) for c in config.constraints]
+            self.searchspace = SearchSpace(parameters, constraints, self._random)
+        else:
+            self.searchspace = searchspace
         self.objective = Objective(**config.objective)
         self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
 
@@ -110,18 +116,28 @@ class BayBE:
         self.measurements_exp = None
 
     @property
+    def parameters(self) -> List[Parameter]:
+        """The parameters of the underlying search space."""
+        return self.searchspace.parameters
+
+    @property
+    def constraints(self) -> List[Constraint]:
+        """The parameter constraints of the underlying search space."""
+        return self.searchspace.constraints
+
+    @property
     def targets(self) -> List[Target]:
-        """Returns the targets of the underlying objective."""
+        """The targets of the underlying objective."""
         return self.objective.targets
 
     @property
     def measurements_parameters_comp(self) -> pd.DataFrame:
-        """Returns the computational representation of the measured parameters."""
+        """The computational representation of the measured parameters."""
         return self.searchspace.transform(self.measurements_exp)
 
     @property
     def measurements_targets_comp(self) -> pd.DataFrame:
-        """Returns the computational representation of the measured targets."""
+        """The computational representation of the measured targets."""
         return self.objective.transform(self.measurements_exp)
 
     def __str__(self):
@@ -212,9 +228,25 @@ class BayBE:
         with fsspec.open(path, **kwargs) as file:
             state_dict = pickle.load(file)
 
-        # Create the BayBE object via constructor and stored config
+        # Parse the stored configuration file
         config = BayBEConfig(**state_dict["config_dict"])
-        baybe = cls(config)
+
+        # To avoid creating the search space from scratch and reduce the computational
+        # effort to build the associated parameter representations, create a "blank"
+        # search space object and restore its state from the file.
+        # TODO: It is not ensured that the given parameters/constraints are consistent
+        #   with the provided search space state coming from the state dict. A proper
+        #   validation would require that the searchspace state dict also carries
+        #   the underlying parameter/constraint information, which could then be
+        #   compared with the given specifications.
+        parameters = [Parameter.create(p) for p in config.parameters]
+        constraints = [Constraint.create(c) for c in config.constraints]
+        searchspace = SearchSpace(parameters, constraints, init_dataframes=False)
+        searchspace.load_state_dict(state_dict["searchspace"])
+
+        # Create the BayBE object using the stored config and pre-initialized search
+        # space via the constructor
+        baybe = cls(config, searchspace)
 
         # Restore its state
         state_dict["config"] = config

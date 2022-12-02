@@ -27,6 +27,7 @@ class SearchSpace:
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
+        init_dataframes: bool = True,
     ):
         """
         Parameters
@@ -41,45 +42,49 @@ class SearchSpace:
             do not read the actual parameter values, since it avoids the
             (potentially costly) transformation of the parameter values to their
             computational representation.
+        init_dataframes : bool, default: True
+            If True, the search space related dataframes (i.e. parameter representations
+            and metadata) will be build from scratch using the input arguments. If
+            False, they are not initialized, which can be useful when loading a search
+            space object from disk.
         """
         # Store the input
         self.parameters = parameters
         self.empty_encoding = empty_encoding
-
-        # Create a dataframe representing the experimental search space
-        self.exp_rep = parameter_cartesian_prod_to_df(parameters)
-
-        # Remove entries that violate parameter constraints
-        if constraints is not None:
-
+        if constraints is None:
+            self.constraints = []
+        else:
             # Reorder the constraints according to their execution order
             self.constraints = sorted(
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
 
-            # Apply the constraints one after another
+        # Initialize search space dataframes
+        if init_dataframes:
+
+            # Create a dataframe representing the experimental search space
+            self.exp_rep = parameter_cartesian_prod_to_df(parameters)
+
+            # Remove entries that violate parameter constraints:
             for constraint in (c for c in self.constraints if c.eval_during_creation):
                 inds = constraint.get_invalid(self.exp_rep)
                 self.exp_rep.drop(index=inds, inplace=True)
             self.exp_rep.reset_index(inplace=True, drop=True)
 
-        else:
-            self.constraints = []
+            # Create a dataframe containing the computational parameter representation
+            # (ignoring all columns that do not carry any covariate information).
+            self.comp_rep = self.transform(self.exp_rep)
+            self.comp_rep = df_drop_single_value_columns(self.comp_rep)
 
-        # Create a dataframe containing the computational parameter representation
-        # (ignoring all columns that do not carry any covariate information).
-        self.comp_rep = self.transform(self.exp_rep)
-        self.comp_rep = df_drop_single_value_columns(self.comp_rep)
-
-        # Create a dataframe storing the experiment metadata
-        self.metadata = pd.DataFrame(
-            {
-                "was_recommended": False,
-                "was_measured": False,
-                "dont_recommend": False,
-            },
-            index=self.exp_rep.index,
-        )
+            # Create a dataframe storing the experiment metadata
+            self.metadata = pd.DataFrame(
+                {
+                    "was_recommended": False,
+                    "was_measured": False,
+                    "dont_recommend": False,
+                },
+                index=self.exp_rep.index,
+            )
 
     @property
     def contains_mordred(self) -> bool:
@@ -98,12 +103,18 @@ class SearchSpace:
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
         state_dict = dict(
+            empty_encoding=self.empty_encoding,
+            exp_rep=self.exp_rep,
+            comp_rep=self.comp_rep,
             metadata=self.metadata,
         )
         return state_dict
 
     def load_state_dict(self, state_dict: dict) -> None:
         """Restores a given object state."""
+        self.empty_encoding = state_dict["empty_encoding"]
+        self.exp_rep = state_dict["exp_rep"]
+        self.comp_rep = state_dict["comp_rep"]
         self.metadata = state_dict["metadata"]
 
     def mark_as_measured(
