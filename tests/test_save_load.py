@@ -31,14 +31,14 @@ def test_data_consistency(
     assert baybe_obj_reference.searchspace.comp_rep.equals(
         baybe_obj_loaded.searchspace.comp_rep
     ), "Problem directly after loading"
-    assert baybe_obj_reference.measurements.equals(
-        baybe_obj_loaded.measurements
+    assert baybe_obj_reference.measurements_exp.equals(
+        baybe_obj_loaded.measurements_exp
     ), "Problem directly after loading"
-    assert baybe_obj_reference.measured_parameters_comp.equals(
-        baybe_obj_loaded.measured_parameters_comp
+    assert baybe_obj_reference.measurements_parameters_comp.equals(
+        baybe_obj_loaded.measurements_parameters_comp
     ), "Problem directly after loading"
-    assert baybe_obj_reference.measured_targets_comp.equals(
-        baybe_obj_loaded.measured_targets_comp
+    assert baybe_obj_reference.measurements_targets_comp.equals(
+        baybe_obj_loaded.measurements_targets_comp
     ), "Problem directly after loading"
     assert (
         baybe_obj_reference.batches_done == baybe_obj_loaded.batches_done
@@ -72,14 +72,14 @@ def test_data_consistency(
     assert baybe_obj_reference.searchspace.comp_rep.equals(
         baybe_obj_loaded.searchspace.comp_rep
     ), "Problem after continuation"
-    assert baybe_obj_reference.measurements.equals(
-        baybe_obj_loaded.measurements
+    assert baybe_obj_reference.measurements_exp.equals(
+        baybe_obj_loaded.measurements_exp
     ), "Problem after continuation"
-    assert baybe_obj_reference.measured_parameters_comp.equals(
-        baybe_obj_loaded.measured_parameters_comp
+    assert baybe_obj_reference.measurements_parameters_comp.equals(
+        baybe_obj_loaded.measurements_parameters_comp
     ), "Problem after continuation"
-    assert baybe_obj_reference.measured_targets_comp.equals(
-        baybe_obj_loaded.measured_targets_comp
+    assert baybe_obj_reference.measurements_targets_comp.equals(
+        baybe_obj_loaded.measurements_targets_comp
     ), "Problem after continuation"
     assert (
         baybe_obj_reference.batches_done == baybe_obj_loaded.batches_done
