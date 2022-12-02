@@ -249,7 +249,7 @@ invalid_config_updates = {
 }
 
 # List of tests that are expected to fail (still missing implementation etc)
-xfails = ["param_custom_duplicated_index"]
+xfails = []
 
 
 @pytest.mark.parametrize("config_update_key", invalid_config_updates.keys())

@@ -4,14 +4,15 @@ From the three recommendations only one is actually added to test the matching a
 metadata. Target objective is minimize to test computational transformation.
 """
 import pandas as pd
-import pytest
 
 from baybe.core import BayBE, BayBEConfig
+from baybe.parameters import Parameter
 from baybe.utils import add_fake_results, add_parameter_noise
 
 
-@pytest.mark.xfail
-def test_run_iterations(config_basic_1target, n_iterations, good_reference_values):
+def test_run_iterations(
+    config_basic_1target, n_iterations, good_reference_values, batch_quantity
+):
     """
     Test if iterative loop runs with custom parameters.
     """
@@ -46,13 +47,21 @@ def test_run_iterations(config_basic_1target, n_iterations, good_reference_value
             "data": custom_df2,
         }
     )
+
     config = BayBEConfig(**config_basic_1target)
     baybe_obj = BayBE(config)
 
     for _ in range(n_iterations):
-        rec = baybe_obj.recommend(batch_quantity=3)
+        rec = baybe_obj.recommend(batch_quantity=batch_quantity)
+
+        print(rec)
+        print(baybe_obj.searchspace.exp_rep)
+        print(baybe_obj.searchspace.comp_rep)
 
         add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
         add_parameter_noise(rec, baybe_obj, noise_level=0.1)
 
         baybe_obj.add_results(rec)
+
+    # This test needs to clear the lru cache, otherwise it causes HashableDict to crash
+    Parameter._create.cache_clear()  # pylint: disable=protected-access
