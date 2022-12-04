@@ -84,19 +84,23 @@ print("\n\n\n############################# BREAK #############################")
 baybe_obj.save("./test.baybe")
 
 # Restore baybe object
-baybe_obj2 = BayBE.from_stored("./test.baybe")
+baybe_obj2 = BayBE.from_file("./test.baybe")
 
 # Asserts
 print("Asserts checking data consistency after loading (must all be true):")
-print("1 - ", baybe_obj.searchspace_metadata.equals(baybe_obj2.searchspace_metadata))
-print("2 - ", baybe_obj.searchspace_exp_rep.equals(baybe_obj2.searchspace_exp_rep))
-print("3 - ", baybe_obj.searchspace_comp_rep.equals(baybe_obj2.searchspace_comp_rep))
-print("4 - ", baybe_obj.measurements_exp_rep.equals(baybe_obj2.measurements_exp_rep))
+print("1 - ", baybe_obj.searchspace.metadata.equals(baybe_obj2.searchspace.metadata))
+print("2 - ", baybe_obj.searchspace.exp_rep.equals(baybe_obj2.searchspace.exp_rep))
+print("3 - ", baybe_obj.searchspace.comp_rep.equals(baybe_obj2.searchspace.comp_rep))
+print("4 - ", baybe_obj.measurements_exp.equals(baybe_obj2.measurements_exp))
 print(
-    "5 - ", baybe_obj.measurements_comp_rep_x.equals(baybe_obj2.measurements_comp_rep_x)
+    "5 - ",
+    baybe_obj.measurements_parameters_comp.equals(
+        baybe_obj2.measurements_parameters_comp
+    ),
 )
 print(
-    "6 - ", baybe_obj.measurements_comp_rep_y.equals(baybe_obj2.measurements_comp_rep_y)
+    "6 - ",
+    baybe_obj.measurements_targets_comp.equals(baybe_obj2.measurements_targets_comp),
 )
 print("7 - ", baybe_obj.batches_done == baybe_obj2.batches_done)
 print("8 - ", baybe_obj.config.dict() == baybe_obj2.config.dict())
@@ -118,18 +122,22 @@ for kIter2 in range(N_ITERATIONS):
 
 
 print("\n\nMeasurements of loaded after everything ran:")
-print(baybe_obj2.measurements_exp_rep)
+print(baybe_obj2.measurements_exp)
 
 print("\n\nAsserts checking final  (must all be true):")
-print("1 - ", baybe_obj.searchspace_metadata.equals(baybe_obj2.searchspace_metadata))
-print("2 - ", baybe_obj.searchspace_exp_rep.equals(baybe_obj2.searchspace_exp_rep))
-print("3 - ", baybe_obj.searchspace_comp_rep.equals(baybe_obj2.searchspace_comp_rep))
-print("4 - ", baybe_obj.measurements_exp_rep.equals(baybe_obj2.measurements_exp_rep))
+print("1 - ", baybe_obj.searchspace.metadata.equals(baybe_obj2.searchspace.metadata))
+print("2 - ", baybe_obj.searchspace.exp_rep.equals(baybe_obj2.searchspace.exp_rep))
+print("3 - ", baybe_obj.searchspace.comp_rep.equals(baybe_obj2.searchspace.comp_rep))
+print("4 - ", baybe_obj.measurements_exp.equals(baybe_obj2.measurements_exp))
 print(
-    "5 - ", baybe_obj.measurements_comp_rep_x.equals(baybe_obj2.measurements_comp_rep_x)
+    "5 - ",
+    baybe_obj.measurements_parameters_comp.equals(
+        baybe_obj2.measurements_parameters_comp
+    ),
 )
 print(
-    "6 - ", baybe_obj.measurements_comp_rep_y.equals(baybe_obj2.measurements_comp_rep_y)
+    "6 - ",
+    baybe_obj.measurements_targets_comp.equals(baybe_obj2.measurements_targets_comp),
 )
 print("7 - ", baybe_obj.batches_done == baybe_obj2.batches_done)
 print("8 - ", baybe_obj.config.dict() == baybe_obj2.config.dict())

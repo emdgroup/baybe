@@ -29,6 +29,7 @@ from sklearn_extra.cluster import KMedoids
 
 from .acquisition import debotorchize
 from .recommender import Recommender
+from .searchspace import SearchSpace
 from .surrogate import SurrogateModel
 from .utils import check_if_in, isabstract, to_tensor
 from .utils.sampling_algorithms import farthest_point_sampling
@@ -259,7 +260,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     #  strategy or introducing config classes for them (-> disable arbitrary types)
 
     # object variables
-    searchspace: pd.DataFrame
+    searchspace: SearchSpace
     surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
     acquisition_function_cls: Union[
         Literal["PM", "PI", "EI", "UCB"], Type[AcquisitionFunction]

@@ -30,16 +30,18 @@ class Objective(BaseModel, extra=Extra.forbid):
     @validator("targets", always=True)
     def validate_targets(cls, targets, values):
         """
-        Validates targets depending on the objective mode.
+        Validates (and instantiates) targets depending on the objective mode.
         """
+
+        # Validate the target specification
         mode = values["mode"]
         if (mode == "SINGLE") and (len(targets) != 1):
             raise StrictValidationError(
-                "For objective mode 'SINGLE', you must specify exactly one target."
+                "For objective mode 'SINGLE', exactly one target must be specified."
             )
         if (mode == "MULTI") and (len(targets) <= 1):
             raise StrictValidationError(
-                "For objective mode 'MULTI', you must specify more than one target."
+                "For objective mode 'MULTI', more than one target must be specified."
             )
         if mode == "DESIRABILITY":
             for target in targets:
@@ -48,6 +50,9 @@ class Objective(BaseModel, extra=Extra.forbid):
                         "In 'DESIRABILITY' mode for multiple targets, each target must "
                         "have bounds defined."
                     )
+
+        # Instantiate the targets
+        targets = [Target.create(t) for t in targets]
 
         return targets
 
@@ -73,17 +78,15 @@ class Objective(BaseModel, extra=Extra.forbid):
 
         return weights
 
-    def transform(self, data: pd.DataFrame, targets: List[Target]) -> pd.DataFrame:
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Transforms targets from experimental to computational representation.
 
         Parameters
         ----------
         data : pd.DataFrame
-            The data to be transformed. Must contain all target values, can contain more
-             columns.
-        targets : List[Target]
-            A list of BayBE targets.
+            The data to be transformed. Must contain all target values, can contain
+            more columns.
 
         Returns
         -------
@@ -92,8 +95,8 @@ class Objective(BaseModel, extra=Extra.forbid):
             be as in the input (except when objective mode is 'DESIRABILITY').
         """
         # Perform transformations that are required independent of the mode
-        transformed = data[[t.name for t in targets]].copy()
-        for target in targets:
+        transformed = data[[t.name for t in self.targets]].copy()
+        for target in self.targets:
             transformed[target.name] = target.transform(data[target.name])
 
         # In desirability mode, the targets are additionally combined further into one

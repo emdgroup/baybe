@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 import pickle
 import random
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import fsspec
 import numpy as np
@@ -14,14 +14,19 @@ import pandas as pd
 import torch
 from pydantic import BaseModel, Extra, validator
 
-from . import parameters as baybe_parameters
-from .constraints import _constraints_order, Constraint
+from .constraints import Constraint
 from .parameters import Parameter
+from .searchspace import SearchSpace
 from .strategy import Strategy
 from .targets import Objective, Target
-from .utils import check_if_in, df_drop_single_value_columns
+from .utils import check_if_in
 
 log = logging.getLogger(__name__)
+
+
+class NotEnoughPointsLeftError(Exception):
+    """An exception raised when more recommendations are requested than there are
+    viable parameter configurations left in the search space."""
 
 
 class BayBEConfig(BaseModel, extra=Extra.forbid):
@@ -69,7 +74,7 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
 class BayBE:
     """Main class for interaction with BayBE."""
 
-    def __init__(self, config: BayBEConfig, create_searchspace: bool = True):
+    def __init__(self, config: BayBEConfig, searchspace: Optional[SearchSpace] = None):
         """
         Constructor of the BayBE class.
 
@@ -77,125 +82,63 @@ class BayBE:
         ----------
         config : BayBEConfig
             Pydantic-validated config object.
-        create_searchspace : bool
-            Indicator that allows skipping the creation of searchspace and strategy.
-            Useful when using the constructor to create a BayBE object from stored data
-            (in that case, searchspace is loaded from disk and not created from config).
+        searchspace : SearchSpace (optional)
+            An optional search space object. If provided, the search space will not
+            be created from the config but instead the given object is used.
         """
         # Set global random seeds
         torch.manual_seed(config.random_seed)
         random.seed(config.random_seed)
         np.random.seed(config.random_seed)
 
+        # Store the configuration
+        self.config = config
+
         # Current iteration/batch number
         self.batches_done = 0
 
-        # Config
-        # TODO: derive the required information directly from the Parameter objects
-        # TODO: find a better solution for the self._random property hack
-        self.config = config
-        self._random = (
-            config.strategy.get("recommender_cls", "UNRESTRICTED_RANKING") == "RANDOM"
-        )
+        # Flag to indicate if the specified recommendation strategy is "random", in
+        # which case certain operation can be skipped, such as the (potentially
+        # costly) transformation of the parameters into computation representation.
+        self._random = config.strategy.get("recommender_cls", "") == "RANDOM"
 
-        # Parameter, Objective and Target objects
-        self.parameters = [Parameter.create(p) for p in config.parameters]
+        # Initialize all subcomponents
+        if searchspace is None:
+            parameters = [Parameter.create(p) for p in config.parameters]
+            constraints = [Constraint.create(c) for c in config.constraints]
+            self.searchspace = SearchSpace(parameters, constraints, self._random)
+        else:
+            self.searchspace = searchspace
         self.objective = Objective(**config.objective)
-        self.targets = [Target.create(t) for t in self.objective.targets]
+        self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
 
-        # Constraints including possible resorting
-        self.constraints = sorted(
-            [Constraint.create(c) for c in config.constraints],
-            key=lambda x: _constraints_order.index(x.type),
-        )
+        # Declare variable for storing measurements (in experimental representation)
+        self.measurements_exp = None
 
-        if create_searchspace:
-            # Create a dataframe representing the experimental search space
-            self.searchspace_exp_rep = baybe_parameters.parameter_cartesian_prod_to_df(
-                self.parameters
-            )
+    @property
+    def parameters(self) -> List[Parameter]:
+        """The parameters of the underlying search space."""
+        return self.searchspace.parameters
 
-            # Create Metadata
-            self.searchspace_metadata = pd.DataFrame(
-                {
-                    "was_recommended": False,
-                    "was_measured": False,
-                    "dont_recommend": False,
-                },
-                index=self.searchspace_exp_rep.index,
-            )
+    @property
+    def constraints(self) -> List[Constraint]:
+        """The parameter constraints of the underlying search space."""
+        return self.searchspace.constraints
 
-            # Remove entries that violate parameter constraints
-            for constraint in (c for c in self.constraints if c.eval_during_creation):
-                inds = constraint.get_invalid(self.searchspace_exp_rep)
-                self.searchspace_exp_rep.drop(index=inds, inplace=True)
-                self.searchspace_metadata.drop(index=inds, inplace=True)
-            self.searchspace_exp_rep.reset_index(inplace=True, drop=True)
-            self.searchspace_metadata.reset_index(inplace=True, drop=True)
+    @property
+    def targets(self) -> List[Target]:
+        """The targets of the underlying objective."""
+        return self.objective.targets
 
-            # Create a corresponding dataframe containing the computational
-            # representation
-            self.searchspace_comp_rep, _ = self.transform_rep_exp2comp(
-                self.searchspace_exp_rep
-            )
+    @property
+    def measurements_parameters_comp(self) -> pd.DataFrame:
+        """The computational representation of the measured parameters."""
+        return self.searchspace.transform(self.measurements_exp)
 
-            # Drop all columns that do not carry any covariate information
-            # TODO [searchspace]: this is a temporary fix and should be handled by the
-            #   yet to be implemented `Searchspace` class
-            self.searchspace_comp_rep = df_drop_single_value_columns(
-                self.searchspace_comp_rep
-            )
-
-            # Initialize the DOE strategy
-            self.strategy = Strategy(
-                **config.strategy, searchspace=self.searchspace_comp_rep
-            )
-
-        else:
-            self.searchspace_exp_rep = None
-            self.searchspace_comp_rep = None
-            self.searchspace_metadata = None
-            self.strategy = None
-
-        # Declare measurement dataframes
-        self.measurements_exp_rep = None
-        self.measurements_comp_rep_x = None
-        self.measurements_comp_rep_y = None
-
-    def transform_rep_exp2comp(
-        self,
-        data: pd.DataFrame,
-    ) -> Tuple[pd.DataFrame, Optional[pd.DataFrame]]:
-        """
-        Transforms a dataframe from experimental to computational representation.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            Data to be transformed. Must contain all parameter columns. Can additionally
-            contain all target columns, which get transformed separately.
-
-        Returns
-        -------
-        Tuple[pd.DataFrame, Optional[pd.DataFrame]]
-            Transformed parameters and, if contained in the input, transformed targets.
-        """
-        # Transform the parameters
-        if self._random:
-            comp_rep_x = pd.DataFrame(index=data.index)
-        else:
-            dfs = []
-            for param in self.parameters:
-                comp_df = param.transform_rep_exp2comp(data[param.name])
-                dfs.append(comp_df)
-            comp_rep_x = pd.concat(dfs, axis=1)
-
-        # Transform the (optional) targets
-        comp_rep_y = None
-        if all(target.name in data.columns for target in self.targets):
-            comp_rep_y = self.objective.transform(data=data, targets=self.targets)
-
-        return comp_rep_x, comp_rep_y
+    @property
+    def measurements_targets_comp(self) -> pd.DataFrame:
+        """The computational representation of the measured targets."""
+        return self.objective.transform(self.measurements_exp)
 
     def __str__(self):
         """
@@ -214,110 +157,130 @@ class BayBE:
             string += f"   {option}: {value}\n"
 
         string += "\n\nSearch Space (Experimental Representation):\n"
-        string += f"{self.searchspace_exp_rep}"
+        string += f"{self.searchspace.exp_rep}"
 
         string += "\n\nSearch Space (Computational Representation):\n"
-        string += f"{self.searchspace_comp_rep}"
+        string += f"{self.searchspace.comp_rep}"
 
         string += "\n\nMeasurement Space (Experimental Representation):\n"
-        string += f"{self.measurements_exp_rep}"
+        string += f"{self.measurements_exp}"
 
         string += "\n\nMeasurement Space (Computational Representation):\n"
-        string += f"{self.measurements_comp_rep_x}\n"
-        string += f"{self.measurements_comp_rep_y}"
+        string += f"{self.measurements_parameters_comp}\n"
+        string += f"{self.measurements_targets_comp}"
 
         return string
 
-    def _match_measurement_with_searchspace_indices(
-        self, data: pd.DataFrame
-    ) -> pd.Index:
+    def state_dict(self) -> dict:
+        """Creates a dictionary representing the object's internal state."""
+        state_dict = dict(
+            config_dict=self.config.dict(),
+            batches_done=self.batches_done,
+            searchspace=self.searchspace.state_dict(),
+            measurements=self.measurements_exp,
+        )
+        return state_dict
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        """Restores a given object state."""
+
+        # Overwrite the member variables with the given state information
+        self.config = state_dict["config"]
+        self.batches_done = state_dict["batches_done"]
+        self.measurements_exp = state_dict["measurements"]
+
+        # Restore the search space state
+        # TODO: Extend the load_state_dict function of SearchSpace such that it takes
+        #   care of everything. For that, we need state_dict functionality for all
+        #   BayBE components.
+        self.searchspace = SearchSpace(self.parameters, self.constraints, self._random)
+        self.searchspace.load_state_dict(state_dict["searchspace"])
+
+        # Restore the strategy state
+        # TODO: implement state_dict functionality for Strategy
+        self.strategy = Strategy(
+            searchspace=self.searchspace,
+            **self.config.strategy,
+        )
+        self.strategy.fit(
+            self.measurements_parameters_comp, self.measurements_targets_comp
+        )
+
+    @classmethod
+    def from_file(cls, path: str, **kwargs) -> BayBE:
         """
-        Matches rows of a dataframe (e.g. measurements to be added to the internal data)
-        to the indices of the search space dataframe. This is useful for validity checks
-        and to automatically match measurements to entries in the search space, e.g. to
-        detect which ones have been measured. For categorical parameters, there needs
-        to be an exact match with any of the allowed values. For numerical parameters,
-        the user can decide via a BayBE flag whether values outside the tolerance should
-        be accepted.
+        Class method to restore a BayBE object that has been saved to disk.
 
         Parameters
         ----------
-        data : pd.DataFrame
-            The data that should be checked for matching entries in the search space.
+        path : str
+            Path to the stored BayBE object.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
+            accessing remote or s3 file systems.
 
         Returns
         -------
-        pd.Index
-            The index of the matching search space entries.
+        BayBE
+            The restored BayBE instance.
         """
-        # IMPROVE: neater implementation (e.g. via fuzzy join)
+        # Load stored BayBE state
+        with fsspec.open(path, **kwargs) as file:
+            state_dict = pickle.load(file)
 
-        inds_matched = []
+        # Parse the stored configuration file
+        config = BayBEConfig(**state_dict["config_dict"])
 
-        # Iterate over all input rows
-        for ind, row in data.iterrows():
+        # To avoid creating the search space from scratch and reduce the computational
+        # effort to build the associated parameter representations, create a "blank"
+        # search space object and restore its state from the file.
+        # TODO: It is not ensured that the given parameters/constraints are consistent
+        #   with the provided search space state coming from the state dict. A proper
+        #   validation would require that the searchspace state dict also carries
+        #   the underlying parameter/constraint information, which could then be
+        #   compared with the given specifications.
+        parameters = [Parameter.create(p) for p in config.parameters]
+        constraints = [Constraint.create(c) for c in config.constraints]
+        searchspace = SearchSpace(parameters, constraints, init_dataframes=False)
+        searchspace.load_state_dict(state_dict["searchspace"])
 
-            # Check if the row represents a valid input
-            valid = True
-            for param in self.parameters:
-                if "NUM" in param.type:
-                    if self.config.numerical_measurements_must_be_within_tolerance:
-                        valid &= param.is_in_range(row[param.name])
-                else:
-                    valid &= param.is_in_range(row[param.name])
-                if not valid:
-                    raise ValueError(
-                        f"Input data on row with the index {row.name} has invalid "
-                        f"values in parameter '{param.name}'. "
-                        f"For categorical parameters, values need to exactly match a "
-                        f"valid choice defined in your config. "
-                        f"For numerical parameters, a match is accepted only if "
-                        f"the input value is within the specified tolerance/range. Set "
-                        f"the flag 'numerical_measurements_must_be_within_tolerance' "
-                        f"to 'False' to disable this behavior."
-                    )
+        # Create the BayBE object using the stored config and pre-initialized search
+        # space via the constructor
+        baybe = cls(config, searchspace)
 
-            # Identify discrete and numeric parameters
-            # TODO: This is error-prone. Add member to indicate discreteness or
-            #  introduce corresponding super-classes.
-            cat_cols = [
-                param.name for param in self.parameters if "NUM" not in param.type
-            ]
-            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
+        # Restore its state
+        state_dict["config"] = config
+        baybe.load_state_dict(state_dict)
 
-            # Discrete parameters must match exactly
-            match = (
-                self.searchspace_exp_rep[cat_cols]
-                .eq(row[cat_cols])
-                .all(axis=1, skipna=False)
+        return baybe
+
+    def save(self, path: Optional[str] = None, **kwargs) -> None:
+        """
+        Store the current state of the BayBE instance on disk.
+
+        Parameters
+        ----------
+        path : str
+            Path to where the BayBE object should be stored.
+        kwargs : keyword arguments
+            Additional arguments passed to fsspec.open. Useful, for instance, for
+            accessing remote or s3 file systems.
+
+        Returns
+        -------
+        Nothing.
+        """
+        # If no path is provided, use a default file path
+        if path is None:
+            path = "./baybe_object.baybe"
+            log.warning(
+                "No path was specified for storing the BayBE object. Will use '%s'.",
+                path,
             )
 
-            # For numeric parameters, match the entry with the smallest deviation
-            # TODO: allow alternative distance metrics
-            for param in num_cols:
-                abs_diff = (self.searchspace_exp_rep[param] - row[param]).abs()
-                match &= abs_diff == abs_diff.min()
-
-            # We expect exactly one match. If that's not the case, print a warning.
-            inds_found = self.searchspace_exp_rep.index[match].to_list()
-            if len(inds_found) == 0:
-                log.warning(
-                    "Input row with index %s could not be matched to the search space. "
-                    "This could indicate that something went wrong.",
-                    ind,
-                )
-            elif len(inds_found) > 1:
-                log.warning(
-                    "Input row with index %s has multiple matches with "
-                    "the search space. This could indicate that something went wrong. "
-                    "Matching only first occurrence.",
-                    ind,
-                )
-                inds_matched.append(inds_found[0])
-            else:
-                inds_matched.extend(inds_found)
-
-        return pd.Index(inds_matched)
+        # Write the BayBE state to disk
+        with fsspec.open(path, "wb", **kwargs) as file:
+            pickle.dump(self.state_dict(), file)
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
@@ -339,9 +302,6 @@ class BayBE:
         -------
         Nothing (the internal database is modified in-place).
         """
-        # Check if all provided data points have acceptable parameter values
-        inds_matched = self._match_measurement_with_searchspace_indices(data)
-
         # Check if all targets have values provided
         for target in self.targets:
             if data[target.name].isna().any():
@@ -351,162 +311,58 @@ class BayBE:
                     f"supported."
                 )
 
-        # Update the 'was_measured' metadata
-        self.searchspace_metadata.loc[inds_matched, "was_measured"] = True
+        self.searchspace.mark_as_measured(
+            data, self.config.numerical_measurements_must_be_within_tolerance
+        )
 
         # Read in measurements and add them to the database
         self.batches_done += 1
         to_insert = data.copy()
         to_insert["BatchNr"] = self.batches_done
 
-        self.measurements_exp_rep = pd.concat(
-            [self.measurements_exp_rep, to_insert], axis=0, ignore_index=True
+        self.measurements_exp = pd.concat(
+            [self.measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
-        # Transform measurement space to computational representation
-        (
-            self.measurements_comp_rep_x,
-            self.measurements_comp_rep_y,
-        ) = self.transform_rep_exp2comp(self.measurements_exp_rep)
-
-        # Use the column representation defined by the searchspace
-        # TODO: This is a temporary fix. See TODO for computational transformation
-        #  in constructor.
-        self.measurements_comp_rep_x = self.measurements_comp_rep_x[
-            self.searchspace_comp_rep.columns
-        ]
-
         # Update the strategy object
-        self.strategy.fit(self.measurements_comp_rep_x, self.measurements_comp_rep_y)
+        self.strategy.fit(
+            self.measurements_parameters_comp, self.measurements_targets_comp
+        )
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
         Provides the recommendations for the next batch of experiments.
         """
-        # Filter the search space before passing it to the strategy
-        mask_todrop = self.searchspace_metadata["dont_recommend"].copy()
-        if not self.config.allow_repeated_recommendations:
-            mask_todrop |= self.searchspace_metadata["was_recommended"]
-        if not self.config.allow_recommending_already_measured:
-            mask_todrop |= self.searchspace_metadata["was_measured"]
+        candidates_exp, candidates_comp = self.searchspace.get_candidates(
+            self.config.allow_repeated_recommendations,
+            self.config.allow_recommending_already_measured,
+        )
 
         # Assert that there are enough points left for recommendation
-        # TODO: use available of points left and show a warning
-        if (mask_todrop.sum() >= len(self.searchspace_exp_rep)) or (
-            len(self.searchspace_exp_rep.loc[~mask_todrop]) < batch_quantity
-        ):
-            raise AssertionError(
-                f"Using the current settings, there are fewer than '{batch_quantity=}' "
-                f"possible data points left to recommend. This can be either because "
-                f"all data points have been measured at some point (while "
-                f"'allow_repeated_recommendations' or "
-                "'allow_recommending_already_measured' being False) or because all "
-                "data points are marked as 'dont_recommend'."
+        if len(candidates_exp) < batch_quantity:
+            raise NotEnoughPointsLeftError(
+                f"Using the current settings, there are fewer than {batch_quantity} "
+                "possible data points left to recommend. This can be "
+                "either because all data points have been measured at some point "
+                "(while 'allow_repeated_recommendations' or "
+                "'allow_recommending_already_measured' being False) "
+                "or because all data points are marked as 'dont_recommend'."
             )
 
         # Get the indices of the recommended search space entries
-        inds = self.strategy.recommend(
-            self.searchspace_comp_rep.loc[~mask_todrop], batch_quantity=batch_quantity
-        )
+        idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
 
         # Translate indices into labeled data points and update metadata
-        rec = self.searchspace_exp_rep.loc[inds, :]
-        self.searchspace_metadata.loc[inds, "was_recommended"] = True
+        # TODO: Don't modify searchspace members directly. Probably, the metadata
+        #   should become part of the BayBE class, which would cleanly separate
+        #   responsibilities. That is, BayBE would capture all data-related information,
+        #   reflecting the progress of an experiment, whereas the SearchSpace class
+        #   would be a stateless representation of the mathematical search space.
+        rec = candidates_exp.loc[idxs, :]
+        self.searchspace.metadata.loc[idxs, "was_recommended"] = True
 
         # Query user input
         for target in self.targets:
             rec[target.name] = "<Enter value>"
 
         return rec
-
-    @classmethod
-    def from_stored(cls, path: str, **kwargs) -> BayBE:
-        """
-        Class method to create a BayBE object from a stored object.
-
-        Parameters
-        ----------
-        path : str
-            Path to the stored object.
-        kwargs : keyword arguments
-            Additional arguments passed to fsspec.open. Useful, for instance, for
-            accessing remote or s3 file systems.
-
-        Returns
-        -------
-        BayBE
-            The restored BayBE instance.
-        """
-        # Load stored data
-        with fsspec.open(path, "rb", **kwargs) as file:
-            (
-                config_dict,
-                batches_done,
-                searchspace_exp_rep,
-                searchspace_metadata,
-                measurements_exp_rep,
-            ) = pickle.load(file)
-
-        # Create the BayBE object via constructor and stored config
-        config = BayBEConfig(**config_dict)
-        baybe_object = cls(config, create_searchspace=False)
-
-        # Update relevant data from previous iterations
-        baybe_object.batches_done = batches_done
-        baybe_object.searchspace_exp_rep = searchspace_exp_rep
-        baybe_object.searchspace_comp_rep, _ = baybe_object.transform_rep_exp2comp(
-            baybe_object.searchspace_exp_rep
-        )
-        baybe_object.searchspace_metadata = searchspace_metadata
-        baybe_object.measurements_exp_rep = measurements_exp_rep
-        (
-            baybe_object.measurements_comp_rep_x,
-            baybe_object.measurements_comp_rep_y,
-        ) = baybe_object.transform_rep_exp2comp(baybe_object.measurements_exp_rep)
-        baybe_object.strategy = Strategy(
-            **config.strategy,  # pylint: disable=not-a-mapping
-            searchspace=baybe_object.searchspace_comp_rep,
-        )
-
-        # Fit the strategy object
-        # TODO: add mechanism for saving/storing all BayBE attributes, e.g. strategy
-        baybe_object.strategy.fit(
-            baybe_object.measurements_comp_rep_x, baybe_object.measurements_comp_rep_y
-        )
-
-        return baybe_object
-
-    def save(self, path: Optional[str] = None, **kwargs) -> None:
-        """
-        Store the current state of the BayBE instance on disk.
-
-        Parameters
-        ----------
-        path : str
-            Path to where the object should be stored.
-        kwargs : keyword arguments
-            Additional arguments passed to fsspec.open. Useful, for instance, for
-            accessing remote or s3 file systems.
-
-        Returns
-        -------
-        Nothing.
-        """
-        # If no path is provided, use a default file path
-        if path is None:
-            path = "./baybe_object.baybe"
-            log.warning(
-                "No path was specified when storing BayBE object. Will use '%s'.",
-                path,
-            )
-
-        # Write the BayBE object to disk
-        with fsspec.open(path, "wb", **kwargs) as file:
-            to_dump = [
-                self.config.dict(),
-                self.batches_done,
-                self.searchspace_exp_rep,
-                self.searchspace_metadata,
-                self.measurements_exp_rep,
-            ]
-            pickle.dump(to_dump, file)

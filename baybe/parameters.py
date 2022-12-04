@@ -61,7 +61,7 @@ class Parameter(
 
     # class variables
     type: ClassVar[str]
-    requires_encoding: ClassVar[str]
+    encoding: ClassVar[Optional[str]]
     SUBCLASSES: ClassVar[Dict[str, Type[Parameter]]] = {}
 
     # object variables
@@ -118,7 +118,7 @@ class Parameter(
         pd.DataFrame
             The transformed version of the data.
         """
-        if self.requires_encoding:
+        if self.encoding:
             # replace each label with the corresponding encoding
             transformed = pd.merge(
                 left=data.rename("Labels").to_frame(),
@@ -140,7 +140,6 @@ class Categorical(Parameter):
 
     # class variables
     type = "CAT"
-    requires_encoding = True
 
     # object variables
     values: conlist(Any, unique_items=True)
@@ -171,7 +170,7 @@ class NumericDiscrete(Parameter):
 
     # class variables
     type = "NUM_DISCRETE"
-    requires_encoding = False
+    encoding = None
 
     # object variables
     values: conlist(float, unique_items=True)
@@ -235,7 +234,6 @@ class GenericSubstance(Parameter):
 
     # class variables
     type = "SUBSTANCE"
-    requires_encoding = True
 
     # object variables
     decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
@@ -310,9 +308,9 @@ class Custom(Parameter):
 
     # class variables
     type = "CUSTOM"
-    requires_encoding = True
 
     # object variables
+    encoding = "CUSTOM"
     decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
     data: pd.DataFrame
 
