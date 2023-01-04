@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 """
 The purpose of this script is to compare different surrogate models and verify that
 their predictions are invariant to changes in scale of the underlying target function.
@@ -8,13 +9,16 @@ when the input and output scales are changed.
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pydantic
 import streamlit as st
 import torch
 
+from baybe.acquisition import debotorchize
+from baybe.parameters import NumericDiscrete
+from baybe.searchspace import SearchSpace
 from baybe.surrogate import SurrogateModel
-from baybe.utils import to_tensor
+from botorch.acquisition import qExpectedImprovement
+from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
 
 # define constants
@@ -37,6 +41,22 @@ def sin(
     return out
 
 
+def constant(
+    x: np.ndarray, x_min: float, x_max: float, amplitude: float, bias: float
+) -> np.ndarray:
+    """Constant test function."""
+    out = np.full(x.shape, fill_value=bias)
+    return out
+
+
+def linear(
+    x: np.ndarray, x_min: float, x_max: float, amplitude: float, bias: float
+) -> np.ndarray:
+    """Linear test function."""
+    out = amplitude * np.linspace(0, 1, len(x)) + bias
+    return out
+
+
 def main():
     """Creates the streamlit dashboard."""
 
@@ -51,7 +71,12 @@ def main():
     st.info(__doc__)
 
     # define all available test functions
-    test_functions = {"Sine": sin, "Cubic": cubic}
+    test_functions = {
+        "Sine": sin,
+        "Constant": constant,
+        "Linear": linear,
+        "Cubic": cubic,
+    }
 
     # collect all available surrogate models
     surrogate_models = SurrogateModel.SUBCLASSES
@@ -63,6 +88,7 @@ def main():
         "Surrogate model", list(surrogate_models.keys())
     )
     n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
+    n_recommendations = st.sidebar.slider("Number of recommendations", 1, 20, 5)
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         """
@@ -89,43 +115,48 @@ def main():
     )
     surrogate_model_cls = surrogate_models[surrogate_name]
 
-    # define the search space and corresponding target values
-    # TODO [searchspace]: The pandas dataframe here is only needed because the current
-    #  GP implementation looks for MORDRED features in the column names.
-    #   --> Remove the dataframe once the `Searchspace` class has been introduced
-    searchspace = pd.DataFrame(
-        {
-            "param": np.linspace(
-                lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES
-            )
-        }
+    # create the input grid and corresponding target values
+    test_x = torch.linspace(
+        lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES
     )
-    targets = pd.DataFrame(fun(searchspace))
+    test_y = torch.from_numpy(fun(test_x.numpy()))
 
     # randomly select the specified number of training data points
     train_idx = np.random.choice(
-        range(len(searchspace)), n_training_points, replace=False
+        range(N_PARAMETER_VALUES), n_training_points, replace=False
     )
-    train_x = to_tensor(searchspace.loc[train_idx])
-    train_y = to_tensor(targets.loc[train_idx])
+    train_x = test_x[train_idx]
+    train_y = test_y[train_idx]
+
+    # create the searchspace object
+    param = NumericDiscrete(name="param", values=test_x.numpy().tolist())
+    searchspace = SearchSpace(parameters=[param])
 
     # create the surrogate model, train it, and get its predictions
     surrogate_model = surrogate_model_cls(searchspace)
-    surrogate_model.fit(train_x, train_y)
+    surrogate_model.fit(train_x.unsqueeze(-1), train_y.unsqueeze(-1))
+
+    # recommend next experiments
+    # TODO: use BayBE recommender and add widgets for strategy selection
+    best_f = train_y.max().item()
+    acqf = debotorchize(qExpectedImprovement)(surrogate_model, best_f)
+    recommendatations = optimize_acqf_discrete(
+        acqf, q=n_recommendations, choices=test_x.unsqueeze(-1)
+    )[0]
 
     # create the mean and standard deviation predictions for the entire search space
-    test_x = to_tensor(searchspace)
-    mean, covar = surrogate_model.posterior(test_x)
+    mean, covar = surrogate_model.posterior(test_x.unsqueeze(-1))
     mean = mean.detach().numpy()
     std = covar.diag().sqrt().detach().numpy()
 
-    # visualize the test function, training points, and model predictions
+    # visualize the test function, training points, model predictions, recommendations
     fig = plt.figure()
-    plt.plot(searchspace, targets, color="tab:blue", label="Test function")
+    plt.plot(test_x, test_y, color="tab:blue", label="Test function")
     plt.plot(train_x, train_y, "o", color="tab:blue")
-    plt.plot(searchspace, mean, color="tab:red", label="Surrogate model")
-    plt.fill_between(
-        searchspace.values[:, 0], mean - std, mean + std, alpha=0.2, color="tab:red"
+    plt.plot(test_x, mean, color="tab:red", label="Surrogate model")
+    plt.fill_between(test_x, mean - std, mean + std, alpha=0.2, color="tab:red")
+    plt.vlines(
+        recommendatations, *plt.gca().get_ylim(), color="k", label="Recommendations"
     )
     plt.legend()
     st.pyplot(fig)
