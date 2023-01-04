@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SearchSpace class
 - Code testing with pytest
 - Option to specify initial data for backtesting simulations
+- SequentialGreedyRecommender class
 
 ### Fixed
 - Parameters cannot be initialized with duplicate values
