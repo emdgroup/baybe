@@ -16,6 +16,7 @@ from botorch.acquisition import (
     ExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
+    qExpectedImprovement,
     UpperConfidenceBound,
 )
 from numpy import unique
@@ -263,10 +264,10 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     searchspace: SearchSpace
     surrogate_model_cls: Union[str, Type[SurrogateModel]] = "GP"
     acquisition_function_cls: Union[
-        Literal["PM", "PI", "EI", "UCB"], Type[AcquisitionFunction]
-    ] = "EI"
+        Literal["PM", "PI", "EI", "UCB", "qEI"], Type[AcquisitionFunction]
+    ] = "qEI"  # TODO: automatic selection between EI and qEI depending on query size
     initial_strategy: Union[str, InitialStrategy] = "RANDOM"
-    recommender_cls: Union[str, Type[Recommender]] = "UNRESTRICTED_RANKING"
+    recommender_cls: Union[str, Type[Recommender]] = "SEQUENTIAL_GREEDY"
 
     # TODO: The following member declarations become obsolete in pydantic 2.0 when
     #  __post_init_post_parse__ is available:
@@ -295,6 +296,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
                 "PI": ProbabilityOfImprovement,
                 "EI": ExpectedImprovement,
                 "UCB": partial(UpperConfidenceBound, beta=1.0),
+                "qEI": qExpectedImprovement,
             }
             fun = debotorchize(mapping[fun])
         return fun

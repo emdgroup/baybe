@@ -11,12 +11,14 @@ from typing import Dict, Optional, Type
 import pandas as pd
 import torch
 from botorch.acquisition import AcquisitionFunction
+from botorch.optim import optimize_acqf_discrete
 
 from .utils import isabstract, to_tensor
 
 
-# TODO: use botorch's built-in acquisition optimization methods
-#   (problem: they do not return the indices but the candidate points)
+class NoMCAcquisitionFunctionError(Exception):
+    """An exception raised when a Monte Carlo acquisition function is required
+    but an analytical acquisition function has been selected by the user."""
 
 
 class Recommender(ABC):
@@ -56,6 +58,49 @@ class Recommender(ABC):
         -------
         The DataFrame indices of the specific experiments selected.
         """
+
+
+class SequentialGreedyRecommender(Recommender):
+    """
+    Recommends the next set of experiments by means of sequential greedy optimization,
+    i.e. using a growing set of candidates points, where each new candidate is
+    selected by optimizing the joint acquisition score of the current candidate set
+    while having fixed all previous candidates.
+
+    Note: This approach only works with Monte Carlo acquisition functions, i.e. of
+        type `botorch.acquisition.monte_carlo.MCAcquisitionFunction`.
+    """
+
+    type = "SEQUENTIAL_GREEDY"
+
+    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+        """See base class."""
+        # determine the next set of points to be tested
+        candidates_tensor = to_tensor(candidates)
+        try:
+            points, _ = optimize_acqf_discrete(
+                self.acquisition_function, batch_quantity, candidates_tensor
+            )
+        except AttributeError as ex:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions."
+            ) from ex
+
+        # retrieve the index of the points from the input dataframe
+        # TODO: This additional inelegant step is unfortunately required since BoTorch
+        #   does not return the indices of the points. However, as soon as we move to
+        #   continuous spaces, we will have to use another representation anyway
+        #   (which is also the reason why BoTorch does not support it).
+        locs = pd.Index(
+            pd.merge(
+                candidates.reset_index(),
+                pd.DataFrame(points, columns=candidates.columns),
+                on=list(candidates),
+            )["index"]
+        )
+
+        return locs
 
 
 class MarginalRankingRecommender(Recommender):

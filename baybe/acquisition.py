@@ -1,21 +1,20 @@
-# pylint: disable=unused-argument
 """
 Adapter functionality to make BoTorch's acquisition functions work with other models.
 """
 from inspect import signature
-from typing import Type
+from typing import Any, Callable, List, Optional, Type
 
 import gpytorch.distributions
 from botorch.acquisition import AcquisitionFunction
-from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.gpytorch import Model
+from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from gpytorch.likelihoods import GaussianLikelihood
-from gpytorch.models import ExactGP
+from torch import Tensor
 
 from baybe.surrogate import SurrogateModel
 
 
-def debotorchize(acqf: Type[AcquisitionFunction]):
+def debotorchize(acqf_cls: Type[AcquisitionFunction]):
     """
     Wraps a given BoTorch acquisition function such that becomes generally usable in
     combination with other non-BoTorch surrogate models.
@@ -23,17 +22,27 @@ def debotorchize(acqf: Type[AcquisitionFunction]):
     This is required since BoTorch's acquisition functions expect a
     `botorch.model.Model` to work with, hindering their general use with arbitrary
     probabilistic models. The wrapper class returned by this function resolves this
-    issue by operating as an adapter that internally creates a dummy BoTorch model
-    that is passed to the selected BoTorch acquisition function, carrying the posterior
-    information provided from any other probabilistic model implementing BayBE's
-    `SurrogateModel` interface.
+    issue by operating as an adapter that internally creates a helper BoTorch model,
+    which serves as a translation layer and is passed to the selected BoTorch
+    acquisition function, carrying the posterior information provided from any other
+    probabilistic model implementing BayBE's `SurrogateModel` interface.
 
-    Example:
-    --------
+    Parameters
+    ----------
+    acqf_cls : Type[AcquisitionFunction]
+        An arbitrary BoTorch acquisition function class.
+
+    Returns
+    -------
+    A wrapped version of the class that accepts non-BoTorch surrogate models.
+
+    Example
+    -------
     from botorch.acquisition import ExpectedImprovement
-    from baybe.surrogate import SurrogateModel
-    surrogate = ...  # add your own BayBE SurrogateModel here
-    best_f = ...  # the best (= highest) function value found so far
+    from baybe.surrogate import BayesianLinearModel
+    surrogate = BayesianLinearModel(*args, **kwargs)
+    surrogate.fit(train_x, train_y)
+    best_f = train_y.max()
     acqf = debotorchize(ExpectedImprovement)(surrogate, best_f)
     acqf_scores = acqf(candidates)
     """
@@ -42,37 +51,51 @@ def debotorchize(acqf: Type[AcquisitionFunction]):
         """Adapter acquisition function that accepts BayBE surrogate models."""
 
         def __init__(self, surrogate: SurrogateModel, best_f):
-            self.surrogate = surrogate
+            self.model = AdapterModel(surrogate)
             self.best_f = best_f
-            self.acqf = acqf
 
-        def __call__(self, candidates):
-            mean, var = self.surrogate.posterior(candidates)
-            mvn = gpytorch.distributions.MultivariateNormal(mean, var)
-            model = self.DummyModel(mvn)
             required_params = {
                 p: v
-                for p, v in {"model": model, "best_f": self.best_f}.items()
-                if p in signature(acqf).parameters
+                for p, v in {"model": self.model, "best_f": self.best_f}.items()
+                if p in signature(acqf_cls).parameters
             }
-            return self.acqf(**required_params)(candidates)
+            self.acqf = acqf_cls(**required_params)
 
-        class DummyModel(GPyTorchModel, ExactGP):
-            """
-            Dummy model to pass the posterior information to BoTorch's acquisition
-            function.
-            """
+        def __call__(self, candidates):
+            return self.acqf(candidates)
 
-            def __init__(self, mvn):
-                GPyTorchModel.__init__(self)
-                ExactGP.__init__(self, None, None, GaussianLikelihood())
-                self.mvn = mvn
-
-            @property
-            def num_outputs(self) -> int:
-                return 1
-
-            def posterior(self, *args, **kwargs) -> GPyTorchPosterior:
-                return GPyTorchPosterior(self.mvn)
+        def __getattr__(self, item):
+            return getattr(self.acqf, item)
 
     return Wrapper
+
+
+class AdapterModel(Model):
+    """
+    A BoTorch model that internally uses a BayBE surrogate model for posterior
+    computation. Can be used, for example, as an adapter layer for making a BayBE
+    surrogate model usable in conjunction with BoTorch acquisition functions.
+    """
+
+    def __init__(self, surrogate: SurrogateModel):
+        super().__init__()
+        self._surrogate = surrogate
+
+    @property
+    def num_outputs(self) -> int:
+        """See base class."""
+        # TODO: So far, the usage is limited to single-output models.
+        return 1
+
+    def posterior(
+        self,
+        X: Tensor,
+        output_indices: Optional[List[int]] = None,
+        observation_noise: bool = False,
+        posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
+        **kwargs: Any,
+    ) -> Posterior:
+        """See base class."""
+        mean, var = self._surrogate.posterior(X)
+        mvn = gpytorch.distributions.MultivariateNormal(mean, var)
+        return GPyTorchPosterior(mvn)
