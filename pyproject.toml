@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 license = {text = "Apache-2.0"}
-requires-python =">=3.8"
+requires-python =">=3.8.6"
 dependencies = [
     "botorch>=0.7.0",
     "fsspec>=2022.10.0",
@@ -25,6 +25,8 @@ dependencies = [
     "seaborn>=0.11.2",
     "streamlit>=1.10.0",
     "torch>=1.11.0",
+    "numpy<=1.23.4",
+    "scipy<=1.9.3",
 ]
 dynamic = ['version']
 
@@ -89,4 +91,4 @@ disable = [
 	]
 
 [tool.pylint.BASIC]
-good-names=["i", "j", "k", "x", "y", "ex", "df"] # allow these variable names
+good-names=["i", "j", "k", "x", "y", "ex", "df", "fh"] # allow these variable names

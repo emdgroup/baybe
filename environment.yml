@@ -8,6 +8,8 @@ dependencies:
 - funcy==1.17
 - matplotlib==3.5.2
 - mordred==1.2.0
+- numpy==1.23.4
+- scipy==1.9.3
 - openpyxl==3.0.9
 - pre-commit==2.19.0
 - pylint==2.13.9
