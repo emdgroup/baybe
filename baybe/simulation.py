@@ -11,7 +11,7 @@ from typing import Callable, Dict, List, Literal, Optional, TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
-from tqdm import trange
+from tqdm import tqdm, trange
 
 from baybe.core import BayBE, BayBEConfig
 from baybe.utils import (
@@ -32,7 +32,8 @@ def simulate_from_configs(
     config_base: dict,
     batch_quantity: int,
     n_exp_iterations: int,
-    n_mc_iterations: int,
+    n_mc_iterations: Optional[int] = None,
+    initial_data: Optional[List[pd.DataFrame]] = None,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -51,9 +52,13 @@ def simulate_from_configs(
         Number of recommendations returned per experimental DOE iteration.
     n_exp_iterations : int
         Number of experimental DOE iterations that should be simulated.
-    n_mc_iterations : int
+    n_mc_iterations : int (optional)
         Number of Monte Carlo runs that should be used in the simulation. Each run will
-        have a different random seed.
+        have a different random seed. Must be 'None' if `initial_data` is specified.
+    initial_data : List[pd.DataFrame] (optional)
+        A collection of initial data sets. The experiment is repeated once with each
+        data set in the collection for each configuration. Must be 'None' if
+        `n_mc_iterations` is specified.
     lookup : Union[pd.DataFrame, Callable] (optional)
         Defines the targets for the queried parameter settings. Can be:
             * A dataframe containing experimental settings and their target results.
@@ -111,6 +116,12 @@ def simulate_from_configs(
     )
     sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Variant")
     """
+    # Validate the iteration specification
+    if not (n_mc_iterations is None) ^ (initial_data is None):
+        raise ValueError(
+            "Exactly one of 'n_mc_iterations' and 'initial_data' can take a value."
+        )
+
     # Validate the lookup mechanism
     if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
         raise TypeError(
@@ -140,8 +151,11 @@ def simulate_from_configs(
         config_dict = deepcopy(config_base)
         config_dict.update(variant_config)
 
-        # Run all Monte Carlo repetitions
-        for k_mc in (pbar := trange(n_mc_iterations)):
+        # Create an iterator for repeating the experiment
+        pbar = trange(n_mc_iterations) if initial_data is None else tqdm(initial_data)
+
+        # Run all experiment repetitions
+        for k_mc, data in enumerate(pbar):
             # Show the simulation progress
             pbar.set_description(variant_name)
 
@@ -152,6 +166,10 @@ def simulate_from_configs(
             config_dict["random_seed"] = 1337 + k_mc
             config = BayBEConfig(**config_dict)
             baybe_obj = BayBE(config)
+
+            # Add the initial data
+            if initial_data is not None:
+                baybe_obj.add_results(data)
 
             # For impute_mode 'ignore', do not recommend space entries that are not
             # available in the lookup
