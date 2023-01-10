@@ -9,7 +9,6 @@ dependencies:
 - matplotlib==3.5.2
 - mordred==1.2.0
 - numpy==1.23.4
-- scipy==1.9.3
 - openpyxl==3.0.9
 - pre-commit==2.19.0
 - pylint==2.13.9
@@ -22,6 +21,7 @@ dependencies:
 - rdkit==2022.3.4
 - scikit-learn==1.1.1
 - scikit-learn-extra==0.2.0
+- scipy==1.9.3
 - seaborn==0.11.2
 - streamlit==1.10.0
 - pip:
