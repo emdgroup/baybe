@@ -1,4 +1,4 @@
-# Format and lint code
+# Formatting, linting, testing, and code release
 
 trigger:
   branches:
@@ -10,10 +10,10 @@ stages:
 
 
 - stage: Code_Checks
-  displayName: PyTest unit tests
+  displayName: pytest unit tests
 
   jobs:
-    - job: "PyTest"
+    - job: "pytest"
 
       pool:
         vmImage: ubuntu-20.04
@@ -49,7 +49,7 @@ stages:
       - script: |
           source activate $(CONDA_ENV)
           pytest -v -p no:warnings
-        displayName: "Run PyTest"
+        displayName: "Run pytest"
         workingDirectory: tests
 
 - stage: Lint

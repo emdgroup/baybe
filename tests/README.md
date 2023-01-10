@@ -1,36 +1,34 @@
 # Tests
-Various PyTest tests can be run in this folder.
+Various `pytest` tests can be run in this folder.
 
 ### Fast Testing
-Uses small iteration number, batch, etc. numbers and also has only one version of them. 
-Is triggered by calling pytest with: 
+Uses small iteration number, batch size, etc., with only one variant for each.
+Can be triggered as follows: 
 ```
 pytest --fast
 ```
-Fast testing is also triggered by a pre-commit hook.
 
 ### Extensive Testing
-This will run several variants of iteration numbers, batch sizes etc and also generally 
-use larger numbers for them. In addition it will run simulation tests that run a mock 
-experiment with an expected outcome. Use:
+Runs several variants of iteration numbers, batch sizes, etc., and also generally 
+uses larger numbers for each. Can be triggered as follows:
 ```
 pytest
 ```
 
 ### Test Options
-If inspection of the test results is intended the following options are recommended:
+If inspection of the test results is intended, the following options are recommended:
 ```
 pytest -v -p no:warnings
 ```
-This will not collect warnings and show an overview of all tests that ran with thei 
-result.
+This will not collect warnings and show an overview of all executed tests, together 
+with their results.
 
-If only interested in a specific test it can be passed via the command line:
+If only interested in a specific test, it can be passed via the command line:
 ```
 pytest -v -p no:warnings test_config.py
 ```
 
-To show the slowest `n` of tests after testing use the option `--durations=n` and set 
+To show the slowest `n` tests after testing, use the option `--durations=n`. Set 
 `n` to 0 if all durations should be shown:
 ```
 pytest --durations=5
