@@ -10,11 +10,10 @@ from typing import Callable, Dict, Optional, Tuple, Type
 
 import numpy as np
 import torch
-from botorch.fit import fit_gpytorch_model
+from botorch.fit import fit_gpytorch_mll_torch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from botorch.optim.fit import fit_gpytorch_torch
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
@@ -425,7 +424,10 @@ class GaussianProcessModel(SurrogateModel):
             likelihood=likelihood,
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, options={"disp": False})
+        # IMPROVE: The step_limit=100 stems from the former (deprecated)
+        #  `fit_gpytorch_torch` function, for which this was the default. Probably,
+        #   one should use a smarter logic here.
+        fit_gpytorch_mll_torch(mll, step_limit=100)
 
 
 class MeanPredictionModel(SurrogateModel):

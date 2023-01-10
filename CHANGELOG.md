@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Parameters cannot be initialized with duplicate values
+- BoTorch version upgrade to fix critical bug (https://github.com/pytorch/botorch/pull/1454)
 
 ## [0.2.0] - 2022-11-10
 ### Added
