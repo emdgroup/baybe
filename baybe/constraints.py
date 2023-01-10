@@ -164,7 +164,7 @@ class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=Tru
     def validate_params(cls, parameters):
         """Validates the parameter list."""
         if len(parameters) != len(set(parameters)):
-            raise AssertionError(
+            raise StrictValidationError(
                 f"The given 'parameter' list must have unique values "
                 f"but was: {parameters}."
             )

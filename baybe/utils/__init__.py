@@ -21,6 +21,7 @@ from typing import (
     Tuple,
     Type,
     TYPE_CHECKING,
+    TypeVar,
     Union,
 )
 
@@ -35,6 +36,8 @@ from torch import Tensor
 
 if TYPE_CHECKING:
     from .core import BayBE  # TODO: fix unresolved import
+
+T = TypeVar("T")
 
 # Caching related objects
 cachedir = Path.home() / ".baybe_cache"
@@ -259,7 +262,6 @@ def add_fake_results(
 
     # Add the fake data for each target
     for target in baybe.targets:
-
         # Add bad values
         data[target.name] = np.random.randint(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)
@@ -638,3 +640,24 @@ class HashableDict(dict):
 
     def __hash__(self) -> int:
         return int(binascii.hexlify(pickle.dumps(self)), 16)
+
+
+def subclasses_recursive(cls: T) -> List[T]:
+    """
+    Returns a recursive list of all subclasses of a given class.
+
+    Parameters
+    ----------
+    cls
+        An arbitrary class.
+
+    Returns
+    -------
+    list
+        A list of class objects.
+    """
+    direct = cls.__subclasses__()
+    indirect = []
+    for subclass in direct:
+        indirect.extend(subclasses_recursive(subclass))
+    return direct + indirect

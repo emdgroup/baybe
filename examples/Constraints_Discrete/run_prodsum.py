@@ -125,7 +125,7 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with 1,2-sum above 150:      ",
         (
-            baybe_obj.searchspace_exp_rep[["NumParameter1", "NumParameter2"]].sum(
+            baybe_obj.searchspace.exp_rep[["NumParameter1", "NumParameter2"]].sum(
                 axis=1
             )
             > 150.0
@@ -134,7 +134,7 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with 3,4-product under 30:   ",
         (
-            baybe_obj.searchspace_exp_rep[["NumParameter3", "NumParameter4"]].sum(
+            baybe_obj.searchspace.exp_rep[["NumParameter3", "NumParameter4"]].prod(
                 axis=1
             )
             < 30
@@ -142,11 +142,11 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         "Number of entries with 5,6-sum unequal to 100: ",
-        baybe_obj.searchspace_exp_rep[["NumParameter5", "NumParameter6"]]
+        baybe_obj.searchspace.exp_rep[["NumParameter5", "NumParameter6"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
-        .gt(1.0)
+        .gt(0.01)
         .sum(),
     )
 

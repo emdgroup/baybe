@@ -1,6 +1,6 @@
 """
-Run history simulation for a direct arylation where all possible combinations have
-been measured
+Run history simulation for testing surrogate models on a direct arylation reaction
+where all possible combinations have been measured
 """
 
 import matplotlib.pyplot as plt
@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 from baybe.simulation import simulate_from_configs
 
-lookup = pd.read_excel("../../tests/Reaction_DirectArylation/lookup.xlsx")
+lookup = pd.read_excel("../Reaction_DirectArylation/lookup.xlsx")
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
@@ -95,53 +95,57 @@ config_dict_base = {
 }
 
 config_dict_v1 = {
-    "project_name": "PAM",
+    "project_name": "GP",
     "strategy": {
         "surrogate_model_cls": "GP",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "PAM",
     },
 }
 
 config_dict_v2 = {
-    "project_name": "K-Means",
+    "project_name": "RF",
     "strategy": {
-        "surrogate_model_cls": "GP",
+        "surrogate_model_cls": "RF",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "KMEANS",
     },
 }
 
 config_dict_v3 = {
-    "project_name": "Gaussian Mixture",
+    "project_name": "NG",
     "strategy": {
-        "surrogate_model_cls": "GP",
+        "surrogate_model_cls": "NG",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "GMM",
     },
 }
 
 config_dict_v4 = {
-    "project_name": "Random",
+    "project_name": "BL",
     "strategy": {
-        "surrogate_model_cls": "GP",
+        "surrogate_model_cls": "BL",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "RANDOM",
     },
 }
+
+config_dict_v5 = {
+    "project_name": "Random",
+    "strategy": {
+        "recommender_cls": "RANDOM",
+    },
+}
+
 
 results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=lookup,
-    impute_mode="worst",
-    n_exp_iterations=10,
-    n_mc_iterations=200,
-    batch_quantity=5,
+    n_exp_iterations=30,
+    n_mc_iterations=5,
+    batch_quantity=2,
     config_variants={
-        "PAM": config_dict_v1,
-        "KMEANS": config_dict_v2,
-        "GMM": config_dict_v3,
-        "RANDOM": config_dict_v4,
+        "GP": config_dict_v1,
+        "RF": config_dict_v2,
+        "NGBoost": config_dict_v3,
+        "BayesLinear": config_dict_v4,
+        "RANDOM": config_dict_v5,
     },
 )
 
@@ -151,7 +155,7 @@ max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
 )
-plt.plot([2, 5 * 10], [max_yield, max_yield], "--r")
+plt.plot([2, 2 * 30], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
 plt.savefig("./run_reaction.png")

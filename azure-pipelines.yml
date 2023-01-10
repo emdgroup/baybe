@@ -1,4 +1,4 @@
-# Format and lint code
+# Formatting, linting, testing, and code release
 
 trigger:
   branches:
@@ -8,8 +8,52 @@ trigger:
 
 stages:
 
+
+- stage: Code_Checks
+  displayName: pytest unit tests
+
+  jobs:
+    - job: "pytest"
+
+      pool:
+        vmImage: ubuntu-20.04
+
+      variables:
+        CONDA_ENV: baybe
+        CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
+
+      steps:
+      - checkout: self
+
+      - script: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: Add conda to PATH
+
+      - task: Cache@2
+        displayName: Use cached conda environment
+        inputs:
+          key: conda | environment.yml
+          path: $(CONDA_HOME)
+          cacheHitVar: CONDA_CACHE_RESTORED
+
+      - script: |
+          conda install --yes -c conda-forge mamba
+          mamba env create --file environment.yml
+        displayName: Create conda environment (if not restored from cache)
+        condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
+
+      - script: |
+          source activate $(CONDA_ENV)
+          python -m pip install .
+        displayName: "Install BayBE package"
+
+      - script: |
+          source activate $(CONDA_ENV)
+          pytest -v -p no:warnings
+        displayName: "Run pytest"
+        workingDirectory: tests
+
 - stage: Lint
-  displayName: Format and lint code
+  displayName: Format and lint
 
   jobs:
     - job: "Lint"

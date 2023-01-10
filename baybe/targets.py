@@ -11,7 +11,7 @@ from typing import ClassVar, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, conlist, Extra, validator
 
 from .utils import check_if_in, geom_mean, isabstract, StrictValidationError
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
@@ -23,11 +23,11 @@ class Objective(BaseModel, extra=Extra.forbid):
     """Class for managing optimization objectives."""
 
     mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
-    targets: List[dict]
+    targets: conlist(dict, min_items=1)
     weights: Optional[List[float]] = None
     combine_func: Literal["MEAN", "GEOM_MEAN"] = "GEOM_MEAN"
 
-    @validator("targets", always=True)
+    @validator("targets", always=True, pre=True)
     def validate_targets(cls, targets, values):
         """
         Validates (and instantiates) targets depending on the objective mode.
@@ -51,10 +51,15 @@ class Objective(BaseModel, extra=Extra.forbid):
                         "have bounds defined."
                     )
 
-        # Instantiate the targets
-        targets = [Target.create(t) for t in targets]
-
         return targets
+
+    @validator("targets", always=True)
+    def instantiate_targets(
+        cls,
+        targets,
+    ):
+        """Instantiate targets."""
+        return [Target.create(t) for t in targets]
 
     @validator("weights", always=True)
     def validate_weights(cls, weights, values):

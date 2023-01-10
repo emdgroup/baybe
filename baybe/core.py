@@ -12,7 +12,7 @@ import fsspec
 import numpy as np
 import pandas as pd
 import torch
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, conlist, Extra, validator
 
 from .constraints import Constraint
 from .parameters import Parameter
@@ -40,7 +40,7 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
 
     project_name: str = "Untitled Project"
-    parameters: List[dict]
+    parameters: conlist(dict, min_items=1)
     objective: dict
     strategy: Optional[dict] = None
     constraints: List[dict] = []
@@ -302,15 +302,33 @@ class BayBE:
         -------
         Nothing (the internal database is modified in-place).
         """
-        # Check if all targets have values provided
+        # Check if all targets have valid values
         for target in self.targets:
             if data[target.name].isna().any():
                 raise ValueError(
                     f"The target '{target.name}' has missing values or NaNs in the "
-                    f"provided dataframe. Missing target values are not currently "
-                    f"supported."
+                    f"provided dataframe. Missing target values are not supported."
+                )
+            if data[target.name].dtype.kind not in "iufb":
+                raise TypeError(
+                    f"The target '{target.name}' has non-numeric entries in the "
+                    f"provided dataframe. Non-numeric target values are not supported."
                 )
 
+        # Check if all targets have valid values
+        for param in self.parameters:
+            if data[param.name].isna().any():
+                raise ValueError(
+                    f"The parameter '{param.name}' has missing values or NaNs in the "
+                    f"provided dataframe. Missing parameter values are not supported."
+                )
+            if ("NUM" in param.type) and (data[param.name].dtype.kind not in "iufb"):
+                raise TypeError(
+                    f"The numerical parameter '{param.name}' has non-numeric entries in"
+                    f" the provided dataframe."
+                )
+
+        # Update meta data
         self.searchspace.mark_as_measured(
             data, self.config.numerical_measurements_must_be_within_tolerance
         )
