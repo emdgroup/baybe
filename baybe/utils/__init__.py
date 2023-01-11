@@ -664,6 +664,8 @@ def subclasses_recursive(cls: T) -> List[T]:
     list
         A list of class objects.
     """
+    # IMPROVE: This functionality overlaps with the `__init_subclass__` hooks
+    #   implemented for most classes. --> Remove on of the two?
     direct = cls.__subclasses__()
     indirect = []
     for subclass in direct:
