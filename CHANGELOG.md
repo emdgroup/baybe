@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - SearchSpace class
 - Code testing with pytest
+- Option to specify initial data for backtesting simulations
 
 ### Fixed
 - Parameters cannot be initialized with duplicate values

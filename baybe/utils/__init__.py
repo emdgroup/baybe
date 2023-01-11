@@ -661,3 +661,13 @@ def subclasses_recursive(cls: T) -> List[T]:
     for subclass in direct:
         indirect.extend(subclasses_recursive(subclass))
     return direct + indirect
+
+
+def closest_element(array: np.ndarray, target: float) -> float:
+    """Finds the element of an array that is closest to a target value."""
+    return array[np.abs(array - target).argmin()]
+
+
+def closer_element(x: float, y: float, target: float) -> float:
+    """Determines which of two given inputs is closer to a target value."""
+    return x if np.abs(x - target) < np.abs(y - target) else y
