@@ -39,6 +39,11 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+# Data types
+# TODO: unclear why pylint wants PascalCase here
+DTYPE_FLOAT_NUMPY = np.float64  # pylint: disable=invalid-name
+DTYPE_FLOAT_TORCH = torch.float64  # pylint: disable=invalid-name
+
 # Caching related objects
 cachedir = Path.home() / ".baybe_cache"
 memory_utils = Memory(cachedir / "utils")
@@ -99,7 +104,10 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     #  floats. As a simple fix (this seems to be the most reasonable place to take
     #  care of this) df.values has been changed to df.values.astype(float),
     #  even though this seems like double casting here.
-    out = (torch.from_numpy(df.values.astype(float)).to(torch.float32) for df in dfs)
+    out = (
+        torch.from_numpy(df.values.astype(DTYPE_FLOAT_NUMPY)).to(DTYPE_FLOAT_TORCH)
+        for df in dfs
+    )
     if len(dfs) == 1:
         out = next(out)
     return out
@@ -656,6 +664,8 @@ def subclasses_recursive(cls: T) -> List[T]:
     list
         A list of class objects.
     """
+    # IMPROVE: This functionality overlaps with the `__init_subclass__` hooks
+    #   implemented for most classes. --> Remove on of the two?
     direct = cls.__subclasses__()
     indirect = []
     for subclass in direct:

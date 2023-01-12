@@ -30,20 +30,26 @@ from .scaler import DefaultScaler
 from .searchspace import SearchSpace
 from .utils import isabstract, to_tensor
 
+# Use float64 (which is recommended at least for BoTorch models)
+DTYPE = torch.float64
+
+# Define constants
 MIN_TARGET_STD = 1e-6
 MIN_VARIANCE = 1e-6
 
 
-def _validate_inputs(x: Tensor) -> None:
-    """Helper function to validate the model input."""
+def _prepare_inputs(x: Tensor) -> Tensor:
+    """Helper function to validate and prepare the model input."""
     if len(x) == 0:
         raise ValueError("The model input must be non-empty.")
+    return x.to(DTYPE)
 
 
-def _validate_targets(y: Tensor) -> None:
-    """Helper function to validate the model targets."""
+def _prepare_targets(y: Tensor) -> Tensor:
+    """Helper function to validate and prepare the model targets."""
     if y.shape[1] != 1:
         raise NotImplementedError("The model currently supports only one target.")
+    return y.to(DTYPE)
 
 
 def _var_to_covar(var: Tensor) -> Tensor:
@@ -264,6 +270,9 @@ class SurrogateModel(ABC):
             The posterior means and posterior covariance matrices of the t-batched
             candidate points.
         """
+        # Prepare the input
+        candidates = _prepare_inputs(candidates)
+
         # Evaluate the posterior distribution
         mean, covar = self._posterior(candidates)
 
@@ -294,9 +303,9 @@ class SurrogateModel(ABC):
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
 
-        # Validate the training data
-        _validate_inputs(train_x)
-        _validate_targets(train_y)
+        # Validate and prepare the training data
+        train_x = _prepare_inputs(train_x)
+        train_y = _prepare_targets(train_y)
 
         return self._fit(train_x, train_y)
 

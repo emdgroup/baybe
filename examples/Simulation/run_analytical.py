@@ -154,7 +154,6 @@ config_dict_v1 = {
     "project_name": "GP",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
     },
 }
 
