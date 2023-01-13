@@ -21,6 +21,7 @@ stages:
       variables:
         CONDA_ENV: baybe
         CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
+        CONDA_ROOT: /usr/share/miniconda/
 
       steps:
       - checkout: self
@@ -36,18 +37,28 @@ stages:
           cacheHitVar: CONDA_CACHE_RESTORED
 
       - script: |
-          conda install --yes -c conda-forge mamba
-          mamba env create --file environment.yml
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          curl micro.mamba.pm/install.sh | bash
+        displayName: Install micromamba
+
+      - script: |
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba create -y --file environment.yml
         displayName: Create conda environment (if not restored from cache)
         condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
 
       - script: |
-          source activate $(CONDA_ENV)
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba activate $(CONDA_ENV)
           python -m pip install .
         displayName: "Install BayBE package"
 
       - script: |
-          source activate $(CONDA_ENV)
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba activate $(CONDA_ENV)
           pytest -v -p no:warnings
         displayName: "Run pytest"
         workingDirectory: tests
@@ -64,6 +75,7 @@ stages:
       variables:
         CONDA_ENV: baybe
         CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
+        CONDA_ROOT: /usr/share/miniconda/
 
       steps:
       - checkout: self
@@ -79,23 +91,35 @@ stages:
           cacheHitVar: CONDA_CACHE_RESTORED
 
       - script: |
-          conda install --yes -c conda-forge mamba
-          mamba env create --file environment.yml
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          curl micro.mamba.pm/install.sh | bash
+        displayName: Install micromamba
+
+      - script: |
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba create -y --file environment.yml
         displayName: Create conda environment (if not restored from cache)
         condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
 
       - script: |
-          source activate $(CONDA_ENV)
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba activate $(CONDA_ENV)
           ufmt check .
         displayName: "Run ufmt code formatter"
 
       - script: |
-          source activate $(CONDA_ENV)
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba activate $(CONDA_ENV)
           flake8
         displayName: "Run flake8 code linter"
 
       - script: |
-          source activate $(CONDA_ENV)
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba activate $(CONDA_ENV)
           pylint . --recursive=yes
         displayName: "Run pylint code linter"
 
