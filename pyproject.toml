@@ -22,6 +22,10 @@ dependencies = [
     "scikit-learn>=1.1.1",
     "scipy>=1.9.3",
     "torch>=1.11.0",
+    "opentelemetry-sdk==1.11.1",
+    "opentelemetry-propagator-aws-xray~=1.0",
+    "opentelemetry-exporter-otlp==1.11.1",
+    "opentelemetry-sdk-extension-aws~=2.0"
 ]
 dynamic = ['version']
 

@@ -7,6 +7,8 @@ import logging
 import pickle
 import random
 from typing import List, Optional
+import uuid
+
 
 import fsspec
 import numpy as np
@@ -20,6 +22,9 @@ from .searchspace import SearchSpace
 from .strategy import Strategy
 from .targets import Objective, Target
 from .utils import check_if_in
+
+from .telemetry.setup_metrics import recommendation_counter
+from .telemetry.setup_tracer import tracer
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +74,7 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
 class BayBE:
     """Main class for interaction with BayBE."""
 
+    @tracer.start_as_current_span("BayBE __init__", attributes={"client.mac": hex(uuid.getnode())})
     def __init__(self, config: BayBEConfig, searchspace: Optional[SearchSpace] = None):
         """
         Constructor of the BayBE class.
@@ -81,6 +87,7 @@ class BayBE:
             An optional search space object. If provided, the search space will not
             be created from the config but instead the given object is used.
         """
+
         # Set global random seeds
         torch.manual_seed(config.random_seed)
         random.seed(config.random_seed)
@@ -143,6 +150,7 @@ class BayBE:
             return pd.DataFrame()
         return self.objective.transform(self.measurements_exp)
 
+    # @tracer.start_as_current_span("__str__")
     def __str__(self):
         """
         Prints a simple summary of the BayBE object. Some information provided here
@@ -177,6 +185,7 @@ class BayBE:
 
         return string
 
+    # @tracer.start_as_current_span("state_dict")
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
         state_dict = dict(
@@ -189,6 +198,7 @@ class BayBE:
         )
         return state_dict
 
+    # @tracer.start_as_current_span("load_state_dict")
     def load_state_dict(self, state_dict: dict) -> None:
         """Restores a given object state."""
 
@@ -264,6 +274,7 @@ class BayBE:
 
         return baybe
 
+    # @tracer.start_as_current_span("save")
     def save(self, path: Optional[str] = None, **kwargs) -> None:
         """
         Store the current state of the BayBE instance on disk.
@@ -292,6 +303,7 @@ class BayBE:
         with fsspec.open(path, "wb", **kwargs) as file:
             pickle.dump(self.state_dict(), file)
 
+    # @tracer.start_as_current_span("add_results")
     def add_results(self, data: pd.DataFrame) -> None:
         """
         Adds results from a dataframe to the internal database.
@@ -390,12 +402,13 @@ class BayBE:
             self.fits_done += 1
             self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
 
-        # Get the recommended search space entries
-        rec = self.strategy.recommend(
-            batch_quantity,
-            self.config.allow_repeated_recommendations,
-            self.config.allow_recommending_already_measured,
-        )
+        with tracer.start_as_current_span("recommend", attributes={"parameter.batch_quantity": batch_quantity}):
+            # Get the recommended search space entries
+            rec = self.strategy.recommend(
+                batch_quantity,
+                self.config.allow_repeated_recommendations,
+                self.config.allow_recommending_already_measured,
+            )
 
         # Query user input
         for target in self.targets:
