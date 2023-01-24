@@ -62,6 +62,7 @@ class Parameter(
     # class variables
     type: ClassVar[str]
     encoding: ClassVar[Optional[str]]
+    is_discrete: ClassVar[float]
     SUBCLASSES: ClassVar[Dict[str, Type[Parameter]]] = {}
 
     # object variables
@@ -96,6 +97,23 @@ class Parameter(
         #  defined in the subclasses but not in the base class since it is either a
         #  member or a property, depending on the parameter type --> better solution?
         return item in self.values
+
+
+class DiscreteParameter(Parameter, ABC):
+    """
+    Abstract class for discrete parameters.
+    """
+
+    # class variables
+    type = "DISCRETE_PARAMETER"
+    is_discrete = True
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        """Registers new subclasses dynamically."""
+        super().__init_subclass__(**kwargs)
+        if not isabstract(cls):
+            cls.SUBCLASSES[cls.type] = cls
 
     @cached_property
     @abstractmethod
@@ -133,7 +151,7 @@ class Parameter(
         return transformed
 
 
-class Categorical(Parameter):
+class Categorical(DiscreteParameter):
     """
     Parameter class for categorical parameters.
     """
@@ -163,7 +181,7 @@ class Categorical(Parameter):
         return comp_df
 
 
-class NumericDiscrete(Parameter):
+class NumericDiscrete(DiscreteParameter):
     """
     Parameter class for discrete numerical parameters (a.k.a. setpoints).
     """
@@ -220,7 +238,47 @@ class NumericDiscrete(Parameter):
         return any(differences_acceptable)
 
 
-class GenericSubstance(Parameter):
+class NumericContinuous(Parameter):
+    """
+    Parameter class for continuous numerical parameters.
+    """
+
+    # class variables
+    type = "NUM_CONTINUOUS"
+
+    # object variables
+    bounds: conlist(Optional[float], min_items=2, max_items=2)
+    is_discrete = False
+
+    @validator("bounds")
+    def validate_bounds(cls, bounds):
+        """
+        Validate boundaries
+        """
+        if bounds[0] is None:
+            bounds[0] = -np.inf
+
+        if bounds[1] is None:
+            bounds[1] = np.inf
+
+        if bounds[1] <= bounds[0]:
+            raise StrictValidationError(
+                "Bounds for continuous parameters must be unique and in ascending "
+                "order. They may contain -np.nan/np.nan or None in case there is no "
+                "bound."
+            )
+
+        return bounds
+
+    def is_in_range(self, item: float) -> bool:
+        """
+        See base class.
+        """
+
+        return self.bounds[0] <= item <= self.bounds[1]
+
+
+class GenericSubstance(DiscreteParameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
     descriptors.
@@ -300,7 +358,7 @@ class GenericSubstance(Parameter):
         return comp_df
 
 
-class Custom(Parameter):
+class Custom(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry.
@@ -377,10 +435,10 @@ def parameter_cartesian_prod_to_df(
     Returns
     -------
     pd.DataFrame
-        A dataframe containing all parameter value combinations.
+        A dataframe containing all possible discrete parameter value combinations.
     """
-    lst_of_values = [p.values for p in parameters]
-    lst_of_names = [p.name for p in parameters]
+    lst_of_values = [p.values for p in parameters if p.is_discrete]
+    lst_of_names = [p.name for p in parameters if p.is_discrete]
 
     index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
     ret = pd.DataFrame(index=index).reset_index()

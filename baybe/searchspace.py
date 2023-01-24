@@ -298,7 +298,7 @@ class SearchSpace:
 
         # Transform the parameters
         dfs = []
-        for param in self.parameters:
+        for param in [p for p in self.parameters if p.is_discrete]:
             comp_df = param.transform_rep_exp2comp(data[param.name])
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1)
