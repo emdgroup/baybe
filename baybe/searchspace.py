@@ -7,7 +7,7 @@ from typing import List, Optional, Tuple
 import pandas as pd
 
 from .constraints import _constraints_order, Constraint
-from .parameters import Parameter, parameter_cartesian_prod_to_df
+from .parameters import NumericContinuous, Parameter, parameter_cartesian_prod_to_df
 from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
@@ -59,9 +59,15 @@ class SearchSpace:
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
 
-        # Initialize search space dataframes
-        if init_dataframes:
+        self.continuous: List[NumericContinuous] = [
+            p for p in parameters if not p.is_discrete
+        ]
+        self.exp_rep: Optional[pd.DataFrame] = None
+        self.comp_rep: Optional[pd.DataFrame] = None
+        self.metadata: Optional[pd.DataFrame] = None
 
+        # Initialize discrete search space dataframes
+        if init_dataframes:
             # Create a dataframe representing the experimental search space
             self.exp_rep = parameter_cartesian_prod_to_df(parameters)
 
@@ -183,7 +189,7 @@ class SearchSpace:
             # Check if the row represents a valid input
             valid = True
             for param in self.parameters:
-                if "NUM" in param.type:
+                if param.is_numeric:
                     if numerical_measurements_must_be_within_tolerance:
                         valid &= param.is_in_range(row[param.name])
                 else:
@@ -200,13 +206,13 @@ class SearchSpace:
                         f"to 'False' to disable this behavior."
                     )
 
-            # Identify discrete and numeric parameters
+            # Identify category-like and discrete numerical parameters
             # TODO: This is error-prone. Add member to indicate discreteness or
             #  introduce corresponding super-classes.
-            cat_cols = [
-                param.name for param in self.parameters if "NUM" not in param.type
+            cat_cols = [p.name for p in self.parameters if not p.is_numeric]
+            num_cols = [
+                p.name for p in self.parameters if (p.is_numeric) and (p.is_discrete)
             ]
-            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
 
             # Discrete parameters must match exactly
             match = self.exp_rep[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)

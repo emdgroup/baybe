@@ -62,7 +62,8 @@ class Parameter(
     # class variables
     type: ClassVar[str]
     encoding: ClassVar[Optional[str]]
-    is_discrete: ClassVar[float]
+    is_numeric: ClassVar[bool] = False  # default that is changed for numeric parameters
+    is_discrete: ClassVar[bool]
     SUBCLASSES: ClassVar[Dict[str, Type[Parameter]]] = {}
 
     # object variables
@@ -188,6 +189,7 @@ class NumericDiscrete(DiscreteParameter):
 
     # class variables
     type = "NUM_DISCRETE"
+    is_numeric = True
     encoding = None
 
     # object variables
@@ -245,10 +247,11 @@ class NumericContinuous(Parameter):
 
     # class variables
     type = "NUM_CONTINUOUS"
+    is_numeric = True
+    is_discrete = False
 
     # object variables
     bounds: conlist(Optional[float], min_items=2, max_items=2)
-    is_discrete = False
 
     @validator("bounds")
     def validate_bounds(cls, bounds):
@@ -425,7 +428,8 @@ def parameter_cartesian_prod_to_df(
     parameters: List[Parameter],
 ) -> pd.DataFrame:
     """
-    Creates the Cartesion product of all parameter values.
+    Creates the Cartesian product of all parameter values. Ignores continuous
+    parameters.
 
     Parameters
     ----------

@@ -320,7 +320,7 @@ def add_parameter_noise(
     Nothing (the given dataframe is modified in-place).
     """
     for param in baybe.parameters:
-        if "NUM" in param.type:
+        if param.is_numeric:
             if noise_type == "relative_percent":
                 data[param.name] *= np.random.uniform(
                     1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)

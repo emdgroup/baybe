@@ -322,7 +322,7 @@ class BayBE:
                     f"The parameter '{param.name}' has missing values or NaNs in the "
                     f"provided dataframe. Missing parameter values are not supported."
                 )
-            if ("NUM" in param.type) and (data[param.name].dtype.kind not in "iufb"):
+            if (param.is_numeric) and (data[param.name].dtype.kind not in "iufb"):
                 raise TypeError(
                     f"The numerical parameter '{param.name}' has non-numeric entries in"
                     f" the provided dataframe."
