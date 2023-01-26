@@ -5,9 +5,15 @@ import logging
 from typing import List, Optional, Tuple
 
 import pandas as pd
+import torch
 
 from .constraints import _constraints_order, Constraint
-from .parameters import NumericContinuous, Parameter, parameter_cartesian_prod_to_df
+from .parameters import (
+    DiscreteParameter,
+    NumericContinuous,
+    Parameter,
+    parameter_cartesian_prod_to_df,
+)
 from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
@@ -15,11 +21,8 @@ log = logging.getLogger(__name__)
 
 class SearchSpace:
     """
-    Class for managing search spaces.
-
-    Builds the search space from parameter definitions and optional constraints, keeps
-    track of search metadata, and provides access to candidate sets and different
-    parameter views.
+    Class for managing the overall search space which might be purely discrete, purely
+    continuous or hybrid.
     """
 
     def __init__(
@@ -50,6 +53,109 @@ class SearchSpace:
         """
         # Store the input
         self.parameters = parameters
+        self.constraints = constraints
+        self.empty_encoding = empty_encoding
+
+        self.discrete: SubspaceDiscrete = SubspaceDiscrete(
+            parameters=[p for p in parameters if p.is_discrete],
+            constraints=constraints,
+            empty_encoding=empty_encoding,
+            init_dataframes=init_dataframes,
+        )
+        self.continuous: SubspaceContinuous = SubspaceContinuous(
+            parameters=[p for p in parameters if not p.is_discrete],
+            constraints=constraints,
+        )
+
+    @property
+    def contains_mordred(self) -> bool:
+        """Indicates if any of the parameters uses MORDRED encoding."""
+        return any(p.encoding == "MORDRED" for p in self.parameters)
+
+    @property
+    def contains_rdkit(self) -> bool:
+        """Indicates if any of the parameters uses RDKIT encoding."""
+        return any(p.encoding == "RDKIT" for p in self.parameters)
+
+    def state_dict(self) -> dict:
+        """Creates a dictionary representing the object's internal state."""
+        state_dict = dict(
+            empty_encoding=self.empty_encoding,
+            discrete=self.discrete.state_dict(),
+        )
+        return state_dict
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        """Restores a given object state."""
+        self.empty_encoding = state_dict["empty_encoding"]
+        self.discrete.load_state_dict(state_dict["discrete"])
+
+    def transform(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Transforms data (such as the measurements) from experimental to computational
+        representation. Continuous parameters are not transformed but included.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to be transformed. Must contain all specified parameters, can
+            contain more columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe with the parameters in computational representation.
+        """
+        # Transform subspaces separately
+        df_discrete = self.discrete.transform(data)
+        df_continuous = self.continuous.transform(data)
+
+        # Combine Subspaces
+        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
+
+        return comp_rep
+
+
+class SubspaceDiscrete:
+    """
+    Class for managing discrete search spaces.
+
+    Builds the search space from parameter definitions and optional constraints, keeps
+    track of search metadata, and provides access to candidate sets and different
+    parameter views.
+    """
+
+    def __init__(
+        self,
+        parameters: List[DiscreteParameter],
+        constraints: Optional[List[Constraint]] = None,
+        empty_encoding: bool = False,
+        init_dataframes: bool = True,
+    ):
+        """
+        Parameters
+        ----------
+        parameters : List[DiscreteParameter]
+            The parameters spanning the search space.
+        constraints : List[Constraint], optional
+            An optional set of constraints restricting the valid parameter space.
+        empty_encoding : bool, default: False
+            If True, uses an "empty" encoding for all parameters. This is useful,
+            for instance, in combination with random search strategies that
+            do not read the actual parameter values, since it avoids the
+            (potentially costly) transformation of the parameter values to their
+            computational representation.
+        init_dataframes : bool, default: True
+            If True, the search space related dataframes (i.e. parameter representations
+            and metadata) will be build from scratch using the input arguments. If
+            False, they are not initialized, which can be useful when loading a search
+            space object from disk.
+        """
+        # Store the input
+        self.parameters = parameters
         self.empty_encoding = empty_encoding
         if constraints is None:
             self.constraints = []
@@ -59,9 +165,6 @@ class SearchSpace:
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
 
-        self.continuous: List[NumericContinuous] = [
-            p for p in parameters if not p.is_discrete
-        ]
         self.exp_rep: Optional[pd.DataFrame] = None
         self.comp_rep: Optional[pd.DataFrame] = None
         self.metadata: Optional[pd.DataFrame] = None
@@ -91,16 +194,6 @@ class SearchSpace:
                 },
                 index=self.exp_rep.index,
             )
-
-    @property
-    def contains_mordred(self) -> bool:
-        """Indicates if any of the parameters uses MORDRED encoding."""
-        return any(p.encoding == "MORDRED" for p in self.parameters)
-
-    @property
-    def contains_rdkit(self) -> bool:
-        """Indicates if any of the parameters uses RDKIT encoding."""
-        return any(p.encoding == "RDKIT" for p in self.parameters)
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
@@ -206,12 +299,10 @@ class SearchSpace:
                         f"to 'False' to disable this behavior."
                     )
 
-            # Identify category-like and discrete numerical parameters
-            # TODO: This is error-prone. Add member to indicate discreteness or
-            #  introduce corresponding super-classes.
+            # Differentiate category-like and discrete numerical parameters
             cat_cols = [p.name for p in self.parameters if not p.is_numeric]
             num_cols = [
-                p.name for p in self.parameters if (p.is_numeric) and (p.is_discrete)
+                p.name for p in self.parameters if (p.is_numeric and p.is_discrete)
             ]
 
             # Discrete parameters must match exactly
@@ -284,7 +375,8 @@ class SearchSpace:
         data: pd.DataFrame,
     ) -> pd.DataFrame:
         """
-        Transforms parameters from experimental to computational representation.
+        Transforms discrete parameters from experimental to computational
+        representation. Continuous parameters and additional columns are ignored.
 
         Parameters
         ----------
@@ -304,7 +396,7 @@ class SearchSpace:
 
         # Transform the parameters
         dfs = []
-        for param in [p for p in self.parameters if p.is_discrete]:
+        for param in self.parameters:
             comp_df = param.transform_rep_exp2comp(data[param.name])
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1)
@@ -324,5 +416,64 @@ class SearchSpace:
             # Otherwise, the transformation is being called by the search space
             # constructor so that no column filtering is needed.
             pass
+
+        return comp_rep
+
+
+class SubspaceContinuous:
+    """
+    Class for managing continuous search spaces.
+    """
+
+    def __init__(
+        self,
+        parameters: List[NumericContinuous],
+        constraints: Optional[List[Constraint]] = None,
+    ):
+        """
+        parameters : List[DiscreteParameter]
+            The parameters spanning the search space.
+        constraints : List[Constraint], optional
+            An optional set of constraints restricting the valid parameter space.
+        """
+        self.parameters: List[NumericContinuous] = parameters
+        self.constraints: List[Constraint] = constraints  # currently not used
+
+    @property
+    def bounds(self) -> List[Tuple[float, float]]:
+        """
+        Returns list of parameter bounds.
+        """
+        return [p.bounds for p in self.parameters]
+
+    @property
+    def tensor_bounds(self) -> torch.Tensor:
+        """
+        Returns list of bounds as tensor.
+        """
+        return torch.tensor(self.bounds)
+
+    def transform(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Transforms continuous parameters from experimental to computational
+        representation. At present no transformation is performed and data is returned
+        as in the input. Discrete parameters are ignored and are not included.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to be transformed. Must contain all specified parameters, can
+            contain more columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe with the parameters in computational representation.
+        """
+        # Transform continuous parameters
+        comp_rep = data[[p.name for p in self.parameters if not p.is_discrete]]
 
         return comp_rep

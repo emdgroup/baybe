@@ -144,7 +144,7 @@ for kIter in range(N_ITERATIONS):
     print("### ASSERTS ###")
     print(
         "Number of searchspace entries where fractions do not sum to 100.0:      ",
-        baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
+        baybe_obj.searchspace.discrete.exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
@@ -153,17 +153,21 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         "Number of searchspace entries that have duplicate solvent labels:       ",
-        baybe_obj.searchspace.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
+        baybe_obj.searchspace.discrete.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .nunique(axis=1)
         .ne(3)
         .sum(),
     )
     print(
         "Number of searchspace entries with permutation-invariant combinations:  ",
-        baybe_obj.searchspace.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
+        baybe_obj.searchspace.discrete.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .apply(frozenset, axis=1)
         .to_frame()
-        .join(baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]])
+        .join(
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+        )
         .duplicated()
         .sum(),
     )
@@ -172,7 +176,12 @@ for kIter in range(N_ITERATIONS):
     # points than intended due to numeric rounding
     print(
         f"Number of unique 1-solvent entries (expected {math.comb(len(solvs), 1)*1})",
-        (baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        (
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+            == 0.0
+        )
         .sum(axis=1)
         .eq(2)
         .sum(),
@@ -180,7 +189,12 @@ for kIter in range(N_ITERATIONS):
     print(
         f"Number of unique 2-solvent entries (expected"
         f" {math.comb(len(solvs), 2)*(N_GRID_POINTS-2)})",
-        (baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        (
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+            == 0.0
+        )
         .sum(axis=1)
         .eq(1)
         .sum(),
@@ -188,7 +202,12 @@ for kIter in range(N_ITERATIONS):
     print(
         f"Number of unique 3-solvent entries (expected"
         f" {math.comb(len(solvs), 3)*((N_GRID_POINTS-3)*(N_GRID_POINTS-2))//2})",
-        (baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        (
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+            == 0.0
+        )
         .sum(axis=1)
         .eq(0)
         .sum(),

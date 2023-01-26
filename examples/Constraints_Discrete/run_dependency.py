@@ -134,15 +134,15 @@ for kIter in range(N_ITERATIONS):
         f"Number entries with both switches on "
         f"(expected {N_GRID_POINTS*len(solvs)*2*2}): ",
         (
-            (baybe_obj.searchspace.exp_rep["Switch1"] == "on")
-            & (baybe_obj.searchspace.exp_rep["Switch2"] == "right")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
         f"Number entries with Switch1 off " f"(expected {2*2}):       ",
         (
-            (baybe_obj.searchspace.exp_rep["Switch1"] == "off")
-            & (baybe_obj.searchspace.exp_rep["Switch2"] == "right")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
@@ -150,15 +150,15 @@ for kIter in range(N_ITERATIONS):
         f"(expected {N_GRID_POINTS*len(solvs)}):"
         f"      ",
         (
-            (baybe_obj.searchspace.exp_rep["Switch1"] == "on")
-            & (baybe_obj.searchspace.exp_rep["Switch2"] == "left")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
     print(
         "Number entries with both switches off (expected 1): ",
         (
-            (baybe_obj.searchspace.exp_rep["Switch1"] == "off")
-            & (baybe_obj.searchspace.exp_rep["Switch2"] == "left")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
 
@@ -183,15 +183,15 @@ for kIter in range(N_ITERATIONS):
         f"Number entries with both switches on "
         f"(expected {N_GRID_POINTS*len(solvs)*2*2}): ",
         (
-            (baybe_obj2.searchspace.exp_rep["Switch1"] == "on")
-            & (baybe_obj2.searchspace.exp_rep["Switch2"] == "right")
+            (baybe_obj2.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (baybe_obj2.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
         f"Number entries with Switch1 off " f"(expected {2*2}):       ",
         (
-            (baybe_obj2.searchspace.exp_rep["Switch1"] == "off")
-            & (baybe_obj2.searchspace.exp_rep["Switch2"] == "right")
+            (baybe_obj2.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (baybe_obj2.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
@@ -199,15 +199,15 @@ for kIter in range(N_ITERATIONS):
         f"(expected {N_GRID_POINTS*len(solvs)}):"
         f"      ",
         (
-            (baybe_obj2.searchspace.exp_rep["Switch1"] == "on")
-            & (baybe_obj2.searchspace.exp_rep["Switch2"] == "left")
+            (baybe_obj2.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (baybe_obj2.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
     print(
         "Number entries with both switches off (expected 1): ",
         (
-            (baybe_obj2.searchspace.exp_rep["Switch1"] == "off")
-            & (baybe_obj2.searchspace.exp_rep["Switch2"] == "left")
+            (baybe_obj2.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (baybe_obj2.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
 

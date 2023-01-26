@@ -157,10 +157,10 @@ class BayBE:
             string += f"   {option}: {value}\n"
 
         string += "\n\nSearch Space (Experimental Representation):\n"
-        string += f"{self.searchspace.exp_rep}"
+        string += f"{self.searchspace.discrete.exp_rep}"
 
         string += "\n\nSearch Space (Computational Representation):\n"
-        string += f"{self.searchspace.comp_rep}"
+        string += f"{self.searchspace.discrete.comp_rep}"
 
         string += "\n\nMeasurement Space (Experimental Representation):\n"
         string += f"{self.measurements_exp}"
@@ -329,7 +329,7 @@ class BayBE:
                 )
 
         # Update meta data
-        self.searchspace.mark_as_measured(
+        self.searchspace.discrete.mark_as_measured(
             data, self.config.numerical_measurements_must_be_within_tolerance
         )
 
@@ -351,7 +351,7 @@ class BayBE:
         """
         Provides the recommendations for the next batch of experiments.
         """
-        candidates_exp, candidates_comp = self.searchspace.get_candidates(
+        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
             self.config.allow_repeated_recommendations,
             self.config.allow_recommending_already_measured,
         )
@@ -377,7 +377,7 @@ class BayBE:
         #   reflecting the progress of an experiment, whereas the SearchSpace class
         #   would be a stateless representation of the mathematical search space.
         rec = candidates_exp.loc[idxs, :]
-        self.searchspace.metadata.loc[idxs, "was_recommended"] = True
+        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
 
         # Query user input
         for target in self.targets:

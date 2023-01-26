@@ -22,14 +22,14 @@ def test_data_consistency(
     baybe_obj_loaded = BayBE.from_file("./test.baybe")
 
     # Asserts
-    assert baybe_obj_reference.searchspace.metadata.equals(
-        baybe_obj_loaded.searchspace.metadata
+    assert baybe_obj_reference.searchspace.discrete.metadata.equals(
+        baybe_obj_loaded.searchspace.discrete.metadata
     ), "Problem directly after loading"
-    assert baybe_obj_reference.searchspace.exp_rep.equals(
-        baybe_obj_loaded.searchspace.exp_rep
+    assert baybe_obj_reference.searchspace.discrete.exp_rep.equals(
+        baybe_obj_loaded.searchspace.discrete.exp_rep
     ), "Problem directly after loading"
-    assert baybe_obj_reference.searchspace.comp_rep.equals(
-        baybe_obj_loaded.searchspace.comp_rep
+    assert baybe_obj_reference.searchspace.discrete.comp_rep.equals(
+        baybe_obj_loaded.searchspace.discrete.comp_rep
     ), "Problem directly after loading"
     assert baybe_obj_reference.measurements_exp.equals(
         baybe_obj_loaded.measurements_exp
@@ -63,14 +63,14 @@ def test_data_consistency(
         baybe_obj_loaded.add_results(rec2)
 
     # Asserts
-    assert baybe_obj_reference.searchspace.metadata.equals(
-        baybe_obj_loaded.searchspace.metadata
+    assert baybe_obj_reference.searchspace.discrete.metadata.equals(
+        baybe_obj_loaded.searchspace.discrete.metadata
     ), "Problem after continuation"
-    assert baybe_obj_reference.searchspace.exp_rep.equals(
-        baybe_obj_loaded.searchspace.exp_rep
+    assert baybe_obj_reference.searchspace.discrete.exp_rep.equals(
+        baybe_obj_loaded.searchspace.discrete.exp_rep
     ), "Problem after continuation"
-    assert baybe_obj_reference.searchspace.comp_rep.equals(
-        baybe_obj_loaded.searchspace.comp_rep
+    assert baybe_obj_reference.searchspace.discrete.comp_rep.equals(
+        baybe_obj_loaded.searchspace.discrete.comp_rep
     ), "Problem after continuation"
     assert baybe_obj_reference.measurements_exp.equals(
         baybe_obj_loaded.measurements_exp

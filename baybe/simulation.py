@@ -175,12 +175,12 @@ def simulate_from_configs(
             # available in the lookup
             # IMPROVE: Avoid direct manipulation of the searchspace members
             if impute_mode == "ignore":
-                searchspace = baybe_obj.searchspace.exp_rep
+                searchspace = baybe_obj.searchspace.discrete.exp_rep
                 missing_inds = searchspace.index[
                     searchspace.merge(lookup, how="left", indicator=True)["_merge"]
                     == "left_only"
                 ]
-                baybe_obj.searchspace.metadata.loc[
+                baybe_obj.searchspace.discrete.metadata.loc[
                     missing_inds, "dont_recommend"
                 ] = True
 
