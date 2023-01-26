@@ -156,11 +156,14 @@ class BayBE:
         for option, value in self.config.dict().items():
             string += f"   {option}: {value}\n"
 
-        string += "\n\nSearch Space (Experimental Representation):\n"
+        string += "\n\nSearch Space (Discrete Part, Experimental Representation):\n"
         string += f"{self.searchspace.discrete.exp_rep}"
 
-        string += "\n\nSearch Space (Computational Representation):\n"
+        string += "\n\nSearch Space (Discrete Part, Computational Representation):\n"
         string += f"{self.searchspace.discrete.comp_rep}"
+
+        string += "\n\nSearch Space (Continuous Part, Boundaries):\n"
+        string += f"{self.searchspace.continuous.bounds}"
 
         string += "\n\nMeasurement Space (Experimental Representation):\n"
         string += f"{self.measurements_exp}"
