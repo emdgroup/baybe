@@ -1,10 +1,15 @@
 """
 Tests for error -free running of some iterations
 """
+import random
 from abc import ABC
 from typing import get_args, get_type_hints
 
+import numpy as np
+
 import pytest
+import torch
+
 from baybe.core import BayBE, BayBEConfig
 from baybe.strategy import InitialStrategy, Strategy
 from baybe.surrogate import SurrogateModel
@@ -229,3 +234,44 @@ def test_run_iteration(
             add_parameter_noise(rec, baybe_obj, noise_level=0.1)
 
         baybe_obj.add_results(rec)
+
+
+def test_recommendation_caching(
+    config_basic_1target,
+    batch_quantity,
+    good_reference_values,
+):
+    """
+    Test recommendation caching and consistency
+    """
+    config = BayBEConfig(**config_basic_1target)
+    baybe_obj = BayBE(config)
+
+    # Add results of an inital recommendation
+    rec0 = baybe_obj.recommend(batch_quantity=batch_quantity)
+    add_fake_results(rec0, baybe_obj, good_reference_values=good_reference_values)
+    add_parameter_noise(rec0, baybe_obj, noise_level=0.1)
+    baybe_obj.add_results(rec0)
+
+    # Perform iterations of calling recommend without adding data
+    rec1 = baybe_obj.recommend(batch_quantity=batch_quantity)
+    for k in range(3):
+        rec = baybe_obj.recommend(batch_quantity=batch_quantity)
+
+        assert rec.equals(rec1)
+
+        # Change random seed to increase likelihood of differences in the model fit
+        # (which should not be performed)
+        torch.manual_seed(1337 + k)
+        random.seed(1337 + k)
+        np.random.seed(1337 + k)
+
+    # Add fake results
+    rec = baybe_obj.recommend(batch_quantity=batch_quantity)
+    add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
+    add_parameter_noise(rec0, baybe_obj, noise_level=0.1)
+    baybe_obj.add_results(rec)
+
+    # Check that recommendations now are different
+    rec = baybe_obj.recommend(batch_quantity=batch_quantity)
+    assert not rec.equals(rec1)
