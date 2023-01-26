@@ -102,6 +102,9 @@ class BayBE:
         # costly) transformation of the parameters into computation representation.
         self._random: bool = config.strategy.get("recommender_cls", "") == "RANDOM"
 
+        # Cached recommendations
+        self._cached_recommendation: Optional[pd.DataFrame] = None
+
         # Initialize all subcomponents
         if searchspace is None:
             parameters = [Parameter.create(p) for p in config.parameters]
@@ -185,6 +188,7 @@ class BayBE:
             batches_done=self.batches_done,
             searchspace=self.searchspace.state_dict(),
             measurements=self.measurements_exp,
+            _cached_recommendation=self._cached_recommendation,
         )
         return state_dict
 
@@ -195,6 +199,7 @@ class BayBE:
         self.config = state_dict["config"]
         self.batches_done = state_dict["batches_done"]
         self.measurements_exp = state_dict["measurements"]
+        self._cached_recommendation = state_dict["_cached_recommendation"]
 
         # Restore the search space state
         # TODO: Extend the load_state_dict function of SearchSpace such that it takes
@@ -291,8 +296,7 @@ class BayBE:
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
-        Adds results from a dataframe to the internal database and updates the strategy
-        object accordingly.
+        Adds results from a dataframe to the internal database.
 
         Each addition of data is considered a new batch. Added results are checked for
         validity. Categorical values need to have an exact match. For numerical values,
@@ -349,10 +353,37 @@ class BayBE:
             [self.measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
+        # Reset recommendation cache
+        self._cached_recommendation = None
+
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
         Provides the recommendations for the next batch of experiments.
+
+        Parameters
+        ----------
+        batch_quantity : int > 0
+            Number of requested recommendations.
+        Returns
+        -------
+        rec : pandas data frame
+            Contains the recommendations in experimental representation.
+
         """
+        if batch_quantity < 1:
+            raise ValueError(
+                f"You must at least request one recommendation per batch, but provided "
+                f"batch_quantity={batch_quantity}."
+            )
+
+        # If there are cached recommendations and the batch size of those is <= the
+        # requested one, we just return those
+        if (self._cached_recommendation is not None) and (
+            len(self._cached_recommendation) <= batch_quantity
+        ):
+            return self._cached_recommendation.iloc[:batch_quantity, :]
+
+        # Get possible candidates
         candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
             self.config.allow_repeated_recommendations,
             self.config.allow_recommending_already_measured,
@@ -389,5 +420,8 @@ class BayBE:
         # Query user input
         for target in self.targets:
             rec[target.name] = "<Enter value>"
+
+        # Cache the recommendations
+        self._cached_recommendation = rec.copy()
 
         return rec
