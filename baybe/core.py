@@ -95,12 +95,12 @@ class BayBE:
         self.config = config
 
         # Current iteration/batch number
-        self.batches_done = 0
+        self.batches_done: int = 0
 
         # Flag to indicate if the specified recommendation strategy is "random", in
         # which case certain operation can be skipped, such as the (potentially
         # costly) transformation of the parameters into computation representation.
-        self._random = config.strategy.get("recommender_cls", "") == "RANDOM"
+        self._random: bool = config.strategy.get("recommender_cls", "") == "RANDOM"
 
         # Initialize all subcomponents
         if searchspace is None:
@@ -345,11 +345,6 @@ class BayBE:
             [self.measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
-        # Update the strategy object
-        self.strategy.fit(
-            self.measurements_parameters_comp, self.measurements_targets_comp
-        )
-
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
         Provides the recommendations for the next batch of experiments.
@@ -369,6 +364,11 @@ class BayBE:
                 "'allow_recommending_already_measured' being False) "
                 "or because all data points are marked as 'dont_recommend'."
             )
+
+        # Update the strategy object
+        self.strategy.fit(
+            self.measurements_parameters_comp, self.measurements_targets_comp
+        )
 
         # Get the indices of the recommended search space entries
         idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
