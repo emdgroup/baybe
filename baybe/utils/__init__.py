@@ -610,6 +610,11 @@ class StrictValidationError(Exception):
     """
 
 
+class NotEnoughPointsLeftError(Exception):
+    """An exception raised when more recommendations are requested than there are
+    viable parameter configurations left in the search space."""
+
+
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """

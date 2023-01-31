@@ -19,14 +19,9 @@ from .parameters import Parameter
 from .searchspace import SearchSpace
 from .strategy import Strategy
 from .targets import Objective, Target
-from .utils import check_if_in
+from .utils import check_if_in, NotEnoughPointsLeftError
 
 log = logging.getLogger(__name__)
-
-
-class NotEnoughPointsLeftError(Exception):
-    """An exception raised when more recommendations are requested than there are
-    viable parameter configurations left in the search space."""
 
 
 class BayBEConfig(BaseModel, extra=Extra.forbid):
