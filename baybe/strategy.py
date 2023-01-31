@@ -361,6 +361,12 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         ----------
         batch_quantity : int (default = 1)
             The number of experiments to be conducted in parallel.
+        allow_repeated_recommendations : bool
+            Whether points whos discrete parts were already recommended can be
+            recommended again.
+        allow_recommending_already_measured : bool
+            Whether points whos discrete parts were already measured can be
+            recommended again.
 
         Returns
         -------
@@ -384,9 +390,20 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
 
         # if no training data exists, apply the strategy for initial recommendations
         if self.use_initial_strategy:
-            # TODO properly implement this
+            # TODO Implement methods and choices for initial point selection in the
+            #  continuous subspace of the search space
+            # Get initial recommendations of discrete part according to initial method
             idxs = self.initial_strategy.recommend(candidates_comp, batch_quantity)
-            return candidates_exp.loc[idxs, :]
+            candidates_discrete_part = candidates_exp.loc[idxs, :]
+
+            # Get random values for continuous part
+            candidates_conti_part = self.searchspace.continuous.samples_random(
+                batch_quantity
+            )
+
+            # Merge parts
+            rec = pd.concat([candidates_discrete_part, candidates_conti_part], axis=1)
+            return rec
 
         # construct the acquisition function
         acqf = (
