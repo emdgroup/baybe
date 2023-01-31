@@ -383,7 +383,13 @@ class BayBE:
             return self._cached_recommendation
 
         # Get the recommended search space entries
-        rec = self.strategy.recommend(batch_quantity=batch_quantity)
+        rec = self.strategy.recommend(
+            batch_quantity=batch_quantity,
+            allow_repeated_recommendations=self.config.allow_repeated_recommendations,
+            allow_recommending_already_measured=(
+                self.config.allow_recommending_already_measured
+            ),
+        )
 
         # Query user input
         for target in self.targets:

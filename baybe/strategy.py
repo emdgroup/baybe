@@ -348,7 +348,12 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             self.surrogate_model.fit(*to_tensor(train_x, train_y))
             self.best_f = train_y.max()
 
-    def recommend(self, batch_quantity: int = 1) -> pd.DataFrame:
+    def recommend(
+        self,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
         """
         Recommends the next experiments to be conducted.
 
@@ -362,8 +367,8 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         The DataFrame with the specific experiments recommended.
         """
         candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
-            # self.config.allow_repeated_recommendations,
-            # self.config.allow_recommending_already_measured,
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
         )
 
         # Assert that there are enough points left for recommendation
@@ -392,6 +397,11 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
 
         # select the next experiments using the given recommender approach
         recommender = self.recommender_cls(acqf)
-        rec = recommender.recommend(self.searchspace, batch_quantity)
+        rec = recommender.recommend(
+            self.searchspace,
+            batch_quantity,
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
 
         return rec

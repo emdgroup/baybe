@@ -40,7 +40,11 @@ class Recommender(ABC):
 
     @abstractmethod
     def recommend(
-        self, searchspace: SearchSpace, batch_quantity: int = 1
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """
         Recommends the next experiments to be conducted.
@@ -72,10 +76,17 @@ class SequentialGreedyRecommender(Recommender):
     type = "SEQUENTIAL_GREEDY"
 
     def recommend(
-        self, searchspace: SearchSpace, batch_quantity: int = 1
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        candidates_exp, candidates_comp = searchspace.discrete.get_candidates()
+        candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
 
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
@@ -124,10 +135,17 @@ class MarginalRankingRecommender(Recommender):
     type = "UNRESTRICTED_RANKING"
 
     def recommend(
-        self, searchspace: SearchSpace, batch_quantity: int = 1
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        candidates_exp, candidates_comp = searchspace.discrete.get_candidates()
+        candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
 
         # prepare the candidates in t-batches (= parallel marginal evaluation)
         candidates_tensor = to_tensor(candidates_comp).unsqueeze(1)
@@ -152,10 +170,17 @@ class RandomRecommender(Recommender):
     type = "RANDOM"
 
     def recommend(
-        self, searchspace: SearchSpace, batch_quantity: int = 1
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        candidates_exp, _ = searchspace.discrete.get_candidates()
+        candidates_exp, _ = searchspace.discrete.get_candidates(
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
 
         # randomly select from discrete candidates
         idxs = candidates_exp.sample(n=batch_quantity).index
