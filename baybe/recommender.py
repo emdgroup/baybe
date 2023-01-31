@@ -13,12 +13,8 @@ import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.optim import optimize_acqf_discrete
 
-from .utils import isabstract, to_tensor
-
-
-class NoMCAcquisitionFunctionError(Exception):
-    """An exception raised when a Monte Carlo acquisition function is required
-    but an analytical acquisition function has been selected by the user."""
+from .searchspace import SearchSpace
+from .utils import isabstract, NoMCAcquisitionFunctionError, to_tensor
 
 
 class Recommender(ABC):
@@ -43,20 +39,22 @@ class Recommender(ABC):
             cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
-    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+    def recommend(
+        self, searchspace: SearchSpace, batch_quantity: int = 1
+    ) -> pd.DataFrame:
         """
         Recommends the next experiments to be conducted.
 
         Parameters
         ----------
-        candidates : pd.DataFrame
-            The features of all candidate experiments that could be conducted next.
+        searchspace : SearchSpace
+            The search space from which recommendations should be provided.
         batch_quantity : int
             The number of experiments to be conducted in parallel.
 
         Returns
         -------
-        The DataFrame indices of the specific experiments selected.
+        The DataFrame with the specific experiments recommended.
         """
 
 
@@ -73,10 +71,14 @@ class SequentialGreedyRecommender(Recommender):
 
     type = "SEQUENTIAL_GREEDY"
 
-    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+    def recommend(
+        self, searchspace: SearchSpace, batch_quantity: int = 1
+    ) -> pd.DataFrame:
         """See base class."""
+        candidates_exp, candidates_comp = searchspace.discrete.get_candidates()
+
         # determine the next set of points to be tested
-        candidates_tensor = to_tensor(candidates)
+        candidates_tensor = to_tensor(candidates_comp)
         try:
             points, _ = optimize_acqf_discrete(
                 self.acquisition_function, batch_quantity, candidates_tensor
@@ -96,16 +98,19 @@ class SequentialGreedyRecommender(Recommender):
         #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
         #   a simpler matching logic. When refactoring the SearchSpace class to
         #   handle continuous parameters, a corresponding utility could be extracted.
-        locs = pd.Index(
+        idxs = pd.Index(
             pd.merge(
-                candidates.reset_index(),
-                pd.DataFrame(points, columns=candidates.columns),
-                on=list(candidates),
+                candidates_comp.reset_index(),
+                pd.DataFrame(points, columns=candidates_comp.columns),
+                on=list(candidates_comp),
             )["index"]
         )
-        assert len(points) == len(locs)
+        assert len(points) == len(idxs)
 
-        return locs
+        rec = candidates_exp.loc[idxs, :]
+        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+
+        return rec
 
 
 class MarginalRankingRecommender(Recommender):
@@ -118,18 +123,25 @@ class MarginalRankingRecommender(Recommender):
 
     type = "UNRESTRICTED_RANKING"
 
-    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+    def recommend(
+        self, searchspace: SearchSpace, batch_quantity: int = 1
+    ) -> pd.DataFrame:
         """See base class."""
+        candidates_exp, candidates_comp = searchspace.discrete.get_candidates()
+
         # prepare the candidates in t-batches (= parallel marginal evaluation)
-        candidates_tensor = to_tensor(candidates).unsqueeze(1)
+        candidates_tensor = to_tensor(candidates_comp).unsqueeze(1)
 
         # evaluate the acquisition function for each t-batch and construct the ranking
         acqf_values = self.acquisition_function(candidates_tensor)
         ilocs = torch.argsort(acqf_values, descending=True)
 
-        # return the dataframe indices of the top ranked candidates
-        locs = candidates.index[ilocs[:batch_quantity].numpy()]
-        return locs
+        # return top ranked candidates
+        idxs = candidates_comp.index[ilocs[:batch_quantity].numpy()]
+        rec = candidates_exp.loc[idxs, :]
+        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+
+        return rec
 
 
 class RandomRecommender(Recommender):
@@ -139,7 +151,15 @@ class RandomRecommender(Recommender):
 
     type = "RANDOM"
 
-    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+    def recommend(
+        self, searchspace: SearchSpace, batch_quantity: int = 1
+    ) -> pd.DataFrame:
         """See base class."""
+        candidates_exp, _ = searchspace.discrete.get_candidates()
 
-        return candidates.sample(n=batch_quantity).index
+        # randomly select from discrete candidates
+        idxs = candidates_exp.sample(n=batch_quantity).index
+        rec = candidates_exp.loc[idxs, :]
+        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+
+        return rec

@@ -19,7 +19,7 @@ from .parameters import Parameter
 from .searchspace import SearchSpace
 from .strategy import Strategy
 from .targets import Objective, Target
-from .utils import check_if_in, NotEnoughPointsLeftError
+from .utils import check_if_in
 
 log = logging.getLogger(__name__)
 
@@ -382,44 +382,8 @@ class BayBE:
         ):
             return self._cached_recommendation
 
-        # Get possible candidates
-        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
-            self.config.allow_repeated_recommendations,
-            self.config.allow_recommending_already_measured,
-        )
-
-        # Assert that there are enough points left for recommendation
-        if len(candidates_exp) < batch_quantity:
-            raise NotEnoughPointsLeftError(
-                f"Using the current settings, there are fewer than {batch_quantity} "
-                "possible data points left to recommend. This can be "
-                "either because all data points have been measured at some point "
-                "(while 'allow_repeated_recommendations' or "
-                "'allow_recommending_already_measured' being False) "
-                "or because all data points are marked as 'dont_recommend'."
-            )
-
-        # Update the strategy object
-        self.strategy.fit(
-            self.measurements_parameters_comp, self.measurements_targets_comp
-        )
-
-        # Update recommendation meta data
-        if len(self.measurements_exp) > 0:
-            self.fits_done += 1
-            self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
-
-        # Get the indices of the recommended search space entries
-        idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
-
-        # Translate indices into labeled data points and update metadata
-        # TODO: Don't modify searchspace members directly. Probably, the metadata
-        #   should become part of the BayBE class, which would cleanly separate
-        #   responsibilities. That is, BayBE would capture all data-related information,
-        #   reflecting the progress of an experiment, whereas the SearchSpace class
-        #   would be a stateless representation of the mathematical search space.
-        rec = candidates_exp.loc[idxs, :]
-        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+        # Get the recommended search space entries
+        rec = self.strategy.recommend(batch_quantity=batch_quantity)
 
         # Query user input
         for target in self.targets:

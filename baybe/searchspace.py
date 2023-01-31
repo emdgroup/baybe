@@ -320,8 +320,8 @@ class SubspaceDiscrete:
 
     def get_candidates(
         self,
-        allow_repeated_recommendations: bool,
-        allow_recommending_already_measured: bool,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = False,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Returns the set of candidate parameter settings that can be tested.

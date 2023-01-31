@@ -615,6 +615,11 @@ class NotEnoughPointsLeftError(Exception):
     viable parameter configurations left in the search space."""
 
 
+class NoMCAcquisitionFunctionError(Exception):
+    """An exception raised when a Monte Carlo acquisition function is required
+    but an analytical acquisition function has been selected by the user."""
+
+
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """
