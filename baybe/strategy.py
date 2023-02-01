@@ -378,7 +378,10 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         )
 
         # Assert that there are enough points left for recommendation
-        if len(candidates_comp) < batch_quantity:
+        if (
+            len(self.searchspace.continuous.parameters) == 0
+            and len(candidates_comp) < batch_quantity
+        ):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_quantity} "
                 "possible data points left to recommend. This can be "
@@ -393,8 +396,11 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             # TODO Implement methods and choices for initial point selection in the
             #  continuous subspace of the search space
             # Get initial recommendations of discrete part according to initial method
-            idxs = self.initial_strategy.recommend(candidates_comp, batch_quantity)
-            candidates_discrete_part = candidates_exp.loc[idxs, :]
+            if len(candidates_comp) > 0:
+                idxs = self.initial_strategy.recommend(candidates_comp, batch_quantity)
+                candidates_discrete_part = candidates_exp.loc[idxs, :]
+            else:
+                candidates_discrete_part = pd.DataFrame()
 
             # Get random values for continuous part
             candidates_conti_part = self.searchspace.continuous.samples_random(

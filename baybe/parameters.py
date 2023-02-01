@@ -444,6 +444,8 @@ def parameter_cartesian_prod_to_df(
     """
     lst_of_values = [p.values for p in parameters if p.is_discrete]
     lst_of_names = [p.name for p in parameters if p.is_discrete]
+    if len(lst_of_names) < 1:
+        return pd.DataFrame()
 
     index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
     ret = pd.DataFrame(index=index).reset_index()

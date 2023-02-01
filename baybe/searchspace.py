@@ -299,7 +299,7 @@ class SubspaceDiscrete:
 
             # We expect exactly one match. If that's not the case, print a warning.
             inds_found = self.exp_rep.index[match].to_list()
-            if len(inds_found) == 0:
+            if len(inds_found) == 0 and len(num_cols) > 0:
                 log.warning(
                     "Input row with index %s could not be matched to the search space. "
                     "This could indicate that something went wrong.",
@@ -373,7 +373,7 @@ class SubspaceDiscrete:
             A dataframe with the parameters in computational representation.
         """
         # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding:
+        if self.empty_encoding or len(data) < 1:
             comp_rep = pd.DataFrame(index=data.index)
             return comp_rep
 
@@ -382,7 +382,7 @@ class SubspaceDiscrete:
         for param in self.parameters:
             comp_df = param.transform_rep_exp2comp(data[param.name])
             dfs.append(comp_df)
-        comp_rep = pd.concat(dfs, axis=1)
+        comp_rep = pd.concat(dfs, axis=1) if len(dfs) > 0 else pd.DataFrame()
 
         # IMPROVE: The following is a simple mechanism to implement statefulness of
         #   the transformation. However, the state is effectively implemented through
@@ -493,6 +493,9 @@ class SubspaceContinuous:
             A data frame containing the points as rows with columns corresponding to the
              parameter names.
         """
+        if len(self.parameters) < 1:
+            return pd.DataFrame()
+
         vals = np.stack(
             [
                 (b[1] - b[0]) * np.random.random(size=n_points) + b[0]
