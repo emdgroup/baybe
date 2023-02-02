@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property, lru_cache
-from typing import Any, ClassVar, Dict, List, Literal, Optional, Type, Union
+from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -251,13 +251,14 @@ class NumericContinuous(Parameter):
     is_discrete = False
 
     # object variables
-    bounds: conlist(Optional[float], min_items=2, max_items=2)
+    bounds: Tuple[Optional[float], Optional[float]]
 
     @validator("bounds")
     def validate_bounds(cls, bounds):
         """
         Validate boundaries
         """
+        bounds = list(bounds)
         if bounds[0] is None:
             bounds[0] = -np.inf
 
@@ -271,7 +272,7 @@ class NumericContinuous(Parameter):
                 "bound."
             )
 
-        return bounds
+        return tuple(bounds)
 
     def is_in_range(self, item: float) -> bool:
         """

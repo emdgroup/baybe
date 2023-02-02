@@ -12,59 +12,59 @@ param_updates = {
         {
             "name": "Conti_Param",
             "type": "NUM_CONTINUOUS",
-            "bounds": [0, 1],
+            "bounds": (0, 1),
         }
     ],
     "conti_infinite1": [
         {
             "name": "Conti_Param",
             "type": "NUM_CONTINUOUS",
-            "bounds": [None, 1],
+            "bounds": (None, 1),
         }
     ],
     "conti_infinite2": [
         {
             "name": "Conti_Param",
             "type": "NUM_CONTINUOUS",
-            "bounds": [0, None],
+            "bounds": (0, None),
         }
     ],
     "conti_infinite3": [
         {
             "name": "Conti_Param",
             "type": "NUM_CONTINUOUS",
-            "bounds": [0, np.inf],
+            "bounds": (0, np.inf),
         }
     ],
     "conti_infinite4": [
         {
             "name": "Conti_Param",
             "type": "NUM_CONTINUOUS",
-            "bounds": [-np.inf, 1],
+            "bounds": (-np.inf, 1),
         }
     ],
     "conti_infinite5": [
         {
             "name": "Conti_Param",
             "type": "NUM_CONTINUOUS",
-            "bounds": [None, None],
+            "bounds": (None, None),
         }
     ],
     "conti_multiple": [
         {
             "name": "Conti_Param1",
             "type": "NUM_CONTINUOUS",
-            "bounds": [0, 1],
+            "bounds": (0, 1),
         },
         {
             "name": "Conti_Param2",
             "type": "NUM_CONTINUOUS",
-            "bounds": [-1, 0],
+            "bounds": (-1, 0),
         },
         {
             "name": "Conti_Param3",
             "type": "NUM_CONTINUOUS",
-            "bounds": [None, None],
+            "bounds": (None, None),
         },
     ],
 }

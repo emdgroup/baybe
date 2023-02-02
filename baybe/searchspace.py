@@ -431,7 +431,7 @@ class SubspaceContinuous:
         constraints: Optional[List[Constraint]] = None,
     ):
         """
-        parameters : List[DiscreteParameter]
+        parameters : List[NumericContinuous]
             The parameters spanning the search space.
         constraints : List[Constraint], optional
             An optional set of constraints restricting the valid parameter space.
@@ -449,7 +449,7 @@ class SubspaceContinuous:
     @property
     def tensor_bounds(self) -> torch.Tensor:
         """
-        Returns list of bounds as tensor.
+        Returns bounds as tensor.
         """
         return torch.tensor(self.bounds)
 
@@ -458,22 +458,9 @@ class SubspaceContinuous:
         data: pd.DataFrame,
     ) -> pd.DataFrame:
         """
-        Transforms continuous parameters from experimental to computational
-        representation. At present no transformation is performed and data is returned
-        as in the input. Discrete parameters are ignored and are not included.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed. Must contain all specified parameters, can
-            contain more columns.
-
-        Returns
-        -------
-        pd.DataFrame
-            A dataframe with the parameters in computational representation.
+        See SubspaceDiscrete.transform
         """
         # Transform continuous parameters
-        comp_rep = data[[p.name for p in self.parameters if not p.is_discrete]]
+        comp_rep = data[[p.name for p in self.parameters]]
 
         return comp_rep
