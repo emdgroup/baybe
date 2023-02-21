@@ -64,7 +64,6 @@ class SearchSpace:
         )
         self.continuous: SubspaceContinuous = SubspaceContinuous(
             parameters=[p for p in parameters if not p.is_discrete],
-            constraints=constraints,
         )
 
     @property
@@ -410,11 +409,9 @@ class SubspaceContinuous:
     def __init__(
         self,
         parameters: List[NumericContinuous],
-        constraints: Optional[List[Constraint]] = None,
     ):
         """See `SearchSpace` class."""
         self.parameters: List[NumericContinuous] = parameters
-        self.constraints: List[Constraint] = constraints  # currently not used
 
     @property
     def bounds(self) -> List[Tuple[float, float]]:
