@@ -4,6 +4,7 @@ Functionality for managing search spaces.
 import logging
 from typing import List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import torch
 
@@ -17,6 +18,7 @@ from .parameters import (
 from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
+INF_BOUNDS_REPLACEMENT = 1000
 
 
 class SearchSpace:
@@ -414,11 +416,47 @@ class SubspaceContinuous:
         self.parameters: List[NumericContinuous] = parameters
 
     @property
+    def param_names(self) -> List[str]:
+        """
+        Returns list of parameter bounds.
+        """
+        return [p.name for p in self.parameters]
+
+    @property
     def bounds(self) -> List[Tuple[float, float]]:
         """
         Returns list of parameter bounds.
         """
         return [p.bounds for p in self.parameters]
+
+    @property
+    def bounds_forced_finite(self) -> List[Tuple[float, float]]:
+        """
+        Returns list of parameter bounds. Infinite will be replaced by 1000.
+        """
+        finite_bounds = list(
+            map(
+                lambda x: (
+                    x[0] if np.isfinite(x[0]) else -INF_BOUNDS_REPLACEMENT,
+                    x[1] if np.isfinite(x[1]) else INF_BOUNDS_REPLACEMENT,
+                ),
+                self.bounds,
+            )
+        )
+
+        return finite_bounds
+
+    @property
+    def is_fully_bounded(self):
+        """
+        Whether the search space has infinite bound or is entirely finitely bounded.
+
+        Returns
+        -------
+        bool
+            True if search space has no infinite bounds.
+        """
+        return self.bounds == self.bounds_forced_finite
 
     @property
     def tensor_bounds(self) -> torch.Tensor:
@@ -438,3 +476,79 @@ class SubspaceContinuous:
         comp_rep = data[[p.name for p in self.parameters]]
 
         return comp_rep
+
+    def samples_random(self, n_points: int = 1) -> pd.DataFrame:
+        """
+        Get random point samples from the continuous space. Infinite bounds are
+        replaced by half of the maximum floating point number.
+
+        Parameters
+        ----------
+        n_points : int
+            Number of points that should be sampled.
+
+        Returns
+        -------
+        pandas data frame
+            A data frame containing the points as rows with columns corresponding to the
+             parameter names.
+        """
+        vals = np.stack(
+            [
+                (b[1] - b[0]) * np.random.random(size=n_points) + b[0]
+                for b in self.bounds_forced_finite
+            ]
+        ).T
+        ret = pd.DataFrame(vals, columns=self.param_names)
+
+        return ret
+
+    def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
+        """
+        Get random point samples from the full factorial of the continuous space.
+
+        Parameters
+        ----------
+        n_points : int
+            Number of points that should be sampled.
+
+        Returns
+        -------
+        pandas data frame
+            A data frame containing the points as rows with columns corresponding to the
+             parameter names.
+        """
+        full_factorial = self.full_factorial
+
+        if len(full_factorial) < n_points:
+            raise ValueError(
+                f"You are trying to sample {n_points} points from the full factorial of"
+                f" the continuous space bounds, but it has only {len(full_factorial)} "
+                f"points."
+            )
+
+        return full_factorial.sample(n=n_points).reset_index(drop=True)
+
+    @property
+    def full_factorial(self) -> pd.DataFrame:
+        """
+        Get the full factorial of the continuous space.
+
+        Returns
+        -------
+        pandas data frame
+            A data frame containing the full factorial
+        """
+        if not self.is_fully_bounded:
+            log.warning(
+                "You are trying to access the full factorial of a continuous sace that "
+                "has infinite bounds in at least one parameter. Internally, infinite "
+                "bounds have been replaced by -/+ %f",
+                INF_BOUNDS_REPLACEMENT,
+            )
+
+        index = pd.MultiIndex.from_product(
+            self.bounds_forced_finite, names=self.param_names
+        )
+
+        return pd.DataFrame(index=index).reset_index()
