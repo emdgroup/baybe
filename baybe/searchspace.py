@@ -135,25 +135,7 @@ class SubspaceDiscrete:
         empty_encoding: bool = False,
         init_dataframes: bool = True,
     ):
-        """
-        Parameters
-        ----------
-        parameters : List[DiscreteParameter]
-            The parameters spanning the search space.
-        constraints : List[Constraint], optional
-            An optional set of constraints restricting the valid parameter space.
-        empty_encoding : bool, default: False
-            If True, uses an "empty" encoding for all parameters. This is useful,
-            for instance, in combination with random search strategies that
-            do not read the actual parameter values, since it avoids the
-            (potentially costly) transformation of the parameter values to their
-            computational representation.
-        init_dataframes : bool, default: True
-            If True, the search space related dataframes (i.e. parameter representations
-            and metadata) will be build from scratch using the input arguments. If
-            False, they are not initialized, which can be useful when loading a search
-            space object from disk.
-        """
+        """See `SearchSpace` class."""
         # Store the input
         self.parameters = parameters
         self.empty_encoding = empty_encoding
@@ -430,12 +412,7 @@ class SubspaceContinuous:
         parameters: List[NumericContinuous],
         constraints: Optional[List[Constraint]] = None,
     ):
-        """
-        parameters : List[NumericContinuous]
-            The parameters spanning the search space.
-        constraints : List[Constraint], optional
-            An optional set of constraints restricting the valid parameter space.
-        """
+        """See `SearchSpace` class."""
         self.parameters: List[NumericContinuous] = parameters
         self.constraints: List[Constraint] = constraints  # currently not used
 
