@@ -39,8 +39,8 @@ def test_simple_dependency_variant1(
 
     # Number entries with both switches on
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "on")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "right")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
     ).sum()
     assert num_entries == n_grid_points * len(mock_substances) * len(
         mock_categories
@@ -48,22 +48,22 @@ def test_simple_dependency_variant1(
 
     # Number entries with Switch1 off
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "off")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "right")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
     ).sum()
     assert num_entries == len(mock_categories) * len(mock_categories)
 
     # Number entries with both switches on
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "on")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "left")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
     ).sum()
     assert num_entries == n_grid_points * len(mock_substances)
 
     # Number entries with both switches on
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "off")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "left")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
     ).sum()
     assert num_entries == 1
 
@@ -107,8 +107,8 @@ def test_simple_dependency_variant2(
 
     # Number entries with both switches on
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "on")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "right")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
     ).sum()
     assert num_entries == n_grid_points * len(mock_substances) * len(
         mock_categories
@@ -116,22 +116,22 @@ def test_simple_dependency_variant2(
 
     # Number entries with Switch1 off
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "off")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "right")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
     ).sum()
     assert num_entries == len(mock_categories) * len(mock_categories)
 
     # Number entries with both switches on
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "on")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "left")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
     ).sum()
     assert num_entries == n_grid_points * len(mock_substances)
 
     # Number entries with both switches on
     num_entries = (
-        (baybe_obj.searchspace.exp_rep["Switch1"] == "off")
-        & (baybe_obj.searchspace.exp_rep["Switch2"] == "left")
+        (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+        & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
     ).sum()
     assert num_entries == 1
 
@@ -202,8 +202,8 @@ def test_exclusion(config_constraints_exclude, mock_substances):
 
     # Number of entries with either first/second substance and a temperature above 151
     num_entries = (
-        baybe_obj.searchspace.exp_rep["Temperature"].apply(lambda x: x > 151)
-        & baybe_obj.searchspace.exp_rep["Solvent"].apply(
+        baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x > 151)
+        & baybe_obj.searchspace.discrete.exp_rep["Solvent"].apply(
             lambda x: x in list(mock_substances)[:2]
         )
     ).sum()
@@ -211,8 +211,8 @@ def test_exclusion(config_constraints_exclude, mock_substances):
 
     # Number of entries with either last / second last substance and a pressure above 5
     num_entries = (
-        baybe_obj.searchspace.exp_rep["Pressure"].apply(lambda x: x > 5)
-        & baybe_obj.searchspace.exp_rep["Solvent"].apply(
+        baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
+        & baybe_obj.searchspace.discrete.exp_rep["Solvent"].apply(
             lambda x: x in list(mock_substances)[-2:]
         )
     ).sum()
@@ -220,8 +220,8 @@ def test_exclusion(config_constraints_exclude, mock_substances):
 
     # Number of entries with pressure below 3 and temperature above 120
     num_entries = (
-        baybe_obj.searchspace.exp_rep["Pressure"].apply(lambda x: x < 3)
-        & baybe_obj.searchspace.exp_rep["Temperature"].apply(lambda x: x > 120)
+        baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x < 3)
+        & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x > 120)
     ).sum()
     assert num_entries == 0
 
@@ -246,7 +246,9 @@ def test_prodsum1(config_constraints_prodsum):
 
     # Number of entries with 1,2-sum above 150
     num_entries = (
-        baybe_obj.searchspace.exp_rep[["NumParameter1", "NumParameter2"]].sum(axis=1)
+        baybe_obj.searchspace.discrete.exp_rep[["NumParameter1", "NumParameter2"]].sum(
+            axis=1
+        )
         > 150.0
     ).sum()
     assert num_entries == 0
@@ -272,7 +274,9 @@ def test_prodsum2(config_constraints_prodsum):
 
     # Number of entries with product under 30
     num_entries = (
-        baybe_obj.searchspace.exp_rep[["NumParameter1", "NumParameter2"]].prod(axis=1)
+        baybe_obj.searchspace.discrete.exp_rep[["NumParameter1", "NumParameter2"]].prod(
+            axis=1
+        )
         < 30
     ).sum()
     assert num_entries == 0
@@ -299,7 +303,7 @@ def test_prodsum3(config_constraints_prodsum):
 
     # Number of entries with sum unequal to 100
     num_entries = (
-        baybe_obj.searchspace.exp_rep[["NumParameter1", "NumParameter2"]]
+        baybe_obj.searchspace.discrete.exp_rep[["NumParameter1", "NumParameter2"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
@@ -364,7 +368,7 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
 
     # Number of searchspace entries where fractions do not sum to 100.0
     num_entries = (
-        baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
+        baybe_obj.searchspace.discrete.exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
@@ -375,7 +379,7 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
 
     # Number of searchspace entries that have duplicate solvent labels
     num_entries = (
-        baybe_obj.searchspace.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
+        baybe_obj.searchspace.discrete.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .nunique(axis=1)
         .ne(3)
         .sum()
@@ -384,10 +388,14 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
 
     # Number of searchspace entries with permutation-invariant combinations
     num_entries = (
-        baybe_obj.searchspace.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
+        baybe_obj.searchspace.discrete.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .apply(frozenset, axis=1)
         .to_frame()
-        .join(baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]])
+        .join(
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+        )
         .duplicated()
         .sum()
     )
@@ -395,7 +403,12 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
 
     # Number of unique 1-solvent entries
     num_entries = (
-        (baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        (
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+            == 0.0
+        )
         .sum(axis=1)
         .eq(2)
         .sum()
@@ -404,7 +417,12 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
 
     # Number of unique 2-solvent entries
     num_entries = (
-        (baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        (
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+            == 0.0
+        )
         .sum(axis=1)
         .eq(1)
         .sum()
@@ -413,7 +431,12 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
 
     # Number of unique 3-solvent entries
     num_entries = (
-        (baybe_obj.searchspace.exp_rep[["Fraction1", "Fraction2", "Fraction3"]] == 0.0)
+        (
+            baybe_obj.searchspace.discrete.exp_rep[
+                ["Fraction1", "Fraction2", "Fraction3"]
+            ]
+            == 0.0
+        )
         .sum(axis=1)
         .eq(0)
         .sum()

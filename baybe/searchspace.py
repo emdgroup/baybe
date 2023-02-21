@@ -5,9 +5,15 @@ import logging
 from typing import List, Optional, Tuple
 
 import pandas as pd
+import torch
 
 from .constraints import _constraints_order, Constraint
-from .parameters import Parameter, parameter_cartesian_prod_to_df
+from .parameters import (
+    DiscreteParameter,
+    NumericContinuous,
+    Parameter,
+    parameter_cartesian_prod_to_df,
+)
 from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
@@ -15,11 +21,8 @@ log = logging.getLogger(__name__)
 
 class SearchSpace:
     """
-    Class for managing search spaces.
-
-    Builds the search space from parameter definitions and optional constraints, keeps
-    track of search metadata, and provides access to candidate sets and different
-    parameter views.
+    Class for managing the overall search space which might be purely discrete, purely
+    continuous or hybrid.
     """
 
     def __init__(
@@ -50,6 +53,90 @@ class SearchSpace:
         """
         # Store the input
         self.parameters = parameters
+        self.constraints = constraints
+        self.empty_encoding = empty_encoding
+
+        self.discrete: SubspaceDiscrete = SubspaceDiscrete(
+            parameters=[p for p in parameters if p.is_discrete],
+            constraints=constraints,
+            empty_encoding=empty_encoding,
+            init_dataframes=init_dataframes,
+        )
+        self.continuous: SubspaceContinuous = SubspaceContinuous(
+            parameters=[p for p in parameters if not p.is_discrete],
+        )
+
+    @property
+    def contains_mordred(self) -> bool:
+        """Indicates if any of the parameters uses MORDRED encoding."""
+        return any(p.encoding == "MORDRED" for p in self.parameters)
+
+    @property
+    def contains_rdkit(self) -> bool:
+        """Indicates if any of the parameters uses RDKIT encoding."""
+        return any(p.encoding == "RDKIT" for p in self.parameters)
+
+    def state_dict(self) -> dict:
+        """Creates a dictionary representing the object's internal state."""
+        state_dict = dict(
+            empty_encoding=self.empty_encoding,
+            discrete=self.discrete.state_dict(),
+        )
+        return state_dict
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        """Restores a given object state."""
+        self.empty_encoding = state_dict["empty_encoding"]
+        self.discrete.load_state_dict(state_dict["discrete"])
+
+    def transform(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Transforms data (such as the measurements) from experimental to computational
+        representation. Continuous parameters are not transformed but included.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to be transformed. Must contain all specified parameters, can
+            contain more columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe with the parameters in computational representation.
+        """
+        # Transform subspaces separately
+        df_discrete = self.discrete.transform(data)
+        df_continuous = self.continuous.transform(data)
+
+        # Combine Subspaces
+        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
+
+        return comp_rep
+
+
+class SubspaceDiscrete:
+    """
+    Class for managing discrete search spaces.
+
+    Builds the search space from parameter definitions and optional constraints, keeps
+    track of search metadata, and provides access to candidate sets and different
+    parameter views.
+    """
+
+    def __init__(
+        self,
+        parameters: List[DiscreteParameter],
+        constraints: Optional[List[Constraint]] = None,
+        empty_encoding: bool = False,
+        init_dataframes: bool = True,
+    ):
+        """See `SearchSpace` class."""
+        # Store the input
+        self.parameters = parameters
         self.empty_encoding = empty_encoding
         if constraints is None:
             self.constraints = []
@@ -59,9 +146,12 @@ class SearchSpace:
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
 
-        # Initialize search space dataframes
-        if init_dataframes:
+        self.exp_rep: Optional[pd.DataFrame] = None
+        self.comp_rep: Optional[pd.DataFrame] = None
+        self.metadata: Optional[pd.DataFrame] = None
 
+        # Initialize discrete search space dataframes
+        if init_dataframes:
             # Create a dataframe representing the experimental search space
             self.exp_rep = parameter_cartesian_prod_to_df(parameters)
 
@@ -85,16 +175,6 @@ class SearchSpace:
                 },
                 index=self.exp_rep.index,
             )
-
-    @property
-    def contains_mordred(self) -> bool:
-        """Indicates if any of the parameters uses MORDRED encoding."""
-        return any(p.encoding == "MORDRED" for p in self.parameters)
-
-    @property
-    def contains_rdkit(self) -> bool:
-        """Indicates if any of the parameters uses RDKIT encoding."""
-        return any(p.encoding == "RDKIT" for p in self.parameters)
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
@@ -183,7 +263,7 @@ class SearchSpace:
             # Check if the row represents a valid input
             valid = True
             for param in self.parameters:
-                if "NUM" in param.type:
+                if param.is_numeric:
                     if numerical_measurements_must_be_within_tolerance:
                         valid &= param.is_in_range(row[param.name])
                 else:
@@ -200,13 +280,11 @@ class SearchSpace:
                         f"to 'False' to disable this behavior."
                     )
 
-            # Identify discrete and numeric parameters
-            # TODO: This is error-prone. Add member to indicate discreteness or
-            #  introduce corresponding super-classes.
-            cat_cols = [
-                param.name for param in self.parameters if "NUM" not in param.type
+            # Differentiate category-like and discrete numerical parameters
+            cat_cols = [p.name for p in self.parameters if not p.is_numeric]
+            num_cols = [
+                p.name for p in self.parameters if (p.is_numeric and p.is_discrete)
             ]
-            num_cols = [param.name for param in self.parameters if "NUM" in param.type]
 
             # Discrete parameters must match exactly
             match = self.exp_rep[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
@@ -278,7 +356,8 @@ class SearchSpace:
         data: pd.DataFrame,
     ) -> pd.DataFrame:
         """
-        Transforms parameters from experimental to computational representation.
+        Transforms discrete parameters from experimental to computational
+        representation. Continuous parameters and additional columns are ignored.
 
         Parameters
         ----------
@@ -318,5 +397,44 @@ class SearchSpace:
             # Otherwise, the transformation is being called by the search space
             # constructor so that no column filtering is needed.
             pass
+
+        return comp_rep
+
+
+class SubspaceContinuous:
+    """
+    Class for managing continuous search spaces.
+    """
+
+    def __init__(
+        self,
+        parameters: List[NumericContinuous],
+    ):
+        """See `SearchSpace` class."""
+        self.parameters: List[NumericContinuous] = parameters
+
+    @property
+    def bounds(self) -> List[Tuple[float, float]]:
+        """
+        Returns list of parameter bounds.
+        """
+        return [p.bounds for p in self.parameters]
+
+    @property
+    def tensor_bounds(self) -> torch.Tensor:
+        """
+        Returns bounds as tensor.
+        """
+        return torch.tensor(self.bounds)
+
+    def transform(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        See SubspaceDiscrete.transform
+        """
+        # Transform continuous parameters
+        comp_rep = data[[p.name for p in self.parameters]]
 
         return comp_rep

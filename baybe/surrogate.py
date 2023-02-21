@@ -154,7 +154,7 @@ def scale_model(model_cls: Type[SurrogateModel]):
 
         def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
             """Fits the scaler and the model using the scaled training data."""
-            self.scaler = DefaultScaler(self.model.searchspace.comp_rep)
+            self.scaler = DefaultScaler(self.model.searchspace.discrete.comp_rep)
             train_x, train_y = self.scaler.fit_transform(train_x, train_y)
             self.model.fit(train_x, train_y)
 
@@ -343,7 +343,7 @@ class GaussianProcessModel(SurrogateModel):
         """See base class."""
 
         # get the input bounds from the search space
-        searchspace = to_tensor(self.searchspace.comp_rep)
+        searchspace = to_tensor(self.searchspace.discrete.comp_rep)
         bounds = torch.vstack(
             [torch.min(searchspace, dim=0)[0], torch.max(searchspace, dim=0)[0]]
         )

@@ -1,7 +1,7 @@
 """
 Tests for basic input-output nad iterative loop.
 """
-
+import numpy as np
 import pandas as pd
 import pytest
 from baybe.core import BayBE, BayBEConfig
@@ -245,6 +245,33 @@ invalid_config_updates = {
         "strategy": {
             "surrogate_model_cls": "INVALID_CHOICE",
         },
+    },
+    "param_conti_invalibounds1": {
+        "parameters": [
+            {
+                "name": "Conti_Param",
+                "type": "NUM_CONTINUOUS",
+                "bounds": [np.inf, 1],
+            }
+        ],
+    },
+    "param_conti_invalibounds2": {
+        "parameters": [
+            {
+                "name": "Conti_Param",
+                "type": "NUM_CONTINUOUS",
+                "bounds": [1, 1],
+            }
+        ],
+    },
+    "param_conti_invalibounds3": {
+        "parameters": [
+            {
+                "name": "Conti_Param",
+                "type": "NUM_CONTINUOUS",
+                "bounds": [1, 0],
+            }
+        ],
     },
 }
 

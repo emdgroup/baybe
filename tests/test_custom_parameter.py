@@ -55,8 +55,8 @@ def test_run_iterations(
         rec = baybe_obj.recommend(batch_quantity=batch_quantity)
 
         print(rec)
-        print(baybe_obj.searchspace.exp_rep)
-        print(baybe_obj.searchspace.comp_rep)
+        print(baybe_obj.searchspace.discrete.exp_rep)
+        print(baybe_obj.searchspace.discrete.comp_rep)
 
         add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
         add_parameter_noise(rec, baybe_obj, noise_level=0.1)

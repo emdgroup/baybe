@@ -133,8 +133,10 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with either Solvents C2 or C4 and a temperature above 151: ",
         (
-            baybe_obj.searchspace.exp_rep["Temperature"].apply(lambda x: x > 151)
-            & baybe_obj.searchspace.exp_rep["Solvent"].apply(
+            baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(
+                lambda x: x > 151
+            )
+            & baybe_obj.searchspace.discrete.exp_rep["Solvent"].apply(
                 lambda x: x in ["C2", "C4"]
             )
         ).sum(),
@@ -142,8 +144,8 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with either Solvents C5 or C6 and a pressure above 5:      ",
         (
-            baybe_obj.searchspace.exp_rep["Pressure"].apply(lambda x: x > 5)
-            & baybe_obj.searchspace.exp_rep["Solvent"].apply(
+            baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
+            & baybe_obj.searchspace.discrete.exp_rep["Solvent"].apply(
                 lambda x: x in ["C5", "C6"]
             )
         ).sum(),
@@ -151,8 +153,10 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with pressure below 3 and temperature above 120:           ",
         (
-            baybe_obj.searchspace.exp_rep["Pressure"].apply(lambda x: x < 3)
-            & baybe_obj.searchspace.exp_rep["Temperature"].apply(lambda x: x > 120)
+            baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x < 3)
+            & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(
+                lambda x: x > 120
+            )
         ).sum(),
     )
 
