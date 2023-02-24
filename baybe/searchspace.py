@@ -178,6 +178,11 @@ class SubspaceDiscrete:
                 index=self.exp_rep.index,
             )
 
+    @property
+    def empty(self):
+        """Whether this search space is empty."""
+        return len(self.parameters) == 0
+
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
         state_dict = dict(
@@ -416,9 +421,14 @@ class SubspaceContinuous:
         self.parameters: List[NumericContinuous] = parameters
 
     @property
+    def empty(self):
+        """Whether this search space is empty."""
+        return len(self.parameters) == 0
+
+    @property
     def param_names(self) -> List[str]:
         """
-        Returns list of parameter bounds.
+        Returns list of parameter names.
         """
         return [p.name for p in self.parameters]
 

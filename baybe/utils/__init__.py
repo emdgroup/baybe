@@ -620,6 +620,12 @@ class NoMCAcquisitionFunctionError(Exception):
     but an analytical acquisition function has been selected by the user."""
 
 
+class IncompatibleSearchSpaceError(Exception):
+    """An exception raised when a recommender is used with a search space that contains
+    incompatible parts, e.g. a discrete recommender is used with a hybrid or continuous
+    search space."""
+
+
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """

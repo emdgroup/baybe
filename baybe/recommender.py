@@ -6,7 +6,7 @@ Recommender classes for optimizing acquisition functions.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Type
+from typing import ClassVar, Dict, Optional, Type
 
 import pandas as pd
 import torch
@@ -14,7 +14,12 @@ from botorch.acquisition import AcquisitionFunction
 from botorch.optim import optimize_acqf_discrete
 
 from .searchspace import SearchSpace
-from .utils import isabstract, NoMCAcquisitionFunctionError, to_tensor
+from .utils import (
+    IncompatibleSearchSpaceError,
+    isabstract,
+    NoMCAcquisitionFunctionError,
+    to_tensor,
+)
 
 
 class Recommender(ABC):
@@ -27,6 +32,9 @@ class Recommender(ABC):
 
     type: str
     SUBCLASSES: Dict[str, Type[Recommender]] = {}
+
+    compatible_discrete: ClassVar[bool]
+    compatible_continuous: ClassVar[bool]
 
     def __init__(self, acquisition_function: Optional[AcquisitionFunction]):
         self.acquisition_function = acquisition_function
@@ -67,6 +75,34 @@ class Recommender(ABC):
         The DataFrame with the specific experiments recommended.
         """
 
+    def check_searchspace_compatibility(self, searchspace: SearchSpace) -> None:
+        """
+        Performs a compatibility check between the recommender type and the provided
+        search space.
+
+        Parameters
+        ----------
+        searchspace : SearchSpace
+            The search space to check for compatibility.
+
+        Returns
+        -------
+            Nothing, if no exception is raised.
+        """
+        if (not self.compatible_discrete) and (not searchspace.discrete.empty):
+            raise IncompatibleSearchSpaceError(
+                f"The search space that was passed contained a discrete part, but the "
+                f"chosen recommender of type {self.type} does not support discrete "
+                f"search spaces."
+            )
+
+        if (not self.compatible_continuous) and (not searchspace.continuous.empty):
+            raise IncompatibleSearchSpaceError(
+                f"The search space that was passed contained a continuous part, but the"
+                f" chosen recommender of type {self.type} does not support continuous "
+                f"search spaces."
+            )
+
 
 class SequentialGreedyRecommender(Recommender):
     """
@@ -80,6 +116,8 @@ class SequentialGreedyRecommender(Recommender):
     """
 
     type = "SEQUENTIAL_GREEDY"
+    compatible_discrete = True
+    compatible_continuous = False
 
     def recommend(
         self,
@@ -89,6 +127,8 @@ class SequentialGreedyRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
+        self.check_searchspace_compatibility(searchspace)
+
         candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
             allow_recommending_already_measured,
@@ -139,6 +179,8 @@ class MarginalRankingRecommender(Recommender):
     """
 
     type = "UNRESTRICTED_RANKING"
+    compatible_discrete = True
+    compatible_continuous = False
 
     def recommend(
         self,
@@ -148,6 +190,8 @@ class MarginalRankingRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
+        self.check_searchspace_compatibility(searchspace)
+
         candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
             allow_recommending_already_measured,
@@ -174,6 +218,10 @@ class RandomRecommender(Recommender):
     """
 
     type = "RANDOM"
+    compatible_discrete = True
+    # TODO adjust to be also compatible with continuous search spaces after strategy
+    #  harmonization
+    compatible_continuous = False
 
     def recommend(
         self,
@@ -183,6 +231,8 @@ class RandomRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
+        self.check_searchspace_compatibility(searchspace)
+
         candidates_exp, _ = searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
             allow_recommending_already_measured,
