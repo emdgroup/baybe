@@ -477,6 +477,8 @@ class SubspaceContinuous:
 
         return comp_rep
 
+    # TODO rework the helper functions below, remove finite bound enforcement and
+    #  replace by distributional sampling
     def samples_random(self, n_points: int = 1) -> pd.DataFrame:
         """
         Get random point samples from the continuous space. Infinite bounds are

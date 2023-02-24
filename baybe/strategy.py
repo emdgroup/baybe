@@ -362,16 +362,18 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         batch_quantity : int (default = 1)
             The number of experiments to be conducted in parallel.
         allow_repeated_recommendations : bool
-            Whether points whos discrete parts were already recommended can be
+            Whether points whose discrete parts were already recommended can be
             recommended again.
         allow_recommending_already_measured : bool
-            Whether points whos discrete parts were already measured can be
+            Whether points whose discrete parts were already measured can be
             recommended again.
 
         Returns
         -------
         The DataFrame with the specific experiments recommended.
         """
+        # TODO remove this call to get_candidates during implementation of the strategy
+        #  harmonization
         candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
             allow_recommending_already_measured,

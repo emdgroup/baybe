@@ -56,10 +56,10 @@ class Recommender(ABC):
         batch_quantity : int
             The number of experiments to be conducted in parallel.
         allow_repeated_recommendations : bool
-            Whether points whos discrete parts were already recommended can be
+            Whether points whose discrete parts were already recommended can be
             recommended again.
         allow_recommending_already_measured : bool
-            Whether points whos discrete parts were already measured can be
+            Whether points whose discrete parts were already measured can be
             recommended again.
 
         Returns
