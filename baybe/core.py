@@ -94,8 +94,9 @@ class BayBE:
         # Store the configuration
         self.config = config
 
-        # Current iteration/batch number
+        # Current iteration/batch and fit number
         self.batches_done: int = 0
+        self.fits_done: int = 0
 
         # Flag to indicate if the specified recommendation strategy is "random", in
         # which case certain operation can be skipped, such as the (potentially
@@ -186,6 +187,7 @@ class BayBE:
         state_dict = dict(
             config_dict=self.config.dict(),
             batches_done=self.batches_done,
+            fits_done=self.fits_done,
             searchspace=self.searchspace.state_dict(),
             measurements=self.measurements_exp,
             _cached_recommendation=self._cached_recommendation,
@@ -198,6 +200,7 @@ class BayBE:
         # Overwrite the member variables with the given state information
         self.config = state_dict["config"]
         self.batches_done = state_dict["batches_done"]
+        self.fits_done = state_dict["fits_done"]
         self.measurements_exp = state_dict["measurements"]
         self._cached_recommendation = state_dict["_cached_recommendation"]
 
@@ -348,6 +351,7 @@ class BayBE:
         self.batches_done += 1
         to_insert = data.copy()
         to_insert["BatchNr"] = self.batches_done
+        to_insert["FitNr"] = pd.NA
 
         self.measurements_exp = pd.concat(
             [self.measurements_exp, to_insert], axis=0, ignore_index=True
@@ -404,6 +408,11 @@ class BayBE:
         self.strategy.fit(
             self.measurements_parameters_comp, self.measurements_targets_comp
         )
+
+        # Update recommendation meta data
+        if len(self.measurements_exp) > 0:
+            self.fits_done += 1
+            self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
 
         # Get the indices of the recommended search space entries
         idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
