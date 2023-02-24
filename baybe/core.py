@@ -376,12 +376,12 @@ class BayBE:
                 f"batch_quantity={batch_quantity}."
             )
 
-        # If there are cached recommendations and the batch size of those is <= the
-        # requested one, we just return those
+        # If there are cached recommendations and the batch size of those is equal to
+        # the previously requested one, we just return those
         if (self._cached_recommendation is not None) and (
-            len(self._cached_recommendation) <= batch_quantity
+            len(self._cached_recommendation) == batch_quantity
         ):
-            return self._cached_recommendation.iloc[:batch_quantity, :]
+            return self._cached_recommendation
 
         # Get possible candidates
         candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
