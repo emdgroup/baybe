@@ -316,6 +316,9 @@ class BayBE:
         -------
         Nothing (the internal database is modified in-place).
         """
+        # Invalidate recommendation cache first (in case of uncaught exceptions below)
+        self._cached_recommendation = None
+
         # Check if all targets have valid values
         for target in self.targets:
             if data[target.name].isna().any():
@@ -356,9 +359,6 @@ class BayBE:
         self.measurements_exp = pd.concat(
             [self.measurements_exp, to_insert], axis=0, ignore_index=True
         )
-
-        # Reset recommendation cache
-        self._cached_recommendation = None
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
