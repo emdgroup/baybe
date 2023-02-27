@@ -117,7 +117,7 @@ class BayBE:
         self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
 
         # Declare variable for storing measurements (in experimental representation)
-        self.measurements_exp: pd.DataFrame = pd.DataFrame([])
+        self.measurements_exp: pd.DataFrame = pd.DataFrame()
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -138,14 +138,14 @@ class BayBE:
     def measurements_parameters_comp(self) -> pd.DataFrame:
         """The computational representation of the measured parameters."""
         if len(self.measurements_exp) < 1:
-            return pd.DataFrame(index=self.measurements_exp.index)
+            return pd.DataFrame()
         return self.searchspace.transform(self.measurements_exp)
 
     @property
     def measurements_targets_comp(self) -> pd.DataFrame:
         """The computational representation of the measured targets."""
         if len(self.measurements_exp) < 1:
-            return pd.DataFrame(index=self.measurements_exp.index)
+            return pd.DataFrame()
         return self.objective.transform(self.measurements_exp)
 
     def __str__(self):
