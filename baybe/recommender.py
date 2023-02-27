@@ -11,7 +11,7 @@ from typing import ClassVar, Dict, Optional, Type
 import pandas as pd
 import torch
 from botorch.acquisition import AcquisitionFunction
-from botorch.optim import optimize_acqf_discrete
+from botorch.optim import optimize_acqf, optimize_acqf_discrete
 
 from .searchspace import SearchSpace
 from .utils import (
@@ -242,5 +242,43 @@ class RandomRecommender(Recommender):
         idxs = candidates_exp.sample(n=batch_quantity).index
         rec = candidates_exp.loc[idxs, :]
         searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+
+        return rec
+
+
+# TODO finalize class and type name below
+class PurelyContinuousRecommender(Recommender):
+    """
+    Recommends the next set of experiments by means of sequential greedy optimization
+    in a purely continuous space.
+    """
+
+    type = "CONTI"
+    compatible_discrete = True
+    compatible_continuous = False
+
+    def recommend(
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
+        """See base class."""
+        self.check_searchspace_compatibility(searchspace)
+        try:
+            points, _ = optimize_acqf(
+                acq_function=self.acquisition_function,
+                bounds=searchspace.continuous.tensor_bounds,
+                q=batch_quantity,
+                num_restarts=5,  # TODO make choice for num_restarts
+            )
+        except AttributeError as ex:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions."
+            ) from ex
+
+        rec = pd.DataFrame(points, columns=searchspace.continuous.param_names)
 
         return rec
