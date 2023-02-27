@@ -219,9 +219,7 @@ class RandomRecommender(Recommender):
 
     type = "RANDOM"
     compatible_discrete = True
-    # TODO adjust to be also compatible with continuous search spaces after strategy
-    #  harmonization
-    compatible_continuous = False
+    compatible_continuous = True
 
     def recommend(
         self,
@@ -233,15 +231,28 @@ class RandomRecommender(Recommender):
         """See base class."""
         self.check_searchspace_compatibility(searchspace)
 
-        candidates_exp, _ = searchspace.discrete.get_candidates(
-            allow_repeated_recommendations,
-            allow_recommending_already_measured,
-        )
+        # Discrete part if applicable
+        rec_disc = pd.DataFrame()
+        if not searchspace.discrete.empty:
+            candidates_exp, _ = searchspace.discrete.get_candidates(
+                allow_repeated_recommendations,
+                allow_recommending_already_measured,
+            )
 
-        # randomly select from discrete candidates
-        idxs = candidates_exp.sample(n=batch_quantity).index
-        rec = candidates_exp.loc[idxs, :]
-        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+            # randomly select from discrete candidates
+            idxs = candidates_exp.sample(n=batch_quantity).index
+            rec_disc = candidates_exp.loc[idxs, :]
+            searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+
+        # Continuous part if applicable
+        rec_conti = pd.DataFrame()
+        if not searchspace.continuous.empty:
+            rec_conti = searchspace.continuous.samples_random(n_points=batch_quantity)
+
+        # Merge sub-parts and reorder columns to match original order
+        rec = pd.concat([rec_disc, rec_conti], axis=1).reindex(
+            columns=[p.name for p in searchspace.parameters]
+        )
 
         return rec
 

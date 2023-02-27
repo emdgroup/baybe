@@ -173,7 +173,7 @@ results = simulate_from_configs(
     batch_quantity=3,
     config_variants={
         "RANDOM": config_dict_v1,
-        "CONTI": config_dict_v2,
+        # "CONTI": config_dict_v2,
     },
 )
 
