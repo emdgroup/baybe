@@ -368,16 +368,16 @@ class BayBE:
         ----------
         batch_quantity : int > 0
             Number of requested recommendations.
+
         Returns
         -------
-        rec : pandas data frame
+        rec : pd.DataFrame
             Contains the recommendations in experimental representation.
-
         """
         if batch_quantity < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
-                f"batch_quantity={batch_quantity}."
+                f"{batch_quantity=}."
             )
 
         # If there are cached recommendations and the batch size of those is equal to
