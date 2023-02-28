@@ -380,10 +380,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         )
 
         # Assert that there are enough points left for recommendation
-        if (
-            len(self.searchspace.continuous.parameters) == 0
-            and len(candidates_comp) < batch_quantity
-        ):
+        if self.searchspace.continuous.empty and len(candidates_comp) < batch_quantity:
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_quantity} "
                 "possible data points left to recommend. This can be "
@@ -400,6 +397,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             # Get initial recommendations of discrete part according to initial method
             if len(candidates_comp) > 0:
                 idxs = self.initial_strategy.recommend(candidates_comp, batch_quantity)
+                self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
                 candidates_discrete_part = candidates_exp.loc[idxs, :]
             else:
                 candidates_discrete_part = pd.DataFrame()
