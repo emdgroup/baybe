@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Parsing for continuous parameters
+- Caching of recommendations to avoid unnecessary computations
 
 ### Changed
 - Parameter class hierarchy
 - SearchSpace has now a discrete and continuous subspace
+- Model fit now done upon requesting recommendations
 
 ### Fixed
 - Updated BoTorch and GPyTorch versions are also used in pyproject.toml

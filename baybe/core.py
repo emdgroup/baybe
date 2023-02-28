@@ -94,13 +94,17 @@ class BayBE:
         # Store the configuration
         self.config = config
 
-        # Current iteration/batch number
-        self.batches_done = 0
+        # Current iteration/batch and fit number
+        self.batches_done: int = 0
+        self.fits_done: int = 0
 
         # Flag to indicate if the specified recommendation strategy is "random", in
         # which case certain operation can be skipped, such as the (potentially
         # costly) transformation of the parameters into computation representation.
-        self._random = config.strategy.get("recommender_cls", "") == "RANDOM"
+        self._random: bool = config.strategy.get("recommender_cls", "") == "RANDOM"
+
+        # Cached recommendations
+        self._cached_recommendation: Optional[pd.DataFrame] = None
 
         # Initialize all subcomponents
         if searchspace is None:
@@ -113,7 +117,7 @@ class BayBE:
         self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
 
         # Declare variable for storing measurements (in experimental representation)
-        self.measurements_exp = None
+        self.measurements_exp: pd.DataFrame = pd.DataFrame()
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -133,11 +137,15 @@ class BayBE:
     @property
     def measurements_parameters_comp(self) -> pd.DataFrame:
         """The computational representation of the measured parameters."""
+        if len(self.measurements_exp) < 1:
+            return pd.DataFrame()
         return self.searchspace.transform(self.measurements_exp)
 
     @property
     def measurements_targets_comp(self) -> pd.DataFrame:
         """The computational representation of the measured targets."""
+        if len(self.measurements_exp) < 1:
+            return pd.DataFrame()
         return self.objective.transform(self.measurements_exp)
 
     def __str__(self):
@@ -179,8 +187,10 @@ class BayBE:
         state_dict = dict(
             config_dict=self.config.dict(),
             batches_done=self.batches_done,
+            fits_done=self.fits_done,
             searchspace=self.searchspace.state_dict(),
             measurements=self.measurements_exp,
+            _cached_recommendation=self._cached_recommendation,
         )
         return state_dict
 
@@ -190,7 +200,9 @@ class BayBE:
         # Overwrite the member variables with the given state information
         self.config = state_dict["config"]
         self.batches_done = state_dict["batches_done"]
+        self.fits_done = state_dict["fits_done"]
         self.measurements_exp = state_dict["measurements"]
+        self._cached_recommendation = state_dict["_cached_recommendation"]
 
         # Restore the search space state
         # TODO: Extend the load_state_dict function of SearchSpace such that it takes
@@ -287,8 +299,7 @@ class BayBE:
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
-        Adds results from a dataframe to the internal database and updates the strategy
-        object accordingly.
+        Adds results from a dataframe to the internal database.
 
         Each addition of data is considered a new batch. Added results are checked for
         validity. Categorical values need to have an exact match. For numerical values,
@@ -305,6 +316,9 @@ class BayBE:
         -------
         Nothing (the internal database is modified in-place).
         """
+        # Invalidate recommendation cache first (in case of uncaught exceptions below)
+        self._cached_recommendation = None
+
         # Check if all targets have valid values
         for target in self.targets:
             if data[target.name].isna().any():
@@ -340,20 +354,40 @@ class BayBE:
         self.batches_done += 1
         to_insert = data.copy()
         to_insert["BatchNr"] = self.batches_done
+        to_insert["FitNr"] = pd.NA
 
         self.measurements_exp = pd.concat(
             [self.measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
-        # Update the strategy object
-        self.strategy.fit(
-            self.measurements_parameters_comp, self.measurements_targets_comp
-        )
-
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
         Provides the recommendations for the next batch of experiments.
+
+        Parameters
+        ----------
+        batch_quantity : int > 0
+            Number of requested recommendations.
+
+        Returns
+        -------
+        rec : pd.DataFrame
+            Contains the recommendations in experimental representation.
         """
+        if batch_quantity < 1:
+            raise ValueError(
+                f"You must at least request one recommendation per batch, but provided "
+                f"{batch_quantity=}."
+            )
+
+        # If there are cached recommendations and the batch size of those is equal to
+        # the previously requested one, we just return those
+        if (self._cached_recommendation is not None) and (
+            len(self._cached_recommendation) == batch_quantity
+        ):
+            return self._cached_recommendation
+
+        # Get possible candidates
         candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
             self.config.allow_repeated_recommendations,
             self.config.allow_recommending_already_measured,
@@ -370,6 +404,16 @@ class BayBE:
                 "or because all data points are marked as 'dont_recommend'."
             )
 
+        # Update the strategy object
+        self.strategy.fit(
+            self.measurements_parameters_comp, self.measurements_targets_comp
+        )
+
+        # Update recommendation meta data
+        if len(self.measurements_exp) > 0:
+            self.fits_done += 1
+            self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
+
         # Get the indices of the recommended search space entries
         idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
 
@@ -385,5 +429,8 @@ class BayBE:
         # Query user input
         for target in self.targets:
             rec[target.name] = "<Enter value>"
+
+        # Cache the recommendations
+        self._cached_recommendation = rec.copy()
 
         return rec

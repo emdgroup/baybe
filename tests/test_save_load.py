@@ -44,6 +44,9 @@ def test_data_consistency(
         baybe_obj_reference.batches_done == baybe_obj_loaded.batches_done
     ), "Problem directly after loading"
     assert (
+        baybe_obj_reference.fits_done == baybe_obj_loaded.fits_done
+    ), "Problem directly after loading"
+    assert (
         baybe_obj_reference.config.dict() == baybe_obj_loaded.config.dict()
     ), "Problem directly after loading"
 
@@ -83,6 +86,9 @@ def test_data_consistency(
     ), "Problem after continuation"
     assert (
         baybe_obj_reference.batches_done == baybe_obj_loaded.batches_done
+    ), "Problem after continuation"
+    assert (
+        baybe_obj_reference.fits_done == baybe_obj_loaded.fits_done
     ), "Problem after continuation"
     assert (
         baybe_obj_reference.config.dict() == baybe_obj_loaded.config.dict()
