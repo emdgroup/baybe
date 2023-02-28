@@ -15,7 +15,7 @@ from .parameters import (
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .utils import df_drop_single_value_columns
+from .utils import df_drop_single_value_columns, to_tensor
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
@@ -70,13 +70,48 @@ class SearchSpace:
 
     @property
     def contains_mordred(self) -> bool:
-        """Indicates if any of the parameters uses MORDRED encoding."""
-        return any(p.encoding == "MORDRED" for p in self.parameters)
+        """Indicates if any of the discrete parameters uses MORDRED encoding."""
+        return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
 
     @property
     def contains_rdkit(self) -> bool:
-        """Indicates if any of the parameters uses RDKIT encoding."""
-        return any(p.encoding == "RDKIT" for p in self.parameters)
+        """Indicates if any of the discrete parameters uses RDKIT encoding."""
+        return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
+
+    @property
+    def bounds(self) -> List[Tuple[float, float]]:
+        """
+        Returns list of parameter bounds.
+        Format is list of tuples with one tuple per parameter.
+        """
+        # TODO Might need to adjust once we include proper scaling
+        disc_bounds, cont_bounds = [], []
+        if not self.discrete.empty:
+            disc_space = to_tensor(self.discrete.comp_rep)
+            disc_bounds = [
+                [torch.min(disc_space, dim=0)[0], torch.max(disc_space, dim=0)[0]]
+            ]
+        if not self.continuous.empty:
+            cont_bounds = self.continuous.bounds
+        return [*disc_bounds, *cont_bounds]
+
+    @property
+    def tensor_bounds(self) -> torch.Tensor:
+        """
+        Returns bounds as tensor.
+        Format is derived from 'bounds'-property.
+        """
+        return torch.tensor(self.bounds)
+
+    @property
+    def botorch_bounds(self) -> torch.Tensor:
+        """
+        Reshaped version of the bounds for use in BoTorch.
+        Shape is 2 x number of parameters.
+        """
+        lower_bounds = [b[0] for b in self.bounds]
+        upper_bounds = [b[1] for b in self.bounds]
+        return torch.Tensor([lower_bounds, upper_bounds])
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""

@@ -301,6 +301,9 @@ class SurrogateModel(ABC):
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
+        # TODO If we want to disable continuous subspaces, we would need to
+        # raise an error here. This is not included at the moment as we
+        # want to have a MWE for continuous spaces.
 
         # Validate and prepare the training data
         train_x = _prepare_inputs(train_x)
@@ -342,11 +345,8 @@ class GaussianProcessModel(SurrogateModel):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
 
-        # get the input bounds from the search space
-        searchspace = to_tensor(self.searchspace.discrete.comp_rep)
-        bounds = torch.vstack(
-            [torch.min(searchspace, dim=0)[0], torch.max(searchspace, dim=0)[0]]
-        )
+        # Get the input bounds from the search space in BoTorch Format
+        bounds = self.searchspace.botorch_bounds
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms

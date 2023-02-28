@@ -265,8 +265,8 @@ class PurelyContinuousRecommender(Recommender):
     """
 
     type = "CONTI"
-    compatible_discrete = True
-    compatible_continuous = False
+    compatible_discrete = False
+    compatible_continuous = True
 
     def recommend(
         self,
@@ -280,9 +280,10 @@ class PurelyContinuousRecommender(Recommender):
         try:
             points, _ = optimize_acqf(
                 acq_function=self.acquisition_function,
-                bounds=searchspace.continuous.tensor_bounds,
+                bounds=searchspace.botorch_bounds,
                 q=batch_quantity,
                 num_restarts=5,  # TODO make choice for num_restarts
+                raw_samples=10,  # TODO make choice for raw_samples
             )
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(
