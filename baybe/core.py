@@ -99,7 +99,7 @@ class BayBE:
         self._random: bool = config.strategy.get("recommender_cls", "") == "RANDOM"
 
         # Cached recommendations
-        self._cached_recommendation: Optional[pd.DataFrame] = None
+        self._cached_recommendation: pd.DataFrame = pd.DataFrame()
 
         # Initialize all subcomponents
         if searchspace is None:
@@ -312,7 +312,7 @@ class BayBE:
         Nothing (the internal database is modified in-place).
         """
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
-        self._cached_recommendation = None
+        self._cached_recommendation = pd.DataFrame()
 
         # Check if all targets have valid values
         for target in self.targets:
@@ -377,9 +377,7 @@ class BayBE:
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
-        if (self._cached_recommendation is not None) and (
-            len(self._cached_recommendation) == batch_quantity
-        ):
+        if len(self._cached_recommendation) == batch_quantity:
             return self._cached_recommendation
 
         # Get the recommended search space entries
