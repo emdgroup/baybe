@@ -9,10 +9,10 @@ readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python =">=3.8.6"
 dependencies = [
-    "botorch>=0.7.0",
+    "botorch>=0.8.1",
     "fsspec>=2022.10.0",
     "funcy>=1.17",
-    "gpytorch>=1.9.0",
+    "gpytorch>=1.9.1",
     "mordred>=1.2.0",
     "ngboost>=0.3.12",
     "numpy<=1.23.4, >=1.20.0",

@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parameter class hierarchy
 - SearchSpace has now a discrete and continuous subspace
 
+### Fixed
+- Updated BoTorch and GPyTorch versions are also used in pyproject.toml
+
 ## [0.2.2] - 2023-01-13
 ### Added
 - SearchSpace class
