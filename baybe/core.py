@@ -380,6 +380,16 @@ class BayBE:
         if len(self._cached_recommendation) == batch_quantity:
             return self._cached_recommendation
 
+        # Update the strategy object
+        self.strategy.fit(
+            self.measurements_parameters_comp, self.measurements_targets_comp
+        )
+
+        # Update recommendation meta data
+        if len(self.measurements_exp) > 0:
+            self.fits_done += 1
+            self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
+
         # Get the recommended search space entries
         rec = self.strategy.recommend(
             batch_quantity=batch_quantity,

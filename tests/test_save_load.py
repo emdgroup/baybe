@@ -14,6 +14,8 @@ def test_data_consistency(
     """
     Test equality after storing and loading a BayBE object.
     """
+    # pylint: disable=protected-access
+
     # Load reference object
     baybe_obj_reference = baybe_object_batch3_iterations2
     baybe_obj_reference.save("./test.baybe")
@@ -49,11 +51,17 @@ def test_data_consistency(
     assert (
         baybe_obj_reference.config.dict() == baybe_obj_loaded.config.dict()
     ), "Problem directly after loading"
+    assert baybe_obj_reference._cached_recommendation.equals(
+        baybe_obj_loaded._cached_recommendation
+    ), "Problem directly after loading"
 
     # Run some more iterations
-    for _ in range(n_iterations):
+    for k in range(n_iterations):
         rec = baybe_obj_reference.recommend(batch_quantity=batch_quantity)
         rec2 = baybe_obj_loaded.recommend(batch_quantity=batch_quantity)
+        assert rec.equals(
+            rec2
+        ), f"Recommendations not identical after loading and running {k+1} iteration(s)"
 
         add_fake_results(
             rec,
@@ -92,6 +100,9 @@ def test_data_consistency(
     ), "Problem after continuation"
     assert (
         baybe_obj_reference.config.dict() == baybe_obj_loaded.config.dict()
+    ), "Problem after continuation"
+    assert baybe_obj_reference._cached_recommendation.equals(
+        baybe_obj_loaded._cached_recommendation
     ), "Problem after continuation"
 
     os.remove("./test.baybe")
