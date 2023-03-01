@@ -97,9 +97,10 @@ class SearchSpace:
     def tensor_bounds(self) -> torch.Tensor:
         """
         Returns bounds as tensor.
-        Format is derived from 'bounds'-property.
         """
-        return torch.tensor(self.bounds)
+        return torch.vstack(
+            [self.discrete.tensor_bounds, self.continuous.tensor_bounds]
+        )
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
@@ -223,6 +224,8 @@ class SubspaceDiscrete:
         """
         Returns bounds as tensor.
         """
+        if not self.parameters:
+            return torch.empty(0, 2)
         bounds = np.vstack(
             [
                 np.c_[p.comp_df.min().values, p.comp_df.max().values]
@@ -521,6 +524,8 @@ class SubspaceContinuous:
         """
         Returns bounds as tensor.
         """
+        if not self.parameters:
+            return torch.empty(0, 2)
         return torch.tensor(self.bounds)
 
     def transform(
