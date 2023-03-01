@@ -280,7 +280,7 @@ class PurelyContinuousRecommender(Recommender):
         try:
             points, _ = optimize_acqf(
                 acq_function=self.acquisition_function,
-                bounds=searchspace.botorch_bounds,
+                bounds=searchspace.tensor_bounds.T,
                 q=batch_quantity,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples

@@ -103,16 +103,6 @@ class SearchSpace:
         """
         return torch.tensor(self.bounds)
 
-    @property
-    def botorch_bounds(self) -> torch.Tensor:
-        """
-        Reshaped version of the bounds for use in BoTorch.
-        Shape is 2 x number of parameters.
-        """
-        lower_bounds = [b[0] for b in self.bounds]
-        upper_bounds = [b[1] for b in self.bounds]
-        return torch.Tensor([lower_bounds, upper_bounds])
-
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
         state_dict = dict(

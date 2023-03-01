@@ -27,7 +27,7 @@ from torch import Tensor
 
 from .scaler import DefaultScaler
 from .searchspace import SearchSpace
-from .utils import isabstract, to_tensor
+from .utils import isabstract
 
 # Use float64 (which is recommended at least for BoTorch models)
 DTYPE = torch.float64
@@ -346,7 +346,7 @@ class GaussianProcessModel(SurrogateModel):
         """See base class."""
 
         # Get the input bounds from the search space in BoTorch Format
-        bounds = self.searchspace.botorch_bounds
+        bounds = self.searchspace.tensor_bounds.T
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
