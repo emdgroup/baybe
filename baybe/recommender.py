@@ -46,7 +46,6 @@ class Recommender(ABC):
         if not isabstract(cls):
             cls.SUBCLASSES[cls.type] = cls
 
-    @abstractmethod
     def recommend(
         self,
         searchspace: SearchSpace,
@@ -73,6 +72,32 @@ class Recommender(ABC):
         Returns
         -------
         The DataFrame with the specific experiments recommended.
+        """
+        # TODO[11179]: Potentially move call to get_candidates from _recommend to here
+        # TODO[11179]: Potentially move metadata update from _recommend to here
+
+        # Validate the search space
+        self.check_searchspace_compatibility(searchspace)
+
+        return self._recommend(
+            searchspace,
+            batch_quantity,
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
+
+    @abstractmethod
+    def _recommend(
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Implements the actual recommendation logic. In contrast to its public
+        counterpart, no validation or post-processing is carried out but only the raw
+        recommendation computation is conducted.
         """
 
     def check_searchspace_compatibility(self, searchspace: SearchSpace) -> None:
@@ -122,7 +147,7 @@ class SequentialGreedyRecommender(Recommender):
     compatible_discrete = True
     compatible_continuous = False
 
-    def recommend(
+    def _recommend(
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -130,7 +155,6 @@ class SequentialGreedyRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        self.check_searchspace_compatibility(searchspace)
 
         candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
@@ -181,7 +205,7 @@ class MarginalRankingRecommender(Recommender):
     compatible_discrete = True
     compatible_continuous = False
 
-    def recommend(
+    def _recommend(
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -189,7 +213,6 @@ class MarginalRankingRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        self.check_searchspace_compatibility(searchspace)
 
         candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
@@ -220,7 +243,7 @@ class RandomRecommender(Recommender):
     compatible_discrete = True
     compatible_continuous = True
 
-    def recommend(
+    def _recommend(
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -228,7 +251,6 @@ class RandomRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        self.check_searchspace_compatibility(searchspace)
 
         # Discrete part if applicable
         rec_disc = pd.DataFrame()
@@ -266,7 +288,7 @@ class PurelyContinuousRecommender(Recommender):
     compatible_discrete = False
     compatible_continuous = True
 
-    def recommend(
+    def _recommend(
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -274,7 +296,7 @@ class PurelyContinuousRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        self.check_searchspace_compatibility(searchspace)
+
         try:
             points, _ = optimize_acqf(
                 acq_function=self.acquisition_function,
