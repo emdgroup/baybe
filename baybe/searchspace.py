@@ -211,11 +211,10 @@ class SubspaceDiscrete:
         """
         Returns list of parameter bounds.
         """
-        # TODO: For consistency with the continuous bounds, the values should not be
-        #   derived from the computational searchspace representation but represent
-        #   the actual parameter bounds.
-        arr = np.c_[self.comp_rep.min(), self.comp_rep.max()]
-        return [tuple(b) for b in arr]
+        # TODO: introduce bounds property for parameters
+        return [
+            (p.comp_df.min().item(), p.comp_df.max().item()) for p in self.parameters
+        ]
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
