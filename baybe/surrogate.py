@@ -301,9 +301,11 @@ class SurrogateModel(ABC):
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
-        # TODO If we want to disable continuous subspaces, we would need to
-        # raise an error here. This is not included at the moment as we
-        # want to have a MWE for continuous spaces.
+        # TODO: Adjust scale_model decorator to support other model types as well.
+        if (not self.searchspace.continuous.empty) and (self.type != "GP"):
+            raise NotImplementedError(
+                "Continuous search spaces are currently only supported by GPs."
+            )
 
         # Validate and prepare the training data
         train_x = _prepare_inputs(train_x)
