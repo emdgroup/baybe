@@ -240,9 +240,8 @@ class RandomRecommender(Recommender):
             )
 
             # randomly select from discrete candidates
-            idxs = candidates_exp.sample(n=batch_quantity).index
-            rec_disc = candidates_exp.loc[idxs, :]
-            searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+            rec_disc = candidates_exp.sample(n=batch_quantity)
+            searchspace.discrete.metadata.loc[rec_disc.index, "was_recommended"] = True
 
         # Continuous part if applicable
         rec_conti = pd.DataFrame()

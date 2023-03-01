@@ -421,7 +421,7 @@ class SubspaceDiscrete:
         for param in self.parameters:
             comp_df = param.transform_rep_exp2comp(data[param.name])
             dfs.append(comp_df)
-        comp_rep = pd.concat(dfs, axis=1) if len(dfs) > 0 else pd.DataFrame()
+        comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
         # IMPROVE: The following is a simple mechanism to implement statefulness of
         #   the transformation. However, the state is effectively implemented through
