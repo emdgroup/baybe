@@ -15,7 +15,7 @@ from .parameters import (
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .utils import df_drop_single_value_columns, to_tensor
+from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
@@ -23,8 +23,16 @@ INF_BOUNDS_REPLACEMENT = 1000
 
 class SearchSpace:
     """
-    Class for managing the overall search space which might be purely discrete, purely
-    continuous or hybrid.
+    Class for managing the overall search space, which might be purely discrete, purely
+    continuous, or hybrid.
+
+    NOTE:
+        Created objects related to the computational representations of parameters
+        (e.g., parameter bounds, computational dataframes, etc.) may use a different
+        parameter order than what is specified through the constructor: While the
+        passed parameter list can contain parameters in arbitrary order, the
+        aforementioned objects (by convention) list discrete parameters first, followed
+        by continuous ones.
     """
 
     def __init__(
@@ -80,19 +88,9 @@ class SearchSpace:
 
     @property
     def bounds(self) -> List[Tuple[float, float]]:
-        """
-        Returns list of parameter bounds.
-        Format is list of tuples with one tuple per parameter.
-        """
-        # TODO Might need to adjust once we include proper scaling
-        disc_bounds, cont_bounds = [], []
-        if not self.discrete.empty:
-            disc_space = to_tensor(self.discrete.comp_rep)
-            disc_bounds = [
-                [torch.min(disc_space, dim=0)[0], torch.max(disc_space, dim=0)[0]]
-            ]
-        if not self.continuous.empty:
-            cont_bounds = self.continuous.bounds
+        """List of parameter bounds."""
+        disc_bounds = self.discrete.bounds
+        cont_bounds = self.continuous.bounds
         return [*disc_bounds, *cont_bounds]
 
     @property
@@ -207,6 +205,17 @@ class SubspaceDiscrete:
     def empty(self):
         """Whether this search space is empty."""
         return len(self.parameters) == 0
+
+    @property
+    def bounds(self) -> List[Tuple[float, float]]:
+        """
+        Returns list of parameter bounds.
+        """
+        # TODO: For consistency with the continuous bounds, the values should not be
+        #   derived from the computational searchspace representation but represent
+        #   the actual parameter bounds.
+        arr = np.c_[self.comp_rep.min(), self.comp_rep.max()]
+        return [tuple(b) for b in arr]
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
