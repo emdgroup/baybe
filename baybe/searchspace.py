@@ -212,9 +212,24 @@ class SubspaceDiscrete:
         Returns list of parameter bounds.
         """
         # TODO: introduce bounds property for parameters
-        return [
-            (p.comp_df.min().item(), p.comp_df.max().item()) for p in self.parameters
-        ]
+        # TODO: At the moment, this property exists mostly for consistency to have a
+        #   counterpart to the version in SubspaceContinuous. Do we really need the
+        #   bounds methods at all and does a list-based version even make sense for
+        #   discrete parameters, which can have multidimensional computational reps?
+        return [tuple(b) for b in self.tensor_bounds.tolist()]
+
+    @property
+    def tensor_bounds(self) -> torch.Tensor:
+        """
+        Returns bounds as tensor.
+        """
+        bounds = np.vstack(
+            [
+                np.c_[p.comp_df.min().values, p.comp_df.max().values]
+                for p in self.parameters
+            ]
+        )
+        return torch.from_numpy(bounds)
 
     def state_dict(self) -> dict:
         """Creates a dictionary representing the object's internal state."""
