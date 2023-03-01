@@ -115,6 +115,8 @@ class SequentialGreedyRecommender(Recommender):
         type `botorch.acquisition.monte_carlo.MCAcquisitionFunction`.
     """
 
+    # TODO: generalize the approach to also support continuous spaces
+
     type = "SEQUENTIAL_GREEDY"
     compatible_discrete = True
     compatible_continuous = False
@@ -147,10 +149,6 @@ class SequentialGreedyRecommender(Recommender):
             ) from ex
 
         # retrieve the index of the points from the input dataframe
-        # TODO: This additional inelegant step is unfortunately required since BoTorch
-        #   does not return the indices of the points. However, as soon as we move to
-        #   continuous spaces, we will have to use another representation anyway
-        #   (which is also the reason why BoTorch does not support it).
         # IMPROVE: The merging procedure is conceptually similar to what
         #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
         #   a simpler matching logic. When refactoring the SearchSpace class to
