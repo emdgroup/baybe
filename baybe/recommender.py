@@ -85,9 +85,10 @@ class Recommender(ABC):
         searchspace : SearchSpace
             The search space to check for compatibility.
 
-        Returns
-        -------
-            Nothing, if no exception is raised.
+        Raises
+        ------
+        IncompatibleSearchSpaceError
+            In case the recommender is not compatible with the specified search space.
         """
         if (not self.compatible_discrete) and (not searchspace.discrete.empty):
             raise IncompatibleSearchSpaceError(
