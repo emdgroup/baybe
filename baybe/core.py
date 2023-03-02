@@ -166,7 +166,7 @@ class BayBE:
         string += f"{self.searchspace.discrete.comp_rep}"
 
         string += "\n\nSearch Space (Continuous Part, Boundaries):\n"
-        string += f"{self.searchspace.continuous.bounds}"
+        string += f"{self.searchspace.continuous.param_bounds_comp}"
 
         string += "\n\nMeasurement Space (Experimental Representation):\n"
         string += f"{self.measurements_exp}"

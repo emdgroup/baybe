@@ -348,7 +348,7 @@ class GaussianProcessModel(SurrogateModel):
         """See base class."""
 
         # Get the input bounds from the search space in BoTorch Format
-        bounds = self.searchspace.tensor_bounds.T
+        bounds = self.searchspace.param_bounds_comp
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms

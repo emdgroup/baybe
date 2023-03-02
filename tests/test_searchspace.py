@@ -18,7 +18,11 @@ def test_bounds_order():
         NumericContinuous(name="B_cont", bounds=(10.0, 12.0)),
     ]
     searchspace = SearchSpace(parameters)
-    assert searchspace.bounds == [(1.0, 3.0), (7.0, 9.0), (4.0, 6.0), (10.0, 12.0)]
+    expected = torch.tensor([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]]).double()
+    assert torch.equal(
+        searchspace.param_bounds_comp,
+        expected,
+    )
 
 
 def test_empty_parameter_bounds():
@@ -28,9 +32,7 @@ def test_empty_parameter_bounds():
     """
     parameters = []
     searchspace = SearchSpace(parameters)
-    assert searchspace.discrete.bounds == []
-    assert searchspace.continuous.bounds == []
-    assert searchspace.bounds == []
-    assert torch.equal(searchspace.discrete.tensor_bounds, torch.empty(0, 2))
-    assert torch.equal(searchspace.continuous.tensor_bounds, torch.empty(0, 2))
-    assert torch.equal(searchspace.tensor_bounds, torch.empty(0, 2))
+    expected = torch.empty(2, 0)
+    assert torch.equal(searchspace.discrete.param_bounds_comp, expected)
+    assert torch.equal(searchspace.continuous.param_bounds_comp, expected)
+    assert torch.equal(searchspace.param_bounds_comp, expected)

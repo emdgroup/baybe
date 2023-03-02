@@ -87,19 +87,12 @@ class SearchSpace:
         return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
 
     @property
-    def bounds(self) -> List[Tuple[float, float]]:
-        """List of parameter bounds."""
-        disc_bounds = self.discrete.bounds
-        cont_bounds = self.continuous.bounds
-        return [*disc_bounds, *cont_bounds]
-
-    @property
-    def tensor_bounds(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> torch.Tensor:
         """
         Returns bounds as tensor.
         """
-        return torch.vstack(
-            [self.discrete.tensor_bounds, self.continuous.tensor_bounds]
+        return torch.hstack(
+            [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
 
     def state_dict(self) -> dict:
@@ -208,27 +201,15 @@ class SubspaceDiscrete:
         return len(self.parameters) == 0
 
     @property
-    def bounds(self) -> List[Tuple[float, float]]:
-        """
-        Returns list of parameter bounds.
-        """
-        # TODO: introduce bounds property for parameters
-        # TODO: At the moment, this property exists mostly for consistency to have a
-        #   counterpart to the version in SubspaceContinuous. Do we really need the
-        #   bounds methods at all and does a list-based version even make sense for
-        #   discrete parameters, which can have multidimensional computational reps?
-        return [tuple(b) for b in self.tensor_bounds.tolist()]
-
-    @property
-    def tensor_bounds(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> torch.Tensor:
         """
         Returns bounds as tensor.
         """
         if not self.parameters:
-            return torch.empty(0, 2)
-        bounds = np.vstack(
+            return torch.empty(2, 0)
+        bounds = np.hstack(
             [
-                np.c_[p.comp_df.min().values, p.comp_df.max().values]
+                np.vstack([p.comp_df.min().values, p.comp_df.max().values])
                 for p in self.parameters
             ]
         )
@@ -484,28 +465,13 @@ class SubspaceContinuous:
         return [p.name for p in self.parameters]
 
     @property
-    def bounds(self) -> List[Tuple[float, float]]:
+    def bounds_forced_finite(self) -> torch.Tensor:
         """
-        Returns list of parameter bounds.
+        Returns the parameter bounds where infinite values are clipped.
         """
-        return [p.bounds for p in self.parameters]
-
-    @property
-    def bounds_forced_finite(self) -> List[Tuple[float, float]]:
-        """
-        Returns list of parameter bounds. Infinite will be replaced by 1000.
-        """
-        finite_bounds = list(
-            map(
-                lambda x: (
-                    x[0] if np.isfinite(x[0]) else -INF_BOUNDS_REPLACEMENT,
-                    x[1] if np.isfinite(x[1]) else INF_BOUNDS_REPLACEMENT,
-                ),
-                self.bounds,
-            )
+        return torch.clip(
+            self.param_bounds_comp, -INF_BOUNDS_REPLACEMENT, INF_BOUNDS_REPLACEMENT
         )
-
-        return finite_bounds
 
     @property
     def is_fully_bounded(self):
@@ -517,16 +483,16 @@ class SubspaceContinuous:
         bool
             True if search space has no infinite bounds.
         """
-        return self.bounds == self.bounds_forced_finite
+        return torch.isfinite(self.param_bounds_comp)
 
     @property
-    def tensor_bounds(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> torch.Tensor:
         """
         Returns bounds as tensor.
         """
         if not self.parameters:
-            return torch.empty(0, 2)
-        return torch.tensor(self.bounds)
+            return torch.empty(2, 0)
+        return torch.tensor([p.bounds for p in self.parameters]).T
 
     def transform(
         self,
@@ -558,18 +524,12 @@ class SubspaceContinuous:
             A data frame containing the points as rows with columns corresponding to the
              parameter names.
         """
-        if len(self.parameters) < 1:
+        if not self.parameters:
             return pd.DataFrame()
-
-        vals = np.stack(
-            [
-                (b[1] - b[0]) * np.random.random(size=n_points) + b[0]
-                for b in self.bounds_forced_finite
-            ]
-        ).T
-        ret = pd.DataFrame(vals, columns=self.param_names)
-
-        return ret
+        points = torch.distributions.uniform.Uniform(*self.bounds_forced_finite).sample(
+            torch.Size((n_points,))
+        )
+        return pd.DataFrame(points, columns=self.param_names)
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
         """
@@ -616,7 +576,7 @@ class SubspaceContinuous:
             )
 
         index = pd.MultiIndex.from_product(
-            self.bounds_forced_finite, names=self.param_names
+            self.bounds_forced_finite.T.tolist(), names=self.param_names
         )
 
         return pd.DataFrame(index=index).reset_index()
