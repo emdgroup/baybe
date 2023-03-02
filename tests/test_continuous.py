@@ -82,9 +82,9 @@ def test_valid_configs(
 
     config = BayBEConfig(**config_basic_1target)
     baybe_obj = BayBE(config)
-    print(baybe_obj.searchspace.continuous.tensor_bounds.flatten())
+    print(baybe_obj.searchspace.continuous.param_bounds_comp.flatten())
 
     assert all(
         torch.is_floating_point(itm)
-        for itm in baybe_obj.searchspace.continuous.tensor_bounds.flatten()
+        for itm in baybe_obj.searchspace.continuous.param_bounds_comp.flatten()
     )

@@ -24,11 +24,6 @@ from .utils import check_if_in
 log = logging.getLogger(__name__)
 
 
-class NotEnoughPointsLeftError(Exception):
-    """An exception raised when more recommendations are requested than there are
-    viable parameter configurations left in the search space."""
-
-
 class BayBEConfig(BaseModel, extra=Extra.forbid):
     """Configuration class for BayBE."""
 
@@ -104,7 +99,7 @@ class BayBE:
         self._random: bool = config.strategy.get("recommender_cls", "") == "RANDOM"
 
         # Cached recommendations
-        self._cached_recommendation: Optional[pd.DataFrame] = None
+        self._cached_recommendation: pd.DataFrame = pd.DataFrame()
 
         # Initialize all subcomponents
         if searchspace is None:
@@ -171,7 +166,7 @@ class BayBE:
         string += f"{self.searchspace.discrete.comp_rep}"
 
         string += "\n\nSearch Space (Continuous Part, Boundaries):\n"
-        string += f"{self.searchspace.continuous.bounds}"
+        string += f"{self.searchspace.continuous.param_bounds_comp}"
 
         string += "\n\nMeasurement Space (Experimental Representation):\n"
         string += f"{self.measurements_exp}"
@@ -317,7 +312,7 @@ class BayBE:
         Nothing (the internal database is modified in-place).
         """
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
-        self._cached_recommendation = None
+        self._cached_recommendation = pd.DataFrame()
 
         # Check if all targets have valid values
         for target in self.targets:
@@ -382,27 +377,8 @@ class BayBE:
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
-        if (self._cached_recommendation is not None) and (
-            len(self._cached_recommendation) == batch_quantity
-        ):
+        if len(self._cached_recommendation) == batch_quantity:
             return self._cached_recommendation
-
-        # Get possible candidates
-        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
-            self.config.allow_repeated_recommendations,
-            self.config.allow_recommending_already_measured,
-        )
-
-        # Assert that there are enough points left for recommendation
-        if len(candidates_exp) < batch_quantity:
-            raise NotEnoughPointsLeftError(
-                f"Using the current settings, there are fewer than {batch_quantity} "
-                "possible data points left to recommend. This can be "
-                "either because all data points have been measured at some point "
-                "(while 'allow_repeated_recommendations' or "
-                "'allow_recommending_already_measured' being False) "
-                "or because all data points are marked as 'dont_recommend'."
-            )
 
         # Update the strategy object
         self.strategy.fit(
@@ -414,17 +390,14 @@ class BayBE:
             self.fits_done += 1
             self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
 
-        # Get the indices of the recommended search space entries
-        idxs = self.strategy.recommend(candidates_comp, batch_quantity=batch_quantity)
-
-        # Translate indices into labeled data points and update metadata
-        # TODO: Don't modify searchspace members directly. Probably, the metadata
-        #   should become part of the BayBE class, which would cleanly separate
-        #   responsibilities. That is, BayBE would capture all data-related information,
-        #   reflecting the progress of an experiment, whereas the SearchSpace class
-        #   would be a stateless representation of the mathematical search space.
-        rec = candidates_exp.loc[idxs, :]
-        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+        # Get the recommended search space entries
+        rec = self.strategy.recommend(
+            batch_quantity=batch_quantity,
+            allow_repeated_recommendations=self.config.allow_repeated_recommendations,
+            allow_recommending_already_measured=(
+                self.config.allow_recommending_already_measured
+            ),
+        )
 
         # Query user input
         for target in self.targets:

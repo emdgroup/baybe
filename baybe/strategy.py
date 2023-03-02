@@ -34,7 +34,7 @@ from .acquisition import debotorchize
 from .recommender import Recommender
 from .searchspace import SearchSpace
 from .surrogate import SurrogateModel
-from .utils import check_if_in, isabstract, to_tensor
+from .utils import check_if_in, isabstract, NotEnoughPointsLeftError, to_tensor
 from .utils.sampling_algorithms import farthest_point_sampling
 
 Model = TypeVar("SklearnModel")
@@ -348,24 +348,68 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             self.surrogate_model.fit(*to_tensor(train_x, train_y))
             self.best_f = train_y.max()
 
-    def recommend(self, candidates: pd.DataFrame, batch_quantity: int = 1) -> pd.Index:
+    def recommend(
+        self,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
         """
         Recommends the next experiments to be conducted.
 
         Parameters
         ----------
-        candidates : pd.DataFrame
-            The features of all candidate experiments that could be conducted next.
         batch_quantity : int (default = 1)
             The number of experiments to be conducted in parallel.
+        allow_repeated_recommendations : bool
+            Whether points whose discrete parts were already recommended can be
+            recommended again.
+        allow_recommending_already_measured : bool
+            Whether points whose discrete parts were already measured can be
+            recommended again.
 
         Returns
         -------
-        The DataFrame indices of the specific experiments selected.
+        The DataFrame with the specific experiments recommended.
         """
+        # TODO remove this call to get_candidates during implementation of the strategy
+        #  harmonization
+        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
+
+        # Assert that there are enough points left for recommendation
+        if self.searchspace.continuous.empty and len(candidates_comp) < batch_quantity:
+            raise NotEnoughPointsLeftError(
+                f"Using the current settings, there are fewer than {batch_quantity} "
+                "possible data points left to recommend. This can be "
+                "either because all data points have been measured at some point "
+                "(while 'allow_repeated_recommendations' or "
+                "'allow_recommending_already_measured' being False) "
+                "or because all data points are marked as 'dont_recommend'."
+            )
+
         # if no training data exists, apply the strategy for initial recommendations
         if self.use_initial_strategy:
-            return self.initial_strategy.recommend(candidates, batch_quantity)
+            # TODO Implement methods and choices for initial point selection in the
+            #  continuous subspace of the search space
+            # Get initial recommendations of discrete part according to initial method
+            if len(candidates_comp) > 0:
+                idxs = self.initial_strategy.recommend(candidates_comp, batch_quantity)
+                self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+                candidates_discrete_part = candidates_exp.loc[idxs, :]
+            else:
+                candidates_discrete_part = pd.DataFrame()
+
+            # Get random values for continuous part
+            candidates_conti_part = self.searchspace.continuous.samples_random(
+                batch_quantity
+            )
+
+            # Merge parts
+            rec = pd.concat([candidates_discrete_part, candidates_conti_part], axis=1)
+            return rec
 
         # construct the acquisition function
         acqf = (
@@ -376,6 +420,11 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
 
         # select the next experiments using the given recommender approach
         recommender = self.recommender_cls(acqf)
-        idxs = recommender.recommend(candidates, batch_quantity)
+        rec = recommender.recommend(
+            self.searchspace,
+            batch_quantity,
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
 
-        return idxs
+        return rec

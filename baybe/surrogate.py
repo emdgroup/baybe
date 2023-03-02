@@ -27,7 +27,7 @@ from torch import Tensor
 
 from .scaler import DefaultScaler
 from .searchspace import SearchSpace
-from .utils import isabstract, to_tensor
+from .utils import isabstract
 
 # Use float64 (which is recommended at least for BoTorch models)
 DTYPE = torch.float64
@@ -301,6 +301,11 @@ class SurrogateModel(ABC):
 
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
+        # TODO: Adjust scale_model decorator to support other model types as well.
+        if (not self.searchspace.continuous.empty) and (self.type != "GP"):
+            raise NotImplementedError(
+                "Continuous search spaces are currently only supported by GPs."
+            )
 
         # Validate and prepare the training data
         train_x = _prepare_inputs(train_x)
@@ -342,11 +347,8 @@ class GaussianProcessModel(SurrogateModel):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
 
-        # get the input bounds from the search space
-        searchspace = to_tensor(self.searchspace.discrete.comp_rep)
-        bounds = torch.vstack(
-            [torch.min(searchspace, dim=0)[0], torch.max(searchspace, dim=0)[0]]
-        )
+        # Get the input bounds from the search space in BoTorch Format
+        bounds = self.searchspace.param_bounds_comp
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms

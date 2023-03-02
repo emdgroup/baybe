@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Parsing for continuous parameters
 - Caching of recommendations to avoid unnecessary computations
+- Strategy support for hybrid spaces
 
 ### Changed
 - Parameter class hierarchy
