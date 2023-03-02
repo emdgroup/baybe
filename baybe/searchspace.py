@@ -465,27 +465,6 @@ class SubspaceContinuous:
         return [p.name for p in self.parameters]
 
     @property
-    def bounds_forced_finite(self) -> torch.Tensor:
-        """
-        Returns the parameter bounds where infinite values are clipped.
-        """
-        return torch.clip(
-            self.param_bounds_comp, -INF_BOUNDS_REPLACEMENT, INF_BOUNDS_REPLACEMENT
-        )
-
-    @property
-    def is_fully_bounded(self):
-        """
-        Whether the search space has infinite bound or is entirely finitely bounded.
-
-        Returns
-        -------
-        bool
-            True if search space has no infinite bounds.
-        """
-        return torch.isfinite(self.param_bounds_comp)
-
-    @property
     def param_bounds_comp(self) -> torch.Tensor:
         """
         Returns bounds as tensor.
@@ -508,6 +487,27 @@ class SubspaceContinuous:
 
     # TODO rework the helper functions below, remove finite bound enforcement and
     #  replace by distributional sampling
+    @property
+    def bounds_forced_finite(self) -> torch.Tensor:
+        """
+        Returns the parameter bounds where infinite values are clipped.
+        """
+        return torch.clip(
+            self.param_bounds_comp, -INF_BOUNDS_REPLACEMENT, INF_BOUNDS_REPLACEMENT
+        )
+
+    @property
+    def is_fully_bounded(self):
+        """
+        Whether the search space has infinite bound or is entirely finitely bounded.
+
+        Returns
+        -------
+        bool
+            True if search space has no infinite bounds.
+        """
+        return torch.isfinite(self.param_bounds_comp)
+
     def samples_random(self, n_points: int = 1) -> pd.DataFrame:
         """
         Get random point samples from the continuous space. Infinite bounds are
