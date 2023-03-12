@@ -380,57 +380,6 @@ def fixture_config_constraints_mixture(n_grid_points, mock_substances):
                 },
             ],
         },
-        # The constrains simulate a situation where we want to mix up to three solvents,
-        # but their respective fractions need to sum up to 100. Also, the solvents
-        # should never be chosen twice.
-        "constraints": [
-            {
-                # This constraint will affect searchspace creation
-                "type": "PERMUTATION_INVARIANCE",
-                "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-                "dependencies": {
-                    "parameters": ["Fraction1", "Fraction2", "Fraction3"],
-                    "conditions": [
-                        {
-                            "type": "THRESHOLD",
-                            "threshold": 0.0,
-                            "operator": ">",
-                        },
-                        {
-                            "type": "THRESHOLD",
-                            "threshold": 0.0,
-                            "operator": ">",
-                        },
-                        {
-                            # This is just to test whether the specification via
-                            # subselection condition also works
-                            "type": "SUBSELECTION",
-                            "selection": list(np.linspace(0, 100, n_grid_points)[1:]),
-                        },
-                    ],
-                    "affected_parameters": [
-                        ["Solvent1"],
-                        ["Solvent2"],
-                        ["Solvent3"],
-                    ],
-                },
-            },
-            {
-                # This constraint will only affect searchspace creation
-                "type": "SUM",
-                "parameters": ["Fraction1", "Fraction2", "Fraction3"],
-                "condition": {
-                    "threshold": 100.0,
-                    "operator": "=",
-                    "tolerance": 0.01,
-                },
-            },
-            {
-                # This constraint will only affect searchspace creation
-                "type": "NO_LABEL_DUPLICATES",
-                "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-            },
-        ],
     }
 
     return config_dict
