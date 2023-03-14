@@ -4,6 +4,7 @@ Test for imposing dependency constraints
 import math
 
 import numpy as np
+import pandas as pd
 
 from baybe.core import BayBE, BayBEConfig
 
@@ -447,3 +448,53 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
         * ((n_grid_points - 3) * (n_grid_points - 2))
         // 2
     )
+
+
+def test_custom(config_constraints_exclude):
+    """
+    Tests custom constraint (uses config from exclude test)
+    """
+
+    def custom_function(ser: pd.Series) -> bool:
+        if ser.Solvent == "water":
+            if ser.Temperature > 120 and ser.Pressure > 5:
+                return False
+            if ser.Temperature > 180 and ser.Pressure > 3:
+                return False
+        if ser.Solvent == "C3":
+            if ser.Temperature < 150 and ser.Pressure > 3:
+                return False
+        return True
+
+    config_constraints_exclude["constraints"] = [
+        # This constraint uses the user-defined function as a valdiator/filter
+        {
+            "type": "CUSTOM",
+            "parameters": ["Pressure", "Solvent", "Temperature"],
+            "validator": custom_function,
+        },
+    ]
+
+    config = BayBEConfig(**config_constraints_exclude)
+    baybe_obj = BayBE(config)
+
+    num_entries = (
+        baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
+        & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x > 120)
+        & baybe_obj.searchspace.discrete.exp_rep["Solvent"].eq("water")
+    ).sum()
+    assert num_entries == 0
+
+    (
+        baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 3)
+        & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x > 180)
+        & baybe_obj.searchspace.discrete.exp_rep["Solvent"].eq("water")
+    ).sum()
+    assert num_entries == 0
+
+    (
+        baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 3)
+        & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x < 150)
+        & baybe_obj.searchspace.discrete.exp_rep["Solvent"].eq("C3")
+    ).sum()
+    assert num_entries == 0

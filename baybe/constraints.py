@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from functools import reduce
 from inspect import isabstract
 
-from typing import ClassVar, Dict, List, Literal, Optional, Type, Union
+from typing import Callable, ClassVar, Dict, List, Literal, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,7 @@ from .utils import check_if_in, Dummy, StrictValidationError
 log = logging.getLogger(__name__)
 
 _constraints_order = [
+    "CUSTOM",
     "EXCLUDE",
     "NO_LABEL_DUPLICATES",
     "LINKED_PARAMETERS",
@@ -452,3 +453,21 @@ class PermutationInvarianceConstraint(Constraint):
             inds_invalid = inds_invalid.union(inds_duplicate_independency_adjusted)
 
         return inds_invalid
+
+
+class CustomConstraint(Constraint):
+    """
+    Class for user-defined custom constraints.
+    """
+
+    # class variables
+    type = "CUSTOM"
+    eval_during_creation = True
+    eval_during_modeling = False
+    validator: Callable[[pd.Series], bool]
+
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
+        """See base class."""
+        mask_bad = ~data[self.parameters].apply(self.validator, axis=1)
+
+        return data.index[mask_bad]
