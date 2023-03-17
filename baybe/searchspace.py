@@ -26,6 +26,7 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
     Parameter,
     parameter_cartesian_prod_to_df,
+    TaskParameter,
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import (
@@ -65,6 +66,13 @@ class SubspaceDiscrete:
     # allow ingestion from e.g. serialized objects and thereby speed up construction.
     # If not provided, the default hook will derive it from `exp_rep`.
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
+
+    @parameters.validator
+    def validate_parameters(self, _, parameters) -> None:
+        if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
+            raise NotImplementedError(
+                "Currently, at most one task parameter can be considered."
+            )
 
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
@@ -590,6 +598,32 @@ class SearchSpace(SerialMixin):
         return torch.hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
+
+    @property
+    def task_idx(self) -> Optional[int]:
+        """
+        The column index of the task parameter in the computational representation.
+        """
+        try:
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+        except StopIteration:
+            return None
+        # TODO[11611]: The current approach has two limitations:
+        #   1.  It matches by column name and thus assumes that the parameter name
+        #       is used as the column name.
+        #   2.  It relies on the current implementation detail that discrete parameters
+        #       appear first in the computational dataframe.
+        #   --> Fix this when refactoring the data
+        return self.discrete.comp_rep.columns.get_loc(task_param.name)
+
+    @property
+    def n_tasks(self) -> int:
+        """The number of tasks encoded in the search space."""
+        # TODO: This approach only works for a single task parameter.
+        task_param = next(p for p in self.parameters if isinstance(p, TaskParameter))
+        return len(task_param.values)
 
     def transform(
         self,

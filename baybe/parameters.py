@@ -376,6 +376,18 @@ SUBSTANCE_ENCODINGS = get_args(get_type_hints(SubstanceParameter)["encoding"])
 
 
 @define(frozen=True, slots=False)
+class TaskParameter(CategoricalParameter):
+    """
+    Parameter class for task parameters.
+    """
+
+    # object variables
+    # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
+    #   declared as such because of the inheritance relationship.
+    encoding: Literal["INT"] = field(default="INT", init=False)
+
+
+@define(frozen=True, slots=False)
 class CustomDiscreteParameter(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
