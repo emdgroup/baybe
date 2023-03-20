@@ -25,6 +25,7 @@ from .utils import (
     IncompatibleSearchSpaceError,
     isabstract,
     NoMCAcquisitionFunctionError,
+    NotEnoughPointsLeftError,
     to_tensor,
 )
 from .utils.sampling_algorithms import farthest_point_sampling
@@ -66,7 +67,7 @@ class Recommender(ABC):
         batch_quantity: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         """
         Recommends the next experiments to be conducted.
 
@@ -139,8 +140,93 @@ class Recommender(ABC):
                 f"search spaces."
             )
 
+    @property
+    def compatible_discrete(self):
+        """
+        Whether the recommender is compatible with discrete search spaces
+        """
+        return isinstance(
+            self, (AbstractDiscreteRecommender, AbstractCompositeRecommender)
+        )
 
-class SequentialGreedyRecommender(Recommender):
+    @property
+    def compatible_continuous(self):
+        """
+        Whether the recommender is compatible with continuous search spaces
+        """
+        return isinstance(
+            self, (AbstractContinuousRecommender, AbstractCompositeRecommender)
+        )
+
+
+class AbstractDiscreteRecommender(Recommender, ABC):
+    """
+    Abstract class for discrete recommenders
+    """
+
+    type = "ABSTRACT_DISCRETE_RECOMMENDER"
+
+    @abstractmethod
+    def _recommend_discrete(
+        self, candidates_comp: pd.DataFrame, batch_quantity: int
+    ) -> pd.Index:
+        """
+        Returns indices of recommended candidates from a discrete search space
+
+        Parameters
+        ----------
+        candidates_comp : pd.DataFrame
+            valid candidates from the discrete search space
+        batch_quantity : int
+            number of requested recommendations
+
+        Returns
+        -------
+        pd.Index
+        """
+
+    def _recommend(
+        self,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
+        """See base class."""
+
+        # Get discrete candidates. The metadata flags are ignored if a continuous space
+        # is not empty
+        _, candidates_comp = self.searchspace.discrete.get_candidates(
+            allow_repeated_recommendations=allow_repeated_recommendations
+            if self.searchspace.continuous.empty
+            else True,
+            allow_recommending_already_measured=allow_recommending_already_measured
+            if self.searchspace.continuous.empty
+            else True,
+        )
+
+        # Check if enough candidates are left
+        if len(candidates_comp) < batch_quantity:
+            raise NotEnoughPointsLeftError(
+                f"Using the current settings, there are fewer than {batch_quantity} "
+                "possible data points left to recommend. This can be "
+                "either because all data points have been measured at some point "
+                "(while 'allow_repeated_recommendations' or "
+                "'allow_recommending_already_measured' being False) "
+                "or because all data points are marked as 'dont_recommend'."
+            )
+
+        # Get recommendations
+        idxs = self._recommend_discrete(candidates_comp, batch_quantity)
+        rec = self.searchspace.discrete.exp_rep.loc[idxs, :]
+
+        # Update Metadata
+        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+
+        # Return recommendations
+        return rec
+
+
+class SequentialGreedyRecommender(AbstractDiscreteRecommender):
     """
     Recommends the next set of experiments by means of sequential greedy optimization,
     i.e. using a growing set of candidates points, where each new candidate is
@@ -154,22 +240,11 @@ class SequentialGreedyRecommender(Recommender):
     # TODO: generalize the approach to also support continuous spaces
 
     type = "SEQUENTIAL_GREEDY"
-    compatible_discrete = True
-    compatible_continuous = False
 
-    def _recommend(
-        self,
-        batch_quantity: int = 1,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
-    ) -> pd.DataFrame:
+    def _recommend_discrete(
+        self, candidates_comp: pd.DataFrame, batch_quantity: int
+    ) -> pd.Index:
         """See base class."""
-
-        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
-            allow_repeated_recommendations,
-            allow_recommending_already_measured,
-        )
-
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
         try:
@@ -196,13 +271,10 @@ class SequentialGreedyRecommender(Recommender):
         )
         assert len(points) == len(idxs)
 
-        rec = candidates_exp.loc[idxs, :]
-        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
-
-        return rec
+        return idxs
 
 
-class MarginalRankingRecommender(Recommender):
+class MarginalRankingRecommender(AbstractDiscreteRecommender):
     """
     Recommends the top experiments from the ranking obtained by evaluating the
     acquisition function on the marginal posterior predictive distribution of each
@@ -211,22 +283,11 @@ class MarginalRankingRecommender(Recommender):
     """
 
     type = "UNRESTRICTED_RANKING"
-    compatible_discrete = True
-    compatible_continuous = False
 
-    def _recommend(
-        self,
-        batch_quantity: int = 1,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
-    ) -> pd.DataFrame:
+    def _recommend_discrete(
+        self, candidates_comp: pd.DataFrame, batch_quantity: int
+    ) -> pd.Index:
         """See base class."""
-
-        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
-            allow_repeated_recommendations,
-            allow_recommending_already_measured,
-        )
-
         # prepare the candidates in t-batches (= parallel marginal evaluation)
         candidates_tensor = to_tensor(candidates_comp).unsqueeze(1)
 
@@ -236,100 +297,11 @@ class MarginalRankingRecommender(Recommender):
 
         # return top ranked candidates
         idxs = candidates_comp.index[ilocs[:batch_quantity].numpy()]
-        rec = candidates_exp.loc[idxs, :]
-        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
 
-        return rec
+        return idxs
 
 
-class RandomRecommender(Recommender):
-    """
-    Recommends experiments randomly.
-    """
-
-    type = "RANDOM"
-    compatible_discrete = True
-    compatible_continuous = True
-
-    def _recommend(
-        self,
-        batch_quantity: int = 1,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
-    ) -> pd.DataFrame:
-        """See base class."""
-
-        # Discrete part if applicable
-        rec_disc = pd.DataFrame()
-        if not self.searchspace.discrete.empty:
-            candidates_exp, _ = self.searchspace.discrete.get_candidates(
-                allow_repeated_recommendations,
-                allow_recommending_already_measured,
-            )
-
-            # randomly select from discrete candidates
-            rec_disc = candidates_exp.sample(n=batch_quantity)
-            self.searchspace.discrete.metadata.loc[
-                rec_disc.index, "was_recommended"
-            ] = True
-
-        # Continuous part if applicable
-        rec_conti = pd.DataFrame()
-        if not self.searchspace.continuous.empty:
-            rec_conti = self.searchspace.continuous.samples_random(
-                n_points=batch_quantity
-            )
-
-        # If both spaces are present assure mathing indices
-        rec_conti.index = rec_disc.index
-
-        # Merge sub-parts and reorder columns to match original order
-        rec = pd.concat([rec_disc, rec_conti], axis=1).reindex(
-            columns=[p.name for p in self.searchspace.parameters]
-        )
-
-        return rec
-
-
-# TODO finalize class and type name below
-class PurelyContinuousRecommender(Recommender):
-    """
-    Recommends the next set of experiments by means of sequential greedy optimization
-    in a purely continuous space.
-    """
-
-    type = "CONTI"
-    compatible_discrete = False
-    compatible_continuous = True
-
-    def _recommend(
-        self,
-        batch_quantity: int = 1,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
-    ) -> pd.DataFrame:
-        """See base class."""
-
-        try:
-            points, _ = optimize_acqf(
-                acq_function=self.acquisition_function,
-                bounds=self.searchspace.param_bounds_comp,
-                q=batch_quantity,
-                num_restarts=5,  # TODO make choice for num_restarts
-                raw_samples=10,  # TODO make choice for raw_samples
-            )
-        except AttributeError as ex:
-            raise NoMCAcquisitionFunctionError(
-                f"The '{self.__class__.__name__}' only works with Monte Carlo "
-                f"acquisition functions."
-            ) from ex
-
-        rec = pd.DataFrame(points, columns=self.searchspace.continuous.param_names)
-
-        return rec
-
-
-class BasicClusteringRecommender(Recommender, ABC):
+class SKLearnClusteringRecommender(AbstractDiscreteRecommender, ABC):
     """
     Intermediate class for cluster-based selection of discrete candidates.
 
@@ -338,9 +310,7 @@ class BasicClusteringRecommender(Recommender, ABC):
     derived classes.
     """
 
-    type = "CLUSTERING_BASECLASS"
-    compatible_discrete = True
-    compatible_continuous = False
+    type = "ABSTRACT_SKLEARN_CLUSTERING"
 
     # Properties that need to be defined by derived classes
     model_class: Type[SklearnModel]
@@ -384,17 +354,10 @@ class BasicClusteringRecommender(Recommender, ABC):
         """
         raise NotImplementedError("This line in the code should be unreachable. Sry.")
 
-    def _recommend(
-        self,
-        batch_quantity: int = 1,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
+    def _recommend_discrete(
+        self, candidates_comp: pd.DataFrame, batch_quantity: int
     ) -> pd.Index:
         """See base class."""
-        _, candidates_comp = self.searchspace.discrete.get_candidates(
-            allow_repeated_recommendations,
-            allow_recommending_already_measured,
-        )
         self.candidates_scaled = np.ascontiguousarray(
             self.scaler.transform(candidates_comp)
         )
@@ -416,7 +379,7 @@ class BasicClusteringRecommender(Recommender, ABC):
         return candidates_comp.index[selection]
 
 
-class PAMInitialStrategy(BasicClusteringRecommender):
+class PAMClusteringRecommender(SKLearnClusteringRecommender):
     """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
     type = "CLUSTERING_PAM"
@@ -436,7 +399,7 @@ class PAMInitialStrategy(BasicClusteringRecommender):
         return selection
 
 
-class KMeansInitialStrategy(BasicClusteringRecommender):
+class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means initial clustering strategy."""
 
     type = "CLUSTERING_KMEANS"
@@ -466,13 +429,13 @@ class KMeansInitialStrategy(BasicClusteringRecommender):
         # assigned.
         predicted_clusters = self.model.predict(self.candidates_scaled)
         for k_cluster in range(self.model.cluster_centers_.shape[0]):
-            inds = predicted_clusters != k_cluster
-            distances[inds, k_cluster] = np.inf
+            idxs = predicted_clusters != k_cluster
+            distances[idxs, k_cluster] = np.inf
         selection = np.argmin(distances, axis=0).tolist()
         return selection
 
 
-class GaussianMixtureInitialStrategy(BasicClusteringRecommender):
+class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) initial clustering strategy."""
 
     type = "CLUSTERING_GMM"
@@ -505,12 +468,40 @@ class GaussianMixtureInitialStrategy(BasicClusteringRecommender):
         return selection
 
 
-class FPSRecommender(Recommender):
+class FPSRecommender(AbstractDiscreteRecommender):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
 
     type = "FPS"
-    compatible_discrete = True
-    compatible_continuous = False
+
+    def _recommend_discrete(
+        self, candidates_comp: pd.DataFrame, batch_quantity: int
+    ) -> pd.Index:
+        """See base class."""
+        ilocs = farthest_point_sampling(candidates_comp.values, batch_quantity)
+        return candidates_comp.index[ilocs]
+
+
+class AbstractContinuousRecommender(Recommender, ABC):
+    """
+    Abstract class for continuous recommenders
+    """
+
+    type = "ABSTRACT_CONTINUOUS_RECOMMENDER"
+
+    @abstractmethod
+    def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
+        """
+        Recommends candidates from a continuous space.
+
+        Parameters
+        ----------
+        batch_quantity : int
+            number of requested recommendations
+
+        Returns
+        -------
+        pd.DataFrame
+        """
 
     def _recommend(
         self,
@@ -519,10 +510,107 @@ class FPSRecommender(Recommender):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
-        _, candidates_comp = self.searchspace.discrete.get_candidates(
-            allow_repeated_recommendations,
-            allow_recommending_already_measured,
+        return self._recommend_continuous(batch_quantity)
+
+
+# TODO finalize class and type name below
+class PurelyContinuousRecommender(AbstractContinuousRecommender):
+    """
+    Recommends the next set of experiments by means of sequential greedy optimization
+    in a purely continuous space.
+    """
+
+    type = "CONTI"
+
+    def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
+        """See base class."""
+
+        try:
+            points, _ = optimize_acqf(
+                acq_function=self.acquisition_function,
+                bounds=self.searchspace.param_bounds_comp,
+                q=batch_quantity,
+                num_restarts=5,  # TODO make choice for num_restarts
+                raw_samples=10,  # TODO make choice for raw_samples
+            )
+        except AttributeError as ex:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions."
+            ) from ex
+
+        rec = pd.DataFrame(points, columns=self.searchspace.continuous.param_names)
+
+        return rec
+
+
+class AbstractCompositeRecommender(Recommender):
+    """
+    Abstract composite recommender
+    """
+
+    type = "ABSTRACT_COMPOSITE"
+
+    @abstractmethod
+    def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
+        """See AbstractContinuousRecommender._recommend_continuous"""
+
+    @abstractmethod
+    def _recommend_discrete(
+        self, candidates_comp: pd.DataFrame, batch_quantity: int
+    ) -> pd.Index:
+        """See AbstractDiscreteRecommender._recommend_discrete"""
+
+    def _recommend(
+        self,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
+        """See base class."""
+
+        # Discrete part if applicable
+        rec_disc = pd.DataFrame()
+        if not self.searchspace.discrete.empty:
+            _, candidates_comp = self.searchspace.discrete.get_candidates(
+                allow_repeated_recommendations,
+                allow_recommending_already_measured,
+            )
+
+            # randomly select from discrete candidates
+            idxs = self._recommend_discrete(candidates_comp, batch_quantity)
+            rec_disc = self.searchspace.discrete.exp_rep.loc[idxs, :]
+            self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+
+        # Continuous part if applicable
+        rec_conti = pd.DataFrame()
+        if not self.searchspace.continuous.empty:
+            rec_conti = self._recommend_continuous(batch_quantity)
+
+        # If both spaces are present assure mathing indices
+        rec_conti.index = rec_disc.index
+
+        # Merge sub-parts and reorder columns to match original order
+        rec = pd.concat([rec_disc, rec_conti], axis=1).reindex(
+            columns=[p.name for p in self.searchspace.parameters]
         )
 
-        ilocs = farthest_point_sampling(candidates_comp.values, batch_quantity)
-        return candidates_comp.index[ilocs]
+        return rec
+
+
+class RandomRecommender(AbstractCompositeRecommender):
+    """
+    Recommends experiments randomly.
+    """
+
+    type = "RANDOM"
+
+    def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
+        """See base class."""
+        return self.searchspace.continuous.samples_random(n_points=batch_quantity)
+
+    def _recommend_discrete(
+        self, candidates_comp: pd.DataFrame, batch_quantity: int
+    ) -> pd.Index:
+        """See base class."""
+        return candidates_comp.sample(n=batch_quantity).index
