@@ -6,12 +6,19 @@ Recommender classes for optimizing acquisition functions.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import ClassVar, Dict, Optional, Type
+from typing import ClassVar, Dict, List, Optional, Type, TypeVar
 
+import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.optim import optimize_acqf, optimize_acqf_discrete
+from scipy.stats import multivariate_normal
+from sklearn.cluster import KMeans
+from sklearn.metrics import pairwise_distances
+from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import StandardScaler
+from sklearn_extra.cluster import KMedoids
 
 from .searchspace import SearchSpace
 from .utils import (
@@ -20,6 +27,9 @@ from .utils import (
     NoMCAcquisitionFunctionError,
     to_tensor,
 )
+from .utils.sampling_algorithms import farthest_point_sampling
+
+SklearnModel = TypeVar("SklearnModel")
 
 
 class Recommender(ABC):
@@ -36,7 +46,12 @@ class Recommender(ABC):
     compatible_discrete: ClassVar[bool]
     compatible_continuous: ClassVar[bool]
 
-    def __init__(self, acquisition_function: Optional[AcquisitionFunction]):
+    def __init__(
+        self,
+        searchspace: SearchSpace,
+        acquisition_function: Optional[AcquisitionFunction],
+    ):
+        self.searchspace = searchspace
         self.acquisition_function = acquisition_function
 
     @classmethod
@@ -48,18 +63,15 @@ class Recommender(ABC):
 
     def recommend(
         self,
-        searchspace: SearchSpace,
         batch_quantity: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
-    ) -> pd.DataFrame:
+    ) -> pd.Index:
         """
         Recommends the next experiments to be conducted.
 
         Parameters
         ----------
-        searchspace : SearchSpace
-            The search space from which recommendations should be provided.
         batch_quantity : int
             The number of experiments to be conducted in parallel.
         allow_repeated_recommendations : bool
@@ -77,10 +89,9 @@ class Recommender(ABC):
         # TODO[11179]: Potentially move metadata update from _recommend to here
 
         # Validate the search space
-        self.check_searchspace_compatibility(searchspace)
+        self.check_searchspace_compatibility(self.searchspace)
 
         return self._recommend(
-            searchspace,
             batch_quantity,
             allow_repeated_recommendations,
             allow_recommending_already_measured,
@@ -89,7 +100,6 @@ class Recommender(ABC):
     @abstractmethod
     def _recommend(
         self,
-        searchspace: SearchSpace,
         batch_quantity: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
@@ -149,14 +159,13 @@ class SequentialGreedyRecommender(Recommender):
 
     def _recommend(
         self,
-        searchspace: SearchSpace,
         batch_quantity: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
 
-        candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
+        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
             allow_recommending_already_measured,
         )
@@ -188,7 +197,7 @@ class SequentialGreedyRecommender(Recommender):
         assert len(points) == len(idxs)
 
         rec = candidates_exp.loc[idxs, :]
-        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
 
         return rec
 
@@ -207,14 +216,13 @@ class MarginalRankingRecommender(Recommender):
 
     def _recommend(
         self,
-        searchspace: SearchSpace,
         batch_quantity: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See base class."""
 
-        candidates_exp, candidates_comp = searchspace.discrete.get_candidates(
+        candidates_exp, candidates_comp = self.searchspace.discrete.get_candidates(
             allow_repeated_recommendations,
             allow_recommending_already_measured,
         )
@@ -229,7 +237,7 @@ class MarginalRankingRecommender(Recommender):
         # return top ranked candidates
         idxs = candidates_comp.index[ilocs[:batch_quantity].numpy()]
         rec = candidates_exp.loc[idxs, :]
-        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+        self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
 
         return rec
 
@@ -245,7 +253,6 @@ class RandomRecommender(Recommender):
 
     def _recommend(
         self,
-        searchspace: SearchSpace,
         batch_quantity: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
@@ -254,24 +261,31 @@ class RandomRecommender(Recommender):
 
         # Discrete part if applicable
         rec_disc = pd.DataFrame()
-        if not searchspace.discrete.empty:
-            candidates_exp, _ = searchspace.discrete.get_candidates(
+        if not self.searchspace.discrete.empty:
+            candidates_exp, _ = self.searchspace.discrete.get_candidates(
                 allow_repeated_recommendations,
                 allow_recommending_already_measured,
             )
 
             # randomly select from discrete candidates
             rec_disc = candidates_exp.sample(n=batch_quantity)
-            searchspace.discrete.metadata.loc[rec_disc.index, "was_recommended"] = True
+            self.searchspace.discrete.metadata.loc[
+                rec_disc.index, "was_recommended"
+            ] = True
 
         # Continuous part if applicable
         rec_conti = pd.DataFrame()
-        if not searchspace.continuous.empty:
-            rec_conti = searchspace.continuous.samples_random(n_points=batch_quantity)
+        if not self.searchspace.continuous.empty:
+            rec_conti = self.searchspace.continuous.samples_random(
+                n_points=batch_quantity
+            )
+
+        # If both spaces are present assure mathing indices
+        rec_conti.index = rec_disc.index
 
         # Merge sub-parts and reorder columns to match original order
         rec = pd.concat([rec_disc, rec_conti], axis=1).reindex(
-            columns=[p.name for p in searchspace.parameters]
+            columns=[p.name for p in self.searchspace.parameters]
         )
 
         return rec
@@ -290,7 +304,6 @@ class PurelyContinuousRecommender(Recommender):
 
     def _recommend(
         self,
-        searchspace: SearchSpace,
         batch_quantity: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
@@ -300,7 +313,7 @@ class PurelyContinuousRecommender(Recommender):
         try:
             points, _ = optimize_acqf(
                 acq_function=self.acquisition_function,
-                bounds=searchspace.param_bounds_comp,
+                bounds=self.searchspace.param_bounds_comp,
                 q=batch_quantity,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
@@ -311,6 +324,205 @@ class PurelyContinuousRecommender(Recommender):
                 f"acquisition functions."
             ) from ex
 
-        rec = pd.DataFrame(points, columns=searchspace.continuous.param_names)
+        rec = pd.DataFrame(points, columns=self.searchspace.continuous.param_names)
 
         return rec
+
+
+class BasicClusteringRecommender(Recommender, ABC):
+    """
+    Intermediate class for cluster-based selection of discrete candidates.
+
+    Suitable for sklearn-like models that have a `fit` and `predict` method. Specific
+    model parameters and cluster sub-selection techniques can be declared in the
+    derived classes.
+    """
+
+    type = "CLUSTERING_BASECLASS"
+    compatible_discrete = True
+    compatible_continuous = False
+
+    # Properties that need to be defined by derived classes
+    model_class: Type[SklearnModel]
+    model_cluster_num_parameter_name: str
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.model_params = kwargs
+        self._use_custom_selector = False
+
+        # Members that will be initialized during the recommendation process
+        self.model: Optional[SklearnModel] = None
+        self.candidates_scaled: Optional[pd.DataFrame] = None
+
+        # Fit scaler on entire searchspace
+        # TODO [Scaling]: scaling should be handled by searchspace object
+        self.scaler = StandardScaler()
+        self.scaler.fit(self.searchspace.discrete.comp_rep.values)
+
+    def _make_selection_default(self) -> List[int]:
+        """
+        Basic model-agnostic method that selects one candidate from each cluster
+        uniformly at random.
+
+        Returns
+        -------
+        selection : List[int]
+           Positional indices of the selected candidates.
+        """
+        assigned_clusters = self.model.predict(self.candidates_scaled)
+        selection = [
+            np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
+            for cluster in np.unique(assigned_clusters)
+        ]
+        return selection
+
+    def _make_selection_custom(self) -> List[int]:
+        """
+        A model-specific method to select candidates from the computed clustering.
+        May be implemented by the derived class.
+        """
+        raise NotImplementedError("This line in the code should be unreachable. Sry.")
+
+    def _recommend(
+        self,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.Index:
+        """See base class."""
+        _, candidates_comp = self.searchspace.discrete.get_candidates(
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
+        self.candidates_scaled = np.ascontiguousarray(
+            self.scaler.transform(candidates_comp)
+        )
+
+        # Set model parameters and perform fit
+        self.model_params.update(
+            {self.model_cluster_num_parameter_name: batch_quantity}
+        )
+        self.model = self.model_class(**self.model_params)
+        self.model.fit(self.candidates_scaled)
+
+        # Perform selection based on assigned clusters
+        if self._use_custom_selector:
+            selection = self._make_selection_custom()
+        else:
+            selection = self._make_selection_default()
+
+        # Convert positional indices into DataFrame indices and return result
+        return candidates_comp.index[selection]
+
+
+class PAMInitialStrategy(BasicClusteringRecommender):
+    """Partitioning Around Medoids (PAM) initial clustering strategy."""
+
+    type = "CLUSTERING_PAM"
+    model_class = KMedoids
+    model_cluster_num_parameter_name = "n_clusters"
+
+    def __init__(self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs):
+        super().__init__(max_iter=max_iter, init="k-medoids++", **kwargs)
+        self._use_custom_selector = use_custom_selector
+
+    def _make_selection_custom(self) -> List[int]:
+        """
+        In PAM, cluster centers (medoids) correspond to actual data points,
+        which means they can be directly used for the selection.
+        """
+        selection = self.model.medoid_indices_.tolist()
+        return selection
+
+
+class KMeansInitialStrategy(BasicClusteringRecommender):
+    """K-means initial clustering strategy."""
+
+    type = "CLUSTERING_KMEANS"
+    model_class = KMeans
+    model_cluster_num_parameter_name = "n_clusters"
+
+    def __init__(
+        self,
+        use_custom_selector: bool = True,
+        n_init: int = 50,
+        max_iter: int = 1000,
+        **kwargs,
+    ):
+        super().__init__(n_init=n_init, max_iter=max_iter, **kwargs)
+        self._use_custom_selector = use_custom_selector
+
+    def _make_selection_custom(self) -> List[int]:
+        """
+        For K-means, a reasonable choice is to pick the points closest to each
+        cluster center.
+        """
+        distances = pairwise_distances(
+            self.candidates_scaled, self.model.cluster_centers_
+        )
+        # Set the distances of points that were not assigned by the model to that
+        # cluster to infinity. This assures that one unique point per cluster is
+        # assigned.
+        predicted_clusters = self.model.predict(self.candidates_scaled)
+        for k_cluster in range(self.model.cluster_centers_.shape[0]):
+            inds = predicted_clusters != k_cluster
+            distances[inds, k_cluster] = np.inf
+        selection = np.argmin(distances, axis=0).tolist()
+        return selection
+
+
+class GaussianMixtureInitialStrategy(BasicClusteringRecommender):
+    """Gaussian mixture model (GMM) initial clustering strategy."""
+
+    type = "CLUSTERING_GMM"
+    model_class = GaussianMixture
+    model_cluster_num_parameter_name = "n_components"
+
+    def __init__(self, use_custom_selector: bool = True, **kwargs):
+        super().__init__(**kwargs)
+        self._use_custom_selector = use_custom_selector
+
+    def _make_selection_custom(self) -> List[int]:
+        """
+        In a GMM, a reasonable choice is to pick the point with the highest
+        probability densities for each cluster.
+        """
+        predicted_clusters = self.model.predict(self.candidates_scaled)
+        selection = []
+        for k_cluster in range(self.model.n_components):
+            density = multivariate_normal(
+                cov=self.model.covariances_[k_cluster],
+                mean=self.model.means_[k_cluster],
+            ).logpdf(self.candidates_scaled)
+
+            # For selecting a point from this cluster we only consider points that were
+            # assigned to the current cluster by the model, hence set the density of
+            # others to 0
+            density[predicted_clusters != k_cluster] = 0.0
+
+            selection.append(np.argmax(density).item())
+        return selection
+
+
+class FPSRecommender(Recommender):
+    """An initial strategy that selects the candidates via Farthest Point Sampling."""
+
+    type = "FPS"
+    compatible_discrete = True
+    compatible_continuous = False
+
+    def _recommend(
+        self,
+        batch_quantity: int = 1,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
+        """See base class."""
+        _, candidates_comp = self.searchspace.discrete.get_candidates(
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
+        )
+
+        ilocs = farthest_point_sampling(candidates_comp.values, batch_quantity)
+        return candidates_comp.index[ilocs]
