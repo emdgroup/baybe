@@ -602,8 +602,10 @@ class AbstractCompositeRecommender(Recommender, ABC):
         if not self.searchspace.continuous.empty:
             rec_conti = self._recommend_continuous(batch_quantity)
 
-        # If both spaces are present assure mathing indices
-        rec_conti.index = rec_disc.index
+        # If both spaces are present assure matching indices. Since the discrete indices
+        # have meaning we choose them
+        if not (self.searchspace.discrete.empty or self.searchspace.continuous.empty):
+            rec_conti.index = rec_disc.index
 
         # Merge sub-parts and reorder columns to match original order
         rec = pd.concat([rec_disc, rec_conti], axis=1).reindex(
