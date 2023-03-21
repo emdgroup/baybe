@@ -6,7 +6,7 @@ Recommender classes for optimizing acquisition functions.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import ClassVar, Dict, List, Optional, Type, TypeVar
+from typing import Dict, List, Optional, Type, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -44,9 +44,6 @@ class Recommender(ABC):
     type: str
     SUBCLASSES: Dict[str, Type[Recommender]] = {}
 
-    compatible_discrete: ClassVar[bool]
-    compatible_continuous: ClassVar[bool]
-
     def __init__(
         self,
         searchspace: SearchSpace,
@@ -54,13 +51,14 @@ class Recommender(ABC):
     ):
         self.searchspace = searchspace
         self.acquisition_function = acquisition_function
+        self.check_searchspace_compatibility(self.searchspace)
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
+            Recommender.SUBCLASSES[cls.type] = cls
 
     def recommend(
         self,
@@ -157,6 +155,21 @@ class Recommender(ABC):
         return isinstance(
             self, (AbstractContinuousRecommender, AbstractCompositeRecommender)
         )
+
+    @property
+    def is_model_free(self):
+        """
+        Whether the recommender is model-free and can be used without training data
+        """
+        return isinstance(self, ModelFreeRecommender)
+
+
+class ModelFreeRecommender(ABC):
+    """
+    Abstract class for recommenders that are model-free
+    """
+
+    type = "ABSTRACT_MODEL_FREE_RECOMMENDER"
 
 
 class AbstractDiscreteRecommender(Recommender, ABC):
@@ -301,7 +314,9 @@ class MarginalRankingRecommender(AbstractDiscreteRecommender):
         return idxs
 
 
-class SKLearnClusteringRecommender(AbstractDiscreteRecommender, ABC):
+class SKLearnClusteringRecommender(
+    AbstractDiscreteRecommender, ModelFreeRecommender, ABC
+):
     """
     Intermediate class for cluster-based selection of discrete candidates.
 
@@ -468,7 +483,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
         return selection
 
 
-class FPSRecommender(AbstractDiscreteRecommender):
+class FPSRecommender(AbstractDiscreteRecommender, ModelFreeRecommender):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
 
     type = "FPS"
@@ -544,7 +559,7 @@ class PurelyContinuousRecommender(AbstractContinuousRecommender):
         return rec
 
 
-class AbstractCompositeRecommender(Recommender):
+class AbstractCompositeRecommender(Recommender, ABC):
     """
     Abstract composite recommender
     """
@@ -598,7 +613,7 @@ class AbstractCompositeRecommender(Recommender):
         return rec
 
 
-class RandomRecommender(AbstractCompositeRecommender):
+class RandomRecommender(AbstractCompositeRecommender, ModelFreeRecommender):
     """
     Recommends experiments randomly.
     """
