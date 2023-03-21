@@ -51,6 +51,8 @@ class Recommender(ABC):
     # it is generally assumed that a recommender is model-based and needs data. If this
     # is not the case the derived class should override is_model_free
     is_model_free: bool = False
+    compatible_discrete: bool = False
+    compatible_continuous: bool = False
 
     def __init__(
         self,
@@ -146,24 +148,6 @@ class Recommender(ABC):
                 f"search spaces."
             )
 
-    @property
-    def compatible_discrete(self):
-        """
-        Whether the recommender is compatible with discrete search spaces
-        """
-        return isinstance(
-            self, (AbstractDiscreteRecommender, AbstractCompositeRecommender)
-        )
-
-    @property
-    def compatible_continuous(self):
-        """
-        Whether the recommender is compatible with continuous search spaces
-        """
-        return isinstance(
-            self, (AbstractContinuousRecommender, AbstractCompositeRecommender)
-        )
-
 
 class AbstractDiscreteRecommender(Recommender, ABC):
     """
@@ -171,6 +155,7 @@ class AbstractDiscreteRecommender(Recommender, ABC):
     """
 
     type = "ABSTRACT_DISCRETE_RECOMMENDER"
+    compatible_discrete: bool = True
 
     @abstractmethod
     def _recommend_discrete(
@@ -502,6 +487,7 @@ class AbstractContinuousRecommender(Recommender, ABC):
     """
 
     type = "ABSTRACT_CONTINUOUS_RECOMMENDER"
+    compatible_continuous: bool = True
 
     @abstractmethod
     def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
@@ -565,6 +551,8 @@ class AbstractCompositeRecommender(Recommender, ABC):
     """
 
     type = "ABSTRACT_COMPOSITE"
+    compatible_discrete: bool = True
+    compatible_continuous: bool = True
 
     @abstractmethod
     def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
