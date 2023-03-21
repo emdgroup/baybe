@@ -18,7 +18,11 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
 from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
-from sklearn_extra.cluster import KMedoids
+
+try:
+    from sklearn_extra.cluster import KMedoids
+except ImportError:
+    KMedoids = None
 
 from .searchspace import SearchSpace
 from .utils import (
@@ -397,24 +401,28 @@ class SKLearnClusteringRecommender(
         return candidates_comp.index[selection]
 
 
-class PAMClusteringRecommender(SKLearnClusteringRecommender):
-    """Partitioning Around Medoids (PAM) initial clustering strategy."""
+if KMedoids:
 
-    type = "CLUSTERING_PAM"
-    model_class = KMedoids
-    model_cluster_num_parameter_name = "n_clusters"
+    class PAMClusteringRecommender(SKLearnClusteringRecommender):
+        """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-    def __init__(self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs):
-        super().__init__(max_iter=max_iter, init="k-medoids++", **kwargs)
-        self._use_custom_selector = use_custom_selector
+        type = "CLUSTERING_PAM"
+        model_class = KMedoids
+        model_cluster_num_parameter_name = "n_clusters"
 
-    def _make_selection_custom(self) -> List[int]:
-        """
-        In PAM, cluster centers (medoids) correspond to actual data points,
-        which means they can be directly used for the selection.
-        """
-        selection = self.model.medoid_indices_.tolist()
-        return selection
+        def __init__(
+            self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs
+        ):
+            super().__init__(max_iter=max_iter, init="k-medoids++", **kwargs)
+            self._use_custom_selector = use_custom_selector
+
+        def _make_selection_custom(self) -> List[int]:
+            """
+            In PAM, cluster centers (medoids) correspond to actual data points,
+            which means they can be directly used for the selection.
+            """
+            selection = self.model.medoid_indices_.tolist()
+            return selection
 
 
 class KMeansClusteringRecommender(SKLearnClusteringRecommender):
