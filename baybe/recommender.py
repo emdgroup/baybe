@@ -48,6 +48,10 @@ class Recommender(ABC):
     type: str
     SUBCLASSES: Dict[str, Type[Recommender]] = {}
 
+    # it is generally assumed that a recommender is model-based and needs data. If this
+    # is not the case the derived class should override is_model_free
+    is_model_free: bool = False
+
     def __init__(
         self,
         searchspace: SearchSpace,
@@ -62,7 +66,7 @@ class Recommender(ABC):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         if not isabstract(cls):
-            Recommender.SUBCLASSES[cls.type] = cls
+            cls.SUBCLASSES[cls.type] = cls
 
     def recommend(
         self,
@@ -159,21 +163,6 @@ class Recommender(ABC):
         return isinstance(
             self, (AbstractContinuousRecommender, AbstractCompositeRecommender)
         )
-
-    @property
-    def is_model_free(self):
-        """
-        Whether the recommender is model-free and can be used without training data
-        """
-        return isinstance(self, ModelFreeRecommender)
-
-
-class ModelFreeRecommender(ABC):
-    """
-    Abstract class for recommenders that are model-free
-    """
-
-    type = "ABSTRACT_MODEL_FREE_RECOMMENDER"
 
 
 class AbstractDiscreteRecommender(Recommender, ABC):
@@ -318,9 +307,7 @@ class MarginalRankingRecommender(AbstractDiscreteRecommender):
         return idxs
 
 
-class SKLearnClusteringRecommender(
-    AbstractDiscreteRecommender, ModelFreeRecommender, ABC
-):
+class SKLearnClusteringRecommender(AbstractDiscreteRecommender, ABC):
     """
     Intermediate class for cluster-based selection of discrete candidates.
 
@@ -330,6 +317,7 @@ class SKLearnClusteringRecommender(
     """
 
     type = "ABSTRACT_SKLEARN_CLUSTERING"
+    is_model_free: bool = True
 
     # Properties that need to be defined by derived classes
     model_class: Type[SklearnModel]
@@ -494,10 +482,11 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
         return selection
 
 
-class FPSRecommender(AbstractDiscreteRecommender, ModelFreeRecommender):
+class FPSRecommender(AbstractDiscreteRecommender):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
 
     type = "FPS"
+    is_model_free: bool = True
 
     def _recommend_discrete(
         self, candidates_comp: pd.DataFrame, batch_quantity: int
@@ -624,12 +613,13 @@ class AbstractCompositeRecommender(Recommender, ABC):
         return rec
 
 
-class RandomRecommender(AbstractCompositeRecommender, ModelFreeRecommender):
+class RandomRecommender(AbstractCompositeRecommender):
     """
     Recommends experiments randomly.
     """
 
     type = "RANDOM"
+    is_model_free: bool = True
 
     def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
         """See base class."""

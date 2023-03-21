@@ -22,7 +22,7 @@ from botorch.acquisition import (
 from pydantic import BaseModel, Extra, validator
 
 from .acquisition import debotorchize
-from .recommender import ModelFreeRecommender, Recommender
+from .recommender import Recommender
 from .searchspace import SearchSpace
 from .surrogate import SurrogateModel
 from .utils import check_if_in, to_tensor
@@ -41,7 +41,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         Literal["PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB"],
         Type[AcquisitionFunction],
     ] = "qEI"  # TODO: automatic selection between EI and qEI depending on query size
-    initial_recommender_cls: Union[str, Type[ModelFreeRecommender]] = "RANDOM"
+    initial_recommender_cls: Union[str, Type[Recommender]] = "RANDOM"
     recommender_cls: Union[str, Type[Recommender]] = "SEQUENTIAL_GREEDY"
 
     # TODO: The following member declarations become obsolete in pydantic 2.0 when
