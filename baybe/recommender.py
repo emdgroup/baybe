@@ -332,7 +332,10 @@ class SKLearnClusteringRecommender(
     model_cluster_num_parameter_name: str
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(
+            searchspace=kwargs.pop("searchspace"),
+            acquisition_function=kwargs.pop("acquisition_function"),
+        )
         self.model_params = kwargs
         self._use_custom_selector = False
 
@@ -343,7 +346,7 @@ class SKLearnClusteringRecommender(
         # Fit scaler on entire searchspace
         # TODO [Scaling]: scaling should be handled by searchspace object
         self.scaler = StandardScaler()
-        self.scaler.fit(self.searchspace.discrete.comp_rep.values)
+        self.scaler.fit(self.searchspace.discrete.comp_rep)
 
     def _make_selection_default(self) -> List[int]:
         """

@@ -93,6 +93,8 @@ config_dict_base = {
 
 config_variants = {}
 for recommender_type in Recommender.SUBCLASSES:
+    if recommender_type == "CONTI":
+        continue
     config_variants[recommender_type] = {
         "strategy": {
             "recommender_cls": recommender_type,
@@ -105,9 +107,9 @@ results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=lookup,
     impute_mode="worst",
-    n_exp_iterations=10,
+    n_exp_iterations=12,
     n_mc_iterations=20,
-    batch_quantity=10,
+    batch_quantity=5,
     config_variants=config_variants,
 )
 
