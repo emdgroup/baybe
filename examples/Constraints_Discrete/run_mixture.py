@@ -79,7 +79,7 @@ config_dict = {
     "strategy": {
         # "surrogate_model_cls": "GP",
     },
-    # The constrains simulate a situation where we want to mix up to three solvents,
+    # The constraints simulate a situation where we want to mix up to three solvents,
     # but their respective fractions need to sum up to 100. Also, the solvents should
     # never be chosen twice.
     "constraints": [
