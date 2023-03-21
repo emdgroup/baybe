@@ -236,9 +236,14 @@ invalid_config_updates = {
             ],
         }
     },
-    "strat_invalid_init_strat": {
+    "strat_invalid_initial_recommender1": {
         "strategy": {
-            "initial_strategy": "INVALID_CHOICE",
+            "initial_recommender_cls": "INVALID_CHOICE",
+        },
+    },
+    "strat_invalid_initial_recommender2": {
+        "strategy": {
+            "initial_recommender_cls": "SEQUENTIAL_GREEDY",
         },
     },
     "strat_invalid_surrogate": {

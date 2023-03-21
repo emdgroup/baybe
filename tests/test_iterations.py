@@ -11,7 +11,8 @@ import pytest
 import torch
 
 from baybe.core import BayBE, BayBEConfig
-from baybe.strategy import InitialStrategy, Strategy
+from baybe.recommender import Recommender
+from baybe.strategy import Strategy
 from baybe.surrogate import SurrogateModel
 from baybe.utils import add_fake_results, add_parameter_noise, subclasses_recursive
 
@@ -144,7 +145,7 @@ config_updates = {
     "aq_random": {  # is not covered by the loop below hence added manually
         "strategy": {
             "recommender_cls": "RANDOM",
-            "initial_strategy": "RANDOM",
+            "initial_recommender_cls": "RANDOM",
         }
     },
 }
@@ -154,16 +155,17 @@ config_updates = {
 valid_surrogate_models = [
     cls.type for cls in subclasses_recursive(SurrogateModel) if ABC not in cls.__bases__
 ]
-valid_init_strats = [
-    cls.type
-    for cls in subclasses_recursive(InitialStrategy)
-    if ABC not in cls.__bases__
+valid_initial_recommenders = [
+    subclass_name
+    for subclass_name, subclass in Recommender.SUBCLASSES.items()
+    if subclass.is_model_free
 ]
 # AQ function type hint looks like this:
 # Union[Literal["PM", ...], Type[AcquisitionFunction]]
 valid_aq_functions = get_args(
     get_args(get_type_hints(Strategy)["acquisition_function_cls"])[0]
 )
+
 
 for itm in valid_aq_functions:
     # TODO: The recommender class is fixed here to avoid getting invalid combinations of
@@ -190,12 +192,12 @@ for itm in valid_surrogate_models:
             },
         }
     )
-for itm in valid_init_strats:
+for itm in valid_initial_recommenders:
     config_updates.update(
         {
             f"init_{itm}": {
                 "strategy": {
-                    "initial_strategy": itm,
+                    "initial_recommender_cls": itm,
                 }
             },
         }
