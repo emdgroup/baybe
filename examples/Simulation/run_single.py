@@ -142,9 +142,9 @@ config_dict_v5 = {
 
 results = simulate_from_configs(
     config_base=config_dict_base,
-    lookup=None,
+    lookup=None,  # this will create some random measurements
     n_exp_iterations=25,
-    n_mc_iterations=200,
+    n_mc_iterations=5,
     batch_quantity=1,
     config_variants={
         "GP | Mordred": config_dict_v1,

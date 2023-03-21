@@ -90,7 +90,7 @@ config_dict_base = {
     },
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
     },
 }
 
@@ -98,8 +98,8 @@ config_dict_v1 = {
     "project_name": "PAM",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "PAM",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "initial_recommender_cls": "CLUSTERING_PAM",
     },
 }
 
@@ -107,8 +107,8 @@ config_dict_v2 = {
     "project_name": "K-Means",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "KMEANS",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "initial_recommender_cls": "CLUSTERING_KMEANS",
     },
 }
 
@@ -116,17 +116,26 @@ config_dict_v3 = {
     "project_name": "Gaussian Mixture",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "GMM",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "initial_recommender_cls": "CLUSTERING_GMM",
     },
 }
 
 config_dict_v4 = {
+    "project_name": "FPS",
+    "strategy": {
+        "surrogate_model_cls": "GP",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "initial_recommender_cls": "FPS",
+    },
+}
+
+config_dict_v5 = {
     "project_name": "Random",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "RANDOM",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "initial_recommender_cls": "RANDOM",
     },
 }
 
@@ -135,13 +144,14 @@ results = simulate_from_configs(
     lookup=lookup,
     impute_mode="worst",
     n_exp_iterations=10,
-    n_mc_iterations=200,
+    n_mc_iterations=5,
     batch_quantity=5,
     config_variants={
         "PAM": config_dict_v1,
         "KMEANS": config_dict_v2,
         "GMM": config_dict_v3,
-        "RANDOM": config_dict_v4,
+        "FPS": config_dict_v4,
+        "RANDOM": config_dict_v5,
     },
 )
 

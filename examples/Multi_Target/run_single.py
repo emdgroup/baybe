@@ -61,7 +61,7 @@ config = BayBEConfig(**config_dict)
 baybe_obj = BayBE(config)
 print(baybe_obj)
 
-N_ITERATIONS = 10
+N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 

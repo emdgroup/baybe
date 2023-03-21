@@ -108,7 +108,7 @@ results = simulate_from_configs(
     lookup=lookup,
     impute_mode="worst",
     n_exp_iterations=12,
-    n_mc_iterations=20,
+    n_mc_iterations=5,
     batch_quantity=5,
     config_variants=config_variants,
 )

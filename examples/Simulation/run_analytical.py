@@ -9,7 +9,7 @@ import seaborn as sns
 from baybe.simulation import simulate_from_configs
 
 DIMENSIONS = 3
-POINTS_PER_DIM = 20
+POINTS_PER_DIM = 10
 
 
 def hartmann6(x1, x2, x3, x4, x5, x6):
@@ -169,8 +169,8 @@ config_dict_v2 = {
 results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=hartmann3,
-    n_exp_iterations=30,
-    n_mc_iterations=200,
+    n_exp_iterations=20,
+    n_mc_iterations=5,
     batch_quantity=3,
     config_variants={
         "GP": config_dict_v1,

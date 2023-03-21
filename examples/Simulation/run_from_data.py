@@ -38,7 +38,7 @@ results = simulate_from_data(
     lookup=lookup,
     impute_mode="ignore",
     n_exp_iterations=15,
-    n_mc_iterations=50,
+    n_mc_iterations=5,
     batch_quantity=2,
     parameter_types={
         "All Cat": [

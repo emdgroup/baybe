@@ -220,7 +220,7 @@ results = simulate_from_configs(
     lookup=lookup,
     impute_mode="worst",
     n_exp_iterations=30,
-    n_mc_iterations=200,
+    n_mc_iterations=5,
     batch_quantity=2,
     config_variants={
         "GP | Mordred": config_dict_v1,
@@ -240,4 +240,4 @@ sns.lineplot(
 plt.plot([2, 2 * 30], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
-plt.savefig("./simulation_encodings.png")
+plt.savefig("./run_encodings.png")

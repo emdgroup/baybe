@@ -9,7 +9,7 @@ import seaborn as sns
 from baybe.simulation import simulate_from_configs
 
 DIMENSIONS = 3
-POINTS_PER_DIM = 20
+POINTS_PER_DIM = 10
 
 
 def hartmann6(x1, x2, x3, x4, x5, x6):
@@ -150,17 +150,29 @@ config_dict_base = {
     "strategy": {},
 }
 
+config_variants = {}
+
 config_dict_v1 = {
     "project_name": "Random",
     "strategy": {
-        "initial_strategy": "RANDOM",
+        "initial_recommender_cls": "RANDOM",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
     },
 }
 
 config_dict_v2 = {
     "project_name": "Farthest Point Sampling",
     "strategy": {
-        "initial_strategy": "FPS",
+        "initial_recommender_cls": "FPS",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
+    },
+}
+
+config_dict_v3 = {
+    "project_name": "KMEANS Clustering",
+    "strategy": {
+        "initial_recommender_cls": "CLUSTERING_KMEANS",
+        "recommender_cls": "SEQUENTIAL_GREEDY",
     },
 }
 
@@ -169,11 +181,12 @@ results = simulate_from_configs(
     config_base=config_dict_base,
     lookup=hartmann3,
     n_exp_iterations=10,
-    n_mc_iterations=10,
-    batch_quantity=40,
+    n_mc_iterations=5,
+    batch_quantity=5,
     config_variants={
         "RANDOM": config_dict_v1,
         "FPS": config_dict_v2,
+        "KMEANS": config_dict_v3,
     },
 )
 
@@ -181,4 +194,4 @@ print(results)
 
 sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Variant")
 plt.gcf().set_size_inches(24, 8)
-plt.savefig("./initial_strategies.png")
+plt.savefig("./run_analytical.png")
