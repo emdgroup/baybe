@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Tests for different search space types and their compatible recommenders
+
+### Changed
+- Initial strategies converted to recommenders
+- Config keyword **initial_strategy** replaced by **initial_recommender_cls**
+- Config keywords for the clustering recommenders changed from `x` to `CLUSTERING_x`
+- skicit-learn-extra is now optional dependency in the [extra] group
+
+### Fixed
+- Dimension error due to incorrect parameter bounds for constrained search spaces
+
 ## [0.2.3] - 2023-03-14
 ### Added
 - Parsing for continuous parameters
