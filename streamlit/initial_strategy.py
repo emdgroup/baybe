@@ -8,7 +8,10 @@ import plotly.graph_objects as go
 import pydantic
 import streamlit as st
 
-from baybe.strategy import InitialStrategy
+from baybe.parameters import NumericDiscrete
+from baybe.recommender import Recommender
+
+from baybe.searchspace import SearchSpace
 from sklearn.datasets import make_blobs
 
 
@@ -62,7 +65,11 @@ data_distributions = {
 }
 
 # collect all available strategies
-selection_strategies = InitialStrategy.SUBCLASSES
+selection_strategies = {
+    name: subclass
+    for name, subclass in Recommender.SUBCLASSES.items()
+    if subclass.is_model_free
+}
 
 
 def main():
@@ -102,12 +109,28 @@ def main():
     np.random.seed(random_seed)
 
     # create the points and the selection
-    points = data_distributions[distribution](n_points, **distribution_params)
-    strategy = selection_strategies[strategy_name]()
-    selection = strategy.recommend(pd.DataFrame(points), n_selected)
+    points = pd.DataFrame(
+        data_distributions[distribution](n_points, **distribution_params)
+    )
+    searchspace = SearchSpace(
+        parameters=[NumericDiscrete(name="bla", values=[1, 2, 3])],
+        empty_encoding=True,
+        init_dataframes=False,
+    )
+    searchspace.discrete.comp_rep = points
+    searchspace.discrete.exp_rep = points
+    searchspace.discrete.metadata = pd.DataFrame(
+        {"dont_recommend": False, "was_recommended": False, "was_measured": False},
+        index=points.index,
+    )
+
+    strategy = selection_strategies[strategy_name](
+        searchspace=searchspace, acquisition_function=None
+    )
+    selection = strategy.recommend(batch_quantity=n_selected)
 
     # show the result
-    fig = plot_point_selection(points, selection, strategy_name)
+    fig = plot_point_selection(points.values, selection.index.values, strategy_name)
     st.plotly_chart(fig)
 
 
