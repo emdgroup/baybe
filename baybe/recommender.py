@@ -37,6 +37,10 @@ from .utils.sampling_algorithms import farthest_point_sampling
 SklearnModel = TypeVar("SklearnModel")
 
 
+class OptionalDependencyError(Exception):
+    """An optional dependency is missing."""
+
+
 class Recommender(ABC):
     """
     Abstract base class for all recommenders.
@@ -374,28 +378,29 @@ class SKLearnClusteringRecommender(AbstractDiscreteRecommender, ABC):
         return candidates_comp.index[selection]
 
 
-if KMedoids:
+class PAMClusteringRecommender(SKLearnClusteringRecommender):
+    """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-    class PAMClusteringRecommender(SKLearnClusteringRecommender):
-        """Partitioning Around Medoids (PAM) initial clustering strategy."""
+    type = "CLUSTERING_PAM"
+    model_class = KMedoids
+    model_cluster_num_parameter_name = "n_clusters"
 
-        type = "CLUSTERING_PAM"
-        model_class = KMedoids
-        model_cluster_num_parameter_name = "n_clusters"
+    def __init__(self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs):
+        if KMedoids is None:
+            raise OptionalDependencyError(
+                f"Please install the optional dependency 'scikit-learn-extra' to use "
+                f"{self.__class__.__name__}."
+            )
+        super().__init__(max_iter=max_iter, init="k-medoids++", **kwargs)
+        self._use_custom_selector = use_custom_selector
 
-        def __init__(
-            self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs
-        ):
-            super().__init__(max_iter=max_iter, init="k-medoids++", **kwargs)
-            self._use_custom_selector = use_custom_selector
-
-        def _make_selection_custom(self) -> List[int]:
-            """
-            In PAM, cluster centers (medoids) correspond to actual data points,
-            which means they can be directly used for the selection.
-            """
-            selection = self.model.medoid_indices_.tolist()
-            return selection
+    def _make_selection_custom(self) -> List[int]:
+        """
+        In PAM, cluster centers (medoids) correspond to actual data points,
+        which means they can be directly used for the selection.
+        """
+        selection = self.model.medoid_indices_.tolist()
+        return selection
 
 
 class KMeansClusteringRecommender(SKLearnClusteringRecommender):
