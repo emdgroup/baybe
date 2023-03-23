@@ -187,7 +187,7 @@ class Objective(BaseModel, extra=Extra.forbid):
     """Class for managing optimization objectives."""
 
     mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
-    targets: conlist(dict, min_items=1)
+    targets: conlist(Target, min_items=1)
     weights: Optional[List[float]] = None
     combine_func: Literal["MEAN", "GEOM_MEAN"] = "GEOM_MEAN"
 
@@ -216,14 +216,6 @@ class Objective(BaseModel, extra=Extra.forbid):
                     )
 
         return targets
-
-    @validator("targets", always=True)
-    def instantiate_targets(
-        cls,
-        targets,
-    ):
-        """Instantiate targets."""
-        return [Target.create(t) for t in targets]
 
     @validator("weights", always=True)
     def validate_weights(cls, weights, values):

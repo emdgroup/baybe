@@ -19,7 +19,6 @@ from .parameters import Parameter
 from .searchspace import SearchSpace
 from .strategy import Strategy
 from .targets import Objective, Target
-from .utils import check_if_in
 
 log = logging.getLogger(__name__)
 
@@ -35,30 +34,15 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     #   - https://github.com/samuelcolvin/pydantic/issues/1729
 
     project_name: str = "Untitled Project"
-    parameters: conlist(dict, min_items=1)
-    objective: dict
+    parameters: conlist(Parameter, min_items=1)
+    objective: Objective
     strategy: Optional[dict] = None
-    constraints: List[dict] = []
+    constraints: List[Constraint] = []
 
     random_seed: int = 1337
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
     numerical_measurements_must_be_within_tolerance: bool = True
-
-    @validator("parameters")
-    def validate_parameter_types(cls, param_specs):
-        """
-        Validates that each parameter has a valid type.
-        All remaining parameter specifications are validated during instantiation.
-        """
-        try:
-            for param in param_specs:
-                check_if_in(param["type"], list(Parameter.SUBCLASSES.keys()))
-        except KeyError as exc:
-            raise ValueError(
-                "Each parameter needs a valid type specification."
-            ) from exc
-        return param_specs
 
     @validator("strategy", always=True)
     def validate_strategy(cls, strategy):
@@ -103,12 +87,12 @@ class BayBE:
 
         # Initialize all subcomponents
         if searchspace is None:
-            parameters = [Parameter.create(p) for p in config.parameters]
-            constraints = [Constraint.create(c) for c in config.constraints]
-            self.searchspace = SearchSpace(parameters, constraints, self._random)
+            self.searchspace = SearchSpace(
+                config.parameters, config.constraints, self._random
+            )
         else:
             self.searchspace = searchspace
-        self.objective = Objective(**config.objective)
+        self.objective = config.objective
         self.strategy = Strategy(searchspace=self.searchspace, **config.strategy)
 
         # Declare variable for storing measurements (in experimental representation)
