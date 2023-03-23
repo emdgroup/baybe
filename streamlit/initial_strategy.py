@@ -108,10 +108,13 @@ def main():
     # fix the random seed
     np.random.seed(random_seed)
 
-    # create the points and the selection
+    # create the points
     points = pd.DataFrame(
         data_distributions[distribution](n_points, **distribution_params)
     )
+
+    # create the corresponding search space
+    # TODO[11815]: We need an easy way to create search spaces from DataFrames
     searchspace = SearchSpace(
         parameters=[NumericDiscrete(name="bla", values=[1, 2, 3])],
         empty_encoding=True,
@@ -124,6 +127,8 @@ def main():
         index=points.index,
     )
 
+    # create the strategy and generate the recommendations
+    # TODO: The acquisition function should become optional for model-free methods
     strategy = selection_strategies[strategy_name](
         searchspace=searchspace, acquisition_function=None
     )
