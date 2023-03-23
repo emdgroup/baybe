@@ -10,12 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Initial strategies converted to recommenders
-- Config keyword **initial_strategy** replaced by **initial_recommender_cls**
+- Config keyword `initial_strategy` replaced by `initial_recommender_cls`
 - Config keywords for the clustering recommenders changed from `x` to `CLUSTERING_x`
 - skicit-learn-extra is now optional dependency in the [extra] group
 
 ### Fixed
-- Dimension error due to incorrect parameter bounds for constrained search spaces
+- Parameter bounds now only contain dimensions that actually appear in the search space 
 
 ## [0.2.3] - 2023-03-14
 ### Added
