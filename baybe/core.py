@@ -6,19 +6,21 @@ from __future__ import annotations
 import logging
 from typing import List
 
+import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from baybe.constraints import Constraint
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategy import Strategy
 from baybe.targets import Objective, Target
+from baybe.utils import BaseModel
 
 log = logging.getLogger(__name__)
 
 
-class BayBE(BaseModel, arbitrary_types_allowed=True):
+class BayBE(BaseModel):
     """Main class for interaction with BayBE."""
 
     objective: Objective
@@ -122,7 +124,7 @@ class BayBE(BaseModel, arbitrary_types_allowed=True):
         self.batches_done += 1
         to_insert = data.copy()
         to_insert["BatchNr"] = self.batches_done
-        to_insert["FitNr"] = pd.NA
+        to_insert["FitNr"] = np.nan
 
         self.measurements_exp = pd.concat(
             [self.measurements_exp, to_insert], axis=0, ignore_index=True
@@ -153,18 +155,17 @@ class BayBE(BaseModel, arbitrary_types_allowed=True):
         if len(self.cached_recommendation) == batch_quantity:
             return self.cached_recommendation
 
-        # Update the strategy object
-        self.strategy.fit(
-            self.measurements_parameters_comp, self.measurements_targets_comp
-        )
-
         # Update recommendation meta data
         if len(self.measurements_exp) > 0:
             self.fits_done += 1
             self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
 
         # Get the recommended search space entries
-        rec = self.strategy.recommend(batch_quantity)
+        rec = self.strategy.recommend(
+            self.measurements_parameters_comp,
+            self.measurements_targets_comp,
+            batch_quantity,
+        )
 
         # Query user input
         for target in self.targets:

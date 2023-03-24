@@ -1,12 +1,16 @@
 """
 Functionality for managing search spaces.
 """
+from __future__ import annotations
+
 import logging
 from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import torch
+
+from baybe.utils import BaseModel
 
 from .constraints import _constraints_order, Constraint
 from .parameters import (
@@ -21,7 +25,7 @@ log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
 
 
-class SubspaceDiscrete:
+class SubspaceDiscrete(BaseModel):
     """
     Class for managing discrete search spaces.
 
@@ -30,54 +34,64 @@ class SubspaceDiscrete:
     parameter views.
     """
 
-    def __init__(
-        self,
+    parameters: List[DiscreteParameter]
+    exp_rep: Optional[pd.DataFrame] = None
+    comp_rep: Optional[pd.DataFrame] = None
+    metadata: Optional[pd.DataFrame] = None
+    constraints: Optional[List[Constraint]] = None
+    empty_encoding: bool = False
+
+    @classmethod
+    def create(
+        cls,
         parameters: List[DiscreteParameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
         init_dataframes: bool = True,
-    ):
+    ) -> SubspaceDiscrete:
         """See `SearchSpace` class."""
         # Store the input
-        self.parameters = parameters
-        self.empty_encoding = empty_encoding
         if constraints is None:
-            self.constraints = []
+            constraints = []
         else:
             # Reorder the constraints according to their execution order
-            self.constraints = sorted(
+            constraints = sorted(
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
-
-        self.exp_rep: Optional[pd.DataFrame] = None
-        self.comp_rep: Optional[pd.DataFrame] = None
-        self.metadata: Optional[pd.DataFrame] = None
 
         # Initialize discrete search space dataframes
         if init_dataframes:
             # Create a dataframe representing the experimental search space
-            self.exp_rep = parameter_cartesian_prod_to_df(parameters)
+            exp_rep = parameter_cartesian_prod_to_df(parameters)
 
             # Remove entries that violate parameter constraints:
-            for constraint in (c for c in self.constraints if c.eval_during_creation):
-                inds = constraint.get_invalid(self.exp_rep)
-                self.exp_rep.drop(index=inds, inplace=True)
-            self.exp_rep.reset_index(inplace=True, drop=True)
+            for constraint in (c for c in constraints if c.eval_during_creation):
+                inds = constraint.get_invalid(exp_rep)
+                exp_rep.drop(index=inds, inplace=True)
+            exp_rep.reset_index(inplace=True, drop=True)
 
             # Create a dataframe containing the computational parameter representation
             # (ignoring all columns that do not carry any covariate information).
-            self.comp_rep = self.transform(self.exp_rep)
-            self.comp_rep = df_drop_single_value_columns(self.comp_rep)
+            comp_rep = cls.transform(exp_rep, parameters, empty_encoding)
+            comp_rep = df_drop_single_value_columns(comp_rep)
 
             # Create a dataframe storing the experiment metadata
-            self.metadata = pd.DataFrame(
+            metadata = pd.DataFrame(
                 {
                     "was_recommended": False,
                     "was_measured": False,
                     "dont_recommend": False,
                 },
-                index=self.exp_rep.index,
+                index=exp_rep.index,
             )
+        return SubspaceDiscrete(
+            parameters=parameters,
+            constraints=constraints,
+            empty_encoding=empty_encoding,
+            exp_rep=exp_rep,
+            comp_rep=comp_rep,
+            metadata=metadata,
+        )
 
     @property
     def empty(self):
@@ -278,9 +292,13 @@ class SubspaceDiscrete:
 
         return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
 
+    @classmethod
     def transform(
-        self,
+        cls,
         data: pd.DataFrame,
+        parameters: List[DiscreteParameter],
+        empty_encoding: bool,
+        comp_rep_columns: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Transforms discrete parameters from experimental to computational
@@ -298,47 +316,29 @@ class SubspaceDiscrete:
             A dataframe with the parameters in computational representation.
         """
         # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(data) < 1:
+        if empty_encoding or len(data) < 1:
             comp_rep = pd.DataFrame(index=data.index)
             return comp_rep
 
         # Transform the parameters
         dfs = []
-        for param in self.parameters:
+        for param in parameters:
             comp_df = param.transform_rep_exp2comp(data[param.name])
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
-        # IMPROVE: The following is a simple mechanism to implement statefulness of
-        #   the transformation. However, the state is effectively implemented through
-        #   the presence of the `comp_rep` member and hence outside of this function.
-        #   Also, the effective column subset is determined outside of this function.
-        #   A slightly better alternative would be to use transformation object that
-        #   internally keeps track of the state.
-        try:
-            # If this does not raise an error, the search space constructor has
-            # already been called and the columns to be kept are known. Hence,
-            # every subsequent transformation should adhere to the same column subset.
-            comp_rep = comp_rep[self.comp_rep.columns]
-        except AttributeError:
-            # Otherwise, the transformation is being called by the search space
-            # constructor so that no column filtering is needed.
-            pass
+        if comp_rep_columns is not None:
+            comp_rep = comp_rep[comp_rep_columns]
 
         return comp_rep
 
 
-class SubspaceContinuous:
+class SubspaceContinuous(BaseModel):
     """
     Class for managing continuous search spaces.
     """
 
-    def __init__(
-        self,
-        parameters: List[NumericContinuous],
-    ):
-        """See `SearchSpace` class."""
-        self.parameters: List[NumericContinuous] = parameters
+    parameters: List[NumericContinuous]
 
     @property
     def empty(self):
@@ -470,7 +470,7 @@ class SubspaceContinuous:
         return pd.DataFrame(index=index).reset_index()
 
 
-class SearchSpace:
+class SearchSpace(BaseModel, arbitrary_types_allowed=True):
     """
     Class for managing the overall search space, which might be purely discrete, purely
     continuous, or hybrid.
@@ -484,13 +484,21 @@ class SearchSpace:
         by continuous ones.
     """
 
-    def __init__(
-        self,
+    discrete: SubspaceDiscrete
+    continuous: SubspaceContinuous
+
+    parameters: List[Parameter]
+    constraints: Optional[List[Constraint]] = None
+    empty_encoding: bool = False
+
+    @classmethod
+    def create(
+        cls,
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
         init_dataframes: bool = True,
-    ):
+    ) -> SearchSpace:
         """
         Parameters
         ----------
@@ -510,19 +518,22 @@ class SearchSpace:
             False, they are not initialized, which can be useful when loading a search
             space object from disk.
         """
-        # Store the input
-        self.parameters = parameters
-        self.constraints = constraints
-        self.empty_encoding = empty_encoding
-
-        self.discrete: SubspaceDiscrete = SubspaceDiscrete(
+        discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[p for p in parameters if p.is_discrete],
             constraints=constraints,
             empty_encoding=empty_encoding,
             init_dataframes=init_dataframes,
         )
-        self.continuous: SubspaceContinuous = SubspaceContinuous(
+        continuous: SubspaceContinuous = SubspaceContinuous(
             parameters=[p for p in parameters if not p.is_discrete],
+        )
+
+        return SearchSpace(
+            discrete=discrete,
+            continuous=continuous,
+            parameters=parameters,
+            constraints=constraints,
+            empty_encoding=empty_encoding,
         )
 
     @property
@@ -577,7 +588,15 @@ class SearchSpace:
             A dataframe with the parameters in computational representation.
         """
         # Transform subspaces separately
-        df_discrete = self.discrete.transform(data)
+        # TODO: refactor discrete transform method to avoid passing these members
+        #   (at the moment, the method needs to be a classmethod since it is needed
+        #   in the subspace creation method)
+        df_discrete = self.discrete.transform(
+            data,
+            self.discrete.parameters,
+            self.discrete.empty_encoding,
+            list(self.discrete.comp_rep),
+        )
         df_continuous = self.continuous.transform(data)
 
         # Combine Subspaces

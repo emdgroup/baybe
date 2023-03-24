@@ -10,10 +10,11 @@ from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple, Type, Un
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, confloat, Extra, StrictBool, validator
+from pydantic import confloat, Extra, StrictBool, validator
 from pydantic.types import conlist
 from sklearn.metrics.pairwise import pairwise_distances
 
+from baybe.utils import BaseModel
 from .utils import (
     check_if_in,
     df_drop_single_value_columns,
@@ -45,15 +46,7 @@ def _validate_value_list(lst: list, values: dict):
     return lst
 
 
-class Parameter(
-    ABC,
-    BaseModel,
-    extra=Extra.forbid,
-    arbitrary_types_allowed=True,
-    keep_untouched=(
-        cached_property,
-    ),  # required due to: https://github.com/pydantic/pydantic/issues/1241
-):
+class Parameter(ABC, BaseModel):
     """
     Abstract base class for all parameters. Stores information about the
     type, range, constraints, etc. and handles in-range checks, transformations etc.
@@ -68,6 +61,16 @@ class Parameter(
 
     # object variables
     name: str
+
+    class Config:  # pylint: disable=missing-class-docstring
+        extra = Extra.forbid
+        keep_untouched = (
+            cached_property,
+        )  # required due to: https://github.com/pydantic/pydantic/issues/1241
+        arbitrary_types_allowed = True
+        json_encoders = {
+            pd.DataFrame: lambda x: x.to_dict(orient="list"),
+        }
 
     @classmethod
     def create(cls, config: dict) -> Parameter:

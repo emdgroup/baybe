@@ -31,6 +31,7 @@ import pandas as pd
 import torch
 from joblib import Memory
 from mordred import Calculator, descriptors
+from pydantic import BaseModel as PydanticBaseModel
 from rdkit import Chem, RDLogger
 from rdkit.Chem.AllChem import GetMorganFingerprintAsBitVect
 from torch import Tensor
@@ -705,3 +706,13 @@ def set_random_seed(seed: int) -> None:
     torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
+
+
+class BaseModel(PydanticBaseModel):
+    """Pydantic model with some basic settings used for various BayBE components."""
+
+    class Config:  # pylint: disable=missing-class-docstring
+        arbitrary_types_allowed = True
+        json_encoders = {
+            pd.DataFrame: lambda x: x.to_dict(orient="list"),
+        }

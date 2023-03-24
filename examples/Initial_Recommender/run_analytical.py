@@ -131,7 +131,7 @@ def hartmann3(x1, x2, x3):
 scenarios = {
     name: BayBE(
         strategy=Strategy(
-            searchspace=SearchSpace(
+            searchspace=SearchSpace.create(
                 parameters=[
                     NumericDiscrete(
                         name=f"x_{k+1}",
