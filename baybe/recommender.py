@@ -193,11 +193,9 @@ class AbstractDiscreteRecommender(Recommender, ABC):
         # has a continuous component.
         _, candidates_comp = self.searchspace.discrete.get_candidates(
             allow_repeated_recommendations=allow_repeated_recommendations
-            if self.searchspace.continuous.empty
-            else True,
+            or not self.searchspace.continuous.empty,
             allow_recommending_already_measured=allow_recommending_already_measured
-            if self.searchspace.continuous.empty
-            else True,
+            or not self.searchspace.continuous.empty,
         )
 
         # Check if enough candidates are left
