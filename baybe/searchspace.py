@@ -21,122 +21,6 @@ log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
 
 
-class SearchSpace:
-    """
-    Class for managing the overall search space, which might be purely discrete, purely
-    continuous, or hybrid.
-
-    NOTE:
-        Created objects related to the computational representations of parameters
-        (e.g., parameter bounds, computational dataframes, etc.) may use a different
-        parameter order than what is specified through the constructor: While the
-        passed parameter list can contain parameters in arbitrary order, the
-        aforementioned objects (by convention) list discrete parameters first, followed
-        by continuous ones.
-    """
-
-    def __init__(
-        self,
-        parameters: List[Parameter],
-        constraints: Optional[List[Constraint]] = None,
-        empty_encoding: bool = False,
-        init_dataframes: bool = True,
-    ):
-        """
-        Parameters
-        ----------
-        parameters : List[Parameter]
-            The parameters spanning the search space.
-        constraints : List[Constraint], optional
-            An optional set of constraints restricting the valid parameter space.
-        empty_encoding : bool, default: False
-            If True, uses an "empty" encoding for all parameters. This is useful,
-            for instance, in combination with random search strategies that
-            do not read the actual parameter values, since it avoids the
-            (potentially costly) transformation of the parameter values to their
-            computational representation.
-        init_dataframes : bool, default: True
-            If True, the search space related dataframes (i.e. parameter representations
-            and metadata) will be build from scratch using the input arguments. If
-            False, they are not initialized, which can be useful when loading a search
-            space object from disk.
-        """
-        # Store the input
-        self.parameters = parameters
-        self.constraints = constraints
-        self.empty_encoding = empty_encoding
-
-        self.discrete: SubspaceDiscrete = SubspaceDiscrete(
-            parameters=[p for p in parameters if p.is_discrete],
-            constraints=constraints,
-            empty_encoding=empty_encoding,
-            init_dataframes=init_dataframes,
-        )
-        self.continuous: SubspaceContinuous = SubspaceContinuous(
-            parameters=[p for p in parameters if not p.is_discrete],
-        )
-
-    @property
-    def contains_mordred(self) -> bool:
-        """Indicates if any of the discrete parameters uses MORDRED encoding."""
-        return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
-
-    @property
-    def contains_rdkit(self) -> bool:
-        """Indicates if any of the discrete parameters uses RDKIT encoding."""
-        return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
-
-    @property
-    def param_bounds_comp(self) -> torch.Tensor:
-        """
-        Returns bounds as tensor.
-        """
-        return torch.hstack(
-            [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
-        )
-
-    def state_dict(self) -> dict:
-        """Creates a dictionary representing the object's internal state."""
-        state_dict = dict(
-            empty_encoding=self.empty_encoding,
-            discrete=self.discrete.state_dict(),
-        )
-        return state_dict
-
-    def load_state_dict(self, state_dict: dict) -> None:
-        """Restores a given object state."""
-        self.empty_encoding = state_dict["empty_encoding"]
-        self.discrete.load_state_dict(state_dict["discrete"])
-
-    def transform(
-        self,
-        data: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """
-        Transforms data (such as the measurements) from experimental to computational
-        representation. Continuous parameters are not transformed but included.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed. Must contain all specified parameters, can
-            contain more columns.
-
-        Returns
-        -------
-        pd.DataFrame
-            A dataframe with the parameters in computational representation.
-        """
-        # Transform subspaces separately
-        df_discrete = self.discrete.transform(data)
-        df_continuous = self.continuous.transform(data)
-
-        # Combine Subspaces
-        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
-
-        return comp_rep
-
-
 class SubspaceDiscrete:
     """
     Class for managing discrete search spaces.
@@ -584,3 +468,119 @@ class SubspaceContinuous:
         )
 
         return pd.DataFrame(index=index).reset_index()
+
+
+class SearchSpace:
+    """
+    Class for managing the overall search space, which might be purely discrete, purely
+    continuous, or hybrid.
+
+    NOTE:
+        Created objects related to the computational representations of parameters
+        (e.g., parameter bounds, computational dataframes, etc.) may use a different
+        parameter order than what is specified through the constructor: While the
+        passed parameter list can contain parameters in arbitrary order, the
+        aforementioned objects (by convention) list discrete parameters first, followed
+        by continuous ones.
+    """
+
+    def __init__(
+        self,
+        parameters: List[Parameter],
+        constraints: Optional[List[Constraint]] = None,
+        empty_encoding: bool = False,
+        init_dataframes: bool = True,
+    ):
+        """
+        Parameters
+        ----------
+        parameters : List[Parameter]
+            The parameters spanning the search space.
+        constraints : List[Constraint], optional
+            An optional set of constraints restricting the valid parameter space.
+        empty_encoding : bool, default: False
+            If True, uses an "empty" encoding for all parameters. This is useful,
+            for instance, in combination with random search strategies that
+            do not read the actual parameter values, since it avoids the
+            (potentially costly) transformation of the parameter values to their
+            computational representation.
+        init_dataframes : bool, default: True
+            If True, the search space related dataframes (i.e. parameter representations
+            and metadata) will be build from scratch using the input arguments. If
+            False, they are not initialized, which can be useful when loading a search
+            space object from disk.
+        """
+        # Store the input
+        self.parameters = parameters
+        self.constraints = constraints
+        self.empty_encoding = empty_encoding
+
+        self.discrete: SubspaceDiscrete = SubspaceDiscrete(
+            parameters=[p for p in parameters if p.is_discrete],
+            constraints=constraints,
+            empty_encoding=empty_encoding,
+            init_dataframes=init_dataframes,
+        )
+        self.continuous: SubspaceContinuous = SubspaceContinuous(
+            parameters=[p for p in parameters if not p.is_discrete],
+        )
+
+    @property
+    def contains_mordred(self) -> bool:
+        """Indicates if any of the discrete parameters uses MORDRED encoding."""
+        return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
+
+    @property
+    def contains_rdkit(self) -> bool:
+        """Indicates if any of the discrete parameters uses RDKIT encoding."""
+        return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
+
+    @property
+    def param_bounds_comp(self) -> torch.Tensor:
+        """
+        Returns bounds as tensor.
+        """
+        return torch.hstack(
+            [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
+        )
+
+    def state_dict(self) -> dict:
+        """Creates a dictionary representing the object's internal state."""
+        state_dict = dict(
+            empty_encoding=self.empty_encoding,
+            discrete=self.discrete.state_dict(),
+        )
+        return state_dict
+
+    def load_state_dict(self, state_dict: dict) -> None:
+        """Restores a given object state."""
+        self.empty_encoding = state_dict["empty_encoding"]
+        self.discrete.load_state_dict(state_dict["discrete"])
+
+    def transform(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Transforms data (such as the measurements) from experimental to computational
+        representation. Continuous parameters are not transformed but included.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to be transformed. Must contain all specified parameters, can
+            contain more columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe with the parameters in computational representation.
+        """
+        # Transform subspaces separately
+        df_discrete = self.discrete.transform(data)
+        df_continuous = self.continuous.transform(data)
+
+        # Combine Subspaces
+        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
+
+        return comp_rep
