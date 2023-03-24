@@ -374,6 +374,10 @@ class SKLearnClusteringRecommender(AbstractDiscreteRecommender, ABC):
 
 
 if KMedoids:
+    # TODO: Instead of hiding the class, raise an error when attempting to create the
+    #   object. However, this requires to replace the current class-based handling of
+    #   recommenders with an object-based logic, since otherwise the exception can be
+    #   triggered arbitrarily late in the DOE process.
 
     class PAMClusteringRecommender(SKLearnClusteringRecommender):
         """Partitioning Around Medoids (PAM) initial clustering strategy."""
