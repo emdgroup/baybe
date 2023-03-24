@@ -535,8 +535,8 @@ def simulate_from_data(
                 if any(s == "" for s in smiles):
                     raise ValueError(
                         f"For the parameter {param_dict['name']} in 'SUBSTANCE' type "
-                        f"not all SMILES could be retrieved from the NCI. The "
-                        f"problematic substances are "
+                        f"not all SMILES could be retrieved from the NCI, this might be"
+                        f" a VPN issue. The problematic substances are "
                         f"{[name for k,name in enumerate(param_vals) if smiles[k]=='']}"
                     )
                 dat = dict(zip(param_vals, smiles))

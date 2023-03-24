@@ -41,7 +41,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 # Independent Fixtures
-@pytest.fixture(params=[2], name="n_iterations", ids=["iter2"])
+@pytest.fixture(params=[2], name="n_iterations", ids=["i2"])
 def fixture_n_iterations(request):
     """
     Number of iterations ran in tests.
@@ -52,7 +52,7 @@ def fixture_n_iterations(request):
 @pytest.fixture(
     params=[pytest.param(1, marks=pytest.mark.slow), 3],
     name="batch_quantity",
-    ids=["batch1", "batch3"],
+    ids=["b1", "b3"],
 )
 def fixture_batch_quantity(request):
     """
@@ -81,7 +81,7 @@ def fixture_n_grid_points(request):
 def fixture_good_reference_values():
     """
     Define some good reference values which are used by the utility function to
-    generate fake good results.
+    generate fake good results. These only make sense for discrete parameters.
     """
     return {"Categorical_1": ["B"], "Categorical_2": ["OK"]}
 
@@ -110,13 +110,13 @@ def fixture_mock_categories():
 
 
 # Dependent Fixtures
-@pytest.fixture(name="config_basic_1target")
-def fixture_config_basic_1target():
+@pytest.fixture(name="config_discrete_1target")
+def fixture_config_discrete_1target():
     """
     Config for a basic test using all basic parameter types and 1 target.
     """
     config_dict = {
-        "project_name": "Basic 1 Target",
+        "project_name": "Discrete Space 1 Target",
         "random_seed": 1337,
         "allow_repeated_recommendations": False,
         "allow_recommending_already_measured": False,
@@ -154,6 +154,53 @@ def fixture_config_basic_1target():
         "strategy": {
             "surrogate_model_cls": "GP",
             "recommender_cls": "UNRESTRICTED_RANKING",
+        },
+    }
+
+    return config_dict
+
+
+@pytest.fixture(name="config_continuous_1target")
+def fixture_config_continuous_1target():
+    """
+    Config for a basic test using all basic parameter types and 1 target.
+    """
+    config_dict = {
+        "project_name": "Continuous Space 1 Target",
+        "random_seed": 1337,
+        "allow_repeated_recommendations": False,
+        "allow_recommending_already_measured": False,
+        "numerical_measurements_must_be_within_tolerance": True,
+        "parameters": [
+            {
+                "name": "Num_conti_1",
+                "type": "NUM_CONTINUOUS",
+                "bounds": (-1, 0),
+            },
+            {
+                "name": "Num_conti_2",
+                "type": "NUM_CONTINUOUS",
+                "bounds": (-1, 1),
+            },
+            {
+                "name": "Num_conti_3",
+                "type": "NUM_CONTINUOUS",
+                "bounds": (0, 1),
+            },
+        ],
+        "objective": {
+            "mode": "SINGLE",
+            "targets": [
+                {
+                    "name": "Target_1",
+                    "type": "NUM",
+                    "mode": "MAX",
+                },
+            ],
+        },
+        "strategy": {
+            "surrogate_model_cls": "GP",
+            "recommender_cls": "SEQUENTIAL_GREEDY_CONTINUOUS",
         },
     }
 
@@ -387,12 +434,12 @@ def fixture_config_constraints_mixture(n_grid_points, mock_substances):
 
 @pytest.fixture(name="baybe_object_batch3_iterations2")
 def fixture_baybe_object_batch3_iterations2(
-    config_basic_1target, good_reference_values
+    config_discrete_1target, good_reference_values
 ):
     """
     Returns BayBE object that has been run for 2 iterations with mock data.
     """
-    config = BayBEConfig(**config_basic_1target)
+    config = BayBEConfig(**config_discrete_1target)
     baybe_obj = BayBE(config)
 
     for _ in range(2):

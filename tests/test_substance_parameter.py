@@ -14,7 +14,7 @@ valid_encodings = get_args(get_type_hints(GenericSubstance)["encoding"])
 
 @pytest.mark.parametrize("encoding", valid_encodings)
 def test_run_iterations(
-    config_basic_1target,
+    config_discrete_1target,
     mock_substances,
     encoding,
     batch_quantity,
@@ -24,7 +24,7 @@ def test_run_iterations(
     """
     Test running some iterations with fake results and a substance parameter.
     """
-    config_basic_1target["parameters"].append(
+    config_discrete_1target["parameters"].append(
         {
             "name": "Substance_1",
             "type": "SUBSTANCE",
@@ -33,7 +33,7 @@ def test_run_iterations(
         },
     )
 
-    config = BayBEConfig(**config_basic_1target)
+    config = BayBEConfig(**config_discrete_1target)
     baybe_obj = BayBE(config)
 
     for k in range(n_iterations):

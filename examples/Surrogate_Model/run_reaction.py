@@ -126,6 +126,38 @@ config_dict_v4 = {
     },
 }
 
+config_dict_v1b = {
+    "project_name": "GP",
+    "strategy": {
+        "surrogate_model_cls": "GP",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
+    },
+}
+
+config_dict_v2b = {
+    "project_name": "RF",
+    "strategy": {
+        "surrogate_model_cls": "RF",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
+    },
+}
+
+config_dict_v3b = {
+    "project_name": "NG",
+    "strategy": {
+        "surrogate_model_cls": "NG",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
+    },
+}
+
+config_dict_v4b = {
+    "project_name": "BL",
+    "strategy": {
+        "surrogate_model_cls": "BL",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
+    },
+}
+
 config_dict_v5 = {
     "project_name": "Random",
     "strategy": {
@@ -141,10 +173,14 @@ results = simulate_from_configs(
     n_mc_iterations=5,
     batch_quantity=2,
     config_variants={
-        "GP": config_dict_v1,
-        "RF": config_dict_v2,
-        "NGBoost": config_dict_v3,
-        "BayesLinear": config_dict_v4,
+        "Naive | GP": config_dict_v1,
+        "Naive | RF": config_dict_v2,
+        "Naive | NGBoost": config_dict_v3,
+        "Naive | BayesLinear": config_dict_v4,
+        "Seq   | GP": config_dict_v1b,
+        "Seq   | RF": config_dict_v2b,
+        "Seq   | NGBoost": config_dict_v3b,
+        "Seq   | BayesLinear": config_dict_v4b,
         "RANDOM": config_dict_v5,
     },
 )
@@ -157,5 +193,6 @@ sns.lineplot(
 )
 plt.plot([2, 2 * 30], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
+
 plt.gcf().set_size_inches(20, 8)
 plt.savefig("./run_reaction.png")

@@ -109,7 +109,7 @@ class BayBE:
         else:
             self.searchspace = searchspace
         self.objective = Objective(**config.objective)
-        self.strategy = Strategy(**config.strategy, searchspace=self.searchspace)
+        self.strategy = Strategy(searchspace=self.searchspace, **config.strategy)
 
         # Declare variable for storing measurements (in experimental representation)
         self.measurements_exp: pd.DataFrame = pd.DataFrame()
@@ -334,7 +334,7 @@ class BayBE:
                     f"The parameter '{param.name}' has missing values or NaNs in the "
                     f"provided dataframe. Missing parameter values are not supported."
                 )
-            if (param.is_numeric) and (data[param.name].dtype.kind not in "iufb"):
+            if param.is_numeric and (data[param.name].dtype.kind not in "iufb"):
                 raise TypeError(
                     f"The numerical parameter '{param.name}' has non-numeric entries in"
                     f" the provided dataframe."
@@ -392,11 +392,9 @@ class BayBE:
 
         # Get the recommended search space entries
         rec = self.strategy.recommend(
-            batch_quantity=batch_quantity,
-            allow_repeated_recommendations=self.config.allow_repeated_recommendations,
-            allow_recommending_already_measured=(
-                self.config.allow_recommending_already_measured
-            ),
+            batch_quantity,
+            self.config.allow_repeated_recommendations,
+            self.config.allow_recommending_already_measured,
         )
 
         # Query user input

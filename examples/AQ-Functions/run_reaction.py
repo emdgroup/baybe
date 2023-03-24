@@ -99,7 +99,7 @@ config_dict_v1 = {
     "strategy": {
         "surrogate_model_cls": "GP",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "RANDOM",
+        "initial_recommender_cls": "RANDOM",
         "acquisition_function_cls": "PM",
     },
 }
@@ -109,7 +109,7 @@ config_dict_v2 = {
     "strategy": {
         "surrogate_model_cls": "GP",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "RANDOM",
+        "initial_recommender_cls": "RANDOM",
         "acquisition_function_cls": "PI",
     },
 }
@@ -119,7 +119,7 @@ config_dict_v3 = {
     "strategy": {
         "surrogate_model_cls": "GP",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "RANDOM",
+        "initial_recommender_cls": "RANDOM",
         "acquisition_function_cls": "EI",
     },
 }
@@ -129,7 +129,7 @@ config_dict_v4 = {
     "strategy": {
         "surrogate_model_cls": "GP",
         "recommender_cls": "UNRESTRICTED_RANKING",
-        "initial_strategy": "RANDOM",
+        "initial_recommender_cls": "RANDOM",
         "acquisition_function_cls": "UCB",
     },
 }
@@ -139,7 +139,7 @@ config_dict_v5 = {
     "strategy": {
         "surrogate_model_cls": "GP",
         "recommender_cls": "RANDOM",
-        "initial_strategy": "RANDOM",
+        "initial_recommender_cls": "RANDOM",
     },
 }
 
@@ -148,7 +148,7 @@ results = simulate_from_configs(
     lookup=lookup,
     impute_mode="worst",
     n_exp_iterations=20,
-    n_mc_iterations=500,
+    n_mc_iterations=5,
     batch_quantity=3,
     config_variants={
         "Posterior Mean": config_dict_v1,

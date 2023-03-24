@@ -8,7 +8,9 @@ import numpy as np
 import pandas as pd
 
 from baybe.acquisition import debotorchize
+from baybe.parameters import NumericDiscrete
 from baybe.recommender import MarginalRankingRecommender
+from baybe.searchspace import SearchSpace
 from baybe.surrogate import (
     BayesianLinearModel,
     GaussianProcessModel,
@@ -64,6 +66,12 @@ searchspace = pd.DataFrame(
         "x2": np.linspace(LOWER_PARAM_LIMIT, UPPER_PARAM_LIMIT, N_PARAMETER_VALUES),
     }
 )
+Searchspace = SearchSpace(
+    [
+        NumericDiscrete(name="x1", values=searchspace["x1"].to_list()),
+        NumericDiscrete(name="x2", values=searchspace["x2"].to_list()),
+    ],
+)
 
 # Create y
 targets = pd.DataFrame(sin_2d(arr1=searchspace["x1"], arr2=searchspace["x2"]))
@@ -103,7 +111,7 @@ for name, mdl in surrogate_models.items():
     print("Model:", name)
 
     # Define and train model
-    model = mdl(searchspace)
+    model = mdl(Searchspace)
     model.fit(train_x, train_y)
 
     # Define candidates with q=1; can also expand both t-batch & q-batch artificially
@@ -117,7 +125,7 @@ for name, mdl in surrogate_models.items():
     # print(mean.size())
     # print(covar.size())
 
-    # Define available aquisition functions
+    # Define available acquisition functions
     acquisition_functions = [
         ExpectedImprovement,
         PosteriorMean,
@@ -128,8 +136,8 @@ for name, mdl in surrogate_models.items():
     for acqf in acquisition_functions:
         acqf = debotorchize(acqf)(model, best_f)
 
-        recommender = MarginalRankingRecommender(acqf)
+        recommender = MarginalRankingRecommender(Searchspace, acqf)
 
-        idxs = recommender.recommend(searchspace, 1)
+        idxs = recommender.recommend(3)
 
         print(idxs)

@@ -160,7 +160,7 @@ config_dict_v2 = {
     "project_name": "RANDOM",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "CONTI",
+        "recommender_cls": "SEQUENTIAL_GREEDY_CONTINUOUS",
     },
 }
 

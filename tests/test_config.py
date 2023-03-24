@@ -236,9 +236,14 @@ invalid_config_updates = {
             ],
         }
     },
-    "strat_invalid_init_strat": {
+    "strat_invalid_initial_recommender1": {
         "strategy": {
-            "initial_strategy": "INVALID_CHOICE",
+            "initial_recommender_cls": "INVALID_CHOICE",
+        },
+    },
+    "strat_invalid_initial_recommender2": {
+        "strategy": {
+            "initial_recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
         },
     },
     "strat_invalid_surrogate": {
@@ -280,7 +285,7 @@ xfails = []
 
 
 @pytest.mark.parametrize("config_update_key", invalid_config_updates.keys())
-def test_invalid_config(config_basic_1target, config_update_key):
+def test_invalid_config(config_discrete_1target, config_update_key):
     """
     Ensure invalid configurations trigger defined exceptions.
     """
@@ -288,8 +293,8 @@ def test_invalid_config(config_basic_1target, config_update_key):
         pytest.xfail()
 
     config_update = invalid_config_updates[config_update_key]
-    config_basic_1target.update(config_update)
+    config_discrete_1target.update(config_update)
 
     with pytest.raises((StrictValidationError, ValidationError)):
         # some raises are done at config and some others at baybe object level
-        BayBE(BayBEConfig(**config_basic_1target))
+        BayBE(BayBEConfig(**config_discrete_1target))

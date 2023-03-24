@@ -11,7 +11,7 @@ from baybe.utils import add_fake_results, add_parameter_noise
 
 
 def test_run_iterations(
-    config_basic_1target, n_iterations, good_reference_values, batch_quantity
+    config_discrete_1target, n_iterations, good_reference_values, batch_quantity
 ):
     """
     Test if iterative loop runs with custom parameters.
@@ -33,14 +33,14 @@ def test_run_iterations(
         index=["A", "B", "C"],
     )
 
-    config_basic_1target["parameters"].append(
+    config_discrete_1target["parameters"].append(
         {
             "name": "Custom_1",
             "type": "CUSTOM",
             "data": custom_df,
         }
     )
-    config_basic_1target["parameters"].append(
+    config_discrete_1target["parameters"].append(
         {
             "name": "Custom_2",
             "type": "CUSTOM",
@@ -48,7 +48,7 @@ def test_run_iterations(
         }
     )
 
-    config = BayBEConfig(**config_basic_1target)
+    config = BayBEConfig(**config_discrete_1target)
     baybe_obj = BayBE(config)
 
     for _ in range(n_iterations):

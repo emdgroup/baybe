@@ -203,14 +203,18 @@ class SubspaceDiscrete:
     @property
     def param_bounds_comp(self) -> torch.Tensor:
         """
-        Returns bounds as tensor.
+        Returns bounds as tensor. Takes bounds from the parameter definitions, but
+        discards bounds belonging to columns that were filtered out during search space
+        creation.
         """
         if not self.parameters:
             return torch.empty(2, 0)
         bounds = np.hstack(
             [
-                np.vstack([p.comp_df.min().values, p.comp_df.max().values])
+                np.vstack([p.comp_df[col].min(), p.comp_df[col].max()])
                 for p in self.parameters
+                for col in p.comp_df
+                if col in self.comp_rep.columns
             ]
         )
         return torch.from_numpy(bounds)

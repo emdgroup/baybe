@@ -47,7 +47,10 @@ def _prepare_inputs(x: Tensor) -> Tensor:
 def _prepare_targets(y: Tensor) -> Tensor:
     """Helper function to validate and prepare the model targets."""
     if y.shape[1] != 1:
-        raise NotImplementedError("The model currently supports only one target.")
+        raise NotImplementedError(
+            "The model currently supports only one target or multiple targets in "
+            "DESIRABILITY mode."
+        )
     return y.to(DTYPE)
 
 

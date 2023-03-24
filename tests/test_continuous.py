@@ -72,15 +72,15 @@ param_updates = {
 
 @pytest.mark.parametrize("config_update_key", param_updates.keys())
 def test_valid_configs(
-    config_basic_1target,
+    config_discrete_1target,
     config_update_key,
 ):
     """
     Test whether the given settings work without error
     """
-    config_basic_1target["parameters"] += param_updates[config_update_key]
+    config_discrete_1target["parameters"] += param_updates[config_update_key]
 
-    config = BayBEConfig(**config_basic_1target)
+    config = BayBEConfig(**config_discrete_1target)
     baybe_obj = BayBE(config)
     print(baybe_obj.searchspace.continuous.param_bounds_comp.flatten())
 
