@@ -52,8 +52,8 @@ class Recommender(ABC):
     type: str
     SUBCLASSES: Dict[str, Type[Recommender]] = {}
 
-    # it is generally assumed that a recommender is model-based and needs data. If this
-    # is not the case the derived class should override is_model_free
+    # It is generally assumed that a recommender is model-based and needs data. If this
+    # is not the case, the derived class should override 'is_model_free'.
     is_model_free: bool = False
     compatible_discrete: bool = False
     compatible_continuous: bool = False
@@ -155,7 +155,7 @@ class Recommender(ABC):
 
 class AbstractDiscreteRecommender(Recommender, ABC):
     """
-    Abstract class for discrete recommenders
+    Abstract class for discrete recommenders.
     """
 
     type = "ABSTRACT_DISCRETE_RECOMMENDER"
@@ -166,18 +166,19 @@ class AbstractDiscreteRecommender(Recommender, ABC):
         self, candidates_comp: pd.DataFrame, batch_quantity: int
     ) -> pd.Index:
         """
-        Returns indices of recommended candidates from a discrete search space
+        Returns indices of recommended candidates from a discrete search space.
 
         Parameters
         ----------
         candidates_comp : pd.DataFrame
-            valid candidates from the discrete search space
+            Valid candidates from the discrete search space.
         batch_quantity : int
-            number of requested recommendations
+            Number of requested recommendations.
 
         Returns
         -------
         pd.Index
+            The dataframe indices of the selected candidates.
         """
 
     def _recommend(
@@ -188,8 +189,8 @@ class AbstractDiscreteRecommender(Recommender, ABC):
     ) -> pd.DataFrame:
         """See base class."""
 
-        # Get discrete candidates. The metadata flags are ignored if a continuous space
-        # is not empty
+        # Get discrete candidates. The metadata flags are ignored if the searchspace
+        # has a continuous component.
         _, candidates_comp = self.searchspace.discrete.get_candidates(
             allow_repeated_recommendations=allow_repeated_recommendations
             if self.searchspace.continuous.empty
@@ -214,7 +215,7 @@ class AbstractDiscreteRecommender(Recommender, ABC):
         idxs = self._recommend_discrete(candidates_comp, batch_quantity)
         rec = self.searchspace.discrete.exp_rep.loc[idxs, :]
 
-        # Update Metadata
+        # Update metadata
         self.searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
 
         # Return recommendations
@@ -488,7 +489,7 @@ class FPSRecommender(AbstractDiscreteRecommender):
 
 class AbstractContinuousRecommender(Recommender, ABC):
     """
-    Abstract class for continuous recommenders
+    Abstract class for continuous recommenders.
     """
 
     type = "ABSTRACT_CONTINUOUS_RECOMMENDER"
@@ -502,11 +503,12 @@ class AbstractContinuousRecommender(Recommender, ABC):
         Parameters
         ----------
         batch_quantity : int
-            number of requested recommendations
+            Number of requested recommendations.
 
         Returns
         -------
         pd.DataFrame
+            The requested candidates.
         """
 
     def _recommend(
@@ -545,14 +547,14 @@ class PurelyContinuousRecommender(AbstractContinuousRecommender):
                 f"acquisition functions."
             ) from ex
 
+        # Return optimized points as dataframe
         rec = pd.DataFrame(points, columns=self.searchspace.continuous.param_names)
-
         return rec
 
 
 class AbstractCompositeRecommender(Recommender, ABC):
     """
-    Abstract composite recommender
+    Abstract composite recommender.
     """
 
     type = "ABSTRACT_COMPOSITE"
@@ -561,13 +563,13 @@ class AbstractCompositeRecommender(Recommender, ABC):
 
     @abstractmethod
     def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
-        """See AbstractContinuousRecommender._recommend_continuous"""
+        """See `AbstractContinuousRecommender._recommend_continuous`."""
 
     @abstractmethod
     def _recommend_discrete(
         self, candidates_comp: pd.DataFrame, batch_quantity: int
     ) -> pd.Index:
-        """See AbstractDiscreteRecommender._recommend_discrete"""
+        """See `AbstractDiscreteRecommender._recommend_discrete`."""
 
     def _recommend(
         self,
