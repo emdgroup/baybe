@@ -42,7 +42,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         Type[AcquisitionFunction],
     ] = "qEI"  # TODO: automatic selection between EI and qEI depending on query size
     initial_recommender_cls: Union[str, Type[Recommender]] = "RANDOM"
-    recommender_cls: Union[str, Type[Recommender]] = "SEQUENTIAL_GREEDY"
+    recommender_cls: Union[str, Type[Recommender]] = "SEQUENTIAL_GREEDY_DISCRETE"
 
     # TODO: The following member declarations become obsolete in pydantic 2.0 when
     #  __post_init_post_parse__ is available:

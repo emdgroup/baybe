@@ -243,7 +243,7 @@ invalid_config_updates = {
     },
     "strat_invalid_initial_recommender2": {
         "strategy": {
-            "initial_recommender_cls": "SEQUENTIAL_GREEDY",
+            "initial_recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
         },
     },
     "strat_invalid_surrogate": {

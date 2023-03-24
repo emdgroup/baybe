@@ -52,7 +52,7 @@ config_dict_base = {
     },
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
     },
 }
 
@@ -60,7 +60,7 @@ config_dict_v1 = {
     "project_name": "PAM",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
         "initial_recommender_cls": "CLUSTERING_PAM",
     },
 }
@@ -69,7 +69,7 @@ config_dict_v2 = {
     "project_name": "K-Means",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
         "initial_recommender_cls": "CLUSTERING_KMEANS",
     },
 }
@@ -78,7 +78,7 @@ config_dict_v3 = {
     "project_name": "Gaussian Mixture",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
         "initial_recommender_cls": "CLUSTERING_GMM",
     },
 }
@@ -87,7 +87,7 @@ config_dict_v4 = {
     "project_name": "FPS",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
         "initial_recommender_cls": "FPS",
     },
 }
@@ -96,7 +96,7 @@ config_dict_v5 = {
     "project_name": "Random",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
         "initial_recommender_cls": "RANDOM",
     },
 }

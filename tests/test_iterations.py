@@ -185,7 +185,7 @@ valid_hybrid_recommenders = [
 
 for itm in valid_aq_functions:
     # TODO: The recommender class is fixed here to avoid getting invalid combinations of
-    #   the default "SEQUENTIAL_GREEDY" class and non-MC acquisition functions.
+    #   the default "SEQUENTIAL_GREEDY_DISCRETE" class and non-MC acquisition functions.
     #   This selection should be done/checked automatically with root validators at some
     #   point and probably there should be a separate test for such config problems.
     config_updates_discrete.update(

@@ -130,7 +130,7 @@ config_dict_v1b = {
     "project_name": "GP",
     "strategy": {
         "surrogate_model_cls": "GP",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
     },
 }
 
@@ -138,7 +138,7 @@ config_dict_v2b = {
     "project_name": "RF",
     "strategy": {
         "surrogate_model_cls": "RF",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
     },
 }
 
@@ -146,7 +146,7 @@ config_dict_v3b = {
     "project_name": "NG",
     "strategy": {
         "surrogate_model_cls": "NG",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
     },
 }
 
@@ -154,7 +154,7 @@ config_dict_v4b = {
     "project_name": "BL",
     "strategy": {
         "surrogate_model_cls": "BL",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
+        "recommender_cls": "SEQUENTIAL_GREEDY_DISCRETE",
     },
 }
 
