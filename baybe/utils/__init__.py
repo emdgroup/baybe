@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import binascii
 import pickle
+import random
 import ssl
 import urllib.request
 from abc import ABC
@@ -697,3 +698,10 @@ def closest_element(array: np.ndarray, target: float) -> float:
 def closer_element(x: float, y: float, target: float) -> float:
     """Determines which of two given inputs is closer to a target value."""
     return x if np.abs(x - target) < np.abs(y - target) else y
+
+
+def set_random_seed(seed: int) -> None:
+    """Sets the global random seed."""
+    torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)

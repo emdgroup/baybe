@@ -20,6 +20,7 @@ from baybe.utils import (
     closer_element,
     closest_element,
     name_to_smiles,
+    set_random_seed,
 )
 
 if TYPE_CHECKING:
@@ -163,7 +164,8 @@ def simulate_from_configs(
             # IMPROVE: Potential speedup by copying the BayBE object + overwriting seed.
             #   Requires a clean way to change the seed of the object without accessing
             #   its members directly.
-            config_dict["random_seed"] = 1337 + k_mc
+            random_seed = 1337 + k_mc
+            set_random_seed(random_seed)
             config = BayBEConfig(**config_dict)
             baybe_obj = BayBE(config)
 
@@ -195,7 +197,7 @@ def simulate_from_configs(
             )
 
             # Add the random seed information and append the results
-            results_mc.insert(0, "Random_Seed", config_dict["random_seed"])
+            results_mc.insert(0, "Random_Seed", random_seed)
             results_var = pd.concat([results_var, results_mc])
 
         # Add the variant information and append the results

@@ -5,13 +5,10 @@ from __future__ import annotations
 
 import logging
 import pickle
-import random
 from typing import List, Optional
 
 import fsspec
-import numpy as np
 import pandas as pd
-import torch
 from pydantic import BaseModel, conlist, Extra, validator
 
 from .constraints import Constraint
@@ -39,7 +36,6 @@ class BayBEConfig(BaseModel, extra=Extra.forbid):
     strategy: Optional[dict] = None
     constraints: List[Constraint] = []
 
-    random_seed: int = 1337
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
     numerical_measurements_must_be_within_tolerance: bool = True
@@ -65,11 +61,6 @@ class BayBE:
             An optional search space object. If provided, the search space will not
             be created from the config but instead the given object is used.
         """
-        # Set global random seeds
-        torch.manual_seed(config.random_seed)
-        random.seed(config.random_seed)
-        np.random.seed(config.random_seed)
-
         # Store the configuration
         self.config = config
 
