@@ -220,7 +220,7 @@ class AbstractDiscreteRecommender(Recommender, ABC):
         return rec
 
 
-class SequentialGreedyRecommender(AbstractDiscreteRecommender):
+class SequentialGreedyDiscreteRecommender(AbstractDiscreteRecommender):
     """
     Recommends the next set of experiments by means of sequential greedy optimization,
     i.e. using a growing set of candidates points, where each new candidate is
@@ -233,7 +233,7 @@ class SequentialGreedyRecommender(AbstractDiscreteRecommender):
 
     # TODO: generalize the approach to also support continuous spaces
 
-    type = "SEQUENTIAL_GREEDY"
+    type = "SEQUENTIAL_GREEDY_DISCRETE"
 
     def _recommend_discrete(
         self, candidates_comp: pd.DataFrame, batch_quantity: int
@@ -519,14 +519,13 @@ class AbstractContinuousRecommender(Recommender, ABC):
         return self._recommend_continuous(batch_quantity)
 
 
-# TODO finalize class and type name below
-class PurelyContinuousRecommender(AbstractContinuousRecommender):
+class SequentialGreedyContinuousRecommender(AbstractContinuousRecommender):
     """
     Recommends the next set of experiments by means of sequential greedy optimization
     in a purely continuous space.
     """
 
-    type = "CONTI"
+    type = "SEQUENTIAL_GREEDY_CONTINUOUS"
 
     def _recommend_continuous(self, batch_quantity: int) -> pd.DataFrame:
         """See base class."""

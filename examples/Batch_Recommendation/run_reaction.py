@@ -93,7 +93,7 @@ config_dict_base = {
 
 config_variants = {}
 for recommender_type in Recommender.SUBCLASSES:
-    if recommender_type == "CONTI":
+    if recommender_type == "SEQUENTIAL_GREEDY_CONTINUOUS":
         continue
     config_variants[recommender_type] = {
         "strategy": {

@@ -200,7 +200,7 @@ def fixture_config_continuous_1target():
         },
         "strategy": {
             "surrogate_model_cls": "GP",
-            "recommender_cls": "CONTI",
+            "recommender_cls": "SEQUENTIAL_GREEDY_CONTINUOUS",
         },
     }
 
