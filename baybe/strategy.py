@@ -43,6 +43,9 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     ] = "qEI"  # TODO: automatic selection between EI and qEI depending on query size
     initial_recommender_cls: Union[str, Type[Recommender]] = "RANDOM"
     recommender_cls: Union[str, Type[Recommender]] = "SEQUENTIAL_GREEDY_DISCRETE"
+    allow_repeated_recommendations: bool = True
+    allow_recommending_already_measured: bool = True
+    numerical_measurements_must_be_within_tolerance: bool = True
 
     # TODO: The following member declarations become obsolete in pydantic 2.0 when
     #  __post_init_post_parse__ is available:
@@ -132,8 +135,6 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     def recommend(
         self,
         batch_quantity: int = 1,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """
         Recommends the next experiments to be conducted.
@@ -142,12 +143,6 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         ----------
         batch_quantity : int (default = 1)
             The number of experiments to be conducted in parallel.
-        allow_repeated_recommendations : bool
-            Whether points whose discrete parts were already recommended can be
-            recommended again.
-        allow_recommending_already_measured : bool
-            Whether points whose discrete parts were already measured can be
-            recommended again.
 
         Returns
         -------
@@ -173,8 +168,8 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
 
         rec = recommender.recommend(
             batch_quantity,
-            allow_repeated_recommendations,
-            allow_recommending_already_measured,
+            self.allow_repeated_recommendations,
+            self.allow_recommending_already_measured,
         )
 
         return rec
