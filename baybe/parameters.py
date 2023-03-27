@@ -14,7 +14,7 @@ from pydantic import confloat, Extra, StrictBool, validator
 from pydantic.types import conlist
 from sklearn.metrics.pairwise import pairwise_distances
 
-from baybe.utils import BaseModel
+from baybe.utils import ABCBaseModel
 from .utils import (
     check_if_in,
     df_drop_single_value_columns,
@@ -46,7 +46,7 @@ def _validate_value_list(lst: list, values: dict):
     return lst
 
 
-class Parameter(ABC, BaseModel):
+class Parameter(ABC, ABCBaseModel):
     """
     Abstract base class for all parameters. Stores information about the
     type, range, constraints, etc. and handles in-range checks, transformations etc.

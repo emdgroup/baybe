@@ -9,6 +9,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import torch
+from pydantic import conlist
 
 from baybe.utils import BaseModel
 
@@ -487,7 +488,7 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
     discrete: SubspaceDiscrete
     continuous: SubspaceContinuous
 
-    parameters: List[Parameter]
+    parameters: conlist(Parameter, min_items=1)
     constraints: Optional[List[Constraint]] = None
     empty_encoding: bool = False
 

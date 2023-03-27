@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import torch
 
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
 
 param_updates = {
     "conti_finite": [
@@ -80,8 +80,7 @@ def test_valid_configs(
     """
     config_discrete_1target["parameters"] += param_updates[config_update_key]
 
-    config = BayBEConfig(**config_discrete_1target)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_discrete_1target)
     print(baybe_obj.searchspace.continuous.param_bounds_comp.flatten())
 
     assert all(

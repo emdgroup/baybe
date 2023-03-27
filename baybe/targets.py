@@ -13,13 +13,19 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import check_if_in, geom_mean, isabstract, StrictValidationError
+from .utils import (
+    ABCBaseModel,
+    check_if_in,
+    geom_mean,
+    isabstract,
+    StrictValidationError,
+)
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
 log = logging.getLogger(__name__)
 
 
-class Target(ABC, BaseModel, extra=Extra.forbid):
+class Target(ABC, ABCBaseModel, extra=Extra.forbid):
     """
     Abstract base class for all target variables. Stores information about the type,
     range, transformations, etc.

@@ -9,6 +9,8 @@ import random
 import ssl
 import urllib.request
 from abc import ABC
+
+from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -716,3 +718,33 @@ class BaseModel(PydanticBaseModel):
         json_encoders = {
             pd.DataFrame: lambda x: x.to_dict(orient="list"),
         }
+
+
+class ABCBaseModel(BaseModel):
+    """Pydantic model for class hierarchies with "type" logic."""
+
+    # TODO: This is only a temporary workaround. The deserialization of subclasses
+    #   will be refactored once all class structures have been cleaned up.
+
+    @classmethod
+    def parse_obj(cls, obj):
+        return cls._convert_to_real_type_(obj)
+
+    @classmethod
+    def _convert_to_real_type_(cls, data):
+
+        try:
+            data = deepcopy(data)
+            data_type = data.pop("type")
+        except AttributeError:
+            return data
+        except KeyError:
+            return cls(**data)
+
+        sub = cls.SUBCLASSES.get(data_type)
+
+        return sub(**data)
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls._convert_to_real_type_

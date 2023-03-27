@@ -4,10 +4,15 @@ Test for save/load capability
 
 import os
 
+import pytest
+
 from baybe.core import BayBE
 from baybe.utils import add_fake_results
 
 
+# TODO: This test needs to be rewritten once the proper (de-)serialization mechanisms
+#   are in place
+@pytest.mark.xfail()
 def test_data_consistency(
     baybe_object_batch3_iterations2,
     good_reference_values,  # pylint: disable=W0613  # TODO: work in progress

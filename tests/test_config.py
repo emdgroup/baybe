@@ -4,7 +4,7 @@ Tests for basic input-output nad iterative loop.
 import numpy as np
 import pandas as pd
 import pytest
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
 
 # Dictionary containing items describing config tests that should throw an error.
 # Key is a string describing the test and is displayed by pytest. Each value is a pair
@@ -297,4 +297,4 @@ def test_invalid_config(config_discrete_1target, config_update_key):
 
     with pytest.raises((StrictValidationError, ValidationError)):
         # some raises are done at config and some others at baybe object level
-        BayBE(BayBEConfig(**config_discrete_1target))
+        BayBE.from_dict(config_discrete_1target)

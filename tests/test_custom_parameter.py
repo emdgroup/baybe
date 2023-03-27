@@ -5,7 +5,7 @@ metadata. Target objective is minimize to test computational transformation.
 """
 import pandas as pd
 
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
 from baybe.parameters import Parameter
 from baybe.utils import add_fake_results, add_parameter_noise
 
@@ -48,8 +48,7 @@ def test_run_iterations(
         }
     )
 
-    config = BayBEConfig(**config_discrete_1target)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_discrete_1target)
 
     for _ in range(n_iterations):
         rec = baybe_obj.recommend(batch_quantity=batch_quantity)

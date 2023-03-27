@@ -6,11 +6,10 @@ from abc import ABC
 from typing import get_args, get_type_hints
 
 import numpy as np
-
 import pytest
 import torch
 
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
 from baybe.recommender import Recommender
 from baybe.strategy import Strategy
 from baybe.surrogate import SurrogateModel
@@ -262,8 +261,7 @@ def test_run_iteration_discrete(
     config_update = config_updates_discrete[config_update_key]
     config_discrete_1target.update(config_update)
 
-    config = BayBEConfig(**config_discrete_1target)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_discrete_1target)
 
     for k in range(n_iterations):
         rec = baybe_obj.recommend(batch_quantity=batch_quantity)
@@ -292,8 +290,7 @@ def test_run_iteration_continuous(
     config_update = config_updates_continuous[config_update_key]
     config_continuous_1target.update(config_update)
 
-    config = BayBEConfig(**config_continuous_1target)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_continuous_1target)
 
     for k in range(n_iterations):
         rec = baybe_obj.recommend(batch_quantity=batch_quantity)
@@ -313,8 +310,7 @@ def test_recommendation_caching(
     """
     Test recommendation caching and consistency
     """
-    config = BayBEConfig(**config_discrete_1target)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_discrete_1target)
 
     # Add results of an inital recommendation
     rec0 = baybe_obj.recommend(batch_quantity=batch_quantity)
