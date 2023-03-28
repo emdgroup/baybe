@@ -1,86 +1,29 @@
 """
 Test for continuous parameters
 """
-import numpy as np
 import pytest
 import torch
 
-from baybe.core import BayBE
 
-param_updates = {
-    "conti_finite": [
-        {
-            "name": "Conti_Param",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (0, 1),
-        }
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        ["Conti_finite1"],
+        ["Conti_finite2"],
+        ["Conti_infinite1"],
+        ["Conti_infinite2"],
+        ["Conti_infinite3"],
+        ["Conti_infinite4"],
+        ["Conti_infinite5"],
+        ["Conti_finite1", "Conti_finite2", "Conti_infinite5"],
     ],
-    "conti_infinite1": [
-        {
-            "name": "Conti_Param",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (None, 1),
-        }
-    ],
-    "conti_infinite2": [
-        {
-            "name": "Conti_Param",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (0, None),
-        }
-    ],
-    "conti_infinite3": [
-        {
-            "name": "Conti_Param",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (0, np.inf),
-        }
-    ],
-    "conti_infinite4": [
-        {
-            "name": "Conti_Param",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (-np.inf, 1),
-        }
-    ],
-    "conti_infinite5": [
-        {
-            "name": "Conti_Param",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (None, None),
-        }
-    ],
-    "conti_multiple": [
-        {
-            "name": "Conti_Param1",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (0, 1),
-        },
-        {
-            "name": "Conti_Param2",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (-1, 0),
-        },
-        {
-            "name": "Conti_Param3",
-            "type": "NUM_CONTINUOUS",
-            "bounds": (None, None),
-        },
-    ],
-}
-
-
-@pytest.mark.parametrize("config_update_key", param_updates.keys())
-def test_valid_configs(
-    config_discrete_1target,
-    config_update_key,
-):
+)
+def test_valid_configs(baybe_one_maximization_target):
     """
     Test whether the given settings work without error
     """
-    config_discrete_1target["parameters"] += param_updates[config_update_key]
 
-    baybe_obj = BayBE.from_dict(config_discrete_1target)
+    baybe_obj = baybe_one_maximization_target
     print(baybe_obj.searchspace.continuous.param_bounds_comp.flatten())
 
     assert all(

@@ -10,6 +10,7 @@ from baybe.core import BayBE
 from baybe.parameters import (
     Categorical,
     GenericSubstance,
+    NumericContinuous,
     NumericDiscrete,
     SUBSTANCE_ENCODINGS,
 )
@@ -139,6 +140,34 @@ def fixture_parameters(parameter_names: List[str], mock_substances):
             name="Num_disc_1",
             values=[1, 2, 7],
             tolerance=0.3,
+        ),
+        NumericContinuous(
+            name="Conti_finite1",
+            bounds=(0, 1),
+        ),
+        NumericContinuous(
+            name="Conti_finite2",
+            bounds=(-1, 0),
+        ),
+        NumericContinuous(
+            name="Conti_infinite1",
+            bounds=(None, 1),
+        ),
+        NumericContinuous(
+            name="Conti_infinite2",
+            bounds=(0, None),
+        ),
+        NumericContinuous(
+            name="Conti_infinite3",
+            bounds=(0, np.inf),
+        ),
+        NumericContinuous(
+            name="Conti_infinite4",
+            bounds=(-np.inf, 1),
+        ),
+        NumericContinuous(
+            name="Conti_infinite5",
+            bounds=(None, None),
         ),
         *[
             GenericSubstance(
