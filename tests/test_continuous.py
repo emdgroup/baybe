@@ -18,15 +18,14 @@ import torch
         ["Conti_finite1", "Conti_finite2", "Conti_infinite5"],
     ],
 )
-def test_valid_configs(baybe_one_maximization_target):
+def test_valid_configs(baybe):
     """
     Test whether the given settings work without error
     """
 
-    baybe_obj = baybe_one_maximization_target
-    print(baybe_obj.searchspace.continuous.param_bounds_comp.flatten())
+    print(baybe.searchspace.continuous.param_bounds_comp.flatten())
 
     assert all(
         torch.is_floating_point(itm)
-        for itm in baybe_obj.searchspace.continuous.param_bounds_comp.flatten()
+        for itm in baybe.searchspace.continuous.param_bounds_comp.flatten()
     )

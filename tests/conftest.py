@@ -262,9 +262,9 @@ def fixture_config_discrete_1target():
     return config_dict
 
 
-@pytest.fixture(name="baybe_one_maximization_target")
-def fixture_baybe_one_maximization_target(parameters):
-    """BayBE object with specified parameters and one maximization target."""
+@pytest.fixture(name="baybe")
+def fixture_baybe(parameters, objective):
+    """Returns a BayBE"""
     return BayBE(
         strategy=Strategy(
             recommender_cls="UNRESTRICTED_RANKING",
@@ -274,16 +274,20 @@ def fixture_baybe_one_maximization_target(parameters):
             allow_recommending_already_measured=False,
             numerical_measurements_must_be_within_tolerance=True,
         ),
-        objective=Objective(
-            mode="SINGLE",
-            targets=[
-                NumericalTarget(
-                    name="Target_1",
-                    mode="MAX",
-                )
-            ],
-        ),
+        objective=objective,
     )
+
+
+@pytest.fixture(name="objective")
+def fixture_default_objective(targets):
+    """The default objective to be used if not specified differently."""
+    return Objective(mode="SINGLE", targets=targets)
+
+
+@pytest.fixture(name="targets")
+def fixture_default_targets():
+    """The default target to be used if not specified differently."""
+    return [NumericalTarget(name="Target", mode="MAX")]
 
 
 @pytest.fixture(name="config_continuous_1target")
