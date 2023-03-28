@@ -18,7 +18,7 @@ target_xfails = []
     ids=["not_within_tol", "nan", "string_instead_float"],
 )
 def test_bad_parameter_input_value(
-    baybe_object_batch3_iterations2,
+    baybe_one_maximization_target,
     good_reference_values,
     bad_val,
     request,
@@ -29,17 +29,19 @@ def test_bad_parameter_input_value(
     if request.node.callspec.id in param_xfails:
         pytest.xfail()
 
-    rec = baybe_object_batch3_iterations2.recommend(batch_quantity=3)
+    baybe = baybe_one_maximization_target
+
+    rec = baybe.recommend(batch_quantity=3)
     add_fake_results(
         rec,
-        baybe_object_batch3_iterations2,
+        baybe,
         good_reference_values=good_reference_values,
     )
 
     # Add an invalid value
     rec.Num_disc_1.iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
-        baybe_object_batch3_iterations2.add_results(rec)
+        baybe.add_results(rec)
 
 
 @pytest.mark.parametrize(
@@ -48,7 +50,7 @@ def test_bad_parameter_input_value(
     ids=["nan", "string_instead_float"],
 )
 def test_bad_target_input_value(
-    baybe_object_batch3_iterations2,
+    baybe_one_maximization_target,
     good_reference_values,
     bad_val,
     request,
@@ -59,14 +61,16 @@ def test_bad_target_input_value(
     if request.node.callspec.id in target_xfails:
         pytest.xfail()
 
-    rec = baybe_object_batch3_iterations2.recommend(batch_quantity=3)
+    baybe = baybe_one_maximization_target
+
+    rec = baybe.recommend(batch_quantity=3)
     add_fake_results(
         rec,
-        baybe_object_batch3_iterations2,
+        baybe,
         good_reference_values=good_reference_values,
     )
 
     # Add an invalid value
     rec.Target_1.iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
-        baybe_object_batch3_iterations2.add_results(rec)
+        baybe.add_results(rec)
