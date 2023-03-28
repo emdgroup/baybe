@@ -1,11 +1,18 @@
 """
 PyTest configuration
 """
+from typing import List
+
 import numpy as np
 import pytest
 
 from baybe.core import BayBE
-from baybe.parameters import Categorical, NumericDiscrete
+from baybe.parameters import (
+    Categorical,
+    GenericSubstance,
+    NumericDiscrete,
+    SUBSTANCE_ENCODINGS,
+)
 from baybe.searchspace import SearchSpace
 from baybe.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
@@ -114,6 +121,43 @@ def fixture_mock_categories():
     return ["Type1", "Type2", "Type3"]
 
 
+@pytest.fixture(name="parameters")
+def fixture_parameters(parameter_names: List[str], mock_substances):
+    """Provides example parameters via specified names."""
+    valid_parameters = [
+        Categorical(
+            name="Categorical_1",
+            values=["A", "B", "C"],
+            encoding="OHE",
+        ),
+        Categorical(
+            name="Categorical_2",
+            values=["bad", "OK", "good"],
+            encoding="OHE",
+        ),
+        NumericDiscrete(
+            name="Num_disc_1",
+            values=[1, 2, 7],
+            tolerance=0.3,
+        ),
+        *[
+            GenericSubstance(
+                name=f"Substance_1_{encoding}",
+                data=mock_substances,
+                encoding=encoding,
+            )
+            for encoding in SUBSTANCE_ENCODINGS
+        ],
+    ]
+    return [p for p in valid_parameters if p.name in parameter_names]
+
+
+@pytest.fixture(name="parameter_names")
+def fixture_default_parameter_selection():
+    """Default parameters used if not specified differently."""
+    return ["Categorical_1", "Categorical_2", "Num_disc_1"]
+
+
 # Dependent Fixtures
 @pytest.fixture(name="config_discrete_1target")
 def fixture_config_discrete_1target():
@@ -165,34 +209,14 @@ def fixture_config_discrete_1target():
     return config_dict
 
 
-@pytest.fixture(name="baybe_discrete_1target")
-def fixture_baybe_discrete_1target():
-    """
-    BayBE object for a basic test using all basic parameter types and 1 target.
-    """
+@pytest.fixture(name="baybe_one_maximization_target")
+def fixture_baybe_one_maximization_target(parameters):
+    """BayBE object with specified parameters and one maximization target."""
     return BayBE(
         strategy=Strategy(
             recommender_cls="UNRESTRICTED_RANKING",
             surrogate_model_cls="GP",
-            searchspace=SearchSpace.create(
-                parameters=[
-                    Categorical(
-                        name="Categorical_1",
-                        values=["A", "B", "C"],
-                        encoding="OHE",
-                    ),
-                    Categorical(
-                        name="Categorical_2",
-                        values=["bad", "OK", "good"],
-                        encoding="OHE",
-                    ),
-                    NumericDiscrete(
-                        name="Num_disc_1",
-                        values=[1, 2, 7],
-                        tolerance=0.3,
-                    ),
-                ],
-            ),
+            searchspace=SearchSpace.create(parameters=parameters),
             allow_repeated_recommendations=False,
             allow_recommending_already_measured=False,
             numerical_measurements_must_be_within_tolerance=True,
@@ -483,12 +507,12 @@ def fixture_config_constraints_mixture(n_grid_points, mock_substances):
 
 @pytest.fixture(name="baybe_object_batch3_iterations2")
 def fixture_baybe_object_batch3_iterations2(
-    baybe_discrete_1target, good_reference_values
+    baybe_one_maximization_target, good_reference_values
 ):
     """
     Returns BayBE object that has been run for 2 iterations with mock data.
     """
-    baybe_obj = baybe_discrete_1target
+    baybe_obj = baybe_one_maximization_target
 
     for _ in range(2):
         rec = baybe_obj.recommend(batch_quantity=3)
