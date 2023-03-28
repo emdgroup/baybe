@@ -4,11 +4,13 @@ PyTest configuration
 from typing import List
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from baybe.core import BayBE
 from baybe.parameters import (
     Categorical,
+    Custom,
     GenericSubstance,
     NumericContinuous,
     NumericDiscrete,
@@ -168,6 +170,28 @@ def fixture_parameters(parameter_names: List[str], mock_substances):
         NumericContinuous(
             name="Conti_infinite5",
             bounds=(None, None),
+        ),
+        Custom(
+            name="Custom_1",
+            data=pd.DataFrame(
+                {
+                    "D1": [1.1, 1.4, 1.7],
+                    "D2": [11, 23, 55],
+                    "D3": [-4, -13, 4],
+                },
+                index=["mol1", "mol2", "mol3"],
+            ),
+        ),
+        Custom(
+            name="Custom_2",
+            data=pd.DataFrame(
+                {
+                    "desc1": [1.1, 1.4, 1.7],
+                    "desc2": [55, 23, 3],
+                    "desc3": [4, 5, 6],
+                },
+                index=["A", "B", "C"],
+            ),
         ),
         *[
             GenericSubstance(
