@@ -5,8 +5,284 @@ import math
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from baybe.core import BayBE
+
+
+@pytest.fixture(name="config_discrete_1target")
+def fixture_config_discrete_1target():
+    """
+    Config for a basic test using all basic parameter types and 1 target.
+    """
+    config_dict = {
+        "project_name": "Discrete Space 1 Target",
+        "random_seed": 1337,
+        "allow_repeated_recommendations": False,
+        "allow_recommending_already_measured": False,
+        "numerical_measurements_must_be_within_tolerance": True,
+        "parameters": [
+            {
+                "name": "Categorical_1",
+                "type": "CAT",
+                "values": ["A", "B", "C"],
+                "encoding": "OHE",
+            },
+            {
+                "name": "Categorical_2",
+                "type": "CAT",
+                "values": ["bad", "OK", "good"],
+                "encoding": "INT",
+            },
+            {
+                "name": "Num_disc_1",
+                "type": "NUM_DISCRETE",
+                "values": [1, 2, 7],
+                "tolerance": 0.3,
+            },
+        ],
+        "objective": {
+            "mode": "SINGLE",
+            "targets": [
+                {
+                    "name": "Target_1",
+                    "type": "NUM",
+                    "mode": "MAX",
+                },
+            ],
+        },
+        "strategy": {
+            "surrogate_model_cls": "GP",
+            "recommender_cls": "UNRESTRICTED_RANKING",
+        },
+    }
+
+    return config_dict
+
+
+@pytest.fixture(name="config_constraints_dependency")
+def fixture_config_constraints_dependency(
+    n_grid_points, mock_substances, mock_categories
+):
+    """
+    Config for a use case with dependency constraints.
+    """
+    config_dict = {
+        "project_name": "Project with switches and dependencies",
+        "allow_repeated_recommendations": False,
+        "allow_recommending_already_measured": False,
+        "numerical_measurements_must_be_within_tolerance": True,
+        "parameters": [
+            {
+                "name": "Switch1",
+                "type": "CAT",
+                "values": ["on", "off"],
+            },
+            {
+                "name": "Switch2",
+                "type": "CAT",
+                "values": ["left", "right"],
+            },
+            {
+                "name": "Fraction1",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(0, 100, n_grid_points)),
+                "tolerance": 0.2,
+            },
+            {
+                "name": "Solvent1",
+                "type": "SUBSTANCE",
+                "data": mock_substances,
+            },
+            {
+                "name": "FrameA",
+                "type": "CAT",
+                "values": mock_categories,
+            },
+            {
+                "name": "FrameB",
+                "type": "CAT",
+                "values": mock_categories,
+            },
+        ],
+        "objective": {
+            "mode": "SINGLE",
+            "targets": [
+                {
+                    "name": "Target_1",
+                    "type": "NUM",
+                    "mode": "MAX",
+                },
+            ],
+        },
+    }
+    return config_dict
+
+
+@pytest.fixture(name="config_constraints_exclude")
+def fixture_config_constraints_exclude(n_grid_points, mock_substances, mock_categories):
+    """
+    Config for a use case with exclusion constraints.
+    """
+    config_dict = {
+        "project_name": "Project with substances and exclusion constraints",
+        "allow_repeated_recommendations": False,
+        "allow_recommending_already_measured": True,
+        "numerical_measurements_must_be_within_tolerance": True,
+        "parameters": [
+            {
+                "name": "Solvent",
+                "type": "SUBSTANCE",
+                "data": mock_substances,
+            },
+            {
+                "name": "SomeSetting",
+                "type": "CAT",
+                "values": mock_categories,
+                "encoding": "INT",
+            },
+            {
+                "name": "Temperature",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(100, 200, n_grid_points)),
+            },
+            {
+                "name": "Pressure",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(0, 6, n_grid_points)),
+            },
+        ],
+        "objective": {
+            "mode": "SINGLE",
+            "targets": [
+                {
+                    "name": "Target_1",
+                    "type": "NUM",
+                    "mode": "MAX",
+                },
+            ],
+        },
+    }
+    return config_dict
+
+
+@pytest.fixture(name="config_constraints_prodsum")
+def fixture_config_constraints_prodsum(n_grid_points):
+    """
+    Config with some numerical parameters for a use case with product and sum
+    constraints.
+    """
+    config_dict = {
+        "project_name": "Project with several numerical parameters",
+        "allow_repeated_recommendations": False,
+        "allow_recommending_already_measured": True,
+        "numerical_measurements_must_be_within_tolerance": True,
+        "parameters": [
+            {
+                "name": "Solvent",
+                "type": "SUBSTANCE",
+                "data": {
+                    "water": "O",
+                    "C1": "C",
+                    "C2": "CC",
+                    "C3": "CCC",
+                },
+                "encoding": "RDKIT",
+            },
+            {
+                "name": "SomeSetting",
+                "type": "CAT",
+                "values": ["slow", "normal", "fast"],
+                "encoding": "INT",
+            },
+            {
+                "name": "NumParameter1",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(0, 100, n_grid_points)),
+                "tolerance": 0.5,
+            },
+            {
+                "name": "NumParameter2",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(0, 100, n_grid_points)),
+                "tolerance": 0.5,
+            },
+        ],
+        "objective": {
+            "mode": "SINGLE",
+            "targets": [
+                {
+                    "name": "Target_1",
+                    "type": "NUM",
+                    "mode": "MAX",
+                },
+            ],
+        },
+    }
+    return config_dict
+
+
+@pytest.fixture(name="config_constraints_mixture")
+def fixture_config_constraints_mixture(n_grid_points, mock_substances):
+    """
+    Config for a mixture use case (3 solvents).
+    """
+    config_dict = {
+        "project_name": "Exclusion Constraints Test (Discrete)",
+        "allow_repeated_recommendations": False,
+        "allow_recommending_already_measured": True,
+        "numerical_measurements_must_be_within_tolerance": True,
+        "parameters": [
+            {
+                "name": "Solvent1",
+                "type": "SUBSTANCE",
+                "data": mock_substances,
+                "encoding": "MORDRED",
+            },
+            {
+                "name": "Solvent2",
+                "type": "SUBSTANCE",
+                "data": mock_substances,
+                "encoding": "MORDRED",
+            },
+            {
+                "name": "Solvent3",
+                "type": "SUBSTANCE",
+                "data": mock_substances,
+                "encoding": "MORDRED",
+            },
+            {
+                "name": "Fraction1",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(0, 100, n_grid_points)),
+                "tolerance": 0.2,
+            },
+            {
+                "name": "Fraction2",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(0, 100, n_grid_points)),
+                "tolerance": 0.2,
+            },
+            {
+                "name": "Fraction3",
+                "type": "NUM_DISCRETE",
+                "values": list(np.linspace(0, 100, n_grid_points)),
+                "tolerance": 0.2,
+            },
+        ],
+        "objective": {
+            "mode": "SINGLE",
+            "targets": [
+                {
+                    "name": "Target_1",
+                    "type": "NUM",
+                    "mode": "MAX",
+                },
+            ],
+        },
+    }
+
+    return config_dict
 
 
 def test_simple_dependency_variant1(
