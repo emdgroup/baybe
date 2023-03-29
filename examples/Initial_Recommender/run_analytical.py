@@ -130,17 +130,17 @@ def hartmann3(x1, x2, x3):
 
 scenarios = {
     name: BayBE(
+        searchspace=SearchSpace.create(
+            parameters=[
+                NumericDiscrete(
+                    name=f"x_{k+1}",
+                    values=list(np.linspace(0, 1, POINTS_PER_DIM)),
+                    tolerance=0.01,
+                )
+                for k in range(DIMENSIONS)
+            ],
+        ),
         strategy=Strategy(
-            searchspace=SearchSpace.create(
-                parameters=[
-                    NumericDiscrete(
-                        name=f"x_{k+1}",
-                        values=list(np.linspace(0, 1, POINTS_PER_DIM)),
-                        tolerance=0.01,
-                    )
-                    for k in range(DIMENSIONS)
-                ],
-            ),
             initial_recommender_cls=rec,
             allow_repeated_recommendations=False,
             allow_recommending_already_measured=False,

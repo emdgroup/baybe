@@ -435,15 +435,17 @@ def fixture_default_constraint_selection():
 
 
 @pytest.fixture(name="baybe")
-def fixture_baybe(strategy, objective):
+def fixture_baybe(parameters, constraints, strategy, objective):
     """Returns a BayBE"""
-    return BayBE(strategy=strategy, objective=objective)
+    return BayBE(
+        searchspace=SearchSpace.create(parameters=parameters, constraints=constraints),
+        strategy=strategy,
+        objective=objective,
+    )
 
 
 @pytest.fixture(name="strategy")
 def fixture_default_strategy(
-    parameters,
-    constraints,
     acquisition_function_cls,
     surrogate_model_cls,
     recommender_cls,
@@ -455,7 +457,6 @@ def fixture_default_strategy(
         initial_recommender_cls=initial_recommender_cls,
         surrogate_model_cls=surrogate_model_cls,
         acquisition_function_cls=acquisition_function_cls,
-        searchspace=SearchSpace.create(parameters=parameters, constraints=constraints),
         allow_repeated_recommendations=False,
         allow_recommending_already_measured=False,
         numerical_measurements_must_be_within_tolerance=True,

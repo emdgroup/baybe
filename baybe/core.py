@@ -23,19 +23,20 @@ log = logging.getLogger(__name__)
 class BayBE(BaseModel):
     """Main class for interaction with BayBE."""
 
+    # DOE specifications
+    searchspace: SearchSpace
     objective: Objective
     strategy: Strategy
+
+    # Data
     measurements_exp: pd.DataFrame = Field(default_factory=pd.DataFrame)
+
+    # Metadata
     batches_done: int = 0
     fits_done: int = 0
 
     # TODO: make private
     cached_recommendation: pd.DataFrame = Field(default_factory=pd.DataFrame)
-
-    @property
-    def searchspace(self) -> SearchSpace:
-        """The underlying search space."""
-        return self.strategy.searchspace
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -96,10 +97,10 @@ class BayBE(BaseModel):
         # parsing process to call Searchspace.create instead of the default constructor
         parameters = parse_obj_as(List[Parameter], config["parameters"])
         if "constraints" in config:
-            constraints = parse_obj_as(List[Constraint], config["constraints"])
+            constraints = parse_obj_as(List[Constraint], config.pop("constraints"))
         else:
             constraints = None
-        config["strategy"]["searchspace"] = SearchSpace.create(
+        config["searchspace"] = SearchSpace.create(
             parameters=parameters,
             constraints=constraints,
         )
@@ -206,6 +207,7 @@ class BayBE(BaseModel):
 
         # Get the recommended search space entries
         rec = self.strategy.recommend(
+            self.searchspace,
             self.measurements_parameters_comp,
             self.measurements_targets_comp,
             batch_quantity,

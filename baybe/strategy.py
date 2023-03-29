@@ -34,7 +34,6 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     #  strategy or introducing config classes for them (-> disable arbitrary types)
 
     # object variables
-    searchspace: SearchSpace
     surrogate_model_cls: str = "GP"
     acquisition_function_cls: Literal[
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB"
@@ -98,7 +97,12 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         # TODO: work in progress
         return Recommender.SUBCLASSES[self.recommender_cls]
 
-    def _fit(self, train_x: pd.DataFrame, train_y: pd.DataFrame) -> SurrogateModel:
+    def _fit(
+        self,
+        searchspace: SearchSpace,
+        train_x: pd.DataFrame,
+        train_y: pd.DataFrame,
+    ) -> SurrogateModel:
         """
         Uses the given data to train a fresh surrogate model instance for the DOE
         strategy.
@@ -115,13 +119,14 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             raise ValueError("Training inputs and targets must have the same index.")
 
         surrogate_model_cls = self.get_surrogate_model_cls()
-        surrogate_model = surrogate_model_cls(self.searchspace)
+        surrogate_model = surrogate_model_cls(searchspace)
         surrogate_model.fit(*to_tensor(train_x, train_y))
 
         return surrogate_model
 
     def recommend(
         self,
+        searchspace: SearchSpace,
         train_x: pd.DataFrame,
         train_y: pd.DataFrame,
         batch_quantity: int = 1,
@@ -146,7 +151,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         if len(train_x) == 0:
             initial_recommender_cls = self.get_initial_recommender_cls()
             recommender = initial_recommender_cls(
-                searchspace=self.searchspace, acquisition_function=None
+                searchspace=searchspace, acquisition_function=None
             )
         else:
             # construct the acquisition function
@@ -154,14 +159,14 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
                 acqf = None
             else:
                 best_f = train_y.max()
-                surrogate_model = self._fit(train_x, train_y)
+                surrogate_model = self._fit(searchspace, train_x, train_y)
                 acquisition_function_cls = self.get_acqusition_function_cls()
                 acqf = acquisition_function_cls(surrogate_model, best_f)
 
             # select the next experiments using the given recommender approach
             recommender_cls = self.get_recommender_cls()
             recommender = recommender_cls(
-                searchspace=self.searchspace, acquisition_function=acqf
+                searchspace=searchspace, acquisition_function=acqf
             )
 
         rec = recommender.recommend(
