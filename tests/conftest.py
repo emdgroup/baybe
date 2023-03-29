@@ -19,7 +19,6 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import add_fake_results, add_parameter_noise
 
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
@@ -364,53 +363,6 @@ def fixture_default_objective(targets):
     return Objective(mode=mode, targets=targets)
 
 
-@pytest.fixture(name="config_continuous_1target")
-def fixture_config_continuous_1target():
-    """
-    Config for a basic test using all basic parameter types and 1 target.
-    """
-    config_dict = {
-        "project_name": "Continuous Space 1 Target",
-        "random_seed": 1337,
-        "allow_repeated_recommendations": False,
-        "allow_recommending_already_measured": False,
-        "numerical_measurements_must_be_within_tolerance": True,
-        "parameters": [
-            {
-                "name": "Num_conti_1",
-                "type": "NUM_CONTINUOUS",
-                "bounds": (-1, 0),
-            },
-            {
-                "name": "Num_conti_2",
-                "type": "NUM_CONTINUOUS",
-                "bounds": (-1, 1),
-            },
-            {
-                "name": "Num_conti_3",
-                "type": "NUM_CONTINUOUS",
-                "bounds": (0, 1),
-            },
-        ],
-        "objective": {
-            "mode": "SINGLE",
-            "targets": [
-                {
-                    "name": "Target_1",
-                    "type": "NUM",
-                    "mode": "MAX",
-                },
-            ],
-        },
-        "strategy": {
-            "surrogate_model_cls": "GP",
-            "recommender_cls": "SEQUENTIAL_GREEDY_CONTINUOUS",
-        },
-    }
-
-    return config_dict
-
-
 @pytest.fixture(name="config_constraints_dependency")
 def fixture_config_constraints_dependency(
     n_grid_points, mock_substances, mock_categories
@@ -634,21 +586,3 @@ def fixture_config_constraints_mixture(n_grid_points, mock_substances):
     }
 
     return config_dict
-
-
-@pytest.fixture(name="baybe_object_batch3_iterations2")
-def fixture_baybe_object_batch3_iterations2(
-    baybe_one_maximization_target, good_reference_values
-):
-    """
-    Returns BayBE object that has been run for 2 iterations with mock data.
-    """
-    baybe_obj = baybe_one_maximization_target
-
-    for _ in range(2):
-        rec = baybe_obj.recommend(batch_quantity=3)
-        add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
-        add_parameter_noise(rec, baybe_obj, noise_level=0.1)
-        baybe_obj.add_results(rec)
-
-    return baybe_obj
