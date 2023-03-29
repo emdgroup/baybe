@@ -459,7 +459,6 @@ def fixture_default_strategy(
         acquisition_function_cls=acquisition_function_cls,
         allow_repeated_recommendations=False,
         allow_recommending_already_measured=False,
-        numerical_measurements_must_be_within_tolerance=True,
     )
 
 

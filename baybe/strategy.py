@@ -42,7 +42,6 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     recommender_cls: str = "SEQUENTIAL_GREEDY_DISCRETE"
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
-    numerical_measurements_must_be_within_tolerance: bool = True
 
     # TODO: introduce a reusable validator once they all perform the same operation
 

@@ -144,12 +144,12 @@ scenarios = {
             initial_recommender_cls=rec,
             allow_repeated_recommendations=False,
             allow_recommending_already_measured=False,
-            numerical_measurements_must_be_within_tolerance=True,
         ),
         objective=Objective(
             mode="SINGLE",
             targets=[NumericalTarget(name="Target", mode="MIN")],
         ),
+        numerical_measurements_must_be_within_tolerance=True,
     )
     for name, rec in [
         ("Random", "RANDOM"),

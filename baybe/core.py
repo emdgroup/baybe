@@ -30,6 +30,7 @@ class BayBE(BaseModel):
 
     # Data
     measurements_exp: pd.DataFrame = Field(default_factory=pd.DataFrame)
+    numerical_measurements_must_be_within_tolerance: bool = True
 
     # Metadata
     batches_done: int = 0
@@ -82,7 +83,6 @@ class BayBE(BaseModel):
             for k in [
                 "allow_repeated_recommendations",
                 "allow_recommending_already_measured",
-                "numerical_measurements_must_be_within_tolerance",
             ]
             if k in config
         }
@@ -158,7 +158,7 @@ class BayBE(BaseModel):
         # Update meta data
         # TODO: refactor responsibilities
         self.searchspace.discrete.mark_as_measured(
-            data, self.strategy.numerical_measurements_must_be_within_tolerance
+            data, self.numerical_measurements_must_be_within_tolerance
         )
 
         # Read in measurements and add them to the database
