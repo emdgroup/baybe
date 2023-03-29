@@ -83,6 +83,7 @@ class BayBE(BaseModel):
                 "allow_recommending_already_measured",
                 "numerical_measurements_must_be_within_tolerance",
             ]
+            if k in config
         }
         for key, val in flags.items():
             config["strategy"][key] = val
