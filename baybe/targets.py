@@ -215,7 +215,7 @@ class Objective(BaseModel, extra=Extra.forbid):
             )
         if mode == "DESIRABILITY":
             for target in targets:
-                if ("bounds" not in target) or (target["bounds"] is None):
+                if getattr(target, "bounds", None) is None:
                     raise StrictValidationError(
                         "In 'DESIRABILITY' mode for multiple targets, each target must "
                         "have bounds defined."

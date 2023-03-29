@@ -205,6 +205,50 @@ def fixture_parameters(parameter_names: List[str], mock_substances):
     return [p for p in valid_parameters if p.name in parameter_names]
 
 
+@pytest.fixture(name="targets")
+def fixture_targets(target_names: List[str]):
+    """Provides example targets via specified names."""
+    valid_targets = [
+        NumericalTarget(
+            name="Target_max",
+            mode="MAX",
+        ),
+        NumericalTarget(
+            name="Target_min",
+            mode="MIN",
+        ),
+        NumericalTarget(
+            name="Target_max_bounded",
+            mode="MAX",
+            bounds=(0, 100),
+        ),
+        NumericalTarget(
+            name="Target_min_bounded",
+            mode="MIN",
+            bounds=(0, 100),
+        ),
+        NumericalTarget(
+            name="Target_match_bell",
+            mode="MATCH",
+            bounds=(0, 100),
+            bounds_transform_func="BELL",
+        ),
+        NumericalTarget(
+            name="Target_match_triangular",
+            mode="MATCH",
+            bounds=(0, 100),
+            bounds_transform_func="TRIANGULAR",
+        ),
+    ]
+    return [t for t in valid_targets if t.name in target_names]
+
+
+@pytest.fixture(name="target_names")
+def fixture_default_target_selection():
+    """The default targets to be used if not specified differently."""
+    return ["Target_max"]
+
+
 @pytest.fixture(name="parameter_names")
 def fixture_default_parameter_selection():
     """Default parameters used if not specified differently."""
@@ -263,31 +307,61 @@ def fixture_config_discrete_1target():
 
 
 @pytest.fixture(name="baybe")
-def fixture_baybe(parameters, objective):
+def fixture_baybe(strategy, objective):
     """Returns a BayBE"""
-    return BayBE(
-        strategy=Strategy(
-            recommender_cls="UNRESTRICTED_RANKING",
-            surrogate_model_cls="GP",
-            searchspace=SearchSpace.create(parameters=parameters),
-            allow_repeated_recommendations=False,
-            allow_recommending_already_measured=False,
-            numerical_measurements_must_be_within_tolerance=True,
-        ),
-        objective=objective,
+    return BayBE(strategy=strategy, objective=objective)
+
+
+@pytest.fixture(name="strategy")
+def fixture_default_strategy(
+    parameters,
+    acquisition_function_cls,
+    surrogate_model_cls,
+    recommender_cls,
+    initial_recommender_cls,
+):
+    """The default strategy to be used if not specified differently."""
+    return Strategy(
+        recommender_cls=recommender_cls,
+        initial_recommender_cls=initial_recommender_cls,
+        surrogate_model_cls=surrogate_model_cls,
+        acquisition_function_cls=acquisition_function_cls,
+        searchspace=SearchSpace.create(parameters=parameters),
+        allow_repeated_recommendations=False,
+        allow_recommending_already_measured=False,
+        numerical_measurements_must_be_within_tolerance=True,
     )
+
+
+@pytest.fixture(name="acquisition_function_cls")
+def fixture_default_acquisition_function():
+    """The default acquisition function to be used if not specified differently."""
+    return "EI"
+
+
+@pytest.fixture(name="surrogate_model_cls")
+def fixture_default_surrogate_model():
+    """The default surrogate model to be used if not specified differently."""
+    return "GP"
+
+
+@pytest.fixture(name="recommender_cls")
+def fixture_recommender():
+    """The default recommender to be used if not specified differently."""
+    return "UNRESTRICTED_RANKING"
+
+
+@pytest.fixture(name="initial_recommender_cls")
+def fixture_initial_recommender():
+    """The default initial recommender to be used if not specified differently."""
+    return "RANDOM"
 
 
 @pytest.fixture(name="objective")
 def fixture_default_objective(targets):
     """The default objective to be used if not specified differently."""
-    return Objective(mode="SINGLE", targets=targets)
-
-
-@pytest.fixture(name="targets")
-def fixture_default_targets():
-    """The default target to be used if not specified differently."""
-    return [NumericalTarget(name="Target", mode="MAX")]
+    mode = "SINGLE" if len(targets) == 1 else "DESIRABILITY"
+    return Objective(mode=mode, targets=targets)
 
 
 @pytest.fixture(name="config_continuous_1target")

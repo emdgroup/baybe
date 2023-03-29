@@ -57,6 +57,6 @@ def test_bad_target_input_value(baybe, good_reference_values, bad_val, request):
     )
 
     # Add an invalid value
-    rec.Target.iloc[0] = bad_val
+    rec.Target_max.iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
         baybe.add_results(rec)
