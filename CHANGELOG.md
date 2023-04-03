@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Replaced dict-based object representation with actual objects in source files
+- Replaced dict-based configuration logic with object-based logic
 
 ## [0.2.4] - 2023-03-24
 ### Added
