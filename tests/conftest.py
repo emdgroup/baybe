@@ -7,6 +7,17 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from baybe.constraints import (
+    CustomConstraint,
+    DependenciesConstraint,
+    ExcludeConstraint,
+    NoLabelDuplicatesConstraint,
+    PermutationInvarianceConstraint,
+    ProductConstraint,
+    SubSelectionCondition,
+    SumConstraint,
+    ThresholdCondition,
+)
 from baybe.core import BayBE
 from baybe.parameters import (
     Categorical,
@@ -123,7 +134,9 @@ def fixture_mock_categories():
 
 
 @pytest.fixture(name="parameters")
-def fixture_parameters(parameter_names: List[str], mock_substances):
+def fixture_parameters(
+    parameter_names: List[str], mock_substances, mock_categories, n_grid_points
+):
     """Provides example parameters via specified names."""
     valid_parameters = [
         Categorical(
@@ -136,10 +149,56 @@ def fixture_parameters(parameter_names: List[str], mock_substances):
             values=["bad", "OK", "good"],
             encoding="OHE",
         ),
+        Categorical(
+            name="Switch_1",
+            values=["on", "off"],
+            encoding="OHE",
+        ),
+        Categorical(
+            name="Switch_2",
+            values=["left", "right"],
+            encoding="OHE",
+        ),
+        Categorical(
+            name="Frame_A",
+            values=mock_categories,
+        ),
+        Categorical(
+            name="Frame_B",
+            values=mock_categories,
+        ),
+        Categorical(
+            name="SomeSetting",
+            values=["slow", "normal", "fast"],
+            encoding="INT",
+        ),
         NumericDiscrete(
             name="Num_disc_1",
             values=[1, 2, 7],
             tolerance=0.3,
+        ),
+        NumericDiscrete(
+            name="Fraction_1",
+            values=list(np.linspace(0, 100, n_grid_points)),
+            tolerance=0.2,
+        ),
+        NumericDiscrete(
+            name="Fraction_2",
+            values=list(np.linspace(0, 100, n_grid_points)),
+            tolerance=0.5,
+        ),
+        NumericDiscrete(
+            name="Fraction_3",
+            values=list(np.linspace(0, 100, n_grid_points)),
+            tolerance=0.5,
+        ),
+        NumericDiscrete(
+            name="Temperature",
+            values=list(np.linspace(100, 200, n_grid_points)),
+        ),
+        NumericDiscrete(
+            name="Pressure",
+            values=list(np.linspace(0, 6, n_grid_points)),
         ),
         NumericContinuous(
             name="Conti_finite1",
@@ -191,6 +250,20 @@ def fixture_parameters(parameter_names: List[str], mock_substances):
                 index=["A", "B", "C"],
             ),
         ),
+        GenericSubstance(
+            name="Solvent_1",
+            data=mock_substances,
+        ),
+        GenericSubstance(
+            name="Solvent_2",
+            data=mock_substances,
+            encoding="MORDRED",
+        ),
+        GenericSubstance(
+            name="Solvent_3",
+            data=mock_substances,
+            encoding="MORDRED",
+        ),
         *[
             GenericSubstance(
                 name=f"Substance_1_{encoding}",
@@ -241,6 +314,108 @@ def fixture_targets(target_names: List[str]):
     return [t for t in valid_targets if t.name in target_names]
 
 
+@pytest.fixture(name="constraints")
+def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_points):
+    """Provides example constraints via specified names."""
+
+    def custom_function(ser: pd.Series) -> bool:
+        if ser.Solvent_1 == "water":
+            if ser.Temperature > 120 and ser.Pressure > 5:
+                return False
+            if ser.Temperature > 180 and ser.Pressure > 3:
+                return False
+        if ser.Solvent_1 == "C3":
+            if ser.Temperature < 150 and ser.Pressure > 3:
+                return False
+        return True
+
+    valid_constraints = {
+        "Constraint_1": DependenciesConstraint(
+            parameters=["Switch_1", "Switch_2"],
+            conditions=[
+                SubSelectionCondition(selection=["on"]),
+                SubSelectionCondition(selection=["right"]),
+            ],
+            affected_parameters=[
+                ["Solvent_1", "Fraction_1"],
+                ["Frame_A", "Frame_B"],
+            ],
+        ),
+        "Constraint_2": DependenciesConstraint(
+            parameters=["Switch_1"],
+            conditions=[SubSelectionCondition(selection=["on"])],
+            affected_parameters=[["Solvent_1", "Fraction_1"]],
+        ),
+        "Constraint_3": DependenciesConstraint(
+            parameters=["Switch_2"],
+            conditions=[SubSelectionCondition(selection=["right"])],
+            affected_parameters=[["Frame_A", "Frame_B"]],
+        ),
+        "Constraint_4": ExcludeConstraint(
+            parameters=["Temperature", "Solvent_1"],
+            combiner="AND",
+            conditions=[
+                ThresholdCondition(threshold=151, operator=">"),
+                SubSelectionCondition(selection=list(mock_substances)[:2]),
+            ],
+        ),
+        "Constraint_5": ExcludeConstraint(
+            parameters=["Pressure", "Solvent_1"],
+            combiner="AND",
+            conditions=[
+                ThresholdCondition(threshold=5, operator=">"),
+                SubSelectionCondition(selection=list(mock_substances)[-2:]),
+            ],
+        ),
+        "Constraint_6": ExcludeConstraint(
+            parameters=["Pressure", "Temperature"],
+            combiner="AND",
+            conditions=[
+                ThresholdCondition(threshold=3, operator="<"),
+                ThresholdCondition(threshold=120, operator=">"),
+            ],
+        ),
+        "Constraint_7": CustomConstraint(
+            parameters=["Pressure", "Solvent_1", "Temperature"],
+            validator=custom_function,
+        ),
+        "Constraint_8": SumConstraint(
+            parameters=["Fraction_1", "Fraction_2"],
+            condition=ThresholdCondition(threshold=150, operator="<="),
+        ),
+        "Constraint_9": ProductConstraint(
+            parameters=["Fraction_1", "Fraction_2"],
+            condition=ThresholdCondition(threshold=30, operator=">="),
+        ),
+        "Constraint_10": SumConstraint(
+            parameters=["Fraction_1", "Fraction_2"],
+            condition=ThresholdCondition(threshold=100, operator="="),
+        ),
+        "Constraint_11": PermutationInvarianceConstraint(
+            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+            dependencies=DependenciesConstraint(
+                parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
+                conditions=[
+                    ThresholdCondition(threshold=0.0, operator=">"),
+                    ThresholdCondition(threshold=0.0, operator=">"),
+                    SubSelectionCondition(
+                        selection=list(np.linspace(0, 100, n_grid_points)[1:])
+                    ),
+                ],
+                affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
+            ),
+        ),
+        "Constraint_12": SumConstraint(
+            parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
+            condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.01),
+        ),
+        "Constraint_13": NoLabelDuplicatesConstraint(
+            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+        ),
+    }
+    return [valid_constraints[c] for c in constraint_names]
+
+
 @pytest.fixture(name="target_names")
 def fixture_default_target_selection():
     """The default targets to be used if not specified differently."""
@@ -253,6 +428,12 @@ def fixture_default_parameter_selection():
     return ["Categorical_1", "Categorical_2", "Num_disc_1"]
 
 
+@pytest.fixture(name="constraint_names")
+def fixture_default_constraint_selection():
+    """Default constraints used if not specified differently."""
+    return []
+
+
 @pytest.fixture(name="baybe")
 def fixture_baybe(strategy, objective):
     """Returns a BayBE"""
@@ -262,6 +443,7 @@ def fixture_baybe(strategy, objective):
 @pytest.fixture(name="strategy")
 def fixture_default_strategy(
     parameters,
+    constraints,
     acquisition_function_cls,
     surrogate_model_cls,
     recommender_cls,
@@ -273,7 +455,7 @@ def fixture_default_strategy(
         initial_recommender_cls=initial_recommender_cls,
         surrogate_model_cls=surrogate_model_cls,
         acquisition_function_cls=acquisition_function_cls,
-        searchspace=SearchSpace.create(parameters=parameters),
+        searchspace=SearchSpace.create(parameters=parameters, constraints=constraints),
         allow_repeated_recommendations=False,
         allow_recommending_already_measured=False,
         numerical_measurements_must_be_within_tolerance=True,

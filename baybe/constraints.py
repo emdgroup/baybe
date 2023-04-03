@@ -8,8 +8,7 @@ import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
 from inspect import isabstract
-
-from typing import Callable, ClassVar, Dict, List, Literal, Optional, Type, Union
+from typing import Callable, ClassVar, Dict, List, Literal, Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -212,15 +211,8 @@ class ExcludeConstraint(Constraint):
     type = "EXCLUDE"
     eval_during_creation = True
     eval_during_modeling = False
-    conditions: conlist(Union[dict, Condition], min_items=1)
+    conditions: conlist(Condition, min_items=1)
     combiner: Literal["AND", "OR", "XOR"] = "AND"
-
-    @validator("conditions")
-    def validate_conditions(cls, conditions):
-        """Instantiates the conditions."""
-        return [
-            c if isinstance(c, Condition) else Condition.create(c) for c in conditions
-        ]
 
     _combiner_dict = {
         "AND": ops.and_,
@@ -338,19 +330,12 @@ class DependenciesConstraint(Constraint):
     #  strategy and surrogate
     eval_during_creation = True
     eval_during_modeling = False
-    conditions: List[Union[dict, Condition]]
+    conditions: List[Condition]
     affected_parameters: List[List[str]]
 
     # Flag that indicates whether the affected parameters are permutation invariant.
     # Not to be set by the user but by other constraints reusing this class.
     permutation_invariant = False
-
-    @validator("conditions")
-    def validate_conditions(cls, conditions):
-        """Validates the conditions."""
-        return [
-            c if isinstance(c, Condition) else Condition.create(c) for c in conditions
-        ]
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
