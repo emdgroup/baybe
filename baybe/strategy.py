@@ -149,9 +149,7 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         # Special treatment of initial recommendation
         if len(train_x) == 0:
             initial_recommender_cls = self.get_initial_recommender_cls()
-            recommender = initial_recommender_cls(
-                searchspace=searchspace, acquisition_function=None
-            )
+            recommender = initial_recommender_cls(acquisition_function=None)
         else:
             # construct the acquisition function
             if self.recommender_cls == "RANDOM":
@@ -164,11 +162,10 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
 
             # select the next experiments using the given recommender approach
             recommender_cls = self.get_recommender_cls()
-            recommender = recommender_cls(
-                searchspace=searchspace, acquisition_function=acqf
-            )
+            recommender = recommender_cls(acquisition_function=acqf)
 
         rec = recommender.recommend(
+            searchspace,
             batch_quantity,
             self.allow_repeated_recommendations,
             self.allow_recommending_already_measured,
