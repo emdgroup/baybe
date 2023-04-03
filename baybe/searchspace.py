@@ -71,11 +71,6 @@ class SubspaceDiscrete(BaseModel):
                 exp_rep.drop(index=inds, inplace=True)
             exp_rep.reset_index(inplace=True, drop=True)
 
-            # Create a dataframe containing the computational parameter representation
-            # (ignoring all columns that do not carry any covariate information).
-            comp_rep = cls.transform(exp_rep, parameters, empty_encoding)
-            comp_rep = df_drop_single_value_columns(comp_rep)
-
             # Create a dataframe storing the experiment metadata
             metadata = pd.DataFrame(
                 {
@@ -85,14 +80,24 @@ class SubspaceDiscrete(BaseModel):
                 },
                 index=exp_rep.index,
             )
-        return SubspaceDiscrete(
+        subspace = SubspaceDiscrete(
             parameters=parameters,
             constraints=constraints,
             empty_encoding=empty_encoding,
             exp_rep=exp_rep,
-            comp_rep=comp_rep,
             metadata=metadata,
         )
+
+        # TODO: The comp_rep should be implemented using a proper post_init and should
+        #   not be visible in the constructor. This should be changed once migrated
+        #   to pydantic v2 or attrs.
+        # Create a dataframe containing the computational parameter representation
+        # (ignoring all columns that do not carry any covariate information).
+        comp_rep = subspace.transform(exp_rep)
+        comp_rep = df_drop_single_value_columns(comp_rep)
+        subspace.comp_rep = comp_rep
+
+        return subspace
 
     @property
     def empty(self):
@@ -293,13 +298,9 @@ class SubspaceDiscrete(BaseModel):
 
         return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
 
-    @classmethod
     def transform(
-        cls,
+        self,
         data: pd.DataFrame,
-        parameters: List[DiscreteParameter],
-        empty_encoding: bool,
-        comp_rep_columns: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Transforms discrete parameters from experimental to computational
@@ -317,19 +318,22 @@ class SubspaceDiscrete(BaseModel):
             A dataframe with the parameters in computational representation.
         """
         # If the transformed values are not required, return an empty dataframe
-        if empty_encoding or len(data) < 1:
+        if self.empty_encoding or len(data) < 1:
             comp_rep = pd.DataFrame(index=data.index)
             return comp_rep
 
         # Transform the parameters
         dfs = []
-        for param in parameters:
+        for param in self.parameters:
             comp_df = param.transform_rep_exp2comp(data[param.name])
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
-        if comp_rep_columns is not None:
-            comp_rep = comp_rep[comp_rep_columns]
+        # If the computational representation has already been built (with potentially
+        # removing some columns, e.g. due to decorrelation or dropping constant ones),
+        # any subsequent transformation should yield the same columns.
+        if self.comp_rep is not None:
+            comp_rep = comp_rep[self.comp_rep.columns]
 
         return comp_rep
 
@@ -589,15 +593,7 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
             A dataframe with the parameters in computational representation.
         """
         # Transform subspaces separately
-        # TODO: refactor discrete transform method to avoid passing these members
-        #   (at the moment, the method needs to be a classmethod since it is needed
-        #   in the subspace creation method)
-        df_discrete = self.discrete.transform(
-            data,
-            self.discrete.parameters,
-            self.discrete.empty_encoding,
-            list(self.discrete.comp_rep),
-        )
+        df_discrete = self.discrete.transform(data)
         df_continuous = self.continuous.transform(data)
 
         # Combine Subspaces
