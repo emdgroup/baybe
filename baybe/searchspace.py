@@ -1,9 +1,13 @@
+# pylint: disable=missing-class-docstring, missing-function-docstring
+# TODO: add docstrings
+
 """
 Functionality for managing search spaces.
 """
 from __future__ import annotations
 
 import logging
+from enum import Enum
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -24,6 +28,13 @@ from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
+
+
+class SearchSpaceType(Enum):
+    DISCRETE = "DISCRETE"
+    CONTINUOUS = "CONTINUOUS"
+    EITHER = "EITHER"
+    HYBRID = "HYBRID"
 
 
 class SubspaceDiscrete(BaseModel):
@@ -540,6 +551,16 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
             constraints=constraints,
             empty_encoding=empty_encoding,
         )
+
+    @property
+    def type(self) -> SearchSpaceType:
+        if self.discrete.empty and not self.continuous.empty:
+            return SearchSpaceType.CONTINUOUS
+        if not self.discrete.empty and self.continuous.empty:
+            return SearchSpaceType.DISCRETE
+        if not self.discrete.empty and not self.continuous.empty:
+            return SearchSpaceType.HYBRID
+        raise RuntimeError("This line should be impossible to reach.")
 
     @property
     def contains_mordred(self) -> bool:

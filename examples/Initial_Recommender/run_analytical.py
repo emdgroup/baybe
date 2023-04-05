@@ -10,6 +10,9 @@ from baybe.core import BayBE
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
+from baybe.strategies.clustering import KMeansClusteringRecommender
+from baybe.strategies.sampling import FPSRecommender, RandomRecommender
+
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
@@ -141,7 +144,7 @@ scenarios = {
             ],
         ),
         strategy=Strategy(
-            initial_recommender_cls=rec,
+            initial_recommender=rec,
             allow_repeated_recommendations=False,
             allow_recommending_already_measured=False,
         ),
@@ -152,9 +155,9 @@ scenarios = {
         numerical_measurements_must_be_within_tolerance=True,
     )
     for name, rec in [
-        ("Random", "RANDOM"),
-        ("Farthest Point Sampling", "FPS"),
-        ("KMEANS Clustering", "CLUSTERING_KMEANS"),
+        ("Random", RandomRecommender()),
+        ("Farthest Point Sampling", FPSRecommender()),
+        ("KMEANS Clustering", KMeansClusteringRecommender()),
     ]
 }
 
