@@ -67,31 +67,37 @@ def run_iterations(baybe, n_iterations, batch_quantity):
     baybe.add_results(rec)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("acquisition_function_cls", valid_acquisition_functions)
 def test_iter_acquisition_function(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("surrogate_model_cls", valid_surrogate_models)
 def test_iter_surrogate_model(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("initial_recommender_cls", valid_initial_recommenders)
 def test_iter_initial_recommender(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("target_names", test_targets)
 def test_iter_targets(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("recommender_cls", valid_purely_discrete_recommenders)
 def test_iter_recommender_discrete(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("recommender_cls", valid_purely_continuous_recommenders)
 @pytest.mark.parametrize("parameter_names", ["Conti_finite1", "Conti_finite2"])
 def test_iter_recommender_continuous(baybe, n_iterations, batch_quantity):
