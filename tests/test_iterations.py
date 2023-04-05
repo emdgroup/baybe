@@ -6,8 +6,8 @@ from typing import get_args, get_type_hints
 
 import pytest
 
-from baybe.recommender import Recommender
-from baybe.strategy import Strategy
+from baybe.strategies.recommender import Recommender
+from baybe.strategies.strategy import Strategy
 from baybe.surrogate import SurrogateModel
 from baybe.utils import add_fake_results, add_parameter_noise, subclasses_recursive
 

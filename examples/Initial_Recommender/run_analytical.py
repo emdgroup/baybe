@@ -10,7 +10,7 @@ from baybe.core import BayBE
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategy import Strategy
+from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 DIMENSIONS = 3

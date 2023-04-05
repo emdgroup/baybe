@@ -9,6 +9,12 @@ from functools import partial
 from typing import Literal
 
 import pandas as pd
+
+from baybe.acquisition import debotorchize
+from baybe.searchspace import SearchSpace
+from baybe.strategies.recommender import Recommender
+from baybe.surrogate import SurrogateModel
+from baybe.utils import BaseModel, check_if_in, to_tensor
 from botorch.acquisition import (
     ExpectedImprovement,
     PosteriorMean,
@@ -19,12 +25,6 @@ from botorch.acquisition import (
     UpperConfidenceBound,
 )
 from pydantic import Extra, validator
-
-from .acquisition import debotorchize
-from .recommender import Recommender
-from .searchspace import SearchSpace
-from .surrogate import SurrogateModel
-from .utils import BaseModel, check_if_in, to_tensor
 
 
 class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):

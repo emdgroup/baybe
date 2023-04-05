@@ -24,15 +24,15 @@ try:
 except ImportError:
     KMedoids = None
 
-from .searchspace import SearchSpace
-from .utils import (
+from baybe.searchspace import SearchSpace
+from baybe.utils import (
     IncompatibleSearchSpaceError,
     isabstract,
     NoMCAcquisitionFunctionError,
     NotEnoughPointsLeftError,
     to_tensor,
 )
-from .utils.sampling_algorithms import farthest_point_sampling
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 SklearnModel = TypeVar("SklearnModel")
 

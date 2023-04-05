@@ -13,7 +13,7 @@ from pydantic import Field, parse_obj_as
 from baybe.constraints import Constraint
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
-from baybe.strategy import Strategy
+from baybe.strategies.strategy import Strategy
 from baybe.targets import Objective, Target
 from baybe.utils import BaseModel
 

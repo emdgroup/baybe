@@ -28,7 +28,7 @@ from baybe.parameters import (
     SUBSTANCE_ENCODINGS,
 )
 from baybe.searchspace import SearchSpace
-from baybe.strategy import Strategy
+from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 
