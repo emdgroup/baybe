@@ -16,9 +16,7 @@ import streamlit as st
 
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
-from baybe.strategies.clustering import KMeansClusteringRecommender
 from baybe.strategies.recommender import NonPredictiveRecommender
-from baybe.strategies.sampling import FPSRecommender, RandomRecommender
 from baybe.utils import isabstract, subclasses_recursive
 from sklearn.datasets import make_blobs
 
