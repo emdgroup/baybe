@@ -8,6 +8,14 @@ It provides the necessary functionality to:
 - handle measurements data and feeding it back into the experimental design.
 - compare different DOE strategies using simulation on synthetic and real data.
 
+
+## :exclamation::construction: NOTE :construction::exclamation:
+This repository is under **heavy active development**.
+Please note that the provided functionality and user interfaces are not stable and may change in newer releases.
+Therefore, if you would like to use the code in its current early stage, we recommend 
+pinning the version during installation to prevent possible changes in the backend.
+In case of questions or comments, feel free to contact the **BayBE Dev Team**.
+
 ## Installation
 BayBE can be directly installed from [Azure Artifacts](https://***REMOVED***/_artifacts/feed/artifacts). To do so, ensure 
 that all [prerequisites](https://pypi.org/project/artifacts-keyring/) of 
