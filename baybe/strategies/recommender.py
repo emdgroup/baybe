@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import Callable, Dict, Literal, Type
+from typing import Callable, Dict, Literal, Optional, Type
 
 import pandas as pd
 
@@ -77,9 +77,9 @@ class Recommender(ABC):
     def recommend(
         self,
         searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
         batch_quantity: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
@@ -97,9 +97,9 @@ class NonPredictiveRecommender(Recommender, ABC):
     def recommend(
         self,
         searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
         batch_quantity: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
@@ -191,9 +191,9 @@ class BayesianRecommender(Recommender, ABC):
     def recommend(
         self,
         searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
         batch_quantity: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:

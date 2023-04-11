@@ -4,6 +4,8 @@ Strategies for Design of Experiments (DOE).
 
 from __future__ import annotations
 
+from typing import Optional
+
 import pandas as pd
 from pydantic import Extra, Field
 
@@ -25,9 +27,9 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     def recommend(
         self,
         searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
         batch_quantity: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """
         Recommends the next experiments to be conducted.
@@ -50,9 +52,9 @@ class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
         )
         rec = recommender.recommend(
             searchspace,
+            batch_quantity,
             train_x,
             train_y,
-            batch_quantity,
             self.allow_repeated_recommendations,
             self.allow_recommending_already_measured,
         )

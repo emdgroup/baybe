@@ -208,9 +208,9 @@ class BayBE(BaseModel):
         # Get the recommended search space entries
         rec = self.strategy.recommend(
             self.searchspace,
+            batch_quantity,
             self.measurements_parameters_comp,
             self.measurements_targets_comp,
-            batch_quantity,
         )
 
         # Query user input
