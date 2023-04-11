@@ -1,3 +1,5 @@
+# pylint: disable=import-error
+# TODO: Reactivate pylint after refactoring
 """
 Compatability test for surrogate models and botorch wrapping
 """
