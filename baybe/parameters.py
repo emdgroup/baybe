@@ -6,7 +6,19 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property, lru_cache
-from typing import Any, ClassVar, Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    get_args,
+    get_type_hints,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
@@ -363,6 +375,10 @@ class GenericSubstance(DiscreteParameter):
                 comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
         return comp_df
+
+
+# Available encodings for substance parameters
+SUBSTANCE_ENCODINGS = get_args(get_type_hints(GenericSubstance)["encoding"])
 
 
 class Custom(DiscreteParameter):

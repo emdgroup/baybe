@@ -1,15 +1,35 @@
 """
 PyTest configuration
 """
+from typing import List
+
 import numpy as np
+import pandas as pd
 import pytest
 
+from baybe.constraints import (
+    CustomConstraint,
+    DependenciesConstraint,
+    ExcludeConstraint,
+    NoLabelDuplicatesConstraint,
+    PermutationInvarianceConstraint,
+    ProductConstraint,
+    SubSelectionCondition,
+    SumConstraint,
+    ThresholdCondition,
+)
 from baybe.core import BayBE
-from baybe.parameters import Categorical, NumericDiscrete
+from baybe.parameters import (
+    Categorical,
+    Custom,
+    GenericSubstance,
+    NumericContinuous,
+    NumericDiscrete,
+    SUBSTANCE_ENCODINGS,
+)
 from baybe.searchspace import SearchSpace
 from baybe.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import add_fake_results, add_parameter_noise
 
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
@@ -45,7 +65,6 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_slow)
 
 
-# Independent Fixtures
 @pytest.fixture(params=[2], name="n_iterations", ids=["i2"])
 def fixture_n_iterations(request):
     """
@@ -114,386 +133,361 @@ def fixture_mock_categories():
     return ["Type1", "Type2", "Type3"]
 
 
-# Dependent Fixtures
-@pytest.fixture(name="config_discrete_1target")
-def fixture_config_discrete_1target():
-    """
-    Config for a basic test using all basic parameter types and 1 target.
-    """
-    config_dict = {
-        "project_name": "Discrete Space 1 Target",
-        "random_seed": 1337,
-        "allow_repeated_recommendations": False,
-        "allow_recommending_already_measured": False,
-        "numerical_measurements_must_be_within_tolerance": True,
-        "parameters": [
-            {
-                "name": "Categorical_1",
-                "type": "CAT",
-                "values": ["A", "B", "C"],
-                "encoding": "OHE",
-            },
-            {
-                "name": "Categorical_2",
-                "type": "CAT",
-                "values": ["bad", "OK", "good"],
-                "encoding": "INT",
-            },
-            {
-                "name": "Num_disc_1",
-                "type": "NUM_DISCRETE",
-                "values": [1, 2, 7],
-                "tolerance": 0.3,
-            },
-        ],
-        "objective": {
-            "mode": "SINGLE",
-            "targets": [
+@pytest.fixture(name="parameters")
+def fixture_parameters(
+    parameter_names: List[str], mock_substances, mock_categories, n_grid_points
+):
+    """Provides example parameters via specified names."""
+    valid_parameters = [
+        Categorical(
+            name="Categorical_1",
+            values=["A", "B", "C"],
+            encoding="OHE",
+        ),
+        Categorical(
+            name="Categorical_2",
+            values=["bad", "OK", "good"],
+            encoding="OHE",
+        ),
+        Categorical(
+            name="Switch_1",
+            values=["on", "off"],
+            encoding="OHE",
+        ),
+        Categorical(
+            name="Switch_2",
+            values=["left", "right"],
+            encoding="OHE",
+        ),
+        Categorical(
+            name="Frame_A",
+            values=mock_categories,
+        ),
+        Categorical(
+            name="Frame_B",
+            values=mock_categories,
+        ),
+        Categorical(
+            name="SomeSetting",
+            values=["slow", "normal", "fast"],
+            encoding="INT",
+        ),
+        NumericDiscrete(
+            name="Num_disc_1",
+            values=[1, 2, 7],
+            tolerance=0.3,
+        ),
+        NumericDiscrete(
+            name="Fraction_1",
+            values=list(np.linspace(0, 100, n_grid_points)),
+            tolerance=0.2,
+        ),
+        NumericDiscrete(
+            name="Fraction_2",
+            values=list(np.linspace(0, 100, n_grid_points)),
+            tolerance=0.5,
+        ),
+        NumericDiscrete(
+            name="Fraction_3",
+            values=list(np.linspace(0, 100, n_grid_points)),
+            tolerance=0.5,
+        ),
+        NumericDiscrete(
+            name="Temperature",
+            values=list(np.linspace(100, 200, n_grid_points)),
+        ),
+        NumericDiscrete(
+            name="Pressure",
+            values=list(np.linspace(0, 6, n_grid_points)),
+        ),
+        NumericContinuous(
+            name="Conti_finite1",
+            bounds=(0, 1),
+        ),
+        NumericContinuous(
+            name="Conti_finite2",
+            bounds=(-1, 0),
+        ),
+        NumericContinuous(
+            name="Conti_infinite1",
+            bounds=(None, 1),
+        ),
+        NumericContinuous(
+            name="Conti_infinite2",
+            bounds=(0, None),
+        ),
+        NumericContinuous(
+            name="Conti_infinite3",
+            bounds=(0, np.inf),
+        ),
+        NumericContinuous(
+            name="Conti_infinite4",
+            bounds=(-np.inf, 1),
+        ),
+        NumericContinuous(
+            name="Conti_infinite5",
+            bounds=(None, None),
+        ),
+        Custom(
+            name="Custom_1",
+            data=pd.DataFrame(
                 {
-                    "name": "Target_1",
-                    "type": "NUM",
-                    "mode": "MAX",
+                    "D1": [1.1, 1.4, 1.7],
+                    "D2": [11, 23, 55],
+                    "D3": [-4, -13, 4],
                 },
+                index=["mol1", "mol2", "mol3"],
+            ),
+        ),
+        Custom(
+            name="Custom_2",
+            data=pd.DataFrame(
+                {
+                    "desc1": [1.1, 1.4, 1.7],
+                    "desc2": [55, 23, 3],
+                    "desc3": [4, 5, 6],
+                },
+                index=["A", "B", "C"],
+            ),
+        ),
+        GenericSubstance(
+            name="Solvent_1",
+            data=mock_substances,
+        ),
+        GenericSubstance(
+            name="Solvent_2",
+            data=mock_substances,
+            encoding="MORDRED",
+        ),
+        GenericSubstance(
+            name="Solvent_3",
+            data=mock_substances,
+            encoding="MORDRED",
+        ),
+        *[
+            GenericSubstance(
+                name=f"Substance_1_{encoding}",
+                data=mock_substances,
+                encoding=encoding,
+            )
+            for encoding in SUBSTANCE_ENCODINGS
+        ],
+    ]
+    return [p for p in valid_parameters if p.name in parameter_names]
+
+
+@pytest.fixture(name="targets")
+def fixture_targets(target_names: List[str]):
+    """Provides example targets via specified names."""
+    valid_targets = [
+        NumericalTarget(
+            name="Target_max",
+            mode="MAX",
+        ),
+        NumericalTarget(
+            name="Target_min",
+            mode="MIN",
+        ),
+        NumericalTarget(
+            name="Target_max_bounded",
+            mode="MAX",
+            bounds=(0, 100),
+        ),
+        NumericalTarget(
+            name="Target_min_bounded",
+            mode="MIN",
+            bounds=(0, 100),
+        ),
+        NumericalTarget(
+            name="Target_match_bell",
+            mode="MATCH",
+            bounds=(0, 100),
+            bounds_transform_func="BELL",
+        ),
+        NumericalTarget(
+            name="Target_match_triangular",
+            mode="MATCH",
+            bounds=(0, 100),
+            bounds_transform_func="TRIANGULAR",
+        ),
+    ]
+    return [t for t in valid_targets if t.name in target_names]
+
+
+@pytest.fixture(name="constraints")
+def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_points):
+    """Provides example constraints via specified names."""
+
+    def custom_function(ser: pd.Series) -> bool:
+        if ser.Solvent_1 == "water":
+            if ser.Temperature > 120 and ser.Pressure > 5:
+                return False
+            if ser.Temperature > 180 and ser.Pressure > 3:
+                return False
+        if ser.Solvent_1 == "C3":
+            if ser.Temperature < 150 and ser.Pressure > 3:
+                return False
+        return True
+
+    valid_constraints = {
+        "Constraint_1": DependenciesConstraint(
+            parameters=["Switch_1", "Switch_2"],
+            conditions=[
+                SubSelectionCondition(selection=["on"]),
+                SubSelectionCondition(selection=["right"]),
             ],
-        },
-        "strategy": {
-            "surrogate_model_cls": "GP",
-            "recommender_cls": "UNRESTRICTED_RANKING",
-        },
-    }
-
-    return config_dict
-
-
-@pytest.fixture(name="baybe_discrete_1target")
-def fixture_baybe_discrete_1target():
-    """
-    BayBE object for a basic test using all basic parameter types and 1 target.
-    """
-    return BayBE(
-        strategy=Strategy(
-            recommender_cls="UNRESTRICTED_RANKING",
-            surrogate_model_cls="GP",
-            searchspace=SearchSpace.create(
-                parameters=[
-                    Categorical(
-                        name="Categorical_1",
-                        values=["A", "B", "C"],
-                        encoding="OHE",
-                    ),
-                    Categorical(
-                        name="Categorical_2",
-                        values=["bad", "OK", "good"],
-                        encoding="OHE",
-                    ),
-                    NumericDiscrete(
-                        name="Num_disc_1",
-                        values=[1, 2, 7],
-                        tolerance=0.3,
+            affected_parameters=[
+                ["Solvent_1", "Fraction_1"],
+                ["Frame_A", "Frame_B"],
+            ],
+        ),
+        "Constraint_2": DependenciesConstraint(
+            parameters=["Switch_1"],
+            conditions=[SubSelectionCondition(selection=["on"])],
+            affected_parameters=[["Solvent_1", "Fraction_1"]],
+        ),
+        "Constraint_3": DependenciesConstraint(
+            parameters=["Switch_2"],
+            conditions=[SubSelectionCondition(selection=["right"])],
+            affected_parameters=[["Frame_A", "Frame_B"]],
+        ),
+        "Constraint_4": ExcludeConstraint(
+            parameters=["Temperature", "Solvent_1"],
+            combiner="AND",
+            conditions=[
+                ThresholdCondition(threshold=151, operator=">"),
+                SubSelectionCondition(selection=list(mock_substances)[:2]),
+            ],
+        ),
+        "Constraint_5": ExcludeConstraint(
+            parameters=["Pressure", "Solvent_1"],
+            combiner="AND",
+            conditions=[
+                ThresholdCondition(threshold=5, operator=">"),
+                SubSelectionCondition(selection=list(mock_substances)[-2:]),
+            ],
+        ),
+        "Constraint_6": ExcludeConstraint(
+            parameters=["Pressure", "Temperature"],
+            combiner="AND",
+            conditions=[
+                ThresholdCondition(threshold=3, operator="<"),
+                ThresholdCondition(threshold=120, operator=">"),
+            ],
+        ),
+        "Constraint_7": CustomConstraint(
+            parameters=["Pressure", "Solvent_1", "Temperature"],
+            validator=custom_function,
+        ),
+        "Constraint_8": SumConstraint(
+            parameters=["Fraction_1", "Fraction_2"],
+            condition=ThresholdCondition(threshold=150, operator="<="),
+        ),
+        "Constraint_9": ProductConstraint(
+            parameters=["Fraction_1", "Fraction_2"],
+            condition=ThresholdCondition(threshold=30, operator=">="),
+        ),
+        "Constraint_10": SumConstraint(
+            parameters=["Fraction_1", "Fraction_2"],
+            condition=ThresholdCondition(threshold=100, operator="="),
+        ),
+        "Constraint_11": PermutationInvarianceConstraint(
+            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+            dependencies=DependenciesConstraint(
+                parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
+                conditions=[
+                    ThresholdCondition(threshold=0.0, operator=">"),
+                    ThresholdCondition(threshold=0.0, operator=">"),
+                    SubSelectionCondition(
+                        selection=list(np.linspace(0, 100, n_grid_points)[1:])
                     ),
                 ],
+                affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
             ),
-            allow_repeated_recommendations=False,
-            allow_recommending_already_measured=False,
-            numerical_measurements_must_be_within_tolerance=True,
         ),
-        objective=Objective(
-            mode="SINGLE",
-            targets=[
-                NumericalTarget(
-                    name="Target_1",
-                    mode="MAX",
-                )
-            ],
+        "Constraint_12": SumConstraint(
+            parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
+            condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.01),
         ),
+        "Constraint_13": NoLabelDuplicatesConstraint(
+            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+        ),
+    }
+    return [valid_constraints[c] for c in constraint_names]
+
+
+@pytest.fixture(name="target_names")
+def fixture_default_target_selection():
+    """The default targets to be used if not specified differently."""
+    return ["Target_max"]
+
+
+@pytest.fixture(name="parameter_names")
+def fixture_default_parameter_selection():
+    """Default parameters used if not specified differently."""
+    return ["Categorical_1", "Categorical_2", "Num_disc_1"]
+
+
+@pytest.fixture(name="constraint_names")
+def fixture_default_constraint_selection():
+    """Default constraints used if not specified differently."""
+    return []
+
+
+@pytest.fixture(name="baybe")
+def fixture_baybe(strategy, objective):
+    """Returns a BayBE"""
+    return BayBE(strategy=strategy, objective=objective)
+
+
+@pytest.fixture(name="strategy")
+def fixture_default_strategy(
+    parameters,
+    constraints,
+    acquisition_function_cls,
+    surrogate_model_cls,
+    recommender_cls,
+    initial_recommender_cls,
+):
+    """The default strategy to be used if not specified differently."""
+    return Strategy(
+        recommender_cls=recommender_cls,
+        initial_recommender_cls=initial_recommender_cls,
+        surrogate_model_cls=surrogate_model_cls,
+        acquisition_function_cls=acquisition_function_cls,
+        searchspace=SearchSpace.create(parameters=parameters, constraints=constraints),
+        allow_repeated_recommendations=False,
+        allow_recommending_already_measured=False,
+        numerical_measurements_must_be_within_tolerance=True,
     )
 
 
-@pytest.fixture(name="config_continuous_1target")
-def fixture_config_continuous_1target():
-    """
-    Config for a basic test using all basic parameter types and 1 target.
-    """
-    config_dict = {
-        "project_name": "Continuous Space 1 Target",
-        "random_seed": 1337,
-        "allow_repeated_recommendations": False,
-        "allow_recommending_already_measured": False,
-        "numerical_measurements_must_be_within_tolerance": True,
-        "parameters": [
-            {
-                "name": "Num_conti_1",
-                "type": "NUM_CONTINUOUS",
-                "bounds": (-1, 0),
-            },
-            {
-                "name": "Num_conti_2",
-                "type": "NUM_CONTINUOUS",
-                "bounds": (-1, 1),
-            },
-            {
-                "name": "Num_conti_3",
-                "type": "NUM_CONTINUOUS",
-                "bounds": (0, 1),
-            },
-        ],
-        "objective": {
-            "mode": "SINGLE",
-            "targets": [
-                {
-                    "name": "Target_1",
-                    "type": "NUM",
-                    "mode": "MAX",
-                },
-            ],
-        },
-        "strategy": {
-            "surrogate_model_cls": "GP",
-            "recommender_cls": "SEQUENTIAL_GREEDY_CONTINUOUS",
-        },
-    }
-
-    return config_dict
+@pytest.fixture(name="acquisition_function_cls")
+def fixture_default_acquisition_function():
+    """The default acquisition function to be used if not specified differently."""
+    return "EI"
 
 
-@pytest.fixture(name="config_constraints_dependency")
-def fixture_config_constraints_dependency(
-    n_grid_points, mock_substances, mock_categories
-):
-    """
-    Config for a use case with dependency constraints.
-    """
-    config_dict = {
-        "project_name": "Project with switches and dependencies",
-        "allow_repeated_recommendations": False,
-        "allow_recommending_already_measured": False,
-        "numerical_measurements_must_be_within_tolerance": True,
-        "parameters": [
-            {
-                "name": "Switch1",
-                "type": "CAT",
-                "values": ["on", "off"],
-            },
-            {
-                "name": "Switch2",
-                "type": "CAT",
-                "values": ["left", "right"],
-            },
-            {
-                "name": "Fraction1",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(0, 100, n_grid_points)),
-                "tolerance": 0.2,
-            },
-            {
-                "name": "Solvent1",
-                "type": "SUBSTANCE",
-                "data": mock_substances,
-            },
-            {
-                "name": "FrameA",
-                "type": "CAT",
-                "values": mock_categories,
-            },
-            {
-                "name": "FrameB",
-                "type": "CAT",
-                "values": mock_categories,
-            },
-        ],
-        "objective": {
-            "mode": "SINGLE",
-            "targets": [
-                {
-                    "name": "Target_1",
-                    "type": "NUM",
-                    "mode": "MAX",
-                },
-            ],
-        },
-    }
-    return config_dict
+@pytest.fixture(name="surrogate_model_cls")
+def fixture_default_surrogate_model():
+    """The default surrogate model to be used if not specified differently."""
+    return "GP"
 
 
-@pytest.fixture(name="config_constraints_exclude")
-def fixture_config_constraints_exclude(n_grid_points, mock_substances, mock_categories):
-    """
-    Config for a use case with exclusion constraints.
-    """
-    config_dict = {
-        "project_name": "Project with substances and exclusion constraints",
-        "allow_repeated_recommendations": False,
-        "allow_recommending_already_measured": True,
-        "numerical_measurements_must_be_within_tolerance": True,
-        "parameters": [
-            {
-                "name": "Solvent",
-                "type": "SUBSTANCE",
-                "data": mock_substances,
-            },
-            {
-                "name": "SomeSetting",
-                "type": "CAT",
-                "values": mock_categories,
-                "encoding": "INT",
-            },
-            {
-                "name": "Temperature",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(100, 200, n_grid_points)),
-            },
-            {
-                "name": "Pressure",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(0, 6, n_grid_points)),
-            },
-        ],
-        "objective": {
-            "mode": "SINGLE",
-            "targets": [
-                {
-                    "name": "Target_1",
-                    "type": "NUM",
-                    "mode": "MAX",
-                },
-            ],
-        },
-    }
-    return config_dict
+@pytest.fixture(name="recommender_cls")
+def fixture_recommender():
+    """The default recommender to be used if not specified differently."""
+    return "UNRESTRICTED_RANKING"
 
 
-@pytest.fixture(name="config_constraints_prodsum")
-def fixture_config_constraints_prodsum(n_grid_points):
-    """
-    Config with some numerical parameters for a use case with product and sum
-    constraints.
-    """
-    config_dict = {
-        "project_name": "Project with several numerical parameters",
-        "allow_repeated_recommendations": False,
-        "allow_recommending_already_measured": True,
-        "numerical_measurements_must_be_within_tolerance": True,
-        "parameters": [
-            {
-                "name": "Solvent",
-                "type": "SUBSTANCE",
-                "data": {
-                    "water": "O",
-                    "C1": "C",
-                    "C2": "CC",
-                    "C3": "CCC",
-                },
-                "encoding": "RDKIT",
-            },
-            {
-                "name": "SomeSetting",
-                "type": "CAT",
-                "values": ["slow", "normal", "fast"],
-                "encoding": "INT",
-            },
-            {
-                "name": "NumParameter1",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(0, 100, n_grid_points)),
-                "tolerance": 0.5,
-            },
-            {
-                "name": "NumParameter2",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(0, 100, n_grid_points)),
-                "tolerance": 0.5,
-            },
-        ],
-        "objective": {
-            "mode": "SINGLE",
-            "targets": [
-                {
-                    "name": "Target_1",
-                    "type": "NUM",
-                    "mode": "MAX",
-                },
-            ],
-        },
-    }
-    return config_dict
+@pytest.fixture(name="initial_recommender_cls")
+def fixture_initial_recommender():
+    """The default initial recommender to be used if not specified differently."""
+    return "RANDOM"
 
 
-@pytest.fixture(name="config_constraints_mixture")
-def fixture_config_constraints_mixture(n_grid_points, mock_substances):
-    """
-    Config for a mixture use case (3 solvents).
-    """
-    config_dict = {
-        "project_name": "Exclusion Constraints Test (Discrete)",
-        "allow_repeated_recommendations": False,
-        "allow_recommending_already_measured": True,
-        "numerical_measurements_must_be_within_tolerance": True,
-        "parameters": [
-            {
-                "name": "Solvent1",
-                "type": "SUBSTANCE",
-                "data": mock_substances,
-                "encoding": "MORDRED",
-            },
-            {
-                "name": "Solvent2",
-                "type": "SUBSTANCE",
-                "data": mock_substances,
-                "encoding": "MORDRED",
-            },
-            {
-                "name": "Solvent3",
-                "type": "SUBSTANCE",
-                "data": mock_substances,
-                "encoding": "MORDRED",
-            },
-            {
-                "name": "Fraction1",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(0, 100, n_grid_points)),
-                "tolerance": 0.2,
-            },
-            {
-                "name": "Fraction2",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(0, 100, n_grid_points)),
-                "tolerance": 0.2,
-            },
-            {
-                "name": "Fraction3",
-                "type": "NUM_DISCRETE",
-                "values": list(np.linspace(0, 100, n_grid_points)),
-                "tolerance": 0.2,
-            },
-        ],
-        "objective": {
-            "mode": "SINGLE",
-            "targets": [
-                {
-                    "name": "Target_1",
-                    "type": "NUM",
-                    "mode": "MAX",
-                },
-            ],
-        },
-    }
-
-    return config_dict
-
-
-@pytest.fixture(name="baybe_object_batch3_iterations2")
-def fixture_baybe_object_batch3_iterations2(
-    baybe_discrete_1target, good_reference_values
-):
-    """
-    Returns BayBE object that has been run for 2 iterations with mock data.
-    """
-    baybe_obj = baybe_discrete_1target
-
-    for _ in range(2):
-        rec = baybe_obj.recommend(batch_quantity=3)
-        add_fake_results(rec, baybe_obj, good_reference_values=good_reference_values)
-        add_parameter_noise(rec, baybe_obj, noise_level=0.1)
-        baybe_obj.add_results(rec)
-
-    return baybe_obj
+@pytest.fixture(name="objective")
+def fixture_default_objective(targets):
+    """The default objective to be used if not specified differently."""
+    mode = "SINGLE" if len(targets) == 1 else "DESIRABILITY"
+    return Objective(mode=mode, targets=targets)

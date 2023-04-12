@@ -1,9 +1,16 @@
-"""Tests for the SearchSpace class."""
-
+"""Tests for the searchspace module."""
+import pytest
 import torch
 
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace, SubspaceContinuous, SubspaceDiscrete
+from pydantic import ValidationError
+
+
+def test_empty_parameters():
+    """Creation of a search space with no parameters raises an exception."""
+    with pytest.raises(ValidationError):
+        SearchSpace.create(parameters=[])
 
 
 def test_bounds_order():
