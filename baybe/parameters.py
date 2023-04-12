@@ -16,7 +16,6 @@ from typing import (
     Literal,
     Optional,
     Tuple,
-    Type,
     Union,
 )
 
@@ -32,7 +31,6 @@ from .utils import (
     df_drop_string_columns,
     df_uncorrelated_features,
     is_valid_smiles,
-    isabstract,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
@@ -67,7 +65,6 @@ class Parameter(ABC, ABCBaseModel):
     encoding: ClassVar[Optional[str]]
     is_numeric: ClassVar[bool] = False  # default that is changed for numeric parameters
     is_discrete: ClassVar[bool]
-    SUBCLASSES: ClassVar[Dict[str, Type[Parameter]]] = {}
 
     # object variables
     name: str
@@ -81,13 +78,6 @@ class Parameter(ABC, ABCBaseModel):
         json_encoders = {
             pd.DataFrame: lambda x: x.to_dict(orient="list"),
         }
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
     def is_in_range(self, item: object) -> bool:
         """
@@ -107,13 +97,6 @@ class DiscreteParameter(Parameter, ABC):
     # class variables
     type = "DISCRETE_PARAMETER"
     is_discrete = True
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
     @cached_property
     @abstractmethod
