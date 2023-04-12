@@ -61,7 +61,6 @@ class Parameter(ABC, ABCBaseModel):
     """
 
     # class variables
-    type: ClassVar[str]
     encoding: ClassVar[Optional[str]]
     is_numeric: ClassVar[bool] = False  # default that is changed for numeric parameters
     is_discrete: ClassVar[bool]
@@ -95,7 +94,6 @@ class DiscreteParameter(Parameter, ABC):
     """
 
     # class variables
-    type = "DISCRETE_PARAMETER"
     is_discrete = True
 
     @cached_property
@@ -139,9 +137,6 @@ class Categorical(DiscreteParameter):
     Parameter class for categorical parameters.
     """
 
-    # class variables
-    type = "CAT"
-
     # object variables
     values: conlist(Any, unique_items=True)
     encoding: Literal["OHE", "INT"] = "OHE"
@@ -170,7 +165,6 @@ class NumericDiscrete(DiscreteParameter):
     """
 
     # class variables
-    type = "NUM_DISCRETE"
     is_numeric = True
     encoding = None
 
@@ -228,7 +222,6 @@ class NumericContinuous(Parameter):
     """
 
     # class variables
-    type = "NUM_CONTINUOUS"
     is_numeric = True
     is_discrete = False
 
@@ -275,9 +268,6 @@ class GenericSubstance(DiscreteParameter):
     descriptors to about 5-20. The number might be substantially higher with more
     labels given.
     """
-
-    # class variables
-    type = "SUBSTANCE"
 
     # object variables
     decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
@@ -353,9 +343,6 @@ class Custom(DiscreteParameter):
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry.
     """
-
-    # class variables
-    type = "CUSTOM"
 
     # object variables
     encoding = "CUSTOM"
