@@ -13,115 +13,19 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import check_if_in, geom_mean, isabstract, StrictValidationError
+from .utils import (
+    ABCBaseModel,
+    check_if_in,
+    geom_mean,
+    isabstract,
+    StrictValidationError,
+)
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
 log = logging.getLogger(__name__)
 
 
-class Objective(BaseModel, extra=Extra.forbid):
-    """Class for managing optimization objectives."""
-
-    mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
-    targets: conlist(dict, min_items=1)
-    weights: Optional[List[float]] = None
-    combine_func: Literal["MEAN", "GEOM_MEAN"] = "GEOM_MEAN"
-
-    @validator("targets", always=True, pre=True)
-    def validate_targets(cls, targets, values):
-        """
-        Validates (and instantiates) targets depending on the objective mode.
-        """
-
-        # Validate the target specification
-        mode = values["mode"]
-        if (mode == "SINGLE") and (len(targets) != 1):
-            raise StrictValidationError(
-                "For objective mode 'SINGLE', exactly one target must be specified."
-            )
-        if (mode == "MULTI") and (len(targets) <= 1):
-            raise StrictValidationError(
-                "For objective mode 'MULTI', more than one target must be specified."
-            )
-        if mode == "DESIRABILITY":
-            for target in targets:
-                if ("bounds" not in target) or (target["bounds"] is None):
-                    raise StrictValidationError(
-                        "In 'DESIRABILITY' mode for multiple targets, each target must "
-                        "have bounds defined."
-                    )
-
-        return targets
-
-    @validator("targets", always=True)
-    def instantiate_targets(
-        cls,
-        targets,
-    ):
-        """Instantiate targets."""
-        return [Target.create(t) for t in targets]
-
-    @validator("weights", always=True)
-    def validate_weights(cls, weights, values):
-        """
-        Validates target weights.
-        """
-        n_targets = len(values["targets"])
-
-        # Set default: uniform weights
-        if weights is None:
-            return [100 / n_targets] * n_targets
-
-        if len(weights) != n_targets:
-            raise StrictValidationError(
-                f"Weights list for your objective has {len(weights)} values, but you "
-                f"defined {n_targets} targets."
-            )
-
-        # Normalize to sum = 100
-        weights = (100 * np.asarray(weights) / np.sum(weights)).tolist()
-
-        return weights
-
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Transforms targets from experimental to computational representation.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed. Must contain all target values, can contain
-            more columns.
-
-        Returns
-        -------
-        pd.DataFrame
-            A dataframe with the targets in computational representation. Columns will
-            be as in the input (except when objective mode is 'DESIRABILITY').
-        """
-        # Perform transformations that are required independent of the mode
-        transformed = data[[t.name for t in self.targets]].copy()
-        for target in self.targets:
-            transformed[target.name] = target.transform(data[target.name])
-
-        # In desirability mode, the targets are additionally combined further into one
-        if self.mode == "DESIRABILITY":
-            if self.combine_func == "GEOM_MEAN":
-                func = geom_mean
-            elif self.combine_func == "MEAN":
-                func = partial(np.average, axis=1)
-            else:
-                raise StrictValidationError(
-                    f"The specified averaging function {self.combine_func} is unknown."
-                )
-
-            vals = func(transformed.values, weights=self.weights)
-            transformed = pd.DataFrame({"Comp_Target": vals}, index=transformed.index)
-
-        return transformed
-
-
-class Target(ABC, BaseModel, extra=Extra.forbid):
+class Target(ABC, ABCBaseModel, extra=Extra.forbid):
     """
     Abstract base class for all target variables. Stores information about the type,
     range, transformations, etc.
@@ -281,5 +185,99 @@ class NumericalTarget(Target):
         # For "MATCH" mode, the validators avoid a situation without specified bounds.
         elif self.mode == "MIN":
             transformed = -transformed
+
+        return transformed
+
+
+class Objective(BaseModel, extra=Extra.forbid):
+    """Class for managing optimization objectives."""
+
+    mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
+    targets: conlist(Target, min_items=1)
+    weights: Optional[List[float]] = None
+    combine_func: Literal["MEAN", "GEOM_MEAN"] = "GEOM_MEAN"
+
+    @validator("targets", always=True, pre=True)
+    def validate_targets(cls, targets, values):
+        """
+        Validates (and instantiates) targets depending on the objective mode.
+        """
+
+        # Validate the target specification
+        mode = values["mode"]
+        if (mode == "SINGLE") and (len(targets) != 1):
+            raise StrictValidationError(
+                "For objective mode 'SINGLE', exactly one target must be specified."
+            )
+        if (mode == "MULTI") and (len(targets) <= 1):
+            raise StrictValidationError(
+                "For objective mode 'MULTI', more than one target must be specified."
+            )
+        if mode == "DESIRABILITY":
+            for target in targets:
+                if ("bounds" not in target) or (target["bounds"] is None):
+                    raise StrictValidationError(
+                        "In 'DESIRABILITY' mode for multiple targets, each target must "
+                        "have bounds defined."
+                    )
+
+        return targets
+
+    @validator("weights", always=True)
+    def validate_weights(cls, weights, values):
+        """
+        Validates target weights.
+        """
+        n_targets = len(values["targets"])
+
+        # Set default: uniform weights
+        if weights is None:
+            return [100 / n_targets] * n_targets
+
+        if len(weights) != n_targets:
+            raise StrictValidationError(
+                f"Weights list for your objective has {len(weights)} values, but you "
+                f"defined {n_targets} targets."
+            )
+
+        # Normalize to sum = 100
+        weights = (100 * np.asarray(weights) / np.sum(weights)).tolist()
+
+        return weights
+
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transforms targets from experimental to computational representation.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to be transformed. Must contain all target values, can contain
+            more columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe with the targets in computational representation. Columns will
+            be as in the input (except when objective mode is 'DESIRABILITY').
+        """
+        # Perform transformations that are required independent of the mode
+        transformed = data[[t.name for t in self.targets]].copy()
+        for target in self.targets:
+            transformed[target.name] = target.transform(data[target.name])
+
+        # In desirability mode, the targets are additionally combined further into one
+        if self.mode == "DESIRABILITY":
+            if self.combine_func == "GEOM_MEAN":
+                func = geom_mean
+            elif self.combine_func == "MEAN":
+                func = partial(np.average, axis=1)
+            else:
+                raise StrictValidationError(
+                    f"The specified averaging function {self.combine_func} is unknown."
+                )
+
+            vals = func(transformed.values, weights=self.weights)
+            transformed = pd.DataFrame({"Comp_Target": vals}, index=transformed.index)
 
         return transformed

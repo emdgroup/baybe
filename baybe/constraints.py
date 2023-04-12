@@ -17,7 +17,7 @@ from funcy import rpartial
 from numpy.typing import ArrayLike
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import check_if_in, Dummy, StrictValidationError
+from .utils import ABCBaseModel, check_if_in, Dummy, StrictValidationError
 
 log = logging.getLogger(__name__)
 
@@ -145,7 +145,7 @@ class SubSelectionCondition(Condition):
         return data.isin(self.selection)
 
 
-class Constraint(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+class Constraint(ABC, ABCBaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """
     Abstract base class for all constraints. Constraints use conditions and chain them
     together to filter unwanted entries from the searchspace.

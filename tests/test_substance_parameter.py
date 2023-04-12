@@ -5,7 +5,7 @@ from typing import get_args, get_type_hints
 
 import pytest
 
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
 from baybe.parameters import GenericSubstance
 from baybe.utils import add_fake_results, add_parameter_noise
 
@@ -33,8 +33,7 @@ def test_run_iterations(
         },
     )
 
-    config = BayBEConfig(**config_discrete_1target)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_discrete_1target)
 
     for k in range(n_iterations):
         rec = baybe_obj.recommend(batch_quantity=batch_quantity)

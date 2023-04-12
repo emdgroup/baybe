@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
 
 
 def test_simple_dependency_variant1(
@@ -35,8 +35,7 @@ def test_simple_dependency_variant1(
             ],
         },
     ]
-    config = BayBEConfig(**config_constraints_dependency)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_dependency)
 
     # Number entries with both switches on
     num_entries = (
@@ -103,8 +102,7 @@ def test_simple_dependency_variant2(
             ],
         },
     ]
-    config = BayBEConfig(**config_constraints_dependency)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_dependency)
 
     # Number entries with both switches on
     num_entries = (
@@ -198,8 +196,7 @@ def test_exclusion(config_constraints_exclude, mock_substances):
             ],
         },
     ]
-    config = BayBEConfig(**config_constraints_exclude)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_exclude)
 
     # Number of entries with either first/second substance and a temperature above 151
     num_entries = (
@@ -242,8 +239,7 @@ def test_prodsum1(config_constraints_prodsum):
         }
     ]
 
-    config = BayBEConfig(**config_constraints_prodsum)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_prodsum)
 
     # Number of entries with 1,2-sum above 150
     num_entries = (
@@ -270,8 +266,7 @@ def test_prodsum2(config_constraints_prodsum):
         }
     ]
 
-    config = BayBEConfig(**config_constraints_prodsum)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_prodsum)
 
     # Number of entries with product under 30
     num_entries = (
@@ -299,8 +294,7 @@ def test_prodsum3(config_constraints_prodsum):
         }
     ]
 
-    config = BayBEConfig(**config_constraints_prodsum)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_prodsum)
 
     # Number of entries with sum unequal to 100
     num_entries = (
@@ -364,8 +358,7 @@ def test_mixture(config_constraints_mixture, n_grid_points, mock_substances):
         },
     ]
 
-    config = BayBEConfig(**config_constraints_mixture)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_mixture)
 
     # Number of searchspace entries where fractions do not sum to 100.0
     num_entries = (
@@ -475,8 +468,7 @@ def test_custom(config_constraints_exclude):
         },
     ]
 
-    config = BayBEConfig(**config_constraints_exclude)
-    baybe_obj = BayBE(config)
+    baybe_obj = BayBE.from_dict(config_constraints_exclude)
 
     num_entries = (
         baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)

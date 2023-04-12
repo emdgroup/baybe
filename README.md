@@ -68,13 +68,12 @@ objective = {
 With this minimal setup (using default values for all other options), an initial
 set of recommendations can be generated as follows:
 ```python
-from baybe.core import BayBE, BayBEConfig
-config_dict = {
+from baybe.core import BayBE
+config = {
     "parameters": parameters,
     "objective": objective,
 }
-config = BayBEConfig(**config_dict)
-baybe = BayBE(config)
+baybe = BayBE.from_dict(config)
 baybe.recommend(batch_quantity=5)
 ```
 
