@@ -1,3 +1,4 @@
+# pylint: disable=missing-function-docstring
 """
 Functionality for different experimental parameter types.
 """
@@ -7,7 +8,6 @@ import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import (
-    Any,
     ClassVar,
     Dict,
     get_args,
@@ -21,40 +21,45 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import confloat, Extra, StrictBool, validator
-from pydantic.types import conlist
+from attrs import define, field
+from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
 from sklearn.metrics.pairwise import pairwise_distances
 
-from baybe.utils import ABCBaseModel
 from .utils import (
     df_drop_single_value_columns,
-    df_drop_string_columns,
     df_uncorrelated_features,
     is_valid_smiles,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
-    StrictValidationError,
 )
 
 log = logging.getLogger(__name__)
 
 
-def _validate_value_list(lst: list, values: dict):
-    """A pydantic validator to verify parameter values."""
-    if len(lst) < 2:
-        raise ValueError(
-            f"Parameter {values['name']} must have at least two unique values."
-        )
-    if len(lst) != len(np.unique(lst)):
-        raise ValueError(
-            f"Values for parameter {values['name']} are not unique. "
-            f"This would cause duplicates in the set of possible experiments."
-        )
-    return lst
+def validate_decorrelation(obj, attribute, value):
+    instance_of((bool, float))(obj, attribute, value)
+    if isinstance(value, float):
+        gt(0.0)(obj, attribute, value)
+        lt(1.0)(obj, attribute, value)
 
 
-class Parameter(ABC, ABCBaseModel):
+def validate_unique_values(obj, attribute, value) -> None:
+    if len(set(value)) != len(value):
+        raise ValueError(f"Value {obj} and {attribute}")
+
+
+def convert_bounds(
+    bounds: Tuple[Union[None, int, float], Union[None, int, float]]
+) -> Tuple[float, float]:
+    bounds = list(bounds)
+    bounds[0] = -np.inf if bounds[0] is None else float(bounds[0])
+    bounds[1] = np.inf if bounds[1] is None else float(bounds[1])
+    return tuple(bounds)
+
+
+@define
+class Parameter(ABC):
     """
     Abstract base class for all parameters. Stores information about the
     type, range, constraints, etc. and handles in-range checks, transformations etc.
@@ -67,16 +72,6 @@ class Parameter(ABC, ABCBaseModel):
 
     # object variables
     name: str
-
-    class Config:  # pylint: disable=missing-class-docstring
-        extra = Extra.forbid
-        keep_untouched = (
-            cached_property,
-        )  # required due to: https://github.com/pydantic/pydantic/issues/1241
-        arbitrary_types_allowed = True
-        json_encoders = {
-            pd.DataFrame: lambda x: x.to_dict(orient="list"),
-        }
 
     def is_in_range(self, item: object) -> bool:
         """
@@ -132,17 +127,15 @@ class DiscreteParameter(Parameter, ABC):
         return transformed
 
 
+@define
 class Categorical(DiscreteParameter):
     """
     Parameter class for categorical parameters.
     """
 
     # object variables
-    values: conlist(Any, unique_items=True)
+    values: list = field(validator=[min_len(2), validate_unique_values])
     encoding: Literal["OHE", "INT"] = "OHE"
-
-    # validators
-    _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
@@ -159,6 +152,7 @@ class Categorical(DiscreteParameter):
         return comp_df
 
 
+@define
 class NumericDiscrete(DiscreteParameter):
     """
     Parameter class for discrete numerical parameters (a.k.a. setpoints).
@@ -169,14 +163,19 @@ class NumericDiscrete(DiscreteParameter):
     encoding = None
 
     # object variables
-    values: conlist(float, unique_items=True)
-    tolerance: float = 0.0
+    values: List[Union[int, float]] = field(
+        validator=[
+            deep_iterable(instance_of((int, float)), instance_of(list)),
+            min_len(2),
+            validate_unique_values,
+        ]
+    )
+    tolerance: float = field(default=0.0)
 
-    # validators
-    _validated_values = validator("values", allow_reuse=True)(_validate_value_list)
-
-    @validator("tolerance")
-    def validate_tolerance(cls, tolerance, values):
+    @tolerance.validator
+    def validate_tolerance(
+        self, attribute, tolerance
+    ):  # pylint: disable=unused-argument
         """
         Validates that the tolerance (i.e. allowed experimental uncertainty when
         reading in measured values) is safe. A tolerance larger than half the minimum
@@ -185,18 +184,16 @@ class NumericDiscrete(DiscreteParameter):
         """
         # NOTE: computing all pairwise distances can be avoided if we ensure that the
         #   values are ordered (which is currently not the case)
-        dists = pairwise_distances(np.asarray(values["values"]).reshape(-1, 1))
+        dists = pairwise_distances(np.asarray(self.values).reshape(-1, 1))
         np.fill_diagonal(dists, np.inf)
         max_tol = dists.min() / 2.0
 
         if tolerance >= max_tol:
             raise ValueError(
-                f"Parameter {values['name']} is initialized with tolerance "
-                f"{tolerance} but due to the values {values['values']} a "
+                f"Parameter {self.name} is initialized with tolerance "
+                f"{tolerance} but due to the values {self.values} a "
                 f"maximum tolerance of {max_tol} is suggested to avoid ambiguity."
             )
-
-        return tolerance
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
@@ -216,6 +213,7 @@ class NumericDiscrete(DiscreteParameter):
         return any(differences_acceptable)
 
 
+@define
 class NumericContinuous(Parameter):
     """
     Parameter class for continuous numerical parameters.
@@ -226,27 +224,19 @@ class NumericContinuous(Parameter):
     is_discrete = False
 
     # object variables
-    bounds: Tuple[Optional[float], Optional[float]]
+    bounds: Tuple[float, float] = field(converter=convert_bounds)
 
-    @validator("bounds")
-    def validate_bounds(cls, bounds):
+    @bounds.validator
+    def validate_bounds(self, attribute, bounds):  # pylint: disable=unused-argument
         """
         Validate boundaries
         """
-        bounds = list(bounds)
-        if bounds[0] is None:
-            bounds[0] = -np.inf
-
-        if bounds[1] is None:
-            bounds[1] = np.inf
-
         if bounds[1] <= bounds[0]:
-            raise StrictValidationError(
+            raise ValueError(
                 "Bounds for continuous parameters must be unique and in ascending "
                 "order. They may contain -np.nan/np.nan or None in case there is no "
                 "bound."
             )
-
         return tuple(bounds)
 
     def is_in_range(self, item: float) -> bool:
@@ -257,6 +247,7 @@ class NumericContinuous(Parameter):
         return self.bounds[0] <= item <= self.bounds[1]
 
 
+@define
 class GenericSubstance(DiscreteParameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
@@ -270,22 +261,22 @@ class GenericSubstance(DiscreteParameter):
     """
 
     # object variables
-    decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
+    data: Dict[str, str] = field()
+    decorrelate: Union[bool, float] = field(
+        default=True, validator=validate_decorrelation
+    )
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
-    data: Dict[str, str]
 
-    @validator("data", always=True)
-    def validate_data(cls, dat):
-        """
-        Validates the given substances.
-        """
-        for name, smiles in dat.items():
+    @data.validator
+    def validate_substance_data(
+        self, attribute, value
+    ):  # pylint: disable=unused-argument
+        for name, smiles in value.items():
             if not is_valid_smiles(smiles):
-                raise StrictValidationError(
+                raise ValueError(
                     f"The SMILES '{smiles}' for molecule '{name}' does "
                     f"not appear to be valid."
                 )
-        return dat
 
     @property
     def values(self) -> list:
@@ -338,6 +329,7 @@ class GenericSubstance(DiscreteParameter):
 SUBSTANCE_ENCODINGS = get_args(get_type_hints(GenericSubstance)["encoding"])
 
 
+@define
 class Custom(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
@@ -346,32 +338,39 @@ class Custom(DiscreteParameter):
 
     # object variables
     encoding = "CUSTOM"
-    decorrelate: Union[StrictBool, confloat(gt=0.0, lt=1.0, strict=True)] = True
-    data: pd.DataFrame
+    data: pd.DataFrame = field()
+    decorrelate: Union[bool, float] = field(
+        default=True, validator=validate_decorrelation
+    )
 
-    @validator("data")
-    def validate_data(cls, data, values):
+    @data.validator
+    def validate_custom_data(self, attribute, value):  # pylint: disable=unused-argument
         """
         Validates the dataframe with the custom representation.
         """
-        if data.isna().any().any():
-            raise StrictValidationError(
-                f"The custom dataframe for parameter {values['name']} contains NaN "
+        if value.isna().any().any():
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} contains NaN "
                 f"entries, which is not supported."
             )
-
-        if len(data) != len(set(data.index)):
-            raise StrictValidationError(
-                f"The custom dataframe for parameter {values['name']} contains "
+        if len(value) != len(set(value.index)):
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} contains "
                 f"duplicated indices. Please only provide dataframes with unique"
                 f" indices."
             )
 
-        # Remove zero variance and string columns
-        data = df_drop_string_columns(data)
-        data = df_drop_single_value_columns(data)
+        if value.select_dtypes("number").shape[1] != value.shape[1]:
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} contains "
+                f"non-numeric values."
+            )
 
-        return data
+        if any(value.nunique() == 1):
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} has columns "
+                "that contain only a single value and hence carry no information."
+            )
 
     @property
     def values(self) -> list:
@@ -425,10 +424,6 @@ def parameter_cartesian_prod_to_df(
 
     return ret
 
-
-# TODO: self.values could be renamed into something else since it's clashing with
-#  pydantic enforced syntax, for instance 'labels' (but that's weird for numeric
-#  discrete parameters)
 
 # TODO: self.values could be a variable of the base class since it's shared between all
 #  parameter. It's essentially the list of labels, always one dimensional
