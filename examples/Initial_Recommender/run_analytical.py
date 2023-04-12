@@ -10,7 +10,10 @@ from baybe.core import BayBE
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategy import Strategy
+from baybe.strategies.clustering import KMeansClusteringRecommender
+from baybe.strategies.sampling import FPSRecommender, RandomRecommender
+
+from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 DIMENSIONS = 3
@@ -130,31 +133,31 @@ def hartmann3(x1, x2, x3):
 
 scenarios = {
     name: BayBE(
+        searchspace=SearchSpace.create(
+            parameters=[
+                NumericDiscrete(
+                    name=f"x_{k+1}",
+                    values=list(np.linspace(0, 1, POINTS_PER_DIM)),
+                    tolerance=0.01,
+                )
+                for k in range(DIMENSIONS)
+            ],
+        ),
         strategy=Strategy(
-            searchspace=SearchSpace.create(
-                parameters=[
-                    NumericDiscrete(
-                        name=f"x_{k+1}",
-                        values=list(np.linspace(0, 1, POINTS_PER_DIM)),
-                        tolerance=0.01,
-                    )
-                    for k in range(DIMENSIONS)
-                ],
-            ),
-            initial_recommender_cls=rec,
+            initial_recommender=rec,
             allow_repeated_recommendations=False,
             allow_recommending_already_measured=False,
-            numerical_measurements_must_be_within_tolerance=True,
         ),
         objective=Objective(
             mode="SINGLE",
             targets=[NumericalTarget(name="Target", mode="MIN")],
         ),
+        numerical_measurements_must_be_within_tolerance=True,
     )
     for name, rec in [
-        ("Random", "RANDOM"),
-        ("Farthest Point Sampling", "FPS"),
-        ("KMEANS Clustering", "CLUSTERING_KMEANS"),
+        ("Random", RandomRecommender()),
+        ("Farthest Point Sampling", FPSRecommender()),
+        ("KMEANS Clustering", KMeansClusteringRecommender()),
     ]
 }
 

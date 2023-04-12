@@ -28,7 +28,9 @@ from baybe.parameters import (
     SUBSTANCE_ENCODINGS,
 )
 from baybe.searchspace import SearchSpace
-from baybe.strategy import Strategy
+from baybe.strategies.bayesian import GreedyRecommender
+from baybe.strategies.sampling import RandomRecommender
+from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 
@@ -435,37 +437,33 @@ def fixture_default_constraint_selection():
 
 
 @pytest.fixture(name="baybe")
-def fixture_baybe(strategy, objective):
+def fixture_baybe(parameters, constraints, strategy, objective):
     """Returns a BayBE"""
-    return BayBE(strategy=strategy, objective=objective)
+    return BayBE(
+        searchspace=SearchSpace.create(parameters=parameters, constraints=constraints),
+        strategy=strategy,
+        objective=objective,
+    )
 
 
 @pytest.fixture(name="strategy")
 def fixture_default_strategy(
-    parameters,
-    constraints,
-    acquisition_function_cls,
-    surrogate_model_cls,
-    recommender_cls,
-    initial_recommender_cls,
+    recommender,
+    initial_recommender,
 ):
     """The default strategy to be used if not specified differently."""
     return Strategy(
-        recommender_cls=recommender_cls,
-        initial_recommender_cls=initial_recommender_cls,
-        surrogate_model_cls=surrogate_model_cls,
-        acquisition_function_cls=acquisition_function_cls,
-        searchspace=SearchSpace.create(parameters=parameters, constraints=constraints),
+        recommender=recommender,
+        initial_recommender=initial_recommender,
         allow_repeated_recommendations=False,
         allow_recommending_already_measured=False,
-        numerical_measurements_must_be_within_tolerance=True,
     )
 
 
 @pytest.fixture(name="acquisition_function_cls")
 def fixture_default_acquisition_function():
     """The default acquisition function to be used if not specified differently."""
-    return "EI"
+    return "qEI"
 
 
 @pytest.fixture(name="surrogate_model_cls")
@@ -474,16 +472,19 @@ def fixture_default_surrogate_model():
     return "GP"
 
 
-@pytest.fixture(name="recommender_cls")
-def fixture_recommender():
+@pytest.fixture(name="recommender")
+def fixture_recommender(surrogate_model_cls, acquisition_function_cls):
     """The default recommender to be used if not specified differently."""
-    return "UNRESTRICTED_RANKING"
+    return GreedyRecommender(
+        surrogate_model_cls=surrogate_model_cls,
+        acquisition_function_cls=acquisition_function_cls,
+    )
 
 
-@pytest.fixture(name="initial_recommender_cls")
+@pytest.fixture(name="initial_recommender")
 def fixture_initial_recommender():
     """The default initial recommender to be used if not specified differently."""
-    return "RANDOM"
+    return RandomRecommender()
 
 
 @pytest.fixture(name="objective")

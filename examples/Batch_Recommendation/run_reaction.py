@@ -1,3 +1,5 @@
+# pylint: disable=import-error
+# TODO: Reactivate pylint after refactoring
 """
 Compare different batch recommendation strategies on the direct arylation example
 """

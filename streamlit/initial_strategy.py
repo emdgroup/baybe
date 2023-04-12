@@ -1,3 +1,9 @@
+# TODO: Currently, the subclass detection mechanisms (registering via __init_subclass__
+#   or using subclasses_recursive) do not work because the base classes and subclasses
+#   lie in different files and their code is not necessarily executed. Hence the
+#   explicit import that triggers code execution as a temporary workaround.
+# flake8: noqa
+# pylint: disable=unused-import
 """
 This script allows comparing initial selection strategies on different data sets.
 """
@@ -9,9 +15,9 @@ import pydantic
 import streamlit as st
 
 from baybe.parameters import NumericDiscrete
-from baybe.recommender import Recommender
-
 from baybe.searchspace import SearchSpace
+from baybe.strategies.recommender import NonPredictiveRecommender
+from baybe.utils import isabstract, subclasses_recursive
 from sklearn.datasets import make_blobs
 
 
@@ -66,9 +72,9 @@ data_distributions = {
 
 # collect all available strategies
 selection_strategies = {
-    name: subclass
-    for name, subclass in Recommender.SUBCLASSES.items()
-    if subclass.is_model_free
+    cls.type: cls
+    for cls in subclasses_recursive(NonPredictiveRecommender)
+    if not isabstract(cls)
 }
 
 
@@ -115,10 +121,9 @@ def main():
 
     # create the corresponding search space
     # TODO[11815]: We need an easy way to create search spaces from DataFrames
-    searchspace = SearchSpace(
+    searchspace = SearchSpace.create(
         parameters=[NumericDiscrete(name="bla", values=[1, 2, 3])],
         empty_encoding=True,
-        init_dataframes=False,
     )
     searchspace.discrete.comp_rep = points
     searchspace.discrete.exp_rep = points
@@ -129,10 +134,8 @@ def main():
 
     # create the strategy and generate the recommendations
     # TODO: The acquisition function should become optional for model-free methods
-    strategy = selection_strategies[strategy_name](
-        searchspace=searchspace, acquisition_function=None
-    )
-    selection = strategy.recommend(batch_quantity=n_selected)
+    strategy = selection_strategies[strategy_name]()
+    selection = strategy.recommend(searchspace=searchspace, batch_quantity=n_selected)
 
     # show the result
     fig = plot_point_selection(points.values, selection.index.values, strategy_name)

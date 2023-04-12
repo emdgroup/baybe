@@ -1,9 +1,13 @@
+# pylint: disable=missing-class-docstring, missing-function-docstring
+# TODO: add docstrings
+
 """
 Functionality for managing search spaces.
 """
 from __future__ import annotations
 
 import logging
+from enum import Enum
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -24,6 +28,13 @@ from .utils import df_drop_single_value_columns
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
+
+
+class SearchSpaceType(Enum):
+    DISCRETE = "DISCRETE"
+    CONTINUOUS = "CONTINUOUS"
+    EITHER = "EITHER"
+    HYBRID = "HYBRID"
 
 
 class SubspaceDiscrete(BaseModel):
@@ -48,7 +59,6 @@ class SubspaceDiscrete(BaseModel):
         parameters: List[DiscreteParameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-        init_dataframes: bool = True,
     ) -> SubspaceDiscrete:
         """See `SearchSpace` class."""
         # Store the input
@@ -60,26 +70,25 @@ class SubspaceDiscrete(BaseModel):
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
 
-        # Initialize discrete search space dataframes
-        if init_dataframes:
-            # Create a dataframe representing the experimental search space
-            exp_rep = parameter_cartesian_prod_to_df(parameters)
+        # Create a dataframe representing the experimental search space
+        exp_rep = parameter_cartesian_prod_to_df(parameters)
 
-            # Remove entries that violate parameter constraints:
-            for constraint in (c for c in constraints if c.eval_during_creation):
-                inds = constraint.get_invalid(exp_rep)
-                exp_rep.drop(index=inds, inplace=True)
-            exp_rep.reset_index(inplace=True, drop=True)
+        # Remove entries that violate parameter constraints:
+        for constraint in (c for c in constraints if c.eval_during_creation):
+            inds = constraint.get_invalid(exp_rep)
+            exp_rep.drop(index=inds, inplace=True)
+        exp_rep.reset_index(inplace=True, drop=True)
 
-            # Create a dataframe storing the experiment metadata
-            metadata = pd.DataFrame(
-                {
-                    "was_recommended": False,
-                    "was_measured": False,
-                    "dont_recommend": False,
-                },
-                index=exp_rep.index,
-            )
+        # Create a dataframe storing the experiment metadata
+        metadata = pd.DataFrame(
+            {
+                "was_recommended": False,
+                "was_measured": False,
+                "dont_recommend": False,
+            },
+            index=exp_rep.index,
+        )
+
         subspace = SubspaceDiscrete(
             parameters=parameters,
             constraints=constraints,
@@ -502,7 +511,6 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-        init_dataframes: bool = True,
     ) -> SearchSpace:
         """
         Parameters
@@ -517,17 +525,11 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
             do not read the actual parameter values, since it avoids the
             (potentially costly) transformation of the parameter values to their
             computational representation.
-        init_dataframes : bool, default: True
-            If True, the search space related dataframes (i.e. parameter representations
-            and metadata) will be build from scratch using the input arguments. If
-            False, they are not initialized, which can be useful when loading a search
-            space object from disk.
         """
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[p for p in parameters if p.is_discrete],
             constraints=constraints,
             empty_encoding=empty_encoding,
-            init_dataframes=init_dataframes,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
             parameters=[p for p in parameters if not p.is_discrete],
@@ -540,6 +542,16 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
             constraints=constraints,
             empty_encoding=empty_encoding,
         )
+
+    @property
+    def type(self) -> SearchSpaceType:
+        if self.discrete.empty and not self.continuous.empty:
+            return SearchSpaceType.CONTINUOUS
+        if not self.discrete.empty and self.continuous.empty:
+            return SearchSpaceType.DISCRETE
+        if not self.discrete.empty and not self.continuous.empty:
+            return SearchSpaceType.HYBRID
+        raise RuntimeError("This line should be impossible to reach.")
 
     @property
     def contains_mordred(self) -> bool:

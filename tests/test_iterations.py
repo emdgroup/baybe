@@ -6,8 +6,12 @@ from typing import get_args, get_type_hints
 
 import pytest
 
-from baybe.recommender import Recommender
-from baybe.strategy import Strategy
+from baybe.searchspace import SearchSpaceType
+from baybe.strategies.recommender import (
+    BayesianRecommender,
+    NonPredictiveRecommender,
+    Recommender,
+)
 from baybe.surrogate import SurrogateModel
 from baybe.utils import add_fake_results, add_parameter_noise, subclasses_recursive
 
@@ -15,7 +19,7 @@ from baybe.utils import add_fake_results, add_parameter_noise, subclasses_recurs
 # Settings of the individual components to be tested
 ########################################################################################
 valid_acquisition_functions = get_args(
-    get_type_hints(Strategy)["acquisition_function_cls"]
+    get_type_hints(BayesianRecommender.__init__)["acquisition_function_cls"]
 )
 valid_surrogate_models = list(
     {
@@ -25,19 +29,21 @@ valid_surrogate_models = list(
     }
 )
 valid_initial_recommenders = [
-    subclass_name
-    for subclass_name, subclass in Recommender.SUBCLASSES.items()
-    if subclass.is_model_free
+    cls()
+    for cls in subclasses_recursive(NonPredictiveRecommender)
+    if ABC not in cls.__bases__
 ]
-valid_purely_discrete_recommenders = [
-    name
-    for name, subclass in Recommender.SUBCLASSES.items()
-    if (subclass.compatible_discrete and not subclass.compatible_continuous)
+valid_discrete_recommenders = [
+    cls()
+    for cls in Recommender.SUBCLASSES.values()
+    if cls.compatibility
+    in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
-valid_purely_continuous_recommenders = [
-    name
-    for name, subclass in Recommender.SUBCLASSES.items()
-    if (not subclass.compatible_discrete and subclass.compatible_continuous)
+valid_continuous_recommenders = [
+    cls()
+    for cls in Recommender.SUBCLASSES.values()
+    if cls.compatibility
+    in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 test_targets = [
     "Target_max",
@@ -80,7 +86,7 @@ def test_iter_surrogate_model(baybe, n_iterations, batch_quantity):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("initial_recommender_cls", valid_initial_recommenders)
+@pytest.mark.parametrize("initial_recommender", valid_initial_recommenders)
 def test_iter_initial_recommender(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 
@@ -92,13 +98,13 @@ def test_iter_targets(baybe, n_iterations, batch_quantity):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("recommender_cls", valid_purely_discrete_recommenders)
+@pytest.mark.parametrize("recommender", valid_discrete_recommenders)
 def test_iter_recommender_discrete(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("recommender_cls", valid_purely_continuous_recommenders)
+@pytest.mark.parametrize("recommender", valid_continuous_recommenders)
 @pytest.mark.parametrize("parameter_names", ["Conti_finite1", "Conti_finite2"])
 def test_iter_recommender_continuous(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
