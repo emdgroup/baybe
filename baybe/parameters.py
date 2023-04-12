@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from functools import cached_property, lru_cache
+from functools import cached_property
 from typing import (
     Any,
     ClassVar,
@@ -28,11 +28,9 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 from baybe.utils import ABCBaseModel
 from .utils import (
-    check_if_in,
     df_drop_single_value_columns,
     df_drop_string_columns,
     df_uncorrelated_features,
-    HashableDict,
     is_valid_smiles,
     isabstract,
     smiles_to_fp_features,
@@ -83,20 +81,6 @@ class Parameter(ABC, ABCBaseModel):
         json_encoders = {
             pd.DataFrame: lambda x: x.to_dict(orient="list"),
         }
-
-    @classmethod
-    def create(cls, config: dict) -> Parameter:
-        """Creates a new object matching the given specifications."""
-        return cls._create(HashableDict(config))
-
-    @classmethod
-    @lru_cache(maxsize=None)
-    def _create(cls, config: HashableDict) -> Parameter:
-        """Memory-cached parameter creation."""
-        config = config.copy()
-        param_type = config.pop("type")
-        check_if_in(param_type, list(Parameter.SUBCLASSES.keys()))
-        return cls.SUBCLASSES[param_type](**config)
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
