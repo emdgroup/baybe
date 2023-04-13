@@ -34,6 +34,7 @@ dev = [
     "black>=22.3.0",  # see FORMATTER NOTE
     "flake8>=4.0.1",
     "matplotlib>=3.5.2",
+    "mypy>=1.2.0",
     "openpyxl>=3.0.9",
     "plotly>=5.10.0",
     "pre-commit>=2.19.0",
@@ -100,3 +101,15 @@ disable = [
 
 [tool.pylint.BASIC]
 good-names=["i", "j", "k", "x", "y", "ex", "df", "fh"] # allow these variable names
+
+[tool.mypy]
+files = [
+    "baybe/parameters.py",
+]
+
+[[tool.mypy.overrides]]
+module = 'scipy.spatial.distance'
+ignore_missing_imports = true
+
+# TODO[12327]: Find a way to automatically install all mypy stubs during the
+#   installation, to avoid having to call "mypy --install-types" afterwards.

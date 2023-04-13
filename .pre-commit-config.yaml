@@ -12,7 +12,7 @@ repos:
 - repo: https://github.com/pycqa/flake8
   rev: 4.0.1
   hooks:
-  - id: flake8
+    - id: flake8
 - repo: local
   hooks:
     - id: pylint
@@ -20,3 +20,11 @@ repos:
       entry: pylint
       language: system
       types: [python]
+- repo: local
+  hooks:
+    - id: mypy
+      name: mypy
+      entry: mypy
+      language: system
+      types: [python]
+      verbose: true

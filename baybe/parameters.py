@@ -8,6 +8,8 @@ import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import (
+    Any,
+    cast,
     ClassVar,
     Dict,
     get_args,
@@ -23,7 +25,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
-from sklearn.metrics.pairwise import pairwise_distances
+from scipy.spatial.distance import pdist
 
 from .utils import (
     df_drop_single_value_columns,
@@ -52,10 +54,11 @@ def validate_unique_values(obj, attribute, value) -> None:
 def convert_bounds(
     bounds: Tuple[Union[None, int, float], Union[None, int, float]]
 ) -> Tuple[float, float]:
-    bounds = list(bounds)
-    bounds[0] = -np.inf if bounds[0] is None else float(bounds[0])
-    bounds[1] = np.inf if bounds[1] is None else float(bounds[1])
-    return tuple(bounds)
+    out = (
+        -np.inf if bounds[0] is None else float(bounds[0]),
+        np.inf if bounds[1] is None else float(bounds[1]),
+    )
+    return out
 
 
 @define
@@ -66,15 +69,15 @@ class Parameter(ABC):
     """
 
     # class variables
-    encoding: ClassVar[Optional[str]]
     is_numeric: ClassVar[bool] = False  # default that is changed for numeric parameters
     is_discrete: ClassVar[bool]
 
     # object variables
     name: str
+    encoding: Optional[str]
 
     @abstractmethod
-    def is_in_range(self, item: object) -> bool:
+    def is_in_range(self, item: Any) -> bool:
         """
         Tells whether an item is within the parameter range.
         """
@@ -100,10 +103,10 @@ class DiscreteParameter(Parameter, ABC):
         Returns the computational representation of the parameter.
         """
 
-    def is_in_range(self, item: object) -> bool:
+    def is_in_range(self, item: Any) -> bool:
         return item in self.values
 
-    def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
+    def transform_rep_exp2comp(self, data: pd.Series) -> pd.DataFrame:
         """
         Transforms data from experimental to computational representation.
 
@@ -156,7 +159,7 @@ class Categorical(DiscreteParameter):
             comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
         elif self.encoding == "INT":
             comp_df = pd.DataFrame(range(len(self.values)), columns=[self.name])
-        comp_df.index = self.values
+        comp_df.index = pd.Index(self.values)
 
         return comp_df
 
@@ -193,8 +196,7 @@ class NumericDiscrete(DiscreteParameter):
         """
         # NOTE: computing all pairwise distances can be avoided if we ensure that the
         #   values are ordered (which is currently not the case)
-        dists = pairwise_distances(np.asarray(self.values).reshape(-1, 1))
-        np.fill_diagonal(dists, np.inf)
+        dists = pdist(np.asarray(self.values).reshape(-1, 1))
         max_tol = dists.min() / 2.0
 
         if tolerance >= max_tol:
@@ -326,7 +328,7 @@ class GenericSubstance(DiscreteParameter):
         ].astype(int)
 
         # Label the rows with the molecule names
-        comp_df.index = self.values
+        comp_df.index = pd.Index(self.values)
 
         # Get a decorrelated subset of the fingerprints
         if self.decorrelate:
@@ -427,7 +429,9 @@ def parameter_cartesian_prod_to_df(
     pd.DataFrame
         A dataframe containing all possible discrete parameter value combinations.
     """
-    lst_of_values = [p.values for p in parameters if p.is_discrete]
+    lst_of_values = [
+        cast(DiscreteParameter, p).values for p in parameters if p.is_discrete
+    ]
     lst_of_names = [p.name for p in parameters if p.is_discrete]
     if len(lst_of_names) < 1:
         return pd.DataFrame()
