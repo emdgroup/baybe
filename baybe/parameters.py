@@ -74,7 +74,6 @@ class Parameter(ABC):
 
     # object variables
     name: str
-    encoding: Optional[str]
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
@@ -89,7 +88,10 @@ class DiscreteParameter(Parameter, ABC):
     """
 
     # class variables
-    is_discrete = True
+    is_discrete: ClassVar[bool] = True
+
+    # object variables
+    encoding: Optional[str] = None
 
     @property
     @abstractmethod
@@ -141,7 +143,6 @@ class Categorical(DiscreteParameter):
     Parameter class for categorical parameters.
     """
 
-    # object variables
     _values: list = field(validator=[min_len(2), validate_unique_values])
     encoding: Literal["OHE", "INT"] = "OHE"
 
@@ -172,7 +173,6 @@ class NumericDiscrete(DiscreteParameter):
 
     # class variables
     is_numeric = True
-    encoding = None
 
     # object variables
     _values: List[Union[int, float]] = field(
@@ -275,7 +275,6 @@ class GenericSubstance(DiscreteParameter):
     labels given.
     """
 
-    # object variables
     data: Dict[str, str] = field()
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
@@ -351,7 +350,6 @@ class Custom(DiscreteParameter):
     representation for labels, e.g. from quantum chemistry.
     """
 
-    # object variables
     encoding = "CUSTOM"
     data: pd.DataFrame = field()
     decorrelate: Union[bool, float] = field(
