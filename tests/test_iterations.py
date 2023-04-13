@@ -66,17 +66,20 @@ def run_iterations(baybe, n_iterations, batch_quantity):
     for k in range(n_iterations):
         rec = baybe.recommend(batch_quantity=batch_quantity)
 
-    add_fake_results(rec, baybe)
-    if k % 2:
-        add_parameter_noise(rec, baybe, noise_level=0.1)
+        add_fake_results(rec, baybe)
+        if k % 2:
+            add_parameter_noise(rec, baybe, noise_level=0.1)
 
-    baybe.add_results(rec)
+        baybe.add_results(rec)
 
 
-@pytest.mark.slow
-@pytest.mark.parametrize("acquisition_function_cls", valid_acquisition_functions)
-def test_iter_acquisition_function(baybe, n_iterations, batch_quantity):
-    run_iterations(baybe, n_iterations, batch_quantity)
+# TODO: The following tests are deactivated because there is currently no Bayesian
+#   recommender that can handle non-MC acquisition functions. Once the
+#   MarginalRecommender (or similar) is re-added, the acqf-tests can be reactivated.
+# @pytest.mark.slow
+# @pytest.mark.parametrize("acquisition_function_cls", valid_acquisition_functions)
+# def test_iter_acquisition_function(baybe, n_iterations, batch_quantity):
+#     run_iterations(baybe, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
