@@ -61,7 +61,6 @@ class GreedyRecommender(BayesianRecommender):
         batch_quantity: int,
     ) -> pd.DataFrame:
         """See base class."""
-        acquisition_function = self.get_acquisition_function_cls()
 
         try:
             points, _ = optimize_acqf(
