@@ -69,7 +69,7 @@ class Parameter(ABC):
     """
 
     # class variables
-    is_numeric: ClassVar[bool] = False  # default that is changed for numeric parameters
+    is_numeric: ClassVar[bool]
     is_discrete: ClassVar[bool]
 
     # object variables
@@ -143,6 +143,10 @@ class Categorical(DiscreteParameter):
     Parameter class for categorical parameters.
     """
 
+    # class variables
+    is_numeric = False
+
+    # object variables
     _values: list = field(validator=[min_len(2), validate_unique_values])
     encoding: Literal["OHE", "INT"] = "OHE"
 
@@ -275,6 +279,10 @@ class GenericSubstance(DiscreteParameter):
     labels given.
     """
 
+    # class variables
+    is_numeric = False
+
+    # object variables
     data: Dict[str, str] = field()
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
@@ -350,6 +358,10 @@ class Custom(DiscreteParameter):
     representation for labels, e.g. from quantum chemistry.
     """
 
+    # class variables
+    is_numeric = False
+
+    # object variables
     encoding = "CUSTOM"
     data: pd.DataFrame = field()
     decorrelate: Union[bool, float] = field(
