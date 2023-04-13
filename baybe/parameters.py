@@ -73,14 +73,11 @@ class Parameter(ABC):
     # object variables
     name: str
 
+    @abstractmethod
     def is_in_range(self, item: object) -> bool:
         """
         Tells whether an item is within the parameter range.
         """
-        # TODO: in terms of coding style, this is not ideal: `values` is currently only
-        #  defined in the subclasses but not in the base class since it is either a
-        #  member or a property, depending on the parameter type --> better solution?
-        return item in self.values
 
 
 class DiscreteParameter(Parameter, ABC):
@@ -91,12 +88,20 @@ class DiscreteParameter(Parameter, ABC):
     # class variables
     is_discrete = True
 
+    @property
+    @abstractmethod
+    def values(self) -> list:
+        """The values the parameter can take."""
+
     @cached_property
     @abstractmethod
     def comp_df(self) -> pd.DataFrame:
         """
         Returns the computational representation of the parameter.
         """
+
+    def is_in_range(self, item: object) -> bool:
+        return item in self.values
 
     def transform_rep_exp2comp(self, data: pd.Series = None) -> pd.DataFrame:
         """
@@ -134,8 +139,12 @@ class Categorical(DiscreteParameter):
     """
 
     # object variables
-    values: list = field(validator=[min_len(2), validate_unique_values])
+    _values: list = field(validator=[min_len(2), validate_unique_values])
     encoding: Literal["OHE", "INT"] = "OHE"
+
+    @property
+    def values(self) -> list:
+        return self._values
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
@@ -163,7 +172,7 @@ class NumericDiscrete(DiscreteParameter):
     encoding = None
 
     # object variables
-    values: List[Union[int, float]] = field(
+    _values: List[Union[int, float]] = field(
         validator=[
             deep_iterable(instance_of((int, float)), instance_of(list)),
             min_len(2),
@@ -194,6 +203,10 @@ class NumericDiscrete(DiscreteParameter):
                 f"{tolerance} but due to the values {self.values} a "
                 f"maximum tolerance of {max_tol} is suggested to avoid ambiguity."
             )
+
+    @property
+    def values(self) -> list:
+        return self._values
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
@@ -423,7 +436,3 @@ def parameter_cartesian_prod_to_df(
     ret = pd.DataFrame(index=index).reset_index()
 
     return ret
-
-
-# TODO: self.values could be a variable of the base class since it's shared between all
-#  parameter. It's essentially the list of labels, always one dimensional
