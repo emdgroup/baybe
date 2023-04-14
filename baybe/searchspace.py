@@ -48,10 +48,29 @@ class SubspaceDiscrete:
     """
 
     parameters: List[DiscreteParameter]
-    exp_rep: Optional[pd.DataFrame] = None
-    comp_rep: Optional[pd.DataFrame] = None
-    metadata: Optional[pd.DataFrame] = None
+    exp_rep: pd.DataFrame
+    comp_rep: pd.DataFrame = field(default=None, init=False)
+    metadata: pd.DataFrame = field(default=None, init=False)
     empty_encoding: bool = False
+
+    def __attrs_post_init__(self):
+        # Create a dataframe storing the experiment metadata
+        self.metadata = pd.DataFrame(
+            {
+                "was_recommended": False,
+                "was_measured": False,
+                "dont_recommend": False,
+            },
+            index=self.exp_rep.index,
+        )
+
+        # Create a dataframe containing the computational parameter representation
+        # (ignoring all columns that do not carry any covariate information).
+        # TODO: Should we always drop single value columns without informing the user?
+        #   This can have undesired/unexpected side-effects (see ***REMOVED*** project).
+        comp_rep = self.transform(self.exp_rep)
+        comp_rep = df_drop_single_value_columns(comp_rep)
+        self.comp_rep = comp_rep
 
     @classmethod
     def create(
@@ -79,33 +98,11 @@ class SubspaceDiscrete:
             exp_rep.drop(index=inds, inplace=True)
         exp_rep.reset_index(inplace=True, drop=True)
 
-        # Create a dataframe storing the experiment metadata
-        metadata = pd.DataFrame(
-            {
-                "was_recommended": False,
-                "was_measured": False,
-                "dont_recommend": False,
-            },
-            index=exp_rep.index,
-        )
-
-        subspace = SubspaceDiscrete(
+        return SubspaceDiscrete(
             parameters=parameters,
-            empty_encoding=empty_encoding,
             exp_rep=exp_rep,
-            metadata=metadata,
+            empty_encoding=empty_encoding,
         )
-
-        # TODO: The comp_rep should be implemented using a proper post_init and should
-        #   not be visible in the constructor. This should be changed once migrated
-        #   to pydantic v2 or attrs.
-        # Create a dataframe containing the computational parameter representation
-        # (ignoring all columns that do not carry any covariate information).
-        comp_rep = subspace.transform(exp_rep)
-        comp_rep = df_drop_single_value_columns(comp_rep)
-        subspace.comp_rep = comp_rep
-
-        return subspace
 
     @property
     def empty(self):
