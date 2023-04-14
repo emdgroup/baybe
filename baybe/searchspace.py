@@ -132,23 +132,6 @@ class SubspaceDiscrete(BaseModel):
         )
         return torch.from_numpy(bounds)
 
-    def state_dict(self) -> dict:
-        """Creates a dictionary representing the object's internal state."""
-        state_dict = dict(
-            empty_encoding=self.empty_encoding,
-            exp_rep=self.exp_rep,
-            comp_rep=self.comp_rep,
-            metadata=self.metadata,
-        )
-        return state_dict
-
-    def load_state_dict(self, state_dict: dict) -> None:
-        """Restores a given object state."""
-        self.empty_encoding = state_dict["empty_encoding"]
-        self.exp_rep = state_dict["exp_rep"]
-        self.comp_rep = state_dict["comp_rep"]
-        self.metadata = state_dict["metadata"]
-
     def mark_as_measured(
         self,
         measurements: pd.DataFrame,
@@ -571,19 +554,6 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
         return torch.hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
-
-    def state_dict(self) -> dict:
-        """Creates a dictionary representing the object's internal state."""
-        state_dict = dict(
-            empty_encoding=self.empty_encoding,
-            discrete=self.discrete.state_dict(),
-        )
-        return state_dict
-
-    def load_state_dict(self, state_dict: dict) -> None:
-        """Restores a given object state."""
-        self.empty_encoding = state_dict["empty_encoding"]
-        self.discrete.load_state_dict(state_dict["discrete"])
 
     def transform(
         self,
