@@ -7,19 +7,13 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import ClassVar, Dict, List, Literal, Optional, Tuple
+from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import (
-    ABCBaseModel,
-    check_if_in,
-    geom_mean,
-    isabstract,
-    StrictValidationError,
-)
+from .utils import ABCBaseModel, geom_mean, StrictValidationError
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
 log = logging.getLogger(__name__)
@@ -33,25 +27,9 @@ class Target(ABC, ABCBaseModel, extra=Extra.forbid):
 
     # class variables
     type: ClassVar[str]
-    SUBCLASSES: ClassVar[Dict[str, Target]] = {}
 
     # object variables
     name: str
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
-
-    @classmethod
-    def create(cls, config: dict) -> Target:
-        """Creates a new object matching the given specifications."""
-        config = config.copy()
-        param_type = config.pop("type")
-        check_if_in(param_type, list(Target.SUBCLASSES.keys()))
-        return cls.SUBCLASSES[param_type](**config)
 
     @abstractmethod
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
