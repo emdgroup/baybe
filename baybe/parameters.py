@@ -15,6 +15,7 @@ from typing import (
     Dict,
     get_args,
     get_type_hints,
+    Iterable,
     List,
     Literal,
     Optional,
@@ -438,7 +439,7 @@ class Custom(DiscreteParameter):
 
 
 def parameter_cartesian_prod_to_df(
-    parameters: List[Parameter],
+    parameters: Iterable[Parameter],
 ) -> pd.DataFrame:
     """
     Creates the Cartesian product of all parameter values. Ignores continuous

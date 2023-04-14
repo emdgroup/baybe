@@ -105,6 +105,7 @@ good-names=["i", "j", "k", "x", "y", "ex", "df", "fh"] # allow these variable na
 [tool.mypy]
 files = [
     "baybe/parameters.py",
+    "baybe/searchspace.py",
 ]
 
 [[tool.mypy.overrides]]

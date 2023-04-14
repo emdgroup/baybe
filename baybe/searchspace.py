@@ -9,7 +9,7 @@ Functionality for managing search spaces.
 
 import logging
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import cast, List, Optional, Tuple
 
 import cattrs
 import numpy as np
@@ -227,8 +227,8 @@ class SubspaceDiscrete:
 
             # For numeric parameters, match the entry with the smallest deviation
             # TODO: allow alternative distance metrics
-            for param in num_cols:
-                abs_diff = (self.exp_rep[param] - row[param]).abs()
+            for col in num_cols:
+                abs_diff = (self.exp_rep[col] - row[col]).abs()
                 match &= abs_diff == abs_diff.min()
 
             # We expect exactly one match. If that's not the case, print a warning.
@@ -510,12 +510,16 @@ class SearchSpace:
             computational representation.
         """
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
-            parameters=[p for p in parameters if p.is_discrete],
+            parameters=[
+                cast(DiscreteParameter, p) for p in parameters if p.is_discrete
+            ],
             constraints=constraints,
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
-            parameters=[p for p in parameters if not p.is_discrete],
+            parameters=[
+                cast(NumericContinuous, p) for p in parameters if not p.is_discrete
+            ],
         )
 
         return SearchSpace(
