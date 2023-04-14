@@ -2,7 +2,8 @@
 """
 Functionality for different experimental parameter types.
 """
-from __future__ import annotations
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
 import logging
 from abc import ABC, abstractmethod
@@ -21,6 +22,7 @@ from typing import (
     Union,
 )
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -30,10 +32,12 @@ from scipy.spatial.distance import pdist
 from .utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
+    get_base_unstructure_hook,
     is_valid_smiles,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
+    unstructure_base,
 )
 
 log = logging.getLogger(__name__)
@@ -80,6 +84,13 @@ class Parameter(ABC):
         """
         Tells whether an item is within the parameter range.
         """
+
+    def to_dict(self):
+        return cattrs.unstructure(self)
+
+    @classmethod
+    def from_dict(cls, dictionary) -> "Parameter":
+        return cattrs.structure(dictionary, cls)
 
 
 class DiscreteParameter(Parameter, ABC):
@@ -450,3 +461,8 @@ def parameter_cartesian_prod_to_df(
     ret = pd.DataFrame(index=index).reset_index()
 
     return ret
+
+
+# Register (un-)structure hooks
+cattrs.register_unstructure_hook(Parameter, unstructure_base)
+cattrs.register_structure_hook(Parameter, get_base_unstructure_hook(Parameter))

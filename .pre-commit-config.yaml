@@ -25,6 +25,7 @@ repos:
     - id: mypy
       name: mypy
       entry: mypy
+      pass_filenames: false
       language: system
       types: [python]
       verbose: true

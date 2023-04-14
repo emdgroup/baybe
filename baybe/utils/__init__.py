@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring
+
 """
 Collection of small utilities.
 """
@@ -25,6 +27,7 @@ from typing import (
     Union,
 )
 
+import cattrs
 import numpy as np
 import pandas as pd
 import torch
@@ -736,3 +739,24 @@ class ABCBaseModel(BaseModel):
     @classmethod
     def __get_validators__(cls):
         yield cls._convert_to_real_type_
+
+
+def unstructure_base(base):
+    converter = cattrs.Converter()
+    return {
+        "_type": base.__class__.__name__,
+        **converter.unstructure_attrs_asdict(base),
+    }
+
+
+def get_base_unstructure_hook(base):
+    def structure_base(val, _):
+        _type = val["_type"]
+        cls = next(
+            (cl for cl in subclasses_recursive(base) if cl.__name__ == _type), None
+        )
+        if cls is None:
+            raise ValueError(f"Unknown subclass {_type}.")
+        return cattrs.structure_attrs_fromdict(val, cls)
+
+    return structure_base
