@@ -4,7 +4,8 @@
 """
 Functionality for managing search spaces.
 """
-from __future__ import annotations
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
 import logging
 from enum import Enum
@@ -13,9 +14,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import torch
-from pydantic import conlist
-
-from baybe.utils import BaseModel
+from attrs import define, field
+from attrs.validators import min_len
 
 from .constraints import _constraints_order, Constraint
 from .parameters import (
@@ -37,7 +37,8 @@ class SearchSpaceType(Enum):
     HYBRID = "HYBRID"
 
 
-class SubspaceDiscrete(BaseModel):
+@define
+class SubspaceDiscrete:
     """
     Class for managing discrete search spaces.
 
@@ -58,7 +59,7 @@ class SubspaceDiscrete(BaseModel):
         parameters: List[DiscreteParameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-    ) -> SubspaceDiscrete:
+    ) -> "SubspaceDiscrete":
         """See `SearchSpace` class."""
         # Store the input
         if constraints is None:
@@ -328,7 +329,8 @@ class SubspaceDiscrete(BaseModel):
         return comp_rep
 
 
-class SubspaceContinuous(BaseModel):
+@define
+class SubspaceContinuous:
     """
     Class for managing continuous search spaces.
     """
@@ -465,7 +467,8 @@ class SubspaceContinuous(BaseModel):
         return pd.DataFrame(index=index).reset_index()
 
 
-class SearchSpace(BaseModel, arbitrary_types_allowed=True):
+@define
+class SearchSpace:
     """
     Class for managing the overall search space, which might be purely discrete, purely
     continuous, or hybrid.
@@ -482,7 +485,7 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
     discrete: SubspaceDiscrete
     continuous: SubspaceContinuous
 
-    parameters: conlist(Parameter, min_items=1)
+    parameters: List[Parameter] = field(validator=min_len(1))
     empty_encoding: bool = False
 
     @classmethod
@@ -491,7 +494,7 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-    ) -> SearchSpace:
+    ) -> "SearchSpace":
         """
         Parameters
         ----------
