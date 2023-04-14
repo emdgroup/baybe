@@ -50,7 +50,6 @@ class SubspaceDiscrete(BaseModel):
     exp_rep: Optional[pd.DataFrame] = None
     comp_rep: Optional[pd.DataFrame] = None
     metadata: Optional[pd.DataFrame] = None
-    constraints: Optional[List[Constraint]] = None
     empty_encoding: bool = False
 
     @classmethod
@@ -91,7 +90,6 @@ class SubspaceDiscrete(BaseModel):
 
         subspace = SubspaceDiscrete(
             parameters=parameters,
-            constraints=constraints,
             empty_encoding=empty_encoding,
             exp_rep=exp_rep,
             metadata=metadata,
@@ -485,7 +483,6 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
     continuous: SubspaceContinuous
 
     parameters: conlist(Parameter, min_items=1)
-    constraints: Optional[List[Constraint]] = None
     empty_encoding: bool = False
 
     @classmethod
@@ -522,7 +519,6 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
             discrete=discrete,
             continuous=continuous,
             parameters=parameters,
-            constraints=constraints,
             empty_encoding=empty_encoding,
         )
 

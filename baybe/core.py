@@ -45,11 +45,6 @@ class BayBE(BaseModel):
         return self.searchspace.parameters
 
     @property
-    def constraints(self) -> List[Constraint]:
-        """The parameter constraints of the underlying search space."""
-        return self.searchspace.constraints
-
-    @property
     def targets(self) -> List[Target]:
         """The targets of the underlying objective."""
         return self.objective.targets
