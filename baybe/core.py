@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 from typing import List
 
+import cattrs
 import numpy as np
 import pandas as pd
 from pydantic import Field, parse_obj_as
@@ -18,6 +19,10 @@ from baybe.targets import Objective, Target
 from baybe.utils import BaseModel
 
 log = logging.getLogger(__name__)
+
+# TODO[12356]: There should be a better way than registering with the global converter.
+cattrs.register_unstructure_hook(pd.DataFrame, lambda x: x.to_json())
+cattrs.register_structure_hook(pd.DataFrame, lambda d, _: pd.read_json(d))
 
 
 class BayBE(BaseModel):

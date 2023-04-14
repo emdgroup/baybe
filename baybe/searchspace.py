@@ -11,6 +11,7 @@ import logging
 from enum import Enum
 from typing import List, Optional, Tuple
 
+import cattrs
 import numpy as np
 import pandas as pd
 import torch
@@ -24,7 +25,7 @@ from .parameters import (
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .utils import df_drop_single_value_columns
+from .utils import df_drop_single_value_columns, eq_dataframe
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
@@ -48,9 +49,9 @@ class SubspaceDiscrete:
     """
 
     parameters: List[DiscreteParameter]
-    exp_rep: pd.DataFrame
-    comp_rep: pd.DataFrame = field(default=None, init=False)
-    metadata: pd.DataFrame = field(default=None, init=False)
+    exp_rep: pd.DataFrame = field(eq=eq_dataframe())
+    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
+    metadata: pd.DataFrame = field(init=False, eq=eq_dataframe())
     empty_encoding: bool = False
 
     def __attrs_post_init__(self):
@@ -320,8 +321,10 @@ class SubspaceDiscrete:
         # If the computational representation has already been built (with potentially
         # removing some columns, e.g. due to decorrelation or dropping constant ones),
         # any subsequent transformation should yield the same columns.
-        if self.comp_rep is not None:
+        try:
             comp_rep = comp_rep[self.comp_rep.columns]
+        except AttributeError:
+            pass
 
         return comp_rep
 
@@ -551,6 +554,13 @@ class SearchSpace:
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
 
+    def to_dict(self):
+        return cattrs.unstructure(self)
+
+    @classmethod
+    def from_dict(cls, dictionary) -> "SearchSpace":
+        return cattrs.structure(dictionary, cls)
+
     def transform(
         self,
         data: pd.DataFrame,
@@ -578,3 +588,16 @@ class SearchSpace:
         comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
 
         return comp_rep
+
+
+# TODO: The following structuring hook is a workaround for field with init=False.
+#   https://github.com/python-attrs/cattrs/issues/40
+
+
+def structure_hook(dict_, type_):
+    dict_.pop("comp_rep")
+    dict_.pop("metadata")
+    return cattrs.structure_attrs_fromdict(dict_, type_)
+
+
+cattrs.register_structure_hook(SubspaceDiscrete, structure_hook)

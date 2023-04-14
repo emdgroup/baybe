@@ -31,6 +31,8 @@ import cattrs
 import numpy as np
 import pandas as pd
 import torch
+
+from attrs import cmp_using
 from joblib import Memory
 from mordred import Calculator, descriptors
 from pydantic import BaseModel as PydanticBaseModel
@@ -760,3 +762,7 @@ def get_base_unstructure_hook(base):
         return cattrs.structure_attrs_fromdict(val, cls)
 
     return structure_base
+
+
+def eq_dataframe():
+    return cmp_using(lambda x, y: x.equals(y))

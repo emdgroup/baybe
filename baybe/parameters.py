@@ -42,6 +42,10 @@ from .utils import (
 
 log = logging.getLogger(__name__)
 
+# TODO[12356]: There should be a better way than registering with the global converter.
+# TODO: The union needs to be properly resolved.
+cattrs.register_structure_hook(Union[int, float], lambda x, _: float(x))
+
 
 def validate_decorrelation(obj, attribute, value):
     instance_of((bool, float))(obj, attribute, value)
