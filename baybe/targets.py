@@ -23,6 +23,12 @@ from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 log = logging.getLogger(__name__)
 
 
+def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
+    if isinstance(bounds, Interval):
+        return bounds
+    return Interval.create(bounds)
+
+
 @define
 class Target(ABC):
     """
@@ -58,16 +64,17 @@ class NumericalTarget(Target):
 
     # TODO: Introduce mode enum
 
-    # TODO: It's unclear if the type of `bounds` should be `Interval` (= type after
-    #   conversion) or `Union[None, tuple, Interval]` (= type before conversion).
-    #   Potentially related: Automatic field transformation
-    #       https://www.attrs.org/en/stable/extending.html
+    # NOTE: The type annotations of `bounds` are correctly overridden by the attrs
+    #   converter. Nonetheless, PyCharm's linter might incorrectly raise a type warning
+    #   when calling the constructor. This is a known issue:
+    #       https://youtrack.jetbrains.com/issue/PY-34243
+    #   Quote from attrs docs:
+    #       If a converter’s first argument has a type annotation, that type will
+    #       appear in the signature for __init__. A converter will override an explicit
+    #       type annotation or type argument.
 
-    mode: Literal["MIN", "MAX", "MATCH"]
-    bounds: Union[None, tuple, Interval] = field(
-        default=None,
-        converter=lambda x: x if isinstance(x, Interval) else Interval.create(x),
-    )
+    mode: Literal["MIN", "MAX", "MATCH"] = field()
+    bounds: Interval = field(default=None, converter=convert_bounds)
     bounds_transform_func: Optional[str] = field(default=None)
 
     @bounds.validator
