@@ -14,10 +14,10 @@ from typing import List, Literal, Optional, Union
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from pydantic import BaseModel, conlist, Extra, validator
+from attrs.validators import min_len
 
 from .interval import Interval
-from .utils import geom_mean, StrictValidationError
+from .utils import geom_mean
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
 log = logging.getLogger(__name__)
@@ -27,6 +27,10 @@ def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
     if isinstance(bounds, Interval):
         return bounds
     return Interval.create(bounds)
+
+
+def convert_weights(weights: List[float]) -> List[float]:
+    return (100 * np.asarray(weights) / np.sum(weights)).tolist()
 
 
 @define
@@ -157,61 +161,52 @@ class NumericalTarget(Target):
         return transformed
 
 
-class Objective(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+@define
+class Objective:
     """Class for managing optimization objectives."""
 
     mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
-    targets: conlist(Target, min_items=1)
-    weights: Optional[List[float]] = None
+    targets: List[NumericalTarget] = field(validator=min_len(1))
+    weights: List[float] = field(converter=convert_weights)
     combine_func: Literal["MEAN", "GEOM_MEAN"] = "GEOM_MEAN"
 
-    @validator("targets", always=True, pre=True)
-    def validate_targets(cls, targets, values):
+    @weights.default
+    def default_weights(self) -> List[float]:
+        n_targets = len(self.targets)
+        return [100 / n_targets] * n_targets
+
+    @targets.validator
+    def validate_targets(self, _, targets: List[NumericalTarget]):
         """
         Validates (and instantiates) targets depending on the objective mode.
         """
 
         # Validate the target specification
-        mode = values["mode"]
-        if (mode == "SINGLE") and (len(targets) != 1):
-            raise StrictValidationError(
+        if (self.mode == "SINGLE") and (len(targets) != 1):
+            raise ValueError(
                 "For objective mode 'SINGLE', exactly one target must be specified."
             )
-        if (mode == "MULTI") and (len(targets) <= 1):
-            raise StrictValidationError(
+        if (self.mode == "MULTI") and (len(targets) <= 1):
+            raise ValueError(
                 "For objective mode 'MULTI', more than one target must be specified."
             )
-        if mode == "DESIRABILITY":
-            for target in targets:
-                if getattr(target, "bounds", None) is None:
-                    raise StrictValidationError(
-                        "In 'DESIRABILITY' mode for multiple targets, each target must "
-                        "have bounds defined."
-                    )
+        if self.mode == "DESIRABILITY":
+            if any(not target.bounds.is_bounded for target in targets):
+                raise ValueError(
+                    "In 'DESIRABILITY' mode for multiple targets, each target must "
+                    "have bounds defined."
+                )
 
-        return targets
-
-    @validator("weights", always=True)
-    def validate_weights(cls, weights, values):
+    @weights.validator
+    def validate_weights(self, _, weights):
         """
         Validates target weights.
         """
-        n_targets = len(values["targets"])
-
-        # Set default: uniform weights
-        if weights is None:
-            return [100 / n_targets] * n_targets
-
-        if len(weights) != n_targets:
-            raise StrictValidationError(
+        if len(weights) != len(self.targets):
+            raise ValueError(
                 f"Weights list for your objective has {len(weights)} values, but you "
-                f"defined {n_targets} targets."
+                f"defined {len(self.targets)} targets."
             )
-
-        # Normalize to sum = 100
-        weights = (100 * np.asarray(weights) / np.sum(weights)).tolist()
-
-        return weights
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -241,7 +236,7 @@ class Objective(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
             elif self.combine_func == "MEAN":
                 func = partial(np.average, axis=1)
             else:
-                raise StrictValidationError(
+                raise ValueError(
                     f"The specified averaging function {self.combine_func} is unknown."
                 )
 
