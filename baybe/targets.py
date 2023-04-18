@@ -23,6 +23,15 @@ from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 log = logging.getLogger(__name__)
 
 
+# TODO: potentially introduce an abstract base class for the transforms
+#   -> this would remove the necessity to maintain the following dict
+VALID_TRANSFORMS = {
+    "MAX": ["LINEAR"],
+    "MIN": ["LINEAR"],
+    "MATCH": ["TRIANGULAR", "BELL"],
+}
+
+
 def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
     if isinstance(bounds, Interval):
         return bounds
@@ -79,7 +88,21 @@ class NumericalTarget(Target):
 
     mode: Literal["MIN", "MAX", "MATCH"] = field()
     bounds: Interval = field(default=None, converter=convert_bounds)
-    bounds_transform_func: Optional[str] = field(default=None)
+    bounds_transform_func: Optional[str] = field()
+
+    @bounds_transform_func.default
+    def default_bounds_transform_func(self) -> Optional[str]:
+        if self.bounds.is_bounded:
+            fun = VALID_TRANSFORMS[self.mode][0]
+            log.warning(
+                "The bound transform function for target '%s' in mode '%s' has not "
+                "been specified. Setting the bound transform function to '%s'.",
+                self.name,
+                self.mode,
+                fun,
+            )
+            return fun
+        return None
 
     @bounds.validator
     def validate_bounds(self, _, value: Interval):
@@ -99,32 +122,13 @@ class NumericalTarget(Target):
     def validate_bounds_transform_func(self, _, value):
         """Validates that the given transform is compatible with the specified mode."""
 
-        # TODO: potentially introduce an abstract base class for the transforms
-        #   -> this would remove the necessity to maintain the following dict
-        valid_transforms = {
-            "MAX": ["LINEAR"],
-            "MIN": ["LINEAR"],
-            "MATCH": ["TRIANGULAR", "BELL"],
-        }
-
-        # Set a default transform
-        if self.bounds.is_bounded and (value is None):
-            fun = valid_transforms[self.mode][0]
-            log.warning(
-                "The bound transform function for target '%s' in mode '%s' has not "
-                "been specified. Setting the bound transform function to '%s'.",
-                self.name,
-                self.mode,
-                fun,
-            )
-
         # Assert that the given transform is valid for the specified target mode
-        elif (value is not None) and (value not in valid_transforms[self.mode]):
+        if (value is not None) and (value not in VALID_TRANSFORMS[self.mode]):
             raise ValueError(
                 f"You specified bounds for target '{self.name}', but your "
                 f"specified bound transform function '{value}' is not compatible "
                 f"with the target mode {self.mode}'. It must be one "
-                f"of {valid_transforms[self.mode]}."
+                f"of {VALID_TRANSFORMS[self.mode]}."
             )
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
