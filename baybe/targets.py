@@ -3,6 +3,8 @@
 """
 Functionality for different objectives and target variable types.
 """
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
 from __future__ import annotations
 
@@ -11,6 +13,7 @@ from abc import ABC, abstractmethod
 from functools import partial
 from typing import List, Literal, Optional, Union
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -211,6 +214,13 @@ class Objective:
                 f"Weights list for your objective has {len(weights)} values, but you "
                 f"defined {len(self.targets)} targets."
             )
+
+    def to_dict(self):
+        return cattrs.unstructure(self)
+
+    @classmethod
+    def from_dict(cls, dictionary) -> "Objective":
+        return cattrs.structure(dictionary, cls)
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         """
