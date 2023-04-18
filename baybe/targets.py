@@ -148,13 +148,13 @@ class NumericalTarget(Target):
         }
 
         # When bounds are given, apply the respective transform
-        if self.bounds is not None:
+        if self.bounds.is_bounded:
             func = bounds_transform_funcs[self.bounds_transform_func]
             if self.mode == "MAX":
                 func = partial(func, descending=False)
             elif self.mode == "MIN":
                 func = partial(func, descending=True)
-            transformed = func(transformed, *self.bounds)
+            transformed = func(transformed, *self.bounds.to_tuple())
 
         # If no bounds are given, simply negate all target values for "MIN" mode.
         # For "MAX" mode, nothing needs to be done.

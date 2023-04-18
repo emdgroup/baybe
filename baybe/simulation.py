@@ -401,9 +401,7 @@ def _impute_lookup(
                 worst_vals.append(
                     lookup.loc[
                         lookup.loc[
-                            (lookup[target.name] - np.mean(target.bounds))
-                            .abs()
-                            .idxmax(),
+                            (lookup[target.name] - target.bounds.center).abs().idxmax(),
                         ],
                         target.name,
                     ].flatten()[0]
@@ -420,9 +418,7 @@ def _impute_lookup(
                 best_vals.append(
                     lookup.loc[
                         lookup.loc[
-                            (lookup[target.name] - np.mean(target.bounds))
-                            .abs()
-                            .idxmin(),
+                            (lookup[target.name] - target.bounds.center).abs().idxmin(),
                         ],
                         target.name,
                     ].flatten()[0]

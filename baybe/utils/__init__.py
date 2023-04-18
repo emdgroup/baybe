@@ -240,8 +240,10 @@ def add_fake_results(
             elif target.mode == "MIN":
                 interv = (0, 33)
             elif target.mode == "MATCH":
-                lbound = 0 if target.bounds is None else target.bounds[0]
-                ubound = 100 if target.bounds is None else target.bounds[1]
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
+                ubound = (
+                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
+                )
                 interv = (
                     lbound + 0.33 * (ubound - lbound),
                     lbound + 0.66 * (ubound - lbound),
@@ -261,8 +263,10 @@ def add_fake_results(
             elif target.mode == "MIN":
                 interv = (66, 100)
             elif target.mode == "MATCH":
-                lbound = 0 if target.bounds is None else target.bounds[0]
-                ubound = 100 if target.bounds is None else target.bounds[1]
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
+                ubound = (
+                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
+                )
                 interv = (
                     # Take as bad values and arbitrary interval above the match interval
                     ubound + 0.5 * (ubound - lbound),
