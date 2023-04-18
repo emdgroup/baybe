@@ -47,6 +47,9 @@ log = logging.getLogger(__name__)
 # TODO: The union needs to be properly resolved.
 cattrs.register_structure_hook(Union[int, float], lambda x, _: float(x))
 
+# TODO: Introduce encoding enums
+# TODO: Use Interval class
+
 
 def validate_decorrelation(obj, attribute, value):
     instance_of((bool, float))(obj, attribute, value)

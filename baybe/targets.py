@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring
+
 """
 Functionality for different objectives and target variable types.
 """
@@ -7,28 +9,27 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import ClassVar, List, Literal, Optional, Tuple
+from typing import List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
+from attrs import define, field
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import ABCBaseModel, geom_mean, StrictValidationError
+from .interval import Interval
+from .utils import geom_mean, StrictValidationError
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
 log = logging.getLogger(__name__)
 
 
-class Target(ABC, ABCBaseModel, extra=Extra.forbid):
+@define
+class Target(ABC):
     """
-    Abstract base class for all target variables. Stores information about the type,
+    Abstract base class for all target variables. Stores information about the
     range, transformations, etc.
     """
 
-    # class variables
-    type: ClassVar[str]
-
-    # object variables
     name: str
 
     @abstractmethod
@@ -49,60 +50,43 @@ class Target(ABC, ABCBaseModel, extra=Extra.forbid):
         """
 
 
+@define
 class NumericalTarget(Target):
     """
     Class for numerical targets.
     """
 
-    type = "NUM"
+    # TODO: Introduce mode enum
+
+    # TODO: It's unclear if the type of `bounds` should be `Interval` (= type after
+    #   conversion) or `Union[None, tuple, Interval]` (= type before conversion).
+    #   Potentially related: Automatic field transformation
+    #       https://www.attrs.org/en/stable/extending.html
 
     mode: Literal["MIN", "MAX", "MATCH"]
-    bounds: Optional[Tuple[float, float]] = None
-    bounds_transform_func: Optional[str] = None
+    bounds: Union[None, tuple, Interval] = field(
+        default=None,
+        converter=lambda x: x if isinstance(x, Interval) else Interval.create(x),
+    )
+    bounds_transform_func: Optional[str] = field(default=None)
 
-    @validator("bounds", always=True)
-    def validate_bounds(cls, bounds, values):
-        """
-        Currently, either no bounds (= set to None) or completely finite bounds
-        (= set to a list of two finite floats) are supported.
-        """
-        # IMPROVE could also include half-way bounds, which however don't work for the
-        #  desirability approach
+    @bounds.validator
+    def validate_bounds(self, _, value: Interval):
+        # Currently, either no bounds or completely finite bounds are supported.
+        # IMPROVE: We could also include half-way bounds, which however don't work
+        #  for the desirability approach
+        if not (value.is_finite or not value.is_bounded):
+            raise ValueError("Bounds must either be finite or infinite on *both* ends.")
 
-        if bounds is None:
-            if values["mode"] == "MATCH":
-                raise StrictValidationError(
-                    f"Target '{values['name']}' is in 'MATCH' mode but no bounds were "
-                    f"provided. Bounds for 'MATCH' mode are mandatory."
-                )
-            return None
-
-        if (not isinstance(bounds, tuple)) or (len(bounds) != 2):
-            raise StrictValidationError(
-                f"Bounds were '{bounds}' but must be a 2-tuple."
+        if self.mode == "MATCH" and not value.is_finite:
+            raise ValueError(
+                f"Target '{self.name}' is in 'MATCH' mode, which requires "
+                f"finite bounds."
             )
 
-        if not all(np.isfinite(bounds)):
-            raise StrictValidationError(
-                f"Bounds were '{bounds}' but need to contain finite float numbers. "
-                f"If you want no bounds, set bounds to 'None'."
-            )
-
-        if bounds[1] <= bounds[0]:
-            raise StrictValidationError(
-                f"The upper bound must be greater than the lower bound. Encountered "
-                f"for bounds '{bounds}'."
-            )
-
-        return bounds
-
-    @validator("bounds_transform_func", always=True)
-    def validate_bounds_transform_func(cls, fun, values):
+    @bounds_transform_func.validator
+    def validate_bounds_transform_func(self, _, value):
         """Validates that the given transform is compatible with the specified mode."""
-
-        # Get validated values
-        name = values["name"]
-        mode = values["mode"]
 
         # TODO: potentially introduce an abstract base class for the transforms
         #   -> this would remove the necessity to maintain the following dict
@@ -113,25 +97,24 @@ class NumericalTarget(Target):
         }
 
         # Set a default transform
-        if (values["bounds"] is not None) and (fun is None):
-            fun = valid_transforms[mode][0]
+        if self.bounds.is_bounded and (value is None):
+            fun = valid_transforms[self.mode][0]
             log.warning(
                 "The bound transform function for target '%s' in mode '%s' has not "
                 "been specified. Setting the bound transform function to '%s'.",
-                name,
-                mode,
+                self.name,
+                self.mode,
                 fun,
             )
 
         # Assert that the given transform is valid for the specified target mode
-        elif (fun is not None) and (fun not in valid_transforms[mode]):
-            raise StrictValidationError(
-                f"You specified bounds for target '{name}', but your specified bound "
-                f"transform function '{fun}' is not compatible with the target mode "
-                f"'{mode}'. It must be one of {valid_transforms[mode]}."
+        elif (value is not None) and (value not in valid_transforms[self.mode]):
+            raise ValueError(
+                f"You specified bounds for target '{self.name}', but your "
+                f"specified bound transform function '{value}' is not compatible "
+                f"with the target mode {self.mode}'. It must be one "
+                f"of {valid_transforms[self.mode]}."
             )
-
-        return fun
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         """See base class."""
@@ -167,7 +150,7 @@ class NumericalTarget(Target):
         return transformed
 
 
-class Objective(BaseModel, extra=Extra.forbid):
+class Objective(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
     """Class for managing optimization objectives."""
 
     mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
