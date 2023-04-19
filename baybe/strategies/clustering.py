@@ -36,7 +36,6 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     derived classes.
     """
 
-    type = "ABSTRACT_SKLEARN_CLUSTERING"
     compatibility = SearchSpaceType.DISCRETE
 
     # Properties that need to be defined by derived classes
@@ -119,7 +118,6 @@ if KMedoids:
     class PAMClusteringRecommender(SKLearnClusteringRecommender):
         """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-        type = "CLUSTERING_PAM"
         model_class = KMedoids
         model_cluster_num_parameter_name = "n_clusters"
 
@@ -141,7 +139,6 @@ if KMedoids:
 class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means initial clustering strategy."""
 
-    type = "CLUSTERING_KMEANS"
     model_class = KMeans
     model_cluster_num_parameter_name = "n_clusters"
 
@@ -177,7 +174,6 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) initial clustering strategy."""
 
-    type = "CLUSTERING_GMM"
     model_class = GaussianMixture
     model_cluster_num_parameter_name = "n_components"
 

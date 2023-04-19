@@ -7,10 +7,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import Callable, Dict, Literal, Optional, Type
+from typing import Callable, Literal, Optional
 
 import pandas as pd
-
 from botorch.acquisition import (
     ExpectedImprovement,
     PosteriorMean,
@@ -24,7 +23,7 @@ from botorch.acquisition import (
 from baybe.acquisition import debotorchize
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogate import SurrogateModel
-from baybe.utils import isabstract, NotEnoughPointsLeftError, to_tensor
+from baybe.utils import NotEnoughPointsLeftError, to_tensor
 
 
 # TODO: See if the there is a more elegant way to share this functionality
@@ -70,7 +69,6 @@ def select_candidates_and_recommend(
 
 class Recommender(ABC):
 
-    SUBCLASSES: Dict[str, Type[Recommender]] = {}
     compatibility: SearchSpaceType
 
     @abstractmethod
@@ -84,13 +82,6 @@ class Recommender(ABC):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         pass
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
 
 class NonPredictiveRecommender(Recommender, ABC):
