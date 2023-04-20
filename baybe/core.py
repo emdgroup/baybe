@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring
+
 """
 Core functionality of BayBE. Main point of interaction via Python.
 """
@@ -68,6 +70,13 @@ class BayBE:
         if len(self.measurements_exp) < 1:
             return pd.DataFrame()
         return self.objective.transform(self.measurements_exp)
+
+    def to_dict(self):
+        return cattrs.unstructure(self)
+
+    @classmethod
+    def from_dict(cls, dictionary) -> "BayBE":
+        return cattrs.structure(dictionary, cls)
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
