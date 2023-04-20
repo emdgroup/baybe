@@ -39,7 +39,7 @@ dev = [
     "openpyxl>=3.0.9",
     "plotly>=5.10.0",
     "pre-commit>=2.19.0",
-    "pylint>=2.13.9",
+    "pylint>=2.17.2",
     "pytest>=7.2.0",
     "seaborn>=0.11.2",
     "streamlit>=1.10.0",
@@ -85,8 +85,6 @@ disable = [
 	"too-many-instance-attributes",  # BayBE class has quite a few members
 	"too-many-branches",  # can maybe be optimized later
 	"too-few-public-methods",  # this happens e.g. in pydantic BaseModel classes
-	"no-self-use",  # should be replaced with a more specific fix for pydantic validators
-	# -> https://github.com/PyCQA/pylint/issues/6900
 	"no-self-argument",  # should be replaced with a more specific fix for pydantic validators
 	# -> https://github.com/PyCQA/pylint/issues/6900
 	"broad-except", # catching base exception is common for RDKit mol validation etc

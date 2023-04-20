@@ -251,7 +251,7 @@ def _simulate_experiment(
         elif target.mode == "MATCH":
             match_val = np.mean(target.bounds)
             agg_fun = partial(closest_element, target=match_val)
-            cum_fun = lambda x: np.array(  # noqa: E731
+            cum_fun = lambda x: np.array(  # noqa: E731, pylint: disable=C3001
                 np.frompyfunc(
                     partial(closer_element, target=match_val),  # pylint: disable=W0640
                     2,
