@@ -1,10 +1,25 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring
 
+import sys
 from functools import singledispatchmethod
 
 import numpy as np
 import torch
 from attrs import define, field
+from packaging import version
+
+# TODO: Remove when upgrading python version
+if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
+    # Monkeypatching necessary due to functools bug fixed in 3.9.8
+    #   https://stackoverflow.com/questions/62696796/singledispatchmethod-and-
+    #       class-method-decorators-in-python-3-8
+    #   https://bugs.python.org/issue39679
+    def _register(self, cls, method=None):
+        if hasattr(cls, "__func__"):
+            setattr(cls, "__annotations__", cls.__func__.__annotations__)
+        return self.dispatcher.register(cls, func=method)
+
+    singledispatchmethod.register = _register
 
 
 class InfiniteIntervalError(Exception):
