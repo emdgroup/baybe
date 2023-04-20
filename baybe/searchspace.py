@@ -51,12 +51,12 @@ class SubspaceDiscrete:
     parameters: List[DiscreteParameter]
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
-    metadata: pd.DataFrame = field(init=False, eq=eq_dataframe())
+    metadata: pd.DataFrame = field(eq=eq_dataframe())
     empty_encoding: bool = False
 
-    def __attrs_post_init__(self):
-        # Create a dataframe storing the experiment metadata
-        self.metadata = pd.DataFrame(
+    @metadata.default
+    def default_metadata(self) -> pd.DataFrame:
+        return pd.DataFrame(
             {
                 "was_recommended": False,
                 "was_measured": False,
@@ -65,6 +65,7 @@ class SubspaceDiscrete:
             index=self.exp_rep.index,
         )
 
+    def __attrs_post_init__(self):
         # Create a dataframe containing the computational parameter representation
         # (ignoring all columns that do not carry any covariate information).
         # TODO: Should we always drop single value columns without informing the user?
@@ -600,7 +601,6 @@ class SearchSpace:
 
 def structure_hook(dict_, type_):
     dict_.pop("comp_rep")
-    dict_.pop("metadata")
     return cattrs.structure_attrs_fromdict(dict_, type_)
 
 
