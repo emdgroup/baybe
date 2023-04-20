@@ -1,7 +1,8 @@
 """
 Core functionality of BayBE. Main point of interaction via Python.
 """
-from __future__ import annotations
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
 import logging
 from typing import List
@@ -9,14 +10,13 @@ from typing import List
 import cattrs
 import numpy as np
 import pandas as pd
-from pydantic import Field, parse_obj_as
+from attrs import define, field
 
-from baybe.constraints import Constraint
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
 from baybe.targets import Objective, Target
-from baybe.utils import BaseModel
+from baybe.utils import eq_dataframe
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,8 @@ cattrs.register_unstructure_hook(pd.DataFrame, lambda x: x.to_json())
 cattrs.register_structure_hook(pd.DataFrame, lambda d, _: pd.read_json(d))
 
 
-class BayBE(BaseModel):
+@define
+class BayBE:
     """Main class for interaction with BayBE."""
 
     # DOE specifications
@@ -34,7 +35,7 @@ class BayBE(BaseModel):
     strategy: Strategy
 
     # Data
-    measurements_exp: pd.DataFrame = Field(default_factory=pd.DataFrame)
+    measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
     numerical_measurements_must_be_within_tolerance: bool = True
 
     # Metadata
@@ -42,7 +43,7 @@ class BayBE(BaseModel):
     fits_done: int = 0
 
     # TODO: make private
-    cached_recommendation: pd.DataFrame = Field(default_factory=pd.DataFrame)
+    cached_recommendation: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -67,45 +68,6 @@ class BayBE(BaseModel):
         if len(self.measurements_exp) < 1:
             return pd.DataFrame()
         return self.objective.transform(self.measurements_exp)
-
-    @classmethod
-    def from_dict(cls, config: dict) -> BayBE:
-        """Creates a BayBE object from a config dictionary."""
-        # TODO: This is only a temporary workaround that allows all current tests
-        #   to pass without having to replace their config dicts. Will be removed
-        #   once all config dicts have been ditched.
-
-        # Move the boolean flags to the strategy dict
-        if "strategy" not in config:
-            config["strategy"] = {}
-        flags = {
-            k: config.pop(k)
-            for k in [
-                "allow_repeated_recommendations",
-                "allow_recommending_already_measured",
-            ]
-            if k in config
-        }
-        for key, val in flags.items():
-            config["strategy"][key] = val
-
-        # Drop removed keys
-        for key in ["random_seed", "project_name"]:
-            config.pop(key, None)
-
-        # Pre-parse parameters and constraints to avoid having to hook into pydantic's
-        # parsing process to call Searchspace.create instead of the default constructor
-        parameters = parse_obj_as(List[Parameter], config["parameters"])
-        if "constraints" in config:
-            constraints = parse_obj_as(List[Constraint], config.pop("constraints"))
-        else:
-            constraints = None
-        config["searchspace"] = SearchSpace.create(
-            parameters=parameters,
-            constraints=constraints,
-        )
-
-        return parse_obj_as(BayBE, config)
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
