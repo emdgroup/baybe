@@ -43,10 +43,10 @@ def gaussian_mixture_model(
 def plot_point_selection(points, selection, title):
     """Visualizes a point selection and the corresponding selection order."""
     fig = go.Figure(data=go.Scatter(x=points[:, 0], y=points[:, 1], mode="markers"))
-    for step, _ in enumerate(selection):
+    for step, sel in enumerate(selection):
         fig.add_annotation(
-            x=points[selection[step], 0],
-            y=points[selection[step], 1],
+            x=points[sel, 0],
+            y=points[sel, 1],
             text=str(step),
             arrowcolor="#8b0000",
         )
@@ -72,7 +72,7 @@ data_distributions = {
 
 # collect all available strategies
 selection_strategies = {
-    cls.type: cls
+    cls.__name__: cls
     for cls in subclasses_recursive(NonPredictiveRecommender)
     if not isabstract(cls)
 }

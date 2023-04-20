@@ -13,7 +13,12 @@ from baybe.strategies.recommender import (
     Recommender,
 )
 from baybe.surrogate import SurrogateModel
-from baybe.utils import add_fake_results, add_parameter_noise, subclasses_recursive
+from baybe.utils import (
+    add_fake_results,
+    add_parameter_noise,
+    isabstract,
+    subclasses_recursive,
+)
 
 ########################################################################################
 # Settings of the individual components to be tested
@@ -35,14 +40,16 @@ valid_initial_recommenders = [
 ]
 valid_discrete_recommenders = [
     cls()
-    for cls in Recommender.SUBCLASSES.values()
-    if cls.compatibility
+    for cls in subclasses_recursive(Recommender)
+    if not isabstract(cls)
+    and cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 valid_continuous_recommenders = [
     cls()
-    for cls in Recommender.SUBCLASSES.values()
-    if cls.compatibility
+    for cls in subclasses_recursive(Recommender)
+    if not isabstract(cls)
+    and cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 test_targets = [
