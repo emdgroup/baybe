@@ -1,9 +1,12 @@
+# pylint: disable=missing-function-docstring
+
 """
 Strategies for Design of Experiments (DOE).
 """
 
 from typing import Optional
 
+import cattrs
 import pandas as pd
 from attrs import define, Factory
 
@@ -58,3 +61,10 @@ class Strategy:
         )
 
         return rec
+
+    def to_dict(self):
+        return cattrs.unstructure(self)
+
+    @classmethod
+    def from_dict(cls, dictionary) -> "Strategy":
+        return cattrs.structure(dictionary, cls)
