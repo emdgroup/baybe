@@ -6,7 +6,6 @@ Strategies for Design of Experiments (DOE).
 
 from typing import Optional
 
-import cattrs
 import pandas as pd
 from attrs import define, Factory
 
@@ -14,10 +13,11 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import GreedyRecommender
 from baybe.strategies.recommender import Recommender
 from baybe.strategies.sampling import RandomRecommender
+from baybe.utils.serialization import SerialMixin
 
 
 @define
-class Strategy:
+class Strategy(SerialMixin):
     """Abstract base class for all DOE strategies."""
 
     initial_recommender: Recommender = Factory(RandomRecommender)
@@ -61,10 +61,3 @@ class Strategy:
         )
 
         return rec
-
-    def to_dict(self):
-        return cattrs.unstructure(self)
-
-    @classmethod
-    def from_dict(cls, dictionary) -> "Strategy":
-        return cattrs.structure(dictionary, cls)

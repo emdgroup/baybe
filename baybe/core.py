@@ -19,6 +19,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import eq_dataframe
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ cattrs.register_structure_hook(pd.DataFrame, lambda d, _: pd.read_json(d))
 
 
 @define
-class BayBE:
+class BayBE(SerialMixin):
     """Main class for interaction with BayBE."""
 
     # DOE specifications
@@ -72,13 +73,6 @@ class BayBE:
         if len(self.measurements_exp) < 1:
             return pd.DataFrame()
         return self.objective.transform(self.measurements_exp)
-
-    def to_dict(self):
-        return cattrs.unstructure(self)
-
-    @classmethod
-    def from_dict(cls, dictionary) -> "BayBE":
-        return cattrs.structure(dictionary, cls)
 
     def add_results(self, data: pd.DataFrame) -> None:
         """

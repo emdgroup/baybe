@@ -40,6 +40,7 @@ from .utils import (
     smiles_to_rdkit_features,
     unstructure_base,
 )
+from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def convert_bounds(
 
 
 @define
-class Parameter(ABC):
+class Parameter(ABC, SerialMixin):
     """
     Abstract base class for all parameters. Stores information about the
     type, range, constraints, etc. and handles in-range checks, transformations etc.
@@ -92,13 +93,6 @@ class Parameter(ABC):
         """
         Tells whether an item is within the parameter range.
         """
-
-    def to_dict(self):
-        return cattrs.unstructure(self)
-
-    @classmethod
-    def from_dict(cls, dictionary) -> "Parameter":
-        return cattrs.structure(dictionary, cls)
 
 
 class DiscreteParameter(Parameter, ABC):

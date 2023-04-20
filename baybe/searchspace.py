@@ -26,6 +26,7 @@ from .parameters import (
     parameter_cartesian_prod_to_df,
 )
 from .utils import df_drop_single_value_columns, eq_dataframe
+from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
@@ -469,7 +470,7 @@ class SubspaceContinuous:
 
 
 @define
-class SearchSpace:
+class SearchSpace(SerialMixin):
     """
     Class for managing the overall search space, which might be purely discrete, purely
     continuous, or hybrid.
@@ -558,13 +559,6 @@ class SearchSpace:
         return torch.hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
-
-    def to_dict(self):
-        return cattrs.unstructure(self)
-
-    @classmethod
-    def from_dict(cls, dictionary) -> "SearchSpace":
-        return cattrs.structure(dictionary, cls)
 
     def transform(
         self,
