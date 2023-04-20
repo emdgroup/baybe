@@ -172,6 +172,10 @@ class NumericalTarget(Target):
 class Objective:
     """Class for managing optimization objectives."""
 
+    # TODO: The class currently directly depends on `NumericalTarget`. Once the this
+    #   direct dependence is replaced with a dependence on `Target`, the type
+    #   annotations should be changed.
+
     mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
     targets: List[NumericalTarget] = field(validator=min_len(1))
     weights: List[float] = field(converter=convert_weights)

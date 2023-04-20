@@ -17,7 +17,7 @@ from attrs import define, field
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
-from baybe.targets import Objective, Target
+from baybe.targets import NumericalTarget, Objective
 from baybe.utils import eq_dataframe
 
 log = logging.getLogger(__name__)
@@ -53,8 +53,10 @@ class BayBE:
         return self.searchspace.parameters
 
     @property
-    def targets(self) -> List[Target]:
+    def targets(self) -> List[NumericalTarget]:
         """The targets of the underlying objective."""
+        # TODO: Currently, the `Objective` class is directly coupled to
+        #  `NumericalTarget`, hence the return type.
         return self.objective.targets
 
     @property
