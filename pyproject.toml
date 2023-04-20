@@ -11,6 +11,7 @@ requires-python =">=3.8.6"
 dependencies = [
     "attrs>=22.2.0",
     "botorch>=0.8.1",
+    "cattrs>=22.2.0",
     "fsspec>=2022.10.0",
     "funcy>=1.17",
     "gpytorch>=1.9.1",

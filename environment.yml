@@ -9,6 +9,7 @@ dependencies:
 - attrs==22.2.0
 - black==22.3.0  # see FORMATTER NOTE
 - botorch==0.8.1
+- cattrs==22.2.0
 - flake8==4.0.1
 - fsspec==2022.10.0
 - funcy==1.17
