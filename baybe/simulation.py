@@ -22,7 +22,6 @@ from baybe.utils import (
     name_to_smiles,
 )
 
-from .telemetry.setup_tracer import tracer
 
 if TYPE_CHECKING:
     from .targets import NumericalTarget
@@ -158,48 +157,47 @@ def simulate_from_configs(
 
         # Run all experiment repetitions
         for k_mc, data in enumerate(pbar):
-            with tracer.start_as_current_span("run_experiment_repetition", attributes={"simulation.k_mc": k_mc, "simulation.variant_name": variant_name}):
-                # Show the simulation progress
-                pbar.set_description(variant_name)
+            # Show the simulation progress
+            pbar.set_description(variant_name)
 
-                # Create a BayBE object with a new random seed
-                # IMPROVE: Potential speedup by copying the BayBE object + overwriting seed.
-                #   Requires a clean way to change the seed of the object without accessing
-                #   its members directly.
-                config_dict["random_seed"] = 1337 + k_mc
-                config = BayBEConfig(**config_dict)
-                baybe_obj = BayBE(config)
+            # Create a BayBE object with a new random seed
+            # IMPROVE: Potential speedup by copying the BayBE object + overwriting seed.
+            #   Requires a clean way to change the seed of the object without accessing
+            #   its members directly.
+            config_dict["random_seed"] = 1337 + k_mc
+            config = BayBEConfig(**config_dict)
+            baybe_obj = BayBE(config)
 
-                # Add the initial data
-                if initial_data is not None:
-                    baybe_obj.add_results(data)
+            # Add the initial data
+            if initial_data is not None:
+                baybe_obj.add_results(data)
 
-                # For impute_mode 'ignore', do not recommend space entries that are not
-                # available in the lookup
-                # IMPROVE: Avoid direct manipulation of the searchspace members
-                if impute_mode == "ignore":
-                    searchspace = baybe_obj.searchspace.discrete.exp_rep
-                    missing_inds = searchspace.index[
-                        searchspace.merge(lookup, how="left", indicator=True)["_merge"]
-                        == "left_only"
-                    ]
-                    baybe_obj.searchspace.discrete.metadata.loc[
-                        missing_inds, "dont_recommend"
-                    ] = True
+            # For impute_mode 'ignore', do not recommend space entries that are not
+            # available in the lookup
+            # IMPROVE: Avoid direct manipulation of the searchspace members
+            if impute_mode == "ignore":
+                searchspace = baybe_obj.searchspace.discrete.exp_rep
+                missing_inds = searchspace.index[
+                    searchspace.merge(lookup, how="left", indicator=True)["_merge"]
+                    == "left_only"
+                ]
+                baybe_obj.searchspace.discrete.metadata.loc[
+                    missing_inds, "dont_recommend"
+                ] = True
 
-                # Run all experimental iterations
-                results_mc = _simulate_experiment(
-                    baybe_obj,
-                    batch_quantity,
-                    n_exp_iterations,
-                    lookup,
-                    impute_mode,
-                    noise_percent,
-                )
+            # Run all experimental iterations
+            results_mc = _simulate_experiment(
+                baybe_obj,
+                batch_quantity,
+                n_exp_iterations,
+                lookup,
+                impute_mode,
+                noise_percent,
+            )
 
-                # Add the random seed information and append the results
-                results_mc.insert(0, "Random_Seed", config_dict["random_seed"])
-                results_var = pd.concat([results_var, results_mc])
+            # Add the random seed information and append the results
+            results_mc.insert(0, "Random_Seed", config_dict["random_seed"])
+            results_var = pd.concat([results_var, results_mc])
 
         # Add the variant information and append the results
         results_var.insert(0, "Variant", variant_name)
@@ -207,7 +205,7 @@ def simulate_from_configs(
 
     return results.reset_index(drop=True)
 
-@tracer.start_as_current_span("_simulate_experiment")
+
 def _simulate_experiment(
     baybe_obj: BayBE,
     batch_quantity: int,
@@ -226,37 +224,36 @@ def _simulate_experiment(
 
     # Run the DOE loop
     for k_iteration in range(n_exp_iterations):
-        with tracer.start_as_current_span("run_doe_iteration", attributes={"simulation.k_iteration": k_iteration}):
-            # Get the next recommendations and corresponding measurements
-            measured = baybe_obj.recommend(batch_quantity=batch_quantity)
-            _look_up_target_values(measured, baybe_obj, lookup, impute_mode)
+        # Get the next recommendations and corresponding measurements
+        measured = baybe_obj.recommend(batch_quantity=batch_quantity)
+        _look_up_target_values(measured, baybe_obj, lookup, impute_mode)
 
-            # Create the summary for the current iteration and store it
-            results_iter = pd.DataFrame(
-                [  # <-- this ensures that the internal lists to not get expanded
-                    {
-                        "Iteration": k_iteration,
-                        "Num_Experiments": (k_iteration + 1) * batch_quantity,
-                        **{
-                            f"{target.name}_Measurements": measured[target.name].to_list()
-                            for target in baybe_obj.targets
-                        },
-                    }
-                ]
+        # Create the summary for the current iteration and store it
+        results_iter = pd.DataFrame(
+            [  # <-- this ensures that the internal lists to not get expanded
+                {
+                    "Iteration": k_iteration,
+                    "Num_Experiments": (k_iteration + 1) * batch_quantity,
+                    **{
+                        f"{target.name}_Measurements": measured[target.name].to_list()
+                        for target in baybe_obj.targets
+                    },
+                }
+            ]
+        )
+        results = pd.concat([results, results_iter])
+
+        # Apply optional noise to the parameter measurements
+        if noise_percent:
+            add_parameter_noise(
+                measured,
+                baybe_obj,
+                noise_type="relative_percent",
+                noise_level=noise_percent,
             )
-            results = pd.concat([results, results_iter])
 
-            # Apply optional noise to the parameter measurements
-            if noise_percent:
-                add_parameter_noise(
-                    measured,
-                    baybe_obj,
-                    noise_type="relative_percent",
-                    noise_level=noise_percent,
-                )
-
-            # Update the BayBE object
-            baybe_obj.add_results(measured)
+        # Update the BayBE object
+        baybe_obj.add_results(measured)
 
     # Add the instantaneous and running best values for all targets
     for target in baybe_obj.targets:
@@ -288,7 +285,7 @@ def _simulate_experiment(
 
     return results.reset_index(drop=True)
 
-# @tracer.start_as_current_span("_look_up_target_values")
+
 def _look_up_target_values(
     queries: pd.DataFrame,
     baybe_obj: BayBE,
@@ -377,7 +374,7 @@ def _look_up_target_values(
         # Add the lookup values
         queries.loc[:, target_names] = np.asarray(all_match_vals)
 
-# @tracer.start_as_current_span("_impute_lookup")
+
 def _impute_lookup(
     row: pd.Series,
     lookup: pd.DataFrame,
@@ -461,7 +458,7 @@ def _impute_lookup(
 
     return match_vals
 
-# @tracer.start_as_current_span("simulate_from_data")
+
 def simulate_from_data(
     config_base: dict,
     n_exp_iterations: int,
