@@ -12,23 +12,19 @@ from opentelemetry.sdk._metrics import MeterProvider
 from opentelemetry.sdk._metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
-resource = Resource.create({"service.name": "baybe.sdk", "service.namespace": "baybe"})
-reader = PeriodicExportingMetricReader(
+_resource = Resource.create({"service.name": "baybe.sdk", "service.namespace": "baybe"})
+_reader = PeriodicExportingMetricReader(
     OTLPMetricExporter(
         "***REMOVED***"
         ".elb.eu-central-1.amazonaws.com:4317",
         True,
     )
 )
-provider = MeterProvider(resource=resource, metric_readers=[reader])
-set_meter_provider(provider)
+_provider = MeterProvider(resource=_resource, metric_readers=[_reader])
+set_meter_provider(_provider)
 
 # Setup Global Metric Provider
-meter = get_meter("aws-otel", "1.0")
-# Setup Metric Components
-recommendation_counter = meter.create_counter(
-    "recommendation.counter", description="Counts the number of recommendations jobs"
-)
+_meter = get_meter("aws-otel", "1.0")
 
 
 # Generate a unique hash value for the current user based on the host name and
@@ -36,10 +32,10 @@ recommendation_counter = meter.create_counter(
 CALLER_ID = hashlib.sha256(
     (socket.gethostname() + getpass.getuser().upper()).encode()
 ).hexdigest()
-# alternative:
+# alternatively take the mac address: hex(uuid.getnode())
 
 # Flag that tells whether telemetry is active or disabled through environment variables
 # This is decided at the time the module is loaded
 ENABLED = "BAYBE_TELEMETRY_ENABLED" in os.environ and os.environ[
-    "TELEMETRY_ENABLED"
+    "BAYBE_TELEMETRY_ENABLED"
 ].lower() in ["false", "no", "off", "0"]
