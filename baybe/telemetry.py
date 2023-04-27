@@ -27,15 +27,33 @@ set_meter_provider(_provider)
 _meter = get_meter("aws-otel", "1.0")
 
 
-# Generate a unique hash value for the current user based on the host name and
-# uppercase username, e.g.
-CALLER_ID = hashlib.sha256(
-    (socket.gethostname() + getpass.getuser().upper()).encode()
-).hexdigest()
-# alternatively take the mac address: hex(uuid.getnode())
+def get_user_hash() -> str:
+    """
+    Generate a unique hash value for the current user based on the host name and
+    uppercase username, e.g. hash of 'LTD1234M123132'.
 
-# Flag that tells whether telemetry is active or disabled through environment variables
-# This is decided at the time the module is loaded
-ENABLED = "BAYBE_TELEMETRY_ENABLED" in os.environ and os.environ[
-    "BAYBE_TELEMETRY_ENABLED"
-].lower() in ["false", "no", "off", "0"]
+    Returns
+    -------
+        str
+    """
+    return hashlib.sha256(
+        (socket.gethostname() + getpass.getuser().upper()).encode()
+    ).hexdigest()
+    # Alternatively one could take the MAC address like hex(uuid.getnode())
+
+
+def is_enabled() -> bool:
+    """
+    Tells whether telemetry currently is enabled. Telemetry can be disabled by setting
+    the respective environment variable.
+
+    Returns
+    -------
+        bool
+    """
+    return os.environ.get("BAYBE_TELEMETRY_ENABLED", "").lower() in [
+        "false",
+        "no",
+        "off",
+        "0",
+    ]
