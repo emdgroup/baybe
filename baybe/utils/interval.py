@@ -35,7 +35,7 @@ class Interval:
 
     @upper.validator
     def validate_order(self, _, value):
-        if value < self.lower:
+        if value <= self.lower:
             raise ValueError(
                 f"The upper interval bound (provided value: {value}) must be larger "
                 f"than the lower bound (provided value: {self.lower})."
