@@ -10,7 +10,7 @@ import pandas as pd
 from attrs import define, Factory
 
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import GreedyRecommender
+from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.recommender import Recommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.utils.serialization import SerialMixin
@@ -21,7 +21,7 @@ class Strategy(SerialMixin):
     """Abstract base class for all DOE strategies."""
 
     initial_recommender: Recommender = Factory(RandomRecommender)
-    recommender: Recommender = Factory(GreedyRecommender)
+    recommender: Recommender = Factory(SequentialGreedyRecommender)
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
 

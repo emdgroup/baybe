@@ -13,7 +13,7 @@ from baybe.strategies.recommender import BayesianRecommender
 from baybe.utils import NoMCAcquisitionFunctionError, to_tensor
 
 
-class GreedyRecommender(BayesianRecommender):
+class SequentialGreedyRecommender(BayesianRecommender):
 
     compatibility = SearchSpaceType.EITHER
 
