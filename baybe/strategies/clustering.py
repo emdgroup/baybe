@@ -40,7 +40,12 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     compatibility = SearchSpaceType.DISCRETE
 
     # Class variables that need to be defined by derived classes
-    # TODO: "Type" should not appear in ClassVar
+    # TODO: "Type" should not appear in ClassVar. Both PyCharm and mypy complain, see
+    #   also note in the mypy docs:
+    #       https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
+    #   Figure out what is the right approach here. However, the issue might be
+    #   ultimately related to an overly restrictive PEP:
+    #       https://github.com/python/mypy/issues/5144
     model_class: ClassVar[Type[SklearnModel]]
     model_cluster_num_parameter_name: ClassVar[str]
 
