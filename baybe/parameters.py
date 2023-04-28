@@ -45,8 +45,18 @@ from .utils.serialization import SerialMixin
 log = logging.getLogger(__name__)
 
 # TODO[12356]: There should be a better way than registering with the global converter.
-# TODO: The union needs to be properly resolved.
+# TODO: Think about what is the best approach to handle field unions:
+#   1)  Adding explicit hooks like the ones below (probably registered with a custom
+#       converter, though)
+#   2)  Adding a converter to the field that resolves the types and ensures that the
+#       object always carries a specific type, removing the need for unions in the
+#       first place.
+#   3)  Waiting for the upcoming "attrs built-in approach". Quote from doc:
+#       "In the future, cattrs will gain additional tools to make union handling even
+#       easier and automate generating these hooks."
+#       https://catt.rs/en/stable/unions.html
 cattrs.register_structure_hook(Union[int, float], lambda x, _: float(x))
+cattrs.register_structure_hook(Union[bool, float], lambda x, _: x)
 
 # TODO: Introduce encoding enums
 # TODO: Use Interval class
