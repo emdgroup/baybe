@@ -69,9 +69,12 @@ def validate_decorrelation(obj, attribute, value):
         lt(1.0)(obj, attribute, value)
 
 
-def validate_unique_values(obj, attribute, value) -> None:
+def validate_unique_values(obj, _, value) -> None:
     if len(set(value)) != len(value):
-        raise ValueError(f"Value {obj} and {attribute}")
+        raise ValueError(
+            f"Cannot assign the following values containing duplicates to "
+            f"parameter {obj.name}: {value}."
+        )
 
 
 def convert_bounds(
