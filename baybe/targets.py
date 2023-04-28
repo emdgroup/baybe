@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ from attrs.validators import min_len
 from .utils import geom_mean
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
 
-from .utils.interval import Interval
+from .utils.interval import convert_bounds, Interval
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -34,12 +34,6 @@ VALID_TRANSFORMS = {
     "MIN": ["LINEAR"],
     "MATCH": ["TRIANGULAR", "BELL"],
 }
-
-
-def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
-    if isinstance(bounds, Interval):
-        return bounds
-    return Interval.create(bounds)
 
 
 def convert_weights(weights: List[float]) -> List[float]:

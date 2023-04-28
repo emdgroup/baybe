@@ -358,7 +358,7 @@ class SubspaceContinuous:
         """
         if not self.parameters:
             return torch.empty(2, 0)
-        return torch.tensor([p.bounds for p in self.parameters]).T
+        return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
 
     def transform(
         self,

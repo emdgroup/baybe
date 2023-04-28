@@ -2,6 +2,7 @@
 
 import sys
 from functools import singledispatchmethod
+from typing import Union
 
 import numpy as np
 import torch
@@ -80,3 +81,12 @@ class Interval:
 
     def to_tensor(self):
         return torch.tensor([self.lower, self.upper])
+
+    def contains(self, number: float) -> bool:
+        return self.lower <= number <= self.upper
+
+
+def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
+    if isinstance(bounds, Interval):
+        return bounds
+    return Interval.create(bounds)

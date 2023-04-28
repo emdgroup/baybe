@@ -19,7 +19,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -40,6 +39,7 @@ from .utils import (
     smiles_to_rdkit_features,
     unstructure_base,
 )
+from .utils.interval import convert_bounds, Interval
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -59,7 +59,6 @@ cattrs.register_structure_hook(Union[int, float], lambda x, _: float(x))
 cattrs.register_structure_hook(Union[bool, float], lambda x, _: x)
 
 # TODO: Introduce encoding enums
-# TODO: Use Interval class
 
 
 def validate_decorrelation(obj, attribute, value):
@@ -75,16 +74,6 @@ def validate_unique_values(obj, _, value) -> None:
             f"Cannot assign the following values containing duplicates to "
             f"parameter {obj.name}: {value}."
         )
-
-
-def convert_bounds(
-    bounds: Tuple[Union[None, int, float], Union[None, int, float]]
-) -> Tuple[float, float]:
-    out = (
-        -np.inf if bounds[0] is None else float(bounds[0]),
-        np.inf if bounds[1] is None else float(bounds[1]),
-    )
-    return out
 
 
 @define
@@ -269,27 +258,14 @@ class NumericContinuous(Parameter):
     is_discrete = False
 
     # object variables
-    bounds: Tuple[float, float] = field(converter=convert_bounds)
-
-    @bounds.validator
-    def validate_bounds(self, attribute, bounds):  # pylint: disable=unused-argument
-        """
-        Validate boundaries
-        """
-        if bounds[1] <= bounds[0]:
-            raise ValueError(
-                "Bounds for continuous parameters must be unique and in ascending "
-                "order. They may contain -np.nan/np.nan or None in case there is no "
-                "bound."
-            )
-        return tuple(bounds)
+    bounds: Interval = field(default=None, converter=convert_bounds)
 
     def is_in_range(self, item: float) -> bool:
         """
         See base class.
         """
 
-        return self.bounds[0] <= item <= self.bounds[1]
+        return self.bounds.contains(item)
 
 
 @define
