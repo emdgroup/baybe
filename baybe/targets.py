@@ -18,9 +18,10 @@ import pandas as pd
 from attrs import define, field
 from attrs.validators import min_len
 
-from .interval import Interval
 from .utils import geom_mean
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
+
+from .utils.interval import Interval
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
