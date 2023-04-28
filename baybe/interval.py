@@ -34,7 +34,7 @@ class Interval:
     upper: float = field(converter=lambda x: float(x) if x is not None else np.inf)
 
     @upper.validator
-    def validate_upper(self, _, value):
+    def validate_order(self, _, value):
         if value < self.lower:
             raise ValueError(
                 f"The upper interval bound (provided value: {value}) must be larger "
