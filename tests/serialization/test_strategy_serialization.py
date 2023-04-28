@@ -1,11 +1,9 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
 
-import json
-
 from baybe.strategies.strategy import Strategy
 
 
-def test_objective_serialization(strategy):
-    string = json.dumps(strategy.to_dict())
-    strategy2 = Strategy.from_dict(json.loads(string))
+def test_strategy_serialization(strategy):
+    string = strategy.to_json()
+    strategy2 = Strategy.from_json(string)
     assert strategy == strategy2

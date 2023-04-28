@@ -1,9 +1,13 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
 
-from baybe.parameters import Categorical, Parameter
+import pytest
+
+from baybe.parameters import Parameter
 
 
-def test_categorical():
-    param = Categorical("cat", [1, 2, 3])
-    param2 = Parameter.from_dict(param.to_dict())
+@pytest.mark.parametrize("parameter_names", ["Categorical_1"])
+def test_parameter_serialization(parameters):
+    param = parameters[0]
+    string = param.to_json()
+    param2 = Parameter.from_json(string)
     assert param == param2
