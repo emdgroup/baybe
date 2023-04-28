@@ -172,7 +172,7 @@ class NumericalTarget(Target, SerialMixin):
 class Objective(SerialMixin):
     """Class for managing optimization objectives."""
 
-    # TODO: The class currently directly depends on `NumericalTarget`. Once the this
+    # TODO: The class currently directly depends on `NumericalTarget`. Once this
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
 
