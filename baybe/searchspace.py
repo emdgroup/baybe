@@ -49,10 +49,20 @@ class SubspaceDiscrete:
     parameter views.
     """
 
+    # NOTE:
+    # -----
+    # The metadata converter ensures the right column type, which otherwise gets lost
+    # during serialization in cases of empty discrete search spaces. In such cases,
+    # metadata will be an empty dataframe, which makes it impossible to correctly infer
+    # the boolean type. Hence, if no explicit conversion was done, subsequent equality
+    # checks would fail.
+
     parameters: List[DiscreteParameter]
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
-    metadata: pd.DataFrame = field(eq=eq_dataframe())
+    metadata: pd.DataFrame = field(
+        eq=eq_dataframe(), converter=lambda x: x.astype(bool)  # See note above
+    )
     empty_encoding: bool = False
 
     @metadata.default

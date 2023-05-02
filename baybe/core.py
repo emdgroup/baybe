@@ -24,8 +24,13 @@ from baybe.utils.serialization import SerialMixin
 log = logging.getLogger(__name__)
 
 # TODO[12356]: There should be a better way than registering with the global converter.
-cattrs.register_unstructure_hook(pd.DataFrame, lambda x: x.to_json())
-cattrs.register_structure_hook(pd.DataFrame, lambda d, _: pd.read_json(d))
+cattrs.register_unstructure_hook(
+    pd.DataFrame, lambda x: x.to_json(orient="split", double_precision=15)
+)
+cattrs.register_structure_hook(
+    pd.DataFrame,
+    lambda d, _: pd.read_json(d, orient="split", dtype=False, precise_float=True),
+)
 
 
 @define

@@ -748,7 +748,7 @@ class ABCBaseModel(BaseModel):
 
 
 def unstructure_base(base):
-    converter = cattrs.Converter()
+    converter = cattrs.global_converter
     return {
         "_type": base.__class__.__name__,
         **converter.unstructure_attrs_asdict(base),

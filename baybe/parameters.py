@@ -32,6 +32,7 @@ from scipy.spatial.distance import pdist
 from .utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
+    eq_dataframe,
     get_base_unstructure_hook,
     is_valid_smiles,
     smiles_to_fp_features,
@@ -45,7 +46,10 @@ from .utils.serialization import SerialMixin
 log = logging.getLogger(__name__)
 
 # TODO[12356]: There should be a better way than registering with the global converter.
-# TODO: Think about what is the best approach to handle field unions:
+# TODO: Think about what is the best approach to handle field unions. That is, when
+#  serializing e.g. a field of typy Union[int, float], it must be ensured that the
+#  deserialized type is correctly recovered, i.e. that a 1.0 is recovered as a float
+#  and not as an int. Potential options:
 #   1)  Adding explicit hooks like the ones below (probably registered with a custom
 #       converter, though)
 #   2)  Adding a converter to the field that resolves the types and ensures that the
@@ -365,13 +369,13 @@ class Custom(DiscreteParameter):
 
     # object variables
     encoding = "CUSTOM"
-    data: pd.DataFrame = field()
+    data: pd.DataFrame = field(eq=eq_dataframe())
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )
 
     @data.validator
-    def validate_custom_data(self, attribute, value):  # pylint: disable=unused-argument
+    def validate_custom_data(self, _, value):
         """
         Validates the dataframe with the custom representation.
         """
