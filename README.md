@@ -91,8 +91,32 @@ measurements = pd.DataFrame.from_records(
 baybe.add_results(measurements)
 ```
 
+## Telemetry
+By default baybe collects anonymous usage statistics. This does not log any details 
+about recorded measurements, targets or any project infos that enable reconstruction 
+of details. These metrics are vital to demonstrating the impact of the project and 
+should you find baybe useful we kindly ask you to leave it on. Should you wish to 
+disable telemetry you can set an environment variable
+```bash
+export BAYBE_TELEMETRY_ENABLED=false
+```
+or in python:
+```python
+import os
+os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
+```
+before calling any baybe functionality. Telemetry can be reenabled by removing this 
+variable:
+```bash
+unset BAYBE_TELEMETRY_ENABLED
+```
+or in python:
+```python
+os.environ.pop["BAYBE_TELEMETRY_ENABLED"]
+```
+
 ## License
-Copyright 2022 Merck KGaA, Darmstadt, Germany
+Copyright 2023 Merck KGaA, Darmstadt, Germany
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
