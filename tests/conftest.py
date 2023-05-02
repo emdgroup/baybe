@@ -28,7 +28,7 @@ from baybe.parameters import (
     SUBSTANCE_ENCODINGS,
 )
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import GreedyRecommender
+from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
@@ -475,7 +475,7 @@ def fixture_default_surrogate_model():
 @pytest.fixture(name="recommender")
 def fixture_recommender(surrogate_model_cls, acquisition_function_cls):
     """The default recommender to be used if not specified differently."""
-    return GreedyRecommender(
+    return SequentialGreedyRecommender(
         surrogate_model_cls=surrogate_model_cls,
         acquisition_function_cls=acquisition_function_cls,
     )

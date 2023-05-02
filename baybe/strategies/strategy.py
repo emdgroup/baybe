@@ -1,26 +1,27 @@
+# pylint: disable=missing-function-docstring
+
 """
 Strategies for Design of Experiments (DOE).
 """
 
-from __future__ import annotations
-
 from typing import Optional
 
 import pandas as pd
-from pydantic import Extra, Field
+from attrs import define, Factory
 
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import GreedyRecommender
+from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.recommender import Recommender
 from baybe.strategies.sampling import RandomRecommender
-from baybe.utils import BaseModel
+from baybe.utils.serialization import SerialMixin
 
 
-class Strategy(BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+@define
+class Strategy(SerialMixin):
     """Abstract base class for all DOE strategies."""
 
-    initial_recommender: Recommender = Field(default_factory=RandomRecommender)
-    recommender: Recommender = Field(default_factory=GreedyRecommender)
+    initial_recommender: Recommender = Factory(RandomRecommender)
+    recommender: Recommender = Factory(SequentialGreedyRecommender)
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
 

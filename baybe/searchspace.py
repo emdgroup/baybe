@@ -4,18 +4,19 @@
 """
 Functionality for managing search spaces.
 """
-from __future__ import annotations
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
 import logging
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import cast, List, Optional, Tuple
 
+import cattrs
 import numpy as np
 import pandas as pd
 import torch
-from pydantic import conlist
-
-from baybe.utils import BaseModel
+from attrs import define, field
+from attrs.validators import min_len
 
 from .constraints import _constraints_order, Constraint
 from .parameters import (
@@ -24,7 +25,8 @@ from .parameters import (
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .utils import df_drop_single_value_columns
+from .utils import df_drop_single_value_columns, eq_dataframe
+from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
@@ -37,7 +39,8 @@ class SearchSpaceType(Enum):
     HYBRID = "HYBRID"
 
 
-class SubspaceDiscrete(BaseModel):
+@define
+class SubspaceDiscrete:
     """
     Class for managing discrete search spaces.
 
@@ -47,11 +50,33 @@ class SubspaceDiscrete(BaseModel):
     """
 
     parameters: List[DiscreteParameter]
-    exp_rep: Optional[pd.DataFrame] = None
-    comp_rep: Optional[pd.DataFrame] = None
-    metadata: Optional[pd.DataFrame] = None
-    constraints: Optional[List[Constraint]] = None
+    exp_rep: pd.DataFrame = field(eq=eq_dataframe())
+    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
+    metadata: pd.DataFrame = field(eq=eq_dataframe())
     empty_encoding: bool = False
+
+    @metadata.default
+    def default_metadata(self) -> pd.DataFrame:
+        columns = ["was_recommended", "was_measured", "dont_recommend"]
+
+        # If the discrete search space is empty, explicitly return an empty dataframe
+        # instead of simply using a zero-length index. Otherwise, the boolean dtype
+        # would be lost during a serialization roundtrip as there would be no
+        # data available that allows to determine the type, causing subsequent
+        # equality checks to fail.
+        if self.empty:
+            return pd.DataFrame(columns=columns)
+
+        return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
+
+    def __attrs_post_init__(self):
+        # Create a dataframe containing the computational parameter representation
+        # (ignoring all columns that do not carry any covariate information).
+        # TODO[12758]: Should we always drop single value columns without informing the
+        #  user? Can have undesired/unexpected side-effects (see ***REMOVED*** project).
+        comp_rep = self.transform(self.exp_rep)
+        comp_rep = df_drop_single_value_columns(comp_rep)
+        self.comp_rep = comp_rep
 
     @classmethod
     def create(
@@ -59,7 +84,7 @@ class SubspaceDiscrete(BaseModel):
         parameters: List[DiscreteParameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-    ) -> SubspaceDiscrete:
+    ) -> "SubspaceDiscrete":
         """See `SearchSpace` class."""
         # Store the input
         if constraints is None:
@@ -79,34 +104,11 @@ class SubspaceDiscrete(BaseModel):
             exp_rep.drop(index=inds, inplace=True)
         exp_rep.reset_index(inplace=True, drop=True)
 
-        # Create a dataframe storing the experiment metadata
-        metadata = pd.DataFrame(
-            {
-                "was_recommended": False,
-                "was_measured": False,
-                "dont_recommend": False,
-            },
-            index=exp_rep.index,
-        )
-
-        subspace = SubspaceDiscrete(
+        return SubspaceDiscrete(
             parameters=parameters,
-            constraints=constraints,
-            empty_encoding=empty_encoding,
             exp_rep=exp_rep,
-            metadata=metadata,
+            empty_encoding=empty_encoding,
         )
-
-        # TODO: The comp_rep should be implemented using a proper post_init and should
-        #   not be visible in the constructor. This should be changed once migrated
-        #   to pydantic v2 or attrs.
-        # Create a dataframe containing the computational parameter representation
-        # (ignoring all columns that do not carry any covariate information).
-        comp_rep = subspace.transform(exp_rep)
-        comp_rep = df_drop_single_value_columns(comp_rep)
-        subspace.comp_rep = comp_rep
-
-        return subspace
 
     @property
     def empty(self):
@@ -131,23 +133,6 @@ class SubspaceDiscrete(BaseModel):
             ]
         )
         return torch.from_numpy(bounds)
-
-    def state_dict(self) -> dict:
-        """Creates a dictionary representing the object's internal state."""
-        state_dict = dict(
-            empty_encoding=self.empty_encoding,
-            exp_rep=self.exp_rep,
-            comp_rep=self.comp_rep,
-            metadata=self.metadata,
-        )
-        return state_dict
-
-    def load_state_dict(self, state_dict: dict) -> None:
-        """Restores a given object state."""
-        self.empty_encoding = state_dict["empty_encoding"]
-        self.exp_rep = state_dict["exp_rep"]
-        self.comp_rep = state_dict["comp_rep"]
-        self.metadata = state_dict["metadata"]
 
     def mark_as_measured(
         self,
@@ -247,8 +232,8 @@ class SubspaceDiscrete(BaseModel):
 
             # For numeric parameters, match the entry with the smallest deviation
             # TODO: allow alternative distance metrics
-            for param in num_cols:
-                abs_diff = (self.exp_rep[param] - row[param]).abs()
+            for col in num_cols:
+                abs_diff = (self.exp_rep[col] - row[col]).abs()
                 match &= abs_diff == abs_diff.min()
 
             # We expect exactly one match. If that's not the case, print a warning.
@@ -341,13 +326,16 @@ class SubspaceDiscrete(BaseModel):
         # If the computational representation has already been built (with potentially
         # removing some columns, e.g. due to decorrelation or dropping constant ones),
         # any subsequent transformation should yield the same columns.
-        if self.comp_rep is not None:
+        try:
             comp_rep = comp_rep[self.comp_rep.columns]
+        except AttributeError:
+            pass
 
         return comp_rep
 
 
-class SubspaceContinuous(BaseModel):
+@define
+class SubspaceContinuous:
     """
     Class for managing continuous search spaces.
     """
@@ -373,7 +361,7 @@ class SubspaceContinuous(BaseModel):
         """
         if not self.parameters:
             return torch.empty(2, 0)
-        return torch.tensor([p.bounds for p in self.parameters]).T
+        return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
 
     def transform(
         self,
@@ -484,7 +472,8 @@ class SubspaceContinuous(BaseModel):
         return pd.DataFrame(index=index).reset_index()
 
 
-class SearchSpace(BaseModel, arbitrary_types_allowed=True):
+@define
+class SearchSpace(SerialMixin):
     """
     Class for managing the overall search space, which might be purely discrete, purely
     continuous, or hybrid.
@@ -501,8 +490,7 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
     discrete: SubspaceDiscrete
     continuous: SubspaceContinuous
 
-    parameters: conlist(Parameter, min_items=1)
-    constraints: Optional[List[Constraint]] = None
+    parameters: List[Parameter] = field(validator=min_len(1))
     empty_encoding: bool = False
 
     @classmethod
@@ -511,7 +499,7 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-    ) -> SearchSpace:
+    ) -> "SearchSpace":
         """
         Parameters
         ----------
@@ -527,19 +515,22 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
             computational representation.
         """
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
-            parameters=[p for p in parameters if p.is_discrete],
+            parameters=[
+                cast(DiscreteParameter, p) for p in parameters if p.is_discrete
+            ],
             constraints=constraints,
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
-            parameters=[p for p in parameters if not p.is_discrete],
+            parameters=[
+                cast(NumericContinuous, p) for p in parameters if not p.is_discrete
+            ],
         )
 
         return SearchSpace(
             discrete=discrete,
             continuous=continuous,
             parameters=parameters,
-            constraints=constraints,
             empty_encoding=empty_encoding,
         )
 
@@ -572,19 +563,6 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
 
-    def state_dict(self) -> dict:
-        """Creates a dictionary representing the object's internal state."""
-        state_dict = dict(
-            empty_encoding=self.empty_encoding,
-            discrete=self.discrete.state_dict(),
-        )
-        return state_dict
-
-    def load_state_dict(self, state_dict: dict) -> None:
-        """Restores a given object state."""
-        self.empty_encoding = state_dict["empty_encoding"]
-        self.discrete.load_state_dict(state_dict["discrete"])
-
     def transform(
         self,
         data: pd.DataFrame,
@@ -612,3 +590,15 @@ class SearchSpace(BaseModel, arbitrary_types_allowed=True):
         comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
 
         return comp_rep
+
+
+# TODO: The following structuring hook is a workaround for field with init=False.
+#   https://github.com/python-attrs/cattrs/issues/40
+
+
+def structure_hook(dict_, type_):
+    dict_.pop("comp_rep")
+    return cattrs.structure_attrs_fromdict(dict_, type_)
+
+
+cattrs.register_structure_hook(SubspaceDiscrete, structure_hook)

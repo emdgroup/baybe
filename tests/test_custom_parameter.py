@@ -5,7 +5,7 @@ metadata. Target objective is minimize to test computational transformation.
 """
 
 import pytest
-from baybe.parameters import Parameter
+
 from baybe.utils import add_fake_results, add_parameter_noise
 
 
@@ -25,6 +25,3 @@ def test_run_iterations(baybe, n_iterations, batch_quantity):
         add_parameter_noise(rec, baybe, noise_level=0.1)
 
         baybe.add_results(rec)
-
-    # This test needs to clear the lru cache, otherwise it causes HashableDict to crash
-    Parameter._create.cache_clear()  # pylint: disable=protected-access

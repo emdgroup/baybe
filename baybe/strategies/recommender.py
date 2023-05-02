@@ -3,14 +3,14 @@
 
 """Base classes for all recommenders."""
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import Callable, Dict, Literal, Optional, Type
+from typing import Callable, ClassVar, Literal, Optional
 
+import cattrs
 import pandas as pd
 
+from attrs import define
 from botorch.acquisition import (
     ExpectedImprovement,
     PosteriorMean,
@@ -24,7 +24,12 @@ from botorch.acquisition import (
 from baybe.acquisition import debotorchize
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogate import SurrogateModel
-from baybe.utils import isabstract, NotEnoughPointsLeftError, to_tensor
+from baybe.utils import (
+    get_base_unstructure_hook,
+    NotEnoughPointsLeftError,
+    to_tensor,
+    unstructure_base,
+)
 
 
 # TODO: See if the there is a more elegant way to share this functionality
@@ -68,10 +73,10 @@ def select_candidates_and_recommend(
     return rec
 
 
+@define
 class Recommender(ABC):
 
-    SUBCLASSES: Dict[str, Type[Recommender]] = {}
-    compatibility: SearchSpaceType
+    compatibility: ClassVar[SearchSpaceType]
 
     @abstractmethod
     def recommend(
@@ -85,14 +90,8 @@ class Recommender(ABC):
     ) -> pd.DataFrame:
         pass
 
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
-
+@define
 class NonPredictiveRecommender(Recommender, ABC):
     def recommend(
         self,
@@ -131,16 +130,13 @@ class NonPredictiveRecommender(Recommender, ABC):
         raise NotImplementedError()
 
 
+@define
 class BayesianRecommender(Recommender, ABC):
-    def __init__(
-        self,
-        surrogate_model_cls: str = "GP",
-        acquisition_function_cls: Literal[
-            "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB"
-        ] = "qEI",
-    ):
-        self.surrogate_model_cls = surrogate_model_cls
-        self.acquisition_function_cls = acquisition_function_cls
+
+    surrogate_model_cls: str = "GP"
+    acquisition_function_cls: Literal[
+        "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB"
+    ] = "qEI"
 
     def get_acquisition_function_cls(
         self,
@@ -239,3 +235,8 @@ class BayesianRecommender(Recommender, ABC):
         batch_quantity: int,
     ):
         raise NotImplementedError()
+
+
+# Register (un-)structure hooks
+cattrs.register_unstructure_hook(Recommender, unstructure_base)
+cattrs.register_structure_hook(Recommender, get_base_unstructure_hook(Recommender))

@@ -1,15 +1,14 @@
+# pylint: disable=missing-function-docstring
+
 """
 Collection of small utilities.
 """
 from __future__ import annotations
 
-import binascii
-import pickle
 import random
 import ssl
 import urllib.request
 from abc import ABC
-
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
@@ -28,9 +27,12 @@ from typing import (
     Union,
 )
 
+import cattrs
 import numpy as np
 import pandas as pd
 import torch
+
+from attrs import cmp_using
 from joblib import Memory
 from mordred import Calculator, descriptors
 from pydantic import BaseModel as PydanticBaseModel
@@ -238,8 +240,10 @@ def add_fake_results(
             elif target.mode == "MIN":
                 interv = (0, 33)
             elif target.mode == "MATCH":
-                lbound = 0 if target.bounds is None else target.bounds[0]
-                ubound = 100 if target.bounds is None else target.bounds[1]
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
+                ubound = (
+                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
+                )
                 interv = (
                     lbound + 0.33 * (ubound - lbound),
                     lbound + 0.66 * (ubound - lbound),
@@ -259,8 +263,10 @@ def add_fake_results(
             elif target.mode == "MIN":
                 interv = (66, 100)
             elif target.mode == "MATCH":
-                lbound = 0 if target.bounds is None else target.bounds[0]
-                ubound = 100 if target.bounds is None else target.bounds[1]
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
+                ubound = (
+                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
+                )
                 interv = (
                     # Take as bad values and arbitrary interval above the match interval
                     ubound + 0.5 * (ubound - lbound),
@@ -661,15 +667,6 @@ def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
     return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
 
 
-class HashableDict(dict):
-    """Allows hashing of (nested) dictionaries."""
-
-    # TODO: maybe there is a smarter way to achieve the same goal?
-
-    def __hash__(self) -> int:
-        return int(binascii.hexlify(pickle.dumps(self)), 16)
-
-
 def subclasses_recursive(cls: T) -> List[T]:
     """
     Returns a recursive list of all subclasses of a given class.
@@ -748,3 +745,28 @@ class ABCBaseModel(BaseModel):
     @classmethod
     def __get_validators__(cls):
         yield cls._convert_to_real_type_
+
+
+def unstructure_base(base):
+    converter = cattrs.global_converter
+    return {
+        "_type": base.__class__.__name__,
+        **converter.unstructure_attrs_asdict(base),
+    }
+
+
+def get_base_unstructure_hook(base):
+    def structure_base(val, _):
+        _type = val["_type"]
+        cls = next(
+            (cl for cl in subclasses_recursive(base) if cl.__name__ == _type), None
+        )
+        if cls is None:
+            raise ValueError(f"Unknown subclass {_type}.")
+        return cattrs.structure_attrs_fromdict(val, cls)
+
+    return structure_base
+
+
+def eq_dataframe():
+    return cmp_using(lambda x, y: x.equals(y))

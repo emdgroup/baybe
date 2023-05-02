@@ -13,9 +13,8 @@ from baybe.strategies.recommender import BayesianRecommender
 from baybe.utils import NoMCAcquisitionFunctionError, to_tensor
 
 
-class GreedyRecommender(BayesianRecommender):
+class SequentialGreedyRecommender(BayesianRecommender):
 
-    type = "GREEDY"
     compatibility = SearchSpaceType.EITHER
 
     def _recommend_discrete(

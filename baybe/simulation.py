@@ -251,7 +251,7 @@ def _simulate_experiment(
         elif target.mode == "MATCH":
             match_val = np.mean(target.bounds)
             agg_fun = partial(closest_element, target=match_val)
-            cum_fun = lambda x: np.array(  # noqa: E731
+            cum_fun = lambda x: np.array(  # noqa: E731, pylint: disable=C3001
                 np.frompyfunc(
                     partial(closer_element, target=match_val),  # pylint: disable=W0640
                     2,
@@ -401,9 +401,7 @@ def _impute_lookup(
                 worst_vals.append(
                     lookup.loc[
                         lookup.loc[
-                            (lookup[target.name] - np.mean(target.bounds))
-                            .abs()
-                            .idxmax(),
+                            (lookup[target.name] - target.bounds.center).abs().idxmax(),
                         ],
                         target.name,
                     ].flatten()[0]
@@ -420,9 +418,7 @@ def _impute_lookup(
                 best_vals.append(
                     lookup.loc[
                         lookup.loc[
-                            (lookup[target.name] - np.mean(target.bounds))
-                            .abs()
-                            .idxmin(),
+                            (lookup[target.name] - target.bounds.center).abs().idxmin(),
                         ],
                         target.name,
                     ].flatten()[0]

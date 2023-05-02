@@ -4,15 +4,15 @@
 """Recommendation strategies based on clustering."""
 
 from abc import ABC
-from typing import List, Optional, Type, TypeVar
+from typing import ClassVar, List, Type, TypeVar
 
 import numpy as np
 import pandas as pd
+from attrs import define, Factory, field
 from scipy.stats import multivariate_normal
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
 from sklearn.mixture import GaussianMixture
-
 from sklearn.preprocessing import StandardScaler
 
 from baybe.searchspace import SearchSpace, SearchSpaceType
@@ -27,6 +27,7 @@ except ImportError:
 SklearnModel = TypeVar("SklearnModel")
 
 
+@define
 class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     """
     Intermediate class for cluster-based selection of discrete candidates.
@@ -36,24 +37,26 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     derived classes.
     """
 
-    type = "ABSTRACT_SKLEARN_CLUSTERING"
     compatibility = SearchSpaceType.DISCRETE
 
-    # Properties that need to be defined by derived classes
-    model_class: Type[SklearnModel]
-    model_cluster_num_parameter_name: str
+    # Class variables that need to be defined by derived classes
+    # TODO: "Type" should not appear in ClassVar. Both PyCharm and mypy complain, see
+    #   also note in the mypy docs:
+    #       https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
+    #   Figure out what is the right approach here. However, the issue might be
+    #   ultimately related to an overly restrictive PEP:
+    #       https://github.com/python/mypy/issues/5144
+    model_class: ClassVar[Type[SklearnModel]]
+    model_cluster_num_parameter_name: ClassVar[str]
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.model_params = kwargs
-        self._use_custom_selector = False
+    model_params: dict = Factory(dict)
+    _use_custom_selector: bool = False
 
-        # Members that will be initialized during the recommendation process
-        self.model: Optional[SklearnModel] = None
-        self.candidates_scaled: Optional[pd.DataFrame] = None
-        self.scaler: Optional[StandardScaler] = None
-
-    def _make_selection_default(self) -> List[int]:
+    def _make_selection_default(
+        self,
+        model: SklearnModel,
+        candidates_scaled: pd.DataFrame,
+    ) -> List[int]:
         """
         Basic model-agnostic method that selects one candidate from each cluster
         uniformly at random.
@@ -63,14 +66,18 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         selection : List[int]
            Positional indices of the selected candidates.
         """
-        assigned_clusters = self.model.predict(self.candidates_scaled)
+        assigned_clusters = model.predict(candidates_scaled)
         selection = [
             np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
             for cluster in np.unique(assigned_clusters)
         ]
         return selection
 
-    def _make_selection_custom(self) -> List[int]:
+    def _make_selection_custom(
+        self,
+        model: SklearnModel,
+        candidates_scaled: pd.DataFrame,
+    ) -> List[int]:
         """
         A model-specific method to select candidates from the computed clustering.
         May be implemented by the derived class.
@@ -86,25 +93,23 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         """See base class."""
         # Fit scaler on entire searchspace
         # TODO [Scaling]: scaling should be handled by searchspace object
-        self.scaler = StandardScaler()
-        self.scaler.fit(searchspace.discrete.comp_rep)
+        scaler = StandardScaler()
+        scaler.fit(searchspace.discrete.comp_rep)
 
-        self.candidates_scaled = np.ascontiguousarray(
-            self.scaler.transform(candidates_comp)
-        )
+        candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         # Set model parameters and perform fit
-        self.model_params.update(
-            {self.model_cluster_num_parameter_name: batch_quantity}
+        model = self.model_class(
+            **{self.model_cluster_num_parameter_name: batch_quantity},
+            **self.model_params
         )
-        self.model = self.model_class(**self.model_params)
-        self.model.fit(self.candidates_scaled)
+        model.fit(candidates_scaled)
 
         # Perform selection based on assigned clusters
         if self._use_custom_selector:
-            selection = self._make_selection_custom()
+            selection = self._make_selection_custom(model, candidates_scaled)
         else:
-            selection = self._make_selection_default()
+            selection = self._make_selection_default(model, candidates_scaled)
 
         # Convert positional indices into DataFrame indices and return result
         return candidates_comp.index[selection]
@@ -116,87 +121,91 @@ if KMedoids:
     #   recommenders with an object-based logic, since otherwise the exception can be
     #   triggered arbitrarily late in the DOE process.
 
+    @define
     class PAMClusteringRecommender(SKLearnClusteringRecommender):
         """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-        type = "CLUSTERING_PAM"
         model_class = KMedoids
         model_cluster_num_parameter_name = "n_clusters"
 
-        def __init__(
-            self, use_custom_selector: bool = True, max_iter: int = 100, **kwargs
-        ):
-            super().__init__(max_iter=max_iter, init="k-medoids++", **kwargs)
-            self._use_custom_selector = use_custom_selector
+        _use_custom_selector = True
+        model_params: dict = field()
 
-        def _make_selection_custom(self) -> List[int]:
+        @model_params.default
+        def default_model_params(self) -> dict:
+            return {"max_iter": 100, "init": "k-medoids++"}
+
+        def _make_selection_custom(
+            self,
+            model: SklearnModel,
+            candidates_scaled: pd.DataFrame,
+        ) -> List[int]:
             """
             In PAM, cluster centers (medoids) correspond to actual data points,
             which means they can be directly used for the selection.
             """
-            selection = self.model.medoid_indices_.tolist()
+            selection = model.medoid_indices_.tolist()
             return selection
 
 
+@define
 class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means initial clustering strategy."""
 
-    type = "CLUSTERING_KMEANS"
     model_class = KMeans
     model_cluster_num_parameter_name = "n_clusters"
 
-    def __init__(
-        self,
-        use_custom_selector: bool = True,
-        n_init: int = 50,
-        max_iter: int = 1000,
-        **kwargs,
-    ):
-        super().__init__(n_init=n_init, max_iter=max_iter, **kwargs)
-        self._use_custom_selector = use_custom_selector
+    _use_custom_selector = True
+    model_params: dict = field()
 
-    def _make_selection_custom(self) -> List[int]:
+    @model_params.default
+    def default_model_params(self) -> dict:
+        return {"max_iter": 1000, "n_init": 50}
+
+    def _make_selection_custom(
+        self,
+        model: SklearnModel,
+        candidates_scaled: pd.DataFrame,
+    ) -> List[int]:
         """
         For K-means, a reasonable choice is to pick the points closest to each
         cluster center.
         """
-        distances = pairwise_distances(
-            self.candidates_scaled, self.model.cluster_centers_
-        )
+        distances = pairwise_distances(candidates_scaled, model.cluster_centers_)
         # Set the distances of points that were not assigned by the model to that
         # cluster to infinity. This assures that one unique point per cluster is
         # assigned.
-        predicted_clusters = self.model.predict(self.candidates_scaled)
-        for k_cluster in range(self.model.cluster_centers_.shape[0]):
+        predicted_clusters = model.predict(candidates_scaled)
+        for k_cluster in range(model.cluster_centers_.shape[0]):
             idxs = predicted_clusters != k_cluster
             distances[idxs, k_cluster] = np.inf
         selection = np.argmin(distances, axis=0).tolist()
         return selection
 
 
+@define
 class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) initial clustering strategy."""
 
-    type = "CLUSTERING_GMM"
     model_class = GaussianMixture
     model_cluster_num_parameter_name = "n_components"
 
-    def __init__(self, use_custom_selector: bool = True, **kwargs):
-        super().__init__(**kwargs)
-        self._use_custom_selector = use_custom_selector
-
-    def _make_selection_custom(self) -> List[int]:
+    def _make_selection_custom(
+        self,
+        model: SklearnModel,
+        candidates_scaled: pd.DataFrame,
+    ) -> List[int]:
         """
         In a GMM, a reasonable choice is to pick the point with the highest
         probability densities for each cluster.
         """
-        predicted_clusters = self.model.predict(self.candidates_scaled)
+        predicted_clusters = model.predict(candidates_scaled)
         selection = []
-        for k_cluster in range(self.model.n_components):
+        for k_cluster in range(model.n_components):
             density = multivariate_normal(
-                cov=self.model.covariances_[k_cluster],
-                mean=self.model.means_[k_cluster],
-            ).logpdf(self.candidates_scaled)
+                cov=model.covariances_[k_cluster],
+                mean=model.means_[k_cluster],
+            ).logpdf(candidates_scaled)
 
             # For selecting a point from this cluster we only consider points that were
             # assigned to the current cluster by the model, hence set the density of

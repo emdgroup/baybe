@@ -12,7 +12,6 @@ class RandomRecommender(NonPredictiveRecommender):
     Recommends experiments randomly.
     """
 
-    type = "RANDOM"
     compatibility = SearchSpaceType.EITHER  # TODO: enable HYBRID mode
 
     def _recommend_continuous(
@@ -34,7 +33,6 @@ class RandomRecommender(NonPredictiveRecommender):
 class FPSRecommender(NonPredictiveRecommender):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
 
-    type = "FPS"
     compatibility = SearchSpaceType.DISCRETE
 
     def _recommend_discrete(

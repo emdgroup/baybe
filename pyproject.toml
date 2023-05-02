@@ -9,7 +9,9 @@ readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python =">=3.8.6"
 dependencies = [
+    "attrs>=22.2.0",
     "botorch>=0.8.1",
+    "cattrs>=22.2.0",
     "fsspec>=2022.10.0",
     "funcy>=1.17",
     "gpytorch>=1.9.1",
@@ -33,10 +35,11 @@ dev = [
     "black>=22.3.0",  # see FORMATTER NOTE
     "flake8>=4.0.1",
     "matplotlib>=3.5.2",
+    "mypy>=1.2.0",
     "openpyxl>=3.0.9",
     "plotly>=5.10.0",
     "pre-commit>=2.19.0",
-    "pylint>=2.13.9",
+    "pylint>=2.17.2",
     "pytest>=7.2.0",
     "seaborn>=0.11.2",
     "streamlit>=1.10.0",
@@ -82,8 +85,6 @@ disable = [
 	"too-many-instance-attributes",  # BayBE class has quite a few members
 	"too-many-branches",  # can maybe be optimized later
 	"too-few-public-methods",  # this happens e.g. in pydantic BaseModel classes
-	"no-self-use",  # should be replaced with a more specific fix for pydantic validators
-	# -> https://github.com/PyCQA/pylint/issues/6900
 	"no-self-argument",  # should be replaced with a more specific fix for pydantic validators
 	# -> https://github.com/PyCQA/pylint/issues/6900
 	"broad-except", # catching base exception is common for RDKit mol validation etc
@@ -99,3 +100,17 @@ disable = [
 
 [tool.pylint.BASIC]
 good-names=["i", "j", "k", "x", "y", "ex", "df", "fh"] # allow these variable names
+
+[tool.mypy]
+files = [
+    "baybe/core.py",
+    "baybe/parameters.py",
+    "baybe/searchspace.py",
+]
+
+[[tool.mypy.overrides]]
+module = 'scipy.spatial.distance'
+ignore_missing_imports = true
+
+# TODO[12327]: Find a way to automatically install all mypy stubs during the
+#   installation, to avoid having to call "mypy --install-types" afterwards.
