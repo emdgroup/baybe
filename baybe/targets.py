@@ -15,8 +15,9 @@ from typing import List, Literal, Optional
 
 import numpy as np
 import pandas as pd
+from attr.validators import instance_of
 from attrs import define, field
-from attrs.validators import min_len
+from attrs.validators import deep_iterable, in_, min_len
 
 from .utils import geom_mean
 from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
@@ -34,10 +35,6 @@ VALID_TRANSFORMS = {
     "MIN": ["LINEAR"],
     "MATCH": ["TRIANGULAR", "BELL"],
 }
-
-
-def convert_weights(weights: List[float]) -> List[float]:
-    return (100 * np.asarray(weights) / np.sum(weights)).tolist()
 
 
 @define
@@ -173,13 +170,18 @@ class Objective(SerialMixin):
 
     mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
     targets: List[NumericalTarget] = field(validator=min_len(1))
-    weights: List[float] = field(converter=convert_weights)
-    combine_func: Literal["MEAN", "GEOM_MEAN"] = "GEOM_MEAN"
+    weights: List[float] = field(default=None)
+    combine_func: Literal["MEAN", "GEOM_MEAN"] = field(
+        default="GEOM_MEAN", validator=in_(["MEAN", "GEOM_MEAN"])
+    )
 
-    @weights.default
-    def default_weights(self) -> List[float]:
-        n_targets = len(self.targets)
-        return [100 / n_targets] * n_targets
+    def __attrs_post_init__(self):
+        # Use default weights if not provided
+        if self.weights is None:
+            self.weights = [100] * len(self.targets)
+
+        # Normalize the weights
+        self.weights = (100 * np.asarray(self.weights) / np.sum(self.weights)).tolist()
 
     @targets.validator
     def validate_targets(self, _, targets: List[NumericalTarget]):
@@ -208,6 +210,14 @@ class Objective(SerialMixin):
         """
         Validates target weights.
         """
+        if weights is None:
+            return
+
+        # Assert that weights is a list of numbers
+        validator = deep_iterable(instance_of((int, float)), instance_of(list))
+        validator(self, _, weights)
+
+        # Assert that weights has the correct length
         if len(weights) != len(self.targets):
             raise ValueError(
                 f"Weights list for your objective has {len(weights)} values, but you "

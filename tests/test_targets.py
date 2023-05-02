@@ -53,7 +53,6 @@ class TestInvalidObjectiveCreation:
         ),
     ]
 
-    @pytest.mark.xfail(reason="Attribute validation yet to be implemented")
     def test_empty_target_list(self):
         with pytest.raises(ValueError):
             Objective(
@@ -85,7 +84,6 @@ class TestInvalidObjectiveCreation:
                 ],
             )
 
-    @pytest.mark.xfail(reason="Attribute validation yet to be implemented")
     def test_invalid_combination_function(self):
         with pytest.raises(ValueError):
             Objective(
@@ -102,18 +100,16 @@ class TestInvalidObjectiveCreation:
                 targets=self.two_targets,
             )
 
-    @pytest.mark.xfail(reason="Attribute validation yet to be implemented")
     def test_non_numeric_weights(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             Objective(
                 mode="DESIRABILITY",
                 weights=[1, "ABC"],
                 targets=self.two_targets,
             )
 
-    @pytest.mark.xfail(reason="Attribute validation yet to be implemented")
     def test_wrong_weights_type(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             Objective(
                 mode="DESIRABILITY",
                 weights="ABC",
