@@ -49,32 +49,25 @@ class SubspaceDiscrete:
     parameter views.
     """
 
-    # NOTE:
-    # -----
-    # The metadata converter ensures the right column type, which otherwise gets lost
-    # during serialization in cases of empty discrete search spaces. In such cases,
-    # metadata will be an empty dataframe, which makes it impossible to correctly infer
-    # the boolean type. Hence, if no explicit conversion was done, subsequent equality
-    # checks would fail.
-
     parameters: List[DiscreteParameter]
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
-    metadata: pd.DataFrame = field(
-        eq=eq_dataframe(), converter=lambda x: x.astype(bool)  # See note above
-    )
+    metadata: pd.DataFrame = field(eq=eq_dataframe())
     empty_encoding: bool = False
 
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
-        return pd.DataFrame(
-            {
-                "was_recommended": False,
-                "was_measured": False,
-                "dont_recommend": False,
-            },
-            index=self.exp_rep.index,
-        )
+        columns = ["was_recommended", "was_measured", "dont_recommend"]
+
+        # If the discrete search space is empty, explicitly return an empty dataframe
+        # instead of simply using a zero-length index. Otherwise, the boolean dtype
+        # would be lost during a serialization roundtrip as there would be no
+        # data available that allows to determine the type, causing subsequent
+        # equality checks to fail.
+        if self.empty:
+            return pd.DataFrame(columns=columns)
+
+        return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
 
     def __attrs_post_init__(self):
         # Create a dataframe containing the computational parameter representation
