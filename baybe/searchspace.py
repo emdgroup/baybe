@@ -69,8 +69,8 @@ class SubspaceDiscrete:
     def __attrs_post_init__(self):
         # Create a dataframe containing the computational parameter representation
         # (ignoring all columns that do not carry any covariate information).
-        # TODO: Should we always drop single value columns without informing the user?
-        #   This can have undesired/unexpected side-effects (see ***REMOVED*** project).
+        # TODO[12758]: Should we always drop single value columns without informing the
+        #  user? Can have undesired/unexpected side-effects (see ***REMOVED*** project).
         comp_rep = self.transform(self.exp_rep)
         comp_rep = df_drop_single_value_columns(comp_rep)
         self.comp_rep = comp_rep
