@@ -5,6 +5,7 @@ import getpass
 import hashlib
 import os
 import socket
+from typing import Union
 
 from opentelemetry._metrics import get_meter, set_meter_provider
 from opentelemetry.exporter.otlp.proto.grpc._metric_exporter import OTLPMetricExporter
@@ -12,12 +13,13 @@ from opentelemetry.sdk._metrics import MeterProvider
 from opentelemetry.sdk._metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
-_resource = Resource.create({"service.name": "baybe.sdk", "service.namespace": "baybe"})
+_instruments = {}
+_resource = Resource.create({"service.namespace": "BayBE-test2", "service.name": "SDK"})
 _reader = PeriodicExportingMetricReader(
-    OTLPMetricExporter(
-        "***REMOVED***"
-        ".elb.eu-central-1.amazonaws.com:4317",
-        True,
+    exporter=OTLPMetricExporter(
+        endpoint="***REMOVED***.elb."
+        "eu-central-1.amazonaws.com:4317",
+        insecure=True,
     )
 )
 _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
@@ -30,16 +32,21 @@ _meter = get_meter("aws-otel", "1.0")
 def get_user_hash() -> str:
     """
     Generate a unique hash value for the current user based on the host name and
-    uppercase username, e.g. hash of 'LTD1234M123132'.
+    uppercase username, e.g. the first 10 upper-case digits of the sha256
+    hash of 'LTD1234M123132'.
 
     Returns
     -------
         str
     """
-    return hashlib.sha256(
-        (socket.gethostname() + getpass.getuser().upper()).encode()
-    ).hexdigest()
+    user_hash = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH", None) or (
+        hashlib.sha256((socket.gethostname() + getpass.getuser().upper()).encode())
+        .hexdigest()
+        .upper()[:10]  # take only first 10 digits to enhance readability in dashboard
+    )
     # Alternatively one could take the MAC address like hex(uuid.getnode())
+
+    return user_hash
 
 
 def is_enabled() -> bool:
@@ -51,9 +58,42 @@ def is_enabled() -> bool:
     -------
         bool
     """
-    return os.environ.get("BAYBE_TELEMETRY_ENABLED", "").lower() in [
+    return os.environ.get("BAYBE_TELEMETRY_ENABLED", "").lower() not in [
         "false",
         "no",
         "off",
         "0",
     ]
+
+
+def telemetry_record_value(
+    instrument_name: str, value: Union[bool, int, float, str]
+) -> None:
+    """
+    Transmits a given value under a given label to the telemetry backend. The values are
+     recorded as histograms, i.e. the info about record time and sample size is also
+     available. This can be sued to cout function calls (record the value 1) or
+     statistics about any variable (record its value). Due to serialization limitations
+     only certain data types of value are allowed.
+
+    Parameters
+    ----------
+    instrument_name: str
+        The label under which this statistic is logged.
+    value
+        The value of the statistic to be logged.
+
+    Returns
+    -------
+        None
+    """
+    if is_enabled():
+        if instrument_name in _instruments:
+            histogram = _instruments[instrument_name]
+        else:
+            histogram = _meter.create_histogram(
+                instrument_name,
+                description=f"Histogram for instrument {instrument_name}",
+            )
+            _instruments[instrument_name] = histogram
+        histogram.record(value, {"user_hash": get_user_hash()})

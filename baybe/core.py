@@ -19,6 +19,7 @@ from .parameters import Parameter
 from .searchspace import SearchSpace
 from .strategy import Strategy
 from .targets import Objective, Target
+from .telemetry import telemetry_record_value
 
 from .utils import check_if_in
 
@@ -108,6 +109,12 @@ class BayBE:
             parameters = [Parameter.create(p) for p in config.parameters]
             constraints = [Constraint.create(c) for c in config.constraints]
             self.searchspace = SearchSpace(parameters, constraints, self._random)
+
+            # Telemetry: if a new space is created, count this and record the number of
+            # parameters and constraints
+            telemetry_record_value("count-new_searchspace_created", 1)
+            telemetry_record_value("num_parameters", len(parameters))
+            telemetry_record_value("num_constraints", len(constraints))
         else:
             self.searchspace = searchspace
         self.objective = Objective(**config.objective)
@@ -313,6 +320,9 @@ class BayBE:
         -------
         Nothing (the internal database is modified in-place).
         """
+        # Telemetry: log the function call
+        telemetry_record_value("count-add_results", 1)
+
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self._cached_recommendation = pd.DataFrame()
 
@@ -371,6 +381,12 @@ class BayBE:
         rec : pd.DataFrame
             Contains the recommendations in experimental representation.
         """
+        # Telemetry: log the function call
+        telemetry_record_value("count-recommend", 1)
+
+        # Telemetry: record the
+        telemetry_record_value("batch_quantity", batch_quantity)
+
         if batch_quantity < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
