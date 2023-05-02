@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Interval` class for representing parameter/target bounds
 - Activated mypy for the first few modules and fixed their type issues
 - Automatic (de-)serialization and `SerialMixin` class
-- Basic serialization tests
+- Basic serialization example and tests
 
 ### Changed
 - Switched from pydantic to attrs in all modules except constraints.py
