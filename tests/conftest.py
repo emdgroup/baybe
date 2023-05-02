@@ -1,6 +1,8 @@
 """
 PyTest configuration
 """
+import os
+
 import numpy as np
 import pytest
 
@@ -10,6 +12,20 @@ from baybe.utils import add_fake_results, add_parameter_noise
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
+
+
+# Disable telemetry at start of session
+def pytest_sessionstart(session):  # pylint: disable=unused-argument
+    """Called at start of session"""
+    os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
+    os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "PYTEST"
+
+
+# Re-Enable telemetry at end of session
+def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
+    """Called at end of session"""
+    os.environ.pop("BAYBE_TELEMETRY_ENABLED")
+    os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
 
 
 # Add option to only run fast tests
