@@ -1,10 +1,13 @@
 """
-Compare different batch recommendation strategies on the direct arylation example
+Simulate different users and telemetry settings. This script does some calls so that
+the results can be viewed on AWS CloudWatch.
 """
 
 import os
+from random import randint
 
 from baybe.core import BayBE, BayBEConfig
+from baybe.telemetry import get_user_hash
 from baybe.utils import add_fake_results
 
 dict_solvent = {
@@ -90,28 +93,39 @@ cofig_dict = {
 config = BayBEConfig(**cofig_dict)
 
 
-# User1 - 5 iterations
+# Actual User
+print(f"Actual User: {get_user_hash()}")
+baybe_object = BayBE(config)
+for k in range(randint(4, 6)):
+    dat = baybe_object.recommend(randint(2, 3))
+    add_fake_results(dat, baybe_object)
+    baybe_object.add_results(dat)
+
+# Fake User1 - 5 iterations
+print("Fake User1")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1"
 baybe_object = BayBE(config)
-for k in range(5):
-    dat = baybe_object.recommend(5)
+for k in range(randint(2, 3)):
+    dat = baybe_object.recommend(randint(3, 4))
     add_fake_results(dat, baybe_object)
     baybe_object.add_results(dat)
 
-# User2 - 2 iterations
+# Fake User2 - 2 iterations
+print("Fake User2")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_2"
 baybe_object = BayBE(config)
-for k in range(2):
-    dat = baybe_object.recommend(3)
+for k in range(randint(2, 3)):
+    dat = baybe_object.recommend(randint(4, 5))
     add_fake_results(dat, baybe_object)
     baybe_object.add_results(dat)
 
-# User 3 - 5 iterations - no telemetry
+# Fake User3 - no telemetry
+print("Fake User3")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_3"
 os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
 baybe_object = BayBE(config)
-for k in range(5):
-    dat = baybe_object.recommend(2)
+for k in range(randint(5, 7)):
+    dat = baybe_object.recommend(randint(2, 3))
     add_fake_results(dat, baybe_object)
     baybe_object.add_results(dat)
 
