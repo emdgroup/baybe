@@ -348,6 +348,10 @@ def add_parameter_noise(
                     f"Parameter 'noise_type' was {noise_type} but must be either "
                     "'absolute' or 'relative_percent'."
                 )
+            if not param.is_discrete:  # respect continuous intervals
+                data[param.name].clip(
+                    param.bounds.lower, param.bounds.upper, inplace=True
+                )
 
 
 @lru_cache(maxsize=None)
