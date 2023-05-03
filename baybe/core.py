@@ -19,9 +19,8 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 from baybe.telemetry import telemetry_record_value
+from baybe.utils import eq_dataframe, fuzzy_row_match
 from baybe.utils.serialization import SerialMixin
-
-from .utils import eq_dataframe
 
 log = logging.getLogger(__name__)
 
@@ -102,6 +101,24 @@ class BayBE(SerialMixin):
         """
         # Telemetry: log the function call
         telemetry_record_value("count-add_results", 1)
+
+        # Telemetry: log fraction of measurements that correspond to previously
+        # recommended ones
+        recommended_measurements_fraction = (
+            len(
+                fuzzy_row_match(
+                    self.cached_recommendation,
+                    data,
+                    self.parameters,
+                    self.numerical_measurements_must_be_within_tolerance,
+                )
+            )
+            / len(self.cached_recommendation)
+            * 100.0
+        )
+        telemetry_record_value(
+            "recommended_measurements_fraction", recommended_measurements_fraction
+        )
 
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self.cached_recommendation = pd.DataFrame()
