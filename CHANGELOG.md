@@ -6,7 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `Interval` class for representing parameter/target bounds
+- Activated mypy for the first few modules and fixed their type issues
+- Automatic (de-)serialization and `SerialMixin` class
+- Basic serialization example and tests
 - Telemetry via OpenTelemetry
+
+### Changed
+- Switched from pydantic to attrs in all modules except constraints.py
+- Removed subclass initialization hooks and `type` attribute
+- Refactored class attributes and their conversion/validation/initialization
+- Removed no longer needed `HashableDict` class
+- Refactored strategy and recommendation module structures
+- Replaced dict-based configuration logic with object-based logic
 
 ## [0.2.4] - 2023-03-24
 ### Added

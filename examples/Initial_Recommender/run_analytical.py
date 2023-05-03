@@ -6,7 +6,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe.simulation import simulate_from_configs
+from baybe.core import BayBE
+from baybe.parameters import NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.simulation import simulate_scenarios
+from baybe.strategies.clustering import KMeansClusteringRecommender
+from baybe.strategies.sampling import FPSRecommender, RandomRecommender
+
+from baybe.strategies.strategy import Strategy
+from baybe.targets import NumericalTarget, Objective
 
 DIMENSIONS = 3
 POINTS_PER_DIM = 10
@@ -123,71 +131,42 @@ def hartmann3(x1, x2, x3):
     return y + noise
 
 
-config_dict_base = {
-    "project_name": "Analytical Test",
-    "allow_repeated_recommendations": False,
-    "allow_recommending_already_measured": False,
-    "numerical_measurements_must_be_within_tolerance": True,
-    "parameters": [
-        {
-            "name": f"x_{k+1}",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 1, POINTS_PER_DIM)),
-            "tolerance": 0.01,
-        }
-        for k in range(DIMENSIONS)
-    ],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "Target",
-                "type": "NUM",
-                "mode": "MIN",
-            },
-        ],
-    },
-    "strategy": {},
+scenarios = {
+    name: BayBE(
+        searchspace=SearchSpace.create(
+            parameters=[
+                NumericDiscrete(
+                    name=f"x_{k+1}",
+                    values=list(np.linspace(0, 1, POINTS_PER_DIM)),
+                    tolerance=0.01,
+                )
+                for k in range(DIMENSIONS)
+            ],
+        ),
+        strategy=Strategy(
+            initial_recommender=rec,
+            allow_repeated_recommendations=False,
+            allow_recommending_already_measured=False,
+        ),
+        objective=Objective(
+            mode="SINGLE",
+            targets=[NumericalTarget(name="Target", mode="MIN")],
+        ),
+        numerical_measurements_must_be_within_tolerance=True,
+    )
+    for name, rec in [
+        ("Random", RandomRecommender()),
+        ("Farthest Point Sampling", FPSRecommender()),
+        ("KMEANS Clustering", KMeansClusteringRecommender()),
+    ]
 }
 
-config_variants = {}
-
-config_dict_v1 = {
-    "project_name": "Random",
-    "strategy": {
-        "initial_recommender_cls": "RANDOM",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
-    },
-}
-
-config_dict_v2 = {
-    "project_name": "Farthest Point Sampling",
-    "strategy": {
-        "initial_recommender_cls": "FPS",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
-    },
-}
-
-config_dict_v3 = {
-    "project_name": "KMEANS Clustering",
-    "strategy": {
-        "initial_recommender_cls": "CLUSTERING_KMEANS",
-        "recommender_cls": "SEQUENTIAL_GREEDY",
-    },
-}
-
-
-results = simulate_from_configs(
-    config_base=config_dict_base,
+results = simulate_scenarios(
+    scenarios=scenarios,
     lookup=hartmann3,
     n_exp_iterations=10,
     n_mc_iterations=5,
     batch_quantity=5,
-    config_variants={
-        "RANDOM": config_dict_v1,
-        "FPS": config_dict_v2,
-        "KMEANS": config_dict_v3,
-    },
 )
 
 print(results)

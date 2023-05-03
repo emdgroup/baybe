@@ -5,7 +5,6 @@ Provides functions to simulate a Bayesian DOE with BayBE given a lookup.
 from __future__ import annotations
 
 import logging
-from copy import deepcopy
 from functools import partial
 from typing import Callable, Dict, List, Literal, Optional, TYPE_CHECKING, Union
 
@@ -13,15 +12,14 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm, trange
 
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
 from baybe.utils import (
     add_fake_results,
     add_parameter_noise,
     closer_element,
     closest_element,
-    name_to_smiles,
+    set_random_seed,
 )
-
 
 if TYPE_CHECKING:
     from .targets import NumericalTarget
@@ -29,8 +27,8 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-def simulate_from_configs(
-    config_base: dict,
+def simulate_scenarios(
+    scenarios: Dict[str, BayBE],
     batch_quantity: int,
     n_exp_iterations: int,
     n_mc_iterations: Optional[int] = None,
@@ -39,7 +37,6 @@ def simulate_from_configs(
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
-    config_variants: Optional[Dict[str, dict]] = None,
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
     """
@@ -47,8 +44,9 @@ def simulate_from_configs(
 
     Parameters
     ----------
-    config_base : dict
-        Contains a base configuration that is shared between all configuration variants.
+    scenarios : Dict[str, BayBE]
+        BayBE objects (dict-values) and corresponding scenario names (dict-keys) to be
+        simulated.
     batch_quantity : int
         Number of recommendations returned per experimental DOE iteration.
     n_exp_iterations : int
@@ -74,10 +72,6 @@ def simulate_from_configs(
         * 'random': a random row will be used as lookup
         * 'ignore': the search space is stripped before recommendations are made
             so that unmeasured experiments will not be recommended
-    config_variants : dict
-        A dict whose keys are the names of the different configuration variants and
-        whose items are configurations that specify the variant. For instance, a
-        variant can define a different strategy or different parameter encoding.
     noise_percent : float (optional)
         If this is not 'None', relative noise in percent of `noise_percent` will be
         applied to the parameter measurements.
@@ -135,22 +129,13 @@ def simulate_from_configs(
             "Impute mode 'ignore' is only available for dataframe lookups."
         )
 
-    # If no configuration variants are provided, use the base configuration as the
-    # only "variant" to be simulated
-    if config_variants is None:
-        config_variants = {"Simulation": config_base}
-
     # Create a dataframe to store the simulation results
     results = pd.DataFrame()
 
     # Simulate all configuration variants
-    for variant_name, variant_config in config_variants.items():
+    for scenario_name, baybe in scenarios.items():
         # Create a dataframe to store the results for the current variant
         results_var = pd.DataFrame()
-
-        # Use the configuration of the current variant
-        config_dict = deepcopy(config_base)
-        config_dict.update(variant_config)
 
         # Create an iterator for repeating the experiment
         pbar = trange(n_mc_iterations) if initial_data is None else tqdm(initial_data)
@@ -158,36 +143,35 @@ def simulate_from_configs(
         # Run all experiment repetitions
         for k_mc, data in enumerate(pbar):
             # Show the simulation progress
-            pbar.set_description(variant_name)
+            pbar.set_description(scenario_name)
 
             # Create a BayBE object with a new random seed
             # IMPROVE: Potential speedup by copying the BayBE object + overwriting seed.
             #   Requires a clean way to change the seed of the object without accessing
             #   its members directly.
-            config_dict["random_seed"] = 1337 + k_mc
-            config = BayBEConfig(**config_dict)
-            baybe_obj = BayBE(config)
+            random_seed = 1337 + k_mc
+            set_random_seed(random_seed)
 
             # Add the initial data
             if initial_data is not None:
-                baybe_obj.add_results(data)
+                baybe.add_results(data)
 
             # For impute_mode 'ignore', do not recommend space entries that are not
             # available in the lookup
             # IMPROVE: Avoid direct manipulation of the searchspace members
             if impute_mode == "ignore":
-                searchspace = baybe_obj.searchspace.discrete.exp_rep
+                searchspace = baybe.searchspace.discrete.exp_rep
                 missing_inds = searchspace.index[
                     searchspace.merge(lookup, how="left", indicator=True)["_merge"]
                     == "left_only"
                 ]
-                baybe_obj.searchspace.discrete.metadata.loc[
+                baybe.searchspace.discrete.metadata.loc[
                     missing_inds, "dont_recommend"
                 ] = True
 
             # Run all experimental iterations
             results_mc = _simulate_experiment(
-                baybe_obj,
+                baybe,
                 batch_quantity,
                 n_exp_iterations,
                 lookup,
@@ -196,11 +180,11 @@ def simulate_from_configs(
             )
 
             # Add the random seed information and append the results
-            results_mc.insert(0, "Random_Seed", config_dict["random_seed"])
+            results_mc.insert(0, "Random_Seed", random_seed)
             results_var = pd.concat([results_var, results_mc])
 
         # Add the variant information and append the results
-        results_var.insert(0, "Variant", variant_name)
+        results_var.insert(0, "Variant", scenario_name)
         results = pd.concat([results, results_var])
 
     return results.reset_index(drop=True)
@@ -267,7 +251,7 @@ def _simulate_experiment(
         elif target.mode == "MATCH":
             match_val = np.mean(target.bounds)
             agg_fun = partial(closest_element, target=match_val)
-            cum_fun = lambda x: np.array(  # noqa: E731
+            cum_fun = lambda x: np.array(  # noqa: E731, pylint: disable=C3001
                 np.frompyfunc(
                     partial(closer_element, target=match_val),  # pylint: disable=W0640
                     2,
@@ -417,9 +401,7 @@ def _impute_lookup(
                 worst_vals.append(
                     lookup.loc[
                         lookup.loc[
-                            (lookup[target.name] - np.mean(target.bounds))
-                            .abs()
-                            .idxmax(),
+                            (lookup[target.name] - target.bounds.center).abs().idxmax(),
                         ],
                         target.name,
                     ].flatten()[0]
@@ -436,9 +418,7 @@ def _impute_lookup(
                 best_vals.append(
                     lookup.loc[
                         lookup.loc[
-                            (lookup[target.name] - np.mean(target.bounds))
-                            .abs()
-                            .idxmin(),
+                            (lookup[target.name] - target.bounds.center).abs().idxmin(),
                         ],
                         target.name,
                     ].flatten()[0]
@@ -457,116 +437,3 @@ def _impute_lookup(
         )
 
     return match_vals
-
-
-def simulate_from_data(
-    config_base: dict,
-    n_exp_iterations: int,
-    n_mc_iterations: int,
-    parameter_types: Dict[str, List[dict]],
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
-    impute_mode: Literal[
-        "error", "worst", "best", "mean", "random", "ignore"
-    ] = "ignore",
-    noise_percent: Optional[float] = None,
-    batch_quantity: int = 5,
-) -> pd.DataFrame:
-    """
-    Wrapper around `simulate_from_configs` that allows to vary parameter types.
-
-    Parameters
-    ----------
-    config_base : dict
-        See `simulate_from_configs`.
-    n_exp_iterations : int
-        See `simulate_from_configs`.
-    n_mc_iterations : int
-        See `simulate_from_configs`.
-    parameter_types : dict
-        Dictionary where keys are variant names. Entries contain lists which have
-        dictionaries describing the parameter configurations except their values.
-    lookup : Union[pd.DataFrame, Callable] (optional)
-        See `simulate_from_configs`.
-    impute_mode : "error" | "worst" | "best" | "mean" | "random" | "ignore"
-        See `simulate_from_configs`.
-    noise_percent : float (optional)
-        See `simulate_from_configs`.
-    batch_quantity : int
-        See `simulate_from_configs`.
-
-    Returns
-    -------
-    pd.DataFrame
-        See `simulate_from_configs`.
-
-    Example
-    -------
-    parameter_types = {
-        "Variant1": [
-            {"name": "Param1", "type": "CAT", "encoding": "INT"},
-            {"name": "Param2", "type": "CAT"},
-        ],
-        "Variant2": [
-            {"name": "Param1", "type": "NUM_DISCRETE"},
-            {"name": "Param2", "type": "SUBSTANCE", "encoding": "RDKIT"},
-        ],
-    }
-    """
-    # TODO: this function needs another code cleanup and refactoring
-
-    # Create the parameter configs from lookup data
-    config_variants = {}
-    for variant_name, parameter_list in parameter_types.items():
-        variant_parameter_configs = []
-        for param_dict in parameter_list:
-            assert "name" in param_dict, (
-                f"Parameter dictionary must contain the key 'name'. "
-                f"Parsed dictionary: {param_dict}"
-            )
-            assert "type" in param_dict, (
-                f"Parameter dictionary must contain the key 'type'. "
-                f"Parsed dictionary: {param_dict}"
-            )
-
-            param_vals = list(lookup[param_dict["name"]].unique())
-            parameter_config = deepcopy(param_dict)
-
-            if param_dict["type"] == "SUBSTANCE":
-                smiles = [name_to_smiles(itm) for itm in param_vals]
-                if any(s == "" for s in smiles):
-                    raise ValueError(
-                        f"For the parameter {param_dict['name']} in 'SUBSTANCE' type "
-                        f"not all SMILES could be retrieved from the NCI, this might be"
-                        f" a VPN issue. The problematic substances are "
-                        f"{[name for k,name in enumerate(param_vals) if smiles[k]=='']}"
-                    )
-                dat = dict(zip(param_vals, smiles))
-                parameter_config["data"] = dat
-            elif param_dict["type"] == "CUSTOM":
-                raise ValueError(
-                    f"Custom parameter types are not supported for "
-                    f"simulation with automatic parameter value inference "
-                    f"(encountered in parameter {param_dict})."
-                )
-            else:
-                parameter_config["values"] = param_vals
-
-            variant_parameter_configs.append(parameter_config)
-
-        config_variants[variant_name] = {"parameters": variant_parameter_configs}
-
-    print("### Inferred configurations:")
-    print(config_variants)
-
-    results = simulate_from_configs(
-        config_base=config_base,
-        batch_quantity=batch_quantity,
-        n_exp_iterations=n_exp_iterations,
-        n_mc_iterations=n_mc_iterations,
-        lookup=lookup,
-        impute_mode=impute_mode,
-        config_variants=config_variants,
-        noise_percent=noise_percent,
-    )
-
-    return results

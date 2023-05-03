@@ -1,12 +1,22 @@
+# pylint: disable=missing-class-docstring, missing-function-docstring
+# TODO: add docstrings
+
 """
 Functionality for managing search spaces.
 """
-import logging
-from typing import List, Optional, Tuple
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
+import logging
+from enum import Enum
+from typing import cast, List, Optional, Tuple
+
+import cattrs
 import numpy as np
 import pandas as pd
 import torch
+from attrs import define, field
+from attrs.validators import min_len
 
 from .constraints import _constraints_order, Constraint
 from .parameters import (
@@ -15,128 +25,22 @@ from .parameters import (
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .utils import df_drop_single_value_columns
+from .telemetry import telemetry_record_value
+from .utils import df_drop_single_value_columns, eq_dataframe
+from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
 
 
-class SearchSpace:
-    """
-    Class for managing the overall search space, which might be purely discrete, purely
-    continuous, or hybrid.
-
-    NOTE:
-        Created objects related to the computational representations of parameters
-        (e.g., parameter bounds, computational dataframes, etc.) may use a different
-        parameter order than what is specified through the constructor: While the
-        passed parameter list can contain parameters in arbitrary order, the
-        aforementioned objects (by convention) list discrete parameters first, followed
-        by continuous ones.
-    """
-
-    def __init__(
-        self,
-        parameters: List[Parameter],
-        constraints: Optional[List[Constraint]] = None,
-        empty_encoding: bool = False,
-        init_dataframes: bool = True,
-    ):
-        """
-        Parameters
-        ----------
-        parameters : List[Parameter]
-            The parameters spanning the search space.
-        constraints : List[Constraint], optional
-            An optional set of constraints restricting the valid parameter space.
-        empty_encoding : bool, default: False
-            If True, uses an "empty" encoding for all parameters. This is useful,
-            for instance, in combination with random search strategies that
-            do not read the actual parameter values, since it avoids the
-            (potentially costly) transformation of the parameter values to their
-            computational representation.
-        init_dataframes : bool, default: True
-            If True, the search space related dataframes (i.e. parameter representations
-            and metadata) will be build from scratch using the input arguments. If
-            False, they are not initialized, which can be useful when loading a search
-            space object from disk.
-        """
-        # Store the input
-        self.parameters = parameters
-        self.constraints = constraints
-        self.empty_encoding = empty_encoding
-
-        self.discrete: SubspaceDiscrete = SubspaceDiscrete(
-            parameters=[p for p in parameters if p.is_discrete],
-            constraints=constraints,
-            empty_encoding=empty_encoding,
-            init_dataframes=init_dataframes,
-        )
-        self.continuous: SubspaceContinuous = SubspaceContinuous(
-            parameters=[p for p in parameters if not p.is_discrete],
-        )
-
-    @property
-    def contains_mordred(self) -> bool:
-        """Indicates if any of the discrete parameters uses MORDRED encoding."""
-        return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
-
-    @property
-    def contains_rdkit(self) -> bool:
-        """Indicates if any of the discrete parameters uses RDKIT encoding."""
-        return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
-
-    @property
-    def param_bounds_comp(self) -> torch.Tensor:
-        """
-        Returns bounds as tensor.
-        """
-        return torch.hstack(
-            [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
-        )
-
-    def state_dict(self) -> dict:
-        """Creates a dictionary representing the object's internal state."""
-        state_dict = dict(
-            empty_encoding=self.empty_encoding,
-            discrete=self.discrete.state_dict(),
-        )
-        return state_dict
-
-    def load_state_dict(self, state_dict: dict) -> None:
-        """Restores a given object state."""
-        self.empty_encoding = state_dict["empty_encoding"]
-        self.discrete.load_state_dict(state_dict["discrete"])
-
-    def transform(
-        self,
-        data: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """
-        Transforms data (such as the measurements) from experimental to computational
-        representation. Continuous parameters are not transformed but included.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed. Must contain all specified parameters, can
-            contain more columns.
-
-        Returns
-        -------
-        pd.DataFrame
-            A dataframe with the parameters in computational representation.
-        """
-        # Transform subspaces separately
-        df_discrete = self.discrete.transform(data)
-        df_continuous = self.continuous.transform(data)
-
-        # Combine Subspaces
-        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
-
-        return comp_rep
+class SearchSpaceType(Enum):
+    DISCRETE = "DISCRETE"
+    CONTINUOUS = "CONTINUOUS"
+    EITHER = "EITHER"
+    HYBRID = "HYBRID"
 
 
+@define
 class SubspaceDiscrete:
     """
     Class for managing discrete search spaces.
@@ -146,54 +50,71 @@ class SubspaceDiscrete:
     parameter views.
     """
 
-    def __init__(
-        self,
+    parameters: List[DiscreteParameter]
+    exp_rep: pd.DataFrame = field(eq=eq_dataframe())
+    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
+    metadata: pd.DataFrame = field(eq=eq_dataframe())
+    empty_encoding: bool = False
+
+    @metadata.default
+    def default_metadata(self) -> pd.DataFrame:
+        columns = ["was_recommended", "was_measured", "dont_recommend"]
+
+        # If the discrete search space is empty, explicitly return an empty dataframe
+        # instead of simply using a zero-length index. Otherwise, the boolean dtype
+        # would be lost during a serialization roundtrip as there would be no
+        # data available that allows to determine the type, causing subsequent
+        # equality checks to fail.
+        if self.empty:
+            return pd.DataFrame(columns=columns)
+
+        return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
+
+    def __attrs_post_init__(self):
+        # Create a dataframe containing the computational parameter representation
+        # (ignoring all columns that do not carry any covariate information).
+        # TODO[12758]: Should we always drop single value columns without informing the
+        #  user? Can have undesired/unexpected side-effects (see ***REMOVED*** project).
+        comp_rep = self.transform(self.exp_rep)
+        comp_rep = df_drop_single_value_columns(comp_rep)
+        self.comp_rep = comp_rep
+
+    @classmethod
+    def create(
+        cls,
         parameters: List[DiscreteParameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-        init_dataframes: bool = True,
-    ):
+    ) -> "SubspaceDiscrete":
         """See `SearchSpace` class."""
         # Store the input
-        self.parameters = parameters
-        self.empty_encoding = empty_encoding
         if constraints is None:
-            self.constraints = []
+            constraints = []
         else:
             # Reorder the constraints according to their execution order
-            self.constraints = sorted(
+            constraints = sorted(
                 constraints, key=lambda x: _constraints_order.index(x.type)
             )
 
-        self.exp_rep: Optional[pd.DataFrame] = None
-        self.comp_rep: Optional[pd.DataFrame] = None
-        self.metadata: Optional[pd.DataFrame] = None
+        # Create a dataframe representing the experimental search space
+        exp_rep = parameter_cartesian_prod_to_df(parameters)
 
-        # Initialize discrete search space dataframes
-        if init_dataframes:
-            # Create a dataframe representing the experimental search space
-            self.exp_rep = parameter_cartesian_prod_to_df(parameters)
+        # Remove entries that violate parameter constraints:
+        for constraint in (c for c in constraints if c.eval_during_creation):
+            inds = constraint.get_invalid(exp_rep)
+            exp_rep.drop(index=inds, inplace=True)
+        exp_rep.reset_index(inplace=True, drop=True)
 
-            # Remove entries that violate parameter constraints:
-            for constraint in (c for c in self.constraints if c.eval_during_creation):
-                inds = constraint.get_invalid(self.exp_rep)
-                self.exp_rep.drop(index=inds, inplace=True)
-            self.exp_rep.reset_index(inplace=True, drop=True)
+        # Telemetry
+        telemetry_record_value("count-new_searchspace_created", 1)
+        telemetry_record_value("num_parameters", len(parameters))
+        telemetry_record_value("num_constraints", len(constraints))
 
-            # Create a dataframe containing the computational parameter representation
-            # (ignoring all columns that do not carry any covariate information).
-            self.comp_rep = self.transform(self.exp_rep)
-            self.comp_rep = df_drop_single_value_columns(self.comp_rep)
-
-            # Create a dataframe storing the experiment metadata
-            self.metadata = pd.DataFrame(
-                {
-                    "was_recommended": False,
-                    "was_measured": False,
-                    "dont_recommend": False,
-                },
-                index=self.exp_rep.index,
-            )
+        return SubspaceDiscrete(
+            parameters=parameters,
+            exp_rep=exp_rep,
+            empty_encoding=empty_encoding,
+        )
 
     @property
     def empty(self):
@@ -218,23 +139,6 @@ class SubspaceDiscrete:
             ]
         )
         return torch.from_numpy(bounds)
-
-    def state_dict(self) -> dict:
-        """Creates a dictionary representing the object's internal state."""
-        state_dict = dict(
-            empty_encoding=self.empty_encoding,
-            exp_rep=self.exp_rep,
-            comp_rep=self.comp_rep,
-            metadata=self.metadata,
-        )
-        return state_dict
-
-    def load_state_dict(self, state_dict: dict) -> None:
-        """Restores a given object state."""
-        self.empty_encoding = state_dict["empty_encoding"]
-        self.exp_rep = state_dict["exp_rep"]
-        self.comp_rep = state_dict["comp_rep"]
-        self.metadata = state_dict["metadata"]
 
     def mark_as_measured(
         self,
@@ -334,8 +238,8 @@ class SubspaceDiscrete:
 
             # For numeric parameters, match the entry with the smallest deviation
             # TODO: allow alternative distance metrics
-            for param in num_cols:
-                abs_diff = (self.exp_rep[param] - row[param]).abs()
+            for col in num_cols:
+                abs_diff = (self.exp_rep[col] - row[col]).abs()
                 match &= abs_diff == abs_diff.min()
 
             # We expect exactly one match. If that's not the case, print a warning.
@@ -425,36 +329,24 @@ class SubspaceDiscrete:
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
-        # IMPROVE: The following is a simple mechanism to implement statefulness of
-        #   the transformation. However, the state is effectively implemented through
-        #   the presence of the `comp_rep` member and hence outside of this function.
-        #   Also, the effective column subset is determined outside of this function.
-        #   A slightly better alternative would be to use transformation object that
-        #   internally keeps track of the state.
+        # If the computational representation has already been built (with potentially
+        # removing some columns, e.g. due to decorrelation or dropping constant ones),
+        # any subsequent transformation should yield the same columns.
         try:
-            # If this does not raise an error, the search space constructor has
-            # already been called and the columns to be kept are known. Hence,
-            # every subsequent transformation should adhere to the same column subset.
             comp_rep = comp_rep[self.comp_rep.columns]
         except AttributeError:
-            # Otherwise, the transformation is being called by the search space
-            # constructor so that no column filtering is needed.
             pass
 
         return comp_rep
 
 
+@define
 class SubspaceContinuous:
     """
     Class for managing continuous search spaces.
     """
 
-    def __init__(
-        self,
-        parameters: List[NumericContinuous],
-    ):
-        """See `SearchSpace` class."""
-        self.parameters: List[NumericContinuous] = parameters
+    parameters: List[NumericContinuous]
 
     @property
     def empty(self):
@@ -475,7 +367,7 @@ class SubspaceContinuous:
         """
         if not self.parameters:
             return torch.empty(2, 0)
-        return torch.tensor([p.bounds for p in self.parameters]).T
+        return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
 
     def transform(
         self,
@@ -584,3 +476,135 @@ class SubspaceContinuous:
         )
 
         return pd.DataFrame(index=index).reset_index()
+
+
+@define
+class SearchSpace(SerialMixin):
+    """
+    Class for managing the overall search space, which might be purely discrete, purely
+    continuous, or hybrid.
+
+    NOTE:
+        Created objects related to the computational representations of parameters
+        (e.g., parameter bounds, computational dataframes, etc.) may use a different
+        parameter order than what is specified through the constructor: While the
+        passed parameter list can contain parameters in arbitrary order, the
+        aforementioned objects (by convention) list discrete parameters first, followed
+        by continuous ones.
+    """
+
+    discrete: SubspaceDiscrete
+    continuous: SubspaceContinuous
+
+    parameters: List[Parameter] = field(validator=min_len(1))
+    empty_encoding: bool = False
+
+    @classmethod
+    def create(
+        cls,
+        parameters: List[Parameter],
+        constraints: Optional[List[Constraint]] = None,
+        empty_encoding: bool = False,
+    ) -> "SearchSpace":
+        """
+        Parameters
+        ----------
+        parameters : List[Parameter]
+            The parameters spanning the search space.
+        constraints : List[Constraint], optional
+            An optional set of constraints restricting the valid parameter space.
+        empty_encoding : bool, default: False
+            If True, uses an "empty" encoding for all parameters. This is useful,
+            for instance, in combination with random search strategies that
+            do not read the actual parameter values, since it avoids the
+            (potentially costly) transformation of the parameter values to their
+            computational representation.
+        """
+        discrete: SubspaceDiscrete = SubspaceDiscrete.create(
+            parameters=[
+                cast(DiscreteParameter, p) for p in parameters if p.is_discrete
+            ],
+            constraints=constraints,
+            empty_encoding=empty_encoding,
+        )
+        continuous: SubspaceContinuous = SubspaceContinuous(
+            parameters=[
+                cast(NumericContinuous, p) for p in parameters if not p.is_discrete
+            ],
+        )
+
+        return SearchSpace(
+            discrete=discrete,
+            continuous=continuous,
+            parameters=parameters,
+            empty_encoding=empty_encoding,
+        )
+
+    @property
+    def type(self) -> SearchSpaceType:
+        if self.discrete.empty and not self.continuous.empty:
+            return SearchSpaceType.CONTINUOUS
+        if not self.discrete.empty and self.continuous.empty:
+            return SearchSpaceType.DISCRETE
+        if not self.discrete.empty and not self.continuous.empty:
+            return SearchSpaceType.HYBRID
+        raise RuntimeError("This line should be impossible to reach.")
+
+    @property
+    def contains_mordred(self) -> bool:
+        """Indicates if any of the discrete parameters uses MORDRED encoding."""
+        return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
+
+    @property
+    def contains_rdkit(self) -> bool:
+        """Indicates if any of the discrete parameters uses RDKIT encoding."""
+        return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
+
+    @property
+    def param_bounds_comp(self) -> torch.Tensor:
+        """
+        Returns bounds as tensor.
+        """
+        return torch.hstack(
+            [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
+        )
+
+    def transform(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Transforms data (such as the measurements) from experimental to computational
+        representation. Continuous parameters are not transformed but included.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The data to be transformed. Must contain all specified parameters, can
+            contain more columns.
+
+        Returns
+        -------
+        pd.DataFrame
+            A dataframe with the parameters in computational representation.
+        """
+        # Transform subspaces separately
+        df_discrete = self.discrete.transform(data)
+        df_continuous = self.continuous.transform(data)
+
+        # Combine Subspaces
+        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
+
+        return comp_rep
+
+
+# TODO: The following structuring hook is a workaround for field with init=False.
+#   https://github.com/python-attrs/cattrs/issues/40
+
+
+def structure_hook(dict_, type_):
+    dict_.pop("comp_rep")
+    return cattrs.structure_attrs_fromdict(dict_, type_)
+
+
+cattrs.register_structure_hook(SubspaceDiscrete, structure_hook)
