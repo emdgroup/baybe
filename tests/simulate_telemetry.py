@@ -6,7 +6,13 @@ the results can be viewed on AWS CloudWatch.
 import os
 from random import randint
 
-from baybe.core import BayBE, BayBEConfig
+from baybe.core import BayBE
+from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.strategies.bayesian import SequentialGreedyRecommender
+from baybe.strategies.sampling import RandomRecommender
+from baybe.strategies.strategy import Strategy
+from baybe.targets import NumericalTarget, Objective
 from baybe.telemetry import get_user_hash
 from baybe.utils import add_fake_results
 
@@ -41,61 +47,34 @@ dict_ligand = {
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
 
-cofig_dict = {
-    "project_name": "Direct Arylation",
-    "allow_repeated_recommendations": False,
-    "allow_recommending_already_measured": False,
+parameters = [
+    GenericSubstance(name="Solvent", data=dict_solvent, encoding="MORDRED"),
+    GenericSubstance(name="Base", data=dict_base, encoding="MORDRED"),
+    GenericSubstance(name="Ligand", data=dict_ligand, encoding="MORDRED"),
+    NumericDiscrete(name="Temp_C", values=[90, 105, 120], tolerance=2),
+    NumericDiscrete(name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005),
+]
+config = {
+    "searchspace": SearchSpace.create(
+        parameters=parameters,
+        constraints=None,
+    ),
+    "objective": Objective(
+        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
+    ),
+    "strategy": Strategy(
+        recommender=SequentialGreedyRecommender(),
+        initial_recommender=RandomRecommender(),
+        allow_repeated_recommendations=False,
+        allow_recommending_already_measured=False,
+    ),
     "numerical_measurements_must_be_within_tolerance": True,
-    "parameters": [
-        {
-            "name": "Solvent",
-            "type": "SUBSTANCE",
-            "data": dict_solvent,
-            "encoding": "MORDRED",
-        },
-        {
-            "name": "Base",
-            "type": "SUBSTANCE",
-            "data": dict_base,
-            "encoding": "MORDRED",
-        },
-        {
-            "name": "Ligand",
-            "type": "SUBSTANCE",
-            "data": dict_ligand,
-            "encoding": "MORDRED",
-        },
-        {
-            "name": "Temp_C",
-            "type": "NUM_DISCRETE",
-            "values": [90, 105, 120],
-            "tolerance": 2,
-        },
-        {
-            "name": "Concentration",
-            "type": "NUM_DISCRETE",
-            "values": [0.057, 0.1, 0.153],
-            "tolerance": 0.005,
-        },
-    ],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "yield",
-                "type": "NUM",
-                "mode": "MAX",
-            },
-        ],
-    },
 }
-
-config = BayBEConfig(**cofig_dict)
 
 
 # Actual User
 print(f"Actual User: {get_user_hash()}")
-baybe_object = BayBE(config)
+baybe_object = BayBE(**config)
 for k in range(randint(4, 6)):
     dat = baybe_object.recommend(randint(2, 3))
     add_fake_results(dat, baybe_object)
@@ -104,7 +83,7 @@ for k in range(randint(4, 6)):
 # Fake User1 - 5 iterations
 print("Fake User1")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1"
-baybe_object = BayBE(config)
+baybe_object = BayBE(**config)
 for k in range(randint(2, 3)):
     dat = baybe_object.recommend(randint(3, 4))
     add_fake_results(dat, baybe_object)
@@ -113,7 +92,7 @@ for k in range(randint(2, 3)):
 # Fake User2 - 2 iterations
 print("Fake User2")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_2"
-baybe_object = BayBE(config)
+baybe_object = BayBE(**config)
 for k in range(randint(2, 3)):
     dat = baybe_object.recommend(randint(4, 5))
     add_fake_results(dat, baybe_object)
@@ -123,7 +102,7 @@ for k in range(randint(2, 3)):
 print("Fake User3")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_3"
 os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
-baybe_object = BayBE(config)
+baybe_object = BayBE(**config)
 for k in range(randint(5, 7)):
     dat = baybe_object.recommend(randint(2, 3))
     add_fake_results(dat, baybe_object)
