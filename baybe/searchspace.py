@@ -26,7 +26,7 @@ from .parameters import (
     parameter_cartesian_prod_to_df,
 )
 from .telemetry import telemetry_record_value
-from .utils import df_drop_single_value_columns, eq_dataframe
+from .utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -153,115 +153,19 @@ class SubspaceDiscrete:
         measurements : pd.DataFrame
             A dataframe containing parameter settings that should be marked as measured.
         numerical_measurements_must_be_within_tolerance : bool
-            See `_match_measurement_with_searchspace_indices`.
+            See utility `fuzzy_row_match`.
 
         Returns
         -------
         Nothing.
         """
-        inds_matched = self._match_measurement_with_searchspace_indices(
+        inds_matched = fuzzy_row_match(
+            self.exp_rep,
             measurements,
+            self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
         self.metadata.loc[inds_matched, "was_measured"] = True
-
-    def _match_measurement_with_searchspace_indices(
-        self,
-        df: pd.DataFrame,
-        numerical_measurements_must_be_within_tolerance: bool,
-    ) -> pd.Index:
-        """
-        Matches rows of a dataframe (e.g. measurements from an experiment)
-        to the indices of the search space dataframe.
-
-        This is useful for validity checks and to automatically match measurements to
-        entries in the search space, e.g. to detect which ones have been measured.
-        For categorical parameters, there needs to be an exact match with any of the
-        allowed values. For numerical parameters, the user can decide via a flag
-        whether values outside the tolerance should be accepted.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            The data that should be checked for matching entries in the search space.
-        numerical_measurements_must_be_within_tolerance : bool
-            If True, numerical parameters are matched with the search space elements
-            only if there is a match within the parameter tolerance. If False,
-            the closest match is considered, irrespective of the distance.
-
-        Returns
-        -------
-        pd.Index
-            The index of the matching search space entries.
-        """
-        # IMPROVE: neater implementation (e.g. via fuzzy join)
-
-        # Assert that all parameters appear in the given dataframe
-        if not all(col in df.columns for col in self.exp_rep.columns):
-            raise ValueError(
-                "Values for all parameter must be specified in the given dataframe."
-            )
-
-        inds_matched = []
-
-        # Iterate over all input rows
-        for ind, row in df.iterrows():
-
-            # Check if the row represents a valid input
-            valid = True
-            for param in self.parameters:
-                if param.is_numeric:
-                    if numerical_measurements_must_be_within_tolerance:
-                        valid &= param.is_in_range(row[param.name])
-                else:
-                    valid &= param.is_in_range(row[param.name])
-                if not valid:
-                    raise ValueError(
-                        f"Input data on row with the index {row.name} has invalid "
-                        f"values in parameter '{param.name}'. "
-                        f"For categorical parameters, values need to exactly match a "
-                        f"valid choice defined in your config. "
-                        f"For numerical parameters, a match is accepted only if "
-                        f"the input value is within the specified tolerance/range. Set "
-                        f"the flag 'numerical_measurements_must_be_within_tolerance' "
-                        f"to 'False' to disable this behavior."
-                    )
-
-            # Differentiate category-like and discrete numerical parameters
-            cat_cols = [p.name for p in self.parameters if not p.is_numeric]
-            num_cols = [
-                p.name for p in self.parameters if (p.is_numeric and p.is_discrete)
-            ]
-
-            # Discrete parameters must match exactly
-            match = self.exp_rep[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
-
-            # For numeric parameters, match the entry with the smallest deviation
-            # TODO: allow alternative distance metrics
-            for col in num_cols:
-                abs_diff = (self.exp_rep[col] - row[col]).abs()
-                match &= abs_diff == abs_diff.min()
-
-            # We expect exactly one match. If that's not the case, print a warning.
-            inds_found = self.exp_rep.index[match].to_list()
-            if len(inds_found) == 0 and len(num_cols) > 0:
-                log.warning(
-                    "Input row with index %s could not be matched to the search space. "
-                    "This could indicate that something went wrong.",
-                    ind,
-                )
-            elif len(inds_found) > 1:
-                log.warning(
-                    "Input row with index %s has multiple matches with "
-                    "the search space. This could indicate that something went wrong. "
-                    "Matching only first occurrence.",
-                    ind,
-                )
-                inds_matched.append(inds_found[0])
-            else:
-                inds_matched.extend(inds_found)
-
-        return pd.Index(inds_matched)
 
     def get_candidates(
         self,
