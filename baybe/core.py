@@ -102,9 +102,9 @@ class BayBE(SerialMixin):
         # Telemetry: log the function call
         telemetry_record_value("count-add_results", 1)
 
-        # Telemetry: log fraction of measurements that correspond to previously
+        # Telemetry: log percentage of measurements that correspond to previously
         # recommended ones
-        recommended_measurements_fraction = (
+        recommended_measurements_percentage = (
             len(
                 fuzzy_row_match(
                     self.cached_recommendation,
@@ -117,7 +117,7 @@ class BayBE(SerialMixin):
             * 100.0
         )
         telemetry_record_value(
-            "recommended_measurements_fraction", recommended_measurements_fraction
+            "recommended_measurements_percentage", recommended_measurements_percentage
         )
 
         # Invalidate recommendation cache first (in case of uncaught exceptions below)

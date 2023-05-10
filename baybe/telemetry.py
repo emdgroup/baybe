@@ -72,7 +72,7 @@ def telemetry_record_value(
     """
     Transmits a given value under a given label to the telemetry backend. The values are
      recorded as histograms, i.e. the info about record time and sample size is also
-     available. This can be sued to cout function calls (record the value 1) or
+     available. This can be used to count function calls (record the value 1) or
      statistics about any variable (record its value). Due to serialization limitations
      only certain data types of value are allowed.
 
