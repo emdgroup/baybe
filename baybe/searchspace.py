@@ -105,11 +105,6 @@ class SubspaceDiscrete:
             exp_rep.drop(index=inds, inplace=True)
         exp_rep.reset_index(inplace=True, drop=True)
 
-        # Telemetry
-        telemetry_record_value("count-new_searchspace_created", 1)
-        telemetry_record_value("num_parameters", len(parameters))
-        telemetry_record_value("num_constraints", len(constraints))
-
         return SubspaceDiscrete(
             parameters=parameters,
             exp_rep=exp_rep,
@@ -435,6 +430,13 @@ class SearchSpace(SerialMixin):
             parameters=[
                 cast(NumericContinuous, p) for p in parameters if not p.is_discrete
             ],
+        )
+
+        # Telemetry
+        telemetry_record_value("count-new_searchspace_created", 1)
+        telemetry_record_value("num_parameters", len(parameters))
+        telemetry_record_value(
+            "num_constraints", len(constraints) if constraints else 0
         )
 
         return SearchSpace(
