@@ -13,6 +13,8 @@ from opentelemetry.sdk._metrics import MeterProvider
 from opentelemetry.sdk._metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
+from .utils import strtobool
+
 _instruments = {}
 _resource = Resource.create({"service.namespace": "BayBE-test2", "service.name": "SDK"})
 _reader = PeriodicExportingMetricReader(
@@ -58,12 +60,7 @@ def is_enabled() -> bool:
     -------
         bool
     """
-    return os.environ.get("BAYBE_TELEMETRY_ENABLED", "").lower() not in [
-        "false",
-        "no",
-        "off",
-        "0",
-    ]
+    return strtobool(os.environ.get("BAYBE_TELEMETRY_ENABLED", "true"))
 
 
 def telemetry_record_value(

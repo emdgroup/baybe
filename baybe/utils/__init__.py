@@ -880,3 +880,28 @@ def fuzzy_row_match(
             inds_matched.extend(inds_found)
 
     return pd.Index(inds_matched)
+
+
+def strtobool(val: str) -> bool:
+    """
+    Convert a string representation of truth to True or False. Adapted from distutils.
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+
+    Parameters
+    ----------
+    val: str
+        String to be checked.
+
+    Returns
+    -------
+    bool
+    """
+    if val.lower() in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if val.lower() in ("n", "no", "f", "false", "off", "0"):
+        return False
+
+    raise ValueError(f"Invalid truth value: {val}")
