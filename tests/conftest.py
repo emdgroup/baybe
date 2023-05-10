@@ -35,24 +35,37 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
 
 
-# Disable telemetry at start of session
-def pytest_sessionstart(session):  # pylint: disable=unused-argument
-    """Called at start of session"""
+@pytest.fixture(scope="session", autouse=True)
+def disable_telemetry():
+    """
+    Disables telemetry during pytesting via fixture
+    """
+    # Remember the original value of the environment variables
+    telemetry_enabled_before = os.environ.get("BAYBE_TELEMETRY_ENABLED")
+    telemetry_userhash_before = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH")
+
+    # Set the environment variable to a certain value for the duration of the tests
     os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
     os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "PYTEST"
 
+    # Yield control to the tests
+    yield
 
-# Re-Enable telemetry at end of session
-def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
-    """Called at end of session"""
-    os.environ.pop("BAYBE_TELEMETRY_ENABLED")
-    os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
+    # Restore the original value of the environment variables
+    if telemetry_enabled_before is not None:
+        os.environ["BAYBE_TELEMETRY_ENABLED"] = telemetry_enabled_before
+    else:
+        os.environ.pop("BAYBE_TELEMETRY_ENABLED")
+
+    if telemetry_userhash_before is not None:
+        os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = telemetry_userhash_before
+    else:
+        os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
 
 
 # Add option to only run fast tests
