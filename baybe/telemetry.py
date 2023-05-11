@@ -13,15 +13,14 @@ from opentelemetry.sdk._metrics import MeterProvider
 from opentelemetry.sdk._metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
-from .utils import baybe_config, strtobool
-
+from .utils import strtobool
 
 _instruments = {}
 _resource = Resource.create({"service.namespace": "BayBE-test2", "service.name": "SDK"})
 _reader = PeriodicExportingMetricReader(
     exporter=OTLPMetricExporter(
-        endpoint=f"{baybe_config.get('telemetry', 'backend_url')}"
-        f":{baybe_config.get('telemetry', 'backend_port')}",
+        endpoint="***REMOVED***.elb."
+        "eu-central-1.amazonaws.com:4317",
         insecure=True,
     )
 )

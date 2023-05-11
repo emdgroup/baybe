@@ -5,10 +5,7 @@ Collection of small utilities.
 """
 from __future__ import annotations
 
-import configparser
-
 import logging
-import os
 import random
 import ssl
 import urllib.request
@@ -908,7 +905,3 @@ def strtobool(val: str) -> bool:
         return False
 
     raise ValueError(f"Invalid truth value: {val}")
-
-
-baybe_config = configparser.ConfigParser()
-baybe_config.read(os.path.join(os.path.dirname(__file__), "../config.ini"))
