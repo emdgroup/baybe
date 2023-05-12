@@ -48,10 +48,12 @@ def disable_telemetry():
     # Remember the original value of the environment variables
     telemetry_enabled_before = os.environ.get("BAYBE_TELEMETRY_ENABLED")
     telemetry_userhash_before = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH")
+    telemetry_hosthash_before = os.environ.get("BAYBE_DEBUG_FAKE_HOSTHASH")
 
     # Set the environment variable to a certain value for the duration of the tests
     os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
     os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "PYTEST"
+    os.environ["BAYBE_DEBUG_FAKE_HOSTHASH"] = "PYTEST"
 
     # Yield control to the tests
     yield
@@ -66,6 +68,11 @@ def disable_telemetry():
         os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = telemetry_userhash_before
     else:
         os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
+
+    if telemetry_hosthash_before is not None:
+        os.environ["BAYBE_DEBUG_FAKE_HOSTHASH"] = telemetry_hosthash_before
+    else:
+        os.environ.pop("BAYBE_DEBUG_FAKE_HOSTHASH")
 
 
 # Add option to only run fast tests

@@ -13,7 +13,7 @@ from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.telemetry import get_user_hash
+from baybe.telemetry import get_user_details
 from baybe.utils import add_fake_results
 
 dict_solvent = {
@@ -73,7 +73,7 @@ config = {
 
 
 # Actual User
-print(f"Actual User: {get_user_hash()}")
+print(f"Actual User Details: {get_user_details()}")
 baybe_object = BayBE(**config)
 for k in range(randint(4, 6)):
     dat = baybe_object.recommend(randint(2, 3))

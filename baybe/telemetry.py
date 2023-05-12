@@ -5,7 +5,7 @@ import getpass
 import hashlib
 import os
 import socket
-from typing import Union
+from typing import Dict, Union
 
 from opentelemetry._metrics import get_meter, set_meter_provider
 from opentelemetry.exporter.otlp.proto.grpc._metric_exporter import OTLPMetricExporter
@@ -31,7 +31,7 @@ set_meter_provider(_provider)
 _meter = get_meter("aws-otel", "1.0")
 
 
-def get_user_hash() -> str:
+def get_user_details() -> Dict[str, str]:
     """
     Generate a unique hash value for the current user based on the host name and
     uppercase username, e.g. the first 10 upper-case digits of the sha256
@@ -39,16 +39,19 @@ def get_user_hash() -> str:
 
     Returns
     -------
-        str
+        dict: Contains the hostname and username in hashed format
     """
-    user_hash = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH", None) or (
-        hashlib.sha256((socket.gethostname() + getpass.getuser().upper()).encode())
+    username_hash = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH", None) or (
+        hashlib.sha256(getpass.getuser().upper().encode())
         .hexdigest()
         .upper()[:10]  # take only first 10 digits to enhance readability in dashboard
     )
+    hostname_hash = os.environ.get("BAYBE_DEBUG_FAKE_HOSTHASH", None) or (
+        hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
+    )
     # Alternatively one could take the MAC address like hex(uuid.getnode())
 
-    return user_hash
+    return {"host": hostname_hash, "user": username_hash}
 
 
 def is_enabled() -> bool:
@@ -93,4 +96,4 @@ def telemetry_record_value(
                 description=f"Histogram for instrument {instrument_name}",
             )
             _instruments[instrument_name] = histogram
-        histogram.record(value, {"user_hash": get_user_hash()})
+        histogram.record(value, get_user_details())
