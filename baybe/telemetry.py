@@ -16,7 +16,7 @@ from opentelemetry.sdk.resources import Resource
 from .utils import strtobool
 
 _instruments = {}
-_resource = Resource.create({"service.namespace": "BayBE-test2", "service.name": "SDK"})
+_resource = Resource.create({"service.namespace": "BayBE", "service.name": "SDK"})
 _reader = PeriodicExportingMetricReader(
     exporter=OTLPMetricExporter(
         endpoint="***REMOVED***.elb."
