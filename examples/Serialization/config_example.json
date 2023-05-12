@@ -3,7 +3,7 @@
         {
             "type": "Categorical",
             "name": "Granularity",
-            "_values": [
+            "values": [
                 "coarse",
                 "ultra-fine"
             ],
@@ -12,7 +12,7 @@
         {
             "type": "NumericDiscrete",
             "name": "Pressure[bar]",
-            "_values": [
+            "values": [
                 1,
                 5,
                 10
