@@ -32,6 +32,11 @@ from .utils.serialization import SerialMixin
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
 
+# Telemetry Labels
+TELEMETRY_LABEL_NUM_PARAMETERS = "VALUE_num-parameters"
+TELEMETRY_LABEL_NUM_CONSTRAINTS = "VALUE_num-constraints"
+TELEMETRY_LABEL_COUNT_SEARCHSPACE_CREATION = "COUNT_searchspace-created"
+
 
 class SearchSpaceType(Enum):
     DISCRETE = "DISCRETE"
@@ -433,10 +438,10 @@ class SearchSpace(SerialMixin):
         )
 
         # Telemetry
-        telemetry_record_value("count-new_searchspace_created", 1)
-        telemetry_record_value("num_parameters", len(parameters))
+        telemetry_record_value(TELEMETRY_LABEL_COUNT_SEARCHSPACE_CREATION, 1)
+        telemetry_record_value(TELEMETRY_LABEL_NUM_PARAMETERS, len(parameters))
         telemetry_record_value(
-            "num_constraints", len(constraints) if constraints else 0
+            TELEMETRY_LABEL_NUM_CONSTRAINTS, len(constraints) if constraints else 0
         )
 
         return SearchSpace(

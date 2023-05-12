@@ -24,6 +24,14 @@ from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
+# Telemetry Labels
+TELEMETRY_LABEL_RECOMMENDED_MEASUREMENTS_PERCENTAGE = (
+    "VALUE_recommended-measurements-percentage"
+)
+TELEMETRY_LABEL_BATCH_QUANTITY = "VALUE_batch-quantity"
+TELEMETRY_LABEL_COUNT_ADD_RESULTS = "COUNT_add-results"
+TELEMETRY_LABEL_COUNT_RECOMMEND = "COUNT_recommend"
+
 # TODO[12356]: There should be a better way than registering with the global converter.
 cattrs.register_unstructure_hook(
     pd.DataFrame, lambda x: x.to_json(orient="split", double_precision=15)
@@ -100,7 +108,7 @@ class BayBE(SerialMixin):
         Nothing (the internal database is modified in-place).
         """
         # Telemetry: log the function call
-        telemetry_record_value("count-add_results", 1)
+        telemetry_record_value(TELEMETRY_LABEL_COUNT_ADD_RESULTS, 1)
 
         # Telemetry: log percentage of measurements that correspond to previously
         # recommended ones
@@ -117,7 +125,8 @@ class BayBE(SerialMixin):
             * 100.0
         )
         telemetry_record_value(
-            "recommended_measurements_percentage", recommended_measurements_percentage
+            TELEMETRY_LABEL_RECOMMENDED_MEASUREMENTS_PERCENTAGE,
+            recommended_measurements_percentage,
         )
 
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
@@ -184,8 +193,8 @@ class BayBE(SerialMixin):
             Contains the recommendations in experimental representation.
         """
         # Telemetry
-        telemetry_record_value("count-recommend", 1)
-        telemetry_record_value("batch_quantity", batch_quantity)
+        telemetry_record_value(TELEMETRY_LABEL_COUNT_RECOMMEND, 1)
+        telemetry_record_value(TELEMETRY_LABEL_BATCH_QUANTITY, batch_quantity)
 
         if batch_quantity < 1:
             raise ValueError(
