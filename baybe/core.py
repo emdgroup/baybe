@@ -12,7 +12,7 @@ from typing import List
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, Factory, field
 
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
@@ -49,7 +49,7 @@ class BayBE(SerialMixin):
     # DOE specifications
     searchspace: SearchSpace
     objective: Objective
-    strategy: Strategy
+    strategy: Strategy = Factory(Strategy)
 
     # Data
     measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
