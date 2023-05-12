@@ -1,7 +1,7 @@
 {
     "parameters": [
         {
-            "_type": "Categorical",
+            "type": "Categorical",
             "name": "Granularity",
             "_values": [
                 "coarse",
@@ -10,7 +10,7 @@
             "encoding": "OHE"
         },
         {
-            "_type": "NumericDiscrete",
+            "type": "NumericDiscrete",
             "name": "Pressure[bar]",
             "_values": [
                 1,
@@ -20,7 +20,7 @@
             "tolerance": 0.2
         },
         {
-            "_type": "GenericSubstance",
+            "type": "GenericSubstance",
             "name": "Solvent",
             "data": {
                 "Solvent A": "COC",
@@ -42,10 +42,10 @@
     },
     "strategy": {
         "initial_recommender": {
-            "_type": "FPSRecommender"
+            "type": "FPSRecommender"
         },
         "recommender": {
-            "_type": "SequentialGreedyRecommender",
+            "type": "SequentialGreedyRecommender",
             "surrogate_model_cls": "GP",
             "acquisition_function_cls": "qEI"
         },
