@@ -1,0 +1,55 @@
+{
+    "parameters": [
+        {
+            "_type": "Categorical",
+            "name": "Granularity",
+            "_values": [
+                "coarse",
+                "ultra-fine"
+            ],
+            "encoding": "OHE"
+        },
+        {
+            "_type": "NumericDiscrete",
+            "name": "Pressure[bar]",
+            "_values": [
+                1,
+                5,
+                10
+            ],
+            "tolerance": 0.2
+        },
+        {
+            "_type": "GenericSubstance",
+            "name": "Solvent",
+            "data": {
+                "Solvent A": "COC",
+                "Solvent B": "CCCCC"
+            },
+            "decorrelate": true,
+            "encoding": "MORDRED"
+        }
+    ],
+    "constraints": [],
+    "objective": {
+        "mode": "SINGLE",
+        "targets": [
+            {
+                "name": "Yield",
+                "mode": "MAX"
+            }
+        ]
+    },
+    "strategy": {
+        "initial_recommender": {
+            "_type": "FPSRecommender"
+        },
+        "recommender": {
+            "_type": "SequentialGreedyRecommender",
+            "surrogate_model_cls": "GP",
+            "acquisition_function_cls": "qEI"
+        },
+        "allow_repeated_recommendations": false,
+        "allow_recommending_already_measured": false
+    }
+}
