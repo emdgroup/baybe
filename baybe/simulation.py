@@ -5,6 +5,7 @@ Provides functions to simulate a Bayesian DOE with BayBE given a lookup.
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from functools import partial
 from typing import Callable, Dict, List, Literal, Optional, TYPE_CHECKING, Union
 
@@ -133,7 +134,8 @@ def simulate_scenarios(
     results = pd.DataFrame()
 
     # Simulate all configuration variants
-    for scenario_name, baybe in scenarios.items():
+    for scenario_name, baybe_template in scenarios.items():
+
         # Create a dataframe to store the results for the current variant
         results_var = pd.DataFrame()
 
@@ -145,10 +147,8 @@ def simulate_scenarios(
             # Show the simulation progress
             pbar.set_description(scenario_name)
 
-            # Create a BayBE object with a new random seed
-            # IMPROVE: Potential speedup by copying the BayBE object + overwriting seed.
-            #   Requires a clean way to change the seed of the object without accessing
-            #   its members directly.
+            # Create a fresh BayBE object and set the corresponding random seed
+            baybe = deepcopy(baybe_template)
             random_seed = 1337 + k_mc
             set_random_seed(random_seed)
 
