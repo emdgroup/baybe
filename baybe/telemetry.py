@@ -13,6 +13,8 @@ from opentelemetry.sdk._metrics import MeterProvider
 from opentelemetry.sdk._metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
+import baybe
+
 from .utils import strtobool
 
 _instruments = {}
@@ -33,13 +35,12 @@ _meter = get_meter("aws-otel", "1.0")
 
 def get_user_details() -> Dict[str, str]:
     """
-    Generate a unique hash value for the current user based on the host name and
-    uppercase username, e.g. the first 10 upper-case digits of the sha256
-    hash of 'LTD1234M123132'.
+    Generate user details that are submitted as metadata with requested telemetry stats.
 
     Returns
     -------
-        dict: Contains the hostname and username in hashed format
+        dict: Contains the hostname and username in hashed format as well as the package
+         version
     """
     username_hash = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH", None) or (
         hashlib.sha256(getpass.getuser().upper().encode())
@@ -51,7 +52,7 @@ def get_user_details() -> Dict[str, str]:
     )
     # Alternatively one could take the MAC address like hex(uuid.getnode())
 
-    return {"host": hostname_hash, "user": username_hash}
+    return {"host": hostname_hash, "user": username_hash, "version": baybe.__version__}
 
 
 def is_enabled() -> bool:
