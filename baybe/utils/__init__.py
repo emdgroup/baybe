@@ -5,6 +5,7 @@ Collection of small utilities.
 """
 from __future__ import annotations
 
+import logging
 import random
 import ssl
 import urllib.request
@@ -41,7 +42,10 @@ from rdkit.Chem.AllChem import GetMorganFingerprintAsBitVect
 from torch import Tensor
 
 if TYPE_CHECKING:
-    from .core import BayBE  # TODO: fix unresolved import
+    from ..core import BayBE  # TODO: fix unresolved import
+    from ..parameters import Parameter
+
+log = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -342,7 +346,11 @@ def add_parameter_noise(
             else:
                 raise ValueError(
                     f"Parameter 'noise_type' was {noise_type} but must be either "
-                    f"'absolute' or 'relative_percent'."
+                    "'absolute' or 'relative_percent'."
+                )
+            if not param.is_discrete:  # respect continuous intervals
+                data[param.name].clip(
+                    param.bounds.lower, param.bounds.upper, inplace=True
                 )
 
 
@@ -770,3 +778,130 @@ def get_base_unstructure_hook(base):
 
 def eq_dataframe():
     return cmp_using(lambda x, y: x.equals(y))
+
+
+def fuzzy_row_match(
+    left_df: pd.DataFrame,
+    right_df: pd.DataFrame,
+    parameters: List[Parameter],
+    numerical_measurements_must_be_within_tolerance: bool,
+) -> pd.Index:
+    """
+    Matches rows of the right dataframe (e.g. measurements from an experiment)
+    to the rows of the left dataframe.
+
+    This is useful for validity checks and to automatically match measurements to
+    entries in the search space, e.g. to detect which ones have been measured.
+    For categorical parameters, there needs to be an exact match with any of the
+    allowed values. For numerical parameters, the user can decide via a flag
+    whether values outside the tolerance should be accepted.
+
+    Parameters
+    ----------
+    left_df : pd.DataFrame
+        The data that serves as lookup reference.
+    right_df : pd.DataFrame
+        The data that should be checked for matching rows in the left data frame.
+    parameters : list
+        List of baybe parameter objects that are needed to identify potential
+        tolerances.
+    numerical_measurements_must_be_within_tolerance : bool
+        If True, numerical parameters are matched with the search space elements
+        only if there is a match within the parameter tolerance. If False,
+        the closest match is considered, irrespective of the distance.
+
+    Returns
+    -------
+    pd.Index
+        The index of the matching rows in left_df.
+    """
+
+    # Assert that all parameters appear in the given dataframe
+    if not all(col in right_df.columns for col in left_df.columns):
+        raise ValueError(
+            "for fuzzy row matching all rows of the right dataframe need to be present"
+            " in the left dataframe."
+        )
+
+    inds_matched = []
+
+    # Iterate over all input rows
+    for ind, row in right_df.iterrows():
+        # Check if the row represents a valid input
+        valid = True
+        for param in parameters:
+            if param.is_numeric:
+                if numerical_measurements_must_be_within_tolerance:
+                    valid &= param.is_in_range(row[param.name])
+            else:
+                valid &= param.is_in_range(row[param.name])
+            if not valid:
+                raise ValueError(
+                    f"Input data on row with the index {row.name} has invalid "
+                    f"values in parameter '{param.name}'. "
+                    f"For categorical parameters, values need to exactly match a "
+                    f"valid choice defined in your config. "
+                    f"For numerical parameters, a match is accepted only if "
+                    f"the input value is within the specified tolerance/range. Set "
+                    f"the flag 'numerical_measurements_must_be_within_tolerance' "
+                    f"to 'False' to disable this behavior."
+                )
+
+        # Differentiate category-like and discrete numerical parameters
+        cat_cols = [p.name for p in parameters if not p.is_numeric]
+        num_cols = [p.name for p in parameters if (p.is_numeric and p.is_discrete)]
+
+        # Discrete parameters must match exactly
+        match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
+
+        # For numeric parameters, match the entry with the smallest deviation
+        # TODO: allow alternative distance metrics
+        for col in num_cols:
+            abs_diff = (left_df[col] - row[col]).abs()
+            match &= abs_diff == abs_diff.min()
+
+        # We expect exactly one match. If that's not the case, print a warning.
+        inds_found = left_df.index[match].to_list()
+        if len(inds_found) == 0 and len(num_cols) > 0:
+            log.warning(
+                "Input row with index %s could not be matched to the search space. "
+                "This could indicate that something went wrong.",
+                ind,
+            )
+        elif len(inds_found) > 1:
+            log.warning(
+                "Input row with index %s has multiple matches with "
+                "the search space. This could indicate that something went wrong. "
+                "Matching only first occurrence.",
+                ind,
+            )
+            inds_matched.append(inds_found[0])
+        else:
+            inds_matched.extend(inds_found)
+
+    return pd.Index(inds_matched)
+
+
+def strtobool(val: str) -> bool:
+    """
+    Convert a string representation of truth to True or False. Adapted from distutils.
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+
+    Parameters
+    ----------
+    val: str
+        String to be checked.
+
+    Returns
+    -------
+    bool
+    """
+    if val.lower() in ("y", "yes", "t", "true", "on", "1"):
+        return True
+    if val.lower() in ("n", "no", "f", "false", "off", "0"):
+        return False
+
+    raise ValueError(f"Invalid truth value: {val}")

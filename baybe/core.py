@@ -18,10 +18,19 @@ from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import eq_dataframe
+from baybe.telemetry import telemetry_record_value
+from baybe.utils import eq_dataframe, fuzzy_row_match
 from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
+
+# Telemetry Labels
+TELEMETRY_LABEL_RECOMMENDED_MEASUREMENTS_PERCENTAGE = (
+    "VALUE_recommended-measurements-percentage"
+)
+TELEMETRY_LABEL_BATCH_QUANTITY = "VALUE_batch-quantity"
+TELEMETRY_LABEL_COUNT_ADD_RESULTS = "COUNT_add-results"
+TELEMETRY_LABEL_COUNT_RECOMMEND = "COUNT_recommend"
 
 # TODO[12356]: There should be a better way than registering with the global converter.
 cattrs.register_unstructure_hook(
@@ -98,6 +107,28 @@ class BayBE(SerialMixin):
         -------
         Nothing (the internal database is modified in-place).
         """
+        # Telemetry: log the function call
+        telemetry_record_value(TELEMETRY_LABEL_COUNT_ADD_RESULTS, 1)
+
+        # Telemetry: log percentage of measurements that correspond to previously
+        # recommended ones
+        recommended_measurements_percentage = (
+            len(
+                fuzzy_row_match(
+                    self.cached_recommendation,
+                    data,
+                    self.parameters,
+                    self.numerical_measurements_must_be_within_tolerance,
+                )
+            )
+            / len(self.cached_recommendation)
+            * 100.0
+        )
+        telemetry_record_value(
+            TELEMETRY_LABEL_RECOMMENDED_MEASUREMENTS_PERCENTAGE,
+            recommended_measurements_percentage,
+        )
+
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self.cached_recommendation = pd.DataFrame()
 
@@ -161,6 +192,10 @@ class BayBE(SerialMixin):
         rec : pd.DataFrame
             Contains the recommendations in experimental representation.
         """
+        # Telemetry
+        telemetry_record_value(TELEMETRY_LABEL_COUNT_RECOMMEND, 1)
+        telemetry_record_value(TELEMETRY_LABEL_BATCH_QUANTITY, batch_quantity)
+
         if batch_quantity < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
