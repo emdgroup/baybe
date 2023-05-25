@@ -68,8 +68,27 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     return SearchSpace.create(parameters, constraints)
 
 
+def searchspace_validation_hook(specs: dict, _) -> None:
+    """
+    Similar to `searchspace_creation_hook` but without the actual searchspace creation
+    step, thus intended for validation purposes only. Additionally, explicitly asserts
+    uniqueness of parameter names, since duplicates would only be noticed during
+    searchspace creation.
+    """
+    parameters = cattrs.structure(specs["parameters"], List[Parameter])
+    param_names = [p.name for p in parameters]
+    if len(set(param_names)) != len(param_names):
+        raise ValueError("Config contains duplicate parameter names.")
+    constraints = specs.get("constraints", None)
+    if constraints:
+        constraints = cattrs.structure(specs["constraints"], Objective)
+
+
 _config_converter = cattrs.global_converter.copy()
 _config_converter.register_structure_hook(SearchSpace, searchspace_creation_hook)
+
+_validation_converter = cattrs.global_converter.copy()
+_validation_converter.register_structure_hook(SearchSpace, searchspace_validation_hook)
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
@@ -137,6 +156,16 @@ class BayBE(SerialMixin):
         #   'omit_if_default' option. Can be Implemented once the converter structure
         #   has been cleaned up.
         raise NotImplementedError()
+
+    @classmethod
+    def validate_config(cls, config_json: str) -> "BayBE":
+        """Validates a given BayBE configuration JSON."""
+        config = json.loads(config_json)
+        config["searchspace"] = {
+            "parameters": config.pop("parameters"),
+            "constraints": config.pop("constraints", None),
+        }
+        return _validation_converter.structure(config, BayBE)
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
