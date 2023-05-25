@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Interval` class for representing parameter/target bounds
 - Activated mypy for the first few modules and fixed their type issues
 - Automatic (de-)serialization and `SerialMixin` class
-- Basic serialization example and tests
+- Basic serialization example, demo and tests
+- Mechanisms for loading and validating config files
 - Telemetry via OpenTelemetry
 
 ### Changed
