@@ -14,5 +14,5 @@ print("Duration of object creation", perf_counter() - t)
 
 # Config validation only
 t = perf_counter()
-baybe = BayBE.validate_config(config_json)
+BayBE.validate_config(config_json)
 print("Duration of config validation", perf_counter() - t)

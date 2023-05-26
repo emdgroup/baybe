@@ -165,14 +165,14 @@ class BayBE(SerialMixin):
         raise NotImplementedError()
 
     @classmethod
-    def validate_config(cls, config_json: str) -> "BayBE":
+    def validate_config(cls, config_json: str) -> None:
         """Validates a given BayBE configuration JSON."""
         config = json.loads(config_json)
         config["searchspace"] = {
             "parameters": config.pop("parameters"),
             "constraints": config.pop("constraints", None),
         }
-        return _validation_converter.structure(config, BayBE)
+        _validation_converter.structure(config, BayBE)
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
