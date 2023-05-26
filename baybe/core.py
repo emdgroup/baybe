@@ -65,8 +65,10 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
     constraints = specs.get("constraints", None)
     if constraints:
-        constraints = cattrs.structure(specs["constraints"], Objective)
-        constraints = cattrs.structure(specs["constraints"], List[Constraint])
+        raise NotImplementedError("Constraint deserialization not yet available.")
+        constraints = cattrs.structure(  # pylint: disable=unreachable
+            specs["constraints"], List[Constraint]
+        )
     return SearchSpace.create(parameters, constraints)
 
 
@@ -83,8 +85,10 @@ def searchspace_validation_hook(specs: dict, _) -> None:
         raise ValueError("Config contains duplicate parameter names.")
     constraints = specs.get("constraints", None)
     if constraints:
-        constraints = cattrs.structure(specs["constraints"], Objective)
-        constraints = cattrs.structure(specs["constraints"], List[Constraint])
+        raise NotImplementedError("Constraint deserialization not yet available.")
+        constraints = cattrs.structure(  # pylint: disable=unreachable
+            specs["constraints"], List[Constraint]
+        )
 
 
 _config_converter = cattrs.global_converter.copy()
