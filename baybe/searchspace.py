@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 import torch
 from attrs import define, field
-from attrs.validators import min_len
 
 from .constraints import _constraints_order, Constraint
 from .parameters import (
@@ -400,9 +399,6 @@ class SearchSpace(SerialMixin):
     discrete: SubspaceDiscrete
     continuous: SubspaceContinuous
 
-    parameters: List[Parameter] = field(validator=min_len(1))
-    empty_encoding: bool = False
-
     @classmethod
     def create(
         cls,
@@ -424,6 +420,9 @@ class SearchSpace(SerialMixin):
             (potentially costly) transformation of the parameter values to their
             computational representation.
         """
+        if not parameters:
+            raise ValueError("At least one parameter must be provided.")
+
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete
@@ -444,12 +443,11 @@ class SearchSpace(SerialMixin):
             TELEMETRY_LABEL_NUM_CONSTRAINTS, len(constraints) if constraints else 0
         )
 
-        return SearchSpace(
-            discrete=discrete,
-            continuous=continuous,
-            parameters=parameters,
-            empty_encoding=empty_encoding,
-        )
+        return SearchSpace(discrete=discrete, continuous=continuous)
+
+    @property
+    def parameters(self) -> List[Parameter]:
+        return self.discrete.parameters + self.continuous.parameters
 
     @property
     def type(self) -> SearchSpaceType:
