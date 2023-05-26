@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, Factory, field
 
+from baybe.constraints import Constraint
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
@@ -65,6 +66,7 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     constraints = specs.get("constraints", None)
     if constraints:
         constraints = cattrs.structure(specs["constraints"], Objective)
+        constraints = cattrs.structure(specs["constraints"], List[Constraint])
     return SearchSpace.create(parameters, constraints)
 
 
@@ -82,6 +84,7 @@ def searchspace_validation_hook(specs: dict, _) -> None:
     constraints = specs.get("constraints", None)
     if constraints:
         constraints = cattrs.structure(specs["constraints"], Objective)
+        constraints = cattrs.structure(specs["constraints"], List[Constraint])
 
 
 _config_converter = cattrs.global_converter.copy()
