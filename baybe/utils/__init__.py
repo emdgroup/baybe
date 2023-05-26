@@ -758,14 +758,14 @@ class ABCBaseModel(BaseModel):
 def unstructure_base(base):
     converter = cattrs.global_converter
     return {
-        "_type": base.__class__.__name__,
+        "type": base.__class__.__name__,
         **converter.unstructure_attrs_asdict(base),
     }
 
 
 def get_base_unstructure_hook(base):
     def structure_base(val, _):
-        _type = val["_type"]
+        _type = val["type"]
         cls = next(
             (cl for cl in subclasses_recursive(base) if cl.__name__ == _type), None
         )

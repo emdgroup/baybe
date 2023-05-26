@@ -28,6 +28,7 @@ dependencies = [
     "scikit-learn>=1.1.1",
     "scipy>=1.9.3",
     "torch>=1.11.0",
+    "typing_extensions<=4.5.0"  # Can be removed with pydantic or once this gets resolved: https://github.com/pydantic/pydantic/issues/545#issuecomment-1559115237
 ]
 dynamic = ['version']
 
@@ -46,7 +47,7 @@ dev = [
     "pylint>=2.17.2",
     "pytest>=7.2.0",
     "seaborn>=0.11.2",
-    "streamlit>=1.10.0",
+    "streamlit>=1.20.0",
     "ufmt>=1.3.2",  # see FORMATTER NOTE
     "usort>=1.0.2",  # see FORMATTER NOTE
 ]

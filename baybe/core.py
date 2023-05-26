@@ -6,14 +6,16 @@ Core functionality of BayBE. Main point of interaction via Python.
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
+import json
 import logging
 from typing import List
 
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, Factory, field
 
+from baybe.constraints import Constraint
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
@@ -32,7 +34,17 @@ TELEMETRY_LABEL_BATCH_QUANTITY = "VALUE_batch-quantity"
 TELEMETRY_LABEL_COUNT_ADD_RESULTS = "COUNT_add-results"
 TELEMETRY_LABEL_COUNT_RECOMMEND = "COUNT_recommend"
 
-# TODO[12356]: There should be a better way than registering with the global converter.
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# TODO[12356]: There should be a way to organize several converters, instead of
+#   registering the hooks with the global converter. The global converter is currently
+#   used so that all "basic" hooks (like DataFrame serializers) can be used at all
+#   hierarchy levels. Ideally, however, each module would define its own converters for
+#   its classes that can then be flexibly combined at the next higher level of the
+#   module hierarchy. For example, there could be several "Parameter converters" that
+#   implement different sorts of serialization logic. For the searchspace, one could
+#   then implement several serialization converters as well that arbitrarily combine
+#   parameter and constraint hooks/converters.
+
 cattrs.register_unstructure_hook(
     pd.DataFrame, lambda x: x.to_json(orient="split", double_precision=15)
 )
@@ -42,6 +54,51 @@ cattrs.register_structure_hook(
 )
 
 
+def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
+    """
+    A structuring hook that assembles the searchspace using the alternative `create`
+    constructor, which allows to deserialize searchspace specifications that are
+    provided in a user-friendly format (i.e. via parameters and constraints).
+    """
+    # IMPROVE: Instead of defining the partial structurings here in the hook,
+    #   on *could* use a dedicated "BayBEConfig" class
+    parameters = cattrs.structure(specs["parameters"], List[Parameter])
+    constraints = specs.get("constraints", None)
+    if constraints:
+        raise NotImplementedError("Constraint deserialization not yet available.")
+        constraints = cattrs.structure(  # pylint: disable=unreachable
+            specs["constraints"], List[Constraint]
+        )
+    return SearchSpace.create(parameters, constraints)
+
+
+def searchspace_validation_hook(specs: dict, _) -> None:
+    """
+    Similar to `searchspace_creation_hook` but without the actual searchspace creation
+    step, thus intended for validation purposes only. Additionally, explicitly asserts
+    uniqueness of parameter names, since duplicates would only be noticed during
+    searchspace creation.
+    """
+    parameters = cattrs.structure(specs["parameters"], List[Parameter])
+    param_names = [p.name for p in parameters]
+    if len(set(param_names)) != len(param_names):
+        raise ValueError("Config contains duplicate parameter names.")
+    constraints = specs.get("constraints", None)
+    if constraints:
+        raise NotImplementedError("Constraint deserialization not yet available.")
+        constraints = cattrs.structure(  # pylint: disable=unreachable
+            specs["constraints"], List[Constraint]
+        )
+
+
+_config_converter = cattrs.global_converter.copy()
+_config_converter.register_structure_hook(SearchSpace, searchspace_creation_hook)
+
+_validation_converter = cattrs.global_converter.copy()
+_validation_converter.register_structure_hook(SearchSpace, searchspace_validation_hook)
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
 @define
 class BayBE(SerialMixin):
     """Main class for interaction with BayBE."""
@@ -49,7 +106,7 @@ class BayBE(SerialMixin):
     # DOE specifications
     searchspace: SearchSpace
     objective: Objective
-    strategy: Strategy
+    strategy: Strategy = Factory(Strategy)
 
     # Data
     measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
@@ -87,6 +144,35 @@ class BayBE(SerialMixin):
         if len(self.measurements_exp) < 1:
             return pd.DataFrame()
         return self.objective.transform(self.measurements_exp)
+
+    @classmethod
+    def from_config(cls, config_json: str) -> "BayBE":
+        """Creates a BayBE object from a configuration JSON."""
+        config = json.loads(config_json)
+        config["searchspace"] = {
+            "parameters": config.pop("parameters"),
+            "constraints": config.pop("constraints", None),
+        }
+        return _config_converter.structure(config, BayBE)
+
+    @classmethod
+    def to_config(cls) -> str:
+        """Extracts the configuration of the BayBE object as JSON string."""
+        # TODO: Ideally, this should extract a "minimal" configuration, that is,
+        #   default values should not be exported, which cattrs supports via the
+        #   'omit_if_default' option. Can be Implemented once the converter structure
+        #   has been cleaned up.
+        raise NotImplementedError()
+
+    @classmethod
+    def validate_config(cls, config_json: str) -> None:
+        """Validates a given BayBE configuration JSON."""
+        config = json.loads(config_json)
+        config["searchspace"] = {
+            "parameters": config.pop("parameters"),
+            "constraints": config.pop("constraints", None),
+        }
+        _validation_converter.structure(config, BayBE)
 
     def add_results(self, data: pd.DataFrame) -> None:
         """
