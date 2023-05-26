@@ -35,6 +35,7 @@ dependencies:
 - scipy==1.9.3
 - seaborn==0.11.2
 - streamlit==1.10.0
+- typing_extensions==4.5.0  # Can be removed with pydantic or once this gets resolved: https://github.com/pydantic/pydantic/issues/545#issuecomment-1559115237
 - pip:
   # Temporarily install ngboost via pip to resolve scikit-learn dependency
   # The conda-forge version requires >=0.21, <=0.24 but pip only needs >=0.21
