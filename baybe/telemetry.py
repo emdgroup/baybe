@@ -17,6 +17,18 @@ import baybe
 
 from .utils import strtobool
 
+# Store global telemetry labels
+# Telemetry Labels
+TELEM_LABELS = {
+    "RECOMMENDED_MEASUREMENTS_PERCENTAGE": "value_recommended-measurements-percentage",
+    "BATCH_QUANTITY": "value_batch-quantity",
+    "COUNT_ADD_RESULTS": "count_add-results",
+    "COUNT_RECOMMEND": "count_recommend",
+    "NUM_PARAMETERS": "value_num-parameters",
+    "NUM_CONSTRAINTS": "value_num-constraints",
+    "COUNT_SEARCHSPACE_CREATION": "count_searchspace-created",
+}
+
 _instruments = {}
 _resource = Resource.create({"service.namespace": "BayBE", "service.name": "SDK"})
 _reader = PeriodicExportingMetricReader(

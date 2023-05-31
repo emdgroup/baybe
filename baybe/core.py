@@ -20,19 +20,12 @@ from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.telemetry import telemetry_record_value
+from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import eq_dataframe, fuzzy_row_match
 from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
-# Telemetry Labels
-TELEMETRY_LABEL_RECOMMENDED_MEASUREMENTS_PERCENTAGE = (
-    "value_recommended-measurements-percentage"
-)
-TELEMETRY_LABEL_BATCH_QUANTITY = "value_batch-quantity"
-TELEMETRY_LABEL_COUNT_ADD_RESULTS = "count_add-results"
-TELEMETRY_LABEL_COUNT_RECOMMEND = "count_recommend"
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO[12356]: There should be a way to organize several converters, instead of
@@ -194,7 +187,7 @@ class BayBE(SerialMixin):
         Nothing (the internal database is modified in-place).
         """
         # Telemetry: log the function call
-        telemetry_record_value(TELEMETRY_LABEL_COUNT_ADD_RESULTS, 1)
+        telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
 
         # Telemetry: log percentage of measurements that correspond to previously
         # recommended ones
@@ -211,7 +204,7 @@ class BayBE(SerialMixin):
             * 100.0
         )
         telemetry_record_value(
-            TELEMETRY_LABEL_RECOMMENDED_MEASUREMENTS_PERCENTAGE,
+            TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
             recommended_measurements_percentage,
         )
 
@@ -279,8 +272,8 @@ class BayBE(SerialMixin):
             Contains the recommendations in experimental representation.
         """
         # Telemetry
-        telemetry_record_value(TELEMETRY_LABEL_COUNT_RECOMMEND, 1)
-        telemetry_record_value(TELEMETRY_LABEL_BATCH_QUANTITY, batch_quantity)
+        telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
+        telemetry_record_value(TELEM_LABELS["BATCH_QUANTITY"], batch_quantity)
 
         if batch_quantity < 1:
             raise ValueError(
