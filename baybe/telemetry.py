@@ -126,15 +126,24 @@ def telemetry_record_value(
         None
     """
     if is_enabled():
-        if instrument_name in _instruments:
-            histogram = _instruments[instrument_name]
-        else:
-            histogram = _meter.create_histogram(
-                instrument_name,
-                description=f"Histogram for instrument {instrument_name}",
-            )
-            _instruments[instrument_name] = histogram
-        histogram.record(value, get_user_details())
+        _submit_scalar_value(instrument_name, value)
+
+
+def _submit_scalar_value(
+    instrument_name: str, value: Union[bool, int, float, str]
+) -> None:
+    """
+    See telemetry_record_value.
+    """
+    if instrument_name in _instruments:
+        histogram = _instruments[instrument_name]
+    else:
+        histogram = _meter.create_histogram(
+            instrument_name,
+            description=f"Histogram for instrument {instrument_name}",
+        )
+        _instruments[instrument_name] = histogram
+    histogram.record(value, get_user_details())
 
 
 def telemetry_record_recommended_measurement_percentage(
@@ -156,7 +165,7 @@ def telemetry_record_recommended_measurement_percentage(
     measurements: pd.DataFrame
         The measurements which are supposed to be checked against cached
         recommendations.
-    parameters: List of baybe parameters
+    parameters: List of BayBE parameters
         The list of parameters spanning the entire searchspace.
     numerical_measurements_must_be_within_tolerance: bool
         If True, numerical parameter entries are matched with the reference elements
@@ -184,7 +193,7 @@ def telemetry_record_recommended_measurement_percentage(
                 * 100.0
             )
         )
-        telemetry_record_value(
+        _submit_scalar_value(
             TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
             recommended_measurements_percentage,
         )
