@@ -5,8 +5,9 @@ import getpass
 import hashlib
 import os
 import socket
-from typing import Dict, Union
+from typing import Dict, List, Union
 
+import pandas as pd
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 from opentelemetry.metrics import get_meter, set_meter_provider
 from opentelemetry.sdk.metrics import MeterProvider
@@ -14,11 +15,11 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
 import baybe
+from .parameters import Parameter
 
-from .utils import strtobool
+from .utils import fuzzy_row_match, strtobool
 
-# Store global telemetry labels
-# Telemetry Labels
+# Global telemetry labels
 TELEM_LABELS = {
     "RECOMMENDED_MEASUREMENTS_PERCENTAGE": "value_recommended-measurements-percentage",
     "BATCH_QUANTITY": "value_batch-quantity",
@@ -110,3 +111,56 @@ def telemetry_record_value(
             )
             _instruments[instrument_name] = histogram
         histogram.record(value, get_user_details())
+
+
+def telemetry_record_recommended_measurement_percentage(
+    cached_recommendation: pd.DataFrame,
+    measurements: pd.DataFrame,
+    parameters: List[Parameter],
+    numerical_measurements_must_be_within_tolerance: bool,
+) -> None:
+    """
+    Submits the percentage of added measurements that correspond to previously
+    recommended ones (called cached recommendations). If no cached recommendation exists
+    0 is submitted. The matching is performed via fuzzy row matching. The calculation
+    is only performed if telemetry is enabled.
+
+    Parameters
+    ----------
+    cached_recommendation: pd.DataFrame
+        The cached recommendations.
+    measurements: pd.DataFrame
+        The measurements which are supposed to be checked against cached
+        recommendations.
+    parameters: List of baybe parameters
+        The list of parameters spanning the entire searchspace.
+    numerical_measurements_must_be_within_tolerance: bool
+        If True, numerical parameter entries are matched with the reference elements
+        only if there is a match within the parameter tolerance. If False,
+        the closest match is considered, irrespective of the distance.
+
+    Returns
+    -------
+        None
+    """
+    if is_enabled():
+        recommended_measurements_percentage = (
+            0.0
+            if (len(cached_recommendation) == 0)
+            else (
+                len(
+                    fuzzy_row_match(
+                        cached_recommendation,
+                        measurements,
+                        parameters,
+                        numerical_measurements_must_be_within_tolerance,
+                    )
+                )
+                / len(cached_recommendation)
+                * 100.0
+            )
+        )
+        telemetry_record_value(
+            TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
+            recommended_measurements_percentage,
+        )

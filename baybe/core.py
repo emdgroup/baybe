@@ -20,8 +20,12 @@ from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils import eq_dataframe, fuzzy_row_match
+from baybe.telemetry import (
+    TELEM_LABELS,
+    telemetry_record_recommended_measurement_percentage,
+    telemetry_record_value,
+)
+from baybe.utils import eq_dataframe
 from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -191,23 +195,12 @@ class BayBE(SerialMixin):
 
         # Telemetry: log percentage of measurements that correspond to previously
         # recommended ones
-        recommended_measurements_percentage = (
-            len(
-                fuzzy_row_match(
-                    self.cached_recommendation,
-                    data,
-                    self.parameters,
-                    self.numerical_measurements_must_be_within_tolerance,
-                )
-            )
-            / len(self.cached_recommendation)
-            * 100.0
+        telemetry_record_recommended_measurement_percentage(
+            self.cached_recommendation,
+            data,
+            self.parameters,
+            self.numerical_measurements_must_be_within_tolerance,
         )
-        telemetry_record_value(
-            TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
-            recommended_measurements_percentage,
-        )
-
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self.cached_recommendation = pd.DataFrame()
 

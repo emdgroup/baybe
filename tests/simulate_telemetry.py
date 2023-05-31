@@ -89,12 +89,22 @@ for k in range(randint(2, 3)):
     add_fake_results(dat, baybe_object)
     baybe_object.add_results(dat)
 
+# Fake User1a - Adds recommenations before calling recommend
+print("Fake User1a")
+os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1a"
+baybe_object = BayBE(**config)
+baybe_object.add_results(dat)
+for k in range(randint(2, 3)):
+    dat = baybe_object.recommend(randint(3, 4))
+    add_fake_results(dat, baybe_object)
+    baybe_object.add_results(dat)
+
 # Fake User2 - 2 iterations
 print("Fake User2")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_2"
 baybe_object = BayBE(**config)
-for k in range(randint(2, 3)):
-    dat = baybe_object.recommend(randint(4, 5))
+for k in range(2):
+    dat = baybe_object.recommend(4)
     add_fake_results(dat, baybe_object)
     baybe_object.add_results(dat)
 
