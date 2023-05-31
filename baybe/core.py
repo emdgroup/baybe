@@ -292,10 +292,6 @@ class BayBE(SerialMixin):
             self.measurements_targets_comp,
         )
 
-        # Query user input
-        for target in self.targets:
-            rec[target.name] = "<Enter value>"
-
         # Cache the recommendations
         self.cached_recommendation = rec.copy()
 
