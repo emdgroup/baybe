@@ -7,10 +7,10 @@ import os
 import socket
 from typing import Dict, Union
 
-from opentelemetry._metrics import get_meter, set_meter_provider
-from opentelemetry.exporter.otlp.proto.grpc._metric_exporter import OTLPMetricExporter
-from opentelemetry.sdk._metrics import MeterProvider
-from opentelemetry.sdk._metrics.export import PeriodicExportingMetricReader
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.metrics import get_meter, set_meter_provider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
 import baybe
