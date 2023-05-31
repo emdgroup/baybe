@@ -27,6 +27,7 @@ dependencies = [
     "rdkit>=2022.3.4",
     "scikit-learn>=1.1.1",
     "scipy>=1.9.3",
+    "setuptools-scm>=7.1.0",
     "torch>=1.11.0",
     "typing_extensions<=4.5.0"  # Can be removed with pydantic or once this gets resolved: https://github.com/pydantic/pydantic/issues/545#issuecomment-1559115237
 ]
@@ -63,8 +64,8 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-version_scheme = "no-guess-dev"
-local_scheme = "no-local-version"
+version_scheme = 'post-release'
+local_scheme = "dirty-tag"
 
 [tool.setuptools]
 packages = ["baybe"]

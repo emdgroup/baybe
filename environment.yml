@@ -34,6 +34,7 @@ dependencies:
 - scikit-learn-extra==0.2.0
 - scipy==1.9.3
 - seaborn==0.11.2
+- setuptools-scm==7.1.0
 - streamlit==1.20.0
 - typing_extensions==4.5.0  # Can be removed with pydantic or once this gets resolved: https://github.com/pydantic/pydantic/issues/545#issuecomment-1559115237
 - pip:

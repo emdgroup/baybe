@@ -14,10 +14,34 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
-import baybe
-from .parameters import Parameter
+from setuptools_scm import get_version
 
+from .parameters import Parameter
 from .utils import fuzzy_row_match, strtobool
+
+
+def _infer_baybe_version() -> str:
+    """
+    Infers the package version. Useful if the package is being used but was not
+    installed. '.postN' means there are N commits between the last tag and this
+    release. '+dirty' means that there are local uncommitted changes.
+
+    Returns
+    -------
+        str: The version, e.g. 0.2.4.post44-dirty
+    """
+    try:
+        version = get_version(version_scheme="post-release", local_scheme="dirty-tag")
+        return version
+    except LookupError:
+        return "unknown"
+
+
+try:
+    from baybe import __version__
+except ImportError:
+    __version__ = _infer_baybe_version()
+
 
 # Global telemetry labels
 TELEM_LABELS = {
@@ -65,7 +89,7 @@ def get_user_details() -> Dict[str, str]:
     )
     # Alternatively one could take the MAC address like hex(uuid.getnode())
 
-    return {"host": hostname_hash, "user": username_hash, "version": baybe.__version__}
+    return {"host": hostname_hash, "user": username_hash, "version": __version__}
 
 
 def is_enabled() -> bool:
