@@ -28,11 +28,11 @@ log = logging.getLogger(__name__)
 
 # Telemetry Labels
 TELEMETRY_LABEL_RECOMMENDED_MEASUREMENTS_PERCENTAGE = (
-    "VALUE_recommended-measurements-percentage"
+    "value_recommended-measurements-percentage"
 )
-TELEMETRY_LABEL_BATCH_QUANTITY = "VALUE_batch-quantity"
-TELEMETRY_LABEL_COUNT_ADD_RESULTS = "COUNT_add-results"
-TELEMETRY_LABEL_COUNT_RECOMMEND = "COUNT_recommend"
+TELEMETRY_LABEL_BATCH_QUANTITY = "value_batch-quantity"
+TELEMETRY_LABEL_COUNT_ADD_RESULTS = "count_add-results"
+TELEMETRY_LABEL_COUNT_RECOMMEND = "count_recommend"
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO[12356]: There should be a way to organize several converters, instead of

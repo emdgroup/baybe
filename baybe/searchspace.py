@@ -32,9 +32,9 @@ log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
 
 # Telemetry Labels
-TELEMETRY_LABEL_NUM_PARAMETERS = "VALUE_num-parameters"
-TELEMETRY_LABEL_NUM_CONSTRAINTS = "VALUE_num-constraints"
-TELEMETRY_LABEL_COUNT_SEARCHSPACE_CREATION = "COUNT_searchspace-created"
+TELEMETRY_LABEL_NUM_PARAMETERS = "value_num-parameters"
+TELEMETRY_LABEL_NUM_CONSTRAINTS = "value_num-constraints"
+TELEMETRY_LABEL_COUNT_SEARCHSPACE_CREATION = "count_searchspace-created"
 
 
 class SearchSpaceType(Enum):
