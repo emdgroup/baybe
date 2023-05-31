@@ -3,6 +3,8 @@ Telemetry  functionality for BayBE.
 """
 import getpass
 import hashlib
+
+import importlib.resources
 import os
 import socket
 from typing import Dict, List, Union
@@ -13,7 +15,6 @@ from opentelemetry.metrics import get_meter, set_meter_provider
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
-
 from setuptools_scm import get_version
 
 from .parameters import Parameter
@@ -28,11 +29,15 @@ def _infer_baybe_version() -> str:
 
     Returns
     -------
-        str: The version, e.g. 0.2.4.post44-dirty
+        str: The version, e.g. 0.2.4.post44+dirty
     """
     try:
-        version = get_version(version_scheme="post-release", local_scheme="dirty-tag")
-        return version
+        with importlib.resources.path("baybe", "") as package_folder:
+            return get_version(
+                root=str(package_folder / ".."),
+                version_scheme="post-release",
+                local_scheme="dirty-tag",
+            )
     except LookupError:
         return "unknown"
 
@@ -52,7 +57,7 @@ TELEM_LABELS = {
     "NUM_PARAMETERS": "value_num-parameters",
     "NUM_CONSTRAINTS": "value_num-constraints",
     "COUNT_SEARCHSPACE_CREATION": "count_searchspace-created",
-    "NAKED_MEASUREMENTS": "count_naked-initial-measurements-uploaded",
+    "NAKED_MEASUREMENTS": "count_naked-initial-measurements-added",
 }
 
 _instruments = {}
