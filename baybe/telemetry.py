@@ -52,6 +52,7 @@ TELEM_LABELS = {
     "NUM_PARAMETERS": "value_num-parameters",
     "NUM_CONSTRAINTS": "value_num-constraints",
     "COUNT_SEARCHSPACE_CREATION": "count_searchspace-created",
+    "NAKED_MEASUREMENTS": "count_naked-initial-measurements-uploaded",
 }
 
 _instruments = {}
@@ -177,10 +178,8 @@ def telemetry_record_recommended_measurement_percentage(
         None
     """
     if is_enabled():
-        recommended_measurements_percentage = (
-            0.0
-            if (len(cached_recommendation) == 0)
-            else (
+        if len(cached_recommendation) > 0:
+            recommended_measurements_percentage = (
                 len(
                     fuzzy_row_match(
                         cached_recommendation,
@@ -192,8 +191,12 @@ def telemetry_record_recommended_measurement_percentage(
                 / len(cached_recommendation)
                 * 100.0
             )
-        )
-        _submit_scalar_value(
-            TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
-            recommended_measurements_percentage,
-        )
+            _submit_scalar_value(
+                TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
+                recommended_measurements_percentage,
+            )
+        else:
+            _submit_scalar_value(
+                TELEM_LABELS["NAKED_MEASUREMENTS"],
+                1,
+            )
