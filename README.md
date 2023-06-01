@@ -82,7 +82,7 @@ config = {
     "objective": objective,
 }
 baybe = BayBE.from_dict(config)
-baybe.recommend(batch_quantity=5)
+baybe.ask(batch_quantity=5)
 ```
 
 At any point in time (also before querying the first recommendations), available
@@ -95,7 +95,7 @@ measurements = pd.DataFrame.from_records(
         {"Temperature": 160, "Pressure": 6, "Yield": 0.4},
     ]
 )
-baybe.add_results(measurements)
+baybe.tell(measurements)
 ```
 
 ## Telemetry

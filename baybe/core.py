@@ -171,7 +171,7 @@ class BayBE(SerialMixin):
         }
         _validation_converter.structure(config, BayBE)
 
-    def add_results(self, data: pd.DataFrame) -> None:
+    def tell(self, data: pd.DataFrame) -> None:
         """
         Adds results from a dataframe to the internal database.
 
@@ -248,7 +248,7 @@ class BayBE(SerialMixin):
             self.numerical_measurements_must_be_within_tolerance,
         )
 
-    def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
+    def ask(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
         Provides the recommendations for the next batch of experiments.
 
