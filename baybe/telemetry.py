@@ -4,7 +4,6 @@ Telemetry  functionality for BayBE.
 import getpass
 import hashlib
 
-import importlib.resources
 import os
 import socket
 from typing import Dict, List, Union
@@ -15,37 +14,11 @@ from opentelemetry.metrics import get_meter, set_meter_provider
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
-from setuptools_scm import get_version
+
+from baybe import __version__
 
 from .parameters import Parameter
 from .utils import fuzzy_row_match, strtobool
-
-
-def _infer_baybe_version() -> str:
-    """
-    Infers the package version. Useful if the package is being used but was not
-    installed. '.postN' means there are N commits between the last tag and this
-    release. '+dirty' means that there are local uncommitted changes.
-
-    Returns
-    -------
-        str: The version, e.g. 0.2.4.post44+dirty
-    """
-    try:
-        with importlib.resources.path("baybe", "") as package_folder:
-            return get_version(
-                root=str(package_folder / ".."),
-                version_scheme="post-release",
-                local_scheme="dirty-tag",
-            )
-    except LookupError:
-        return "unknown"
-
-
-try:
-    from baybe import __version__
-except ImportError:
-    __version__ = _infer_baybe_version()
 
 
 # Global telemetry labels
