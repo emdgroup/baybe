@@ -57,7 +57,7 @@ TELEM_LABELS = {
     "NUM_PARAMETERS": "value_num-parameters",
     "NUM_CONSTRAINTS": "value_num-constraints",
     "COUNT_SEARCHSPACE_CREATION": "count_searchspace-created",
-    "NAKED_MEASUREMENTS": "count_naked-initial-measurements-added",
+    "NAKED_INITIAL_MEASUREMENTS": "count_naked-initial-measurements-added",
 }
 
 _instruments = {}
@@ -160,9 +160,10 @@ def telemetry_record_recommended_measurement_percentage(
 ) -> None:
     """
     Submits the percentage of added measurements that correspond to previously
-    recommended ones (called cached recommendations). If no cached recommendation exists
-    0 is submitted. The matching is performed via fuzzy row matching. The calculation
-    is only performed if telemetry is enabled.
+    recommended ones (called cached recommendations). The matching is performed via
+    fuzzy row matching. The calculation is only performed if telemetry is enabled. If
+    no cached recommendation exists the percentage is not calculated and instead a
+    different event ('naked initial measurement added') is recorded.
 
     Parameters
     ----------
@@ -202,6 +203,6 @@ def telemetry_record_recommended_measurement_percentage(
             )
         else:
             _submit_scalar_value(
-                TELEM_LABELS["NAKED_MEASUREMENTS"],
+                TELEM_LABELS["NAKED_INITIAL_MEASUREMENTS"],
                 1,
             )
