@@ -190,17 +190,6 @@ class BayBE(SerialMixin):
         -------
         Nothing (the internal database is modified in-place).
         """
-        # Telemetry: log the function call
-        telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
-
-        # Telemetry: log percentage of measurements that correspond to previously
-        # recommended ones
-        telemetry_record_recommended_measurement_percentage(
-            self.cached_recommendation,
-            data,
-            self.parameters,
-            self.numerical_measurements_must_be_within_tolerance,
-        )
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self.cached_recommendation = pd.DataFrame()
 
@@ -250,6 +239,15 @@ class BayBE(SerialMixin):
             [self.measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
+        # Telemetry
+        telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
+        telemetry_record_recommended_measurement_percentage(
+            self.cached_recommendation,
+            data,
+            self.parameters,
+            self.numerical_measurements_must_be_within_tolerance,
+        )
+
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """
         Provides the recommendations for the next batch of experiments.
@@ -264,10 +262,6 @@ class BayBE(SerialMixin):
         rec : pd.DataFrame
             Contains the recommendations in experimental representation.
         """
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
-        telemetry_record_value(TELEM_LABELS["BATCH_QUANTITY"], batch_quantity)
-
         if batch_quantity < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
@@ -294,5 +288,9 @@ class BayBE(SerialMixin):
 
         # Cache the recommendations
         self.cached_recommendation = rec.copy()
+
+        # Telemetry
+        telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
+        telemetry_record_value(TELEM_LABELS["BATCH_QUANTITY"], batch_quantity)
 
         return rec
