@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed no longer needed `HashableDict` class
 - Refactored strategy and recommendation module structures
 - Replaced dict-based configuration logic with object-based logic
+- Overall versioning scheme and version inference for telemetry
+- No longer using private telemetry imports
+
+### Fixed
+- Telemetry no longer crashing when package was not installed
 
 ## [0.2.4] - 2023-03-24
 ### Added

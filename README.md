@@ -121,6 +121,16 @@ or in python:
 ```python
 os.environ.pop["BAYBE_TELEMETRY_ENABLED"]
 ```
+Monitored quantities are:
+- `batch_quantity` used when querying recommendations
+- number of parameters in the search space
+- number of constraints in the search space
+- how often `add_results` was called
+- how often `recommend` was called
+- how often a search space is newly created
+- how often initial measurements are added before recommendations were calculated 
+(naked initial measurements)
+- the fraction of measurements added that correspond to previous recommendations
 
 ## License
 Copyright 2022-2023 Merck KGaA, Darmstadt, Germany

@@ -24,17 +24,12 @@ from .parameters import (
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .telemetry import telemetry_record_value
+from .telemetry import TELEM_LABELS, telemetry_record_value
 from .utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 INF_BOUNDS_REPLACEMENT = 1000
-
-# Telemetry Labels
-TELEMETRY_LABEL_NUM_PARAMETERS = "VALUE_num-parameters"
-TELEMETRY_LABEL_NUM_CONSTRAINTS = "VALUE_num-constraints"
-TELEMETRY_LABEL_COUNT_SEARCHSPACE_CREATION = "COUNT_searchspace-created"
 
 
 class SearchSpaceType(Enum):
@@ -437,10 +432,10 @@ class SearchSpace(SerialMixin):
         )
 
         # Telemetry
-        telemetry_record_value(TELEMETRY_LABEL_COUNT_SEARCHSPACE_CREATION, 1)
-        telemetry_record_value(TELEMETRY_LABEL_NUM_PARAMETERS, len(parameters))
+        telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
+        telemetry_record_value(TELEM_LABELS["NUM_PARAMETERS"], len(parameters))
         telemetry_record_value(
-            TELEMETRY_LABEL_NUM_CONSTRAINTS, len(constraints) if constraints else 0
+            TELEM_LABELS["NUM_CONSTRAINTS"], len(constraints) if constraints else 0
         )
 
         return SearchSpace(discrete=discrete, continuous=continuous)
