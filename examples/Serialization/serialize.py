@@ -12,7 +12,7 @@ from baybe.targets import NumericalTarget, Objective
 parameters = [
     Categorical(
         name="Granularity",
-        values=["coarse", "ultra-fine"],
+        values=["coarse", "medium", "fine"],
         encoding="OHE",
     ),
     NumericDiscrete(

@@ -150,7 +150,7 @@ from baybe.parameters import Categorical, NumericDiscrete, GenericSubstance
 parameters = [
     Categorical(
         name="Granularity",
-        values=["coarse", "ultra-fine"],
+        values=["coarse", "medium", "fine"],
         encoding="OHE",
     ),
     NumericDiscrete(
@@ -258,13 +258,13 @@ df = baybe.recommend(batch_quantity=5)
 
 For a particular random seed, the result could look as follows:
 
-| Granularity | Pressure[bar] | Solvent   |
-|-------------|---------------|-----------|
-| ultra-fine  | 1             | Solvent B |
-| coarse      | 1             | Solvent A |
-| coarse      | 10            | Solvent B |
-| ultra-fine  | 10            | Solvent B |
-| ultra-fine  | 1             | Solvent A |
+| Granularity   | Pressure[bar]   | Solvent   |
+|---------------|-----------------|-----------|
+| medium        | 1               | Solvent B |
+| medium        | 5               | Solvent B |
+| fine          | 5               | Solvent B |
+| fine          | 5               | Solvent A |
+| medium        | 10              | Solvent B |
 
 After having conducted the corresponding experiments, we can add our measured
 yields to the table and feed it back to BayBE:
