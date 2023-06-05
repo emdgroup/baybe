@@ -71,13 +71,13 @@ test_targets = [
 
 def run_iterations(baybe, n_iterations, batch_quantity):
     for k in range(n_iterations):
-        rec = baybe.ask(batch_quantity=batch_quantity)
+        rec = baybe.recommend(batch_quantity=batch_quantity)
 
         add_fake_results(rec, baybe)
         if k % 2:
             add_parameter_noise(rec, baybe, noise_level=0.1)
 
-        baybe.tell(rec)
+        baybe.add_measurements(rec)
 
 
 # TODO: The following tests are deactivated because there is currently no Bayesian

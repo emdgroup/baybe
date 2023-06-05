@@ -13,6 +13,6 @@ def test_baybe_serialization(baybe):
     baybe2 = roundtrip(baybe)
     assert baybe == baybe2
 
-    baybe.ask()
+    baybe.recommend()
     baybe2 = roundtrip(baybe)
     assert baybe == baybe2

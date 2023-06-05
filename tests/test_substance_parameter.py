@@ -18,10 +18,10 @@ def test_run_iterations(baybe, batch_quantity, n_iterations):
     Test running some iterations with fake results and a substance parameter.
     """
     for k in range(n_iterations):
-        rec = baybe.ask(batch_quantity=batch_quantity)
+        rec = baybe.recommend(batch_quantity=batch_quantity)
 
         add_fake_results(rec, baybe)
         if k % 2:
             add_parameter_noise(rec, baybe, noise_level=0.1)
 
-        baybe.tell(rec)
+        baybe.add_measurements(rec)

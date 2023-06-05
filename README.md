@@ -225,7 +225,7 @@ strategy = Strategy(
 )
 ```
 
-### Ask & Tell — The Optimization Loop
+### The Optimization Loop
 
 Having provided the answers to [all questions above](#getting-started), we can now
 construct a BayBE object that brings all
@@ -240,8 +240,8 @@ baybe = BayBE(searchspace, objective, strategy)
 With this object at hand, we can start our experimentation cycle.
 In particular:
 
-* We can `ask` BayBE for recommendations of new experiments.
-* We can `tell` BayBE measured target values for certain experimental settings.
+* We can ask BayBE to `recommend` new experiments.
+* We can `add_measurements` for certain experimental settings to BayBE's database.
 
 Note that these two steps can be performed in any order.
 In particular, available measurement data can be submitted at any time.
@@ -253,7 +253,7 @@ The following illustrates one such possible sequence of interactions.
 Let us first ask for an initial set of recommendations:
 
 ```python
-df = baybe.ask(batch_quantity=5)
+df = baybe.recommend(batch_quantity=5)
 ```
 
 For a particular random seed, the result could look as follows:
@@ -271,7 +271,7 @@ yields to the table and feed it back to BayBE:
 
 ```python
 df["Yield"] = [79, 54, 59, 95, 84]
-baybe.tell(df)
+baybe.add_measurements(df)
 ```
 
 With the newly arrived data, BayBE will update its internal state and can produce a

@@ -24,7 +24,7 @@ def test_bad_parameter_input_value(baybe, good_reference_values, bad_val, reques
     if request.node.callspec.id in param_xfails:
         pytest.xfail()
 
-    rec = baybe.ask(batch_quantity=3)
+    rec = baybe.recommend(batch_quantity=3)
     add_fake_results(
         rec,
         baybe,
@@ -34,7 +34,7 @@ def test_bad_parameter_input_value(baybe, good_reference_values, bad_val, reques
     # Add an invalid value
     rec.Num_disc_1.iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
-        baybe.tell(rec)
+        baybe.add_measurements(rec)
 
 
 @pytest.mark.parametrize(
@@ -49,7 +49,7 @@ def test_bad_target_input_value(baybe, good_reference_values, bad_val, request):
     if request.node.callspec.id in target_xfails:
         pytest.xfail()
 
-    rec = baybe.ask(batch_quantity=3)
+    rec = baybe.recommend(batch_quantity=3)
     add_fake_results(
         rec,
         baybe,
@@ -59,4 +59,4 @@ def test_bad_target_input_value(baybe, good_reference_values, bad_val, request):
     # Add an invalid value
     rec.Target_max.iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
-        baybe.tell(rec)
+        baybe.add_measurements(rec)

@@ -15,7 +15,7 @@ def test_run_iterations(baybe, n_iterations, batch_quantity):
     Test if iterative loop runs with custom parameters.
     """
     for _ in range(n_iterations):
-        rec = baybe.ask(batch_quantity=batch_quantity)
+        rec = baybe.recommend(batch_quantity=batch_quantity)
 
         print(rec)
         print(baybe.searchspace.discrete.exp_rep)
@@ -24,4 +24,4 @@ def test_run_iterations(baybe, n_iterations, batch_quantity):
         add_fake_results(rec, baybe)
         add_parameter_noise(rec, baybe, noise_level=0.1)
 
-        baybe.tell(rec)
+        baybe.add_measurements(rec)

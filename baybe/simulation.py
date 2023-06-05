@@ -154,7 +154,7 @@ def simulate_scenarios(
 
             # Add the initial data
             if initial_data is not None:
-                baybe.tell(data)
+                baybe.add_measurements(data)
 
             # For impute_mode 'ignore', do not recommend space entries that are not
             # available in the lookup
@@ -209,7 +209,7 @@ def _simulate_experiment(
     # Run the DOE loop
     for k_iteration in range(n_exp_iterations):
         # Get the next recommendations and corresponding measurements
-        measured = baybe_obj.ask(batch_quantity=batch_quantity)
+        measured = baybe_obj.recommend(batch_quantity=batch_quantity)
         _look_up_target_values(measured, baybe_obj, lookup, impute_mode)
 
         # Create the summary for the current iteration and store it
@@ -237,7 +237,7 @@ def _simulate_experiment(
             )
 
         # Update the BayBE object
-        baybe_obj.tell(measured)
+        baybe_obj.add_measurements(measured)
 
     # Add the instantaneous and running best values for all targets
     for target in baybe_obj.targets:
