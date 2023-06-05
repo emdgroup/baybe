@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic serialization example, demo and tests
 - Mechanisms for loading and validating config files
 - Telemetry via OpenTelemetry
+- More detailed package installation info
 
 ### Changed
 - Switched from pydantic to attrs in all modules except constraints.py
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Overall versioning scheme and version inference for telemetry
 - No longer using private telemetry imports
 - Fixed package versions for dev tools
+- Revised "Getting Started" section in README.md
 
 ### Fixed
 - Telemetry no longer crashing when package was not installed
