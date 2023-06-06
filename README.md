@@ -67,6 +67,15 @@ desired commit, and run:
 pip install .
 ```
 
+There are additional dependencies that can be installed corresponding to linters, 
+plotters etc. (`dev`) and scikit-learn-extra (`extra`) which is not yet available 
+on osx-arm64. A developer would typically also install the package in editable mode 
+('-e').
+
+```bash
+pip install -e '.[dev,extra]'
+```
+
 ## Getting Started
 
 BayBE is a DOE software built to streamline your experimental process.
@@ -160,7 +169,7 @@ parameters = [
     ),
     GenericSubstance(
         name="Solvent",
-        data={"Solvent A": "COC", "Solvent B": "CCCCC"},
+        data={"Solvent A": "COC", "Solvent B": "CCC", "Solvent C": "O", "Solvent D": "CS(=O)C"},
         encoding="MORDRED",
     ),
 ]
@@ -261,8 +270,8 @@ For a particular random seed, the result could look as follows:
 | Granularity   | Pressure[bar]   | Solvent   |
 |---------------|-----------------|-----------|
 | medium        | 1               | Solvent B |
-| medium        | 5               | Solvent B |
-| fine          | 5               | Solvent B |
+| medium        | 5               | Solvent D |
+| fine          | 5               | Solvent C |
 | fine          | 5               | Solvent A |
 | medium        | 10              | Solvent B |
 
@@ -288,8 +297,8 @@ Monitored quantities are:
 - `batch_quantity` used when querying recommendations
 - number of parameters in the search space
 - number of constraints in the search space
-- how often `ask` was called
-- how often `tell` was called
+- how often `recommend` was called
+- how often `add_measurements` was called
 - how often a search space is newly created
 - how often initial measurements are added before recommendations were calculated
   ("naked initial measurements")
