@@ -33,24 +33,24 @@ dependencies = [
 ]
 dynamic = ['version']
 
-# FORMATTER NOTE: The versions of ufmt, black and usort should be consistent everywhere
+# FORMATTER NOTE: The versions of ufmt, black, flake8, pre-commit, pylint and usort should be consistent everywhere
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
 [project.optional-dependencies]
 dev = [
-    "black>=22.3.0",  # see FORMATTER NOTE
-    "flake8>=4.0.1",
+    "black==22.3.0",  # see FORMATTER NOTE
+    "flake8==4.0.1", # see FORMATTER NOTE
     "matplotlib>=3.5.2",
     "mypy>=1.2.0",
     "openpyxl>=3.0.9",
     "plotly>=5.10.0",
-    "pre-commit>=2.19.0",
-    "pylint>=2.17.2",
+    "pre-commit==2.19.0", # see FORMATTER NOTE
+    "pylint==2.17.2", # see FORMATTER NOTE
     "pytest>=7.2.0",
     "seaborn>=0.11.2",
     "streamlit>=1.20.0",
-    "ufmt>=1.3.2",  # see FORMATTER NOTE
-    "usort>=1.0.2",  # see FORMATTER NOTE
+    "ufmt==1.3.2",  # see FORMATTER NOTE
+    "usort==1.0.2",  # see FORMATTER NOTE
 ]
 extra = [
     "scikit-learn-extra>=0.2.0",
