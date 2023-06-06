@@ -171,7 +171,7 @@ class BayBE(SerialMixin):
         }
         _validation_converter.structure(config, BayBE)
 
-    def add_results(self, data: pd.DataFrame) -> None:
+    def add_measurements(self, data: pd.DataFrame) -> None:
         """
         Adds results from a dataframe to the internal database.
 

@@ -77,7 +77,7 @@ def run_iterations(baybe, n_iterations, batch_quantity):
         if k % 2:
             add_parameter_noise(rec, baybe, noise_level=0.1)
 
-        baybe.add_results(rec)
+        baybe.add_measurements(rec)
 
 
 # TODO: The following tests are deactivated because there is currently no Bayesian

@@ -154,7 +154,7 @@ def simulate_scenarios(
 
             # Add the initial data
             if initial_data is not None:
-                baybe.add_results(data)
+                baybe.add_measurements(data)
 
             # For impute_mode 'ignore', do not recommend space entries that are not
             # available in the lookup
@@ -237,7 +237,7 @@ def _simulate_experiment(
             )
 
         # Update the BayBE object
-        baybe_obj.add_results(measured)
+        baybe_obj.add_measurements(measured)
 
     # Add the instantaneous and running best values for all targets
     for target in baybe_obj.targets:
