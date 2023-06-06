@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced dict-based configuration logic with object-based logic
 - Overall versioning scheme and version inference for telemetry
 - No longer using private telemetry imports
+- Fixed package versions for dev tools
 
 ### Fixed
 - Telemetry no longer crashing when package was not installed

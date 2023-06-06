@@ -301,11 +301,7 @@ def _look_up_target_values(
         # TODO: Currently, the alignment of return values to targets is based on the
         #   column ordering, which is not robust. Instead, the callable should return
         #   a dataframe with properly labeled columns.
-        measured_targets = (
-            queries.drop(columns=target_names)
-            .apply(lambda x: lookup(*x.values), axis=1)
-            .to_frame()
-        )
+        measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
         if measured_targets.shape[1] != len(baybe_obj.targets):
             raise AssertionError(
                 "If you use an analytical function as lookup, make sure "
@@ -320,7 +316,7 @@ def _look_up_target_values(
     #  could also be implemented for approximate matches
     elif isinstance(lookup, pd.DataFrame):
         all_match_vals = []
-        for _, row in queries.drop(columns=target_names).iterrows():
+        for _, row in queries.iterrows():
             # IMPROVE: to the entire matching at once via a merge
             ind = lookup[
                 (lookup.loc[:, row.index] == row).all(axis=1, skipna=False)
