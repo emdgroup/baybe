@@ -10,7 +10,7 @@ dependencies:
 - black==22.3.0  # see FORMATTER NOTE
 - botorch==0.8.1
 - cattrs==22.2.0
-- flake8==4.0.1
+- flake8==4.0.1 # see FORMATTER NOTE
 - fsspec==2022.10.0
 - funcy==1.17
 - gpytorch==1.9.1
@@ -21,8 +21,8 @@ dependencies:
 - openpyxl==3.0.9
 - opentelemetry-sdk==1.16.0
 - opentelemetry-exporter-otlp==1.16.0
-- pre-commit==2.19.0
-- pylint==2.17.2
+- pre-commit==2.19.0 # see FORMATTER NOTE
+- pylint==2.17.2 # see FORMATTER NOTE
 - pip==22.1.2
 - pandas==1.4.2
 - plotly==5.10.0
