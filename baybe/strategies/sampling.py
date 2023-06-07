@@ -1,5 +1,7 @@
 """Recommendation strategies based on sampling."""
 
+from typing import Optional
+
 import pandas as pd
 
 from baybe.searchspace import SearchSpace, SearchSpaceType
@@ -12,22 +14,25 @@ class RandomRecommender(NonPredictiveRecommender):
     Recommends experiments randomly.
     """
 
-    compatibility = SearchSpaceType.EITHER  # TODO: enable HYBRID mode
+    compatibility = SearchSpaceType.HYBRID
 
-    def _recommend_continuous(
-        self, searchspace: SearchSpace, batch_quantity: int
-    ) -> pd.DataFrame:
-        """See base class."""
-        return searchspace.continuous.samples_random(n_points=batch_quantity)
-
-    def _recommend_discrete(
+    def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_comp: pd.DataFrame,
         batch_quantity: int,
-    ) -> pd.Index:
-        """See base class."""
-        return candidates_comp.sample(n=batch_quantity).index
+        candidates_comp: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        cont_random = searchspace.continuous.samples_random(n_points=batch_quantity)
+        if searchspace.type == SearchSpaceType.CONTINUOUS:
+            return cont_random
+        if searchspace.type == SearchSpaceType.DISCRETE:
+            return candidates_comp.sample(batch_quantity)
+        disc_candidates, _ = searchspace.discrete.get_candidates(True, True)
+        disc_random = disc_candidates.sample(n=batch_quantity)
+
+        cont_random.reset_index(drop=True)
+        cont_random.index = disc_random.index
+        return pd.concat([disc_random, cont_random], axis=1)
 
 
 class FPSRecommender(NonPredictiveRecommender):
