@@ -126,8 +126,15 @@ class NonPredictiveRecommender(Recommender, ABC):
     def _recommend_continuous(self, searchspace: SearchSpace, batch_quantity: int):
         raise NotImplementedError()
 
-    def _recommend_hybrid(self, searchspace: SearchSpace, batch_quantity: int):
-        raise NotImplementedError()
+    def _recommend_hybrid(
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int,
+        candidates_comp: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        """In order to enable the fallback mechanism, it is possible to provide
+        a DataFrame with candidates in computational representation."""
+        raise NotImplementedError("Hybrid recommender is not implemented.")
 
 
 @define
