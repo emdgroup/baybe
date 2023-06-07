@@ -102,6 +102,33 @@ class NonPredictiveRecommender(Recommender, ABC):
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
+        """Recommend (a batch of) points in the searchspace.
+
+        Depending on the type of the given searchspace, this method calls one of the
+        corresponding private methods which implement the actual logic.
+
+        Parameters
+        ----------
+        searchspace: SearchSpace
+            The searchspace in which we are looking for a recommendation.
+        batch_quantity: int, default = 1
+            The batch quantity. Defaults to 1.
+        train_x: pd.DataFrame, optional
+            Training data. Since this recommender is non predictive, this is ignored.
+        train_y: pd.DataFrame, optional
+            See 'train_x'.
+        allow_repeated_recommendates: bool, default = False
+            Flag denoting whether repeated recommendations should be allowed. Only has
+            an influence for discrete searchspaces. Defaults to False.
+        allow_recommending_already_measured: bool, default = True
+            Flag denoting whether recommending already measured points should be
+            allowed. Only has an influence for discrete searchspaces. Defaults to False.
+
+        Returns
+        -------
+        pd.DataFrame
+            The recommendations
+        """
 
         if searchspace.type == SearchSpaceType.DISCRETE:
             return select_candidates_and_recommend(
@@ -112,8 +139,12 @@ class NonPredictiveRecommender(Recommender, ABC):
                 allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(searchspace, batch_quantity)
-        raise NotImplementedError()
+            return self._recommend_continuous(
+                searchspace=searchspace, batch_quantity=batch_quantity
+            )
+        return self._recommend_hybrid(
+            searchspace=searchspace, batch_quantity=batch_quantity
+        )
 
     def _recommend_discrete(
         self,
