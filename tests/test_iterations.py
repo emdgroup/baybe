@@ -52,6 +52,11 @@ valid_continuous_recommenders = [
     and cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
+valid_hybrid_recommenders = [
+    cls()
+    for cls in subclasses_recursive(Recommender)
+    if not isabstract(cls) and cls.compatibility in [SearchSpaceType.HYBRID]
+]
 test_targets = [
     "Target_max",
     "Target_min",
@@ -117,4 +122,13 @@ def test_iter_recommender_discrete(baybe, n_iterations, batch_quantity):
 @pytest.mark.parametrize("recommender", valid_continuous_recommenders)
 @pytest.mark.parametrize("parameter_names", ["Conti_finite1", "Conti_finite2"])
 def test_iter_recommender_continuous(baybe, n_iterations, batch_quantity):
+    run_iterations(baybe, n_iterations, batch_quantity)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("recommender", valid_hybrid_recommenders)
+@pytest.mark.parametrize(
+    "parameter_names", [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"]]
+)
+def test_iter_recommender_hybrid(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
