@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mechanisms for loading and validating config files
 - Telemetry via OpenTelemetry
 - More detailed package installation info
+- Fallback mechanism for NonPredicteRecommenders
 
 ### Changed
 - Switched from pydantic to attrs in all modules except constraints.py
