@@ -120,11 +120,37 @@ class NonPredictiveRecommender(Recommender, ABC):
         searchspace: SearchSpace,
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
-    ):
-        raise NotImplementedError()
+    ) -> pd.Index:
+        """If this method is not implemented by a children class, try to call
+        _recommend_hybrid instead."""
+        try:
+            return self._recommend_hybrid(
+                searchspace=searchspace,
+                batch_quantity=batch_quantity,
+                candidates_comp=candidates_comp,
+            ).index
+        except NotImplementedError as exc:
+            raise NotImplementedError(
+                """Hybrid recommender could not be used as
+                fallback when trying to optimize a discrete space as it is not
+                implemented"""
+            ) from exc
 
-    def _recommend_continuous(self, searchspace: SearchSpace, batch_quantity: int):
-        raise NotImplementedError()
+    def _recommend_continuous(
+        self, searchspace: SearchSpace, batch_quantity: int
+    ) -> pd.DataFrame:
+        """If this method is not implemented by a children class, try to call
+        _recommend_hybrid instead."""
+        try:
+            return self._recommend_hybrid(
+                searchspace=searchspace, batch_quantity=batch_quantity
+            )
+        except NotImplementedError as exc:
+            raise NotImplementedError(
+                """Hybrid recommender could not be used as
+            fallback when trying to optimize a continuous space as it is not
+            implemented"""
+            ) from exc
 
     def _recommend_hybrid(
         self,
