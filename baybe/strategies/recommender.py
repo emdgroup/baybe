@@ -12,6 +12,7 @@ import pandas as pd
 
 from attrs import define
 from botorch.acquisition import (
+    AcquisitionFunction,
     ExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -223,6 +224,38 @@ class BayesianRecommender(Recommender, ABC):
         fun = debotorchize(mapping[self.acquisition_function_cls])
         return fun
 
+    def setup_acquisition_function(
+        self, searchspace: SearchSpace, train_x: pd.DataFrame, train_y: pd.DataFrame
+    ) -> AcquisitionFunction:
+        """
+        Create, train and return an acquisition function.
+
+        This method exteacts the best value found in train_y and uses the private _fit
+        method to fit the surrogate model of self to the provided training data.
+        It then creates and return the acquisition function according to the prescribed
+        acquisition_function_cls of self.
+
+        Parameters
+        ----------
+        searchspace: SearchSpace
+            The searchspace in which the experiments are to be conducted.
+        train_x : pd.DataFrame
+            The features of the conducted experiments.
+        train_y : pd.DataFrame
+            The corresponding response values.
+
+        Returns
+        -------
+        AcquisitionFunction
+            An acquisition function obtained by fitting the surrogate model of self to
+            the provided training data.
+
+        """
+        best_f = train_y.max()
+        surrogate_model = self._fit(searchspace, train_x, train_y)
+        acquisition_function_cls = self.get_acquisition_function_cls()
+        return acquisition_function_cls(surrogate_model, best_f)
+
     def _fit(
         self,
         searchspace: SearchSpace,
@@ -264,10 +297,7 @@ class BayesianRecommender(Recommender, ABC):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
 
-        best_f = train_y.max()
-        surrogate_model = self._fit(searchspace, train_x, train_y)
-        acquisition_function_cls = self.get_acquisition_function_cls()
-        acqf = acquisition_function_cls(surrogate_model, best_f)
+        acqf = self.setup_acquisition_function(searchspace, train_x, train_y)
 
         if searchspace.type == SearchSpaceType.DISCRETE:
             return select_candidates_and_recommend(
