@@ -112,17 +112,17 @@ class NonPredictiveRecommender(Recommender, ABC):
         searchspace: SearchSpace
             The searchspace in which we are looking for a recommendation.
         batch_quantity: int, default = 1
-            The batch quantity. Defaults to 1.
+            The batch quantity.
         train_x: pd.DataFrame, optional
             Training data. Since this recommender is non predictive, this is ignored.
         train_y: pd.DataFrame, optional
             See 'train_x'.
         allow_repeated_recommendates: bool, default = False
             Flag denoting whether repeated recommendations should be allowed. Only has
-            an influence for discrete searchspaces. Defaults to False.
+            an influence for discrete searchspaces.
         allow_recommending_already_measured: bool, default = True
             Flag denoting whether recommending already measured points should be
-            allowed. Only has an influence for discrete searchspaces. Defaults to False.
+            allowed. Only has an influence for discrete searchspaces.
 
         Returns
         -------
