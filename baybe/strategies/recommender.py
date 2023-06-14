@@ -163,9 +163,11 @@ class NonPredictiveRecommender(Recommender, ABC):
             ).index
         except NotImplementedError as exc:
             raise NotImplementedError(
-                """Hybrid recommender could not be used as
-                fallback when trying to optimize a discrete space as it is not
-                implemented"""
+                """Hybrid recommender could not be used as fallback when trying to
+                optimize a discrete space. This is probably due to your searchspace and
+                recommender not being compatible. Please verify that your searchspace is
+                purely discrete and that you are either using a discrete or hybrid
+                recommender."""
             ) from exc
 
     def _recommend_continuous(
@@ -179,9 +181,11 @@ class NonPredictiveRecommender(Recommender, ABC):
             )
         except NotImplementedError as exc:
             raise NotImplementedError(
-                """Hybrid recommender could not be used as
-            fallback when trying to optimize a continuous space as it is not
-            implemented"""
+                """Hybrid recommender could not be used as fallback when trying to
+                optimize a continuous space. This is probably due to your searchspace
+                and  recommender not being compatible. Please verify that your
+                searchspace is purely continuous and that you are either using a
+                continuous or hybrid recommender."""
             ) from exc
 
     def _recommend_hybrid(
