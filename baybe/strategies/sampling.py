@@ -22,11 +22,17 @@ class RandomRecommender(NonPredictiveRecommender):
         batch_quantity: int,
         candidates_comp: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
+        if searchspace.type == SearchSpaceType.DISCRETE:
+            if candidates_comp is None:
+                raise TypeError(
+                    """You did not provide a dataframe of candidates when applying the
+                    random recommender to a purely discrete space. Please ensure that
+                    this dataframe is not None."""
+                )
+            return candidates_comp.sample(batch_quantity)
         cont_random = searchspace.continuous.samples_random(n_points=batch_quantity)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return cont_random
-        if searchspace.type == SearchSpaceType.DISCRETE:
-            return candidates_comp.sample(batch_quantity)
         disc_candidates, _ = searchspace.discrete.get_candidates(True, True)
         disc_random = disc_candidates.sample(n=batch_quantity)
 
