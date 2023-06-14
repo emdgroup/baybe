@@ -75,6 +75,7 @@ def select_candidates_and_recommend(
 
 @define
 class Recommender(ABC):
+    # TODO Docstrings missing
 
     compatibility: ClassVar[SearchSpaceType]
 
@@ -196,6 +197,7 @@ class NonPredictiveRecommender(Recommender, ABC):
 
 @define
 class BayesianRecommender(Recommender, ABC):
+    # TODO Docstrings missing
 
     surrogate_model_cls: str = "GP"
     acquisition_function_cls: Literal[
