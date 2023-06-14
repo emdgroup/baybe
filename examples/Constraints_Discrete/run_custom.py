@@ -4,9 +4,43 @@ some parameter values are incompatible with certain values of another parameter
 """
 import numpy as np
 import pandas as pd
+from baybe.constraints import CustomConstraint
 
-from baybe.core import BayBE, BayBEConfig
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.core import BayBE
+from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget, Objective
+from baybe.utils import add_fake_results
+
+# This examples shows how a custom constraint can be created for a discrete searchspace.
+# It assumes that the reader is familiar with the basics of Baybe, and thus does not
+# explain the details of e.g. parameter creation. For additional explanation on these
+# aspects, we refer to the Basic examples.
+
+# We begin by setting up some parameters for our experiments.
+dict_solvent = {
+    "water": "O",
+    "C1": "C",
+    "C2": "CC",
+    "C3": "CCC",
+    "C4": "CCCC",
+    "C5": "CCCCC",
+    "c6": "c1ccccc1",
+    "C6": "CCCCCC",
+}
+solvent = GenericSubstance("Solvent", data=dict_solvent, encoding="RDKIT")
+speed = Categorical(
+    "Speed", values=["very slow", "slow", "normal", "fast", "very fast"], encoding="INT"
+)
+temperature = NumericDiscrete(
+    "Temperature", values=list(np.linspace(100, 200, 10)), tolerance=0.5
+)
+concentration = NumericDiscrete("Concentration", values=[1, 2, 5, 10], tolerance=0.4)
+
+parameters = [solvent, speed, temperature, concentration]
+
+# The constraints are handled when creating the searchspace object.
+# We thus need to define our constraint first as follows.
 
 
 def custom_function(ser: pd.Series) -> bool:
@@ -28,76 +62,28 @@ def custom_function(ser: pd.Series) -> bool:
     return True
 
 
-N_GRID_POINTS = 10
-config_dict = {
-    "project_name": "Custom Constraints Test (Discrete)",
-    "allow_repeated_recommendations": False,
-    "allow_recommending_already_measured": False,
-    "numerical_measurements_must_be_within_tolerance": True,
-    "parameters": [
-        {
-            "name": "Solvent",
-            "type": "SUBSTANCE",
-            "data": {
-                "water": "O",
-                "C1": "C",
-                "C2": "CC",
-                "C3": "CCC",
-                "C4": "CCCC",
-                "C5": "CCCCC",
-                "c6": "c1ccccc1",
-                "C6": "CCCCCC",
-            },
-            "encoding": "RDKIT",
-        },
-        {
-            "name": "SomeSetting",
-            "type": "CAT",
-            "values": ["very slow", "slow", "normal", "fast", "very fast"],
-            "encoding": "INT",
-        },
-        {
-            "name": "Temperature",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(100, 200, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-        {
-            "name": "Concentration",
-            "type": "NUM_DISCRETE",
-            "values": [1, 2, 5, 10],
-            "tolerance": 0.4,
-        },
-    ],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "Target_1",
-                "type": "NUM",
-                "mode": "MAX",
-            },
-        ],
-    },
-    "strategy": {
-        # "surrogate_model_cls": "GP",
-    },
-    "constraints": [
-        # This constraint uses the user-defined function as a valdiator/filter
-        {
-            "type": "CUSTOM",
-            "parameters": ["Concentration", "Solvent", "Temperature"],
-            "validator": custom_function,
-        },
-    ],
+# Custom constraints require a configuration dictionary, stating the type, the
+# # parameters involved and the corresponding python function.
+# Note that the parameters are accessed by names!
+dict_constraint = {
+    "type": "CUSTOM",
+    "parameters": ["Concentration", "Solvent", "Temperature"],
+    "validator": custom_function,
 }
+# We can now create the constraint and consequently also the searchspace
+constraint = CustomConstraint.create(config=dict_constraint)
+searchspace = SearchSpace.create(parameters=parameters, constraints=[constraint])
 
-# Create BayBE object, add fake results and print what happens to internal data
-config = BayBEConfig(**config_dict)
-baybe_obj = BayBE(config)
+# We finally create an objective and the baybe object
+objective = Objective(
+    mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
+)
+baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
-N_ITERATIONS = 3
+# The following loop performs some recommendations and manually verifies that the
+# given constraints are obeyed.
+N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
@@ -140,9 +126,5 @@ for kIter in range(N_ITERATIONS):
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)
-
     add_fake_results(rec, baybe_obj)
-    if kIter % 2:
-        add_parameter_noise(rec, baybe_obj, noise_level=0.1)
-
-    baybe_obj.add_results(rec)
+    baybe_obj.add_measurements(rec)
