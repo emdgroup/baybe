@@ -1,123 +1,90 @@
 """
-Test for imposing exclusion constraints on discrete parameters. For instance if
-some parameter values are incompatible with certain values of another parameter
+Tests to ensure conditions relating to sums and products of numerical discrete
+parameters.
 """
 import numpy as np
 
-from baybe.core import BayBE, BayBEConfig
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.constraints import ProductConstraint, SumConstraint, ThresholdCondition
 
-N_GRID_POINTS = 5
+from baybe.core import BayBE
+from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget, Objective
+from baybe.utils import add_fake_results
 
-config_dict = {
-    "project_name": "Exclusion Constraints Test (Discrete)",
-    "allow_repeated_recommendations": False,
-    "allow_recommending_already_measured": True,
-    "numerical_measurements_must_be_within_tolerance": True,
-    "parameters": [
-        {
-            "name": "Solvent",
-            "type": "SUBSTANCE",
-            "data": {
-                "water": "O",
-                "C1": "C",
-                "C2": "CC",
-                "C3": "CCC",
-            },
-            "encoding": "RDKIT",
-        },
-        {
-            "name": "SomeSetting",
-            "type": "CAT",
-            "values": ["slow", "normal", "fast"],
-            "encoding": "INT",
-        },
-        {
-            "name": "NumParameter1",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-        {
-            "name": "NumParameter2",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-        {
-            "name": "NumParameter3",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-        {
-            "name": "NumParameter4",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-        {
-            "name": "NumParameter5",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-        {
-            "name": "NumParameter6",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-    ],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "Target_1",
-                "type": "NUM",
-                "mode": "MAX",
-            },
-        ],
-    },
-    "strategy": {
-        # "surrogate_model_cls": "GP",
-    },
-    # The constrains test whether conditions relating to a sum and product are ensured
-    "constraints": [
-        {
-            "type": "SUM",
-            "parameters": ["NumParameter1", "NumParameter2"],
-            "condition": {
-                "threshold": 150.0,
-                "operator": "<=",
-            },
-        },
-        {
-            "type": "PRODUCT",
-            "parameters": ["NumParameter3", "NumParameter4"],
-            "condition": {
-                "threshold": 30.0,
-                "operator": ">=",
-            },
-        },
-        {
-            "type": "SUM",
-            "parameters": ["NumParameter5", "NumParameter6"],
-            "condition": {
-                "threshold": 100.0,
-                "operator": "=",
-                "tolerance": 1.0,
-            },
-        },
-    ],
+# This examples shows how an exclusion constraint can be created for a discrete
+# searchspace. It assumes that the reader is familiar with the basics of Baybe, and thus
+# does not explain the details of e.g. parameter creation. For additional explanation
+# on these aspects, we refer to the Basic examples.
+
+# We begin by setting up some parameters for our experiments.
+dict_solvent = {
+    "water": "O",
+    "C1": "C",
+    "C2": "CC",
+    "C3": "CCC",
 }
+solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="RDKIT")
+speed = Categorical(name="Speed", values=["slow", "normal", "fast"], encoding="INT")
+num_parameter_1 = NumericDiscrete(
+    name="NumParameter1", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+)
+num_parameter_2 = NumericDiscrete(
+    name="NumParameter2", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+)
+num_parameter_3 = NumericDiscrete(
+    name="NumParameter3", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+)
+num_parameter_4 = NumericDiscrete(
+    name="NumParameter4", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+)
+num_parameter_5 = NumericDiscrete(
+    name="NumParameter5", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+)
+num_parameter_6 = NumericDiscrete(
+    name="NumParameter6", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+)
+
+parameters = [
+    solvent,
+    speed,
+    num_parameter_1,
+    num_parameter_2,
+    num_parameter_3,
+    num_parameter_4,
+    num_parameter_5,
+    num_parameter_6,
+]
+
+# Before creating the searchspace, we create the constraints
+
+sum_constraint_1 = SumConstraint(
+    parameters=["NumParameter1", "NumParameter2"],
+    condition=ThresholdCondition(threshold=150.0, operator="<="),
+)
+sum_constraint_2 = SumConstraint(
+    parameters=["NumParameter5", "NumParameter6"],
+    condition=ThresholdCondition(threshold=100, operator="=", tolerance=1.0),
+)
+prod_constraint = ProductConstraint(
+    parameters=["NumParameter3", "NumParameter4"],
+    condition=ThresholdCondition(threshold=30, operator=">="),
+)
+
+constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
+
+searchspace = SearchSpace.create(parameters=parameters, constraints=constraints)
+
+# Create the objective
+objective = Objective(
+    mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
+)
 
 # Create BayBE object, add fake results and print what happens to internal data
-config = BayBEConfig(**config_dict)
-baybe_obj = BayBE(config)
+baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
-N_ITERATIONS = 3
+N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
@@ -151,9 +118,5 @@ for kIter in range(N_ITERATIONS):
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)
-
     add_fake_results(rec, baybe_obj)
-    if kIter % 2:
-        add_parameter_noise(rec, baybe_obj, noise_level=0.1)
-
-    baybe_obj.add_results(rec)
+    baybe_obj.add_measurements(rec)
