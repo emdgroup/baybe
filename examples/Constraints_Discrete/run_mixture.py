@@ -1,140 +1,92 @@
 """
-Test for imposing sum constraints for discrete parameters, e.g. for mixture fractions
-that need to sum up to 1
+Test for imposing sum constraints for discrete parameters.
+The constraints simulate a situation where we want to mix up to three solvents,
+but their respective fractions need to sum up to 100. Also, the solvents should
+never be chosen twice.
 """
 import math
 
 import numpy as np
 
-from baybe.core import BayBE, BayBEConfig
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.constraints import (
+    DependenciesConstraint,
+    NoLabelDuplicatesConstraint,
+    PermutationInvarianceConstraint,
+    SumConstraint,
+    ThresholdCondition,
+)
 
-solvs = {
+from baybe.core import BayBE
+from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget, Objective
+from baybe.utils import add_fake_results
+
+# This parameter denotes the tolerance with regards to the calculation of the sum.
+SUM_TOLERANCE = 1.0
+
+dict_solvents = {
     "water": "O",
     "C1": "C",
     "C2": "CC",
     "C3": "CCC",
-    # "C4": "CCCC",
-    # "C5": "CCCCC",
 }
+solvent1 = GenericSubstance(name="Solvent1", data=dict_solvents, encoding="MORDRED")
+solvent2 = GenericSubstance(name="Solvent2", data=dict_solvents, encoding="MORDRED")
+solvent3 = GenericSubstance(name="Solvent3", data=dict_solvents, encoding="MORDRED")
+# Parameters for representing the fraction
+fraction1 = NumericDiscrete(
+    name="Fraction1", values=list(np.linspace(0, 100, 12)), tolerance=0.2
+)
+fraction2 = NumericDiscrete(
+    name="Fraction2", values=list(np.linspace(0, 100, 12)), tolerance=0.2
+)
+fraction3 = NumericDiscrete(
+    name="Fraction3", values=list(np.linspace(0, 100, 12)), tolerance=0.2
+)
 
-N_GRID_POINTS = 7
-SUM_TOLERANCE = 1.0
+parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 
-# Simple example with one numerical target, two categorical and one numerical discrete
-# parameter
-config_dict = {
-    "project_name": "Exclusion Constraints Test (Discrete)",
-    "allow_repeated_recommendations": False,
-    "allow_recommending_already_measured": True,
-    "numerical_measurements_must_be_within_tolerance": True,
-    "parameters": [
-        {
-            "name": "Solvent1",
-            "type": "SUBSTANCE",
-            "data": solvs,
-            "encoding": "MORDRED",
-        },
-        {
-            "name": "Solvent2",
-            "type": "SUBSTANCE",
-            "data": solvs,
-            "encoding": "MORDRED",
-        },
-        {
-            "name": "Solvent3",
-            "type": "SUBSTANCE",
-            "data": solvs,
-            "encoding": "MORDRED",
-        },
-        {
-            "name": "Fraction1",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.2,
-        },
-        {
-            "name": "Fraction2",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.2,
-        },
-        {
-            "name": "Fraction3",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(0, 100, N_GRID_POINTS)),
-            "tolerance": 0.2,
-        },
-    ],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "Target_1",
-                "type": "NUM",
-                "mode": "MAX",
-            },
+# Since the constraints are required for the creation of the searchspace, we create
+# them next.
+# Note that we need a PermutationInvariance Constraint here. The reason is that
+# constraints are normally applied in a specific order. However, as the fractions should
+# be invariant under permutations, we require an explicit constraint for this.
+perm_inv_constraint = PermutationInvarianceConstraint(
+    parameters=["Solvent1", "Solvent2", "Solvent3"],
+    dependencies=DependenciesConstraint(
+        parameters=["Fraction1", "Fraction2", "Fraction3"],
+        conditions=[
+            ThresholdCondition(threshold=0.0, operator=">"),
+            ThresholdCondition(threshold=0.0, operator=">"),
+            ThresholdCondition(threshold=0.0, operator=">"),
         ],
-    },
-    "strategy": {
-        # "surrogate_model_cls": "GP",
-    },
-    # The constraints simulate a situation where we want to mix up to three solvents,
-    # but their respective fractions need to sum up to 100. Also, the solvents should
-    # never be chosen twice.
-    "constraints": [
-        {
-            # This constraint will affect searchspace creation
-            "type": "PERMUTATION_INVARIANCE",
-            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-            "dependencies": {
-                "parameters": ["Fraction1", "Fraction2", "Fraction3"],
-                "conditions": [
-                    {
-                        "type": "THRESHOLD",
-                        "threshold": 0.0,
-                        "operator": ">",
-                    },
-                    {
-                        "type": "THRESHOLD",
-                        "threshold": 0.0,
-                        "operator": ">",
-                    },
-                    {
-                        # This is just to test whether the specification via
-                        # subselection condition also works
-                        "type": "SUBSELECTION",
-                        "selection": list(np.linspace(0, 100, N_GRID_POINTS)[1:]),
-                    },
-                ],
-                "affected_parameters": [
-                    ["Solvent1"],
-                    ["Solvent2"],
-                    ["Solvent3"],
-                ],
-            },
-        },
-        {
-            # This constraint will only affect searchspace creation
-            "type": "SUM",
-            "parameters": ["Fraction1", "Fraction2", "Fraction3"],
-            "condition": {
-                "threshold": 100.0,
-                "operator": "=",
-                "tolerance": SUM_TOLERANCE,
-            },
-        },
-        {
-            # This constraint will only affect searchspace creation
-            "type": "NO_LABEL_DUPLICATES",
-            "parameters": ["Solvent1", "Solvent2", "Solvent3"],
-        },
-    ],
-}
+        affected_parameters=[["Solvent1"], ["Solvent2"], ["Solvent3"]],
+    ),
+)
+# This is now the actual sum constraint
+sum_constraint = SumConstraint(
+    parameters=["Fraction1", "Fraction2", "Fraction3"],
+    condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
+)
+# Since the permutation invariance might create duplicate labels, we onclude a consraint
+# to remove them
+no_duplicates_constraint = NoLabelDuplicatesConstraint(
+    parameters=["Solvent1", "Solvent2", "Solvent3"]
+)
+
+constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
+# We now create the searchspace using all of these constraints
+searchspace = SearchSpace.create(parameters=parameters, constraints=constraints)
+
+
+# Create the objective
+objective = Objective(
+    mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
+)
 
 # Create BayBE object, add fake results and print what happens to internal data
-config = BayBEConfig(**config_dict)
-baybe_obj = BayBE(config)
+baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
 N_ITERATIONS = 3
@@ -143,7 +95,7 @@ for kIter in range(N_ITERATIONS):
 
     print("### ASSERTS ###")
     print(
-        "Number of searchspace entries where fractions do not sum to 100.0:      ",
+        "No. of searchspace entries where fractions do not sum to 100.0:      ",
         baybe_obj.searchspace.discrete.exp_rep[["Fraction1", "Fraction2", "Fraction3"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
@@ -152,14 +104,14 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
     print(
-        "Number of searchspace entries that have duplicate solvent labels:       ",
+        "No. of searchspace entries that have duplicate solvent labels:       ",
         baybe_obj.searchspace.discrete.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .nunique(axis=1)
         .ne(3)
         .sum(),
     )
     print(
-        "Number of searchspace entries with permutation-invariant combinations:  ",
+        "No. of searchspace entries with permutation-invariant combinations:  ",
         baybe_obj.searchspace.discrete.exp_rep[["Solvent1", "Solvent2", "Solvent3"]]
         .apply(frozenset, axis=1)
         .to_frame()
@@ -175,7 +127,7 @@ for kIter in range(N_ITERATIONS):
     # the constraint are not 0. Otherwise the sum/prod constraints will remove more
     # points than intended due to numeric rounding
     print(
-        f"Number of unique 1-solvent entries (expected {math.comb(len(solvs), 1)*1})",
+        f"No. of unique 1-solvent entries (exp. {math.comb(len(dict_solvents), 1)*1})",
         (
             baybe_obj.searchspace.discrete.exp_rep[
                 ["Fraction1", "Fraction2", "Fraction3"]
@@ -187,8 +139,8 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
     print(
-        f"Number of unique 2-solvent entries (expected"
-        f" {math.comb(len(solvs), 2)*(N_GRID_POINTS-2)})",
+        f"No. of unique 2-solvent entries (exp."
+        f" {math.comb(len(dict_solvents), 2)*(12-2)})",
         (
             baybe_obj.searchspace.discrete.exp_rep[
                 ["Fraction1", "Fraction2", "Fraction3"]
@@ -200,8 +152,8 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
     print(
-        f"Number of unique 3-solvent entries (expected"
-        f" {math.comb(len(solvs), 3)*((N_GRID_POINTS-3)*(N_GRID_POINTS-2))//2})",
+        f"No. of unique 3-solvent entries (exp."
+        f" {math.comb(len(dict_solvents), 3)*((12-3)*(12-2))//2})",
         (
             baybe_obj.searchspace.discrete.exp_rep[
                 ["Fraction1", "Fraction2", "Fraction3"]
@@ -214,9 +166,5 @@ for kIter in range(N_ITERATIONS):
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)
-
     add_fake_results(rec, baybe_obj)
-    if kIter % 2:
-        add_parameter_noise(rec, baybe_obj, noise_level=0.1)
-
-    baybe_obj.add_results(rec)
+    baybe_obj.add_measurements(rec)
