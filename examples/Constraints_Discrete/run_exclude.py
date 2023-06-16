@@ -4,127 +4,93 @@ some parameter values are incompatible with certain values of another parameter
 """
 import numpy as np
 
-from baybe.core import BayBE, BayBEConfig
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.constraints import (
+    ExcludeConstraint,
+    SubSelectionCondition,
+    ThresholdCondition,
+)
 
-N_GRID_POINTS = 15
-config_dict = {
-    "project_name": "Exclusion Constraints Test (Discrete)",
-    "allow_repeated_recommendations": False,
-    "allow_recommending_already_measured": True,
-    "numerical_measurements_must_be_within_tolerance": True,
-    "parameters": [
-        {
-            "name": "Solvent",
-            "type": "SUBSTANCE",
-            "data": {
-                "water": "O",
-                "C1": "C",
-                "C2": "CC",
-                "C3": "CCC",
-                "C4": "CCCC",
-                "C5": "CCCCC",
-                "c6": "c1ccccc1",
-                "C6": "CCCCCC",
-            },
-            "encoding": "RDKIT",
-        },
-        {
-            "name": "SomeSetting",
-            "type": "CAT",
-            "values": ["very slow", "slow", "normal", "fast", "very fast"],
-            "encoding": "INT",
-        },
-        {
-            "name": "Temperature",
-            "type": "NUM_DISCRETE",
-            "values": list(np.linspace(100, 200, N_GRID_POINTS)),
-            "tolerance": 0.5,
-        },
-        {
-            "name": "Pressure",
-            "type": "NUM_DISCRETE",
-            "values": [1, 2, 5, 10],
-            "tolerance": 0.4,
-        },
-    ],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "Target_1",
-                "type": "NUM",
-                "mode": "MAX",
-            },
-        ],
-    },
-    "strategy": {
-        # "surrogate_model_cls": "GP",
-    },
-    "constraints": [
-        # This constraint simulates a situation where solvents C2 and C4 are not
-        # compatible with temperatures > 154 and should thus be excluded
-        {
-            "type": "EXCLUDE",
-            "parameters": ["Temperature", "Solvent"],
-            "combiner": "AND",
-            "conditions": [
-                {
-                    "type": "THRESHOLD",
-                    "threshold": 151,
-                    "operator": ">",
-                },
-                {
-                    "type": "SUBSELECTION",
-                    "selection": ["C2", "C4"],
-                },
-            ],
-        },
-        # This constraint simulates a situation where solvents C5 and C6 are not
-        # compatible with pressures >= 5 and should thus be excluded
-        {
-            "type": "EXCLUDE",
-            "parameters": ["Pressure", "Solvent"],
-            "combiner": "AND",
-            "conditions": [
-                {
-                    "type": "THRESHOLD",
-                    "threshold": 5,
-                    "operator": ">",
-                },
-                {
-                    "type": "SUBSELECTION",
-                    "selection": ["C5", "C6"],
-                },
-            ],
-        },
-        # This constraint simulates a situation where pressures below 3 should never be
-        # combined with temperatures above 120
-        {
-            "type": "EXCLUDE",
-            "parameters": ["Pressure", "Temperature"],
-            "combiner": "AND",
-            "conditions": [
-                {
-                    "type": "THRESHOLD",
-                    "threshold": 3.0,
-                    "operator": "<",
-                },
-                {
-                    "type": "THRESHOLD",
-                    "threshold": 120.0,
-                    "operator": ">",
-                },
-            ],
-        },
-    ],
+from baybe.core import BayBE
+from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget, Objective
+from baybe.utils import add_fake_results
+
+# This examples shows how an exclusion constraint can be created for a discrete
+# searchspace. It assumes that the reader is familiar with the basics of Baybe, and thus
+# does not explain the details of e.g. parameter creation. For additional explanation
+# on these aspects, we refer to the Basic examples.
+
+# We begin by setting up some parameters for our experiments.
+dict_solvent = {
+    "water": "O",
+    "C1": "C",
+    "C2": "CC",
+    "C3": "CCC",
+    "C4": "CCCC",
+    "C5": "CCCCC",
+    "c6": "c1ccccc1",
+    "C6": "CCCCCC",
 }
+solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="RDKIT")
+speed = Categorical(
+    name="Speed",
+    values=["very slow", "slow", "normal", "fast", "very fast"],
+    encoding="INT",
+)
+temperature = NumericDiscrete(
+    name="Temperature", values=list(np.linspace(100, 200, 15)), tolerance=0.4
+)
+pressure = NumericDiscrete(name="Pressure", values=[1, 2, 5, 10], tolerance=0.4)
 
-# Create BayBE object, add fake results and print what happens to internal data
-config = BayBEConfig(**config_dict)
-baybe_obj = BayBE(config)
+parameters = [solvent, speed, temperature, pressure]
+
+# This constraint simulates a situation where solvents C2 and C4 are not
+# compatible with temperatures > 154 and should thus be excluded
+constraint_1 = ExcludeConstraint(
+    parameters=["Temperature", "Solvent"],
+    combiner="AND",
+    conditions=[
+        ThresholdCondition(threshold=151, operator=">"),
+        SubSelectionCondition(selection=["C4", "C2"]),
+    ],
+)
+# This constraint simulates a situation where solvents C5 and C6 are not
+# compatible with pressures >= 5 and should thus be excluded
+constraint_2 = ExcludeConstraint(
+    parameters=["Pressure", "Solvent"],
+    combiner="AND",
+    conditions=[
+        ThresholdCondition(threshold=5, operator=">"),
+        SubSelectionCondition(selection=["C5", "C6"]),
+    ],
+)
+# This constraint simulates a situation where pressures below 3 should never be
+# combined with temperatures above 120
+constraint_3 = ExcludeConstraint(
+    parameters=["Pressure", "Temperature"],
+    combiner="AND",
+    conditions=[
+        ThresholdCondition(threshold=3.0, operator="<"),
+        ThresholdCondition(threshold=120.0, operator=">"),
+    ],
+)
+
+# Creating the searchspace using the previously defined constraints
+searchspace = SearchSpace.create(
+    parameters=parameters, constraints=[constraint_1, constraint_2, constraint_3]
+)
+
+# Create the objective
+objective = Objective(
+    mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
+)
+
+# Put everything together
+baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
+# Perform some iterations and check that the searchspaces respects the given constraints
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
@@ -161,9 +127,5 @@ for kIter in range(N_ITERATIONS):
     )
 
     rec = baybe_obj.recommend(batch_quantity=5)
-
     add_fake_results(rec, baybe_obj)
-    if kIter % 2:
-        add_parameter_noise(rec, baybe_obj, noise_level=0.1)
-
-    baybe_obj.add_results(rec)
+    baybe_obj.add_measurements(rec)
