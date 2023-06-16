@@ -37,7 +37,7 @@ from baybe.utils import (
 #   hierarchies).
 def select_candidates_and_recommend(
     searchspace: SearchSpace,
-    recommend: Callable,
+    recommend: Callable[[SearchSpace, pd.DataFrame, int], pd.Index],
     batch_quantity: int = 1,
     allow_repeated_recommendations: bool = False,
     allow_recommending_already_measured: bool = True,
