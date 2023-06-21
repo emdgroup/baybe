@@ -6,6 +6,8 @@ They wrap synthetic BoTorch test function to simplify using these for testing pu
 from abc import ABC
 from typing import List, Optional, Tuple
 
+import numpy as np
+
 from botorch.test_functions import (
     Ackley,
     Branin,
@@ -16,7 +18,7 @@ from botorch.test_functions import (
     Shekel,
     SyntheticTestFunction,
 )
-from torch import Tensor
+from torch import from_numpy, Tensor
 
 
 class AbstractTestFunction(ABC):
@@ -52,7 +54,9 @@ class AbstractTestFunction(ABC):
         else:
             self.test_function = test_function(bounds=bounds)
 
-    def __call__(self, x: Tensor) -> float:
+    def __call__(self, x: Tensor) -> Tensor:
+        if isinstance(x, np.ndarray):
+            x = from_numpy(x)
         # Make it easier to evaluate a function.
         return self.test_function.forward(x)
 
