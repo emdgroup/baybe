@@ -301,7 +301,7 @@ def _look_up_target_values(
         # TODO: Currently, the alignment of return values to targets is based on the
         #   column ordering, which is not robust. Instead, the callable should return
         #   a dataframe with properly labeled columns.
-        measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
+        measured_targets = queries.apply(lambda x: lookup(x.values), axis=1).to_frame()
         if measured_targets.shape[1] != len(baybe_obj.targets):
             raise AssertionError(
                 "If you use an analytical function as lookup, make sure "
@@ -309,7 +309,9 @@ def _look_up_target_values(
                 "specified."
             )
         for k_target, target in enumerate(baybe_obj.targets):
-            queries[target.name] = measured_targets.iloc[:, k_target]
+            queries[target.name] = [
+                x.item() for x in measured_targets.iloc[:, k_target]
+            ]
 
     # Get results via dataframe lookup (works only for exact matches)
     # IMPROVE: Although its not too important for a simulation, this
