@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No longer using private telemetry imports
 - Fixed package versions for dev tools
 - Revised "Getting Started" section in README.md
+- Revised examples
 
 ### Fixed
 - Telemetry no longer crashing when package was not installed
