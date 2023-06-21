@@ -6,7 +6,9 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import to_tensor
 
-from test_functions import (
+# Note that this import here might be problematic depending on your exact
+# setup and that you might need to make some adjustments to make it work!
+from examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
     #    AckleyTestFunction,
     #    BraninTestFunction,
     #    HartmannTestFunction,
@@ -46,8 +48,9 @@ baybe_obj = BayBE(
     objective=objective,
 )
 
-# Get a recommendation
-recommendation = baybe_obj.recommend(batch_quantity=3)
+# Get a recommendation for a fixed batched quantity
+BATCH_QUANTITY = 3
+recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
 # Evaluate the test function. Note that we need to transform the recommendation, which
 # is a pandas dataframe, to a tensor.
 target_value = TEST_FUNCTION(to_tensor(recommendation))
