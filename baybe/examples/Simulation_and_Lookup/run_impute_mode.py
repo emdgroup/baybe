@@ -23,7 +23,7 @@ from baybe.targets import NumericalTarget, Objective
 # Note that the file that we read here does not contain all possible experiments and
 # has missing data!
 
-lookup = pd.read_excel("examples/Simulation_and_Lookup/lookup_withmissing.xlsx")
+lookup = pd.read_excel("baybe/examples/Simulation_and_Lookup/lookup_withmissing.xlsx")
 # lookup = pd.read_excel("./lookup_withmissing.xlsx")
 
 # As usual, we set up some experiment. Note that we now need to ensure that the names
@@ -101,8 +101,8 @@ scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 #   * 'ignore': the search space is stripped before recommendations are made
 #       so that unmeasured experiments will not be recommended
 BATCH_QUANTITY = 2
-N_EXP_ITERATIONS = 20
-N_MC_ITERATIONS = 5
+N_EXP_ITERATIONS = 5
+N_MC_ITERATIONS = 3
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=BATCH_QUANTITY,

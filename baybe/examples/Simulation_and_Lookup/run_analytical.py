@@ -16,17 +16,10 @@ import numpy as np
 import seaborn as sns
 
 from baybe.core import BayBE
-from baybe.parameters import NumericDiscrete
-from baybe.searchspace import SearchSpace
-from baybe.simulation import simulate_scenarios
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
-from baybe.targets import NumericalTarget, Objective
 
 # Note that this import here might be problematic depending on your exact
 # setup and that you might need to make some adjustments to make it work!
-from examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
+from baybe.examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
     #   AckleyTestFunction,
     BraninTestFunction,
     #   HartmannTestFunction,
@@ -34,6 +27,13 @@ from examples.Analytic_Functions.test_functions import (  # pylint: disable=E040
     #   RosenbrockTestFunction,
     #   ShekelTestFunction,
 )
+from baybe.parameters import NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.simulation import simulate_scenarios
+from baybe.strategies.bayesian import SequentialGreedyRecommender
+from baybe.strategies.sampling import RandomRecommender
+from baybe.strategies.strategy import Strategy
+from baybe.targets import NumericalTarget, Objective
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be

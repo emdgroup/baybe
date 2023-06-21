@@ -1,14 +1,12 @@
-"""Example for using the synthetic test functions in continuous spaces."""
+"""Example for using the synthetic test functions in discrete spaces."""
+
+import numpy as np
 
 from baybe.core import BayBE
-from baybe.parameters import NumericContinuous
-from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
-from baybe.utils import to_tensor
 
 # Note that this import here might be problematic depending on your exact
 # setup and that you might need to make some adjustments to make it work!
-from examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
+from baybe.examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
     #    AckleyTestFunction,
     #    BraninTestFunction,
     #    HartmannTestFunction,
@@ -16,6 +14,10 @@ from examples.Analytic_Functions.test_functions import (  # pylint: disable=E040
     RosenbrockTestFunction,
     #    ShekelTestFunction,
 )
+from baybe.parameters import NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget, Objective
+from baybe.utils import to_tensor
 
 # Here, you can choose the dimension of the test function as well as the actual test
 # function. All of the functions that are part of the import statement are available.
@@ -25,13 +27,20 @@ from examples.Analytic_Functions.test_functions import (  # pylint: disable=E040
 # For details on constructing the baybe object, we refer to the basic example file.
 DIMENSION = 6
 TEST_FUNCTION = RosenbrockTestFunction(dim=DIMENSION)
+# Parameter for controlling the number of points per dimension.
+POINTS_PER_DIM = 4
 
-# Since this is the continuous test, we only construct NumericContinuous parameters.
+# Since this is the discrete test, we only construct NumericDiscrete parameters.
 # We use that data of the test function to deduce bounds and number of parameters.
 parameters = [
-    NumericContinuous(
+    NumericDiscrete(
         name=f"x_{k+1}",
-        bounds=(TEST_FUNCTION.bounds[0, k], TEST_FUNCTION.bounds[1, k]),
+        values=list(
+            np.linspace(
+                TEST_FUNCTION.bounds[0, k], TEST_FUNCTION.bounds[1, k], POINTS_PER_DIM
+            )
+        ),
+        tolerance=0.01,
     )
     for k in range(TEST_FUNCTION.dim)
 ]
@@ -48,9 +57,8 @@ baybe_obj = BayBE(
     objective=objective,
 )
 
-# Get a recommendation for a fixed batched quantity
-BATCH_QUANTITY = 3
-recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
+# Get a recommendation
+recommendation = baybe_obj.recommend(batch_quantity=3)
 # Evaluate the test function. Note that we need to transform the recommendation, which
 # is a pandas dataframe, to a tensor.
 target_value = TEST_FUNCTION(to_tensor(recommendation))

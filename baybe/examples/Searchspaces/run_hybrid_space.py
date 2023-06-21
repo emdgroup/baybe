@@ -3,14 +3,10 @@
 import numpy as np
 
 from baybe.core import BayBE
-from baybe.parameters import NumericContinuous, NumericDiscrete
-from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
-from baybe.utils import to_tensor
 
 # Note that this import here might be problematic depending on your exact
 # setup and that you might need to make some adjustments to make it work!
-from examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
+from baybe.examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
     AckleyTestFunction,
     #    BraninTestFunction,
     #    HartmannTestFunction,
@@ -18,6 +14,10 @@ from examples.Analytic_Functions.test_functions import (  # pylint: disable=E040
     # RosenbrockTestFunction,
     #    ShekelTestFunction,
 )
+from baybe.parameters import NumericContinuous, NumericDiscrete
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget, Objective
+from baybe.utils import to_tensor
 
 # Here, you can choose the dimension of the test function as well as the actual test
 # function. All of the functions that are part of the import statement are available.

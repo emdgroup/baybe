@@ -1,6 +1,6 @@
 """
 Run history simulation for a direct arylation where all possible combinations have
-been measured
+been measured, using initial data.
 """
 
 import matplotlib.pyplot as plt
@@ -21,8 +21,13 @@ from baybe.targets import NumericalTarget, Objective
 # saving it as a pandas DataFrame. Note that depending on your sysem and settings, you
 # might need to slightly adjust the following path.
 
-lookup = pd.read_excel("examples/Simulation_and_Lookup/lookup.xlsx")
+lookup = pd.read_excel("baybe/examples/Simulation_and_Lookup/lookup.xlsx")
 # lookup = pd.read_excel("./lookup.xlsx")
+
+# In order to include initial data, we sample some rows from the lookup table and act
+# as if these were our initial data. Note that the initial_data needs to be a list of
+# DataFrames, and that one experiment will be done per provided initial data set.
+initial_data = [lookup.sample(n=5), lookup.sample(n=5), lookup.sample(n=5)]
 
 # As usual, we set up some experiment. Note that we now need to ensure that the names
 # fit the names in the provided .xlsx file!
@@ -91,18 +96,19 @@ scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 # Note that, in contrast to other cases where we use the lookup functionality, it is
 # not necessary to include the 'impute' keyword here as we know that all data is
 # part of our table.
+# Further note that we cannot specify the number of MC runs here since we have initial
+# data.
 BATCH_QUANTITY = 2
 N_EXP_ITERATIONS = 5
-N_MC_ITERATIONS = 3
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=BATCH_QUANTITY,
     n_exp_iterations=N_EXP_ITERATIONS,
-    n_mc_iterations=N_MC_ITERATIONS,
+    initial_data=initial_data,
     lookup=lookup,
 )
 
-# The following lines plot the results and save the plot in run_full_lookup.png
+# The following lines plot the results and save the plot in run_full_initial_data.png
 max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
@@ -112,4 +118,4 @@ plt.plot(
 )
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
-plt.savefig("./run_full_lookup.png")
+plt.savefig("./run_full_initial_data.png")

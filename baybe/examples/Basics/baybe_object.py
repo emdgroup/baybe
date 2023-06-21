@@ -177,7 +177,6 @@ for batch_quantity in [2, 3]:
     print(f"\n\nRecommended measurements with batch_quantity = {batch_quantity}: ")
     print(recommendation)
 
-
 # --------------------------------------------------------------------------------------
 # PART 5: Add a measurement
 # --------------------------------------------------------------------------------------
