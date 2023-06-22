@@ -1,10 +1,11 @@
-"""Creating a BayBE object from a user configuration."""
+"""
+This example shows how to load a user defined configuration file and use it to create
+a BayBE object. We use the following configuration dictionaries, representing a
+valid BayBE object.
+"""
 
 from baybe.core import BayBE
 
-# This example shows how to load a user defined configuration file and use it to create
-# a BayBE object. We use the following configuration dictionaries, representing a
-# valid BayBE object.
 
 CONFIG = """
 {

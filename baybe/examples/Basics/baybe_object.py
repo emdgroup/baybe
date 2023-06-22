@@ -1,6 +1,11 @@
 """
 Basic Example about creation and use of baybe objects
 on direct arylation reaction example
+
+This example shows how to create a Baybe Object and how to use it
+It details how a user can first define parameters of the searchspace
+and the objective desired, to then be able to create a proper baybe object
+that can be used to get recommendations
 """
 
 from baybe.core import BayBE
@@ -8,12 +13,6 @@ from baybe.parameters import GenericSubstance, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
-
-
-# This example shows how to create a Baybe Object and how to use it
-# It details how a user can first define parameters of the searchspace
-# and the objective desired, to then be able to create a proper baybe object
-# that can be used to get recommendations
 
 
 # --------------------------------------------------------------------------------------

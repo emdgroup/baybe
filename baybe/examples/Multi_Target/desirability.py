@@ -1,5 +1,9 @@
 """
-Example for having multiple targets treated in a true multi-target fashion
+This example shows how one can use a multi target mode for the objective.
+It uses a desirability value to handle several targets.
+It assumes that the reader is familiar with the basics of Baybe, and thus does not
+explain the details of e.g. parameter creation. For additional explanation on these
+aspects, we refer to the Basic examples.
 """
 
 from baybe.core import BayBE
@@ -7,12 +11,6 @@ from baybe.parameters import Categorical, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
-
-# This example shows how one can use a multi target mode for the objective
-# It uses a desirability value to handle several targets
-# It assumes that the reader is familiar with the basics of Baybe, and thus does not
-# explain the details of e.g. parameter creation. For additional explanation on these
-# aspects, we refer to the Basic examples.
 
 
 # SEARCHSPACE

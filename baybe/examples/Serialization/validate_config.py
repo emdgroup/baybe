@@ -1,10 +1,12 @@
-"""Validating a BayBE object from a user configuration."""
+"""
+This example shows how to load and validate a user defined configuration file.
+We use the two configuration dictionaries. The first one represents a valid
+configuration, the second does not.
+"""
 
 from baybe.core import BayBE
 
-# This example shows how to load and validate a user defined configuration file.
-# We use the following two configuration dictionaries. The first one represents a
-# valid configuration, the second does not.
+
 CONFIG = """
 {
     "parameters": [

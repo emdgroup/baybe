@@ -1,5 +1,12 @@
 """
-Example for imposing dependency constraints
+This example shows how a dependency constraint can be created for a discrete
+searchspace.
+There are constraint that specifies dependencies between parameters. For instance some
+parameters might only be relevant when another parameter has a certain value
+(e.g. 'on'). All dependencies can be declared in a single constraint.
+This example assumes that the reader is familiar with the basics of Baybe, and thus
+does not explain the details of e.g. parameter creation. For additional explanation
+on these aspects, we refer to the Basic examples.
 """
 
 import numpy as np
@@ -11,14 +18,6 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# This example shows how a dependency constraint can be created for a discrete
-# searchspace.
-# There are constraint that specifies dependencies between parameters. For instance some
-# parameters might only be relevant when another parameter has a certain value
-# (e.g. 'on'). All dependencies can be declared in a single constraint.
-# This example assumes that the reader is familiar with the basics of Baybe, and thus
-# does not explain the details of e.g. parameter creation. For additional explanation
-# on these aspects, we refer to the Basic examples.
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {

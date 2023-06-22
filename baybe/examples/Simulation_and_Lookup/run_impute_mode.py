@@ -1,6 +1,7 @@
 """
 Run history simulation for a direct arylation where not all possible combinations have
-been measured previously.
+been measured previously. This uses the lookup mechanism that allows us to access
+information about previously conducted experiments from .xlsx-files.
 """
 
 import matplotlib.pyplot as plt
@@ -16,9 +17,8 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-# In this example, we read the information about the conducted elements from a table
-# that is saved as .xlsx-file. This is done by reading in the corresponding file and
-# saving it as a pandas DataFrame. Note that depending on your sysem and settings, you
+# We read the information about the conducted expderiments from a .xlsx-file and save it
+# as a pandas DataFrame.  Note that depending on your sysem and settings, you
 # might need to slightly adjust the following path.
 # Note that the file that we read here does not contain all possible experiments and
 # has missing data!

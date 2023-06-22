@@ -1,6 +1,8 @@
 """
-Example for imposing exclusion constraints on discrete parameters. For instance if
-some parameter values are incompatible with certain values of another parameter
+This examples shows how a custom constraint can be created for a discrete searchspace.
+It assumes that the reader is familiar with the basics of Baybe, and thus does not
+explain the details of e.g. parameter creation. For additional explanation on these
+aspects, we refer to the Basic examples.
 """
 import numpy as np
 import pandas as pd
@@ -12,10 +14,6 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# This examples shows how a custom constraint can be created for a discrete searchspace.
-# It assumes that the reader is familiar with the basics of Baybe, and thus does not
-# explain the details of e.g. parameter creation. For additional explanation on these
-# aspects, we refer to the Basic examples.
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {

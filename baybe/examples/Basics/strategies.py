@@ -1,5 +1,19 @@
 """
-Description of the different strategies available
+Description of the different strategies available.
+
+# This example explain how to create the strategy object
+
+This object specifies the strategy adopted to make recommendations
+It has several parameters one can adjust
+depending on the strategy the user wants to follow
+To apply the selected strategy,
+this object can be specified in the arguments of the baybe object
+
+The different parameters the user can change are:
+- The initial recomender
+- The recommender with its surrogate model and its acquisition function
+- Other parameters to allow or not repetition of recommendations
+This example explain how they can be changed
 """
 
 from functools import partial
@@ -28,20 +42,6 @@ from botorch.acquisition import (
     qUpperConfidenceBound,
     UpperConfidenceBound,
 )
-
-# This example explain how to create the strategy object
-
-# This object specifies the strategy adopted to make recommendations
-# It has several parameters one can adjust
-# depending on the strategy the user wants to follow
-# To apply the selected strategy,
-# this object can be specified in the arguments of the baybe object
-
-# The different parameters the user can change are:
-# - The initial recomender
-# - The recommender with its surrogate model and its acquisition function
-# - Other parameters to allow or not repetition of recommendations
-# This example explain how they can be changed
 
 
 # --------------------------------------------------------------------------------------

@@ -1,6 +1,8 @@
 """
-Example to ensure conditions relating to sums and products of numerical discrete
-parameters.
+This examples shows how an exclusion constraint can be created for a discrete
+searchspace using products and sums. It assumes that the reader is familiar with the
+basics of Baybe, and thus does not explain the details of e.g. parameter creation.
+For additional explanation on these aspects, we refer to the Basic examples.
 """
 import numpy as np
 
@@ -12,10 +14,6 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# This examples shows how an exclusion constraint can be created for a discrete
-# searchspace. It assumes that the reader is familiar with the basics of Baybe, and thus
-# does not explain the details of e.g. parameter creation. For additional explanation
-# on these aspects, we refer to the Basic examples.
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {
