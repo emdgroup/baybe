@@ -228,12 +228,7 @@ class BayesianRecommender(Recommender, ABC):
         self, searchspace: SearchSpace, train_x: pd.DataFrame, train_y: pd.DataFrame
     ) -> AcquisitionFunction:
         """
-        Create, train and return an acquisition function.
-
-        This method exteacts the best value found in train_y and uses the private _fit
-        method to fit the surrogate model of self to the provided training data.
-        It then creates and return the acquisition function according to the prescribed
-        acquisition_function_cls of self.
+        Creates the current acquisition function from training data.
 
         Parameters
         ----------
