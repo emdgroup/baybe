@@ -1,4 +1,4 @@
-"""Creating and validating a BayBE object from a user configuration."""
+"""Validating a BayBE object from a user configuration."""
 
 from baybe.core import BayBE
 
@@ -130,7 +130,6 @@ INVALID_CONFIG = """
 # The first validation should work and print the line contained in the try block
 try:
     BayBE.validate_config(CONFIG)
-    baybe = BayBE.from_config(CONFIG)
     print("Succesfully validated first config and created a BayBE object!")
 except Exception:  # pylint: disable=W0702
     print("Something is wrong with config 1 which should not happen!")
