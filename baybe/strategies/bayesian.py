@@ -71,7 +71,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         try:
             points, _ = optimize_acqf(
                 acq_function=acquisition_function,
-                bounds=searchspace.param_bounds_comp,
+                bounds=searchspace.continuous.param_bounds_comp,
                 q=batch_quantity,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
