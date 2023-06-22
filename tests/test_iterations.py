@@ -8,7 +8,7 @@ import pytest
 
 from baybe.searchspace import SearchSpaceType
 from baybe.strategies.bayesian import (
-    NaiveHybridBayesianRecommender,
+    NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
 from baybe.strategies.recommender import (
@@ -73,7 +73,7 @@ valid_discrete_bayesian_recommenders = [
     if not isabstract(cls) and cls.compatibility in [SearchSpaceType.DISCRETE]
 ]
 valid_naive_hybrid_recommenders = [
-    NaiveHybridBayesianRecommender(
+    NaiveHybridRecommender(
         disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
     )
     for disc in [

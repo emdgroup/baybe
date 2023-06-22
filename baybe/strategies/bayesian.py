@@ -88,7 +88,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
 
 @define
-class NaiveHybridBayesianRecommender(Recommender):
+class NaiveHybridRecommender(Recommender):
 
     compatibility = SearchSpaceType.HYBRID
     # TODO This used to be a Union of BayesianRecommender and NonPredictiveRecommender.
