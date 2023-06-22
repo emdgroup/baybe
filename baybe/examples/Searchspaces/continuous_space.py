@@ -1,30 +1,27 @@
-"""Example for using the synthetic test functions in continuous spaces."""
+"""
+Example for using the synthetic test functions in continuous spaces.
+All test functions that are available in BoTorch are also available here and wrapped
+via the BayBEBotorchFunctionWrapper.
+"""
 
 from baybe.core import BayBE
 
-# Note that this import here might be problematic depending on your exact
-# setup and that you might need to make some adjustments to make it work!
-from baybe.examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
-    #    AckleyTestFunction,
-    #    BraninTestFunction,
-    #    HartmannTestFunction,
-    #    RastriginTestFunction,
-    RosenbrockTestFunction,
-    #    ShekelTestFunction,
-)
+from baybe.examples.Analytic_Functions.test_functions import BayBEBotorchFunctionWrapper
 from baybe.parameters import NumericContinuous
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import to_tensor
 
-# Here, you can choose the dimension of the test function as well as the actual test
-# function. All of the functions that are part of the import statement are available.
-# Note that choosing a dimension is only Ackley and Rastrigin, Rosenbrock and will be
-# ignored for all other.
-# We refer to the test_functions.py file for more information on the functions.
+# Import the desired test function from botorch here
+from botorch.test_functions import Rastrigin
+
+# Here, you can choose the dimension of the test function and create the actual test
+# function. Note that some test functions are only defined for specific dimensions.
+# If the dimension you provide is not available for the given test function, a warning
+# will be printed and one of the available dimensions is used.
 # For details on constructing the baybe object, we refer to the basic example file.
-DIMENSION = 6
-TEST_FUNCTION = RosenbrockTestFunction(dim=DIMENSION)
+DIMENSION = 2
+TEST_FUNCTION = BayBEBotorchFunctionWrapper(test_function=Rastrigin, dim=DIMENSION)
 
 # Since this is the continuous test, we only construct NumericContinuous parameters.
 # We use that data of the test function to deduce bounds and number of parameters.

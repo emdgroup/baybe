@@ -3,8 +3,8 @@ Run history simulation for a single target with a function as lookup.
 
 This example shows a full simulation loop. That is, we do not only perform one or two
 iterations like in the other examples but rather a full loop. We also store and display
-the results. The available test functions can be found in the file test_functions.py in
-examples/Analytic_Functions
+the results. We refer to the examples in the searchspace folder for more information
+on how to use the synthetic test functions.
 
 This example can also be used or testing new aspects like recommenders.
 
@@ -19,14 +19,7 @@ from baybe.core import BayBE
 
 # Note that this import here might be problematic depending on your exact
 # setup and that you might need to make some adjustments to make it work!
-from baybe.examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
-    #   AckleyTestFunction,
-    BraninTestFunction,
-    #   HartmannTestFunction,
-    #   RastriginTestFunction,
-    #   RosenbrockTestFunction,
-    #   ShekelTestFunction,
-)
+from baybe.examples.Analytic_Functions.test_functions import BayBEBotorchFunctionWrapper
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -34,6 +27,7 @@ from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
+from botorch.test_functions import Rastrigin
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be
@@ -45,7 +39,7 @@ N_EXP_ITERATIONS = 5
 # run_discrete_space.py within examples/Analytic_Functions, so we refer to this file
 # for more details on the setup.
 DIMENSION = 2
-TEST_FUNCTION = BraninTestFunction(dim=DIMENSION)
+TEST_FUNCTION = BayBEBotorchFunctionWrapper(test_function=Rastrigin, dim=DIMENSION)
 POINTS_PER_DIM = 15
 
 # As we expect it to be the most common use case, we construct a purely discrete space

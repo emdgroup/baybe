@@ -1,35 +1,31 @@
-"""Example for using the synthetic test functions in hybrid spaces."""
+"""
+Example for using the synthetic test functions in hybrid spaces.
+All test functions that are available in BoTorch are also available here and wrapped
+via the BayBEBotorchFunctionWrapper.
+"""
 
 import numpy as np
 
 from baybe.core import BayBE
 
-# Note that this import here might be problematic depending on your exact
-# setup and that you might need to make some adjustments to make it work!
-from baybe.examples.Analytic_Functions.test_functions import (  # pylint: disable=E0401
-    AckleyTestFunction,
-    #    BraninTestFunction,
-    #    HartmannTestFunction,
-    #    RastriginTestFunction,
-    # RosenbrockTestFunction,
-    #    ShekelTestFunction,
-)
+from baybe.examples.Analytic_Functions.test_functions import BayBEBotorchFunctionWrapper
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import to_tensor
 
-# Here, you can choose the dimension of the test function as well as the actual test
-# function. All of the functions that are part of the import statement are available.
-# Note that choosing a dimension is only Ackley and Rastrigin, Rosenbrock and will be
-# ignored for all other.
-# We refer to the test_functions.py file for more information on the functions.
+# Import the desired test function from botorch here
+from botorch.test_functions import Rastrigin
+
+# Here, you can choose the dimension of the test function and create the actual test
+# function. Note that some test functions are only defined for specific dimensions.
+# If the dimension you provide is not available for the given test function, a warning
+# will be printed and one of the available dimensions is used.
 # For details on constructing the baybe object, we refer to the basic example file.
 DIMENSION = 6
 # DISC_INDICES and CONT_INDICES together should contain the integers 0,1,...,DIMENSION-1
 DISC_INDICES = [0, 1, 2]
 CONT_INDICES = [3, 4, 5]
-TEST_FUNCTION = AckleyTestFunction(dim=DIMENSION)
+TEST_FUNCTION = BayBEBotorchFunctionWrapper(test_function=Rastrigin, dim=DIMENSION)
 POINTS_PER_DIM = 3
 
 # This if-statement check whether the union of the given index sets yields indices
@@ -79,13 +75,16 @@ baybe_obj = BayBE(
 )
 
 
-# Get a recommendation
-recommendation = baybe_obj.recommend(batch_quantity=3)
-# Evaluate the test function. Note that we need to transform the recommendation, which
-# is a pandas dataframe, to a tensor.
-target_value = TEST_FUNCTION(to_tensor(recommendation))
+# Get a recommendation for a fixed batched quantity
+BATCH_QUANTITY = 3
+recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
+# Evaluate the test function. Note that we need iterate through the rows of the
+# recommendation and that we need to interpret the row as a list.
+target_values = []
+for index, row in recommendation.iterrows():
+    target_values.append(TEST_FUNCTION(*row.to_list()))
 # We add an additional column with the calculated target values...
-recommendation["Target"] = target_value
+recommendation["Target"] = target_values
 # ... and inform the BayBE object about our measurement.
 baybe_obj.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
