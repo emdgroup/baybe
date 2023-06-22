@@ -1,5 +1,5 @@
 """
-Test for imposing sum constraints for discrete parameters.
+Example for imposing sum constraints for discrete parameters.
 The constraints simulate a situation where we want to mix up to three solvents,
 but their respective fractions need to sum up to 100. Also, the solvents should
 never be chosen twice.

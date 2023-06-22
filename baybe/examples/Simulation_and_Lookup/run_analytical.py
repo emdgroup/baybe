@@ -1,5 +1,5 @@
 """
-Test for history simulation of a single target with a function as lookup.
+Run history simulation for a single target with a function as lookup.
 
 This example shows a full simulation loop. That is, we do not only perform one or two
 iterations like in the other examples but rather a full loop. We also store and display

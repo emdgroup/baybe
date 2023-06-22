@@ -1,5 +1,5 @@
 """
-Tests to ensure conditions relating to sums and products of numerical discrete
+Example to ensure conditions relating to sums and products of numerical discrete
 parameters.
 """
 import numpy as np

@@ -1,5 +1,5 @@
 """
-Test for imposing exclusion constraints on discrete parameters. For instance if
+Example for imposing exclusion constraints on discrete parameters. For instance if
 some parameter values are incompatible with certain values of another parameter
 """
 import numpy as np

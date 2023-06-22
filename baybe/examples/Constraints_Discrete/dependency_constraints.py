@@ -1,5 +1,5 @@
 """
-Test for imposing dependency constraints
+Example for imposing dependency constraints
 """
 
 import numpy as np
@@ -11,7 +11,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# This examples shows how a dependency constraint can be created for a discrete
+# This example shows how a dependency constraint can be created for a discrete
 # searchspace.
 # There are constraint that specifies dependencies between parameters. For instance some
 # parameters might only be relevant when another parameter has a certain value
