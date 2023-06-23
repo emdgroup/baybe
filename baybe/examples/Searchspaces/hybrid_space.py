@@ -14,6 +14,8 @@ from baybe.core import BayBE
 from baybe.examples.Analytic_Functions.test_functions import BayBEBotorchFunctionWrapper
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace
+from baybe.strategies.bayesian import NaiveHybridRecommender
+from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 # Import the desired test function from botorch here
@@ -72,9 +74,17 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
+# Here, we explicitly create a strategy object to use the NaiveHybridRecommender.
+# Using the keywords disc_recommender and cont_recommender, it can be chosen which
+# individual recommenders should then be used for the corresponding subspaces.
+# We use the default choices, which is the SequentialGreedy.
+
+hybrid_recommender = NaiveHybridRecommender()
+
 baybe_obj = BayBE(
     searchspace=searchspace,
     objective=objective,
+    strategy=Strategy(recommender=hybrid_recommender),
 )
 
 
