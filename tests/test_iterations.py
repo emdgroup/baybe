@@ -65,12 +65,16 @@ valid_hybrid_recommenders = [
 valid_discrete_non_predictive_recommenders = [
     cls()
     for cls in subclasses_recursive(NonPredictiveRecommender)
-    if not isabstract(cls) and cls.compatibility in [SearchSpaceType.DISCRETE]
+    if not isabstract(cls)
+    and cls.compatibility
+    in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
 valid_discrete_bayesian_recommenders = [
     cls()
     for cls in subclasses_recursive(BayesianRecommender)
-    if not isabstract(cls) and cls.compatibility in [SearchSpaceType.DISCRETE]
+    if not isabstract(cls)
+    and cls.compatibility
+    in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
 valid_naive_hybrid_recommenders = [
     NaiveHybridRecommender(
