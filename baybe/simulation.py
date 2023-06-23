@@ -301,7 +301,17 @@ def _look_up_target_values(
         # TODO: Currently, the alignment of return values to targets is based on the
         #   column ordering, which is not robust. Instead, the callable should return
         #   a dataframe with properly labeled columns.
-        measured_targets = queries.apply(lambda x: lookup(x.values), axis=1).to_frame()
+
+        # Since the return of a lookup function is a a tuple, the following code stores
+        # tuples of floats in a single column with label 0:
+        measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
+        # We transform this column to a DataFrame in which there is an individual
+        # column for each of the targets....
+        split_target_columns = pd.DataFrame(
+            measured_targets[0].to_list(), index=measured_targets.index
+        )
+        # ... and assign this to measured_targets in order to have one column per target
+        measured_targets[split_target_columns.columns] = split_target_columns
         if measured_targets.shape[1] != len(baybe_obj.targets):
             raise AssertionError(
                 "If you use an analytical function as lookup, make sure "
@@ -309,9 +319,7 @@ def _look_up_target_values(
                 "specified."
             )
         for k_target, target in enumerate(baybe_obj.targets):
-            queries[target.name] = [
-                x.item() for x in measured_targets.iloc[:, k_target]
-            ]
+            queries[target.name] = measured_targets.iloc[:, k_target]
 
     # Get results via dataframe lookup (works only for exact matches)
     # IMPROVE: Although its not too important for a simulation, this
