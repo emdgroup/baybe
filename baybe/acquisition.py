@@ -9,7 +9,7 @@ from botorch.acquisition import AcquisitionFunction
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from torch import Tensor
+from torch import cat, squeeze, Tensor
 
 from baybe.surrogate import SurrogateModel
 
@@ -99,3 +99,91 @@ class AdapterModel(Model):
         mean, var = self._surrogate.posterior(X)
         mvn = gpytorch.distributions.MultivariateNormal(mean, var)
         return GPyTorchPosterior(mvn)
+
+
+class PartialAcquisitionFunction:
+    """
+    Acquisition function for evaluating points in a searchspace where of the subspaces
+    is fixed.
+
+    It can either pin the discrete or the continuous part. The pinned part is assumed
+    to be a tensor of dimension dx1 where d is the computational dimension of the
+    searchspace that is to be pinned. The acquisition function is assumed to be defined
+    for the full hybrid space.
+
+    Parameters
+    ----------
+    acqf: AcquisitionFunction
+        The acquisition function for the hybrid space
+    pinned_part: Tensor
+        The values that will be attached whenever evaaluating the acquisition function
+    pin_discrete: bool
+        A flag for denoting whether the pinned_part corresponds to the discrete subspace
+    """
+
+    def __init__(
+        self, acqf: AcquisitionFunction, pinned_part: Tensor, pin_discrete: bool
+    ):
+        self.acqf = acqf
+        self.pinned_part = pinned_part
+        self.pin_discrete = pin_discrete
+
+    def _lift(self, partial_part: Tensor):
+        """
+        Lift the partial_part to the original hybrid space.
+
+        Depending on whether the discrete or the variable part of the searchspace is
+        pinned, this function identifies whether the partial_part is the continuous
+        or discrete part and then constructs the full tensor accordingly.
+
+        Parameters
+        ----------
+        partial_part: Tensor
+            The part of the tensor that is to be evaluated in the partial space
+        """
+        # Might be necessary to insert a dummy dimension
+        if partial_part.ndim == 2:
+            partial_part = partial_part.unsqueeze(-2)
+        # Repeat the pinned part such that it matches the dimension of the partial_part
+        pinned_part = self.pinned_part.repeat(
+            (partial_part.shape[0], partial_part.shape[1], 1)
+        )
+        # Check which part is discrete and which is continuous
+        if self.pin_discrete:
+            disc_part = pinned_part
+            cont_part = partial_part
+        else:
+            disc_part = partial_part
+            cont_part = pinned_part
+        # Concat the parts and return the concatenated point
+        full_point = cat((disc_part, cont_part), -1)
+        return full_point
+
+    def __call__(self, variable_part):
+        # Lift the point to the hybrid space, then evaluate the acquisition function
+        # in the hybrid space.
+        full_point = self._lift(variable_part)
+        return self.acqf(full_point)
+
+    def __getattr__(self, item):
+        return getattr(self.acqf, item)
+
+    def set_X_pending(self, X_pending: Optional[Tensor]):  # pylint: disable=C0103
+        """
+        Informs the acquisition function about pending design points.
+
+        Enhances the original 'set_X_pending' function from the full acquisition
+        function as we need to store the full point, i.e., the point in the hybrid space
+        for the PartialAcquisitionFunction to work properly.
+
+        Parameters (according to original documentation)
+        ----------
+        X_pending: Tensor, optional
+            n x d Tensor with n d-dim design points that have been submitted for
+            evaluation but have not yet been evaluated.
+        """
+        if X_pending is not None:  # Lift point to hybrid space and add additional dim
+            X_pending = self._lift(X_pending)
+            X_pending = squeeze(X_pending, -2)
+        # Now use the original set_X_pending function
+        self.acqf.set_X_pending(X_pending)

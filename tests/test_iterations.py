@@ -7,6 +7,10 @@ from typing import get_args, get_type_hints
 import pytest
 
 from baybe.searchspace import SearchSpaceType
+from baybe.strategies.bayesian import (
+    NaiveHybridRecommender,
+    SequentialGreedyRecommender,
+)
 from baybe.strategies.recommender import (
     BayesianRecommender,
     NonPredictiveRecommender,
@@ -57,6 +61,32 @@ valid_hybrid_recommenders = [
     for cls in subclasses_recursive(Recommender)
     if not isabstract(cls) and cls.compatibility in [SearchSpaceType.HYBRID]
 ]
+
+valid_discrete_non_predictive_recommenders = [
+    cls()
+    for cls in subclasses_recursive(NonPredictiveRecommender)
+    if not isabstract(cls)
+    and cls.compatibility
+    in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
+]
+valid_discrete_bayesian_recommenders = [
+    cls()
+    for cls in subclasses_recursive(BayesianRecommender)
+    if not isabstract(cls)
+    and cls.compatibility
+    in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
+]
+valid_naive_hybrid_recommenders = [
+    NaiveHybridRecommender(
+        disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
+    )
+    for disc in [
+        *valid_discrete_non_predictive_recommenders,
+        *valid_discrete_bayesian_recommenders,
+    ]
+]
+
+valid_hybrid_recommenders.extend(valid_naive_hybrid_recommenders)
 test_targets = [
     "Target_max",
     "Target_min",

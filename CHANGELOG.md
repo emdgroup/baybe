@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telemetry via OpenTelemetry
 - More detailed package installation info
 - Fallback mechanism for NonPredicteRecommenders
+- Introduce naive hybrid recommender
 
 ### Changed
 - Switched from pydantic to attrs in all modules except constraints.py
