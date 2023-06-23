@@ -2,6 +2,9 @@
 Example for using the synthetic test functions in discrete spaces.
 All test functions that are available in BoTorch are also available here and wrapped
 via the BayBEBotorchFunctionWrapper.
+
+For an example on how to use a custom function instead of a wrapped one, we refer to the
+continuous_space example.
 """
 
 import numpy as np
