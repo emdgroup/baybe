@@ -93,7 +93,9 @@ targets = [Target_1, Target_2, Target_3]
 # The combine function can either be the mean 'MEAN' or the geometric mean 'GEOM_MEAN'
 # per default GEOM_MEAN is used
 # Weights for each targets can also be specified as a list of floats in the arguments
-# Per default the weights are equally distributed between all targets
+# Per default the weights are equally distributed between all targets.
+# Also, weights are normalized internally, so it is not necessary to handle
+# normalization or scaling here.
 
 
 objective = Objective(
