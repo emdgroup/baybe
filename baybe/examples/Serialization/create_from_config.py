@@ -1,7 +1,9 @@
 """
 This example shows how to load a user defined configuration file and use it to create
-a BayBE object. We use the following configuration dictionaries, representing a
-valid BayBE object.
+a BayBE object. In such a configuration file, the objects used to create a BayBE object
+are represented by strings instead of other python objects.
+We use the following configuration dictionaries, representing a valid BayBE object.
+Note that the json format is required for the config file.
 """
 
 from baybe.core import BayBE
