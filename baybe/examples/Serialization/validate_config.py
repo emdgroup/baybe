@@ -72,7 +72,7 @@ INVALID_CONFIG = """
 {
     "parameters": [
         {
-            "type": "BLABLABLA",
+            "type": "INVALID_TYPE",
             "name": "Granularity",
             "values": [
                 "coarse",
