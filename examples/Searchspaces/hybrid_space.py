@@ -28,13 +28,17 @@ from botorch.test_functions import Rastrigin
 # For details on constructing the baybe object, we refer to the basic example file.
 DIMENSION = 6
 # DISC_INDICES and CONT_INDICES together should contain the integers 0,1,...,DIMENSION-1
+# NOTE Although this is checked also in this file, you need to configure these indices
+# manually here and verify that the experiment you set up is configured correctly.
+# In particular, if the function that you want to use is only available for a fixed
+# dimension, this might result in an error, so be aware of this.
 DISC_INDICES = [0, 1, 2]
 CONT_INDICES = [3, 4, 5]
 TEST_FUNCTION = BayBEBotorchFunctionWrapper(test_function=Rastrigin, dim=DIMENSION)
 POINTS_PER_DIM = 3
 
 # This if-statement check whether the union of the given index sets yields indices
-# mathcing the dimension of the test function. If this test fails, then either the
+# matching the dimension of the test function. If this test fails, then either the
 # intersection betweem the index sets is not empty or the test function has another
 # dimension. Note that this might in particular happen for test functions that ignore
 # the dim keyword!
