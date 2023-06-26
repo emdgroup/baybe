@@ -94,3 +94,5 @@ results = simulate_scenarios(
     n_mc_iterations=2,
     lookup=sum_of_squares,
 )
+
+print(results)
