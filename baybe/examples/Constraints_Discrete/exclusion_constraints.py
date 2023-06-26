@@ -1,7 +1,7 @@
 """
 This examples shows how an exclusion constraint can be created for a discrete
 searchspace, for instance if some parameter values are incompatible with certain values
-of another parameter It assumes that the reader is familiar with the basics of Baybe,
+of another parameter. It assumes that the reader is familiar with the basics of Baybe,
 and thus does not explain the details of e.g. parameter creation. For additional
 explanation on these aspects, we refer to the Basic examples.
 """
@@ -44,7 +44,7 @@ pressure = NumericDiscrete(name="Pressure", values=[1, 2, 5, 10], tolerance=0.4)
 parameters = [solvent, speed, temperature, pressure]
 
 # This constraint simulates a situation where solvents C2 and C4 are not
-# compatible with temperatures > 154 and should thus be excluded
+# compatible with temperatures > 151 and should thus be excluded
 constraint_1 = ExcludeConstraint(
     parameters=["Temperature", "Solvent"],
     combiner="AND",
@@ -54,7 +54,7 @@ constraint_1 = ExcludeConstraint(
     ],
 )
 # This constraint simulates a situation where solvents C5 and C6 are not
-# compatible with pressures >= 5 and should thus be excluded
+# compatible with pressures > 5 and should thus be excluded
 constraint_2 = ExcludeConstraint(
     parameters=["Pressure", "Solvent"],
     combiner="AND",

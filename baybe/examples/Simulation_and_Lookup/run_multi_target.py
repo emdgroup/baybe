@@ -81,7 +81,7 @@ objective = Objective(
 )
 
 
-# We finally create the bayBE object and perform some iterations.
+# We finally create the bayBE object and perform backtesting.
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 

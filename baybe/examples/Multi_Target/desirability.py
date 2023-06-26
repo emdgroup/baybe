@@ -1,7 +1,7 @@
 """
 This example shows how one can use a multi target mode for the objective.
 It uses a desirability value to handle several targets.
-It assumes that the reader is familiar with the basics of Baybe, and thus does not
+It assumes that the reader is familiar with the basics of BayBE, and thus does not
 explain the details of e.g. parameter creation. For additional explanation on these
 aspects, we refer to the Basic examples.
 """
@@ -86,7 +86,6 @@ targets = [Target_1, Target_2, Target_3]
 
 # for the recommender to work properly
 # a combine_function is used to create a single target out of the several targets given.
-# Indeed surrogate models can only be trained with 1D output
 # The combine function can either be the mean 'MEAN' or the geometric mean 'GEOM_MEAN'
 # per default GEOM_MEAN is used
 # Weights for each targets can also be specified as a list of floats in the arguments

@@ -61,7 +61,7 @@ def custom_function(ser: pd.Series) -> bool:
 
 
 # Custom constraints require a configuration dictionary, stating the type, the
-# # parameters involved and the corresponding python function.
+# parameters involved and the corresponding python function.
 # Note that the parameters are accessed by names!
 dict_constraint = {
     "type": "CUSTOM",
