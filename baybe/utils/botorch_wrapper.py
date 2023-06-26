@@ -3,10 +3,13 @@
 They wrap synthetic BoTorch test function to simplify using these for testing purposes.
 """
 
-from typing import Optional
+import logging
+from typing import Optional, Type
 
 from botorch.test_functions import SyntheticTestFunction
 from torch import Tensor
+
+log = logging.getLogger(__name__)
 
 
 class BayBEBotorchFunctionWrapper:
@@ -28,18 +31,20 @@ class BayBEBotorchFunctionWrapper:
 
     def __init__(
         self,
-        test_function: SyntheticTestFunction,
+        test_function: Type[SyntheticTestFunction],
         dim: Optional[int] = None,
     ) -> None:
         # If the test_function already does not have a flexible dimension, then we
         # ignore the dim keyword and print a corresponding warning
         if hasattr(test_function, "dim"):
             if test_function.dim != dim:
-                print(
-                    f"""You choose a dimension of {dim} for the test function
-                    {test_function}. However, this function can only be used in
-                    {test_function.dim} dimension, so the provided dimension is
-                    ignored."""
+                log.warning(
+                    "You choose a dimension of %d for the test function"
+                    "%s. However, this function can only be used in"
+                    "%s dimension, so the provided dimension is ignored.",
+                    dim,
+                    test_function,
+                    test_function.dim,
                 )
             self.test_function = test_function()
         else:
