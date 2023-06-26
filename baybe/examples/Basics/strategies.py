@@ -16,32 +16,15 @@ The different parameters the user can change are:
 This example explain how they can be changed
 """
 
-from functools import partial
 
 from baybe.core import BayBE
 from baybe.parameters import GenericSubstance, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.clustering import KMeansClusteringRecommender
-from baybe.strategies.sampling import FPSRecommender, RandomRecommender
+from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.surrogate import (
-    BayesianLinearModel,
-    GaussianProcessModel,
-    NGBoostModel,
-    RandomForestModel,
-)
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
-from botorch.acquisition import (
-    ExpectedImprovement,
-    PosteriorMean,
-    ProbabilityOfImprovement,
-    qExpectedImprovement,
-    qProbabilityOfImprovement,
-    qUpperConfidenceBound,
-    UpperConfidenceBound,
-)
 
 
 # --------------------------------------------------------------------------------------
@@ -55,11 +38,11 @@ from botorch.acquisition import (
 # All available recommenders are listed below
 # One should not forget to make the corresping import before using them
 
-initial_recommenders = {
-    "Random": RandomRecommender(),
-    "Farthest Point Sampling": FPSRecommender(),
-    "KMEANS Clustering": KMeansClusteringRecommender(),
-}
+initial_recommenders = [
+    "Random",  #: RandomRecommender(),
+    "Farthest Point Sampling",  # FPSRecommender(),
+    "KMEANS Clustering",  # KMeansClusteringRecommender(),
+]
 
 
 # Per default the initial recommender chosen is random
@@ -84,12 +67,12 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # The model is then used by the acquistion function to make recommendations
 
 # All available surrogate models are listed below:
-surrogate_models = {
-    "GP: Gaussian Process": GaussianProcessModel,
-    "RF: Random Forest": RandomForestModel,
-    "NG: Natural Gradient Boosting": NGBoostModel,
-    "BL: Bayesian Linear Regression": BayesianLinearModel,
-}
+available_surrogate_models = [
+    "GP",  # GaussianProcessModel
+    "RF",  # Random Forest Model
+    "NG",  # Natural Gradient Boosting
+    "BL",  # Bayesian Linear Regression
+]
 
 # Per default a Gaussian Process is used
 SURROGATE_MODEL = "GP"
@@ -118,15 +101,15 @@ SURROGATE_MODEL = "GP"
 
 # All available acquisition functions are listed below:
 
-acq_functions = {
-    "qPI": qProbabilityOfImprovement,
-    "qEI": qExpectedImprovement,
-    "qUCB": partial(qUpperConfidenceBound, beta=1.0),
-    "PM": PosteriorMean,
-    "PI": ProbabilityOfImprovement,
-    "EI": ExpectedImprovement,
-    "UCB": partial(UpperConfidenceBound, beta=1.0),
-}
+available_acq_functions = [
+    "qPI",  # q-Probability Of Improvement
+    "qEI",  # q-ExpectedI mprovement
+    "qUCB",  # q-upper confidence bound with beta of 1.0
+    "PM",  # Posterior Mean,
+    "PI",  # Probability Of Improvement,
+    "EI",  # ExpectedI mprovement,
+    "UCB",  # upper confidence bound with beta of 1.0
+]
 
 # NOTE Example specific details:
 #   - If batch_quantity is set to 1, all available acquisition functions can be chosen
