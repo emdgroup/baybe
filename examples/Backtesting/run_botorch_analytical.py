@@ -26,7 +26,7 @@ from baybe.targets import NumericalTarget, Objective
 
 # Note that this import here might be problematic depending on your exact
 # setup and that you might need to make some adjustments to make it work!
-from baybe.utils.botorch_wrapper import BayBEBotorchFunctionWrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
 
 # For the full simulation, we need to define some additional parameters.
@@ -39,7 +39,10 @@ N_EXP_ITERATIONS = 5
 # run_discrete_space.py within examples/Analytic_Functions, so we refer to this file
 # for more details on the setup.
 DIMENSION = 2
-TEST_FUNCTION = BayBEBotorchFunctionWrapper(test_function=Rastrigin, dim=DIMENSION)
+TestFunctionType = Rastrigin
+WRAPPED_FUNCTION = botorch_function_wrapper(
+    test_function=TestFunctionType, dim=DIMENSION
+)
 POINTS_PER_DIM = 15
 
 
@@ -51,12 +54,14 @@ parameters = [
         name=f"x_{k+1}",
         values=list(
             np.linspace(
-                TEST_FUNCTION.bounds[0, k], TEST_FUNCTION.bounds[1, k], POINTS_PER_DIM
+                TestFunctionType().bounds[0, k],
+                TestFunctionType().bounds[1, k],
+                POINTS_PER_DIM,
             )
         ),
         tolerance=0.01,
     )
-    for k in range(TEST_FUNCTION.dim)
+    for k in range(DIMENSION)
 ]
 
 # Construct searchspace and objective.
@@ -102,7 +107,7 @@ results = simulate_scenarios(
     batch_quantity=3,
     n_exp_iterations=N_EXP_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
-    lookup=TEST_FUNCTION,
+    lookup=WRAPPED_FUNCTION,
 )
 
 # The following lines plot the results and save the plot in run_analytical.png

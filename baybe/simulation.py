@@ -34,7 +34,9 @@ def simulate_scenarios(
     n_exp_iterations: int,
     n_mc_iterations: Optional[int] = None,
     initial_data: Optional[List[pd.DataFrame]] = None,
-    lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
+    lookup: Optional[
+        Union[pd.DataFrame, Callable[[float, ...], Union[float, Tuple[float, ...]]]]
+    ] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -59,7 +61,8 @@ def simulate_scenarios(
         A collection of initial data sets. The experiment is repeated once with each
         data set in the collection for each configuration. Must be 'None' if
         `n_mc_iterations` is specified.
-    lookup : Union[pd.DataFrame, Callable[..., Tuple[float, ...]]] (optional)
+    lookup : pd.DataFrame or callable that takes one or more floats and returns one
+        or more floats (optional)
         Defines the targets for the queried parameter settings. Can be:
             * A dataframe containing experimental settings and their target results.
             * A callable, providing target values for the given parameter settings.
