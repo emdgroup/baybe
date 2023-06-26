@@ -10,7 +10,7 @@ To apply the selected strategy,
 this object can be specified in the arguments of the baybe object
 
 The different parameters the user can change are:
-- The initial recomender
+- The initial recommender
 - The recommender with its surrogate model and its acquisition function
 - Other parameters to allow or not repetition of recommendations
 This example explain how they can be changed
@@ -32,11 +32,11 @@ from baybe.utils import add_fake_results
 # --------------------------------------------------------------------------------------
 
 
-# This part describes how one can choose the inital strategy to start the optimization
+# This part describes how one can choose the initial strategy to start the optimization
 
 # For the first recommendation, the user can specify which strategy to adopt
 # All available recommenders are listed below
-# One should not forget to make the corresping import before using them
+# One should not forget to make the corresponding import before using them
 
 initial_recommenders = [
     "Random",  #: RandomRecommender(),
@@ -45,16 +45,8 @@ initial_recommenders = [
 ]
 
 
-# Per default the initial recommender chosen is random
+# Per default the initial recommender chosen is a random recommender
 INITIAL_RECOMMENDER = RandomRecommender()
-
-# STRATEGY OBJECT
-# --------------------------------------------------------------------------------------
-
-# Then the user can create a Strategy object and specify the argument intial_recommender
-# with the chosen recommender
-# strategy = Strategy(initial_recommender=initial_recommender)
-
 
 # --------------------------------------------------------------------------------------
 # PART 2: Surrogate Model
@@ -62,9 +54,9 @@ INITIAL_RECOMMENDER = RandomRecommender()
 
 # This part describes the different surrogate models that can be used
 
-# This model uses available data to model the objective function
-# as well as the uncertainty of the model
-# The model is then used by the acquistion function to make recommendations
+# This model uses available data to model the objective function as well as the
+# uncertainty of the model.
+# The model is then used by the acquisition function to make recommendations
 
 # All available surrogate models are listed below:
 available_surrogate_models = [
@@ -81,13 +73,13 @@ SURROGATE_MODEL = "GP"
 # STRATEGY OBJECT
 # --------------------------------------------------------------------------------------
 
-# In the strategy object a recommender object can be specify
+# In the strategy object a recommender object can be specified
 # In a bayesian approach this recommender object should be a SequentialGreedyRecommender
 # This Recommender uses a surrogate model to model the data
 # and then an acquisition function to select candidates for new recommendations
-# The chosen surrogate model can be specify as argument of SequentialGreedyRecommender
+# The chosen surrogate model can be specified as argument of SequentialGreedyRecommender
 # strategy = Strategy(
-# recommender=SequentialGreedyRecommender(surrogate_model_cls=surrogate_model)
+# recommender=SequentialGreedyRecommender(surrogate_model_cls=SURROGATE_MODEL)
 
 
 # --------------------------------------------------------------------------------------
@@ -103,11 +95,11 @@ SURROGATE_MODEL = "GP"
 
 available_acq_functions = [
     "qPI",  # q-Probability Of Improvement
-    "qEI",  # q-ExpectedI mprovement
+    "qEI",  # q-Expected Improvement
     "qUCB",  # q-upper confidence bound with beta of 1.0
     "PM",  # Posterior Mean,
     "PI",  # Probability Of Improvement,
-    "EI",  # ExpectedI mprovement,
+    "EI",  # Expected Improvement,
     "UCB",  # upper confidence bound with beta of 1.0
 ]
 
@@ -115,7 +107,7 @@ available_acq_functions = [
 #   - If batch_quantity is set to 1, all available acquisition functions can be chosen
 #
 #   - If a larger value is chosen, only those that allow batching, i.e., 'q'-variants
-#       of the acquisition functions can be chosen
+#       of the acquisition functions must be chosen
 
 # Per default the acquisition function is qExpected Improvement
 ACQ_FUNCTION = "qEI"
@@ -124,9 +116,9 @@ ACQ_FUNCTION = "qEI"
 # --------------------------------------------------------------------------------------
 
 # Similarly as with surrogate models, the acquisition fucntion is defined
-# in the recomender object
+# in the recommender object
 # strategy = Strategy(
-#    recommender=SequentialGreedyRecommender(acquisition_function_cls=acq_function))
+#    recommender=SequentialGreedyRecommender(acquisition_function_cls=ACQ_FUNCTION))
 
 
 # --------------------------------------------------------------------------------------
@@ -139,14 +131,14 @@ ACQ_FUNCTION = "qEI"
 # One to allow the recommendation of points that are already recommended
 # One to allow the recommendation of points that have already been measured
 
-# per default they are set to True
+# per default, they are set to True
 ALLOW_REPEATED_RECOMMENDATIONS = True
 ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 
 # STRATEGY OBJECT
 # --------------------------------------------------------------------------------------
 
-# Like the initial recommender these parameters can be specify in the arguments
+# Like the initial recommender these parameters can be specified in the arguments
 # of the strategy object
 # strategy = Strategy(
 #    allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
@@ -158,8 +150,8 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 # --------------------------------------------------------------------------------------
 
 
-# To create the strategy object each parameter described above can be specify as follows
-# Please note that they all have default values and therefore one does not need
+# To create the strategy object each parameter described above can be specified as
+# follows, Please note that they all have default values and therefore one does not need
 # to specify all of them to create a strategy object
 
 strategy = Strategy(
@@ -175,16 +167,16 @@ print(strategy)
 
 
 # --------------------------------------------------------------------------------------
-# PART 5: Incorporate chosen strategy in Baybe object
+# PART 5: Incorporate chosen strategy in BayBE object
 # --------------------------------------------------------------------------------------
 
 
 # In order to adopt the chosen strategy in the optimization process
-# The strategy object need to be specify while creating the baybe object
+# The strategy object need to be specified while creating the BayBE object
 
 # As seen in the baybe_object basic example to do so one needs
 # to create first searchspace and objective objects
-# then together with the strategy object they can be used to create a baybe object
+# then together with the strategy object they can be used to create a BayBE object
 
 # Part 5.1: Example Searchspace and objective parameters
 # --------------------------------------------------------------------------------------
@@ -233,10 +225,10 @@ objective = Objective(
 )
 
 
-# Part 5.2: Creation of the Baybe Object
+# Part 5.2: Creation of the BayBE Object
 # --------------------------------------------------------------------------------------
 
-# During creation of a baybe object one can specify the strategy adopted
+# During creation of a BayBE object one can specify the strategy adopted
 
 baybe_obj = BayBE(
     searchspace=searchspace,

@@ -1,7 +1,7 @@
 """
 This examples shows how an exclusion constraint can be created for a discrete
 searchspace using products and sums. It assumes that the reader is familiar with the
-basics of Baybe, and thus does not explain the details of e.g. parameter creation.
+basics of BayBE, and thus does not explain the details of e.g. parameter creation.
 For additional explanation on these aspects, we refer to the Basic examples.
 """
 import numpy as np

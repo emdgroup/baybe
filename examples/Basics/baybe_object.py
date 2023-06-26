@@ -1,10 +1,10 @@
 """
-Basic Example about creation and use of baybe objects
+Basic Example about creation and use of BayBE objects
 on direct arylation reaction example
 
-This example shows how to create a Baybe Object and how to use it
+This example shows how to create a Baybe Object and how to use it.
 It details how a user can first define parameters of the searchspace
-and the objective desired, to then be able to create a proper baybe object
+and the objective desired, to then be able to create a proper BayBE object
 that can be used to get recommendations
 """
 
@@ -25,7 +25,7 @@ from baybe.utils import add_fake_results
 # Here a basic discrete searchspace is presented
 # Discrete variables can be numerical, categorical or encoded chemical substances
 
-# To be able to create a searchspace in which baybe can operate
+# To be able to create a searchspace in which BayBE can operate.
 # It is important to first define all parameters that can vary between experiments
 # and of course the different values that can be taken by a parameter
 
@@ -42,7 +42,7 @@ from baybe.utils import add_fake_results
 # The experimenter can vary the chemical substances used (Solvent, Base and Ligand)
 # But also the temperature and the base concentration
 
-# Each available solvents, bases and ligands are discribed in the following dictionaries
+# Each available solvents, bases and ligands are described in the following dictionaries
 # with their corresponding SMILES
 
 dict_solvent = {
@@ -70,7 +70,7 @@ dict_ligand = {
 # Part 1.2: Define Parameters
 # --------------------------------------------------------------------------------------
 # Then the user define each parameter and its type
-# before gathering each parameters in a single list
+# before gathering each parameter in a single list
 
 # Define generic chemical substances parameters: Solvent, Base and Ligand
 # Here, MORDRED encoding is used for chemical substances
@@ -121,7 +121,7 @@ objective = Objective(
 
 
 # --------------------------------------------------------------------------------------
-# PART 3: Creation of a Baybe object
+# PART 3: Creation of a BayBE object
 # --------------------------------------------------------------------------------------
 
 
@@ -133,7 +133,7 @@ baybe_obj = BayBE(
     objective=objective,
 )
 
-# NOTE: an additional object strategy can be specify while creating the baybe object
+# NOTE: an additional object strategy can be specified while creating the BayBE object
 # This object and its parameters are described in the basic example 'strategies'
 # If no strategy is supplied a default one is used
 
@@ -143,8 +143,8 @@ baybe_obj = BayBE(
 # --------------------------------------------------------------------------------------
 
 
-# In this part we use the baybe object to recommend the next experiments to be conducted
-# To do so we use the property recommend of the baybe object
+# In this part we use the BayBE object to recommend the next experiments to be conducted
+# To do so we use the property recommend of the BayBE object
 
 
 # The user can specify the size of the batch of recommendations desired
@@ -156,7 +156,7 @@ print("\n\nRecommended measurements with batch_quantity = 1: ")
 print(recommendation)
 
 # recommendation is a dataframe with columns labeled after the different variables
-# Each row is a suggested experiment filled with a value to try for each parameters
+# Each row is a suggested experiment filled with a value to try for each parameter
 
 # If we set a greater batch quantity,
 # the recommendation dataframe would then look like this
@@ -185,7 +185,7 @@ print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 # The recommendation dataframe now has a new column named yield filled with fake values
 
-# Part 5.2: Add the new measurements to the Baybe Object
+# Part 5.2: Add the new measurements to the BayBE Object
 # --------------------------------------------------------------------------------------
 
 baybe_obj.add_measurements(recommendation)

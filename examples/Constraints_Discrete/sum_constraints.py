@@ -22,7 +22,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# This parameter denotes the tolerance with regards to the calculation of the sum.
+# This parameter denotes the tolerance with regard to the calculation of the sum.
 SUM_TOLERANCE = 1.0
 
 dict_solvents = {
@@ -124,7 +124,7 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
     # The following asserts only work if the tolerance for the threshold condition in
-    # the constraint are not 0. Otherwise the sum/prod constraints will remove more
+    # the constraint are not 0. Otherwise, the sum/prod constraints will remove more
     # points than intended due to numeric rounding
     print(
         f"No. of unique 1-solvent entries (exp. {math.comb(len(dict_solvents), 1)*1})",

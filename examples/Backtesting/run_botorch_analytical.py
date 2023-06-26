@@ -92,7 +92,7 @@ random_baybe = BayBE(
 # We can now use the simulate_scenarios function from simulation.py to simulate a
 # full experiment. Note that this function enables to run multiple scenarios one after
 # another by a single function call, which is why we need to define a dictionary
-# mapping names for the scenarios to actual baybe objects
+# mapping names for the scenarios to actual BayBE objects
 scenarios = {
     "Sequential greedy EI": seq_greedy_EI_baybe,
     "Random": random_baybe,

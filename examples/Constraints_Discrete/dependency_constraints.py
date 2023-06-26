@@ -4,7 +4,7 @@ searchspace.
 There are constraint that specifies dependencies between parameters. For instance some
 parameters might only be relevant when another parameter has a certain value
 (e.g. 'on'). All dependencies can be declared in a single constraint.
-This example assumes that the reader is familiar with the basics of Baybe, and thus
+This example assumes that the reader is familiar with the basics of BayBE, and thus
 does not explain the details of e.g. parameter creation. For additional explanation
 on these aspects, we refer to the Basic examples.
 """
@@ -37,9 +37,9 @@ parameters = [solvent, switch1, switch2, fraction1, frame1, frame2]
 
 # The constraints are handled when creating the searchspace object.
 # We thus need to define our constraint now.
-# The contsraints can either be created jointly by constructing a single
+# The constraints can either be created jointly by constructing a single
 # DependenciesConstraint or by having multiple constraints.
-# This is demonstrated here by creating two baybe objects
+# This is demonstrated here by creating two BayBE objects
 
 # This is the constraint modeling two Dependencies at once....
 constraint_1 = DependenciesConstraint(
@@ -64,7 +64,7 @@ constraint_3 = DependenciesConstraint(
     affected_parameters=[["FrameA", "FrameB"]],
 )
 
-# Create the searchspaces with the corresponding lists of constraints
+# Create the search spaces with the corresponding lists of constraints
 searchspace_1 = SearchSpace.create(parameters=parameters, constraints=[constraint_1])
 searchspace_2 = SearchSpace.create(
     parameters=parameters, constraints=[constraint_2, constraint_3]
@@ -79,7 +79,7 @@ objective = Objective(
 baybe_obj_1 = BayBE(searchspace=searchspace_1, objective=objective)
 baybe_obj_2 = BayBE(searchspace=searchspace_2, objective=objective)
 
-# Run some iterations for both constructed baybe objecs. During these iterations, we
+# Run some iterations for both constructed BayBE objects. During these iterations, we
 # print some information about the parameters configurations that now exist.
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):

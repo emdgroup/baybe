@@ -17,7 +17,7 @@ from botorch.test_functions import Rastrigin
 # function. Note that some test functions are only defined for specific dimensions.
 # If the dimension you provide is not available for the given test function, a warning
 # will be printed and one of the available dimensions is used.
-# For details on constructing the baybe object, we refer to the basic example file.
+# For details on constructing the BayBE object, we refer to the basic example file.
 DIMENSION = 5
 TEST_FUNCTION = BayBEBotorchFunctionWrapper(test_function=Rastrigin, dim=DIMENSION)
 
@@ -58,8 +58,10 @@ recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(TEST_FUNCTION(*row.to_list()))
+
 # We add an additional column with the calculated target values...
 recommendation["Target"] = target_values
+
 # ... and inform the BayBE object about our measurement.
 baybe_obj.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")

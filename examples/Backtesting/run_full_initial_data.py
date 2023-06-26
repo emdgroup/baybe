@@ -1,7 +1,7 @@
 """
-Run history simulation for a direct arylation where not all possible combinations have
-been measured previously. This uses the lookup mechanism that allows us to access
-information about previously conducted experiments from .xlsx-files.
+Run history simulation for a direct arylation where all possible combinations have
+been measured, using initial data. This uses the lookup mechanism that allows us to
+access information about previously conducted experiments from .xlsx-files.
 """
 
 import matplotlib.pyplot as plt
@@ -17,13 +17,18 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-# We read the information about the conducted expderiments from a .xlsx-file and save it
+# We read the information about the conducted experiments from a .xlsx-file and save it
 # as a pandas DataFrame.
-# NOTE Depending on your sysem and settings, you might need to slightly adjust the
+# NOTE Depending on your system and settings, you might need to slightly adjust the
 # following path as this is relevant to the folder in which you execute the 'python'
 # call. This path assumes that this call is made from the main BayBE folder.
 
-lookup = pd.read_excel("examples/Simulation_and_Lookup/lookup_withmissing.xlsx")
+lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
+
+# In order to include initial data, we sample some rows from the lookup table and act
+# as if these were our initial data. Note that the initial_data needs to be a list of
+# DataFrames, and that one experiment will be done per provided initial data set.
+initial_data = [lookup.sample(n=5), lookup.sample(n=5), lookup.sample(n=5)]
 
 # As usual, we set up some experiment. Note that we now need to ensure that the names
 # fit the names in the provided .xlsx file!
@@ -73,7 +78,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-# Create two baybe objects: One using the default recommender and one making random
+# Create two BayBE objects: One using the default recommender and one making random
 # recommendations.
 baybe = BayBE(searchspace=searchspace, objective=objective)
 baybe_rand = BayBE(
@@ -85,33 +90,26 @@ baybe_rand = BayBE(
 # We can now use the simulate_scenarios function from simulation.py to simulate a
 # full experiment. Note that this function enables to run multiple scenarios one after
 # another by a single function call, which is why we need to define a dictionary
-# mapping names for the scenarios to actual baybe objects
+# mapping names for the scenarios to actual BayBE objects
 scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 
 # This is the call to the actual function.
-# Since the lookup table does not provide a full overview, we need to tell the function
-# how to deal with missing entries. This is done via the 'impute_mode' keyword.
-# The following options are available:
-#   * 'error': an error will be thrown
-#   * 'worst': imputation using the worst available value for each target
-#   * 'best': imputation using the best available value for each target
-#   * 'mean': imputation using mean value for each target
-#   * 'random': a random row will be used as lookup
-#   * 'ignore': the search space is stripped before recommendations are made
-#       so that unmeasured experiments will not be recommended
+# Note that, in contrast to other cases where we use the lookup functionality, it is
+# not necessary to include the 'impute' keyword here as we know that all data is
+# part of our table.
+# Further note that we cannot specify the number of MC runs here since we have initial
+# data.
 BATCH_QUANTITY = 2
 N_EXP_ITERATIONS = 5
-N_MC_ITERATIONS = 3
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=BATCH_QUANTITY,
     n_exp_iterations=N_EXP_ITERATIONS,
-    n_mc_iterations=N_MC_ITERATIONS,
+    initial_data=initial_data,
     lookup=lookup,
-    impute_mode="best",
 )
 
-# The following lines plot the results and save the plot in run_impute_mode.png
+# The following lines plot the results and save the plot in run_full_initial_data.png
 max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
@@ -121,4 +119,4 @@ plt.plot(
 )
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
-plt.savefig("./run_impute_mode.png")
+plt.savefig("./run_full_initial_data.png")

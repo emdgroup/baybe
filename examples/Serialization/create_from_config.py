@@ -3,7 +3,9 @@ This example shows how to load a user defined configuration file and use it to c
 a BayBE object. In such a configuration file, the objects used to create a BayBE object
 are represented by strings instead of other python objects.
 We use the following configuration dictionaries, representing a valid BayBE object.
-Note that the json format is required for the config file.
+Note that the json format is required for the config file. Instead of providing the
+actual class instances you can create such a config by providing a dictionary with
+"type":"name of the class". Example: FPSRecommender() becomes {"type": "FPSRecommender"}
 """
 
 from baybe.core import BayBE
@@ -71,7 +73,7 @@ CONFIG = """
 """
 
 # Although we know in this case that the config represents a valid configuration for a
-# bayBE object, it is a good practice to enclose the creation in a try block.
+# BayBE object, it is a good practice to enclose the creation in a try block.
 try:
     baybe = BayBE.from_config(CONFIG)
     # We now perform a recommendation as usual and print it.

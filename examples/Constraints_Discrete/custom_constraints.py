@@ -1,6 +1,6 @@
 """
 This examples shows how a custom constraint can be created for a discrete searchspace.
-It assumes that the reader is familiar with the basics of Baybe, and thus does not
+It assumes that the reader is familiar with the basics of BayBE, and thus does not
 explain the details of e.g. parameter creation. For additional explanation on these
 aspects, we refer to the Basic examples.
 """
@@ -72,7 +72,7 @@ dict_constraint = {
 constraint = CustomConstraint.create(config=dict_constraint)
 searchspace = SearchSpace.create(parameters=parameters, constraints=[constraint])
 
-# We finally create an objective and the baybe object
+# We finally create an objective and the BayBE object
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )

@@ -17,13 +17,13 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-# We read the information about the conducted expderiments from a .xlsx-file and save it
+# We read the information about the conducted experiments from a .xlsx-file and save it
 # as a pandas DataFrame.
-# NOTE Depending on your sysem and settings, you might need to slightly adjust the
+# NOTE Depending on your system and settings, you might need to slightly adjust the
 # following path as this is relevant to the folder in which you execute the 'python'
 # call. This path assumes that this call is made from the main BayBE folder.
 
-lookup = pd.read_excel("examples/Simulation_and_Lookup/lookup.xlsx")
+lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
 
 # As usual, we set up some experiment. Note that we now need to ensure that the names
 # fit the names in the provided .xlsx file!
@@ -73,7 +73,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-# Create two baybe objects: One using the default recommender and one making random
+# Create two BayBE objects: One using the default recommender and one making random
 # recommendations.
 baybe = BayBE(searchspace=searchspace, objective=objective)
 baybe_rand = BayBE(
@@ -85,7 +85,7 @@ baybe_rand = BayBE(
 # We can now use the simulate_scenarios function from simulation.py to simulate a
 # full experiment. Note that this function enables to run multiple scenarios one after
 # another by a single function call, which is why we need to define a dictionary
-# mapping names for the scenarios to actual baybe objects
+# mapping names for the scenarios to actual BayBE objects
 scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 
 # This is the call to the actual function.

@@ -13,7 +13,7 @@ from baybe.targets import NumericalTarget, Objective
 # a tuple of floats.
 # NOTE It is assumed that the analytical test function does only perform a single
 # calculation, i.e., it is assumed to work in a non-batched-way!
-# We implements a simple sum of squares function with a single output.
+# We implement a simple sum of squares function with a single output.
 def sum_of_squares(*x: float) -> float:
     """
     Calculates the sum of squares.
@@ -63,8 +63,10 @@ recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(TEST_FUNCTION(*row.to_list()))
+
 # We add an additional column with the calculated target values...
 recommendation["Target"] = target_values
+
 # ... and inform the BayBE object about our measurement.
 baybe_obj.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")

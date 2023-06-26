@@ -1,8 +1,8 @@
 """Simple serialization example.
 
-This exampls shows the creation of a baybe object, how to serialize it and also
+This example shows the creation of a BayBE object, how to serialize it and also
 de-serialize it and shows that the "original" and "new" objects behave the same.
-It also shows an additional way of creating baybe objects via config files and
+It also shows an additional way of creating BayBE objects via config files and
 how to validate these.
 
 Note that this example does not explain the basics of object creation, we refer to the
@@ -59,7 +59,7 @@ baybe_orig = BayBE(
         initial_recommender=FPSRecommender(),
     ),
 )
-# We begin by printing the original baybe object
+# We begin by printing the original BayBE object
 print(f"{'#'*30} Original object {'#'*30}")
 print(baybe_orig, end="\n" * 3)
 
@@ -78,7 +78,7 @@ print(baybe_recreate, end="\n" * 3)
 assert baybe_orig == baybe_recreate
 print("Passed basic assertion check!")
 
-# To further show how serialization affects working with baybe objects, we will now
+# To further show how serialization affects working with BayBE objects, we will now
 # create and compare some recommendations in both bayBE objects.
 
 # We now do recommendations for both objects and print them

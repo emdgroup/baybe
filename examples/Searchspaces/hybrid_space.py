@@ -25,7 +25,7 @@ from botorch.test_functions import Rastrigin
 # function. Note that some test functions are only defined for specific dimensions.
 # If the dimension you provide is not available for the given test function, a warning
 # will be printed and one of the available dimensions is used.
-# For details on constructing the baybe object, we refer to the basic example file.
+# For details on constructing the BayBE object, we refer to the basic example file.
 DIMENSION = 6
 # DISC_INDICES and CONT_INDICES together should contain the integers 0,1,...,DIMENSION-1
 # NOTE Although this is checked also in this file, you need to configure these indices
@@ -39,13 +39,13 @@ POINTS_PER_DIM = 3
 
 # This if-statement check whether the union of the given index sets yields indices
 # matching the dimension of the test function. If this test fails, then either the
-# intersection betweem the index sets is not empty or the test function has another
+# intersection between the index sets is not empty or the test function has another
 # dimension. Note that this might in particular happen for test functions that ignore
 # the dim keyword!
 if set(CONT_INDICES + DISC_INDICES) != set(range(TEST_FUNCTION.dim)):
     raise ValueError(
-        "Either the tntersection between CONT_IND and DISC_IND is not empty or\
-              your indices do not match."
+        "Either the intersection between CONT_IND and DISC_IND is not empty or your "
+        "indices do not match."
     )
 
 # Construct the continuous parameters as NumericContinuous parameters
@@ -100,8 +100,10 @@ recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(TEST_FUNCTION(*row.to_list()))
+
 # We add an additional column with the calculated target values...
 recommendation["Target"] = target_values
+
 # ... and inform the BayBE object about our measurement.
 baybe_obj.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")

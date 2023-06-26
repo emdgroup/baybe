@@ -41,7 +41,7 @@ searchspace = SearchSpace.create(parameters=parameters)
 # Thus we first need to define the different targets
 
 # For example, we can start by defining two targets
-# One which is maximiwed and one minimized during the optimization process
+# One which is maximized and one minimized during the optimization process
 
 # Note that in this multi target mode,
 # the user must specify bounds for each target
@@ -92,7 +92,7 @@ targets = [Target_1, Target_2, Target_3]
 # a combine_function is used to create a single target out of the several targets given.
 # The combine function can either be the mean 'MEAN' or the geometric mean 'GEOM_MEAN'
 # per default GEOM_MEAN is used
-# Weights for each targets can also be specified as a list of floats in the arguments
+# Weights for each target can also be specified as a list of floats in the arguments
 # Per default the weights are equally distributed between all targets.
 # Also, weights are normalized internally, so it is not necessary to handle
 # normalization or scaling here.
@@ -114,7 +114,7 @@ print(objective)
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 
-# This baybe object can then be used to get recommendations and add measurements
+# This BayBE object can then be used to get recommendations and add measurements
 
 
 # ITERATIONS EXAMPLE

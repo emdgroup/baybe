@@ -2,7 +2,7 @@
 This example shows how one can use a multi target mode for the objective when using a
 custom analytic functions
 It uses a desirability value to handle several targets.
-It assumes that the reader is familiar with the basics of Baybe, as well as the basics
+It assumes that the reader is familiar with the basics of BayBE, as well as the basics
 of using custom analytic functions and multiple targets.
 We thus refer to the corresponding examples for more explanations on these aspects.
 """
@@ -16,8 +16,8 @@ from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, Objective
 
 
-# We implements a simple sum of squares function with a tow outputs.
-def sum_of_squares(*x: float) -> Tuple[float]:
+# We implement a simple sum of squares function with two outputs.
+def sum_of_squares(*x: float) -> Tuple[float, float]:
     """
     Calculates the sum of squares.
     """
@@ -34,7 +34,7 @@ def sum_of_squares(*x: float) -> Tuple[float]:
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-# In this exampls, we construct a purely discrete space.
+# In this example, we construct a purely discrete space.
 parameters = [
     NumericDiscrete(
         name=f"x_{k+1}",
@@ -81,11 +81,11 @@ objective = Objective(
 )
 
 
-# We finally create the bayBE object and perform backtesting.
+# We finally create the BayBE object and perform backtesting.
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 
-scenarios = {"Baybe": baybe_obj}
+scenarios = {"BayBE": baybe_obj}
 
 results = simulate_scenarios(
     scenarios=scenarios,
