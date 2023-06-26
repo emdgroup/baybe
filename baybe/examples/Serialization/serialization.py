@@ -65,11 +65,10 @@ print(f"{'#'*30} Original object {'#'*30}")
 print(baybe_orig, end="\n" * 3)
 
 # We next serialize the BayBE object to JSON
-# This yields a JSON representation that is a bit hard to read and understand by a human
-# but you can have al look by removing the #-signs below
+# This yields a JSON representation that we also print here for convenience.
 string = baybe_orig.to_json()
-# print(f"{'#'*30} JSON string {'#'*30}")
-# print(string, end="\n" * 3)
+print(f"{'#'*30} JSON string {'#'*30}")
+print(string, end="\n" * 3)
 
 # Deserialize the JSON string back to an object
 print(f"{'#'*30} Deserialized object {'#'*30}")
