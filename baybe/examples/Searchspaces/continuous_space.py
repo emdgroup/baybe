@@ -5,11 +5,11 @@ test function.
 """
 
 from baybe.core import BayBE
-
-from baybe.examples.Analytic_Functions.test_functions import BayBEBotorchFunctionWrapper
 from baybe.parameters import NumericContinuous
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
+
+from baybe.utils.botorch_wrapper import BayBEBotorchFunctionWrapper
 
 # Import the desired test function from botorch here
 from botorch.test_functions import Rastrigin

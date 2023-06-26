@@ -10,13 +10,13 @@ continuous_space example.
 import numpy as np
 
 from baybe.core import BayBE
-
-from baybe.examples.Analytic_Functions.test_functions import BayBEBotorchFunctionWrapper
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import NaiveHybridRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
+
+from baybe.utils.botorch_wrapper import BayBEBotorchFunctionWrapper
 
 # Import the desired test function from botorch here
 from botorch.test_functions import Rastrigin

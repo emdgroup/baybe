@@ -16,10 +16,6 @@ import numpy as np
 import seaborn as sns
 
 from baybe.core import BayBE
-
-# Note that this import here might be problematic depending on your exact
-# setup and that you might need to make some adjustments to make it work!
-from baybe.examples.Analytic_Functions.test_functions import BayBEBotorchFunctionWrapper
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -27,6 +23,10 @@ from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
+
+# Note that this import here might be problematic depending on your exact
+# setup and that you might need to make some adjustments to make it work!
+from baybe.utils.botorch_wrapper import BayBEBotorchFunctionWrapper
 from botorch.test_functions import Rastrigin
 
 # For the full simulation, we need to define some additional parameters.
