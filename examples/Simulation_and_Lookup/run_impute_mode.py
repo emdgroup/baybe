@@ -23,7 +23,7 @@ from baybe.targets import NumericalTarget, Objective
 # Note that the file that we read here does not contain all possible experiments and
 # has missing data!
 
-lookup = pd.read_excel("baybe/examples/Simulation_and_Lookup/lookup_withmissing.xlsx")
+lookup = pd.read_excel("examples/Simulation_and_Lookup/lookup_withmissing.xlsx")
 # lookup = pd.read_excel("./lookup_withmissing.xlsx")
 
 # As usual, we set up some experiment. Note that we now need to ensure that the names

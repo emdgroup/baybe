@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-example_list = list(Path(".").glob("baybe/examples/*/*.py"))
+example_list = list(Path(".").glob("examples/*/*.py"))
 
 EXAMPLES = [str(file) for file in example_list]
 

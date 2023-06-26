@@ -21,7 +21,7 @@ from baybe.targets import NumericalTarget, Objective
 # as a pandas DataFrame. Note that depending on your sysem and settings, you might need
 # to slightly adjust the following path.
 
-lookup = pd.read_excel("baybe/examples/Simulation_and_Lookup/lookup.xlsx")
+lookup = pd.read_excel("examples/Simulation_and_Lookup/lookup.xlsx")
 # lookup = pd.read_excel("./lookup.xlsx")
 
 # As usual, we set up some experiment. Note that we now need to ensure that the names
