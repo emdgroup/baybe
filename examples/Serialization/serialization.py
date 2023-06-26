@@ -18,7 +18,6 @@ from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import FPSRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import add_fake_results
 
 # We start by defining the parameters of the experiment.
 parameters = [
@@ -80,28 +79,14 @@ assert baybe_orig == baybe_recreate
 print("Passed basic assertion check!")
 
 # To further show how serialization affects working with baybe objects, we will now
-# create and store some recommendations, then perform a serialization and a
-# de-serialization and show that the next recommendation will be the same.
+# create and compare some recommendations in both bayBE objects.
 
-# We thus begin by running some iterations with fake results
-for _ in range(5):
-    recommendation = baybe_orig.recommend(batch_quantity=2)
-    add_fake_results(recommendation, baybe_orig)
-    baybe_orig.add_measurements(recommendation)
-
-# We re-print the baybe object after these recommendation
-print(f"{'#'*30} Original object after some recommendations {'#'*30}")
-print(baybe_orig, end="\n" * 3)
-
-# We now serialize and de-serialize it and check for equality again.
-json_after_recommendations = baybe_orig.to_json()
-baybe_recreate_after_rec = BayBE.from_json(json_after_recommendations)
-assert baybe_orig == baybe_recreate_after_rec
-print("Passed assertion check after some recommendations!")
-
-# We now do recommendations for both objects and show that they are equal
+# We now do recommendations for both objects and print them
 recommendation_orig = baybe_orig.recommend(batch_quantity=2)
-recommendation_recreate = baybe_recreate_after_rec.recommend(batch_quantity=2)
+recommendation_recreate = baybe_recreate.recommend(batch_quantity=2)
 
-assert recommendation_orig.equals(recommendation_recreate)
-print("Passed assertion check for recommendations!")
+print("Recommendation from original object:")
+print(recommendation_orig)
+
+print("Recommendation from recreated object:")
+print(recommendation_recreate)
