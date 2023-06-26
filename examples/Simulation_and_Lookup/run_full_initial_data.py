@@ -18,11 +18,12 @@ from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 # We read the information about the conducted experiments from a .xlsx-file and save it
-# as a pandas DataFram Note that depending on your sysem and settings, you might need
-# to slightly adjust the following path.
+# as a pandas DataFram.
+# NOTE Depending on your sysem and settings, you might need to slightly adjust the
+# following path as this is relevant to the folder in which you execute the 'python'
+# call. This path assumes that this call is made from the main BayBE folder.
 
 lookup = pd.read_excel("examples/Simulation_and_Lookup/lookup.xlsx")
-# lookup = pd.read_excel("./lookup.xlsx")
 
 # In order to include initial data, we sample some rows from the lookup table and act
 # as if these were our initial data. Note that the initial_data needs to be a list of
