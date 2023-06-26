@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from functools import partial
-from typing import Callable, Dict, List, Literal, Optional, TYPE_CHECKING, Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,7 @@ def simulate_scenarios(
     n_exp_iterations: int,
     n_mc_iterations: Optional[int] = None,
     initial_data: Optional[List[pd.DataFrame]] = None,
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
+    lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -59,10 +59,12 @@ def simulate_scenarios(
         A collection of initial data sets. The experiment is repeated once with each
         data set in the collection for each configuration. Must be 'None' if
         `n_mc_iterations` is specified.
-    lookup : Union[pd.DataFrame, Callable] (optional)
+    lookup : Union[pd.DataFrame, Callable[..., Tuple[float, ...]]] (optional)
         Defines the targets for the queried parameter settings. Can be:
             * A dataframe containing experimental settings and their target results.
             * A callable, providing target values for the given parameter settings.
+                This callable is assumed to return either a float or a tuple of floats
+                and to accept an arbitrary number of floats as input.
             * 'None' (produces fake results).
     impute_mode : "error" | "worst" | "best" | "mean" | "random" | "ignore"
         Specifies how a missing lookup will be handled:
@@ -194,7 +196,7 @@ def _simulate_experiment(
     baybe_obj: BayBE,
     batch_quantity: int,
     n_exp_iterations: int,
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
+    lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -202,6 +204,9 @@ def _simulate_experiment(
 ) -> pd.DataFrame:
     """
     Simulates a single experimental DOE loop. See `simulate_from_configs` for details.
+    Note that the type hint Callable[..., Tuple[float, ...]] means that the callable
+    accepts any number of arguments and returns either a single or a tuple of floats.
+    The inputs however also need to be floats!
     """
     # Create a dataframe to store the simulation results
     results = pd.DataFrame()
