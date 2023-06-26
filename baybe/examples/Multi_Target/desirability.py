@@ -68,7 +68,11 @@ Target_2 = NumericalTarget(name="Target_2", mode="MIN", bounds=(0, 100))
 # interval, reaching the maximum value of 1 at the interval center
 
 # For example we can define a third target working with the mode MATCH
-# and a BELL bounds_transform_function
+# and a BELL bounds_transform_function.
+# Note that the MATCH mode seeks to have the target at the mean between the two bounds.
+# For example, choosing 95 and 105 will lead the algorithm seeking 100 as the optimal
+# value. Thus, using the bounds, it is possible to control both the match target and
+# the range around this target that is considered viable.
 
 Target_3 = NumericalTarget(
     name="Target_3", mode="MATCH", bounds=(45, 55), bounds_transform_func="BELL"
