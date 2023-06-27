@@ -16,25 +16,52 @@ from baybe.strategies.bayesian import NaiveHybridRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-from baybe.utils.botorch_wrapper import BayBEBotorchFunctionWrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 # Import the desired test function from botorch here
 from botorch.test_functions import Rastrigin
 
-# Here, you can choose the dimension of the test function and create the actual test
-# function. Note that some test functions are only defined for specific dimensions.
+# Here, you can choose the dimension  and the actual the test function.
+# All BoTorch test functions can be used.
+# Note that some test functions are only defined for specific dimensions.
 # If the dimension you provide is not available for the given test function, a warning
-# will be printed and one of the available dimensions is used.
+# will be printed and the dimension is adjusted.
 # For details on constructing the BayBE object, we refer to the basic example file.
 DIMENSION = 6
+
 # DISC_INDICES and CONT_INDICES together should contain the integers 0,1,...,DIMENSION-1
-# NOTE Although this is checked also in this file, you need to configure these indices
+# NOTE Although this is checked also in this file, you should configure these indices
 # manually here and verify that the experiment you set up is configured correctly.
 # In particular, if the function that you want to use is only available for a fixed
-# dimension, this might result in an error, so be aware of this.
+# dimension, then these will be overwritten by distributing the first half of the
+# dimension to DISC_INDICES and the remaining ones to CONT_INDICES
 DISC_INDICES = [0, 1, 2]
 CONT_INDICES = [3, 4, 5]
-TEST_FUNCTION = BayBEBotorchFunctionWrapper(test_function=Rastrigin, dim=DIMENSION)
+
+TestFunctionClass = Rastrigin
+
+# This part checks if the test function already has a fixed dimension.
+# In that case, we print a warning and replace DIMENSION.
+if not hasattr(TestFunctionClass, "dim"):
+    TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
+else:
+    print(
+        f"\nYou choose a dimension of {DIMENSION} for the test function"
+        f"{TestFunctionClass}. However, this function can only be used in "
+        f"{TestFunctionClass().dim} dimension, so the provided dimension is replaced. "
+        "Also, DISC_INDICES and CONT_INDICES will be re-written."
+    )
+    TestFunction = TestFunctionClass()
+    DIMENSION = TestFunctionClass().dim
+    mid = (DIMENSION + 1) // 2
+    DISC_INDICES = list(range(0, mid))
+    CONT_INDICES = list(range(mid, DIMENSION))
+
+# Get the bounds of the variables as they are set by BoTorch
+BOUNDS = TestFunction.bounds
+# Create the wrapped function itself.
+WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
+
 POINTS_PER_DIM = 3
 
 # This if-statement check whether the union of the given index sets yields indices
@@ -42,7 +69,7 @@ POINTS_PER_DIM = 3
 # intersection between the index sets is not empty or the test function has another
 # dimension. Note that this might in particular happen for test functions that ignore
 # the dim keyword!
-if set(CONT_INDICES + DISC_INDICES) != set(range(TEST_FUNCTION.dim)):
+if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
     raise ValueError(
         "Either the intersection between CONT_IND and DISC_IND is not empty or your "
         "indices do not match."
@@ -52,7 +79,7 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(TEST_FUNCTION.dim)):
 cont_parameters = [
     NumericContinuous(
         name=f"x_{k+1}",
-        bounds=(TEST_FUNCTION.bounds[0, k], TEST_FUNCTION.bounds[1, k]),
+        bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )
     for k in CONT_INDICES
 ]
@@ -61,11 +88,7 @@ cont_parameters = [
 disc_parameters = [
     NumericDiscrete(
         name=f"x_{k+1}",
-        values=list(
-            np.linspace(
-                TEST_FUNCTION.bounds[0, k], TEST_FUNCTION.bounds[1, k], POINTS_PER_DIM
-            )
-        ),
+        values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
         tolerance=0.01,
     )
     for k in DISC_INDICES
@@ -99,7 +122,7 @@ recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
 # recommendation and that we need to interpret the row as a list.
 target_values = []
 for index, row in recommendation.iterrows():
-    target_values.append(TEST_FUNCTION(*row.to_list()))
+    target_values.append(WRAPPED_FUNCTION(*row.to_list()))
 
 # We add an additional column with the calculated target values...
 recommendation["Target"] = target_values

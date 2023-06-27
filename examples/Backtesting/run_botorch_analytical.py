@@ -24,8 +24,6 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-# Note that this import here might be problematic depending on your exact
-# setup and that you might need to make some adjustments to make it work!
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
 
@@ -35,14 +33,32 @@ from botorch.test_functions import Rastrigin
 N_MC_ITERATIONS = 2
 N_EXP_ITERATIONS = 5
 
-# The basic setup for this experiment is identical to the example presented in the file
-# run_discrete_space.py within examples/Analytic_Functions, so we refer to this file
-# for more details on the setup.
-DIMENSION = 2
-TestFunctionType = Rastrigin
-WRAPPED_FUNCTION = botorch_function_wrapper(
-    test_function=TestFunctionType, dim=DIMENSION
-)
+# Here, you can choose the dimension  and the actual the test function.
+# All BoTorch test functions can be used.
+# Note that some test functions are only defined for specific dimensions.
+# If the dimension you provide is not available for the given test function, a warning
+# will be printed and the dimension is adjusted.
+# For details on constructing the BayBE object, we refer to the basic example file.
+DIMENSION = 4
+TestFunctionClass = Rastrigin
+
+# This part checks if the test function already has a fixed dimension.
+# In that case, we print a warning and replace DIMENSION.
+if not hasattr(TestFunctionClass, "dim"):
+    TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
+else:
+    print(
+        f"\nYou choose a dimension of {DIMENSION} for the test function"
+        f"{TestFunctionClass}. However, this function can only be used in "
+        f"{TestFunctionClass().dim} dimension, so the provided dimension is replaced."
+    )
+    TestFunction = TestFunctionClass()
+    DIMENSION = TestFunctionClass().dim
+
+# Get the bounds of the variables as they are set by BoTorch
+BOUNDS = TestFunction.bounds
+# Create the wrapped function itself.
+WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 POINTS_PER_DIM = 15
 
 
@@ -54,8 +70,8 @@ parameters = [
         name=f"x_{k+1}",
         values=list(
             np.linspace(
-                TestFunctionType().bounds[0, k],
-                TestFunctionType().bounds[1, k],
+                BOUNDS[0, k],
+                BOUNDS[1, k],
                 POINTS_PER_DIM,
             )
         ),
