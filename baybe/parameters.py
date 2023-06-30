@@ -40,7 +40,7 @@ from .utils import (
     smiles_to_rdkit_features,
     unstructure_base,
 )
-from .utils.interval import convert_bounds, Interval
+from .utils.interval import convert_bounds, InfiniteIntervalError, Interval
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -264,6 +264,15 @@ class NumericContinuous(Parameter):
     # object variables
     bounds: Interval = field(default=None, converter=convert_bounds)
 
+    @bounds.validator
+    def validate_bounds(self, _, value: Interval):
+        if not value.is_finite:
+            raise InfiniteIntervalError(
+                f"You are trying to initialize a parameter with an infinite interval "
+                f"of {value.to_tuple()}. Infinite intervals for parameters are "
+                f"currently not supported."
+            )
+
     def is_in_range(self, item: float) -> bool:
         """
         See base class.
@@ -330,9 +339,16 @@ class GenericSubstance(DiscreteParameter):
             comp_df = smiles_to_rdkit_features(vals, prefix=pref)
         elif self.encoding == "MORGAN_FP":
             comp_df = smiles_to_fp_features(vals, prefix=pref)
+        else:
+            raise ValueError(
+                f"Unknown parameter encoding {self.encoding} for parameter {self.name}."
+            )
 
         # Drop NaN and constant columns
-        comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
+        # Due to the above if clauses pylint thinks comp_df could become None
+        comp_df = comp_df.loc[
+            :, ~comp_df.isna().any(axis=0)  # pylint: disable=invalid-unary-operand-type
+        ]
         comp_df = df_drop_single_value_columns(comp_df)
 
         # If there are bool columns, convert them to int (possible for Mordred)
