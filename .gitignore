@@ -21,3 +21,14 @@ build/*
 
 # Local Pylint config
 /pylintrc
+
+# pytest and pytest-cov
+/tests/.coverage*
+/tests/.pytest_cache/
+/tests/htmlcov/
+/.coverage*
+/.pytest_cache/
+/htmlcov/
+
+# Pictures created by backtesting
+*.png
