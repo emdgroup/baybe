@@ -5,7 +5,11 @@ import pytest
 from baybe.parameters import Parameter
 
 
-@pytest.mark.parametrize("parameter_names", ["Categorical_1"])
+@pytest.mark.parametrize(
+    "parameter_names",
+    ["Categorical_1", "Num_disc_1", "Custom_1", "Solvent_1", "Conti_finite1"],
+)
+@pytest.mark.parametrize("n_grid_points", [5])
 def test_parameter_serialization(parameters):
     param = parameters[0]
     string = param.to_json()
