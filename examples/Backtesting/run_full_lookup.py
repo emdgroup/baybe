@@ -94,7 +94,7 @@ scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 # part of our table.
 BATCH_QUANTITY = 2
 N_EXP_ITERATIONS = 5
-N_MC_ITERATIONS = 30
+N_MC_ITERATIONS = 3
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=BATCH_QUANTITY,
