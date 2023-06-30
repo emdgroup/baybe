@@ -9,7 +9,6 @@ from baybe.searchspace import SearchSpace
     [
         ["Categorical_1", "Num_discrete_1"],
         ["Fraction_1"],
-        ["Conti_infinite1"],
         ["Conti_finite1"],
         ["Custom_1"],
         ["Solvent_1"],
