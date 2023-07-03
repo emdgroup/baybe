@@ -10,12 +10,7 @@ import torch
     [
         ["Conti_finite1"],
         ["Conti_finite2"],
-        ["Conti_infinite1"],
-        ["Conti_infinite2"],
-        ["Conti_infinite3"],
-        ["Conti_infinite4"],
-        ["Conti_infinite5"],
-        ["Conti_finite1", "Conti_finite2", "Conti_infinite5"],
+        ["Conti_finite1", "Conti_finite2"],
     ],
 )
 def test_valid_configs(baybe):

@@ -29,7 +29,6 @@ from .utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
-INF_BOUNDS_REPLACEMENT = 1000
 
 
 class SearchSpaceType(Enum):
@@ -279,29 +278,6 @@ class SubspaceContinuous:
 
         return comp_rep
 
-    # TODO rework the helper functions below, remove finite bound enforcement and
-    #  replace by distributional sampling
-    @property
-    def bounds_forced_finite(self) -> torch.Tensor:
-        """
-        Returns the parameter bounds where infinite values are clipped.
-        """
-        return torch.clip(
-            self.param_bounds_comp, -INF_BOUNDS_REPLACEMENT, INF_BOUNDS_REPLACEMENT
-        )
-
-    @property
-    def is_fully_bounded(self):
-        """
-        Whether the search space has infinite bound or is entirely finitely bounded.
-
-        Returns
-        -------
-        bool
-            True if search space has no infinite bounds.
-        """
-        return torch.isfinite(self.param_bounds_comp)
-
     def samples_random(self, n_points: int = 1) -> pd.DataFrame:
         """
         Get random point samples from the continuous space. Infinite bounds are
@@ -320,7 +296,7 @@ class SubspaceContinuous:
         """
         if not self.parameters:
             return pd.DataFrame()
-        points = torch.distributions.uniform.Uniform(*self.bounds_forced_finite).sample(
+        points = torch.distributions.uniform.Uniform(*self.param_bounds_comp).sample(
             torch.Size((n_points,))
         )
         return pd.DataFrame(points, columns=self.param_names)
@@ -361,16 +337,8 @@ class SubspaceContinuous:
         pandas data frame
             A data frame containing the full factorial
         """
-        if not self.is_fully_bounded:
-            log.warning(
-                "You are trying to access the full factorial of a continuous sace that "
-                "has infinite bounds in at least one parameter. Internally, infinite "
-                "bounds have been replaced by -/+ %f",
-                INF_BOUNDS_REPLACEMENT,
-            )
-
         index = pd.MultiIndex.from_product(
-            self.bounds_forced_finite.T.tolist(), names=self.param_names
+            self.param_bounds_comp.T.tolist(), names=self.param_names
         )
 
         return pd.DataFrame(index=index).reset_index()

@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- code coverage check with pytest-cov
+- Code coverage check with pytest-cov
+
+### Changed
+- Removed support for infinite parameter bounds. Might be reintroduced together with 
+sampling distributions
 
 ## [0.3.0] - 2023-06-27
 ### Added
