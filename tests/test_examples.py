@@ -12,6 +12,7 @@ example_list = list(Path(".").glob("examples/*/*.py"))
 EXAMPLES = [str(file) for file in example_list]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("example", EXAMPLES)
 def test_example(example: str):
     """Test an individual example by running it"""

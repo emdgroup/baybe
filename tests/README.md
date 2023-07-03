@@ -33,3 +33,21 @@ To show the slowest `n` tests after testing, use the option `--durations=n`. Set
 ```
 pytest --durations=5
 ```
+
+To get an assessment of the code coverage you can specify the following option:
+```
+pytest --cov=baybe
+```
+
+This will produce something like this:
+```
+---------- coverage: platform darwin, python 3.8.6-final-0 -----------
+Name                                 Stmts   Miss  Cover
+--------------------------------------------------------
+baybe/acquisition.py                    58      0   100%
+baybe/constraints.py                   170     10    94%
+baybe/core.py                          111      8    93%
+...
+--------------------------------------------------------
+TOTAL                                 1941    214    89%
+```
