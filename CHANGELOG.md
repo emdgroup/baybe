@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed support for infinite parameter bounds. Might be reintroduced together with 
 sampling distributions
 
+### Fixed
+- Changelog assert in Azure pipeline
+
 ## [0.3.0] - 2023-06-27
 ### Added
 - `Interval` class for representing parameter/target bounds
