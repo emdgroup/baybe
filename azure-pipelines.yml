@@ -162,16 +162,16 @@ stages:
 
       steps:
         - script: |
-            CURRENT_COMMIT=`git rev-parse HEAD`
-            #git checkout main
-            git checkout $CURRENT_COMMIT
-            NUM_ADDED=`git diff --numstat origin/main CHANGELOG.md | cut -d$'\t' -f1`
-            echo $NUM_ADDED
+            if [ `git rev-parse --abbrev-ref HEAD` == "main" ]; then
+              NUM_ADDED=`git diff --numstat HEAD^ HEAD CHANGELOG.md | cut -d$'\t' -f1`
+            else
+              NUM_ADDED=`git diff --numstat origin/main HEAD CHANGELOG.md | cut -d$'\t' -f1`
+            fi
+            echo "Changelog differences: $NUM_ADDED"
             if [ "$NUM_ADDED" -gt "0" ]; then
-              echo "$NUM_ADDED lines have been added to CHANGELOG.md"
               exit 0
             else
-              echo "Nothing has been added to CHANGELOG.md"
+              echo "ERROR - Nothing has been added to CHANGELOG.md"
               exit 1
             fi
           continueOnError: false
