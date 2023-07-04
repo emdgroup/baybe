@@ -163,6 +163,7 @@ stages:
       steps:
         - script: |
             if [ `git rev-parse --abbrev-ref HEAD` == "main" ]; then
+              git checkout main
               prev_head=`git log --merges -n 1 --skip 1 --pretty=format:"%H"`
               NUM_ADDED=`git diff --numstat $prev_head HEAD CHANGELOG.md | cut -d$'\t' -f1`
             else
