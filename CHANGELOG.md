@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Code coverage check with pytest-cov
+- SequentialGreedy hybrid recommender
 
 ### Changed
 - Removed support for infinite parameter bounds. Might be reintroduced together with 
