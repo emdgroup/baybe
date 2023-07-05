@@ -168,7 +168,7 @@ class Objective(SerialMixin):
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
 
-    mode: Literal["SINGLE", "MULTI", "DESIRABILITY"]
+    mode: Literal["SINGLE", "DESIRABILITY"]
     targets: List[NumericalTarget] = field(validator=min_len(1))
     weights: List[float] = field(default=None)
     combine_func: Literal["MEAN", "GEOM_MEAN"] = field(
@@ -193,10 +193,6 @@ class Objective(SerialMixin):
         if (self.mode == "SINGLE") and (len(targets) != 1):
             raise ValueError(
                 "For objective mode 'SINGLE', exactly one target must be specified."
-            )
-        if (self.mode == "MULTI") and (len(targets) <= 1):
-            raise ValueError(
-                "For objective mode 'MULTI', more than one target must be specified."
             )
         if self.mode == "DESIRABILITY":
             if any(not target.bounds.is_bounded for target in targets):

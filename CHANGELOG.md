@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Removed support for infinite parameter bounds. Might be reintroduced together with 
 sampling distributions
+- Removed not implemented MULTI objective mode
 
 ### Fixed
 - Changelog assert in Azure pipeline
@@ -24,7 +25,7 @@ sampling distributions
 - Mechanisms for loading and validating config files
 - Telemetry via OpenTelemetry
 - More detailed package installation info
-- Fallback mechanism for NonPredicteRecommenders
+- Fallback mechanism for NonPredictiveRecommenders
 - Introduce naive hybrid recommender
 
 ### Changed
