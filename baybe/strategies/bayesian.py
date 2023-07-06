@@ -7,7 +7,8 @@ from typing import Callable, Optional
 
 import pandas as pd
 from attrs import define, Factory
-from botorch.optim import optimize_acqf, optimize_acqf_discrete
+from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
+from sklearn.metrics import pairwise_distances
 
 from baybe.acquisition import PartialAcquisitionFunction
 
@@ -22,7 +23,9 @@ from baybe.utils import NoMCAcquisitionFunctionError, to_tensor
 
 class SequentialGreedyRecommender(BayesianRecommender):
 
-    compatibility = SearchSpaceType.EITHER
+    compatibility = SearchSpaceType.HYBRID
+    # Percentage of points that are sampled for hybrid optimization
+    sample_percentage: float = 0.3
 
     def _recommend_discrete(
         self,
@@ -85,6 +88,70 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # Return optimized points as dataframe
         rec = pd.DataFrame(points, columns=searchspace.continuous.param_names)
         return rec
+
+    def _recommend_hybrid(
+        self,
+        acquisition_function: Callable,
+        searchspace: SearchSpace,
+        batch_quantity: int,
+    ):
+
+        # Get discrete candidates.
+        # Since this method is not used as a fallback, the candidates_comp is
+        # re-computed, and the provided one is ignored.
+        _, candidates_comp = searchspace.discrete.get_candidates(
+            allow_repeated_recommendations=True,
+            allow_recommending_already_measured=True,
+        )
+        # Sample a portion of the searchspace
+        candidates_comp_sample = candidates_comp.sample(frac=self.sample_percentage)
+        # BoTorch requires a list of dictionaries for the fixed features
+        fixed_features_list = candidates_comp_sample.to_dict("records")
+        # Since the format needs to be List[Dict[int, float]], we need to get the
+        # indices of the features
+        # TODO This currently assumes that the discrete parameters are first and the
+        # continuous are second. Once parameter redesign [11611] is implemented, we
+        # might need to adjust this code.
+        fixed_feature_list_int = []
+        for single_list in fixed_features_list:
+            fixed_feature_list_int.append(
+                {i: single_list[x] for i, x in enumerate(single_list)}
+            )
+        try:
+            points, _ = optimize_acqf_mixed(
+                acq_function=acquisition_function,
+                bounds=searchspace.param_bounds_comp,
+                q=batch_quantity,
+                num_restarts=5,  # TODO make choice for num_restarts
+                raw_samples=10,  # TODO make choice for raw_samples
+                fixed_features_list=fixed_feature_list_int,
+            )
+        except AttributeError as ex:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions."
+            ) from ex
+        # Transform back into the proper format, which is experimental
+        # We start by extracting discrete and continuous parts of the searchspace.
+        disc_points = points[:, : len(candidates_comp.columns)]
+        cont_points = points[:, len(candidates_comp.columns) :]
+        # Calculate the indices of the discrete part to extract the experimental
+        # representation. This is done by finding the closest rows in candidates_comp
+        # for each discrete point. Necessary since points might contain rounding errors,
+        # hence a pandas merge as done e.g. in _recommend_discrete is not possible
+        disc_idxs = pairwise_distances(disc_points, candidates_comp).argmin(axis=1)
+
+        # Get experimental representation of discrete part
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs]
+        # Get experimental representation of continuous part
+        rec_cont_exp = pd.DataFrame(
+            cont_points, columns=searchspace.continuous.param_names
+        )
+        # Adjust index and concatenate
+        rec_cont_exp.index = rec_disc_exp.index
+        rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
+
+        return rec_exp
 
 
 @define

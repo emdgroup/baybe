@@ -304,7 +304,7 @@ class BayesianRecommender(Recommender, ABC):
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(acqf, searchspace, batch_quantity)
-        raise NotImplementedError()
+        return self._recommend_hybrid(acqf, searchspace, batch_quantity)
 
     def _recommend_discrete(
         self,
