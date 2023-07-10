@@ -6,7 +6,7 @@
 from typing import Callable, Optional
 
 import pandas as pd
-from attrs import define, Factory
+from attrs import define, Factory, field, validators
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
 from sklearn.metrics import pairwise_distances
 
@@ -19,13 +19,32 @@ from baybe.strategies.recommender import (
     Recommender,
 )
 from baybe.utils import NoMCAcquisitionFunctionError, to_tensor
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
+# Validation for the sampling percentage of the hybrid recommendation functionality.
+# Modeled in the same way as validation is done in the parameters.py file
+def validate_percentage(obj, _, value):
+    """Validate that the given value is a proper percentage between 0 and 1."""
+    if not 0 <= value <= 1:
+        raise ValueError(
+            f"Percentage for {obj.__class__.__name__} needs to be between 0 and 1 but "
+            f"is {value}"
+        )
+
+
+@define
 class SequentialGreedyRecommender(BayesianRecommender):
 
     compatibility = SearchSpaceType.HYBRID
-    # Percentage of points that are sampled for hybrid optimization
-    sample_percentage: float = 0.3
+    # Keyword for which sampling strategy should be used for hybrid recommendation
+    hybrid_sampler: str = field(
+        validator=validators.in_(["None", "Farthest", "Random"]), default="None"
+    )
+    # Percentage for how of the search space should be sampled for hybrid recommendation
+    sampling_percentage: float = field(
+        validator=[validators.instance_of(float), validate_percentage], default=1.0
+    )
 
     def _recommend_discrete(
         self,
@@ -95,6 +114,13 @@ class SequentialGreedyRecommender(BayesianRecommender):
         searchspace: SearchSpace,
         batch_quantity: int,
     ):
+        """Recommendation functionality of the SequentialGreedy Recommender.
+        This implements the `optimize_acqf_mixed` of BoTorch.
+
+        Important: This performs a brute-force calculation by fixing evey possible
+        assignment of discrete variables and optimizing the continuous subspace for
+        each of them. It is thus computationally expensive and should only be applied
+        for searchspace with not too many discrete points."""
 
         # Get discrete candidates.
         # Since this method is not used as a fallback, the candidates_comp is
@@ -103,12 +129,18 @@ class SequentialGreedyRecommender(BayesianRecommender):
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
         )
+        # Calculate the number of samples from the given percentage
+        number_of_samples = int(self.sampling_percentage * len(candidates_comp.index))
+        if self.hybrid_sampler == "Farthest":
+            # Same as in the FPSRecommender
+            ilocs = farthest_point_sampling(candidates_comp.values, number_of_samples)
+            candidates_comp = candidates_comp.iloc[ilocs]
+        elif self.hybrid_sampler == "Random":
+            candidates_comp = candidates_comp.sample(number_of_samples)
 
-        # Sample a portion of the searchspace and transform it in a dictionary.
         # Since the format for the BoTorch function needs to be List[Dict[int, float]],
-        # we then need to get the indices of the features
-        candidates_comp_sample = candidates_comp.sample(frac=self.sample_percentage)
-        fixed_features_list = candidates_comp_sample.to_dict("records")
+        # we need to get the indices of the features
+        fixed_features_list = candidates_comp.to_dict("records")
 
         # TODO This currently assumes that the discrete parameters are first and the
         # continuous are second. Once parameter redesign [11611] is implemented, we
