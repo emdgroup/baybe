@@ -147,7 +147,12 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # TODO This is currently necessary since points might contain rounding errors.
         # Should be able to implement a more reasonable solution once [13483] is
         # implemented.
-        disc_idxs = pairwise_distances(disc_points, candidates_comp).argmin(axis=1)
+        disc_idxs_loc = pairwise_distances(disc_points, candidates_comp).argmin(axis=1)
+
+        # disc_idx is now location based with respect to candidates_comp. As we need to
+        # get the indices with respect to the experimental representation, we get the
+        # indices of the candidates at the calcluated location.
+        disc_idxs = candidates_comp.iloc[disc_idxs_loc].index
 
         # Get experimental representation of discrete and continuous parts
         rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs]
