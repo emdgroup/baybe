@@ -103,12 +103,13 @@ class SequentialGreedyRecommender(BayesianRecommender):
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
         )
-        # Sample a portion of the searchspace
+
+        # Sample a portion of the searchspace and transform it in a dictionary.
+        # Since the format for the BoTorch function needs to be List[Dict[int, float]],
+        # we then need to get the indices of the features
         candidates_comp_sample = candidates_comp.sample(frac=self.sample_percentage)
-        # BoTorch requires a list of dictionaries for the fixed features
         fixed_features_list = candidates_comp_sample.to_dict("records")
-        # Since the format needs to be List[Dict[int, float]], we need to get the
-        # indices of the features
+
         # TODO This currently assumes that the discrete parameters are first and the
         # continuous are second. Once parameter redesign [11611] is implemented, we
         # might need to adjust this code.
@@ -117,6 +118,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
             fixed_feature_list_int.append(
                 {i: single_list[x] for i, x in enumerate(single_list)}
             )
+
+        # Actual call of the botorch optimization routine
         try:
             points, _ = optimize_acqf_mixed(
                 acq_function=acquisition_function,
@@ -131,23 +134,28 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions."
             ) from ex
+
         # Transform back into the proper format, which is experimental
         # We start by extracting discrete and continuous parts of the searchspace.
+
         disc_points = points[:, : len(candidates_comp.columns)]
         cont_points = points[:, len(candidates_comp.columns) :]
+
         # Calculate the indices of the discrete part to extract the experimental
         # representation. This is done by finding the closest rows in candidates_comp
-        # for each discrete point. Necessary since points might contain rounding errors,
-        # hence a pandas merge as done e.g. in _recommend_discrete is not possible
+        # for each discrete point.
+        # TODO This is currently necessary since points might contain rounding errors.
+        # Should be able to implement a more reasonable solution once [13483] is
+        # implemented.
         disc_idxs = pairwise_distances(disc_points, candidates_comp).argmin(axis=1)
 
-        # Get experimental representation of discrete part
+        # Get experimental representation of discrete and continuous parts
         rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs]
-        # Get experimental representation of continuous part
         rec_cont_exp = pd.DataFrame(
             cont_points, columns=searchspace.continuous.param_names
         )
-        # Adjust index and concatenate
+
+        # Adjust index, concatenate and return
         rec_cont_exp.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
 
