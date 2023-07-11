@@ -6,10 +6,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import wraps
-from typing import Callable, Dict, Optional, Tuple, Type
+from typing import Callable, ClassVar, Optional, Tuple, Type
+
+import cattrs
 
 import numpy as np
 import torch
+from attrs import define, field
 from botorch.fit import fit_gpytorch_mll_torch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
@@ -27,8 +30,8 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import is_abstract
-
+from baybe.utils import get_base_unstructure_hook, unstructure_base
+from baybe.utils.serialization import SerialMixin
 
 # Use float64 (which is recommended at least for BoTorch models)
 _DTYPE = torch.float64
@@ -76,16 +79,14 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
         targets are all constant and no variance can be estimated.
         """
 
-        # Overwrite the registered subclass with the wrapped version
-        type = model_cls.type
-
         # The posterior mode is chosen to match that of the wrapped model class
-        joint_posterior = model_cls.joint_posterior
+        joint_posterior: ClassVar[bool] = model_cls.joint_posterior
 
         def __init__(self, *args, **kwargs):
             """Stores an instance of the underlying model class."""
             super().__init__()
             self.model = model_cls(*args, **kwargs)
+            self.__class__.__name__ = self.model.__class__.__name__
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
             """Calls the posterior function of the internal model instance."""
@@ -145,6 +146,7 @@ def scale_model(model_cls: Type[SurrogateModel]):
         def __init__(self, *args, **kwargs):
             """Stores an instance of the underlying model class and a scaler object."""
             self.model = model_cls(*args, **kwargs)
+            self.__class__.__name__ = self.model.__class__.__name__
             self.scaler = None
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -243,15 +245,11 @@ def batchify(
     return sequential_posterior
 
 
-class SurrogateModel(ABC):
+@define
+class SurrogateModel(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
-    # Dictionary for bookkeeping of subclasses
-    SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
-
-    # Class properties
-    type: str
-    joint_posterior: bool
+    joint_posterior: ClassVar[bool]
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """
@@ -323,23 +321,20 @@ class SurrogateModel(ABC):
         operation is conducted.
         """
 
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not is_abstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
+    # @classmethod
+    # def __init_subclass__(cls, **kwargs):
+    #     """Registers new subclasses dynamically."""
+    #     super().__init_subclass__(**kwargs)
+    #     if not isabstract(cls):
+    #         cls.SUBCLASSES[cls.type] = cls
 
 
+@define
 class GaussianProcessModel(SurrogateModel):
     """A Gaussian process surrogate model."""
 
-    type = "GP"
-    joint_posterior = True
-
-    def __init__(self):
-        super().__init__()
-        self.model: Optional[SingleTaskGP] = None
+    joint_posterior: ClassVar[bool] = True
+    model: Optional[SingleTaskGP] = field(init=False, default=None)
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
@@ -434,18 +429,15 @@ class GaussianProcessModel(SurrogateModel):
         fit_gpytorch_mll_torch(mll, step_limit=100)
 
 
+@define
 class MeanPredictionModel(SurrogateModel):
     """
     A trivial surrogate model that provides the average value of the training targets
     as posterior mean and a (data-independent) constant posterior variance.
     """
 
-    type = "MP"
-    joint_posterior = False
-
-    def __init__(self):
-        super().__init__()
-        self.target_value = None
+    joint_posterior: ClassVar[bool] = False
+    target_value = None
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -462,15 +454,12 @@ class MeanPredictionModel(SurrogateModel):
 
 @catch_constant_targets
 @scale_model
+@define
 class RandomForestModel(SurrogateModel):
     """A random forest surrogate model."""
 
-    type = "RF"
-    joint_posterior = False
-
-    def __init__(self):
-        super().__init__()
-        self.model: Optional[RandomForestRegressor] = None
+    joint_posterior: ClassVar[bool] = False
+    model: Optional[RandomForestRegressor] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -503,15 +492,12 @@ class RandomForestModel(SurrogateModel):
 
 @catch_constant_targets
 @scale_model
+@define
 class NGBoostModel(SurrogateModel):
     """A natural-gradient-boosting surrogate model."""
 
-    type = "NG"
-    joint_posterior = False
-
-    def __init__(self):
-        super().__init__()
-        self.model: Optional[NGBRegressor] = None
+    joint_posterior: ClassVar[bool] = False
+    model: Optional[NGBRegressor] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -534,15 +520,12 @@ class NGBoostModel(SurrogateModel):
 
 @catch_constant_targets
 @scale_model
+@define
 class BayesianLinearModel(SurrogateModel):
     """A Bayesian linear regression surrogate model."""
 
-    type = "BL"
-    joint_posterior = False
-
-    def __init__(self):
-        super().__init__()
-        self.model: Optional[ARDRegression] = None
+    joint_posterior: ClassVar[bool] = False
+    model: Optional[ARDRegression] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -560,3 +543,24 @@ class BayesianLinearModel(SurrogateModel):
         """See base class."""
         self.model = ARDRegression()
         self.model.fit(train_x, train_y.ravel())
+
+
+def remove_model(raw_unstructure_hook):
+    """Removes the model in an surrogate for serialization"""
+
+    def wrapper(obj):
+        dict_ = raw_unstructure_hook(obj)
+        try:
+            dict_.pop("model")
+        except KeyError:
+            pass
+        return dict_
+
+    return wrapper
+
+
+# Register (un-)structure hooks
+cattrs.register_unstructure_hook(SurrogateModel, remove_model(unstructure_base))
+cattrs.register_structure_hook(
+    SurrogateModel, get_base_unstructure_hook(SurrogateModel)
+)
