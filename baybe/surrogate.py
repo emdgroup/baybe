@@ -350,13 +350,6 @@ class SurrogateModel(ABC, SerialMixin):
         operation is conducted.
         """
 
-    # @classmethod
-    # def __init_subclass__(cls, **kwargs):
-    #     """Registers new subclasses dynamically."""
-    #     super().__init_subclass__(**kwargs)
-    #     if not isabstract(cls):
-    #         cls.SUBCLASSES[cls.type] = cls
-
 
 @define
 class GaussianProcessModel(SurrogateModel):
