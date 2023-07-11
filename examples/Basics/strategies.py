@@ -22,7 +22,12 @@ from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
-from baybe.surrogate import GaussianProcessModel
+from baybe.surrogate import (
+    BayesianLinearModel,
+    GaussianProcessModel,
+    NGBoostModel,
+    RandomForestModel,
+)
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
@@ -49,10 +54,10 @@ INITIAL_RECOMMENDER = RandomRecommender()
 
 # The following surrogate models are available.
 available_surrogate_models = [
-    "GP",  # GaussianProcessModel
-    "RF",  # Random Forest Model
-    "NG",  # Natural Gradient Boosting
-    "BL",  # Bayesian Linear Regression
+    GaussianProcessModel(),
+    RandomForestModel(),
+    NGBoostModel(),
+    BayesianLinearModel(),
 ]
 
 # Per default a Gaussian Process is used
