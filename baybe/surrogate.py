@@ -67,6 +67,32 @@ def _var_to_covar(var: Tensor) -> Tensor:
     return torch.diag_embed(var)
 
 
+def _get_model_params_validator(model_init: Callable) -> Callable:
+    """Constructs a validator based on the model class"""
+
+    def validate_model_params(obj, _, model_params: dict) -> None:
+        # Get model class name
+        model = obj.__class__.__name__
+
+        # GP does not support additional model params
+        if "GaussianProcess" in model and model_params:
+            raise ValueError(f"{model} does not support model params.")
+
+        # Invalid params
+        invalid_params = ", ".join(
+            [
+                key
+                for key in model_params.keys()
+                if key not in model_init.__code__.co_varnames
+            ]
+        )
+
+        if invalid_params:
+            raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
+
+    return validate_model_params
+
+
 def catch_constant_targets(model_cls: Type[SurrogateModel]):
     """
     Wraps a given `SurrogateModel` class that cannot handle constant training target
@@ -87,6 +113,7 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
             super().__init__()
             self.model = model_cls(*args, **kwargs)
             self.__class__.__name__ = self.model.__class__.__name__
+            self.model_params = self.model.model_params
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
             """Calls the posterior function of the internal model instance."""
@@ -147,6 +174,7 @@ def scale_model(model_cls: Type[SurrogateModel]):
             """Stores an instance of the underlying model class and a scaler object."""
             self.model = model_cls(*args, **kwargs)
             self.__class__.__name__ = self.model.__class__.__name__
+            self.model_params = self.model.model_params
             self.scaler = None
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -250,6 +278,7 @@ class SurrogateModel(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     joint_posterior: ClassVar[bool]
+    model_params: dict = field(default={})
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """
@@ -335,6 +364,11 @@ class GaussianProcessModel(SurrogateModel):
 
     joint_posterior: ClassVar[bool] = True
     model: Optional[SingleTaskGP] = field(init=False, default=None)
+    model_params: dict = field(
+        default={},
+        converter=dict,
+        validator=_get_model_params_validator(SingleTaskGP.__init__),
+    )
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
@@ -460,6 +494,11 @@ class RandomForestModel(SurrogateModel):
 
     joint_posterior: ClassVar[bool] = False
     model: Optional[RandomForestRegressor] = field(init=False, default=None)
+    model_params: dict = field(
+        default={},
+        converter=dict,
+        validator=_get_model_params_validator(RandomForestRegressor.__init__),
+    )
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -486,7 +525,7 @@ class RandomForestModel(SurrogateModel):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = RandomForestRegressor()
+        self.model = RandomForestRegressor(**(self.model_params))
         self.model.fit(train_x, train_y.ravel())
 
 
@@ -498,6 +537,11 @@ class NGBoostModel(SurrogateModel):
 
     joint_posterior: ClassVar[bool] = False
     model: Optional[NGBRegressor] = field(init=False, default=None)
+    model_params: dict = field(
+        default={"n_estimators": 25, "verbose": False},
+        converter=dict,
+        validator=_get_model_params_validator(NGBRegressor.__init__),
+    )
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -513,9 +557,7 @@ class NGBoostModel(SurrogateModel):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = NGBRegressor(n_estimators=25, verbose=False).fit(
-            train_x, train_y.ravel()
-        )
+        self.model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
 
 @catch_constant_targets
@@ -526,6 +568,11 @@ class BayesianLinearModel(SurrogateModel):
 
     joint_posterior: ClassVar[bool] = False
     model: Optional[ARDRegression] = field(init=False, default=None)
+    model_params: dict = field(
+        default={},
+        converter=dict,
+        validator=_get_model_params_validator(ARDRegression.__init__),
+    )
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -541,7 +588,7 @@ class BayesianLinearModel(SurrogateModel):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = ARDRegression()
+        self.model = ARDRegression(**(self.model_params))
         self.model.fit(train_x, train_y.ravel())
 
 
