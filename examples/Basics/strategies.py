@@ -22,6 +22,7 @@ from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
+from baybe.surrogate import GaussianProcessModel
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
@@ -54,9 +55,8 @@ available_surrogate_models = [
     "BL",  # Bayesian Linear Regression
 ]
 
-# Per default, a Gaussian Process is used.
-
-SURROGATE_MODEL = "GP"
+# Per default a Gaussian Process is used
+SURROGATE_MODEL = GaussianProcessModel()
 
 
 #### Acquisition function
@@ -102,7 +102,7 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 strategy = Strategy(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=SequentialGreedyRecommender(
-        surrogate_model_cls=SURROGATE_MODEL, acquisition_function_cls=ACQ_FUNCTION
+        surrogate_model=SURROGATE_MODEL, acquisition_function_cls=ACQ_FUNCTION
     ),
     allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
     allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,
