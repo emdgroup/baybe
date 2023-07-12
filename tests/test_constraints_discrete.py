@@ -178,7 +178,7 @@ def test_prodsum3(baybe):
     [["Solvent_1", "Solvent_2", "Solvent_3", "Fraction_1", "Fraction_2", "Fraction_3"]],
 )
 @pytest.mark.parametrize(
-    "constraint_names", [["Constraint_11", "Constraint_12", "Constraint_13"]]
+    "constraint_names", [["Constraint_7", "Constraint_11", "Constraint_12"]]
 )
 def test_mixture(baybe, n_grid_points, mock_substances):
     """
@@ -271,7 +271,7 @@ def test_mixture(baybe, n_grid_points, mock_substances):
     "parameter_names",
     [["Solvent_1", "SomeSetting", "Temperature", "Pressure"]],
 )
-@pytest.mark.parametrize("constraint_names", [["Constraint_7"]])
+@pytest.mark.parametrize("constraint_names", [["Constraint_13"]])
 def test_custom(baybe):
     """
     Tests custom constraint (uses config from exclude test)

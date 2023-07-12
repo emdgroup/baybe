@@ -310,11 +310,13 @@ def fixture_targets(target_names: List[str]):
             name="Target_max_bounded",
             mode="MAX",
             bounds=(0, 100),
+            bounds_transform_func="LINEAR",
         ),
         NumericalTarget(
             name="Target_min_bounded",
             mode="MIN",
             bounds=(0, 100),
+            bounds_transform_func="LINEAR",
         ),
         NumericalTarget(
             name="Target_match_bell",
@@ -393,9 +395,8 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 ThresholdCondition(threshold=120, operator=">"),
             ],
         ),
-        "Constraint_7": CustomConstraint(
-            parameters=["Pressure", "Solvent_1", "Temperature"],
-            validator=custom_function,
+        "Constraint_7": NoLabelDuplicatesConstraint(
+            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
         ),
         "Constraint_8": SumConstraint(
             parameters=["Fraction_1", "Fraction_2"],
@@ -427,11 +428,16 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
             parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
             condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.01),
         ),
-        "Constraint_13": NoLabelDuplicatesConstraint(
-            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+        "Constraint_13": CustomConstraint(
+            parameters=["Pressure", "Solvent_1", "Temperature"],
+            validator=custom_function,
         ),
     }
-    return [valid_constraints[c] for c in constraint_names]
+    return [
+        c_item
+        for c_name, c_item in valid_constraints.items()
+        if c_name in constraint_names
+    ]
 
 
 @pytest.fixture(name="target_names")
