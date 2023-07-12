@@ -483,3 +483,11 @@ cattrs.register_unstructure_hook(Condition, unstructure_base)
 cattrs.register_structure_hook(Condition, get_base_unstructure_hook(Condition))
 cattrs.register_unstructure_hook(Constraint, unstructure_base)
 cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint))
+
+
+def _custom_constraint_hook(obj):  # pylint: disable=unused-argument
+    raise NotImplementedError("CustomConstraint does not support de-/serialization.")
+
+
+cattrs.register_unstructure_hook(CustomConstraint, _custom_constraint_hook)
+cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
