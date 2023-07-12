@@ -49,7 +49,7 @@ def validate_percentage(obj, _, value):
 class BayesianRecommender(Recommender, ABC):
     # TODO Docstrings missing
 
-    surrogate_model: SurrogateModel = GaussianProcessModel()
+    surrogate_model: SurrogateModel = field(factory=GaussianProcessModel)
     acquisition_function_cls: Literal[
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
     ] = field(default="qEI")

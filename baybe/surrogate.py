@@ -278,7 +278,7 @@ class SurrogateModel(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     joint_posterior: ClassVar[bool]
-    model_params: dict = field(default={})
+    model_params: dict = field(factory=dict)
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """
@@ -358,7 +358,7 @@ class GaussianProcessModel(SurrogateModel):
     joint_posterior: ClassVar[bool] = True
     model: Optional[SingleTaskGP] = field(init=False, default=None)
     model_params: dict = field(
-        default={},
+        factory=dict,
         converter=dict,
         validator=_get_model_params_validator(SingleTaskGP.__init__),
     )
@@ -488,7 +488,7 @@ class RandomForestModel(SurrogateModel):
     joint_posterior: ClassVar[bool] = False
     model: Optional[RandomForestRegressor] = field(init=False, default=None)
     model_params: dict = field(
-        default={},
+        factory=dict,
         converter=dict,
         validator=_get_model_params_validator(RandomForestRegressor.__init__),
     )
@@ -531,7 +531,7 @@ class NGBoostModel(SurrogateModel):
     joint_posterior: ClassVar[bool] = False
     model: Optional[NGBRegressor] = field(init=False, default=None)
     model_params: dict = field(
-        default={"n_estimators": 25, "verbose": False},
+        factory=dict,
         converter=dict,
         validator=_get_model_params_validator(NGBRegressor.__init__),
     )
@@ -550,6 +550,8 @@ class NGBoostModel(SurrogateModel):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
+        if not self.model_params:
+            self.model_params = {"n_estimators": 25, "verbose": False}
         self.model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
 
@@ -562,7 +564,7 @@ class BayesianLinearModel(SurrogateModel):
     joint_posterior: ClassVar[bool] = False
     model: Optional[ARDRegression] = field(init=False, default=None)
     model_params: dict = field(
-        default={},
+        factory=dict,
         converter=dict,
         validator=_get_model_params_validator(ARDRegression.__init__),
     )
