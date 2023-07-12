@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, Factory, field
 
-from baybe.constraints import Constraint
+from baybe.constraints import Constraint, DependenciesConstraint
 from baybe.parameters import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
@@ -62,10 +62,7 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
     constraints = specs.get("constraints", None)
     if constraints:
-        raise NotImplementedError("Constraint deserialization not yet available.")
-        constraints = cattrs.structure(  # pylint: disable=unreachable
-            specs["constraints"], List[Constraint]
-        )
+        constraints = cattrs.structure(specs["constraints"], List[Constraint])
     return SearchSpace.create(parameters, constraints)
 
 
@@ -80,12 +77,15 @@ def searchspace_validation_hook(specs: dict, _) -> None:
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
         raise ValueError("Config contains duplicate parameter names.")
+
     constraints = specs.get("constraints", None)
     if constraints:
-        raise NotImplementedError("Constraint deserialization not yet available.")
-        constraints = cattrs.structure(  # pylint: disable=unreachable
-            specs["constraints"], List[Constraint]
-        )
+        constraints = cattrs.structure(specs["constraints"], List[Constraint])
+        if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
+            raise ValueError(
+                "There is only one DependenciesConstraint allowed, please "
+                "specify all in one command."
+            )
 
 
 _config_converter = cattrs.global_converter.copy()
