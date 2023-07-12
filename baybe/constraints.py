@@ -149,7 +149,7 @@ class SubSelectionCondition(Condition):
     type = "SUBSELECTION"
 
     # object variables
-    selection: List[str]
+    selection: List
 
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
