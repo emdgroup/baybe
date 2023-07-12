@@ -5,10 +5,11 @@
 
 from typing import Callable, Optional
 
+import numpy as np
 import pandas as pd
 from attrs import define, Factory, field, validators
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.acquisition import PartialAcquisitionFunction
 
@@ -179,7 +180,11 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # TODO This is currently necessary since points might contain rounding errors.
         # Should be able to implement a more reasonable solution once [13483] is
         # implemented.
-        disc_idxs_loc = pairwise_distances(disc_points, candidates_comp).argmin(axis=1)
+        # Transform to numpy format and make it contiguous if necessary
+        disc_points_np = disc_points.numpy()
+        if not disc_points_np.data.contiguous:
+            disc_points_np = np.ascontiguousarray(disc_points_np)
+        disc_idxs_loc = pairwise_distances_argmin(disc_points_np, candidates_comp)
 
         # disc_idx is now location based with respect to candidates_comp. As we need to
         # get the indices with respect to the experimental representation, we get the
