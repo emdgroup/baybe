@@ -142,16 +142,12 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
         # Since the format for the BoTorch function needs to be List[Dict[int, float]],
         # we need to get the indices of the features
-        fixed_features_list = candidates_comp.to_dict("records")
-
         # TODO This currently assumes that the discrete parameters are first and the
         # continuous are second. Once parameter redesign [11611] is implemented, we
         # might need to adjust this code.
-        fixed_feature_list_int = []
-        for single_list in fixed_features_list:
-            fixed_feature_list_int.append(
-                {i: single_list[x] for i, x in enumerate(single_list)}
-            )
+
+        candidates_comp.columns = list(range(len(candidates_comp.columns)))
+        fixed_features_list = candidates_comp.to_dict("records")
 
         # Actual call of the botorch optimization routine
         try:
@@ -161,7 +157,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 q=batch_quantity,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
-                fixed_features_list=fixed_feature_list_int,
+                fixed_features_list=fixed_features_list,
             )
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(
