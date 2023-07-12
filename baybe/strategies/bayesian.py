@@ -174,9 +174,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # Calculate the indices of the discrete part to extract the experimental
         # representation. This is done by finding the closest rows in candidates_comp
         # for each discrete point.
-        # TODO This is currently necessary since points might contain rounding errors.
-        # Should be able to implement a more reasonable solution once [13483] is
-        # implemented.
+        # TODO This is currently necessary due to BoTorch changing data types internally
+        # Might thus change this once [14819] is fixed.
 
         # Fit scaler on discrete subspace for index extraction
         scaler = StandardScaler()
