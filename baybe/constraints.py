@@ -8,8 +8,7 @@ import logging
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
-from inspect import isabstract
-from typing import Callable, ClassVar, Dict, List, Optional, Type
+from typing import Callable, ClassVar, List, Optional
 
 import cattrs
 import numpy as np
@@ -20,7 +19,6 @@ from funcy import rpartial
 from numpy.typing import ArrayLike
 
 from .utils import (
-    check_if_in,
     Dummy,
     get_base_unstructure_hook,
     StrictValidationError,
@@ -56,22 +54,6 @@ class Condition(ABC, SerialMixin):
 
     # class variables
     type: ClassVar[str]
-    SUBCLASSES: ClassVar[Dict[str, Type["Condition"]]] = {}
-
-    @classmethod
-    def create(cls, config: dict) -> "Condition":
-        """Creates a new object matching the given specifications."""
-        config = config.copy()
-        condition_type = config.pop("type")
-        check_if_in(condition_type, list(Condition.SUBCLASSES.keys()))
-        return cls.SUBCLASSES[condition_type](**config)
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def evaluate(self, data: pd.Series) -> pd.Series:
@@ -183,13 +165,12 @@ class Constraint(ABC, SerialMixin):
 
     # class variables
     type: ClassVar[str]
-    SUBCLASSES: ClassVar[Dict[str, Type["Constraint"]]] = {}
     # TODO: it might turn out these are not needed at a later development stage
     eval_during_creation: ClassVar[bool]
     eval_during_modeling: ClassVar[bool]
 
     # Object variables
-    parameters: List[str] = field()
+    parameters: List[str] = field(validator=min_len(1))
 
     @parameters.validator
     def validate_params(self, attribute, params):  # pylint: disable=unused-argument
@@ -199,21 +180,6 @@ class Constraint(ABC, SerialMixin):
                 f"The given 'parameters' list must have unique values "
                 f"but was: {params}."
             )
-
-    @classmethod
-    def create(cls, config: dict) -> "Constraint":
-        """Creates a new object matching the given specifications."""
-        config = config.copy()
-        constraint_type = config.pop("type")
-        check_if_in(constraint_type, list(Constraint.SUBCLASSES.keys()))
-        return cls.SUBCLASSES[constraint_type](**config)
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
@@ -512,7 +478,7 @@ class CustomConstraint(Constraint):
         return data.index[mask_bad]
 
 
-# Register struccture / unstructure hooks
+# Register structure / unstructure hooks
 cattrs.register_unstructure_hook(Condition, unstructure_base)
 cattrs.register_structure_hook(Condition, get_base_unstructure_hook(Condition))
 cattrs.register_unstructure_hook(Constraint, unstructure_base)
