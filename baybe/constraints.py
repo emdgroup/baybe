@@ -124,6 +124,14 @@ class ThresholdCondition(Condition):
                 f"with the following operators: {_valid_tolerance_operators}."
             )
 
+        if self.operator in _valid_tolerance_operators:
+            if (value is None) or (value <= 0.0):
+                raise StrictValidationError(
+                    f"When using a tolerance-enabled operator"
+                    f" ({_valid_tolerance_operators}) the tolerance cannot be None "
+                    f"or <= 0.0, but was {value}."
+                )
+
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
         if data.dtype.kind not in "iufb":
