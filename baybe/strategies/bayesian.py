@@ -117,24 +117,23 @@ class SequentialGreedyRecommender(BayesianRecommender):
         batch_quantity: int,
     ):
         """Recommendation functionality of the SequentialGreedy Recommender.
-        This implements the `optimize_acqf_mixed` of BoTorch.
+        This implements the `optimize_acqf_mixed` function of BoTorch.
 
         Important: This performs a brute-force calculation by fixing evey possible
         assignment of discrete variables and optimizing the continuous subspace for
-        each of them. It is thus computationally expensive and should only be applied
-        for searchspace with not too many discrete points."""
+        each of them. It is thus computationally expensive."""
 
         # Get discrete candidates.
-        # Since this method is not used as a fallback, the candidates_comp is
-        # re-computed, and the provided one is ignored.
         _, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
         )
+
         # Calculate the number of samples from the given percentage
         number_of_samples = int(self.sampling_percentage * len(candidates_comp.index))
+
+        # Potential sampling of discrete candidates
         if self.hybrid_sampler == "Farthest":
-            # Same as in the FPSRecommender
             ilocs = farthest_point_sampling(candidates_comp.values, number_of_samples)
             candidates_comp = candidates_comp.iloc[ilocs]
         elif self.hybrid_sampler == "Random":
@@ -142,9 +141,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
         # Since the format for the BoTorch function needs to be List[Dict[int, float]],
         # we need to get the indices of the features
-        # TODO This currently assumes that the discrete parameters are first and the
-        # continuous are second. Once parameter redesign [11611] is implemented, we
-        # might need to adjust this code.
+        # TODO Currently assumes that discrete parameters are first and continuous
+        # second. Once parameter redesign [11611] is implemented, we might adjust this.
 
         candidates_comp.columns = list(range(len(candidates_comp.columns)))
         fixed_features_list = candidates_comp.to_dict("records")
@@ -165,34 +163,29 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 f"acquisition functions."
             ) from ex
 
-        # Transform back into the proper format, which is experimental
-        # We start by extracting discrete and continuous parts of the searchspace.
+        # Transform into experimental representation
 
         disc_points = points[:, : len(candidates_comp.columns)]
         cont_points = points[:, len(candidates_comp.columns) :]
 
         # Calculate the indices of the discrete part to extract the experimental
-        # representation. This is done by finding the closest rows in candidates_comp
-        # for each discrete point.
+        # representation. This is done by finding closests rows in candidates_comp.
         # TODO This is currently necessary due to BoTorch changing data types internally
         # Might thus change this once [14819] is fixed.
 
         # Fit scaler on discrete subspace for index extraction
         scaler = StandardScaler()
-        scaler.fit(candidates_comp)
-
-        # Transform to numpy format and make it contiguous if necessary
+        candidates_comp_np = scaler.fit_transform(candidates_comp)
         disc_points_np = scaler.transform(disc_points.numpy())
-        candidates_comp_np = scaler.transform(candidates_comp.to_numpy())
+
+        # Make everything contiguous if necessary
         if not disc_points_np.flags["C_CONTIGUOUS"]:
             disc_points_np = np.ascontiguousarray(disc_points_np)
         if not candidates_comp_np.flags["C_CONTIGUOUS"]:
             candidates_comp_np = np.ascontiguousarray(candidates_comp_np)
         disc_idxs_loc = pairwise_distances_argmin(disc_points_np, candidates_comp_np)
 
-        # disc_idx is now location based with respect to candidates_comp. As we need to
-        # get the indices with respect to the experimental representation, we get the
-        # indices of the candidates at the calcluated location.
+        # Get actual indices, as disc_idx_loc is location based
         disc_idxs = candidates_comp.iloc[disc_idxs_loc].index
 
         # Get experimental representation of discrete and continuous parts
