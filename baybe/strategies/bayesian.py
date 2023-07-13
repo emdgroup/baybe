@@ -10,7 +10,6 @@ import pandas as pd
 from attrs import define, Factory, field, validators
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
 from sklearn.metrics import pairwise_distances_argmin
-from sklearn.preprocessing import StandardScaler
 
 from baybe.acquisition import PartialAcquisitionFunction
 
@@ -173,17 +172,17 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # TODO This is currently necessary due to BoTorch changing data types internally
         # Might thus change this once [14819] is fixed.
 
-        # Fit scaler on discrete subspace for index extraction
-        scaler = StandardScaler()
-        candidates_comp_np = scaler.fit_transform(candidates_comp)
-        disc_points_np = scaler.transform(disc_points.numpy())
+        candidates_comp_np = candidates_comp.to_numpy()
+        disc_points_np = disc_points.numpy()
 
         # Make everything contiguous if necessary
         if not disc_points_np.flags["C_CONTIGUOUS"]:
             disc_points_np = np.ascontiguousarray(disc_points_np)
         if not candidates_comp_np.flags["C_CONTIGUOUS"]:
             candidates_comp_np = np.ascontiguousarray(candidates_comp_np)
-        disc_idxs_loc = pairwise_distances_argmin(disc_points_np, candidates_comp_np)
+        disc_idxs_loc = pairwise_distances_argmin(
+            disc_points_np, candidates_comp_np, metric="manhattan"
+        )
 
         # Get actual indices, as disc_idx_loc is location based
         disc_idxs = candidates_comp.iloc[disc_idxs_loc].index
