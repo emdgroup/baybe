@@ -348,6 +348,9 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
 @define
 class NaiveHybridRecommender(Recommender):
+    # TODO: This class (and potentially the recommender function signatures) need to
+    #   be refactor such that there is no more coupling to BayesianRecommender and it
+    #   can be moved to recommender.py
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
