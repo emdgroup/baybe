@@ -56,10 +56,26 @@ valid_continuous_recommenders = [
     and cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
+# List of all hybrid recommenders with default attributes. Is extended with other lists
+# of hybird recommenders like naive ones or recommenders not using default arguments
 valid_hybrid_recommenders = [
     cls()
     for cls in subclasses_recursive(Recommender)
     if not isabstract(cls) and cls.compatibility in [SearchSpaceType.HYBRID]
+]
+# List of SequentialGreedy Recommender with different sampling strategies.
+sampling_strategies = [
+    # Valid combinations
+    ("None", 0.0),
+    ("None", 1.0),
+    ("Farthest", 0.2),
+    ("Farthest", 0.5),
+    ("Random", 0.2),
+    ("Random", 0.5),
+]
+valid_hybrid_sequential_greedy_recommenders = [
+    SequentialGreedyRecommender(hybrid_sampler=sampler, sampling_percentage=per)
+    for sampler, per in sampling_strategies
 ]
 
 valid_discrete_non_predictive_recommenders = [
@@ -87,6 +103,8 @@ valid_naive_hybrid_recommenders = [
 ]
 
 valid_hybrid_recommenders.extend(valid_naive_hybrid_recommenders)
+valid_hybrid_recommenders.extend(valid_hybrid_sequential_greedy_recommenders)
+
 test_targets = [
     "Target_max",
     "Target_min",

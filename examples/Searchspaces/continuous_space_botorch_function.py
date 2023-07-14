@@ -26,14 +26,19 @@ TestFunctionClass = Rastrigin
 # In that case, we print a warning and replace DIMENSION.
 if not hasattr(TestFunctionClass, "dim"):
     TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
+elif TestFunctionClass().dim == DIMENSION:
+    TestFunction = TestFunctionClass()
 else:
     print(
         f"\nYou choose a dimension of {DIMENSION} for the test function"
         f"{TestFunctionClass}. However, this function can only be used in "
-        f"{TestFunctionClass().dim} dimension, so the provided dimension is replaced."
+        f"{TestFunctionClass().dim} dimension, so the provided dimension is replaced. "
+        "Also, DISC_INDICES and CONT_INDICES will be re-written."
     )
     TestFunction = TestFunctionClass()
     DIMENSION = TestFunctionClass().dim
+    DISC_INDICES = list(range(0, (DIMENSION + 1) // 2))
+    CONT_INDICES = list(range((DIMENSION + 1) // 2, DIMENSION))
 
 # Get the bounds of the variables as they are set by BoTorch
 BOUNDS = TestFunction.bounds

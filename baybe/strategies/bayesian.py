@@ -5,9 +5,11 @@
 
 from typing import Callable, Optional
 
+import numpy as np
 import pandas as pd
-from attrs import define, Factory
-from botorch.optim import optimize_acqf, optimize_acqf_discrete
+from attrs import define, Factory, field, validators
+from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
+from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.acquisition import PartialAcquisitionFunction
 
@@ -18,11 +20,32 @@ from baybe.strategies.recommender import (
     Recommender,
 )
 from baybe.utils import NoMCAcquisitionFunctionError, to_tensor
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
+# Validation for the sampling percentage of the hybrid recommendation functionality.
+# Modeled in the same way as validation is done in the parameters.py file
+def validate_percentage(obj, _, value):
+    """Validate that the given value is a proper percentage between 0 and 1."""
+    if not 0 <= value <= 1:
+        raise ValueError(
+            f"Percentage for {obj.__class__.__name__} needs to be between 0 and 1 but "
+            f"is {value}"
+        )
+
+
+@define
 class SequentialGreedyRecommender(BayesianRecommender):
 
-    compatibility = SearchSpaceType.EITHER
+    compatibility = SearchSpaceType.HYBRID
+    # Keyword for which sampling strategy should be used for hybrid recommendation
+    hybrid_sampler: str = field(
+        validator=validators.in_(["None", "Farthest", "Random"]), default="None"
+    )
+    # Percentage for how of the search space should be sampled for hybrid recommendation
+    sampling_percentage: float = field(
+        validator=[validators.instance_of(float), validate_percentage], default=1.0
+    )
 
     def _recommend_discrete(
         self,
@@ -85,6 +108,95 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # Return optimized points as dataframe
         rec = pd.DataFrame(points, columns=searchspace.continuous.param_names)
         return rec
+
+    def _recommend_hybrid(
+        self,
+        acquisition_function: Callable,
+        searchspace: SearchSpace,
+        batch_quantity: int,
+    ):
+        """Recommendation functionality of the SequentialGreedy Recommender.
+        This implements the `optimize_acqf_mixed` function of BoTorch.
+
+        Important: This performs a brute-force calculation by fixing evey possible
+        assignment of discrete variables and optimizing the continuous subspace for
+        each of them. It is thus computationally expensive."""
+
+        # Get discrete candidates.
+        _, candidates_comp = searchspace.discrete.get_candidates(
+            allow_repeated_recommendations=True,
+            allow_recommending_already_measured=True,
+        )
+
+        # Calculate the number of samples from the given percentage
+        n_candidates = int(self.sampling_percentage * len(candidates_comp.index))
+
+        # Potential sampling of discrete candidates
+        if self.hybrid_sampler == "Farthest":
+            ilocs = farthest_point_sampling(candidates_comp.values, n_candidates)
+            candidates_comp = candidates_comp.iloc[ilocs]
+        elif self.hybrid_sampler == "Random":
+            candidates_comp = candidates_comp.sample(n_candidates)
+
+        # Prepare all considered discrete configurations in the List[Dict[int, float]]
+        # format expected by BoTorch
+        # TODO: Currently assumes that discrete parameters are first and continuous
+        #   second. Once parameter redesign [11611] is completed, we might adjust this.
+        candidates_comp.columns = list(range(len(candidates_comp.columns)))
+        fixed_features_list = candidates_comp.to_dict("records")
+
+        # Actual call of the BoTorch optimization routine
+        try:
+            points, _ = optimize_acqf_mixed(
+                acq_function=acquisition_function,
+                bounds=searchspace.param_bounds_comp,
+                q=batch_quantity,
+                num_restarts=5,  # TODO make choice for num_restarts
+                raw_samples=10,  # TODO make choice for raw_samples
+                fixed_features_list=fixed_features_list,
+            )
+        except AttributeError as ex:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions."
+            ) from ex
+
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # TODO [14819]: The following code is necessary due to floating point
+        #   inaccuracies introduced by BoTorch (potentially due to some float32
+        #   conversion?). The current workaround is the match the recommendations back
+        #   to the closest candidate points.
+
+        # Split discrete and continuous parts
+        disc_points = points[:, : len(candidates_comp.columns)]
+        cont_points = points[:, len(candidates_comp.columns) :]
+
+        # Find the closest match with the discrete candidates
+        candidates_comp_np = candidates_comp.to_numpy()
+        disc_points_np = disc_points.numpy()
+        if not disc_points_np.flags["C_CONTIGUOUS"]:
+            disc_points_np = np.ascontiguousarray(disc_points_np)
+        if not candidates_comp_np.flags["C_CONTIGUOUS"]:
+            candidates_comp_np = np.ascontiguousarray(candidates_comp_np)
+        disc_idxs_iloc = pairwise_distances_argmin(
+            disc_points_np, candidates_comp_np, metric="manhattan"
+        )
+
+        # Get the actual searchspace dataframe indices
+        disc_idxs_loc = candidates_comp.iloc[disc_idxs_iloc].index
+
+        # Get experimental representation of discrete and continuous parts
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs_loc]
+        rec_cont_exp = pd.DataFrame(
+            cont_points, columns=searchspace.continuous.param_names
+        )
+
+        # Adjust the index of the continuous part and concatenate both
+        rec_cont_exp.index = rec_disc_exp.index
+        rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
+        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        return rec_exp
 
 
 @define
