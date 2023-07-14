@@ -25,9 +25,10 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ARDRegression
 from torch import Tensor
 
-from .scaler import DefaultScaler
-from .searchspace import SearchSpace
-from .utils import isabstract
+from baybe.scaler import DefaultScaler
+from baybe.searchspace import SearchSpace
+from baybe.utils import isabstract
+
 
 # Use float64 (which is recommended at least for BoTorch models)
 DTYPE = torch.float64

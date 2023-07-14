@@ -19,11 +19,10 @@ from attr.validators import instance_of
 from attrs import define, field
 from attrs.validators import deep_iterable, in_, min_len
 
-from .utils import geom_mean
-from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
-
-from .utils.interval import convert_bounds, Interval
-from .utils.serialization import SerialMixin
+from baybe.utils import geom_mean
+from baybe.utils.boundtransforms import bound_bell, bound_linear, bound_triangular
+from baybe.utils.interval import convert_bounds, Interval
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 

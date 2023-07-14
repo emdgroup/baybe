@@ -32,7 +32,6 @@ import cattrs
 import numpy as np
 import pandas as pd
 import torch
-
 from attrs import cmp_using
 from joblib import Memory
 from mordred import Calculator, descriptors
@@ -42,8 +41,8 @@ from rdkit.Chem.AllChem import GetMorganFingerprintAsBitVect
 from torch import Tensor
 
 if TYPE_CHECKING:
-    from ..core import BayBE  # TODO: fix unresolved import
-    from ..parameters import Parameter
+    from baybe.core import BayBE
+    from baybe.parameters import Parameter
 
 log = logging.getLogger(__name__)
 

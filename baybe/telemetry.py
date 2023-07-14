@@ -3,7 +3,6 @@ Telemetry  functionality for BayBE.
 """
 import getpass
 import hashlib
-
 import os
 import socket
 from typing import Dict, List, Union
@@ -16,10 +15,8 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
 from baybe import __version__
-
-from .parameters import Parameter
-from .utils import fuzzy_row_match, strtobool
-
+from baybe.parameters import Parameter
+from baybe.utils import fuzzy_row_match, strtobool
 
 def is_enabled() -> bool:
     """

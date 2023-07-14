@@ -17,16 +17,16 @@ import pandas as pd
 import torch
 from attrs import define, field
 
-from .constraints import _constraints_order, Constraint
-from .parameters import (
+from baybe.constraints import _constraints_order, Constraint
+from baybe.parameters import (
     DiscreteParameter,
     NumericContinuous,
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .telemetry import TELEM_LABELS, telemetry_record_value
-from .utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
-from .utils.serialization import SerialMixin
+from baybe.telemetry import TELEM_LABELS, telemetry_record_value
+from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 

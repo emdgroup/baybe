@@ -29,7 +29,7 @@ from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
 from scipy.spatial.distance import pdist
 
-from .utils import (
+from baybe.utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
     eq_dataframe,
@@ -40,8 +40,8 @@ from .utils import (
     smiles_to_rdkit_features,
     unstructure_base,
 )
-from .utils.interval import convert_bounds, InfiniteIntervalError, Interval
-from .utils.serialization import SerialMixin
+from baybe.utils.interval import convert_bounds, InfiniteIntervalError, Interval
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 

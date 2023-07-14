@@ -16,7 +16,7 @@ from funcy import rpartial
 from numpy.typing import ArrayLike
 from pydantic import BaseModel, conlist, Extra, validator
 
-from .utils import ABCBaseModel, check_if_in, Dummy, StrictValidationError
+from baybe.utils import ABCBaseModel, check_if_in, Dummy, StrictValidationError
 
 log = logging.getLogger(__name__)
 
