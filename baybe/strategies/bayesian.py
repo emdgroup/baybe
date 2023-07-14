@@ -129,24 +129,23 @@ class SequentialGreedyRecommender(BayesianRecommender):
         )
 
         # Calculate the number of samples from the given percentage
-        number_of_samples = int(self.sampling_percentage * len(candidates_comp.index))
+        n_candidates = int(self.sampling_percentage * len(candidates_comp.index))
 
         # Potential sampling of discrete candidates
         if self.hybrid_sampler == "Farthest":
-            ilocs = farthest_point_sampling(candidates_comp.values, number_of_samples)
+            ilocs = farthest_point_sampling(candidates_comp.values, n_candidates)
             candidates_comp = candidates_comp.iloc[ilocs]
         elif self.hybrid_sampler == "Random":
-            candidates_comp = candidates_comp.sample(number_of_samples)
+            candidates_comp = candidates_comp.sample(n_candidates)
 
-        # Since the format for the BoTorch function needs to be List[Dict[int, float]],
-        # we need to get the indices of the features
-        # TODO Currently assumes that discrete parameters are first and continuous
-        # second. Once parameter redesign [11611] is implemented, we might adjust this.
-
+        # Prepare all considered discrete configurations in the List[Dict[int, float]]
+        # format expected by BoTorch
+        # TODO: Currently assumes that discrete parameters are first and continuous
+        #   second. Once parameter redesign [11611] is completed, we might adjust this.
         candidates_comp.columns = list(range(len(candidates_comp.columns)))
         fixed_features_list = candidates_comp.to_dict("records")
 
-        # Actual call of the botorch optimization routine
+        # Actual call of the BoTorch optimization routine
         try:
             points, _ = optimize_acqf_mixed(
                 acq_function=acquisition_function,
@@ -162,40 +161,40 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 f"acquisition functions."
             ) from ex
 
-        # Transform into experimental representation
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # TODO [14819]: The following code is necessary due to floating point
+        #   inaccuracies introduced by BoTorch (potentially due to some float32
+        #   conversion?). The current workaround is the match the recommendations back
+        #   to the closest candidate points.
 
+        # Split discrete and continuous parts
         disc_points = points[:, : len(candidates_comp.columns)]
         cont_points = points[:, len(candidates_comp.columns) :]
 
-        # Calculate the indices of the discrete part to extract the experimental
-        # representation. This is done by finding closests rows in candidates_comp.
-        # TODO This is currently necessary due to BoTorch changing data types internally
-        # Might thus change this once [14819] is fixed.
-
+        # Find the closest match with the discrete candidates
         candidates_comp_np = candidates_comp.to_numpy()
         disc_points_np = disc_points.numpy()
-
-        # Make everything contiguous if necessary
         if not disc_points_np.flags["C_CONTIGUOUS"]:
             disc_points_np = np.ascontiguousarray(disc_points_np)
         if not candidates_comp_np.flags["C_CONTIGUOUS"]:
             candidates_comp_np = np.ascontiguousarray(candidates_comp_np)
-        disc_idxs_loc = pairwise_distances_argmin(
+        disc_idxs_iloc = pairwise_distances_argmin(
             disc_points_np, candidates_comp_np, metric="manhattan"
         )
 
-        # Get actual indices, as disc_idx_loc is location based
-        disc_idxs = candidates_comp.iloc[disc_idxs_loc].index
+        # Get the actual searchspace dataframe indices
+        disc_idxs_loc = candidates_comp.iloc[disc_idxs_iloc].index
 
         # Get experimental representation of discrete and continuous parts
-        rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs]
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs_loc]
         rec_cont_exp = pd.DataFrame(
             cont_points, columns=searchspace.continuous.param_names
         )
 
-        # Adjust index, concatenate and return
+        # Adjust the index of the continuous part and concatenate both
         rec_cont_exp.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
+        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         return rec_exp
 
