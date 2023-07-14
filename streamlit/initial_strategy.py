@@ -17,7 +17,7 @@ import streamlit as st
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.strategies.recommender import NonPredictiveRecommender
-from baybe.utils import isabstract, subclasses_recursive
+from baybe.utils import get_subclasses, isabstract
 from sklearn.datasets import make_blobs
 
 
@@ -72,9 +72,7 @@ data_distributions = {
 
 # collect all available strategies
 selection_strategies = {
-    cls.__name__: cls
-    for cls in subclasses_recursive(NonPredictiveRecommender)
-    if not isabstract(cls)
+    cls.__name__: cls for cls in get_subclasses(NonPredictiveRecommender)
 }
 
 

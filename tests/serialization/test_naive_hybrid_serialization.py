@@ -1,6 +1,7 @@
 """Test for the serialization of naive hybrid recommenders."""
 
 import pytest
+
 from baybe.core import BayBE
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace, SearchSpaceType
@@ -11,20 +12,18 @@ from baybe.strategies.bayesian import (
 from baybe.strategies.recommender import BayesianRecommender, NonPredictiveRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import isabstract, subclasses_recursive
+from baybe.utils import get_subclasses
 
 valid_discrete_non_predictive_recommenders = [
     cls()
-    for cls in subclasses_recursive(NonPredictiveRecommender)
-    if not isabstract(cls)
-    and cls.compatibility
+    for cls in get_subclasses(NonPredictiveRecommender)
+    if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
 valid_discrete_bayesian_recommenders = [
     cls()
-    for cls in subclasses_recursive(BayesianRecommender)
-    if not isabstract(cls)
-    and cls.compatibility
+    for cls in get_subclasses(BayesianRecommender)
+    if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
 valid_naive_hybrid_recommenders = [
