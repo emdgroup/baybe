@@ -47,9 +47,9 @@ def select_candidates_and_recommend(
     # has a continuous component.
     _, candidates_comp = searchspace.discrete.get_candidates(
         allow_repeated_recommendations=allow_repeated_recommendations
-        or not searchspace.continuous.empty,
+        or not searchspace.continuous.is_empty,
         allow_recommending_already_measured=allow_recommending_already_measured
-        or not searchspace.continuous.empty,
+        or not searchspace.continuous.is_empty,
     )
 
     # Check if enough candidates are left

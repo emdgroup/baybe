@@ -63,7 +63,7 @@ class SubspaceDiscrete:
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
-        if self.empty:
+        if self.is_empty:
             return pd.DataFrame(columns=columns)
 
         return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
@@ -110,7 +110,7 @@ class SubspaceDiscrete:
         )
 
     @property
-    def empty(self):
+    def is_empty(self):
         """Whether this search space is empty."""
         return len(self.parameters) == 0
 
@@ -246,7 +246,7 @@ class SubspaceContinuous:
     parameters: List[NumericContinuous]
 
     @property
-    def empty(self):
+    def is_empty(self):
         """Whether this search space is empty."""
         return len(self.parameters) == 0
 
@@ -414,11 +414,11 @@ class SearchSpace(SerialMixin):
 
     @property
     def type(self) -> SearchSpaceType:
-        if self.discrete.empty and not self.continuous.empty:
+        if self.discrete.is_empty and not self.continuous.is_empty:
             return SearchSpaceType.CONTINUOUS
-        if not self.discrete.empty and self.continuous.empty:
+        if not self.discrete.is_empty and self.continuous.is_empty:
             return SearchSpaceType.DISCRETE
-        if not self.discrete.empty and not self.continuous.empty:
+        if not self.discrete.is_empty and not self.continuous.is_empty:
             return SearchSpaceType.HYBRID
         raise RuntimeError("This line should be impossible to reach.")
 

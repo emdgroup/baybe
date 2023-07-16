@@ -306,7 +306,7 @@ class SurrogateModel(ABC):
     def fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
         # TODO: Adjust scale_model decorator to support other model types as well.
-        if (not self.searchspace.continuous.empty) and (self.type != "GP"):
+        if (not self.searchspace.continuous.is_empty) and (self.type != "GP"):
             raise NotImplementedError(
                 "Continuous search spaces are currently only supported by GPs."
             )
