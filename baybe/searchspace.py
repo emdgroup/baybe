@@ -19,8 +19,10 @@ from attrs import define, Factory, field
 
 from baybe.constraints import _constraints_order, Constraint
 from baybe.parameters import (
+    Categorical,
     DiscreteParameter,
     NumericContinuous,
+    NumericDiscrete,
     Parameter,
     parameter_cartesian_prod_to_df,
 )
@@ -119,6 +121,69 @@ class SubspaceDiscrete:
             parameters=parameters,
             exp_rep=exp_rep,
             empty_encoding=empty_encoding,
+        )
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        parameters: Optional[List[Parameter]] = None,
+        empty_encoding: bool = False,
+    ) -> "SubspaceDiscrete":
+        """
+        Creates a discrete search space with a specified set of configurations.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The experimental representation of the search space to be created.
+        parameters : pd.DataFrame
+            Optional parameters corresponding to the columns in the given dataframe.
+            If a match between column name and parameter name is found, the
+            corresponding parameter is used. If a column has no match in the parameter
+            list, a `NumericDiscrete` parameter is created if possible, or a
+            `Categorical` is used as fallback.
+        empty_encoding : bool
+            See `SearchSpace` class.
+
+        Returns
+        -------
+        SubspaceDiscrete
+            The created discrete search space.
+        """
+
+        if parameters is None:
+            parameters = []
+
+        # Try to find a parameter match for each dataframe column
+        params = []
+        for name, series in df.iteritems():
+            match = next((param for param in parameters if param.name == name), None)
+
+            # If a match is found, assert that the values are in range
+            if match:
+                parameters.remove(match)
+                assert series.apply(match.is_in_range).all()
+                params.append(match)
+
+            # Otherwise, try to create a numerical parameter or use categorical fallback
+            else:
+                values = series.drop_duplicates().values.tolist()
+                try:
+                    param = NumericDiscrete(name=name, values=values)
+                except TypeError:
+                    param = Categorical(name=name, values=values)
+                params.append(param)
+
+        # By now, all parameters must have been used
+        if parameters:
+            raise ValueError(
+                f"For the following parameters you specified, no match could be found "
+                f"in the given dataframe: {parameters}."
+            )
+
+        return SubspaceDiscrete(
+            parameters=params, exp_rep=df, empty_encoding=empty_encoding
         )
 
     @property
@@ -425,6 +490,19 @@ class SearchSpace(SerialMixin):
         )
 
         return SearchSpace(discrete=discrete, continuous=continuous)
+
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        parameters: Optional[List[Parameter]] = None,
+    ) -> "SearchSpace":
+        """
+        Creates search space containing only a discrete subspace with a specified set
+        of configurations. See `SubspaceDiscrete.from_dataframe` for details.
+        """
+        discrete = SubspaceDiscrete.from_dataframe(df, parameters)
+        return SearchSpace(discrete=discrete)
 
     @property
     def parameters(self) -> List[Parameter]:
