@@ -643,6 +643,10 @@ class IncompatibleSearchSpaceError(Exception):
     search space."""
 
 
+class EmptySearchSpaceError(Exception):
+    """An exception raised when the created search space contains no parameters."""
+
+
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """

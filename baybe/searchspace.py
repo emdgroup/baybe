@@ -15,7 +15,7 @@ import cattrs
 import numpy as np
 import pandas as pd
 import torch
-from attrs import define, field
+from attrs import define, Factory, field
 
 from baybe.constraints import _constraints_order, Constraint
 from baybe.parameters import (
@@ -25,7 +25,12 @@ from baybe.parameters import (
     parameter_cartesian_prod_to_df,
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
+from baybe.utils import (
+    df_drop_single_value_columns,
+    EmptySearchSpaceError,
+    eq_dataframe,
+    fuzzy_row_match,
+)
 from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -76,6 +81,13 @@ class SubspaceDiscrete:
         comp_rep = self.transform(self.exp_rep)
         comp_rep = df_drop_single_value_columns(comp_rep)
         self.comp_rep = comp_rep
+
+    @classmethod
+    def empty(cls) -> "SubspaceDiscrete":
+        """Creates an empty discrete search space."""
+        return SubspaceDiscrete(
+            parameters=[], exp_rep=pd.DataFrame(), metadata=pd.DataFrame()
+        )
 
     @classmethod
     def create(
@@ -245,6 +257,11 @@ class SubspaceContinuous:
 
     parameters: List[NumericContinuous]
 
+    @classmethod
+    def empty(cls) -> "SubspaceContinuous":
+        """Creates an empty continuous search space."""
+        return SubspaceContinuous([])
+
     @property
     def is_empty(self):
         """Whether this search space is empty."""
@@ -359,8 +376,12 @@ class SearchSpace(SerialMixin):
         by continuous ones.
     """
 
-    discrete: SubspaceDiscrete
-    continuous: SubspaceContinuous
+    discrete: SubspaceDiscrete = Factory(SubspaceDiscrete.empty)
+    continuous: SubspaceContinuous = Factory(SubspaceContinuous.empty)
+
+    def __attrs_post_init__(self):
+        if not self.parameters:
+            raise EmptySearchSpaceError("At least one parameter must be provided.")
 
     @classmethod
     def create(
@@ -383,9 +404,6 @@ class SearchSpace(SerialMixin):
             (potentially costly) transformation of the parameter values to their
             computational representation.
         """
-        if not parameters:
-            raise ValueError("At least one parameter must be provided.")
-
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete

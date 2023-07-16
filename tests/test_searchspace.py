@@ -4,12 +4,13 @@ import torch
 
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace, SubspaceContinuous, SubspaceDiscrete
+from baybe.utils import EmptySearchSpaceError
 
 
 def test_empty_parameters():
     """Creation of a search space with no parameters raises an exception."""
-    with pytest.raises(ValueError):
-        SearchSpace.create(parameters=[])
+    with pytest.raises(EmptySearchSpaceError):
+        SearchSpace()
 
 
 def test_bounds_order():
