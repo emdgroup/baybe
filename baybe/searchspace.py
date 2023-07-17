@@ -9,7 +9,7 @@ Functionality for managing search spaces.
 
 import logging
 from enum import Enum
-from typing import cast, List, Optional, Tuple
+from typing import cast, Dict, List, Optional, Tuple
 
 import cattrs
 import numpy as np
@@ -151,20 +151,24 @@ class SubspaceDiscrete:
         SubspaceDiscrete
             The created discrete search space.
         """
-
-        if parameters is None:
-            parameters = []
+        # Turn the specified parameters into a dict and check for duplicate names
+        specified_params: Dict[str, Parameter] = {}
+        if parameters is not None:
+            for param in parameters:
+                if param.name in specified_params:
+                    raise ValueError(
+                        f"You provided several parameters with the name {param.name}."
+                    )
+                specified_params[param.name] = param
 
         # Try to find a parameter match for each dataframe column
-        params = []
+        parameters = []
         for name, series in df.iteritems():
-            match = next((param for param in parameters if param.name == name), None)
 
             # If a match is found, assert that the values are in range
-            if match:
-                parameters.remove(match)
+            if match := specified_params.pop(name, None):
                 assert series.apply(match.is_in_range).all()
-                params.append(match)
+                parameters.append(match)
 
             # Otherwise, try to create a numerical parameter or use categorical fallback
             else:
@@ -173,17 +177,17 @@ class SubspaceDiscrete:
                     param = NumericDiscrete(name=name, values=values)
                 except TypeError:
                     param = Categorical(name=name, values=values)
-                params.append(param)
+                parameters.append(param)
 
         # By now, all parameters must have been used
-        if parameters:
+        if specified_params:
             raise ValueError(
                 f"For the following parameters you specified, no match could be found "
-                f"in the given dataframe: {parameters}."
+                f"in the given dataframe: {specified_params.values()}."
             )
 
         return SubspaceDiscrete(
-            parameters=params, exp_rep=df, empty_encoding=empty_encoding
+            parameters=parameters, exp_rep=df, empty_encoding=empty_encoding
         )
 
     @property
