@@ -4,18 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.1] - 2023-07-17
 ### Added
 - Code coverage check with pytest-cov
-- SequentialGreedy hybrid recommender
+- Hybrid mode for `SequentialGreedyRecommender`
 
 ### Changed
-- Removed support for infinite parameter bounds. Might be reintroduced together with 
-sampling distributions
-- Removed not implemented MULTI objective mode
+- Removed support for infinite parameter bounds
+- Removed not yet implemented MULTI objective mode
 
 ### Fixed
 - Changelog assert in Azure pipeline
+- Bug: telemetry could not be fully deactivated
 
 ## [0.3.0] - 2023-06-27
 ### Added
