@@ -166,7 +166,9 @@ class Categorical(DiscreteParameter):
     is_numeric = False
 
     # object variables
-    _values: list = field(validator=[min_len(2), validate_unique_values])
+    _values: list = field(
+        converter=list, validator=[min_len(2), validate_unique_values]
+    )
     encoding: Literal["OHE", "INT"] = "OHE"
 
     @property
@@ -199,11 +201,12 @@ class NumericDiscrete(DiscreteParameter):
 
     # object variables
     _values: List[Union[int, float]] = field(
+        converter=list,
         validator=[
             deep_iterable(instance_of((int, float)), instance_of(list)),
             min_len(2),
             validate_unique_values,
-        ]
+        ],
     )
     tolerance: float = field(default=0.0)
 

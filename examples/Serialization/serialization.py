@@ -33,7 +33,7 @@ parameters = [
     ),
     NumericDiscrete(
         name="Temperature[degree_C]",
-        values=np.linspace(100, 200, 10).tolist(),
+        values=np.linspace(100, 200, 10),
     ),
     GenericSubstance(
         name="Solvent",
