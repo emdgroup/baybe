@@ -16,7 +16,7 @@ from typing import List, Literal, Optional
 import numpy as np
 import pandas as pd
 from attr.validators import instance_of
-from attrs import define, field
+from attrs import field, frozen
 from attrs.validators import deep_iterable, in_, min_len
 
 from baybe.utils import geom_mean
@@ -41,7 +41,7 @@ def _normalize_weights(weights: List[float]) -> List[float]:
     return (100 * np.asarray(weights) / np.sum(weights)).tolist()
 
 
-@define
+@frozen
 class Target(ABC):
     """
     Abstract base class for all target variables. Stores information about the
@@ -68,7 +68,7 @@ class Target(ABC):
         """
 
 
-@define
+@frozen
 class NumericalTarget(Target, SerialMixin):
     """
     Class for numerical targets.
@@ -164,7 +164,7 @@ class NumericalTarget(Target, SerialMixin):
         return transformed
 
 
-@define
+@frozen
 class Objective(SerialMixin):
     """Class for managing optimization objectives."""
 

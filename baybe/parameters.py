@@ -25,7 +25,7 @@ from typing import (
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import field, frozen
 from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
 from scipy.spatial.distance import pdist
 
@@ -80,7 +80,7 @@ def validate_unique_values(obj, _, value) -> None:
         )
 
 
-@define
+@frozen
 class Parameter(ABC, SerialMixin):
     """
     Abstract base class for all parameters. Stores information about the
@@ -156,7 +156,7 @@ class DiscreteParameter(Parameter, ABC):
         return transformed
 
 
-@define
+@frozen
 class Categorical(DiscreteParameter):
     """
     Parameter class for categorical parameters.
@@ -188,7 +188,7 @@ class Categorical(DiscreteParameter):
         return comp_df
 
 
-@define
+@frozen
 class NumericDiscrete(DiscreteParameter):
     """
     Parameter class for discrete numerical parameters (a.k.a. setpoints).
@@ -251,7 +251,7 @@ class NumericDiscrete(DiscreteParameter):
         return any(differences_acceptable)
 
 
-@define
+@frozen
 class NumericContinuous(Parameter):
     """
     Parameter class for continuous numerical parameters.
@@ -281,7 +281,7 @@ class NumericContinuous(Parameter):
         return self.bounds.contains(item)
 
 
-@define
+@frozen
 class GenericSubstance(DiscreteParameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
@@ -373,7 +373,7 @@ class GenericSubstance(DiscreteParameter):
 SUBSTANCE_ENCODINGS = get_args(get_type_hints(GenericSubstance)["encoding"])
 
 
-@define
+@frozen
 class Custom(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
