@@ -36,6 +36,11 @@ VALID_TRANSFORMS = {
 }
 
 
+def _normalize_weights(weights: List[float]) -> List[float]:
+    """Normalizes a collection of weights such that they sum to 100."""
+    return (100 * np.asarray(weights) / np.sum(weights)).tolist()
+
+
 @define
 class Target(ABC):
     """
@@ -169,18 +174,15 @@ class Objective(SerialMixin):
 
     mode: Literal["SINGLE", "DESIRABILITY"]
     targets: List[NumericalTarget] = field(validator=min_len(1))
-    weights: List[float] = field(default=None)
+    weights: List[float] = field(converter=_normalize_weights)
     combine_func: Literal["MEAN", "GEOM_MEAN"] = field(
         default="GEOM_MEAN", validator=in_(["MEAN", "GEOM_MEAN"])
     )
 
-    def __attrs_post_init__(self):
-        # Use default weights if not provided
-        if self.weights is None:
-            self.weights = [100] * len(self.targets)
-
-        # Normalize the weights
-        self.weights = (100 * np.asarray(self.weights) / np.sum(self.weights)).tolist()
+    @weights.default
+    def default_weights(self) -> List[float]:
+        """By default, all targets are equally important."""
+        return [1.0] * len(self.targets)
 
     @targets.validator
     def validate_targets(self, _, targets: List[NumericalTarget]):
