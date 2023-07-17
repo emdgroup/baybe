@@ -21,6 +21,18 @@ from .parameters import Parameter
 from .utils import fuzzy_row_match, strtobool
 
 
+def is_enabled() -> bool:
+    """
+    Tells whether telemetry currently is enabled. Telemetry can be disabled by setting
+    the respective environment variable.
+
+    Returns
+    -------
+        bool
+    """
+    return strtobool(os.environ.get("BAYBE_TELEMETRY_ENABLED", "true"))
+
+
 # Global telemetry labels
 TELEM_LABELS = {
     "RECOMMENDED_MEASUREMENTS_PERCENTAGE": "value_recommended-measurements-percentage",
@@ -33,20 +45,26 @@ TELEM_LABELS = {
     "NAKED_INITIAL_MEASUREMENTS": "count_naked-initial-measurements-added",
 }
 
-_instruments = {}
-_resource = Resource.create({"service.namespace": "BayBE", "service.name": "SDK"})
-_reader = PeriodicExportingMetricReader(
-    exporter=OTLPMetricExporter(
-        endpoint="***REMOVED***.elb."
-        "eu-central-1.amazonaws.com:4317",
-        insecure=True,
-    )
-)
-_provider = MeterProvider(resource=_resource, metric_readers=[_reader])
-set_meter_provider(_provider)
+# Create resources only if telemetry is activated
+# TODO: Need a more elegant solution here. Ideally, telemetry should become an opt-out
+#   dependency. Potential solution: when deactivated/not installed, load a mock package
+#   that mirrors the public functions in telemetry.py but does not do anything.
+if is_enabled():
 
-# Setup Global Metric Provider
-_meter = get_meter("aws-otel", "1.0")
+    _instruments = {}
+    _resource = Resource.create({"service.namespace": "BayBE", "service.name": "SDK"})
+    _reader = PeriodicExportingMetricReader(
+        exporter=OTLPMetricExporter(
+            endpoint="***REMOVED***.elb."
+            "eu-central-1.amazonaws.com:4317",
+            insecure=True,
+        )
+    )
+    _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
+    set_meter_provider(_provider)
+
+    # Setup Global Metric Provider
+    _meter = get_meter("aws-otel", "1.0")
 
 
 def get_user_details() -> Dict[str, str]:
@@ -69,18 +87,6 @@ def get_user_details() -> Dict[str, str]:
     # Alternatively one could take the MAC address like hex(uuid.getnode())
 
     return {"host": hostname_hash, "user": username_hash, "version": __version__}
-
-
-def is_enabled() -> bool:
-    """
-    Tells whether telemetry currently is enabled. Telemetry can be disabled by setting
-    the respective environment variable.
-
-    Returns
-    -------
-        bool
-    """
-    return strtobool(os.environ.get("BAYBE_TELEMETRY_ENABLED", "true"))
 
 
 def telemetry_record_value(
