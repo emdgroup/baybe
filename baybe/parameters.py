@@ -208,9 +208,7 @@ class NumericDiscrete(DiscreteParameter):
     tolerance: float = field(default=0.0)
 
     @tolerance.validator
-    def validate_tolerance(
-        self, attribute, tolerance
-    ):  # pylint: disable=unused-argument
+    def validate_tolerance(self, _, tolerance):
         """
         Validates that the tolerance (i.e. allowed experimental uncertainty when
         reading in measured values) is safe. A tolerance larger than half the minimum
@@ -305,9 +303,7 @@ class GenericSubstance(DiscreteParameter):
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
 
     @data.validator
-    def validate_substance_data(
-        self, attribute, value
-    ):  # pylint: disable=unused-argument
+    def validate_substance_data(self, _, value):
         for name, smiles in value.items():
             if not is_valid_smiles(smiles):
                 raise ValueError(
