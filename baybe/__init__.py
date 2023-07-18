@@ -8,12 +8,12 @@ from setuptools_scm import get_version
 from baybe.core import BayBE
 
 try:
-    __version__ = version("baybe")
+    __version__ = version(__name__)
 except PackageNotFoundError:
     pass
 
 try:
-    with path("baybe", "") as package_folder:
+    with path(__name__, "") as package_folder:
         __version__ = get_version(
             root=str(package_folder / ".."),
             version_scheme="post-release",
