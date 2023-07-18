@@ -1,9 +1,11 @@
-"""Provides the version number."""
+"""BayBE — A Bayesian Back End for Design of Experiments."""
 
 from importlib.metadata import PackageNotFoundError, version
 from importlib.resources import path
 
 from setuptools_scm import get_version
+
+from baybe.core import BayBE
 
 try:
     __version__ = version("baybe")
@@ -24,3 +26,8 @@ del version
 del PackageNotFoundError
 del path
 del get_version
+
+__all__ = [
+    "__version__",
+    "BayBE",
+]
