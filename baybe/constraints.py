@@ -8,7 +8,7 @@ import logging
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import Callable, ClassVar, List, Optional
+from typing import Any, Callable, ClassVar, List, Optional
 
 import cattrs
 import numpy as np
@@ -129,7 +129,7 @@ class SubSelectionCondition(Condition):
     """
 
     # object variables
-    selection: List
+    selection: List[Any]
 
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
