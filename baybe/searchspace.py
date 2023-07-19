@@ -17,7 +17,7 @@ import pandas as pd
 import torch
 from attrs import define, field
 
-from .constraints import _constraints_order, Constraint
+from .constraints import Constraint, CONSTRAINTS_ORDER
 from .parameters import (
     DiscreteParameter,
     NumericContinuous,
@@ -92,7 +92,7 @@ class SubspaceDiscrete:
         else:
             # Reorder the constraints according to their execution order
             constraints = sorted(
-                constraints, key=lambda x: _constraints_order.index(x.type)
+                constraints, key=lambda x: CONSTRAINTS_ORDER.index(x.__class__)
             )
 
         # Create a dataframe representing the experimental search space

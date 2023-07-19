@@ -28,17 +28,6 @@ from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
-_constraints_order = [
-    "CUSTOM",
-    "EXCLUDE",
-    "NO_LABEL_DUPLICATES",
-    "LINKED_PARAMETERS",
-    "SUM",
-    "PRODUCT",
-    "PERMUTATION_INVARIANCE",
-    "DEPENDENCIES",
-]
-
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
     """The counterpart to `numpy.isclose`."""
@@ -51,9 +40,6 @@ class Condition(ABC, SerialMixin):
     regarding a single parameter. Conditions are part of constraints, a constraint
     can have multiple conditions.
     """
-
-    # class variables
-    type: ClassVar[str]
 
     @abstractmethod
     def evaluate(self, data: pd.Series) -> pd.Series:
@@ -98,9 +84,6 @@ class ThresholdCondition(Condition):
     """
     Class for modelling threshold-based conditions.
     """
-
-    # class variables
-    type = "THRESHOLD"
 
     # object variables
     threshold: float
@@ -153,9 +136,6 @@ class SubSelectionCondition(Condition):
     Class for defining valid parameter entries.
     """
 
-    # class variables
-    type = "SUBSELECTION"
-
     # object variables
     selection: List
 
@@ -172,7 +152,6 @@ class Constraint(ABC, SerialMixin):
     """
 
     # class variables
-    type: ClassVar[str]
     # TODO: it might turn out these are not needed at a later development stage
     eval_during_creation: ClassVar[bool]
     eval_during_modeling: ClassVar[bool]
@@ -213,7 +192,6 @@ class ExcludeConstraint(Constraint):
     """
 
     # class variables
-    type = "EXCLUDE"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -240,7 +218,6 @@ class SumConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    type = "SUM"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -264,7 +241,6 @@ class ProductConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    type = "PRODUCT"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -293,7 +269,6 @@ class NoLabelDuplicatesConstraint(Constraint):
     """
 
     # class variables
-    type = "NO_LABEL_DUPLICATES"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -314,7 +289,6 @@ class LinkedParametersConstraint(Constraint):
     """
 
     # class variables
-    type = "LINKED_PARAMETERS"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -334,7 +308,7 @@ class DependenciesConstraint(Constraint):
     constraint.
     """
 
-    type = "DEPENDENCIES"
+    # class variables
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
     eval_during_creation = True
@@ -413,7 +387,6 @@ class PermutationInvarianceConstraint(Constraint):
     """
 
     # class variables
-    type = "PERMUTATION_INVARIANCE"
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
     eval_during_creation = True
@@ -472,7 +445,6 @@ class CustomConstraint(Constraint):
     """
 
     # class variables
-    type = "CUSTOM"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -484,6 +456,19 @@ class CustomConstraint(Constraint):
         mask_bad = ~data[self.parameters].apply(self.validator, axis=1)
 
         return data.index[mask_bad]
+
+
+# the order in which the constraint types need to be applied
+CONSTRAINTS_ORDER = (
+    CustomConstraint,
+    ExcludeConstraint,
+    NoLabelDuplicatesConstraint,
+    LinkedParametersConstraint,
+    SumConstraint,
+    ProductConstraint,
+    PermutationInvarianceConstraint,
+    DependenciesConstraint,
+)
 
 
 # Register structure / unstructure hooks
