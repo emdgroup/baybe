@@ -18,12 +18,7 @@ from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
 
-from .utils import (
-    Dummy,
-    get_base_unstructure_hook,
-    StrictValidationError,
-    unstructure_base,
-)
+from .utils import Dummy, get_base_unstructure_hook, unstructure_base
 from .utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -99,14 +94,14 @@ class ThresholdCondition(Condition):
     def tolerance_validation(self, _, value):
         """Validates the threshold condition tolerance"""
         if (self.operator not in _valid_tolerance_operators) and (value is not None):
-            raise StrictValidationError(
+            raise ValueError(
                 f"Setting the tolerance for a threshold condition is only valid "
                 f"with the following operators: {_valid_tolerance_operators}."
             )
 
         if self.operator in _valid_tolerance_operators:
             if (value is None) or (value <= 0.0):
-                raise StrictValidationError(
+                raise ValueError(
                     f"When using a tolerance-enabled operator"
                     f" ({_valid_tolerance_operators}) the tolerance cannot be None "
                     f"or <= 0.0, but was {value}."
@@ -115,7 +110,7 @@ class ThresholdCondition(Condition):
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
         if data.dtype.kind not in "iufb":
-            raise StrictValidationError(
+            raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
                 "This operation is error-prone and not supported. Only use threshold "
                 "conditions with numerical parameters."
@@ -160,7 +155,7 @@ class Constraint(ABC, SerialMixin):
     def validate_params(self, _, params):
         """Validates the parameter list."""
         if len(params) != len(set(params)):
-            raise StrictValidationError(
+            raise ValueError(
                 f"The given 'parameters' list must have unique values "
                 f"but was: {params}."
             )
@@ -322,7 +317,7 @@ class DependenciesConstraint(Constraint):
     def affected_parameters_validator(self, _, value):
         """Ensure each set of affected parameters has exactly one condition"""
         if len(self.conditions) != len(value):
-            raise StrictValidationError(
+            raise ValueError(
                 "For the DependenciesConstraint, for each item in the "
                 "affected_parameters list you must provide exactly one condition in "
                 "the conditions list."
