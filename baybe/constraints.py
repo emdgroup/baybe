@@ -93,13 +93,10 @@ class ThresholdCondition(Condition):
     @tolerance.default
     def tolerance_default(self):
         """Default value for the tolerance"""
-        if self.operator in _valid_tolerance_operators:
-            return 1e-8
-
-        return None
+        return 1e-8 if self.operator in _valid_tolerance_operators else None
 
     @tolerance.validator
-    def tolerance_validation(self, attribute, value):  # pylint: disable=unused-argument
+    def tolerance_validation(self, _, value):
         """Validates the threshold condition tolerance"""
         if (self.operator not in _valid_tolerance_operators) and (value is not None):
             raise StrictValidationError(
@@ -160,7 +157,7 @@ class Constraint(ABC, SerialMixin):
     parameters: List[str] = field(validator=min_len(1))
 
     @parameters.validator
-    def validate_params(self, attribute, params):  # pylint: disable=unused-argument
+    def validate_params(self, _, params):
         """Validates the parameter list."""
         if len(params) != len(set(params)):
             raise StrictValidationError(
@@ -197,7 +194,7 @@ class ExcludeConstraint(Constraint):
 
     # object variables
     conditions: List[Condition] = field(validator=min_len(1))
-    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners.keys()))
+    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -322,9 +319,7 @@ class DependenciesConstraint(Constraint):
     permutation_invariant = False
 
     @affected_parameters.validator
-    def affected_parameters_validator(
-        self, obj, value
-    ):  # pylint: disable=unused-argument
+    def affected_parameters_validator(self, _, value):
         """Ensure each set of affected parameters has exactly one condition"""
         if len(self.conditions) != len(value):
             raise StrictValidationError(
@@ -478,7 +473,7 @@ cattrs.register_unstructure_hook(Constraint, unstructure_base)
 cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint))
 
 
-def _custom_constraint_hook(obj):  # pylint: disable=unused-argument
+def _custom_constraint_hook(*_):
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
