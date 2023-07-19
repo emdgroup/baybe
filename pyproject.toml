@@ -24,13 +24,11 @@ dependencies = [
     "opentelemetry-exporter-otlp>=1.16.0",
     "opentelemetry-sdk-extension-aws>=2.0.0",
     "pandas>=1.4.2",
-    "pydantic>=1.9.1",
     "rdkit>=2022.3.4",
     "scikit-learn>=1.1.1",
     "scipy>=1.9.3",
     "setuptools-scm>=7.1.0",
     "torch>=1.11.0",
-    "typing_extensions<=4.5.0"  # Can be removed with pydantic or once this gets resolved: https://github.com/pydantic/pydantic/issues/545#issuecomment-1559115237
 ]
 dynamic = ['version']
 
@@ -81,10 +79,6 @@ line-length = 88
 # expressions are accepted.
 generated-members = "torch.*"
 
-[tool.pylint.MASTER]
-# Add pydantic to whitelist according to https://github.com/samuelcolvin/pydantic/issues/1961
-extension-pkg-whitelist = "pydantic"
-
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
 	"fixme",  # fixme hints should be allowed
@@ -92,9 +86,6 @@ disable = [
 	"duplicate-code",  # duplicate code happens eg in similar debug scripts
 	"too-many-instance-attributes",  # BayBE class has quite a few members
 	"too-many-branches",  # can maybe be optimized later
-	"too-few-public-methods",  # this happens e.g. in pydantic BaseModel classes
-	"no-self-argument",  # should be replaced with a more specific fix for pydantic validators
-	# -> https://github.com/PyCQA/pylint/issues/6900
 	"broad-except", # catching base exception is common for RDKit mol validation etc
 	"no-name-in-module", # seems RDKit objects in some modules can never be found by IDEs
 	"no-member", # seems RDKit objects in some modules can never be found by IDEs

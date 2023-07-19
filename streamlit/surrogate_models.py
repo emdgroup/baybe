@@ -9,7 +9,6 @@ when the input and output scales are changed.
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pydantic
 import streamlit as st
 import torch
 
@@ -59,10 +58,6 @@ def linear(
 
 def main():
     """Creates the streamlit dashboard."""
-
-    # fix issue with streamlit and pydantic
-    # https://github.com/streamlit/streamlit/issues/3218
-    pydantic.class_validators._FUNCS.clear()  # pylint: disable=protected-access
 
     # basic settings
     plt.style.use("seaborn")
