@@ -318,9 +318,9 @@ class DependenciesConstraint(Constraint):
         """Ensure each set of affected parameters has exactly one condition"""
         if len(self.conditions) != len(value):
             raise ValueError(
-                "For the DependenciesConstraint, for each item in the "
-                "affected_parameters list you must provide exactly one condition in "
-                "the conditions list."
+                f"For the {self.__class__.__name__}, for each item in the "
+                f"affected_parameters list you must provide exactly one condition in "
+                f"the conditions list."
             )
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
