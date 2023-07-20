@@ -41,8 +41,9 @@ parameters = [solvent, switch1, switch2, fraction1, frame1, frame2]
 # DependenciesConstraint or by having multiple constraints.
 # This is demonstrated here by creating two BayBE objects
 
-# This is the constraint modeling two Dependencies at once....
-constraint_1 = DependenciesConstraint(
+# This is the constraint modeling two Dependencies. Multiple dependencies have to be
+# included in a single constraint object
+constraint = DependenciesConstraint(
     parameters=["Switch1", "Switch2"],
     conditions=[
         SubSelectionCondition(selection=["on"]),
@@ -51,24 +52,9 @@ constraint_1 = DependenciesConstraint(
     affected_parameters=[["Solvent", "Fraction1"], ["FrameA", "FrameB"]],
 )
 
-# ... while these are two separate constraints that do the same when used together.
-constraint_2 = DependenciesConstraint(
-    parameters=["Switch1"],
-    conditions=[SubSelectionCondition(selection=["on"])],
-    affected_parameters=[["Solvent", "Fraction1"]],
-)
-
-constraint_3 = DependenciesConstraint(
-    parameters=["Switch2"],
-    conditions=[SubSelectionCondition(selection=["right"])],
-    affected_parameters=[["FrameA", "FrameB"]],
-)
 
 # Create the search spaces with the corresponding lists of constraints
-searchspace_1 = SearchSpace.create(parameters=parameters, constraints=[constraint_1])
-searchspace_2 = SearchSpace.create(
-    parameters=parameters, constraints=[constraint_2, constraint_3]
-)
+searchspace = SearchSpace.create(parameters=parameters, constraints=[constraint])
 
 # Create the objective
 objective = Objective(
@@ -76,29 +62,28 @@ objective = Objective(
 )
 
 # Put everything together
-baybe_obj_1 = BayBE(searchspace=searchspace_1, objective=objective)
-baybe_obj_2 = BayBE(searchspace=searchspace_2, objective=objective)
+baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 
-# Run some iterations for both constructed BayBE objects. During these iterations, we
+# Run some iterations. During these iterations, we
 # print some information about the parameters configurations that now exist.
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
-    print(f"\n##### Version1 ITERATION {kIter+1} #####")
+    print(f"\n##### ITERATION {kIter+1} #####")
 
     print("### ASSERTS ###")
     print(
         f"Number entries with both switches on "
         f"(expected {7*len(dict_solvent)*2*2}): ",
         (
-            (baybe_obj_1.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (baybe_obj_1.searchspace.discrete.exp_rep["Switch2"] == "right")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
         f"Number entries with Switch1 off " f"(expected {2*2}):       ",
         (
-            (baybe_obj_1.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (baybe_obj_1.searchspace.discrete.exp_rep["Switch2"] == "right")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
@@ -106,60 +91,18 @@ for kIter in range(N_ITERATIONS):
         f"(expected {7*len(dict_solvent)}):"
         f"      ",
         (
-            (baybe_obj_1.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (baybe_obj_1.searchspace.discrete.exp_rep["Switch2"] == "left")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
     print(
         "Number entries with both switches off (expected 1): ",
         (
-            (baybe_obj_1.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (baybe_obj_1.searchspace.discrete.exp_rep["Switch2"] == "left")
+            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
 
-    rec = baybe_obj_1.recommend(batch_quantity=5)
-    add_fake_results(rec, baybe_obj_1)
-    baybe_obj_1.add_measurements(rec)
-
-
-for kIter in range(N_ITERATIONS):
-    print(f"\n##### Version2 ITERATION {kIter+1} #####")
-
-    print("### ASSERTS ###")
-    print(
-        f"Number entries with both switches on "
-        f"(expected {7*len(dict_solvent)*2*2}): ",
-        (
-            (baybe_obj_2.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (baybe_obj_2.searchspace.discrete.exp_rep["Switch2"] == "right")
-        ).sum(),
-    )
-    print(
-        f"Number entries with Switch1 off " f"(expected {2*2}):       ",
-        (
-            (baybe_obj_2.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (baybe_obj_2.searchspace.discrete.exp_rep["Switch2"] == "right")
-        ).sum(),
-    )
-    print(
-        f"Number entries with Switch2 off "
-        f"(expected {7*len(dict_solvent)}):"
-        f"      ",
-        (
-            (baybe_obj_2.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (baybe_obj_2.searchspace.discrete.exp_rep["Switch2"] == "left")
-        ).sum(),
-    )
-    print(
-        "Number entries with both switches off (expected 1): ",
-        (
-            (baybe_obj_2.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (baybe_obj_2.searchspace.discrete.exp_rep["Switch2"] == "left")
-        ).sum(),
-    )
-
-    rec = baybe_obj_2.recommend(batch_quantity=5)
-
-    add_fake_results(rec, baybe_obj_2)
-    baybe_obj_2.add_measurements(rec)
+    rec = baybe_obj.recommend(batch_quantity=5)
+    add_fake_results(rec, baybe_obj)
+    baybe_obj.add_measurements(rec)
