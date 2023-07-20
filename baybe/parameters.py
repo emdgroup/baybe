@@ -518,3 +518,24 @@ unstructure_hook = remove_values_underscore(unstructure_base)
 structure_hook = add_values_underscore(get_base_unstructure_hook(Parameter))
 cattrs.register_unstructure_hook(Parameter, unstructure_hook)
 cattrs.register_structure_hook(Parameter, structure_hook)
+
+
+def _validate_parameters(parameters: List[Parameter]) -> None:
+    """
+    Performs additional validation for the entire list of parameters before the
+    searchspace is created.
+
+    Parameters
+    ----------
+    parameters: list
+        List of Parameter objects.
+    Returns
+    -------
+    Nothing, raises exception if list is not valid.
+    """
+    if not parameters:
+        raise ValueError("At least one parameter must be provided.")
+
+    param_names = [p.name for p in parameters]
+    if len(set(param_names)) != len(param_names):
+        raise ValueError("Config contains duplicate parameter names.")

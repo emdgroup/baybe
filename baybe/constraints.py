@@ -474,3 +474,23 @@ def _custom_constraint_hook(*_):
 
 cattrs.register_unstructure_hook(CustomConstraint, _custom_constraint_hook)
 cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
+
+
+def _validate_constraints(constraints: List[Constraint]) -> None:
+    """
+    Performs additional validation for the entire list of constraints before the
+    searchspace is created.
+
+    Parameters
+    ----------
+    constraints: list
+        List of Constraint objects.
+    Returns
+    -------
+    Nothing, raises exception if list is not valid.
+    """
+    if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
+        raise ValueError(
+            "There is only one DependenciesConstraint allowed, please specify all "
+            "dependencies in one constraint command."
+        )

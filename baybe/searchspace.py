@@ -17,8 +17,9 @@ import pandas as pd
 import torch
 from attrs import define, field
 
-from .constraints import Constraint, CONSTRAINTS_ORDER
+from .constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
 from .parameters import (
+    _validate_parameters,
     DiscreteParameter,
     NumericContinuous,
     Parameter,
@@ -385,8 +386,9 @@ class SearchSpace(SerialMixin):
             (potentially costly) transformation of the parameter values to their
             computational representation.
         """
-        if not parameters:
-            raise ValueError("At least one parameter must be provided.")
+        _validate_parameters(parameters)
+        if constraints:
+            _validate_constraints(constraints)
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[
