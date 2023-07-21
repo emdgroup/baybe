@@ -86,7 +86,8 @@ disable = [
 	"duplicate-code",  # duplicate code happens eg in similar debug scripts
 	"too-many-instance-attributes",  # BayBE class has quite a few members
 	"too-many-branches",  # can maybe be optimized later
-	"broad-except", # catching base exception is common for RDKit mol validation etc
+    "too-few-public-methods",  # too strict, this happens in several places
+    "broad-except", # catching base exception is common for RDKit mol validation etc
 	"no-name-in-module", # seems RDKit objects in some modules can never be found by IDEs
 	"no-member", # seems RDKit objects in some modules can never be found by IDEs
 	"too-many-nested-blocks", # too strict (encountered in history module)
