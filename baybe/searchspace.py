@@ -19,6 +19,7 @@ from attrs import define, field
 
 from .constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
 from .parameters import (
+    _validate_parameter_names,
     _validate_parameters,
     DiscreteParameter,
     NumericContinuous,
@@ -49,7 +50,7 @@ class SubspaceDiscrete:
     parameter views.
     """
 
-    parameters: List[DiscreteParameter]
+    parameters: List[DiscreteParameter] = field(validator=_validate_parameter_names)
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
     metadata: pd.DataFrame = field(eq=eq_dataframe())
@@ -246,7 +247,7 @@ class SubspaceContinuous:
     Class for managing continuous search spaces.
     """
 
-    parameters: List[NumericContinuous]
+    parameters: List[NumericContinuous] = field(validator=_validate_parameter_names)
 
     @property
     def empty(self):
@@ -390,6 +391,13 @@ class SearchSpace(SerialMixin):
             (potentially costly) transformation of the parameter values to their
             computational representation.
         """
+        # IMPROVE: The arguments get pre-validated here to avoid the potentially costly
+        #   creation of the subspaces. Perhaps there is an elegant way to bypass the
+        #   default validation in the initializer (which is required for other
+        #   ways ways of object creation) in this particular case.
+        _validate_parameters(parameters)
+        _validate_constraints(constraints)
+
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete
