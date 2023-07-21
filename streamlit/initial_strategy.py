@@ -11,7 +11,6 @@ This script allows comparing initial selection strategies on different data sets
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import pydantic
 import streamlit as st
 
 from baybe.parameters import NumericDiscrete
@@ -80,10 +79,6 @@ selection_strategies = {
 
 def main():
     """Creates the streamlit dashboard."""
-
-    # fix issue with streamlit and pydantic
-    # https://github.com/streamlit/streamlit/issues/3218
-    pydantic.class_validators._FUNCS.clear()  # pylint: disable=protected-access
 
     # show docstring in dashboard
     st.info(__doc__)

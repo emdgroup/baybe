@@ -17,8 +17,10 @@ import pandas as pd
 import torch
 from attrs import define, field
 
-from .constraints import _constraints_order, Constraint
+from .constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
 from .parameters import (
+    _validate_parameter_names,
+    _validate_parameters,
     DiscreteParameter,
     NumericContinuous,
     Parameter,
@@ -48,11 +50,14 @@ class SubspaceDiscrete:
     parameter views.
     """
 
-    parameters: List[DiscreteParameter]
+    parameters: List[DiscreteParameter] = field(
+        validator=lambda _1, _2, x: _validate_parameter_names(x)
+    )
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
     metadata: pd.DataFrame = field(eq=eq_dataframe())
     empty_encoding: bool = False
+    constraints: List[Constraint] = field(factory=list)
 
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
@@ -91,7 +96,7 @@ class SubspaceDiscrete:
         else:
             # Reorder the constraints according to their execution order
             constraints = sorted(
-                constraints, key=lambda x: _constraints_order.index(x.type)
+                constraints, key=lambda x: CONSTRAINTS_ORDER.index(x.__class__)
             )
 
         # Create a dataframe representing the experimental search space
@@ -105,6 +110,7 @@ class SubspaceDiscrete:
 
         return SubspaceDiscrete(
             parameters=parameters,
+            constraints=constraints,
             exp_rep=exp_rep,
             empty_encoding=empty_encoding,
         )
@@ -243,7 +249,9 @@ class SubspaceContinuous:
     Class for managing continuous search spaces.
     """
 
-    parameters: List[NumericContinuous]
+    parameters: List[NumericContinuous] = field(
+        validator=lambda _1, _2, x: _validate_parameter_names(x)
+    )
 
     @property
     def empty(self):
@@ -362,6 +370,10 @@ class SearchSpace(SerialMixin):
     discrete: SubspaceDiscrete
     continuous: SubspaceContinuous
 
+    def __attrs_post_init__(self):
+        _validate_parameters(self.parameters)
+        _validate_constraints(self.discrete.constraints)
+
     @classmethod
     def create(
         cls,
@@ -383,8 +395,13 @@ class SearchSpace(SerialMixin):
             (potentially costly) transformation of the parameter values to their
             computational representation.
         """
-        if not parameters:
-            raise ValueError("At least one parameter must be provided.")
+        # IMPROVE: The arguments get pre-validated here to avoid the potentially costly
+        #   creation of the subspaces. Perhaps there is an elegant way to bypass the
+        #   default validation in the initializer (which is required for other
+        #   ways of object creation) in this particular case.
+        _validate_parameters(parameters)
+        if constraints:
+            _validate_constraints(constraints)
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[

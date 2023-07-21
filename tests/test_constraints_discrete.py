@@ -11,9 +11,7 @@ import pytest
     [["Switch_1", "Switch_2", "Fraction_1", "Solvent_1", "Frame_A", "Frame_B"]],
 )
 @pytest.mark.parametrize("constraint_names", [["Constraint_1"]])
-def test_simple_dependency_variant1(
-    baybe, n_grid_points, mock_substances, mock_categories
-):
+def test_simple_dependency(baybe, n_grid_points, mock_substances, mock_categories):
     """
     Test declaring dependencies by declaring them in a single constraints entry.
     """
@@ -27,48 +25,6 @@ def test_simple_dependency_variant1(
     ) * len(mock_categories)
 
     # Number entries with Switch_1 off
-    num_entries = (
-        (baybe.searchspace.discrete.exp_rep["Switch_1"] == "off")
-        & (baybe.searchspace.discrete.exp_rep["Switch_2"] == "right")
-    ).sum()
-    assert num_entries == len(mock_categories) * len(mock_categories)
-
-    # Number entries with both switches on
-    num_entries = (
-        (baybe.searchspace.discrete.exp_rep["Switch_1"] == "on")
-        & (baybe.searchspace.discrete.exp_rep["Switch_2"] == "left")
-    ).sum()
-    assert num_entries == n_grid_points * len(mock_substances)
-
-    # Number entries with both switches on
-    num_entries = (
-        (baybe.searchspace.discrete.exp_rep["Switch_1"] == "off")
-        & (baybe.searchspace.discrete.exp_rep["Switch_2"] == "left")
-    ).sum()
-    assert num_entries == 1
-
-
-@pytest.mark.parametrize(
-    "parameter_names",
-    [["Switch_1", "Switch_2", "Fraction_1", "Solvent_1", "Frame_A", "Frame_B"]],
-)
-@pytest.mark.parametrize("constraint_names", [["Constraint_2", "Constraint_3"]])
-def test_simple_dependency_variant2(
-    baybe, n_grid_points, mock_substances, mock_categories
-):
-    """
-    Test declaring dependencies by declaring them in separate constraint entries.
-    """
-    # Number entries with both switches on
-    num_entries = (
-        (baybe.searchspace.discrete.exp_rep["Switch_1"] == "on")
-        & (baybe.searchspace.discrete.exp_rep["Switch_2"] == "right")
-    ).sum()
-    assert num_entries == n_grid_points * len(mock_substances) * len(
-        mock_categories
-    ) * len(mock_categories)
-
-    # Number entries with Switch 1 off
     num_entries = (
         (baybe.searchspace.discrete.exp_rep["Switch_1"] == "off")
         & (baybe.searchspace.discrete.exp_rep["Switch_2"] == "right")
@@ -178,7 +134,7 @@ def test_prodsum3(baybe):
     [["Solvent_1", "Solvent_2", "Solvent_3", "Fraction_1", "Fraction_2", "Fraction_3"]],
 )
 @pytest.mark.parametrize(
-    "constraint_names", [["Constraint_11", "Constraint_12", "Constraint_13"]]
+    "constraint_names", [["Constraint_7", "Constraint_11", "Constraint_12"]]
 )
 def test_mixture(baybe, n_grid_points, mock_substances):
     """
@@ -271,7 +227,7 @@ def test_mixture(baybe, n_grid_points, mock_substances):
     "parameter_names",
     [["Solvent_1", "SomeSetting", "Temperature", "Pressure"]],
 )
-@pytest.mark.parametrize("constraint_names", [["Constraint_7"]])
+@pytest.mark.parametrize("constraint_names", [["Constraint_13"]])
 def test_custom(baybe):
     """
     Tests custom constraint (uses config from exclude test)

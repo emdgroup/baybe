@@ -60,16 +60,10 @@ def custom_function(ser: pd.Series) -> bool:
     return True
 
 
-# Custom constraints require a configuration dictionary, stating the type, the
-# parameters involved and the corresponding python function.
-# Note that the parameters are accessed by names!
-dict_constraint = {
-    "type": "CUSTOM",
-    "parameters": ["Concentration", "Solvent", "Temperature"],
-    "validator": custom_function,
-}
 # We can now create the constraint and consequently also the searchspace
-constraint = CustomConstraint.create(config=dict_constraint)
+constraint = CustomConstraint(
+    parameters=["Concentration", "Solvent", "Temperature"], validator=custom_function
+)
 searchspace = SearchSpace.create(parameters=parameters, constraints=[constraint])
 
 # We finally create an objective and the BayBE object
