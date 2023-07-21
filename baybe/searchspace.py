@@ -367,8 +367,7 @@ class SearchSpace(SerialMixin):
 
     def __attrs_post_init__(self):
         _validate_parameters(self.parameters)
-        if self.discrete.constraints:
-            _validate_constraints(self.discrete.constraints)
+        _validate_constraints(self.discrete.constraints)
 
     @classmethod
     def create(
