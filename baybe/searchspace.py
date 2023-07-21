@@ -365,6 +365,11 @@ class SearchSpace(SerialMixin):
     discrete: SubspaceDiscrete
     continuous: SubspaceContinuous
 
+    def __attrs_post_init__(self):
+        _validate_parameters(self.parameters)
+        if self.discrete.constraints:
+            _validate_constraints(self.discrete.constraints)
+
     @classmethod
     def create(
         cls,
@@ -386,10 +391,6 @@ class SearchSpace(SerialMixin):
             (potentially costly) transformation of the parameter values to their
             computational representation.
         """
-        _validate_parameters(parameters)
-        if constraints:
-            _validate_constraints(constraints)
-
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete

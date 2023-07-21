@@ -478,8 +478,7 @@ cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
 
 def _validate_constraints(constraints: List[Constraint]) -> None:
     """
-    Performs additional validation for the entire list of constraints before the
-    searchspace is created.
+    Asserts that a given collection of parameters is valid.
 
     Parameters
     ----------

@@ -522,8 +522,7 @@ cattrs.register_structure_hook(Parameter, structure_hook)
 
 def _validate_parameters(parameters: List[Parameter]) -> None:
     """
-    Performs additional validation for the entire list of parameters before the
-    searchspace is created.
+    Asserts that a given collection of parameters is valid.
 
     Parameters
     ----------
