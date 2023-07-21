@@ -483,14 +483,16 @@ def _validate_constraints(constraints: List[Constraint]) -> None:
 
     Parameters
     ----------
-    constraints: list
+    constraints : list
         List of Constraint objects.
-    Returns
-    -------
-    Nothing, raises exception if list is not valid.
+
+    Raises
+    ------
+    ValueError
+        If the given list of constraints is invalid.
     """
     if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
-            "There is only one DependenciesConstraint allowed, please specify all "
-            "dependencies in one constraint command."
+            f"There is only one {DependenciesConstraint.__name__} allowed. "
+            f"Please specify all dependencies in one single constraint."
         )

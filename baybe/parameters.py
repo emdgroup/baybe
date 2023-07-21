@@ -527,15 +527,17 @@ def _validate_parameters(parameters: List[Parameter]) -> None:
 
     Parameters
     ----------
-    parameters: list
+    parameters : list
         List of Parameter objects.
-    Returns
-    -------
-    Nothing, raises exception if list is not valid.
+
+    Raises
+    ------
+    ValueError
+        If the given list of parameters is invalid.
     """
     if not parameters:
         raise ValueError("At least one parameter must be provided.")
 
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
-        raise ValueError("Config contains duplicate parameter names.")
+        raise ValueError("All parameters must have unique names.")
