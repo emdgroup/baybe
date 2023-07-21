@@ -478,7 +478,7 @@ cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
 
 def _validate_constraints(constraints: List[Constraint]) -> None:
     """
-    Asserts that a given collection of parameters is valid.
+    Asserts that a given collection of constraints is valid.
 
     Parameters
     ----------
