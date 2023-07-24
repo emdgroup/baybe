@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - A maxiumum of one `DependenciesConstraint` is allowed
+- Bumped numpy and matplotlib versions
 
 ## [0.3.1] - 2023-07-17
 ### Added

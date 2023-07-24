@@ -18,7 +18,7 @@ dependencies = [
     "gpytorch>=1.9.1",
     "mordred>=1.2.0",
     "ngboost>=0.3.12",
-    "numpy<=1.23.4, >=1.20.0",
+    "numpy>=1.24.0",
     "opentelemetry-sdk>=1.16.0",
     "opentelemetry-propagator-aws-xray>=1.0.0",
     "opentelemetry-exporter-otlp>=1.16.0",
@@ -39,7 +39,7 @@ dynamic = ['version']
 dev = [
     "black==22.3.0",  # see DEV TOOLS NOTE
     "flake8==4.0.1",  # see DEV TOOLS NOTE
-    "matplotlib>=3.5.2",
+    "matplotlib>=3.6.3",
     "mypy>=1.2.0",
     "openpyxl>=3.0.9",
     "plotly>=5.10.0",
