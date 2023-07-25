@@ -7,7 +7,7 @@ Strategies for Design of Experiments (DOE).
 from typing import Optional
 
 import pandas as pd
-from attrs import define, Factory
+from attrs import define, field
 
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
@@ -20,8 +20,8 @@ from baybe.utils.serialization import SerialMixin
 class Strategy(SerialMixin):
     """Abstract base class for all DOE strategies."""
 
-    initial_recommender: Recommender = Factory(RandomRecommender)
-    recommender: Recommender = Factory(SequentialGreedyRecommender)
+    initial_recommender: Recommender = field(factory=RandomRecommender)
+    recommender: Recommender = field(factory=SequentialGreedyRecommender)
     allow_repeated_recommendations: bool = True
     allow_recommending_already_measured: bool = True
 

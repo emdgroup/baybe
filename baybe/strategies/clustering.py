@@ -8,7 +8,7 @@ from typing import ClassVar, List, Type, TypeVar
 
 import numpy as np
 import pandas as pd
-from attrs import define, Factory, field
+from attrs import define, field
 from scipy.stats import multivariate_normal
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
@@ -49,7 +49,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     model_class: ClassVar[Type[SklearnModel]]
     model_cluster_num_parameter_name: ClassVar[str]
 
-    model_params: dict = Factory(dict)
+    model_params: dict = field(factory=dict)
     _use_custom_selector: bool = False
 
     def _make_selection_default(

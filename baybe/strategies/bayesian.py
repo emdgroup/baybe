@@ -7,7 +7,7 @@ from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
-from attrs import define, Factory, field, validators
+from attrs import define, field, validators
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
 from sklearn.metrics import pairwise_distances_argmin
 
@@ -209,8 +209,8 @@ class NaiveHybridRecommender(Recommender):
     # for now. Still, we manually check whether the disc_recommender belogns to one of
     # these two subclasses such that we might be able to easily spot a potential problem
     # that might come up when implementing new subclasses of Recommender
-    disc_recommender: Recommender = Factory(SequentialGreedyRecommender)
-    cont_recommender: BayesianRecommender = Factory(SequentialGreedyRecommender)
+    disc_recommender: Recommender = field(factory=SequentialGreedyRecommender)
+    cont_recommender: BayesianRecommender = field(factory=SequentialGreedyRecommender)
 
     def recommend(
         self,

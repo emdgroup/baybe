@@ -15,7 +15,7 @@ import cattrs
 import numpy as np
 import pandas as pd
 import torch
-from attrs import define, Factory, field
+from attrs import define, field
 
 from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
 from baybe.parameters import (
@@ -448,8 +448,8 @@ class SearchSpace(SerialMixin):
         by continuous ones.
     """
 
-    discrete: SubspaceDiscrete = Factory(SubspaceDiscrete.empty)
-    continuous: SubspaceContinuous = Factory(SubspaceContinuous.empty)
+    discrete: SubspaceDiscrete = field(factory=SubspaceDiscrete.empty)
+    continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
 
     def __attrs_post_init__(self):
         _validate_parameters(self.parameters)
