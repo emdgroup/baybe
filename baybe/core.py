@@ -15,8 +15,8 @@ import numpy as np
 import pandas as pd
 from attrs import define, Factory, field
 
-from baybe.constraints import Constraint
-from baybe.parameters import Parameter
+from baybe.constraints import _validate_constraints, Constraint
+from baybe.parameters import _validate_parameters, Parameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
@@ -62,10 +62,7 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
     constraints = specs.get("constraints", None)
     if constraints:
-        raise NotImplementedError("Constraint deserialization not yet available.")
-        constraints = cattrs.structure(  # pylint: disable=unreachable
-            specs["constraints"], List[Constraint]
-        )
+        constraints = cattrs.structure(specs["constraints"], List[Constraint])
     return SearchSpace.create(parameters, constraints)
 
 
@@ -77,15 +74,12 @@ def searchspace_validation_hook(specs: dict, _) -> None:
     searchspace creation.
     """
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
-    param_names = [p.name for p in parameters]
-    if len(set(param_names)) != len(param_names):
-        raise ValueError("Config contains duplicate parameter names.")
+    _validate_parameters(parameters)
+
     constraints = specs.get("constraints", None)
     if constraints:
-        raise NotImplementedError("Constraint deserialization not yet available.")
-        constraints = cattrs.structure(  # pylint: disable=unreachable
-            specs["constraints"], List[Constraint]
-        )
+        constraints = cattrs.structure(specs["constraints"], List[Constraint])
+        _validate_constraints(constraints)
 
 
 _config_converter = cattrs.global_converter.copy()

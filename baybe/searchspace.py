@@ -17,8 +17,10 @@ import pandas as pd
 import torch
 from attrs import define, Factory, field
 
-from baybe.constraints import _constraints_order, Constraint
+from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
 from baybe.parameters import (
+    _validate_parameter_names,
+    _validate_parameters,
     Categorical,
     DiscreteParameter,
     NumericContinuous,
@@ -27,12 +29,7 @@ from baybe.parameters import (
     parameter_cartesian_prod_to_df,
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils import (
-    df_drop_single_value_columns,
-    EmptySearchSpaceError,
-    eq_dataframe,
-    fuzzy_row_match,
-)
+from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
 from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
@@ -55,11 +52,14 @@ class SubspaceDiscrete:
     parameter views.
     """
 
-    parameters: List[DiscreteParameter]
+    parameters: List[DiscreteParameter] = field(
+        validator=lambda _1, _2, x: _validate_parameter_names(x)
+    )
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
     metadata: pd.DataFrame = field(eq=eq_dataframe())
     empty_encoding: bool = False
+    constraints: List[Constraint] = field(factory=list)
 
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
@@ -105,7 +105,7 @@ class SubspaceDiscrete:
         else:
             # Reorder the constraints according to their execution order
             constraints = sorted(
-                constraints, key=lambda x: _constraints_order.index(x.type)
+                constraints, key=lambda x: CONSTRAINTS_ORDER.index(x.__class__)
             )
 
         # Create a dataframe representing the experimental search space
@@ -119,6 +119,7 @@ class SubspaceDiscrete:
 
         return SubspaceDiscrete(
             parameters=parameters,
+            constraints=constraints,
             exp_rep=exp_rep,
             empty_encoding=empty_encoding,
         )
@@ -324,7 +325,9 @@ class SubspaceContinuous:
     Class for managing continuous search spaces.
     """
 
-    parameters: List[NumericContinuous]
+    parameters: List[NumericContinuous] = field(
+        validator=lambda _1, _2, x: _validate_parameter_names(x)
+    )
 
     @classmethod
     def empty(cls) -> "SubspaceContinuous":
@@ -449,8 +452,8 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = Factory(SubspaceContinuous.empty)
 
     def __attrs_post_init__(self):
-        if not self.parameters:
-            raise EmptySearchSpaceError("At least one parameter must be provided.")
+        _validate_parameters(self.parameters)
+        _validate_constraints(self.discrete.constraints)
 
     @classmethod
     def create(
@@ -473,6 +476,14 @@ class SearchSpace(SerialMixin):
             (potentially costly) transformation of the parameter values to their
             computational representation.
         """
+        # IMPROVE: The arguments get pre-validated here to avoid the potentially costly
+        #   creation of the subspaces. Perhaps there is an elegant way to bypass the
+        #   default validation in the initializer (which is required for other
+        #   ways of object creation) in this particular case.
+        _validate_parameters(parameters)
+        if constraints:
+            _validate_constraints(constraints)
+
         discrete: SubspaceDiscrete = SubspaceDiscrete.create(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete

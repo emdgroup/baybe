@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cached recommendations are now a private attribute
 - Parameters, targets and objectives are now immutable
 
+## [0.3.2] - 2023-07-24
+### Added
+- Constraints serialization
+
+### Changed
+- A maxiumum of one `DependenciesConstraint` is allowed
+- Bumped numpy and matplotlib versions
+
 ## [0.3.1] - 2023-07-17
 ### Added
 - Code coverage check with pytest-cov

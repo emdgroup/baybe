@@ -1,35 +1,27 @@
 """
 Functionality for parameter constraints.
 """
-from __future__ import annotations
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
 import logging
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
-from inspect import isabstract
-from typing import Callable, ClassVar, Dict, List, Literal, Optional, Type
+from typing import Any, Callable, ClassVar, List, Optional
 
+import cattrs
 import numpy as np
 import pandas as pd
+from attr import define, field
+from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
-from pydantic import BaseModel, conlist, Extra, validator
 
-from baybe.utils import ABCBaseModel, check_if_in, Dummy, StrictValidationError
+from baybe.utils import Dummy, get_base_unstructure_hook, unstructure_base
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
-
-_constraints_order = [
-    "CUSTOM",
-    "EXCLUDE",
-    "NO_LABEL_DUPLICATES",
-    "LINKED_PARAMETERS",
-    "SUM",
-    "PRODUCT",
-    "PERMUTATION_INVARIANCE",
-    "DEPENDENCIES",
-]
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
@@ -37,31 +29,12 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
     return np.logical_not(np.isclose(x, y, rtol=rtol, atol=atol))
 
 
-class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+class Condition(ABC, SerialMixin):
     """
     Abstract base class for all conditions. Conditions always evaluate an expression
     regarding a single parameter. Conditions are part of constraints, a constraint
     can have multiple conditions.
     """
-
-    # class variables
-    type: ClassVar[str]
-    SUBCLASSES: ClassVar[Dict[str, Type[Constraint]]] = {}
-
-    @classmethod
-    def create(cls, config: dict) -> Condition:
-        """Creates a new object matching the given specifications."""
-        config = config.copy()
-        condition_type = config.pop("type")
-        check_if_in(condition_type, list(Condition.SUBCLASSES.keys()))
-        return cls.SUBCLASSES[condition_type](**config)
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def evaluate(self, data: pd.Series) -> pd.Series:
@@ -80,110 +53,112 @@ class Condition(ABC, BaseModel, extra=Extra.forbid, arbitrary_types_allowed=True
         """
 
 
+# provide threshold operators
+_threshold_operators = {
+    "<": ops.lt,
+    "<=": ops.le,
+    "=": rpartial(np.isclose, rtol=0.0),
+    "==": rpartial(np.isclose, rtol=0.0),
+    "!=": rpartial(_is_not_close, rtol=0.0),
+    ">": ops.gt,
+    ">=": ops.ge,
+}
+
+# define operators that are eligible for tolerance
+_valid_tolerance_operators = ["=", "==", "!="]
+
+_valid_logic_combiners = {
+    "AND": ops.and_,
+    "OR": ops.or_,
+    "XOR": ops.xor,
+}
+
+
+@define
 class ThresholdCondition(Condition):
     """
     Class for modelling threshold-based conditions.
     """
 
-    # class variables
-    type = "THRESHOLD"
+    # object variables
     threshold: float
-    operator: Literal["<", "<=", "=", "==", "!=", ">", ">="]
-    tolerance: float = 1e-8
+    operator: str = field(validator=[in_(_threshold_operators)])
+    tolerance: Optional[float] = field()
 
-    # define the valid operators
-    _operator_dict = {
-        "<": ops.lt,
-        "<=": ops.le,
-        "=": rpartial(np.isclose, rtol=0.0),
-        "==": rpartial(np.isclose, rtol=0.0),
-        "!=": rpartial(_is_not_close, rtol=0.0),
-        ">": ops.gt,
-        ">=": ops.ge,
-    }
+    @tolerance.default
+    def tolerance_default(self):
+        """Default value for the tolerance"""
+        return 1e-8 if self.operator in _valid_tolerance_operators else None
 
-    # define operators that are eligible for tolerance
-    _tolerance_operators = ["=", "==", "!="]
-
-    @validator("tolerance")
-    def validate_tolerance(cls, tolerance, values):
-        """Ensures tolerance can only be set with appropriate operators."""
-        if values["operator"] not in cls._tolerance_operators:
-            raise StrictValidationError(
-                f"Tolerance for a threshold condition is only valid with the following "
-                f"operators: {cls._tolerance_operators}."
+    @tolerance.validator
+    def tolerance_validation(self, _, value):
+        """Validates the threshold condition tolerance"""
+        if (self.operator not in _valid_tolerance_operators) and (value is not None):
+            raise ValueError(
+                f"Setting the tolerance for a threshold condition is only valid "
+                f"with the following operators: {_valid_tolerance_operators}."
             )
-        return tolerance
+
+        if self.operator in _valid_tolerance_operators:
+            if (value is None) or (value <= 0.0):
+                raise ValueError(
+                    f"When using a tolerance-enabled operator"
+                    f" ({_valid_tolerance_operators}) the tolerance cannot be None "
+                    f"or <= 0.0, but was {value}."
+                )
 
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
         if data.dtype.kind not in "iufb":
-            raise StrictValidationError(
+            raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
                 "This operation is error-prone and not supported. Only use threshold "
                 "conditions with numerical parameters."
             )
-        func = rpartial(self._operator_dict[self.operator], self.threshold)
-        if self.operator in self._tolerance_operators:
+        func = rpartial(_threshold_operators[self.operator], self.threshold)
+        if self.operator in _valid_tolerance_operators:
             func = rpartial(func, atol=self.tolerance)
 
         return data.apply(func)
 
 
+@define
 class SubSelectionCondition(Condition):
     """
     Class for defining valid parameter entries.
     """
 
-    # class variables
-    type = "SUBSELECTION"
-    selection: list
+    # object variables
+    selection: List[Any]
 
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
         return data.isin(self.selection)
 
 
-class Constraint(ABC, ABCBaseModel, extra=Extra.forbid, arbitrary_types_allowed=True):
+@define
+class Constraint(ABC, SerialMixin):
     """
     Abstract base class for all constraints. Constraints use conditions and chain them
     together to filter unwanted entries from the searchspace.
     """
 
     # class variables
-    type: ClassVar[str]
-    parameters: List[str]
-
-    SUBCLASSES: ClassVar[Dict[str, Constraint]] = {}
-
     # TODO: it might turn out these are not needed at a later development stage
     eval_during_creation: ClassVar[bool]
     eval_during_modeling: ClassVar[bool]
 
-    @validator("parameters")
-    def validate_params(cls, parameters):
+    # Object variables
+    parameters: List[str] = field(validator=min_len(1))
+
+    @parameters.validator
+    def validate_params(self, _, params):
         """Validates the parameter list."""
-        if len(parameters) != len(set(parameters)):
-            raise StrictValidationError(
-                f"The given 'parameter' list must have unique values "
-                f"but was: {parameters}."
+        if len(params) != len(set(params)):
+            raise ValueError(
+                f"The given 'parameters' list must have unique values "
+                f"but was: {params}."
             )
-        return parameters
-
-    @classmethod
-    def create(cls, config: dict) -> Constraint:
-        """Creates a new object matching the given specifications."""
-        config = config.copy()
-        constraint_type = config.pop("type")
-        check_if_in(constraint_type, list(Constraint.SUBCLASSES.keys()))
-        return cls.SUBCLASSES[constraint_type](**config)
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
@@ -202,23 +177,19 @@ class Constraint(ABC, ABCBaseModel, extra=Extra.forbid, arbitrary_types_allowed=
         """
 
 
+@define
 class ExcludeConstraint(Constraint):
     """
     Class for modelling exclusion constraints.
     """
 
     # class variables
-    type = "EXCLUDE"
     eval_during_creation = True
     eval_during_modeling = False
-    conditions: conlist(Condition, min_items=1)
-    combiner: Literal["AND", "OR", "XOR"] = "AND"
 
-    _combiner_dict = {
-        "AND": ops.and_,
-        "OR": ops.or_,
-        "XOR": ops.xor,
-    }
+    # object variables
+    conditions: List[Condition] = field(validator=min_len(1))
+    combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -226,10 +197,11 @@ class ExcludeConstraint(Constraint):
             cond.evaluate(data[self.parameters[k]])
             for k, cond in enumerate(self.conditions)
         ]
-        res = reduce(self._combiner_dict[self.combiner], satisfied)
+        res = reduce(_valid_logic_combiners[self.combiner], satisfied)
         return data.index[res]
 
 
+@define
 class SumConstraint(Constraint):
     """
     Class for modelling sum constraints.
@@ -238,10 +210,11 @@ class SumConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    type = "SUM"
     eval_during_creation = True
     eval_during_modeling = False
-    condition: ThresholdCondition
+
+    # object variables
+    condition: ThresholdCondition = field()
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -251,6 +224,7 @@ class SumConstraint(Constraint):
         return data.index[mask_bad]
 
 
+@define
 class ProductConstraint(Constraint):
     """
     Class for modelling product constraints.
@@ -259,10 +233,11 @@ class ProductConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    type = "PRODUCT"
     eval_during_creation = True
     eval_during_modeling = False
-    condition: ThresholdCondition
+
+    # object variables
+    condition: ThresholdCondition = field()
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -286,7 +261,6 @@ class NoLabelDuplicatesConstraint(Constraint):
     """
 
     # class variables
-    type = "NO_LABEL_DUPLICATES"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -307,7 +281,6 @@ class LinkedParametersConstraint(Constraint):
     """
 
     # class variables
-    type = "LINKED_PARAMETERS"
     eval_during_creation = True
     eval_during_modeling = False
 
@@ -318,24 +291,37 @@ class LinkedParametersConstraint(Constraint):
         return data.index[mask_bad]
 
 
+@define
 class DependenciesConstraint(Constraint):
     """
     Constraint that specifies dependencies between parameters. For instance some
     parameters might only be relevant when another parameter has a certain value
-    (e.g. 'on'). All dependencies must be declared in a single constraint.
+    (e.g. parameter switch is 'on'). All dependencies must be declared in a single
+    constraint.
     """
 
-    type = "DEPENDENCIES"
+    # class variables
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
     eval_during_creation = True
     eval_during_modeling = False
-    conditions: List[Condition]
-    affected_parameters: List[List[str]]
 
+    # object variables
+    conditions: List[Condition]
+    affected_parameters: List[List[str]] = field()
     # Flag that indicates whether the affected parameters are permutation invariant.
     # Not to be set by the user but by other constraints reusing this class.
     permutation_invariant = False
+
+    @affected_parameters.validator
+    def affected_parameters_validator(self, _, value):
+        """Ensure each set of affected parameters has exactly one condition"""
+        if len(self.conditions) != len(value):
+            raise ValueError(
+                f"For the {self.__class__.__name__}, for each item in the "
+                f"affected_parameters list you must provide exactly one condition in "
+                f"the conditions list."
+            )
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -377,6 +363,7 @@ class DependenciesConstraint(Constraint):
         return inds_bad
 
 
+@define
 class PermutationInvarianceConstraint(Constraint):
     """
     Constraint class for declaring that a set of parameters are permutation invariant,
@@ -390,11 +377,12 @@ class PermutationInvarianceConstraint(Constraint):
     """
 
     # class variables
-    type = "PERMUTATION_INVARIANCE"
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
     eval_during_creation = True
     eval_during_modeling = False
+
+    # object variables
     dependencies: Optional[DependenciesConstraint]
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
@@ -440,15 +428,17 @@ class PermutationInvarianceConstraint(Constraint):
         return inds_invalid
 
 
+@define
 class CustomConstraint(Constraint):
     """
     Class for user-defined custom constraints.
     """
 
     # class variables
-    type = "CUSTOM"
     eval_during_creation = True
     eval_during_modeling = False
+
+    # object variables
     validator: Callable[[pd.Series], bool]
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
@@ -456,3 +446,52 @@ class CustomConstraint(Constraint):
         mask_bad = ~data[self.parameters].apply(self.validator, axis=1)
 
         return data.index[mask_bad]
+
+
+# the order in which the constraint types need to be applied
+CONSTRAINTS_ORDER = (
+    CustomConstraint,
+    ExcludeConstraint,
+    NoLabelDuplicatesConstraint,
+    LinkedParametersConstraint,
+    SumConstraint,
+    ProductConstraint,
+    PermutationInvarianceConstraint,
+    DependenciesConstraint,
+)
+
+
+# Register structure / unstructure hooks
+cattrs.register_unstructure_hook(Condition, unstructure_base)
+cattrs.register_structure_hook(Condition, get_base_unstructure_hook(Condition))
+cattrs.register_unstructure_hook(Constraint, unstructure_base)
+cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint))
+
+
+def _custom_constraint_hook(*_):
+    raise NotImplementedError("CustomConstraint does not support de-/serialization.")
+
+
+cattrs.register_unstructure_hook(CustomConstraint, _custom_constraint_hook)
+cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
+
+
+def _validate_constraints(constraints: List[Constraint]) -> None:
+    """
+    Asserts that a given collection of constraints is valid.
+
+    Parameters
+    ----------
+    constraints : list
+        List of Constraint objects.
+
+    Raises
+    ------
+    ValueError
+        If the given list of constraints is invalid.
+    """
+    if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
+        raise ValueError(
+            f"There is only one {DependenciesConstraint.__name__} allowed. "
+            f"Please specify all dependencies in one single constraint."
+        )

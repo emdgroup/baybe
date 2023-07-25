@@ -32,6 +32,7 @@ from scipy.spatial.distance import pdist
 from baybe.utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
+    EmptySearchSpaceError,
     eq_dataframe,
     get_base_unstructure_hook,
     is_valid_smiles,
@@ -517,3 +518,42 @@ unstructure_hook = remove_values_underscore(unstructure_base)
 structure_hook = add_values_underscore(get_base_unstructure_hook(Parameter))
 cattrs.register_unstructure_hook(Parameter, unstructure_hook)
 cattrs.register_structure_hook(Parameter, structure_hook)
+
+
+def _validate_parameter_names(parameters: List[Parameter]) -> None:
+    """
+    Asserts that a given collection of parameters has unique names.
+
+    Parameters
+    ----------
+    parameters : list
+        List of Parameter objects.
+
+    Raises
+    ------
+    ValueError
+        If the given list contains parameters with the same name.
+    """
+    param_names = [p.name for p in parameters]
+    if len(set(param_names)) != len(param_names):
+        raise ValueError("All parameters must have unique names.")
+
+
+def _validate_parameters(parameters: List[Parameter]) -> None:
+    """
+    Asserts that a given collection of parameters is valid.
+
+    Parameters
+    ----------
+    parameters : list
+        List of Parameter objects.
+
+    Raises
+    ------
+    ValueError
+        If the given list of parameters is invalid.
+    """
+    # Assert that the parameter list is non-empty and contains unique names
+    if not parameters:
+        raise EmptySearchSpaceError("At least one parameter must be provided.")
+    _validate_parameter_names(parameters)
