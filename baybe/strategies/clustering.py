@@ -49,8 +49,10 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     model_class: ClassVar[Type[SklearnModel]]
     model_cluster_num_parameter_name: ClassVar[str]
 
+    # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism,
+    #   similar to what is done in the recommenders
     model_params: dict = field(factory=dict)
-    _use_custom_selector: bool = False
+    _use_custom_selector: bool = field(default=False)
 
     def _make_selection_default(
         self,
@@ -128,7 +130,7 @@ if KMedoids:
         model_class = KMedoids
         model_cluster_num_parameter_name = "n_clusters"
 
-        _use_custom_selector = True
+        _use_custom_selector = field(default=True)
         model_params: dict = field()
 
         @model_params.default
@@ -155,7 +157,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     model_class = KMeans
     model_cluster_num_parameter_name = "n_clusters"
 
-    _use_custom_selector = True
+    _use_custom_selector = field(default=True)
     model_params: dict = field()
 
     @model_params.default

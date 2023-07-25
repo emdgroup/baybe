@@ -93,7 +93,7 @@ class Parameter(ABC, SerialMixin):
     is_discrete: ClassVar[bool]
 
     # object variables
-    name: str
+    name: str = field()
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
@@ -102,6 +102,7 @@ class Parameter(ABC, SerialMixin):
         """
 
 
+@define(frozen=True)
 class DiscreteParameter(Parameter, ABC):
     """
     Abstract class for discrete parameters.
@@ -111,7 +112,7 @@ class DiscreteParameter(Parameter, ABC):
     is_discrete: ClassVar[bool] = True
 
     # object variables
-    encoding: Optional[str] = None
+    encoding: Optional[str] = field(default=None)
 
     @property
     @abstractmethod
@@ -170,7 +171,7 @@ class Categorical(DiscreteParameter):
     _values: list = field(
         converter=list, validator=[min_len(2), validate_unique_values]
     )
-    encoding: Literal["OHE", "INT"] = "OHE"
+    encoding: Literal["OHE", "INT"] = field(default="OHE")
 
     @property
     def values(self) -> list:
@@ -304,7 +305,7 @@ class GenericSubstance(DiscreteParameter):
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )
-    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
+    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
 
     @data.validator
     def validate_substance_data(self, _, value):
@@ -384,11 +385,11 @@ class Custom(DiscreteParameter):
     is_numeric = False
 
     # object variables
-    encoding = "CUSTOM"
     data: pd.DataFrame = field(eq=eq_dataframe())
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )
+    encoding = field(default="CUSTOM")
 
     @data.validator
     def validate_custom_data(self, _, value):

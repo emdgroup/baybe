@@ -58,7 +58,7 @@ class SubspaceDiscrete:
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
     metadata: pd.DataFrame = field(eq=eq_dataframe())
-    empty_encoding: bool = False
+    empty_encoding: bool = field(default=False)
     constraints: List[Constraint] = field(factory=list)
 
     @metadata.default

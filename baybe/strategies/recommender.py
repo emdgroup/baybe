@@ -9,8 +9,7 @@ from typing import Callable, ClassVar, Literal, Optional
 
 import cattrs
 import pandas as pd
-
-from attrs import define
+from attrs import define, field
 from botorch.acquisition import (
     AcquisitionFunction,
     ExpectedImprovement,
@@ -204,10 +203,10 @@ class NonPredictiveRecommender(Recommender, ABC):
 class BayesianRecommender(Recommender, ABC):
     # TODO Docstrings missing
 
-    surrogate_model_cls: str = "GP"
+    surrogate_model_cls: str = field(default="GP")
     acquisition_function_cls: Literal[
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB"
-    ] = "qEI"
+    ] = field(default="qEI")
 
     def get_acquisition_function_cls(
         self,

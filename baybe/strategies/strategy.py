@@ -22,8 +22,8 @@ class Strategy(SerialMixin):
 
     initial_recommender: Recommender = field(factory=RandomRecommender)
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
-    allow_repeated_recommendations: bool = True
-    allow_recommending_already_measured: bool = True
+    allow_repeated_recommendations: bool = field(default=True)
+    allow_recommending_already_measured: bool = field(default=True)
 
     def recommend(
         self,

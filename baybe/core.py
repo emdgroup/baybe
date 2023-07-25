@@ -95,17 +95,17 @@ class BayBE(SerialMixin):
     """Main class for interaction with BayBE."""
 
     # DOE specifications
-    searchspace: SearchSpace
-    objective: Objective
+    searchspace: SearchSpace = field()
+    objective: Objective = field()
     strategy: Strategy = field(factory=Strategy)
 
     # Data
     measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
-    numerical_measurements_must_be_within_tolerance: bool = True
+    numerical_measurements_must_be_within_tolerance: bool = field(default=True)
 
     # Metadata
-    batches_done: int = 0
-    fits_done: int = 0
+    batches_done: int = field(default=0)
+    fits_done: int = field(default=0)
 
     # Private
     _cached_recommendation: pd.DataFrame = field(

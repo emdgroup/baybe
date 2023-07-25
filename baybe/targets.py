@@ -48,7 +48,7 @@ class Target(ABC):
     range, transformations, etc.
     """
 
-    name: str
+    name: str = field()
 
     @abstractmethod
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -172,7 +172,7 @@ class Objective(SerialMixin):
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
 
-    mode: Literal["SINGLE", "DESIRABILITY"]
+    mode: Literal["SINGLE", "DESIRABILITY"] = field()
     targets: List[NumericalTarget] = field(validator=min_len(1))
     weights: List[float] = field(converter=_normalize_weights)
     combine_func: Literal["MEAN", "GEOM_MEAN"] = field(
