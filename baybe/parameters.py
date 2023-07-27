@@ -81,7 +81,7 @@ def validate_unique_values(obj, _, value) -> None:
         )
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class Parameter(ABC, SerialMixin):
     """
     Abstract base class for all parameters. Stores information about the
@@ -102,17 +102,19 @@ class Parameter(ABC, SerialMixin):
         """
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):
     """
     Abstract class for discrete parameters.
     """
 
+    # TODO [15280]: needs to be refactored
+
     # class variables
     is_discrete: ClassVar[bool] = True
 
     # object variables
-    encoding: Optional[str] = field(default=None)
+    encoding: ClassVar[Optional[str]] = None
 
     @property
     @abstractmethod
@@ -158,7 +160,7 @@ class DiscreteParameter(Parameter, ABC):
         return transformed
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class Categorical(DiscreteParameter):
     """
     Parameter class for categorical parameters.
@@ -192,7 +194,7 @@ class Categorical(DiscreteParameter):
         return comp_df
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class NumericDiscrete(DiscreteParameter):
     """
     Parameter class for discrete numerical parameters (a.k.a. setpoints).
@@ -254,7 +256,7 @@ class NumericDiscrete(DiscreteParameter):
         return any(differences_acceptable)
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class NumericContinuous(Parameter):
     """
     Parameter class for continuous numerical parameters.
@@ -284,7 +286,7 @@ class NumericContinuous(Parameter):
         return self.bounds.contains(item)
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class GenericSubstance(DiscreteParameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
@@ -374,7 +376,7 @@ class GenericSubstance(DiscreteParameter):
 SUBSTANCE_ENCODINGS = get_args(get_type_hints(GenericSubstance)["encoding"])
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class Custom(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
