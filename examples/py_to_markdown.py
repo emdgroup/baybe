@@ -3,54 +3,66 @@ Automatic transformation of example files written in python into markdown files
 """
 
 
+import glob
 import os
 
-# Script to transform .py files in .md files in the examples folder
+# Script to transform all .py files in .md files in the examples folder
 
-# Information about the file
-DIRECTORY = "Basics"
-FILE = "baybe_object.py"
-FILENAME = "baybe_object"
-ORDER = 1
+# list all directories in the examples folder
+directories = [
+    d for d in os.listdir("examples/") if os.path.isdir(os.path.join("examples", d))
+]
 
-# Create the Markdown file:
+# Iterate over the directories
+for directory in directories:
+    path = os.path.join("examples", directory, "*.py")
 
-# 1. Convert the file to jupyter notebook
-os.system(rf"p2j examples\{DIRECTORY}\{FILE}")
-NOTEBOOK = FILENAME + ".ipynb"
+    # list all .py files in the subdirectory that need to be converted
+    py_files = [os.path.split(fpath)[1] for fpath in glob.glob(path)]
 
-# 2. Execute the notebook
-os.system(
-    rf"jupyter nbconvert --execute --to notebook --inplace examples\{DIRECTORY}\{NOTEBOOK}"
-)
-MARKDOWN = FILENAME + ".md"
+    for file_index, file in enumerate(py_files):
+        # Collect information about the file
+        FILENAME = os.path.splitext(file)[0]
+        ORDER = file_index + 1
 
-# 3. Convert the notebook to markdown
-os.system(rf"jupyter nbconvert --to markdown examples\{DIRECTORY}\{NOTEBOOK}")
+        # Create the Markdown file:
 
-# 4. Delete the no-longer-necessary notebook
-os.remove(rf"examples\{DIRECTORY}\{NOTEBOOK}")
+        # 1. Convert the file to jupyter notebook
+        os.system(rf"p2j examples\{directory}\{file}")
+        NOTEBOOK = FILENAME + ".ipynb"
 
-# %. Add lines at the top of the .md file
+        # 2. Execute the notebook
+        os.system(
+            rf"jupyter nbconvert --execute --to notebook --inplace examples\{directory}\{NOTEBOOK}"
+        )
+        MARKDOWN = FILENAME + ".md"
 
-LINES_TO_ADD = (
-    "---"
-    + "\neleventyNavigation:"
-    + "\n  key: "
-    + FILENAME
-    + "\n  order: "
-    + str(ORDER)
-    + "\n  parent: Examples/"
-    + DIRECTORY
-    + "\nlayout: layout.njk"
-    + "\npermalink: baybe/sdk/examples/"
-    + DIRECTORY
-    + "\ntitle: "
-    + FILENAME
-    + "\n---\n\n "
-)
-with open(rf"examples\{DIRECTORY}\{MARKDOWN}", "r+", encoding="UTF-8") as f:
-    content = f.read()
-    f.seek(0)
-    f.write(LINES_TO_ADD)
-    f.write(content)
+        # 3. Convert the notebook to markdown
+        os.system(rf"jupyter nbconvert --to markdown examples\{directory}\{NOTEBOOK}")
+
+        # 4. Delete the no-longer-necessary notebook
+        os.remove(rf"examples\{directory}\{NOTEBOOK}")
+
+        # 5. Add lines at the top of the .md file
+
+        LINES_TO_ADD = (
+            "---"
+            + "\neleventyNavigation:"
+            + "\n  key: "
+            + FILENAME
+            + "\n  order: "
+            + str(ORDER)
+            + "\n  parent: Examples/"
+            + directory
+            + "\nlayout: layout.njk"
+            + "\npermalink: baybe/sdk/examples/"
+            + directory
+            + "\ntitle: "
+            + FILENAME
+            + "\n---\n\n "
+        )
+        with open(rf"examples\{directory}\{MARKDOWN}", "r+", encoding="UTF-8") as f:
+            content = f.read()
+            f.seek(0)
+            f.write(LINES_TO_ADD)
+            f.write(content)
