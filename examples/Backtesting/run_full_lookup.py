@@ -1,8 +1,14 @@
+### Example for full simulation loop using a table-based lookup mechanism
+
 """
-Run history simulation for a direct arylation where all possible combinations have
-been measured. This uses the lookup mechanism that allows us to access information about
-previously conducted experiments from .xlsx-files.
+This example shows a simulation for a direct arylation where all combinations have been measured.
+This allows us to access information about previously conducted experiments from .xlsx-files.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
 
 import matplotlib.pyplot as plt
 
@@ -17,32 +23,43 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-# We read the information about the conducted experiments from a .xlsx-file and save it
-# as a pandas DataFrame.
-# NOTE Depending on your system and settings, you might need to slightly adjust the
-# following path as this is relevant to the folder in which you execute the 'python'
-# call. This path assumes that this call is made from the main BayBE folder.
+### Parameters for a full simulation loop
 
-lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
+# For the full simulation, we need to define some additional parameters.
+# These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
-# As usual, we set up some experiment. Note that we now need to ensure that the names
-# fit the names in the provided .xlsx file!
+N_EXP_ITERATIONS = 5
+N_MC_ITERATIONS = 3
+
+### Lookup functionality and data creation
+
+# We read the information about the conducted experiments from a .xlsx-file.
+# Depending on your system and settings, you might need to slightly adjust the following paths.
+# The reason is that it depends on the folder in which you execute the `python` call.
+# This code assumes that you call `python` either from the baybe folder or this folder.
+
+try:
+    lookup = pd.read_excel("./lookup.xlsx")
+except FileNotFoundError:
+    try:
+        lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
+    except FileNotFoundError as e:
+        print(e)
+
+# As usual, we set up some experiment.
+# Note that we now need to ensure that the names fit the names in the provided .xlsx file!
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
     "Butyornitrile": r"CCCC#N",
     "Butyl Ester": r"CCCCOC(C)=O",
     "p-Xylene": r"CC1=CC=C(C)C=C1",
 }
-solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="MORDRED")
-
 dict_base = {
     "Potassium acetate": r"O=C([O-])C.[K+]",
     "Potassium pivalate": r"O=C([O-])C(C)(C)C.[K+]",
     "Cesium acetate": r"O=C([O-])C.[Cs+]",
     "Cesium pivalate": r"O=C([O-])C(C)(C)C.[Cs+]",
 }
-base = GenericSubstance(name="Base", data=dict_base, encoding="MORDRED")
-
 dict_ligand = {
     "BrettPhos": r"CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC4)C(OC)="
     "CC=C2OC",
@@ -59,6 +76,13 @@ dict_ligand = {
     "SCHEMBL15068049": r"C[C@]1(O2)O[C@](C[C@]2(C)P3C4=CC=CC=C4)(C)O[C@]3(C)C1",
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
+
+### Creating the searchspace and the objective
+
+# Here, we create the parameter objects, the searchspace and the objective.
+
+solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="MORDRED")
+base = GenericSubstance(name="Base", data=dict_base, encoding="MORDRED")
 ligand = GenericSubstance(name="Ligand", data=dict_ligand, encoding="MORDRED")
 temperature = NumericDiscrete(name="Temp_C", values=[90, 105, 120], tolerance=2)
 concentration = NumericDiscrete(
@@ -67,14 +91,16 @@ concentration = NumericDiscrete(
 
 parameters = [solvent, base, ligand, temperature, concentration]
 
-# Construct searchspace and objective. Note that the objective is maximization!
 searchspace = SearchSpace.from_product(parameters=parameters)
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-# Create two BayBE objects: One using the default recommender and one making random
-# recommendations.
+### Constructing BayBE objects for the simulation loop
+
+# In this example, we create two BayBE objects.
+# One uses the default recommender and the other one makes random recommendations.
+
 baybe = BayBE(searchspace=searchspace, objective=objective)
 baybe_rand = BayBE(
     searchspace=searchspace,
@@ -82,22 +108,14 @@ baybe_rand = BayBE(
     objective=objective,
 )
 
-# We can now use the simulate_scenarios function from simulation.py to simulate a
-# full experiment. Note that this function enables to run multiple scenarios one after
-# another by a single function call, which is why we need to define a dictionary
-# mapping names for the scenarios to actual BayBE objects
+# We can now use the `simulate_scenarios` function to simulate a full experiment.
+# Note that this function enables to run multiple scenarios by a single function call.
+# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
 scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 
-# This is the call to the actual function.
-# Note that, in contrast to other cases where we use the lookup functionality, it is
-# not necessary to include the 'impute' keyword here as we know that all data is
-# part of our table.
-BATCH_QUANTITY = 2
-N_EXP_ITERATIONS = 5
-N_MC_ITERATIONS = 3
 results = simulate_scenarios(
     scenarios=scenarios,
-    batch_quantity=BATCH_QUANTITY,
+    batch_quantity=3,
     n_exp_iterations=N_EXP_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
     lookup=lookup,
@@ -108,9 +126,7 @@ max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
 )
-plt.plot(
-    [BATCH_QUANTITY, BATCH_QUANTITY * N_EXP_ITERATIONS], [max_yield, max_yield], "--r"
-)
+plt.plot([3, 3 * N_EXP_ITERATIONS], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
 plt.savefig("./run_full_lookup.png")
