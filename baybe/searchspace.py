@@ -86,7 +86,7 @@ class SubspaceDiscrete:
 
     @classmethod
     def empty(cls) -> "SubspaceDiscrete":
-        """Creates an empty discrete search space."""
+        """Creates an empty discrete subspace."""
         return SubspaceDiscrete(
             parameters=[], exp_rep=pd.DataFrame(), metadata=pd.DataFrame()
         )
@@ -132,7 +132,7 @@ class SubspaceDiscrete:
         empty_encoding: bool = False,
     ) -> "SubspaceDiscrete":
         """
-        Creates a discrete search space with a specified set of configurations.
+        Creates a discrete subspace with a specified set of configurations.
 
         Parameters
         ----------
@@ -150,7 +150,7 @@ class SubspaceDiscrete:
         Returns
         -------
         SubspaceDiscrete
-            The created discrete search space.
+            The created discrete subspace.
         """
         # Turn the specified parameters into a dict and check for duplicate names
         specified_params: Dict[str, Parameter] = {}
@@ -331,7 +331,7 @@ class SubspaceContinuous:
 
     @classmethod
     def empty(cls) -> "SubspaceContinuous":
-        """Creates an empty continuous search space."""
+        """Creates an empty continuous subspace."""
         return SubspaceContinuous([])
 
     @property
