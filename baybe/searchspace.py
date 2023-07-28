@@ -349,6 +349,16 @@ class SubspaceContinuous:
         ]
         return SubspaceContinuous(parameters)
 
+    @classmethod
+    def from_dataframe(cls, df: pd.DataFrame) -> "SubspaceContinuous":
+        """
+        Creates the smallest axis-aligned hyperrectangle-shaped continuous subspace
+        that contains the points specified in the given dataframe.
+        """
+        # TODO: Add option for convex hull once constraints are in place
+        bounds = pd.concat([df.min(), df.max()], axis=1).T
+        return cls.from_bounds(bounds)
+
     @property
     def is_empty(self):
         """Whether this search space is empty."""

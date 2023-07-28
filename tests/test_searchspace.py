@@ -81,3 +81,25 @@ def test_continuous_searchspace_creation_from_bounds():
 
     assert searchspace.type == SearchSpaceType.CONTINUOUS
     assert searchspace.parameters == parameters
+
+
+def test_hyperrectangle_searchspace_creation():
+    """
+    A purely continuous hyperrectangle-shaped search space is created that spans a
+    certain set of points.
+    """
+    points = pd.DataFrame(
+        {
+            "param1": [0, 1, 2],
+            "param2": [-1, 0, 1],
+        }
+    )
+    searchspace = SearchSpace(continuous=SubspaceContinuous.from_dataframe(points))
+
+    parameters = [
+        NumericContinuous("param1", (0, 2)),
+        NumericContinuous("param2", (-1, 1)),
+    ]
+
+    assert searchspace.type == SearchSpaceType.CONTINUOUS
+    assert searchspace.parameters == parameters

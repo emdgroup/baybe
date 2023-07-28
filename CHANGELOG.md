@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `from_dataframe` convenience constructor for discrete subspaces 
+- `from_dataframe` convenience constructors for discrete and continuous subspaces 
 - `from_bounds` convenience constructor for continuous subspaces
 
 ### Changed
