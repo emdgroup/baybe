@@ -1,24 +1,25 @@
+### Example for full simulation loop using a custom analytical test function
+
 """
-Run history simulation for a single target with a custom defined function as lookup.
-
-This example shows a full simulation loop. That is, we do not only perform one or two
-iterations like in the other examples but rather a full loop. We also store and display
-the results. We refer to the examples in the searchspace folder for more information
-on how to use the synthetic test functions.
-
-This example can also be used or testing new aspects like recommenders.
-
-Note that this example assumes some familiarity with BayBE.
+This example shows a simulation loop for a single target with a custom test function as lookup.
+That is, we perform several Monte Carlo runs with several iterations.
+In addition, we also store and display the results.
 """
+
+
+# This example assumes some basic familiarity with using BayBE and how to use BoTorch test
+# functions in discrete searchspaces.
+# For further details, we thus refer to
+# - [`baybe_object`](./../Basics/baybe_object.md) for a basic example on how to use BayBE and
+# - [here](./../Searchspaces/continuous_space_custom_function.md) for how to use a custom function.
+
+#### Necessary imports for this example
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 from baybe.core import BayBE
-
-# Note that this import here might be problematic depending on your exact
-# setup and that you might need to make some adjustments to make it work!
 from baybe.parameters import NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -28,22 +29,19 @@ from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 
+### Parameters for a full simulation loop
+
 # For the full simulation, we need to define some additional parameters.
-# These are the number of Monte Carlo runs and the number of experiments to be
-# conducted per Monte Carlo run.
+# These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
+
 N_MC_ITERATIONS = 2
 N_EXP_ITERATIONS = 4
 
-# Here, we now need to define our custom function first. The function should accept an
-# arbitrary or fixed amount of floats as input and return either a single float or
-# a tuple of floats.
-# NOTE It is assumed that the analytical test function does only perform a single
-# calculation, i.e., it is assumed to work in a non-batched-way!
-# NOTE The case of using an analytical test function for multi-target optimization has
-# not yet been fully tested.
+### Defining the test function
+
+# See [here](./../Searchspaces/continuous_space_custom_function.md) for details.
 
 
-# We implement a simple sum of squares function with a single output.
 def sum_of_squares(*x: float) -> float:
     """
     Calculates the sum of squares.
@@ -54,16 +52,18 @@ def sum_of_squares(*x: float) -> float:
     return res
 
 
-# For our actual experiment, we need to specify the number of dimension that we want
-# to use as this is necessary to know for the creation of the parameters. The same is
-# true for the bounds of the parameters which should be provided as a list of
-# two-dimensional tuples.
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-# As we expect it to be the most common use case, we construct a purely discrete space
-# here. We refer to the examples within examples/SearchSpaces for details on
-# how to change this code for continuous or hybrid spaces.
+### Creating the searchspace and the objective
+
+# As we expect it to be the most common use case, we construct a purely discrete space here.
+# Details on how to adjust this for other spaces can be found in the searchspace examples.
+
+# The parameter `POINTS_PER_DIM` controls the number of points per dimension.
+# Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
+
+POINTS_PER_DIM = 10
 parameters = [
     NumericDiscrete(
         name=f"x_{k+1}",
@@ -73,25 +73,23 @@ parameters = [
     for k in range(DIMENSION)
 ]
 
-# Construct searchspace and objective.
 searchspace = SearchSpace.from_product(parameters=parameters)
-
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-# The goal of this example is to demonstrate how to perform a full simulation. To
-# simplify adjusting the example for other recommenders or strategies, we explicitly
-# construct some strategy objects. For details on the construction of strategy objects,
-# we refer to strategies.py within examples/Basics.
+### Constructing BayBE objects for the simulation loop
+
+# To simplify adjusting the example for other strategies, we construct some strategy objects.
+# For details on strategy objects, we refer to [`strategies`](./../Basics/strategies.md).
 
 seq_greedy_EI_strategy = Strategy(
     recommender=SequentialGreedyRecommender(acquisition_function_cls="qEI"),
 )
 random_strategy = Strategy(recommender=RandomRecommender())
 
+# We now create one BayBE object per strategy.
 
-# Create the BayBE object
 seq_greedy_EI_baybe = BayBE(
     searchspace=searchspace,
     strategy=seq_greedy_EI_strategy,
@@ -103,10 +101,11 @@ random_baybe = BayBE(
     objective=objective,
 )
 
-# We can now use the simulate_scenarios function from simulation.py to simulate a
-# full experiment. Note that this function enables to run multiple scenarios one after
-# another by a single function call, which is why we need to define a dictionary
-# mapping names for the scenarios to actual BayBE objects
+### Performing the simulation loop
+
+# We can now use the `simulate_scenarios` function to simulate a full experiment.
+# Note that this function enables to run multiple scenarios by a single function call.
+# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
 scenarios = {
     "Sequential greedy EI": seq_greedy_EI_baybe,
     "Random": random_baybe,
