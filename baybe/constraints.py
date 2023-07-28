@@ -81,7 +81,7 @@ class ThresholdCondition(Condition):
     """
 
     # object variables
-    threshold: float
+    threshold: float = field()
     operator: str = field(validator=[in_(_threshold_operators)])
     tolerance: Optional[float] = field()
 
@@ -129,7 +129,7 @@ class SubSelectionCondition(Condition):
     """
 
     # object variables
-    selection: List[Any]
+    selection: List[Any] = field()
 
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
@@ -307,7 +307,7 @@ class DependenciesConstraint(Constraint):
     eval_during_modeling = False
 
     # object variables
-    conditions: List[Condition]
+    conditions: List[Condition] = field()
     affected_parameters: List[List[str]] = field()
     # Flag that indicates whether the affected parameters are permutation invariant.
     # Not to be set by the user but by other constraints reusing this class.
@@ -383,7 +383,7 @@ class PermutationInvarianceConstraint(Constraint):
     eval_during_modeling = False
 
     # object variables
-    dependencies: Optional[DependenciesConstraint] = None
+    dependencies: Optional[DependenciesConstraint] = field(default=None)
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -439,7 +439,7 @@ class CustomConstraint(Constraint):
     eval_during_modeling = False
 
     # object variables
-    validator: Callable[[pd.Series], bool]
+    validator: Callable[[pd.Series], bool] = field()
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
