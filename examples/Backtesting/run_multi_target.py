@@ -1,11 +1,18 @@
+### Example for full simulation loop using the multi target mode for custom analytic functions
+
 """
-This example shows how one can use a multi target mode for the objective when using a
-custom analytic functions
+This example shows how to use a multi target objective for a custom analytic function.
 It uses a desirability value to handle several targets.
-It assumes that the reader is familiar with the basics of BayBE, as well as the basics
-of using custom analytic functions and multiple targets.
-We thus refer to the corresponding examples for more explanations on these aspects.
 """
+
+# This example assumes basic familiarty with BayBE, custom test functions and multiple targets.
+# For further details, we thus refer to
+# - [`baybe_object`](./../Basics/baybe_object.md) for a more general and basic example,
+# - [`run_custom_analytical`](./run_custom_analytical.md) for custom test functions, and
+# - [`desirability`](./../Multi_Target/desirability.md) for multiple targets.
+
+#### Necessary imports for this example
+
 from typing import Tuple
 
 import numpy as np
@@ -15,8 +22,18 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, Objective
 
+### Parameters for a full simulation loop
 
-# We implement a simple sum of squares function with two outputs.
+# For the full simulation, we need to define some additional parameters.
+# These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
+
+N_MC_ITERATIONS = 2
+N_EXP_ITERATIONS = 4
+
+### Defining the test function
+
+
+# See [`run_custom_analytical`](./run_custom_analytical.md) for details
 def sum_of_squares(*x: float) -> Tuple[float, float]:
     """
     Calculates the sum of squares.
@@ -27,18 +44,18 @@ def sum_of_squares(*x: float) -> Tuple[float, float]:
     return res, 2 * res**2 - 1
 
 
-# For our actual experiment, we need to specify the number of dimension that we want
-# to use as this is necessary to know for the creation of the parameters. The same is
-# true for the bounds of the parameters which should be provided as a list of
-# two-dimensional tuples.
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-# In this example, we construct a purely discrete space.
+### Creating the searchspace and the objective
+
+#### Creating the searchspace
+
+# In this example, we construct a purely discrete space with 10 points per dimension.
 parameters = [
     NumericDiscrete(
         name=f"x_{k+1}",
-        values=list(np.linspace(*BOUNDS[k], 15)),
+        values=list(np.linspace(*BOUNDS[k], 10)),
         tolerance=0.01,
     )
     for k in range(DIMENSION)
@@ -47,17 +64,12 @@ parameters = [
 searchspace = SearchSpace.from_product(parameters=parameters)
 
 
-# TARGETS
-# --------------------------------------------------------------------------------------
+#### Creating multiple target object
 
-
-# The multi target mode is handled when creating the objective object
-# Thus we first need to define the different targets
-
+# The multi target mode is handled when creating the objective object.
+# Thus we first need to define the different targets.
 # We use two targets here.
-# One which is maximized and one minimized during the optimization process.
-
-
+# The first target is maximized and the second target is minimized during the optimization process.
 Target_1 = NumericalTarget(
     name="Target_1", mode="MAX", bounds=(0, 100), bounds_transform_func="LINEAR"
 )
@@ -66,12 +78,11 @@ Target_2 = NumericalTarget(
 )
 
 
-# OBJECTIVE
-# --------------------------------------------------------------------------------------
+#### Creating the objective object
 
+# We collect the two targets in a list and use this list to construct the objective.
 
 targets = [Target_1, Target_2]
-
 
 objective = Objective(
     mode="DESIRABILITY",
@@ -81,10 +92,11 @@ objective = Objective(
 )
 
 
-# We finally create the BayBE object and perform backtesting.
+### Constructing a BayBE object and performing the simulation loop
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 
+# We can now use the `simulate_scenarios` function to simulate a full experiment.
 scenarios = {"BayBE": baybe_obj}
 
 results = simulate_scenarios(
