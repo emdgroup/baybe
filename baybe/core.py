@@ -63,7 +63,7 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     constraints = specs.get("constraints", None)
     if constraints:
         constraints = cattrs.structure(specs["constraints"], List[Constraint])
-    return SearchSpace.create(parameters, constraints)
+    return SearchSpace.from_product(parameters, constraints)
 
 
 def searchspace_validation_hook(specs: dict, _) -> None:

@@ -106,7 +106,7 @@ disc_parameters = [
 parameters = cont_parameters + disc_parameters
 
 # Construct searchspace and objective.
-searchspace = SearchSpace.create(parameters=parameters)
+searchspace = SearchSpace.from_product(parameters=parameters)
 
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]

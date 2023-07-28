@@ -52,7 +52,7 @@ targets = [NumericalTarget(name="Yield", mode="MAX")]
 
 # Create the DOE object
 baybe_orig = BayBE(
-    searchspace=SearchSpace.create(parameters=parameters, constraints=None),
+    searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(mode="SINGLE", targets=targets),
     strategy=Strategy(
         recommender=SequentialGreedyRecommender(),

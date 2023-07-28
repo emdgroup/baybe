@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Convenience constructor for creating search spaces from dataframes
 
 ### Changed
+- Renamed `create` constructors to `from_product`
 - Cached recommendations are now a private attribute
 - Parameters, targets and objectives are now immutable
 

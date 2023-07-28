@@ -30,7 +30,7 @@ Num_disc_2 = NumericDiscrete("Num_disc_2", values=[-1, -3, -6, -9], tolerance=0.
 
 parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
 
-searchspace = SearchSpace.create(parameters=parameters)
+searchspace = SearchSpace.from_product(parameters=parameters)
 
 
 # TARGETS

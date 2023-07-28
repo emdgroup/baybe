@@ -25,7 +25,7 @@ def test_bounds_order():
         NumericDiscrete(name="B_disc", values=[7.0, 8.0, 9.0]),
         NumericContinuous(name="B_cont", bounds=(10.0, 12.0)),
     ]
-    searchspace = SearchSpace.create(parameters=parameters)
+    searchspace = SearchSpace.from_product(parameters=parameters)
     expected = torch.tensor([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]]).double()
     assert torch.equal(
         searchspace.param_bounds_comp,
@@ -39,7 +39,7 @@ def test_empty_parameter_bounds():
     search spaces.
     """
     parameters = []
-    searchspace_discrete = SubspaceDiscrete.create(parameters=parameters)
+    searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
     searchspace_continuous = SubspaceContinuous(parameters=parameters)
     expected = torch.empty(2, 0)
     assert torch.equal(searchspace_discrete.param_bounds_comp, expected)

@@ -75,7 +75,7 @@ constraint_3 = ExcludeConstraint(
 )
 
 # Creating the searchspace using the previously defined constraints
-searchspace = SearchSpace.create(
+searchspace = SearchSpace.from_product(
     parameters=parameters, constraints=[constraint_1, constraint_2, constraint_3]
 )
 

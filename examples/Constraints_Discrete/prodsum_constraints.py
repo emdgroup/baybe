@@ -71,7 +71,7 @@ prod_constraint = ProductConstraint(
 
 constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 
-searchspace = SearchSpace.create(parameters=parameters, constraints=constraints)
+searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
 # Create the objective
 objective = Objective(

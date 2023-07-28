@@ -92,7 +92,7 @@ class SubspaceDiscrete:
         )
 
     @classmethod
-    def create(
+    def from_product(
         cls,
         parameters: List[DiscreteParameter],
         constraints: Optional[List[Constraint]] = None,
@@ -456,13 +456,20 @@ class SearchSpace(SerialMixin):
         _validate_constraints(self.discrete.constraints)
 
     @classmethod
-    def create(
+    def from_product(
         cls,
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
     ) -> "SearchSpace":
         """
+        Creates a "product" search space (with optional subsequent constraints applied).
+
+        That is, the discrete subspace becomes the (filtered) cartesian product
+        containing all discrete parameter combinations while, analogously, the
+        continuous subspace represents the (filtered) cartesian product of all
+        continuous parameters. (TODO: continuous constraints are yet to be enabled.)
+
         Parameters
         ----------
         parameters : List[Parameter]
@@ -484,7 +491,7 @@ class SearchSpace(SerialMixin):
         if constraints:
             _validate_constraints(constraints)
 
-        discrete: SubspaceDiscrete = SubspaceDiscrete.create(
+        discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete
             ],

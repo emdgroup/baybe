@@ -73,7 +73,7 @@ concentration = NumericDiscrete(
 parameters = [solvent, base, ligand, temperature, concentration]
 
 # Construct searchspace and objective. Note that the objective is maximization!
-searchspace = SearchSpace.create(parameters=parameters)
+searchspace = SearchSpace.from_product(parameters=parameters)
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )

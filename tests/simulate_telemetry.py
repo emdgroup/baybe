@@ -55,7 +55,7 @@ parameters = [
     NumericDiscrete(name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005),
 ]
 config = {
-    "searchspace": SearchSpace.create(
+    "searchspace": SearchSpace.from_product(
         parameters=parameters,
         constraints=None,
     ),

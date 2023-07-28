@@ -46,7 +46,7 @@ def test_serialization_without_recommendation(hybrid_recommender):
     ]
     targets = [NumericalTarget(name="Yield", mode="MAX")]
     baybe_orig = BayBE(
-        searchspace=SearchSpace.create(parameters=parameters),
+        searchspace=SearchSpace.from_product(parameters=parameters),
         objective=Objective(mode="SINGLE", targets=targets),
         strategy=Strategy(recommender=hybrid_recommender),
     )
