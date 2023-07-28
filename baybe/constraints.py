@@ -311,7 +311,11 @@ class DependenciesConstraint(Constraint):
     affected_parameters: List[List[str]] = field()
     # Flag that indicates whether the affected parameters are permutation invariant.
     # Not to be set by the user but by other constraints reusing this class.
-    permutation_invariant: bool = field(init=False, default=False)
+    # TODO: This should be init=False, but would require changing the unstructuring
+    #   logic. Let's wait for the next cattrs release with the following PR to be merged
+    #   and then init=False attributes can be handled more elegantly:
+    #   https://github.com/python-attrs/cattrs/pull/395/commits
+    permutation_invariant: bool = field(default=False)
 
     @affected_parameters.validator
     def affected_parameters_validator(self, _, value):
