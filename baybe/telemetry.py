@@ -18,6 +18,7 @@ from baybe import __version__
 from baybe.parameters import Parameter
 from baybe.utils import fuzzy_row_match, strtobool
 
+
 def is_enabled() -> bool:
     """
     Tells whether telemetry currently is enabled. Telemetry can be disabled by setting
