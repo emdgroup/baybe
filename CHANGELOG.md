@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Constraints serialization
 
 ### Changed
-- A maxiumum of one `DependenciesConstraint` is allowed
+- A maximum of one `DependenciesConstraint` is allowed
 - Bumped numpy and matplotlib versions
 
 ## [0.3.1] - 2023-07-17
