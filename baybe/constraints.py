@@ -311,7 +311,7 @@ class DependenciesConstraint(Constraint):
     affected_parameters: List[List[str]] = field()
     # Flag that indicates whether the affected parameters are permutation invariant.
     # Not to be set by the user but by other constraints reusing this class.
-    permutation_invariant = False
+    permutation_invariant: bool = field(init=False, default=False)
 
     @affected_parameters.validator
     def affected_parameters_validator(self, _, value):
@@ -383,7 +383,7 @@ class PermutationInvarianceConstraint(Constraint):
     eval_during_modeling = False
 
     # object variables
-    dependencies: Optional[DependenciesConstraint]
+    dependencies: Optional[DependenciesConstraint] = None
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
