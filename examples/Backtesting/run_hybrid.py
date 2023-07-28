@@ -1,22 +1,21 @@
-"""
-Run history simulation for a single target with a custom defined function as lookup in
-a hybrid searchspace.
+### Example for full simulation loop using a custom analytical test function in a hybrid space
 
-This example shows a full simulation loop. That is, we do not only perform one or two
-iterations like in the other examples but rather a full loop. We also store and display
-the results. We refer to the examples in the searchspace folder for more information
-on how to use the synthetic test functions and to the example file on hybrid
-searchspaces for more information on them.
-
-Note that this example assumes some familiarity with BayBE.
 """
+This example shows a simulation loop for a single target with a custom test function as lookup.
+Most importantly, it demonstrates the creation of a custom hybrid searchspace.
+"""
+
+# This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
+# We refer to [`baybe_object`](./../Basics/baybe_object.md) for a more  basic example resp.
+# to [`run_custom_analytical`](./run_custom_analytical.md) for details on the lookup mechanism.
+
+#### Necessary imports for this example
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 from baybe.core import BayBE
-
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -29,20 +28,17 @@ from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 
+### Parameters for a full simulation loop
+
 # For the full simulation, we need to define some additional parameters.
-# These are the number of Monte Carlo runs and the number of experiments to be
-# conducted per Monte Carlo run.
+# These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 N_MC_ITERATIONS = 2
 N_EXP_ITERATIONS = 5
 
-# Here, we now need to define our custom function first. The function should accept an
-# arbitrary or fixed amount of floats as input and return either a single float or
-# a tuple of floats.
-# NOTE It is assumed that the analytical test function does only perform a single
-# calculation, i.e., it is assumed to work in a non-batched-way!
+### Defining the test function.
 
 
-# We implement a simple sum of squares function with a single output.
+# See [`here`](./run_custom_analytical.md) for details on the custom analytical test function.
 def sum_of_squares(*x: float) -> float:
     """
     Calculates the sum of squares.
@@ -53,37 +49,35 @@ def sum_of_squares(*x: float) -> float:
     return res
 
 
-# For our actual experiment, we need to specify the number of dimensions that we want
-# to use as this is necessary to know for the creation of the parameters. The same is
-# true for the bounds of the parameters which should be provided as a list of
-# two-dimensional tuples.
+# For our actual experiment, we need to specify the number of dimension that we want to use.
+# This is necessary to know for the creation of the parameters.
+# Similarly, it is necessary to state the bounds of the parameters.
+# These should be provided as a list of two-dimensional tuples.
 DIMENSION = 4
-BOUNDS = [
-    (-2, 2),
-    (-2, 2),
-    (-2, 2),
-    (-2, 2),
-]
+BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-# Since we are in a hybrid setting, we need to specify which indices should be discrete
-# and which should be continuous.
+### Constructing the hybrid searchspace
+
+# Our goal is to construct a hybrid searchspace containing discrete and continuous parameters.
+# We thus need to specify which indices should be discrete and which should be continuous.
 CONT_INDICES = [0, 1]
 DISC_INDICES = [2, 3]
 
-# This parameter decides how many points each discrete dimension should have
-# NOTE This example uses the SequentialGreedyRecommender which performs a brute-force
-# optimization over the discrete subspace. We thus heavily advise to keep the number
-# of discrete parmeters and points rather small here.
-POINTS_PER_DIM = 6
-
-# Check if the provided indices match the given dimension
+# This code verifies whether the provided indices agree with `DIMENSION`.
 if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
     raise ValueError(
         "Either the intersection between CONT_IND and DISC_IND is not empty or your "
         "indices do not match."
     )
 
-# Construct the continuous parameters as NumericContinuous parameters
+# The following parameter decides how many points each discrete dimension should have.
+# Note that this example uses the `SequentialGreedyRecommender` (among others).
+# This recommender performs a brute-force optimization over the discrete subspace.
+# We thus heavily advise to keep the number of discrete parmeters and points rather small here.
+POINTS_PER_DIM = 6
+
+
+# Construct the continuous parameters as NumericContinuous parameters.
 cont_parameters = [
     NumericContinuous(
         name=f"x_{k+1}",
@@ -92,7 +86,7 @@ cont_parameters = [
     for k in CONT_INDICES
 ]
 
-# Construct the discrete parameters as NumericDiscrete parameters
+# Construct the discrete parameters as NumericDiscrete parameters.
 disc_parameters = [
     NumericDiscrete(
         name=f"x_{k+1}",
@@ -102,27 +96,38 @@ disc_parameters = [
     for k in DISC_INDICES
 ]
 
-# Concatenate the continuous and discrete parameters
+# Concatenate the continuous and discrete parameters.
 parameters = cont_parameters + disc_parameters
 
 # Construct searchspace and objective.
 searchspace = SearchSpace.from_product(parameters=parameters)
-
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-# This example compares the sequential greedy recommender with the naive hybrid
-# recommender. We thus initialize a baybe object for both of them as well as for the
-# random recommender.
+### Constructing BayBE objects for the simulation loop
+
+# This example compares three different available hybrid recommenders:
+# The `SequentialGreedyRecommender`, the `NaiveHybridRecommedner` and the `RandomRecommender`.
+# For each of them, we initialize one strategy object.
+# Note that it is possible to further specify the behavor of the `SequentialGreedyRecommender`.
+# Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control
+# - how much of the discrete subspace should be explored
+# - how these points should be sampled.
+
+# Note that the recommender performs one optimization of the continuous subspace per sampled point.
+# We thus recommend to keep this parameter rather low.
+
 seq_greedy_strategy = Strategy(
-    recommender=SequentialGreedyRecommender(),
+    recommender=SequentialGreedyRecommender(
+        hybrid_sampler="Farthest", sampling_percentage=0.3
+    ),
 )
 naive_hybrid_strategy = Strategy(recommender=NaiveHybridRecommender())
 random_strategy = Strategy(recommender=RandomRecommender())
 
+# We now create one BayBE object per strategy.
 
-# Create the BayBE objects
 seq_greedy_baybe = BayBE(
     searchspace=searchspace,
     strategy=seq_greedy_strategy,
@@ -139,10 +144,9 @@ random_baybe = BayBE(
     objective=objective,
 )
 
-# We can now use the simulate_scenarios function from simulation.py to simulate a
-# full experiment. Note that this function enables to run multiple scenarios one after
-# another by a single function call, which is why we need to define a dictionary
-# mapping names for the scenarios to actual BayBE objects
+# We can now use the `simulate_scenarios` function to simulate a full experiment.
+# Note that this function enables to run multiple scenarios by a single function call.
+# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
 scenarios = {
     "Sequential greedy": seq_greedy_baybe,
     "Naive hybrid": naive_hybrid_baybe,
