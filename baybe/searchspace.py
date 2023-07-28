@@ -506,19 +506,6 @@ class SearchSpace(SerialMixin):
 
         return SearchSpace(discrete=discrete, continuous=continuous)
 
-    @classmethod
-    def from_dataframe(
-        cls,
-        df: pd.DataFrame,
-        parameters: Optional[List[Parameter]] = None,
-    ) -> "SearchSpace":
-        """
-        Creates search space containing only a discrete subspace with a specified set
-        of configurations. See `SubspaceDiscrete.from_dataframe` for details.
-        """
-        discrete = SubspaceDiscrete.from_dataframe(df, parameters)
-        return SearchSpace(discrete=discrete)
-
     @property
     def parameters(self) -> List[Parameter]:
         return self.discrete.parameters + self.continuous.parameters

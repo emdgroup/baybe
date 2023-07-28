@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from baybe.searchspace import SearchSpace
+from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.strategies.recommender import NonPredictiveRecommender
 from baybe.utils import get_subclasses
 from sklearn.datasets import make_blobs
@@ -107,7 +107,7 @@ def main():
     )
 
     # create the corresponding search space
-    searchspace = SearchSpace.from_dataframe(points)
+    searchspace = SearchSpace(discrete=SubspaceDiscrete.from_dataframe(points))
 
     # create the strategy and generate the recommendations
     # TODO: The acquisition function should become optional for model-free methods

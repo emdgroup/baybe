@@ -46,8 +46,8 @@ def test_empty_parameter_bounds():
     assert torch.equal(searchspace_continuous.param_bounds_comp, expected)
 
 
-def test_creation_from_dataframe():
-    """A search space is created from an example dataframe."""
+def test_discrete_searchspace_creation_from_dataframe():
+    """A purely discrete search space is created from an example dataframe."""
     num_specified = NumericDiscrete(name="num_specified", values=[1, 2, 3])
     num_unspecified = NumericDiscrete(name="num_unspecified", values=[4, 5, 6])
     cat_specified = Categorical(name="cat_specified", values=["a", "b", "c"])
@@ -56,7 +56,9 @@ def test_creation_from_dataframe():
     all_params = [num_specified, num_unspecified, cat_specified, cat_unspecified]
 
     df = pd.DataFrame({param.name: param.values for param in all_params})
-    searchspace = SearchSpace.from_dataframe(df, [num_specified, cat_specified])
+    searchspace = SearchSpace(
+        SubspaceDiscrete.from_dataframe(df, parameters=[num_specified, cat_specified])
+    )
 
     assert searchspace.continuous.is_empty
     assert searchspace.parameters == all_params
