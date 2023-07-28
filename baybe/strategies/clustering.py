@@ -37,9 +37,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     derived classes.
     """
 
-    compatibility = SearchSpaceType.DISCRETE
-
-    # Class variables that need to be defined by derived classes
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # TODO: "Type" should not appear in ClassVar. Both PyCharm and mypy complain, see
     #   also note in the mypy docs:
     #       https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
@@ -49,6 +48,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     model_class: ClassVar[Type[SklearnModel]]
     model_cluster_num_parameter_name: ClassVar[str]
 
+    # Object variables
     # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism,
     #   similar to what is done in the recommenders
     model_params: dict = field(factory=dict)
@@ -127,9 +127,11 @@ if KMedoids:
     class PAMClusteringRecommender(SKLearnClusteringRecommender):
         """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-        model_class = KMedoids
-        model_cluster_num_parameter_name = "n_clusters"
+        # Class variables
+        model_class: ClassVar[Type[SklearnModel]] = KMedoids
+        model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
 
+        # Object variables
         _use_custom_selector = field(default=True)
         model_params: dict = field()
 
@@ -154,9 +156,11 @@ if KMedoids:
 class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means initial clustering strategy."""
 
-    model_class = KMeans
-    model_cluster_num_parameter_name = "n_clusters"
+    # Class variables
+    model_class: ClassVar[Type[SklearnModel]] = KMeans
+    model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
 
+    # Object variables
     _use_custom_selector = field(default=True)
     model_params: dict = field()
 
@@ -189,8 +193,9 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) initial clustering strategy."""
 
-    model_class = GaussianMixture
-    model_cluster_num_parameter_name = "n_components"
+    # Class variables
+    model_class: ClassVar[Type[SklearnModel]] = GaussianMixture
+    model_cluster_num_parameter_name: ClassVar[str] = "n_components"
 
     def _make_selection_custom(
         self,

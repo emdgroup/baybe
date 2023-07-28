@@ -184,8 +184,8 @@ class ExcludeConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     conditions: List[Condition] = field(validator=min_len(1))
@@ -210,8 +210,8 @@ class SumConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -233,8 +233,8 @@ class ProductConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -261,8 +261,8 @@ class NoLabelDuplicatesConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -281,8 +281,8 @@ class LinkedParametersConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -303,8 +303,8 @@ class DependenciesConstraint(Constraint):
     # class variables
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     conditions: List[Condition] = field()
@@ -383,8 +383,8 @@ class PermutationInvarianceConstraint(Constraint):
     # class variables
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     dependencies: Optional[DependenciesConstraint] = field(default=None)
@@ -439,8 +439,8 @@ class CustomConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     validator: Callable[[pd.Series], bool] = field()

@@ -77,6 +77,7 @@ def select_candidates_and_recommend(
 class Recommender(ABC):
     # TODO Docstrings missing
 
+    # Class variables
     compatibility: ClassVar[SearchSpaceType]
 
     @abstractmethod

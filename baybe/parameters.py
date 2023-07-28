@@ -167,7 +167,7 @@ class Categorical(DiscreteParameter):
     """
 
     # class variables
-    is_numeric = False
+    is_numeric: ClassVar[bool] = False
 
     # object variables
     _values: list = field(
@@ -201,7 +201,7 @@ class NumericDiscrete(DiscreteParameter):
     """
 
     # class variables
-    is_numeric = True
+    is_numeric: ClassVar[bool] = True
 
     # object variables
     _values: List[Union[int, float]] = field(
@@ -263,8 +263,8 @@ class NumericContinuous(Parameter):
     """
 
     # class variables
-    is_numeric = True
-    is_discrete = False
+    is_numeric: ClassVar[bool] = True
+    is_discrete: ClassVar[bool] = False
 
     # object variables
     bounds: Interval = field(default=None, converter=convert_bounds)
@@ -300,7 +300,7 @@ class GenericSubstance(DiscreteParameter):
     """
 
     # class variables
-    is_numeric = False
+    is_numeric: ClassVar[bool] = False
 
     # object variables
     data: Dict[str, str] = field()
@@ -384,7 +384,7 @@ class Custom(DiscreteParameter):
     """
 
     # class variables
-    is_numeric = False
+    is_numeric: ClassVar[bool] = False
 
     # object variables
     data: pd.DataFrame = field(eq=eq_dataframe())
