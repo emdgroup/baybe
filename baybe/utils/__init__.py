@@ -687,16 +687,13 @@ def get_subclasses(cls: T, recursive: bool = True, abstract: bool = False) -> Li
     subclasses = []
     for subclass in cls.__subclasses__():
 
-        # Direct subclasses
-        subclasses.append(subclass)
+        # Append direct subclass only if it is not abstract
+        if abstract or not isabstract(subclass):
+            subclasses.append(subclass)
 
-        # Indirect subclasses
+        # If requested, add indirect subclasses
         if recursive:
             subclasses.extend(get_subclasses(subclass, abstract=abstract))
-
-    # Optionally remove abstract classes
-    if not abstract:
-        subclasses = [s for s in subclasses if not isabstract(s)]
 
     return subclasses
 
