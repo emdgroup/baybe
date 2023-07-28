@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Convenience constructor for creating search spaces from dataframes
+- `from_dataframe` convenience constructor for discrete subspaces 
+- `from_bounds` convenience constructor for continuous subspaces
 
 ### Changed
 - Renamed `create` constructors to `from_product`

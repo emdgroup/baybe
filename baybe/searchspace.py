@@ -334,6 +334,21 @@ class SubspaceContinuous:
         """Creates an empty continuous subspace."""
         return SubspaceContinuous([])
 
+    @classmethod
+    def from_bounds(cls, bounds: pd.DataFrame) -> "SubspaceContinuous":
+        """Creates a hyperrectangle-shaped continuous search space with given bounds."""
+
+        # Assert that the input represents valid bounds
+        assert bounds.shape[0] == 2
+        assert (np.diff(bounds.values, axis=0) >= 0).all()
+        assert bounds.apply(pd.api.types.is_numeric_dtype).all()
+
+        # Create the corresponding parameters and from them the search space
+        parameters = [
+            NumericContinuous(name, bound) for (name, bound) in bounds.iteritems()
+        ]
+        return SubspaceContinuous(parameters)
+
     @property
     def is_empty(self):
         """Whether this search space is empty."""

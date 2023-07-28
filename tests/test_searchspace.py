@@ -4,7 +4,12 @@ import pytest
 import torch
 
 from baybe.parameters import Categorical, NumericContinuous, NumericDiscrete
-from baybe.searchspace import SearchSpace, SubspaceContinuous, SubspaceDiscrete
+from baybe.searchspace import (
+    SearchSpace,
+    SearchSpaceType,
+    SubspaceContinuous,
+    SubspaceDiscrete,
+)
 from baybe.utils import EmptySearchSpaceError
 
 
@@ -60,6 +65,19 @@ def test_discrete_searchspace_creation_from_dataframe():
         SubspaceDiscrete.from_dataframe(df, parameters=[num_specified, cat_specified])
     )
 
-    assert searchspace.continuous.is_empty
+    assert searchspace.type == SearchSpaceType.DISCRETE
     assert searchspace.parameters == all_params
     assert df.equals(searchspace.discrete.exp_rep)
+
+
+def test_continuous_searchspace_creation_from_bounds():
+    """A purely continuous search space is created from example bounds."""
+    parameters = [
+        NumericContinuous("param1", (0, 1)),
+        NumericContinuous("param2", (-1, 1)),
+    ]
+    bounds = pd.DataFrame({p.name: p.bounds.to_tuple() for p in parameters})
+    searchspace = SearchSpace(continuous=SubspaceContinuous.from_bounds(bounds))
+
+    assert searchspace.type == SearchSpaceType.CONTINUOUS
+    assert searchspace.parameters == parameters
