@@ -1,10 +1,14 @@
+### Example for using the multi target mode for the objective
+
 """
-This example shows how one can use a multi target mode for the objective.
+Example for using the multi target mode for the objective.
 It uses a desirability value to handle several targets.
-It assumes that the reader is familiar with the basics of BayBE, and thus does not
-explain the details of e.g. parameter creation. For additional explanation on these
-aspects, we refer to the Basic examples.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
 
 from baybe.core import BayBE
 from baybe.parameters import Categorical, NumericDiscrete
@@ -13,11 +17,7 @@ from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
 
-# SEARCHSPACE
-# --------------------------------------------------------------------------------------
-
-
-# We begin by setting up some parameters for our experiments
+### Experiment setup and creating the searchspace
 
 Categorical_1 = Categorical("Categorical_1", values=[22, 33], encoding="OHE")
 Categorical_2 = Categorical(
@@ -33,69 +33,48 @@ parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
 searchspace = SearchSpace.from_product(parameters=parameters)
 
 
-# TARGETS
-# --------------------------------------------------------------------------------------
+### Defining the targets
 
+# The multi target mode is handled when creating the objective object.
+# Thus we first need to define the different targets.
 
-# The multi target mode is handled when creating the objective object
-# Thus we first need to define the different targets
-
-# For example, we can start by defining two targets
-# One which is maximized and one minimized during the optimization process
-
-# Note that in this multi target mode,
-# the user must specify bounds for each target
+# This examples has different targets with different modes.
+# The first target is maximized and while the second one is minimized.
+# Note that in this multi target mode, the user must specify bounds for each target.
 
 Target_1 = NumericalTarget(name="Target_1", mode="MAX", bounds=(0, 100))
 Target_2 = NumericalTarget(name="Target_2", mode="MIN", bounds=(0, 100))
 
+# For each target it is also possible to specify a `bounds_transformation_func` function.
+# A detailed discussion of this functionality can be found at the end of this example.
 
-# For each target it is also possible to specify a Bounds_transformation_function
-# This function is used to transform target values to an interval [0;1]
-# for MAX and MIN mode, an ascending or decreasing 'LINEAR' function is used per default
-# for match mode two functions are available 'TRIANGULAR' or 'BELL'
-
-# These functions are described as follows:
-# - LINEAR: maps input values in a specified interval [lower, upper] to the interval
-# [0, 1]. Outside the specified interval, the function remains constant
-# (that is, 0 or 1, depending on the side and selected mode (=decreasing or not))
-
-# - TRIANGULAR: is 0 outside a specified interval and linearly increases to 1 from both
-# interval ends, reaching the value 1 at the center of the interval
-# This function is used per default for MATCH mode
-
-# - BELL: A Gaussian bell curve, specified through the boundary values of the sigma
-# interval, reaching the maximum value of 1 at the interval center
-
-# For example we can define a third target working with the mode MATCH
-# and a BELL bounds_transform_function.
-# Note that the MATCH mode seeks to have the target at the mean between the two bounds.
-# For example, choosing 95 and 105 will lead the algorithm seeking 100 as the optimal
-# value. Thus, using the bounds, it is possible to control both the match target and
-# the range around this target that is considered viable.
+# In this example, define a third target working with the mode `MATCH`.
+# We furthermore use `bounds_transform_func="BELL"`.
 
 Target_3 = NumericalTarget(
     name="Target_3", mode="MATCH", bounds=(45, 55), bounds_transform_func="BELL"
 )
 
+# Note that the `MATCH` mode seeks to have the target at the mean between the two bounds.
+# For example, choosing 95 and 105 will lead the algorithm seeking 100 as the optimal value.
+# Thus, using the bounds, it is possible to control both the match target and
+# the range around this target that is considered viable.
 
-# OBJECTIVE
-# --------------------------------------------------------------------------------------
 
+### Creating the objective
 
-# Now to work with these three targets the objective object must be properly created
-# The mode is set to 'DESIRABILITY' and the targets are described in a list
+# Now to work with these three targets the objective object must be properly created.
+# The mode is set to `DESIRABILITY` and the targets are described in a list.
 
 targets = [Target_1, Target_2, Target_3]
 
-# for the recommender to work properly
-# a combine_function is used to create a single target out of the several targets given.
-# The combine function can either be the mean 'MEAN' or the geometric mean 'GEOM_MEAN'
-# per default GEOM_MEAN is used
+# As the recommender requires a single function, the different targets need to be combined.
+# Thus, a `combine_function` is used to create a single target out of the several targets given.
+# The combine function can either be the mean `MEAN` or the geometric mean `GEOM_MEAN`.
+# Per default, `GEOM_MEAN` is used.
 # Weights for each target can also be specified as a list of floats in the arguments
-# Per default the weights are equally distributed between all targets.
-# Also, weights are normalized internally, so it is not necessary to handle
-# normalization or scaling here.
+# Per default, weights are equally distributed between all targets and are normalized internally.
+# It is thus not necessary to handle normalization or scaling.
 
 
 objective = Objective(
@@ -107,22 +86,15 @@ objective = Objective(
 
 print(objective)
 
-
-# BAYBE OBJECT
-# --------------------------------------------------------------------------------------
-
+### Creating and printing the BayBE object
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
+print(baybe_obj)
 
-# This BayBE object can then be used to get recommendations and add measurements
+### Performing some iterations
 
-
-# ITERATIONS EXAMPLE
-# --------------------------------------------------------------------------------------
-
-
-# The following loop performs some recommendations and add fake results
-# and print what happens to internal data
+# The following loop performs some recommendations and adds fake results.
+# It also prints what happens to internal data.
 
 N_ITERATIONS = 3
 
@@ -139,3 +111,18 @@ for kIter in range(N_ITERATIONS):
 
     print("\n\n### Internal measurement dataframe computational representation Y:\n")
     print(baybe_obj.measurements_targets_comp)
+
+
+#### Addendum: Description of `bounds_transformation_func` functions
+
+# This function is used to transform target values to the interval `[0,1]` for `MAX`/`MIN` mode.
+# An ascending or decreasing `LINEAR` function is used per default.
+# This function maps input values in a specified interval [lower, upper] to the interval `[0,1]`.
+# Outside the specified interval, the function remains constant, that is, 0 or 1.
+
+# For the match mode, two functions are available `TRIANGULAR` and `BELL`.
+# The `TRIANGULAR` function is 0 outside a specified interval and linearly increases to 1 from both
+# interval ends, reaching the value 1 at the center of the interval.
+# This function is used per default for MATCH mode.
+# The `BELL` function is a Gaussian bell curve, specified through the boundary values of the sigma
+# interval, reaching the maximum value of 1 at the interval center.
