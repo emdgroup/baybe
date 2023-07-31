@@ -1,11 +1,13 @@
+### Example for using a synthetic BoTorch test function in a discrete searchspace
+
 """
 Example for using the synthetic test functions in discrete spaces.
-All test functions that are available in BoTorch are also available here and wrapped
-via the BayBEBotorchFunctionWrapper.
-
-For an example on how to use a custom function instead of a wrapped one, we refer to the
-continuous_space example.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
 
 import numpy as np
 
@@ -15,23 +17,24 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from botorch.test_functions import Rastrigin
 
-# Import the desired test function from botorch here
-from botorch.test_functions import Branin
+### Defining the test function
 
-# Here, you can choose the dimension  and the actual the test function.
-# All BoTorch test functions can be used.
+# BoTorch offers a variety of different test functions, all of which can be used.
 # Note that some test functions are only defined for specific dimensions.
-# If the dimension you provide is not available for the given test function, a warning
-# will be printed and the dimension is adjusted.
-# For details on constructing the BayBE object, we refer to the basic example file.
+# If the dimension you provide is not available for the chose function, a warning will be printed.
+# In addition, the dimension is then adjusted automatically.
 
-# Here, the Dimension and the TestFunctionClass are purposel
+# Note that choosing a different test function requires to change the `import` statement.
+# All test functions that are available in BoTorch are also available here and are later wrapped
+# via the `botorch_function_wrapper`.
 DIMENSION = 4
-TestFunctionClass = Branin
+TestFunctionClass = Rastrigin
 
-# This part checks if the test function already has a fixed dimension.
-# In that case, we print a warning and replace DIMENSION.
+# This code checks if the test function is only available for a specific dimension.
+# In that case, we print a warning and replace `DIMENSION`.
+# In addition, it constructs the actual `TestFunction` object.
 if not hasattr(TestFunctionClass, "dim"):
     TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
 elif TestFunctionClass().dim == DIMENSION:
@@ -48,15 +51,26 @@ else:
     DISC_INDICES = list(range(0, (DIMENSION + 1) // 2))
     CONT_INDICES = list(range((DIMENSION + 1) // 2, DIMENSION))
 
-# Get the bounds of the variables as they are set by BoTorch
+# BoTorch provides reasonable bounds for the variables which are used to define the searchspace.
+
 BOUNDS = TestFunction.bounds
-# Create the wrapped function itself.
+
+# It is necessary to "translate" the BoTorch function such that it can be used by BayBE.
+# This is done by using the `botorch_function_wrapper` function.
+
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
-# Parameter for controlling the number of points per dimension.
+
+### Creating the searchspace and the objective
+
+# In this example, we construct a purely discrete space.
+# The parameter `POINTS_PER_DIM` controls the number of points per dimension.
+# Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
+
 POINTS_PER_DIM = 4
 
-# Since this is the discrete test, we only construct NumericDiscrete parameters.
-# We use that data of the test function to deduce bounds and number of parameters.
+# Since we have a discrete searchspace, we only construct `NumericDiscrete` parameters.
+# We use the data of the test function to deduce bounds and number of parameters.
+
 parameters = [
     NumericDiscrete(
         name=f"x_{k+1}",
@@ -66,31 +80,33 @@ parameters = [
     for k in range(DIMENSION)
 ]
 
-# Construct searchspace, objective and BayBE object.
 searchspace = SearchSpace.from_product(parameters=parameters)
-
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
+
+### Constructing the BayBE object and performing a recommendation
 
 baybe_obj = BayBE(
     searchspace=searchspace,
     objective=objective,
 )
 
-# Get a recommendation for a fixed batched quantity
+# Get a recommendation for a fixed batched quantity.
 BATCH_QUANTITY = 3
 recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
-# Evaluate the test function. Note that we need iterate through the rows of the
-# recommendation and that we need to interpret the row as a list.
+
+# Evaluate the test function.
+# Note that we need iterate through the rows of the recommendation.
+# Furthermore, we need to interpret the row as a list.
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(WRAPPED_FUNCTION(*row.to_list()))
 
-# We add an additional column with the calculated target values...
+# We add an additional column with the calculated target values.
 recommendation["Target"] = target_values
 
-# ... and inform the BayBE object about our measurement.
+# Here, we inform the BayBE object about our measurement.
 baybe_obj.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)
