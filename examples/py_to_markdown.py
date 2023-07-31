@@ -13,7 +13,7 @@ import shutil
 # Folder where the .md files created are stored
 DESTINATION_DIR = "examples_markdown/"
 
-# if the destination directory already exist it is deleted
+# if the destination directory already exists it is deleted
 if os.path.isdir(DESTINATION_DIR):
     shutil.rmtree(DESTINATION_DIR)
 
@@ -27,7 +27,6 @@ directories = [
     for d in os.listdir("examples_markdown/")
     if os.path.isdir(os.path.join("examples_markdown", d))
 ]
-
 
 # Iterate over the directories
 for directory in directories:
@@ -83,21 +82,28 @@ for directory in directories:
         with open(
             rf"examples_markdown\{directory}\{MARKDOWN}", "r+", encoding="UTF-8"
         ) as f:
-            content = f.read()
+            content = f.readlines()
+            content = [line for line in content if not line.startswith("![png]")]
 
             f.seek(0)
             f.write(LINES_TO_ADD)
-            f.write(content)
+            f.writelines(content)
 
         # 6. Remove the no-longer-necessary .py file
         os.remove(rf"examples_markdown\{directory}\{file}")
 
-# 7. remove remaining not markdown files from the destination directory
-files = glob.glob("examples_markdown/**/*")
+# 7. remove remaining not markdown files and subdirectories from the destination directory
+files = [f for f in glob.glob("examples_markdown/*") if os.path.isfile(f)] + [
+    f for f in glob.glob("examples_markdown/**/*") if os.path.isfile(f)
+]
+
+subdirectories = [d for d in glob.glob("examples_markdown/**/*") if os.path.isdir(d)]
+
+
 other_files = [
     file for file in files if os.path.splitext(os.path.split(file)[1])[1] != ".md"
 ]
 for file in other_files:
     os.remove(file)
-
-os.remove("examples_markdown/py_to_markdown.py")
+for subdirectory in subdirectories:
+    shutil.rmtree(subdirectory)
