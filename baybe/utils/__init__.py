@@ -7,10 +7,8 @@ from __future__ import annotations
 
 import logging
 import random
-from abc import ABC
 from dataclasses import dataclass
 from typing import (
-    Any,
     Dict,
     Iterable,
     List,
@@ -25,9 +23,9 @@ from typing import (
 import numpy as np
 import pandas as pd
 import torch
-from attrs import cmp_using
-from rdkit import Chem
 from torch import Tensor
+
+from baybe.utils.boolean import isabstract
 
 if TYPE_CHECKING:
     from baybe.core import BayBE
@@ -41,49 +39,6 @@ T = TypeVar("T")
 # TODO: unclear why pylint wants PascalCase here
 DTYPE_FLOAT_NUMPY = np.float64  # pylint: disable=invalid-name
 DTYPE_FLOAT_TORCH = torch.float64  # pylint: disable=invalid-name
-
-
-def isabstract(cls: Any) -> bool:
-    """
-    Determines if a given class is abstract in a more general sense than
-    `inspect.abstract`, which only verifies if a class has abstract methods. The
-    latter can be problematic when the class has no abstract methods but is
-    nevertheless not directly usable, for example, because it has uninitialized
-    members, which are only covered in its non-"abstract" subclasses. By contrast,
-    this method simply checks if the class derives from `abc.ABC`.
-
-    Parameters
-    ----------
-    cls : Any
-        The class to be inspected.
-
-    Returns
-    -------
-    bool
-        True if the class is "abstract" (see definition above), False else.
-    """
-    return ABC in cls.__bases__
-
-
-def is_valid_smiles(smiles: str) -> bool:
-    """
-    Tests if a SMILES string is valid according to RDKit.
-
-    Parameters
-    ----------
-    smiles : str
-        SMILES string to be tested.
-
-    Returns
-    -------
-    bool
-        True if smiles is valid, False else.
-    """
-    try:
-        mol = Chem.MolFromSmiles(smiles)
-        return mol is not None
-    except Exception:
-        return False
 
 
 def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
@@ -102,17 +57,6 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     if len(dfs) == 1:
         out = next(out)
     return out
-
-
-def check_if_in(element: Any, allowed: list) -> None:
-    """
-    Checks if an element is in a given list of elements and raises a
-    context-specific exception if it is not.
-    """
-    if element not in allowed:
-        raise ValueError(
-            f"The value '{element}' is not allowed. Must be one of {allowed}."
-        )
 
 
 def add_fake_results(
@@ -478,10 +422,6 @@ def set_random_seed(seed: int) -> None:
     np.random.seed(seed)
 
 
-def eq_dataframe():
-    return cmp_using(lambda x, y: x.equals(y))
-
-
 def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
@@ -582,28 +522,3 @@ def fuzzy_row_match(
             inds_matched.extend(inds_found)
 
     return pd.Index(inds_matched)
-
-
-def strtobool(val: str) -> bool:
-    """
-    Convert a string representation of truth to True or False. Adapted from distutils.
-
-    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
-    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
-    'val' is anything else.
-
-    Parameters
-    ----------
-    val: str
-        String to be checked.
-
-    Returns
-    -------
-    bool
-    """
-    if val.lower() in ("y", "yes", "t", "true", "on", "1"):
-        return True
-    if val.lower() in ("n", "no", "f", "false", "off", "0"):
-        return False
-
-    raise ValueError(f"Invalid truth value: {val}")

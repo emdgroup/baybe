@@ -31,12 +31,8 @@ from scipy.spatial.distance import pdist
 
 from baybe.exceptions import EmptySearchSpaceError
 
-from baybe.utils import (
-    df_drop_single_value_columns,
-    df_uncorrelated_features,
-    eq_dataframe,
-    is_valid_smiles,
-)
+from baybe.utils import df_drop_single_value_columns, df_uncorrelated_features
+from baybe.utils.boolean import eq_dataframe, is_valid_smiles
 from baybe.utils.chemistry import (
     smiles_to_fp_features,
     smiles_to_mordred_features,
