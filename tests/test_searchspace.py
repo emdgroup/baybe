@@ -2,6 +2,7 @@
 import pandas as pd
 import pytest
 import torch
+from baybe.exceptions import EmptySearchSpaceError
 
 from baybe.parameters import Categorical, NumericContinuous, NumericDiscrete
 from baybe.searchspace import (
@@ -10,7 +11,6 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.utils import EmptySearchSpaceError
 
 
 def test_empty_parameters():

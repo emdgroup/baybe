@@ -23,6 +23,7 @@ from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_m
 from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.acquisition import debotorchize, PartialAcquisitionFunction
+from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.strategies.recommender import (
     NonPredictiveRecommender,
@@ -30,7 +31,7 @@ from baybe.strategies.recommender import (
     select_candidates_and_recommend,
 )
 from baybe.surrogate import SurrogateModel
-from baybe.utils import NoMCAcquisitionFunctionError, to_tensor
+from baybe.utils import to_tensor
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 

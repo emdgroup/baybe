@@ -29,10 +29,11 @@ from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
 from scipy.spatial.distance import pdist
 
+from baybe.exceptions import EmptySearchSpaceError
+
 from baybe.utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
-    EmptySearchSpaceError,
     eq_dataframe,
     get_base_unstructure_hook,
     is_valid_smiles,
