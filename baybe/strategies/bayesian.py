@@ -31,7 +31,7 @@ from baybe.strategies.recommender import (
     select_candidates_and_recommend,
 )
 from baybe.surrogate import SurrogateModel
-from baybe.utils import to_tensor
+from baybe.utils.dataframe import to_tensor
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 

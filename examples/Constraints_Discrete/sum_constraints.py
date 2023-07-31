@@ -20,7 +20,7 @@ from baybe.core import BayBE
 from baybe.parameters import GenericSubstance, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import add_fake_results
+from baybe.utils.dataframe import add_fake_results
 
 # This parameter denotes the tolerance with regard to the calculation of the sum.
 SUM_TOLERANCE = 1.0

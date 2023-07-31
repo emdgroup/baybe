@@ -12,8 +12,7 @@ from baybe.core import BayBE
 from baybe.parameters import GenericSubstance, NumericDiscrete
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import add_fake_results
-
+from baybe.utils.dataframe import add_fake_results
 
 # --------------------------------------------------------------------------------------
 # PART 1: Creation of searchspace object

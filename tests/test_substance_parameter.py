@@ -5,7 +5,7 @@ Tests for the generic substance parameter.
 import pytest
 
 from baybe.parameters import SUBSTANCE_ENCODINGS
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
 
 @pytest.mark.parametrize(

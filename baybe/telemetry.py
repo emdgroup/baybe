@@ -16,8 +16,8 @@ from opentelemetry.sdk.resources import Resource
 
 from baybe import __version__
 from baybe.parameters import Parameter
-from baybe.utils import fuzzy_row_match
 from baybe.utils.boolean import strtobool
+from baybe.utils.dataframe import fuzzy_row_match
 
 
 def is_enabled() -> bool:

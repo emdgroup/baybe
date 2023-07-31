@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 from torch import Tensor
 
-from baybe.utils import to_tensor
+from baybe.utils.dataframe import to_tensor
 
 ScaleFun = Callable[[Tensor], Tensor]
 

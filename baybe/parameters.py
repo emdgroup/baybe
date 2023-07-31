@@ -30,14 +30,14 @@ from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
 from scipy.spatial.distance import pdist
 
 from baybe.exceptions import EmptySearchSpaceError
-
-from baybe.utils import df_drop_single_value_columns, df_uncorrelated_features
 from baybe.utils.boolean import eq_dataframe, is_valid_smiles
 from baybe.utils.chemistry import (
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
 )
+
+from baybe.utils.dataframe import df_drop_single_value_columns, df_uncorrelated_features
 from baybe.utils.interval import convert_bounds, InfiniteIntervalError, Interval
 from baybe.utils.serialization import (
     get_base_unstructure_hook,

@@ -14,7 +14,7 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 from baybe.telemetry import get_user_details
-from baybe.utils import add_fake_results
+from baybe.utils.dataframe import add_fake_results
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
