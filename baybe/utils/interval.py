@@ -66,7 +66,7 @@ class Interval:
 
     @create.register
     @classmethod
-    def _(cls, none: None):  # pylint: disable=unused-argument
+    def _(cls, _: None):
         return Interval(-np.inf, np.inf)
 
     @create.register
