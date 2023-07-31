@@ -35,9 +35,7 @@ from baybe.utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
     eq_dataframe,
-    get_base_unstructure_hook,
     is_valid_smiles,
-    unstructure_base,
 )
 from baybe.utils.chemistry import (
     smiles_to_fp_features,
@@ -45,7 +43,11 @@ from baybe.utils.chemistry import (
     smiles_to_rdkit_features,
 )
 from baybe.utils.interval import convert_bounds, InfiniteIntervalError, Interval
-from baybe.utils.serialization import SerialMixin
+from baybe.utils.serialization import (
+    get_base_unstructure_hook,
+    SerialMixin,
+    unstructure_base,
+)
 
 log = logging.getLogger(__name__)
 

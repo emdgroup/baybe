@@ -18,8 +18,12 @@ from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
 
-from baybe.utils import Dummy, get_base_unstructure_hook, unstructure_base
-from baybe.utils.serialization import SerialMixin
+from baybe.utils import Dummy
+from baybe.utils.serialization import (
+    get_base_unstructure_hook,
+    SerialMixin,
+    unstructure_base,
+)
 
 log = logging.getLogger(__name__)
 

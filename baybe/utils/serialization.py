@@ -1,9 +1,14 @@
+# pylint: disable=missing-function-docstring
+
+
 """Serialization utilities."""
 
 import json
 from typing import Type, TypeVar
 
 import cattrs
+
+from baybe.utils import get_subclasses
 
 T = TypeVar("T")
 
@@ -32,3 +37,22 @@ class SerialMixin:
     def from_json(cls: Type[T], string: str) -> T:
         """Create an object from its JSON representation."""
         return cls.from_dict(json.loads(string))
+
+
+def unstructure_base(base):
+    converter = cattrs.global_converter
+    return {
+        "type": base.__class__.__name__,
+        **converter.unstructure_attrs_asdict(base),
+    }
+
+
+def get_base_unstructure_hook(base):
+    def structure_base(val, _):
+        _type = val["type"]
+        cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
+        if cls is None:
+            raise ValueError(f"Unknown subclass {_type}.")
+        return cattrs.structure_attrs_fromdict(val, cls)
+
+    return structure_base

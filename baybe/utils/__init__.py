@@ -22,7 +22,6 @@ from typing import (
     Union,
 )
 
-import cattrs
 import numpy as np
 import pandas as pd
 import torch
@@ -477,25 +476,6 @@ def set_random_seed(seed: int) -> None:
     torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
-
-
-def unstructure_base(base):
-    converter = cattrs.global_converter
-    return {
-        "type": base.__class__.__name__,
-        **converter.unstructure_attrs_asdict(base),
-    }
-
-
-def get_base_unstructure_hook(base):
-    def structure_base(val, _):
-        _type = val["type"]
-        cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
-        if cls is None:
-            raise ValueError(f"Unknown subclass {_type}.")
-        return cattrs.structure_attrs_fromdict(val, cls)
-
-    return structure_base
 
 
 def eq_dataframe():
