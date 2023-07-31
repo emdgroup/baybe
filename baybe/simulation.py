@@ -14,8 +14,9 @@ import pandas as pd
 from tqdm import tqdm, trange
 
 from baybe.core import BayBE
-from baybe.utils import closer_element, closest_element, set_random_seed
+from baybe.utils import set_random_seed
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.numeric import closer_element, closest_element
 
 if TYPE_CHECKING:
     from baybe.targets import NumericalTarget
