@@ -8,7 +8,7 @@ from typing import Type, TypeVar
 
 import cattrs
 
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 
 T = TypeVar("T")
 

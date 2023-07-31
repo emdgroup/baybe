@@ -13,7 +13,7 @@ from baybe.strategies.bayesian import (
 )
 from baybe.strategies.recommender import NonPredictiveRecommender, Recommender
 from baybe.surrogate import SurrogateModel
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
 ########################################################################################

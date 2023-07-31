@@ -18,7 +18,7 @@ from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
 
-from baybe.utils import Dummy
+from baybe.utils.basic import Dummy
 from baybe.utils.serialization import (
     get_base_unstructure_hook,
     SerialMixin,

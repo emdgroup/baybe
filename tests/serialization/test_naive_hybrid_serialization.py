@@ -13,7 +13,7 @@ from baybe.strategies.bayesian import (
 from baybe.strategies.recommender import NonPredictiveRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 
 valid_discrete_non_predictive_recommenders = [
     cls()
