@@ -45,14 +45,15 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     #   Figure out what is the right approach here. However, the issue might be
     #   ultimately related to an overly restrictive PEP:
     #       https://github.com/python/mypy/issues/5144
+    # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism
+    #   that checks if a custom mechanism is implemented and uses default otherwise
+    #   (similar to what is done in the recommenders)
     model_class: ClassVar[Type[SklearnModel]]
     model_cluster_num_parameter_name: ClassVar[str]
+    _use_custom_selector: ClassVar[bool] = False
 
     # Object variables
-    # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism,
-    #   similar to what is done in the recommenders
     model_params: dict = field(factory=dict)
-    _use_custom_selector: bool = field(default=False)
 
     def _make_selection_default(
         self,
@@ -130,9 +131,9 @@ if KMedoids:
         # Class variables
         model_class: ClassVar[Type[SklearnModel]] = KMedoids
         model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
+        _use_custom_selector: ClassVar[bool] = True
 
         # Object variables
-        _use_custom_selector = field(default=True)
         model_params: dict = field()
 
         @model_params.default
@@ -159,9 +160,9 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     # Class variables
     model_class: ClassVar[Type[SklearnModel]] = KMeans
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
+    _use_custom_selector: ClassVar[bool] = True
 
     # Object variables
-    _use_custom_selector = field(default=True)
     model_params: dict = field()
 
     @model_params.default
