@@ -100,6 +100,9 @@ line-length = 88
 # expressions are accepted.
 generated-members = "torch.*"
 
+[tool.pylint.MASTER]
+ignore-paths = "docs/*"
+
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
     "broad-except",  # catching base exception is common for RDKit mol validation etc
