@@ -44,7 +44,7 @@ parameters = [
     for k in range(DIMENSION)
 ]
 
-searchspace = SearchSpace.create(parameters=parameters)
+searchspace = SearchSpace.from_product(parameters=parameters)
 
 
 # TARGETS

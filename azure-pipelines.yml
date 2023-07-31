@@ -38,7 +38,7 @@ stages:
 
       - script: |
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          curl micro.mamba.pm/install.sh | bash
+          "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
         displayName: Install Micromamba
 
       - script: |
@@ -124,7 +124,7 @@ stages:
 
       - script: |
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          curl micro.mamba.pm/install.sh | bash
+          "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
         displayName: Install Micromamba
 
       - script: |

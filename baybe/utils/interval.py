@@ -1,6 +1,7 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring
 
 import sys
+from collections.abc import Iterable
 from functools import singledispatchmethod
 from typing import Union
 
@@ -65,12 +66,12 @@ class Interval:
 
     @create.register
     @classmethod
-    def _(cls, none: None):  # pylint: disable=unused-argument
+    def _(cls, _: None):
         return Interval(-np.inf, np.inf)
 
     @create.register
     @classmethod
-    def _(cls, bounds: tuple):
+    def _(cls, bounds: Iterable):
         return Interval(*bounds)
 
     def to_tuple(self):

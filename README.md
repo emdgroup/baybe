@@ -203,7 +203,7 @@ With the parameter and constraint definitions at hand, we can now create our
 ```python
 from baybe.searchspace import SearchSpace
 
-searchspace = SearchSpace.create(parameters, constraints)
+searchspace = SearchSpace.from_product(parameters, constraints)
 ```
 
 ### Optional: Defining the Optimization Strategy

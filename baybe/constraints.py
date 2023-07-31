@@ -18,8 +18,8 @@ from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
 
-from .utils import Dummy, get_base_unstructure_hook, unstructure_base
-from .utils.serialization import SerialMixin
+from baybe.utils import Dummy, get_base_unstructure_hook, unstructure_base
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class ThresholdCondition(Condition):
     """
 
     # object variables
-    threshold: float
+    threshold: float = field()
     operator: str = field(validator=[in_(_threshold_operators)])
     tolerance: Optional[float] = field()
 
@@ -129,7 +129,7 @@ class SubSelectionCondition(Condition):
     """
 
     # object variables
-    selection: List[Any]
+    selection: List[Any] = field()
 
     def evaluate(self, data: pd.Series) -> pd.Series:
         """See base class."""
@@ -184,8 +184,8 @@ class ExcludeConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     conditions: List[Condition] = field(validator=min_len(1))
@@ -210,8 +210,8 @@ class SumConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -233,8 +233,8 @@ class ProductConstraint(Constraint):
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -261,8 +261,8 @@ class NoLabelDuplicatesConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -281,8 +281,8 @@ class LinkedParametersConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -303,15 +303,19 @@ class DependenciesConstraint(Constraint):
     # class variables
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
-    conditions: List[Condition]
+    conditions: List[Condition] = field()
     affected_parameters: List[List[str]] = field()
     # Flag that indicates whether the affected parameters are permutation invariant.
     # Not to be set by the user but by other constraints reusing this class.
-    permutation_invariant = False
+    # TODO: This should be init=False, but would require changing the unstructuring
+    #   logic. Let's wait for the next cattrs release with the following PR to be merged
+    #   and then init=False attributes can be handled more elegantly:
+    #   https://github.com/python-attrs/cattrs/pull/395/commits
+    permutation_invariant: bool = field(default=False)
 
     @affected_parameters.validator
     def affected_parameters_validator(self, _, value):
@@ -379,11 +383,11 @@ class PermutationInvarianceConstraint(Constraint):
     # class variables
     # TODO update usage in different evaluation stages once that is implemented in
     #  strategy and surrogate
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
-    dependencies: Optional[DependenciesConstraint]
+    dependencies: Optional[DependenciesConstraint] = field(default=None)
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""
@@ -435,11 +439,11 @@ class CustomConstraint(Constraint):
     """
 
     # class variables
-    eval_during_creation = True
-    eval_during_modeling = False
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
-    validator: Callable[[pd.Series], bool]
+    validator: Callable[[pd.Series], bool] = field()
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """See base class."""

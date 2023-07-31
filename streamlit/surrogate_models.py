@@ -125,7 +125,7 @@ def main():
 
     # create the searchspace object
     param = NumericDiscrete(name="param", values=test_x.numpy().tolist())
-    searchspace = SearchSpace.create(parameters=[param])
+    searchspace = SearchSpace.from_product(parameters=[param])
 
     # create the surrogate model, train it, and get its predictions
     surrogate_model = surrogate_model_cls(searchspace)

@@ -4,12 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- `from_dataframe` convenience constructors for discrete and continuous subspaces 
+- `from_bounds` convenience constructor for continuous subspaces
+- `empty` convenience constructors discrete and continuous subspaces
+
+### Changed
+- Renamed `create` constructors to `from_product`
+- Renamed `empty` checks for subspaces to `is_empty`
+- Cached recommendations are now a private attribute
+- Parameters, targets and objectives are now immutable
+
 ## [0.3.2] - 2023-07-24
 ### Added
 - Constraints serialization
 
 ### Changed
-- A maxiumum of one `DependenciesConstraint` is allowed
+- A maximum of one `DependenciesConstraint` is allowed
 - Bumped numpy and matplotlib versions
 
 ## [0.3.1] - 2023-07-17

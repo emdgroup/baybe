@@ -77,7 +77,7 @@ no_duplicates_constraint = NoLabelDuplicatesConstraint(
 
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 # We now create the searchspace using all of these constraints
-searchspace = SearchSpace.create(parameters=parameters, constraints=constraints)
+searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
 
 # Create the objective

@@ -3,11 +3,11 @@
 
 """Recommendation strategies based on Bayesian optimization."""
 
-from typing import Callable, Optional
+from typing import Callable, ClassVar, Optional
 
 import numpy as np
 import pandas as pd
-from attrs import define, Factory, field, validators
+from attrs import define, field, validators
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
 from sklearn.metrics import pairwise_distances_argmin
 
@@ -37,7 +37,11 @@ def validate_percentage(obj, _, value):
 @define
 class SequentialGreedyRecommender(BayesianRecommender):
 
-    compatibility = SearchSpaceType.HYBRID
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+
+    # Object variables
+    # ----------------
     # Keyword for which sampling strategy should be used for hybrid recommendation
     hybrid_sampler: str = field(
         validator=validators.in_(["None", "Farthest", "Random"]), default="None"
@@ -202,15 +206,18 @@ class SequentialGreedyRecommender(BayesianRecommender):
 @define
 class NaiveHybridRecommender(Recommender):
 
-    compatibility = SearchSpaceType.HYBRID
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+
+    # Object variables
     # TODO This used to be a Union of BayesianRecommender and NonPredictiveRecommender.
     # Due to serialization issues, this was changed to Recommender in general.
     # As we currently do not have other subclasses of Recommender, this solution works
     # for now. Still, we manually check whether the disc_recommender belogns to one of
     # these two subclasses such that we might be able to easily spot a potential problem
     # that might come up when implementing new subclasses of Recommender
-    disc_recommender: Recommender = Factory(SequentialGreedyRecommender)
-    cont_recommender: BayesianRecommender = Factory(SequentialGreedyRecommender)
+    disc_recommender: Recommender = field(factory=SequentialGreedyRecommender)
+    cont_recommender: BayesianRecommender = field(factory=SequentialGreedyRecommender)
 
     def recommend(
         self,

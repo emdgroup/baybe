@@ -218,7 +218,7 @@ parameters = [solvent, base, ligand, temperature, concentration]
 
 # Creation of searchspace and objective Objects
 
-searchspace = SearchSpace.create(parameters=parameters)
+searchspace = SearchSpace.from_product(parameters=parameters)
 
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]

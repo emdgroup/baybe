@@ -64,7 +64,7 @@ def custom_function(ser: pd.Series) -> bool:
 constraint = CustomConstraint(
     parameters=["Concentration", "Solvent", "Temperature"], validator=custom_function
 )
-searchspace = SearchSpace.create(parameters=parameters, constraints=[constraint])
+searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
 # We finally create an objective and the BayBE object
 objective = Objective(

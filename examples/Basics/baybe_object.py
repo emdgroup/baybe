@@ -95,7 +95,7 @@ parameters = [solvent, base, ligand, temperature, concentration]
 
 # The object searchspace can now be easily created as follows
 
-searchspace = SearchSpace.create(parameters=parameters)
+searchspace = SearchSpace.from_product(parameters=parameters)
 
 
 # --------------------------------------------------------------------------------------

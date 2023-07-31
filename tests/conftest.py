@@ -462,7 +462,9 @@ def fixture_default_constraint_selection():
 def fixture_baybe(parameters, constraints, strategy, objective):
     """Returns a BayBE"""
     return BayBE(
-        searchspace=SearchSpace.create(parameters=parameters, constraints=constraints),
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
         strategy=strategy,
         objective=objective,
     )

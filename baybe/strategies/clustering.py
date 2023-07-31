@@ -8,7 +8,7 @@ from typing import ClassVar, List, Type, TypeVar
 
 import numpy as np
 import pandas as pd
-from attrs import define, Factory, field
+from attrs import define, field
 from scipy.stats import multivariate_normal
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
@@ -37,20 +37,23 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     derived classes.
     """
 
-    compatibility = SearchSpaceType.DISCRETE
-
-    # Class variables that need to be defined by derived classes
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # TODO: "Type" should not appear in ClassVar. Both PyCharm and mypy complain, see
     #   also note in the mypy docs:
     #       https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
     #   Figure out what is the right approach here. However, the issue might be
     #   ultimately related to an overly restrictive PEP:
     #       https://github.com/python/mypy/issues/5144
+    # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism
+    #   that checks if a custom mechanism is implemented and uses default otherwise
+    #   (similar to what is done in the recommenders)
     model_class: ClassVar[Type[SklearnModel]]
     model_cluster_num_parameter_name: ClassVar[str]
+    _use_custom_selector: ClassVar[bool] = False
 
-    model_params: dict = Factory(dict)
-    _use_custom_selector: bool = False
+    # Object variables
+    model_params: dict = field(factory=dict)
 
     def _make_selection_default(
         self,
@@ -125,10 +128,12 @@ if KMedoids:
     class PAMClusteringRecommender(SKLearnClusteringRecommender):
         """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-        model_class = KMedoids
-        model_cluster_num_parameter_name = "n_clusters"
+        # Class variables
+        model_class: ClassVar[Type[SklearnModel]] = KMedoids
+        model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
+        _use_custom_selector: ClassVar[bool] = True
 
-        _use_custom_selector = True
+        # Object variables
         model_params: dict = field()
 
         @model_params.default
@@ -152,10 +157,12 @@ if KMedoids:
 class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means initial clustering strategy."""
 
-    model_class = KMeans
-    model_cluster_num_parameter_name = "n_clusters"
+    # Class variables
+    model_class: ClassVar[Type[SklearnModel]] = KMeans
+    model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
+    _use_custom_selector: ClassVar[bool] = True
 
-    _use_custom_selector = True
+    # Object variables
     model_params: dict = field()
 
     @model_params.default
@@ -187,8 +194,9 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) initial clustering strategy."""
 
-    model_class = GaussianMixture
-    model_cluster_num_parameter_name = "n_components"
+    # Class variables
+    model_class: ClassVar[Type[SklearnModel]] = GaussianMixture
+    model_cluster_num_parameter_name: ClassVar[str] = "n_components"
 
     def _make_selection_custom(
         self,

@@ -13,7 +13,7 @@ from typing import List
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, Factory, field
+from attrs import define, field
 
 from baybe.constraints import _validate_constraints, Constraint
 from baybe.parameters import _validate_parameters, Parameter
@@ -63,7 +63,7 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     constraints = specs.get("constraints", None)
     if constraints:
         constraints = cattrs.structure(specs["constraints"], List[Constraint])
-    return SearchSpace.create(parameters, constraints)
+    return SearchSpace.from_product(parameters, constraints)
 
 
 def searchspace_validation_hook(specs: dict, _) -> None:
@@ -95,20 +95,22 @@ class BayBE(SerialMixin):
     """Main class for interaction with BayBE."""
 
     # DOE specifications
-    searchspace: SearchSpace
-    objective: Objective
-    strategy: Strategy = Factory(Strategy)
+    searchspace: SearchSpace = field()
+    objective: Objective = field()
+    strategy: Strategy = field(factory=Strategy)
 
     # Data
     measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
-    numerical_measurements_must_be_within_tolerance: bool = True
+    numerical_measurements_must_be_within_tolerance: bool = field(default=True)
 
     # Metadata
-    batches_done: int = 0
-    fits_done: int = 0
+    batches_done: int = field(default=0)
+    fits_done: int = field(default=0)
 
-    # TODO: make private
-    cached_recommendation: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
+    # Private
+    _cached_recommendation: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe()
+    )
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -185,7 +187,7 @@ class BayBE(SerialMixin):
         Nothing (the internal database is modified in-place).
         """
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
-        self.cached_recommendation = pd.DataFrame()
+        self._cached_recommendation = pd.DataFrame()
 
         # Check if all targets have valid values
         for target in self.targets:
@@ -236,7 +238,7 @@ class BayBE(SerialMixin):
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
-            self.cached_recommendation,
+            self._cached_recommendation,
             data,
             self.parameters,
             self.numerical_measurements_must_be_within_tolerance,
@@ -264,8 +266,8 @@ class BayBE(SerialMixin):
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
-        if len(self.cached_recommendation) == batch_quantity:
-            return self.cached_recommendation
+        if len(self._cached_recommendation) == batch_quantity:
+            return self._cached_recommendation
 
         # Update recommendation meta data
         if len(self.measurements_exp) > 0:
@@ -281,7 +283,7 @@ class BayBE(SerialMixin):
         )
 
         # Cache the recommendations
-        self.cached_recommendation = rec.copy()
+        self._cached_recommendation = rec.copy()
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)

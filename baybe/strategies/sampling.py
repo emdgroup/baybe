@@ -1,6 +1,6 @@
 """Recommendation strategies based on sampling."""
 
-from typing import Optional
+from typing import ClassVar, Optional
 
 import pandas as pd
 
@@ -14,7 +14,8 @@ class RandomRecommender(NonPredictiveRecommender):
     Recommends experiments randomly.
     """
 
-    compatibility = SearchSpaceType.HYBRID
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
 
     def _recommend_hybrid(
         self,
@@ -44,7 +45,8 @@ class RandomRecommender(NonPredictiveRecommender):
 class FPSRecommender(NonPredictiveRecommender):
     """An initial strategy that selects the candidates via Farthest Point Sampling."""
 
-    compatibility = SearchSpaceType.DISCRETE
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
 
     def _recommend_discrete(
         self,

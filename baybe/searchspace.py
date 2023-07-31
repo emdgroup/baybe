@@ -9,7 +9,7 @@ Functionality for managing search spaces.
 
 import logging
 from enum import Enum
-from typing import cast, List, Optional, Tuple
+from typing import cast, Dict, List, Optional, Tuple
 
 import cattrs
 import numpy as np
@@ -17,18 +17,20 @@ import pandas as pd
 import torch
 from attrs import define, field
 
-from .constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
-from .parameters import (
+from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
+from baybe.parameters import (
     _validate_parameter_names,
     _validate_parameters,
+    Categorical,
     DiscreteParameter,
     NumericContinuous,
+    NumericDiscrete,
     Parameter,
     parameter_cartesian_prod_to_df,
 )
-from .telemetry import TELEM_LABELS, telemetry_record_value
-from .utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
-from .utils.serialization import SerialMixin
+from baybe.telemetry import TELEM_LABELS, telemetry_record_value
+from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +58,7 @@ class SubspaceDiscrete:
     exp_rep: pd.DataFrame = field(eq=eq_dataframe())
     comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
     metadata: pd.DataFrame = field(eq=eq_dataframe())
-    empty_encoding: bool = False
+    empty_encoding: bool = field(default=False)
     constraints: List[Constraint] = field(factory=list)
 
     @metadata.default
@@ -68,7 +70,7 @@ class SubspaceDiscrete:
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
-        if self.empty:
+        if self.is_empty:
             return pd.DataFrame(columns=columns)
 
         return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
@@ -83,7 +85,14 @@ class SubspaceDiscrete:
         self.comp_rep = comp_rep
 
     @classmethod
-    def create(
+    def empty(cls) -> "SubspaceDiscrete":
+        """Creates an empty discrete subspace."""
+        return SubspaceDiscrete(
+            parameters=[], exp_rep=pd.DataFrame(), metadata=pd.DataFrame()
+        )
+
+    @classmethod
+    def from_product(
         cls,
         parameters: List[DiscreteParameter],
         constraints: Optional[List[Constraint]] = None,
@@ -115,8 +124,75 @@ class SubspaceDiscrete:
             empty_encoding=empty_encoding,
         )
 
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        parameters: Optional[List[Parameter]] = None,
+        empty_encoding: bool = False,
+    ) -> "SubspaceDiscrete":
+        """
+        Creates a discrete subspace with a specified set of configurations.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The experimental representation of the search space to be created.
+        parameters : pd.DataFrame
+            Optional parameters corresponding to the columns in the given dataframe.
+            If a match between column name and parameter name is found, the
+            corresponding parameter is used. If a column has no match in the parameter
+            list, a `NumericDiscrete` parameter is created if possible, or a
+            `Categorical` is used as fallback.
+        empty_encoding : bool
+            See `SearchSpace` class.
+
+        Returns
+        -------
+        SubspaceDiscrete
+            The created discrete subspace.
+        """
+        # Turn the specified parameters into a dict and check for duplicate names
+        specified_params: Dict[str, Parameter] = {}
+        if parameters is not None:
+            for param in parameters:
+                if param.name in specified_params:
+                    raise ValueError(
+                        f"You provided several parameters with the name {param.name}."
+                    )
+                specified_params[param.name] = param
+
+        # Try to find a parameter match for each dataframe column
+        parameters = []
+        for name, series in df.iteritems():
+
+            # If a match is found, assert that the values are in range
+            if match := specified_params.pop(name, None):
+                assert series.apply(match.is_in_range).all()
+                parameters.append(match)
+
+            # Otherwise, try to create a numerical parameter or use categorical fallback
+            else:
+                values = series.drop_duplicates().values.tolist()
+                try:
+                    param = NumericDiscrete(name=name, values=values)
+                except TypeError:
+                    param = Categorical(name=name, values=values)
+                parameters.append(param)
+
+        # By now, all parameters must have been used
+        if specified_params:
+            raise ValueError(
+                f"For the following parameters you specified, no match could be found "
+                f"in the given dataframe: {specified_params.values()}."
+            )
+
+        return SubspaceDiscrete(
+            parameters=parameters, exp_rep=df, empty_encoding=empty_encoding
+        )
+
     @property
-    def empty(self):
+    def is_empty(self):
         """Whether this search space is empty."""
         return len(self.parameters) == 0
 
@@ -253,8 +329,38 @@ class SubspaceContinuous:
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
 
+    @classmethod
+    def empty(cls) -> "SubspaceContinuous":
+        """Creates an empty continuous subspace."""
+        return SubspaceContinuous([])
+
+    @classmethod
+    def from_bounds(cls, bounds: pd.DataFrame) -> "SubspaceContinuous":
+        """Creates a hyperrectangle-shaped continuous search space with given bounds."""
+
+        # Assert that the input represents valid bounds
+        assert bounds.shape[0] == 2
+        assert (np.diff(bounds.values, axis=0) >= 0).all()
+        assert bounds.apply(pd.api.types.is_numeric_dtype).all()
+
+        # Create the corresponding parameters and from them the search space
+        parameters = [
+            NumericContinuous(name, bound) for (name, bound) in bounds.iteritems()
+        ]
+        return SubspaceContinuous(parameters)
+
+    @classmethod
+    def from_dataframe(cls, df: pd.DataFrame) -> "SubspaceContinuous":
+        """
+        Creates the smallest axis-aligned hyperrectangle-shaped continuous subspace
+        that contains the points specified in the given dataframe.
+        """
+        # TODO: Add option for convex hull once constraints are in place
+        bounds = pd.concat([df.min(), df.max()], axis=1).T
+        return cls.from_bounds(bounds)
+
     @property
-    def empty(self):
+    def is_empty(self):
         """Whether this search space is empty."""
         return len(self.parameters) == 0
 
@@ -367,21 +473,36 @@ class SearchSpace(SerialMixin):
         by continuous ones.
     """
 
-    discrete: SubspaceDiscrete
-    continuous: SubspaceContinuous
+    discrete: SubspaceDiscrete = field(factory=SubspaceDiscrete.empty)
+    continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
 
     def __attrs_post_init__(self):
         _validate_parameters(self.parameters)
         _validate_constraints(self.discrete.constraints)
 
+        # Telemetry
+        telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
+        telemetry_record_value(TELEM_LABELS["NUM_PARAMETERS"], len(self.parameters))
+        telemetry_record_value(
+            TELEM_LABELS["NUM_CONSTRAINTS"],
+            len(self.constraints) if self.constraints else 0,
+        )
+
     @classmethod
-    def create(
+    def from_product(
         cls,
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
     ) -> "SearchSpace":
         """
+        Creates a "product" search space (with optional subsequent constraints applied).
+
+        That is, the discrete subspace becomes the (filtered) cartesian product
+        containing all discrete parameter combinations while, analogously, the
+        continuous subspace represents the (filtered) cartesian product of all
+        continuous parameters. (TODO: continuous constraints are yet to be enabled.)
+
         Parameters
         ----------
         parameters : List[Parameter]
@@ -403,7 +524,7 @@ class SearchSpace(SerialMixin):
         if constraints:
             _validate_constraints(constraints)
 
-        discrete: SubspaceDiscrete = SubspaceDiscrete.create(
+        discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete
             ],
@@ -416,13 +537,6 @@ class SearchSpace(SerialMixin):
             ],
         )
 
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
-        telemetry_record_value(TELEM_LABELS["NUM_PARAMETERS"], len(parameters))
-        telemetry_record_value(
-            TELEM_LABELS["NUM_CONSTRAINTS"], len(constraints) if constraints else 0
-        )
-
         return SearchSpace(discrete=discrete, continuous=continuous)
 
     @property
@@ -430,12 +544,16 @@ class SearchSpace(SerialMixin):
         return self.discrete.parameters + self.continuous.parameters
 
     @property
+    def constraints(self) -> List[Constraint]:
+        return self.discrete.constraints
+
+    @property
     def type(self) -> SearchSpaceType:
-        if self.discrete.empty and not self.continuous.empty:
+        if self.discrete.is_empty and not self.continuous.is_empty:
             return SearchSpaceType.CONTINUOUS
-        if not self.discrete.empty and self.continuous.empty:
+        if not self.discrete.is_empty and self.continuous.is_empty:
             return SearchSpaceType.DISCRETE
-        if not self.discrete.empty and not self.continuous.empty:
+        if not self.discrete.is_empty and not self.continuous.is_empty:
             return SearchSpaceType.HYBRID
         raise RuntimeError("This line should be impossible to reach.")
 

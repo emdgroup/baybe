@@ -1,7 +1,6 @@
 # pylint: disable=missing-function-docstring, missing-module-docstring
 # TODO: This file needs to be refactored.
 
-from abc import ABC
 from typing import get_args, get_type_hints
 
 import pytest
@@ -17,12 +16,7 @@ from baybe.strategies.recommender import (
     Recommender,
 )
 from baybe.surrogate import SurrogateModel
-from baybe.utils import (
-    add_fake_results,
-    add_parameter_noise,
-    isabstract,
-    subclasses_recursive,
-)
+from baybe.utils import add_fake_results, add_parameter_noise, get_subclasses
 
 ########################################################################################
 # Settings of the individual components to be tested
@@ -30,38 +24,27 @@ from baybe.utils import (
 valid_acquisition_functions = get_args(
     get_type_hints(BayesianRecommender.__init__)["acquisition_function_cls"]
 )
-valid_surrogate_models = list(
-    {
-        cls.type
-        for cls in subclasses_recursive(SurrogateModel)
-        if ABC not in cls.__bases__
-    }
-)
-valid_initial_recommenders = [
-    cls()
-    for cls in subclasses_recursive(NonPredictiveRecommender)
-    if ABC not in cls.__bases__
-]
+# TODO: refactor code to avoid the set deduplication below
+valid_surrogate_models = list({cls.type for cls in get_subclasses(SurrogateModel)})
+valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 valid_discrete_recommenders = [
     cls()
-    for cls in subclasses_recursive(Recommender)
-    if not isabstract(cls)
-    and cls.compatibility
+    for cls in get_subclasses(Recommender)
+    if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 valid_continuous_recommenders = [
     cls()
-    for cls in subclasses_recursive(Recommender)
-    if not isabstract(cls)
-    and cls.compatibility
+    for cls in get_subclasses(Recommender)
+    if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybird recommenders like naive ones or recommenders not using default arguments
 valid_hybrid_recommenders = [
     cls()
-    for cls in subclasses_recursive(Recommender)
-    if not isabstract(cls) and cls.compatibility in [SearchSpaceType.HYBRID]
+    for cls in get_subclasses(Recommender)
+    if cls.compatibility == SearchSpaceType.HYBRID
 ]
 # List of SequentialGreedy Recommender with different sampling strategies.
 sampling_strategies = [
@@ -80,16 +63,14 @@ valid_hybrid_sequential_greedy_recommenders = [
 
 valid_discrete_non_predictive_recommenders = [
     cls()
-    for cls in subclasses_recursive(NonPredictiveRecommender)
-    if not isabstract(cls)
-    and cls.compatibility
+    for cls in get_subclasses(NonPredictiveRecommender)
+    if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
 valid_discrete_bayesian_recommenders = [
     cls()
-    for cls in subclasses_recursive(BayesianRecommender)
-    if not isabstract(cls)
-    and cls.compatibility
+    for cls in get_subclasses(BayesianRecommender)
+    if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
 valid_naive_hybrid_recommenders = [

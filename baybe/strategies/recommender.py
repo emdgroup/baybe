@@ -9,8 +9,7 @@ from typing import Callable, ClassVar, Literal, Optional
 
 import cattrs
 import pandas as pd
-
-from attrs import define
+from attrs import define, field
 from botorch.acquisition import (
     AcquisitionFunction,
     ExpectedImprovement,
@@ -47,9 +46,9 @@ def select_candidates_and_recommend(
     # has a continuous component.
     _, candidates_comp = searchspace.discrete.get_candidates(
         allow_repeated_recommendations=allow_repeated_recommendations
-        or not searchspace.continuous.empty,
+        or not searchspace.continuous.is_empty,
         allow_recommending_already_measured=allow_recommending_already_measured
-        or not searchspace.continuous.empty,
+        or not searchspace.continuous.is_empty,
     )
 
     # Check if enough candidates are left
@@ -78,6 +77,7 @@ def select_candidates_and_recommend(
 class Recommender(ABC):
     # TODO Docstrings missing
 
+    # Class variables
     compatibility: ClassVar[SearchSpaceType]
 
     @abstractmethod
@@ -204,10 +204,10 @@ class NonPredictiveRecommender(Recommender, ABC):
 class BayesianRecommender(Recommender, ABC):
     # TODO Docstrings missing
 
-    surrogate_model_cls: str = "GP"
+    surrogate_model_cls: str = field(default="GP")
     acquisition_function_cls: Literal[
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB"
-    ] = "qEI"
+    ] = field(default="qEI")
 
     def get_acquisition_function_cls(
         self,

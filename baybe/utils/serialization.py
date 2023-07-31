@@ -11,6 +11,10 @@ T = TypeVar("T")
 class SerialMixin:
     """A mixin class providing serialization functionality."""
 
+    # Use slots so that the derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+    __slots__ = ()
+
     def to_dict(self) -> dict:
         """Create an object's dictionary representation."""
         return cattrs.unstructure(self)

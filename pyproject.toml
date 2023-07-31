@@ -114,3 +114,6 @@ ignore_missing_imports = true
 
 # TODO[12327]: Find a way to automatically install all mypy stubs during the
 #   installation, to avoid having to call "mypy --install-types" afterwards.
+
+[tool.usort]
+first_party = ["baybe"]

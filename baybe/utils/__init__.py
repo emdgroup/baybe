@@ -39,8 +39,8 @@ from rdkit.Chem.AllChem import GetMorganFingerprintAsBitVect
 from torch import Tensor
 
 if TYPE_CHECKING:
-    from ..core import BayBE  # TODO: fix unresolved import
-    from ..parameters import Parameter
+    from baybe.core import BayBE
+    from baybe.parameters import Parameter
 
 log = logging.getLogger(__name__)
 
@@ -631,6 +631,10 @@ class IncompatibleSearchSpaceError(Exception):
     search space."""
 
 
+class EmptySearchSpaceError(Exception):
+    """An exception raised when the created search space contains no parameters."""
+
+
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """
@@ -662,27 +666,36 @@ def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
     return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
 
 
-def subclasses_recursive(cls: T) -> List[T]:
+def get_subclasses(cls: T, recursive: bool = True, abstract: bool = False) -> List[T]:
     """
-    Returns a recursive list of all subclasses of a given class.
+    Returns a list of subclasses for the given class.
 
     Parameters
     ----------
     cls
-        An arbitrary class.
+        The base class to retrieve subclasses for.
+    recursive : bool
+        If True, indirect subclasses (i.e. subclasses of subclasses) are included.
+    abstract : bool
+        If True, abstract subclasses are included.
 
     Returns
     -------
     list
-        A list of class objects.
+        A list of subclasses for the given class.
     """
-    # IMPROVE: This functionality overlaps with the `__init_subclass__` hooks
-    #   implemented for most classes. --> Remove on of the two?
-    direct = cls.__subclasses__()
-    indirect = []
-    for subclass in direct:
-        indirect.extend(subclasses_recursive(subclass))
-    return direct + indirect
+    subclasses = []
+    for subclass in cls.__subclasses__():
+
+        # Append direct subclass only if it is not abstract
+        if abstract or not isabstract(subclass):
+            subclasses.append(subclass)
+
+        # If requested, add indirect subclasses
+        if recursive:
+            subclasses.extend(get_subclasses(subclass, abstract=abstract))
+
+    return subclasses
 
 
 def closest_element(array: np.ndarray, target: float) -> float:
@@ -713,9 +726,7 @@ def unstructure_base(base):
 def get_base_unstructure_hook(base):
     def structure_base(val, _):
         _type = val["type"]
-        cls = next(
-            (cl for cl in subclasses_recursive(base) if cl.__name__ == _type), None
-        )
+        cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
             raise ValueError(f"Unknown subclass {_type}.")
         return cattrs.structure_attrs_fromdict(val, cls)

@@ -54,7 +54,7 @@ constraint = DependenciesConstraint(
 
 
 # Create the search spaces with the corresponding lists of constraints
-searchspace = SearchSpace.create(parameters=parameters, constraints=[constraint])
+searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
 # Create the objective
 objective = Objective(

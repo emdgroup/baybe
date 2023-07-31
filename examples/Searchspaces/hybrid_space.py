@@ -96,7 +96,7 @@ disc_parameters = [
 ]
 
 # Construct searchspace, objective and BayBE object.
-searchspace = SearchSpace.create(parameters=disc_parameters + cont_parameters)
+searchspace = SearchSpace.from_product(parameters=disc_parameters + cont_parameters)
 
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]

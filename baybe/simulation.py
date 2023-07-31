@@ -23,7 +23,7 @@ from baybe.utils import (
 )
 
 if TYPE_CHECKING:
-    from .targets import NumericalTarget
+    from baybe.targets import NumericalTarget
 
 log = logging.getLogger(__name__)
 

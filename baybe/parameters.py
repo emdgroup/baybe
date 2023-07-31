@@ -29,9 +29,10 @@ from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
 from scipy.spatial.distance import pdist
 
-from .utils import (
+from baybe.utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
+    EmptySearchSpaceError,
     eq_dataframe,
     get_base_unstructure_hook,
     is_valid_smiles,
@@ -40,8 +41,8 @@ from .utils import (
     smiles_to_rdkit_features,
     unstructure_base,
 )
-from .utils.interval import convert_bounds, InfiniteIntervalError, Interval
-from .utils.serialization import SerialMixin
+from baybe.utils.interval import convert_bounds, InfiniteIntervalError, Interval
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ def validate_unique_values(obj, _, value) -> None:
         )
 
 
-@define
+@define(frozen=True, slots=False)
 class Parameter(ABC, SerialMixin):
     """
     Abstract base class for all parameters. Stores information about the
@@ -92,7 +93,7 @@ class Parameter(ABC, SerialMixin):
     is_discrete: ClassVar[bool]
 
     # object variables
-    name: str
+    name: str = field()
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
@@ -101,16 +102,19 @@ class Parameter(ABC, SerialMixin):
         """
 
 
+@define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):
     """
     Abstract class for discrete parameters.
     """
 
+    # TODO [15280]: needs to be refactored
+
     # class variables
     is_discrete: ClassVar[bool] = True
 
     # object variables
-    encoding: Optional[str] = None
+    encoding: ClassVar[Optional[str]] = None
 
     @property
     @abstractmethod
@@ -156,18 +160,20 @@ class DiscreteParameter(Parameter, ABC):
         return transformed
 
 
-@define
+@define(frozen=True, slots=False)
 class Categorical(DiscreteParameter):
     """
     Parameter class for categorical parameters.
     """
 
     # class variables
-    is_numeric = False
+    is_numeric: ClassVar[bool] = False
 
     # object variables
-    _values: list = field(validator=[min_len(2), validate_unique_values])
-    encoding: Literal["OHE", "INT"] = "OHE"
+    _values: list = field(
+        converter=list, validator=[min_len(2), validate_unique_values]
+    )
+    encoding: Literal["OHE", "INT"] = field(default="OHE")
 
     @property
     def values(self) -> list:
@@ -188,29 +194,28 @@ class Categorical(DiscreteParameter):
         return comp_df
 
 
-@define
+@define(frozen=True, slots=False)
 class NumericDiscrete(DiscreteParameter):
     """
     Parameter class for discrete numerical parameters (a.k.a. setpoints).
     """
 
     # class variables
-    is_numeric = True
+    is_numeric: ClassVar[bool] = True
 
     # object variables
     _values: List[Union[int, float]] = field(
+        converter=list,
         validator=[
             deep_iterable(instance_of((int, float)), instance_of(list)),
             min_len(2),
             validate_unique_values,
-        ]
+        ],
     )
     tolerance: float = field(default=0.0)
 
     @tolerance.validator
-    def validate_tolerance(
-        self, attribute, tolerance
-    ):  # pylint: disable=unused-argument
+    def validate_tolerance(self, _, tolerance):
         """
         Validates that the tolerance (i.e. allowed experimental uncertainty when
         reading in measured values) is safe. A tolerance larger than half the minimum
@@ -251,15 +256,15 @@ class NumericDiscrete(DiscreteParameter):
         return any(differences_acceptable)
 
 
-@define
+@define(frozen=True, slots=False)
 class NumericContinuous(Parameter):
     """
     Parameter class for continuous numerical parameters.
     """
 
     # class variables
-    is_numeric = True
-    is_discrete = False
+    is_numeric: ClassVar[bool] = True
+    is_discrete: ClassVar[bool] = False
 
     # object variables
     bounds: Interval = field(default=None, converter=convert_bounds)
@@ -281,7 +286,7 @@ class NumericContinuous(Parameter):
         return self.bounds.contains(item)
 
 
-@define
+@define(frozen=True, slots=False)
 class GenericSubstance(DiscreteParameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
@@ -295,19 +300,17 @@ class GenericSubstance(DiscreteParameter):
     """
 
     # class variables
-    is_numeric = False
+    is_numeric: ClassVar[bool] = False
 
     # object variables
     data: Dict[str, str] = field()
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )
-    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = "MORDRED"
+    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
 
     @data.validator
-    def validate_substance_data(
-        self, attribute, value
-    ):  # pylint: disable=unused-argument
+    def validate_substance_data(self, _, value):
         for name, smiles in value.items():
             if not is_valid_smiles(smiles):
                 raise ValueError(
@@ -373,7 +376,7 @@ class GenericSubstance(DiscreteParameter):
 SUBSTANCE_ENCODINGS = get_args(get_type_hints(GenericSubstance)["encoding"])
 
 
-@define
+@define(frozen=True, slots=False)
 class Custom(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
@@ -381,14 +384,14 @@ class Custom(DiscreteParameter):
     """
 
     # class variables
-    is_numeric = False
+    is_numeric: ClassVar[bool] = False
 
     # object variables
-    encoding = "CUSTOM"
     data: pd.DataFrame = field(eq=eq_dataframe())
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )
+    encoding = field(default="CUSTOM")
 
     @data.validator
     def validate_custom_data(self, _, value):
@@ -555,5 +558,5 @@ def _validate_parameters(parameters: List[Parameter]) -> None:
     """
     # Assert that the parameter list is non-empty and contains unique names
     if not parameters:
-        raise ValueError("At least one parameter must be provided.")
+        raise EmptySearchSpaceError("At least one parameter must be provided.")
     _validate_parameter_names(parameters)

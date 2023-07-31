@@ -19,11 +19,10 @@ from attr.validators import instance_of
 from attrs import define, field
 from attrs.validators import deep_iterable, in_, min_len
 
-from .utils import geom_mean
-from .utils.boundtransforms import bound_bell, bound_linear, bound_triangular
-
-from .utils.interval import convert_bounds, Interval
-from .utils.serialization import SerialMixin
+from baybe.utils import geom_mean
+from baybe.utils.boundtransforms import bound_bell, bound_linear, bound_triangular
+from baybe.utils.interval import convert_bounds, Interval
+from baybe.utils.serialization import SerialMixin
 
 log = logging.getLogger(__name__)
 
@@ -37,14 +36,19 @@ VALID_TRANSFORMS = {
 }
 
 
-@define
+def _normalize_weights(weights: List[float]) -> List[float]:
+    """Normalizes a collection of weights such that they sum to 100."""
+    return (100 * np.asarray(weights) / np.sum(weights)).tolist()
+
+
+@define(frozen=True)
 class Target(ABC):
     """
     Abstract base class for all target variables. Stores information about the
     range, transformations, etc.
     """
 
-    name: str
+    name: str = field()
 
     @abstractmethod
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -64,7 +68,7 @@ class Target(ABC):
         """
 
 
-@define
+@define(frozen=True)
 class NumericalTarget(Target, SerialMixin):
     """
     Class for numerical targets.
@@ -160,7 +164,7 @@ class NumericalTarget(Target, SerialMixin):
         return transformed
 
 
-@define
+@define(frozen=True)
 class Objective(SerialMixin):
     """Class for managing optimization objectives."""
 
@@ -168,20 +172,17 @@ class Objective(SerialMixin):
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
 
-    mode: Literal["SINGLE", "DESIRABILITY"]
+    mode: Literal["SINGLE", "DESIRABILITY"] = field()
     targets: List[NumericalTarget] = field(validator=min_len(1))
-    weights: List[float] = field(default=None)
+    weights: List[float] = field(converter=_normalize_weights)
     combine_func: Literal["MEAN", "GEOM_MEAN"] = field(
         default="GEOM_MEAN", validator=in_(["MEAN", "GEOM_MEAN"])
     )
 
-    def __attrs_post_init__(self):
-        # Use default weights if not provided
-        if self.weights is None:
-            self.weights = [100] * len(self.targets)
-
-        # Normalize the weights
-        self.weights = (100 * np.asarray(self.weights) / np.sum(self.weights)).tolist()
+    @weights.default
+    def default_weights(self) -> List[float]:
+        """By default, all targets are equally important."""
+        return [1.0] * len(self.targets)
 
     @targets.validator
     def validate_targets(self, _, targets: List[NumericalTarget]):
