@@ -69,6 +69,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
+    "sphinx_markdown_builder",
 ]
 
 templates_path = ["_templates"]
