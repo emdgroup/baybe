@@ -1,9 +1,17 @@
+### Example for using a sum constraint in a discrete searchspace
+
 """
 Example for imposing sum constraints for discrete parameters.
-The constraints simulate a situation where we want to mix up to three solvents,
-but their respective fractions need to sum up to 100. Also, the solvents should
-never be chosen twice.
+The constraints simulate a situation where we want to mix up to three solvents.
+However, their respective fractions need to sum up to 100.
+Also, the solvents should never be chosen twice.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
+
 import math
 
 import numpy as np
@@ -22,6 +30,8 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
+### Experiment setup
+
 # This parameter denotes the tolerance with regard to the calculation of the sum.
 SUM_TOLERANCE = 1.0
 
@@ -34,7 +44,8 @@ dict_solvents = {
 solvent1 = GenericSubstance(name="Solvent1", data=dict_solvents, encoding="MORDRED")
 solvent2 = GenericSubstance(name="Solvent2", data=dict_solvents, encoding="MORDRED")
 solvent3 = GenericSubstance(name="Solvent3", data=dict_solvents, encoding="MORDRED")
-# Parameters for representing the fraction
+
+# Parameters for representing the fraction.
 fraction1 = NumericDiscrete(
     name="Fraction1", values=list(np.linspace(0, 100, 12)), tolerance=0.2
 )
@@ -47,11 +58,13 @@ fraction3 = NumericDiscrete(
 
 parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 
-# Since the constraints are required for the creation of the searchspace, we create
-# them next.
-# Note that we need a PermutationInvariance Constraint here. The reason is that
-# constraints are normally applied in a specific order. However, as the fractions should
-# be invariant under permutations, we require an explicit constraint for this.
+### Creating the constraint
+
+# Since the constraints are required for the creation of the searchspace, we create them next.
+# Note that we need a `PermutationInvarianceConstraint` here.
+# The reason is that constraints are normally applied in a specific order.
+# However, the fractions should be invariant under permutations.
+# We thus require an explicit constraint for this.
 perm_inv_constraint = PermutationInvarianceConstraint(
     parameters=["Solvent1", "Solvent2", "Solvent3"],
     dependencies=DependenciesConstraint(
@@ -64,30 +77,37 @@ perm_inv_constraint = PermutationInvarianceConstraint(
         affected_parameters=[["Solvent1"], ["Solvent2"], ["Solvent3"]],
     ),
 )
+
 # This is now the actual sum constraint
 sum_constraint = SumConstraint(
     parameters=["Fraction1", "Fraction2", "Fraction3"],
     condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
 )
-# Since the permutation invariance might create duplicate labels, we onclude a consraint
-# to remove them
+
+# The permutation invariance might create duplciate labels.
+# We thus include a constraint to remove them.
 no_duplicates_constraint = NoLabelDuplicatesConstraint(
     parameters=["Solvent1", "Solvent2", "Solvent3"]
 )
 
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
-# We now create the searchspace using all of these constraints
+
+### Creating the searchspace and the objective
+
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
-
-# Create the objective
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-# Create BayBE object, add fake results and print what happens to internal data
+### Creating and printing the BayBE object
+
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
+
+### Manual verification of the constraint
+
+# The following loop performs some recommendations and manually verifies the given constraints.
 
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
