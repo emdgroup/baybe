@@ -480,6 +480,14 @@ class SearchSpace(SerialMixin):
         _validate_parameters(self.parameters)
         _validate_constraints(self.discrete.constraints)
 
+        # Telemetry
+        telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
+        telemetry_record_value(TELEM_LABELS["NUM_PARAMETERS"], len(self.parameters))
+        telemetry_record_value(
+            TELEM_LABELS["NUM_CONSTRAINTS"],
+            len(self.constraints) if self.constraints else 0,
+        )
+
     @classmethod
     def from_product(
         cls,
@@ -529,18 +537,15 @@ class SearchSpace(SerialMixin):
             ],
         )
 
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
-        telemetry_record_value(TELEM_LABELS["NUM_PARAMETERS"], len(parameters))
-        telemetry_record_value(
-            TELEM_LABELS["NUM_CONSTRAINTS"], len(constraints) if constraints else 0
-        )
-
         return SearchSpace(discrete=discrete, continuous=continuous)
 
     @property
     def parameters(self) -> List[Parameter]:
         return self.discrete.parameters + self.continuous.parameters
+
+    @property
+    def constraints(self) -> List[Constraint]:
+        return self.discrete.constraints
 
     @property
     def type(self) -> SearchSpaceType:
