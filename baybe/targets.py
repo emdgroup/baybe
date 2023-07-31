@@ -25,12 +25,12 @@ from baybe.utils.interval import convert_bounds, Interval
 from baybe.utils.numeric import geom_mean
 from baybe.utils.serialization import SerialMixin
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 # TODO: potentially introduce an abstract base class for the transforms
 #   -> this would remove the necessity to maintain the following dict
-VALID_TRANSFORMS = {
+_VALID_TRANSFORMS = {
     "MAX": ["LINEAR"],
     "MIN": ["LINEAR"],
     "MATCH": ["TRIANGULAR", "BELL"],
@@ -93,8 +93,8 @@ class NumericalTarget(Target, SerialMixin):
     @bounds_transform_func.default
     def default_bounds_transform_func(self) -> Optional[str]:
         if self.bounds.is_bounded:
-            fun = VALID_TRANSFORMS[self.mode][0]
-            log.warning(
+            fun = _VALID_TRANSFORMS[self.mode][0]
+            _logger.warning(
                 "The bound transform function for target '%s' in mode '%s' has not "
                 "been specified. Setting the bound transform function to '%s'.",
                 self.name,
@@ -123,12 +123,12 @@ class NumericalTarget(Target, SerialMixin):
         """Validates that the given transform is compatible with the specified mode."""
 
         # Assert that the given transform is valid for the specified target mode
-        if (value is not None) and (value not in VALID_TRANSFORMS[self.mode]):
+        if (value is not None) and (value not in _VALID_TRANSFORMS[self.mode]):
             raise ValueError(
                 f"You specified bounds for target '{self.name}', but your "
                 f"specified bound transform function '{value}' is not compatible "
                 f"with the target mode {self.mode}'. It must be one "
-                f"of {VALID_TRANSFORMS[self.mode]}."
+                f"of {_VALID_TRANSFORMS[self.mode]}."
             )
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:

@@ -31,18 +31,18 @@ from baybe.utils.boolean import isabstract
 
 
 # Use float64 (which is recommended at least for BoTorch models)
-DTYPE = torch.float64
+_DTYPE = torch.float64
 
 # Define constants
-MIN_TARGET_STD = 1e-6
-MIN_VARIANCE = 1e-6
+_MIN_TARGET_STD = 1e-6
+_MIN_VARIANCE = 1e-6
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
     """Helper function to validate and prepare the model input."""
     if len(x) == 0:
         raise ValueError("The model input must be non-empty.")
-    return x.to(DTYPE)
+    return x.to(_DTYPE)
 
 
 def _prepare_targets(y: Tensor) -> Tensor:
@@ -52,7 +52,7 @@ def _prepare_targets(y: Tensor) -> Tensor:
             "The model currently supports only one target or multiple targets in "
             "DESIRABILITY mode."
         )
-    return y.to(DTYPE)
+    return y.to(_DTYPE)
 
 
 def _var_to_covar(var: Tensor) -> Tensor:
@@ -106,7 +106,7 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
 
             # https://github.com/pytorch/pytorch/issues/29372
             # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
-            if torch.std(train_y.ravel(), unbiased=False) < MIN_TARGET_STD:
+            if torch.std(train_y.ravel(), unbiased=False) < _MIN_TARGET_STD:
                 self.model = MeanPredictionModel(self.model.searchspace)
 
             # Fit the selected model with the training data
@@ -284,7 +284,7 @@ class SurrogateModel(ABC):
             covar = _var_to_covar(covar)
 
         # Add small diagonal variances for numerical stability
-        covar.add_(torch.eye(covar.shape[-1]) * MIN_VARIANCE)
+        covar.add_(torch.eye(covar.shape[-1]) * _MIN_VARIANCE)
 
         return mean, covar
 

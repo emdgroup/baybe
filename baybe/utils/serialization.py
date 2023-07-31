@@ -10,7 +10,7 @@ import cattrs
 
 from baybe.utils.basic import get_subclasses
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 
 class SerialMixin:
@@ -25,7 +25,7 @@ class SerialMixin:
         return cattrs.unstructure(self)
 
     @classmethod
-    def from_dict(cls: Type[T], dictionary: dict) -> T:
+    def from_dict(cls: Type[_T], dictionary: dict) -> _T:
         """Create an object from its dictionary representation."""
         return cattrs.structure(dictionary, cls)
 
@@ -34,7 +34,7 @@ class SerialMixin:
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls: Type[T], string: str) -> T:
+    def from_json(cls: Type[_T], string: str) -> _T:
         """Create an object from its JSON representation."""
         return cls.from_dict(json.loads(string))
 

@@ -21,7 +21,7 @@ from baybe.utils.numeric import closer_element, closest_element
 if TYPE_CHECKING:
     from baybe.targets import NumericalTarget
 
-log = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def simulate_scenarios(
@@ -339,7 +339,7 @@ def _look_up_target_values(
             if len(ind) > 1:
                 # More than two instances of this parameter combination
                 # have been measured
-                log.warning(
+                _logger.warning(
                     "The lookup rows with indexes %s seem to be "
                     "duplicates regarding parameter values. Choosing a "
                     "random one.",

@@ -24,7 +24,7 @@ except ImportError:
     KMedoids = None
 
 
-SklearnModel = TypeVar("SklearnModel")
+_ScikitLearnModel = TypeVar("_ScikitLearnModel")
 
 
 @define
@@ -48,7 +48,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism
     #   that checks if a custom mechanism is implemented and uses default otherwise
     #   (similar to what is done in the recommenders)
-    model_class: ClassVar[Type[SklearnModel]]
+    model_class: ClassVar[Type[_ScikitLearnModel]]
     model_cluster_num_parameter_name: ClassVar[str]
     _use_custom_selector: ClassVar[bool] = False
 
@@ -57,7 +57,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     def _make_selection_default(
         self,
-        model: SklearnModel,
+        model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
         """
@@ -78,7 +78,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     def _make_selection_custom(
         self,
-        model: SklearnModel,
+        model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
         """
@@ -129,7 +129,7 @@ if KMedoids:
         """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
         # Class variables
-        model_class: ClassVar[Type[SklearnModel]] = KMedoids
+        model_class: ClassVar[Type[_ScikitLearnModel]] = KMedoids
         model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
         _use_custom_selector: ClassVar[bool] = True
 
@@ -142,7 +142,7 @@ if KMedoids:
 
         def _make_selection_custom(
             self,
-            model: SklearnModel,
+            model: _ScikitLearnModel,
             candidates_scaled: pd.DataFrame,
         ) -> List[int]:
             """
@@ -158,7 +158,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means initial clustering strategy."""
 
     # Class variables
-    model_class: ClassVar[Type[SklearnModel]] = KMeans
+    model_class: ClassVar[Type[_ScikitLearnModel]] = KMeans
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
     _use_custom_selector: ClassVar[bool] = True
 
@@ -171,7 +171,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 
     def _make_selection_custom(
         self,
-        model: SklearnModel,
+        model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
         """
@@ -195,12 +195,12 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) initial clustering strategy."""
 
     # Class variables
-    model_class: ClassVar[Type[SklearnModel]] = GaussianMixture
+    model_class: ClassVar[Type[_ScikitLearnModel]] = GaussianMixture
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
 
     def _make_selection_custom(
         self,
-        model: SklearnModel,
+        model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
         """

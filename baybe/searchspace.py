@@ -7,7 +7,6 @@ Functionality for managing search spaces.
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
-import logging
 from enum import Enum
 from typing import cast, Dict, List, Optional, Tuple
 
@@ -32,8 +31,6 @@ from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import df_drop_single_value_columns, fuzzy_row_match
 from baybe.utils.serialization import SerialMixin
-
-log = logging.getLogger(__name__)
 
 
 class SearchSpaceType(Enum):

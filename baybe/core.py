@@ -7,7 +7,6 @@ Core functionality of BayBE. Main point of interaction via Python.
 #  https://github.com/python-attrs/cattrs/issues/354
 
 import json
-import logging
 from typing import List
 
 import cattrs
@@ -27,9 +26,6 @@ from baybe.telemetry import (
 )
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.serialization import SerialMixin
-
-log = logging.getLogger(__name__)
-
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO[12356]: There should be a way to organize several converters, instead of

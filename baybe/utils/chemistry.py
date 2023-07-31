@@ -16,11 +16,11 @@ from rdkit.Chem.rdMolDescriptors import GetMorganFingerprintAsBitVect
 
 
 # Caching
-cachedir = Path.home() / ".baybe_cache"
-memory_utils = Memory(cachedir / "utils")
+_cachedir = Path.home() / ".baybe_cache"
+_memory_utils = Memory(_cachedir / "utils")
 
 # Fingerprint calculation
-mordred_calculator = Calculator(descriptors)
+_mordred_calculator = Calculator(descriptors)
 
 
 def name_to_smiles(name: str) -> str:
@@ -59,7 +59,7 @@ def name_to_smiles(name: str) -> str:
 
 
 @lru_cache(maxsize=None)
-@memory_utils.cache
+@_memory_utils.cache
 def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
     """
     Memory- and disk-cached computation of Mordred descriptors.
@@ -75,9 +75,11 @@ def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
         Mordred descriptors for the given smiles string.
     """
     try:
-        return np.asarray(mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing())
+        return np.asarray(
+            _mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing()
+        )
     except Exception:
-        return np.full(len(mordred_calculator.descriptors), np.NaN)
+        return np.full(len(_mordred_calculator.descriptors), np.NaN)
 
 
 def smiles_to_mordred_features(
@@ -103,7 +105,7 @@ def smiles_to_mordred_features(
         Dataframe containing overlapping Mordred descriptors for each SMILES string.
     """
     features = [_smiles_to_mordred_features(smiles) for smiles in smiles_list]
-    descriptor_names = list(mordred_calculator.descriptors)
+    descriptor_names = list(_mordred_calculator.descriptors)
     columns = [prefix + "MORDRED_" + str(name) for name in descriptor_names]
     dataframe = pd.DataFrame(data=features, columns=columns)
 

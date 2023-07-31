@@ -4,7 +4,6 @@ Functionality for parameter constraints.
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
-import logging
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
@@ -24,8 +23,6 @@ from baybe.utils.serialization import (
     SerialMixin,
     unstructure_base,
 )
-
-log = logging.getLogger(__name__)
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:

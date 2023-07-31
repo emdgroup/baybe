@@ -5,7 +5,6 @@ Functionality for different experimental parameter types.
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
-import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import (
@@ -36,7 +35,6 @@ from baybe.utils.chemistry import (
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
 )
-
 from baybe.utils.dataframe import df_drop_single_value_columns, df_uncorrelated_features
 from baybe.utils.interval import convert_bounds, InfiniteIntervalError, Interval
 from baybe.utils.serialization import (
@@ -44,8 +42,6 @@ from baybe.utils.serialization import (
     SerialMixin,
     unstructure_base,
 )
-
-log = logging.getLogger(__name__)
 
 # TODO[12356]: There should be a better way than registering with the global converter.
 # TODO: Think about what is the best approach to handle field unions. That is, when

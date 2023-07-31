@@ -10,7 +10,7 @@ import torch
 from baybe.utils.boolean import isabstract
 
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 
 @dataclass(frozen=True, repr=False)
@@ -24,7 +24,7 @@ class Dummy:
         return "<dummy>"
 
 
-def get_subclasses(cls: T, recursive: bool = True, abstract: bool = False) -> List[T]:
+def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> List[_T]:
     """
     Returns a list of subclasses for the given class.
 
