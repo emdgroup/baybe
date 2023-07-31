@@ -7,14 +7,11 @@ import pytest
 
 from baybe.searchspace import SearchSpaceType
 from baybe.strategies.bayesian import (
+    BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.strategies.recommender import (
-    BayesianRecommender,
-    NonPredictiveRecommender,
-    Recommender,
-)
+from baybe.strategies.recommender import NonPredictiveRecommender, Recommender
 from baybe.surrogate import SurrogateModel
 from baybe.utils import add_fake_results, add_parameter_noise, get_subclasses
 

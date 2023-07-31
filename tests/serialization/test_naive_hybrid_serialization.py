@@ -6,10 +6,11 @@ from baybe.core import BayBE
 from baybe.parameters import NumericContinuous, NumericDiscrete
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.strategies.bayesian import (
+    BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.strategies.recommender import BayesianRecommender, NonPredictiveRecommender
+from baybe.strategies.recommender import NonPredictiveRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import get_subclasses
