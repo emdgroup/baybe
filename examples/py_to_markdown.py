@@ -2,108 +2,96 @@
 Automatic transformation of example files written in python into markdown files
 """
 
-
-import glob
 import os
+import pathlib
 import shutil
+
 
 # Script to transform all .py files in .md files in the examples folder
 # Create a new folder named examples_markdown to store the markdown files
 
 # Folder where the .md files created are stored
-DESTINATION_DIR = "examples_markdown/"
+destination_dir = pathlib.Path("examples_markdown")
 
 # if the destination directory already exists it is deleted
-if os.path.isdir(DESTINATION_DIR):
-    shutil.rmtree(DESTINATION_DIR)
+if destination_dir.is_dir():
+    shutil.rmtree(destination_dir)
 
 # Copy the examples folder in the destination directory
-shutil.copytree("examples/", DESTINATION_DIR)
+shutil.copytree("examples", destination_dir)
+
 
 # list all directories in the examples folder
-
-directories = [
-    d
-    for d in os.listdir("examples_markdown/")
-    if os.path.isdir(os.path.join("examples_markdown", d))
-]
+directories = [d for d in destination_dir.iterdir() if d.is_dir()]
 
 # Iterate over the directories
 for directory in directories:
-    path = os.path.join("examples_markdown", directory, "*.py")
-
     # list all .py files in the subdirectory that need to be converted
-    py_files = [os.path.split(fpath)[1] for fpath in glob.glob(path)]
+    py_files = list(directory.glob("**/*.py"))
 
     for file_index, file in enumerate(py_files):
-        # Collect information about the file
-        FILENAME = os.path.splitext(file)[0]
-        ORDER = file_index + 1
-
         # Create the Markdown file:
 
         # 1. Convert the file to jupyter notebook
-        os.system(rf"p2j examples_markdown\{directory}\{file}")
-        NOTEBOOK = FILENAME + ".ipynb"
+        os.system(rf"p2j {file}")
+
+        notebook_path = file.with_suffix(".ipynb")
 
         # 2. Execute the notebook
         os.system(
-            "jupyter nbconvert --execute --to notebook --inplace"
-            + rf" examples_markdown\{directory}\{NOTEBOOK}"
+            rf"jupyter nbconvert --execute --to notebook --inplace {notebook_path}"
         )
-        MARKDOWN = FILENAME + ".md"
 
         # 3. Convert the notebook to markdown
-        os.system(
-            rf"jupyter nbconvert --to markdown examples_markdown\{directory}\{NOTEBOOK}"
-        )
+        os.system(rf"jupyter nbconvert --to markdown {notebook_path}")
 
-        # 4. Delete the no-longer-necessary notebook
-        os.remove(rf"examples_markdown\{directory}\{NOTEBOOK}")
+        markdown_path = file.with_suffix(".md")
 
-        # 5. Add lines at the top of the .md file
+        # 4. Add lines at the top of the .md file
+
+        # Collect information about the file
+        filename = file.stem
+        directory_name = directory.name
+        order = file_index + 1
+
+        # Write the information collected at the top of the .md file
 
         LINES_TO_ADD = (
             "---"
             + "\neleventyNavigation:"
             + "\n  key: "
-            + FILENAME
+            + filename
             + "\n  order: "
-            + str(ORDER)
+            + str(order)
             + "\n  parent: Examples/"
-            + directory
+            + directory_name
             + "\nlayout: layout.njk"
             + "\npermalink: baybe/sdk/examples/"
-            + directory
+            + directory_name
             + "\ntitle: "
-            + FILENAME
+            + filename
             + "\n---\n\n "
         )
-        with open(
-            rf"examples_markdown\{directory}\{MARKDOWN}", "r+", encoding="UTF-8"
-        ) as f:
+        with open(rf"{markdown_path}", "r+", encoding="UTF-8") as f:
             content = f.readlines()
+
+            # Any lines starting with '![png]' is removed
             content = [line for line in content if not line.startswith("![png]")]
 
+            # The final file is then written
             f.seek(0)
             f.write(LINES_TO_ADD)
             f.writelines(content)
 
-        # 6. Remove the no-longer-necessary .py file
-        os.remove(rf"examples_markdown\{directory}\{file}")
+# 5. remove remaining not markdown files and subdirectories from the destination directory
 
-# 7. remove remaining not markdown files and subdirectories from the destination directory
-files = [f for f in glob.glob("examples_markdown/*") if os.path.isfile(f)] + [
-    f for f in glob.glob("examples_markdown/**/*") if os.path.isfile(f)
-]
-
-subdirectories = [d for d in glob.glob("examples_markdown/**/*") if os.path.isdir(d)]
+# remove any not markdown files
+for file in destination_dir.glob("**/*"):
+    if file.is_file() and file.suffix != ".md":
+        file.unlink(file)
 
 
-other_files = [
-    file for file in files if os.path.splitext(os.path.split(file)[1])[1] != ".md"
-]
-for file in other_files:
-    os.remove(file)
-for subdirectory in subdirectories:
-    shutil.rmtree(subdirectory)
+# Remove any remaining empty subdirectories
+for subdirectory in destination_dir.glob("*/*"):
+    if subdirectory.is_dir() and not any(subdirectory.iterdir()):
+        subdirectory.rmdir()
