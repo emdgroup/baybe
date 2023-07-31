@@ -1,9 +1,14 @@
+### Example for using exlusion constraints incorporating sums and products
+
 """
-This examples shows how an exclusion constraint can be created for a discrete
-searchspace using products and sums. It assumes that the reader is familiar with the
-basics of BayBE, and thus does not explain the details of e.g. parameter creation.
-For additional explanation on these aspects, we refer to the Basic examples.
+This examples demonstrates an exclusion constraint using products and sums.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
+
 import numpy as np
 
 from baybe.constraints import ProductConstraint, SumConstraint, ThresholdCondition
@@ -14,8 +19,8 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
+### Experiment setup
 
-# We begin by setting up some parameters for our experiments.
 dict_solvent = {
     "water": "O",
     "C1": "C",
@@ -54,7 +59,10 @@ parameters = [
     num_parameter_6,
 ]
 
-# Before creating the searchspace, we create the constraints
+### Creating the constraints
+
+# Constraints are used when creating the searchspace object.
+# Thus, they need to be defined prior to the searchspace creation.
 
 sum_constraint_1 = SumConstraint(
     parameters=["NumParameter1", "NumParameter2"],
@@ -71,16 +79,22 @@ prod_constraint = ProductConstraint(
 
 constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 
+### Creating the searchspace and the objective
+
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
-# Create the objective
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-# Create BayBE object, add fake results and print what happens to internal data
+### Creating and printing the BayBE object
+
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
+
+### Manual verification of the constraints
+
+# The following loop performs some recommendations and manually verifies the given constraints.
 
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
