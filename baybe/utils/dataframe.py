@@ -1,14 +1,18 @@
 """Dataframe utilities."""
+
+from __future__ import annotations
+
 import logging
-from typing import Dict, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Literal, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import pandas as pd
 import torch
 from torch import Tensor
 
-from baybe.core import BayBE
-from baybe.parameters import Parameter
+if TYPE_CHECKING:
+    from baybe.core import BayBE
+    from baybe.parameters import Parameter
 
 # Logging
 _logger = logging.getLogger(__name__)
