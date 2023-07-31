@@ -37,10 +37,12 @@ from baybe.utils import (
     eq_dataframe,
     get_base_unstructure_hook,
     is_valid_smiles,
+    unstructure_base,
+)
+from baybe.utils.chemistry import (
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
-    unstructure_base,
 )
 from baybe.utils.interval import convert_bounds, InfiniteIntervalError, Interval
 from baybe.utils.serialization import SerialMixin
