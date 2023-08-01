@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Renamed `create` constructors to `from_product`
 - Renamed `empty` checks for subspaces to `is_empty`
-- Cached recommendations are now a private attribute
+- Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
 
 ## [0.3.2] - 2023-07-24
