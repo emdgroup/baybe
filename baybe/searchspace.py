@@ -28,9 +28,12 @@ from baybe.parameters import (
     parameter_cartesian_prod_to_df,
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import df_drop_single_value_columns, fuzzy_row_match
-from baybe.utils.serialization import SerialMixin
+from baybe.utils import (
+    df_drop_single_value_columns,
+    eq_dataframe,
+    fuzzy_row_match,
+    SerialMixin,
+)
 
 
 class SearchSpaceType(Enum):

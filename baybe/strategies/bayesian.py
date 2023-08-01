@@ -31,8 +31,7 @@ from baybe.strategies.recommender import (
     select_candidates_and_recommend,
 )
 from baybe.surrogate import SurrogateModel
-from baybe.utils.dataframe import to_tensor
-from baybe.utils.sampling_algorithms import farthest_point_sampling
+from baybe.utils import farthest_point_sampling, to_tensor
 
 
 # Validation for the sampling percentage of the hybrid recommendation functionality.

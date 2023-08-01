@@ -7,8 +7,6 @@ from typing import List, TypeVar
 import numpy as np
 import torch
 
-from baybe.utils.boolean import isabstract
-
 
 _T = TypeVar("_T")
 
@@ -42,6 +40,8 @@ def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> L
     list
         A list of subclasses for the given class.
     """
+    from baybe.utils import isabstract  # pylint: disable=import-outside-toplevel
+
     subclasses = []
     for subclass in cls.__subclasses__():
 

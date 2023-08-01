@@ -27,7 +27,7 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils.boolean import isabstract
+from baybe.utils import isabstract
 
 
 # Use float64 (which is recommended at least for BoTorch models)

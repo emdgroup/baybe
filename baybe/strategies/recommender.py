@@ -13,7 +13,7 @@ from attrs import define
 from baybe.exceptions import NotEnoughPointsLeftError
 
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.utils.serialization import get_base_unstructure_hook, unstructure_base
+from baybe.utils import get_base_unstructure_hook, unstructure_base
 
 
 # TODO: See if the there is a more elegant way to share this functionality
