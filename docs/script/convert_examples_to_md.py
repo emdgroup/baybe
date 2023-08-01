@@ -5,6 +5,7 @@ Automatic transformation of example files written in python into markdown files
 import os
 import pathlib
 import shutil
+import sys
 
 from tqdm import tqdm
 
@@ -12,7 +13,9 @@ from tqdm import tqdm
 # Create a new folder named examples_markdown to store the markdown files
 
 # Folder where the .md files created are stored
-destination_dir = pathlib.Path("examples_markdown")
+# Default name is examples_markdown, optional name can be provided
+DESTINATION_DIR_NAME = "examples_markdown" if len(sys.argv) == 1 else sys.argv[1]
+destination_dir = pathlib.Path(DESTINATION_DIR_NAME)
 
 # if the destination directory already exists it is deleted
 if destination_dir.is_dir():
@@ -37,7 +40,9 @@ for directory in (pbar := tqdm(directories)):
     for file_index, file in enumerate(inner_pbar := tqdm(py_files, leave=False)):
 
         # Set description for progress bar
-        inner_pbar.set_description(f"Progressing {str(directory)[18:]}")
+        inner_pbar.set_description(
+            f"Progressing {str(directory)[len(DESTINATION_DIR_NAME)+1:]}"
+        )
 
         # Create the Markdown file:
 
