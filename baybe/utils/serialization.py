@@ -1,10 +1,7 @@
-# pylint: disable=missing-function-docstring
-
-
 """Serialization utilities."""
 
 import json
-from typing import Type, TypeVar
+from typing import Any, Callable, Type, TypeVar
 
 import cattrs
 
@@ -39,7 +36,8 @@ class SerialMixin:
         return cls.from_dict(json.loads(string))
 
 
-def unstructure_base(base):
+def unstructure_base(base: Any) -> dict:
+    """Unstructures an object into a dictionary and adds an entry for the class name."""
     converter = cattrs.global_converter
     return {
         "type": base.__class__.__name__,
@@ -47,8 +45,13 @@ def unstructure_base(base):
     }
 
 
-def get_base_unstructure_hook(base):
-    def structure_base(val, _):
+def get_base_unstructure_hook(base: Type[_T]) -> Callable[[dict], _T]:
+    """
+    Returns a hook for structuring a dictionary into an appropriate subclass.
+    Provides the inverse operation to `unstructure_base`.
+    """
+
+    def structure_base(val: dict, _) -> _T:
         _type = val["type"]
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
