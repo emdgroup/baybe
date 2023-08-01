@@ -386,7 +386,7 @@ class Custom(DiscreteParameter):
     is_numeric: ClassVar[bool] = False
 
     # object variables
-    data: pd.DataFrame = field(eq=eq_dataframe())
+    data: pd.DataFrame = field(eq=eq_dataframe)
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )

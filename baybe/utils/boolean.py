@@ -1,5 +1,3 @@
-# pylint: disable=missing-function-docstring
-
 """Functions implementing boolean checks."""
 
 from abc import ABC
@@ -7,6 +5,10 @@ from typing import Any
 
 from attr import cmp_using
 from rdkit import Chem
+
+
+# Used for comparing pandas dataframes in attrs classes
+eq_dataframe = cmp_using(lambda x, y: x.equals(y))
 
 
 def isabstract(cls: Any) -> bool:
@@ -50,10 +52,6 @@ def is_valid_smiles(smiles: str) -> bool:
         return mol is not None
     except Exception:
         return False
-
-
-def eq_dataframe():
-    return cmp_using(lambda x, y: x.equals(y))
 
 
 def strtobool(val: str) -> bool:

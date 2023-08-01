@@ -56,9 +56,9 @@ class SubspaceDiscrete:
     parameters: List[DiscreteParameter] = field(
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
-    exp_rep: pd.DataFrame = field(eq=eq_dataframe())
-    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
-    metadata: pd.DataFrame = field(eq=eq_dataframe())
+    exp_rep: pd.DataFrame = field(eq=eq_dataframe)
+    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe)
+    metadata: pd.DataFrame = field(eq=eq_dataframe)
     empty_encoding: bool = field(default=False)
     constraints: List[Constraint] = field(factory=list)
 
