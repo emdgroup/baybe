@@ -1,13 +1,21 @@
+### Example for validation of a config file
+
 """
 This example shows how to load and validate a user defined configuration file.
-We use the two configuration dictionaries. The first one represents a valid
-configuration, the second does not.
+We use the two configuration dictionaries.
+The first one represents a valid configuration, the second does not.
 """
+
+#### Necessary imports
 
 from baybe.core import BayBE
 
+# Note that the following explicit call `str()` is not strictly necessary.
+# It is included since our method of converting this example to a markdown file does not interpret
+# this part of the code as `python` code if we do not include this call.
 
-CONFIG = """
+CONFIG = str(
+    """
 {
     "parameters": [
         {
@@ -67,8 +75,10 @@ CONFIG = """
     }
 }
 """
+)
 
-INVALID_CONFIG = """
+INVALID_CONFIG = str(
+    """
 {
     "parameters": [
         {
@@ -128,6 +138,7 @@ INVALID_CONFIG = """
     }
 }
 """
+)
 
 # The first validation should work and print the line contained in the try block
 try:
@@ -136,7 +147,7 @@ try:
 except Exception:  # pylint: disable=W0702
     print("Something is wrong with config 1 which should not happen!")
 
-# This should fail
+# This should fail.
 try:
     BayBE.validate_config(INVALID_CONFIG)
     baybe = BayBE.from_config(INVALID_CONFIG)
