@@ -1,20 +1,22 @@
 """BayBE — A Bayesian Back End for Design of Experiments."""
 
-from importlib.metadata import PackageNotFoundError, version
-from importlib.resources import path
+from importlib.metadata import (
+    PackageNotFoundError as _PackageNotFoundError,
+    version as _version,
+)
+from importlib.resources import path as _path
 
-from setuptools_scm import get_version
+from setuptools_scm import get_version as _get_version
 
-from baybe.core import BayBE
 
 try:
-    __version__ = version(__name__)
-except PackageNotFoundError:
+    __version__ = _version(__name__)
+except _PackageNotFoundError:
     pass
 
 try:
-    with path(__name__, "") as package_folder:
-        __version__ = get_version(
+    with _path(__name__, "") as package_folder:
+        __version__ = _get_version(
             root=str(package_folder / ".."),
             version_scheme="post-release",
             local_scheme="dirty-tag",
@@ -22,10 +24,11 @@ try:
 except LookupError:
     __version__ = "unknown"
 
-del version
-del PackageNotFoundError
-del path
-del get_version
+########################################################################################
+# Prepare namespace
+########################################################################################
+
+from baybe.core import BayBE  # pylint: disable=wrong-import-position
 
 __all__ = [
     "__version__",
