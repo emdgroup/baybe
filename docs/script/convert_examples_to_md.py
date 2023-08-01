@@ -2,19 +2,37 @@
 Automatic transformation of example files written in python into markdown files
 """
 
+import argparse
 import os
 import pathlib
 import shutil
-import sys
 
 from tqdm import tqdm
 
 # Script to transform all .py files in .md files in the examples folder
 # Create a new folder named examples_markdown to store the markdown files
 
+# First, we parse potential arguments the user might want to give.
+# These are a different folder name and the option whether or not the headers should
+# be written
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-t",
+    "--target_dir",
+    help="Choose a different target directory. Default is SDKExamples.",
+    default="SDKExamples",
+)
+parser.add_argument(
+    "--write_headers",
+    help="Decide whether eleventy headers should be written. Default is to write them",
+    action=argparse.BooleanOptionalAction,
+    default=True,
+)
+args = parser.parse_args()
 # Folder where the .md files created are stored
 # Default name is examples_markdown, optional name can be provided
-DESTINATION_DIR_NAME = "SDKExamples" if len(sys.argv) == 1 else sys.argv[1]
+DESTINATION_DIR_NAME = args.target_dir
+WRITE_HEADERS = args.write_headers
 destination_dir = pathlib.Path(DESTINATION_DIR_NAME)
 
 # if the destination directory already exists it is deleted
@@ -27,20 +45,24 @@ shutil.copytree("examples", destination_dir)
 # List all directories in the examples folder
 directories = [d for d in destination_dir.iterdir() if d.is_dir()]
 
-# Write the markdown file for the SDK Example folder itself
-with open(rf"{destination_dir}/{destination_dir.name}.md", "w", encoding="UTF-8") as f:
-    f.write(
-        "---"
-        + "\neleventyNavigation:"
-        + "\n  key: SDK Examples"
-        + f"\n  order: {len(directories)+1}"
-        + "\n  parent: Python SDK"
-        + "\nlayout: layout.njk"
-        + "\npermalink: baybe/sdk/examples/"
-        + "\ntitle: SDK Examples"
-        + "\n---\n\n "
-    )
-    f.write("These are examples on using the BayBE SDK")
+# Write the markdown file for the SDK Example folder itself.
+# Only necessary if eleventy headers should be written.
+if WRITE_HEADERS:
+    with open(
+        rf"{destination_dir}/{destination_dir.name}.md", "w", encoding="UTF-8"
+    ) as f:
+        f.write(
+            "---"
+            + "\neleventyNavigation:"
+            + "\n  key: SDK Examples"
+            + f"\n  order: {len(directories)+1}"
+            + "\n  parent: Python SDK"
+            + "\nlayout: layout.njk"
+            + "\npermalink: baybe/sdk/examples/"
+            + "\ntitle: SDK Examples"
+            + "\n---\n\n "
+        )
+        f.write("These are examples on using the BayBE SDK")
 
 # Iterate over the directories
 for directory in (pbar := tqdm(directories)):
@@ -83,45 +105,46 @@ for directory in (pbar := tqdm(directories)):
         directory_name = directory.name
         order = file_index + 1
 
-        # Write the information collected at the top of the .md file
+        # Write the information collected at the top of the .md file if required
+        if WRITE_HEADERS:
+            formatted_name = filename.replace("_", " ").capitalize()
 
-        formatted_name = filename.replace("_", " ").capitalize()
+            LINES_TO_ADD = (
+                "---"
+                + "\neleventyNavigation:"
+                + f"\n  key: {formatted_name}"
+                + f"\n  order: {order}"
+                + f"\n  parent: {directory_name}"
+                + "\nlayout: layout.njk"
+                + f"\npermalink: baybe/sdk/examples/{directory_name}/{filename}_ex/"
+                + f"\ntitle: {formatted_name}"
+                + "\n---\n\n "
+            )
+            with open(rf"{markdown_path}", "r+", encoding="UTF-8") as f:
+                content = f.readlines()
 
-        LINES_TO_ADD = (
-            "---"
-            + "\neleventyNavigation:"
-            + f"\n  key: {formatted_name}"
-            + f"\n  order: {order}"
-            + f"\n  parent: {directory_name}"
-            + "\nlayout: layout.njk"
-            + f"\npermalink: baybe/sdk/examples/{directory_name}/{filename}_ex/"
-            + f"\ntitle: {formatted_name}"
-            + "\n---\n\n "
-        )
-        with open(rf"{markdown_path}", "r+", encoding="UTF-8") as f:
-            content = f.readlines()
+                # Any lines starting with '![png]' is removed
+                content = [line for line in content if not line.startswith("![png]")]
 
-            # Any lines starting with '![png]' is removed
-            content = [line for line in content if not line.startswith("![png]")]
+                # The final file is then written
+                f.seek(0)
+                f.write(LINES_TO_ADD)
+                f.writelines(content)
 
-            # The final file is then written
-            f.seek(0)
-            f.write(LINES_TO_ADD)
-            f.writelines(content)
-
-    # Write the file for the sub-directory itself
-    with open(rf"{directory}/{directory.name}.md", "w", encoding="UTF-8") as f:
-        f.write(
-            "---"
-            + "\neleventyNavigation:"
-            + f"\n  key: {directory.name}"
-            + f"\n  order: {order+1}"
-            + "\n  parent: SDK Examples"
-            + "\nlayout: layout.njk"
-            + f"\npermalink: baybe/sdk/examples/{directory.name}/"
-            + f"\ntitle: {directory.name}"
-            + "\n---\n\n "
-        )
+    # Write the file for the sub-directory itself if required
+    if WRITE_HEADERS:
+        with open(rf"{directory}/{directory.name}.md", "w", encoding="UTF-8") as f:
+            f.write(
+                "---"
+                + "\neleventyNavigation:"
+                + f"\n  key: {directory.name}"
+                + f"\n  order: {order+1}"
+                + "\n  parent: SDK Examples"
+                + "\nlayout: layout.njk"
+                + f"\npermalink: baybe/sdk/examples/{directory.name}/"
+                + f"\ntitle: {directory.name}"
+                + "\n---\n\n "
+            )
 
 # 5. Remove remaining files and subdirectories from the destination directory
 
