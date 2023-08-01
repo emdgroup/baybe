@@ -139,7 +139,7 @@ class SubspaceDiscrete:
         ----------
         df : pd.DataFrame
             The experimental representation of the search space to be created.
-        parameters : pd.DataFrame
+        parameters : List[Parameter], optional
             Optional parameters corresponding to the columns in the given dataframe.
             If a match between column name and parameter name is found, the
             corresponding parameter is used. If a column has no match in the parameter
