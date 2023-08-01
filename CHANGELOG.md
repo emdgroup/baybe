@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `empty` checks for subspaces to `is_empty`
 - Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
+- Adjusted comments in example files
 
 ## [0.3.2] - 2023-07-24
 ### Added
