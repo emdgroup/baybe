@@ -8,7 +8,6 @@ from baybe.strategies.clustering import (
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
     PAMClusteringRecommender,
-    SKLearnClusteringRecommender,
 )
 from baybe.strategies.sampling import FPSRecommender, RandomRecommender
 from baybe.strategies.strategy import Strategy
@@ -20,7 +19,6 @@ __all__ = [
     "NaiveHybridRecommender",
     "PAMClusteringRecommender",
     "RandomRecommender",
-    "SKLearnClusteringRecommender",
     "SequentialGreedyRecommender",
     "Strategy",
 ]
