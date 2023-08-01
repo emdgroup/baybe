@@ -21,7 +21,7 @@ if destination_dir.is_dir():
 shutil.copytree("examples", destination_dir)
 
 
-# list all directories in the examples folder
+# List all directories in the examples folder
 directories = [d for d in destination_dir.iterdir() if d.is_dir()]
 
 # Iterate over the directories
@@ -33,17 +33,18 @@ for directory in directories:
         # Create the Markdown file:
 
         # 1. Convert the file to jupyter notebook
-        os.system(rf"p2j {file}")
+        os.system(rf"p2j {file} >/dev/null 2>&1")
 
         notebook_path = file.with_suffix(".ipynb")
 
         # 2. Execute the notebook
         os.system(
-            rf"jupyter nbconvert --execute --to notebook --inplace {notebook_path}"
+            f"jupyter nbconvert --execute --to notebook --inplace {notebook_path}"
+            + ">/dev/null 2>&1"
         )
 
         # 3. Convert the notebook to markdown
-        os.system(rf"jupyter nbconvert --to markdown {notebook_path}")
+        os.system(rf"jupyter nbconvert --to markdown {notebook_path} >/dev/null 2>&1")
 
         markdown_path = file.with_suffix(".md")
 
@@ -83,7 +84,7 @@ for directory in directories:
             f.write(LINES_TO_ADD)
             f.writelines(content)
 
-# 5. remove remaining not markdown files and subdirectories from the destination directory
+# 5. Remove remaining not markdown files and subdirectories from the destination directory
 
 # remove any not markdown files
 for file in destination_dir.glob("**/*"):
