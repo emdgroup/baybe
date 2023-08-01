@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 # Folder where the .md files created are stored
 # Default name is examples_markdown, optional name can be provided
-DESTINATION_DIR_NAME = "examples_markdown" if len(sys.argv) == 1 else sys.argv[1]
+DESTINATION_DIR_NAME = "SDKExamples" if len(sys.argv) == 1 else sys.argv[1]
 destination_dir = pathlib.Path(DESTINATION_DIR_NAME)
 
 # if the destination directory already exists it is deleted
@@ -24,9 +24,23 @@ if destination_dir.is_dir():
 # Copy the examples folder in the destination directory
 shutil.copytree("examples", destination_dir)
 
-
 # List all directories in the examples folder
 directories = [d for d in destination_dir.iterdir() if d.is_dir()]
+
+# Write the markdown file for the SDK Example folder itself
+with open(rf"{destination_dir}/{destination_dir.name}.md", "w", encoding="UTF-8") as f:
+    f.write(
+        "---"
+        + "\neleventyNavigation:"
+        + "\n  key: SDK Examples"
+        + f"\n  order: {len(directories)+1}"
+        + "\n  parent: Python SDK"
+        + "\nlayout: layout.njk"
+        + "\npermalink: baybe/sdk/examples/"
+        + "\ntitle: SDK Examples"
+        + "\n---\n\n "
+    )
+    f.write("These are examples on using the BayBE SDK")
 
 # Iterate over the directories
 for directory in (pbar := tqdm(directories)):
@@ -71,20 +85,17 @@ for directory in (pbar := tqdm(directories)):
 
         # Write the information collected at the top of the .md file
 
+        formatted_name = filename.replace("_", " ").capitalize()
+
         LINES_TO_ADD = (
             "---"
             + "\neleventyNavigation:"
-            + "\n  key: "
-            + filename
-            + "\n  order: "
-            + str(order)
-            + "\n  parent: Examples/"
-            + directory_name
+            + f"\n  key: {formatted_name}"
+            + f"\n  order: {order}"
+            + f"\n  parent: {directory_name}"
             + "\nlayout: layout.njk"
-            + "\npermalink: baybe/sdk/examples/"
-            + directory_name
-            + "\ntitle: "
-            + filename
+            + f"\npermalink: baybe/sdk/examples/{directory_name}/{filename}_ex/"
+            + f"\ntitle: {formatted_name}"
             + "\n---\n\n "
         )
         with open(rf"{markdown_path}", "r+", encoding="UTF-8") as f:
@@ -97,6 +108,20 @@ for directory in (pbar := tqdm(directories)):
             f.seek(0)
             f.write(LINES_TO_ADD)
             f.writelines(content)
+
+    # Write the file for the sub-directory itself
+    with open(rf"{directory}/{directory.name}.md", "w", encoding="UTF-8") as f:
+        f.write(
+            "---"
+            + "\neleventyNavigation:"
+            + f"\n  key: {directory.name}"
+            + f"\n  order: {order+1}"
+            + "\n  parent: SDK Examples"
+            + "\nlayout: layout.njk"
+            + f"\npermalink: baybe/sdk/examples/{directory.name}/"
+            + f"\ntitle: {directory.name}"
+            + "\n---\n\n "
+        )
 
 # 5. Remove remaining files and subdirectories from the destination directory
 
