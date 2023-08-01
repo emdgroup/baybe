@@ -156,7 +156,7 @@ stages:
         displayName: "Run PyLint Linter"
 
     - job: "Changelog"
-
+      condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
       pool:
         vmImage: ubuntu-20.04
 
@@ -172,7 +172,6 @@ stages:
               exit 1
             fi
           continueOnError: false
-          condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
           displayName: Assert Changelog Edit
 
 - stage: Release  # taken from foundry-local
