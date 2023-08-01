@@ -6,6 +6,7 @@ import os
 import pathlib
 import shutil
 
+from tqdm import tqdm
 
 # Script to transform all .py files in .md files in the examples folder
 # Create a new folder named examples_markdown to store the markdown files
@@ -25,11 +26,19 @@ shutil.copytree("examples", destination_dir)
 directories = [d for d in destination_dir.iterdir() if d.is_dir()]
 
 # Iterate over the directories
-for directory in directories:
+for directory in (pbar := tqdm(directories)):
+
+    # Set description of progressbar
+    pbar.set_description("Overall progress")
+
     # list all .py files in the subdirectory that need to be converted
     py_files = list(directory.glob("**/*.py"))
 
-    for file_index, file in enumerate(py_files):
+    for file_index, file in enumerate(inner_pbar := tqdm(py_files, leave=False)):
+
+        # Set description for progress bar
+        inner_pbar.set_description(f"Progressing {str(directory)[18:]}")
+
         # Create the Markdown file:
 
         # 1. Convert the file to jupyter notebook
