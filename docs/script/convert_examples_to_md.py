@@ -93,7 +93,7 @@ for directory in (pbar := tqdm(directories)):
             f.write(LINES_TO_ADD)
             f.writelines(content)
 
-# 5. Remove remaining not markdown files and subdirectories from the destination directory
+# 5. Remove remaining files and subdirectories from the destination directory
 
 # remove any not markdown files
 for file in destination_dir.glob("**/*"):
