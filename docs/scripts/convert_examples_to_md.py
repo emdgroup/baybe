@@ -31,9 +31,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--write_headers",
-    help="Decide whether eleventy headers should be written. Default is to write them",
-    action=argparse.BooleanOptionalAction,
-    default=True,
+    help="Decide whether eleventy headers are written. Default is to not write them",
+    action="store_true",
 )
 args = parser.parse_args()
 # Folder where the .md files created are stored
