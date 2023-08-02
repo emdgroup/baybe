@@ -15,7 +15,7 @@ from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
 
-### Creation of searchspace object
+#### Creation of searchspace object
 
 # This part shows how the user can create a searchspace object.
 # In general, searchspaces can be continuous, discrete or hybrid.
@@ -24,10 +24,6 @@ from baybe.utils import add_fake_results
 # Discrete variables can be numerical, categorical or encoded chemical substances.
 
 # To create a searchspace, we need to define all parameters that can vary between experiments.
-
-#### Definition of data
-
-# Here, we define data that is relevant for the specific example.
 # This example presents the optimization of a direct Arylation reaction.
 # For this, we require data for solvents, ligands and bases.
 
@@ -54,9 +50,6 @@ dict_ligand = {
     "(t-Bu)PhCPhos": r"CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3",
 }
 
-
-#### Creation of parameter objects
-
 # This part shows how to create the  parameter objects that are used to create the BayBE object.
 # We define the chemical substances parameters using the dictionaries defined previously.
 # Here, we use `"MORDRED"` encoding, but others are available.
@@ -64,7 +57,6 @@ dict_ligand = {
 solvent = GenericSubstance("Solvent", data=dict_solvent, encoding="MORDRED")
 base = GenericSubstance("Base", data=dict_base, encoding="MORDRED")
 ligand = GenericSubstance("Ligand", data=dict_ligand, encoding="MORDRED")
-
 
 # We proceed to define numerical discrete parameters: `temperature` and `concentration`.
 
@@ -81,7 +73,7 @@ parameters = [solvent, base, ligand, temperature, concentration]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
 
-### Creation of objective object
+#### Creation of objective object
 
 # In this part we specify the objective of the optimization process.
 # In this example, we consider a single numerical target.
@@ -94,7 +86,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-### Creation of a BayBE object
+#### Creation of a BayBE object
 
 # We now finaly create the BayBE object using the objects configure previously.
 
@@ -108,7 +100,7 @@ baybe_obj = BayBE(
 # If no strategy is supplied, a default one is used.
 # Details on strategies can be found in [`strategies`](./strategies.md)
 
-### Getting a recommendation
+#### Getting a recommendation
 
 # In this part we use the BayBE object to recommend the next experiments to be conducted.
 # To do so we use the `recommend()` function of the BayBE object.
@@ -131,7 +123,7 @@ for batch_quantity in [2, 3]:
     print(f"\n\nRecommended measurements with batch_quantity = {batch_quantity}: ")
     print(recommendation)
 
-### Adding a measurement
+#### Adding a measurement
 
 # In this part we add target values obtained while conducting new measurements.
 # This is done by creating a new column in the `recommendation` dataframe named after the target.

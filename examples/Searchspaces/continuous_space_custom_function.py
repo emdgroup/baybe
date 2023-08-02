@@ -13,7 +13,7 @@ from baybe.parameters import NumericContinuous
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 
-### Defining the custom test function
+#### Defining the custom test function
 
 # The function should accept an arbitrary or fixed amount of floats as input.
 # It needs to return either a single float or a tuple of floats.
@@ -43,7 +43,7 @@ TEST_FUNCTION = sum_of_squares
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 parameters = [
     NumericContinuous(
@@ -59,7 +59,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-### Constructing the BayBE object and performing a recommendation
+#### Constructing the BayBE object and performing a recommendation
 
 baybe_obj = BayBE(
     searchspace=searchspace,

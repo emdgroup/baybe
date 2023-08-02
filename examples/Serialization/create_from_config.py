@@ -13,7 +13,7 @@ We use the following configuration dictionaries, representing a valid BayBE obje
 
 from baybe.core import BayBE
 
-### The configuration dictionary as a string
+#### The configuration dictionary as a string
 
 # Note that the following explicit call `str()` is not strictly necessary.
 # It is included since our method of converting this example to a markdown file does not interpret
@@ -82,7 +82,7 @@ CONFIG = str(
 """
 )
 
-### Creating a BayBE object from the configuration file
+#### Creating a BayBE object from the configuration file
 
 # Although we know in this case that the config represents a valid configuration for a
 # BayBE object, it is a good practice to enclose the creation in a try block.

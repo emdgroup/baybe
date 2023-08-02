@@ -27,7 +27,7 @@ from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 from botorch.test_functions import Rastrigin
 
-### Defining the test function and the hybrid dimensions
+#### Defining the test function and the hybrid dimensions
 
 # See [`discrete_space`](./discrete_space.md) for details on the test function.
 
@@ -76,7 +76,7 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
 BOUNDS = TestFunction.bounds
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-### Constructing the hybrid searchspace
+#### Constructing the hybrid searchspace
 
 # The following parameter decides how many points each discrete dimension should have.
 POINTS_PER_DIM = 3
@@ -105,7 +105,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-### Constructing hybrid recommenders
+#### Constructing hybrid recommenders
 
 # Here, we explicitly create a strategy object to use the `NaiveHybridRecommender`.
 # The keywords `disc_recommender` and `cont_recommender` can be used to select different

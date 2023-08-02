@@ -22,7 +22,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, Objective
 
-### Parameters for a full simulation loop
+#### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
@@ -30,7 +30,7 @@ from baybe.targets import NumericalTarget, Objective
 N_MC_ITERATIONS = 2
 N_EXP_ITERATIONS = 4
 
-### Defining the test function
+#### Defining the test function
 
 
 # See [`run_custom_analytical`](./run_custom_analytical.md) for details
@@ -46,8 +46,6 @@ def sum_of_squares(*x: float) -> Tuple[float, float]:
 
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
-
-### Creating the searchspace and the objective
 
 #### Creating the searchspace
 
@@ -92,7 +90,7 @@ objective = Objective(
 )
 
 
-### Constructing a BayBE object and performing the simulation loop
+#### Constructing a BayBE object and performing the simulation loop
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 

@@ -19,7 +19,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-### Experiment setup
+#### Experiment setup
 
 dict_solvent = {
     "water": "O",
@@ -59,7 +59,7 @@ parameters = [
     num_parameter_6,
 ]
 
-### Creating the constraints
+#### Creating the constraints
 
 # Constraints are used when creating the searchspace object.
 # Thus, they need to be defined prior to the searchspace creation.
@@ -79,7 +79,7 @@ prod_constraint = ProductConstraint(
 
 constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
@@ -87,12 +87,12 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-### Creating and printing the BayBE object
+#### Creating and printing the BayBE object
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
-### Manual verification of the constraints
+#### Manual verification of the constraints
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 

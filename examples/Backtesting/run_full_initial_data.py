@@ -25,14 +25,14 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-### Parameters for a full simulation loop
+#### Parameters for a full simulation loop
 
 # For the full simulation, we need to define an additional parameter.
 # Since this example uses initial data, we only need to define the number of iterations per run.
 # The number of runs is determined by the number of initial data points provided.
 N_EXP_ITERATIONS = 5
 
-### Lookup functionality and data creation
+#### Lookup functionality and data creation
 
 # See [`run_full_lookup`](./run_full_lookup.md) for details.
 

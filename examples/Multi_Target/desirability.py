@@ -17,7 +17,7 @@ from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
 
-### Experiment setup and creating the searchspace
+#### Experiment setup and creating the searchspace
 
 Categorical_1 = Categorical("Categorical_1", values=[22, 33], encoding="OHE")
 Categorical_2 = Categorical(
@@ -33,7 +33,7 @@ parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
 searchspace = SearchSpace.from_product(parameters=parameters)
 
 
-### Defining the targets
+#### Defining the targets
 
 # The multi target mode is handled when creating the objective object.
 # Thus we first need to define the different targets.
@@ -61,7 +61,7 @@ Target_3 = NumericalTarget(
 # the range around this target that is considered viable.
 
 
-### Creating the objective
+#### Creating the objective
 
 # Now to work with these three targets the objective object must be properly created.
 # The mode is set to `DESIRABILITY` and the targets are described in a list.
@@ -86,12 +86,12 @@ objective = Objective(
 
 print(objective)
 
-### Creating and printing the BayBE object
+#### Creating and printing the BayBE object
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
-### Performing some iterations
+#### Performing some iterations
 
 # The following loop performs some recommendations and adds fake results.
 # It also prints what happens to internal data.

@@ -24,14 +24,14 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-### Parameters for a full simulation loop
+#### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 N_MC_ITERATIONS = 2
 N_EXP_ITERATIONS = 5
 
-### Lookup functionality and data creation
+#### Lookup functionality and data creation
 
 # See [`run_full_lookup`](./run_full_lookup.md) for details.
 try:
@@ -73,7 +73,7 @@ dict_ligand = {
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 # Here, we create the parameter objects, the searchspace and the objective.
 
@@ -92,7 +92,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-### Constructing BayBE objects for the simulation loop
+#### Constructing BayBE objects for the simulation loop
 
 # In this example, we create two BayBE objects.
 # One uses the default recommender and the other one makes random recommendations.

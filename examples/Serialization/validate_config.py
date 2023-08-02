@@ -10,6 +10,8 @@ The first one represents a valid configuration, the second does not.
 
 from baybe.core import BayBE
 
+#### Defining config dictionaries
+
 # Note that the following explicit call `str()` is not strictly necessary.
 # It is included since our method of converting this example to a markdown file does not interpret
 # this part of the code as `python` code if we do not include this call.
@@ -139,6 +141,8 @@ INVALID_CONFIG = str(
 }
 """
 )
+
+#### Verifictation of the two dictionaries
 
 # The first validation should work and print the line contained in the try block
 try:

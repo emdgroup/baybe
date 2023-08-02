@@ -19,7 +19,7 @@ from baybe.targets import NumericalTarget, Objective
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
 
-### Defining the test function
+#### Defining the test function
 
 # BoTorch offers a variety of different test functions, all of which can be used.
 # Note that some test functions are only defined for specific dimensions.
@@ -60,7 +60,7 @@ BOUNDS = TestFunction.bounds
 
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 # In this example, we construct a purely discrete space.
 # The parameter `POINTS_PER_DIM` controls the number of points per dimension.
@@ -85,7 +85,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-### Constructing the BayBE object and performing a recommendation
+#### Constructing the BayBE object and performing a recommendation
 
 baybe_obj = BayBE(
     searchspace=searchspace,

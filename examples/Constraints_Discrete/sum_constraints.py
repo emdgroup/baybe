@@ -30,7 +30,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-### Experiment setup
+#### Experiment setup
 
 # This parameter denotes the tolerance with regard to the calculation of the sum.
 SUM_TOLERANCE = 1.0
@@ -58,7 +58,7 @@ fraction3 = NumericDiscrete(
 
 parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 
-### Creating the constraint
+#### Creating the constraint
 
 # Since the constraints are required for the creation of the searchspace, we create them next.
 # Note that we need a `PermutationInvarianceConstraint` here.
@@ -92,7 +92,7 @@ no_duplicates_constraint = NoLabelDuplicatesConstraint(
 
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
@@ -100,12 +100,12 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-### Creating and printing the BayBE object
+#### Creating and printing the BayBE object
 
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
-### Manual verification of the constraint
+#### Manual verification of the constraint
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 

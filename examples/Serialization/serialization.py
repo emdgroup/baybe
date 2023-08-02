@@ -20,7 +20,7 @@ from baybe.strategies.sampling import FPSRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
-### Experiment setup
+#### Experiment setup
 
 parameters = [
     Categorical(
@@ -49,7 +49,7 @@ parameters = [
     ),
 ]
 
-### Creating the BayBE object
+#### Creating the BayBE object
 
 baybe_orig = BayBE(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
@@ -62,7 +62,7 @@ baybe_orig = BayBE(
     ),
 )
 
-### Serialization and de-serialization
+#### Serialization and de-serialization
 
 # We begin by printing the original BayBE object
 print(f"{'#'*30} Original object {'#'*30}")
@@ -84,7 +84,7 @@ print(baybe_recreate, end="\n" * 3)
 assert baybe_orig == baybe_recreate
 print("Passed basic assertion check!")
 
-### Comparing recommendations in both objects
+#### Comparing recommendations in both objects
 
 # To further show how serialization affects working with BayBE objects, we will now
 # create and compare some recommendations in both bayBE objects.

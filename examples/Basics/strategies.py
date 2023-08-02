@@ -28,9 +28,7 @@ from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
 
-### Available options for strategy objects
-
-#### Initial strategy
+#### Available initial strategies
 
 # For the first recommendation, the user can specify which strategy to use.
 # The following initial recommenders are available.
@@ -46,7 +44,7 @@ initial_recommenders = [
 # Per default the initial recommender chosen is a random recommender.
 INITIAL_RECOMMENDER = RandomRecommender()
 
-#### Surrogate model
+#### Available surrogate models
 
 # This model uses available data to model the objective function as well as the uncertainty.
 # The surrogate model is then used by the acquisition function to make recommendations.
@@ -98,7 +96,7 @@ ACQ_FUNCTION = "qEI"
 ALLOW_REPEATED_RECOMMENDATIONS = True
 ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 
-### Creating the strategy object
+#### Creating the strategy object
 
 # To create the strategy object, each parameter described above can be specified as follows.
 # Note that they all have default values.
@@ -118,10 +116,6 @@ print(strategy)
 # Note that there are the additional keywords `hybrid_sampler` and `sampling_percentag`.
 # Their meaning and how to use and define it are explained in the hybrid backtesting example.
 # We thus refer to [`run_hybrid`](./../Backtesting/run_hybrid.md) for details on these.
-
-### Incorporate chosen strategy in BayBE object
-
-# To incorporate the strategy object, it needs to be specified when creating the BayBE object.
 
 #### Example Searchspace and objective parameters
 

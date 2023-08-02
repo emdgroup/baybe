@@ -29,7 +29,7 @@ from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 
-### Parameters for a full simulation loop
+#### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
@@ -37,7 +37,7 @@ from baybe.targets import NumericalTarget, Objective
 N_MC_ITERATIONS = 2
 N_EXP_ITERATIONS = 4
 
-### Defining the test function
+#### Defining the test function
 
 # See [here](./../Searchspaces/continuous_space_custom_function.md) for details.
 
@@ -55,7 +55,7 @@ def sum_of_squares(*x: float) -> float:
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 # As we expect it to be the most common use case, we construct a purely discrete space here.
 # Details on how to adjust this for other spaces can be found in the searchspace examples.
@@ -78,7 +78,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-### Constructing BayBE objects for the simulation loop
+#### Constructing BayBE objects for the simulation loop
 
 # To simplify adjusting the example for other strategies, we construct some strategy objects.
 # For details on strategy objects, we refer to [`strategies`](./../Basics/strategies.md).
@@ -101,7 +101,7 @@ random_baybe = BayBE(
     objective=objective,
 )
 
-### Performing the simulation loop
+#### Performing the simulation loop
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
