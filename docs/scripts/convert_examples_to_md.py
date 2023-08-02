@@ -26,8 +26,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "-t",
     "--target_dir",
-    help="Choose a different target directory. Default is SDKExamples.",
-    default="SDKExamples",
+    help="Choose a different target directory. Default is `SDK Examples`.",
+    default="SDK Examples",
 )
 parser.add_argument(
     "--write_headers",
@@ -60,12 +60,12 @@ if WRITE_HEADERS:
         f.write(
             "---"
             + "\neleventyNavigation:"
-            + "\n  key: SDK Examples"
+            + f"\n  key: {DESTINATION_DIR_NAME}"
             + f"\n  order: {len(directories)+1}"
             + "\n  parent: Python SDK"
             + "\nlayout: layout.njk"
             + "\npermalink: baybe/sdk/examples/"
-            + "\ntitle: SDK Examples"
+            + f"\ntitle: {DESTINATION_DIR_NAME}"
             + "\n---\n\n "
         )
         f.write("These are examples on using the BayBE SDK")
@@ -89,18 +89,18 @@ for directory in (pbar := tqdm(directories)):
         # Create the Markdown file:
 
         # 1. Convert the file to jupyter notebook
-        os.system(rf"p2j {file} >/dev/null 2>&1")
+        os.system(rf"p2j '{file}' >/dev/null 2>&1")
 
         notebook_path = file.with_suffix(".ipynb")
 
         # 2. Execute the notebook
         os.system(
-            f"jupyter nbconvert --execute --to notebook --inplace {notebook_path}"
+            f"jupyter nbconvert --execute --to notebook --inplace '{notebook_path}'"
             + ">/dev/null 2>&1"
         )
 
         # 3. Convert the notebook to markdown
-        os.system(rf"jupyter nbconvert --to markdown {notebook_path} >/dev/null 2>&1")
+        os.system(rf"jupyter nbconvert --to markdown '{notebook_path}' >/dev/null 2>&1")
 
         markdown_path = file.with_suffix(".md")
 
@@ -145,7 +145,7 @@ for directory in (pbar := tqdm(directories)):
                 + "\neleventyNavigation:"
                 + f"\n  key: {directory.name}"
                 + f"\n  order: {order+1}"
-                + "\n  parent: SDK Examples"
+                + f"\n  parent: {DESTINATION_DIR_NAME}"
                 + "\nlayout: layout.njk"
                 + f"\npermalink: baybe/sdk/examples/{directory.name}/"
                 + f"\ntitle: {directory.name}"
