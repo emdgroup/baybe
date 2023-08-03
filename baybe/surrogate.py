@@ -4,6 +4,8 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 """
 from __future__ import annotations
 
+import gc
+
 from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Callable, ClassVar, Optional, Tuple, Type
@@ -30,7 +32,7 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import get_base_unstructure_hook, unstructure_base
+from baybe.utils import get_subclasses, unstructure_base
 from baybe.utils.serialization import SerialMixin
 
 # Use float64 (which is recommended at least for BoTorch models)
@@ -99,7 +101,7 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
     values such that these cases are handled by a separate model type.
     """
 
-    class SplitModel(SurrogateModel):
+    class SplitModel(*model_cls.__bases__):
         """
         A surrogate model that applies a separate strategy for cases where the training
         targets are all constant and no variance can be estimated.
@@ -167,8 +169,11 @@ def scale_model(model_cls: Type[SurrogateModel]):
     representations of the training and test data.
     """
 
-    class ScaledModel(model_cls):
+    class ScaledModel(*model_cls.__bases__):
         """Overrides the methods of the given model class such the use scaled data."""
+
+        # The posterior mode is chosen to match that of the wrapped model class
+        joint_posterior: ClassVar[bool] = model_cls.joint_posterior
 
         def __init__(self, *args, **kwargs):
             """Stores an instance of the underlying model class and a scaler object."""
@@ -601,8 +606,37 @@ def remove_model(raw_unstructure_hook):
     return wrapper
 
 
+def structure_surrogate(val, _):
+    """Structures a surrogate model"""
+    # TODO.
+    # See Work Item # 15436
+    # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
+
+    # NOTE.
+    # Due to above issue and the renaming of ScaleModel & SplitModel
+    # The subclasses structure includes all intermediate models
+    # with the same __name__ (some of which are not used).
+    # By default they are ordered as they are defined.
+    # The original `structure_base` method would use the first one
+    # which would be the vanila models with no wrappers.
+    # As the desired one is the most wrapped,
+    # we choose the one that is introduced last.
+
+    _type = val["type"]
+    cls = next(
+        reversed(
+            list((cl for cl in get_subclasses(SurrogateModel) if cl.__name__ == _type))
+        ),
+        None,
+    )
+    if cls is None:
+        raise ValueError(f"Unknown subclass {_type}.")
+
+    return cattrs.structure_attrs_fromdict(val, cls)
+
+
 # Register (un-)structure hooks
 cattrs.register_unstructure_hook(SurrogateModel, remove_model(unstructure_base))
-cattrs.register_structure_hook(
-    SurrogateModel, get_base_unstructure_hook(SurrogateModel)
-)
+cattrs.register_structure_hook(SurrogateModel, structure_surrogate)
+
+gc.collect()
