@@ -156,19 +156,13 @@ stages:
         displayName: "Run PyLint Linter"
 
     - job: "Changelog"
-
+      condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
       pool:
         vmImage: ubuntu-20.04
 
       steps:
         - script: |
-            if [ `git rev-parse --abbrev-ref HEAD` == "main" ]; then
-              git checkout main
-              prev_head=`git log --merges -n 1 --skip 1 --pretty=format:"%H"`
-              NUM_ADDED=`git diff --numstat $prev_head HEAD CHANGELOG.md | cut -d$'\t' -f1`
-            else
-              NUM_ADDED=`git diff --numstat origin/main HEAD CHANGELOG.md | cut -d$'\t' -f1`
-            fi
+            NUM_ADDED=`git diff --numstat origin/main HEAD CHANGELOG.md | cut -d$'\t' -f1`
             echo "Changelog differences: $NUM_ADDED"
             if [ "$NUM_ADDED" -gt "0" ]; then
               echo "SUCCESS"
