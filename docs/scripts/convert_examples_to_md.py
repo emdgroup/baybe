@@ -141,6 +141,13 @@ for directory in (pbar := tqdm(directories)):
                 if line.startswith("![png]"):
                     continue
 
+                if WRITE_HEADERS and "(./" in line:
+                    # Step 1: Include one additional ../
+                    line = line.replace("(./", "(./../")
+                    # Step 2: Get position of the end of the [...](...) part
+                    end = [m.start() for m in re.finditer(re.escape(")"), line)][0]
+                    # Step 3: Replace with the permalink ending
+                    line = line[: end - 3] + "_ex" + line[end:]
                 # For long lines, we manually insert line breaks.
                 # These are always inserted after the last "," in between two "=".
                 # This is necessary as we were not able to find a tool that auto formats
