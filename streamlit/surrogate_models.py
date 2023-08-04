@@ -15,7 +15,12 @@ import torch
 from baybe.acquisition import debotorchize
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.surrogate import SurrogateModel
+from baybe.surrogate import (
+    BayesianLinearModel,
+    GaussianProcessModel,
+    NGBoostModel,
+    RandomForestModel,
+)
 from botorch.acquisition import qExpectedImprovement
 from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
@@ -74,7 +79,12 @@ def main():
     }
 
     # collect all available surrogate models
-    surrogate_models = SurrogateModel.SUBCLASSES
+    surrogate_models = {
+        "GP": GaussianProcessModel,
+        "RF": RandomForestModel,
+        "NG": NGBoostModel,
+        "BL": BayesianLinearModel,
+    }
 
     # simulation parameters
     random_seed = int(st.sidebar.number_input("Random seed", value=1337))
@@ -108,7 +118,6 @@ def main():
         function_amplitude,
         function_bias,
     )
-    surrogate_model_cls = surrogate_models[surrogate_name]
 
     # create the input grid and corresponding target values
     test_x = torch.linspace(
@@ -128,8 +137,8 @@ def main():
     searchspace = SearchSpace.from_product(parameters=[param])
 
     # create the surrogate model, train it, and get its predictions
-    surrogate_model = surrogate_model_cls(searchspace)
-    surrogate_model.fit(train_x.unsqueeze(-1), train_y.unsqueeze(-1))
+    surrogate_model = surrogate_models[surrogate_name]()
+    surrogate_model.fit(searchspace, train_x.unsqueeze(-1), train_y.unsqueeze(-1))
 
     # recommend next experiments
     # TODO: use BayBE recommender and add widgets for strategy selection

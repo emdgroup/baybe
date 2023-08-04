@@ -119,15 +119,9 @@ class BayesianRecommender(Recommender, ABC):
         if not train_x.index.equals(train_y.index):
             raise ValueError("Training inputs and targets must have the same index.")
 
-        # surrogate_model_cls = self.get_surrogate_model_cls()
-        # surrogate_model = surrogate_model_cls()
         self.surrogate_model.fit(searchspace, *to_tensor(train_x, train_y))
 
         return self.surrogate_model
-
-    def get_surrogate_model_cls(self):  # pylint: disable=missing-function-docstring
-        # TODO: work in progress
-        return SurrogateModel.SUBCLASSES[self.surrogate_model_cls]
 
     def recommend(
         self,
