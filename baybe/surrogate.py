@@ -336,7 +336,9 @@ class SurrogateModel(ABC, SerialMixin):
     def fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
         # TODO: Adjust scale_model decorator to support other model types as well.
-        if (not searchspace.continuous.is_empty) and (self.type != "GP"):
+        if (not searchspace.continuous.is_empty) and (
+            "GaussianProcess" not in self.__class__.__name__
+        ):
             raise NotImplementedError(
                 "Continuous search spaces are currently only supported by GPs."
             )
@@ -469,7 +471,7 @@ class MeanPredictionModel(SurrogateModel):
     """
 
     joint_posterior: ClassVar[bool] = False
-    target_value = None
+    target_value = field(init=False, factory=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:

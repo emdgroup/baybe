@@ -33,6 +33,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
+from baybe.surrogate import GaussianProcessModel
 from baybe.targets import NumericalTarget, Objective
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
@@ -490,17 +491,17 @@ def fixture_default_acquisition_function():
     return "qEI"
 
 
-@pytest.fixture(name="surrogate_model_cls")
+@pytest.fixture(name="surrogate_model")
 def fixture_default_surrogate_model():
     """The default surrogate model to be used if not specified differently."""
-    return "GP"
+    return GaussianProcessModel()
 
 
 @pytest.fixture(name="recommender")
-def fixture_recommender(surrogate_model_cls, acquisition_function_cls):
+def fixture_recommender(surrogate_model, acquisition_function_cls):
     """The default recommender to be used if not specified differently."""
     return SequentialGreedyRecommender(
-        surrogate_model_cls=surrogate_model_cls,
+        surrogate_model=surrogate_model,
         acquisition_function_cls=acquisition_function_cls,
     )
 
