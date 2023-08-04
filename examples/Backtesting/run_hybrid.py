@@ -15,19 +15,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe.core import BayBE
-
+from baybe import BayBE
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies.bayesian import (
+from baybe.strategies import (
     NaiveHybridRecommender,
+    RandomRecommender,
     SequentialGreedyRecommender,
+    Strategy,
 )
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be

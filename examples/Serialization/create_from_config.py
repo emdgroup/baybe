@@ -8,7 +8,7 @@ actual class instances you can create such a config by providing a dictionary wi
 "type":"name of the class". Example: FPSRecommender() becomes {"type": "FPSRecommender"}
 """
 
-from baybe.core import BayBE
+from baybe import BayBE
 
 
 CONFIG = """

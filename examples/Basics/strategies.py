@@ -17,14 +17,12 @@ This example explain how they can be changed
 """
 
 
-from baybe.core import BayBE
+from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils import add_fake_results
 
 # --------------------------------------------------------------------------------------
 # PART 1: Initial Strategy

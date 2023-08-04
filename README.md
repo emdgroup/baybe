@@ -225,9 +225,7 @@ details, and their configuration settings, see
 [baybe/strategies](./baybe/strategies).
 
 ```python
-from baybe.strategies.strategy import Strategy
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
+from baybe.strategies import Strategy, SequentialGreedyRecommender, RandomRecommender
 
 strategy = Strategy(
     initial_recommender=RandomRecommender(),
@@ -242,7 +240,7 @@ construct a BayBE object that brings all
 pieces of the puzzle together:
 
 ```python
-from baybe.core import BayBE
+from baybe import BayBE
 
 baybe = BayBE(searchspace, objective, strategy)
 ```

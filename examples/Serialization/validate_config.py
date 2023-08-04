@@ -4,7 +4,7 @@ We use the two configuration dictionaries. The first one represents a valid
 configuration, the second does not.
 """
 
-from baybe.core import BayBE
+from baybe import BayBE
 
 
 CONFIG = """

@@ -9,12 +9,11 @@ continuous_space example.
 
 import numpy as np
 
-from baybe.core import BayBE
+from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils import botorch_function_wrapper
 
 # Import the desired test function from botorch here
 from botorch.test_functions import Branin

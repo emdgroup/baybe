@@ -5,10 +5,9 @@ basics of BayBE, and thus does not explain the details of e.g. parameter creatio
 For additional explanation on these aspects, we refer to the Basic examples.
 """
 import numpy as np
+from baybe import BayBE
 
 from baybe.constraints import ProductConstraint, SumConstraint, ThresholdCondition
-
-from baybe.core import BayBE
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -16,7 +15,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils import add_fake_results
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {

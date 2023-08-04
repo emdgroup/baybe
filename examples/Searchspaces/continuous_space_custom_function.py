@@ -2,7 +2,7 @@
 Example for using custom synthetic test functions in continuous spaces.
 """
 
-from baybe.core import BayBE
+from baybe import BayBE
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective

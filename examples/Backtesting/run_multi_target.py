@@ -9,7 +9,7 @@ We thus refer to the corresponding examples for more explanations on these aspec
 from typing import Tuple
 
 import numpy as np
-from baybe.core import BayBE
+from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios

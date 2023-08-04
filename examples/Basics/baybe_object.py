@@ -8,11 +8,11 @@ and the objective desired, to then be able to create a proper BayBE object
 that can be used to get recommendations
 """
 
-from baybe.core import BayBE
+from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils import add_fake_results
 
 # --------------------------------------------------------------------------------------
 # PART 1: Creation of searchspace object

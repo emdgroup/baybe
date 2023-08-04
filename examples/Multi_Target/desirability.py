@@ -6,11 +6,11 @@ explain the details of e.g. parameter creation. For additional explanation on th
 aspects, we refer to the Basic examples.
 """
 
-from baybe.core import BayBE
+from baybe import BayBE
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils import add_fake_results
 
 # SEARCHSPACE
 # --------------------------------------------------------------------------------------

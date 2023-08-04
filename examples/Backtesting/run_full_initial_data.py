@@ -9,12 +9,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from baybe.core import BayBE
+from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import RandomRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
 
 # We read the information about the conducted experiments from a .xlsx-file and save it
