@@ -16,15 +16,11 @@ import numpy as np
 import seaborn as sns
 
 from baybe import BayBE
-
-# Note that this import here might be problematic depending on your exact
-# setup and that you might need to make some adjustments to make it work!
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
-
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be
