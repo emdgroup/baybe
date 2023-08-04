@@ -61,12 +61,12 @@ if WRITE_HEADERS:
         f.write(
             "---"
             + "\neleventyNavigation:"
-            + f"\n  key: {DESTINATION_DIR_NAME}"
+            + f"\n  key: {destination_dir.name}"
             + f"\n  order: {len(directories)+1}"
             + "\n  parent: Python SDK"
             + "\nlayout: layout.njk"
             + "\npermalink: baybe/sdk/examples/"
-            + f"\ntitle: {DESTINATION_DIR_NAME}"
+            + f"\ntitle: {destination_dir.name}"
             + "\n---\n\n "
         )
         f.write("These are examples on using the BayBE SDK")
@@ -196,7 +196,7 @@ for directory in (pbar := tqdm(directories)):
                 + "\neleventyNavigation:"
                 + f"\n  key: {directory.name}"
                 + f"\n  order: {order+1}"
-                + f"\n  parent: {DESTINATION_DIR_NAME}"
+                + f"\n  parent: {destination_dir.name}"
                 + "\nlayout: layout.njk"
                 + f"\npermalink: baybe/sdk/examples/{directory.name}/"
                 + f"\ntitle: {directory.name}"
