@@ -52,6 +52,13 @@ shutil.copytree("examples", destination_dir)
 # List all directories in the examples folder
 directories = [d for d in destination_dir.iterdir() if d.is_dir()]
 
+# List all files in top-level folder as it determines the example order entry
+top_level_files = [
+    f
+    for f in destination_dir.parent.iterdir()
+    if f.is_file() and not f.name.startswith(".")
+]
+
 # Write the markdown file for the SDK Example folder itself.
 # Only necessary if eleventy headers should be written.
 if WRITE_HEADERS:
@@ -62,7 +69,7 @@ if WRITE_HEADERS:
             "---"
             + "\neleventyNavigation:"
             + f"\n  key: {destination_dir.name}"
-            + f"\n  order: {len(directories)+1}"
+            + f"\n  order: {len(top_level_files)}"
             + "\n  parent: Python SDK"
             + "\nlayout: layout.njk"
             + "\npermalink: baybe/sdk/examples/"
