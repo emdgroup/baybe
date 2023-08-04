@@ -1,12 +1,15 @@
-"""Surrogate Model Parameter example.
+### Example for custom parameter passing in surrogate models
 
+"""
 This example shows the creation of a BayBE object, how to define surrogate
 models with custom model parameters and the validations that are done.
 It also shows how to specify these parameters through a configuration.
-
-Note that this example does not explain the basics of object creation, we refer to the
-basics example for explanations on this.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports
 
 import numpy as np
 
@@ -20,7 +23,9 @@ from baybe.surrogate import NGBoostModel
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# We start by defining the parameters of the experiment.
+
+#### Experiment Setup
+
 parameters = [
     Categorical(
         name="Granularity",
@@ -48,42 +53,46 @@ parameters = [
     ),
 ]
 
-# Define a single target
-targets = [NumericalTarget(name="Yield", mode="MAX")]
+#### Create a surrogate model with custom model parameters
 
-
-# Surrogate Model with custom parameters
 surrogate_model = NGBoostModel(model_params={"n_estimators": 50, "verbose": True})
 
-# See the following links for available options in each model
+#### Validation of model parameters
 
-# NOTE. GaussianProcessModel will support custom parameters in the future
+try:
+    invalid_surrogate_model = NGBoostModel(model_params={"NOT_A_PARAM": None})
+except ValueError as e:
+    print("The validator will give an error here:")
+    print(e)
 
-# RandomForestModel
-# https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+#### Links for documentation
 
-# NGBoostModel
-# https://stanfordmlgroup.github.io/ngboost/1-useage.html
+# Note that `GaussianProcessModel` will support custom parameters in the future
 
-# BayesianLinearModel
-# https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ARDRegression.html
+# pylint: disable=line-too-long
+# [`RandomForestModel`](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)
+# [`NGBoostModel`](https://stanfordmlgroup.github.io/ngboost/1-useage.html)
+# [`BayesianLinearModel`](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ARDRegression.html)
 
+#### Creating the BayBE object
 
-# Create the DOE object
 baybe_obj = BayBE(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=Objective(mode="SINGLE", targets=targets),
+    objective=Objective(
+        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
+    ),
     strategy=Strategy(
         recommender=SequentialGreedyRecommender(surrogate_model=surrogate_model),
         initial_recommender=FPSRecommender(),
     ),
 )
 
+#### Iterate with recommendations and measurements
 
 # We can print the surrogate model object
-print(f"{'#'*30} BayBE object {'#'*30}")
+print()
+print("The model object in json format:")
 print(surrogate_model.to_json(), end="\n" * 3)
-
 
 # Let's do a first round of recommendation
 recommendation = baybe_obj.recommend(batch_quantity=2)
@@ -91,14 +100,13 @@ recommendation = baybe_obj.recommend(batch_quantity=2)
 print("Recommendation from baybe object:")
 print(recommendation)
 
-
 # Add some fake results
 add_fake_results(recommendation, baybe_obj)
 baybe_obj.add_measurements(recommendation)
 
+#### Model Outputs
 
-# Model outputs
-# NOTE. This model is only triggered when there is data.
+# Note that this model is only triggered when there is data.
 print()
 print("Here you will see some model outputs as we set verbose to True")
 print(f"{'#'*60}")
@@ -109,16 +117,20 @@ recommendation = baybe_obj.recommend(batch_quantity=2)
 print(f"{'#'*60}")
 print()
 
-
-# Second round of recommendations
+# Print second round of recommendations
 print("Recommendation from baybe object:")
 print(recommendation)
 
+#### Using configuration instead
 
-# By configuration:
-# NOTE. This can be placed inside an overall baybe config
-# See examples/Serialization/create_from_config for an example
-CONFIG = """
+# Note that this can be placed inside an overall baybe config
+# Refer to [`create_from_config`](./../Serialization/create_from_config.md) for an example
+
+# Note that the following explicit call `str()` is not strictly necessary.
+# It is included since our method of converting this example to a markdown file does not interpret
+# this part of the code as `python` code if we do not include this call.
+CONFIG = str(
+    """
 {
     "type": "NGBoostModel",
     "model_params": {
@@ -128,9 +140,10 @@ CONFIG = """
 
 }
 """
+)
 
-# Create a model based on the json string
+#### Model creation from json
 recreate_model = NGBoostModel.from_json(CONFIG)
 
-# Ensure they are equal
+# This configuration creates the same model
 assert recreate_model == surrogate_model
