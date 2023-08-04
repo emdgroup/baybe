@@ -27,7 +27,7 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import isabstract
+from baybe.utils import is_abstract
 
 
 # Use float64 (which is recommended at least for BoTorch models)
@@ -329,7 +329,7 @@ class SurrogateModel(ABC):
     def __init_subclass__(cls, **kwargs):
         """Registers new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
-        if not isabstract(cls):
+        if not is_abstract(cls):
             cls.SUBCLASSES[cls.type] = cls
 
 

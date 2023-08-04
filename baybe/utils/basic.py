@@ -40,13 +40,13 @@ def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> L
     list
         A list of subclasses for the given class.
     """
-    from baybe.utils import isabstract  # pylint: disable=import-outside-toplevel
+    from baybe.utils import is_abstract  # pylint: disable=import-outside-toplevel
 
     subclasses = []
     for subclass in cls.__subclasses__():
 
         # Append direct subclass only if it is not abstract
-        if abstract or not isabstract(subclass):
+        if abstract or not is_abstract(subclass):
             subclasses.append(subclass)
 
         # If requested, add indirect subclasses

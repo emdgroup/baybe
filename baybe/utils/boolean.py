@@ -11,7 +11,7 @@ from rdkit import Chem
 eq_dataframe = cmp_using(lambda x, y: x.equals(y))
 
 
-def isabstract(cls: Any) -> bool:
+def is_abstract(cls: Any) -> bool:
     """
     Determines if a given class is abstract in a more general sense than
     `inspect.abstract`, which only verifies if a class has abstract methods. The
