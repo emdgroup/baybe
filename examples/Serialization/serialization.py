@@ -12,7 +12,11 @@ basics example for explanations on this.
 import numpy as np
 
 from baybe.core import BayBE
-from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import FPSRecommender
@@ -21,21 +25,21 @@ from baybe.targets import NumericalTarget, Objective
 
 # We start by defining the parameters of the experiment.
 parameters = [
-    Categorical(
+    CategoricalParameter(
         name="Granularity",
         values=["coarse", "medium", "fine"],
         encoding="OHE",
     ),
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name="Pressure[bar]",
         values=[1, 5, 10],
         tolerance=0.2,
     ),
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name="Temperature[degree_C]",
         values=np.linspace(100, 200, 10),
     ),
-    GenericSubstance(
+    SubstanceParameter(
         name="Solvent",
         data={
             "Solvent A": "COC",

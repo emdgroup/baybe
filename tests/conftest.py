@@ -22,12 +22,12 @@ from baybe.constraints import (
 )
 from baybe.core import BayBE
 from baybe.parameters import (
-    Categorical,
-    Custom,
-    GenericSubstance,
-    NumericContinuous,
-    NumericDiscrete,
+    CategoricalParameter,
+    CustomParameter,
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
     SUBSTANCE_ENCODINGS,
+    SubstanceParameter,
 )
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
@@ -177,76 +177,76 @@ def fixture_parameters(
 ):
     """Provides example parameters via specified names."""
     valid_parameters = [
-        Categorical(
+        CategoricalParameter(
             name="Categorical_1",
             values=["A", "B", "C"],
             encoding="OHE",
         ),
-        Categorical(
+        CategoricalParameter(
             name="Categorical_2",
             values=["bad", "OK", "good"],
             encoding="OHE",
         ),
-        Categorical(
+        CategoricalParameter(
             name="Switch_1",
             values=["on", "off"],
             encoding="OHE",
         ),
-        Categorical(
+        CategoricalParameter(
             name="Switch_2",
             values=["left", "right"],
             encoding="OHE",
         ),
-        Categorical(
+        CategoricalParameter(
             name="Frame_A",
             values=mock_categories,
         ),
-        Categorical(
+        CategoricalParameter(
             name="Frame_B",
             values=mock_categories,
         ),
-        Categorical(
+        CategoricalParameter(
             name="SomeSetting",
             values=["slow", "normal", "fast"],
             encoding="INT",
         ),
-        NumericDiscrete(
+        NumericalDiscreteParameter(
             name="Num_disc_1",
             values=[1, 2, 7],
             tolerance=0.3,
         ),
-        NumericDiscrete(
+        NumericalDiscreteParameter(
             name="Fraction_1",
             values=list(np.linspace(0, 100, n_grid_points)),
             tolerance=0.2,
         ),
-        NumericDiscrete(
+        NumericalDiscreteParameter(
             name="Fraction_2",
             values=list(np.linspace(0, 100, n_grid_points)),
             tolerance=0.5,
         ),
-        NumericDiscrete(
+        NumericalDiscreteParameter(
             name="Fraction_3",
             values=list(np.linspace(0, 100, n_grid_points)),
             tolerance=0.5,
         ),
-        NumericDiscrete(
+        NumericalDiscreteParameter(
             name="Temperature",
             values=list(np.linspace(100, 200, n_grid_points)),
         ),
-        NumericDiscrete(
+        NumericalDiscreteParameter(
             name="Pressure",
             values=list(np.linspace(0, 6, n_grid_points)),
         ),
-        NumericContinuous(
+        NumericalContinuousParameter(
             name="Conti_finite1",
             bounds=(0, 1),
         ),
-        NumericContinuous(
+        NumericalContinuousParameter(
             name="Conti_finite2",
             bounds=(-1, 0),
         ),
-        Custom(
+        CustomParameter(
             name="Custom_1",
             data=pd.DataFrame(
                 {
@@ -257,7 +257,7 @@ def fixture_parameters(
                 index=["mol1", "mol2", "mol3"],
             ),
         ),
-        Custom(
+        CustomParameter(
             name="Custom_2",
             data=pd.DataFrame(
                 {
@@ -268,22 +268,22 @@ def fixture_parameters(
                 index=["A", "B", "C"],
             ),
         ),
-        GenericSubstance(
+        SubstanceParameter(
             name="Solvent_1",
             data=mock_substances,
         ),
-        GenericSubstance(
+        SubstanceParameter(
             name="Solvent_2",
             data=mock_substances,
             encoding="MORDRED",
         ),
-        GenericSubstance(
+        SubstanceParameter(
             name="Solvent_3",
             data=mock_substances,
             encoding="MORDRED",
         ),
         *[
-            GenericSubstance(
+            SubstanceParameter(
                 name=f"Substance_1_{encoding}",
                 data=mock_substances,
                 encoding=encoding,

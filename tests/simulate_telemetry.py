@@ -7,7 +7,7 @@ import os
 from random import randint
 
 from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
@@ -48,11 +48,13 @@ dict_ligand = {
 }
 
 parameters = [
-    GenericSubstance(name="Solvent", data=dict_solvent, encoding="MORDRED"),
-    GenericSubstance(name="Base", data=dict_base, encoding="MORDRED"),
-    GenericSubstance(name="Ligand", data=dict_ligand, encoding="MORDRED"),
-    NumericDiscrete(name="Temp_C", values=[90, 105, 120], tolerance=2),
-    NumericDiscrete(name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005),
+    SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED"),
+    SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED"),
+    SubstanceParameter(name="Ligand", data=dict_ligand, encoding="MORDRED"),
+    NumericalDiscreteParameter(name="Temp_C", values=[90, 105, 120], tolerance=2),
+    NumericalDiscreteParameter(
+        name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
+    ),
 ]
 config = {
     "searchspace": SearchSpace.from_product(

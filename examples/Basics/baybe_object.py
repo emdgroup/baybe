@@ -9,7 +9,7 @@ that can be used to get recommendations
 """
 
 from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils.dataframe import add_fake_results
@@ -74,15 +74,17 @@ dict_ligand = {
 # Define generic chemical substances parameters: Solvent, Base and Ligand
 # Here, MORDRED encoding is used for chemical substances
 
-solvent = GenericSubstance("Solvent", data=dict_solvent, encoding="MORDRED")
-base = GenericSubstance("Base", data=dict_base, encoding="MORDRED")
-ligand = GenericSubstance("Ligand", data=dict_ligand, encoding="MORDRED")
+solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="MORDRED")
+base = SubstanceParameter("Base", data=dict_base, encoding="MORDRED")
+ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="MORDRED")
 
 
 # Define numerical discrete parameters: Temperature, Concentration
 
-temperature = NumericDiscrete("Temperature", values=[90, 105, 120], tolerance=2)
-concentration = NumericDiscrete(
+temperature = NumericalDiscreteParameter(
+    "Temperature", values=[90, 105, 120], tolerance=2
+)
+concentration = NumericalDiscreteParameter(
     "Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 

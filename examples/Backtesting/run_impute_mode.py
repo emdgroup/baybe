@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 
 from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.strategies.sampling import RandomRecommender
@@ -33,7 +33,7 @@ dict_solvent = {
     "Butyl Ester": r"CCCCOC(C)=O",
     "p-Xylene": r"CC1=CC=C(C)C=C1",
 }
-solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="MORDRED")
+solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED")
 
 dict_base = {
     "Potassium acetate": r"O=C([O-])C.[K+]",
@@ -41,7 +41,7 @@ dict_base = {
     "Cesium acetate": r"O=C([O-])C.[Cs+]",
     "Cesium pivalate": r"O=C([O-])C(C)(C)C.[Cs+]",
 }
-base = GenericSubstance(name="Base", data=dict_base, encoding="MORDRED")
+base = SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED")
 
 dict_ligand = {
     "BrettPhos": r"CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC4)C(OC)="
@@ -59,9 +59,11 @@ dict_ligand = {
     "SCHEMBL15068049": r"C[C@]1(O2)O[C@](C[C@]2(C)P3C4=CC=CC=C4)(C)O[C@]3(C)C1",
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
-ligand = GenericSubstance(name="Ligand", data=dict_ligand, encoding="MORDRED")
-temperature = NumericDiscrete(name="Temp_C", values=[90, 105, 120], tolerance=2)
-concentration = NumericDiscrete(
+ligand = SubstanceParameter(name="Ligand", data=dict_ligand, encoding="MORDRED")
+temperature = NumericalDiscreteParameter(
+    name="Temp_C", values=[90, 105, 120], tolerance=2
+)
+concentration = NumericalDiscreteParameter(
     name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 

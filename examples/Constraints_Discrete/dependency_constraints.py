@@ -13,7 +13,11 @@ import numpy as np
 from baybe.constraints import DependenciesConstraint, SubSelectionCondition
 
 from baybe.core import BayBE
-from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils.dataframe import add_fake_results
@@ -23,14 +27,14 @@ dict_solvent = {
     "water": "O",
     "C1": "C",
 }
-solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="MORDRED")
-switch1 = Categorical(name="Switch1", values=["on", "off"])
-switch2 = Categorical(name="Switch2", values=["left", "right"])
-fraction1 = NumericDiscrete(
+solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED")
+switch1 = CategoricalParameter(name="Switch1", values=["on", "off"])
+switch2 = CategoricalParameter(name="Switch2", values=["left", "right"])
+fraction1 = NumericalDiscreteParameter(
     name="Fraction1", values=list(np.linspace(0, 100, 7)), tolerance=0.2
 )
-frame1 = Categorical(name="FrameA", values=["A", "B"])
-frame2 = Categorical(name="FrameB", values=["A", "B"])
+frame1 = CategoricalParameter(name="FrameA", values=["A", "B"])
+frame2 = CategoricalParameter(name="FrameB", values=["A", "B"])
 
 parameters = [solvent, switch1, switch2, fraction1, frame1, frame2]
 

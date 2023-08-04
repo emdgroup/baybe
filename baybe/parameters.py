@@ -160,7 +160,7 @@ class DiscreteParameter(Parameter, ABC):
 
 
 @define(frozen=True, slots=False)
-class Categorical(DiscreteParameter):
+class CategoricalParameter(DiscreteParameter):
     """
     Parameter class for categorical parameters.
     """
@@ -194,7 +194,7 @@ class Categorical(DiscreteParameter):
 
 
 @define(frozen=True, slots=False)
-class NumericDiscrete(DiscreteParameter):
+class NumericalDiscreteParameter(DiscreteParameter):
     """
     Parameter class for discrete numerical parameters (a.k.a. setpoints).
     """
@@ -256,7 +256,7 @@ class NumericDiscrete(DiscreteParameter):
 
 
 @define(frozen=True, slots=False)
-class NumericContinuous(Parameter):
+class NumericalContinuousParameter(Parameter):
     """
     Parameter class for continuous numerical parameters.
     """
@@ -286,7 +286,7 @@ class NumericContinuous(Parameter):
 
 
 @define(frozen=True, slots=False)
-class GenericSubstance(DiscreteParameter):
+class SubstanceParameter(DiscreteParameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
     descriptors.
@@ -372,11 +372,11 @@ class GenericSubstance(DiscreteParameter):
 
 
 # Available encodings for substance parameters
-SUBSTANCE_ENCODINGS = get_args(get_type_hints(GenericSubstance)["encoding"])
+SUBSTANCE_ENCODINGS = get_args(get_type_hints(SubstanceParameter)["encoding"])
 
 
 @define(frozen=True, slots=False)
-class Custom(DiscreteParameter):
+class CustomParameter(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry.

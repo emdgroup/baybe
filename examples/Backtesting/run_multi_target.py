@@ -10,7 +10,7 @@ from typing import Tuple
 
 import numpy as np
 from baybe.core import BayBE
-from baybe.parameters import NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, Objective
@@ -36,7 +36,7 @@ BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
 # In this example, we construct a purely discrete space.
 parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(np.linspace(*BOUNDS[k], 15)),
         tolerance=0.01,

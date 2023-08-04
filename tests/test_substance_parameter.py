@@ -1,5 +1,5 @@
 """
-Tests for the generic substance parameter.
+Tests for the substance parameter.
 """
 
 import pytest

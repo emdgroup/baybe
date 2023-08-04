@@ -17,7 +17,7 @@ import seaborn as sns
 
 from baybe.core import BayBE
 
-from baybe.parameters import NumericContinuous, NumericDiscrete
+from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.strategies.bayesian import (
@@ -83,18 +83,18 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
         "indices do not match."
     )
 
-# Construct the continuous parameters as NumericContinuous parameters
+# Construct the continuous parameters
 cont_parameters = [
-    NumericContinuous(
+    NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=(BOUNDS[k]),
     )
     for k in CONT_INDICES
 ]
 
-# Construct the discrete parameters as NumericDiscrete parameters
+# Construct the discrete parameters
 disc_parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(np.linspace(*BOUNDS[k], POINTS_PER_DIM)),
         tolerance=0.01,

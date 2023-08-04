@@ -14,7 +14,11 @@ from baybe.constraints import (
 )
 
 from baybe.core import BayBE
-from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils.dataframe import add_fake_results
@@ -30,16 +34,18 @@ dict_solvent = {
     "c6": "c1ccccc1",
     "C6": "CCCCCC",
 }
-solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="RDKIT")
-speed = Categorical(
+solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="RDKIT")
+speed = CategoricalParameter(
     name="Speed",
     values=["very slow", "slow", "normal", "fast", "very fast"],
     encoding="INT",
 )
-temperature = NumericDiscrete(
+temperature = NumericalDiscreteParameter(
     name="Temperature", values=list(np.linspace(100, 200, 15)), tolerance=0.4
 )
-pressure = NumericDiscrete(name="Pressure", values=[1, 2, 5, 10], tolerance=0.4)
+pressure = NumericalDiscreteParameter(
+    name="Pressure", values=[1, 2, 5, 10], tolerance=0.4
+)
 
 parameters = [solvent, speed, temperature, pressure]
 

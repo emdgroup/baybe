@@ -20,10 +20,10 @@ from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORD
 from baybe.parameters import (
     _validate_parameter_names,
     _validate_parameters,
-    Categorical,
+    CategoricalParameter,
     DiscreteParameter,
-    NumericContinuous,
-    NumericDiscrete,
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
     Parameter,
     parameter_cartesian_prod_to_df,
 )
@@ -143,8 +143,8 @@ class SubspaceDiscrete:
             Optional parameters corresponding to the columns in the given dataframe.
             If a match between column name and parameter name is found, the
             corresponding parameter is used. If a column has no match in the parameter
-            list, a `NumericDiscrete` parameter is created if possible, or a
-            `Categorical` is used as fallback.
+            list, a `NumericalDiscreteParameter` is created if possible, or a
+            `CategoricalParameter` is used as fallback.
         empty_encoding : bool
             See `SearchSpace` class.
 
@@ -176,9 +176,9 @@ class SubspaceDiscrete:
             else:
                 values = series.drop_duplicates().values.tolist()
                 try:
-                    param = NumericDiscrete(name=name, values=values)
+                    param = NumericalDiscreteParameter(name=name, values=values)
                 except TypeError:
-                    param = Categorical(name=name, values=values)
+                    param = CategoricalParameter(name=name, values=values)
                 parameters.append(param)
 
         # By now, all parameters must have been used
@@ -326,7 +326,7 @@ class SubspaceContinuous:
     Class for managing continuous search spaces.
     """
 
-    parameters: List[NumericContinuous] = field(
+    parameters: List[NumericalContinuousParameter] = field(
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
 
@@ -346,7 +346,8 @@ class SubspaceContinuous:
 
         # Create the corresponding parameters and from them the search space
         parameters = [
-            NumericContinuous(name, bound) for (name, bound) in bounds.iteritems()
+            NumericalContinuousParameter(name, bound)
+            for (name, bound) in bounds.iteritems()
         ]
         return SubspaceContinuous(parameters)
 
@@ -534,7 +535,9 @@ class SearchSpace(SerialMixin):
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
             parameters=[
-                cast(NumericContinuous, p) for p in parameters if not p.is_discrete
+                cast(NumericalContinuousParameter, p)
+                for p in parameters
+                if not p.is_discrete
             ],
         )
 

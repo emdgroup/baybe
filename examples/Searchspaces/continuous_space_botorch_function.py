@@ -4,7 +4,7 @@ function as synthetic test function.
 """
 
 from baybe.core import BayBE
-from baybe.parameters import NumericContinuous
+from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 
@@ -45,10 +45,10 @@ BOUNDS = TestFunction.bounds
 # Create the wrapped function itself.
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-# Since this is the continuous test, we only construct NumericContinuous parameters.
+# Since this is the continuous test, we only construct numerical continuous parameters.
 # We use that data of the test function to deduce bounds and number of parameters.
 parameters = [
-    NumericContinuous(
+    NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )

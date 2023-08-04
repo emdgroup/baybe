@@ -3,7 +3,7 @@ Example for using custom synthetic test functions in continuous spaces.
 """
 
 from baybe.core import BayBE
-from baybe.parameters import NumericContinuous
+from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 
@@ -35,7 +35,7 @@ DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
 parameters = [
-    NumericContinuous(
+    NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=BOUNDS[k],
     )

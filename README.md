@@ -154,22 +154,23 @@ This also involves specifying their ranges and other parameter-specific details.
 For our reaction example, we assume that we can control the following three quantities:
 
 ```python
-from baybe.parameters import Categorical, NumericDiscrete, GenericSubstance
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter, SubstanceParameter
 
 parameters = [
-    Categorical(
+    CategoricalParameter(
         name="Granularity",
         values=["coarse", "medium", "fine"],
         encoding="OHE",
     ),
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name="Pressure[bar]",
         values=[1, 5, 10],
         tolerance=0.2,
     ),
-    GenericSubstance(
+    SubstanceParameter(
         name="Solvent",
-        data={"Solvent A": "COC", "Solvent B": "CCC", "Solvent C": "O", "Solvent D": "CS(=O)C"},
+        data={"Solvent A": "COC", "Solvent B": "CCC", "Solvent C": "O",
+              "Solvent D": "CS(=O)C"},
         encoding="MORDRED",
     ),
 ]

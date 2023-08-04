@@ -16,7 +16,7 @@ import numpy as np
 import seaborn as sns
 
 from baybe.core import BayBE
-from baybe.parameters import NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.strategies.bayesian import SequentialGreedyRecommender
@@ -66,7 +66,7 @@ POINTS_PER_DIM = 15
 # here. We refer to the examples within examples/SearchSpaces for details on
 # how to change this code for continuous or hybrid spaces.
 parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(
             np.linspace(

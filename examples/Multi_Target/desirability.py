@@ -7,7 +7,7 @@ aspects, we refer to the Basic examples.
 """
 
 from baybe.core import BayBE
-from baybe.parameters import Categorical, NumericDiscrete
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils.dataframe import add_fake_results
@@ -18,14 +18,18 @@ from baybe.utils.dataframe import add_fake_results
 
 # We begin by setting up some parameters for our experiments
 
-Categorical_1 = Categorical("Categorical_1", values=[22, 33], encoding="OHE")
-Categorical_2 = Categorical(
+Categorical_1 = CategoricalParameter("Categorical_1", values=[22, 33], encoding="OHE")
+Categorical_2 = CategoricalParameter(
     "Categorical_2",
     values=["very bad", "bad", "OK", "good", "very good"],
     encoding="INT",
 )
-Num_disc_1 = NumericDiscrete("Num_disc_1", values=[1, 2, 3, 4, 6, 8, 10], tolerance=0.3)
-Num_disc_2 = NumericDiscrete("Num_disc_2", values=[-1, -3, -6, -9], tolerance=0.3)
+Num_disc_1 = NumericalDiscreteParameter(
+    "Num_disc_1", values=[1, 2, 3, 4, 6, 8, 10], tolerance=0.3
+)
+Num_disc_2 = NumericalDiscreteParameter(
+    "Num_disc_2", values=[-1, -3, -6, -9], tolerance=0.3
+)
 
 parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
 

@@ -4,7 +4,11 @@ import pytest
 import torch
 from baybe.exceptions import EmptySearchSpaceError
 
-from baybe.parameters import Categorical, NumericContinuous, NumericDiscrete
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.searchspace import (
     SearchSpace,
     SearchSpaceType,
@@ -25,10 +29,10 @@ def test_bounds_order():
     first, continuous next).
     """
     parameters = [
-        NumericDiscrete(name="A_disc", values=[1.0, 2.0, 3.0]),
-        NumericContinuous(name="A_cont", bounds=(4.0, 6.0)),
-        NumericDiscrete(name="B_disc", values=[7.0, 8.0, 9.0]),
-        NumericContinuous(name="B_cont", bounds=(10.0, 12.0)),
+        NumericalDiscreteParameter(name="A_disc", values=[1.0, 2.0, 3.0]),
+        NumericalContinuousParameter(name="A_cont", bounds=(4.0, 6.0)),
+        NumericalDiscreteParameter(name="B_disc", values=[7.0, 8.0, 9.0]),
+        NumericalContinuousParameter(name="B_cont", bounds=(10.0, 12.0)),
     ]
     searchspace = SearchSpace.from_product(parameters=parameters)
     expected = torch.tensor([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]]).double()
@@ -53,10 +57,14 @@ def test_empty_parameter_bounds():
 
 def test_discrete_searchspace_creation_from_dataframe():
     """A purely discrete search space is created from an example dataframe."""
-    num_specified = NumericDiscrete(name="num_specified", values=[1, 2, 3])
-    num_unspecified = NumericDiscrete(name="num_unspecified", values=[4, 5, 6])
-    cat_specified = Categorical(name="cat_specified", values=["a", "b", "c"])
-    cat_unspecified = Categorical(name="cat_unspecified", values=["d", "e", "f"])
+    num_specified = NumericalDiscreteParameter(name="num_specified", values=[1, 2, 3])
+    num_unspecified = NumericalDiscreteParameter(
+        name="num_unspecified", values=[4, 5, 6]
+    )
+    cat_specified = CategoricalParameter(name="cat_specified", values=["a", "b", "c"])
+    cat_unspecified = CategoricalParameter(
+        name="cat_unspecified", values=["d", "e", "f"]
+    )
 
     all_params = [num_specified, num_unspecified, cat_specified, cat_unspecified]
 
@@ -73,8 +81,8 @@ def test_discrete_searchspace_creation_from_dataframe():
 def test_continuous_searchspace_creation_from_bounds():
     """A purely continuous search space is created from example bounds."""
     parameters = [
-        NumericContinuous("param1", (0, 1)),
-        NumericContinuous("param2", (-1, 1)),
+        NumericalContinuousParameter("param1", (0, 1)),
+        NumericalContinuousParameter("param2", (-1, 1)),
     ]
     bounds = pd.DataFrame({p.name: p.bounds.to_tuple() for p in parameters})
     searchspace = SearchSpace(continuous=SubspaceContinuous.from_bounds(bounds))
@@ -97,8 +105,8 @@ def test_hyperrectangle_searchspace_creation():
     searchspace = SearchSpace(continuous=SubspaceContinuous.from_dataframe(points))
 
     parameters = [
-        NumericContinuous("param1", (0, 2)),
-        NumericContinuous("param2", (-1, 1)),
+        NumericalContinuousParameter("param1", (0, 2)),
+        NumericalContinuousParameter("param2", (-1, 1)),
     ]
 
     assert searchspace.type == SearchSpaceType.CONTINUOUS

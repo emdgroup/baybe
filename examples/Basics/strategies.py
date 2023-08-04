@@ -18,7 +18,7 @@ This example explain how they can be changed
 
 
 from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
@@ -205,11 +205,13 @@ dict_ligand = {
 
 # Define list of parameters
 
-solvent = GenericSubstance("Solvent", data=dict_solvent, encoding="MORDRED")
-base = GenericSubstance("Base", data=dict_base, encoding="MORDRED")
-ligand = GenericSubstance("Ligand", data=dict_ligand, encoding="MORDRED")
-temperature = NumericDiscrete("Temperature", values=[90, 105, 120], tolerance=2)
-concentration = NumericDiscrete(
+solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="MORDRED")
+base = SubstanceParameter("Base", data=dict_base, encoding="MORDRED")
+ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="MORDRED")
+temperature = NumericalDiscreteParameter(
+    "Temperature", values=[90, 105, 120], tolerance=2
+)
+concentration = NumericalDiscreteParameter(
     "Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 
