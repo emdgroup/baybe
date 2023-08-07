@@ -78,8 +78,7 @@ CONFIG = str(
         "recommender": {
             "type": "SequentialGreedyRecommender",
             "surrogate_model": {
-                "type": "GaussianProcessModel",
-                "model_params": {}
+                "type": "GaussianProcessModel"
             },
             "acquisition_function_cls": "qEI"
         },

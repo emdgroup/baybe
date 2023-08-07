@@ -55,6 +55,8 @@ parameters = [
 
 #### Create a surrogate model with custom model parameters
 
+# Please note that model_params is an optional argument:
+# The defaults will be used if none specified
 surrogate_model = NGBoostModel(model_params={"n_estimators": 50, "verbose": True})
 
 #### Validation of model parameters
