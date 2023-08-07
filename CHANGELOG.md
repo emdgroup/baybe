@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple test for config validation
 - `VarUCB` and `qVarUCB` acquisition functions emulating maximum variance for active learning
 - Surrogate model serialization
-- Surrogate mmodel passing
+- Surrogate model parameter passing
 
 ### Changed
 - Renamed `create` constructors to `from_product`
