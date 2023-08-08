@@ -5,6 +5,7 @@ authors = [
     {name = "Martin Fitzner (Merck KGaA, Darmstadt, Germany)", email = "martin.fitzner@merckgroup.com"},
     {name = "Adrian Šošić (Merck KGaA, Darmstadt, Germany)", email = "adrian.sosic@merckgroup.com"},
     {name = "Alexander Hopp (Merck KGaA, Darmstadt, Germany)", email = "alexander.hopp@merckgroup.com"},
+    {name = "Alex Lee (Merck KGaA, Darmstadt, Germany)", email = "alex.lee@emdgroup.com"},
 ]
 readme = "README.md"
 license = {text = "Apache-2.0"}
