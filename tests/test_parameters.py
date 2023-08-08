@@ -6,7 +6,7 @@ import pytest
 
 from baybe.parameters import (
     CategoricalParameter,
-    CustomParameter,
+    CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
     SubstanceParameter,
@@ -39,7 +39,7 @@ def test_invalid_parameter_creation():
 
     # Scenario: custom parameter contains duplicated index
     with pytest.raises(ValueError):
-        CustomParameter(
+        CustomDiscreteParameter(
             name="custom_duplicated_index",
             data=pd.DataFrame(
                 {

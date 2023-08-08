@@ -376,7 +376,7 @@ SUBSTANCE_ENCODINGS = get_args(get_type_hints(SubstanceParameter)["encoding"])
 
 
 @define(frozen=True, slots=False)
-class CustomParameter(DiscreteParameter):
+class CustomDiscreteParameter(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry.

@@ -23,7 +23,7 @@ from baybe.constraints import (
 from baybe.core import BayBE
 from baybe.parameters import (
     CategoricalParameter,
-    CustomParameter,
+    CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
     SUBSTANCE_ENCODINGS,
@@ -246,7 +246,7 @@ def fixture_parameters(
             name="Conti_finite2",
             bounds=(-1, 0),
         ),
-        CustomParameter(
+        CustomDiscreteParameter(
             name="Custom_1",
             data=pd.DataFrame(
                 {
@@ -257,7 +257,7 @@ def fixture_parameters(
                 index=["mol1", "mol2", "mol3"],
             ),
         ),
-        CustomParameter(
+        CustomDiscreteParameter(
             name="Custom_2",
             data=pd.DataFrame(
                 {
