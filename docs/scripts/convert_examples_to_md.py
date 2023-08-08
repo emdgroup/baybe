@@ -10,10 +10,10 @@ Using this files requires the following additional packages:
 """
 
 import argparse
-import os
 import pathlib
 import re
 import shutil
+from subprocess import check_call, DEVNULL, STDOUT
 
 from tqdm import tqdm
 
@@ -97,18 +97,31 @@ for directory in (pbar := tqdm(directories)):
         # Create the Markdown file:
 
         # 1. Convert the file to jupyter notebook
-        os.system(rf"p2j '{file}' >/dev/null 2>&1")
+        check_call(["p2j", file], stdout=DEVNULL, stderr=STDOUT)
 
         notebook_path = file.with_suffix(".ipynb")
 
         # 2. Execute the notebook
-        os.system(
-            f"jupyter nbconvert --execute --to notebook --inplace '{notebook_path}'"
-            + ">/dev/null 2>&1"
+        check_call(
+            [
+                "jupyter",
+                "nbconvert",
+                "--execute",
+                "--to",
+                "notebook",
+                "--inplace",
+                notebook_path,
+            ],
+            stdout=DEVNULL,
+            stderr=STDOUT,
         )
 
         # 3. Convert the notebook to markdown
-        os.system(rf"jupyter nbconvert --to markdown '{notebook_path}' >/dev/null 2>&1")
+        check_call(
+            ["jupyter", "nbconvert", "--to", "markdown", notebook_path],
+            stdout=DEVNULL,
+            stderr=STDOUT,
+        )
 
         markdown_path = file.with_suffix(".md")
 
