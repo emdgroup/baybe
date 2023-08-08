@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
 
+### Fixed
+- Include scaling in FPS recommender
+
 ## [0.3.2] - 2023-07-24
 ### Added
 - Constraints serialization
