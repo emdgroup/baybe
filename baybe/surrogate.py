@@ -5,6 +5,7 @@ Surrogate models, such as Gaussian processes, random forests, etc.
 from __future__ import annotations
 
 import gc
+import sys
 
 from abc import ABC, abstractmethod
 from functools import wraps
@@ -32,7 +33,7 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import get_subclasses, unstructure_base
+from baybe.utils import unstructure_base
 from baybe.utils.serialization import SerialMixin
 
 # Use float64 (which is recommended at least for BoTorch models)
@@ -615,22 +616,18 @@ def structure_surrogate(val, _):
     # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
 
     # NOTE.
-    # Due to above issue and the renaming of ScaleModel & SplitModel
-    # The subclasses structure includes all intermediate models
-    # with the same __name__ (some of which are not used).
-    # By default they are ordered as they are defined.
-    # The original `structure_base` method would use the first one
-    # which would be the vanila models with no wrappers.
-    # As the desired one is the most wrapped,
-    # we choose the one that is introduced last.
+    # Due to above issue,
+    # it is difficult to find the wrapped class in the subclass structure.
+    # The renaming only happens in the init method of wrapper classes
+    # (classes that haven't been initialized won't have the overwritten name)
+    # Since any method revolving `cls()` will not work as expected,
+    # we rely temporarily on `getattr` to allow the wrappers to be called on demand.
 
     _type = val["type"]
-    cls = next(
-        reversed(
-            list((cl for cl in get_subclasses(SurrogateModel) if cl.__name__ == _type))
-        ),
-        None,
-    )
+
+    cls = getattr(sys.modules[__name__], _type, None)
+    # cls = getattr(baybe.surrogate, ...) if used in another module
+
     if cls is None:
         raise ValueError(f"Unknown subclass {_type}.")
 
