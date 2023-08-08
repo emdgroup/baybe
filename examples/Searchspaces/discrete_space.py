@@ -9,12 +9,11 @@ continuous_space example.
 
 import numpy as np
 
-from baybe.core import BayBE
-from baybe.parameters import NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils import botorch_function_wrapper
 
 # Import the desired test function from botorch here
 from botorch.test_functions import Branin
@@ -55,10 +54,10 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 # Parameter for controlling the number of points per dimension.
 POINTS_PER_DIM = 4
 
-# Since this is the discrete test, we only construct NumericDiscrete parameters.
+# Since this is the discrete test, we only construct numerical discrete parameters.
 # We use that data of the test function to deduce bounds and number of parameters.
 parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
         tolerance=0.01,

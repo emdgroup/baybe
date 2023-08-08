@@ -15,18 +15,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe.core import BayBE
-
-# Note that this import here might be problematic depending on your exact
-# setup and that you might need to make some adjustments to make it work!
-from baybe.parameters import NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
-
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be
@@ -65,7 +59,7 @@ BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 # here. We refer to the examples within examples/SearchSpaces for details on
 # how to change this code for continuous or hybrid spaces.
 parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(np.linspace(*BOUNDS[k], 15)),
         tolerance=0.01,

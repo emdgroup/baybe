@@ -7,7 +7,6 @@ Functionality for managing search spaces.
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
-import logging
 from enum import Enum
 from typing import cast, Dict, List, Optional, Tuple
 
@@ -21,18 +20,20 @@ from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORD
 from baybe.parameters import (
     _validate_parameter_names,
     _validate_parameters,
-    Categorical,
+    CategoricalParameter,
     DiscreteParameter,
-    NumericContinuous,
-    NumericDiscrete,
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
     Parameter,
     parameter_cartesian_prod_to_df,
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
-from baybe.utils.serialization import SerialMixin
-
-log = logging.getLogger(__name__)
+from baybe.utils import (
+    df_drop_single_value_columns,
+    eq_dataframe,
+    fuzzy_row_match,
+    SerialMixin,
+)
 
 
 class SearchSpaceType(Enum):
@@ -55,9 +56,9 @@ class SubspaceDiscrete:
     parameters: List[DiscreteParameter] = field(
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
-    exp_rep: pd.DataFrame = field(eq=eq_dataframe())
-    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe())
-    metadata: pd.DataFrame = field(eq=eq_dataframe())
+    exp_rep: pd.DataFrame = field(eq=eq_dataframe)
+    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe)
+    metadata: pd.DataFrame = field(eq=eq_dataframe)
     empty_encoding: bool = field(default=False)
     constraints: List[Constraint] = field(factory=list)
 
@@ -138,12 +139,12 @@ class SubspaceDiscrete:
         ----------
         df : pd.DataFrame
             The experimental representation of the search space to be created.
-        parameters : pd.DataFrame
+        parameters : List[Parameter], optional
             Optional parameters corresponding to the columns in the given dataframe.
             If a match between column name and parameter name is found, the
             corresponding parameter is used. If a column has no match in the parameter
-            list, a `NumericDiscrete` parameter is created if possible, or a
-            `Categorical` is used as fallback.
+            list, a `NumericalDiscreteParameter` is created if possible, or a
+            `CategoricalParameter` is used as fallback.
         empty_encoding : bool
             See `SearchSpace` class.
 
@@ -175,9 +176,9 @@ class SubspaceDiscrete:
             else:
                 values = series.drop_duplicates().values.tolist()
                 try:
-                    param = NumericDiscrete(name=name, values=values)
+                    param = NumericalDiscreteParameter(name=name, values=values)
                 except TypeError:
-                    param = Categorical(name=name, values=values)
+                    param = CategoricalParameter(name=name, values=values)
                 parameters.append(param)
 
         # By now, all parameters must have been used
@@ -325,7 +326,7 @@ class SubspaceContinuous:
     Class for managing continuous search spaces.
     """
 
-    parameters: List[NumericContinuous] = field(
+    parameters: List[NumericalContinuousParameter] = field(
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
 
@@ -345,7 +346,8 @@ class SubspaceContinuous:
 
         # Create the corresponding parameters and from them the search space
         parameters = [
-            NumericContinuous(name, bound) for (name, bound) in bounds.iteritems()
+            NumericalContinuousParameter(name, bound)
+            for (name, bound) in bounds.iteritems()
         ]
         return SubspaceContinuous(parameters)
 
@@ -533,7 +535,9 @@ class SearchSpace(SerialMixin):
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
             parameters=[
-                cast(NumericContinuous, p) for p in parameters if not p.is_discrete
+                cast(NumericalContinuousParameter, p)
+                for p in parameters
+                if not p.is_discrete
             ],
         )
 

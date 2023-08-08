@@ -4,14 +4,14 @@ We use the two configuration dictionaries. The first one represents a valid
 configuration, the second does not.
 """
 
-from baybe.core import BayBE
+from baybe import BayBE
 
 
 CONFIG = """
 {
     "parameters": [
         {
-            "type": "Categorical",
+            "type": "CategoricalParameter",
             "name": "Granularity",
             "values": [
                 "coarse",
@@ -21,7 +21,7 @@ CONFIG = """
             "encoding": "OHE"
         },
         {
-            "type": "NumericDiscrete",
+            "type": "NumericalDiscreteParameter",
             "name": "Pressure[bar]",
             "values": [
                 1,
@@ -31,7 +31,7 @@ CONFIG = """
             "tolerance": 0.2
         },
         {
-            "type": "GenericSubstance",
+            "type": "SubstanceParameter",
             "name": "Solvent",
             "data": {
                 "Solvent A": "COC",
@@ -82,7 +82,7 @@ INVALID_CONFIG = """
             "encoding": "OHE"
         },
         {
-            "type": "NumericDiscrete",
+            "type": "NumericalDiscreteParameter",
             "name": "Pressure[bar]",
             "values": [
                 1,
@@ -92,7 +92,7 @@ INVALID_CONFIG = """
             "tolerance": 0.2
         },
         {
-            "type": "GenericSubstance",
+            "type": "SubstanceParameter",
             "name": "Solvent",
             "data": {
                 "Solvent A": "COC",

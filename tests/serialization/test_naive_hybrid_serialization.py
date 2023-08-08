@@ -3,16 +3,17 @@
 import pytest
 
 from baybe.core import BayBE
-from baybe.parameters import NumericContinuous, NumericDiscrete
+from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.strategies.bayesian import (
+    BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.strategies.recommender import BayesianRecommender, NonPredictiveRecommender
+from baybe.strategies.recommender import NonPredictiveRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 
 valid_discrete_non_predictive_recommenders = [
     cls()
@@ -41,8 +42,8 @@ valid_naive_hybrid_recommenders = [
 def test_serialization_without_recommendation(hybrid_recommender):
     """Serialize all possible hybrid recommender objects and test for equality"""
     parameters = [
-        NumericDiscrete(name="disc", values=[1, 5, 10], tolerance=0.2),
-        NumericContinuous(name="cont", bounds=(0, 1)),
+        NumericalDiscreteParameter(name="disc", values=[1, 5, 10], tolerance=0.2),
+        NumericalContinuousParameter(name="cont", bounds=(0, 1)),
     ]
     targets = [NumericalTarget(name="Yield", mode="MAX")]
     baybe_orig = BayBE(

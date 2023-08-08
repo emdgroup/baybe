@@ -154,22 +154,23 @@ This also involves specifying their ranges and other parameter-specific details.
 For our reaction example, we assume that we can control the following three quantities:
 
 ```python
-from baybe.parameters import Categorical, NumericDiscrete, GenericSubstance
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter, SubstanceParameter
 
 parameters = [
-    Categorical(
+    CategoricalParameter(
         name="Granularity",
         values=["coarse", "medium", "fine"],
         encoding="OHE",
     ),
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name="Pressure[bar]",
         values=[1, 5, 10],
         tolerance=0.2,
     ),
-    GenericSubstance(
+    SubstanceParameter(
         name="Solvent",
-        data={"Solvent A": "COC", "Solvent B": "CCC", "Solvent C": "O", "Solvent D": "CS(=O)C"},
+        data={"Solvent A": "COC", "Solvent B": "CCC", "Solvent C": "O",
+              "Solvent D": "CS(=O)C"},
         encoding="MORDRED",
     ),
 ]
@@ -224,9 +225,7 @@ details, and their configuration settings, see
 [baybe/strategies](./baybe/strategies).
 
 ```python
-from baybe.strategies.strategy import Strategy
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
+from baybe.strategies import Strategy, SequentialGreedyRecommender, RandomRecommender
 
 strategy = Strategy(
     initial_recommender=RandomRecommender(),
@@ -241,7 +240,7 @@ construct a BayBE object that brings all
 pieces of the puzzle together:
 
 ```python
-from baybe.core import BayBE
+from baybe import BayBE
 
 baybe = BayBE(searchspace, objective, strategy)
 ```

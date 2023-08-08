@@ -13,7 +13,7 @@ from torch import Tensor
 
 from baybe.utils import to_tensor
 
-ScaleFun = Callable[[Tensor], Tensor]
+_ScaleFun = Callable[[Tensor], Tensor]
 
 
 class Scaler(ABC):
@@ -25,12 +25,12 @@ class Scaler(ABC):
     def __init__(self, searchspace: pd.DataFrame):
         self.searchspace = searchspace
         self.fitted = False
-        self.scale_x: ScaleFun
-        self.scale_y: ScaleFun
-        self.unscale_x: ScaleFun
-        self.unscale_y: ScaleFun
-        self.unscale_m: ScaleFun
-        self.unscale_s: ScaleFun
+        self.scale_x: _ScaleFun
+        self.scale_y: _ScaleFun
+        self.unscale_x: _ScaleFun
+        self.unscale_y: _ScaleFun
+        self.unscale_m: _ScaleFun
+        self.unscale_s: _ScaleFun
 
     @abstractmethod
     def fit_transform(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:

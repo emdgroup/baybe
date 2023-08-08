@@ -13,7 +13,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.recommender import Recommender
 from baybe.strategies.sampling import RandomRecommender
-from baybe.utils.serialization import SerialMixin
+from baybe.utils import SerialMixin
 
 
 @define

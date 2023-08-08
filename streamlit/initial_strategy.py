@@ -9,7 +9,7 @@ import streamlit as st
 
 from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.strategies.recommender import NonPredictiveRecommender
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 from sklearn.datasets import make_blobs
 
 

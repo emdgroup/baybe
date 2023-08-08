@@ -1,11 +1,13 @@
 """Serialization utilities."""
 
 import json
-from typing import Type, TypeVar
+from typing import Any, Callable, Type, TypeVar
 
 import cattrs
 
-T = TypeVar("T")
+from baybe.utils import get_subclasses
+
+_T = TypeVar("_T")
 
 
 class SerialMixin:
@@ -20,7 +22,7 @@ class SerialMixin:
         return cattrs.unstructure(self)
 
     @classmethod
-    def from_dict(cls: Type[T], dictionary: dict) -> T:
+    def from_dict(cls: Type[_T], dictionary: dict) -> _T:
         """Create an object from its dictionary representation."""
         return cattrs.structure(dictionary, cls)
 
@@ -29,6 +31,31 @@ class SerialMixin:
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls: Type[T], string: str) -> T:
+    def from_json(cls: Type[_T], string: str) -> _T:
         """Create an object from its JSON representation."""
         return cls.from_dict(json.loads(string))
+
+
+def unstructure_base(base: Any) -> dict:
+    """Unstructures an object into a dictionary and adds an entry for the class name."""
+    converter = cattrs.global_converter
+    return {
+        "type": base.__class__.__name__,
+        **converter.unstructure_attrs_asdict(base),
+    }
+
+
+def get_base_unstructure_hook(base: Type[_T]) -> Callable[[dict], _T]:
+    """
+    Returns a hook for structuring a dictionary into an appropriate subclass.
+    Provides the inverse operation to `unstructure_base`.
+    """
+
+    def structure_base(val: dict, _) -> _T:
+        _type = val["type"]
+        cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
+        if cls is None:
+            raise ValueError(f"Unknown subclass {_type}.")
+        return cattrs.structure_attrs_fromdict(val, cls)
+
+    return structure_base

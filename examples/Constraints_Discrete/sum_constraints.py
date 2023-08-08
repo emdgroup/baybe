@@ -7,6 +7,7 @@ never be chosen twice.
 import math
 
 import numpy as np
+from baybe import BayBE
 
 from baybe.constraints import (
     DependenciesConstraint,
@@ -15,9 +16,7 @@ from baybe.constraints import (
     SumConstraint,
     ThresholdCondition,
 )
-
-from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
@@ -31,17 +30,17 @@ dict_solvents = {
     "C2": "CC",
     "C3": "CCC",
 }
-solvent1 = GenericSubstance(name="Solvent1", data=dict_solvents, encoding="MORDRED")
-solvent2 = GenericSubstance(name="Solvent2", data=dict_solvents, encoding="MORDRED")
-solvent3 = GenericSubstance(name="Solvent3", data=dict_solvents, encoding="MORDRED")
+solvent1 = SubstanceParameter(name="Solvent1", data=dict_solvents, encoding="MORDRED")
+solvent2 = SubstanceParameter(name="Solvent2", data=dict_solvents, encoding="MORDRED")
+solvent3 = SubstanceParameter(name="Solvent3", data=dict_solvents, encoding="MORDRED")
 # Parameters for representing the fraction
-fraction1 = NumericDiscrete(
+fraction1 = NumericalDiscreteParameter(
     name="Fraction1", values=list(np.linspace(0, 100, 12)), tolerance=0.2
 )
-fraction2 = NumericDiscrete(
+fraction2 = NumericalDiscreteParameter(
     name="Fraction2", values=list(np.linspace(0, 100, 12)), tolerance=0.2
 )
-fraction3 = NumericDiscrete(
+fraction3 = NumericalDiscreteParameter(
     name="Fraction3", values=list(np.linspace(0, 100, 12)), tolerance=0.2
 )
 

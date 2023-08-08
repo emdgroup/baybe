@@ -7,7 +7,6 @@ Core functionality of BayBE. Main point of interaction via Python.
 #  https://github.com/python-attrs/cattrs/issues/354
 
 import json
-import logging
 from typing import List
 
 import cattrs
@@ -25,11 +24,7 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
-from baybe.utils import eq_dataframe
-from baybe.utils.serialization import SerialMixin
-
-log = logging.getLogger(__name__)
-
+from baybe.utils import eq_dataframe, SerialMixin
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO[12356]: There should be a way to organize several converters, instead of
@@ -100,7 +95,7 @@ class BayBE(SerialMixin):
     strategy: Strategy = field(factory=Strategy)
 
     # Data
-    measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe())
+    measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
     numerical_measurements_must_be_within_tolerance: bool = field(default=True)
 
     # Metadata
@@ -108,9 +103,7 @@ class BayBE(SerialMixin):
     fits_done: int = field(default=0)
 
     # Private
-    _cached_recommendation: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe()
-    )
+    _cached_recommendation: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
 
     @property
     def parameters(self) -> List[Parameter]:

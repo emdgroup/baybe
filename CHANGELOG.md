@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `from_dataframe` convenience constructors for discrete and continuous subspaces 
 - `from_bounds` convenience constructor for continuous subspaces
 - `empty` convenience constructors discrete and continuous subspaces
+- `baybe`, `strategies` and `utils` namespace for convenient imports
 
 ### Changed
 - Renamed `create` constructors to `from_product`
 - Renamed `empty` checks for subspaces to `is_empty`
+- Fixed inconsistent parameter class names
 - Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
 
