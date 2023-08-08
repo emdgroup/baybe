@@ -9,7 +9,7 @@ import sys
 
 from abc import ABC, abstractmethod
 from functools import wraps
-from typing import Callable, ClassVar, Optional, Tuple, Type
+from typing import Callable, ClassVar, List, Optional, Tuple, Type
 
 import cattrs
 
@@ -33,7 +33,7 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import unstructure_base
+from baybe.utils import get_subclasses, unstructure_base
 from baybe.utils.serialization import SerialMixin
 
 # Use float64 (which is recommended at least for BoTorch models)
@@ -42,6 +42,7 @@ _DTYPE = torch.float64
 # Define constants
 _MIN_TARGET_STD = 1e-6
 _MIN_VARIANCE = 1e-6
+_WRAPPER_MODELS = ("SplitModel", "ScaledModel")
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
@@ -632,6 +633,23 @@ def structure_surrogate(val, _):
         raise ValueError(f"Unknown subclass {_type}.")
 
     return cattrs.structure_attrs_fromdict(val, cls)
+
+
+def get_available_surrogates() -> List[SurrogateModel]:
+    """Lists all available models"""
+    # List available names
+    available_names = {
+        cl.__name__
+        for cl in get_subclasses(SurrogateModel)
+        if cl.__name__ not in _WRAPPER_MODELS
+    }
+
+    # Convert them to classes
+    available_classes = [
+        getattr(sys.modules[__name__], mdl_name, None) for mdl_name in available_names
+    ]
+
+    return [cl() for cl in available_classes if cl is not None]
 
 
 # Register (un-)structure hooks

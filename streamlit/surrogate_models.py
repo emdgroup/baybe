@@ -15,12 +15,7 @@ import torch
 from baybe.acquisition import debotorchize
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.surrogate import (
-    BayesianLinearModel,
-    GaussianProcessModel,
-    NGBoostModel,
-    RandomForestModel,
-)
+from baybe.surrogate import get_available_surrogates
 from botorch.acquisition import qExpectedImprovement
 from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
@@ -80,10 +75,7 @@ def main():
 
     # collect all available surrogate models
     surrogate_models = {
-        "GP": GaussianProcessModel,
-        "RF": RandomForestModel,
-        "NG": NGBoostModel,
-        "BL": BayesianLinearModel,
+        surr.__class__.__name__: surr for surr in get_available_surrogates()
     }
 
     # simulation parameters
@@ -137,7 +129,7 @@ def main():
     searchspace = SearchSpace.from_product(parameters=[param])
 
     # create the surrogate model, train it, and get its predictions
-    surrogate_model = surrogate_models[surrogate_name]()
+    surrogate_model = surrogate_models[surrogate_name]
     surrogate_model.fit(searchspace, train_x.unsqueeze(-1), train_y.unsqueeze(-1))
 
     # recommend next experiments
