@@ -18,6 +18,21 @@ from textwrap import fill
 
 from tqdm import tqdm
 
+
+def format_displayed_names(text: str) -> str:
+    """Format all file names and keys such that they look better.
+
+    Currently, this replaces underscores by blanks and capitalizes the input.
+
+    Args:
+        text (str): The input text
+
+    Returns:
+        str: The string with all underscores replaced by blanks
+    """
+    return text.replace("_", " ").capitalize()
+
+
 # Script to transform all .py files in .md files in the examples folder
 # Create a new folder named examples_markdown to store the markdown files
 
@@ -63,9 +78,7 @@ top_level_files = [
 # Write the markdown file for the SDK Example folder itself.
 # Only necessary if eleventy headers should be written.
 if WRITE_HEADERS:
-    with open(
-        rf"{destination_dir}/{destination_dir.name}.md", "w", encoding="UTF-8"
-    ) as f:
+    with open(destination_dir / f"{destination_dir}.md", "w", encoding="UTF-8") as f:
         f.write(
             "---"
             + "\neleventyNavigation:"
@@ -80,10 +93,34 @@ if WRITE_HEADERS:
         f.write("These are examples on using the BayBE SDK")
 
 # Iterate over the directories
+directory_order = 3  # pylint: disable=invalid-name
 for directory in (pbar := tqdm(directories)):
 
     # Set description of progressbar
     pbar.set_description("Overall progress")
+
+    # Write the file for the sub-directory itself if required
+    if WRITE_HEADERS:
+        with open(directory / f"{directory.name}.md", "w", encoding="UTF-8") as f:
+            if "Basics" in directory.name:
+                order = 1  # pylint: disable=invalid-name
+            elif "Searchspaces" in directory.name:
+                order = 2  # pylint: disable=invalid-name
+            else:
+                order = directory_order  # pylint: disable=invalid-name
+                directory_order = directory_order + 1  # pylint: disable=invalid-name
+
+            f.write(
+                "---"
+                + "\neleventyNavigation:"
+                + f"\n  key: {format_displayed_names(directory.name)}"
+                + f"\n  order: {order}"
+                + f"\n  parent: {destination_dir}"
+                + "\nlayout: layout.njk"
+                + f"\npermalink: baybe/sdk/examples/{directory.name}/"
+                + f"\ntitle: {format_displayed_names(directory.name)}"
+                + "\n---\n\n "
+            )
 
     # list all .py files in the subdirectory that need to be converted
     py_files = list(directory.glob("**/*.py"))
@@ -134,24 +171,24 @@ for directory in (pbar := tqdm(directories)):
         order = file_index + 1
 
         # Write the information collected at the top of the .md file if required
-        formatted_name = filename.replace("_", " ").capitalize()
+        formatted_file_name = format_displayed_names(filename)
 
         LINES_TO_ADD = (
             (
                 "---"
                 + "\neleventyNavigation:"
-                + f"\n  key: {formatted_name}"
+                + f"\n  key: {formatted_file_name}"
                 + f"\n  order: {order}"
-                + f"\n  parent: {directory_name}"
+                + f"\n  parent: {format_displayed_names(directory.name)}"
                 + "\nlayout: layout.njk"
                 + f"\npermalink: baybe/sdk/examples/{directory_name}/{filename}_ex/"
-                + f"\ntitle: {formatted_name}"
+                + f"\ntitle: {formatted_file_name}"
                 + "\n---\n\n "
             )
             if WRITE_HEADERS
             else ""
         )
-        with open(rf"{markdown_path}", "r+", encoding="UTF-8") as f:
+        with open(markdown_path, "r+", encoding="UTF-8") as f:
             content = f.readlines()
 
             formatted_content = []
@@ -183,21 +220,6 @@ for directory in (pbar := tqdm(directories)):
             f.seek(0)
             f.write(LINES_TO_ADD)
             f.writelines(formatted_content)
-
-    # Write the file for the sub-directory itself if required
-    if WRITE_HEADERS:
-        with open(rf"{directory}/{directory.name}.md", "w", encoding="UTF-8") as f:
-            f.write(
-                "---"
-                + "\neleventyNavigation:"
-                + f"\n  key: {directory.name}"
-                + f"\n  order: {order+1}"
-                + f"\n  parent: {destination_dir.name}"
-                + "\nlayout: layout.njk"
-                + f"\npermalink: baybe/sdk/examples/{directory.name}/"
-                + f"\ntitle: {directory.name}"
-                + "\n---\n\n "
-            )
 
 # 5. Remove remaining files and subdirectories from the destination directory
 
