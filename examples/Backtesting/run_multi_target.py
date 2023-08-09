@@ -16,8 +16,8 @@ It uses a desirability value to handle several targets.
 from typing import Tuple
 
 import numpy as np
-from baybe.core import BayBE
-from baybe.parameters import NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, Objective
@@ -51,7 +51,7 @@ BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
 # In this example, we construct a purely discrete space with 10 points per dimension.
 parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(np.linspace(*BOUNDS[k], 10)),
         tolerance=0.01,

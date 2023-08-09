@@ -10,23 +10,31 @@ It uses a desirability value to handle several targets.
 
 #### Necessary imports for this example
 
-from baybe.core import BayBE
-from baybe.parameters import Categorical, NumericDiscrete
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
+
+from baybe import BayBE
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-
 #### Experiment setup and creating the searchspace
 
-Categorical_1 = Categorical("Categorical_1", values=[22, 33], encoding="OHE")
-Categorical_2 = Categorical(
+Categorical_1 = CategoricalParameter("Categorical_1", values=[22, 33], encoding="OHE")
+Categorical_2 = CategoricalParameter(
     "Categorical_2",
     values=["very bad", "bad", "OK", "good", "very good"],
     encoding="INT",
 )
-Num_disc_1 = NumericDiscrete("Num_disc_1", values=[1, 2, 3, 4, 6, 8, 10], tolerance=0.3)
-Num_disc_2 = NumericDiscrete("Num_disc_2", values=[-1, -3, -6, -9], tolerance=0.3)
+Num_disc_1 = NumericalDiscreteParameter(
+    "Num_disc_1", values=[1, 2, 3, 4, 6, 8, 10], tolerance=0.3
+)
+Num_disc_2 = NumericalDiscreteParameter(
+    "Num_disc_2", values=[-1, -3, -6, -9], tolerance=0.3
+)
 
 parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
 

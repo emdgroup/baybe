@@ -2,11 +2,13 @@
 
 from typing import ClassVar, Optional
 
+import numpy as np
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.strategies.recommender import NonPredictiveRecommender
-from baybe.utils.sampling_algorithms import farthest_point_sampling
+from baybe.utils import farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -55,5 +57,10 @@ class FPSRecommender(NonPredictiveRecommender):
         batch_quantity: int,
     ) -> pd.Index:
         """See base class."""
-        ilocs = farthest_point_sampling(candidates_comp.values, batch_quantity)
+        # Fit scaler on entire searchspace
+        # TODO [Scaling]: scaling should be handled by searchspace object
+        scaler = StandardScaler()
+        scaler.fit(searchspace.discrete.comp_rep)
+        candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
+        ilocs = farthest_point_sampling(candidates_scaled, batch_quantity)
         return candidates_comp.index[ilocs]

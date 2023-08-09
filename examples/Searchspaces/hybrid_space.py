@@ -13,17 +13,12 @@ It focuses on the searchspace-related aspects and not on the custom test functio
 
 import numpy as np
 
-from baybe.core import BayBE
-from baybe.parameters import NumericContinuous, NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import (
-    NaiveHybridRecommender,
-    SequentialGreedyRecommender,
-)
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import NaiveHybridRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
-
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils import botorch_function_wrapper
 
 from botorch.test_functions import Rastrigin
 
@@ -83,16 +78,16 @@ POINTS_PER_DIM = 3
 
 # Construct the continuous parameters as `NumericContinuous` parameters.
 cont_parameters = [
-    NumericContinuous(
+    NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )
     for k in CONT_INDICES
 ]
 
-# Construct the discrete parameters as `NumericDiscrete` parameters.
+# Construct the discrete parameters as `NumericalDiscreteParameters`.
 disc_parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
         tolerance=0.01,
@@ -112,10 +107,7 @@ objective = Objective(
 # recommenders for the corresponding subspaces.
 # We use the default choices, which is the `SequentialGreedyRecommender`.
 
-hybrid_recommender = NaiveHybridRecommender(
-    cont_recommender=SequentialGreedyRecommender(),
-    disc_recommender=SequentialGreedyRecommender(),
-)
+hybrid_recommender = NaiveHybridRecommender()
 
 hybrid_strategy = Strategy(recommender=hybrid_recommender)
 

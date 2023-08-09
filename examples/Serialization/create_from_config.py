@@ -11,7 +11,12 @@ We use the following configuration dictionaries, representing a valid BayBE obje
 
 #### Necessary imports
 
-from baybe.core import BayBE
+# Note that the json format is required for the config file.
+# You can create such a config by providing a  dictionary with `"type":"name of the class"`.
+
+#### Necessary imports
+
+from baybe import BayBE
 
 #### The configuration dictionary as a string
 
@@ -24,7 +29,7 @@ CONFIG = str(
 {
     "parameters": [
         {
-            "type": "Categorical",
+            "type": "CategoricalParameter",
             "name": "Granularity",
             "values": [
                 "coarse",
@@ -34,7 +39,7 @@ CONFIG = str(
             "encoding": "OHE"
         },
         {
-            "type": "NumericDiscrete",
+            "type": "NumericalDiscreteParameter",
             "name": "Pressure[bar]",
             "values": [
                 1,
@@ -44,7 +49,7 @@ CONFIG = str(
             "tolerance": 0.2
         },
         {
-            "type": "GenericSubstance",
+            "type": "SubstanceParameter",
             "name": "Solvent",
             "data": {
                 "Solvent A": "COC",

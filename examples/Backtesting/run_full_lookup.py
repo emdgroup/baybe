@@ -15,12 +15,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import RandomRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
 
 #### Parameters for a full simulation loop
@@ -81,11 +80,13 @@ dict_ligand = {
 
 # Here, we create the parameter objects, the searchspace and the objective.
 
-solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="MORDRED")
-base = GenericSubstance(name="Base", data=dict_base, encoding="MORDRED")
-ligand = GenericSubstance(name="Ligand", data=dict_ligand, encoding="MORDRED")
-temperature = NumericDiscrete(name="Temp_C", values=[90, 105, 120], tolerance=2)
-concentration = NumericDiscrete(
+solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED")
+base = SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED")
+ligand = SubstanceParameter(name="Ligand", data=dict_ligand, encoding="MORDRED")
+temperature = NumericalDiscreteParameter(
+    name="Temp_C", values=[90, 105, 120], tolerance=2
+)
+concentration = NumericalDiscreteParameter(
     name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 

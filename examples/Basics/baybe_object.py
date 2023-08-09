@@ -8,12 +8,12 @@ These can then be used to create a proper BayBE object that can be used to get r
 
 #### Necessary imports for this example
 
-from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+#### Necessary imports for this example
+from baybe import BayBE
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
-
 
 #### Creation of searchspace object
 
@@ -24,6 +24,7 @@ from baybe.utils import add_fake_results
 # Discrete variables can be numerical, categorical or encoded chemical substances.
 
 # To create a searchspace, we need to define all parameters that can vary between experiments.
+
 # This example presents the optimization of a direct Arylation reaction.
 # For this, we require data for solvents, ligands and bases.
 
@@ -54,14 +55,18 @@ dict_ligand = {
 # We define the chemical substances parameters using the dictionaries defined previously.
 # Here, we use `"MORDRED"` encoding, but others are available.
 
-solvent = GenericSubstance("Solvent", data=dict_solvent, encoding="MORDRED")
-base = GenericSubstance("Base", data=dict_base, encoding="MORDRED")
-ligand = GenericSubstance("Ligand", data=dict_ligand, encoding="MORDRED")
-
 # We proceed to define numerical discrete parameters: `temperature` and `concentration`.
 
-temperature = NumericDiscrete("Temperature", values=[90, 105, 120], tolerance=2)
-concentration = NumericDiscrete(
+solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="MORDRED")
+base = SubstanceParameter("Base", data=dict_base, encoding="MORDRED")
+ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="MORDRED")
+
+# Define numerical discrete parameters: Temperature, Concentration
+
+temperature = NumericalDiscreteParameter(
+    "Temperature", values=[90, 105, 120], tolerance=2
+)
+concentration = NumericalDiscreteParameter(
     "Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 

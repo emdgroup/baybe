@@ -86,21 +86,22 @@ generated-members = "torch.*"
 
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
+    "broad-except",  # catching base exception is common for RDKit mol validation etc
+    "duplicate-code",  # duplicate code happens eg in similar debug scripts
+    "cyclic-import",  # seems like it commonly produces false positives
 	"fixme",  # fixme hints should be allowed
-	"wrong-import-order",  # handled by ufmt
-	"duplicate-code",  # duplicate code happens eg in similar debug scripts
 	"too-many-instance-attributes",  # BayBE class has quite a few members
 	"too-many-branches",  # can maybe be optimized later
     "too-few-public-methods",  # too strict, this happens in several places
-    "broad-except", # catching base exception is common for RDKit mol validation etc
-	"no-name-in-module", # seems RDKit objects in some modules can never be found by IDEs
-	"no-member", # seems RDKit objects in some modules can never be found by IDEs
-	"too-many-nested-blocks", # too strict (encountered in history module)
-	"too-many-locals", # too strict (encountered in history module)
-	"too-many-arguments", # too strict (encountered in history module)
-	"too-many-statements", # too strict (encountered in history module)
-	"unsubscriptable-object", # well known false positive
+	"no-member",  # seems RDKit objects in some modules can never be found by IDEs
+    "no-name-in-module",  # seems RDKit objects in some modules can never be found by IDEs
+    "too-many-arguments",  # too strict (encountered in history module)
+    "too-many-locals",  # too strict (encountered in history module)
+	"too-many-nested-blocks",  # too strict (encountered in history module)
+	"too-many-statements",  # too strict (encountered in history module)
+	"unsubscriptable-object",  # well known false positive
 	# -> see https://github.com/PyCQA/pylint/issues/1498
+    "wrong-import-order",  # handled by ufmt
 	]
 
 [tool.pylint.BASIC]

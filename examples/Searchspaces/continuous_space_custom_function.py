@@ -8,8 +8,12 @@ This example shows how an arbitrary python function can be used as lookup.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
 
 
-from baybe.core import BayBE
-from baybe.parameters import NumericContinuous
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+
+from baybe import BayBE
+from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 
@@ -46,7 +50,7 @@ BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 #### Creating the searchspace and the objective
 
 parameters = [
-    NumericContinuous(
+    NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=BOUNDS[k],
     )

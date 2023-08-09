@@ -3,15 +3,13 @@
 import pytest
 
 from baybe.core import BayBE
-from baybe.parameters import NumericContinuous, NumericDiscrete
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.searchspace import SearchSpaceType
 from baybe.strategies.bayesian import (
+    BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.strategies.recommender import BayesianRecommender, NonPredictiveRecommender
-from baybe.strategies.strategy import Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.strategies.recommender import NonPredictiveRecommender
 from baybe.utils import get_subclasses
 
 valid_discrete_non_predictive_recommenders = [
@@ -37,19 +35,13 @@ valid_naive_hybrid_recommenders = [
 ]
 
 
-@pytest.mark.parametrize("hybrid_recommender", valid_naive_hybrid_recommenders)
-def test_serialization_without_recommendation(hybrid_recommender):
+@pytest.mark.parametrize("recommender", valid_naive_hybrid_recommenders)
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
+)
+def test_serialization_without_recommendation(baybe):
     """Serialize all possible hybrid recommender objects and test for equality"""
-    parameters = [
-        NumericDiscrete(name="disc", values=[1, 5, 10], tolerance=0.2),
-        NumericContinuous(name="cont", bounds=(0, 1)),
-    ]
-    targets = [NumericalTarget(name="Yield", mode="MAX")]
-    baybe_orig = BayBE(
-        searchspace=SearchSpace.from_product(parameters=parameters),
-        objective=Objective(mode="SINGLE", targets=targets),
-        strategy=Strategy(recommender=hybrid_recommender),
-    )
-    baybe_orig_string = baybe_orig.to_json()
+    baybe_orig_string = baybe.to_json()
     baybe_recreate = BayBE.from_json(baybe_orig_string)
-    assert baybe_orig == baybe_recreate
+    assert baybe == baybe_recreate

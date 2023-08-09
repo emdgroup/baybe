@@ -6,7 +6,7 @@ metadata. Target objective is minimize to test computational transformation.
 
 import pytest
 
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
 
 @pytest.mark.parametrize("parameter_names", [["Custom_1", "Custom_2"]])

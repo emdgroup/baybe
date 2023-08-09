@@ -19,16 +19,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe.core import BayBE
-from baybe.parameters import NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
-
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
 
 ### Parameters for a full simulation loop
@@ -67,7 +64,7 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 POINTS_PER_DIM = 10
 parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(
             np.linspace(

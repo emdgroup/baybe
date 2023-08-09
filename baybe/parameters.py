@@ -5,7 +5,6 @@ Functionality for different experimental parameter types.
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
-import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import (
@@ -29,22 +28,22 @@ from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
 from scipy.spatial.distance import pdist
 
+from baybe.exceptions import EmptySearchSpaceError
 from baybe.utils import (
+    convert_bounds,
     df_drop_single_value_columns,
     df_uncorrelated_features,
-    EmptySearchSpaceError,
     eq_dataframe,
     get_base_unstructure_hook,
+    InfiniteIntervalError,
+    Interval,
     is_valid_smiles,
+    SerialMixin,
     smiles_to_fp_features,
     smiles_to_mordred_features,
     smiles_to_rdkit_features,
     unstructure_base,
 )
-from baybe.utils.interval import convert_bounds, InfiniteIntervalError, Interval
-from baybe.utils.serialization import SerialMixin
-
-log = logging.getLogger(__name__)
 
 # TODO[12356]: There should be a better way than registering with the global converter.
 # TODO: Think about what is the best approach to handle field unions. That is, when
@@ -161,7 +160,7 @@ class DiscreteParameter(Parameter, ABC):
 
 
 @define(frozen=True, slots=False)
-class Categorical(DiscreteParameter):
+class CategoricalParameter(DiscreteParameter):
     """
     Parameter class for categorical parameters.
     """
@@ -195,7 +194,7 @@ class Categorical(DiscreteParameter):
 
 
 @define(frozen=True, slots=False)
-class NumericDiscrete(DiscreteParameter):
+class NumericalDiscreteParameter(DiscreteParameter):
     """
     Parameter class for discrete numerical parameters (a.k.a. setpoints).
     """
@@ -257,7 +256,7 @@ class NumericDiscrete(DiscreteParameter):
 
 
 @define(frozen=True, slots=False)
-class NumericContinuous(Parameter):
+class NumericalContinuousParameter(Parameter):
     """
     Parameter class for continuous numerical parameters.
     """
@@ -287,7 +286,7 @@ class NumericContinuous(Parameter):
 
 
 @define(frozen=True, slots=False)
-class GenericSubstance(DiscreteParameter):
+class SubstanceParameter(DiscreteParameter):
     """
     Parameter class for generic substances that are treated with cheminformatics
     descriptors.
@@ -373,11 +372,11 @@ class GenericSubstance(DiscreteParameter):
 
 
 # Available encodings for substance parameters
-SUBSTANCE_ENCODINGS = get_args(get_type_hints(GenericSubstance)["encoding"])
+SUBSTANCE_ENCODINGS = get_args(get_type_hints(SubstanceParameter)["encoding"])
 
 
 @define(frozen=True, slots=False)
-class Custom(DiscreteParameter):
+class CustomDiscreteParameter(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
     representation for labels, e.g. from quantum chemistry.
@@ -387,7 +386,7 @@ class Custom(DiscreteParameter):
     is_numeric: ClassVar[bool] = False
 
     # object variables
-    data: pd.DataFrame = field(eq=eq_dataframe())
+    data: pd.DataFrame = field(eq=eq_dataframe)
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )

@@ -13,7 +13,7 @@ import streamlit as st
 import torch
 
 from baybe.acquisition import debotorchize
-from baybe.parameters import NumericDiscrete
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.surrogate import SurrogateModel
 from botorch.acquisition import qExpectedImprovement
@@ -124,7 +124,7 @@ def main():
     train_y = test_y[train_idx]
 
     # create the searchspace object
-    param = NumericDiscrete(name="param", values=test_x.numpy().tolist())
+    param = NumericalDiscreteParameter(name="param", values=test_x.numpy().tolist())
     searchspace = SearchSpace.from_product(parameters=[param])
 
     # create the surrogate model, train it, and get its predictions

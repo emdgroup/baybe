@@ -8,7 +8,9 @@ The first one represents a valid configuration, the second does not.
 
 #### Necessary imports
 
-from baybe.core import BayBE
+#### Necessary imports
+
+from baybe import BayBE
 
 #### Defining config dictionaries
 
@@ -21,7 +23,7 @@ CONFIG = str(
 {
     "parameters": [
         {
-            "type": "Categorical",
+            "type": "CategoricalParameter",
             "name": "Granularity",
             "values": [
                 "coarse",
@@ -31,7 +33,7 @@ CONFIG = str(
             "encoding": "OHE"
         },
         {
-            "type": "NumericDiscrete",
+            "type": "NumericalDiscreteParameter",
             "name": "Pressure[bar]",
             "values": [
                 1,
@@ -41,7 +43,7 @@ CONFIG = str(
             "tolerance": 0.2
         },
         {
-            "type": "GenericSubstance",
+            "type": "SubstanceParameter",
             "name": "Solvent",
             "data": {
                 "Solvent A": "COC",
@@ -94,7 +96,7 @@ INVALID_CONFIG = str(
             "encoding": "OHE"
         },
         {
-            "type": "NumericDiscrete",
+            "type": "NumericalDiscreteParameter",
             "name": "Pressure[bar]",
             "values": [
                 1,
@@ -104,7 +106,7 @@ INVALID_CONFIG = str(
             "tolerance": 0.2
         },
         {
-            "type": "GenericSubstance",
+            "type": "SubstanceParameter",
             "name": "Solvent",
             "data": {
                 "Solvent A": "COC",

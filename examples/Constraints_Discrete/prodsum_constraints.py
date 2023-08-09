@@ -10,11 +10,14 @@ This examples demonstrates an exclusion constraint using products and sums.
 #### Necessary imports for this example
 
 import numpy as np
+from baybe import BayBE
 
 from baybe.constraints import ProductConstraint, SumConstraint, ThresholdCondition
-
-from baybe.core import BayBE
-from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
@@ -27,24 +30,26 @@ dict_solvent = {
     "C2": "CC",
     "C3": "CCC",
 }
-solvent = GenericSubstance(name="Solvent", data=dict_solvent, encoding="RDKIT")
-speed = Categorical(name="Speed", values=["slow", "normal", "fast"], encoding="INT")
-num_parameter_1 = NumericDiscrete(
+solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="RDKIT")
+speed = CategoricalParameter(
+    name="Speed", values=["slow", "normal", "fast"], encoding="INT"
+)
+num_parameter_1 = NumericalDiscreteParameter(
     name="NumParameter1", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
-num_parameter_2 = NumericDiscrete(
+num_parameter_2 = NumericalDiscreteParameter(
     name="NumParameter2", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
-num_parameter_3 = NumericDiscrete(
+num_parameter_3 = NumericalDiscreteParameter(
     name="NumParameter3", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
-num_parameter_4 = NumericDiscrete(
+num_parameter_4 = NumericalDiscreteParameter(
     name="NumParameter4", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
-num_parameter_5 = NumericDiscrete(
+num_parameter_5 = NumericalDiscreteParameter(
     name="NumParameter5", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
-num_parameter_6 = NumericDiscrete(
+num_parameter_6 = NumericalDiscreteParameter(
     name="NumParameter6", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
 

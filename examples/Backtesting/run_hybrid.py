@@ -15,16 +15,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe.core import BayBE
-from baybe.parameters import NumericContinuous, NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies.bayesian import (
+from baybe.strategies import (
     NaiveHybridRecommender,
+    RandomRecommender,
     SequentialGreedyRecommender,
+    Strategy,
 )
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 
 
@@ -79,16 +79,16 @@ POINTS_PER_DIM = 6
 
 # Construct the continuous parameters as NumericContinuous parameters.
 cont_parameters = [
-    NumericContinuous(
+    NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=(BOUNDS[k]),
     )
     for k in CONT_INDICES
 ]
 
-# Construct the discrete parameters as NumericDiscrete parameters.
+# Construct the discrete parameters as `NumericalDiscreteParameters`.
 disc_parameters = [
-    NumericDiscrete(
+    NumericalDiscreteParameter(
         name=f"x_{k+1}",
         values=list(np.linspace(*BOUNDS[k], POINTS_PER_DIM)),
         tolerance=0.01,

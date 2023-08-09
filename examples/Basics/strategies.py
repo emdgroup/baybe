@@ -18,15 +18,12 @@ It has several parameters one can adjust, depending on the strategy the user wan
 
 #### Necessary imports for this example
 
-from baybe.core import BayBE
-from baybe.parameters import GenericSubstance, NumericDiscrete
+from baybe import BayBE
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
-
 
 #### Available initial strategies
 
@@ -140,11 +137,13 @@ dict_ligand = {
     "(t-Bu)PhCPhos": r"CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3",
 }
 
-solvent = GenericSubstance("Solvent", data=dict_solvent, encoding="MORDRED")
-base = GenericSubstance("Base", data=dict_base, encoding="MORDRED")
-ligand = GenericSubstance("Ligand", data=dict_ligand, encoding="MORDRED")
-temperature = NumericDiscrete("Temperature", values=[90, 105, 120], tolerance=2)
-concentration = NumericDiscrete(
+solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="MORDRED")
+base = SubstanceParameter("Base", data=dict_base, encoding="MORDRED")
+ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="MORDRED")
+temperature = NumericalDiscreteParameter(
+    "Temperature", values=[90, 105, 120], tolerance=2
+)
+concentration = NumericalDiscreteParameter(
     "Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 

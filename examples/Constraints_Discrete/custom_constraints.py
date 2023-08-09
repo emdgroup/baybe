@@ -12,10 +12,14 @@ That is, it shows how the user can define a constraint restricting the searchspa
 
 import numpy as np
 import pandas as pd
-from baybe.constraints import CustomConstraint
+from baybe import BayBE
 
-from baybe.core import BayBE
-from baybe.parameters import Categorical, GenericSubstance, NumericDiscrete
+from baybe.constraints import CustomConstraint
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
@@ -33,14 +37,16 @@ dict_solvent = {
     "c6": "c1ccccc1",
     "C6": "CCCCCC",
 }
-solvent = GenericSubstance("Solvent", data=dict_solvent, encoding="RDKIT")
-speed = Categorical(
+solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="RDKIT")
+speed = CategoricalParameter(
     "Speed", values=["very slow", "slow", "normal", "fast", "very fast"], encoding="INT"
 )
-temperature = NumericDiscrete(
+temperature = NumericalDiscreteParameter(
     "Temperature", values=list(np.linspace(100, 200, 10)), tolerance=0.5
 )
-concentration = NumericDiscrete("Concentration", values=[1, 2, 5, 10], tolerance=0.4)
+concentration = NumericalDiscreteParameter(
+    "Concentration", values=[1, 2, 5, 10], tolerance=0.4
+)
 
 parameters = [solvent, speed, temperature, concentration]
 

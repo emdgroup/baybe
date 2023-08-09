@@ -3,12 +3,8 @@
 They wrap synthetic BoTorch test function to simplify using these for testing purposes.
 """
 
-import logging
-
 from botorch.test_functions import SyntheticTestFunction
 from torch import Tensor
-
-log = logging.getLogger(__name__)
 
 
 def botorch_function_wrapper(test_function: SyntheticTestFunction):

@@ -13,12 +13,18 @@ via the `botorch_function_wrapper`.
 
 #### Necessary imports for this example
 
-from baybe.core import BayBE
-from baybe.parameters import NumericContinuous
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# Also, there is a large overlap with other examples with regards to using the test function.
+# We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
+
+#### Necessary imports for this example
+
+from baybe import BayBE
+from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
-
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils import botorch_function_wrapper
 
 from botorch.test_functions import Rastrigin
 
@@ -50,10 +56,10 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 #### Creating the searchspace and the objective
 
-# Since the searchspace is continuous test, we construct `NumericContinuous` parameters.
+# Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
 # We use that data of the test function to deduce bounds and number of parameters.
 parameters = [
-    NumericContinuous(
+    NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )

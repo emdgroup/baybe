@@ -115,7 +115,7 @@ for directory in (pbar := tqdm(directories)):
                 + "\neleventyNavigation:"
                 + f"\n  key: {format_displayed_names(directory.name)}"
                 + f"\n  order: {order}"
-                + f"\n  parent: {destination_dir}"
+                + f"\n  parent: {destination_dir.name}"
                 + "\nlayout: layout.njk"
                 + f"\npermalink: baybe/sdk/examples/{directory.name}/"
                 + f"\ntitle: {format_displayed_names(directory.name)}"
