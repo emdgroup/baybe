@@ -40,14 +40,14 @@ dict_solvent = {
     "c6": "c1ccccc1",
     "C6": "CCCCCC",
 }
-solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="RDKIT")
+solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="RDKIT")
 speed = CategoricalParameter(
     name="Speed",
     values=["very slow", "slow", "normal", "fast", "very fast"],
     encoding="INT",
 )
 temperature = NumericalDiscreteParameter(
-    name="Temperature", values=list(np.linspace(100, 200, 15)), tolerance=0.4
+    name="Temp", values=list(np.linspace(100, 200, 15)), tolerance=0.4
 )
 pressure = NumericalDiscreteParameter(
     name="Pressure", values=[1, 2, 5, 10], tolerance=0.4
@@ -61,7 +61,7 @@ parameters = [solvent, speed, temperature, pressure]
 # compatible with temperatures larger than 151 and should thus be excluded.
 
 constraint_1 = ExcludeConstraint(
-    parameters=["Temperature", "Solvent"],
+    parameters=["Temp", "Solv"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=151, operator=">"),
@@ -72,7 +72,7 @@ constraint_1 = ExcludeConstraint(
 # This constraint simulates a situation where solvents `C5` and `C6` are not
 # compatible with pressures larger than 5 and should thus be excluded.
 constraint_2 = ExcludeConstraint(
-    parameters=["Pressure", "Solvent"],
+    parameters=["Pressure", "Solv"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=5, operator=">"),
@@ -83,7 +83,7 @@ constraint_2 = ExcludeConstraint(
 # This constraint simulates a situation where pressures below 3 should never be
 # combined with temperatures above 120.
 constraint_3 = ExcludeConstraint(
-    parameters=["Pressure", "Temperature"],
+    parameters=["Pressure", "Temp"],
     combiner="AND",
     conditions=[
         ThresholdCondition(threshold=3.0, operator="<"),
@@ -118,10 +118,8 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with either Solvents C2 or C4 and a temperature above 151: ",
         (
-            baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(
-                lambda x: x > 151
-            )
-            & baybe_obj.searchspace.discrete.exp_rep["Solvent"].apply(
+            baybe_obj.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 151)
+            & baybe_obj.searchspace.discrete.exp_rep["Solv"].apply(
                 lambda x: x in ["C2", "C4"]
             )
         ).sum(),
@@ -130,7 +128,7 @@ for kIter in range(N_ITERATIONS):
         "Number of entries with either Solvents C5 or C6 and a pressure above 5:      ",
         (
             baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
-            & baybe_obj.searchspace.discrete.exp_rep["Solvent"].apply(
+            & baybe_obj.searchspace.discrete.exp_rep["Solv"].apply(
                 lambda x: x in ["C5", "C6"]
             )
         ).sum(),
@@ -139,9 +137,7 @@ for kIter in range(N_ITERATIONS):
         "Number of entries with pressure below 3 and temperature above 120:           ",
         (
             baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x < 3)
-            & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(
-                lambda x: x > 120
-            )
+            & baybe_obj.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 120)
         ).sum(),
     )
 

@@ -67,18 +67,17 @@ baybe_orig = BayBE(
 #### Serialization and de-serialization
 
 # We begin by printing the original BayBE object
-print(f"{'#'*30} Original object {'#'*30}")
+print("Original object")
 print(baybe_orig, end="\n" * 3)
 
 # We next serialize the BayBE object to JSON.
 # This yields a JSON representation  in string format.
 # Since it is rather complex, we do not print this string here.
 string = baybe_orig.to_json()
-print(f"{'#'*30} JSON string {'#'*30}")
 
 
 # Deserialize the JSON string back to an object.
-print(f"{'#'*30} Deserialized object {'#'*30}")
+print("Deserialized object")
 baybe_recreate = BayBE.from_json(string)
 print(baybe_recreate, end="\n" * 3)
 

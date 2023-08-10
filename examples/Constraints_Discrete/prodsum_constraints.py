@@ -35,22 +35,22 @@ speed = CategoricalParameter(
     name="Speed", values=["slow", "normal", "fast"], encoding="INT"
 )
 num_parameter_1 = NumericalDiscreteParameter(
-    name="NumParameter1", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam1", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
 num_parameter_2 = NumericalDiscreteParameter(
-    name="NumParameter2", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam2", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
 num_parameter_3 = NumericalDiscreteParameter(
-    name="NumParameter3", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam3", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
 num_parameter_4 = NumericalDiscreteParameter(
-    name="NumParameter4", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam4", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
 num_parameter_5 = NumericalDiscreteParameter(
-    name="NumParameter5", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam5", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
 num_parameter_6 = NumericalDiscreteParameter(
-    name="NumParameter6", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam6", values=list(np.linspace(0, 100, 7)), tolerance=0.5
 )
 
 parameters = [
@@ -70,15 +70,15 @@ parameters = [
 # Thus, they need to be defined prior to the searchspace creation.
 
 sum_constraint_1 = SumConstraint(
-    parameters=["NumParameter1", "NumParameter2"],
+    parameters=["NumParam1", "NumParam2"],
     condition=ThresholdCondition(threshold=150.0, operator="<="),
 )
 sum_constraint_2 = SumConstraint(
-    parameters=["NumParameter5", "NumParameter6"],
+    parameters=["NumParam5", "NumParam6"],
     condition=ThresholdCondition(threshold=100, operator="=", tolerance=1.0),
 )
 prod_constraint = ProductConstraint(
-    parameters=["NumParameter3", "NumParameter4"],
+    parameters=["NumParam3", "NumParam4"],
     condition=ThresholdCondition(threshold=30, operator=">="),
 )
 
@@ -109,24 +109,24 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with 1,2-sum above 150:      ",
         (
-            baybe_obj.searchspace.discrete.exp_rep[
-                ["NumParameter1", "NumParameter2"]
-            ].sum(axis=1)
+            baybe_obj.searchspace.discrete.exp_rep[["NumParam1", "NumParam2"]].sum(
+                axis=1
+            )
             > 150.0
         ).sum(),
     )
     print(
         "Number of entries with 3,4-product under 30:   ",
         (
-            baybe_obj.searchspace.discrete.exp_rep[
-                ["NumParameter3", "NumParameter4"]
-            ].prod(axis=1)
+            baybe_obj.searchspace.discrete.exp_rep[["NumParam3", "NumParam4"]].prod(
+                axis=1
+            )
             < 30
         ).sum(),
     )
     print(
         "Number of entries with 5,6-sum unequal to 100: ",
-        baybe_obj.searchspace.discrete.exp_rep[["NumParameter5", "NumParameter6"]]
+        baybe_obj.searchspace.discrete.exp_rep[["NumParam5", "NumParam6"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()

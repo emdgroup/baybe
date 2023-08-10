@@ -81,7 +81,7 @@ dict_ligand = {
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 # Here, we create the parameter objects, the searchspace and the objective.
 
@@ -102,7 +102,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-### Constructing BayBE objects for the simulation loop
+#### Constructing BayBE objects for the simulation loop
 
 # In this example, we create two BayBE objects.
 # One uses the default recommender and the other one makes random recommendations.
@@ -113,7 +113,7 @@ baybe_rand = BayBE(
     objective=objective,
 )
 
-### Performing the simulation loop
+#### Performing the simulation loop
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # This function is where we provide the `initial_data` dataframe.

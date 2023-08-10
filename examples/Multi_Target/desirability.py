@@ -23,9 +23,9 @@ from baybe.utils import add_fake_results
 
 #### Experiment setup and creating the searchspace
 
-Categorical_1 = CategoricalParameter("Categorical_1", values=[22, 33], encoding="OHE")
+Categorical_1 = CategoricalParameter("Cat_1", values=[22, 33], encoding="OHE")
 Categorical_2 = CategoricalParameter(
-    "Categorical_2",
+    "Cat_2",
     values=["very bad", "bad", "OK", "good", "very good"],
     encoding="INT",
 )
@@ -50,8 +50,12 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # The first target is maximized and while the second one is minimized.
 # Note that in this multi target mode, the user must specify bounds for each target.
 
-Target_1 = NumericalTarget(name="Target_1", mode="MAX", bounds=(0, 100))
-Target_2 = NumericalTarget(name="Target_2", mode="MIN", bounds=(0, 100))
+Target_1 = NumericalTarget(
+    name="Target_1", mode="MAX", bounds=(0, 100), bounds_transform_func="LINEAR"
+)
+Target_2 = NumericalTarget(
+    name="Target_2", mode="MIN", bounds=(0, 100), bounds_transform_func="LINEAR"
+)
 
 # For each target it is also possible to specify a `bounds_transformation_func` function.
 # A detailed discussion of this functionality can be found at the end of this example.
@@ -110,14 +114,14 @@ for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
     rec = baybe_obj.recommend(batch_quantity=3)
-    print("\n### Recommended measurements:\n", rec)
+    print("\nRecommended measurements:\n", rec)
 
     add_fake_results(rec, baybe_obj)
-    print("\n### Recommended measurements with fake measured results:\n", rec)
+    print("\nRecommended measurements with fake measured results:\n", rec)
 
     baybe_obj.add_measurements(rec)
 
-    print("\n\n### Internal measurement dataframe computational representation Y:\n")
+    print("\n\nInternal measurement dataframe computational representation Y:\n")
     print(baybe_obj.measurements_targets_comp)
 
 

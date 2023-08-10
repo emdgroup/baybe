@@ -30,11 +30,11 @@ dict_solvent = {
     "water": "O",
     "C1": "C",
 }
-solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED")
+solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="MORDRED")
 switch1 = CategoricalParameter(name="Switch1", values=["on", "off"])
 switch2 = CategoricalParameter(name="Switch2", values=["left", "right"])
 fraction1 = NumericalDiscreteParameter(
-    name="Fraction1", values=list(np.linspace(0, 100, 7)), tolerance=0.2
+    name="Frac1", values=list(np.linspace(0, 100, 7)), tolerance=0.2
 )
 frame1 = CategoricalParameter(name="FrameA", values=["A", "B"])
 frame2 = CategoricalParameter(name="FrameB", values=["A", "B"])
@@ -52,7 +52,7 @@ constraint = DependenciesConstraint(
         SubSelectionCondition(selection=["on"]),
         SubSelectionCondition(selection=["right"]),
     ],
-    affected_parameters=[["Solvent", "Fraction1"], ["FrameA", "FrameB"]],
+    affected_parameters=[["Solv", "Frac1"], ["FrameA", "FrameB"]],
 )
 
 #### Creating the searchspace and the objective
