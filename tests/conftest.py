@@ -516,3 +516,58 @@ def fixture_default_objective(targets):
     """The default objective to be used if not specified differently."""
     mode = "SINGLE" if len(targets) == 1 else "DESIRABILITY"
     return Objective(mode=mode, targets=targets)
+
+
+@pytest.fixture(name="config")
+def fixture_default_config():
+    """The default config to be used if not specified differently."""
+    cfg = """{
+    "parameters": [
+      {
+        "type": "NumericalDiscreteParameter",
+        "name": "Temp_C",
+        "values": [10, 20, 30, 40]
+      },
+      {
+        "type": "NumericalDiscreteParameter",
+        "name": "Concentration",
+        "values": [0.2, 0.3, 1.4]
+      },
+      {
+        "type": "SubstanceParameter",
+        "name": "Solvent",
+        "data": {"sol1":"C", "sol2":"CC", "sol3":"CCC"},
+        "decorrelate": true,
+        "encoding": "MORDRED"
+      },
+      {
+        "type": "CategoricalParameter",
+        "name": "Base",
+        "values": ["base1", "base2", "base3", "base4", "base5"]
+      }
+    ],
+    "constraints": [],
+    "objective": {
+      "mode": "SINGLE",
+      "targets": [
+        {
+          "name": "Yield",
+          "mode": "MAX"
+        }
+      ]
+    },
+    "strategy": {
+      "initial_recommender": {
+        "type": "RandomRecommender"
+      },
+      "recommender": {
+        "type": "SequentialGreedyRecommender",
+        "surrogate_model_cls": "GP",
+        "acquisition_function_cls": "qEI"
+      },
+      "allow_repeated_recommendations": false,
+      "allow_recommending_already_measured": false
+    }
+  }
+"""
+    return cfg
