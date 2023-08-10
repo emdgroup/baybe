@@ -51,11 +51,19 @@ parser.add_argument(
     help="Decide whether eleventy headers are written. Default is to not write them",
     action="store_true",
 )
+parser.add_argument(
+    "-lw",
+    "--line_width",
+    help="Choose the line width for. Default is 90.",
+    default=90,
+    type=int,
+)
 args = parser.parse_args()
 # Folder where the .md files created are stored
 # Default name is examples_markdown, optional name can be provided
 DESTINATION_DIR_NAME = args.target_dir
 WRITE_HEADERS = args.write_headers
+LINE_WIDTH = args.line_width
 destination_dir = pathlib.Path(DESTINATION_DIR_NAME)
 
 # if the destination directory already exists it is deleted
@@ -210,12 +218,11 @@ for directory in (pbar := tqdm(directories)):
                 # Note that such lines can only be printed output of the jupyter
                 # notebook as our comments and python code cannot become so long.
                 # Thus, the formatting here is safe.
-                if len(line) > 110:
-                    formatted_content.append(
-                        fill(line, width=110, subsequent_indent="    ")
+                if len(line) > LINE_WIDTH and line.startswith("    "):
+                    line = fill(  # pylint: disable=invalid-name
+                        line, width=LINE_WIDTH, subsequent_indent="    "
                     )
-                else:
-                    formatted_content.append(line)
+                formatted_content.append(line)
             # The final file is then written
             f.seek(0)
             f.write(LINES_TO_ADD)
