@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `from_bounds` convenience constructor for continuous subspaces
 - `empty` convenience constructors discrete and continuous subspaces
 - `baybe`, `strategies` and `utils` namespace for convenient imports
+- Simple test for config validation
 
 ### Changed
 - Renamed `create` constructors to `from_product`
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
 - Adjusted comments in example files
+- Accelerated the slowest tests
+- Removed try blocks from config examples
 
 ### Fixed
 - Include scaling in FPS recommender
