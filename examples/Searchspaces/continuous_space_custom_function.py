@@ -1,19 +1,32 @@
+### Example for using a custom BoTorch test function in a continuous searchspace
+
 """
-Example for using custom synthetic test functions in continuous spaces.
+This example shows how an arbitrary python function can be used as lookup.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
 
 from baybe import BayBE
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 
+#### Defining the custom test function
 
-# Here, we now need to define our custom function first. The function should accept an
-# arbitrary or fixed amount of floats as input and return either a single float or
-# a tuple of floats.
-# NOTE It is assumed that the analytical test function does only perform a single
-# calculation, i.e., it is assumed to work in a non-batched-way!
-# We implement a simple sum of squares function with a single output.
+# The function should accept an arbitrary or fixed amount of floats as input.
+# It needs to return either a single float or a tuple of floats.
+# It is assumed that the analytical test function does only perform a single calculation.
+# That is, it is assumed to work in a non-batched-way!
+
+# In this example, we implement a simple sum of squares function with a single output.
+
+
 def sum_of_squares(*x: float) -> float:
     """
     Calculates the sum of squares.
@@ -24,15 +37,17 @@ def sum_of_squares(*x: float) -> float:
     return res
 
 
-# For our actual experiment, we need to specify the number of dimension that we want
-# to use as this is necessary to know for the creation of the parameters. The same is
-# true for the bounds of the parameters which should be provided as a list of
-# two-dimensional tuples.
-
 TEST_FUNCTION = sum_of_squares
+
+# For our actual experiment, we need to specify the number of dimension that we want to use.
+# This is necessary to know for the creation of the parameters.
+# Similarly, it is necessary to state the bounds of the parameters.
+# These should be provided as a list of two-dimensional tuples.
 
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
+
+#### Creating the searchspace and the objective
 
 parameters = [
     NumericalContinuousParameter(
@@ -42,32 +57,34 @@ parameters = [
     for k in range(DIMENSION)
 ]
 
-
-# Construct searchspace, objective and BayBE object.
 searchspace = SearchSpace.from_product(parameters=parameters)
 
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
+#### Constructing the BayBE object and performing a recommendation
+
 baybe_obj = BayBE(
     searchspace=searchspace,
     objective=objective,
 )
 
-# Get a recommendation for a fixed batched quantity
+# Get a recommendation for a fixed batched quantity.
 BATCH_QUANTITY = 3
 recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
-# Evaluate the test function. Note that we need iterate through the rows of the
-# recommendation and that we need to interpret the row as a list.
+
+# Evaluate the test function.
+# Note that we need iterate through the rows of the recommendation.
+# Furthermore, we need to interpret the row as a list.
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(TEST_FUNCTION(*row.to_list()))
 
-# We add an additional column with the calculated target values...
+# We add an additional column with the calculated target values.
 recommendation["Target"] = target_values
 
-# ... and inform the BayBE object about our measurement.
+# Here, we inform the BayBE object about our measurement.
 baybe_obj.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)

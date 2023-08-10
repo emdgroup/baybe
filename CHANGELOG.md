@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed inconsistent parameter class names
 - Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
+- Adjusted comments in example files
 
 ### Fixed
 - Include scaling in FPS recommender

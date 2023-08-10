@@ -1,17 +1,31 @@
+### Example for creating BayBE objects from configs
+
 """
-This example shows how to load a user defined configuration file and use it to create
-a BayBE object. In such a configuration file, the objects used to create a BayBE object
-are represented by strings instead of other python objects.
+This example shows how to load a configuration file and use it to create a BayBE object.
+In such a configuration file, the objects used to create a BayBE object are represented by strings.
 We use the following configuration dictionaries, representing a valid BayBE object.
-Note that the json format is required for the config file. Instead of providing the
-actual class instances you can create such a config by providing a dictionary with
-"type":"name of the class". Example: FPSRecommender() becomes {"type": "FPSRecommender"}
 """
+
+# Note that the json format is required for the config file.
+# You can create such a config by providing a  dictionary with `"type":"name of the class"`.
+
+#### Necessary imports
+
+# Note that the json format is required for the config file.
+# You can create such a config by providing a  dictionary with `"type":"name of the class"`.
+
+#### Necessary imports
 
 from baybe import BayBE
 
+#### The configuration dictionary as a string
 
-CONFIG = """
+# Note that the following explicit call `str()` is not strictly necessary.
+# It is included since our method of converting this example to a markdown file does not interpret
+# this part of the code as `python` code if we do not include this call.
+
+CONFIG = str(
+    """
 {
     "parameters": [
         {
@@ -71,6 +85,9 @@ CONFIG = """
     }
 }
 """
+)
+
+#### Creating a BayBE object from the configuration file
 
 # Although we know in this case that the config represents a valid configuration for a
 # BayBE object, it is a good practice to enclose the creation in a try block.

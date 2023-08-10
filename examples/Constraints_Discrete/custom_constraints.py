@@ -1,9 +1,15 @@
+### Example for using custom constraints in discrete searchspaces
+
 """
 This examples shows how a custom constraint can be created for a discrete searchspace.
-It assumes that the reader is familiar with the basics of BayBE, and thus does not
-explain the details of e.g. parameter creation. For additional explanation on these
-aspects, we refer to the Basic examples.
+That is, it shows how the user can define a constraint restricting the searchspace.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
+
 import numpy as np
 import pandas as pd
 from baybe import BayBE
@@ -17,6 +23,8 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
+
+### Experiment setup
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {
@@ -42,18 +50,16 @@ concentration = NumericalDiscreteParameter(
 
 parameters = [solvent, speed, temperature, concentration]
 
+### Creating the constraint
+
 # The constraints are handled when creating the searchspace object.
 # We thus need to define our constraint first as follows.
 
 
 def custom_function(ser: pd.Series) -> bool:
     """
-    Example for a custom validator / filer
+    This constraint implements a custom user-defined filter/validation functionality.
     """
-    # Below we initialize the CUSTOM constraint with all the parameters this function
-    # should have access to. The function can then compute a completely user-defined
-    # validation of the searchspace points
-
     if ser.Solvent == "water":
         if ser.Temperature > 120 and ser.Concentration > 5:
             return False
@@ -65,21 +71,27 @@ def custom_function(ser: pd.Series) -> bool:
     return True
 
 
-# We can now create the constraint and consequently also the searchspace
+# We now initialize the `CustomConstraint` with all parameters this function should have access to.
 constraint = CustomConstraint(
     parameters=["Concentration", "Solvent", "Temperature"], validator=custom_function
 )
+
+### Creating the searchspace and the objective
+
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
-# We finally create an objective and the BayBE object
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
+
+### Creating and printing the BayBE object
+
 baybe_obj = BayBE(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
-# The following loop performs some recommendations and manually verifies that the
-# given constraints are obeyed.
+### Manual verification of the constraint
+
+# The following loop performs some recommendations and manually verifies the given constraints.
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")

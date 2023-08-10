@@ -1,15 +1,19 @@
+### Example for full simulation loop using a BoTorch test function
+
 """
-Run history simulation for a single target with a Botorch test function as lookup.
-
-This example shows a full simulation loop. That is, we do not only perform one or two
-iterations like in the other examples but rather a full loop. We also store and display
-the results. We refer to the examples in the searchspace folder for more information
-on how to use the synthetic test functions.
-
-This example can also be used or testing new aspects like recommenders.
-
-Note that this example assumes some familiarity with BayBE.
+This example shows a simulation loop for a single target with a BoTorch test function as lookup.
+That is, we perform several Monte Carlo runs with several iterations.
+In addition, we also store and display the results.
 """
+
+# This example assumes some basic familiarity with using BayBE and how to use BoTorch test
+# functions in discrete searchspaces.
+# We thus refer to
+# 1. [`baybe_object`](./../Basics/baybe_object.md) for a basic example on how to use BayBE and
+# 2. [`discrete_space`](./../Searchspaces/discrete_space.md) for details on using a
+# BoTorch test function.
+
+#### Necessary imports for this example
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,24 +28,21 @@ from baybe.targets import NumericalTarget, Objective
 from baybe.utils import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
 
+### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
-# These are the number of Monte Carlo runs and the number of experiments to be
-# conducted per Monte Carlo run.
-N_MC_ITERATIONS = 2
-N_EXP_ITERATIONS = 5
+# These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
-# Here, you can choose the dimension  and the actual the test function.
-# All BoTorch test functions can be used.
-# Note that some test functions are only defined for specific dimensions.
-# If the dimension you provide is not available for the given test function, a warning
-# will be printed and the dimension is adjusted.
-# For details on constructing the BayBE object, we refer to the basic example file.
+N_MC_ITERATIONS = 2
+N_EXP_ITERATIONS = 10
+
+### Defining the test function
+
+# See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
+
 DIMENSION = 4
 TestFunctionClass = Rastrigin
 
-# This part checks if the test function already has a fixed dimension.
-# In that case, we print a warning and replace DIMENSION.
 if not hasattr(TestFunctionClass, "dim"):
     TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
 else:
@@ -53,16 +54,15 @@ else:
     TestFunction = TestFunctionClass()
     DIMENSION = TestFunctionClass().dim
 
-# Get the bounds of the variables as they are set by BoTorch
 BOUNDS = TestFunction.bounds
-# Create the wrapped function itself.
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
-POINTS_PER_DIM = 15
 
+#### Creating the searchspace and the objective
 
-# As we expect it to be the most common use case, we construct a purely discrete space
-# here. We refer to the examples within examples/SearchSpaces for details on
-# how to change this code for continuous or hybrid spaces.
+# The parameter `POINTS_PER_DIM` controls the number of points per dimension.
+# Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
+
+POINTS_PER_DIM = 10
 parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k+1}",
@@ -78,25 +78,23 @@ parameters = [
     for k in range(DIMENSION)
 ]
 
-# Construct searchspace and objective.
 searchspace = SearchSpace.from_product(parameters=parameters)
-
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-# The goal of this example is to demonstrate how to perform a full simulation. To
-# simplify adjusting the example for other recommenders or strategies, we explicitly
-# construct some strategy objects. For details on the construction of strategy objects,
-# we refer to strategies.py within examples/Basics.
+#### Constructing BayBE objects for the simulation loop
+
+# To simplify adjusting the example for other strategies, we construct some strategy objects.
+# For details on strategy objects, we refer to [`strategies`](./../Basics/strategies.md).
 
 seq_greedy_EI_strategy = Strategy(
     recommender=SequentialGreedyRecommender(acquisition_function_cls="qEI"),
 )
 random_strategy = Strategy(recommender=RandomRecommender())
 
+# We now create one BayBE object per strategy.
 
-# Create the BayBE object
 seq_greedy_EI_baybe = BayBE(
     searchspace=searchspace,
     strategy=seq_greedy_EI_strategy,
@@ -108,10 +106,12 @@ random_baybe = BayBE(
     objective=objective,
 )
 
-# We can now use the simulate_scenarios function from simulation.py to simulate a
-# full experiment. Note that this function enables to run multiple scenarios one after
-# another by a single function call, which is why we need to define a dictionary
-# mapping names for the scenarios to actual BayBE objects
+#### Performing the simulation loop
+
+# We can now use the `simulate_scenarios` function to simulate a full experiment.
+# Note that this function enables to run multiple scenarios by a single function call.
+# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
+
 scenarios = {
     "Sequential greedy EI": seq_greedy_EI_baybe,
     "Random": random_baybe,

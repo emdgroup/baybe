@@ -1,13 +1,15 @@
+### Example for using dependency constraints in discrete searchspaces
+
 """
-This example shows how a dependency constraint can be created for a discrete
-searchspace.
-There are constraint that specifies dependencies between parameters. For instance some
-parameters might only be relevant when another parameter has a certain value
-(e.g. 'on'). All dependencies can be declared in a single constraint.
-This example assumes that the reader is familiar with the basics of BayBE, and thus
-does not explain the details of e.g. parameter creation. For additional explanation
-on these aspects, we refer to the Basic examples.
+This example shows how a dependency constraint can be created for a discrete searchspace.
+For instance, some parameters might only be relevant when another parameter has a certain value.
+All dependencies have to be declared in a single constraint.
 """
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports for this example
 
 import numpy as np
 
@@ -22,53 +24,53 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# We begin by setting up some parameters for our experiments.
+#### Experiment setup
+
 dict_solvent = {
     "water": "O",
     "C1": "C",
 }
-solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED")
+solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="MORDRED")
 switch1 = CategoricalParameter(name="Switch1", values=["on", "off"])
 switch2 = CategoricalParameter(name="Switch2", values=["left", "right"])
 fraction1 = NumericalDiscreteParameter(
-    name="Fraction1", values=list(np.linspace(0, 100, 7)), tolerance=0.2
+    name="Frac1", values=list(np.linspace(0, 100, 7)), tolerance=0.2
 )
 frame1 = CategoricalParameter(name="FrameA", values=["A", "B"])
 frame2 = CategoricalParameter(name="FrameB", values=["A", "B"])
 
 parameters = [solvent, switch1, switch2, fraction1, frame1, frame2]
 
-# The constraints are handled when creating the searchspace object.
-# We thus need to define our constraint now.
-# The constraints can either be created jointly by constructing a single
-# DependenciesConstraint or by having multiple constraints.
-# This is demonstrated here by creating two BayBE objects
+#### Creating the constraints
 
-# This is the constraint modeling two Dependencies. Multiple dependencies have to be
-# included in a single constraint object
+# The constraints are handled when creating the searchspace object.
+# It is thus necessary to define it before the searchspace creation.
+# Note that multiple dependencies have to be included in a single constraint object.
 constraint = DependenciesConstraint(
     parameters=["Switch1", "Switch2"],
     conditions=[
         SubSelectionCondition(selection=["on"]),
         SubSelectionCondition(selection=["right"]),
     ],
-    affected_parameters=[["Solvent", "Fraction1"], ["FrameA", "FrameB"]],
+    affected_parameters=[["Solv", "Frac1"], ["FrameA", "FrameB"]],
 )
 
+#### Creating the searchspace and the objective
 
-# Create the search spaces with the corresponding lists of constraints
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
-# Create the objective
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-# Put everything together
-baybe_obj = BayBE(searchspace=searchspace, objective=objective)
+#### Creating and printing the BayBE object
 
-# Run some iterations. During these iterations, we
-# print some information about the parameters configurations that now exist.
+baybe_obj = BayBE(searchspace=searchspace, objective=objective)
+print(baybe_obj)
+
+#### Manual verification of the constraints
+
+# The following loop performs some recommendations and manually verifies the given constraints.
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
     print(f"\n##### ITERATION {kIter+1} #####")

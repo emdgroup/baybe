@@ -1,48 +1,34 @@
-"""
-Basic Example about creation and use of BayBE objects
-on direct arylation reaction example
+### Basic example for using BayBE
 
-This example shows how to create a Baybe Object and how to use it.
-It details how a user can first define parameters of the searchspace
-and the objective desired, to then be able to create a proper BayBE object
-that can be used to get recommendations
+"""
+This example shows how to create a BayBE Object and how to use it.
+It details how a user can first define parameters of the searchspace and the objective.
+These can then be used to create a proper BayBE object that can be used to get recommendations.
 """
 
+#### Necessary imports for this example
+
+#### Necessary imports for this example
 from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# --------------------------------------------------------------------------------------
-# PART 1: Creation of searchspace object
-# --------------------------------------------------------------------------------------
+#### Creation of searchspace object
 
+# This part shows how the user can create a searchspace object.
+# In general, searchspaces can be continuous, discrete or hybrid.
+# This depends on the parameters of the searchspace.
+# In this examples, a basic discrete searchspace is presented.
+# Discrete variables can be numerical, categorical or encoded chemical substances.
 
-# In this part the user define the search space
-# It can be continuous, discrete or hybrid
-# Here a basic discrete searchspace is presented
-# Discrete variables can be numerical, categorical or encoded chemical substances
+# To create a searchspace, we need to define all parameters that can vary between experiments.
 
-# To be able to create a searchspace in which BayBE can operate.
-# It is important to first define all parameters that can vary between experiments
-# and of course the different values that can be taken by a parameter
+# This example presents the optimization of a direct Arylation reaction.
+# For this, we require data for solvents, ligands and bases.
 
-
-# Part 1.1: Define data
-# --------------------------------------------------------------------------------------
-
-# Here, we define data that is relevant for the specific example like solvents,
-# ligands, temperature and so on
-
-# This example presents the optimization of a direct Arylation reaction
-# Different input parameters are varied in order to find the configuration
-# that maximize the yield of the reaction
-# The experimenter can vary the chemical substances used (Solvent, Base and Ligand)
-# But also the temperature and the base concentration
-
-# Each available solvents, bases and ligands are described in the following dictionaries
-# with their corresponding SMILES
+# The available solvents, bases and ligands are described in the following dictionaries via SMILES.
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
@@ -65,19 +51,15 @@ dict_ligand = {
     "(t-Bu)PhCPhos": r"CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3",
 }
 
+# This part shows how to create the  parameter objects that are used to create the BayBE object.
+# We define the chemical substances parameters using the dictionaries defined previously.
+# Here, we use `"MORDRED"` encoding, but others are available.
 
-# Part 1.2: Define Parameters
-# --------------------------------------------------------------------------------------
-# Then the user define each parameter and its type
-# before gathering each parameter in a single list
-
-# Define generic chemical substances parameters: Solvent, Base and Ligand
-# Here, MORDRED encoding is used for chemical substances
+# We proceed to define numerical discrete parameters: `temperature` and `concentration`.
 
 solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="MORDRED")
 base = SubstanceParameter("Base", data=dict_base, encoding="MORDRED")
 ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="MORDRED")
-
 
 # Define numerical discrete parameters: Temperature, Concentration
 
@@ -88,107 +70,76 @@ concentration = NumericalDiscreteParameter(
     "Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 
-# Define the  list of parameters
+# To simplify the creation of the BayBE object, we collect all parameters in a single list.
+
 parameters = [solvent, base, ligand, temperature, concentration]
 
-# Part 1.3: Searchspace Object
-# --------------------------------------------------------------------------------------
-
-# The object searchspace can now be easily created as follows
+# The searchspace object can now be easily created as follows.
 
 searchspace = SearchSpace.from_product(parameters=parameters)
 
+#### Creation of objective object
 
-# --------------------------------------------------------------------------------------
-# PART 2: Creation of objective object
-# --------------------------------------------------------------------------------------
-
-
-# In this part we specify the objective of the optimization process
-
-
-# Here we consider a single numerical target
-# The user indicates the target variable as well as the action he is trying to achieve
-# It can be either maximize, minimize or match a specific value
-# In this example we try to maximize the yield of a reaction
-# so we indicate that the target is numerical, named 'yield'
-# and that we work with the mode 'MAX'
-
-# The Objective object is thus defined as follows
+# In this part we specify the objective of the optimization process.
+# In this example, we consider a single numerical target.
+# The user indicates the target variable as well as what he is trying to achieve.
+# That is, the user can decide wheter to maximize, minimize or match a specific value.
+# In this example, we maximize the yield of a reaction.
+# Hence, we indicate that the target is numerical, named `"yield"` and use the mode `"MAX"`.
 
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
+#### Creation of a BayBE object
 
-# --------------------------------------------------------------------------------------
-# PART 3: Creation of a BayBE object
-# --------------------------------------------------------------------------------------
-
-
-# In this part we finaly create the Baybe Object using the objects configured
-# in the previous parts
+# We now finaly create the BayBE object using the objects configure previously.
 
 baybe_obj = BayBE(
     searchspace=searchspace,
     objective=objective,
 )
 
-# NOTE: an additional object strategy can be specified while creating the BayBE object
+# Note that an additional strategy object can be specified while creating the BayBE object.
 # This object and its parameters are described in the basic example 'strategies'
-# If no strategy is supplied a default one is used
+# If no strategy is supplied, a default one is used.
+# Details on strategies can be found in [`strategies`](./strategies.md)
 
+#### Getting a recommendation
 
-# --------------------------------------------------------------------------------------
-# PART 4: Get a Recommendation
-# --------------------------------------------------------------------------------------
+# In this part we use the BayBE object to recommend the next experiments to be conducted.
+# To do so we use the `recommend()` function of the BayBE object.
 
-
-# In this part we use the BayBE object to recommend the next experiments to be conducted
-# To do so we use the property recommend of the BayBE object
-
-
-# The user can specify the size of the batch of recommendations desired
-# The value needs to be an integer >= 1
+# The user can specify the size of the batch of recommendations desired.
+# The value needs to be an integer >= 1.
 
 recommendation = baybe_obj.recommend(batch_quantity=1)
 
 print("\n\nRecommended measurements with batch_quantity = 1: ")
 print(recommendation)
 
-# recommendation is a dataframe with columns labeled after the different variables
-# Each row is a suggested experiment filled with a value to try for each parameter
+# `recommendation` is a dataframe with one column per parameter.
+# Each row is a suggested experiment filled with a value to try for each parameter.
 
-# If we set a greater batch quantity,
-# the recommendation dataframe would then look like this
+# If we set a greater batch quantity, the `recommendation` dataframe contains more rows.
 
 for batch_quantity in [2, 3]:
     recommendation = baybe_obj.recommend(batch_quantity=batch_quantity)
     print(f"\n\nRecommended measurements with batch_quantity = {batch_quantity}: ")
     print(recommendation)
 
-# --------------------------------------------------------------------------------------
-# PART 5: Add a measurement
-# --------------------------------------------------------------------------------------
+#### Adding a measurement
 
+# In this part we add target values obtained while conducting new measurements.
+# This is done by creating a new column in the `recommendation` dataframe named after the target.
+# In this example, we use the `add_fake_results()` utility function to create some fake results.
 
-# In this part we add target values obtained while conducting new measurements
-
-# Part 5.1: collect target values
-# --------------------------------------------------------------------------------------
-
-# A new column is added to the recommendation dataframe named after the target variable
-# The target values are inserted in this dataframe
-
-# For the example we add fake results
 add_fake_results(recommendation, baybe_obj)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
-# The recommendation dataframe now has a new column named yield filled with fake values
 
-# Part 5.2: Add the new measurements to the BayBE Object
-# --------------------------------------------------------------------------------------
+# The recommendation dataframe now has a new column named `yield` filled with fake values.
+
+# Finally, we update the BayBE object by adding the measurement.
 
 baybe_obj.add_measurements(recommendation)
-
-# The baybe object can now be used to ask for a new recommendation
