@@ -28,29 +28,28 @@ dict_solvent = {
     "water": "O",
     "C1": "C",
     "C2": "CC",
-    "C3": "CCC",
 }
 solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="RDKIT")
 speed = CategoricalParameter(
     name="Speed", values=["slow", "normal", "fast"], encoding="INT"
 )
 num_parameter_1 = NumericalDiscreteParameter(
-    name="NumParam1", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam1", values=list(np.linspace(0, 100, 5)), tolerance=0.5
 )
 num_parameter_2 = NumericalDiscreteParameter(
-    name="NumParam2", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam2", values=list(np.linspace(0, 100, 5)), tolerance=0.5
 )
 num_parameter_3 = NumericalDiscreteParameter(
-    name="NumParam3", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam3", values=list(np.linspace(0, 100, 5)), tolerance=0.5
 )
 num_parameter_4 = NumericalDiscreteParameter(
-    name="NumParam4", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam4", values=list(np.linspace(0, 100, 5)), tolerance=0.5
 )
 num_parameter_5 = NumericalDiscreteParameter(
-    name="NumParam5", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam5", values=list(np.linspace(0, 100, 5)), tolerance=0.5
 )
 num_parameter_6 = NumericalDiscreteParameter(
-    name="NumParam6", values=list(np.linspace(0, 100, 7)), tolerance=0.5
+    name="NumParam6", values=list(np.linspace(0, 100, 5)), tolerance=0.5
 )
 
 parameters = [

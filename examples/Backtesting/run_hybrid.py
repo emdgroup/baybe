@@ -33,7 +33,7 @@ from baybe.targets import NumericalTarget, Objective
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 N_MC_ITERATIONS = 2
-N_EXP_ITERATIONS = 5
+N_EXP_ITERATIONS = 2
 
 #### Defining the test function.
 
