@@ -86,7 +86,9 @@ top_level_files = [
 # Write the markdown file for the SDK Example folder itself.
 # Only necessary if eleventy headers should be written.
 if WRITE_HEADERS:
-    with open(destination_dir / f"{destination_dir}.md", "w", encoding="UTF-8") as f:
+    with open(
+        destination_dir / f"{destination_dir.name}.md", "w", encoding="UTF-8"
+    ) as f:
         f.write(
             "---"
             + "\neleventyNavigation:"
