@@ -51,7 +51,7 @@ class BayesianRecommender(Recommender, ABC):
 
     surrogate_model_cls: str = field(default="GP")
     acquisition_function_cls: Literal[
-        "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB"
+        "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
     ] = field(default="qEI")
 
     def get_acquisition_function_cls(
@@ -65,6 +65,8 @@ class BayesianRecommender(Recommender, ABC):
             "qEI": qExpectedImprovement,
             "qPI": qProbabilityOfImprovement,
             "qUCB": partial(qUpperConfidenceBound, beta=1.0),
+            "VarUCB": partial(UpperConfidenceBound, beta=100.0),
+            "qVarUCB": partial(qUpperConfidenceBound, beta=100.0),
         }
         fun = debotorchize(mapping[self.acquisition_function_cls])
         return fun
