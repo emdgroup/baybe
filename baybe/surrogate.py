@@ -471,7 +471,7 @@ class MeanPredictionSurrogate(Surrogate):
     """
 
     joint_posterior: ClassVar[bool] = False
-    target_value = field(init=False, factory=None)
+    target_value: Optional[float] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
