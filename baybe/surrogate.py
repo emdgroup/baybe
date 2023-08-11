@@ -9,7 +9,7 @@ import sys
 
 from abc import ABC, abstractmethod
 from functools import wraps
-from typing import Callable, ClassVar, List, Optional, Tuple, Type
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type
 
 import cattrs
 
@@ -283,7 +283,7 @@ class Surrogate(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     joint_posterior: ClassVar[bool]
-    model_params: dict = field(factory=dict)
+    model_params: Dict[str, Any] = field(factory=dict)
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """
@@ -364,7 +364,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     joint_posterior: ClassVar[bool] = True
     model: Optional[SingleTaskGP] = field(init=False, default=None)
-    model_params: dict = field(
+    model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(SingleTaskGP.__init__),
@@ -494,7 +494,7 @@ class RandomForestSurrogate(Surrogate):
 
     joint_posterior: ClassVar[bool] = False
     model: Optional[RandomForestRegressor] = field(init=False, default=None)
-    model_params: dict = field(
+    model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(RandomForestRegressor.__init__),
@@ -537,7 +537,7 @@ class NGBoostSurrogate(Surrogate):
 
     joint_posterior: ClassVar[bool] = False
     model: Optional[NGBRegressor] = field(init=False, default=None)
-    model_params: dict = field(
+    model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(NGBRegressor.__init__),
@@ -570,7 +570,7 @@ class BayesianLinearSurrogate(Surrogate):
 
     joint_posterior: ClassVar[bool] = False
     model: Optional[ARDRegression] = field(init=False, default=None)
-    model_params: dict = field(
+    model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(ARDRegression.__init__),
