@@ -33,8 +33,7 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import get_subclasses, unstructure_base
-from baybe.utils.serialization import SerialMixin
+from baybe.utils import get_subclasses, SerialMixin, unstructure_base
 
 # Use float64 (which is recommended at least for BoTorch models)
 _DTYPE = torch.float64
