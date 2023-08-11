@@ -22,7 +22,6 @@ from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 valid_acquisition_functions = get_args(
     get_type_hints(BayesianRecommender.__init__)["acquisition_function_cls"]
 )
-# TODO: refactor code to avoid the set deduplication below
 valid_surrogate_models = get_available_surrogates()
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 valid_discrete_recommenders = [
