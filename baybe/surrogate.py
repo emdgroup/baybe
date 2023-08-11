@@ -282,8 +282,10 @@ def batchify(
 class Surrogate(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
+    # Class variables
     joint_posterior: ClassVar[bool]
 
+    # Object variables
     # TODO: In a next refactoring, the user friendliness could be improved by directly
     #   exposing the individual model parameters via the constructor, instead of
     #   expecting them in the form of an unstructured dictionary. This would also
@@ -367,13 +369,16 @@ class Surrogate(ABC, SerialMixin):
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
 
+    # Class variables
     joint_posterior: ClassVar[bool] = True
-    _model: Optional[SingleTaskGP] = field(init=False, default=None)
+
+    # Object variables
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(SingleTaskGP.__init__),
     )
+    _model: Optional[SingleTaskGP] = field(init=False, default=None)
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
@@ -475,7 +480,10 @@ class MeanPredictionSurrogate(Surrogate):
     as posterior mean and a (data-independent) constant posterior variance.
     """
 
+    # Class variables
     joint_posterior: ClassVar[bool] = False
+
+    # Object variables
     target_value: Optional[float] = field(init=False, default=None)
 
     @batchify
@@ -497,13 +505,16 @@ class MeanPredictionSurrogate(Surrogate):
 class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
 
+    # Class variables
     joint_posterior: ClassVar[bool] = False
-    _model: Optional[RandomForestRegressor] = field(init=False, default=None)
+
+    # Object variables
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(RandomForestRegressor.__init__),
     )
+    _model: Optional[RandomForestRegressor] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -540,14 +551,17 @@ class RandomForestSurrogate(Surrogate):
 class NGBoostSurrogate(Surrogate):
     """A natural-gradient-boosting surrogate model."""
 
+    # Class variables
     joint_posterior: ClassVar[bool] = False
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
-    _model: Optional[NGBRegressor] = field(init=False, default=None)
+
+    # Object variables
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(NGBRegressor.__init__),
     )
+    _model: Optional[NGBRegressor] = field(init=False, default=None)
 
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}
@@ -575,13 +589,16 @@ class NGBoostSurrogate(Surrogate):
 class BayesianLinearSurrogate(Surrogate):
     """A Bayesian linear regression surrogate model."""
 
+    # Class variables
     joint_posterior: ClassVar[bool] = False
-    _model: Optional[ARDRegression] = field(init=False, default=None)
+
+    # Object variables
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(ARDRegression.__init__),
     )
+    _model: Optional[ARDRegression] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
