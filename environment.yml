@@ -33,7 +33,7 @@ dependencies:
 - rdkit==2022.3.4
 - scikit-learn==1.1.1
 - scipy==1.9.3
-- seaborn==0.11.2
+- seaborn==0.12.2
 - setuptools-scm==7.1.0
 - streamlit==1.20.0
 - pip:
