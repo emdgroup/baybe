@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `empty` convenience constructors discrete and continuous subspaces
 - `baybe`, `strategies` and `utils` namespace for convenient imports
 - Simple test for config validation
+- `VarUCB` and `qVarUCB` acquisition functions emulating maximum variance for active learning
 
 ### Changed
 - Renamed `create` constructors to `from_product`
