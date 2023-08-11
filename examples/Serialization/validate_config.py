@@ -5,7 +5,6 @@ This example shows how to load and validate a user defined configuration file.
 We use the two configuration dictionaries.
 The first one represents a valid configuration, the second does not.
 """
-#### Necessary imports
 
 #### Necessary imports
 
