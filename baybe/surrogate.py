@@ -368,7 +368,7 @@ class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
 
     joint_posterior: ClassVar[bool] = True
-    model: Optional[SingleTaskGP] = field(init=False, default=None)
+    _model: Optional[SingleTaskGP] = field(init=False, default=None)
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
@@ -377,7 +377,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
-        posterior = self.model.posterior(candidates)
+        posterior = self._model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
@@ -452,7 +452,7 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
-        self.model = SingleTaskGP(
+        self._model = SingleTaskGP(
             train_x,
             train_y,
             input_transform=input_transform,
@@ -461,7 +461,7 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module=covar_module,
             likelihood=likelihood,
         )
-        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
+        mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
         # IMPROVE: The step_limit=100 stems from the former (deprecated)
         #  `fit_gpytorch_torch` function, for which this was the default. Probably,
         #   one should use a smarter logic here.
@@ -498,7 +498,7 @@ class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
 
     joint_posterior: ClassVar[bool] = False
-    model: Optional[RandomForestRegressor] = field(init=False, default=None)
+    _model: Optional[RandomForestRegressor] = field(init=False, default=None)
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
@@ -516,8 +516,8 @@ class RandomForestSurrogate(Surrogate):
         predictions = torch.from_numpy(
             np.asarray(
                 [
-                    self.model.estimators_[tree].predict(candidates)
-                    for tree in range(self.model.n_estimators)
+                    self._model.estimators_[tree].predict(candidates)
+                    for tree in range(self._model.n_estimators)
                 ]
             )
         )
@@ -530,8 +530,8 @@ class RandomForestSurrogate(Surrogate):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = RandomForestRegressor(**(self.model_params))
-        self.model.fit(train_x, train_y.ravel())
+        self._model = RandomForestRegressor(**(self.model_params))
+        self._model.fit(train_x, train_y.ravel())
 
 
 @catch_constant_targets
@@ -542,7 +542,7 @@ class NGBoostSurrogate(Surrogate):
 
     joint_posterior: ClassVar[bool] = False
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
-    model: Optional[NGBRegressor] = field(init=False, default=None)
+    _model: Optional[NGBRegressor] = field(init=False, default=None)
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
@@ -556,7 +556,7 @@ class NGBoostSurrogate(Surrogate):
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
-        dists = self.model.pred_dist(candidates)
+        dists = self._model.pred_dist(candidates)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists.mean())
@@ -566,7 +566,7 @@ class NGBoostSurrogate(Surrogate):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
+        self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
 
 @catch_constant_targets
@@ -576,7 +576,7 @@ class BayesianLinearSurrogate(Surrogate):
     """A Bayesian linear regression surrogate model."""
 
     joint_posterior: ClassVar[bool] = False
-    model: Optional[ARDRegression] = field(init=False, default=None)
+    _model: Optional[ARDRegression] = field(init=False, default=None)
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
@@ -587,7 +587,7 @@ class BayesianLinearSurrogate(Surrogate):
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
-        dists = self.model.predict(candidates.numpy(), return_std=True)
+        dists = self._model.predict(candidates.numpy(), return_std=True)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists[0])
@@ -597,8 +597,8 @@ class BayesianLinearSurrogate(Surrogate):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = ARDRegression(**(self.model_params))
-        self.model.fit(train_x, train_y.ravel())
+        self._model = ARDRegression(**(self.model_params))
+        self._model.fit(train_x, train_y.ravel())
 
 
 def remove_model(raw_unstructure_hook):
@@ -608,7 +608,7 @@ def remove_model(raw_unstructure_hook):
 
     def wrapper(obj):
         dict_ = raw_unstructure_hook(obj)
-        dict_.pop("model", None)
+        dict_.pop("_model", None)
         dict_.pop("target_value", None)
         return dict_
 
