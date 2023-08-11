@@ -11,7 +11,7 @@ from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from torch import cat, squeeze, Tensor
 
-from baybe.surrogate import SurrogateModel
+from baybe.surrogate import Surrogate
 
 
 def debotorchize(acqf_cls: Type[AcquisitionFunction]):
@@ -25,7 +25,7 @@ def debotorchize(acqf_cls: Type[AcquisitionFunction]):
     issue by operating as an adapter that internally creates a helper BoTorch model,
     which serves as a translation layer and is passed to the selected BoTorch
     acquisition function, carrying the posterior information provided from any other
-    probabilistic model implementing BayBE's `SurrogateModel` interface.
+    probabilistic model implementing BayBE's `Surrogate` interface.
 
     Parameters
     ----------
@@ -38,9 +38,10 @@ def debotorchize(acqf_cls: Type[AcquisitionFunction]):
 
     Example
     -------
+    # TODO: Turn into doctest
     from botorch.acquisition import ExpectedImprovement
-    from baybe.surrogate import BayesianLinearModel
-    surrogate = BayesianLinearModel(*args, **kwargs)
+    from baybe.surrogate import BayesianLinearSurrogate
+    surrogate = BayesianLinearSurrogate(*args, **kwargs)
     surrogate.fit(train_x, train_y)
     best_f = train_y.max()
     acqf = debotorchize(ExpectedImprovement)(surrogate, best_f)
@@ -50,7 +51,7 @@ def debotorchize(acqf_cls: Type[AcquisitionFunction]):
     class Wrapper:
         """Adapter acquisition function that accepts BayBE surrogate models."""
 
-        def __init__(self, surrogate: SurrogateModel, best_f):
+        def __init__(self, surrogate: Surrogate, best_f):
             self.model = AdapterModel(surrogate)
             self.best_f = best_f
 
@@ -77,7 +78,7 @@ class AdapterModel(Model):
     surrogate model usable in conjunction with BoTorch acquisition functions.
     """
 
-    def __init__(self, surrogate: SurrogateModel):
+    def __init__(self, surrogate: Surrogate):
         super().__init__()
         self._surrogate = surrogate
 

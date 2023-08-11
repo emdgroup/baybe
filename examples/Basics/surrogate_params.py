@@ -21,7 +21,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
-from baybe.surrogate import NGBoostModel
+from baybe.surrogate import NGBoostSurrogate
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
@@ -59,19 +59,19 @@ parameters = [
 
 # Please note that model_params is an optional argument:
 # The defaults will be used if none specified
-surrogate_model = NGBoostModel(model_params={"n_estimators": 50, "verbose": True})
+surrogate_model = NGBoostSurrogate(model_params={"n_estimators": 50, "verbose": True})
 
 #### Validation of model parameters
 
 try:
-    invalid_surrogate_model = NGBoostModel(model_params={"NOT_A_PARAM": None})
+    invalid_surrogate_model = NGBoostSurrogate(model_params={"NOT_A_PARAM": None})
 except ValueError as e:
     print("The validator will give an error here:")
     print(e)
 
 #### Links for documentation
 
-# Note that `GaussianProcessModel` will support custom parameters in the future
+# Note that `GaussianProcessSurrogate` will support custom parameters in the future
 
 # pylint: disable=line-too-long
 # [`RandomForestModel`](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)
@@ -136,7 +136,7 @@ print(recommendation)
 CONFIG = str(
     """
 {
-    "type": "NGBoostModel",
+    "type": "NGBoostSurrogate",
     "model_params": {
         "n_estimators": 50,
         "verbose": true
@@ -147,7 +147,7 @@ CONFIG = str(
 )
 
 #### Model creation from json
-recreate_model = NGBoostModel.from_json(CONFIG)
+recreate_model = NGBoostSurrogate.from_json(CONFIG)
 
 # This configuration creates the same model
 assert recreate_model == surrogate_model

@@ -71,7 +71,7 @@ CONFIG = str(
         "recommender": {
             "type": "SequentialGreedyRecommender",
             "surrogate_model": {
-                "type": "GaussianProcessModel"
+                "type": "GaussianProcessSurrogate"
             },
             "acquisition_function_cls": "qEI"
         },
@@ -136,7 +136,7 @@ INVALID_CONFIG = str(
         "recommender": {
             "type": "SequentialGreedyRecommender",
             "surrogate_model": {
-                "type": "GaussianProcessModel"
+                "type": "GaussianProcessSurrogate"
             },
             "acquisition_function_cls": "qEI"
         },

@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Renamed `create` constructors to `from_product`
 - Renamed `empty` checks for subspaces to `is_empty`
-- Fixed inconsistent parameter class names
+- Fixed inconsistent class names in surrogate.py
+- Fixed inconsistent class names in parameters.py
 - Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
 - Adjusted comments in example files

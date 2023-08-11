@@ -33,7 +33,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.surrogate import GaussianProcessModel
+from baybe.surrogate import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
@@ -494,7 +494,7 @@ def fixture_default_acquisition_function():
 @pytest.fixture(name="surrogate_model")
 def fixture_default_surrogate_model():
     """The default surrogate model to be used if not specified differently."""
-    return GaussianProcessModel()
+    return GaussianProcessSurrogate()
 
 
 @pytest.fixture(name="recommender")

@@ -97,9 +97,9 @@ def _get_model_params_validator(model_init: Callable) -> Callable:
     return validate_model_params
 
 
-def catch_constant_targets(model_cls: Type[SurrogateModel]):
+def catch_constant_targets(model_cls: Type[Surrogate]):
     """
-    Wraps a given `SurrogateModel` class that cannot handle constant training target
+    Wraps a given `Surrogate` class that cannot handle constant training target
     values such that these cases are handled by a separate model type.
     """
 
@@ -141,7 +141,7 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
             # https://github.com/pytorch/pytorch/issues/29372
             # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
             if torch.std(train_y.ravel(), unbiased=False) < _MIN_TARGET_STD:
-                self.model = MeanPredictionModel()
+                self.model = MeanPredictionSurrogate()
 
             # Fit the selected model with the training data
             self.model.fit(searchspace, train_x, train_y)
@@ -165,9 +165,9 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
     return SplitModel
 
 
-def scale_model(model_cls: Type[SurrogateModel]):
+def scale_model(model_cls: Type[Surrogate]):
     """
-    Wraps a given `SurrogateModel` class such that it operates with scaled
+    Wraps a given `Surrogate` class such that it operates with scaled
     representations of the training and test data.
     """
 
@@ -223,17 +223,15 @@ def scale_model(model_cls: Type[SurrogateModel]):
 
 
 def batchify(
-    posterior: Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]
-) -> Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]:
+    posterior: Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]
+) -> Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]:
     """
-    Wraps `SurrogateModel` posterior functions that are incompatible with t- and
+    Wraps `Surrogate` posterior functions that are incompatible with t- and
     q-batching such that they become able to process batched inputs.
     """
 
     @wraps(posterior)
-    def sequential_posterior(
-        model: SurrogateModel, candidates: Tensor
-    ) -> [Tensor, Tensor]:
+    def sequential_posterior(model: Surrogate, candidates: Tensor) -> [Tensor, Tensor]:
         """A posterior function replacement that processes batches sequentially."""
 
         # If no batch dimensions are given, call the model directly
@@ -281,7 +279,7 @@ def batchify(
 
 
 @define
-class SurrogateModel(ABC, SerialMixin):
+class Surrogate(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     joint_posterior: ClassVar[bool]
@@ -361,7 +359,7 @@ class SurrogateModel(ABC, SerialMixin):
 
 
 @define
-class GaussianProcessModel(SurrogateModel):
+class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
 
     joint_posterior: ClassVar[bool] = True
@@ -466,7 +464,7 @@ class GaussianProcessModel(SurrogateModel):
 
 
 @define
-class MeanPredictionModel(SurrogateModel):
+class MeanPredictionSurrogate(Surrogate):
     """
     A trivial surrogate model that provides the average value of the training targets
     as posterior mean and a (data-independent) constant posterior variance.
@@ -491,7 +489,7 @@ class MeanPredictionModel(SurrogateModel):
 @catch_constant_targets
 @scale_model
 @define
-class RandomForestModel(SurrogateModel):
+class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
 
     joint_posterior: ClassVar[bool] = False
@@ -534,7 +532,7 @@ class RandomForestModel(SurrogateModel):
 @catch_constant_targets
 @scale_model
 @define
-class NGBoostModel(SurrogateModel):
+class NGBoostSurrogate(Surrogate):
     """A natural-gradient-boosting surrogate model."""
 
     joint_posterior: ClassVar[bool] = False
@@ -567,7 +565,7 @@ class NGBoostModel(SurrogateModel):
 @catch_constant_targets
 @scale_model
 @define
-class BayesianLinearModel(SurrogateModel):
+class BayesianLinearSurrogate(Surrogate):
     """A Bayesian linear regression surrogate model."""
 
     joint_posterior: ClassVar[bool] = False
@@ -635,12 +633,12 @@ def structure_surrogate(val, _):
     return cattrs.structure_attrs_fromdict(val, cls)
 
 
-def get_available_surrogates() -> List[SurrogateModel]:
+def get_available_surrogates() -> List[Surrogate]:
     """Lists all available models"""
     # List available names
     available_names = {
         cl.__name__
-        for cl in get_subclasses(SurrogateModel)
+        for cl in get_subclasses(Surrogate)
         if cl.__name__ not in _WRAPPER_MODELS
     }
 
@@ -653,7 +651,7 @@ def get_available_surrogates() -> List[SurrogateModel]:
 
 
 # Register (un-)structure hooks
-cattrs.register_unstructure_hook(SurrogateModel, remove_model(unstructure_base))
-cattrs.register_structure_hook(SurrogateModel, structure_surrogate)
+cattrs.register_unstructure_hook(Surrogate, remove_model(unstructure_base))
+cattrs.register_structure_hook(Surrogate, structure_surrogate)
 
 gc.collect()

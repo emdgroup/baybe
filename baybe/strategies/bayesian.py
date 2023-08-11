@@ -30,7 +30,7 @@ from baybe.strategies.recommender import (
     Recommender,
     select_candidates_and_recommend,
 )
-from baybe.surrogate import GaussianProcessModel, SurrogateModel
+from baybe.surrogate import GaussianProcessSurrogate, Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
 
 
@@ -49,7 +49,7 @@ def validate_percentage(obj, _, value):
 class BayesianRecommender(Recommender, ABC):
     # TODO Docstrings missing
 
-    surrogate_model: SurrogateModel = field(factory=GaussianProcessModel)
+    surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
     acquisition_function_cls: Literal[
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
     ] = field(default="qEI")
@@ -103,7 +103,7 @@ class BayesianRecommender(Recommender, ABC):
         searchspace: SearchSpace,
         train_x: pd.DataFrame,
         train_y: pd.DataFrame,
-    ) -> SurrogateModel:
+    ) -> Surrogate:
         """
         Uses the given data to train a fresh surrogate model instance for the DOE
         strategy.
