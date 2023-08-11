@@ -2,17 +2,16 @@
 """
 Surrogate models, such as Gaussian processes, random forests, etc.
 """
-from __future__ import annotations
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
 import gc
 import sys
-
 from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type
 
 import cattrs
-
 import numpy as np
 import torch
 from attrs import define, field
@@ -96,7 +95,7 @@ def _get_model_params_validator(model_init: Callable) -> Callable:
     return validate_model_params
 
 
-def catch_constant_targets(model_cls: Type[Surrogate]):
+def catch_constant_targets(model_cls: Type["Surrogate"]):
     """
     Wraps a given `Surrogate` class that cannot handle constant training target
     values such that these cases are handled by a separate model type.
@@ -164,7 +163,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
     return SplitModel
 
 
-def scale_model(model_cls: Type[Surrogate]):
+def scale_model(model_cls: Type["Surrogate"]):
     """
     Wraps a given `Surrogate` class such that it operates with scaled
     representations of the training and test data.
@@ -222,15 +221,17 @@ def scale_model(model_cls: Type[Surrogate]):
 
 
 def batchify(
-    posterior: Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]
-) -> Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]:
+    posterior: Callable[["Surrogate", Tensor], Tuple[Tensor, Tensor]]
+) -> Callable[["Surrogate", Tensor], Tuple[Tensor, Tensor]]:
     """
     Wraps `Surrogate` posterior functions that are incompatible with t- and
     q-batching such that they become able to process batched inputs.
     """
 
     @wraps(posterior)
-    def sequential_posterior(model: Surrogate, candidates: Tensor) -> [Tensor, Tensor]:
+    def sequential_posterior(
+        model: "Surrogate", candidates: Tensor
+    ) -> [Tensor, Tensor]:
         """A posterior function replacement that processes batches sequentially."""
 
         # If no batch dimensions are given, call the model directly
@@ -607,10 +608,8 @@ def remove_model(raw_unstructure_hook):
 
     def wrapper(obj):
         dict_ = raw_unstructure_hook(obj)
-        try:
-            dict_.pop("model")
-        except KeyError:
-            pass
+        dict_.pop("model", None)
+        dict_.pop("target_value", None)
         return dict_
 
     return wrapper
