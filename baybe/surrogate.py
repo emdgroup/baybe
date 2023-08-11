@@ -283,6 +283,11 @@ class Surrogate(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     joint_posterior: ClassVar[bool]
+
+    # TODO: In a next refactoring, the user friendliness could be improved by directly
+    #   exposing the individual model parameters via the constructor, instead of
+    #   expecting them in the form of an unstructured dictionary. This would also
+    #   remove the need for the current `_get_model_params_validator` logic.
     model_params: Dict[str, Any] = field(factory=dict)
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -597,7 +602,9 @@ class BayesianLinearSurrogate(Surrogate):
 
 
 def remove_model(raw_unstructure_hook):
-    """Removes the model in an surrogate for serialization"""
+    """Removes the model in a surrogate for serialization."""
+    # TODO: No longer required once the following feature is released:
+    #   https://github.com/python-attrs/cattrs/issues/40
 
     def wrapper(obj):
         dict_ = raw_unstructure_hook(obj)
@@ -610,13 +617,13 @@ def remove_model(raw_unstructure_hook):
     return wrapper
 
 
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def structure_surrogate(val, _):
-    """Structures a surrogate model"""
-    # TODO.
-    # See Work Item # 15436
+    """Structures a surrogate model."""
+    # TODO [15436]
     # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
 
-    # NOTE.
+    # NOTE:
     # Due to above issue,
     # it is difficult to find the wrapped class in the subclass structure.
     # The renaming only happens in the init method of wrapper classes
@@ -636,7 +643,7 @@ def structure_surrogate(val, _):
 
 
 def get_available_surrogates() -> List[Surrogate]:
-    """Lists all available models"""
+    """Lists all available surrogate models."""
     # List available names
     available_names = {
         cl.__name__
@@ -656,4 +663,6 @@ def get_available_surrogates() -> List[Surrogate]:
 cattrs.register_unstructure_hook(Surrogate, remove_model(unstructure_base))
 cattrs.register_structure_hook(Surrogate, structure_surrogate)
 
+# Related to [15436]
 gc.collect()
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
