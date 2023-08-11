@@ -536,12 +536,16 @@ class NGBoostSurrogate(Surrogate):
     """A natural-gradient-boosting surrogate model."""
 
     joint_posterior: ClassVar[bool] = False
+    _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
     model: Optional[NGBRegressor] = field(init=False, default=None)
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=_get_model_params_validator(NGBRegressor.__init__),
     )
+
+    def __attrs_post_init__(self):
+        self.model_params = {**self._default_model_params, **self.model_params}
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -557,8 +561,6 @@ class NGBoostSurrogate(Surrogate):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        if not self.model_params:
-            self.model_params = {"n_estimators": 25, "verbose": False}
         self.model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
 
