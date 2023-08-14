@@ -18,7 +18,7 @@ dependencies:
 - matplotlib==3.6.3
 - mordred==1.2.0
 - mypy==1.2.0
-- numpy==1.24.0
+- numpy==1.24.1
 - openpyxl==3.0.9
 - opentelemetry-sdk==1.16.0
 - opentelemetry-exporter-otlp==1.16.0
