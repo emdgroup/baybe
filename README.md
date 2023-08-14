@@ -333,7 +333,11 @@ os.environ.pop["BAYBE_TELEMETRY_ENABLED"]
 ```
 
 Note, however, that (un-)setting the variable in the shell will not affect the running
-python session.
+Python session.
+
+## Known Issues
+A list of know issues can be found [here](docs/known_issues.md).
+
 
 ## License
 
