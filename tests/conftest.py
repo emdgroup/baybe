@@ -521,6 +521,9 @@ def fixture_default_objective(targets):
 @pytest.fixture(name="config")
 def fixture_default_config():
     """The default config to be used if not specified differently."""
+    # TODO: Once `to_config` is implemented, generate the default config from the
+    #   default baybe object instead of hardcoding it here. This avoids redundant code
+    #   and automatically keeps them synced.
     cfg = """{
         "parameters": [
             {
