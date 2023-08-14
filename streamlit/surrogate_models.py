@@ -74,7 +74,7 @@ def main():
     }
 
     # collect all available surrogate models
-    surrogate_models = {
+    surrogate_model_classes = {
         surr.__class__.__name__: surr for surr in get_available_surrogates()
     }
 
@@ -82,7 +82,7 @@ def main():
     random_seed = int(st.sidebar.number_input("Random seed", value=1337))
     function_name = st.sidebar.selectbox("Test function", list(test_functions.keys()))
     surrogate_name = st.sidebar.selectbox(
-        "Surrogate model", list(surrogate_models.keys())
+        "Surrogate model", list(surrogate_model_classes.keys())
     )
     n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
     n_recommendations = st.sidebar.slider("Number of recommendations", 1, 20, 5)
@@ -129,7 +129,7 @@ def main():
     searchspace = SearchSpace.from_product(parameters=[param])
 
     # create the surrogate model, train it, and get its predictions
-    surrogate_model = surrogate_models[surrogate_name]
+    surrogate_model = surrogate_model_classes[surrogate_name]()
     surrogate_model.fit(searchspace, train_x.unsqueeze(-1), train_y.unsqueeze(-1))
 
     # recommend next experiments

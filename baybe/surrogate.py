@@ -657,7 +657,7 @@ def structure_surrogate(val, _):
     return cattrs.structure_attrs_fromdict(val, cls)
 
 
-def get_available_surrogates() -> List[Surrogate]:
+def get_available_surrogates() -> List[Type[Surrogate]]:
     """Lists all available surrogate models."""
     # List available names
     available_names = {
@@ -671,7 +671,7 @@ def get_available_surrogates() -> List[Surrogate]:
         getattr(sys.modules[__name__], mdl_name, None) for mdl_name in available_names
     ]
 
-    return [cl() for cl in available_classes if cl is not None]
+    return [cl for cl in available_classes if cl is not None]
 
 
 # Register (un-)structure hooks
