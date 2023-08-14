@@ -90,12 +90,9 @@ CONFIG = str(
 #### Creating a BayBE object from the configuration file
 
 # Although we know in this case that the config represents a valid configuration for a
-# BayBE object, it is a good practice to enclose the creation in a try block.
-try:
-    baybe = BayBE.from_config(CONFIG)
-    # We now perform a recommendation as usual and print it.
-    recommendation = baybe.recommend(batch_quantity=3)
-    print(recommendation)
-except Exception:  # pylint: disable=W0702
-    # Using the CONFIG that is given in this file, this should not be reached.
-    print("Something is wrong with the configuration file.")
+# BayBE object. If the config is invalid an exception will be thrown.
+baybe = BayBE.from_config(CONFIG)
+
+# We now perform a recommendation as usual and print it.
+recommendation = baybe.recommend(batch_quantity=3)
+print(recommendation)

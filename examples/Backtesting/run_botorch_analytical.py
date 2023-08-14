@@ -34,7 +34,7 @@ from botorch.test_functions import Rastrigin
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
 N_MC_ITERATIONS = 2
-N_EXP_ITERATIONS = 10
+N_EXP_ITERATIONS = 2
 
 ### Defining the test function
 

@@ -8,9 +8,8 @@ The first one represents a valid configuration, the second does not.
 
 #### Necessary imports
 
-#### Necessary imports
-
 from baybe import BayBE
+from cattrs import ClassValidationError
 
 #### Defining config dictionaries
 
@@ -146,16 +145,13 @@ INVALID_CONFIG = str(
 
 #### Verifictation of the two dictionaries
 
-# The first validation should work and print the line contained in the try block
-try:
-    BayBE.validate_config(CONFIG)
-    print("Succesfully validated first config and created a BayBE object!")
-except Exception:  # pylint: disable=W0702
-    print("Something is wrong with config 1 which should not happen!")
+# The first validation should work
+BayBE.validate_config(CONFIG)
+print("Successfully validated first config and created a BayBE object!")
 
 # This should fail.
 try:
     BayBE.validate_config(INVALID_CONFIG)
     baybe = BayBE.from_config(INVALID_CONFIG)
-except Exception:  # pylint: disable=W0702
-    print("Something is wrong with config 2 which is what we epexted!")
+except ClassValidationError:
+    print("Something is wrong with config 2 which is what we expected!")
