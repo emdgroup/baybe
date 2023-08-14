@@ -33,8 +33,8 @@ circumvent the problem:
 * Change PyCharm's run configuration from "Run with Python Console" to "Emulate
   terminal in output console"
 * Use Python version 3.11 or higher
-* Undo the monkeypatch applied by PyCharm by running the following code *at the start
-  of your script:
+* Undo the monkeypatch applied by PyCharm by running the following code **at the start
+  of your script**:
 ```
 import sys
 sys.excepthook = sys.__excepthook__
