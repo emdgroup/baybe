@@ -57,10 +57,14 @@ class SubspaceDiscrete:
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
-    comp_rep: pd.DataFrame = field(init=False, eq=eq_dataframe)
     metadata: pd.DataFrame = field(eq=eq_dataframe)
     empty_encoding: bool = field(default=False)
     constraints: List[Constraint] = field(factory=list)
+
+    # Technically not required but added as an optional initializer argument to
+    # allow ingestion from e.g. serialized objects and thereby speed up construction.
+    # If not provided, the default hook will derive it from `exp_rep`.
+    comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
@@ -76,14 +80,21 @@ class SubspaceDiscrete:
 
         return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
 
-    def __attrs_post_init__(self):
+    @comp_rep.default
+    def default_comp_rep(self) -> pd.DataFrame:
+        """
+        Derives the computational search space representation from the experimental one
+        if not explicitly passed to the constructor.
+        """
         # Create a dataframe containing the computational parameter representation
-        # (ignoring all columns that do not carry any covariate information).
+        comp_rep = self.transform(self.exp_rep)
+
+        # Ignore all columns that do not carry any covariate information
         # TODO[12758]: Should we always drop single value columns without informing the
         #  user? Can have undesired/unexpected side-effects (see ***REMOVED*** project).
-        comp_rep = self.transform(self.exp_rep)
         comp_rep = df_drop_single_value_columns(comp_rep)
-        self.comp_rep = comp_rep
+
+        return comp_rep
 
     @classmethod
     def empty(cls) -> "SubspaceDiscrete":
@@ -614,7 +625,6 @@ class SearchSpace(SerialMixin):
 
 
 def structure_hook(dict_, type_):
-    dict_.pop("comp_rep")
     return cattrs.structure_attrs_fromdict(dict_, type_)
 
 
