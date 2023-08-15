@@ -671,6 +671,12 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
         getattr(sys.modules[__name__], mdl_name, None) for mdl_name in available_names
     ]
 
+    # TODO: The initialization of the classes is currently necessary for the renaming
+    #  to take place (see [15436] and NOTE in `structure_surrogate`).
+    [  # pylint: disable=expression-not-assigned
+        cl() for cl in available_classes if cl is not None
+    ]
+
     return [cl for cl in available_classes if cl is not None]
 
 
