@@ -75,7 +75,7 @@ def main():
 
     # collect all available surrogate models
     surrogate_model_classes = {
-        surr.__class__.__name__: surr for surr in get_available_surrogates()
+        surr.__name__: surr for surr in get_available_surrogates()
     }
 
     # simulation parameters
