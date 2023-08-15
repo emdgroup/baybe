@@ -52,7 +52,8 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # This model uses available data to model the objective function as well as the uncertainty.
 # The surrogate model is then used by the acquisition function to make recommendations.
 
-# The following surrogate models are available.
+# The following are some available basic surrogates
+# Use `baybe.surrogate.get_available_surrogates()` for a complete list
 available_surrogate_models = [
     GaussianProcessSurrogate(),
     RandomForestSurrogate(),
