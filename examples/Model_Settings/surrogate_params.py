@@ -1,4 +1,5 @@
 ### Example for custom parameter passing in surrogate models
+# pylint: disable=line-too-long
 
 """
 This example shows the creation of a BayBE object, how to define surrogate
@@ -73,7 +74,6 @@ except ValueError as e:
 
 # Note that `GaussianProcessSurrogate` will support custom parameters in the future
 
-# pylint: disable=line-too-long
 # [`RandomForestModel`](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)
 # [`NGBoostModel`](https://stanfordmlgroup.github.io/ngboost/1-useage.html)
 # [`BayesianLinearModel`](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ARDRegression.html)
@@ -94,7 +94,6 @@ baybe_obj = BayBE(
 #### Iterate with recommendations and measurements
 
 # We can print the surrogate model object
-print()
 print("The model object in json format:")
 print(surrogate_model.to_json(), end="\n" * 3)
 
@@ -111,15 +110,11 @@ baybe_obj.add_measurements(recommendation)
 #### Model Outputs
 
 # Note that this model is only triggered when there is data.
-print()
 print("Here you will see some model outputs as we set verbose to True")
-print(f"{'#'*60}")
 
 # Do another round of recommendations
 recommendation = baybe_obj.recommend(batch_quantity=2)
 
-print(f"{'#'*60}")
-print()
 
 # Print second round of recommendations
 print("Recommendation from baybe object:")
@@ -141,7 +136,6 @@ CONFIG = str(
         "n_estimators": 50,
         "verbose": true
     }
-
 }
 """
 )
