@@ -71,8 +71,9 @@ print("Original object")
 print(baybe_orig, end="\n" * 3)
 
 # We next serialize the BayBE object to JSON.
-# This yields a JSON representation  in string format.
+# This yields a JSON representation in string format.
 # Since it is rather complex, we do not print this string here.
+# Note: Dataframes are encoded via binary parquet and are hence not human-readable.
 string = baybe_orig.to_json()
 
 
