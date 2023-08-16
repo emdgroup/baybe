@@ -205,8 +205,8 @@ for directory in (pbar := tqdm(directories)):
 
             # Some manual cleanup of the lines
             for line in content:
-                # Any lines starting with '![png]' is removed
-                if line.startswith("![png]"):
+                # Any lines starting with '![png]' or `pylint`is removed
+                if line.startswith(("![png]", "# pylint", "pylint")):
                     continue
 
                 if WRITE_HEADERS and "(./" in line:
@@ -232,7 +232,7 @@ for directory in (pbar := tqdm(directories)):
 
 # 5. Remove remaining files and subdirectories from the destination directory
 
-# remove any not markdown files
+# Remove any not markdown files
 for file in destination_dir.glob("**/*"):
     if file.is_file() and file.suffix != ".md":
         file.unlink(file)
