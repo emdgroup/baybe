@@ -12,11 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `baybe`, `strategies` and `utils` namespace for convenient imports
 - Simple test for config validation
 - `VarUCB` and `qVarUCB` acquisition functions emulating maximum variance for active learning
+- Surrogate model serialization
+- Surrogate model parameter passing
 
 ### Changed
 - Renamed `create` constructors to `from_product`
 - Renamed `empty` checks for subspaces to `is_empty`
-- Fixed inconsistent parameter class names
+- Fixed inconsistent class names in surrogate.py
+- Fixed inconsistent class names in parameters.py
 - Cached recommendations are now private
 - Parameters, targets and objectives are now immutable
 - Adjusted comments in example files
@@ -24,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed try blocks from config examples
 - Upgraded numpy requirement to >= 1.24.1
 - Requires `protobuf~=3.20.3`
+- `SearchSpace` parameters in surrogate models are now handled in `fit`
 
 ### Fixed
 - Include scaling in FPS recommender

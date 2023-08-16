@@ -15,7 +15,7 @@ import torch
 from baybe.acquisition import debotorchize
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.surrogate import SurrogateModel
+from baybe.surrogate import get_available_surrogates
 from botorch.acquisition import qExpectedImprovement
 from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
@@ -74,13 +74,15 @@ def main():
     }
 
     # collect all available surrogate models
-    surrogate_models = SurrogateModel.SUBCLASSES
+    surrogate_model_classes = {
+        surr.__name__: surr for surr in get_available_surrogates()
+    }
 
     # simulation parameters
     random_seed = int(st.sidebar.number_input("Random seed", value=1337))
     function_name = st.sidebar.selectbox("Test function", list(test_functions.keys()))
     surrogate_name = st.sidebar.selectbox(
-        "Surrogate model", list(surrogate_models.keys())
+        "Surrogate model", list(surrogate_model_classes.keys())
     )
     n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
     n_recommendations = st.sidebar.slider("Number of recommendations", 1, 20, 5)
@@ -108,7 +110,6 @@ def main():
         function_amplitude,
         function_bias,
     )
-    surrogate_model_cls = surrogate_models[surrogate_name]
 
     # create the input grid and corresponding target values
     test_x = torch.linspace(
@@ -128,8 +129,8 @@ def main():
     searchspace = SearchSpace.from_product(parameters=[param])
 
     # create the surrogate model, train it, and get its predictions
-    surrogate_model = surrogate_model_cls(searchspace)
-    surrogate_model.fit(train_x.unsqueeze(-1), train_y.unsqueeze(-1))
+    surrogate_model = surrogate_model_classes[surrogate_name]()
+    surrogate_model.fit(searchspace, train_x.unsqueeze(-1), train_y.unsqueeze(-1))
 
     # recommend next experiments
     # TODO: use BayBE recommender and add widgets for strategy selection

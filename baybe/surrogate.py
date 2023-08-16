@@ -2,14 +2,19 @@
 """
 Surrogate models, such as Gaussian processes, random forests, etc.
 """
-from __future__ import annotations
+# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
+#  https://github.com/python-attrs/cattrs/issues/354
 
+import gc
+import sys
 from abc import ABC, abstractmethod
 from functools import wraps
-from typing import Callable, Dict, Optional, Tuple, Type
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type
 
+import cattrs
 import numpy as np
 import torch
+from attrs import define, field
 from botorch.fit import fit_gpytorch_mll_torch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
@@ -27,8 +32,7 @@ from torch import Tensor
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import is_abstract
-
+from baybe.utils import get_subclasses, SerialMixin, unstructure_base
 
 # Use float64 (which is recommended at least for BoTorch models)
 _DTYPE = torch.float64
@@ -36,6 +40,7 @@ _DTYPE = torch.float64
 # Define constants
 _MIN_TARGET_STD = 1e-6
 _MIN_VARIANCE = 1e-6
+_WRAPPER_MODELS = ("SplitModel", "ScaledModel")
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
@@ -64,28 +69,53 @@ def _var_to_covar(var: Tensor) -> Tensor:
     return torch.diag_embed(var)
 
 
-def catch_constant_targets(model_cls: Type[SurrogateModel]):
+def _get_model_params_validator(model_init: Callable) -> Callable:
+    """Constructs a validator based on the model class"""
+
+    def validate_model_params(obj, _, model_params: dict) -> None:
+        # Get model class name
+        model = obj.__class__.__name__
+
+        # GP does not support additional model params
+        if "GaussianProcess" in model and model_params:
+            raise ValueError(f"{model} does not support model params.")
+
+        # Invalid params
+        invalid_params = ", ".join(
+            [
+                key
+                for key in model_params.keys()
+                if key not in model_init.__code__.co_varnames
+            ]
+        )
+
+        if invalid_params:
+            raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
+
+    return validate_model_params
+
+
+def catch_constant_targets(model_cls: Type["Surrogate"]):
     """
-    Wraps a given `SurrogateModel` class that cannot handle constant training target
+    Wraps a given `Surrogate` class that cannot handle constant training target
     values such that these cases are handled by a separate model type.
     """
 
-    class SplitModel(SurrogateModel):
+    class SplitModel(*model_cls.__bases__):
         """
         A surrogate model that applies a separate strategy for cases where the training
         targets are all constant and no variance can be estimated.
         """
 
-        # Overwrite the registered subclass with the wrapped version
-        type = model_cls.type
-
         # The posterior mode is chosen to match that of the wrapped model class
-        joint_posterior = model_cls.joint_posterior
+        joint_posterior: ClassVar[bool] = model_cls.joint_posterior
 
-        def __init__(self, searchspace: SearchSpace, *args, **kwargs):
+        def __init__(self, *args, **kwargs):
             """Stores an instance of the underlying model class."""
-            super().__init__(searchspace)
-            self.model = model_cls(searchspace, *args, **kwargs)
+            super().__init__()
+            self.model = model_cls(*args, **kwargs)
+            self.__class__.__name__ = self.model.__class__.__name__
+            self.model_params = self.model.model_params
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
             """Calls the posterior function of the internal model instance."""
@@ -101,16 +131,18 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
 
             return mean, var
 
-        def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        def _fit(
+            self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        ) -> None:
             """Selects a model based on the variance of the targets and fits it."""
 
             # https://github.com/pytorch/pytorch/issues/29372
             # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
             if torch.std(train_y.ravel(), unbiased=False) < _MIN_TARGET_STD:
-                self.model = MeanPredictionModel(self.model.searchspace)
+                self.model = MeanPredictionSurrogate()
 
             # Fit the selected model with the training data
-            self.model.fit(train_x, train_y)
+            self.model.fit(searchspace, train_x, train_y)
 
         def __getattribute__(self, attr):
             """
@@ -131,18 +163,23 @@ def catch_constant_targets(model_cls: Type[SurrogateModel]):
     return SplitModel
 
 
-def scale_model(model_cls: Type[SurrogateModel]):
+def scale_model(model_cls: Type["Surrogate"]):
     """
-    Wraps a given `SurrogateModel` class such that it operates with scaled
+    Wraps a given `Surrogate` class such that it operates with scaled
     representations of the training and test data.
     """
 
-    class ScaledModel(model_cls):
+    class ScaledModel(*model_cls.__bases__):
         """Overrides the methods of the given model class such the use scaled data."""
+
+        # The posterior mode is chosen to match that of the wrapped model class
+        joint_posterior: ClassVar[bool] = model_cls.joint_posterior
 
         def __init__(self, *args, **kwargs):
             """Stores an instance of the underlying model class and a scaler object."""
             self.model = model_cls(*args, **kwargs)
+            self.__class__.__name__ = self.model.__class__.__name__
+            self.model_params = self.model.model_params
             self.scaler = None
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -156,11 +193,13 @@ def scale_model(model_cls: Type[SurrogateModel]):
             )
             return self.scaler.untransform(mean, covar)
 
-        def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        def _fit(
+            self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        ) -> None:
             """Fits the scaler and the model using the scaled training data."""
-            self.scaler = DefaultScaler(self.model.searchspace.discrete.comp_rep)
+            self.scaler = DefaultScaler(searchspace.discrete.comp_rep)
             train_x, train_y = self.scaler.fit_transform(train_x, train_y)
-            self.model.fit(train_x, train_y)
+            self.model.fit(searchspace, train_x, train_y)
 
         def __getattribute__(self, attr):
             """
@@ -182,16 +221,16 @@ def scale_model(model_cls: Type[SurrogateModel]):
 
 
 def batchify(
-    posterior: Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]
-) -> Callable[[SurrogateModel, Tensor], Tuple[Tensor, Tensor]]:
+    posterior: Callable[["Surrogate", Tensor], Tuple[Tensor, Tensor]]
+) -> Callable[["Surrogate", Tensor], Tuple[Tensor, Tensor]]:
     """
-    Wraps `SurrogateModel` posterior functions that are incompatible with t- and
+    Wraps `Surrogate` posterior functions that are incompatible with t- and
     q-batching such that they become able to process batched inputs.
     """
 
     @wraps(posterior)
     def sequential_posterior(
-        model: SurrogateModel, candidates: Tensor
+        model: "Surrogate", candidates: Tensor
     ) -> [Tensor, Tensor]:
         """A posterior function replacement that processes batches sequentially."""
 
@@ -239,21 +278,19 @@ def batchify(
     return sequential_posterior
 
 
-class SurrogateModel(ABC):
+@define
+class Surrogate(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
-    # Dictionary for bookkeeping of subclasses
-    SUBCLASSES: Dict[str, Type[SurrogateModel]] = {}
+    # Class variables
+    joint_posterior: ClassVar[bool]
 
-    # Class properties
-    type: str
-    joint_posterior: bool
-
-    def __init__(self, searchspace: SearchSpace):
-        # TODO: consider alternative architecture where the surrogate model really only
-        #   represents the "mathematical" surrogate, i.e. where it has no dependencies
-        #   to other objects like the search space
-        self.searchspace = searchspace
+    # Object variables
+    # TODO: In a next refactoring, the user friendliness could be improved by directly
+    #   exposing the individual model parameters via the constructor, instead of
+    #   expecting them in the form of an unstructured dictionary. This would also
+    #   remove the need for the current `_get_model_params_validator` logic.
+    model_params: Dict[str, Any] = field(factory=dict)
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """
@@ -303,10 +340,12 @@ class SurrogateModel(ABC):
         optional conversion to a covariance matrix is handled by the public method.
         """
 
-    def fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
         # TODO: Adjust scale_model decorator to support other model types as well.
-        if (not self.searchspace.continuous.is_empty) and (self.type != "GP"):
+        if (not searchspace.continuous.is_empty) and (
+            "GaussianProcess" not in self.__class__.__name__
+        ):
             raise NotImplementedError(
                 "Continuous search spaces are currently only supported by GPs."
             )
@@ -315,44 +354,42 @@ class SurrogateModel(ABC):
         train_x = _prepare_inputs(train_x)
         train_y = _prepare_targets(train_y)
 
-        return self._fit(train_x, train_y)
+        return self._fit(searchspace, train_x, train_y)
 
     @abstractmethod
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """
         Implements the actual fitting logic. In contrast to its public counterpart,
         no data validation/transformation is carried out but only the raw fitting
         operation is conducted.
         """
 
-    @classmethod
-    def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
-        super().__init_subclass__(**kwargs)
-        if not is_abstract(cls):
-            cls.SUBCLASSES[cls.type] = cls
 
-
-class GaussianProcessModel(SurrogateModel):
+@define
+class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
 
-    type = "GP"
-    joint_posterior = True
+    # Class variables
+    joint_posterior: ClassVar[bool] = True
 
-    def __init__(self, searchspace: SearchSpace):
-        super().__init__(searchspace)
-        self.model: Optional[SingleTaskGP] = None
+    # Object variables
+    model_params: Dict[str, Any] = field(
+        factory=dict,
+        converter=dict,
+        validator=_get_model_params_validator(SingleTaskGP.__init__),
+    )
+    _model: Optional[SingleTaskGP] = field(init=False, default=None)
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
-        posterior = self.model.posterior(candidates)
+        posterior = self._model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
 
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
 
         # Get the input bounds from the search space in BoTorch Format
-        bounds = self.searchspace.param_bounds_comp
+        bounds = searchspace.param_bounds_comp
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
@@ -363,7 +400,7 @@ class GaussianProcessModel(SurrogateModel):
         # ---------- GP prior selection ---------- #
         # TODO: temporary prior choices adapted from edbo, replace later on
 
-        mordred = self.searchspace.contains_mordred or self.searchspace.contains_rdkit
+        mordred = searchspace.contains_mordred or searchspace.contains_rdkit
         if mordred and train_x.shape[-1] < 50:
             mordred = False
 
@@ -420,7 +457,7 @@ class GaussianProcessModel(SurrogateModel):
         likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
-        self.model = SingleTaskGP(
+        self._model = SingleTaskGP(
             train_x,
             train_y,
             input_transform=input_transform,
@@ -429,25 +466,25 @@ class GaussianProcessModel(SurrogateModel):
             covar_module=covar_module,
             likelihood=likelihood,
         )
-        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
+        mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
         # IMPROVE: The step_limit=100 stems from the former (deprecated)
         #  `fit_gpytorch_torch` function, for which this was the default. Probably,
         #   one should use a smarter logic here.
         fit_gpytorch_mll_torch(mll, step_limit=100)
 
 
-class MeanPredictionModel(SurrogateModel):
+@define
+class MeanPredictionSurrogate(Surrogate):
     """
     A trivial surrogate model that provides the average value of the training targets
     as posterior mean and a (data-independent) constant posterior variance.
     """
 
-    type = "MP"
-    joint_posterior = False
+    # Class variables
+    joint_posterior: ClassVar[bool] = False
 
-    def __init__(self, searchspace: SearchSpace):
-        super().__init__(searchspace)
-        self.target_value = None
+    # Object variables
+    target_value: Optional[float] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -457,22 +494,27 @@ class MeanPredictionModel(SurrogateModel):
         var = torch.ones(len(candidates))
         return mean, var
 
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
         self.target_value = train_y.mean().item()
 
 
 @catch_constant_targets
 @scale_model
-class RandomForestModel(SurrogateModel):
+@define
+class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
 
-    type = "RF"
-    joint_posterior = False
+    # Class variables
+    joint_posterior: ClassVar[bool] = False
 
-    def __init__(self, searchspace: SearchSpace):
-        super().__init__(searchspace)
-        self.model: Optional[RandomForestRegressor] = None
+    # Object variables
+    model_params: Dict[str, Any] = field(
+        factory=dict,
+        converter=dict,
+        validator=_get_model_params_validator(RandomForestRegressor.__init__),
+    )
+    _model: Optional[RandomForestRegressor] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -485,8 +527,8 @@ class RandomForestModel(SurrogateModel):
         predictions = torch.from_numpy(
             np.asarray(
                 [
-                    self.model.estimators_[tree].predict(candidates)
-                    for tree in range(self.model.n_estimators)
+                    self._model.estimators_[tree].predict(candidates)
+                    for tree in range(self._model.n_estimators)
                 ]
             )
         )
@@ -497,29 +539,38 @@ class RandomForestModel(SurrogateModel):
 
         return mean, var
 
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = RandomForestRegressor()
-        self.model.fit(train_x, train_y.ravel())
+        self._model = RandomForestRegressor(**(self.model_params))
+        self._model.fit(train_x, train_y.ravel())
 
 
 @catch_constant_targets
 @scale_model
-class NGBoostModel(SurrogateModel):
+@define
+class NGBoostSurrogate(Surrogate):
     """A natural-gradient-boosting surrogate model."""
 
-    type = "NG"
-    joint_posterior = False
+    # Class variables
+    joint_posterior: ClassVar[bool] = False
+    _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
 
-    def __init__(self, searchspace: SearchSpace):
-        super().__init__(searchspace)
-        self.model: Optional[NGBRegressor] = None
+    # Object variables
+    model_params: Dict[str, Any] = field(
+        factory=dict,
+        converter=dict,
+        validator=_get_model_params_validator(NGBRegressor.__init__),
+    )
+    _model: Optional[NGBRegressor] = field(init=False, default=None)
+
+    def __attrs_post_init__(self):
+        self.model_params = {**self._default_model_params, **self.model_params}
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
-        dists = self.model.pred_dist(candidates)
+        dists = self._model.pred_dist(candidates)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists.mean())
@@ -527,30 +578,33 @@ class NGBoostModel(SurrogateModel):
 
         return mean, var
 
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = NGBRegressor(n_estimators=25, verbose=False).fit(
-            train_x, train_y.ravel()
-        )
+        self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
 
 @catch_constant_targets
 @scale_model
-class BayesianLinearModel(SurrogateModel):
+@define
+class BayesianLinearSurrogate(Surrogate):
     """A Bayesian linear regression surrogate model."""
 
-    type = "BL"
-    joint_posterior = False
+    # Class variables
+    joint_posterior: ClassVar[bool] = False
 
-    def __init__(self, searchspace: SearchSpace):
-        super().__init__(searchspace)
-        self.model: Optional[ARDRegression] = None
+    # Object variables
+    model_params: Dict[str, Any] = field(
+        factory=dict,
+        converter=dict,
+        validator=_get_model_params_validator(ARDRegression.__init__),
+    )
+    _model: Optional[ARDRegression] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """See base class."""
         # Get predictions
-        dists = self.model.predict(candidates.numpy(), return_std=True)
+        dists = self._model.predict(candidates.numpy(), return_std=True)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists[0])
@@ -558,7 +612,78 @@ class BayesianLinearModel(SurrogateModel):
 
         return mean, var
 
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
-        self.model = ARDRegression()
-        self.model.fit(train_x, train_y.ravel())
+        self._model = ARDRegression(**(self.model_params))
+        self._model.fit(train_x, train_y.ravel())
+
+
+def remove_model(raw_unstructure_hook):
+    """Removes the model in a surrogate for serialization."""
+    # TODO: No longer required once the following feature is released:
+    #   https://github.com/python-attrs/cattrs/issues/40
+
+    def wrapper(obj):
+        dict_ = raw_unstructure_hook(obj)
+        dict_.pop("_model", None)
+        dict_.pop("target_value", None)
+        return dict_
+
+    return wrapper
+
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+def structure_surrogate(val, _):
+    """Structures a surrogate model."""
+    # TODO [15436]
+    # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
+
+    # NOTE:
+    # Due to above issue,
+    # it is difficult to find the wrapped class in the subclass structure.
+    # The renaming only happens in the init method of wrapper classes
+    # (classes that haven't been initialized won't have the overwritten name)
+    # Since any method revolving `cls()` will not work as expected,
+    # we rely temporarily on `getattr` to allow the wrappers to be called on demand.
+
+    _type = val["type"]
+
+    cls = getattr(sys.modules[__name__], _type, None)
+    # cls = getattr(baybe.surrogate, ...) if used in another module
+
+    if cls is None:
+        raise ValueError(f"Unknown subclass {_type}.")
+
+    return cattrs.structure_attrs_fromdict(val, cls)
+
+
+def get_available_surrogates() -> List[Type[Surrogate]]:
+    """Lists all available surrogate models."""
+    # List available names
+    available_names = {
+        cl.__name__
+        for cl in get_subclasses(Surrogate)
+        if cl.__name__ not in _WRAPPER_MODELS
+    }
+
+    # Convert them to classes
+    available_classes = [
+        getattr(sys.modules[__name__], mdl_name, None) for mdl_name in available_names
+    ]
+
+    # TODO: The initialization of the classes is currently necessary for the renaming
+    #  to take place (see [15436] and NOTE in `structure_surrogate`).
+    [  # pylint: disable=expression-not-assigned
+        cl() for cl in available_classes if cl is not None
+    ]
+
+    return [cl for cl in available_classes if cl is not None]
+
+
+# Register (un-)structure hooks
+cattrs.register_unstructure_hook(Surrogate, remove_model(unstructure_base))
+cattrs.register_structure_hook(Surrogate, structure_surrogate)
+
+# Related to [15436]
+gc.collect()
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

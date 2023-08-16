@@ -22,6 +22,12 @@ from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
+from baybe.surrogate import (
+    BayesianLinearSurrogate,
+    GaussianProcessSurrogate,
+    NGBoostSurrogate,
+    RandomForestSurrogate,
+)
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
@@ -46,17 +52,17 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # This model uses available data to model the objective function as well as the uncertainty.
 # The surrogate model is then used by the acquisition function to make recommendations.
 
-# The following surrogate models are available.
+# The following are some available basic surrogates
+# Use `baybe.surrogate.get_available_surrogates()` for a complete list
 available_surrogate_models = [
-    "GP",  # GaussianProcessModel
-    "RF",  # Random Forest Model
-    "NG",  # Natural Gradient Boosting
-    "BL",  # Bayesian Linear Regression
+    GaussianProcessSurrogate(),
+    RandomForestSurrogate(),
+    NGBoostSurrogate(),
+    BayesianLinearSurrogate(),
 ]
 
-# Per default, a Gaussian Process is used.
-
-SURROGATE_MODEL = "GP"
+# Per default a Gaussian Process is used
+SURROGATE_MODEL = GaussianProcessSurrogate()
 
 
 #### Acquisition function
@@ -102,7 +108,7 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 strategy = Strategy(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=SequentialGreedyRecommender(
-        surrogate_model_cls=SURROGATE_MODEL, acquisition_function_cls=ACQ_FUNCTION
+        surrogate_model=SURROGATE_MODEL, acquisition_function_cls=ACQ_FUNCTION
     ),
     allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
     allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,

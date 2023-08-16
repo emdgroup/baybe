@@ -12,7 +12,7 @@ from baybe.strategies.bayesian import (
     SequentialGreedyRecommender,
 )
 from baybe.strategies.recommender import NonPredictiveRecommender, Recommender
-from baybe.surrogate import SurrogateModel
+from baybe.surrogate import get_available_surrogates
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
@@ -22,8 +22,7 @@ from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 valid_acquisition_functions = get_args(
     get_type_hints(BayesianRecommender.__init__)["acquisition_function_cls"]
 )
-# TODO: refactor code to avoid the set deduplication below
-valid_surrogate_models = list({cls.type for cls in get_subclasses(SurrogateModel)})
+valid_surrogate_models = [cls() for cls in get_available_surrogates()]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 valid_discrete_recommenders = [
     cls()
@@ -122,7 +121,7 @@ def run_iterations(baybe, n_iterations, batch_quantity):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("surrogate_model_cls", valid_surrogate_models)
+@pytest.mark.parametrize("surrogate_model", valid_surrogate_models)
 def test_iter_surrogate_model(baybe, n_iterations, batch_quantity):
     run_iterations(baybe, n_iterations, batch_quantity)
 

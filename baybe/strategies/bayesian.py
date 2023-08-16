@@ -30,7 +30,7 @@ from baybe.strategies.recommender import (
     Recommender,
     select_candidates_and_recommend,
 )
-from baybe.surrogate import SurrogateModel
+from baybe.surrogate import GaussianProcessSurrogate, Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
 
 
@@ -49,7 +49,7 @@ def validate_percentage(obj, _, value):
 class BayesianRecommender(Recommender, ABC):
     # TODO Docstrings missing
 
-    surrogate_model_cls: str = field(default="GP")
+    surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
     acquisition_function_cls: Literal[
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
     ] = field(default="qEI")
@@ -103,7 +103,7 @@ class BayesianRecommender(Recommender, ABC):
         searchspace: SearchSpace,
         train_x: pd.DataFrame,
         train_y: pd.DataFrame,
-    ) -> SurrogateModel:
+    ) -> Surrogate:
         """
         Uses the given data to train a fresh surrogate model instance for the DOE
         strategy.
@@ -119,15 +119,9 @@ class BayesianRecommender(Recommender, ABC):
         if not train_x.index.equals(train_y.index):
             raise ValueError("Training inputs and targets must have the same index.")
 
-        surrogate_model_cls = self.get_surrogate_model_cls()
-        surrogate_model = surrogate_model_cls(searchspace)
-        surrogate_model.fit(*to_tensor(train_x, train_y))
+        self.surrogate_model.fit(searchspace, *to_tensor(train_x, train_y))
 
-        return surrogate_model
-
-    def get_surrogate_model_cls(self):  # pylint: disable=missing-function-docstring
-        # TODO: work in progress
-        return SurrogateModel.SUBCLASSES[self.surrogate_model_cls]
+        return self.surrogate_model
 
     def recommend(
         self,

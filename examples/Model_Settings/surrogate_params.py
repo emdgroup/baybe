@@ -1,0 +1,147 @@
+### Example for custom parameter passing in surrogate models
+# pylint: disable=line-too-long
+
+"""
+This example shows the creation of a BayBE object, how to define surrogate
+models with custom model parameters and the validations that are done.
+It also shows how to specify these parameters through a configuration.
+"""
+
+# This example assumes some basic familiarity with using BayBE.
+# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+
+#### Necessary imports
+
+import numpy as np
+
+from baybe.core import BayBE
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
+from baybe.searchspace import SearchSpace
+from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
+from baybe.surrogate import NGBoostSurrogate
+from baybe.targets import NumericalTarget, Objective
+from baybe.utils import add_fake_results
+
+
+#### Experiment Setup
+
+parameters = [
+    CategoricalParameter(
+        name="Granularity",
+        values=["coarse", "medium", "fine"],
+        encoding="OHE",
+    ),
+    NumericalDiscreteParameter(
+        name="Pressure[bar]",
+        values=[1, 5, 10],
+        tolerance=0.2,
+    ),
+    NumericalDiscreteParameter(
+        name="Temperature[degree_C]",
+        values=np.linspace(100, 200, 10),
+    ),
+    SubstanceParameter(
+        name="Solvent",
+        data={
+            "Solvent A": "COC",
+            "Solvent B": "CCC",
+            "Solvent C": "O",
+            "Solvent D": "CS(=O)C",
+        },
+        encoding="MORDRED",
+    ),
+]
+
+#### Create a surrogate model with custom model parameters
+
+# Please note that model_params is an optional argument:
+# The defaults will be used if none specified
+surrogate_model = NGBoostSurrogate(model_params={"n_estimators": 50, "verbose": True})
+
+#### Validation of model parameters
+
+try:
+    invalid_surrogate_model = NGBoostSurrogate(model_params={"NOT_A_PARAM": None})
+except ValueError as e:
+    print("The validator will give an error here:")
+    print(e)
+
+#### Links for documentation
+
+# Note that `GaussianProcessSurrogate` will support custom parameters in the future
+
+# [`RandomForestModel`](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)
+# [`NGBoostModel`](https://stanfordmlgroup.github.io/ngboost/1-useage.html)
+# [`BayesianLinearModel`](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ARDRegression.html)
+
+#### Creating the BayBE object
+
+baybe_obj = BayBE(
+    searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
+    objective=Objective(
+        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
+    ),
+    strategy=Strategy(
+        recommender=SequentialGreedyRecommender(surrogate_model=surrogate_model),
+        initial_recommender=FPSRecommender(),
+    ),
+)
+
+#### Iterate with recommendations and measurements
+
+# We can print the surrogate model object
+print("The model object in json format:")
+print(surrogate_model.to_json(), end="\n" * 3)
+
+# Let's do a first round of recommendation
+recommendation = baybe_obj.recommend(batch_quantity=2)
+
+print("Recommendation from baybe object:")
+print(recommendation)
+
+# Add some fake results
+add_fake_results(recommendation, baybe_obj)
+baybe_obj.add_measurements(recommendation)
+
+#### Model Outputs
+
+# Note that this model is only triggered when there is data.
+print("Here you will see some model outputs as we set verbose to True")
+
+# Do another round of recommendations
+recommendation = baybe_obj.recommend(batch_quantity=2)
+
+
+# Print second round of recommendations
+print("Recommendation from baybe object:")
+print(recommendation)
+
+#### Using configuration instead
+
+# Note that this can be placed inside an overall baybe config
+# Refer to [`create_from_config`](./../Serialization/create_from_config.md) for an example
+
+# Note that the following explicit call `str()` is not strictly necessary.
+# It is included since our method of converting this example to a markdown file does not interpret
+# this part of the code as `python` code if we do not include this call.
+CONFIG = str(
+    """
+{
+    "type": "NGBoostSurrogate",
+    "model_params": {
+        "n_estimators": 50,
+        "verbose": true
+    }
+}
+"""
+)
+
+#### Model creation from json
+recreate_model = NGBoostSurrogate.from_json(CONFIG)
+
+# This configuration creates the same model
+assert recreate_model == surrogate_model
