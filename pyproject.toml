@@ -24,6 +24,7 @@ dependencies = [
     "opentelemetry-exporter-otlp>=1.16.0",
     "opentelemetry-sdk-extension-aws>=2.0.0",
     "pandas>=1.4.2",
+    "protobuf<=3.20.3",
     "rdkit>=2022.3.4",
     "scikit-learn>=1.1.1",
     "scikit-learn-extra>=0.3.0",
