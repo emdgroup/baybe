@@ -29,7 +29,7 @@ dependencies = [
     "rdkit>=2022.3.4",
     "scikit-learn>=1.1.1",
     "scikit-learn-extra>=0.3.0",
-    "scipy>=1.9.3",
+    "scipy>=1.10.1",
     "setuptools-scm>=7.1.0",
     "torch>=1.11.0",
 ]
@@ -46,6 +46,8 @@ dev = [
     "matplotlib>=3.6.3",
     "mypy>=1.2.0",
     "openpyxl>=3.0.9",
+    "pip-audit>=2.5.5",
+    "pip-tools>=7.3.0",
     "plotly>=5.10.0",
     "pre-commit==2.19.0",  # see DEV TOOLS NOTE
     "pylint==2.17.2",  # see DEV TOOLS NOTE
