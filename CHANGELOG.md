@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded numpy requirement to >= 1.24.1
 - Requires `protobuf~=3.20.3`
 - `SearchSpace` parameters in surrogate models are now handled in `fit`
+- Dataframes are encoded in binary for serialization
+- `comp_rep` is loaded directly from the serialization string
 
 ### Fixed
 - Include scaling in FPS recommender

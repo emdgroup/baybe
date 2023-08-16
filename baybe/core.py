@@ -3,10 +3,13 @@
 """
 Core functionality of BayBE. Main point of interaction via Python.
 """
+
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
+import base64
 import json
+from io import BytesIO
 from typing import List
 
 import cattrs
@@ -26,6 +29,7 @@ from baybe.telemetry import (
 )
 from baybe.utils import eq_dataframe, SerialMixin
 
+
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # TODO[12356]: There should be a way to organize several converters, instead of
 #   registering the hooks with the global converter. The global converter is currently
@@ -37,13 +41,19 @@ from baybe.utils import eq_dataframe, SerialMixin
 #   then implement several serialization converters as well that arbitrarily combine
 #   parameter and constraint hooks/converters.
 
-cattrs.register_unstructure_hook(
-    pd.DataFrame, lambda x: x.to_json(orient="split", double_precision=15)
-)
-cattrs.register_structure_hook(
-    pd.DataFrame,
-    lambda d, _: pd.read_json(d, orient="split", dtype=False, precise_float=True),
-)
+
+def structure_dataframe_hook(string: str, _) -> pd.DataFrame:
+    buffer = BytesIO()
+    buffer.write(base64.b64decode(string.encode("utf-8")))
+    return pd.read_parquet(buffer)
+
+
+def unstructure_dataframe_hook(df: pd.DataFrame) -> str:
+    return base64.b64encode(df.to_parquet()).decode("utf-8")
+
+
+cattrs.register_unstructure_hook(pd.DataFrame, unstructure_dataframe_hook)
+cattrs.register_structure_hook(pd.DataFrame, structure_dataframe_hook)
 
 
 def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
