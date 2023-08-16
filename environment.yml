@@ -18,7 +18,7 @@ dependencies:
 - matplotlib==3.6.3
 - mordred==1.2.0
 - mypy==1.2.0
-- numpy==1.24.0
+- numpy==1.24.1
 - openpyxl==3.0.9
 - opentelemetry-sdk==1.16.0
 - opentelemetry-exporter-otlp==1.16.0
@@ -28,12 +28,13 @@ dependencies:
 - pip==22.1.2
 - pandas==1.4.2
 - plotly==5.10.0
+- protobuf==3.20.3
 - pytest==7.2.0
 - pytorch==1.11.0
 - rdkit==2022.3.4
 - scikit-learn==1.1.1
 - scipy==1.9.3
-- seaborn==0.11.2
+- seaborn==0.12.2
 - setuptools-scm==7.1.0
 - streamlit==1.20.0
 - pip:

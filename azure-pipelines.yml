@@ -52,7 +52,7 @@ stages:
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
           eval "$(micromamba shell hook --shell=bash)"
           micromamba activate $(CONDA_ENV)
-          python -m pip install '.[extra]'
+          python -m pip install '.'
         displayName: "Install BayBE Package"
 
       - script: |

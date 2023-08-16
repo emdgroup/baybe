@@ -68,12 +68,11 @@ pip install .
 ```
 
 There are additional dependencies that can be installed corresponding to linters, 
-plotters etc. (`dev`) and scikit-learn-extra (`extra`) which is not yet available 
-on osx-arm64. A developer would typically also install the package in editable mode 
+plotters etc. (`dev`). A developer would typically also install the package in editable mode 
 ('-e').
 
 ```bash
-pip install -e '.[dev,extra]'
+pip install -e '.[dev]'
 ```
 
 ## Getting Started

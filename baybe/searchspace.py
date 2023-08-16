@@ -165,7 +165,7 @@ class SubspaceDiscrete:
 
         # Try to find a parameter match for each dataframe column
         parameters = []
-        for name, series in df.iteritems():
+        for name, series in df.items():
 
             # If a match is found, assert that the values are in range
             if match := specified_params.pop(name, None):
@@ -347,7 +347,7 @@ class SubspaceContinuous:
         # Create the corresponding parameters and from them the search space
         parameters = [
             NumericalContinuousParameter(name, bound)
-            for (name, bound) in bounds.iteritems()
+            for (name, bound) in bounds.items()
         ]
         return SubspaceContinuous(parameters)
 

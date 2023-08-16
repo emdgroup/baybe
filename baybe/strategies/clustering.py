@@ -14,14 +14,10 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
 from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
+from sklearn_extra.cluster import KMedoids
 
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.strategies.recommender import NonPredictiveRecommender
-
-try:
-    from sklearn_extra.cluster import KMedoids
-except ImportError:
-    KMedoids = None
 
 
 _ScikitLearnModel = TypeVar("_ScikitLearnModel")
@@ -118,39 +114,33 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         return candidates_comp.index[selection]
 
 
-if KMedoids:
-    # TODO: Instead of hiding the class, raise an error when attempting to create the
-    #   object. However, this requires to replace the current class-based handling of
-    #   recommenders with an object-based logic, since otherwise the exception can be
-    #   triggered arbitrarily late in the DOE process.
+@define
+class PAMClusteringRecommender(SKLearnClusteringRecommender):
+    """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-    @define
-    class PAMClusteringRecommender(SKLearnClusteringRecommender):
-        """Partitioning Around Medoids (PAM) initial clustering strategy."""
+    # Class variables
+    model_class: ClassVar[Type[_ScikitLearnModel]] = KMedoids
+    model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
+    _use_custom_selector: ClassVar[bool] = True
 
-        # Class variables
-        model_class: ClassVar[Type[_ScikitLearnModel]] = KMedoids
-        model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
-        _use_custom_selector: ClassVar[bool] = True
+    # Object variables
+    model_params: dict = field()
 
-        # Object variables
-        model_params: dict = field()
+    @model_params.default
+    def default_model_params(self) -> dict:
+        return {"max_iter": 100, "init": "k-medoids++"}
 
-        @model_params.default
-        def default_model_params(self) -> dict:
-            return {"max_iter": 100, "init": "k-medoids++"}
-
-        def _make_selection_custom(
-            self,
-            model: _ScikitLearnModel,
-            candidates_scaled: pd.DataFrame,
-        ) -> List[int]:
-            """
-            In PAM, cluster centers (medoids) correspond to actual data points,
-            which means they can be directly used for the selection.
-            """
-            selection = model.medoid_indices_.tolist()
-            return selection
+    def _make_selection_custom(
+        self,
+        model: _ScikitLearnModel,
+        candidates_scaled: pd.DataFrame,
+    ) -> List[int]:
+        """
+        In PAM, cluster centers (medoids) correspond to actual data points,
+        which means they can be directly used for the selection.
+        """
+        selection = model.medoid_indices_.tolist()
+        return selection
 
 
 @define

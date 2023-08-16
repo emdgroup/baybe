@@ -22,9 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adjusted comments in example files
 - Accelerated the slowest tests
 - Removed try blocks from config examples
+- Upgraded numpy requirement to >= 1.24.1
+- Requires `protobuf~=3.20.3`
 
 ### Fixed
 - Include scaling in FPS recommender
+- Support for pandas>=2.0.0
 
 ## [0.3.2] - 2023-07-24
 ### Added
