@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2023-08-16
 ### Added
 - `from_dataframe` convenience constructors for discrete and continuous subspaces 
 - `from_bounds` convenience constructor for continuous subspaces
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Accelerated the slowest tests
 - Removed try blocks from config examples
 - Upgraded numpy requirement to >= 1.24.1
-- Requires `protobuf~=3.20.3`
+- Requires `protobuf<=3.20.3`
 - `SearchSpace` parameters in surrogate models are now handled in `fit`
 - Dataframes are encoded in binary for serialization
 - `comp_rep` is loaded directly from the serialization string
