@@ -156,7 +156,11 @@ stages:
         displayName: "Run PyLint Linter"
 
     - job: "Changelog"
-      condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+      condition: |
+        and(
+        ne(variables['Build.SourceBranch'], 'refs/heads/main'), 
+        not(startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+        )
       pool:
         vmImage: ubuntu-20.04
 
@@ -174,7 +178,7 @@ stages:
           continueOnError: false
           displayName: "Assert Changelog Edit"
 
-    - job: "Vulnerability Check"
+    - job: "Vulnerability"
 
       pool:
         vmImage: ubuntu-20.04
