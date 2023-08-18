@@ -9,7 +9,7 @@ trigger:
 stages:
 
 - stage: Unit_Tests
-  displayName: Unit Tests
+  displayName: "Unit Tests"
 
   jobs:
     - job: "PyTest"
@@ -27,10 +27,10 @@ stages:
       - checkout: self
 
       - script: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: Add Conda to PATH
+        displayName: "Add Conda to PATH"
 
       - task: Cache@2
-        displayName: Use Cached Conda Env
+        displayName: "Use Cached Conda Env"
         inputs:
           key: conda | environment.yml
           path: $(CONDA_HOME)
@@ -39,13 +39,13 @@ stages:
       - script: |
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
           "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
-        displayName: Install Micromamba
+        displayName: "Install Micromamba"
 
       - script: |
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
           eval "$(micromamba shell hook --shell=bash)"
           micromamba create -y --file environment.yml
-        displayName: Create Conda Env If Not Cached
+        displayName: "Create Conda Env If Not Cached"
         condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
 
       - script: |
@@ -60,7 +60,7 @@ stages:
           eval "$(micromamba shell hook --shell=bash)"
           micromamba activate $(CONDA_ENV)
           python -m pip install unittest-xml-reporting pytest-azurepipelines
-        displayName: Install Code Coverage Requirements"
+        displayName: "Install Code Coverage Requirements"
 
       - script: |
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
@@ -70,10 +70,10 @@ stages:
           touch ./tests/__init__.py
           touch ./tests/serialization/__init__.py
           pytest -v -p no:warnings --cov=baybe --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/test-results.xml --cov-report=html ./tests
-        displayName: Run PyTest
+        displayName: "Run PyTest"
 
       - task: PublishCodeCoverageResults@1
-        displayName: Publish Coverage Report
+        displayName: "Publish Coverage Report"
         inputs:
           codeCoverageTool: Cobertura
           summaryFileLocation: $(System.DefaultWorkingDirectory)/coverage.xml
@@ -85,7 +85,7 @@ stages:
           eval "$(micromamba shell hook --shell=bash)"
           micromamba activate $(CONDA_ENV)
           coverage report --fail-under=70
-        displayName: Assert Overall Coverage
+        displayName: "Assert Overall Coverage"
 
       # Fail if any individual coverage is below 50%
       - script: |
@@ -93,10 +93,10 @@ stages:
           eval "$(micromamba shell hook --shell=bash)"
           micromamba activate $(CONDA_ENV)
           coverage report | grep -E -o '[0-9]+%' | tr -d '%' | sed '$d' | awk '{if ($1<50) exit 1 }'  
-        displayName: Assert Individual Coverage
+        displayName: "Assert Individual Coverage"
 
 - stage: Lint
-  displayName: Format, Lint, Asserts
+  displayName: "Format, Lint, Asserts"
 
   jobs:
     - job: "Lint"
@@ -113,10 +113,10 @@ stages:
       - checkout: self
 
       - script: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: Add Conda to PATH
+        displayName: "Add Conda to PATH"
 
       - task: Cache@2
-        displayName: Use Cached Conda Env
+        displayName: "Use Cached Conda Env"
         inputs:
           key: conda | environment.yml
           path: $(CONDA_HOME)
@@ -125,13 +125,13 @@ stages:
       - script: |
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
           "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
-        displayName: Install Micromamba
+        displayName: "Install Micromamba"
 
       - script: |
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
           eval "$(micromamba shell hook --shell=bash)"
           micromamba create -y --file environment.yml
-        displayName: Create Conda Env If Not Cached
+        displayName: "Create Conda Env If Not Cached"
         condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
 
       - script: |
@@ -156,7 +156,11 @@ stages:
         displayName: "Run PyLint Linter"
 
     - job: "Changelog"
-      condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+      condition: |
+        and(
+        ne(variables['Build.SourceBranch'], 'refs/heads/main'), 
+        not(startsWith(variables['build.sourceBranch'], 'refs/tags/'))
+        )
       pool:
         vmImage: ubuntu-20.04
 
@@ -172,10 +176,59 @@ stages:
               exit 1
             fi
           continueOnError: false
-          displayName: Assert Changelog Edit
+          displayName: "Assert Changelog Edit"
+
+    - job: "Vulnerability"
+
+      pool:
+        vmImage: ubuntu-20.04
+
+      variables:
+        CONDA_ENV: baybe
+        CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
+        CONDA_ROOT: /usr/share/miniconda/
+
+      steps:
+      - checkout: self
+
+      - script: echo "##vso[task.prependpath]$CONDA/bin"
+        displayName: "Add Conda to PATH"
+
+      - task: Cache@2
+        displayName: "Use Cached Conda Env"
+        inputs:
+          key: conda | environment.yml
+          path: $(CONDA_HOME)
+          cacheHitVar: CONDA_CACHE_RESTORED
+
+      - script: |
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
+        displayName: "Install Micromamba"
+
+      - script: |
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba create -y --file environment.yml
+        displayName: "Create Conda Env If Not Cached"
+        condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
+
+      - script: |
+          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba activate $(CONDA_ENV)
+          EXCLUDES=()
+          while IFS= read -r ID; do
+              if [[ $ID != \#* ]]; then
+                  EXCLUDES+=("--ignore-vuln")
+                  EXCLUDES+=("${ID}")
+              fi
+          done < .pip-audit_exceptions
+          pip-audit "${EXCLUDES[@]}"
+        displayName: "Perform Check"
 
 - stage: Release  # taken from foundry-local
-  displayName: Publish package
+  displayName: "Publish package"
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
 
   jobs:
@@ -187,25 +240,25 @@ stages:
       steps:
         - task: PipAuthenticate@1
           inputs:
-            artifactFeeds: 'artifacts' # Reactivate once upstream is up to date
+            artifactFeeds: "artifacts" # Reactivate once upstream is up to date
             # Setting this variable to "true" will force pip to get distributions from official python registry first and fallback to feeds mentioned above if distributions are not found there.
             onlyAddExtraIndex: true
-          displayName: 'Pip Authenticate'
+          displayName: "Pip Authenticate"
 
         - script: |
             pip wheel . --no-deps --wheel-dir dist
             ls -lat dist
-          displayName: 'Create Wheel'
+          displayName: "Create Wheel"
 
         - script: |
             WHL_PATH=$( find dist -name "*.whl")
             echo $WHL_PATH
             echo "##vso[task.setvariable variable=whlName]$WHL_PATH"
-          displayName: 'Get whl Filename'
+          displayName: "Get whl Filename"
 
         - publish: $(System.DefaultWorkingDirectory)/$(whlName)
           artifact: baybe_pipeline_snapshot
-          displayName: 'Upload Snapshot Artifact'
+          displayName: "Upload Snapshot Artifact"
 
         # publish on tagged build
         - script: |
