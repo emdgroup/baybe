@@ -1,6 +1,9 @@
 # DEV TOOLS NOTE: The versions of all dev tools should be consistent everywhere
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
+# AUDIT NOTE: These packages have been pinned as secondary dependencies flagged by
+# pip-audit for vulnerabilities in lower versions
+
 name: baybe
 channels:
 - conda-forge
@@ -33,11 +36,13 @@ dependencies:
 - pytest==7.2.0
 - pytorch==1.11.0
 - rdkit==2022.3.4
+- requests==2.31.0 # see AUDIT NOTE
 - scikit-learn==1.1.1
 - scipy==1.10.1
 - seaborn==0.12.2
 - setuptools-scm==7.1.0
 - streamlit==1.20.0
+- tornado==6.3.3 # see AUDIT NOTE
 - pip:
   # Temporarily install ngboost via pip to resolve scikit-learn dependency
   # The conda-forge version requires >=0.21, <=0.24 but pip only needs >=0.21
