@@ -217,8 +217,14 @@ stages:
           export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
           eval "$(micromamba shell hook --shell=bash)"
           micromamba activate $(CONDA_ENV)
-          pip-compile
-          pip-audit -r requirements.txt
+          EXCLUDES=()
+          while IFS= read -r ID; do
+              if [[ $ID != \#* ]]; then
+                  EXCLUDES+=("--ignore-vuln")
+                  EXCLUDES+=("${ID}")
+              fi
+          done < .pip-audit_exceptions
+          pip-audit "${EXCLUDES[@]}"
         displayName: "Perform Check"
 
 - stage: Release  # taken from foundry-local
