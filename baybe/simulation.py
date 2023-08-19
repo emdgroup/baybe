@@ -141,7 +141,7 @@ def simulate_scenarios(
     results = pd.DataFrame()
 
     # Simulate all configuration variants
-    for scenario_name, baybe_template in scenarios.items():
+    for scenario_id, baybe_template in scenarios.items():
 
         # Create a dataframe to store the results for the current variant
         results_var = pd.DataFrame()
@@ -152,7 +152,7 @@ def simulate_scenarios(
         # Run all experiment repetitions
         for k_mc, data in enumerate(pbar):
             # Show the simulation progress
-            pbar.set_description(scenario_name)
+            pbar.set_description(str(scenario_id))
 
             # Create a fresh BayBE object and set the corresponding random seed
             baybe = deepcopy(baybe_template)
@@ -191,7 +191,7 @@ def simulate_scenarios(
             results_var = pd.concat([results_var, results_mc])
 
         # Add the variant information and append the results
-        results_var.insert(0, "Variant", scenario_name)
+        results_var.insert(0, "Variant", scenario_id)
         results = pd.concat([results, results_var])
 
     return results.reset_index(drop=True)
