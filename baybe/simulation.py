@@ -7,7 +7,17 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from functools import partial
-from typing import Callable, Dict, List, Literal, Optional, Tuple, TYPE_CHECKING, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    TYPE_CHECKING,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
@@ -15,6 +25,7 @@ from tqdm import tqdm, trange
 
 from baybe.core import BayBE
 from baybe.exceptions import NotEnoughPointsLeftError
+from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
 from baybe.utils import (
     add_fake_results,
@@ -30,8 +41,60 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
+def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
+    baybe: BayBE,
+    batch_quantity: int,
+    lookup: pd.DataFrame,
+    n_exp_iterations: Optional[int] = None,
+) -> pd.DataFrame:
+
+    # TODO: The current implementation assumes a purely discrete search space
+    assert baybe.searchspace.type == SearchSpaceType.DISCRETE
+
+    # TODO: We currently assume that everything can be recommended
+    assert not baybe.searchspace.discrete.metadata.any().any()
+
+    # TODO: Currently, it is assumed exactly one task parameter exists
+    # Extract the single task parameter
+    task_params = [p for p in baybe.parameters if isinstance(p, TaskParameter)]
+    assert len(task_params) == 1
+    task_param = task_params[0]
+
+    # List to collect the simulation results
+    results = []
+
+    # Simulate all tasks
+    for task in task_param.values:
+
+        # Use all off-task data as training data
+        df_train = lookup.copy()
+        df_train = df_train[df_train[task_param.name] != task]
+
+        # Restrict the optimization only to on-task settings
+        # TODO: Avoid direct manipulation of metadata
+        baybe_task = deepcopy(baybe)
+        off_task_idxs = baybe_task.searchspace.discrete.exp_rep[task_param.name] != task
+        baybe_task.searchspace.discrete.metadata.loc[
+            off_task_idxs.values, "dont_recommend"
+        ] = True
+
+        # Simulate the setting and store results with metadata
+        df_result = simulate_scenarios(
+            scenarios={task: baybe_task},
+            batch_quantity=batch_quantity,
+            n_exp_iterations=n_exp_iterations,
+            initial_data=[df_train],
+            lookup=lookup,
+        )
+
+        # Store the simulation result for the current task
+        results.append(df_result)
+
+    return pd.concat(results, ignore_index=True)
+
+
 def simulate_scenarios(
-    scenarios: Dict[str, BayBE],
+    scenarios: Dict[Any, BayBE],
     batch_quantity: int,
     lookup: Optional[
         Union[pd.DataFrame, Callable[[float, ...], Union[float, Tuple[float, ...]]]]
@@ -49,7 +112,7 @@ def simulate_scenarios(
 
     Parameters
     ----------
-    scenarios : Dict[str, BayBE]
+    scenarios : Dict[Any, BayBE]
         BayBE objects (dict-values) and corresponding scenario names (dict-keys) to be
         simulated.
     batch_quantity : int
