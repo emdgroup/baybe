@@ -125,9 +125,9 @@ scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=3,
+    lookup=lookup,
     n_exp_iterations=N_EXP_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
-    lookup=lookup,
     impute_mode="best",
 )
 

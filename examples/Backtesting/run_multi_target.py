@@ -100,9 +100,9 @@ scenarios = {"BayBE": baybe_obj}
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=2,
+    lookup=sum_of_squares,
     n_exp_iterations=4,
     n_mc_iterations=2,
-    lookup=sum_of_squares,
 )
 
 print(results)

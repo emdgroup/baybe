@@ -33,12 +33,12 @@ _logger = logging.getLogger(__name__)
 def simulate_scenarios(
     scenarios: Dict[str, BayBE],
     batch_quantity: int,
-    n_exp_iterations: Optional[int] = None,
-    n_mc_iterations: Optional[int] = None,
-    initial_data: Optional[List[pd.DataFrame]] = None,
     lookup: Optional[
         Union[pd.DataFrame, Callable[[float, ...], Union[float, Tuple[float, ...]]]]
     ] = None,
+    n_exp_iterations: Optional[int] = None,
+    n_mc_iterations: Optional[int] = None,
+    initial_data: Optional[List[pd.DataFrame]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -180,8 +180,8 @@ def simulate_scenarios(
             results_mc = _simulate_experiment(
                 baybe,
                 batch_quantity,
-                n_exp_iterations,
                 lookup,
+                n_exp_iterations,
                 impute_mode,
                 noise_percent,
             )
@@ -200,8 +200,8 @@ def simulate_scenarios(
 def _simulate_experiment(
     baybe_obj: BayBE,
     batch_quantity: int,
-    n_exp_iterations: Optional[int] = None,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
+    n_exp_iterations: Optional[int] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",

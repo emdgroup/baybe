@@ -119,9 +119,9 @@ scenarios = {
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=3,
+    lookup=WRAPPED_FUNCTION,
     n_exp_iterations=N_EXP_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
-    lookup=WRAPPED_FUNCTION,
 )
 
 # The following lines plot the results and save the plot in run_analytical.png

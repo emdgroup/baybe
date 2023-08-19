@@ -155,9 +155,9 @@ scenarios = {
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=2,
+    lookup=sum_of_squares,
     n_exp_iterations=N_EXP_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
-    lookup=sum_of_squares,
 )
 
 # The following lines plot the results and save the plot in run_analytical.png

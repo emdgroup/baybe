@@ -124,9 +124,9 @@ scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 results = simulate_scenarios(
     scenarios=scenarios,
     batch_quantity=3,
+    lookup=lookup,
     n_exp_iterations=N_EXP_ITERATIONS,
     initial_data=initial_data,
-    lookup=lookup,
 )
 
 # The following lines plot the results and save the plot in run_full_initial_data.png
