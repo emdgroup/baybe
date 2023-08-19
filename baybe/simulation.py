@@ -14,6 +14,8 @@ import pandas as pd
 from tqdm import tqdm, trange
 
 from baybe.core import BayBE
+from baybe.exceptions import NotEnoughPointsLeftError
+from baybe.searchspace import SearchSpaceType
 from baybe.utils import (
     add_fake_results,
     add_parameter_noise,
@@ -31,7 +33,7 @@ _logger = logging.getLogger(__name__)
 def simulate_scenarios(
     scenarios: Dict[str, BayBE],
     batch_quantity: int,
-    n_exp_iterations: int,
+    n_exp_iterations: Optional[int] = None,
     n_mc_iterations: Optional[int] = None,
     initial_data: Optional[List[pd.DataFrame]] = None,
     lookup: Optional[
@@ -198,7 +200,7 @@ def simulate_scenarios(
 def _simulate_experiment(
     baybe_obj: BayBE,
     batch_quantity: int,
-    n_exp_iterations: int,
+    n_exp_iterations: Optional[int] = None,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -211,13 +213,46 @@ def _simulate_experiment(
     accepts any number of arguments and returns either a single or a tuple of floats.
     The inputs however also need to be floats!
     """
+    # Validate input
+    # TODO: Probably, we should add this as a property to BayBE
+    will_terminate = (baybe_obj.searchspace.type == SearchSpaceType.DISCRETE) and (
+        not baybe_obj.strategy.allow_recommending_already_measured
+    )
+    if (n_exp_iterations is None) and (not will_terminate):
+        raise ValueError(
+            "For the specified setting, the experimentation loop can be continued "
+            "indefinitely. Hence, `n_exp_iterations` must be explicitly provided."
+        )
+
     # Create a dataframe to store the simulation results
     results = pd.DataFrame()
 
     # Run the DOE loop
-    for k_iteration in range(n_exp_iterations):
+    limit = n_exp_iterations or np.inf
+    k_iteration = 0
+    while k_iteration < limit:
         # Get the next recommendations and corresponding measurements
-        measured = baybe_obj.recommend(batch_quantity=batch_quantity)
+        try:
+            measured = baybe_obj.recommend(batch_quantity=batch_quantity)
+        except NotEnoughPointsLeftError:
+            # TODO: This except block requires a more elegant solution
+            strategy = baybe_obj.strategy
+            allow_repeated = strategy.allow_repeated_recommendations
+            allow_measured = strategy.allow_recommending_already_measured
+
+            # Sanity check: if the variable was True, the except block should have
+            # been impossible to reach in the first place
+            # TODO: Currently, this is still possible due to bug [15917] though.
+            assert not allow_measured
+
+            measured, _ = baybe_obj.searchspace.discrete.get_candidates(
+                allow_repeated_recommendations=allow_repeated,
+                allow_recommending_already_measured=allow_measured,
+            )
+
+            if len(measured) == 0:
+                break
+
         _look_up_target_values(measured, baybe_obj, lookup, impute_mode)
 
         # Create the summary for the current iteration and store it
@@ -246,6 +281,9 @@ def _simulate_experiment(
 
         # Update the BayBE object
         baybe_obj.add_measurements(measured)
+
+        # Update the iteration counter
+        k_iteration += 1
 
     # Add the instantaneous and running best values for all targets
     for target in baybe_obj.targets:

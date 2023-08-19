@@ -36,6 +36,7 @@ def select_candidates_and_recommend(
     )
 
     # Check if enough candidates are left
+    # TODO [15917]: This check is not perfectly correct.
     if len(candidates_comp) < batch_quantity:
         raise NotEnoughPointsLeftError(
             f"Using the current settings, there are fewer than {batch_quantity} "
