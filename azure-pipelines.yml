@@ -67,8 +67,6 @@ stages:
           eval "$(micromamba shell hook --shell=bash)"
           micromamba activate $(CONDA_ENV)
           cd $(System.DefaultWorkingDirectory)
-          touch ./tests/__init__.py
-          touch ./tests/serialization/__init__.py
           pytest -v -p no:warnings --cov=baybe --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/test-results.xml --cov-report=html ./tests
         displayName: "Run PyTest"
 
