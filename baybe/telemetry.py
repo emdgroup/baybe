@@ -14,7 +14,6 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 
-from baybe import __version__
 from baybe.parameters import Parameter
 from baybe.utils import fuzzy_row_match, strtobool
 
@@ -74,6 +73,8 @@ def get_user_details() -> Dict[str, str]:
         dict: Contains the hostname and username in hashed format as well as the package
          version
     """
+    from baybe import __version__  # pylint: disable=import-outside-toplevel
+
     username_hash = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH", None) or (
         hashlib.sha256(getpass.getuser().upper().encode())
         .hexdigest()
