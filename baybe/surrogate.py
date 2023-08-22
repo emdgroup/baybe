@@ -36,7 +36,7 @@ _DTYPE = torch.float64
 # Define constants
 _MIN_TARGET_STD = 1e-6
 _MIN_VARIANCE = 1e-6
-_WRAPPER_MODELS = ("SplitModel", "ScaledModel")
+_WRAPPER_MODELS = ("SplitModel", "ScaledModel", "CustomArchitectureSurrogate")
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
@@ -250,6 +250,77 @@ def scale_model(model_cls: Type["Surrogate"]):
     # assign the docstring of the class.
     ScaledModel.__doc__ = model_cls.__doc__
     return ScaledModel
+
+
+def register_custom_architecture(
+    joint_posterior_attr: bool = False,
+    constant_target_catching: bool = True,
+    batchify_posterior: bool = True,
+):
+    """
+    Wraps a given Custom Class with fit and posterior functions
+    to enable BayBE to interface with custom architectures.
+    """
+
+    def construct_custom_architecture(model_cls):
+        """Constructs a surrogate class wrapped around the custom class."""
+
+        class CustomArchitectureSurrogate(Surrogate):
+            """Wraps around a custom architecture class."""
+
+            joint_posterior: ClassVar[bool] = joint_posterior_attr
+            model_params: Dict[str, Any] = field(factory=dict)
+
+            def __init__(self, *args, **kwargs):
+                """Stores an instance of the underlying model class."""
+                self.model = model_cls(*args, **kwargs)
+
+            def _fit(
+                self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+            ) -> None:
+                """See base class."""
+                return self.model._fit(  # pylint: disable=protected-access
+                    searchspace, train_x, train_y
+                )
+
+            def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+                """See base class."""
+                return self.model._posterior(  # pylint: disable=protected-access
+                    candidates
+                )
+
+            def __get_attribute__(self, attr):
+                """
+                Accesses the attributes of the class instance if available,
+                otherwise uses the attributes of the internal model instance.
+                """
+                # Try to retrieve the attribute in the class
+                try:
+                    val = super().__getattribute__(attr)
+                except AttributeError:
+                    pass
+                else:
+                    return val
+
+                # If the attribute is not overwritten, use that of the internal model
+                return self.model.__getattribute__(attr)
+
+        # Catch constant targets if needed
+        cls = (
+            catch_constant_targets(CustomArchitectureSurrogate)
+            if constant_target_catching
+            else CustomArchitectureSurrogate
+        )
+
+        # batchify posterior if needed
+        if batchify_posterior:
+            cls._posterior = batchify(  # pylint: disable=protected-access
+                cls._posterior  # pylint: disable=protected-access
+            )
+
+        return cls
+
+    return construct_custom_architecture
 
 
 def batchify(
@@ -748,6 +819,20 @@ class BayesianLinearSurrogate(Surrogate):
         self._model.fit(train_x, train_y.ravel())
 
 
+def block_serialize_custom_architecture(raw_unstructure_hook):
+    """Raises error if attempt to serialize a custom architecture surrogate."""
+
+    def wrapper(obj):
+        if obj.__class__.__name__ == "CustomArchitectureSurrogate":
+            raise RuntimeError(
+                "Custom Architecture Surrogate Serialization is not supported"
+            )
+
+        return raw_unstructure_hook(obj)
+
+    return wrapper
+
+
 def _remove_model(raw_unstructure_hook):
     """Removes the model in a surrogate for serialization."""
     # TODO: No longer required once the following feature is released:
@@ -811,7 +896,9 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
 
 # Register (un-)structure hooks
-cattrs.register_unstructure_hook(Surrogate, _remove_model(unstructure_base))
+cattrs.register_unstructure_hook(
+    Surrogate, _remove_model(block_serialize_custom_architecture(unstructure_base))
+)
 cattrs.register_structure_hook(Surrogate, _structure_surrogate)
 
 # Related to [15436]
