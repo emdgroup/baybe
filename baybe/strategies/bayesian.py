@@ -1,7 +1,4 @@
-# pylint: disable=missing-class-docstring, missing-function-docstring
-# TODO: add docstrings
-
-"""Recommendation strategies based on Bayesian optimization."""
+"""Different recommendation strategies that are based on Bayesian optimization."""
 from abc import ABC
 from functools import partial
 from typing import Callable, ClassVar, Literal, Optional
@@ -34,10 +31,8 @@ from baybe.surrogate import GaussianProcessSurrogate, Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
 
 
-# Validation for the sampling percentage of the hybrid recommendation functionality.
-# Modeled in the same way as validation is done in the parameters.py file
 def validate_percentage(obj, _, value):
-    """Validate that the given value is a proper percentage between 0 and 1."""
+    # TODO [16954] Make this private pylint: disable=missing-function-docstring
     if not 0 <= value <= 1:
         raise ValueError(
             f"Percentage for {obj.__class__.__name__} needs to be between 0 and 1 but "
@@ -47,7 +42,12 @@ def validate_percentage(obj, _, value):
 
 @define
 class BayesianRecommender(Recommender, ABC):
-    # TODO Docstrings missing
+    """An abstract class for Bayesian Recommenders.
+
+    Args:
+        surrogate_model: The used surrogate model.
+        acquisition_function_cls: The used acquisition function class.
+    """
 
     surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
     acquisition_function_cls: Literal[
@@ -56,7 +56,9 @@ class BayesianRecommender(Recommender, ABC):
 
     def get_acquisition_function_cls(
         self,
-    ):  # pylint: disable=missing-function-docstring
+    ):
+        # TODO [16954] Make this private pylint: disable=missing-function-docstring
+
         mapping = {
             "PM": PosteriorMean,
             "PI": ProbabilityOfImprovement,
@@ -74,21 +76,14 @@ class BayesianRecommender(Recommender, ABC):
     def setup_acquisition_function(
         self, searchspace: SearchSpace, train_x: pd.DataFrame, train_y: pd.DataFrame
     ) -> AcquisitionFunction:
-        """
-        Creates the current acquisition function from training data.
+        """Create the current acquisition function from provided training data.
 
-        Parameters
-        ----------
-        searchspace: SearchSpace
-            The searchspace in which the experiments are to be conducted.
-        train_x : pd.DataFrame
-            The features of the conducted experiments.
-        train_y : pd.DataFrame
-            The corresponding response values.
+        Args:
+            searchspace: The search space in which the experiments are to be conducted.
+            train_x: The features of the conducted experiments.
+            train_y: The corresponding response values.
 
-        Returns
-        -------
-        AcquisitionFunction
+        Returns:
             An acquisition function obtained by fitting the surrogate model of self to
             the provided training data.
 
@@ -104,16 +99,18 @@ class BayesianRecommender(Recommender, ABC):
         train_x: pd.DataFrame,
         train_y: pd.DataFrame,
     ) -> Surrogate:
-        """
-        Uses the given data to train a fresh surrogate model instance for the DOE
-        strategy.
+        """Train a fresh surrogate model instance for the DOE strategy.
 
-        Parameters
-        ----------
-        train_x : pd.DataFrame
-            The features of the conducted experiments.
-        train_y : pd.DataFrame
-            The corresponding response values.
+        Args:
+            searchspace: The search space.
+            train_x: The features of the conducted experiments.
+            train_y: The corresponding response values.
+
+        Returns:
+            A surrogate model fitted to the provided data.
+
+        Raises:
+            ValueError: If the training inputs and targets do not have the same index.
         """
         # validate input
         if not train_x.index.equals(train_y.index):
@@ -132,6 +129,7 @@ class BayesianRecommender(Recommender, ABC):
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
+        # See base class.
 
         acqf = self.setup_acquisition_function(searchspace, train_x, train_y)
 
@@ -153,7 +151,25 @@ class BayesianRecommender(Recommender, ABC):
         searchspace: SearchSpace,
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
-    ):
+    ) -> pd.Index:
+        """Calculate recommendations in a discrete search space.
+
+        Args:
+            acquisition_function: The acquisition function used for choosing the
+                recommendation.
+            searchspace: The discrete search space in which the recommendations should
+                be made.
+            candidates_comp: The computational representation of all possible
+                candidates.
+            batch_quantity: The size of the calculated batch.
+
+        Raises:
+            NotImplementedError: If the function is not implemented by the child class.
+
+        Returns:
+            The indices of the recommended points with respect to the
+            computational representation.
+        """
         raise NotImplementedError()
 
     def _recommend_continuous(
@@ -161,7 +177,22 @@ class BayesianRecommender(Recommender, ABC):
         acquisition_function: Callable,
         searchspace: SearchSpace,
         batch_quantity: int,
-    ):
+    ) -> pd.DataFrame:
+        """Calculate recommendations in a continuous search space.
+
+        Args:
+            acquisition_function: The acquisition function used for choosing the
+                recommendation.
+            searchspace: The continuous search space in which the recommendations should
+                be made.
+            batch_quantity: The size of the calculated batch.
+
+        Raises:
+            NotImplementedError: If the function is not implemented by the child class.
+
+        Returns:
+            The recommended points.
+        """
         raise NotImplementedError()
 
     def _recommend_hybrid(
@@ -169,23 +200,53 @@ class BayesianRecommender(Recommender, ABC):
         acquisition_function: Callable,
         searchspace: SearchSpace,
         batch_quantity: int,
-    ):
+    ) -> pd.DataFrame:
+        """Calculate recommendations in a hybrid search space.
+
+        Args:
+            acquisition_function: The acquisition function used for choosing the
+                recommendation.
+            searchspace: The hybrid search space in which the recommendations should
+                be made.
+            batch_quantity: The size of the calculated batch.
+
+        Raises:
+            NotImplementedError: If the function is not implemented by the child class.
+
+        Returns:
+            The recommended points.
+        """
         raise NotImplementedError()
 
 
 @define
 class SequentialGreedyRecommender(BayesianRecommender):
+    """Recommender using sequential Greedy optimization.
+
+    This recommender implements the BoTorch functions ```optimize_acqf_discrete```,
+    ```optimize_acqf``` and ```optimize_acqf_mixed``` for the optimization of discrete,
+    continuous and hybrid search spaces. In particular, it can be applied in all
+    kinds of search spaces.
+    It is important to note that this algorithm performs a brute-force optimization in
+    hybrid search spaces which can be computationally expensive. Thus, the behavior of
+    the algorithm in hybrid search spaces can be controlled by two additional
+    parameters.
+
+    Args:
+        hybrid_sampler: Strategy used for sampling the discrete subspace when performing
+            hybrid search space optimization.
+        sampling_percentage: Percentage of discrete search space that is sampled when
+            performing hybrid search space optimization. Ignored when
+            ```hybrid_sampler="None"```.
+    """
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
 
     # Object variables
-    # ----------------
-    # Keyword for which sampling strategy should be used for hybrid recommendation
     hybrid_sampler: str = field(
         validator=validators.in_(["None", "Farthest", "Random"]), default="None"
     )
-    # Percentage for how of the search space should be sampled for hybrid recommendation
     sampling_percentage: float = field(
         validator=[validators.instance_of(float), validate_percentage], default=1.0
     )
@@ -197,7 +258,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
-        """See base class."""
+        # See base class.
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
         try:
@@ -232,7 +293,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         searchspace: SearchSpace,
         batch_quantity: int,
     ) -> pd.DataFrame:
-        """See base class."""
+        # See base class.
 
         try:
             points, _ = optimize_acqf(
@@ -257,14 +318,28 @@ class SequentialGreedyRecommender(BayesianRecommender):
         acquisition_function: Callable,
         searchspace: SearchSpace,
         batch_quantity: int,
-    ):
-        """Recommendation functionality of the SequentialGreedy Recommender.
-        This implements the `optimize_acqf_mixed` function of BoTorch.
+    ) -> pd.DataFrame:
+        """Recommend points using the ```optimize_acqf_mixed``` function of BoTorch.
 
-        Important: This performs a brute-force calculation by fixing evey possible
+        This functions samples points from the discrete subspace, performs optimization
+        in the continuous subspace with these points being fixed and returns the best
+        found solution.
+        **Important**: This performs a brute-force calculation by fixing every possible
         assignment of discrete variables and optimizing the continuous subspace for
-        each of them. It is thus computationally expensive."""
+        each of them. It is thus computationally expensive.
 
+        Args:
+            acquisition_function: The acquisition function to be optimized.
+            searchspace: The search space in which the recommendations should be made.
+            batch_quantity: The size of the calculated batch.
+
+        Returns:
+            The recommended points.
+
+        Raises:
+            NoMCAcquisitionFunctionError: If a non Monte Carlo acquisition function
+                is chosen.
+        """
         # Get discrete candidates.
         _, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=True,
@@ -325,7 +400,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
             disc_points_np, candidates_comp_np, metric="manhattan"
         )
 
-        # Get the actual searchspace dataframe indices
+        # Get the actual search space dataframe indices
         disc_idxs_loc = candidates_comp.iloc[disc_idxs_iloc].index
 
         # Get experimental representation of discrete and continuous parts
@@ -344,8 +419,22 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
 @define
 class NaiveHybridRecommender(Recommender):
+    """Recommend points by independent optimization of subspaces.
+
+    This recommender splits the hybrid search space in the discrete and continuous
+    subspace. Each of the subspaces is optimized on its own, and the recommenders for
+    those subspaces can be chosen upon initilaization. If this recommender is used on
+    a non-hybrid space, it uses the corresponding recommender.
+
+    Args:
+        disc_recommender: The recommender used for the discrete subspace.
+            Default: :py:class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
+        cont_recommender: The recommender used for the continuous subspace.
+            Default: :py:class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
+    """
+
     # TODO: This class (and potentially the recommender function signatures) need to
-    #   be refactor such that there is no more coupling to BayesianRecommender and it
+    #   be refactored such that there is no more coupling to BayesianRecommender and it
     #   can be moved to recommender.py
 
     # Class variables
@@ -370,7 +459,7 @@ class NaiveHybridRecommender(Recommender):
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
-        """See base class."""
+        # See base class.
 
         # First check whether the disc_recommender is either bayesian or non predictive
         is_bayesian_recommender = isinstance(self.disc_recommender, BayesianRecommender)
@@ -408,7 +497,7 @@ class NaiveHybridRecommender(Recommender):
         cont_part = searchspace.continuous.samples_random(1)
         cont_part = to_tensor(cont_part).unsqueeze(-2)
 
-        # Get discrete candidates. The metadata flags are ignored since the searchspace
+        # Get discrete candidates. The metadata flags are ignored since the search space
         # is hybrid
         # TODO Slight BOILERPLATE CODE, see recommender.py, ll. 47+
         _, candidates_comp = searchspace.discrete.get_candidates(
