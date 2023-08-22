@@ -303,6 +303,7 @@ def _simulate_experiment(
     # Run the DOE loop
     limit = n_exp_iterations or np.inf
     k_iteration = 0
+    n_experiments = 0
     while k_iteration < limit:
         # Get the next recommendations and corresponding measurements
         try:
@@ -326,6 +327,7 @@ def _simulate_experiment(
             if len(measured) == 0:
                 break
 
+        n_experiments += len(measured)
         _look_up_target_values(measured, baybe_obj, lookup, impute_mode)
 
         # Create the summary for the current iteration and store it
@@ -333,7 +335,7 @@ def _simulate_experiment(
             [  # <-- this ensures that the internal lists to not get expanded
                 {
                     "Iteration": k_iteration,
-                    "Num_Experiments": (k_iteration + 1) * batch_quantity,
+                    "Num_Experiments": n_experiments,
                     **{
                         f"{target.name}_Measurements": measured[target.name].to_list()
                         for target in baybe_obj.targets
