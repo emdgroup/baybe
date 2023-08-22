@@ -2,11 +2,17 @@
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
-
 import os
 import shutil
 import sys
 
+# We need to "trick" sphinx due to it thinking that decorated classes are just aliases
+# We thus need to import and later define some specific names
+from baybe.surrogate import (
+    BayesianLinearSurrogate,
+    NGBoostSurrogate,
+    RandomForestSurrogate,
+)
 
 # -- Path setup --------------------------------------------------------------
 
@@ -39,7 +45,7 @@ try:  # for Sphinx >= 1.7
 except ImportError:
     from sphinx import apidoc
 
-output_dir = os.path.join(__location__, "api")
+output_dir = os.path.join(__location__, "sdk")
 baybe_module_dir = os.path.join(__location__, "../baybe")
 try:
     shutil.rmtree(output_dir)
@@ -47,7 +53,7 @@ except FileNotFoundError:
     pass
 
 try:
-    args = ["--implicit-namespaces", "-M", "-T", "-f", "-o", output_dir]
+    args = ["--implicit-namespaces", "-M", "-T", "-e", "-f", "-o", output_dir]
 
     apidoc.main(
         [
@@ -63,44 +69,42 @@ except Exception as e:
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
+# Note that the order here is important! E.g. napoleon needs to be loaded before
+# autodoc_typehints
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.todo",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.viewcode",
-    "sphinx_markdown_builder",
+    "sphinx.ext.napoleon",  # Necessary for numpy/google docstrings to work
+    "sphinx_toolbox.more_autodoc.typehints",  # Proper typehints 1
+    "sphinx_autodoc_typehints",  # Proper typehints 2
+    "sphinx.ext.autodoc",  # Crucial for autodocumentation
+    "sphinx_autodoc_defaultargs",  # Automatic documentation of default values
+    "sphinx.ext.intersphinx",  # Links to other documentations like numpy, python,...
+    "sphinx_markdown_builder",  # Necessary for building the markdown files.
 ]
 
+# Necessary additional code for dealing with defaults.
+rst_prolog = """
+.. |default| raw:: html
+
+    Default:"""
+
+# Not sure about this, seems to be default stuff that is always used
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # Enable markdown
+# Note that we do not need additional configuration here.
 extensions.append("myst_parser")
 
-# Configure MyST-Parser
-myst_enable_extensions = [
-    "amsmath",
-    "colon_fence",
-    "deflist",
-    "dollarmath",
-    "html_image",
-    "linkify",
-    "replacements",
-    "smartquotes",
-    "substitution",
-    "tasklist",
-]
-
-# The suffix of source filenames
+# The suffix of source filename
 source_suffix = [".rst", ".md"]
 
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+# On purpose not deleted since this will become relevant once we write the html version
 
-html_theme = "furo"
-html_static_path = ["_static"]
+# html_theme = "furo"
+# html_static_path = ["_static"]
 
 
 # -- Options for intersphinx extension ---------------------------------------
@@ -108,10 +112,32 @@ html_static_path = ["_static"]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "sklearn": ("http://scikit-learn.org/stable", None),
+    "sklearn_extra": ("https://scikit-learn-extra.readthedocs.io/en/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "torch": ("https://pytorch.org/docs/master/", None),
 }
 
+# --- Options for autodoc typehints and autodoc -------------------------------
+# https://pypi.org/project/sphinx-autodoc-typehints/
 
-# -- Options for todo extension ----------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/extensions/todo.html#configuration
+autodoc_typehints = "both"
+# Separate class names and init functions
+autodoc_class_signature = "separated"
+# Preserve the defaults
+autodoc_preserve_defaults = True
+autodoc_default_options = {
+    "members": True,  # Also document members of classes
+    "member-order": "bysource",  # Order as in source files (alternative is alphabetic)
+    "exclude-members": "__init__",  # Do not include inits
+}
+autodoc_typehints_description_target = "documented_params"
 
-todo_include_todos = True
+
+# Magic function doing magic stuff
+def setup(app):
+    # This avoids that sphinx refers to all surrogate models via alias
+    RandomForestSurrogate.__name__ = "RandomForestSurrogate"
+    BayesianLinearSurrogate.__name__ = "BayesianLinearSurrogate"
+    NGBoostSurrogate.__name__ = "NGBoostSurrogate"
