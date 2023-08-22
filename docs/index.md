@@ -1,5 +1,4 @@
-```{include} ../README.md
-```
+
 
 # Reference
 
@@ -8,8 +7,8 @@
 :titlesonly:
 :caption: Reference
 
-baybe <api/baybe>
 
+baybe <sdk/baybe>
 ```
 
 # Indices and Tables
