@@ -180,7 +180,7 @@ def simulate_scenarios(
     -------
     pd.DataFrame
         A dataframe ready for plotting, containing the following columns:
-            * 'Variant': corresponds to the dict keys used in `config_variants`
+            * 'Scenario': corresponds to the dict keys in `scenarios`
             * 'Random_Seed': the random seed used for the respective simulation
             * 'Num_Experiments': corresponds to the running number of experiments
                 performed (usually x-axis)
@@ -191,25 +191,6 @@ def simulate_scenarios(
                 result for that target up to including respective iteration
             * '{targetname}_Measurements': the individual measurements obtained for the
                 respective target and iteration
-
-    Examples
-    --------
-    results = simulate_from_configs(
-        config_base=config_dict_base,
-        batch_quantity=3,
-        n_exp_iterations=20,
-        n_mc_iterations=5,
-        lookup=lookup,
-        impute_mode="ignore",
-        config_variants={
-            "GP | Mordred": config_dict_v1,
-            "GP | RDKit": config_dict_v2,
-            "GP | FP": config_dict_v3,
-            "GP | OHE": config_dict_v4,
-            "RANDOM": config_dict_v5,
-        },
-    )
-    sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Variant")
     """
     # Validate the iteration specification
     if not (n_mc_iterations is None) ^ (initial_data is None):
@@ -232,10 +213,10 @@ def simulate_scenarios(
     # Create a dataframe to store the simulation results
     results = pd.DataFrame()
 
-    # Simulate all configuration variants
+    # Simulate all scenarios
     for scenario_id, baybe_template in scenarios.items():
 
-        # Create a dataframe to store the results for the current variant
+        # Create a dataframe to store the results for the current scenario
         results_var = pd.DataFrame()
 
         # Create an iterator for repeating the experiment
@@ -282,8 +263,8 @@ def simulate_scenarios(
             results_mc.insert(0, "Random_Seed", random_seed)
             results_var = pd.concat([results_var, results_mc])
 
-        # Add the variant information and append the results
-        results_var.insert(0, "Variant", scenario_id)
+        # Add the scenario information and append the results
+        results_var.insert(0, "Scenario", scenario_id)
         results = pd.concat([results, results_var])
 
     return results.reset_index(drop=True)
