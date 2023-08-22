@@ -74,6 +74,14 @@ class SubspaceDiscrete:
                 "Currently, at most one task parameter can be considered."
             )
 
+    @exp_rep.validator
+    def validate_exp_rep(self, attribute, exp_rep: pd.DataFrame) -> None:
+        if exp_rep.index.has_duplicates:
+            raise ValueError(
+                f"The index of {attribute.name} contains duplicates. "
+                f"This is not allowed, as it can lead to hard-to-detect bugs."
+            )
+
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
         columns = ["was_recommended", "was_measured", "dont_recommend"]
