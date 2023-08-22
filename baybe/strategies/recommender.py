@@ -1,6 +1,3 @@
-# pylint: disable=missing-class-docstring, missing-function-docstring
-# TODO: add docstrings
-
 """Base classes for all recommenders."""
 
 from abc import ABC, abstractmethod
@@ -16,9 +13,6 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils import get_base_unstructure_hook, unstructure_base
 
 
-# TODO: See if the there is a more elegant way to share this functionality
-#   among all purely discrete recommenders (without introducing complicates class
-#   hierarchies).
 def select_candidates_and_recommend(
     searchspace: SearchSpace,
     recommend: Callable[[SearchSpace, pd.DataFrame, int], pd.Index],
@@ -26,7 +20,12 @@ def select_candidates_and_recommend(
     allow_repeated_recommendations: bool = False,
     allow_recommending_already_measured: bool = True,
 ) -> pd.DataFrame:
-    # Get discrete candidates. The metadata flags are ignored if the searchspace
+    # TODO [16954] Make this private pylint: disable=missing-function-docstring
+    # TODO: See if the there is a more elegant way to share this functionality
+    #   among all purely discrete recommenders (without introducing complicates class
+    #   hierarchies).
+
+    # Get discrete candidates. The metadata flags are ignored if the search space
     # has a continuous component.
     _, candidates_comp = searchspace.discrete.get_candidates(
         allow_repeated_recommendations=allow_repeated_recommendations
@@ -60,10 +59,11 @@ def select_candidates_and_recommend(
 
 @define
 class Recommender(ABC):
-    # TODO Docstrings missing
+    """Abstract base class for all recommenders."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType]
+    """Class variable describing the search space compatibility."""
 
     @abstractmethod
     def recommend(
@@ -75,11 +75,29 @@ class Recommender(ABC):
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
-        pass
+        """Recommend (a batch of) points in the search space.
+
+        Args:
+            searchspace: The search space in which experiments are being conducted.
+            batch_quantity: The number of points that should be recommended.
+            train_x: The training data used to train the model.
+            train_y: The training labels used to train the model.
+            allow_repeated_recommendations: Allow to make recommendations that were
+                already recommended earlier. This only has an influence in discrete
+                search spaces.
+            allow_recommending_already_measured: Allow to output recommendations that
+                were measured previously. This only has an influence in discrete
+                search spaces.
+
+        Returns:
+            A DataFrame containing the recommendations as individual rows.
+        """
 
 
 @define
 class NonPredictiveRecommender(Recommender, ABC):
+    """Abstract base class for recommenders that are non-predictive."""
+
     def recommend(
         self,
         searchspace: SearchSpace,
@@ -89,33 +107,7 @@ class NonPredictiveRecommender(Recommender, ABC):
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
-        """Recommend (a batch of) points in the searchspace.
-
-        Depending on the type of the given searchspace, this method calls one of the
-        corresponding private methods which implement the actual logic.
-
-        Parameters
-        ----------
-        searchspace: SearchSpace
-            The searchspace in which we are looking for a recommendation.
-        batch_quantity: int, default = 1
-            The batch quantity.
-        train_x: pd.DataFrame, optional
-            Training data. Since this recommender is non predictive, this is ignored.
-        train_y: pd.DataFrame, optional
-            See 'train_x'.
-        allow_repeated_recommendates: bool, default = False
-            Flag denoting whether repeated recommendations should be allowed. Only has
-            an influence for discrete searchspaces.
-        allow_recommending_already_measured: bool, default = True
-            Flag denoting whether recommending already measured points should be
-            allowed. Only has an influence for discrete searchspaces.
-
-        Returns
-        -------
-        pd.DataFrame
-            The recommendations
-        """
+        # See base class. pylint: disable=missing-function-docstring
 
         if searchspace.type == SearchSpaceType.DISCRETE:
             return select_candidates_and_recommend(
@@ -139,8 +131,21 @@ class NonPredictiveRecommender(Recommender, ABC):
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
-        """If this method is not implemented by a children class, try to call
-        _recommend_hybrid instead."""
+        """Calculate recommendations in a discrete search space.
+
+        Args:
+            searchspace: The discrete search space in which the recommendations should
+                be made.
+            candidates_comp: The computational representation of all possible candidates
+            batch_quantity: The size of the calculated batch.
+
+        Raises:
+            NotImplementedError: If the function is not implemented by the child class.
+
+        Returns:
+            The indices of the recommended points with respect to the
+            computational representation.
+        """
         try:
             return self._recommend_hybrid(
                 searchspace=searchspace,
@@ -150,17 +155,30 @@ class NonPredictiveRecommender(Recommender, ABC):
         except NotImplementedError as exc:
             raise NotImplementedError(
                 """Hybrid recommender could not be used as fallback when trying to
-                optimize a discrete space. This is probably due to your searchspace and
-                recommender not being compatible. Please verify that your searchspace is
-                purely discrete and that you are either using a discrete or hybrid
+                optimize a discrete space. This is probably due to your search space and
+                recommender not being compatible. Please verify that your search space
+                is purely discrete and that you are either using a discrete or hybrid
                 recommender."""
             ) from exc
 
     def _recommend_continuous(
         self, searchspace: SearchSpace, batch_quantity: int
     ) -> pd.DataFrame:
-        """If this method is not implemented by a children class, try to call
-        _recommend_hybrid instead."""
+        """Calculate recommendations in a continuous search space.
+
+        Args:
+            searchspace: The continuous search space in which the recommendations should
+                be made.
+            batch_quantity: The size of the calculated batch.
+
+        Raises:
+            NotImplementedError: If the function is not implemented by the child class.
+
+        Returns:
+            The recommended points.
+        """
+        # If this method is not implemented by a children class, try to call
+        # _recommend_hybrid instead.
         try:
             return self._recommend_hybrid(
                 searchspace=searchspace, batch_quantity=batch_quantity
@@ -168,9 +186,9 @@ class NonPredictiveRecommender(Recommender, ABC):
         except NotImplementedError as exc:
             raise NotImplementedError(
                 """Hybrid recommender could not be used as fallback when trying to
-                optimize a continuous space. This is probably due to your searchspace
+                optimize a continuous space. This is probably due to your search space
                 and  recommender not being compatible. Please verify that your
-                searchspace is purely continuous and that you are either using a
+                search space is purely continuous and that you are either using a
                 continuous or hybrid recommender."""
             ) from exc
 
@@ -180,8 +198,26 @@ class NonPredictiveRecommender(Recommender, ABC):
         batch_quantity: int,
         candidates_comp: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        """In order to enable the fallback mechanism, it is possible to provide
-        a DataFrame with candidates in computational representation."""
+        """Calculate recommendations in a hybrid search space.
+
+        If the recommender does not implement additional functions for discrete and
+        continuous search spaces, this method is used as a fallback for those spaces
+        as well.
+
+        Args:
+            searchspace: The hybrid search space in which the recommendations should
+                be made.
+            batch_quantity: The size of the calculated batch.
+            candidates_comp: The computational representation of the candidates. This
+                is necessary for using this function as a fallback mechanism for
+                recommendations in discrete search spaces.
+
+        Raises:
+            NotImplementedError: If the function is not implemented by the child class.
+
+        Returns:
+            The recommended points.
+        """
         raise NotImplementedError("Hybrid recommender is not implemented.")
 
 
