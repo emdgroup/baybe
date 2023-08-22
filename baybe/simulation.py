@@ -45,6 +45,7 @@ def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
     baybe: BayBE,
     batch_quantity: int,
     lookup: pd.DataFrame,
+    groupby: Optional[List[str]] = None,
     n_exp_iterations: Optional[int] = None,
 ) -> pd.DataFrame:
 
@@ -70,25 +71,53 @@ def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
         df_train = lookup.copy()
         df_train = df_train[df_train[task_param.name] != task]
 
-        # Restrict the optimization only to on-task settings
-        # TODO: Avoid direct manipulation of metadata
-        baybe_task = deepcopy(baybe)
-        off_task_idxs = baybe_task.searchspace.discrete.exp_rep[task_param.name] != task
-        baybe_task.searchspace.discrete.metadata.loc[
-            off_task_idxs.values, "dont_recommend"
-        ] = True
+        # Extract all possible parameter configuration for the given task
+        # NOTE: In the following, we intentionally work with *integer* indexing (iloc)
+        #   instead of pandas indexes (loc), because the latter would yield wrong
+        #   results in cases where the search space dataframe contains duplicate
+        #   index entries (i.e., the assignment of recommendable entries would affect
+        #   all duplicates). While duplicate entries should be prevented by the search
+        #   space constructor, the integer-based indexing provides a second safety net.
+        task_mask = (baybe.searchspace.discrete.exp_rep[task_param.name] == task).values
+        task_configurations = baybe.searchspace.discrete.exp_rep.reset_index(drop=True)[
+            task_mask
+        ]
 
-        # Simulate the setting and store results with metadata
-        df_result = simulate_scenarios(
-            scenarios={task: baybe_task},
-            batch_quantity=batch_quantity,
-            n_exp_iterations=n_exp_iterations,
-            initial_data=[df_train],
-            lookup=lookup,
-        )
+        # Create the subgroups for the current task. If no grouping is specified,
+        # use a single group containing all parameter configuration of the task.
+        if groupby is None:
+            groups = ((None, task_configurations),)
+        else:
+            groups = task_configurations.groupby(groupby)
 
-        # Store the simulation result for the current task
-        results.append(df_result)
+        # Simulate all subgroups
+        for group_id, group in groups:
+
+            # Create a copy of that can be manipulated
+            baybe_group = deepcopy(baybe)
+
+            # Exclude off-task / off-group settings from candidates list
+            # TODO: Avoid direct manipulation of metadata
+            baybe_group.searchspace.discrete.metadata.loc[:, "dont_recommend"] = True
+            baybe_group.searchspace.discrete.metadata.loc[:, "dont_recommend"].iloc[
+                group.index.values
+            ] = False
+
+            # Run the group simulation
+            df_group = simulate_scenarios(
+                scenarios={task: baybe_group},
+                batch_quantity=batch_quantity,
+                n_exp_iterations=n_exp_iterations,
+                initial_data=[df_train],
+                lookup=lookup,
+            )
+
+            # Add the group columns
+            if groupby is not None:
+                context = pd.DataFrame(group_id, columns=groupby, index=df_group.index)
+                df_group = pd.concat([context, df_group], axis=1)
+
+            results.append(df_group)
 
     return pd.concat(results, ignore_index=True)
 
