@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from dataclasses import dataclass
 from functools import partial
 from typing import (
     Any,
@@ -21,7 +22,8 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm, trange
+import xyzpy as xyz
+from xarray import DataArray
 
 from baybe.core import BayBE
 from baybe.exceptions import NotEnoughPointsLeftError
@@ -192,70 +194,64 @@ def simulate_scenarios(
             * '{targetname}_Measurements': the individual measurements obtained for the
                 respective target and iteration
     """
-    # Validate the iteration specification
-    if not (n_mc_iterations is None) ^ (initial_data is None):
-        raise ValueError(
-            "Exactly one of 'n_mc_iterations' and 'initial_data' can take a value."
+    RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
+
+    @dataclass
+    class SimulationResult:
+        """A simple wrapper to enable dataframe-valued return values with xyzpy."""
+
+        result: pd.DataFrame
+
+    @xyz.label(var_names=[RESULT_VARIABLE])
+    def simulate(  # pylint: disable=invalid-name
+        Scenario: str,
+        Random_Seed=None,
+        Initial_Data=None,
+    ):
+        """Callable for xyzpy simulation."""
+        return SimulationResult(
+            simulate_experiment(
+                baybe_obj=scenarios[Scenario],
+                batch_quantity=batch_quantity,
+                lookup=lookup,
+                n_exp_iterations=n_exp_iterations,
+                initial_data=initial_data[Initial_Data],
+                impute_mode=impute_mode,
+                noise_percent=noise_percent,
+                random_seed=Random_Seed,
+            )
         )
 
-    # Create a dataframe to store the simulation results
-    results = pd.DataFrame()
+    def unpack_simulation_results(array: DataArray) -> pd.DataFrame:
+        """Turns the xyzpy simulation results into a flat dataframe."""
+        # Convert to dataframe and remove the wrapper layer
+        series = array.to_series()
+        series = series.apply(lambda x: x.result)
 
-    # Simulate all scenarios
-    for scenario_id, baybe_template in scenarios.items():
-
-        # Create a dataframe to store the results for the current scenario
-        results_var = pd.DataFrame()
-
-        # Create an iterator for repeating the experiment
-        pbar = trange(n_mc_iterations) if initial_data is None else tqdm(initial_data)
-
-        # Run all experiment repetitions
-        for k_mc, data in enumerate(pbar):
-            # Show the simulation progress
-            pbar.set_description(str(scenario_id))
-
-            # Create a fresh BayBE object and set the corresponding random seed
-            baybe = deepcopy(baybe_template)
-            random_seed = 1337 + k_mc
-            set_random_seed(random_seed)
-
-            # Add the initial data
-            if initial_data is not None:
-                baybe.add_measurements(data)
-
-            # For impute_mode 'ignore', do not recommend space entries that are not
-            # available in the lookup
-            # IMPROVE: Avoid direct manipulation of the searchspace members
-            if impute_mode == "ignore":
-                searchspace = baybe.searchspace.discrete.exp_rep
-                missing_inds = searchspace.index[
-                    searchspace.merge(lookup, how="left", indicator=True)["_merge"]
-                    == "left_only"
-                ]
-                baybe.searchspace.discrete.metadata.loc[
-                    missing_inds, "dont_recommend"
-                ] = True
-
-            # Run all experimental iterations
-            results_mc = simulate_experiment(
-                baybe,
-                batch_quantity,
-                lookup,
-                n_exp_iterations,
-                impute_mode,
-                noise_percent,
+        # Un-nest all simulation results
+        dfs = []
+        for setting, df_result in series.items():
+            df_setting = pd.DataFrame(
+                [setting], columns=series.index.names, index=df_result.index
             )
+            df_result = pd.concat([df_setting, df_result], axis=1)
+            dfs.append(df_result)
 
-            # Add the random seed information and append the results
-            results_mc.insert(0, "Random_Seed", random_seed)
-            results_var = pd.concat([results_var, results_mc])
+        # Concatenate all results into a single dataframe
+        return pd.concat(dfs, ignore_index=True)
 
-        # Add the scenario information and append the results
-        results_var.insert(0, "Scenario", scenario_id)
-        results = pd.concat([results, results_var])
+    # Collect the settings to be simulated
+    combos = {"Scenario": scenarios.keys()}
+    if n_mc_iterations:
+        combos["Random_Seed"] = range(1337, 1337 + n_mc_iterations)
+    if initial_data:
+        combos["Initial_Data"] = range(len(initial_data))
 
-    return results.reset_index(drop=True)
+    # Simulate and unpack
+    da_results = simulate.run_combos(combos)[RESULT_VARIABLE]
+    df_results = unpack_simulation_results(da_results)
+
+    return df_results
 
 
 def simulate_experiment(
@@ -263,10 +259,12 @@ def simulate_experiment(
     batch_quantity: int,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
     n_exp_iterations: Optional[int] = None,
+    initial_data: Optional[pd.DataFrame] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
+    random_seed: int = 1337,
 ) -> pd.DataFrame:
     """
     Simulates a single experimental DOE loop. See `simulate_from_configs` for details.
@@ -296,6 +294,27 @@ def simulate_experiment(
             "For the specified setting, the experimentation loop can be continued "
             "indefinitely. Hence, `n_exp_iterations` must be explicitly provided."
         )
+
+    # Create a fresh BayBE object and set the corresponding random seed
+    baybe_obj = deepcopy(baybe_obj)
+    set_random_seed(random_seed)
+
+    # Add the initial data
+    if initial_data is not None:
+        baybe_obj.add_measurements(initial_data)
+
+    # For impute_mode 'ignore', do not recommend space entries that are not
+    # available in the lookup
+    # IMPROVE: Avoid direct manipulation of the searchspace members
+    if impute_mode == "ignore":
+        searchspace = baybe_obj.searchspace.discrete.exp_rep
+        missing_inds = searchspace.index[
+            searchspace.merge(lookup, how="left", indicator=True)["_merge"]
+            == "left_only"
+        ]
+        baybe_obj.searchspace.discrete.metadata.loc[
+            missing_inds, "dont_recommend"
+        ] = True
 
     # Create a dataframe to store the simulation results
     # TODO: Avoid dataframe concatenation in loop

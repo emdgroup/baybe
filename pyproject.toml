@@ -33,6 +33,7 @@ dependencies = [
     "scipy>=1.10.1",
     "setuptools-scm>=7.1.0",
     "torch>=1.11.0",
+    "xyzpy>=1.2.1",
 ]
 dynamic = ['version']
 
