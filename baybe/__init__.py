@@ -3,7 +3,7 @@
 from baybe.core import BayBE  # pylint: disable=wrong-import-position
 
 
-def infer_version() -> str:
+def infer_version() -> str:  # pragma: no cover
     """Determines the package version for the different ways the code can be invoked."""
 
     # ----------------------------------------------------------------------------------
