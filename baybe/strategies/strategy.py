@@ -1,8 +1,4 @@
-# pylint: disable=missing-function-docstring
-
-"""
-Strategies for Design of Experiments (DOE).
-"""
+"""Strategies for Design of Experiments (DOE)."""
 
 from typing import Optional
 
@@ -32,21 +28,16 @@ class Strategy(SerialMixin):
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        """
-        Recommends the next experiments to be conducted.
+        """Recommend the next experiments to be conducted.
 
-        Parameters
-        ----------
-        train_x : pd.DataFrame
-            The features of the conducted experiments.
-        train_y : pd.DataFrame
-            The corresponding response values.
-        batch_quantity : int (default = 1)
-            The number of experiments to be conducted in parallel.
+        Args:
+            searchspace: The search space in which the experiments are conducted.
+            batch_quantity: The number of experiments to be conducted in parallel.
+            train_x: The features of the conducted experiments.
+            train_y: The corresponding response values.
 
-        Returns
-        -------
-        The DataFrame with the specific experiments recommended.
+        Returns:
+            The DataFrame with the specific experiments recommended.
         """
         recommender = (
             self.initial_recommender if len(train_x) == 0 else self.recommender
