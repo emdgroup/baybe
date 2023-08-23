@@ -10,6 +10,7 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type
 
 import cattrs
 import numpy as np
+import onnxruntime as ort
 import torch
 from attrs import define, field
 from botorch.fit import fit_gpytorch_mll_torch
@@ -100,6 +101,22 @@ def _get_model_params_validator(model_init: Callable) -> Callable:
             raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
 
     return validate_model_params
+
+
+def _validate_custom_pretrained_params(obj, _, model_params: dict) -> None:
+    """Validates custom pretrain model params."""
+    try:
+        onnx_str = model_params["onnx"]
+        _ = model_params["onnx_input_name"]
+    except KeyError as exc:
+        raise ValueError(
+            f"Incomplete model params for {obj.__class__.__name__}"
+        ) from exc
+
+    try:
+        ort.InferenceSession(onnx_str.encode("ISO-8859-1"))
+    except Exception as exc:
+        raise ValueError(f"Invalid onnx str for {obj.__class__.__name__}") from exc
 
 
 def catch_constant_targets(model_cls: Type["Surrogate"]):
@@ -817,6 +834,41 @@ class BayesianLinearSurrogate(Surrogate):
         # See base class.
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
+
+
+@define
+class CustomPretrainedSurrogate(Surrogate):
+    """A wrapper class for custom pretrained surrogate models"""
+
+    # Class variables
+    joint_posterior: ClassVar[bool] = False
+
+    # Object variables
+    model_params: Dict[str, Any] = field(
+        factory=dict,
+        converter=dict,
+        validator=_validate_custom_pretrained_params,
+    )
+
+    _model: Optional[ort.InferenceSession] = field(init=False, default=None)
+
+    @batchify
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See base class."""
+
+        model_inputs = {
+            self.model_params["onnx_input_name"]: candidates.numpy().astype(np.float32)
+        }
+
+        results = self._model.run(None, model_inputs)
+
+        return torch.from_numpy(results[0]), torch.from_numpy(results[1]).pow(2)
+
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+        """See base class."""
+        self._model = ort.InferenceSession(
+            self.model_params["onnx"].encode("ISO-8859-1")
+        )
 
 
 def block_serialize_custom_architecture(raw_unstructure_hook):
