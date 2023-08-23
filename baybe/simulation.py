@@ -198,18 +198,6 @@ def simulate_scenarios(
             "Exactly one of 'n_mc_iterations' and 'initial_data' can take a value."
         )
 
-    # Validate the lookup mechanism
-    if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
-        raise TypeError(
-            "The lookup can either be 'None', a pandas dataframe or a callable."
-        )
-
-    # Validate the data imputation mode
-    if (impute_mode == "ignore") and (not isinstance(lookup, pd.DataFrame)):
-        raise ValueError(
-            "Impute mode 'ignore' is only available for dataframe lookups."
-        )
-
     # Create a dataframe to store the simulation results
     results = pd.DataFrame()
 
@@ -250,7 +238,7 @@ def simulate_scenarios(
                 ] = True
 
             # Run all experimental iterations
-            results_mc = _simulate_experiment(
+            results_mc = simulate_experiment(
                 baybe,
                 batch_quantity,
                 lookup,
@@ -270,7 +258,7 @@ def simulate_scenarios(
     return results.reset_index(drop=True)
 
 
-def _simulate_experiment(
+def simulate_experiment(
     baybe_obj: BayBE,
     batch_quantity: int,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
@@ -286,7 +274,19 @@ def _simulate_experiment(
     accepts any number of arguments and returns either a single or a tuple of floats.
     The inputs however also need to be floats!
     """
-    # Validate input
+    # Validate the lookup mechanism
+    if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
+        raise TypeError(
+            "The lookup can either be 'None', a pandas dataframe or a callable."
+        )
+
+    # Validate the data imputation mode
+    if (impute_mode == "ignore") and (not isinstance(lookup, pd.DataFrame)):
+        raise ValueError(
+            "Impute mode 'ignore' is only available for dataframe lookups."
+        )
+
+    # Validate the number of experimental steps
     # TODO: Probably, we should add this as a property to BayBE
     will_terminate = (baybe_obj.searchspace.type == SearchSpaceType.DISCRETE) and (
         not baybe_obj.strategy.allow_recommending_already_measured
@@ -298,6 +298,7 @@ def _simulate_experiment(
         )
 
     # Create a dataframe to store the simulation results
+    # TODO: Avoid dataframe concatenation in loop
     results = pd.DataFrame()
 
     # Run the DOE loop
