@@ -1,4 +1,4 @@
-"""Collection of small utilities."""
+"""Collection of small basic utilities."""
 
 import random
 from dataclasses import dataclass
@@ -13,9 +13,9 @@ _T = TypeVar("_T")
 
 @dataclass(frozen=True, repr=False)
 class Dummy:
-    """
-    Placeholder element for array-like data types. Useful e.g. for detecting
-    duplicates in constraints.
+    """Placeholder element for array-like data types.
+
+    Useful e.g. for detecting duplicates in constraints.
     """
 
     def __repr__(self):
@@ -23,21 +23,15 @@ class Dummy:
 
 
 def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> List[_T]:
-    """
-    Returns a list of subclasses for the given class.
+    """Return a list of subclasses for the given class.
 
-    Parameters
-    ----------
-    cls
-        The base class to retrieve subclasses for.
-    recursive : bool
-        If True, indirect subclasses (i.e. subclasses of subclasses) are included.
-    abstract : bool
-        If True, abstract subclasses are included.
+    Args:
+        cls: The base class to retrieve subclasses for.
+        recursive: If ```True```, indirect subclasses (i.e. subclasses of subclasses)
+            are included.
+        abstract: If ```True```, abstract subclasses are included.
 
-    Returns
-    -------
-    list
+    Returns:
         A list of subclasses for the given class.
     """
     from baybe.utils import is_abstract  # pylint: disable=import-outside-toplevel
@@ -56,8 +50,12 @@ def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> L
     return subclasses
 
 
-def set_random_seed(seed: int) -> None:
-    """Sets the global random seed."""
+def set_random_seed(seed: int):
+    """Sets the global random seed.
+
+    Args:
+        seed: The chosen global random seed.
+    """
     torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
