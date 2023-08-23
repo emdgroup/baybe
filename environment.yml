@@ -1,8 +1,9 @@
 # DEV TOOLS NOTE: The versions of all dev tools should be consistent everywhere
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
-# AUDIT NOTE: These packages have been pinned as secondary dependencies flagged by
-# pip-audit for vulnerabilities in lower versions
+# AUDIT NOTE: The marked packages are secondary dependencies but their versions are
+# set explicitly because the otherwise installed default versions have been flagged
+# for vulnerabilities by pip-audit
 
 name: baybe
 channels:
