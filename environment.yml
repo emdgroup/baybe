@@ -26,13 +26,13 @@ dependencies:
 - opentelemetry-exporter-otlp==1.16.0
 - p2j==1.3.2
 - pre-commit==2.19.0  # see DEV TOOLS NOTE
-- pyarrow==12.0.1
 - pylint==2.17.2  # see DEV TOOLS NOTE
 - pip==22.1.2
 - pip-audit==2.5.5
 - pandas==1.4.2
 - plotly==5.10.0
 - protobuf==3.20.3
+- pyarrow==9.0.0
 - pytest==7.2.0
 - pytorch==1.11.0
 - rdkit==2022.3.4
