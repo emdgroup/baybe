@@ -49,6 +49,7 @@ def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
     lookup: pd.DataFrame,
     groupby: Optional[List[str]] = None,
     n_exp_iterations: Optional[int] = None,
+    n_mc_iterations: Optional[int] = None,
 ) -> pd.DataFrame:
 
     # TODO: The current implementation assumes a purely discrete search space
@@ -109,9 +110,10 @@ def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
             df_group = simulate_scenarios(
                 scenarios={task: baybe_group},
                 batch_quantity=batch_quantity,
-                n_exp_iterations=n_exp_iterations,
-                initial_data=[df_train],
                 lookup=lookup,
+                n_exp_iterations=n_exp_iterations,
+                n_mc_iterations=n_mc_iterations,
+                initial_data=[df_train],
             )
 
             # Add the group columns
