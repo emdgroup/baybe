@@ -1,25 +1,19 @@
-"""A wrapper class for synthetic BoTorch test functions.
-
-They wrap synthetic BoTorch test function to simplify using these for testing purposes.
-"""
+"""A wrapper class for synthetic BoTorch test functions."""
 
 from botorch.test_functions import SyntheticTestFunction
 from torch import Tensor
 
 
 def botorch_function_wrapper(test_function: SyntheticTestFunction):
-    """
-    Wrapper for botorch analytical test functions. Turns them into a format that is
-    accepted by lookup in simulations.
+    """Turn a BoTorch test function into a format accepted by lookup in simulations.
 
-    Parameters
-    ----------
-    test_function: SyntheticTestFunction
-        The synthetic test function, e.g. "Rastrigin()" from botorch.test_functions
+    See :py:func:`baybe.simulation` for details.
 
-    Returns
-    -------
-    Callable of signature Callable[[float,...], float]
+    Args:
+        test_function: The synthetic test function from ```botorch.test_functions```
+
+    Returns:
+        A wrapped version of the provided function.
     """
 
     def wrapper(*x: float) -> float:
