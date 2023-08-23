@@ -1,6 +1,4 @@
-"""
-Automatic conversion of python code to markdown files for the documentation.
-"""
+"""Automatic conversion of python code to markdown files for the documentation."""
 
 import argparse
 import os
@@ -32,7 +30,7 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
-    "--do_not_pretify",
+    "--do_not_prettify",
     help="Flag for denoting that the routines used to make the output look prettier"
     "should not be used.",
     action="store_true",
@@ -43,7 +41,7 @@ args = parser.parse_args()
 USE_HTML = args.html
 DIR = args.target_dir
 INCLUDE_PRIVATE = args.include_private
-PRETIFY = not args.do_not_pretify
+PRETTIFY = not args.do_not_prettify
 
 # Additional options for the sphinx-apidoc
 private_members = "private-members" if INCLUDE_PRIVATE else ""
@@ -108,22 +106,49 @@ for order, file in enumerate(markdown_files):
         # List for storing the formatted lines
         formatted_content = []
 
+        # Flag denoting whether it is necessary to skip lines due to them containing
+        # information about the return type of properties
+        skip_property_line = False
+        # Flag for skipping two lines at once. Necessary since the line for the return
+        # text and the actual return type are two lines
+        double_skip = False
+
         # Some manual cleanup of the lines
         # There are two major aspects that we need to take care of:
         # 1. Make the lines look a bit better
         # 2. Adjust links such that they work for the documentation
         for line in content:
             # PART 1: MAKE THINGS LOOK NICER IF THIS IS CHOSEN
-            if PRETIFY:
+            if PRETTIFY:
+
+                # There are situations in which we need to skip some lines.
+
+                # NOTE: It seems like sphinx does not add the return type hint for
+                # cached properties like in comp_df. Thus, there is an additional check
+                # that sets skip_property_line=Fals again if we encounter another
+                # heading
+                if skip_property_line and line.startswith("####"):
+                    skip_property_line = False
+                # We thus check if we are still in such a situation
+                if skip_property_line and line.startswith("* **Return type:**"):
+                    skip_property_line = False
+                    double_skip = True
+                    continue
+
+                # If we need to skip two lines, we skip the second on now.
+                if double_skip:
+                    double_skip = False
+                    continue
 
                 # 1. Remove ugly "*"
                 if line.startswith("#### ") and "*" in line:
                     line = line.replace("*", "")
 
-                # 2. Replace [‘typing.ClassVar'] by ['ClassVar'] as this looks nicer
+                # 2. Replacement for class variables types
                 line = line.replace("[`typing.ClassVar`]", "[`ClassVar`]")
+                line = line.replace("[`typing.Type`]", "[`Type`]")
 
-                # 3. Do a similar replacement for the baybe.searchspace.SearchSpaceType
+                # 3. Do a similar replacement for the specific object types
                 line = line.replace(
                     "`baybe.searchspace.SearchSpaceType`", "`SearchSpaceType`"
                 )
@@ -137,6 +162,10 @@ for order, file in enumerate(markdown_files):
                 # lines are skipped
                 if "_Nothing.NOTHING" in line:
                     continue
+                # Remove the "~" sign that is in front of the ScikitLearnModel
+                line = line.replace("~_ScikitLearn", "_ScikitLearn")
+                # Remove the "~" sign that is in front ot the _T class var
+                line = line.replace("`~_T`", "`_T`")
                 # Insert the correct link manually.
                 if "Default: SequentialGreedyRecommender" in line:
                     line = line.replace(
@@ -147,6 +176,71 @@ for order, file in enumerate(markdown_files):
                         line + "(/baybe/sdk/docs/baybestrategiesbayesian/#class-baybe."
                         "strategies.bayesian.sequentialgreedyrecommender)\n"
                     )
+
+                # 4. numpy ArrayLike alias
+                # It seems like the current version of sphinx does not properly handle
+                # aliases, specifically when using autodoc_typehints which we need.
+                # See https://github.com/sphinx-doc/sphinx/issues/10455 for the open
+                # issue and https://stackoverflow.com/questions/
+                # 73223417/type-aliases-in-type-hints-are-not-preserved
+                # for a comment regarding the autodoc issue
+                # In our case, this is not a severe problem as we only rarely use
+                # ArrayLike and thus simply manually replace the corresponding lines.
+                if line.startswith("  * **arr** ([`Union`]"):
+                    # Get the first part with the convoluted type hint and the second
+                    # part with the actual description
+                    _, description = line.split("–")
+                    # Construct the first part of the line manually
+                    type_alias = (
+                        "  * **arr** ([`ArrayLike`](https://numpy.org/devdocs/"
+                        + "reference/typing.html#numpy.typing.ArrayLike)) - "
+                    )
+                    line = type_alias + description
+                if line.startswith("  * **x** (`Union`"):
+                    # Get the first part with the convoluted type hint and the second
+                    # part with the actual description
+                    _, description = line.split("–")
+                    # Construct the first part of the line manually
+                    type_alias = (
+                        "  * **x** ([`ArrayLike`](https://numpy.org/devdocs/"
+                        + "reference/typing.html#numpy.typing.ArrayLike)) - "
+                    )
+                    line = type_alias + description
+                if line.startswith("  * **y** (`Union`"):
+                    # Get the first part with the convoluted type hint and the second
+                    # part with the actual description
+                    _, description = line.split("–")
+                    # Construct the first part of the line manually
+                    type_alias = (
+                        "  * **y** ([`ArrayLike`](https://numpy.org/devdocs/"
+                        + "reference/typing.html#numpy.typing.ArrayLike)) - "
+                    )
+                    line = type_alias + description
+
+                # 5. Return annotations for properties
+                # Sphinx shows the return type also for properties which is not
+                # necessary. Thus, whenever we encounter a property, we skip the next
+                # line that contains a return
+                # NOTE: It seems like sphinx does not add the return type hint for
+                # cached properties like in comp_df. Thus, there is an additional check
+                # that sets skip_property_line=Fals again if we encounter another
+                # heading
+                if line.startswith("#### property") or line.startswith(
+                    "#### abstract property"
+                ):
+                    skip_property_line = True
+
+                # None return types
+                # If a function returns "None", then this should be part of the doc
+                if line.startswith("  [`None`]"):
+                    # We need to get rid of the previous line and then continue
+                    formatted_content = formatted_content[:-1]
+                    continue
+
+                # Multi-line enumerations in docstrings
+                # This happens e.g. in simulation.py
+                if ">   :" in line:
+                    line = line.replace(">   :", ">    ")
 
             # PART 2: FORMAT LINKS
             # We have to take care of different kinds of links.
