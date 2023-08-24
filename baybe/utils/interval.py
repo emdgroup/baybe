@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring
+"""Utilities for handling intervals."""
 
 import sys
 from collections.abc import Iterable
@@ -30,13 +30,19 @@ class InfiniteIntervalError(Exception):
 
 @define
 class Interval:
-    """Intervals on the real number line."""
+    """Intervals on the real number line.
+
+    Args:
+        lower: The lower end of the interval.
+        upper: The upper end of the interval.
+    """
 
     lower: float = field(converter=lambda x: float(x) if x is not None else -np.inf)
     upper: float = field(converter=lambda x: float(x) if x is not None else np.inf)
 
     @upper.validator
     def validate_order(self, _, value):
+        # Only used internally. pylint:disable = missing-function-docstring
         if value <= self.lower:
             raise ValueError(
                 f"The upper interval bound (provided value: {value}) must be larger "
@@ -45,14 +51,17 @@ class Interval:
 
     @property
     def is_finite(self):
+        """Check whether the interval is finite."""
         return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
     def is_bounded(self):
+        """Check whether the interval is bounded."""
         return np.isfinite(self.lower) or np.isfinite(self.upper)
 
     @property
     def center(self):
+        """The center of the interval. Only applicable for finite intervals."""
         if not self.is_finite:
             raise InfiniteIntervalError(
                 f"The interval {self} is infinite and thus has no center."
@@ -62,6 +71,7 @@ class Interval:
     @singledispatchmethod
     @classmethod
     def create(cls, value):
+        # pylint: disable=missing-function-docstring
         raise NotImplementedError(f"Unsupported argument type: {type(value)}")
 
     @create.register
@@ -75,19 +85,38 @@ class Interval:
         return Interval(*bounds)
 
     def to_tuple(self):
+        """Transfor the interval to a tuple."""
         return self.lower, self.upper
 
     def to_ndarray(self):
+        """Transform the interval to a ndarray."""
         return np.array([self.lower, self.upper])
 
     def to_tensor(self):
+        """Transform the interval to a tensor."""
         return torch.tensor([self.lower, self.upper])
 
     def contains(self, number: float) -> bool:
+        """Check whether the interval contains a given number.
+
+        Args:
+            number: The number that should be checked.
+
+        Returns:
+            Whether or not the interval contains the number.
+        """
         return self.lower <= number <= self.upper
 
 
 def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
+    """Convert bounds given in another format to an interval.
+
+    Args:
+        bounds: The bounds that should be transformed to an interval.
+
+    Returns:
+        The interval.
+    """
     if isinstance(bounds, Interval):
         return bounds
     return Interval.create(bounds)
