@@ -24,7 +24,14 @@ _DTYPE_FLOAT_TORCH = torch.float64  # pylint: disable=invalid-name
 
 
 def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
-    """Converts a given set of dataframes into tensors (dropping all indices)."""
+    """Convert a given set of dataframes into tensors (dropping all indices).
+
+    Args:
+        *dfs: A set of dataframes
+
+    Returns:
+        The provided dataframe(s), transformed into Tensor(s)
+    """
     # FIXME This function seems to trigger a problem when some columns in either of
     #  the dfs have a dtype other than int or float (e.g. object, bool). This can
     #  weirdly happen, even if all values are numeric, e.g. when a target column is
@@ -48,45 +55,36 @@ def add_fake_results(
     good_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
     bad_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
 ) -> None:
-    """
-    Adds fake results to a dataframe which was the result of the BayBE recommendation
-    action. It is possible to specify "good" values, which will be given a better
+    """Add fake results to a dataframe which was the result of a BayBE recommendation.
+
+    It is possible to specify "good" values, which will be given a better
     target value. With this, the algorithm can be driven towards certain optimal values
-    whilst still being random. Useful for testing.
+    whilst still being random. Useful for testing. Note that this does not return a
+    new dataframe and that the dataframe is changed in-place.
 
-    Parameters
-    ----------
-    data : pd.DataFrame
-        Output of the `recommend` function of a `BayBE` object.
-    baybe : BayBE
-        The `BayBE` object, which provides configuration, targets, etc.
-    good_reference_values : dict (optional)
-        A dictionary containing parameter names (= dict keys) and respective
-        parameter values (= dict values) that specify what will be considered good
-        parameter settings. Conditions for different parameters are connected via
-        "and" logic, i.e. the targets will only get good values when all parameters
-        have good reference values.
-    good_intervals : dict (optional)
-        A dictionary containing target names (= dict keys) and respective "good"
-        target value ranges (= dict values) in the form of 2-tuples. Each target will
-        be assigned a random value in its respective target range whenever the
-        corresponding parameters meet the conditions specified through
-        `good_reference_values`.
-    bad_intervals : dict (optional)
-        Analogous to `good_intervals` but covering the cases where the parameters lie
-        outside the conditions specified through `good_reference_values`.
+    Args:
+        data: Output of the ```recommend``` function of a ```BayBE``` object, see
+            :py:func:`baybe.core.BayBE.recommend`.
+        baybe: The ```BayBE``` object, which provides configuration, targets, etc.
+        good_reference_values: A dictionary containing parameter names (= dict keys) and
+            respective parameter values (= dict values) that specify what will be
+            considered good parameter settings. Conditions for different parameters are
+            connected via "and" logic, i.e. the targets will only get good values when
+            all parameters have good reference values.
+        good_intervals: A dictionary containing target names (= dict keys) and
+            respective "good" target value ranges (= dict values) in the form of
+            2-tuples. Each target will be assigned a random value in its respective
+            target range whenever the corresponding parameters meet the conditions
+            specified through ```good_reference_values```.
+        bad_intervals: Analogous to ```good_intervals``` but covering the cases where
+            the parameters lie outside the conditions specified through
+            ```good_reference_values```.
 
-    Example
-    -------
-    good_reference_values = {'Param1': [1, 4, 42], 'Param2': ['A', 'C']}.
-    good_intervals = {'Target1': (5, 10), 'Target2': (0, 100)}
-    bad_intervals = {'Target1': (0, 5), 'Target2': (-99, 0)}
-    data = baybe.recommend(batch_quantity=10)
-    add_fake_results(data, baybe, good_reference_values, good_intervals, bad_intervals)
-
-    Returns
-    -------
-    Nothing (the given dataframe is modified in-place).
+    Raises:
+        ValueError: If good values for a parameter were specified, but this parameter
+            is not part of the dataframe.
+        ValueError: If the target mode is unrecognized when trying to add fake values.
+        TypeError: If the entries in ```good_reference_values``` are not lists.
     """
     # Per default, there are no reference values for good parameters
     if good_reference_values is None:
@@ -183,27 +181,25 @@ def add_parameter_noise(
     noise_type: Literal["absolute", "relative_percent"] = "absolute",
     noise_level: float = 1.0,
 ) -> None:
-    """
-    Applies uniform noise (additive or multiplicative) to the parameter values
-    contained in a dataframe. This can be used, for instance, to simulate experimental
-    noise or imperfect user input containing numerical parameter values that differ
-    from recommended parameter configurations.
+    """Apply uniform noise to the parameter values of a recommendation frame.
 
-    Parameters
-    ----------
-    data : pd.DataFrame
-        A dataframe containing configurations for all provided parameters.
-    parameters : Iterable[Parameter]
-        The parameters for which the values shall be corrupted.
-    noise_type : "absolute" | "relative_percent"
-        Defines whether the noise should be additive or multiplicative.
-    noise_level : float
-        Level/magnitude of the noise. Must be provided as numerical value for
-        noise type 'absolute' and as percentage for noise type 'relative_percent'.
+    The noise can be additive or multiplicative.
+    This can be used to simulate experimental noise or imperfect user input containing
+    numerical parameter values that differ from the recommendations. Note that the
+    dataframe is modified in-place, and that no new dataframe is returned.
 
-    Returns
-    -------
-    Nothing (the given dataframe is modified in-place).
+    Args:
+        data: Output of the ```recommend``` function of a ```BayBE``` object, see
+            :py:func:`baybe.core.BayBE.recommend`.
+        parameters: The parameters for which the values shall be corrupted.
+        noise_type: Defines whether the noise should be additive or multiplicative.
+        noise_level: Level/magnitude of the noise. Must be provided as numerical value
+            for noise type ```absolute``` and as percentage for noise type
+            ```relative_percent```.
+
+    Raises:
+        ValueError: If ```noise_type``` is neither ```absolute``` nor
+            ```relative_percent```.
     """
     # Validate input
     if noise_type not in ("relative_percent", "absolute"):
@@ -230,19 +226,13 @@ def add_parameter_noise(
 def df_drop_single_value_columns(
     df: pd.DataFrame, lst_exclude: list = None
 ) -> pd.DataFrame:
-    """
-    Drops dataframe columns with zero variance.
+    """Drop dataframe columns with zero variance.
 
-    Parameters
-    ----------
-    df: pd.DataFrame
-        The dataframe to be cleaned.
-    lst_exclude: list
-        List of column names that are excluded from this filter.
+    Args:
+        df: The dataframe to be cleaned.
+        lst_exclude: List of column names that are excluded from this filter.
 
-    Returns
-    -------
-    pd.DataFrame
+    Returns:
         The cleaned dataframe.
     """
     if lst_exclude is None:
@@ -259,19 +249,14 @@ def df_drop_single_value_columns(
 def df_drop_string_columns(
     df: pd.DataFrame, ignore_list: Optional[List[str]] = None
 ) -> pd.DataFrame:
-    """
-    Drops dataframe columns with string values.
+    """Drop dataframe columns with string values.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        The dataframe to be cleaned.
-    ignore_list : List[str] (optional)
-        List of columns that should not be dropped, even if they include string values.
+    Args:
+        df: The dataframe to be cleaned.
+        ignore_list: List of columns that should not be dropped, even if they include
+            string values.
 
-    Returns
-    -------
-    pd.DataFrame
+    Returns:
         The cleaned dataframe.
     """
     ignore_list = ignore_list or []
@@ -285,20 +270,15 @@ def df_drop_string_columns(
 def df_uncorrelated_features(
     df: pd.DataFrame, exclude_list: Optional[List[str]] = None, threshold: float = 0.7
 ):
-    """
-    Returns an uncorrelated set of features. Adapted from edbo.
+    """Return an uncorrelated set of features. Adapted from edbo.
 
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        The dataframe to be cleaned
-    exclude_list : list of strings or None
-        If provided this defines the columns that should be ignored
-    threshold : float
-        Threshold for column-column correlation above which columns should be dropped
-    Returns
-    -------
-    data : pandas.DataFrame
+    Args:
+        df: The dataframe to be cleaned
+        exclude_list: If provided this defines the columns that should be ignored
+        threshold: Threshold for column-column correlation above which columns should
+            be dropped
+
+    Returns:
         A new dataframe
     """
     # TODO: revise or replace with VRE method
@@ -331,9 +311,7 @@ def fuzzy_row_match(
     parameters: List[Parameter],
     numerical_measurements_must_be_within_tolerance: bool,
 ) -> pd.Index:
-    """
-    Matches rows of the right dataframe (e.g. measurements from an experiment)
-    to the rows of the left dataframe.
+    """Match row of the right dataframe to the rows of the left dataframe.
 
     This is useful for validity checks and to automatically match measurements to
     entries in the search space, e.g. to detect which ones have been measured.
@@ -341,30 +319,28 @@ def fuzzy_row_match(
     allowed values. For numerical parameters, the user can decide via a flag
     whether values outside the tolerance should be accepted.
 
-    Parameters
-    ----------
-    left_df : pd.DataFrame
-        The data that serves as lookup reference.
-    right_df : pd.DataFrame
-        The data that should be checked for matching rows in the left data frame.
-    parameters : list
-        List of baybe parameter objects that are needed to identify potential
-        tolerances.
-    numerical_measurements_must_be_within_tolerance : bool
-        If True, numerical parameters are matched with the search space elements
-        only if there is a match within the parameter tolerance. If False,
-        the closest match is considered, irrespective of the distance.
+    Args:
+        left_df: The data that serves as lookup reference.
+        right_df: The data that should be checked for matching rows in the left
+            dataframe.
+        parameters: List of baybe parameter objects that are needed to identify
+            potential tolerances.
+        numerical_measurements_must_be_within_tolerance: If ```True```, numerical
+            parameters are matched with the search space elements only if there is a
+            match within the parameter tolerance. If ```False```, the closest match is
+            considered, irrespective of the distance.
 
-    Returns
-    -------
-    pd.Index
-        The index of the matching rows in left_df.
+    Returns:
+        The index of the matching rows in ```left_df```.
+
+    Raises:
+        ValueError: If some rows are present in the right but not in the left dataframe.
+        ValueError: If the input data has invalid values.
     """
-
     # Assert that all parameters appear in the given dataframe
     if not all(col in right_df.columns for col in left_df.columns):
         raise ValueError(
-            "for fuzzy row matching all rows of the right dataframe need to be present"
+            "For fuzzy row matching all rows of the right dataframe need to be present"
             " in the left dataframe."
         )
 
