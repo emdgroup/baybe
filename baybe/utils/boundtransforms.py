@@ -1,6 +1,5 @@
-"""
-Functions for bound transforms.
-"""
+"""Functions for bound transforms."""
+
 import numpy as np
 from numpy.typing import ArrayLike
 
@@ -8,27 +7,19 @@ from numpy.typing import ArrayLike
 def bound_linear(
     arr: ArrayLike, lower: float, upper: float, descending: bool
 ) -> np.ndarray:
-    """
-    A function that linearly maps input values in a specified interval
-    [lower, upper] to the interval [0, 1]. Outside the specified interval, the function
-    remains constant (that is, 0 or 1, depending on the side and selected mode).
+    """Linearly map values in a specified interval ```[lower, upper]``` to ```[0, 1]```.
 
-    Parameters
-    ----------
-    arr : ArrayLike
-        The values to be mapped.
-    lower : float
-        The lower boundary of the linear mapping interval.
-    upper : float
-        The upper boundary of the linear mapping interval.
-    descending : bool
-        If True, the function values decrease from 1 to 0 in the specified interval.
-        If False, they increase from 0 to 1. Outside the interval, the boundary function
-        values are extended.
+    Outside the specified interval, the function remains constant.
+    That is, 0 or 1, depending on the side and selected mode.
 
-    Returns
-    -------
-    np.ndarray
+    Args:
+        arr: The values to be mapped.
+        lower: The lower boundary of the linear mapping interval.
+        upper: The upper boundary of the linear mapping interval.
+        descending: If ```True```, the function values decrease from 1 to 0 in the
+            specified interval. If ```False```, they increase from 0 to 1.
+
+    Returns:
         An array containing the transformed values.
     """
     arr = np.array(arr)
@@ -45,23 +36,18 @@ def bound_linear(
 
 
 def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
-    """
-    A "triangular" function that is 0 outside a specified interval and linearly
-    increases to 1 from both interval ends, reaching the value 1 at the center of the
-    interval.
+    """Map values to the interval ```[0, 1]``` in a "triangular" fashion.
 
-    Parameters
-    ----------
-    arr : ArrayLike
-        The values to be mapped.
-    lower : float
-        The lower end of the triangle interval. Below, the mapped values are 0.
-    upper : float
-        The upper end of the triangle interval. Above, the mapped values are 0.
+    The shape of the function is "triangular" in that is 0 outside a specified interval
+    and linearly increases to 1 from both interval ends, reaching the value 1 at the
+    center of the interval.
 
-    Returns
-    -------
-    np.ndarray
+    Args:
+        arr: The values to be mapped.
+        lower: The lower end of the triangle interval. Below, the mapped values are 0.
+        upper:The upper end of the triangle interval. Above, the mapped values are 0.
+
+    Returns:
         An array containing the transformed values.
     """
     mid = lower + (upper - lower) / 2
@@ -75,22 +61,17 @@ def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
 
 
 def bound_bell(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
-    """
-    A Gaussian bell curve, specified through the boundary values of the sigma interval.
-    Reaches the maximum value of 1 at the interval center.
+    """Map values to the interval ```[0, 1]``` in a "Gaussian bell" fashion.
 
-    Parameters
-    ----------
-    arr : ArrayLike
-        The values to be mapped.
-    lower : float
-        The input value corresponding to the upper sigma interval boundary.
-    upper : float
-        The input value corresponding to the lower sigma interval boundary.
+    The shape of the function is "Gaussian bell curve", specified through the boundary
+    values of the sigma interval. Reaches the maximum value of 1 at the interval center.
 
-    Returns
-    -------
-    np.ndarray
+    Args:
+        arr: The values to be mapped.
+        lower: The input value corresponding to the upper sigma interval boundary.
+        upper: The input value corresponding to the lower sigma interval boundary.
+
+    Returns:
         An array containing the transformed values.
     """
     mean = np.mean([lower, upper])
