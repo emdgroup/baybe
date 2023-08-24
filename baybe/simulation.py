@@ -1,5 +1,4 @@
-"""
-Functionality to "simulate" Bayesian DOE given a lookup mechanism.
+"""Functionality to "simulate" Bayesian DOE given a lookup mechanism.
 
 The term "simulation" can have two slightly different interpretations, depending on the
 applied context:
@@ -68,42 +67,36 @@ def simulate_transfer_learning(
     groupby: Optional[List[str]] = None,
     n_mc_iterations: int = 1,
 ) -> pd.DataFrame:
-    """
-    Simulate Bayesian optimization with transfer learning.
+    """Simulate Bayesian optimization with transfer learning.
 
-    A wrapper around `simulate_scenarios` that partitions the search space into its
-    tasks and simulates each task with the training data from the remaining tasks.
+    A wrapper around :py:func:`baybe.simulation.simulate_scenarios` that partitions the
+    search space into its tasks and simulates each task with the training data from the
+    remaining tasks.
 
     NOTE:
     Currently, the simulation only supports purely discrete search spaces. This is
-    because `lookup` serves both as the loop-closing element **and** as the source
+    because ```lookup``` serves both as the loop-closing element **and** as the source
     for off-task training data. For continuous (or mixed) spaces, the lookup mechanism
     would need to be either implemented as a callable (in which case the training data
     must be provided separately) or the continuous parameters need to be effectively
     restricted to the finite number of provided lookup configurations. Neither is
     implemented at the moment.
 
-    Parameters
-    ----------
-    baybe:
-        See `simulate_experiment`.
-    lookup
-        See `simulate_scenarios`.
-    batch_quantity
-        See `simulate_scenarios`.
-    n_doe_iterations
-        See `simulate_scenarios`.
-    groupby
-        See `simulate_scenarios`.
-    n_mc_iterations
-        See `simulate_scenarios`.
+    Args:
+        baybe: See :py:func:`baybe.simulation.simulate_experiment`.
+        lookup: See :py:func:`baybe.simulation.simulate_scenarios`.
+        batch_quantity: See :py:func:`baybe.simulation.simulate_scenarios`.
+        n_doe_iterations: See :py:func:`baybe.simulation.simulate_scenarios`.
+        groupby: See :py:func:`baybe.simulation.simulate_scenarios`.
+        n_mc_iterations: See :py:func:`baybe.simulation.simulate_scenarios`.
 
-    Returns
-    -------
-    A dataframe as returned by `simulate_scenarios` where the different tasks are
-    represented in the 'Scenario' column.
+    Returns:
+        A dataframe as returned by :py:func:`baybe.simulation.simulate_scenarios` where
+        the different tasks are represented in the ```Scenario``` column.
+
+    Raises:
+        NotImplementedError: If a non-dscrete search space is chosen.
     """
-
     # TODO: Currently, we assume a purely discrete search space
     if baybe.searchspace.type != SearchSpaceType.DISCRETE:
         raise NotImplementedError(
@@ -170,54 +163,50 @@ def simulate_scenarios(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
+    """Simulation of multiple Bayesian optimization scenarios.
+
+    A wrapper function around :py:func:`baybe.simulation.simulate_experiment` that
+    allows to specify multiple simulation settings at once.
+
+    Args:
+        scenarios: A dictionary mapping scenario identifiers to DOE specifications.
+        lookup: See :py:func:`baybe.simulation.simulate_experiment`.
+        batch_quantity: See :py:func:`baybe.simulation.simulate_experiment`.
+        n_doe_iterations: See :py:func:`baybe.simulation.simulate_experiment`.
+        initial_data: A list of initial data sets for which the scenarios should be
+            simulated.
+        groupby: The names of the parameters to be used to partition the search space.
+            A separate simulation will be conducted for each partition, with the search
+            restricted to that partition.
+        n_mc_iterations: The number of Monte Carlo simulations to be used.
+        impute_mode: See :py:func:`baybe.simulation.simulate_experiment`.
+        noise_percent: See :py:func:`baybe.simulation.simulate_experiment`.
+
+    Returns:
+        A dataframe like returned from `simulate_experiments` but with the following
+        additional columns:
+            * ```Scenario```: Specifies the scenario identifier of the respective
+                simulation.
+            * ```Random_Seed```: Specifies the random seed used for the respective
+                simulation.
+            * Optional, if ```initial_data``` is provided:
+                A column ```Initial_Data``` that pecifies the index of the initial data
+                set used for the respective simulation.
+            * Optional, if ```groupby``` is provided: A column for each ```groupby```
+                parameter that specifies the search space partition considered for the
+                respective simulation.
     """
-    Simulation of multiple Bayesian optimization scenarios.
-
-    A wrapper function around `simulate_experiment` that allows to specify multiple
-    simulation settings at once.
-
-    Parameters
-    ----------
-    scenarios
-        A dictionary mapping scenario identifiers to DOE specifications.
-    lookup
-        See `simulate_experiment`.
-    batch_quantity
-        See `simulate_experiment`.
-    n_doe_iterations
-        See `simulate_experiment`.
-    initial_data
-        A list of initial data sets for which the scenarios should be simulated.
-    groupby
-        The names of the parameters to be used to partition the search space.
-        A separate simulation will be conducted for each partition, with the search
-        restricted to that partition.
-    n_mc_iterations
-        The number of Monte Carlo simulations to be used.
-    impute_mode
-        See `simulate_experiment`.
-    noise_percent
-        See `simulate_experiment`.
-
-    Returns
-    -------
-    A dataframe like returned from `simulate_experiments` but with the following
-    additional columns:
-        * 'Scenario': Specifies the scenario identifier of the respective simulation.
-        * 'Random_Seed': Specifies the random seed used for the respective simulation.
-        * Optional, if `initial_data` is provided:
-            A column 'Initial_Data' that pecifies the index of the initial data set
-            used for the respective simulation.
-        * Optional, if `groupby` is provided: A column for each "groupby" parameter
-            that specifies the search space partition considered for the respective
-            simulation.
-    """
-
+    # TODO: Due to the "..." operator, sphinx does not render this properly. Might
+    # want to investigate in the future.
     _RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
 
     @dataclass
     class SimulationResult:
-        """A thin wrapper to enable dataframe-valued return values with xyzpy."""
+        """A thin wrapper to enable dataframe-valued return values with xyzpy.
+
+        Args:
+            result: The result of the simulation.
+        """
 
         result: pd.DataFrame
 
@@ -289,41 +278,31 @@ def _simulate_groupby(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
+    """Scenario simulation for different search space partitions.
+
+    A wrapper around :py:func:`baybe.simulation.simulate_experiment` that allows to
+    partition the search space into different groups and run separate simulations for
+    all groups where the search is restricted to the corresponding partition.
+
+    Args:
+        baybe_obj: See :py:func:`baybe.simulation.simulate_experiment`.
+        lookup: See :py:func:`baybe.simulation.simulate_experiment`.
+        batch_quantity: See :py:func:`baybe.simulation.simulate_experiment`.
+        n_doe_iterations: See :py:func:`baybe.simulation.simulate_experiment`.
+        initial_data: See :py:func:`baybe.simulation.simulate_experiment`.
+        groupby: See :py:func:`baybe.simulation.simulate_scenarios`.
+        random_seed: See :py:func:`baybe.simulation.simulate_experiment`.
+        impute_mode: See :py:func:`baybe.simulation.simulate_experiment`.
+        noise_percent: See :py:func:`baybe.simulation.simulate_experiment`.
+
+    Returns:
+        A dataframe like returned from :py:func:`baybe.simulation.simulate_experiments`,
+        but with additional ```groupby columns``` (named according to the specified
+        groupby parameters) that subdivide the results into the different simulations.
+
+    Raises:
+        NothingToSimulateError: If there is nothing to simulate.
     """
-    Scenario simulation for different search space partitions.
-
-    A wrapper around `simulate_experiment` that allows to partition the search space
-    into different groups and run separate simulations for all groups where the search
-    is restricted to the corresponding partition.
-
-    Parameters
-    ----------
-    baybe_obj
-        See `simulate_experiment`.
-    lookup
-        See `simulate_experiment`.
-    batch_quantity
-        See `simulate_experiment`.
-    n_doe_iterations
-        See `simulate_experiment`.
-    initial_data
-        See `simulate_experiment`.
-    groupby
-        See `simulate_scenarios`.
-    random_seed
-        See `simulate_experiment`.
-    impute_mode
-        See `simulate_experiment`.
-    noise_percent
-        See `simulate_experiment`.
-
-    Returns
-    -------
-    A dataframe like returned from `simulate_experiments`, but with additional
-    "groupby columns" (named according to the specified groupby parameters) that
-    subdivide the results into the different simulations.
-    """
-
     # Create the groups. If no grouping is specified, use a single group containing
     # all parameter configurations.
     # NOTE: In the following, we intentionally work with *integer* indexing (iloc)
@@ -401,62 +380,65 @@ def simulate_experiment(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
-    """
-    Simulates a Bayesian optimization loop.
+    """Simulates a Bayesian optimization loop.
 
     The most basic type of simulation. Runs a single execution of the loop either
     for a specified number of steps or until there are no more configurations left
     to be tested.
 
-    Parameters
-    ----------
-    baybe_obj
-        The DOE setting to be simulated.
-    lookup
-        # TODO: needs refactoring
-        The lookup used to close the loop,provided in the form of a dataframe or
-        callable that define the targets for the queried parameter settings:
-            * A dataframe containing experimental settings and their target results.
-            * A callable, providing target values for the given parameter settings.
-                The callable is assumed to return either a float or a tuple of floats
-                and to accept an arbitrary number of floats as input.
-            * 'None' (produces fake results).
-    batch_quantity
-        The number of recommendations to be queried per iteration.
-    n_doe_iterations
-        The number of iterations to run the design-of-experiments loop. If not
-        specified, the simulation proceeds until there are no more testable
-        configurations left.
-    initial_data
-        The initial measurement data to be ingested before starting the loop.
-    random_seed
-        The random seed used for the simulation.
-    impute_mode
-        Specifies how a missing lookup will be handled:
-            * 'error': an error will be thrown
-            * 'worst': imputation using the worst available value for each target
-            * 'best': imputation using the best available value for each target
-            * 'mean': imputation using mean value for each target
-            * 'random': a random row will be used as lookup
-            * 'ignore': the search space is stripped before recommendations are made
-                so that unmeasured experiments will not be recommended
-    noise_percent
-        If not 'None', relative noise in percent of `noise_percent` will be
-        applied to the parameter measurements.
+    Args:
+        baybe_obj: The DOE setting to be simulated.
+        lookup: The lookup used to close the loop, provided in the form of a dataframe
+            or callable that define the targets for the queried parameter settings:
+            First, a dataframe containing experimental settings and their target
+            results can be chosen.
+            Second, A callable, providing target values for the given parameter
+            settings. can be chosen. The callable is assumed to return either a float
+            or a tuple of floats and to accept an arbitrary number of floats as input.
+            Finally,```None``` can be chosen, producing fake results.
+        batch_quantity: The number of recommendations to be queried per iteration.
+        n_doe_iterations:  The number of iterations to run the design-of-experiments
+            loop. If not specified, the simulation proceeds until there are no more
+            testable configurations left.
+        initial_data: The initial measurement data to be ingested before starting the
+            loop.
+        random_seed: The random seed used for the simulation.
+        impute_mode: Specifies how a missing lookup will be handled.
+            There are six different options available.
+            If ```"error"``` is chosen, an error will be thrown.
+            If ```"worst"``` is chosen, imputation uses the worst available value for
+            each target.
+            If ```"best"``` is chosen, imputation uses the best available value for each
+            target.
+            If ```"mean"``` is chosen, imputation uses the mean value for each target.
+            If ```"random"``` is chosen, a random row will be used as lookup.
+            If ```"ignore"``` is chosen, the search space is stripped before
+            recommendations are made so that unmeasured experiments will not be
+            recommended.
+        noise_percent: If not ```None```, relative noise in percent of
+            ```noise_percent``` will be applied to the parameter measurements.
 
-    Returns
-    -------
-    A dataframe ready for plotting, containing the following columns:
-        * 'Iteration': corresponds to the DOE iteration (starting at 0)
-        * 'Num_Experiments': corresponds to the running number of experiments
-            performed (usually x-axis)
-        * for each target a column '{targetname}_IterBest': corresponds to the best
-            result for that target at the respective iteration
-        * for each target a column '{targetname}_CumBest': corresponds to the best
-            result for that target up to including respective iteration
-        * for each target a column '{targetname}_Measurements': the individual
-            measurements obtained for the respective target and iteration
+    Returns:
+        A dataframe ready for plotting, containing the following columns:
+            * ```Iteration```: corresponds to the DOE iteration (starting at 0)
+            * ```Num_Experiments```: corresponds to the running number of experiments
+                performed (usually x-axis)
+            * for each target a column ```{targetname}_IterBest```: corresponds to the
+                best result for that target at the respective iteration
+            * for each target a column ```{targetname}_CumBest```: corresponds to the
+                best result for that target up to including respective iteration
+            * for each target a column ```{targetname}_Measurements```: the individual
+                measurements obtained for the respective target and iteration
+
+    Raises:
+        TypeError: If a non-suitable lookup is chosen.
+        ValueError: If the impute mode ```ignore``` is chosen for non-dataframe lookup.
+        ValueError: If a setup is provided that would run indefinitely.
     """
+    # TODO: Due to the "..." operator, sphinx does not render this properly. Might
+    # want to investigate in the future.
+    # TODO: In the markdown variant, bullet points with more levels are not rendered
+    # properly. We thus might want to refactor this when using html based documentation
     # Validate the lookup mechanism
     if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
         raise TypeError(
@@ -607,14 +589,22 @@ def _look_up_target_values(
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
-) -> None:
-    """
-    Fills the target values in the given query dataframe using the provided lookup
-    mechanism. See `simulate_from_configs` for details.
+):
+    """Fill the target values in the query dataframe using the lookup mechanism.
 
-    Returns
-    -------
-    Nothing (the given dataframe is modified in-place).
+    Note that this does not create a new dataframe but modifies ```queries``` in-place.
+
+    Args:
+        queries: A dataframe containing points to be queried.
+        baybe_obj: The BayBE object for which the experiments should be simulated.
+        lookup: The lookup mechanism. See :py:func:`baybe.simulation.simulate_scenarios`
+            for details.
+        impute_mode: The used impute mode. See
+            :py:func:`baybe.simulation.simulate_scenarios` for details.
+
+    Raises:
+        AssertionError: If an analytical function is used and an incorrect number of
+            targets was specified.
     """
     # TODO: This function needs another code cleanup and refactoring. In particular,
     #   the different lookup modes should be implemented via multiple dispatch.
@@ -701,25 +691,23 @@ def _impute_lookup(
     targets: List[NumericalTarget],
     mode: Literal["error", "best", "worst", "mean", "random"] = "error",
 ) -> np.ndarray:
-    """
-    Performs data imputation (or raises errors, depending on the mode) for missing
-    lookup values.
+    """Perform data imputation for missing lookup values.
 
-    Parameters
-    ----------
-    row : pd.Series
-        The data that should be matched with the lookup table.
-    lookup: pd.DataFrame
-        The lookup table.
-    targets: List[NumericalTarget]
-        Targets from the BayBE object, providing the required mode information.
-    mode : "error" | "worst" | "best" | "mean" | "random" | "ignore"
-        See `simulate_from_configs`.
+    Depending on the chosen mode, this might raise errors instead.
 
-    Returns
-    -------
-    np.ndarray
+    Args:
+        row: The data that should be matched with the lookup data frame.
+        lookup: The lookup data frame.
+        targets: Targets from the BayBE object, providing the required mode information.
+        mode: The used impute mode. See :py:func:`baybe.simulation.simulate_scenarios`
+            for details.
+
+    Returns:
         The filled-in lookup results.
+
+    Raises:
+        IndexError: If the mode ```"error"``` is chosen and at least one of the targets
+            could not be found.
     """
     # TODO: this function needs another code cleanup and refactoring
 
