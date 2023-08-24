@@ -24,3 +24,7 @@ class IncompatibleSearchSpaceError(Exception):
 
 class EmptySearchSpaceError(Exception):
     """The created search space contains no parameters."""
+
+
+class NothingToSimulateError(Exception):
+    """There is nothing to simulate because there are no testable configurations."""

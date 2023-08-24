@@ -1,3 +1,5 @@
+# pylint: disable=missing-function-docstring
+
 """
 Provides functions to simulate a Bayesian DOE with BayBE given a lookup.
 """
@@ -26,7 +28,7 @@ import xyzpy as xyz
 from xarray import DataArray
 
 from baybe.core import BayBE
-from baybe.exceptions import NotEnoughPointsLeftError
+from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
 from baybe.utils import (
@@ -52,78 +54,51 @@ def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
     n_mc_iterations: Optional[int] = None,
 ) -> pd.DataFrame:
 
-    # TODO: The current implementation assumes a purely discrete search space
+    # TODO: Currently, we assume a purely discrete search space
     assert baybe.searchspace.type == SearchSpaceType.DISCRETE
 
-    # TODO: We currently assume that everything can be recommended
+    # TODO: Currently, we assume no prior measurements
+    assert len(baybe.measurements_exp) == 0
+
+    # TODO: Currently, we assume that everything can be recommended
     assert not baybe.searchspace.discrete.metadata.any().any()
 
-    # TODO: Currently, it is assumed exactly one task parameter exists
+    # TODO: Currently, we assume exactly one task parameter exists
     # Extract the single task parameter
     task_params = [p for p in baybe.parameters if isinstance(p, TaskParameter)]
     assert len(task_params) == 1
     task_param = task_params[0]
 
-    # List to collect the simulation results
-    results = []
-
-    # Simulate all tasks
+    # Create simulation objects for all tasks
+    scenarios: Dict[Any, BayBE] = {}
     for task in task_param.values:
 
+        # Create a baybe object that focuses only on the current task by excluding
+        # off-task configurations from the candidates list
+        baybe_task = deepcopy(baybe)
+        off_task_mask = baybe.searchspace.discrete.exp_rep[task_param.name] != task
+        # TODO: Avoid direct manipulation of metadata
+        baybe_task.searchspace.discrete.metadata.loc[
+            off_task_mask.values, "dont_recommend"
+        ] = True
+
         # Use all off-task data as training data
-        df_train = lookup.copy()
-        df_train = df_train[df_train[task_param.name] != task]
+        df_train = lookup[lookup[task_param.name] != task]
+        baybe_task.add_measurements(df_train)
 
-        # Extract all possible parameter configuration for the given task
-        # NOTE: In the following, we intentionally work with *integer* indexing (iloc)
-        #   instead of pandas indexes (loc), because the latter would yield wrong
-        #   results in cases where the search space dataframe contains duplicate
-        #   index entries (i.e., the assignment of recommendable entries would affect
-        #   all duplicates). While duplicate entries should be prevented by the search
-        #   space constructor, the integer-based indexing provides a second safety net.
-        task_mask = (baybe.searchspace.discrete.exp_rep[task_param.name] == task).values
-        task_configurations = baybe.searchspace.discrete.exp_rep.reset_index(drop=True)[
-            task_mask
-        ]
+        # Add the task scenario
+        scenarios[task] = baybe_task
 
-        # Create the subgroups for the current task. If no grouping is specified,
-        # use a single group containing all parameter configuration of the task.
-        if groupby is None:
-            groups = ((None, task_configurations),)
-        else:
-            groups = task_configurations.groupby(groupby)
-
-        # Simulate all subgroups
-        for group_id, group in groups:
-
-            # Create a copy of that can be manipulated
-            baybe_group = deepcopy(baybe)
-
-            # Exclude off-task / off-group settings from candidates list
-            # TODO: Avoid direct manipulation of metadata
-            baybe_group.searchspace.discrete.metadata.loc[:, "dont_recommend"] = True
-            baybe_group.searchspace.discrete.metadata.loc[:, "dont_recommend"].iloc[
-                group.index.values
-            ] = False
-
-            # Run the group simulation
-            df_group = simulate_scenarios(
-                scenarios={task: baybe_group},
-                batch_quantity=batch_quantity,
-                lookup=lookup,
-                n_exp_iterations=n_exp_iterations,
-                n_mc_iterations=n_mc_iterations,
-                initial_data=[df_train],
-            )
-
-            # Add the group columns
-            if groupby is not None:
-                context = pd.DataFrame(group_id, columns=groupby, index=df_group.index)
-                df_group = pd.concat([context, df_group], axis=1)
-
-            results.append(df_group)
-
-    return pd.concat(results, ignore_index=True)
+    # Simulate all tasks
+    return simulate_scenarios(
+        scenarios=scenarios,
+        batch_quantity=batch_quantity,
+        lookup=lookup,
+        groupby=groupby,
+        n_exp_iterations=n_exp_iterations,
+        n_mc_iterations=n_mc_iterations,
+        impute_mode="ignore",
+    )
 
 
 def simulate_scenarios(
@@ -132,6 +107,7 @@ def simulate_scenarios(
     lookup: Optional[
         Union[pd.DataFrame, Callable[[float, ...], Union[float, Tuple[float, ...]]]]
     ] = None,
+    groupby: Optional[List[str]] = None,
     n_exp_iterations: Optional[int] = None,
     n_mc_iterations: Optional[int] = None,
     initial_data: Optional[List[pd.DataFrame]] = None,
@@ -140,71 +116,16 @@ def simulate_scenarios(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
-    """
-    Simulates Monte Carlo runs of experiments via lookup for different configurations.
 
-    Parameters
-    ----------
-    scenarios : Dict[Any, BayBE]
-        BayBE objects (dict-values) and corresponding scenario names (dict-keys) to be
-        simulated.
-    batch_quantity : int
-        Number of recommendations returned per experimental DOE iteration.
-    n_exp_iterations : int
-        Number of experimental DOE iterations that should be simulated.
-    n_mc_iterations : int (optional)
-        Number of Monte Carlo runs that should be used in the simulation. Each run will
-        have a different random seed. Must be 'None' if `initial_data` is specified.
-    initial_data : List[pd.DataFrame] (optional)
-        A collection of initial data sets. The experiment is repeated once with each
-        data set in the collection for each configuration. Must be 'None' if
-        `n_mc_iterations` is specified.
-    lookup : pd.DataFrame or callable that takes one or more floats and returns one
-        or more floats (optional)
-        Defines the targets for the queried parameter settings. Can be:
-            * A dataframe containing experimental settings and their target results.
-            * A callable, providing target values for the given parameter settings.
-                This callable is assumed to return either a float or a tuple of floats
-                and to accept an arbitrary number of floats as input.
-            * 'None' (produces fake results).
-    impute_mode : "error" | "worst" | "best" | "mean" | "random" | "ignore"
-        Specifies how a missing lookup will be handled:
-        * 'error': an error will be thrown
-        * 'worst': imputation using the worst available value for each target
-        * 'best': imputation using the best available value for each target
-        * 'mean': imputation using mean value for each target
-        * 'random': a random row will be used as lookup
-        * 'ignore': the search space is stripped before recommendations are made
-            so that unmeasured experiments will not be recommended
-    noise_percent : float (optional)
-        If this is not 'None', relative noise in percent of `noise_percent` will be
-        applied to the parameter measurements.
-
-    Returns
-    -------
-    pd.DataFrame
-        A dataframe ready for plotting, containing the following columns:
-            * 'Scenario': corresponds to the dict keys in `scenarios`
-            * 'Random_Seed': the random seed used for the respective simulation
-            * 'Num_Experiments': corresponds to the running number of experiments
-                performed (usually x-axis)
-            * 'Iteration': corresponds to the DOE iteration (starting at 0)
-            *  for each target a column '{targetname}_IterBest': corresponds to the best
-                result for that target at the respective iteration
-            *  for each target a column '{targetname}_CumBest': corresponds to the best
-                result for that target up to including respective iteration
-            * '{targetname}_Measurements': the individual measurements obtained for the
-                respective target and iteration
-    """
-    RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
+    _RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
 
     @dataclass
     class SimulationResult:
-        """A simple wrapper to enable dataframe-valued return values with xyzpy."""
+        """A thin wrapper to enable dataframe-valued return values with xyzpy."""
 
         result: pd.DataFrame
 
-    @xyz.label(var_names=[RESULT_VARIABLE])
+    @xyz.label(var_names=[_RESULT_VARIABLE])
     def simulate(  # pylint: disable=invalid-name
         Scenario: str,
         Random_Seed=None,
@@ -212,10 +133,11 @@ def simulate_scenarios(
     ):
         """Callable for xyzpy simulation."""
         return SimulationResult(
-            simulate_experiment(
+            _simulate_groupby(
                 baybe_obj=scenarios[Scenario],
                 batch_quantity=batch_quantity,
                 lookup=lookup,
+                groupby=groupby,
                 n_exp_iterations=n_exp_iterations,
                 initial_data=initial_data[Initial_Data],
                 impute_mode=impute_mode,
@@ -250,10 +172,86 @@ def simulate_scenarios(
         combos["Initial_Data"] = range(len(initial_data))
 
     # Simulate and unpack
-    da_results = simulate.run_combos(combos)[RESULT_VARIABLE]
+    da_results = simulate.run_combos(combos)[_RESULT_VARIABLE]
     df_results = unpack_simulation_results(da_results)
 
     return df_results
+
+
+def _simulate_groupby(
+    baybe_obj: BayBE,
+    batch_quantity: int,
+    lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
+    groupby: Optional[List[str]] = None,
+    n_exp_iterations: Optional[int] = None,
+    initial_data: Optional[pd.DataFrame] = None,
+    impute_mode: Literal[
+        "error", "worst", "best", "mean", "random", "ignore"
+    ] = "error",
+    noise_percent: Optional[float] = None,
+    random_seed: int = 1337,
+) -> pd.DataFrame:
+
+    # Create the groups. If no grouping is specified, use a single group containing
+    # all parameter configurations.
+    # NOTE: In the following, we intentionally work with *integer* indexing (iloc)
+    #   instead of pandas indexes (loc), because the latter would yield wrong
+    #   results in cases where the search space dataframe contains duplicate
+    #   index entries (i.e., controlling the recommendable entries would affect
+    #   all duplicates). While duplicate entries should be prevented by the search
+    #   space constructor, the integer-based indexing provides a second safety net.
+    #   Hence, the "reset_index" call.
+    if groupby is None:
+        groups = ((None, baybe_obj.searchspace.discrete.exp_rep.reset_index()),)
+    else:
+        groups = baybe_obj.searchspace.discrete.exp_rep.reset_index().groupby(groupby)
+
+    # Simulate all subgroups
+    dfs = []
+    for group_id, group in groups:
+
+        # Create a baybe object that focuses only on the current group by excluding
+        # off-group configurations from the candidates list
+        baybe_group = deepcopy(baybe_obj)
+        # TODO: Implement SubspaceDiscrete.__len__
+        off_group_idx = np.full(
+            len(baybe_obj.searchspace.discrete.exp_rep), fill_value=True, dtype=bool
+        )
+        off_group_idx[group.index.values] = False
+        # TODO: Avoid direct manipulation of metadata
+        baybe_group.searchspace.discrete.metadata.loc[
+            off_group_idx, "dont_recommend"
+        ] = True
+
+        # Run the group simulation
+        try:
+            df_group = simulate_experiment(
+                baybe_obj=baybe_group,
+                batch_quantity=batch_quantity,
+                lookup=lookup,
+                n_exp_iterations=n_exp_iterations,
+                initial_data=initial_data,
+                impute_mode=impute_mode,
+                noise_percent=noise_percent,
+                random_seed=random_seed,
+            )
+        except NothingToSimulateError:
+            continue
+
+        # Add the group columns
+        if groupby is not None:
+            group_tuple = group_id if isinstance(group_id, tuple) else (group_id,)
+            context = pd.DataFrame([group_tuple], columns=groupby, index=df_group.index)
+            df_group = pd.concat([context, df_group], axis=1)
+
+        dfs.append(df_group)
+
+    # Collect all results
+    if len(dfs) == 0:
+        raise NothingToSimulateError
+    df = pd.concat(dfs, ignore_index=True)
+
+    return df
 
 
 def simulate_experiment(
@@ -318,15 +316,13 @@ def simulate_experiment(
             missing_inds, "dont_recommend"
         ] = True
 
-    # Create a dataframe to store the simulation results
-    # TODO: Avoid dataframe concatenation in loop
-    results = pd.DataFrame()
-
     # Run the DOE loop
     limit = n_exp_iterations or np.inf
     k_iteration = 0
     n_experiments = 0
+    dfs = []
     while k_iteration < limit:
+
         # Get the next recommendations and corresponding measurements
         try:
             measured = baybe_obj.recommend(batch_quantity=batch_quantity)
@@ -353,7 +349,7 @@ def simulate_experiment(
         _look_up_target_values(measured, baybe_obj, lookup, impute_mode)
 
         # Create the summary for the current iteration and store it
-        results_iter = pd.DataFrame(
+        result = pd.DataFrame(
             [  # <-- this ensures that the internal lists to not get expanded
                 {
                     "Iteration": k_iteration,
@@ -365,7 +361,7 @@ def simulate_experiment(
                 }
             ]
         )
-        results = pd.concat([results, results_iter])
+        dfs.append(result)
 
         # Apply optional noise to the parameter measurements
         if noise_percent:
@@ -381,6 +377,11 @@ def simulate_experiment(
 
         # Update the iteration counter
         k_iteration += 1
+
+    # Collect the iteration results
+    if len(dfs) == 0:
+        raise NothingToSimulateError()
+    results = pd.concat(dfs, ignore_index=True)
 
     # Add the instantaneous and running best values for all targets
     for target in baybe_obj.targets:
@@ -410,7 +411,7 @@ def simulate_experiment(
         results[iterbest_col] = results[measurement_col].apply(agg_fun)
         results[cumbest_cols] = cum_fun(results[iterbest_col])
 
-    return results.reset_index(drop=True)
+    return results
 
 
 def _look_up_target_values(
