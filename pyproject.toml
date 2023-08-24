@@ -72,6 +72,7 @@ tests = [
     "seaborn>=0.12.2",
     "streamlit>=1.20.0",
     "tornado>=6.3.3",  # see AUDIT NOTE, required by streamlit
+    "tox>=4.10.0",
 ]
 
 [build-system]

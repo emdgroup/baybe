@@ -44,6 +44,7 @@ dependencies:
 - setuptools-scm==7.1.0
 - streamlit==1.20.0
 - tornado==6.3.3 # see AUDIT NOTE
+- tox==4.10.0
 - pip:
   # Temporarily install ngboost via pip to resolve scikit-learn dependency
   # The conda-forge version requires >=0.21, <=0.24 but pip only needs >=0.21
