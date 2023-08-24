@@ -7,30 +7,42 @@ import numpy as np
 
 
 def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
-    """
-    Calculates the (weighted) geometric mean along the second axis of a given 2-D array.
-    Alternative to `gmean` from scipy that avoids logarithms and division errors.
+    """Calculate the (weighted) geometric mean along the second axis of a 2-D array.
 
-    Parameters
-    ----------
-    arr : np.ndarray
-        The array containing the values for the mean computation.
-    weights : List[float] (optional)
-        Optional weights for the mean computation.
+    Alternative to ```gmean``` from scipy that avoids logarithms and division errors.
 
-    Returns
-    -------
-    np.ndarray
+    Args:
+        arr: The array containing the values for the mean computation.
+        weights: Optional weights for the mean computation.
+
+    Returns:
         A 1-D array containing the row-wise geometric means of the given array.
     """
     return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
 
 
 def closest_element(array: np.ndarray, target: float) -> float:
-    """Finds the element of an array that is closest to a target value."""
+    """Find the element of an array that is closest to a target value.
+
+    Args:
+        array: The array in which the closest value should be found.
+        target: The target value.
+
+    Returns:
+        The closes element.
+    """
     return array[np.abs(array - target).argmin()]
 
 
 def closer_element(x: float, y: float, target: float) -> float:
-    """Determines which of two given inputs is closer to a target value."""
+    """Determine which of two given inputs is closer to a target value.
+
+    Args:
+        x: The first input that should be checked.
+        y: The second input that should be checked.
+        target: The target value.
+
+    Returns:
+        The closer of the two elements.
+    """
     return x if np.abs(x - target) < np.abs(y - target) else y
