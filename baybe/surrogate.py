@@ -37,7 +37,12 @@ _DTYPE = torch.float64
 # Define constants
 _MIN_TARGET_STD = 1e-6
 _MIN_VARIANCE = 1e-6
-_WRAPPER_MODELS = ("SplitModel", "ScaledModel", "CustomArchitectureSurrogate")
+_WRAPPER_MODELS = (
+    "SplitModel",
+    "ScaledModel",
+    "CustomArchitectureSurrogate",
+    "CustomPretrainedSurrogate",
+)
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
