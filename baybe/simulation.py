@@ -45,13 +45,15 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
+def simulate_transfer_learning(
     baybe: BayBE,
-    batch_quantity: int,
     lookup: pd.DataFrame,
-    groupby: Optional[List[str]] = None,
+    /,
+    *,
+    batch_quantity: int = 1,
     n_exp_iterations: Optional[int] = None,
-    n_mc_iterations: Optional[int] = None,
+    groupby: Optional[List[str]] = None,
+    n_mc_iterations: int = 1,
 ) -> pd.DataFrame:
 
     # TODO: Currently, we assume a purely discrete search space
@@ -91,11 +93,11 @@ def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
 
     # Simulate all tasks
     return simulate_scenarios(
-        scenarios=scenarios,
+        scenarios,
+        lookup,
         batch_quantity=batch_quantity,
-        lookup=lookup,
-        groupby=groupby,
         n_exp_iterations=n_exp_iterations,
+        groupby=groupby,
         n_mc_iterations=n_mc_iterations,
         impute_mode="ignore",
     )
@@ -103,14 +105,16 @@ def simulate_transfer_learning(  # pylint: disable=missing-function-docstring
 
 def simulate_scenarios(
     scenarios: Dict[Any, BayBE],
-    batch_quantity: int,
     lookup: Optional[
         Union[pd.DataFrame, Callable[[float, ...], Union[float, Tuple[float, ...]]]]
     ] = None,
-    groupby: Optional[List[str]] = None,
+    /,
+    *,
+    batch_quantity: int = 1,
     n_exp_iterations: Optional[int] = None,
-    n_mc_iterations: Optional[int] = None,
     initial_data: Optional[List[pd.DataFrame]] = None,
+    groupby: Optional[List[str]] = None,
+    n_mc_iterations: int = 1,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -134,15 +138,15 @@ def simulate_scenarios(
         """Callable for xyzpy simulation."""
         return SimulationResult(
             _simulate_groupby(
-                baybe_obj=scenarios[Scenario],
+                scenarios[Scenario],
+                lookup,
                 batch_quantity=batch_quantity,
-                lookup=lookup,
-                groupby=groupby,
                 n_exp_iterations=n_exp_iterations,
                 initial_data=initial_data[Initial_Data],
+                groupby=groupby,
+                random_seed=Random_Seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
-                random_seed=Random_Seed,
             )
         )
 
@@ -180,16 +184,18 @@ def simulate_scenarios(
 
 def _simulate_groupby(
     baybe_obj: BayBE,
-    batch_quantity: int,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
-    groupby: Optional[List[str]] = None,
+    /,
+    *,
+    batch_quantity: int = 1,
     n_exp_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
+    groupby: Optional[List[str]] = None,
+    random_seed: int = 1337,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
-    random_seed: int = 1337,
 ) -> pd.DataFrame:
 
     # Create the groups. If no grouping is specified, use a single group containing
@@ -226,14 +232,14 @@ def _simulate_groupby(
         # Run the group simulation
         try:
             df_group = simulate_experiment(
-                baybe_obj=baybe_group,
+                baybe_group,
+                lookup,
                 batch_quantity=batch_quantity,
-                lookup=lookup,
                 n_exp_iterations=n_exp_iterations,
                 initial_data=initial_data,
+                random_seed=random_seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
-                random_seed=random_seed,
             )
         except NothingToSimulateError:
             continue
@@ -256,15 +262,17 @@ def _simulate_groupby(
 
 def simulate_experiment(
     baybe_obj: BayBE,
-    batch_quantity: int,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
+    /,
+    *,
+    batch_quantity: int = 1,
     n_exp_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
+    random_seed: int = 1337,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
-    random_seed: int = 1337,
 ) -> pd.DataFrame:
     """
     Simulates a single experimental DOE loop. See `simulate_from_configs` for details.
