@@ -41,6 +41,7 @@ if TYPE_CHECKING:
     from baybe.targets import NumericalTarget
 
 _logger = logging.getLogger(__name__)
+_DEFAULT_SEED = 1337
 
 
 def simulate_transfer_learning(
@@ -217,8 +218,7 @@ def simulate_scenarios(
 
     # Collect the settings to be simulated
     combos = {"Scenario": scenarios.keys()}
-    if n_mc_iterations:
-        combos["Random_Seed"] = range(1337, 1337 + n_mc_iterations)
+    combos["Random_Seed"] = range(_DEFAULT_SEED, _DEFAULT_SEED + n_mc_iterations)
     if initial_data:
         combos["Initial_Data"] = range(len(initial_data))
 
@@ -238,7 +238,7 @@ def _simulate_groupby(
     n_exp_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
     groupby: Optional[List[str]] = None,
-    random_seed: int = 1337,
+    random_seed: int = _DEFAULT_SEED,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -335,7 +335,7 @@ def simulate_experiment(
     batch_quantity: int = 1,
     n_exp_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
-    random_seed: int = 1337,
+    random_seed: int = _DEFAULT_SEED,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
