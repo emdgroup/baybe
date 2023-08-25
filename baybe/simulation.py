@@ -1,5 +1,3 @@
-# pylint: disable=missing-function-docstring
-
 """
 Provides functions to simulate a Bayesian DOE with BayBE given a lookup.
 """
@@ -55,6 +53,12 @@ def simulate_transfer_learning(
     groupby: Optional[List[str]] = None,
     n_mc_iterations: int = 1,
 ) -> pd.DataFrame:
+    """
+    Simulates Bayesian optimization with transfer learning.
+
+    A wrapper around `simulate_scenarios` that partitions the search space into its
+    tasks and simulates each task with the training data from the remaining tasks.
+    """
 
     # TODO: Currently, we assume a purely discrete search space
     assert baybe.searchspace.type == SearchSpaceType.DISCRETE
@@ -120,6 +124,48 @@ def simulate_scenarios(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
+    """
+    Simulation of multiple Bayesian optimization scenarios.
+
+    A wrapper function around `simulate_experiment` that allows to specify multiple
+    simulation settings at once.
+
+    Parameters
+    ----------
+    scenarios
+        A dictionary mapping scenario identifiers to DOE specifications.
+    lookup
+        See `simulate_experiment`.
+    batch_quantity
+        See `simulate_experiment`.
+    n_exp_iterations
+        See `simulate_experiment`.
+    initial_data
+        A list of initial data sets for which the scenarios should be simulated.
+    groupby
+        The names of the parameters that should be used to partition the search space
+        for each scenario. A separate simulation will be conducted for each partition
+        where the search is restricted to that partition.
+    n_mc_iterations
+        The number of Monte Carlo simulations to be used.
+    impute_mode
+        See `simulate_experiment`.
+    noise_percent
+        See `simulate_experiment`.
+
+    Returns
+    -------
+    A dataframe like returned from `simulate_experiments` but with the following
+    additional columns:
+        * 'Scenario': Specifies the scenario identifier of the respective simulation.
+        * 'Random_Seed': Specifies the random seed used for the respective simulation.
+        * Optional, if `initial_data` is provided:
+            A column 'Initial_Data' that pecifies the index of the initial data set
+            used for the respective simulation.
+        * Optional, if `groupby` is provided: A column for each "groupby" parameter
+            that specifies the search space partition considered for the respective
+            simulation.
+    """
 
     _RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
 
@@ -197,6 +243,26 @@ def _simulate_groupby(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
+    """
+    Scenario simulation for different search space partitions.
+
+    A wrapper around `simulate_experiment` that allows to partition the search space
+    into different groups and run separate simulations for all groups where the search
+    is restricted to the corresponding partition.
+
+    Parameters
+    ----------
+    groupby
+        The names of the parameters that define the search space partitioning.
+    Remaining parameters:
+        See `simulate_experiment`.
+
+    Returns
+    -------
+    A dataframe like returned from `simulate_experiments`, but with additional
+    "groupby columns" (named according to the specified groupby parameters) that
+    subdivide the results into the different simulations.
+    """
 
     # Create the groups. If no grouping is specified, use a single group containing
     # all parameter configurations.
@@ -275,10 +341,59 @@ def simulate_experiment(
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
     """
-    Simulates a single experimental DOE loop. See `simulate_from_configs` for details.
-    Note that the type hint Callable[..., Tuple[float, ...]] means that the callable
-    accepts any number of arguments and returns either a single or a tuple of floats.
-    The inputs however also need to be floats!
+    Simulates a Bayesian optimization loop.
+
+    The most basic type of simulation. Runs a single execution of the loop either
+    for a specified number of steps or until there are no more configurations left
+    to be tested.
+
+    Parameters
+    ----------
+    baybe_obj
+        The DOE setting to be simulated.
+    lookup
+        # TODO: needs refactoring
+        The lookup used to close the loop,provided in the form of a dataframe or
+        callable that define the targets for the queried parameter settings:
+            * A dataframe containing experimental settings and their target results.
+            * A callable, providing target values for the given parameter settings.
+                The callable is assumed to return either a float or a tuple of floats
+                and to accept an arbitrary number of floats as input.
+            * 'None' (produces fake results).
+    batch_quantity
+        The number of recommendations to be queried per iteration.
+    n_exp_iterations
+        The number of iterations to run the loop. If not specified, the simulation
+        proceeds until there are no more testable configurations left.
+    initial_data
+        The initial measurement data to be ingested before starting the loop.
+    random_seed
+        The random seed used for the simulation.
+    impute_mode
+        Specifies how a missing lookup will be handled:
+            * 'error': an error will be thrown
+            * 'worst': imputation using the worst available value for each target
+            * 'best': imputation using the best available value for each target
+            * 'mean': imputation using mean value for each target
+            * 'random': a random row will be used as lookup
+            * 'ignore': the search space is stripped before recommendations are made
+                so that unmeasured experiments will not be recommended
+    noise_percent
+        If not 'None', relative noise in percent of `noise_percent` will be
+        applied to the parameter measurements.
+
+    Returns
+    -------
+    A dataframe ready for plotting, containing the following columns:
+        * 'Iteration': corresponds to the DOE iteration (starting at 0)
+        * 'Num_Experiments': corresponds to the running number of experiments
+            performed (usually x-axis)
+        * for each target a column '{targetname}_IterBest': corresponds to the best
+            result for that target at the respective iteration
+        * for each target a column '{targetname}_CumBest': corresponds to the best
+            result for that target up to including respective iteration
+        * for each target a column '{targetname}_Measurements': the individual
+            measurements obtained for the respective target and iteration
     """
     # Validate the lookup mechanism
     if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
