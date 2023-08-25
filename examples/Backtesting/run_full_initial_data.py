@@ -122,9 +122,9 @@ baybe_rand = BayBE(
 scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 
 results = simulate_scenarios(
-    scenarios=scenarios,
+    scenarios,
+    lookup,
     batch_quantity=3,
-    lookup=lookup,
     n_exp_iterations=N_EXP_ITERATIONS,
     initial_data=initial_data,
 )
@@ -132,7 +132,7 @@ results = simulate_scenarios(
 # The following lines plot the results and save the plot in run_full_initial_data.png
 max_yield = lookup["yield"].max()
 sns.lineplot(
-    data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
+    data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"
 )
 plt.plot([3, 3 * N_EXP_ITERATIONS], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
