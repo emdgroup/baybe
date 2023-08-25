@@ -182,13 +182,14 @@ def simulate_scenarios(
         Initial_Data=None,
     ):
         """Callable for xyzpy simulation."""
+        data = None if initial_data is None else initial_data[Initial_Data]
         return SimulationResult(
             _simulate_groupby(
                 scenarios[Scenario],
                 lookup,
                 batch_quantity=batch_quantity,
                 n_exp_iterations=n_exp_iterations,
-                initial_data=initial_data[Initial_Data],
+                initial_data=data,
                 groupby=groupby,
                 random_seed=Random_Seed,
                 impute_mode=impute_mode,
