@@ -55,10 +55,30 @@ def simulate_transfer_learning(
     n_mc_iterations: int = 1,
 ) -> pd.DataFrame:
     """
-    Simulates Bayesian optimization with transfer learning.
+    Simulate Bayesian optimization with transfer learning.
 
     A wrapper around `simulate_scenarios` that partitions the search space into its
     tasks and simulates each task with the training data from the remaining tasks.
+
+    Parameters
+    ----------
+    baybe:
+        See `simulate_experiment`.
+    lookup
+        See `simulate_scenarios`.
+    batch_quantity
+        See `simulate_scenarios`.
+    n_exp_iterations
+        See `simulate_scenarios`.
+    groupby
+        See `simulate_scenarios`.
+    n_mc_iterations
+        See `simulate_scenarios`.
+
+    Returns
+    -------
+    A dataframe as returned by `simulate_scenarios` where the different tasks are
+    represented in the 'Scenario' column.
     """
 
     # TODO: Currently, we assume a purely discrete search space
