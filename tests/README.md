@@ -1,6 +1,7 @@
 # Tests
 Various `pytest` tests can be run in this folder.
 
+## PyTest
 ### Fast Testing
 Uses small iteration number, batch size, etc., with only one variant for each.
 Can be triggered as follows: 
@@ -51,3 +52,53 @@ baybe/core.py                          111      8    93%
 --------------------------------------------------------
 TOTAL                                 1941    214    89%
 ```
+
+## Tox
+Testing, linting and auditing can also be done via `tox`, which includes the 
+possibility to test different python variants as well. 
+
+### Environments
+In `tox.ini`, we have configured several environments for running different actions 
+(`pytest`, `lint`, `audit`) against different versions of python (e.g. `py38`, `py39`, .
+..). 
+You can specify both in `tox` to call a certain combination. 
+
+For instance 
+```bash
+tox -e pytest-py39
+``` 
+will run pytest with python 3.9, while 
+```bash
+tox -e lint-py311
+```
+will run the linters with python 3.11.
+
+For a full overview of all available environments, type:
+```
+tox -l
+```
+
+### Shortcuts
+In case you want to run several combinations, you can specify them like
+```bash
+tox -e audit-py38,audit-py311
+```
+
+If you omit the python version from the environment, `tox` will use the version 
+from the command-executing environment:
+```bash
+tox -e pytest  # runs like '-e pytest-py38' in a python 3.8 environment
+```
+
+If you simply want to run all combinations, you can use
+```bash
+tox  # runs all environments shown via `tox -l`
+```
+
+### Local / Parallel Execution
+On a local machine, the sequential execution of `tox` might take a long time. 
+Thus, you can use the parallel option `-p`:
+```bash
+tox -p
+```
+which will run all environments in parallel.

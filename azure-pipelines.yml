@@ -5,95 +5,12 @@ trigger:
     include:
     - main
     - refs/tags/*
-  
+
+variables:
+  coverage_overall_threshold: 70
+  coverage_individual_threshold: 50
+
 stages:
-
-- stage: Unit_Tests
-  displayName: "Unit Tests"
-
-  jobs:
-    - job: "PyTest"
-
-      pool:
-        vmImage: ubuntu-20.04
-
-      variables:
-        CONDA_ENV: baybe
-        CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
-        CONDA_ROOT: /usr/share/miniconda/
-        disable.coverage.autogenerate: 'true'
-
-      steps:
-      - checkout: self
-
-      - script: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: "Add Conda to PATH"
-
-      - task: Cache@2
-        displayName: "Use Cached Conda Env"
-        inputs:
-          key: conda | environment.yml
-          path: $(CONDA_HOME)
-          cacheHitVar: CONDA_CACHE_RESTORED
-
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
-        displayName: "Install Micromamba"
-
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba create -y --file environment.yml
-        displayName: "Create Conda Env If Not Cached"
-        condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
-
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          python -m pip install '.'
-        displayName: "Install BayBE Package"
-
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          python -m pip install unittest-xml-reporting pytest-azurepipelines
-        displayName: "Install Code Coverage Requirements"
-
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          cd $(System.DefaultWorkingDirectory)
-          touch ./tests/__init__.py
-          touch ./tests/serialization/__init__.py
-          pytest -v -p no:warnings --cov=baybe --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/test-results.xml --cov-report=html ./tests
-        displayName: "Run PyTest"
-
-      - task: PublishCodeCoverageResults@1
-        displayName: "Publish Coverage Report"
-        inputs:
-          codeCoverageTool: Cobertura
-          summaryFileLocation: $(System.DefaultWorkingDirectory)/coverage.xml
-          reportDirectory: $(System.DefaultWorkingDirectory)/htmlcov
-
-      # Fail if overall coverage is below 70%
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          coverage report --fail-under=70
-        displayName: "Assert Overall Coverage"
-
-      # Fail if any individual coverage is below 50%
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          coverage report | grep -E -o '[0-9]+%' | tr -d '%' | sed '$d' | awk '{if ($1<50) exit 1 }'  
-        displayName: "Assert Individual Coverage"
 
 - stage: Lint
   displayName: "Format, Lint, Asserts"
@@ -104,56 +21,98 @@ stages:
       pool:
         vmImage: ubuntu-20.04
 
-      variables:
-        CONDA_ENV: baybe
-        CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
-        CONDA_ROOT: /usr/share/miniconda/
+      strategy:
+        matrix:
+          Py3.8:
+            python.version: '3.8.x'
+            tox.env: 'py38'
+          Py3.9:
+            python.version: '3.9.x'
+            tox.env: 'py39'
+          Py3.10:
+            python.version: '3.10.x'
+            tox.env: 'py310'
 
       steps:
       - checkout: self
 
-      - script: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: "Add Conda to PATH"
-
-      - task: Cache@2
-        displayName: "Use Cached Conda Env"
+      - task: UsePythonVersion@0
         inputs:
-          key: conda | environment.yml
-          path: $(CONDA_HOME)
-          cacheHitVar: CONDA_CACHE_RESTORED
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
 
       - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
-        displayName: "Install Micromamba"
+          pip install tox
+          tox -e lint
+        displayName: "Pre-commit linter/formatter stack"
+
+    - job: "Lint_Py311"
+      displayName: "Lint Py3.11"
+      pool:
+        vmImage: ubuntu-20.04
+
+      steps:
+      - checkout: self
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.11.x'
+        displayName: 'Use Python 3.11.x'
 
       - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba create -y --file environment.yml
-        displayName: "Create Conda Env If Not Cached"
-        condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
+          pip install tox
+          tox -e lint
+        displayName: "Pre-commit linter/formatter stack"
+        continueOnError: true
+
+    - job: "Audit"
+
+      pool:
+        vmImage: ubuntu-20.04
+
+      strategy:
+        matrix:
+          Py3.8:
+            python.version: '3.8.x'
+            tox.env: 'py38'
+          Py3.9:
+            python.version: '3.9.x'
+            tox.env: 'py39'
+          Py3.10:
+            python.version: '3.10.x'
+            tox.env: 'py310'
+
+      steps:
+      - checkout: self
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
 
       - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          ufmt check .
-        displayName: "Run ufmt Formatter"
+          pip install tox
+          tox -e audit
+        displayName: "Pip-audit"
+
+    - job: "Audit_Py311"
+      displayName: "Audit Py3.11"
+      pool:
+        vmImage: ubuntu-20.04
+
+      steps:
+      - checkout: self
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.11.x'
+        displayName: 'Use Python 3.11.x'
 
       - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          flake8
-        displayName: "Run flake8 Linter"
-
-      - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          pylint . --recursive=yes
-        displayName: "Run PyLint Linter"
+          pip install tox
+          tox -e audit
+        displayName: "Pip-audit"
+        continueOnError: true
 
     - job: "Changelog"
       condition: |
@@ -175,62 +134,117 @@ stages:
               echo "ERROR - Nothing has been added to CHANGELOG.md"
               exit 1
             fi
-          continueOnError: false
           displayName: "Assert Changelog Edit"
 
-    - job: "Vulnerability"
+
+- stage: Unit_Tests
+  displayName: "Unit Tests"
+
+  jobs:
+    - job: "PyTest"
 
       pool:
         vmImage: ubuntu-20.04
 
-      variables:
-        CONDA_ENV: baybe
-        CONDA_HOME: /usr/share/miniconda/envs/$(CONDA_ENV)/
-        CONDA_ROOT: /usr/share/miniconda/
+      strategy:
+        matrix:
+          Py3.8:
+            python.version: '3.8.x'
+            tox.env: 'py38'
+          Py3.9:
+            python.version: '3.9.x'
+            tox.env: 'py39'
+          Py3.10:
+            python.version: '3.10.x'
+            tox.env: 'py310'
 
       steps:
       - checkout: self
 
-      - script: echo "##vso[task.prependpath]$CONDA/bin"
-        displayName: "Add Conda to PATH"
-
-      - task: Cache@2
-        displayName: "Use Cached Conda Env"
+      - task: UsePythonVersion@0
         inputs:
-          key: conda | environment.yml
-          path: $(CONDA_HOME)
-          cacheHitVar: CONDA_CACHE_RESTORED
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
 
       - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
-        displayName: "Install Micromamba"
+          pip install tox unittest-xml-reporting pytest-azurepipelines
+          tox -e pytest-$(tox.env) -- --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/junit.xml
+        displayName: "PyTest"
+
+      # Fail if overall coverage is too low
+      - script: |
+          pip install coverage
+          coverage report --fail-under=$(coverage_overall_threshold)
+        displayName: "Assert Overall Coverage"
+
+      # Fail if any individual coverage is too low
+      - script: |
+          pip install coverage
+          coverage report |
+          grep -E -o '[0-9]+%' |
+          tr -d '%' |
+          sed '$d' |
+          awk '{if ($1<$(coverage_individual_threshold)) exit 1 }'
+        displayName: "Assert Individual Coverage"
+
+      # Publish code coverage for Python38
+      - task: PublishCodeCoverageResults@1
+        condition: eq(variables['tox.env'], 'py38')
+        displayName: "Publish Coverage Report"
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: $(System.DefaultWorkingDirectory)/coverage.xml
+          #reportDirectory: $(System.DefaultWorkingDirectory)/**/htmlcov
+
+      - task: PublishTestResults@2
+        condition: eq(variables['tox.env'], 'py38')
+        displayName: "Publish Test Results"
+        inputs:
+          testResultsFiles: $(System.DefaultWorkingDirectory)/junit.xml
+          #testRunTitle: 'Rest results for Python $(python.version)'
+
+    - job: "PyTest_Py311"
+      displayName: "PyTest Py3.11"
+      pool:
+        vmImage: ubuntu-20.04
+
+      steps:
+      - checkout: self
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.11.x'
+        displayName: 'Use Python 3.11.x'
 
       - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba create -y --file environment.yml
-        displayName: "Create Conda Env If Not Cached"
-        condition: eq(variables.CONDA_CACHE_RESTORED, 'false')
+          pip install tox
+          tox -e pytest-py311
+        displayName: "PyTest"
+        continueOnError: true
 
+      # Fail if overall coverage is too low
       - script: |
-          export MAMBA_ROOT_PREFIX=$(CONDA_ROOT)
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate $(CONDA_ENV)
-          EXCLUDES=()
-          while IFS= read -r ID; do
-              if [[ $ID != \#* ]]; then
-                  EXCLUDES+=("--ignore-vuln")
-                  EXCLUDES+=("${ID}")
-              fi
-          done < .pip-audit_exceptions
-          pip-audit "${EXCLUDES[@]}"
-        displayName: "Perform Check"
+          echo ###########
+          pwd
+          pip install coverage
+          coverage report --fail-under=$(coverage_overall_threshold)
+        displayName: "Assert Overall Coverage"
+        continueOnError: true
+
+      # Fail if any individual coverage is too low
+      - script: |
+          pip install coverage
+          coverage report |
+          grep -E -o '[0-9]+%' |
+          tr -d '%' |
+          sed '$d' |
+          awk '{if ($1<$(coverage_individual_threshold)) exit 1 }'
+        displayName: "Assert Individual Coverage"
+        continueOnError: true
 
 - stage: Release  # taken from foundry-local
   displayName: "Publish package"
   condition: startsWith(variables['build.sourceBranch'], 'refs/tags/')
-
   jobs:
     - job: "Release"
 
