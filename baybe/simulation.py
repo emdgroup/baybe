@@ -102,9 +102,10 @@ def simulate_transfer_learning(
 
         # Create a baybe object that focuses only on the current task by excluding
         # off-task configurations from the candidates list
+        # TODO: Reconsider if deepcopies are required once [16605] is resolved
         baybe_task = deepcopy(baybe)
         off_task_mask = baybe.searchspace.discrete.exp_rep[task_param.name] != task
-        # TODO: Avoid direct manipulation of metadata
+        # TODO [16605]: Avoid direct manipulation of metadata
         baybe_task.searchspace.discrete.metadata.loc[
             off_task_mask.values, "dont_recommend"
         ] = True
@@ -319,13 +320,14 @@ def _simulate_groupby(
 
         # Create a baybe object that focuses only on the current group by excluding
         # off-group configurations from the candidates list
+        # TODO: Reconsider if deepcopies are required once [16605] is resolved
         baybe_group = deepcopy(baybe_obj)
         # TODO: Implement SubspaceDiscrete.__len__
         off_group_idx = np.full(
             len(baybe_obj.searchspace.discrete.exp_rep), fill_value=True, dtype=bool
         )
         off_group_idx[group.index.values] = False
-        # TODO: Avoid direct manipulation of metadata
+        # TODO [16605]: Avoid direct manipulation of metadata
         baybe_group.searchspace.discrete.metadata.loc[
             off_group_idx, "dont_recommend"
         ] = True
@@ -454,6 +456,7 @@ def simulate_experiment(
         )
 
     # Create a fresh BayBE object and set the corresponding random seed
+    # TODO: Reconsider if deepcopies are required once [16605] is resolved
     baybe_obj = deepcopy(baybe_obj)
     set_random_seed(random_seed)
 
@@ -463,7 +466,7 @@ def simulate_experiment(
 
     # For impute_mode 'ignore', do not recommend space entries that are not
     # available in the lookup
-    # IMPROVE: Avoid direct manipulation of the searchspace members
+    # TODO [16605]: Avoid direct manipulation of metadata
     if impute_mode == "ignore":
         searchspace = baybe_obj.searchspace.discrete.exp_rep
         missing_inds = searchspace.index[
