@@ -58,16 +58,11 @@ Testing, linting and auditing can also be done via `tox`, which includes the
 possibility to test different python variants as well. 
 
 ### Environments
-The available python environments are:
-```
-py38, py39, py310, py311
-```
-and the available actions are:
-```
-pytest, lint, audit
-```
+In `tox.ini`, we have configured several environments for running different actions 
+(`pytest`, `lint`, `audit`) against different versions of python (e.g. `py38`, `py39`, .
+..). 
+You can specify both in `tox` to call a certain combination. 
 
-You can combine these in `tox` to call a certain action in a specific python version. 
 For instance 
 ```bash
 tox -e pytest-py39
@@ -78,8 +73,13 @@ tox -e lint-py311
 ```
 will run the linters with python 3.11.
 
+For a full overview of all available environments, type:
+```
+tox -l
+```
+
 ### Shortcuts
-In case you want to run several combinations you can specify them like
+In case you want to run several combinations, you can specify them like
 ```bash
 tox -e audit-py38,audit-py311
 ```
@@ -87,18 +87,18 @@ tox -e audit-py38,audit-py311
 If you omit the python version from the environment, `tox` will use the version 
 from the command-executing environment:
 ```bash
-tox -e pytest # runs like '-e pytest-py38'
+tox -e pytest  # runs like '-e pytest-py38' in a python 3.8 environment
 ```
 
-If you simply want to run all combinations you can use
+If you simply want to run all combinations, you can use
 ```bash
-tox # runs all combinations of {pytest, lint, audit, ...} and {py38, py39, py310, py311}
+tox  # runs all environments shown via `tox -l`
 ```
 
 ### Local / Parallel Execution
-On a local machine the sequential execution of `tox` might take a long time. 
+On a local machine, the sequential execution of `tox` might take a long time. 
 Thus, you can use the parallel option `-p`:
 ```bash
 tox -p
 ```
-which will run all action-python combinations in parallel.
+which will run all environments in parallel.
