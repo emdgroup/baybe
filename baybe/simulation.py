@@ -253,9 +253,23 @@ def _simulate_groupby(
 
     Parameters
     ----------
+    baybe_obj
+        See `simulate_experiment`.
+    lookup
+        See `simulate_experiment`.
+    batch_quantity
+        See `simulate_experiment`.
+    n_exp_iterations
+        See `simulate_experiment`.
+    initial_data
+        See `simulate_experiment`.
     groupby
         The names of the parameters that define the search space partitioning.
-    Remaining parameters:
+    random_seed
+        See `simulate_experiment`.
+    impute_mode
+        See `simulate_experiment`.
+    noise_percent
         See `simulate_experiment`.
 
     Returns
