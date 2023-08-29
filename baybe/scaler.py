@@ -1,6 +1,4 @@
-"""
-Functionality for data scaling.
-"""
+"""Functionality for data scaling."""
 
 from __future__ import annotations
 
@@ -17,10 +15,16 @@ _ScaleFun = Callable[[Tensor], Tensor]
 
 
 class Scaler(ABC):
-    """Abstract base class for all scalers."""
+    """Abstract base class for all scalers.
+
+    Args:
+        searchspace: The search space that should be scaled.
+    """
 
     type: str
+    """Class variable encoding the type of the scaler."""
     SUBCLASSES: Dict[str, Type[Scaler]] = {}
+    """Class variable for all subclasses"""
 
     def __init__(self, searchspace: pd.DataFrame):
         self.searchspace = searchspace
@@ -34,16 +38,45 @@ class Scaler(ABC):
 
     @abstractmethod
     def fit_transform(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
-        """Fits the scaler using the given training data and transforms the data."""
+        """Fit the scaler using the given training data and transform the data.
+
+        Args:
+            x: The x-data that should be used.
+            y: The y-data that should be used.
+
+        Returns:
+            The transformed data.
+        """
 
     def transform(self, x: Tensor) -> Tensor:
-        """Scales a given input."""
+        """Scale a given input.
+
+        Args:
+            x: The given input.
+
+        Returns:
+            The scaled input.
+
+        Raises:
+            RuntimeError: If the scaler is not fitted first.
+        """
         if not self.fitted:
             raise RuntimeError("Scaler object must be fitted first.")
         return self.scale_x(x)
 
     def untransform(self, mean: Tensor, variance: Tensor) -> Tuple[Tensor, Tensor]:
-        """Transforms mean values and variances back to the original domain."""
+        """Transform mean values and variances back to the original domain.
+
+        Args:
+            mean: The given mean values.
+            variance: The given variances.
+
+        Returns:
+            The "un-transformed" means and variances.
+
+        Raises:
+            RuntimeError: If the scaler object is not fitted first.
+        """
         if not self.fitted:
             raise RuntimeError("Scaler object must be fitted first.")
         return self.unscale_m(mean), self.unscale_s(variance)
@@ -61,7 +94,7 @@ class DefaultScaler(Scaler):
     type = "DEFAULT"
 
     def fit_transform(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
 
         # Get the searchspace boundaries
         searchspace = to_tensor(self.searchspace)
