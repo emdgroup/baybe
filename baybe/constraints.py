@@ -1,13 +1,11 @@
-"""
-Functionality for parameter constraints.
-"""
+"""Functionality for parameter constraints."""
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import Any, Callable, ClassVar, List, Optional
+from typing import Any, Callable, ClassVar, List, Optional, Union
 
 import cattrs
 import numpy as np
@@ -21,30 +19,37 @@ from baybe.utils import Dummy, get_base_unstructure_hook, SerialMixin, unstructu
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """The counterpart to `numpy.isclose`."""
+    """The counterpart to ```numpy.isclose```.
+
+    Args:
+        x: First input array to compare.
+        y: Second input array to compare.
+        rtol: The relative tolerance parameter.
+        atol: The absolute tolerance parameter.
+
+    Returns:
+        Returns a boolean array of where ```x``` and ```y``` are not equal within the
+        given tolerances.
+
+    """
     return np.logical_not(np.isclose(x, y, rtol=rtol, atol=atol))
 
 
 class Condition(ABC, SerialMixin):
-    """
-    Abstract base class for all conditions. Conditions always evaluate an expression
-    regarding a single parameter. Conditions are part of constraints, a constraint
-    can have multiple conditions.
+    """Abstract base class for all conditions.
+
+    Conditions always evaluate an expression regarding a single parameter.
+    Conditions are part of constraints, a constrain can have multiple conditions.
     """
 
     @abstractmethod
     def evaluate(self, data: pd.Series) -> pd.Series:
-        """
-        Evaluates the condition on a given data series.
+        """Evaluates the condition on a given data series.
 
-        Parameters
-        ----------
-        data : pd.Series
-            A series containing parameter values.
+        Args:
+            data: A series containing parameter values.
 
-        Returns
-        -------
-        pd.Series
+        Returns:
             A boolean series indicating which elements satisfy the condition.
         """
 
@@ -72,8 +77,12 @@ _valid_logic_combiners = {
 
 @define
 class ThresholdCondition(Condition):
-    """
-    Class for modelling threshold-based conditions.
+    """Class for modelling threshold-based conditions.
+
+    Args:
+        threshold: The threshold value used in the condition.
+        operator: The operator used in the condition.
+        tolerance: A numerical tolerance. Set to a reasonable default tolerance.
     """
 
     # object variables
@@ -82,13 +91,15 @@ class ThresholdCondition(Condition):
     tolerance: Optional[float] = field()
 
     @tolerance.default
-    def tolerance_default(self):
-        """Default value for the tolerance"""
+    def tolerance_default(self) -> Union[float, None]:
+        # Default value for the tolerance.
+        # pylint: disable=missing-function-docstring
         return 1e-8 if self.operator in _valid_tolerance_operators else None
 
     @tolerance.validator
-    def tolerance_validation(self, _, value):
-        """Validates the threshold condition tolerance"""
+    def tolerance_validation(self, _, value) -> None:
+        # Validates the threshold condition tolerance.
+        # pylint: disable=missing-function-docstring
         if (self.operator not in _valid_tolerance_operators) and (value is not None):
             raise ValueError(
                 f"Setting the tolerance for a threshold condition is only valid "
@@ -104,7 +115,7 @@ class ThresholdCondition(Condition):
                 )
 
     def evaluate(self, data: pd.Series) -> pd.Series:
-        """See base class."""
+        # See base class. pylint: disable=missing-function-docstring
         if data.dtype.kind not in "iufb":
             raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
@@ -120,36 +131,45 @@ class ThresholdCondition(Condition):
 
 @define
 class SubSelectionCondition(Condition):
-    """
-    Class for defining valid parameter entries.
+    """Class for defining valid parameter entries.
+
+    Args:
+        selection: The list of items which are considered valid.
     """
 
     # object variables
     selection: List[Any] = field()
 
     def evaluate(self, data: pd.Series) -> pd.Series:
-        """See base class."""
+        # See base class. pylint: disable=missing-function-docstring
         return data.isin(self.selection)
 
 
 @define
 class Constraint(ABC, SerialMixin):
-    """
-    Abstract base class for all constraints. Constraints use conditions and chain them
-    together to filter unwanted entries from the searchspace.
+    """Abstract base class for all constraints.
+
+    Constraints use conditions and chain them together to filter unwanted entries from
+    the search space.
+
+    Args:
+        parameters: The list of parameters used for the constraint.
     """
 
     # class variables
     # TODO: it might turn out these are not needed at a later development stage
     eval_during_creation: ClassVar[bool]
+    """Class variable encoding whether the condition is evaluated during creation."""
     eval_during_modeling: ClassVar[bool]
+    """Class variable encoding whether the condition is evaluated during modeling."""
 
     # Object variables
     parameters: List[str] = field(validator=min_len(1))
 
     @parameters.validator
-    def validate_params(self, _, params):
-        """Validates the parameter list."""
+    def validate_params(self, _, params) -> None:
+        # Validates the parameter list.
+        # pylint: disable=missing-function-docstring
         if len(params) != len(set(params)):
             raise ValueError(
                 f"The given 'parameters' list must have unique values "
@@ -158,25 +178,24 @@ class Constraint(ABC, SerialMixin):
 
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """
-        Get the indices of dataframe entries that are invalid under the constraint.
+        """Get the indices of dataframe entries that are invalid under the constraint.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            A dataframe where each row represents a particular parameter combination.
+        Args:
+            data: A dataframe where each row represents a particular parameter
+                combination.
 
-        Returns
-        -------
-        pd.Index
+        Returns:
             The dataframe indices of rows where the constraint is violated.
         """
 
 
 @define
 class ExcludeConstraint(Constraint):
-    """
-    Class for modelling exclusion constraints.
+    """Class for modelling exclusion constraints.
+
+    Args:
+        conditions: List of individual conditions.
+        combiner: Operator encoding how to combine the individual conditions.
     """
 
     # class variables
@@ -188,7 +207,7 @@ class ExcludeConstraint(Constraint):
     combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         satisfied = [
             cond.evaluate(data[self.parameters[k]])
             for k, cond in enumerate(self.conditions)
@@ -199,9 +218,7 @@ class ExcludeConstraint(Constraint):
 
 @define
 class SumConstraint(Constraint):
-    """
-    Class for modelling sum constraints.
-    """
+    """Class for modelling sum constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
@@ -213,7 +230,7 @@ class SumConstraint(Constraint):
     condition: ThresholdCondition = field()
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         evaluate_data = data[self.parameters].sum(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -222,8 +239,10 @@ class SumConstraint(Constraint):
 
 @define
 class ProductConstraint(Constraint):
-    """
-    Class for modelling product constraints.
+    """Class for modelling product constraints.
+
+    Args:
+        condition: The condition that is used for this constraint.
     """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
@@ -236,7 +255,7 @@ class ProductConstraint(Constraint):
     condition: ThresholdCondition = field()
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         evaluate_data = data[self.parameters].prod(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -244,16 +263,16 @@ class ProductConstraint(Constraint):
 
 
 class NoLabelDuplicatesConstraint(Constraint):
-    """
-    Constraint class for excluding entries where the occurring labels are not unique.
-    This can be useful to remove entries that arise from e.g. a permutation invariance.
-    Examples:
-        - A,B,C,D would remain
-        - A,A,B,C would be removed
-        - A,A,B,B would be removed
-        - A,A,B,A would be removed
-        - A,C,A,C would be removed
-        - A,C,B,C would be removed
+    """Constraint class for excluding entries where occurring labels are not unique.
+
+    This can be useful to remove entries that arise from e.g. a permutation invariance
+    as for instance here:
+    - A,B,C,D would remain
+    - A,A,B,C would be removed
+    - A,A,B,B would be removed
+    - A,A,B,A would be removed
+    - A,C,A,C would be removed
+    - A,C,B,C would be removed
     """
 
     # class variables
@@ -261,19 +280,19 @@ class NoLabelDuplicatesConstraint(Constraint):
     eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint: disable=missing-function-docstring
         mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
 
         return data.index[mask_bad]
 
 
 class LinkedParametersConstraint(Constraint):
-    """
-    Constraint class for linking the values of parameters. This constraint type
-    effectively allows generating parameter sets that relate to the same underlying
-    quantity, e.g. two parameters that represent the same molecule using different
-    encodings. Linking the parameters removes all entries from the searchspace where
-    the parameter values differ.
+    """Constraint class for linking the values of parameters.
+
+    This constraint type effectively allows generating parameter sets that relate to
+    the same underlying quantity, e.g. two parameters that represent the same molecule
+    using different encodings. Linking the parameters removes all entries from the
+    search space where the parameter values differ.
     """
 
     # class variables
@@ -281,7 +300,7 @@ class LinkedParametersConstraint(Constraint):
     eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         mask_bad = data[self.parameters].nunique(axis=1) != 1
 
         return data.index[mask_bad]
@@ -289,11 +308,18 @@ class LinkedParametersConstraint(Constraint):
 
 @define
 class DependenciesConstraint(Constraint):
-    """
-    Constraint that specifies dependencies between parameters. For instance some
-    parameters might only be relevant when another parameter has a certain value
-    (e.g. parameter switch is 'on'). All dependencies must be declared in a single
-    constraint.
+    """Constraint that specifies dependencies between parameters.
+
+    For instance some parameters might only be relevant when another parameter has a
+    certain value (e.g. parameter switch is 'on'). All dependencies must be declared in
+    a single constraint.
+
+    Args:
+        conditions: The list of individual conditions.
+        affected_parameters: The parameters affected by the individual conditions.
+        permutation_invariant: Flag that indicates whether the affected parameters are
+            permutation invariant. This should not be changed by the user but by other
+            constraints reusing this class.
     """
 
     # class variables
@@ -305,8 +331,6 @@ class DependenciesConstraint(Constraint):
     # object variables
     conditions: List[Condition] = field()
     affected_parameters: List[List[str]] = field()
-    # Flag that indicates whether the affected parameters are permutation invariant.
-    # Not to be set by the user but by other constraints reusing this class.
     # TODO: This should be init=False, but would require changing the unstructuring
     #   logic. Let's wait for the next cattrs release with the following PR to be merged
     #   and then init=False attributes can be handled more elegantly:
@@ -314,8 +338,9 @@ class DependenciesConstraint(Constraint):
     permutation_invariant: bool = field(default=False)
 
     @affected_parameters.validator
-    def affected_parameters_validator(self, _, value):
-        """Ensure each set of affected parameters has exactly one condition"""
+    def affected_parameters_validator(self, _, value) -> None:
+        # Ensure each set of affected parameters has exactly one condition.
+        # pylint: disable=missing-function-docstring
         if len(self.conditions) != len(value):
             raise ValueError(
                 f"For the {self.__class__.__name__}, for each item in the "
@@ -324,7 +349,7 @@ class DependenciesConstraint(Constraint):
             )
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
         censored_data = data.copy()
@@ -365,15 +390,18 @@ class DependenciesConstraint(Constraint):
 
 @define
 class PermutationInvarianceConstraint(Constraint):
-    """
-    Constraint class for declaring that a set of parameters are permutation invariant,
-    that is, (val_from_param1, val_from_param2) is equivalent to
-    (val_from_param2, val_from_param1). Since it does not make sense to have this
-    constraint with duplicated labels, this implementation also internally applies the
-    `NoDuplicatesConstraint`.
+    """Constraint class for declaring that a set of parameters is permutation invariant.
+
+    More precisely, this means that, ```(val_from_param1, val_from_param2)``` is
+    equivalent to ```(val_from_param2, val_from_param1)```. Since it does not make sense
+    to have this constraint with duplicated labels, this implementation also internally
+    applies the :py:func:`baybe.constraints.NoLabelDuplicatesConstraint`.
 
     Note: This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
+
+    Args:
+        dependencies: Dependencies connected with the invariant parameters.
     """
 
     # class variables
@@ -386,7 +414,7 @@ class PermutationInvarianceConstraint(Constraint):
     dependencies: Optional[DependenciesConstraint] = field(default=None)
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         # Get indices of entries with duplicate label entries. These will also be
         # dropped by this constraint.
         mask_duplicate_labels = pd.Series(False, index=data.index)
@@ -430,8 +458,10 @@ class PermutationInvarianceConstraint(Constraint):
 
 @define
 class CustomConstraint(Constraint):
-    """
-    Class for user-defined custom constraints.
+    """Class for user-defined custom constraints.
+
+    Args:
+        validator: A user-defined function modeling the validatio of the constraint.
     """
 
     # class variables
@@ -442,7 +472,7 @@ class CustomConstraint(Constraint):
     validator: Callable[[pd.Series], bool] = field()
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        """See base class."""
+        # See base class. pylint: disable=missing-function-docstring
         mask_bad = ~data[self.parameters].apply(self.validator, axis=1)
 
         return data.index[mask_bad]
@@ -468,7 +498,8 @@ cattrs.register_unstructure_hook(Constraint, unstructure_base)
 cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint))
 
 
-def _custom_constraint_hook(*_):
+def _custom_constraint_hook(*_) -> None:
+    # pylint: disable=missing-function-docstring
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
@@ -477,18 +508,13 @@ cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
 
 
 def _validate_constraints(constraints: List[Constraint]) -> None:
-    """
-    Asserts that a given collection of constraints is valid.
+    """Asserts that a given collection of constraints is valid.
 
-    Parameters
-    ----------
-    constraints : list
-        List of Constraint objects.
+    Args:
+        constraints: List of Constraint objects.
 
-    Raises
-    ------
-    ValueError
-        If the given list of constraints is invalid.
+    Raises:
+        ValueError: If the given list of constraints is invalid.
     """
     if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
