@@ -52,8 +52,11 @@ if is_enabled():
     _resource = Resource.create({"service.namespace": "BayBE", "service.name": "SDK"})
     _reader = PeriodicExportingMetricReader(
         exporter=OTLPMetricExporter(
-            endpoint="***REMOVED***.elb."
-            "eu-central-1.amazonaws.com:4317",
+            endpoint=os.environ.get(
+                "BAYBE_TELEMETRY_HOST",
+                "***REMOVED***.elb."
+                "eu-central-1.amazonaws.com:4317",
+            ),
             insecure=True,
         )
     )
