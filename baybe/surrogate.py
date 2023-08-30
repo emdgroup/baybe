@@ -1,7 +1,4 @@
-# pylint: disable=too-few-public-methods
-"""
-Surrogate models, such as Gaussian processes, random forests, etc.
-"""
+"""Surrogate models, such as Gaussian processes, random forests, etc."""
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
@@ -43,14 +40,34 @@ _WRAPPER_MODELS = ("SplitModel", "ScaledModel")
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
-    """Helper function to validate and prepare the model input."""
+    """Validate and prepare the model input.
+
+    Args:
+        x: The "raw" model input.
+
+    Returns:
+        The prepared input.
+
+    Raises:
+        ValueError: If the model input is empty.
+    """
     if len(x) == 0:
         raise ValueError("The model input must be non-empty.")
     return x.to(_DTYPE)
 
 
 def _prepare_targets(y: Tensor) -> Tensor:
-    """Helper function to validate and prepare the model targets."""
+    """Validate and prepare the model targets.
+
+    Args:
+        y: The "raw" model targets.
+
+    Returns:
+        The prepared targets.
+
+    Raises:
+        NotImplementedError: If there is more than one target.
+    """
     if y.shape[1] != 1:
         raise NotImplementedError(
             "The model currently supports only one target or multiple targets in "
@@ -60,16 +77,24 @@ def _prepare_targets(y: Tensor) -> Tensor:
 
 
 def _var_to_covar(var: Tensor) -> Tensor:
-    """
-    Converts a tensor (with optional batch dimensions) that contains (marginal)
+    """Convert a tensor containing variances to tensor containing covariance matrices.
+
+    Convert a tensor (with optional batch dimensions) that contains (marginal)
     variances along its last dimension into one that contains corresponding diagonal
     covariance matrices along its last two dimensions.
+
+    Args:
+        var: The tensor that should be converted.
+
+    Returns:
+        The converted tensor.
     """
+    # TODO [16954] Check if it is necessary to have this as an individual function
     return torch.diag_embed(var)
 
 
 def _get_model_params_validator(model_init: Callable) -> Callable:
-    """Constructs a validator based on the model class"""
+    """Construct a validator based on the model class."""
 
     def validate_model_params(obj, _, model_params: dict) -> None:
         # Get model class name
@@ -95,22 +120,30 @@ def _get_model_params_validator(model_init: Callable) -> Callable:
 
 
 def catch_constant_targets(model_cls: Type["Surrogate"]):
-    """
-    Wraps a given `Surrogate` class that cannot handle constant training target
-    values such that these cases are handled by a separate model type.
+    """Wrap a ```Surrogate``` class that cannot handle constant training target values.
+
+    In the wrapped class, these cases are handled by a separate model type.
+
+    Args:
+        model_cls: A ```Surrogate``` class that should be wrapped.
+
+    Returns:
+        A wrapped version of the class.
     """
 
     class SplitModel(*model_cls.__bases__):
-        """
-        A surrogate model that applies a separate strategy for cases where the training
+        """The class that is used for wrapping.
+
+        It applies a separate strategy for cases where the training
         targets are all constant and no variance can be estimated.
+
+        It stores an instance of the underlying model class.
         """
 
         # The posterior mode is chosen to match that of the wrapped model class
         joint_posterior: ClassVar[bool] = model_cls.joint_posterior
 
         def __init__(self, *args, **kwargs):
-            """Stores an instance of the underlying model class."""
             super().__init__()
             self.model = model_cls(*args, **kwargs)
             self.__class__.__name__ = self.model.__class__.__name__
@@ -133,8 +166,7 @@ def catch_constant_targets(model_cls: Type["Surrogate"]):
         def _fit(
             self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
         ) -> None:
-            """Selects a model based on the variance of the targets and fits it."""
-
+            """Select a model based on the variance of the targets and fits it."""
             # https://github.com/pytorch/pytorch/issues/29372
             # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
             if torch.std(train_y.ravel(), unbiased=False) < _MIN_TARGET_STD:
@@ -144,9 +176,10 @@ def catch_constant_targets(model_cls: Type["Surrogate"]):
             self.model.fit(searchspace, train_x, train_y)
 
         def __getattribute__(self, attr):
-            """
-            Accesses the attributes of the class instance if available, otherwise uses
-            the attributes of the internal model instance.
+            """Accesses the attributes of the class instance if available.
+
+            If the attributes are not available, it uses the attributes of the internal
+            model instance.
             """
             # Try to retrieve the attribute in the class
             try:
@@ -159,32 +192,43 @@ def catch_constant_targets(model_cls: Type["Surrogate"]):
             # If the attribute has not been overwritten, use that of the internal model
             return self.model.__getattribute__(attr)
 
+    # Wrapping a class using a decorator does not transfer the doc, resulting in the
+    # autodocumentation not showing the correct docstring. We thus need to manually
+    # assign the docstring of the class.
+    SplitModel.__doc__ = model_cls.__doc__
     return SplitModel
 
 
 def scale_model(model_cls: Type["Surrogate"]):
-    """
-    Wraps a given `Surrogate` class such that it operates with scaled
-    representations of the training and test data.
+    """Wrap a ```Surrogate``` class such that it operates with scaled representations.
+
+    Args:
+        model_cls: A ```Surrogate``` model class that should be wrapped.
+
+    Returns:
+        A wrapped version of the class.
     """
 
     class ScaledModel(*model_cls.__bases__):
-        """Overrides the methods of the given model class such the use scaled data."""
+        """Overrides the methods of the given model class such the use scaled data.
+
+        It stores an instance of the underlying model class and a scalar object.
+        """
 
         # The posterior mode is chosen to match that of the wrapped model class
         joint_posterior: ClassVar[bool] = model_cls.joint_posterior
 
         def __init__(self, *args, **kwargs):
-            """Stores an instance of the underlying model class and a scaler object."""
             self.model = model_cls(*args, **kwargs)
             self.__class__.__name__ = self.model.__class__.__name__
             self.model_params = self.model.model_params
             self.scaler = None
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-            """
-            Calls the posterior function of the internal model instance on
-            a scaled version of the test data and rescales the output accordingly.
+            """Call the posterior function of the internal model instance.
+
+            This call is made on a scaled version of the test data and rescales the
+            output accordingly.
             """
             candidates = self.scaler.transform(candidates)
             mean, covar = self.model._posterior(  # pylint: disable=protected-access
@@ -201,9 +245,10 @@ def scale_model(model_cls: Type["Surrogate"]):
             self.model.fit(searchspace, train_x, train_y)
 
         def __getattribute__(self, attr):
-            """
-            Accesses the attributes of the class instance if available, otherwise uses
-            the attributes of the internal model instance.
+            """Accesses the attributes of the class instance if available.
+
+            If the attributes are not available, it uses the attributes of the internal
+            model instance.
             """
             # Try to retrieve the attribute in the class
             try:
@@ -216,23 +261,41 @@ def scale_model(model_cls: Type["Surrogate"]):
             # If the attribute has not been overwritten, use that of the internal model
             return self.model.__getattribute__(attr)
 
+    # Wrapping a class using a decorator does not transfer the doc, resulting in the
+    # autodocumentation not showing the correct docstring. We thus need to manually
+    # assign the docstring of the class.
+    ScaledModel.__doc__ = model_cls.__doc__
     return ScaledModel
 
 
 def batchify(
     posterior: Callable[["Surrogate", Tensor], Tuple[Tensor, Tensor]]
 ) -> Callable[["Surrogate", Tensor], Tuple[Tensor, Tensor]]:
-    """
-    Wraps `Surrogate` posterior functions that are incompatible with t- and
-    q-batching such that they become able to process batched inputs.
+    """Wrap ```Surrogate``` posterior functions to enable proper batching.
+
+    More precisely, this wraps model that are incompatible with t- and q-batching such
+    that they become able to process batched inputs.
+
+    Args:
+        posterior: The original ```posterior``` function.
+
+    Returns:
+        The wrapped posterior function.
     """
 
     @wraps(posterior)
     def sequential_posterior(
         model: "Surrogate", candidates: Tensor
     ) -> [Tensor, Tensor]:
-        """A posterior function replacement that processes batches sequentially."""
+        """A posterior function replacement that processes batches sequentially.
 
+        Args:
+            model: The ```Surrogate``` model.
+            candidates: The candidates tensor.
+
+        Returns:
+            The mean and the covariance.
+        """
         # If no batch dimensions are given, call the model directly
         if candidates.ndim == 2:
             return posterior(model, candidates)
@@ -279,10 +342,15 @@ def batchify(
 
 @define
 class Surrogate(ABC, SerialMixin):
-    """Abstract base class for all surrogate models."""
+    """Abstract base class for all surrogate models.
+
+    Args:
+        model_params: Optional model parameters.
+    """
 
     # Class variables
     joint_posterior: ClassVar[bool]
+    """Class variable encoding whether or not a joint posterior is calculated."""
     supports_transfer_learning: ClassVar[bool]
 
     # Object variables
@@ -293,20 +361,15 @@ class Surrogate(ABC, SerialMixin):
     model_params: Dict[str, Any] = field(factory=dict)
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """
-        Evaluates the surrogate model at the given candidate points.
+        """Evaluate the surrogate model at the given candidate points.
 
-        Parameters
-        ----------
-        candidates : torch.Tensor
-            The candidate points, represented as a tensor of shape (*t, q, d), where
-            't' denotes the "t-batch" shape, 'q' denotes the "q-batch" shape, and
-            'd' is the input dimension. For more details about batch shapes, see:
-            https://botorch.org/docs/batching
+        Args:
+            candidates: The candidate points, represented as a tensor of shape
+                ```(*t, q, d)```, where ```t``` denotes the "t-batch" shape, ```q```
+                denotes the "q-batch" shape, and ```d``` is the input dimension. For
+                more details about batch shapes, see: https://botorch.org/docs/batching
 
-        Returns
-        -------
-        Tuple[Tensor, Tensor]
+        Returns:
             The posterior means and posterior covariance matrices of the t-batched
             candidate points.
         """
@@ -327,21 +390,41 @@ class Surrogate(ABC, SerialMixin):
 
     @abstractmethod
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """
-        Implements the actual posterior evaluation logic. In contrast to its public
-        counterpart, no data validation/transformation is carried out but only the raw
-        posterior computation is conducted.
+        """Perform the actual posterior evaluation logic.
 
-        Note:
-        -----
-        The public `posterior` method *always* returns a full covariance matrix. By
-        contrast, this method may return either a covariance matrix or a tensor
-        of marginal variances, depending on the models `joint_posterior` flag. The
-        optional conversion to a covariance matrix is handled by the public method.
+        In contrast to its public counterpart
+        :py:func:`baybe.surrogate.Surrogate.posterior`, no data
+        validation/transformation is carried out but only the raw posterior computation
+        is conducted.
+
+        Note that the public ```posterior``` method *always* returns a full covariance
+        matrix. By contrast, this method may return either a covariance matrix or a
+        tensor of marginal variances, depending on the models ```joint_posterior```
+        flag. The optional conversion to a covariance matrix is handled by the public
+        method.
+
+        See :py:func:`baybe.surrogate.Surrogate.posterior` for details on the
+        parameters.
+
+        Args:
+            candidates: The candidates.
+
+        Returns:
+            See :py:func:`baybe.surrogate.Surrogate.posterior`.
         """
 
     def fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """Trains the surrogate model on the provided data."""
+        """Train the surrogate model on the provided data.
+
+        Args:
+            searchspace: The search space in which experiments are conducted.
+            train_x: The training data points.
+            train_y: The training data labels.
+
+        Raises:
+            NotImplementedError: When using a continuous search space and a non-GP
+                model.
+        """
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
@@ -349,7 +432,6 @@ class Surrogate(ABC, SerialMixin):
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
             )
-
         # TODO: Adjust scale_model decorator to support other model types as well.
         if (not searchspace.continuous.is_empty) and (
             "GaussianProcess" not in self.__class__.__name__
@@ -366,16 +448,24 @@ class Surrogate(ABC, SerialMixin):
 
     @abstractmethod
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """
-        Implements the actual fitting logic. In contrast to its public counterpart,
+        """Perform the actual fitting logic.
+
+        In contrast to its public counterpart :py:func:`baybe.surrogate.Surrogate.fit`,
         no data validation/transformation is carried out but only the raw fitting
         operation is conducted.
+
+        See :py:func:`baybe.surrogate.Surrogate.fit` for details on the parameters.
         """
 
 
 @define
 class GaussianProcessSurrogate(Surrogate):
-    """A Gaussian process surrogate model."""
+    """A Gaussian process surrogate model.
+
+    Args:
+        _model: The actual model.
+        model_params: Optional model parameters.
+    """
 
     # Class variables
     joint_posterior: ClassVar[bool] = True
@@ -390,12 +480,12 @@ class GaussianProcessSurrogate(Surrogate):
     _model: Optional[SingleTaskGP] = field(init=False, default=None)
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         posterior = self._model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
 
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
@@ -408,7 +498,7 @@ class GaussianProcessSurrogate(Surrogate):
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
-        # TODO [Scaling]: scaling should be handled by searchspace object
+        # TODO [Scaling]: scaling should be handled by search space object
         input_transform = Normalize(
             train_x.shape[1], bounds=bounds, indices=numeric_idxs
         )
@@ -504,9 +594,13 @@ class GaussianProcessSurrogate(Surrogate):
 
 @define
 class MeanPredictionSurrogate(Surrogate):
-    """
-    A trivial surrogate model that provides the average value of the training targets
+    """A trivial surrogate model.
+
+    It provides the average value of the training targets
     as posterior mean and a (data-independent) constant posterior variance.
+
+    Args:
+        target_value: The value of the posterior mean.
     """
 
     # Class variables
@@ -518,14 +612,14 @@ class MeanPredictionSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         # TODO: use target value bounds for covariance scaling when explicitly provided
         mean = self.target_value * torch.ones([len(candidates)])
         var = torch.ones(len(candidates))
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         self.target_value = train_y.mean().item()
 
 
@@ -533,7 +627,12 @@ class MeanPredictionSurrogate(Surrogate):
 @scale_model
 @define
 class RandomForestSurrogate(Surrogate):
-    """A random forest surrogate model."""
+    """A random forest surrogate model.
+
+    Args:
+        _model: The actual model.
+        model_params: Optional model parameters.
+    """
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
@@ -549,7 +648,7 @@ class RandomForestSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
 
         # Evaluate all trees
         # NOTE: explicit conversion to ndarray is needed due to a pytorch issue:
@@ -571,7 +670,7 @@ class RandomForestSurrogate(Surrogate):
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
 
@@ -580,12 +679,18 @@ class RandomForestSurrogate(Surrogate):
 @scale_model
 @define
 class NGBoostSurrogate(Surrogate):
-    """A natural-gradient-boosting surrogate model."""
+    """A natural-gradient-boosting surrogate model.
+
+    Args:
+        _model: The actual model.
+        model_params: Optional model parameters.
+    """
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
     supports_transfer_learning: ClassVar[bool] = False
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
+    """Class variable encoding the default model parameters."""
 
     # Object variables
     model_params: Dict[str, Any] = field(
@@ -600,7 +705,7 @@ class NGBoostSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         # Get predictions
         dists = self._model.pred_dist(candidates)
 
@@ -611,7 +716,7 @@ class NGBoostSurrogate(Surrogate):
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
 
@@ -619,7 +724,12 @@ class NGBoostSurrogate(Surrogate):
 @scale_model
 @define
 class BayesianLinearSurrogate(Surrogate):
-    """A Bayesian linear regression surrogate model."""
+    """A Bayesian linear regression surrogate model.
+
+    Args:
+        _model: The actual model.
+        model_params: Optional model parameters.
+    """
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
@@ -635,7 +745,7 @@ class BayesianLinearSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         # Get predictions
         dists = self._model.predict(candidates.numpy(), return_std=True)
 
@@ -646,13 +756,14 @@ class BayesianLinearSurrogate(Surrogate):
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See base class."""
+        # See base class. pylint:disable=missing-function-docstring
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
 
 
 def remove_model(raw_unstructure_hook):
-    """Removes the model in a surrogate for serialization."""
+    # Removes the model in a surrogate for serialization.
+    # pylint: disable=missing-function-docstring
     # TODO: No longer required once the following feature is released:
     #   https://github.com/python-attrs/cattrs/issues/40
 
@@ -667,7 +778,8 @@ def remove_model(raw_unstructure_hook):
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def structure_surrogate(val, _):
-    """Structures a surrogate model."""
+    # Structures a surrogate model.
+    # pylint: disable=missing-function-docstring
     # TODO [15436]
     # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
 
