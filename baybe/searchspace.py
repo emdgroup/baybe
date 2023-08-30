@@ -1,9 +1,4 @@
-# pylint: disable=missing-class-docstring, missing-function-docstring
-# TODO: add docstrings
-
-"""
-Functionality for managing search spaces.
-"""
+"""Functionality for managing search spaces."""
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
@@ -40,20 +35,40 @@ _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
 
 class SearchSpaceType(Enum):
+    """Enum class for different types of search spaces and respective compatibility."""
+
     DISCRETE = "DISCRETE"
+    """Flag for discrete search spaces resp. compatibility with discrete search
+    spaces."""
     CONTINUOUS = "CONTINUOUS"
+    """Flag for continuous search spaces resp. compatibility with continuous
+    search spaces."""
     EITHER = "EITHER"
+    """Flag compatibility with either discrete or continuous, but not hybrid
+    search spaces."""
     HYBRID = "HYBRID"
+    """Flag for hybrid search spaces resp. compatibility with hybrid search spaces."""
 
 
 @define
 class SubspaceDiscrete:
-    """
-    Class for managing discrete search spaces.
+    """Class for managing discrete subspaces.
 
-    Builds the search space from parameter definitions and optional constraints, keeps
+    Builds the subspace from parameter definitions and optional constraints, keeps
     track of search metadata, and provides access to candidate sets and different
     parameter views.
+
+    Args:
+        parameters: The list of parameters of the subspace.
+        exp_rep: The experimental representation of the subspace.
+        metadata: The metadata.
+        empty_encoding: Flag encoding whether an empty encoding is used.
+        constraints: A list of constraints for restricting the space.
+        comp_rep: The computational representation of the space.
+            Technically not required but added as an optional initializer argument to
+            allow ingestion from e.g. serialized objects and thereby speed up
+            construction. If not provided, the default hook will derive it from
+            ```exp_rep```.
     """
 
     parameters: List[DiscreteParameter] = field(
@@ -63,14 +78,11 @@ class SubspaceDiscrete:
     metadata: pd.DataFrame = field(eq=eq_dataframe)
     empty_encoding: bool = field(default=False)
     constraints: List[Constraint] = field(factory=list)
-
-    # Technically not required but added as an optional initializer argument to
-    # allow ingestion from e.g. serialized objects and thereby speed up construction.
-    # If not provided, the default hook will derive it from `exp_rep`.
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
     @exp_rep.validator
     def validate_exp_rep(self, attribute, exp_rep: pd.DataFrame) -> None:
+        # TODO [16954] Make private; pylint:disable=missing-function-docstring
         if exp_rep.index.has_duplicates:
             raise ValueError(
                 f"The index of {attribute.name} contains duplicates. "
@@ -85,6 +97,7 @@ class SubspaceDiscrete:
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
+        # TODO [16954] Make private; pylint:disable=missing-function-docstring
         if self.is_empty:
             return pd.DataFrame(columns=_METADATA_COLUMNS)
 
@@ -98,6 +111,7 @@ class SubspaceDiscrete:
     @metadata.validator
     def validate_metadata(self, _, metadata: pd.DataFrame) -> None:
         # Validate that the metadata is compatible with inactive tasks
+        # TODO [16954] Make private; pylint:disable=missing-function-docstring
         off_task_idxs = ~self._on_task_configurations()
         if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
             raise ValueError(
@@ -107,10 +121,9 @@ class SubspaceDiscrete:
 
     @comp_rep.default
     def default_comp_rep(self) -> pd.DataFrame:
-        """
-        Derives the computational search space representation from the experimental one
-        if not explicitly passed to the constructor.
-        """
+        # Derives the computational search space representation from the experimental
+        # one if not explicitly passed to the constructor.
+        # pylint:disable=missing-function-docstring
         # Create a dataframe containing the computational parameter representation
         comp_rep = self.transform(self.exp_rep)
 
@@ -154,7 +167,7 @@ class SubspaceDiscrete:
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
     ) -> "SubspaceDiscrete":
-        """See `SearchSpace` class."""
+        """See :py:class:`baybe.searchspace.SearchSpace`."""
         # Store the input
         if constraints is None:
             constraints = []
@@ -187,26 +200,25 @@ class SubspaceDiscrete:
         parameters: Optional[List[Parameter]] = None,
         empty_encoding: bool = False,
     ) -> "SubspaceDiscrete":
-        """
-        Creates a discrete subspace with a specified set of configurations.
+        """Create a discrete subspace with a specified set of configurations.
 
-        Parameters
-        ----------
-        df : pd.DataFrame
-            The experimental representation of the search space to be created.
-        parameters : List[Parameter], optional
-            Optional parameters corresponding to the columns in the given dataframe.
-            If a match between column name and parameter name is found, the
-            corresponding parameter is used. If a column has no match in the parameter
-            list, a `NumericalDiscreteParameter` is created if possible, or a
-            `CategoricalParameter` is used as fallback.
-        empty_encoding : bool
-            See `SearchSpace` class.
+        Args:
+            df: The experimental representation of the search space to be created.
+            parameters: Optional parameters corresponding to the columns in the given
+                dataframe. If a match between column name and parameter name is found,
+                the corresponding parameter is used. If a column has no match in the
+                parameter list, a
+                :py:class:`baybe.parameters.NumericalDiscreteParameter` is created if
+                possible, or a :py:class:`baybe.parameters.CategoricalParameter` is used
+                as fallback.
+            empty_encoding: See :py:class:`baybe.searchspace.SearchSpace`.
 
-        Returns
-        -------
-        SubspaceDiscrete
+        Returns:
             The created discrete subspace.
+
+        Raises:
+            ValueError: If several parameters with identical names are provided.
+            ValueError: If a parameter was specified for which no match was found.
         """
         # Turn the specified parameters into a dict and check for duplicate names
         specified_params: Dict[str, Parameter] = {}
@@ -248,16 +260,16 @@ class SubspaceDiscrete:
         )
 
     @property
-    def is_empty(self):
-        """Whether this search space is empty."""
+    def is_empty(self) -> bool:
+        """Return whether this subspace is empty."""
         return len(self.parameters) == 0
 
     @property
     def param_bounds_comp(self) -> torch.Tensor:
-        """
-        Returns bounds as tensor. Takes bounds from the parameter definitions, but
-        discards bounds belonging to columns that were filtered out during search space
-        creation.
+        """Return bounds as tensor.
+
+        Takes bounds from the parameter definitions, but discards bounds belonging to
+        columns that were filtered out during the creation of the space.
         """
         if not self.parameters:
             return torch.empty(2, 0)
@@ -276,19 +288,13 @@ class SubspaceDiscrete:
         measurements: pd.DataFrame,
         numerical_measurements_must_be_within_tolerance: bool,
     ) -> None:
-        """
-        Marks the given elements of the search space as measured.
+        """Mark the given elements of the space as measured.
 
-        Parameters
-        ----------
-        measurements : pd.DataFrame
-            A dataframe containing parameter settings that should be marked as measured.
-        numerical_measurements_must_be_within_tolerance : bool
-            See utility `fuzzy_row_match`.
-
-        Returns
-        -------
-        Nothing.
+        Args:
+            measurements: A dataframe containing parameter settings that should be
+                marked as measured.
+            numerical_measurements_must_be_within_tolerance: See
+                :py:func:`baybe.utils.dataframe.fuzzy_row_match`.
         """
         inds_matched = fuzzy_row_match(
             self.exp_rep,
@@ -303,24 +309,19 @@ class SubspaceDiscrete:
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = False,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Returns the set of candidate parameter settings that can be tested.
+        """Return the set of candidate parameter settings that can be tested.
 
-        Parameters
-        ----------
-        allow_repeated_recommendations : bool
-            If True, parameter settings that have already been recommended in an
-            earlier iteration are still considered as valid candidates. This is
-            relevant, for instance, when an earlier recommended parameter setting has
-            not been measured by the user (for any reason) after the corresponding
-            recommendation was made.
-        allow_recommending_already_measured : bool
-            If True, parameters settings for which there are already target values
-            available are still considered as valid candidates.
+        Args:
+            allow_repeated_recommendations: If ```True```, parameter settings that have
+                already been recommended in an earlier iteration are still considered
+                valid candidates. This is relevant, for instance, when an earlier
+                recommended parameter setting has not been measured by the user (for any
+                reason) after the corresponding recommendation was made.
+            allow_recommending_already_measured: If ```True```, parameters settings for
+                which there are already target values available are still considered as
+                valid candidates.
 
-        Returns
-        -------
-        Tuple[pd.DataFrame, pd.DataFrame]
+        Returns:
             The candidate parameter settings both in experimental and computational
             representation.
         """
@@ -337,19 +338,15 @@ class SubspaceDiscrete:
         self,
         data: pd.DataFrame,
     ) -> pd.DataFrame:
-        """
-        Transforms discrete parameters from experimental to computational
-        representation. Continuous parameters and additional columns are ignored.
+        """Transform parameters from experimental to computational representation.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed. Must contain all specified parameters, can
-            contain more columns.
+        Continuous parameters and additional columns are ignored.
 
-        Returns
-        -------
-        pd.DataFrame
+        Args:
+            data: The data to be transformed. Must contain all specified parameters, can
+                contain more columns.
+
+        Returns:
             A dataframe with the parameters in computational representation.
         """
         # If the transformed values are not required, return an empty dataframe
@@ -377,8 +374,14 @@ class SubspaceDiscrete:
 
 @define
 class SubspaceContinuous:
-    """
-    Class for managing continuous search spaces.
+    """Class for managing continuous subspaces.
+
+    Builds the subspace from parameter definitions, keeps
+    track of search metadata, and provides access to candidate sets and different
+    parameter views.
+
+    Args:
+        parameters: The list of parameters of the subspace.
     """
 
     parameters: List[NumericalContinuousParameter] = field(
@@ -387,13 +390,19 @@ class SubspaceContinuous:
 
     @classmethod
     def empty(cls) -> "SubspaceContinuous":
-        """Creates an empty continuous subspace."""
+        """Create an empty continuous subspace."""
         return SubspaceContinuous([])
 
     @classmethod
     def from_bounds(cls, bounds: pd.DataFrame) -> "SubspaceContinuous":
-        """Creates a hyperrectangle-shaped continuous search space with given bounds."""
+        """Create a hyperrectangle-shaped continuous subspace with given bounds.
 
+        Args:
+            bounds: The bounds of the parameters.
+
+        Returns:
+            The constructed subspace.
+        """
         # Assert that the input represents valid bounds
         assert bounds.shape[0] == 2
         assert (np.diff(bounds.values, axis=0) >= 0).all()
@@ -408,31 +417,34 @@ class SubspaceContinuous:
 
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame) -> "SubspaceContinuous":
-        """
-        Creates the smallest axis-aligned hyperrectangle-shaped continuous subspace
-        that contains the points specified in the given dataframe.
+        """Create a hyperractangle-shaped continuous subspace from a dataframe.
+
+        More precisely, create the smallest axis-aligned hyperrectangle-shaped
+        continuous subspace that contains the points specified in the given dataframe.
+
+        Args:
+            df: The dataframe specifying the points of the subspace.
+
+        Returns:
+            Ths constructed subspace.
         """
         # TODO: Add option for convex hull once constraints are in place
         bounds = pd.concat([df.min(), df.max()], axis=1).T
         return cls.from_bounds(bounds)
 
     @property
-    def is_empty(self):
-        """Whether this search space is empty."""
+    def is_empty(self) -> bool:
+        """Return whether this subspace is empty."""
         return len(self.parameters) == 0
 
     @property
     def param_names(self) -> List[str]:
-        """
-        Returns list of parameter names.
-        """
+        """Return list of parameter names."""
         return [p.name for p in self.parameters]
 
     @property
     def param_bounds_comp(self) -> torch.Tensor:
-        """
-        Returns bounds as tensor.
-        """
+        """Return bounds as tensor."""
         if not self.parameters:
             return torch.empty(2, 0)
         return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
@@ -441,8 +453,13 @@ class SubspaceContinuous:
         self,
         data: pd.DataFrame,
     ) -> pd.DataFrame:
-        """
-        See SubspaceDiscrete.transform
+        """See :py:func:`baybe.searchspace.SubspaceDiscrete.transform`.
+
+        Args:
+            data: The data that should be transformed.
+
+        Returns:
+            The transformed data.
         """
         # Transform continuous parameters
         comp_rep = data[[p.name for p in self.parameters]]
@@ -450,20 +467,14 @@ class SubspaceContinuous:
         return comp_rep
 
     def samples_random(self, n_points: int = 1) -> pd.DataFrame:
-        """
-        Get random point samples from the continuous space. Infinite bounds are
-        replaced by half of the maximum floating point number.
+        """Get random point samples from the continuous space.
 
-        Parameters
-        ----------
-        n_points : int
-            Number of points that should be sampled.
+        Args:
+            n_points: Number of points that should be sampled.
 
-        Returns
-        -------
-        pandas data frame
+        Returns:
             A data frame containing the points as rows with columns corresponding to the
-             parameter names.
+            parameter names.
         """
         if not self.parameters:
             return pd.DataFrame()
@@ -473,19 +484,17 @@ class SubspaceContinuous:
         return pd.DataFrame(points, columns=self.param_names)
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
-        """
-        Get random point samples from the full factorial of the continuous space.
+        """Get random point samples from the full factorial of the continuous space.
 
-        Parameters
-        ----------
-        n_points : int
-            Number of points that should be sampled.
+        Args:
+            n_points: Number of points that should be sampled.
 
-        Returns
-        -------
-        pandas data frame
+        Returns:
             A data frame containing the points as rows with columns corresponding to the
-             parameter names.
+            parameter names.
+
+        Raises:
+            ValueError: If there are not enough points to sample from.
         """
         full_factorial = self.full_factorial
 
@@ -500,14 +509,7 @@ class SubspaceContinuous:
 
     @property
     def full_factorial(self) -> pd.DataFrame:
-        """
-        Get the full factorial of the continuous space.
-
-        Returns
-        -------
-        pandas data frame
-            A data frame containing the full factorial
-        """
+        """Get the full factorial of the continuous space."""
         index = pd.MultiIndex.from_product(
             self.param_bounds_comp.T.tolist(), names=self.param_names
         )
@@ -517,23 +519,27 @@ class SubspaceContinuous:
 
 @define
 class SearchSpace(SerialMixin):
-    """
-    Class for managing the overall search space, which might be purely discrete, purely
-    continuous, or hybrid.
+    """Class for managing the overall search space.
 
-    NOTE:
-        Created objects related to the computational representations of parameters
-        (e.g., parameter bounds, computational dataframes, etc.) may use a different
-        parameter order than what is specified through the constructor: While the
-        passed parameter list can contain parameters in arbitrary order, the
-        aforementioned objects (by convention) list discrete parameters first, followed
-        by continuous ones.
+    The search space might be purely discrete, purely continuous, or hybrid.
+    Note that created objects related to the computational representations of parameters
+    (e.g., parameter bounds, computational dataframes, etc.) may use a different
+    parameter order than what is specified through the constructor: While the
+    passed parameter list can contain parameters in arbitrary order, the
+    aforementioned objects (by convention) list discrete parameters first, followed
+    by continuous ones.
+
+    Args:
+        discrete: The (potentially empty) discrete subspace of the overall search space.
+        continuous: The (potentially empty) continuous subspace of the overall
+            search space.
     """
 
     discrete: SubspaceDiscrete = field(factory=SubspaceDiscrete.empty)
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
 
     def __attrs_post_init__(self):
+        # pylint: disable=missing-function-docstring
         _validate_parameters(self.parameters)
         _validate_constraints(self.discrete.constraints)
 
@@ -552,26 +558,26 @@ class SearchSpace(SerialMixin):
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
     ) -> "SearchSpace":
-        """
-        Creates a "product" search space (with optional subsequent constraints applied).
+        """Create a search space from a cartesian product.
 
+        In the search space, optional subsequent constraints are applied.
         That is, the discrete subspace becomes the (filtered) cartesian product
         containing all discrete parameter combinations while, analogously, the
         continuous subspace represents the (filtered) cartesian product of all
-        continuous parameters. (TODO: continuous constraints are yet to be enabled.)
+        continuous parameters.
 
-        Parameters
-        ----------
-        parameters : List[Parameter]
-            The parameters spanning the search space.
-        constraints : List[Constraint], optional
-            An optional set of constraints restricting the valid parameter space.
-        empty_encoding : bool, default: False
-            If True, uses an "empty" encoding for all parameters. This is useful,
-            for instance, in combination with random search strategies that
-            do not read the actual parameter values, since it avoids the
-            (potentially costly) transformation of the parameter values to their
-            computational representation.
+        Args:
+            parameters: The parameters spanning the search space.
+            constraints: An optional set of constraints restricting the valid parameter
+                space.
+            empty_encoding: If ```True```, uses an "empty" encoding for all parameters.
+                This is useful, for instance, in combination with random search
+                strategies that do not read the actual parameter values, since it avoids
+                the (potentially costly) transformation of the parameter values to their
+                computational representation.
+
+        Returns:
+            The constructed search space.
         """
         # IMPROVE: The arguments get pre-validated here to avoid the potentially costly
         #   creation of the subspaces. Perhaps there is an elegant way to bypass the
@@ -600,14 +606,17 @@ class SearchSpace(SerialMixin):
 
     @property
     def parameters(self) -> List[Parameter]:
+        """Return the list of parameters of the search space."""
         return self.discrete.parameters + self.continuous.parameters
 
     @property
     def constraints(self) -> List[Constraint]:
+        """Return the constraints of the search space."""
         return self.discrete.constraints
 
     @property
     def type(self) -> SearchSpaceType:
+        """Return the type of the search space."""
         if self.discrete.is_empty and not self.continuous.is_empty:
             return SearchSpaceType.CONTINUOUS
         if not self.discrete.is_empty and self.continuous.is_empty:
@@ -618,28 +627,24 @@ class SearchSpace(SerialMixin):
 
     @property
     def contains_mordred(self) -> bool:
-        """Indicates if any of the discrete parameters uses MORDRED encoding."""
+        """Indicates if any of the discrete parameters uses ```MORDRED``` encoding."""
         return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
 
     @property
     def contains_rdkit(self) -> bool:
-        """Indicates if any of the discrete parameters uses RDKIT encoding."""
+        """Indicates if any of the discrete parameters uses ```RDKIT``` encoding."""
         return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
 
     @property
     def param_bounds_comp(self) -> torch.Tensor:
-        """
-        Returns bounds as tensor.
-        """
+        """Return bounds as tensor."""
         return torch.hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
 
     @property
     def task_idx(self) -> Optional[int]:
-        """
-        The column index of the task parameter in the computational representation.
-        """
+        """The column index of the task parameter in computational representation."""
         try:
             # TODO [16932]: Redesign metadata handling
             task_param = next(
@@ -676,19 +681,16 @@ class SearchSpace(SerialMixin):
         self,
         data: pd.DataFrame,
     ) -> pd.DataFrame:
-        """
-        Transforms data (such as the measurements) from experimental to computational
-        representation. Continuous parameters are not transformed but included.
+        """Transform data from experimental to computational representation.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed. Must contain all specified parameters, can
-            contain more columns.
+        This function can e.g. be used to transform data obtained from measurements.
+        Continuous parameters are not transformed but included.
 
-        Returns
-        -------
-        pd.DataFrame
+        Args:
+            data: The data to be transformed. Must contain all specified parameters, can
+                contain more columns.
+
+        Returns:
             A dataframe with the parameters in computational representation.
         """
         # Transform subspaces separately
@@ -706,6 +708,7 @@ class SearchSpace(SerialMixin):
 
 
 def structure_hook(dict_, type_):
+    # pylint: disable=missing-function-docstring
     return cattrs.structure_attrs_fromdict(dict_, type_)
 
 
