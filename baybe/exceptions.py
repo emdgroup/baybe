@@ -26,5 +26,9 @@ class EmptySearchSpaceError(Exception):
     """The created search space contains no parameters."""
 
 
+class NoTaskParametersError(Exception):
+    """A task-related query was executed in a context with no task parameters."""
+
+
 class NothingToSimulateError(Exception):
     """There is nothing to simulate because there are no testable configurations."""

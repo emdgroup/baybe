@@ -17,6 +17,7 @@ import torch
 from attrs import define, field
 
 from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
+from baybe.exceptions import NoTaskParametersError
 from baybe.parameters import (
     _validate_parameter_names,
     _validate_parameters,
@@ -629,8 +630,16 @@ class SearchSpace(SerialMixin):
     @property
     def n_tasks(self) -> int:
         """The number of tasks encoded in the search space."""
-        # TODO: This approach only works for a single task parameter.
-        task_param = next(p for p in self.parameters if isinstance(p, TaskParameter))
+        # TODO: This approach only works for a single task parameter. For multiple task
+        #   parameters, we need to align what the output should even represent
+        #   (e.g. number of combinatorial task combinations, number of tasks per
+        #   task parameter, etc).
+        try:
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+        except StopIteration as ex:
+            raise NoTaskParametersError("There are no tasks defined.") from ex
         return len(task_param.values)
 
     def transform(
