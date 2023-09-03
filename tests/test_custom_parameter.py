@@ -22,6 +22,6 @@ def test_run_iterations(baybe, n_iterations, batch_quantity):
         print(baybe.searchspace.discrete.comp_rep)
 
         add_fake_results(rec, baybe)
-        add_parameter_noise(rec, baybe, noise_level=0.1)
+        add_parameter_noise(rec, baybe.parameters, noise_level=0.1)
 
         baybe.add_measurements(rec)

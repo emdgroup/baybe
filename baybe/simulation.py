@@ -528,7 +528,7 @@ def simulate_experiment(
         if noise_percent:
             add_parameter_noise(
                 measured,
-                baybe_obj,
+                baybe_obj.parameters,
                 noise_type="relative_percent",
                 noise_level=noise_percent,
             )
