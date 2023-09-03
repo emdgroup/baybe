@@ -567,7 +567,16 @@ def _validate_parameters(parameters: List[Parameter]) -> None:
     ValueError
         If the given list of parameters is invalid.
     """
-    # Assert that the parameter list is non-empty and contains unique names
+    # Assert: non-empty parameter list
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
+
+    # Assert: at most one task parameter
+    # TODO: Remove once more task parameters are supported
+    if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
+        raise NotImplementedError(
+            "Currently, at most one task parameter can be considered."
+        )
+
+    # Assert: unique names
     _validate_parameter_names(parameters)

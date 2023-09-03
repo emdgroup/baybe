@@ -68,13 +68,6 @@ class SubspaceDiscrete:
     # If not provided, the default hook will derive it from `exp_rep`.
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
-    @parameters.validator
-    def validate_parameters(self, _, parameters) -> None:
-        if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
-            raise NotImplementedError(
-                "Currently, at most one task parameter can be considered."
-            )
-
     @exp_rep.validator
     def validate_exp_rep(self, attribute, exp_rep: pd.DataFrame) -> None:
         if exp_rep.index.has_duplicates:
