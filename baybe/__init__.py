@@ -5,7 +5,6 @@ from baybe.core import BayBE  # pylint: disable=wrong-import-position
 
 def infer_version() -> str:  # pragma: no cover
     """Determines the package version for the different ways the code can be invoked."""
-
     # ----------------------------------------------------------------------------------
     # Attempt 1:
     # If the package has been installed, read the version from the metadata created
