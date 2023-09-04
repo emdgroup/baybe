@@ -17,7 +17,6 @@ import torch
 from attrs import define, field
 
 from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
-from baybe.exceptions import NoTaskParametersError
 from baybe.parameters import (
     _validate_parameter_names,
     _validate_parameters,
@@ -631,9 +630,11 @@ class SearchSpace(SerialMixin):
             task_param = next(
                 p for p in self.parameters if isinstance(p, TaskParameter)
             )
-        except StopIteration as ex:
-            raise NoTaskParametersError("There are no tasks defined.") from ex
-        return len(task_param.values)
+            return len(task_param.values)
+
+        # When there are no task parameters, we effectively have a single task
+        except StopIteration:
+            return 1
 
     def transform(
         self,
