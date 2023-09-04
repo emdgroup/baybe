@@ -1,9 +1,8 @@
 ### Example for full simulation loop using a custom analytical test function in a hybrid space
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows a simulation loop for a single target with a custom test function as lookup.
-Most importantly, it demonstrates the creation of a custom hybrid searchspace.
-"""
+# This example shows a simulation loop for a single target with a custom test function as lookup.
+# Most importantly, it demonstrates the creation of a custom hybrid searchspace.
 
 # This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
 # We refer to [`baybe_object`](./../Basics/baybe_object.md) for a more  basic example resp.
@@ -40,9 +39,7 @@ N_DOE_ITERATIONS = 2
 
 # See [`here`](./run_custom_analytical.md) for details on the custom analytical test function.
 def sum_of_squares(*x: float) -> float:
-    """
-    Calculates the sum of squares.
-    """
+    """Calculates the sum of squares."""
     res = 0
     for y in x:
         res += y**2

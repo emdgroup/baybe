@@ -1,11 +1,10 @@
 ### Example for custom parameter passing in surrogate models
 # pylint: disable=line-too-long
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows the creation of a BayBE object, how to define surrogate
-models with custom model parameters and the validations that are done.
-It also shows how to specify these parameters through a configuration.
-"""
+# This example shows how to define surrogate models with custom model parameters.
+# It also shows the validations that are done and how to specify these parameters through
+# a configuration.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

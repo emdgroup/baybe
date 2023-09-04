@@ -1,10 +1,9 @@
 ### Example for validation of a config file
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows how to load and validate a user defined configuration file.
-We use the two configuration dictionaries.
-The first one represents a valid configuration, the second does not.
-"""
+# This example shows how to load and validate a user defined configuration file.
+# We use the two configuration dictionaries.
+# The first one represents a valid configuration, the second does not.
 
 #### Necessary imports
 
@@ -14,8 +13,8 @@ from cattrs import ClassValidationError
 #### Defining config dictionaries
 
 # Note that the following explicit call `str()` is not strictly necessary.
-# It is included since our method of converting this example to a markdown file does not interpret
-# this part of the code as `python` code if we do not include this call.
+# It is included since our method of converting this example to a markdown file does not
+# interpret this part of the code as `python` code if we do not include this call.
 
 CONFIG = str(
     """

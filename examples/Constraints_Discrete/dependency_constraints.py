@@ -1,10 +1,9 @@
 ### Example for using dependency constraints in discrete searchspaces
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows how a dependency constraint can be created for a discrete searchspace.
-For instance, some parameters might only be relevant when another parameter has a certain value.
-All dependencies have to be declared in a single constraint.
-"""
+# This example shows how a dependency constraint can be created for a discrete searchspace.
+# For instance, some parameters might only be relevant when another parameter has a certain value.
+# All dependencies have to be declared in a single constraint.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

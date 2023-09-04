@@ -1,9 +1,8 @@
 ### Example for full simulation loop using the multi target mode for custom analytic functions
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows how to use a multi target objective for a custom analytic function.
-It uses a desirability value to handle several targets.
-"""
+# This example shows how to use a multi target objective for a custom analytic function.
+# It uses a desirability value to handle several targets.
 
 # This example assumes basic familiarty with BayBE, custom test functions and multiple targets.
 # For further details, we thus refer to
@@ -35,9 +34,7 @@ N_DOE_ITERATIONS = 4
 
 # See [`run_custom_analytical`](./run_custom_analytical.md) for details
 def sum_of_squares(*x: float) -> Tuple[float, float]:
-    """
-    Calculates the sum of squares.
-    """
+    """Calculates the sum of squares."""
     res = 0
     for y in x:
         res += y**2

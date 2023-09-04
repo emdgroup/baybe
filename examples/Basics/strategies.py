@@ -1,10 +1,9 @@
 ### Example for using different strategies
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows how to create and use strategy objects.
-Such an object specifies the strategy adopted to make recommendations.
-It has several parameters one can adjust, depending on the strategy the user wants to follow.
-"""
+# This example shows how to create and use strategy objects.
+# Such an object specifies the strategy adopted to make recommendations.
+# It has several parameters one can adjust, depending on the strategy the user wants to follow.
 
 # To apply the selected strategy, this object can be specified in the arguments of the BayBE object.
 # The different parameters the user can change are:

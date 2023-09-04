@@ -1,14 +1,12 @@
 ### Basic example for using BayBE
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows how to create a BayBE Object and how to use it.
-It details how a user can first define parameters of the searchspace and the objective.
-These can then be used to create a proper BayBE object that can be used to get recommendations.
-"""
-
-#### Necessary imports for this example
+# This example shows how to create a BayBE object and how to use it.
+# It details how a user can first define parameters of the searchspace and the objective.
+# These can then be used to create a proper BayBE object that can be used to get recommendations.
 
 #### Necessary imports for this example
+
 from baybe import BayBE
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace

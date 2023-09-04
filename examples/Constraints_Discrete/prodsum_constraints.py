@@ -1,8 +1,7 @@
 ### Example for using exlusion constraints incorporating sums and products
+# pylint: disable=missing-module-docstring
 
-"""
-This examples demonstrates an exclusion constraint using products and sums.
-"""
+# This examples demonstrates an exclusion constraint using products and sums.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
