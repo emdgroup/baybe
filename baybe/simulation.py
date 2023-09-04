@@ -74,6 +74,15 @@ def simulate_transfer_learning(
     A wrapper around `simulate_scenarios` that partitions the search space into its
     tasks and simulates each task with the training data from the remaining tasks.
 
+    NOTE:
+    Currently, the simulation only supports purely discrete search spaces. This is
+    because `lookup` serves both as the loop-closing element **and** as the source
+    for off-task training data. For continuous (or mixed) spaces, the lookup mechanism
+    would need to be either implemented as a callable (in which case the training data
+    must be provided separately) or the continuous parameters need to be effectively
+    restricted to the finite number of provided lookup configurations. Neither is
+    implemented at the moment.
+
     Parameters
     ----------
     baybe:
@@ -96,18 +105,19 @@ def simulate_transfer_learning(
     """
 
     # TODO: Currently, we assume a purely discrete search space
-    assert baybe.searchspace.type == SearchSpaceType.DISCRETE
-
-    # TODO: Currently, we assume no prior measurements
-    assert len(baybe.measurements_exp) == 0
-
-    # TODO: Currently, we assume that everything can be recommended
-    assert not baybe.searchspace.discrete.metadata.any().any()
+    if baybe.searchspace.type != SearchSpaceType.DISCRETE:
+        raise NotImplementedError(
+            "Currently, only purely discrete search spaces are supported. "
+            "For details, see NOTE in the function docstring."
+        )
 
     # TODO [16932]: Currently, we assume exactly one task parameter exists
     # Extract the single task parameter
     task_params = [p for p in baybe.parameters if isinstance(p, TaskParameter)]
-    assert len(task_params) == 1
+    if len(task_params) > 1:
+        raise NotImplementedError(
+            "Currently, transfer learning supports only a single task parameter."
+        )
     task_param = task_params[0]
 
     # Create simulation objects for all tasks
