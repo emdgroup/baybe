@@ -79,6 +79,7 @@ class SubspaceDiscrete:
     def default_metadata(self) -> pd.DataFrame:
         columns = ["was_recommended", "was_measured", "dont_recommend"]
 
+        # TODO: verify if this is still required
         # If the discrete search space is empty, explicitly return an empty dataframe
         # instead of simply using a zero-length index. Otherwise, the boolean dtype
         # would be lost during a serialization roundtrip as there would be no
@@ -87,7 +88,22 @@ class SubspaceDiscrete:
         if self.is_empty:
             return pd.DataFrame(columns=columns)
 
-        return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
+        # TODO [16605]: Redesign metadata handling
+        # Exclude inactive tasks from search
+        df = pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
+        off_task_idxs = ~self._on_task_configurations()
+        df.loc[off_task_idxs.values, "dont_recommend"] = True
+        return df
+
+    @metadata.validator
+    def validate_metadata(self, _, metadata: pd.DataFrame) -> None:
+        # Validate that the metadata is compatible with inactive tasks
+        off_task_idxs = ~self._on_task_configurations()
+        if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
+            raise ValueError(
+                "Inconsistent instructions given: The provided metadata allows "
+                "testing parameter configurations for inactive tasks."
+            )
 
     @comp_rep.default
     def default_comp_rep(self) -> pd.DataFrame:
@@ -104,6 +120,23 @@ class SubspaceDiscrete:
         comp_rep = df_drop_single_value_columns(comp_rep)
 
         return comp_rep
+
+    def __attrs_post_init__(self):
+        # Exclude inactive tasks from search
+        # TODO [16605]: Redesign metadata handling
+        off_task_idxs = ~self._on_task_configurations()
+        self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True
+
+    def _on_task_configurations(self) -> pd.Series:
+        """Retrieves the parameter configurations for the active tasks."""
+        # TODO [16932]: This only works for a single parameter
+        try:
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+        except StopIteration:
+            return pd.Series(True, index=self.exp_rep.index)
+        return self.exp_rep[task_param.name].isin(task_param.active_values)
 
     @classmethod
     def empty(cls) -> "SubspaceDiscrete":
@@ -606,6 +639,7 @@ class SearchSpace(SerialMixin):
         The column index of the task parameter in the computational representation.
         """
         try:
+            # TODO [16932]: Redesign metadata handling
             task_param = next(
                 p for p in self.parameters if isinstance(p, TaskParameter)
             )
@@ -622,10 +656,10 @@ class SearchSpace(SerialMixin):
     @property
     def n_tasks(self) -> int:
         """The number of tasks encoded in the search space."""
-        # TODO: This approach only works for a single task parameter. For multiple task
-        #   parameters, we need to align what the output should even represent
-        #   (e.g. number of combinatorial task combinations, number of tasks per
-        #   task parameter, etc).
+        # TODO [16932]: This approach only works for a single task parameter. For
+        #  multiple task parameters, we need to align what the output should even
+        #  represent (e.g. number of combinatorial task combinations, number of
+        #  tasks per task parameter, etc).
         try:
             task_param = next(
                 p for p in self.parameters if isinstance(p, TaskParameter)

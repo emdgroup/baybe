@@ -385,6 +385,26 @@ class TaskParameter(CategoricalParameter):
     # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
     #   declared as such because of the inheritance relationship.
     encoding: Literal["INT"] = field(default="INT", init=False)
+    active_values: list = field(
+        default=None, converter=lambda x: x if x is None else list(x)
+    )
+
+    @active_values.validator
+    def validate_active_values(self, _, values):
+        # TODO [16605]: Redesign metadata handling
+        if values is None:
+            return
+        if len(values) == 0:
+            raise ValueError("At least one active parameter value is required.")
+        if len(set(values)) != len(values):
+            raise ValueError("The active parameter values must be unique.")
+        if not all(v in self.values for v in values):
+            raise ValueError("All active values must be valid parameter choices.")
+
+    def __attrs_post_init__(self):
+        # TODO [16605]: Redesign metadata handling
+        if self.active_values is None:
+            object.__setattr__(self, "active_values", self.values)
 
 
 @define(frozen=True, slots=False)
@@ -572,7 +592,7 @@ def _validate_parameters(parameters: List[Parameter]) -> None:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
 
     # Assert: at most one task parameter
-    # TODO: Remove once more task parameters are supported
+    # TODO [16932]: Remove once more task parameters are supported
     if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
         raise NotImplementedError(
             "Currently, at most one task parameter can be considered."

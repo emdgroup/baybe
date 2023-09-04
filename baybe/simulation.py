@@ -90,7 +90,7 @@ def simulate_transfer_learning(
     # TODO: Currently, we assume that everything can be recommended
     assert not baybe.searchspace.discrete.metadata.any().any()
 
-    # TODO: Currently, we assume exactly one task parameter exists
+    # TODO [16932]: Currently, we assume exactly one task parameter exists
     # Extract the single task parameter
     task_params = [p for p in baybe.parameters if isinstance(p, TaskParameter)]
     assert len(task_params) == 1
