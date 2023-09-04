@@ -1,5 +1,5 @@
-"""
-Automatic transformation of example files written in python into markdown files
+"""Automatic transformation of example files written in python into markdown files.
+
 Using this files requires the following additional packages:
 - p2j: Necessary for converting the python source code to jupyter notebooks
     Available via `pip install p2j`
