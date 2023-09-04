@@ -36,6 +36,8 @@ from baybe.utils import (
     SerialMixin,
 )
 
+_METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
+
 
 class SearchSpaceType(Enum):
     DISCRETE = "DISCRETE"
@@ -77,8 +79,6 @@ class SubspaceDiscrete:
 
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
-        columns = ["was_recommended", "was_measured", "dont_recommend"]
-
         # TODO: verify if this is still required
         # If the discrete search space is empty, explicitly return an empty dataframe
         # instead of simply using a zero-length index. Otherwise, the boolean dtype
@@ -86,11 +86,11 @@ class SubspaceDiscrete:
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
         if self.is_empty:
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=_METADATA_COLUMNS)
 
         # TODO [16605]: Redesign metadata handling
         # Exclude inactive tasks from search
-        df = pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
+        df = pd.DataFrame(False, columns=_METADATA_COLUMNS, index=self.exp_rep.index)
         off_task_idxs = ~self._on_task_configurations()
         df.loc[off_task_idxs.values, "dont_recommend"] = True
         return df
@@ -142,7 +142,9 @@ class SubspaceDiscrete:
     def empty(cls) -> "SubspaceDiscrete":
         """Creates an empty discrete subspace."""
         return SubspaceDiscrete(
-            parameters=[], exp_rep=pd.DataFrame(), metadata=pd.DataFrame()
+            parameters=[],
+            exp_rep=pd.DataFrame(),
+            metadata=pd.DataFrame(columns=_METADATA_COLUMNS),
         )
 
     @classmethod
