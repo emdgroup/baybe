@@ -1,6 +1,4 @@
-"""
-Tests for the substance parameter.
-"""
+"""Tests for the substance parameter."""
 
 import pytest
 
@@ -14,9 +12,7 @@ from baybe.utils.dataframe import add_fake_results, add_parameter_noise
     ids=SUBSTANCE_ENCODINGS,
 )
 def test_run_iterations(baybe, batch_quantity, n_iterations):
-    """
-    Test running some iterations with fake results and a substance parameter.
-    """
+    """Test running some iterations with fake results and a substance parameter."""
     for k in range(n_iterations):
         rec = baybe.recommend(batch_quantity=batch_quantity)
 

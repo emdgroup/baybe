@@ -1,4 +1,5 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
+"""Test serialization of surrogates."""
 
 import pytest
 from baybe.surrogate import get_available_surrogates, Surrogate

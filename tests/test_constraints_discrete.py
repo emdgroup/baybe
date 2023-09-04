@@ -1,6 +1,4 @@
-"""
-Test for imposing dependency constraints
-"""
+"""Test for imposing dependency constraints."""
 import math
 
 import pytest
@@ -12,9 +10,7 @@ import pytest
 )
 @pytest.mark.parametrize("constraint_names", [["Constraint_1"]])
 def test_simple_dependency(baybe, n_grid_points, mock_substances, mock_categories):
-    """
-    Test declaring dependencies by declaring them in a single constraints entry.
-    """
+    """Test declaring dependencies by declaring them in a single constraints entry."""
     # Number entries with both switches on
     num_entries = (
         (baybe.searchspace.discrete.exp_rep["Switch_1"] == "on")
@@ -54,9 +50,7 @@ def test_simple_dependency(baybe, n_grid_points, mock_substances, mock_categorie
     "constraint_names", [["Constraint_4", "Constraint_5", "Constraint_6"]]
 )
 def test_exclusion(baybe, mock_substances):
-    """
-    Tests exclusion constraint
-    """
+    """Tests exclusion constraint."""
     # Number of entries with either first/second substance and a temperature above 151
     num_entries = (
         baybe.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x > 151)
@@ -86,9 +80,7 @@ def test_exclusion(baybe, mock_substances):
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_8"]])
 def test_prodsum1(baybe):
-    """
-    Tests sum constraint.
-    """
+    """Tests sum constraint."""
     # Number of entries with 1,2-sum above 150
     num_entries = (
         baybe.searchspace.discrete.exp_rep[["Fraction_1", "Fraction_2"]].sum(axis=1)
@@ -100,9 +92,7 @@ def test_prodsum1(baybe):
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_9"]])
 def test_prodsum2(baybe):
-    """
-    Tests product constrain.
-    """
+    """Tests product constrain."""
     # Number of entries with product under 30
     num_entries = (
         baybe.searchspace.discrete.exp_rep[["Fraction_1", "Fraction_2"]].prod(axis=1)
@@ -114,9 +104,7 @@ def test_prodsum2(baybe):
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_10"]])
 def test_prodsum3(baybe):
-    """
-    Tests exact sum constraint.
-    """
+    """Tests exact sum constraint."""
     # Number of entries with sum unequal to 100
     num_entries = (
         baybe.searchspace.discrete.exp_rep[["Fraction_1", "Fraction_2"]]
@@ -137,9 +125,7 @@ def test_prodsum3(baybe):
     "constraint_names", [["Constraint_7", "Constraint_11", "Constraint_12"]]
 )
 def test_mixture(baybe, n_grid_points, mock_substances):
-    """
-    Tests various constraints in a mixture use case.
-    """
+    """Tests various constraints in a mixture use case."""
     # Number of searchspace entries where fractions do not sum to 100.0
     num_entries = (
         baybe.searchspace.discrete.exp_rep[["Fraction_1", "Fraction_2", "Fraction_3"]]
@@ -229,9 +215,7 @@ def test_mixture(baybe, n_grid_points, mock_substances):
 )
 @pytest.mark.parametrize("constraint_names", [["Constraint_13"]])
 def test_custom(baybe):
-    """
-    Tests custom constraint (uses config from exclude test)
-    """
+    """Tests custom constraint (uses config from exclude test)."""
     num_entries = (
         baybe.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
         & baybe.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x > 120)

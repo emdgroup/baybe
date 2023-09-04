@@ -1,4 +1,5 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
+"""Test serialization of strategies."""
 
 from baybe.strategies.strategy import Strategy
 

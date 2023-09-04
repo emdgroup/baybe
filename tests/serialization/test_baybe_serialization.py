@@ -1,4 +1,6 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
+"""Test sserialization of BayBE objects."""
+
 import pytest
 
 from baybe.core import BayBE
