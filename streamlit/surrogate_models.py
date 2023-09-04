@@ -1,5 +1,6 @@
 # pylint: disable=unused-argument
-"""
+"""Compare different surrogate model and verify their predictions.
+
 The purpose of this script is to compare different surrogate models and verify that
 their predictions are invariant to changes in scale of the underlying target function.
 
@@ -58,7 +59,6 @@ def linear(
 
 def main():
     """Creates the streamlit dashboard."""
-
     # basic settings
     plt.style.use("seaborn")
 
