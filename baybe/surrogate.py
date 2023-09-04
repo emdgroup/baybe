@@ -283,6 +283,7 @@ class Surrogate(ABC, SerialMixin):
 
     # Class variables
     joint_posterior: ClassVar[bool]
+    supports_transfer_learning: ClassVar[bool]
 
     # Object variables
     # TODO: In a next refactoring, the user friendliness could be improved by directly
@@ -341,6 +342,14 @@ class Surrogate(ABC, SerialMixin):
 
     def fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
+        # Check if transfer learning capabilities are needed
+        if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
+            raise ValueError(
+                f"The search space contains task parameters but the selected "
+                f"surrogate model type ({self.__class__.__name__}) does not "
+                f"support transfer learning."
+            )
+
         # TODO: Adjust scale_model decorator to support other model types as well.
         if (not searchspace.continuous.is_empty) and (
             "GaussianProcess" not in self.__class__.__name__
@@ -370,6 +379,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = True
+    supports_transfer_learning: ClassVar[bool] = True
 
     # Object variables
     model_params: Dict[str, Any] = field(
@@ -501,6 +511,7 @@ class MeanPredictionSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
 
     # Object variables
     target_value: Optional[float] = field(init=False, default=None)
@@ -526,6 +537,7 @@ class RandomForestSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
 
     # Object variables
     model_params: Dict[str, Any] = field(
@@ -572,6 +584,7 @@ class NGBoostSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
 
     # Object variables
@@ -610,6 +623,7 @@ class BayesianLinearSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
 
     # Object variables
     model_params: Dict[str, Any] = field(
