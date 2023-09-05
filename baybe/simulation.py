@@ -189,7 +189,9 @@ def simulate_scenarios(
     initial_data
         A list of initial data sets for which the scenarios should be simulated.
     groupby
-        See `_simulate_groupby`.
+        The names of the parameters to be used to partition the search space.
+        A separate simulation will be conducted for each partition, with the search
+        restricted to that partition.
     n_mc_iterations
         The number of Monte Carlo simulations to be used.
     impute_mode
@@ -307,9 +309,7 @@ def _simulate_groupby(
     initial_data
         See `simulate_experiment`.
     groupby
-        The names of the parameters to be used to partition the search space.
-        A separate simulation will be conducted for each partition, with the search
-        restricted to that partition.
+        See `simulate_scenarios`.
     random_seed
         See `simulate_experiment`.
     impute_mode
