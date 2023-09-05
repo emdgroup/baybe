@@ -64,7 +64,7 @@ def simulate_transfer_learning(
     /,
     *,
     batch_quantity: int = 1,
-    n_exp_iterations: Optional[int] = None,
+    n_doe_iterations: Optional[int] = None,
     groupby: Optional[List[str]] = None,
     n_mc_iterations: int = 1,
 ) -> pd.DataFrame:
@@ -91,7 +91,7 @@ def simulate_transfer_learning(
         See `simulate_scenarios`.
     batch_quantity
         See `simulate_scenarios`.
-    n_exp_iterations
+    n_doe_iterations
         See `simulate_scenarios`.
     groupby
         See `simulate_scenarios`.
@@ -146,7 +146,7 @@ def simulate_transfer_learning(
         scenarios,
         lookup,
         batch_quantity=batch_quantity,
-        n_exp_iterations=n_exp_iterations,
+        n_doe_iterations=n_doe_iterations,
         groupby=groupby,
         n_mc_iterations=n_mc_iterations,
         impute_mode="ignore",
@@ -161,7 +161,7 @@ def simulate_scenarios(
     /,
     *,
     batch_quantity: int = 1,
-    n_exp_iterations: Optional[int] = None,
+    n_doe_iterations: Optional[int] = None,
     initial_data: Optional[List[pd.DataFrame]] = None,
     groupby: Optional[List[str]] = None,
     n_mc_iterations: int = 1,
@@ -184,7 +184,7 @@ def simulate_scenarios(
         See `simulate_experiment`.
     batch_quantity
         See `simulate_experiment`.
-    n_exp_iterations
+    n_doe_iterations
         See `simulate_experiment`.
     initial_data
         A list of initial data sets for which the scenarios should be simulated.
@@ -232,7 +232,7 @@ def simulate_scenarios(
                 scenarios[Scenario],
                 lookup,
                 batch_quantity=batch_quantity,
-                n_exp_iterations=n_exp_iterations,
+                n_doe_iterations=n_doe_iterations,
                 initial_data=data,
                 groupby=groupby,
                 random_seed=Random_Seed,
@@ -278,7 +278,7 @@ def _simulate_groupby(
     /,
     *,
     batch_quantity: int = 1,
-    n_exp_iterations: Optional[int] = None,
+    n_doe_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
     groupby: Optional[List[str]] = None,
     random_seed: int = _DEFAULT_SEED,
@@ -302,7 +302,7 @@ def _simulate_groupby(
         See `simulate_experiment`.
     batch_quantity
         See `simulate_experiment`.
-    n_exp_iterations
+    n_doe_iterations
         See `simulate_experiment`.
     initial_data
         See `simulate_experiment`.
@@ -362,7 +362,7 @@ def _simulate_groupby(
                 baybe_group,
                 lookup,
                 batch_quantity=batch_quantity,
-                n_exp_iterations=n_exp_iterations,
+                n_doe_iterations=n_doe_iterations,
                 initial_data=initial_data,
                 random_seed=random_seed,
                 impute_mode=impute_mode,
@@ -393,7 +393,7 @@ def simulate_experiment(
     /,
     *,
     batch_quantity: int = 1,
-    n_exp_iterations: Optional[int] = None,
+    n_doe_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
     random_seed: int = _DEFAULT_SEED,
     impute_mode: Literal[
@@ -423,9 +423,10 @@ def simulate_experiment(
             * 'None' (produces fake results).
     batch_quantity
         The number of recommendations to be queried per iteration.
-    n_exp_iterations
-        The number of iterations to run the loop. If not specified, the simulation
-        proceeds until there are no more testable configurations left.
+    n_doe_iterations
+        The number of iterations to run the design-of-experiments loop. If not
+        specified, the simulation proceeds until there are no more testable
+        configurations left.
     initial_data
         The initial measurement data to be ingested before starting the loop.
     random_seed
@@ -473,10 +474,10 @@ def simulate_experiment(
     will_terminate = (baybe_obj.searchspace.type == SearchSpaceType.DISCRETE) and (
         not baybe_obj.strategy.allow_recommending_already_measured
     )
-    if (n_exp_iterations is None) and (not will_terminate):
+    if (n_doe_iterations is None) and (not will_terminate):
         raise ValueError(
             "For the specified setting, the experimentation loop can be continued "
-            "indefinitely. Hence, `n_exp_iterations` must be explicitly provided."
+            "indefinitely. Hence, `n_doe_iterations` must be explicitly provided."
         )
 
     # Create a fresh BayBE object and set the corresponding random seed
@@ -502,7 +503,7 @@ def simulate_experiment(
         ] = True
 
     # Run the DOE loop
-    limit = n_exp_iterations or np.inf
+    limit = n_doe_iterations or np.inf
     k_iteration = 0
     n_experiments = 0
     dfs = []

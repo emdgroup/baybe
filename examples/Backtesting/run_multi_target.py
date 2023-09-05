@@ -28,7 +28,7 @@ from baybe.targets import NumericalTarget, Objective
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
 N_MC_ITERATIONS = 2
-N_EXP_ITERATIONS = 4
+N_DOE_ITERATIONS = 4
 
 #### Defining the test function
 
@@ -101,8 +101,8 @@ results = simulate_scenarios(
     scenarios,
     sum_of_squares,
     batch_quantity=2,
-    n_exp_iterations=4,
-    n_mc_iterations=2,
+    n_doe_iterations=N_DOE_ITERATIONS,
+    n_mc_iterations=N_MC_ITERATIONS,
 )
 
 print(results)
