@@ -19,8 +19,7 @@ from botorch.fit import fit_gpytorch_mll_torch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
-from gpytorch.kernels.matern_kernel import MaternKernel
-from gpytorch.kernels.scale_kernel import ScaleKernel
+from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -284,6 +283,7 @@ class Surrogate(ABC, SerialMixin):
 
     # Class variables
     joint_posterior: ClassVar[bool]
+    supports_transfer_learning: ClassVar[bool]
 
     # Object variables
     # TODO: In a next refactoring, the user friendliness could be improved by directly
@@ -342,6 +342,14 @@ class Surrogate(ABC, SerialMixin):
 
     def fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """Trains the surrogate model on the provided data."""
+        # Check if transfer learning capabilities are needed
+        if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
+            raise ValueError(
+                f"The search space contains task parameters but the selected "
+                f"surrogate model type ({self.__class__.__name__}) does not "
+                f"support transfer learning."
+            )
+
         # TODO: Adjust scale_model decorator to support other model types as well.
         if (not searchspace.continuous.is_empty) and (
             "GaussianProcess" not in self.__class__.__name__
@@ -371,6 +379,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = True
+    supports_transfer_learning: ClassVar[bool] = True
 
     # Object variables
     model_params: Dict[str, Any] = field(
@@ -388,13 +397,21 @@ class GaussianProcessSurrogate(Surrogate):
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """See base class."""
 
-        # Get the input bounds from the search space in BoTorch Format
+        # identify the indexes of the task and numeric dimensions
+        # TODO: generalize to multiple task parameters
+        task_idx = searchspace.task_idx
+        n_task_params = 1 if task_idx else 0
+        numeric_idxs = [i for i in range(train_x.shape[1]) if i != task_idx]
+
+        # get the input bounds from the search space in BoTorch Format
         bounds = searchspace.param_bounds_comp
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
         # TODO [Scaling]: scaling should be handled by searchspace object
-        input_transform = Normalize(train_x.shape[1], bounds=bounds)
+        input_transform = Normalize(
+            train_x.shape[1], bounds=bounds, indices=numeric_idxs
+        )
         outcome_transform = Standardize(train_y.shape[1])
 
         # ---------- GP prior selection ---------- #
@@ -436,19 +453,31 @@ class GaussianProcessSurrogate(Surrogate):
         # create GP mean
         mean_module = ConstantMean(batch_shape=batch_shape)
 
-        # create GP covariance
-        covar_module = ScaleKernel(
+        # define the covariance module for the numeric dimensions
+        base_covar_module = ScaleKernel(
             MaternKernel(
                 nu=2.5,
-                ard_num_dims=train_x.shape[-1],
+                ard_num_dims=train_x.shape[-1] - n_task_params,
+                active_dims=numeric_idxs,
                 batch_shape=batch_shape,
                 lengthscale_prior=lengthscale_prior[0],
             ),
             batch_shape=batch_shape,
             outputscale_prior=outputscale_prior[0],
         )
-        covar_module.outputscale = torch.tensor([outputscale_prior[1]])
-        covar_module.base_kernel.lengthscale = torch.tensor([lengthscale_prior[1]])
+        base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
+        base_covar_module.base_kernel.lengthscale = torch.tensor([lengthscale_prior[1]])
+
+        # create GP covariance
+        if task_idx is None:
+            covar_module = base_covar_module
+        else:
+            task_covar_module = IndexKernel(
+                num_tasks=searchspace.n_tasks,
+                active_dims=task_idx,
+                rank=searchspace.n_tasks,  # TODO: make controllable
+            )
+            covar_module = base_covar_module * task_covar_module
 
         # create GP likelihood
         likelihood = GaussianLikelihood(
@@ -482,6 +511,7 @@ class MeanPredictionSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
 
     # Object variables
     target_value: Optional[float] = field(init=False, default=None)
@@ -507,6 +537,7 @@ class RandomForestSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
 
     # Object variables
     model_params: Dict[str, Any] = field(
@@ -553,6 +584,7 @@ class NGBoostSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
 
     # Object variables
@@ -591,6 +623,7 @@ class BayesianLinearSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
 
     # Object variables
     model_params: Dict[str, Any] = field(

@@ -26,6 +26,7 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
     Parameter,
     parameter_cartesian_prod_to_df,
+    TaskParameter,
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import (
@@ -34,6 +35,8 @@ from baybe.utils import (
     fuzzy_row_match,
     SerialMixin,
 )
+
+_METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
 
 class SearchSpaceType(Enum):
@@ -66,19 +69,41 @@ class SubspaceDiscrete:
     # If not provided, the default hook will derive it from `exp_rep`.
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
+    @exp_rep.validator
+    def validate_exp_rep(self, attribute, exp_rep: pd.DataFrame) -> None:
+        if exp_rep.index.has_duplicates:
+            raise ValueError(
+                f"The index of {attribute.name} contains duplicates. "
+                f"This is not allowed, as it can lead to hard-to-detect bugs."
+            )
+
     @metadata.default
     def default_metadata(self) -> pd.DataFrame:
-        columns = ["was_recommended", "was_measured", "dont_recommend"]
-
+        # TODO: verify if this is still required
         # If the discrete search space is empty, explicitly return an empty dataframe
         # instead of simply using a zero-length index. Otherwise, the boolean dtype
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
         if self.is_empty:
-            return pd.DataFrame(columns=columns)
+            return pd.DataFrame(columns=_METADATA_COLUMNS)
 
-        return pd.DataFrame(False, columns=columns, index=self.exp_rep.index)
+        # TODO [16605]: Redesign metadata handling
+        # Exclude inactive tasks from search
+        df = pd.DataFrame(False, columns=_METADATA_COLUMNS, index=self.exp_rep.index)
+        off_task_idxs = ~self._on_task_configurations()
+        df.loc[off_task_idxs.values, "dont_recommend"] = True
+        return df
+
+    @metadata.validator
+    def validate_metadata(self, _, metadata: pd.DataFrame) -> None:
+        # Validate that the metadata is compatible with inactive tasks
+        off_task_idxs = ~self._on_task_configurations()
+        if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
+            raise ValueError(
+                "Inconsistent instructions given: The provided metadata allows "
+                "testing parameter configurations for inactive tasks."
+            )
 
     @comp_rep.default
     def default_comp_rep(self) -> pd.DataFrame:
@@ -96,11 +121,30 @@ class SubspaceDiscrete:
 
         return comp_rep
 
+    def __attrs_post_init__(self):
+        # Exclude inactive tasks from search
+        # TODO [16605]: Redesign metadata handling
+        off_task_idxs = ~self._on_task_configurations()
+        self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True
+
+    def _on_task_configurations(self) -> pd.Series:
+        """Retrieves the parameter configurations for the active tasks."""
+        # TODO [16932]: This only works for a single parameter
+        try:
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+        except StopIteration:
+            return pd.Series(True, index=self.exp_rep.index)
+        return self.exp_rep[task_param.name].isin(task_param.active_values)
+
     @classmethod
     def empty(cls) -> "SubspaceDiscrete":
         """Creates an empty discrete subspace."""
         return SubspaceDiscrete(
-            parameters=[], exp_rep=pd.DataFrame(), metadata=pd.DataFrame()
+            parameters=[],
+            exp_rep=pd.DataFrame(),
+            metadata=pd.DataFrame(columns=_METADATA_COLUMNS),
         )
 
     @classmethod
@@ -590,6 +634,43 @@ class SearchSpace(SerialMixin):
         return torch.hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
+
+    @property
+    def task_idx(self) -> Optional[int]:
+        """
+        The column index of the task parameter in the computational representation.
+        """
+        try:
+            # TODO [16932]: Redesign metadata handling
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+        except StopIteration:
+            return None
+        # TODO[11611]: The current approach has two limitations:
+        #   1.  It matches by column name and thus assumes that the parameter name
+        #       is used as the column name.
+        #   2.  It relies on the current implementation detail that discrete parameters
+        #       appear first in the computational dataframe.
+        #   --> Fix this when refactoring the data
+        return self.discrete.comp_rep.columns.get_loc(task_param.name)
+
+    @property
+    def n_tasks(self) -> int:
+        """The number of tasks encoded in the search space."""
+        # TODO [16932]: This approach only works for a single task parameter. For
+        #  multiple task parameters, we need to align what the output should even
+        #  represent (e.g. number of combinatorial task combinations, number of
+        #  tasks per task parameter, etc).
+        try:
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+            return len(task_param.values)
+
+        # When there are no task parameters, we effectively have a single task
+        except StopIteration:
+            return 1
 
     def transform(
         self,

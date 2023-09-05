@@ -33,7 +33,7 @@ from baybe.targets import NumericalTarget, Objective
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 N_MC_ITERATIONS = 2
-N_EXP_ITERATIONS = 2
+N_DOE_ITERATIONS = 2
 
 #### Defining the test function.
 
@@ -153,14 +153,14 @@ scenarios = {
     "Random": random_baybe,
 }
 results = simulate_scenarios(
-    scenarios=scenarios,
+    scenarios,
+    sum_of_squares,
     batch_quantity=2,
-    n_exp_iterations=N_EXP_ITERATIONS,
+    n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
-    lookup=sum_of_squares,
 )
 
 # The following lines plot the results and save the plot in run_analytical.png
-sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Variant")
+sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
 plt.gcf().set_size_inches(24, 8)
 plt.savefig("./run_hybrid.png")

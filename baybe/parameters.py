@@ -376,6 +376,38 @@ SUBSTANCE_ENCODINGS = get_args(get_type_hints(SubstanceParameter)["encoding"])
 
 
 @define(frozen=True, slots=False)
+class TaskParameter(CategoricalParameter):
+    """
+    Parameter class for task parameters.
+    """
+
+    # object variables
+    # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
+    #   declared as such because of the inheritance relationship.
+    encoding: Literal["INT"] = field(default="INT", init=False)
+    active_values: list = field(
+        default=None, converter=lambda x: x if x is None else list(x)
+    )
+
+    @active_values.validator
+    def validate_active_values(self, _, values):
+        # TODO [16605]: Redesign metadata handling
+        if values is None:
+            return
+        if len(values) == 0:
+            raise ValueError("At least one active parameter value is required.")
+        if len(set(values)) != len(values):
+            raise ValueError("The active parameter values must be unique.")
+        if not all(v in self.values for v in values):
+            raise ValueError("All active values must be valid parameter choices.")
+
+    def __attrs_post_init__(self):
+        # TODO [16605]: Redesign metadata handling
+        if self.active_values is None:
+            object.__setattr__(self, "active_values", self.values)
+
+
+@define(frozen=True, slots=False)
 class CustomDiscreteParameter(DiscreteParameter):
     """
     Parameter class for custom parameters where the user can read in a precomputed
@@ -555,7 +587,16 @@ def _validate_parameters(parameters: List[Parameter]) -> None:
     ValueError
         If the given list of parameters is invalid.
     """
-    # Assert that the parameter list is non-empty and contains unique names
+    # Assert: non-empty parameter list
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
+
+    # Assert: at most one task parameter
+    # TODO [16932]: Remove once more task parameters are supported
+    if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
+        raise NotImplementedError(
+            "Currently, at most one task parameter can be considered."
+        )
+
+    # Assert: unique names
     _validate_parameter_names(parameters)

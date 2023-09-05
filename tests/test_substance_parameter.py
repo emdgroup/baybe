@@ -22,6 +22,6 @@ def test_run_iterations(baybe, batch_quantity, n_iterations):
 
         add_fake_results(rec, baybe)
         if k % 2:
-            add_parameter_noise(rec, baybe, noise_level=0.1)
+            add_parameter_noise(rec, baybe.parameters, noise_level=0.1)
 
         baybe.add_measurements(rec)

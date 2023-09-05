@@ -179,22 +179,22 @@ def add_fake_results(
 
 def add_parameter_noise(
     data: pd.DataFrame,
-    baybe: BayBE,
+    parameters: Iterable[Parameter],
     noise_type: Literal["absolute", "relative_percent"] = "absolute",
     noise_level: float = 1.0,
 ) -> None:
     """
-    Applies uniform noise (additive or multiplicative) to the parameter values of a
-    recommendation frame. This can be used to simulate experimental noise or
-    imperfect user input containing numerical parameter values that differ from the
-    recommendations.
+    Applies uniform noise (additive or multiplicative) to the parameter values
+    contained in a dataframe. This can be used, for instance, to simulate experimental
+    noise or imperfect user input containing numerical parameter values that differ
+    from recommended parameter configurations.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Output of the `recommend` function of a `BayBE` object.
-    baybe : BayBE
-        The `BayBE` object, which provides configuration, targets, etc.
+        A dataframe containing configurations for all provided parameters.
+    parameters : Iterable[Parameter]
+        The parameters for which the values shall be corrupted.
     noise_type : "absolute" | "relative_percent"
         Defines whether the noise should be additive or multiplicative.
     noise_level : float
@@ -205,25 +205,26 @@ def add_parameter_noise(
     -------
     Nothing (the given dataframe is modified in-place).
     """
-    for param in baybe.parameters:
-        if param.is_numeric:
-            if noise_type == "relative_percent":
-                data[param.name] *= np.random.uniform(
-                    1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)
-                )
-            elif noise_type == "absolute":
-                data[param.name] += np.random.uniform(
-                    -noise_level, noise_level, len(data)
-                )
-            else:
-                raise ValueError(
-                    f"Parameter 'noise_type' was {noise_type} but must be either "
-                    "'absolute' or 'relative_percent'."
-                )
-            if not param.is_discrete:  # respect continuous intervals
-                data[param.name].clip(
-                    param.bounds.lower, param.bounds.upper, inplace=True
-                )
+    # Validate input
+    if noise_type not in ("relative_percent", "absolute"):
+        raise ValueError(
+            f"Parameter 'noise_type' was {noise_type} but must be either "
+            "'absolute' or 'relative_percent'."
+        )
+
+    for param in (p for p in parameters if p.is_numeric):
+
+        # Add selected noise type
+        if noise_type == "relative_percent":
+            data[param.name] *= np.random.uniform(
+                1.0 - noise_level / 100.0, 1.0 + noise_level / 100.0, len(data)
+            )
+        elif noise_type == "absolute":
+            data[param.name] += np.random.uniform(-noise_level, noise_level, len(data))
+
+        # Respect continuous intervals
+        if not param.is_discrete:
+            data[param.name].clip(param.bounds.lower, param.bounds.upper, inplace=True)
 
 
 def df_drop_single_value_columns(

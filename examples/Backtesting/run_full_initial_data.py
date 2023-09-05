@@ -29,7 +29,7 @@ from baybe.targets import NumericalTarget, Objective
 # For the full simulation, we need to define an additional parameter.
 # Since this example uses initial data, we only need to define the number of iterations per run.
 # The number of runs is determined by the number of initial data points provided.
-N_EXP_ITERATIONS = 5
+N_DOE_ITERATIONS = 5
 
 #### Lookup functionality and data creation
 
@@ -122,19 +122,19 @@ baybe_rand = BayBE(
 scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
 
 results = simulate_scenarios(
-    scenarios=scenarios,
+    scenarios,
+    lookup,
     batch_quantity=3,
-    n_exp_iterations=N_EXP_ITERATIONS,
+    n_doe_iterations=N_DOE_ITERATIONS,
     initial_data=initial_data,
-    lookup=lookup,
 )
 
 # The following lines plot the results and save the plot in run_full_initial_data.png
 max_yield = lookup["yield"].max()
 sns.lineplot(
-    data=results, x="Num_Experiments", y="yield_CumBest", hue="Variant", marker="x"
+    data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"
 )
-plt.plot([3, 3 * N_EXP_ITERATIONS], [max_yield, max_yield], "--r")
+plt.plot([3, 3 * N_DOE_ITERATIONS], [max_yield, max_yield], "--r")
 plt.legend(loc="lower right")
 plt.gcf().set_size_inches(20, 8)
 plt.savefig("./run_full_initial_data.png")
