@@ -92,13 +92,39 @@ for order, file in enumerate(markdown_files):
         "---"
         + "\neleventyNavigation:"
         + f"\n  key: {NAME}"
-        + f"\n  order: {order+1}"
+        + f"\n  order: {order}"
         + "\n  parent: Documentation"
         + "\nlayout: layout.njk"
         + f"\npermalink: baybe/sdk/docs/{NAME.replace('.md', '').replace('.', '')}/"
         + f"\ntitle: {NAME}"
         + "\n---\n\n "
     )
+
+    # If we currently consider the baybe.md file, we change the LINES_TO_ADD since we
+    # want this to be the file for the full folder
+    if NAME == "baybe":
+        # Get the name of the destination directory
+        directory_name = destination_dir.name
+
+        # Next, we get the number of top-level files such that the documentation will be
+        # placed properly after already existing files
+        # List all files in top-level folder as it determines the order entry
+        top_level_files = [
+            f
+            for f in destination_dir.parent.iterdir()
+            if f.is_file() and not f.name.startswith(".")
+        ]
+        LINES_TO_ADD = (
+            "---"
+            + "\neleventyNavigation:"
+            + f"\n  key: {directory_name}"
+            + f"\n  order: {len(top_level_files)+1}"
+            + "\n  parent: Python SDK"
+            + "\nlayout: layout.njk"
+            + "\npermalink: baybe/sdk/docs/"
+            + f"\ntitle: {directory_name}"
+            + "\n---\n\n "
+        )
 
     with open(file, "r+", encoding="UTF-8") as f:
         content = f.readlines()
@@ -312,6 +338,11 @@ for order, file in enumerate(markdown_files):
         f.write(LINES_TO_ADD)
         f.writelines(formatted_content)
         f.close()
+    # Check if we need to rename the file.
+    # This happens since we want to have the original baybe.md file as the file for the
+    # folder.
+    if NAME == "baybe":
+        file = file.rename(file.parent / f"{directory_name}.md")
 
 # Copy the files to the intended location
 # Get only the corresponding markdown resp. html files
@@ -321,40 +352,6 @@ else:
     documentation = pathlib.Path(build_dir / "markdown" / "sdk")
 
 shutil.move(documentation, destination_dir)
-
-# Next, we create the file for the folder itself.
-# For that, we need to get the name of the actual folder from the provided DIR
-directory_name = destination_dir.name
-
-# Next, we get the number of top-level files such that the documentation will be placed
-# properly after already existing files
-# List all files in top-level folder as it determines the order entry
-top_level_files = [
-    f
-    for f in destination_dir.parent.iterdir()
-    if f.is_file() and not f.name.startswith(".")
-]
-
-# Note that we have a +1 here since we also have the examples folder
-HEADER = (
-    "---"
-    + "\neleventyNavigation:"
-    + f"\n  key: {directory_name}"
-    + f"\n  order: {len(top_level_files)+1}"
-    + "\n  parent: Python SDK"
-    + "\nlayout: layout.njk"
-    + "\npermalink: baybe/sdk/docs/"
-    + f"\ntitle: {directory_name}"
-    + "\n---\n\n "
-)
-CONTENT = (
-    "# SDK Documentation - IN PROGRESS"
-    + "\nAn auto-generated documentation of the Python SDK  is **in development...**"
-)
-
-with open(destination_dir / f"{directory_name}.md", "w+", encoding="UTF-8") as f:
-    f.write(HEADER)
-    f.write(CONTENT)
 
 # Clean the other files
 if build_dir.is_dir():
