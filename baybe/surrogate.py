@@ -76,23 +76,6 @@ def _prepare_targets(y: Tensor) -> Tensor:
     return y.to(_DTYPE)
 
 
-def _var_to_covar(var: Tensor) -> Tensor:
-    """Convert a tensor containing variances to tensor containing covariance matrices.
-
-    Convert a tensor (with optional batch dimensions) that contains (marginal)
-    variances along its last dimension into one that contains corresponding diagonal
-    covariance matrices along its last two dimensions.
-
-    Args:
-        var: The tensor that should be converted.
-
-    Returns:
-        The converted tensor.
-    """
-    # TODO [16954] Check if it is necessary to have this as an individual function
-    return torch.diag_embed(var)
-
-
 def _get_model_params_validator(model_init: Callable) -> Callable:
     """Construct a validator based on the model class."""
 
@@ -159,7 +142,8 @@ def catch_constant_targets(model_cls: Type["Surrogate"]):
             # that does not provide covariance information, construct a diagonal
             # covariance matrix
             if self.joint_posterior and not self.model.joint_posterior:
-                var = _var_to_covar(var)
+                # Convert to tensor containing covariance matrices
+                var = torch.diag_embed(var)
 
             return mean, var
 
@@ -381,7 +365,8 @@ class Surrogate(ABC, SerialMixin):
 
         # Apply covariance transformation for marginal posterior models
         if not self.joint_posterior:
-            covar = _var_to_covar(covar)
+            # Convert to tensor containing covariance matrices
+            covar = torch.diag_embed(covar)
 
         # Add small diagonal variances for numerical stability
         covar.add_(torch.eye(covar.shape[-1]) * _MIN_VARIANCE)
