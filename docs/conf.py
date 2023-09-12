@@ -8,11 +8,7 @@ import sys
 
 # We need to "trick" sphinx due to it thinking that decorated classes are just aliases
 # We thus need to import and later define some specific names
-from baybe.surrogate import (
-    BayesianLinearSurrogate,
-    NGBoostSurrogate,
-    RandomForestSurrogate,
-)
+from baybe.surrogate import get_available_surrogates
 
 # -- Path setup --------------------------------------------------------------
 
@@ -22,7 +18,6 @@ __location__ = os.path.dirname(__file__)
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.join(__location__, "../src"))
-
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -137,7 +132,5 @@ autodoc_typehints_description_target = "documented_params"
 
 # Magic function doing magic stuff
 def setup(app):
-    # This avoids that sphinx refers to all surrogate models via alias
-    RandomForestSurrogate.__name__ = "RandomForestSurrogate"
-    BayesianLinearSurrogate.__name__ = "BayesianLinearSurrogate"
-    NGBoostSurrogate.__name__ = "NGBoostSurrogate"
+    # We initialize all available surrogates once as this sets their name
+    get_available_surrogates()
