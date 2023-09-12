@@ -1,6 +1,4 @@
-"""
-Tests for basic input-output nad iterative loop.
-"""
+"""Tests for basic input-output and iterative loop."""
 import numpy as np
 import pytest
 
@@ -17,9 +15,7 @@ target_xfails = []
     ids=["not_within_tol", "nan", "string_instead_float"],
 )
 def test_bad_parameter_input_value(baybe, good_reference_values, bad_val, request):
-    """
-    Test attempting to read in an invalid parameter value.
-    """
+    """Test attempting to read in an invalid parameter value."""
     if request.node.callspec.id in param_xfails:
         pytest.xfail()
 
@@ -42,9 +38,7 @@ def test_bad_parameter_input_value(baybe, good_reference_values, bad_val, reques
     ids=["nan", "string_instead_float"],
 )
 def test_bad_target_input_value(baybe, good_reference_values, bad_val, request):
-    """
-    Test attempting to read in an invalid parameter value.
-    """
+    """Test attempting to read in an invalid target value."""
     if request.node.callspec.id in target_xfails:
         pytest.xfail()
 

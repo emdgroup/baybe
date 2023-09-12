@@ -24,9 +24,9 @@ def test_empty_parameters():
 
 
 def test_bounds_order():
-    """
-    Asserts that the bounds are created in the correct order (discrete parameters
-    first, continuous next).
+    """Asserts that the bounds are created in the correct order.
+
+    The correct order is discrete parameters first, continuous next.
     """
     parameters = [
         NumericalDiscreteParameter(name="A_disc", values=[1.0, 2.0, 3.0]),
@@ -43,9 +43,9 @@ def test_bounds_order():
 
 
 def test_empty_parameter_bounds():
-    """
-    Asserts that the correct bounds (with correct shapes) are produced for empty
-    search spaces.
+    """Asserts that the correct bounds are produced for empty search spaces.
+
+    Also checks for the correct shapes.
     """
     parameters = []
     searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
@@ -92,9 +92,9 @@ def test_continuous_searchspace_creation_from_bounds():
 
 
 def test_hyperrectangle_searchspace_creation():
-    """
-    A purely continuous hyperrectangle-shaped search space is created that spans a
-    certain set of points.
+    """A purely continuous search space is created that spans a certain set of points.
+
+    As the name suggests, this searchspace is hyperrectangle- shaped
     """
     points = pd.DataFrame(
         {

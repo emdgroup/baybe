@@ -1,9 +1,8 @@
 ### Example for using custom constraints in discrete searchspaces
+# pylint: disable=missing-module-docstring
 
-"""
-This examples shows how a custom constraint can be created for a discrete searchspace.
-That is, it shows how the user can define a constraint restricting the searchspace.
-"""
+# This examples shows how a custom constraint can be created for a discrete searchspace.
+# That is, it shows how the user can define a constraint restricting the searchspace.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
@@ -57,9 +56,7 @@ parameters = [solvent, speed, temperature, concentration]
 
 
 def custom_function(ser: pd.Series) -> bool:
-    """
-    This constraint implements a custom user-defined filter/validation functionality.
-    """
+    """This constraint implements a custom user-defined filter/validation functionality."""
     if ser.Solvent == "water":
         if ser.Temperature > 120 and ser.Concentration > 5:
             return False

@@ -1,6 +1,6 @@
-"""
-Simulate different users and telemetry settings. This script does some calls so that
-the results can be viewed on AWS CloudWatch.
+"""Simulate different users and telemetry settings.
+
+This script does some calls so that the results can be viewed on AWS CloudWatch.
 """
 
 import os

@@ -1,8 +1,4 @@
-# pylint: disable=missing-function-docstring
-
-"""
-Functionality for different objectives and target variable types.
-"""
+"""Functionality for different objectives and target variable types."""
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
@@ -42,41 +38,52 @@ _VALID_TRANSFORMS = {
 
 
 def _normalize_weights(weights: List[float]) -> List[float]:
-    """Normalizes a collection of weights such that they sum to 100."""
+    """Normalize a collection of weights such that they sum to 100.
+
+    Args:
+        weights: The un-normalized weights.
+
+    Returns:
+        The normalized weights.
+    """
     return (100 * np.asarray(weights) / np.sum(weights)).tolist()
 
 
 @define(frozen=True)
 class Target(ABC):
-    """
-    Abstract base class for all target variables. Stores information about the
-    range, transformations, etc.
+    """Abstract base class for all target variables.
+
+    Stores information about the range, transformations, etc.
+
+    Args:
+        name: The name of the target.
     """
 
     name: str = field()
 
     @abstractmethod
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Transforms data into computational representation. The transformation depends
-        on the target mode, e.g. minimization, maximization, matching, etc.
+        """Transform data into computational representation.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed.
+        The transformation depends on the target mode, e.g. minimization, maximization,
+        matching, etc.
 
-        Returns
-        -------
-        pd.DataFrame
+        Args:
+            data: The data to be transformed.
+
+        Returns:
             A dataframe containing the transformed data.
         """
 
 
 @define(frozen=True)
 class NumericalTarget(Target, SerialMixin):
-    """
-    Class for numerical targets.
+    """Class for numerical targets.
+
+    Args:
+        mode: The optimization mode.
+        bounds: Bounds of the value of the target.
+        bounds_transform_func: A function for transforming the bounds.
     """
 
     # TODO: Introduce mode enum
@@ -96,6 +103,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @bounds_transform_func.default
     def default_bounds_transform_func(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         if self.bounds.is_bounded:
             fun = _VALID_TRANSFORMS[self.mode][0]
             _logger.warning(
@@ -112,7 +120,8 @@ class NumericalTarget(Target, SerialMixin):
     def validate_bounds(self, _, value: Interval):
         # Currently, either no bounds or completely finite bounds are supported.
         # IMPROVE: We could also include half-way bounds, which however don't work
-        #  for the desirability approach
+        # for the desirability approach
+        # pylint: disable=missing-function-docstring
         if not (value.is_finite or not value.is_bounded):
             raise ValueError("Bounds must either be finite or infinite on *both* ends.")
 
@@ -124,7 +133,8 @@ class NumericalTarget(Target, SerialMixin):
 
     @bounds_transform_func.validator
     def validate_bounds_transform_func(self, _, value):
-        """Validates that the given transform is compatible with the specified mode."""
+        # Validates that the given transform is compatible with the specified mode.
+        # pylint: disable=missing-function-docstring
 
         # Assert that the given transform is valid for the specified target mode
         if (value is not None) and (value not in _VALID_TRANSFORMS[self.mode]):
@@ -136,7 +146,7 @@ class NumericalTarget(Target, SerialMixin):
             )
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """See base class."""
+        # See base class. pylint: disable=missing-function-docstring
 
         transformed = data.copy()
 
@@ -171,7 +181,15 @@ class NumericalTarget(Target, SerialMixin):
 
 @define(frozen=True)
 class Objective(SerialMixin):
-    """Class for managing optimization objectives."""
+    """Class for managing optimization objectives.
+
+    Args:
+        mode: The optimization mode.
+        targets: The list of targets used for the objective.
+        weights: The weights used to balance the different targets. By default, all
+            weights are equally important.
+        combine_func: The function used to combine the different targets.
+    """
 
     # TODO: The class currently directly depends on `NumericalTarget`. Once this
     #   direct dependence is replaced with a dependence on `Target`, the type
@@ -186,14 +204,14 @@ class Objective(SerialMixin):
 
     @weights.default
     def default_weights(self) -> List[float]:
-        """By default, all targets are equally important."""
+        # By default, all targets are equally important.
+        # pylint: disable=missing-function-docstring
         return [1.0] * len(self.targets)
 
     @targets.validator
     def validate_targets(self, _, targets: List[NumericalTarget]):
-        """
-        Validates (and instantiates) targets depending on the objective mode.
-        """
+        # Validates targets depending on the objective mode.
+        # pylint: disable=missing-function-docstring
 
         # Validate the target specification
         if (self.mode == "SINGLE") and (len(targets) != 1):
@@ -209,9 +227,8 @@ class Objective(SerialMixin):
 
     @weights.validator
     def validate_weights(self, _, weights):
-        """
-        Validates target weights.
-        """
+        # Validates target weights.
+        # pylint: disable=missing-function-docstring
         if weights is None:
             return
 
@@ -227,20 +244,18 @@ class Objective(SerialMixin):
             )
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Transforms targets from experimental to computational representation.
+        """Transform targets from experimental to computational representation.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be transformed. Must contain all target values, can contain
-            more columns.
+        Args:
+            data: The data to be transformed. Must contain all target values, can
+                contain more columns.
 
-        Returns
-        -------
-        pd.DataFrame
+        Returns:
             A dataframe with the targets in computational representation. Columns will
-            be as in the input (except when objective mode is 'DESIRABILITY').
+            be as in the input (except when objective mode is ```DESIRABILITY```).
+
+        Raises:
+            ValueError: If the specified averaging function is unknown.
         """
         # Perform transformations that are required independent of the mode
         transformed = data[[t.name for t in self.targets]].copy()

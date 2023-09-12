@@ -1,9 +1,8 @@
 ### Example for full simulation loop using a table-based lookup mechanism
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows a simulation for a direct arylation where all combinations have been measured.
-This allows us to access information about previously conducted experiments from .xlsx-files.
-"""
+# This example shows a simulation for a direct arylation where all combinations have been measured.
+# This allows us to access information about previously conducted experiments from .xlsx-files.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

@@ -1,4 +1,5 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
+"""Test serialization of constraints."""
 
 import pytest
 

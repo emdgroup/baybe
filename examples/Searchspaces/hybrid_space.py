@@ -1,9 +1,8 @@
 ### Example for using synthetic test functions in hybrid spaces
+# pylint: disable=missing-module-docstring
 
-"""
-This examples shows how to optimize a custom test function in a hybrid searchspace.
-It focuses on the searchspace-related aspects and not on the custom test function.
-"""
+# This examples shows how to optimize a custom test function in a hybrid searchspace.
+# It focuses on the searchspace-related aspects and not on the custom test function.
 
 # This example assumes some basic familiarity with using BayBE and synthetic test functions.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

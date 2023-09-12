@@ -1,6 +1,4 @@
-"""
-A collection of point sampling algorithms.
-"""
+"""A collection of point sampling algorithms."""
 
 from typing import Literal
 
@@ -13,30 +11,27 @@ def farthest_point_sampling(
     n_samples: int = 1,
     initialization: Literal["farthest", "random"] = "farthest",
 ) -> np.ndarray:
-    """
-    Farthest point sampling.
+    """Sample points according to a farthest point heuristic.
 
     Creates a subset of a collection of points by successively adding points with the
     largest Euclidean distance to intermediate point selections encountered during
     the algorithmic process.
 
-    Parameters
-    ----------
-    points : np.ndarray
-        The points that are available for selection, represented as a 2-D array whose
-        first dimension corresponds to the point index.
-    n_samples : int (default = 1)
-        The total number of points to be selected.
-    initialization : "farthest" | "random" (default = "farthest")
-        Determines how the first points are selected.
-        * "farthest: The first two selected points are those with the largest distance.
-            If only a single point is requested, it is selected randomly from these two.
-        * "random": The first point is selected uniformly at random.
+    Args:
+        points: The points that are available for selection, represented as a 2D array
+            whose first dimension corresponds to the point index.
+        n_samples: The total number of points to be selected.
+        initialization: Determines how the first points are selected. When
+            ```"farthest"``` is chosen, the first two selected points are those with the
+            largest distance. If only a single point is requested, it is selected
+            randomly from these two. When ```"random"``` is chosen, the first point is
+            selected uniformly at random.
 
-    Returns
-    -------
-    np.ndarray
-        An array containing the indices of the selected points.
+    Returns:
+        An array containing the positional indices of the selected points.
+
+    Raises:
+        ValueError: If an unknown initialization strategy is used.
     """
     # Compute the pairwise distances between all points
     dist_matrix = pairwise_distances(points)

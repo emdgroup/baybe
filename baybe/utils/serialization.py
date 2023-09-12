@@ -23,21 +23,46 @@ class SerialMixin:
 
     @classmethod
     def from_dict(cls: Type[_T], dictionary: dict) -> _T:
-        """Create an object from its dictionary representation."""
+        """Create an object from its dictionary representation.
+
+        Args:
+            dictionary: The dictionary representation.
+
+        Returns:
+            The reconstructed object.
+        """
         return cattrs.structure(dictionary, cls)
 
     def to_json(self) -> str:
-        """Create an object's JSON representation."""
+        """Create an object's JSON representation.
+
+        Returns:
+            The JSON representation as a string.
+        """
         return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls: Type[_T], string: str) -> _T:
-        """Create an object from its JSON representation."""
+        """Create an object from its JSON representation.
+
+        Args:
+            string: The JSON representation of the object.
+
+        Returns:
+            The reconstructed object.
+        """
         return cls.from_dict(json.loads(string))
 
 
 def unstructure_base(base: Any) -> dict:
-    """Unstructures an object into a dictionary and adds an entry for the class name."""
+    """Unstructures an object into a dictionary and adds an entry for the class name.
+
+    Args:
+        base: The object that should be unstructured.
+
+    Returns:
+        The unstructured dict with the additional entry.
+    """
     converter = cattrs.global_converter
     return {
         "type": base.__class__.__name__,
@@ -46,9 +71,15 @@ def unstructure_base(base: Any) -> dict:
 
 
 def get_base_unstructure_hook(base: Type[_T]) -> Callable[[dict], _T]:
-    """
-    Returns a hook for structuring a dictionary into an appropriate subclass.
-    Provides the inverse operation to `unstructure_base`.
+    """Return a hook for structuring a dictionary into an appropriate subclass.
+
+    Provides the inverse operation to ```unstructure_base```.
+
+    Args:
+        base: The corresponding class
+
+    Returns:
+        The hook
     """
 
     def structure_base(val: dict, _) -> _T:

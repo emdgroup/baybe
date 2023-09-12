@@ -13,6 +13,9 @@ repos:
   rev: 4.0.1
   hooks:
     - id: flake8
+      additional_dependencies:
+        - pydoclint==0.2.1
+        - flake8-docstrings==1.7.0
 - repo: local
   hooks:
     - id: pylint

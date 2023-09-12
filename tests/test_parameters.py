@@ -15,7 +15,6 @@ from baybe.parameters import (
 
 def test_invalid_parameter_creation():
     """Invalid parameter creation raises expected error."""
-
     # Scenario: discrete numerical parameter contains duplicated values
     with pytest.raises(ValueError):
         NumericalDiscreteParameter(

@@ -1,10 +1,9 @@
 ### Example for full simulation loop using a table-based lookup mechanism with initial data
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows a simulation for a direct arylation where all combinations have been measured.
-It also demonstrates how to use initial data by using a lookup mechanism.
-This allows us to access information about previously conducted experiments from .xlsx-files.
-"""
+# This example shows a simulation for a direct arylation where all combinations have been measured.
+# It also demonstrates how to use initial data by using a lookup mechanism.
+# This allows us to access information about previously conducted experiments from .xlsx-files.
 
 # This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

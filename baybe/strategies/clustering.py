@@ -1,6 +1,3 @@
-# pylint: disable=missing-class-docstring, missing-function-docstring
-# TODO: add docstrings
-
 """Recommendation strategies based on clustering."""
 
 from abc import ABC
@@ -25,12 +22,15 @@ _ScikitLearnModel = TypeVar("_ScikitLearnModel")
 
 @define
 class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
-    """
-    Intermediate class for cluster-based selection of discrete candidates.
+    """Intermediate class for cluster-based selection of discrete candidates.
 
-    Suitable for sklearn-like models that have a `fit` and `predict` method. Specific
-    model parameters and cluster sub-selection techniques can be declared in the
-    derived classes.
+    Suitable for ```sklearn```-like models that have a ```fit``` and ```predict```
+    method. Specific model parameters and cluster sub-selection techniques can be
+    declared in the derived classes.
+
+    Args:
+        model_params: The parameters for the used model. This is initialized with
+            reasonable default values for the derived child classes.
     """
 
     # Class variables
@@ -45,7 +45,9 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     #   that checks if a custom mechanism is implemented and uses default otherwise
     #   (similar to what is done in the recommenders)
     model_class: ClassVar[Type[_ScikitLearnModel]]
+    """Class variable describing the model class."""
     model_cluster_num_parameter_name: ClassVar[str]
+    """Class variable describing the name of the clustering parameter."""
     _use_custom_selector: ClassVar[bool] = False
 
     # Object variables
@@ -56,14 +58,16 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
-        """
-        Basic model-agnostic method that selects one candidate from each cluster
-        uniformly at random.
+        """Select one candidate from each cluster uniformly at random.
 
-        Returns
-        -------
-        selection : List[int]
-           Positional indices of the selected candidates.
+        This function is model-agnostic and can be used by any child class.
+
+        Args:
+            model: The used model.
+            candidates_scaled: The already scaled candidates.
+
+        Returns:
+           A list with positional indices of the selected candidates.
         """
         assigned_clusters = model.predict(candidates_scaled)
         selection = [
@@ -77,9 +81,20 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
-        """
-        A model-specific method to select candidates from the computed clustering.
-        May be implemented by the derived class.
+        """Select candidates from the computed clustering.
+
+        This function is model-specific and may be implemented by the derived class.
+
+        Args:
+            model: The used model.
+            candidates_scaled: The already scaled candidates.
+
+        Returns:
+           A list with positional indices of the selected candidates.
+
+        Raises:
+            NotImplementedError: If this function is not implemented. Should be
+                unreachable.
         """
         raise NotImplementedError("This line in the code should be unreachable. Sry.")
 
@@ -89,9 +104,9 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
-        """See base class."""
-        # Fit scaler on entire searchspace
-        # TODO [Scaling]: scaling should be handled by searchspace object
+        # See base class. pylint: disable=missing-function-docstring
+        # Fit scaler on entire search space
+        # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
         scaler.fit(searchspace.discrete.comp_rep)
 
@@ -118,7 +133,6 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 class PAMClusteringRecommender(SKLearnClusteringRecommender):
     """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
-    # Class variables
     model_class: ClassVar[Type[_ScikitLearnModel]] = KMedoids
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
     _use_custom_selector: ClassVar[bool] = True
@@ -128,6 +142,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
 
     @model_params.default
     def default_model_params(self) -> dict:
+        # pylint: disable=missing-function-docstring
         return {"max_iter": 100, "init": "k-medoids++"}
 
     def _make_selection_custom(
@@ -135,9 +150,17 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
         model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
-        """
+        """Select candidates from the computed clustering.
+
         In PAM, cluster centers (medoids) correspond to actual data points,
         which means they can be directly used for the selection.
+
+        Args:
+            model: The used model.
+            candidates_scaled: The already scaled candidates. Unused.
+
+        Returns:
+           A list with positional indices of the selected candidates.
         """
         selection = model.medoid_indices_.tolist()
         return selection
@@ -157,6 +180,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 
     @model_params.default
     def default_model_params(self) -> dict:
+        # pylint: disable=missing-function-docstring
         return {"max_iter": 1000, "n_init": 50}
 
     def _make_selection_custom(
@@ -164,9 +188,17 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
         model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
-        """
+        """Select candidates from the computed clustering.
+
         For K-means, a reasonable choice is to pick the points closest to each
         cluster center.
+
+        Args:
+            model: The used model.
+            candidates_scaled: The already scaled candidates.
+
+        Returns:
+           A list with positional indices of the selected candidates.
         """
         distances = pairwise_distances(candidates_scaled, model.cluster_centers_)
         # Set the distances of points that were not assigned by the model to that
@@ -193,9 +225,17 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
         model: _ScikitLearnModel,
         candidates_scaled: pd.DataFrame,
     ) -> List[int]:
-        """
+        """Select candidates from the computed clustering.
+
         In a GMM, a reasonable choice is to pick the point with the highest
         probability densities for each cluster.
+
+        Args:
+            model: The used model.
+            candidates_scaled: The already scaled candidates.
+
+        Returns:
+           A list with positional indices of the selected candidates.
         """
         predicted_clusters = model.predict(candidates_scaled)
         selection = []

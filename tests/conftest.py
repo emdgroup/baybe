@@ -1,6 +1,4 @@
-"""
-PyTest configuration
-"""
+"""PyTest configuration."""
 import os
 
 from typing import List
@@ -43,9 +41,7 @@ from baybe.targets import NumericalTarget, Objective
 
 @pytest.fixture(scope="session", autouse=True)
 def disable_telemetry():
-    """
-    Disables telemetry during pytesting via fixture
-    """
+    """Disables telemetry during pytesting via fixture."""
     # Remember the original value of the environment variables
     telemetry_enabled_before = os.environ.get("BAYBE_TELEMETRY_ENABLED")
     telemetry_userhash_before = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH")
@@ -78,23 +74,17 @@ def disable_telemetry():
 
 # Add option to only run fast tests
 def pytest_addoption(parser):
-    """
-    Changes pytest parser.
-    """
+    """Changes pytest parser."""
     parser.addoption("--fast", action="store_true", help="fast: Runs reduced tests")
 
 
 def pytest_configure(config):
-    """
-    Changes pytest marker configuration.
-    """
+    """Changes pytest marker configuration."""
     config.addinivalue_line("markers", "slow: mark test as slow to run")
 
 
 def pytest_collection_modifyitems(config, items):
-    """
-    Marks slow tests as skip of flag is set.
-    """
+    """Marks slow tests as skip if flag is set."""
     if not config.getoption("--fast"):
         return
 
@@ -106,9 +96,7 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(params=[2], name="n_iterations", ids=["i2"])
 def fixture_n_iterations(request):
-    """
-    Number of iterations ran in tests.
-    """
+    """Number of iterations ran in tests."""
     return request.param
 
 
@@ -118,9 +106,9 @@ def fixture_n_iterations(request):
     ids=["b1", "b3"],
 )
 def fixture_batch_quantity(request):
-    """
-    Number of recommendations requested per iteration. Testing 1 as edge case and 3
-    as a case for >1.
+    """Number of recommendations requested per iteration.
+
+    Testing 1 as edge case and 3 as a case for >1.
     """
     return request.param
 
@@ -131,19 +119,20 @@ def fixture_batch_quantity(request):
     ids=["grid5", "grid8"],
 )
 def fixture_n_grid_points(request):
-    """
-    Number of grid points used in e.g. the mixture tests. Test an even number
-    (5 grid points will cause 4 sections) and a number that causes division into
-    numbers that have no perfect floating point representation
-    (8 grid points will cause 7 sections).
+    """Number of grid points used in e.g. the mixture tests.
+
+    Test an even number (5 grid points will cause 4 sections) and a number that causes
+    division into numbers that have no perfect floating point representation (8 grid
+    points will cause 7 sections).
     """
     return request.param
 
 
 @pytest.fixture(name="good_reference_values")
 def fixture_good_reference_values():
-    """
-    Define some good reference values which are used by the utility function to
+    """Define some good reference values.
+
+    These are used by the utility function to
     generate fake good results. These only make sense for discrete parameters.
     """
     return {"Categorical_1": ["B"], "Categorical_2": ["OK"]}
@@ -151,9 +140,7 @@ def fixture_good_reference_values():
 
 @pytest.fixture(name="mock_substances")
 def fixture_mock_substances():
-    """
-    A set of test substances.
-    """
+    """A set of test substances."""
     substances = {
         "Water": "O",
         "THF": "C1CCOC1",
@@ -166,9 +153,7 @@ def fixture_mock_substances():
 
 @pytest.fixture(name="mock_categories")
 def fixture_mock_categories():
-    """
-    A set of mock categories for categorical parameters.
-    """
+    """A set of mock categories for categorical parameters."""
     return ["Type1", "Type2", "Type3"]
 
 
@@ -461,7 +446,7 @@ def fixture_default_constraint_selection():
 
 @pytest.fixture(name="baybe")
 def fixture_baybe(parameters, constraints, strategy, objective):
-    """Returns a BayBE"""
+    """Returns a BayBE."""
     return BayBE(
         searchspace=SearchSpace.from_product(
             parameters=parameters, constraints=constraints

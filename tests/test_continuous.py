@@ -1,6 +1,4 @@
-"""
-Test for continuous parameters
-"""
+"""Test for continuous parameters."""
 import pytest
 import torch
 
@@ -14,10 +12,7 @@ import torch
     ],
 )
 def test_valid_configs(baybe):
-    """
-    Test whether the given settings work without error
-    """
-
+    """Test whether the given settings work without error."""
     print(baybe.searchspace.continuous.param_bounds_comp.flatten())
 
     assert all(

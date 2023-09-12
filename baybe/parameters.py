@@ -1,7 +1,4 @@
-# pylint: disable=missing-function-docstring
-"""
-Functionality for different experimental parameter types.
-"""
+"""Functionality for different experimental parameter types."""
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
 
@@ -65,7 +62,9 @@ cattrs.register_structure_hook(Union[bool, float], lambda x, _: x)
 # TODO: Introduce encoding enums
 
 
-def validate_decorrelation(obj, attribute, value):
+def validate_decorrelation(obj, attribute, value) -> None:
+    # Validation function which thus does not require a docstring.
+    # pylint:disable=missing-function-docstring
     instance_of((bool, float))(obj, attribute, value)
     if isinstance(value, float):
         gt(0.0)(obj, attribute, value)
@@ -73,6 +72,8 @@ def validate_decorrelation(obj, attribute, value):
 
 
 def validate_unique_values(obj, _, value) -> None:
+    # Validation function which thus does not require a docstring.
+    # pylint:disable=missing-function-docstring
     if len(set(value)) != len(value):
         raise ValueError(
             f"Cannot assign the following values containing duplicates to "
@@ -82,29 +83,42 @@ def validate_unique_values(obj, _, value) -> None:
 
 @define(frozen=True, slots=False)
 class Parameter(ABC, SerialMixin):
-    """
-    Abstract base class for all parameters. Stores information about the
-    type, range, constraints, etc. and handles in-range checks, transformations etc.
+    """Abstract base class for all parameters.
+
+    Stores information about the type, range, constraints, etc. and handles in-range
+    checks, transformations etc.
+
+    Args:
+        name: The name of the parameter
     """
 
     # class variables
     is_numeric: ClassVar[bool]
+    """Class variable encoding whether this parameter is numeric."""
     is_discrete: ClassVar[bool]
+    """Class variable encoding whether this parameter is discrete."""
 
     # object variables
     name: str = field()
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
-        """
-        Tells whether an item is within the parameter range.
+        """Return whether an item is within the parameter range.
+
+        Args:
+            item: The item to be checked.
+
+        Returns:
+            ```True``` if the item is within the parameter range, ```False``` otherwise.
         """
 
 
 @define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):
-    """
-    Abstract class for discrete parameters.
+    """Abstract class for discrete parameters.
+
+    Args:
+        encoding: The encoding of the parameter.
     """
 
     # TODO [15280]: needs to be refactored
@@ -123,25 +137,19 @@ class DiscreteParameter(Parameter, ABC):
     @cached_property
     @abstractmethod
     def comp_df(self) -> pd.DataFrame:
-        """
-        Returns the computational representation of the parameter.
-        """
+        """Return the computational representation of the parameter."""
 
     def is_in_range(self, item: Any) -> bool:
+        # See base class. pylint: disable=missing-function-docstring
         return item in self.values
 
     def transform_rep_exp2comp(self, data: pd.Series) -> pd.DataFrame:
-        """
-        Transforms data from experimental to computational representation.
+        """Transform data from experimental to computational representation.
 
-        Parameters
-        ----------
-        data: pd.Series
-            Data to be transformed.
+        Args:
+            data: Data to be transformed.
 
-        Returns
-        -------
-        pd.DataFrame
+        Returns:
             The transformed version of the data.
         """
         if self.encoding:
@@ -161,9 +169,16 @@ class DiscreteParameter(Parameter, ABC):
 
 @define(frozen=True, slots=False)
 class CategoricalParameter(DiscreteParameter):
+    """Parameter class for categorical parameters.
+
+    Args:
+        encoding: The encoding of the parameter.
     """
-    Parameter class for categorical parameters.
-    """
+
+    # TODO: Since object variables are not inherited, we need to include it here again.
+    # Due to this, changes in such variables are not auto-documented by Sphinx, making
+    # it necessary to change them manually.
+    # This might change when moving towards html based documentation.
 
     # class variables
     is_numeric: ClassVar[bool] = False
@@ -176,13 +191,12 @@ class CategoricalParameter(DiscreteParameter):
 
     @property
     def values(self) -> list:
+        """The values of the parameter."""
         return self._values
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
-        """
-        See base class.
-        """
+        # See base class.
         if self.encoding == "OHE":
             cols = [f"{self.name}_{val}" for val in self.values]
             comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
@@ -195,8 +209,13 @@ class CategoricalParameter(DiscreteParameter):
 
 @define(frozen=True, slots=False)
 class NumericalDiscreteParameter(DiscreteParameter):
-    """
-    Parameter class for discrete numerical parameters (a.k.a. setpoints).
+    """Parameter class for discrete numerical parameters (a.k.a. setpoints).
+
+    Args:
+        tolerance: The absolute tolerance used for deciding whether a value is in range.
+            A tolerance larger than half the minimum distance between parameter values
+            is not allowed because that could cause ambiguity when inputting data points
+            later.
     """
 
     # class variables
@@ -214,13 +233,13 @@ class NumericalDiscreteParameter(DiscreteParameter):
     tolerance: float = field(default=0.0)
 
     @tolerance.validator
-    def validate_tolerance(self, _, tolerance):
-        """
-        Validates that the tolerance (i.e. allowed experimental uncertainty when
-        reading in measured values) is safe. A tolerance larger than half the minimum
-        distance between parameter values is not allowed because that could cause
-        ambiguity when inputting data points later.
-        """
+    def validate_tolerance(self, _, tolerance) -> None:
+        # Validate that the tolerance is safe.
+        # The tolerance is the allowed experimental uncertainty when
+        # reading in measured values. A tolerance larger than half the minimum
+        # pdistance between parameter values is not allowed because that could cause
+        # ambiguity when inputting data points later.
+        # pylint:disable=missing-function-docstring
         # NOTE: computing all pairwise distances can be avoided if we ensure that the
         #   values are ordered (which is currently not the case)
         dists = pdist(np.asarray(self.values).reshape(-1, 1))
@@ -235,20 +254,17 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
     @property
     def values(self) -> list:
+        # See base class. pylint:disable=missing-function-docstring
         return self._values
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
-        """
-        See base class.
-        """
+        # See base class. pylint:disable=missing-function-docstring
         comp_df = pd.DataFrame({self.name: self.values}, index=self.values)
         return comp_df
 
     def is_in_range(self, item: float) -> bool:
-        """
-        See base class.
-        """
+        # See base class. pylint:disable=missing-function-docstring
         differences_acceptable = [
             np.abs(val - item) <= self.tolerance for val in self.values
         ]
@@ -257,8 +273,10 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
 @define(frozen=True, slots=False)
 class NumericalContinuousParameter(Parameter):
-    """
-    Parameter class for continuous numerical parameters.
+    """Parameter class for continuous numerical parameters.
+
+    Args:
+        bounds: The bounds of the parameter.
     """
 
     # class variables
@@ -269,7 +287,8 @@ class NumericalContinuousParameter(Parameter):
     bounds: Interval = field(default=None, converter=convert_bounds)
 
     @bounds.validator
-    def validate_bounds(self, _, value: Interval):
+    def validate_bounds(self, _, value: Interval) -> None:
+        # pylint:disable=missing-function-docstring
         if not value.is_finite:
             raise InfiniteIntervalError(
                 f"You are trying to initialize a parameter with an infinite interval "
@@ -278,26 +297,27 @@ class NumericalContinuousParameter(Parameter):
             )
 
     def is_in_range(self, item: float) -> bool:
-        """
-        See base class.
-        """
+        # See base class. pylint:disable=missing-function-docstring
 
         return self.bounds.contains(item)
 
 
 @define(frozen=True, slots=False)
 class SubstanceParameter(DiscreteParameter):
-    """
-    Parameter class for generic substances that are treated with cheminformatics
-    descriptors.
+    """Generic substances that are treated with cheminformatics descriptors.
 
     Only a decorrelated subset of descriptors should be used as otherwise this can
     result in a large number of features. For a handful of molecules, keeping only
     descriptors that have a maximum correlation of 0.7 reduces the number of
     descriptors to about 5-20. The number might be substantially higher with more
     labels given.
+
+    Args:
+        encoding: The encoding of the variable.
     """
 
+    # TODO: Since object variables are not inherited, we need to include it here agian.
+    # This might change when moving towards html based documentation.
     # class variables
     is_numeric: ClassVar[bool] = False
 
@@ -309,7 +329,8 @@ class SubstanceParameter(DiscreteParameter):
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
 
     @data.validator
-    def validate_substance_data(self, _, value):
+    def validate_substance_data(self, _, value) -> None:
+        # pylint: disable=missing-function-docstring
         for name, smiles in value.items():
             if not is_valid_smiles(smiles):
                 raise ValueError(
@@ -319,18 +340,15 @@ class SubstanceParameter(DiscreteParameter):
 
     @property
     def values(self) -> list:
-        """
-        Returns the labels of the given set of molecules.
-        """
+        """Returns the labels of the given set of molecules."""
         # Since the order of dictionary keys is important here, this will only work
         # for Python 3.7 or higher
         return list(self.data.keys())
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
-        """
-        See base class.
-        """
+        # See base class.
+        # pylint: disable=missing-function-docstring
         vals = list(self.data.values())
         pref = self.name + "_"
 
@@ -377,8 +395,12 @@ SUBSTANCE_ENCODINGS = get_args(get_type_hints(SubstanceParameter)["encoding"])
 
 @define(frozen=True, slots=False)
 class TaskParameter(CategoricalParameter):
-    """
-    Parameter class for task parameters.
+    """Parameter class for task parameters.
+
+    Args:
+        encoding: The encoding of the parameter.
+        active_values: List of values describing for which tasks recommendations should
+            be given.
     """
 
     # object variables
@@ -392,6 +414,7 @@ class TaskParameter(CategoricalParameter):
     @active_values.validator
     def validate_active_values(self, _, values):
         # TODO [16605]: Redesign metadata handling
+        # TODO [16954]: Make private; pylint:disable=missing-function-docstring
         if values is None:
             return
         if len(values) == 0:
@@ -409,9 +432,15 @@ class TaskParameter(CategoricalParameter):
 
 @define(frozen=True, slots=False)
 class CustomDiscreteParameter(DiscreteParameter):
-    """
-    Parameter class for custom parameters where the user can read in a precomputed
-    representation for labels, e.g. from quantum chemistry.
+    """Custom parameters.
+
+    For these parameters, the user can read in a precomputed representation for labels,
+    e.g. from quantum chemistry.
+
+    Args:
+        data: The data for the custom parameter.
+        decorrelate: Flag encoding whether the provided data should be decorrelated.
+        encoding: The encoding of the parameter.
     """
 
     # class variables
@@ -425,10 +454,9 @@ class CustomDiscreteParameter(DiscreteParameter):
     encoding = field(default="CUSTOM")
 
     @data.validator
-    def validate_custom_data(self, _, value):
-        """
-        Validates the dataframe with the custom representation.
-        """
+    def validate_custom_data(self, _, value) -> None:
+        # Validates the dataframe with the custom representation.
+        # TODO [16954] Make private. pylint: disable=missing-function-docstring
         if value.isna().any().any():
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains NaN "
@@ -455,16 +483,12 @@ class CustomDiscreteParameter(DiscreteParameter):
 
     @property
     def values(self) -> list:
-        """
-        Returns the representing labels of the parameter.
-        """
+        """Returns the representing labels of the parameter."""
         return self.data.index.to_list()
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:
-        """
-        See base class.
-        """
+        # See base class. pylint: disable=missing-function-docstring
         # The encoding is directly provided by the user
         comp_df = self.data
 
@@ -481,18 +505,14 @@ class CustomDiscreteParameter(DiscreteParameter):
 def parameter_cartesian_prod_to_df(
     parameters: Iterable[Parameter],
 ) -> pd.DataFrame:
-    """
-    Creates the Cartesian product of all parameter values. Ignores continuous
-    parameters.
+    """Create the Cartesian product of all parameter values.
 
-    Parameters
-    ----------
-    parameters: List[Parameter]
-        List of parameter objects.
+    Ignores continuous parameters.
 
-    Returns
-    -------
-    pd.DataFrame
+    Args:
+        parameters: List of parameter objects.
+
+    Returns:
         A dataframe containing all possible discrete parameter value combinations.
     """
     lst_of_values = [
@@ -523,6 +543,7 @@ def parameter_cartesian_prod_to_df(
 
 
 def remove_values_underscore(raw_unstructure_hook):
+    # pylint:disable=missing-function-docstring
     def wrapper(obj):
         dict_ = raw_unstructure_hook(obj)
         try:
@@ -535,6 +556,7 @@ def remove_values_underscore(raw_unstructure_hook):
 
 
 def add_values_underscore(raw_structure_hook):
+    # pylint:disable=missing-function-docstring
     def wrapper(dict_, _):
         try:
             dict_["_values"] = dict_.pop("values")
@@ -555,18 +577,13 @@ cattrs.register_structure_hook(Parameter, structure_hook)
 
 
 def _validate_parameter_names(parameters: List[Parameter]) -> None:
-    """
-    Asserts that a given collection of parameters has unique names.
+    """Assert that a given collection of parameters has unique names.
 
-    Parameters
-    ----------
-    parameters : list
-        List of Parameter objects.
+    Args:
+        parameters: List of Parameter objects.
 
-    Raises
-    ------
-    ValueError
-        If the given list contains parameters with the same name.
+    Raises:
+        ValueError: If the given list contains parameters with the same name.
     """
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
@@ -574,18 +591,13 @@ def _validate_parameter_names(parameters: List[Parameter]) -> None:
 
 
 def _validate_parameters(parameters: List[Parameter]) -> None:
-    """
-    Asserts that a given collection of parameters is valid.
+    """Assert that a given collection of parameters is valid.
 
-    Parameters
-    ----------
-    parameters : list
-        List of Parameter objects.
+    Args:
+        parameters: List of Parameter objects.
 
-    Raises
-    ------
-    ValueError
-        If the given list of parameters is invalid.
+    Raises:
+        ValueError: If the given list of parameters is invalid.
     """
     # Assert: non-empty parameter list
     if not parameters:

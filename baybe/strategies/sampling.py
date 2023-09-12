@@ -12,9 +12,7 @@ from baybe.utils import farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):
-    """
-    Recommends experiments randomly.
-    """
+    """Recommends experiments randomly."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
@@ -56,9 +54,9 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
-        """See base class."""
-        # Fit scaler on entire searchspace
-        # TODO [Scaling]: scaling should be handled by searchspace object
+        # See base class. pylint: disable=missing-function-docstring
+        # Fit scaler on entire search space
+        # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
         scaler.fit(searchspace.discrete.comp_rep)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))

@@ -1,6 +1,4 @@
-"""
-This script allows comparing initial selection strategies on different data sets.
-"""
+"""This script allows comparing initial selection strategies on different data sets."""
 
 import numpy as np
 import pandas as pd
@@ -70,7 +68,6 @@ selection_strategies = {
 
 def main():
     """Creates the streamlit dashboard."""
-
     # show docstring in dashboard
     st.info(__doc__)
 

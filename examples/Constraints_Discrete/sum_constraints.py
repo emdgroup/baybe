@@ -1,11 +1,10 @@
 ### Example for using a sum constraint in a discrete searchspace
+# pylint: disable=missing-module-docstring
 
-"""
-Example for imposing sum constraints for discrete parameters.
-The constraints simulate a situation where we want to mix up to three solvents.
-However, their respective fractions need to sum up to 100.
-Also, the solvents should never be chosen twice.
-"""
+# Example for imposing sum constraints for discrete parameters.
+# The constraints simulate a situation where we want to mix up to three solvents.
+# However, their respective fractions need to sum up to 100.
+# Also, the solvents should never be chosen twice.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

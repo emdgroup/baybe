@@ -41,7 +41,7 @@ valid_naive_hybrid_recommenders = [
     [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
 )
 def test_serialization_without_recommendation(baybe):
-    """Serialize all possible hybrid recommender objects and test for equality"""
+    """Serialize all possible hybrid recommender objects and test for equality."""
     baybe_orig_string = baybe.to_json()
     baybe_recreate = BayBE.from_json(baybe_orig_string)
     assert baybe == baybe_recreate

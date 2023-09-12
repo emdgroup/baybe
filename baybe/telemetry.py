@@ -1,6 +1,4 @@
-"""
-Telemetry  functionality for BayBE.
-"""
+"""Telemetry  functionality for BayBE."""
 import getpass
 import hashlib
 import os
@@ -19,13 +17,9 @@ from baybe.utils import fuzzy_row_match, strtobool
 
 
 def is_enabled() -> bool:
-    """
-    Tells whether telemetry currently is enabled. Telemetry can be disabled by setting
-    the respective environment variable.
+    """Tell whether telemetry currently is enabled.
 
-    Returns
-    -------
-        bool
+    Telemetry can be disabled by setting the respective environment variable.
     """
     return strtobool(os.environ.get("BAYBE_TELEMETRY_ENABLED", "true"))
 
@@ -68,13 +62,12 @@ if is_enabled():
 
 
 def get_user_details() -> Dict[str, str]:
-    """
-    Generate user details that are submitted as metadata with requested telemetry stats.
+    """Generate user details.
 
-    Returns
-    -------
-        dict: Contains the hostname and username in hashed format as well as the package
-         version
+    These are submitted as metadata with requested telemetry stats.
+
+    Returns:
+        The hostname and username in hashed format as well as the package version.
     """
     from baybe import __version__  # pylint: disable=import-outside-toplevel
 
@@ -94,23 +87,16 @@ def get_user_details() -> Dict[str, str]:
 def telemetry_record_value(
     instrument_name: str, value: Union[bool, int, float, str]
 ) -> None:
-    """
-    Transmits a given value under a given label to the telemetry backend. The values are
-     recorded as histograms, i.e. the info about record time and sample size is also
-     available. This can be used to count function calls (record the value 1) or
-     statistics about any variable (record its value). Due to serialization limitations
-     only certain data types of value are allowed.
+    """Transmit a given value under a given label to the telemetry backend.
 
-    Parameters
-    ----------
-    instrument_name: str
-        The label under which this statistic is logged.
-    value
-        The value of the statistic to be logged.
+    The values are recorded as histograms, i.e. the info about record time and sample
+    size is also available. This can be used to count function calls (record the
+    value 1) or statistics about any variable (record its value). Due to serialization
+    limitations only certain data types of value are allowed.
 
-    Returns
-    -------
-        None
+    Args:
+        instrument_name: The label under which this statistic is logged.
+        value: The value of the statistic to be logged.
     """
     if is_enabled():
         _submit_scalar_value(instrument_name, value)
@@ -119,9 +105,7 @@ def telemetry_record_value(
 def _submit_scalar_value(
     instrument_name: str, value: Union[bool, int, float, str]
 ) -> None:
-    """
-    See telemetry_record_value.
-    """
+    """See :py:func:`baybe.telemetry.telemetry_record_value`."""
     if instrument_name in _instruments:
         histogram = _instruments[instrument_name]
     else:
@@ -139,30 +123,26 @@ def telemetry_record_recommended_measurement_percentage(
     parameters: List[Parameter],
     numerical_measurements_must_be_within_tolerance: bool,
 ) -> None:
-    """
-    Submits the percentage of added measurements that correspond to previously
-    recommended ones (called cached recommendations). The matching is performed via
-    fuzzy row matching. The calculation is only performed if telemetry is enabled. If
-    no cached recommendation exists the percentage is not calculated and instead a
-    different event ('naked initial measurement added') is recorded.
+    """Submit the percentage of added measurements.
 
-    Parameters
-    ----------
-    cached_recommendation: pd.DataFrame
-        The cached recommendations.
-    measurements: pd.DataFrame
-        The measurements which are supposed to be checked against cached
-        recommendations.
-    parameters: List of BayBE parameters
-        The list of parameters spanning the entire searchspace.
-    numerical_measurements_must_be_within_tolerance: bool
-        If True, numerical parameter entries are matched with the reference elements
-        only if there is a match within the parameter tolerance. If False,
-        the closest match is considered, irrespective of the distance.
+    More precisely, submit the percentage of added measurements that correspond to
+    previously recommended ones (called cached recommendations).
 
-    Returns
-    -------
-        None
+    The matching is performed via fuzzy row matching, using the utils function
+    :py:func:`baybe.utils.dataframe.fuzzy_row_match`. The calculation is only performed
+    if telemetry is enabled. If no cached recommendation exists the percentage is not
+    calculated and instead a different event ('naked initial measurement added') is
+    recorded.
+
+    Args:
+        cached_recommendation: The cached recommendations.
+        measurements: The measurements which are supposed to be checked against cached
+            recommendations.
+        parameters: The list of parameters spanning the entire search space.
+        numerical_measurements_must_be_within_tolerance: If ```True```, numerical
+            parameter entries are matched with the reference elements only if there is
+            a match within the parameter tolerance. If ```False```, the closest match
+            is considered, irrespective of the distance.
     """
     if is_enabled():
         if len(cached_recommendation) > 0:

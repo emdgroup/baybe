@@ -1,8 +1,7 @@
 ### Example for using a synthetic BoTorch test function in a discrete searchspace
+# pylint: disable=missing-module-docstring
 
-"""
-Example for using the synthetic test functions in discrete spaces.
-"""
+# Example for using the synthetic test functions in discrete spaces.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

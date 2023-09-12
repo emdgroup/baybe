@@ -1,16 +1,12 @@
 ### Example for using a custom BoTorch test function in a continuous searchspace
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows how an arbitrary python function can be used as lookup.
-"""
-
-# This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
-
+# This example shows how an arbitrary python function can be used as lookup.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
 
+#### Necessary imports
 
 from baybe import BayBE
 from baybe.parameters import NumericalContinuousParameter
@@ -28,9 +24,7 @@ from baybe.targets import NumericalTarget, Objective
 
 
 def sum_of_squares(*x: float) -> float:
-    """
-    Calculates the sum of squares.
-    """
+    """Calculates the sum of squares."""
     res = 0
     for y in x:
         res += y**2

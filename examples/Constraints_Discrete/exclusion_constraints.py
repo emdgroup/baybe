@@ -1,9 +1,8 @@
 ### Example for using exclusion constraints in discrete searchspaces
+# pylint: disable=missing-module-docstring
 
-"""
-This examples shows how an exclusion constraint can be created for a discrete searchspace.
-This can be used if some parameter values are incompatible with values of another parameter.
-"""
+# This examples shows how an exclusion constraint can be created for a discrete searchspace.
+# This can be used if some parameter values are incompatible with values of another parameter.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

@@ -1,22 +1,15 @@
 ### Example for using a synthetic BoTorch test function in a continuous searchspace
+# pylint: disable=missing-module-docstring
 
-"""
-Example for using the synthetic test functions in a continuous spaces.
-All test functions that are available in BoTorch are also available here and wrapped
-via the `botorch_function_wrapper`.
-"""
-
-# This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
-# Also, there is a large overlap with other examples with regards to using the test function.
-# We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
-
-#### Necessary imports for this example
+# Example for using the synthetic test functions in a continuous spaces.
+# All test functions that are available in BoTorch are also available here and wrapped
+# via the `botorch_function_wrapper`.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
 # We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
+
 
 #### Necessary imports for this example
 

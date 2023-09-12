@@ -1,8 +1,4 @@
-# pylint: disable=missing-function-docstring
-
-"""
-Core functionality of BayBE. Main point of interaction via Python.
-"""
+"""Core functionality of BayBE. Main point of interaction via Python."""
 
 # TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
 #  https://github.com/python-attrs/cattrs/issues/354
@@ -37,18 +33,20 @@ from baybe.utils import eq_dataframe, SerialMixin
 #   hierarchy levels. Ideally, however, each module would define its own converters for
 #   its classes that can then be flexibly combined at the next higher level of the
 #   module hierarchy. For example, there could be several "Parameter converters" that
-#   implement different sorts of serialization logic. For the searchspace, one could
+#   implement different sorts of serialization logic. For the search space, one could
 #   then implement several serialization converters as well that arbitrarily combine
 #   parameter and constraint hooks/converters.
 
 
 def structure_dataframe_hook(string: str, _) -> pd.DataFrame:
+    # pylint: disable=missing-function-docstring
     buffer = BytesIO()
     buffer.write(base64.b64decode(string.encode("utf-8")))
     return pd.read_parquet(buffer)
 
 
 def unstructure_dataframe_hook(df: pd.DataFrame) -> str:
+    # pylint: disable=missing-function-docstring
     return base64.b64encode(df.to_parquet()).decode("utf-8")
 
 
@@ -57,11 +55,10 @@ cattrs.register_structure_hook(pd.DataFrame, structure_dataframe_hook)
 
 
 def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
-    """
-    A structuring hook that assembles the searchspace using the alternative `create`
-    constructor, which allows to deserialize searchspace specifications that are
-    provided in a user-friendly format (i.e. via parameters and constraints).
-    """
+    # A structuring hook that assembles the search space using the alternative `create`
+    # constructor, which allows to deserialize search space specifications that are
+    # provided in a user-friendly format (i.e. via parameters and constraints).
+    # pylint: disable=missing-function-docstring
     # IMPROVE: Instead of defining the partial structurings here in the hook,
     #   on *could* use a dedicated "BayBEConfig" class
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
@@ -72,12 +69,11 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
 
 
 def searchspace_validation_hook(specs: dict, _) -> None:
-    """
-    Similar to `searchspace_creation_hook` but without the actual searchspace creation
-    step, thus intended for validation purposes only. Additionally, explicitly asserts
-    uniqueness of parameter names, since duplicates would only be noticed during
-    searchspace creation.
-    """
+    # Similar to `searchspace_creation_hook` but without the actual search space
+    # creation step, thus intended for validation purposes only. Additionally,
+    # explicitly asserts uniqueness of parameter names, since duplicates would only be
+    # noticed during search space creation.
+    # pylint: disable=missing-function-docstring
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
     _validate_parameters(parameters)
 
@@ -97,7 +93,18 @@ _validation_converter.register_structure_hook(SearchSpace, searchspace_validatio
 
 @define
 class BayBE(SerialMixin):
-    """Main class for interaction with BayBE."""
+    """Main class for interaction with BayBE.
+
+    Args:
+        searchspace: The search space in which the experiments are conducted.
+        objective: The optimization objective.
+        strategy: The employed strategy.
+        measurements_exp: The experimental representation of the conducted experiments.
+        numerical_measurements_must_be_within_tolerance: Flag for forcing numerical
+            measurements to be within tolerance.
+        batches_done: The number of already processed batches.
+        fits_done: The number of fits already done.
+    """
 
     # DOE specifications
     searchspace: SearchSpace = field()
@@ -143,7 +150,14 @@ class BayBE(SerialMixin):
 
     @classmethod
     def from_config(cls, config_json: str) -> "BayBE":
-        """Creates a BayBE object from a configuration JSON."""
+        """Create a BayBE object from a configuration JSON.
+
+        Args:
+            config_json: The string with the configuration JSON.
+
+        Returns:
+            The constructed BayBE object.
+        """
         config = json.loads(config_json)
         config["searchspace"] = {
             "parameters": config.pop("parameters"),
@@ -153,7 +167,17 @@ class BayBE(SerialMixin):
 
     @classmethod
     def to_config(cls) -> str:
-        """Extracts the configuration of the BayBE object as JSON string."""
+        """Extract the configuration of the BayBE object as JSON string.
+
+        Note: This is not yet implemented. Use
+        :py:func:`baybe.utils.serialization.SerialMixin.to_json` instead
+
+        Returns:
+            The configuration as JSON string.
+
+        Raises:
+            NotImplementedError: When trying to use this function.
+        """
         # TODO: Ideally, this should extract a "minimal" configuration, that is,
         #   default values should not be exported, which cattrs supports via the
         #   'omit_if_default' option. Can be Implemented once the converter structure
@@ -162,7 +186,11 @@ class BayBE(SerialMixin):
 
     @classmethod
     def validate_config(cls, config_json: str) -> None:
-        """Validates a given BayBE configuration JSON."""
+        """Validates a given BayBE configuration JSON.
+
+        Args:
+            config_json: The JSON that should be validated.
+        """
         config = json.loads(config_json)
         config["searchspace"] = {
             "parameters": config.pop("parameters"),
@@ -171,23 +199,22 @@ class BayBE(SerialMixin):
         _validation_converter.structure(config, BayBE)
 
     def add_measurements(self, data: pd.DataFrame) -> None:
-        """
-        Adds results from a dataframe to the internal database.
+        """Add results from a dataframe to the internal database.
 
         Each addition of data is considered a new batch. Added results are checked for
         validity. Categorical values need to have an exact match. For numerical values,
         a BayBE flag determines if values that lie outside a specified tolerance
         are accepted.
+        Note that this modifies the provided data in-place.
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The data to be added (with filled values for targets). Preferably created
-            via the `recommend` method.
+        Args:
+            data: The data to be added (with filled values for targets). Preferably
+                created via :py:func:`baybe.core.BayBE.recommend`.
 
-        Returns
-        -------
-        Nothing (the internal database is modified in-place).
+        Raises:
+            ValueError: If one of the targets has missing values or NaNs in the provided
+                dataframe.
+            TypeError: If the target has non-numeric entries in the provided dataframe.
         """
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self._cached_recommendation = pd.DataFrame()
@@ -248,18 +275,16 @@ class BayBE(SerialMixin):
         )
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
-        """
-        Provides the recommendations for the next batch of experiments.
+        """Provide the recommendations for the next batch of experiments.
 
-        Parameters
-        ----------
-        batch_quantity : int > 0
-            Number of requested recommendations.
+        Args:
+            batch_quantity: Number of requested recommendations.
 
-        Returns
-        -------
-        rec : pd.DataFrame
-            Contains the recommendations in experimental representation.
+        Returns:
+            Dataframe containing the recommendations in experimental representation.
+
+        Raises:
+            ValueError: If ```batch_quantity``` is smaller than 1.
         """
         if batch_quantity < 1:
             raise ValueError(

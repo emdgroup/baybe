@@ -1,9 +1,8 @@
 ### Example for the serialization of a BayBE object
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows how to serialize and also de-serialize a BayBE object.
-It demonstrates and shows that the "original" and "new" objects behave the same.
-"""
+# This example shows how to serialize and also de-serialize a BayBE object.
+# It demonstrates and shows that the "original" and "new" objects behave the same.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.

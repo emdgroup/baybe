@@ -24,17 +24,12 @@ _mordred_calculator = Calculator(descriptors)
 
 
 def name_to_smiles(name: str) -> str:
-    """
-    Converts from chemical name to SMILES string using chemical identifier resolver.
+    """Convert from chemical name to SMILES string using chemical identifier resolver.
 
-    Parameters
-    ----------
-    name : str
-        Name or nickname of compound.
+    Args:
+        name: Name or nickname of compound.
 
-    Returns
-    -------
-    str
+    Returns:
         SMILES string corresponding to chemical name.
     """
     name = name.replace(" ", "%20")
@@ -61,17 +56,12 @@ def name_to_smiles(name: str) -> str:
 @lru_cache(maxsize=None)
 @_memory_utils.cache
 def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
-    """
-    Memory- and disk-cached computation of Mordred descriptors.
+    """Memory- and disk-cached computation of Mordred descriptors.
 
-    Parameters
-    ----------
-    smiles : str
-        SMILES string.
+    Args:
+        smiles: SMILES string.
 
-    Returns
-    -------
-    np.ndarray
+    Returns:
         Mordred descriptors for the given smiles string.
     """
     try:
@@ -87,21 +77,14 @@ def smiles_to_mordred_features(
     prefix: str = "",
     dropna: bool = True,
 ) -> pd.DataFrame:
-    """
-    Computes Mordred chemical descriptors for a list of SMILES strings.
+    """Compute Mordred chemical descriptors for a list of SMILES strings.
 
-    Parameters
-    ----------
-    smiles_list : List[str]
-        List of SMILES strings.
-    prefix : str
-        Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-    dropna : bool
-        If True, drops columns that contain NaNs.
+    Args:
+        smiles_list: List of SMILES strings.
+        prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
+        dropna: If ```True```, drops columns that contain NaNs.
 
-    Returns
-    -------
-    pd.DataFrame
+    Returns:
         Dataframe containing overlapping Mordred descriptors for each SMILES string.
     """
     features = [_smiles_to_mordred_features(smiles) for smiles in smiles_list]
@@ -116,18 +99,16 @@ def smiles_to_mordred_features(
 
 
 def smiles_to_molecules(smiles_list: List[str]) -> List[Chem.Mol]:
-    """
-    Converts a given list of SMILES strings into corresponding Molecule objects.
+    """Convert a given list of SMILES strings into corresponding Molecule objects.
 
-    Parameters
-    ----------
-    smiles_list : List[str]
-        List of SMILES strings.
+    Args:
+        smiles_list: List of SMILES strings.
 
-    Returns
-    -------
-    List[Chem.Mol]
+    Returns:
         List of corresponding molecules.
+
+    Raises:
+        ValueError: If the SMILES does not seem to be chemically valid.
     """
     mols = []
     for smiles in smiles_list:
@@ -146,21 +127,14 @@ def smiles_to_molecules(smiles_list: List[str]) -> List[Chem.Mol]:
 def smiles_to_rdkit_features(
     smiles_list: List[str], prefix: str = "", dropna: bool = True
 ) -> pd.DataFrame:
-    """
-    Computes RDKit chemical descriptors for a list of SMILES strings.
+    """Compute RDKit chemical descriptors for a list of SMILES strings.
 
-    Parameters
-    ----------
-    smiles_list : List[str]
-        List of SMILES strings.
-    prefix : str
-        Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-    dropna : bool
-        If True, drops columns that contain NaNs.
+    Args:
+        smiles_list: List of SMILES strings.
+        prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
+        dropna: If True, drops columns that contain NaNs.
 
-    Returns
-    ----------
-    pd.DataFrame
+    Returns:
         Dataframe containing overlapping RDKit descriptors for each SMILES string.
     """
     mols = smiles_to_molecules(smiles_list)
@@ -187,25 +161,16 @@ def smiles_to_fp_features(
     radius: int = 4,
     n_bits: int = 1024,
 ) -> pd.DataFrame:
-    """
-    Computes standard Morgan molecule fingerprints for a list of SMILES strings.
+    """Compute standard Morgan molecule fingerprints for a list of SMILES strings.
 
-    Parameters
-    ----------
-    smiles_list : List[str]
-        List of SMILES strings.
-    prefix : str
-        Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-    dtype : Type[int] | Type[float]
-        Specifies whether fingerprints will have int or float data type.
-    radius : int
-        Radius for the Morgan fingerprint.
-    n_bits : int
-        Number of bits for the Morgan fingerprint.
+    Args:
+        smiles_list: List of SMILES strings.
+        prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
+        dtype: Specifies whether fingerprints will have int or float data type.
+        radius: Radius for the Morgan fingerprint.
+        n_bits:Number of bits for the Morgan fingerprint.
 
-    Returns
-    ----------
-    pd.DataFrame
+    Returns:
         Dataframe containing Morgan fingerprints for each SMILES string.
     """
     mols = smiles_to_molecules(smiles_list)
