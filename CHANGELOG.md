@@ -10,13 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic transfer learning capability using multitask kernels
 - Advanced simulation mechanisms for transfer learning and search space partitioning
 - Extensive docstring documentation in all files
-- Apidoc using sphinx
+- Autodoc using sphinx
 - Script for automatic code documentation
+- New `tox` environments for a full and a core-only pytest run
 
 ### Changed
 - Discrete subspaces require unique indices
 - Simulation function signatures are redesigned (but largely backwards compatible)
 - Docstring contents and style (numpy -> google)
+- Regrouped additional dependencies
 
 ## [0.4.2] - 2023-08-29
 ### Added
