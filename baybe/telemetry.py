@@ -1,19 +1,35 @@
 """Telemetry  functionality for BayBE."""
 import getpass
 import hashlib
+import logging
 import os
 import socket
 from typing import Dict, List, Union
 
 import pandas as pd
-from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.metrics import get_meter, set_meter_provider
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.sdk.resources import Resource
 
 from baybe.parameters import Parameter
 from baybe.utils import fuzzy_row_match, strtobool
+
+_logger = logging.getLogger(__name__)
+
+try:
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+        OTLPMetricExporter,
+    )
+    from opentelemetry.metrics import get_meter, set_meter_provider
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+    from opentelemetry.sdk.resources import Resource
+except ImportError:
+    # Failed telemetry install/import should not fail baybe, so telemetry is being
+    # disabled in that case
+    if strtobool(os.environ.get("BAYBE_TELEMETRY_ENABLED", "true")):
+        _logger.warning(
+            "Opentelemetry could not be imported, potentially it is not "
+            "installed. Disabling baybe telemetry."
+        )
+    os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
 
 
 def is_enabled() -> bool:
