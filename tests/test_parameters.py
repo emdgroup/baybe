@@ -3,14 +3,17 @@
 import numpy as np
 import pandas as pd
 import pytest
-
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
-    SubstanceParameter,
 )
+from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
+
+_CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
+if _CHEM_INSTALLED:
+    from baybe.parameters import SubstanceParameter
 
 
 def test_invalid_parameter_creation():
@@ -30,11 +33,12 @@ def test_invalid_parameter_creation():
         )
 
     # Scenario: substance parameter contains invalid SMILES
-    with pytest.raises(ValueError):
-        SubstanceParameter(
-            name="substance_invalid_smiles",
-            data={"valid1": "C", "valid2": "CC", "invalid": "cc"},
-        )
+    if _CHEM_INSTALLED:
+        with pytest.raises(ValueError):
+            SubstanceParameter(
+                name="substance_invalid_smiles",
+                data={"valid1": "C", "valid2": "CC", "invalid": "cc"},
+            )
 
     # Scenario: custom parameter contains duplicated index
     with pytest.raises(ValueError):
