@@ -287,14 +287,6 @@ def fixture_parameters(
                 )
                 for k in range(3)
             ],
-            # *[
-            #     CategoricalParameter(
-            #         name=f"Substance_1_{encoding}",
-            #         values=list(mock_substances.keys()),
-            #         encoding=encoding,
-            #     )
-            #     for encoding in SUBSTANCE_ENCODINGS
-            # ],
         ]
 
     return [p for p in valid_parameters if p.name in parameter_names]

@@ -19,7 +19,6 @@ try:
 except ImportError:
     _MORDRED_INSTALLED = False
 
-_RDKIT_INSTALLED = True
 try:
     from rdkit import Chem, RDLogger
     from rdkit.Chem.rdMolDescriptors import GetMorganFingerprintAsBitVect
@@ -35,6 +34,10 @@ _memory_utils = Memory(_cachedir / "utils")
 
 def name_to_smiles(name: str) -> str:
     """Convert from chemical name to SMILES string using chemical identifier resolver.
+
+    This script is useful to combine with ```df.apply``` from pandas, hence it does not
+    throw exceptions for invalid molecules but instead returns an ampty string for
+    easy subsequent postprocessing of the data frame.
 
     Args:
         name: Name or nickname of compound.
@@ -144,7 +147,7 @@ if _RDKIT_INSTALLED:
         Args:
             smiles_list: List of SMILES strings.
             prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-            dropna: If True, drops columns that contain NaNs.
+            dropna: If ```True```, drops columns that contain NaNs.
 
         Returns:
             Dataframe containing overlapping RDKit descriptors for each SMILES string.
