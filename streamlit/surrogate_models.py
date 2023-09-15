@@ -60,7 +60,7 @@ def linear(
 def main():
     """Creates the streamlit dashboard."""
     # basic settings
-    plt.style.use("seaborn")
+    plt.style.use("seaborn-v0_8-paper")  # 'seaborn' is depreciated since matplotlib 3.6
 
     # show docstring in dashboard
     st.info(__doc__)
