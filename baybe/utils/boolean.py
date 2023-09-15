@@ -4,8 +4,6 @@ from abc import ABC
 from typing import Any
 
 from attr import cmp_using
-from rdkit import Chem
-
 
 # Used for comparing pandas dataframes in attrs classes
 eq_dataframe = cmp_using(lambda x, y: x.equals(y))
@@ -27,22 +25,6 @@ def is_abstract(cls: Any) -> bool:
         ```True``` if the class is "abstract" (see definition above), ```False``` else.
     """
     return ABC in cls.__bases__
-
-
-def is_valid_smiles(smiles: str) -> bool:
-    """Test if a SMILES string is valid according to RDKit.
-
-    Args:
-        smiles: SMILES string to be tested.
-
-    Returns:
-        ```True``` if the provided SMILES is valid, ```False``` else.
-    """
-    try:
-        mol = Chem.MolFromSmiles(smiles)
-        return mol is not None
-    except Exception:
-        return False
 
 
 def strtobool(val: str) -> bool:

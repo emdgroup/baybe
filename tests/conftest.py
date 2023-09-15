@@ -6,7 +6,6 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
-
 from baybe.constraints import (
     CustomConstraint,
     DependenciesConstraint,
@@ -24,15 +23,20 @@ from baybe.parameters import (
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
-    SUBSTANCE_ENCODINGS,
-    SubstanceParameter,
 )
+
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.surrogate import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
+
+from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
+
+_CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
+if _CHEM_INSTALLED:
+    from baybe.parameters import SUBSTANCE_ENCODINGS, SubstanceParameter
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
@@ -254,29 +258,37 @@ def fixture_parameters(
                 index=["A", "B", "C"],
             ),
         ),
-        SubstanceParameter(
-            name="Solvent_1",
-            data=mock_substances,
-        ),
-        SubstanceParameter(
-            name="Solvent_2",
-            data=mock_substances,
-            encoding="MORDRED",
-        ),
-        SubstanceParameter(
-            name="Solvent_3",
-            data=mock_substances,
-            encoding="MORDRED",
-        ),
-        *[
-            SubstanceParameter(
-                name=f"Substance_1_{encoding}",
-                data=mock_substances,
-                encoding=encoding,
-            )
-            for encoding in SUBSTANCE_ENCODINGS
-        ],
     ]
+
+    if _CHEM_INSTALLED:
+        valid_parameters += [
+            *[
+                SubstanceParameter(
+                    name=f"Solvent_{k+1}",
+                    data=mock_substances,
+                )
+                for k in range(3)
+            ],
+            *[
+                SubstanceParameter(
+                    name=f"Substance_1_{encoding}",
+                    data=mock_substances,
+                    encoding=encoding,
+                )
+                for encoding in SUBSTANCE_ENCODINGS
+            ],
+        ]
+    else:
+        valid_parameters += [
+            *[
+                CategoricalParameter(
+                    name=f"Solvent_{k+1}",
+                    values=list(mock_substances.keys()),
+                )
+                for k in range(3)
+            ],
+        ]
+
     return [p for p in valid_parameters if p.name in parameter_names]
 
 
@@ -522,13 +534,7 @@ def fixture_default_config():
                 "name": "Concentration",
                 "values": [0.2, 0.3, 1.4]
             },
-            {
-                "type": "SubstanceParameter",
-                "name": "Solvent",
-                "data": {"sol1":"C", "sol2":"CC", "sol3":"CCC"},
-                "decorrelate": true,
-                "encoding": "MORDRED"
-            },
+            __fillin__
             {
                 "type": "CategoricalParameter",
                 "name": "Base",
@@ -555,5 +561,23 @@ def fixture_default_config():
             "allow_recommending_already_measured": false
         }
     }
-    """
+    """.replace(
+        "__fillin__",
+        """
+                {
+                "type": "SubstanceParameter",
+                "name": "Solvent",
+                "data": {"sol1":"C", "sol2":"CC", "sol3":"CCC"},
+                "decorrelate": true,
+                "encoding": "MORDRED"
+            },"""
+        if _CHEM_INSTALLED
+        else """
+                {
+                "type": "CategoricalParameter",
+                "name": "Solvent",
+                "values": ["sol1", "sol2", "sol3"],
+                "encoding": "OHE"
+            },""",
+    )
     return cfg

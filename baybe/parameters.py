@@ -34,13 +34,20 @@ from baybe.utils import (
     get_base_unstructure_hook,
     InfiniteIntervalError,
     Interval,
-    is_valid_smiles,
     SerialMixin,
-    smiles_to_fp_features,
-    smiles_to_mordred_features,
-    smiles_to_rdkit_features,
     unstructure_base,
 )
+from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
+
+if _RDKIT_INSTALLED:
+    from baybe.utils import (
+        is_valid_smiles,
+        smiles_to_fp_features,
+        smiles_to_rdkit_features,
+    )
+
+    if _MORDRED_INSTALLED:
+        from baybe.utils import smiles_to_mordred_features
 
 # TODO[12356]: There should be a better way than registering with the global converter.
 # TODO: Think about what is the best approach to handle field unions. That is, when
@@ -316,7 +323,7 @@ class SubstanceParameter(DiscreteParameter):
         encoding: The encoding of the variable.
     """
 
-    # TODO: Since object variables are not inherited, we need to include it here agian.
+    # TODO: Since object variables are not inherited, we need to include it here again.
     # This might change when moving towards html based documentation.
     # class variables
     is_numeric: ClassVar[bool] = False
@@ -328,11 +335,27 @@ class SubstanceParameter(DiscreteParameter):
     )
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
 
+    @encoding.validator
+    def validate_encoding(self, _, value) -> None:
+        # pylint: disable=missing-function-docstring
+        if value in ["MORDRED"] and not (_MORDRED_INSTALLED and _RDKIT_INSTALLED):
+            raise ImportError(
+                "The mordred/rdkit packages are not installed, a SubstanceParameter "
+                "with MORDRED encoding cannot be used. Consider installing baybe with "
+                "'chem' dependency like 'pip install baybe[chem]'"
+            )
+        if value in ["RDKIT", "MORGAN_FP"] and not _RDKIT_INSTALLED:
+            raise ImportError(
+                "The rdkit package is not installed, a SubstanceParameter with "
+                "RDKIT or MORGAN_FP encoding cannot be used. Consider installing baybe "
+                "with 'chem' dependency like 'pip install baybe[chem]'"
+            )
+
     @data.validator
     def validate_substance_data(self, _, value) -> None:
         # pylint: disable=missing-function-docstring
         for name, smiles in value.items():
-            if not is_valid_smiles(smiles):
+            if _RDKIT_INSTALLED and not is_valid_smiles(smiles):
                 raise ValueError(
                     f"The SMILES '{smiles}' for molecule '{name}' does "
                     f"not appear to be valid."

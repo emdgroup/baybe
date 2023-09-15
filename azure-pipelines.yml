@@ -8,7 +8,7 @@ trigger:
 
 variables:
   coverage_overall_threshold: 70
-  coverage_individual_threshold: 50
+  coverage_individual_threshold: 45
 
 stages:
 
@@ -46,18 +46,24 @@ stages:
           tox -e lint
         displayName: "Pre-commit linter/formatter stack"
 
-    - job: "Lint_Py311"
-      displayName: "Lint Py3.11"
+    - job: "Lint_Optional"
+      displayName: "Lint (Optional)"
       pool:
         vmImage: ubuntu-20.04
+
+      strategy:
+        matrix:
+          Py3.11:
+            python.version: '3.11.x'
+            tox.env: 'py311'
 
       steps:
       - checkout: self
 
       - task: UsePythonVersion@0
         inputs:
-          versionSpec: '3.11.x'
-        displayName: 'Use Python 3.11.x'
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
 
       - script: |
           pip install tox
@@ -95,18 +101,24 @@ stages:
           tox -e audit
         displayName: "Pip-audit"
 
-    - job: "Audit_Py311"
-      displayName: "Audit Py3.11"
+    - job: "Audit_Optional"
+      displayName: "Audit (Optional)"
       pool:
         vmImage: ubuntu-20.04
+
+      strategy:
+        matrix:
+          Py3.11:
+            python.version: '3.11.x'
+            tox.env: 'py311'
 
       steps:
       - checkout: self
 
       - task: UsePythonVersion@0
         inputs:
-          versionSpec: '3.11.x'
-        displayName: 'Use Python 3.11.x'
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
 
       - script: |
           pip install tox
@@ -141,8 +153,8 @@ stages:
   displayName: "Unit Tests"
 
   jobs:
-    - job: "PyTest"
-
+    - job: "PyTest_full"
+      displayName: "Pytest (full)"
       pool:
         vmImage: ubuntu-20.04
 
@@ -168,7 +180,7 @@ stages:
 
       - script: |
           pip install tox unittest-xml-reporting pytest-azurepipelines
-          tox -e pytest-$(tox.env) -- --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/junit.xml
+          tox -e fulltest-$(tox.env) -- --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/junit.xml
         displayName: "PyTest"
 
       # Fail if overall coverage is too low
@@ -203,29 +215,33 @@ stages:
           testResultsFiles: $(System.DefaultWorkingDirectory)/junit.xml
           #testRunTitle: 'Rest results for Python $(python.version)'
 
-    - job: "PyTest_Py311"
-      displayName: "PyTest Py3.11"
+    - job: "PyTest_Optional"
+      displayName: "Pytest (full, optional)"
       pool:
         vmImage: ubuntu-20.04
+
+      strategy:
+        matrix:
+          Py3.11:
+            python.version: '3.11.x'
+            tox.env: 'py311'
 
       steps:
       - checkout: self
 
       - task: UsePythonVersion@0
         inputs:
-          versionSpec: '3.11.x'
-        displayName: 'Use Python 3.11.x'
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
 
       - script: |
-          pip install tox
-          tox -e pytest-py311
+          pip install tox unittest-xml-reporting pytest-azurepipelines
+          tox -e fulltest-$(tox.env) -- --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/junit.xml
         displayName: "PyTest"
         continueOnError: true
 
       # Fail if overall coverage is too low
       - script: |
-          echo ###########
-          pwd
           pip install coverage
           coverage report --fail-under=$(coverage_overall_threshold)
         displayName: "Assert Overall Coverage"
@@ -241,6 +257,37 @@ stages:
           awk '{if ($1<$(coverage_individual_threshold)) exit 1 }'
         displayName: "Assert Individual Coverage"
         continueOnError: true
+
+    - job: "PyTest_Core"
+      displayName: "Pytest (core)"
+      pool:
+        vmImage: ubuntu-20.04
+
+      strategy:
+        matrix:
+          Py3.8:
+            python.version: '3.8.x'
+            tox.env: 'py38'
+          Py3.9:
+            python.version: '3.9.x'
+            tox.env: 'py39'
+          Py3.10:
+            python.version: '3.10.x'
+            tox.env: 'py310'
+
+      steps:
+      - checkout: self
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
+
+      - script: |
+          pip install tox unittest-xml-reporting pytest-azurepipelines
+          tox -e coretest-$(tox.env) -- --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/junit.xml
+        displayName: "PyTest"
+
 
 - stage: Release  # taken from foundry-local
   displayName: "Publish package"

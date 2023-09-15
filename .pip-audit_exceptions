@@ -1,3 +1,0 @@
-# This file collects IDs for exceptions to pip-audit.
-# The purpose is being able to ignore issues that might prove to be more complicated and would otherwise block progress.
-# Ideally this file has no further lines.

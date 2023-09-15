@@ -35,8 +35,17 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-import xyzpy as xyz
-from xarray import DataArray
+
+try:
+    import xyzpy as xyz
+    from xarray import DataArray
+except ImportError as ex:
+    # This is just to augment the error message and provide a suggestion
+    raise ModuleNotFoundError(
+        "xyzpy is not installed, the simulation module is unavailable. Consider "
+        "installing baybe with `simulation` dependency, e.g.`pip install "
+        "baybe[simulation]`"
+    ) from ex
 
 from baybe.core import BayBE
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError

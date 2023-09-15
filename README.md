@@ -75,6 +75,26 @@ plotters etc. (`dev`). A developer would typically also install the package in e
 pip install -e '.[dev]'
 ```
 
+### Optional Dependencies
+There are several dependency groups that can be installed during pip installation like
+```bash
+pip install baybe[test,lint] # will install baybe with additional dependency groups `test` and `lint`
+```
+To get the most out of `baybe` we recommend to install at least
+```bash
+pip install baybe[chem,simulation]
+```
+
+The available groups are:
+- `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
+- `docs`: Required for creating the documentation.
+- `examples`: Required for running the examples/streamlit.
+- `lint`: Required for linting and formatting.
+- `simulation`: Enabling the `simulation` module.
+- `test`: Required for running the tests.
+- `dev`: All of the above plus `tox` and `pip-audit`.
+
+
 ## Getting Started
 
 BayBE is a DOE software built to streamline your experimental process.
