@@ -104,7 +104,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
-        # See base class. pylint: disable=missing-function-docstring
+        # See base class.
+
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
@@ -141,8 +142,8 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
     model_params: dict = field()
 
     @model_params.default
-    def default_model_params(self) -> dict:
-        # pylint: disable=missing-function-docstring
+    def _default_model_params(self) -> dict:
+        """Create the default model parameters."""
         return {"max_iter": 100, "init": "k-medoids++"}
 
     def _make_selection_custom(
@@ -179,8 +180,8 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     model_params: dict = field()
 
     @model_params.default
-    def default_model_params(self) -> dict:
-        # pylint: disable=missing-function-docstring
+    def _default_model_params(self) -> dict:
+        """Create the default model parameters."""
         return {"max_iter": 1000, "n_init": 50}
 
     def _make_selection_custom(
