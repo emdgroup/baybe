@@ -76,11 +76,12 @@ class AdapterModel(Model):
 
     @property
     def num_outputs(self) -> int:
-        # See base class. pylint:disable=missing-function-docstring
+        """Return the number of outputs of the model."""
+        # See base class.
         # TODO: So far, the usage is limited to single-output models.
         return 1
 
-    def posterior(
+    def posterior(  # noqa: D102
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
@@ -88,7 +89,7 @@ class AdapterModel(Model):
         posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
         **kwargs: Any,
     ) -> Posterior:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         mean, var = self._surrogate.posterior(X)
         mvn = gpytorch.distributions.MultivariateNormal(mean, var)
         return GPyTorchPosterior(mvn)
@@ -149,13 +150,19 @@ class PartialAcquisitionFunction:
         full_point = cat((disc_part, cont_part), -1)
         return full_point
 
-    def __call__(self, variable_part):
-        # Lift the point to the hybrid space, then evaluate the acquisition function
-        # in the hybrid space.
+    def __call__(self, variable_part: Tensor) -> Tensor:
+        """Lift the point to the hybrid space and evaluate the acquisition function.
+
+        Args:
+            variable_part: The part that should be lifted.
+
+        Returns:
+            The evaluation of the lifted point in the full hybrid space.
+        """
         full_point = self._lift_partial_part(variable_part)
         return self.acqf(full_point)
 
-    def __getattr__(self, item):
+    def __getattr__(self, item):  # noqa: D105
         return getattr(self.acqf, item)
 
     def set_X_pending(self, X_pending: Optional[Tensor]):  # pylint: disable=C0103
