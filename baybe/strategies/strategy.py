@@ -14,7 +14,18 @@ from baybe.utils import SerialMixin
 
 @define
 class Strategy(SerialMixin):
-    """Abstract base class for all DOE strategies."""
+    """Abstract base class for all DOE strategies.
+
+    Args:
+        initial_recommender: The initial recommender used by the strategy.
+        recommender: The recommender used by the strategy.
+        allow_repeated_recommendations: Allow to make recommendations that were
+            already recommended earlier. This only has an influence in discrete
+            search spaces.
+        allow_recommending_already_measured: Allow to output recommendations that
+            were measured previously. This only has an influence in discrete
+            search spaces.
+    """
 
     initial_recommender: Recommender = field(factory=RandomRecommender)
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
