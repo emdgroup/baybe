@@ -13,15 +13,37 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils import get_base_unstructure_hook, unstructure_base
 
 
-def select_candidates_and_recommend(
+def _select_candidates_and_recommend(
     searchspace: SearchSpace,
     recommend: Callable[[SearchSpace, pd.DataFrame, int], pd.Index],
     batch_quantity: int = 1,
     allow_repeated_recommendations: bool = False,
     allow_recommending_already_measured: bool = True,
 ) -> pd.DataFrame:
-    # TODO [16954] Make this private pylint: disable=missing-function-docstring
-    # TODO: See if the there is a more elegant way to share this functionality
+    """Select candidates in a discrete search space and recommend them.
+
+    This function is a workaround as this functionality is required for all purely
+    discrete recommenders and avoids the introduction of complicate class hierarchies.
+    It is also used to select candidates in the discrete part of hybrid search spaces,
+    ignoring the continuous part.
+
+    Args:
+        searchspace: The search space.
+        recommend: The Callable representing the recommendation function.
+        batch_quantity: The chosen batch quantity.
+        allow_repeated_recommendations: Allow to make recommendations that were already
+            recommended earlier.
+        allow_recommending_already_measured: Allow to output recommendations that were
+            measured previously.
+
+    Returns:
+        The recommendation in experimental representation.
+
+    Raises:
+        NotEnoughPointsLeftError: If there are fewer than ```batch_quantity``` points
+            left for potentail recommendation.
+    """
+    # IMPROVE: See if the there is a more elegant way to share this functionality
     #   among all purely discrete recommenders (without introducing complicates class
     #   hierarchies).
 
@@ -98,7 +120,7 @@ class Recommender(ABC):
 class NonPredictiveRecommender(Recommender, ABC):
     """Abstract base class for recommenders that are non-predictive."""
 
-    def recommend(
+    def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -107,10 +129,10 @@ class NonPredictiveRecommender(Recommender, ABC):
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
-        # See base class. pylint: disable=missing-function-docstring
+        # See base class.
 
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return select_candidates_and_recommend(
+            return _select_candidates_and_recommend(
                 searchspace,
                 self._recommend_discrete,
                 batch_quantity,
