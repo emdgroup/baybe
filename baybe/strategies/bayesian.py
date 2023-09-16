@@ -1,7 +1,7 @@
 """Different recommendation strategies that are based on Bayesian optimization."""
 from abc import ABC
 from functools import partial
-from typing import Callable, ClassVar, Literal, Optional
+from typing import Any, Callable, ClassVar, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -23,21 +23,12 @@ from baybe.acquisition import debotorchize, PartialAcquisitionFunction
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.strategies.recommender import (
+    _select_candidates_and_recommend,
     NonPredictiveRecommender,
     Recommender,
-    select_candidates_and_recommend,
 )
 from baybe.surrogate import GaussianProcessSurrogate, Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
-
-
-def validate_percentage(obj, _, value):
-    # TODO [16954] Make this private pylint: disable=missing-function-docstring
-    if not 0 <= value <= 1:
-        raise ValueError(
-            f"Percentage for {obj.__class__.__name__} needs to be between 0 and 1 but "
-            f"is {value}"
-        )
 
 
 @define
@@ -54,11 +45,14 @@ class BayesianRecommender(Recommender, ABC):
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
     ] = field(default="qEI")
 
-    def get_acquisition_function_cls(
+    def _get_acquisition_function_cls(
         self,
-    ):
-        # TODO [16954] Make this private pylint: disable=missing-function-docstring
+    ) -> Callable:
+        """Get the actual acquisition function class.
 
+        Returns:
+            The debotorchized acquisition function class.
+        """
         mapping = {
             "PM": PosteriorMean,
             "PI": ProbabilityOfImprovement,
@@ -90,7 +84,7 @@ class BayesianRecommender(Recommender, ABC):
         """
         best_f = train_y.max()
         surrogate_model = self._fit(searchspace, train_x, train_y)
-        acquisition_function_cls = self.get_acquisition_function_cls()
+        acquisition_function_cls = self._get_acquisition_function_cls()
         return acquisition_function_cls(surrogate_model, best_f)
 
     def _fit(
@@ -120,7 +114,7 @@ class BayesianRecommender(Recommender, ABC):
 
         return self.surrogate_model
 
-    def recommend(
+    def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -134,7 +128,7 @@ class BayesianRecommender(Recommender, ABC):
         acqf = self.setup_acquisition_function(searchspace, train_x, train_y)
 
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return select_candidates_and_recommend(
+            return _select_candidates_and_recommend(
                 searchspace,
                 partial(self._recommend_discrete, acqf),
                 batch_quantity,
@@ -247,9 +241,16 @@ class SequentialGreedyRecommender(BayesianRecommender):
     hybrid_sampler: str = field(
         validator=validators.in_(["None", "Farthest", "Random"]), default="None"
     )
-    sampling_percentage: float = field(
-        validator=[validators.instance_of(float), validate_percentage], default=1.0
-    )
+    sampling_percentage: float = field(default=1.0)
+
+    @sampling_percentage.validator
+    def _validate_percentage(self, _: Any, value: float) -> None:
+        """Validate that the given value is in fact a percentage."""
+        # Raises a ValueError if value is not between 0 and 1.
+        if not 0 <= value <= 1:
+            raise ValueError(
+                f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
+            )
 
     def _recommend_discrete(
         self,
@@ -259,6 +260,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         batch_quantity: int,
     ) -> pd.Index:
         # See base class.
+
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
         try:
@@ -450,7 +452,7 @@ class NaiveHybridRecommender(Recommender):
     disc_recommender: Recommender = field(factory=SequentialGreedyRecommender)
     cont_recommender: BayesianRecommender = field(factory=SequentialGreedyRecommender)
 
-    def recommend(
+    def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
