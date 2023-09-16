@@ -150,6 +150,7 @@ disable = [
     "wrong-import-order",  # handled by ufmt
     "import-error",  # otherwise linting can only succeed in full dev environment
 	]
+no-docstring-rgx = "__.*__"
 
 [tool.pylint.BASIC]
 good-names=["i", "j", "k", "x", "y", "ex", "df", "fh"] # allow these variable names
