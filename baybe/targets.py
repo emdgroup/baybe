@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import List, Literal, Optional
+from typing import Any, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -102,8 +102,13 @@ class NumericalTarget(Target, SerialMixin):
     bounds_transform_func: Optional[str] = field()
 
     @bounds_transform_func.default
-    def default_bounds_transform_func(self) -> Optional[str]:
-        # pylint: disable=missing-function-docstring
+    def _default_bounds_transform_func(self) -> Optional[str]:
+        """Create the default bounds transform function.
+
+        Returns:
+            The default bounds transform function if ```self``` is bounded. Otherwise
+            ```None```.
+        """
         if self.bounds.is_bounded:
             fun = _VALID_TRANSFORMS[self.mode][0]
             _logger.warning(
@@ -117,11 +122,22 @@ class NumericalTarget(Target, SerialMixin):
         return None
 
     @bounds.validator
-    def validate_bounds(self, _, value: Interval):
-        # Currently, either no bounds or completely finite bounds are supported.
+    def _validate_bounds(self, _: Any, value: Interval) -> None:
+        """Validate the bounds.
+
+        Currently, either no bounds or completely finite bounds are supported.
+
+        Args:
+            _: The attribute that is being validated. Ignored.
+            value: The bounds that should be validated.
+
+        Raises:
+            ValueError: If the bounds are finite on one and infinite on the other end.
+            ValueError: If the target is in ```MATCH``` mode but the provided bounds
+                are not finite.
+        """
         # IMPROVE: We could also include half-way bounds, which however don't work
         # for the desirability approach
-        # pylint: disable=missing-function-docstring
         if not (value.is_finite or not value.is_bounded):
             raise ValueError("Bounds must either be finite or infinite on *both* ends.")
 
@@ -132,10 +148,17 @@ class NumericalTarget(Target, SerialMixin):
             )
 
     @bounds_transform_func.validator
-    def validate_bounds_transform_func(self, _, value):
-        # Validates that the given transform is compatible with the specified mode.
-        # pylint: disable=missing-function-docstring
+    def _validate_bounds_transform_func(self, _: Any, value: str) -> None:
+        """Validate that the given transform is compatible with the specified mode.
 
+        Args:
+            _: The attribute that is being validated. Ignored.
+            value: The given transform.
+
+        Raises:
+            ValueError: If the specified bound transform function and the target mode
+                are not compatible.
+        """
         # Assert that the given transform is valid for the specified target mode
         if (value is not None) and (value not in _VALID_TRANSFORMS[self.mode]):
             raise ValueError(
@@ -145,8 +168,8 @@ class NumericalTarget(Target, SerialMixin):
                 f"of {_VALID_TRANSFORMS[self.mode]}."
             )
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        # See base class. pylint: disable=missing-function-docstring
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+        # See base class.
 
         transformed = data.copy()
 
@@ -203,16 +226,30 @@ class Objective(SerialMixin):
     )
 
     @weights.default
-    def default_weights(self) -> List[float]:
-        # By default, all targets are equally important.
-        # pylint: disable=missing-function-docstring
+    def _default_weights(self) -> List[float]:
+        """Create the default weights.
+
+        By default, all targets are equally important.
+
+        Returns:
+            A list of identical weights, each being 1.0.
+        """
         return [1.0] * len(self.targets)
 
     @targets.validator
-    def validate_targets(self, _, targets: List[NumericalTarget]):
-        # Validates targets depending on the objective mode.
-        # pylint: disable=missing-function-docstring
+    def _validate_targets(self, _: Any, targets: List[NumericalTarget]) -> None:
+        """Validate targets depending on the objective mode.
 
+        Args:
+            _: _: The attribute that is being validated. Ignored.
+            targets: The list of targets that should be validated.
+
+        Raises:
+            ValueError: If multiple targets are specified when using objective mode
+                ```SINGLE```.
+            ValueError: If there are unbounded targets when using objective mode
+                ```DESIRABILITY```.
+        """
         # Validate the target specification
         if (self.mode == "SINGLE") and (len(targets) != 1):
             raise ValueError(
@@ -226,9 +263,18 @@ class Objective(SerialMixin):
                 )
 
     @weights.validator
-    def validate_weights(self, _, weights):
-        # Validates target weights.
-        # pylint: disable=missing-function-docstring
+    def _validate_weights(self, _: Any, weights: List[Union[int, float]]) -> None:
+        """Validate target weights.
+
+        Args:
+            _: The attribute that is being validated. Ignored.
+            weights: The list of the weights to be validated.
+
+        Raises:
+            ValueError: If the number of weights and the number of targets differ.
+
+        TODO: Check if the type hint is correct.
+        """
         if weights is None:
             return
 
