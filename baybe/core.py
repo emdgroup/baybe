@@ -38,27 +38,27 @@ from baybe.utils import eq_dataframe, SerialMixin
 #   parameter and constraint hooks/converters.
 
 
-def structure_dataframe_hook(string: str, _) -> pd.DataFrame:
-    # pylint: disable=missing-function-docstring
+def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
+    """Hook for de-serializing a DataFrame."""
     buffer = BytesIO()
     buffer.write(base64.b64decode(string.encode("utf-8")))
     return pd.read_parquet(buffer)
 
 
-def unstructure_dataframe_hook(df: pd.DataFrame) -> str:
-    # pylint: disable=missing-function-docstring
+def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
+    """Hook for serializing a DataFrame."""
     return base64.b64encode(df.to_parquet()).decode("utf-8")
 
 
-cattrs.register_unstructure_hook(pd.DataFrame, unstructure_dataframe_hook)
-cattrs.register_structure_hook(pd.DataFrame, structure_dataframe_hook)
+cattrs.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
+cattrs.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
 
 
-def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
+def _searchspace_creation_hook(specs: dict, _) -> SearchSpace:
+    """A structuring hook that assembles the search space."""
     # A structuring hook that assembles the search space using the alternative `create`
     # constructor, which allows to deserialize search space specifications that are
     # provided in a user-friendly format (i.e. via parameters and constraints).
-    # pylint: disable=missing-function-docstring
     # IMPROVE: Instead of defining the partial structurings here in the hook,
     #   on *could* use a dedicated "BayBEConfig" class
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
@@ -68,12 +68,12 @@ def searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     return SearchSpace.from_product(parameters, constraints)
 
 
-def searchspace_validation_hook(specs: dict, _) -> None:
+def _searchspace_validation_hook(specs: dict, _) -> None:
+    """A validation hook that does not create the search space."""
     # Similar to `searchspace_creation_hook` but without the actual search space
     # creation step, thus intended for validation purposes only. Additionally,
     # explicitly asserts uniqueness of parameter names, since duplicates would only be
     # noticed during search space creation.
-    # pylint: disable=missing-function-docstring
     parameters = cattrs.structure(specs["parameters"], List[Parameter])
     _validate_parameters(parameters)
 
@@ -84,10 +84,10 @@ def searchspace_validation_hook(specs: dict, _) -> None:
 
 
 _config_converter = cattrs.global_converter.copy()
-_config_converter.register_structure_hook(SearchSpace, searchspace_creation_hook)
+_config_converter.register_structure_hook(SearchSpace, _searchspace_creation_hook)
 
 _validation_converter = cattrs.global_converter.copy()
-_validation_converter.register_structure_hook(SearchSpace, searchspace_validation_hook)
+_validation_converter.register_structure_hook(SearchSpace, _searchspace_validation_hook)
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
