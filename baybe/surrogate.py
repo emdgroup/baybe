@@ -407,6 +407,8 @@ class Surrogate(ABC, SerialMixin):
             train_y: The training data labels.
 
         Raises:
+            ValueError: If the search space contains task parameters but the selected
+                surrogate model type does not support transfer learning.
             NotImplementedError: When using a continuous search space and a non-GP
                 model.
         """
@@ -465,12 +467,12 @@ class GaussianProcessSurrogate(Surrogate):
     _model: Optional[SingleTaskGP] = field(init=False, default=None)
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         posterior = self._model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
 
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
@@ -597,14 +599,14 @@ class MeanPredictionSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         # TODO: use target value bounds for covariance scaling when explicitly provided
         mean = self.target_value * torch.ones([len(candidates)])
         var = torch.ones(len(candidates))
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         self.target_value = train_y.mean().item()
 
 
@@ -633,7 +635,7 @@ class RandomForestSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
 
         # Evaluate all trees
         # NOTE: explicit conversion to ndarray is needed due to a pytorch issue:
@@ -655,7 +657,7 @@ class RandomForestSurrogate(Surrogate):
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
 
@@ -730,7 +732,7 @@ class BayesianLinearSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         # Get predictions
         dists = self._model.predict(candidates.numpy(), return_std=True)
 
@@ -741,14 +743,13 @@ class BayesianLinearSurrogate(Surrogate):
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
 
 
-def remove_model(raw_unstructure_hook):
-    # Removes the model in a surrogate for serialization.
-    # pylint: disable=missing-function-docstring
+def _remove_model(raw_unstructure_hook):
+    """Removes the model in a surrogate for serialization."""
     # TODO: No longer required once the following feature is released:
     #   https://github.com/python-attrs/cattrs/issues/40
 
@@ -762,9 +763,8 @@ def remove_model(raw_unstructure_hook):
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def structure_surrogate(val, _):
-    # Structures a surrogate model.
-    # pylint: disable=missing-function-docstring
+def _structure_surrogate(val, _):
+    """Structures a surrogate model."""
     # TODO [15436]
     # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
 
@@ -811,8 +811,8 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
 
 # Register (un-)structure hooks
-cattrs.register_unstructure_hook(Surrogate, remove_model(unstructure_base))
-cattrs.register_structure_hook(Surrogate, structure_surrogate)
+cattrs.register_unstructure_hook(Surrogate, _remove_model(unstructure_base))
+cattrs.register_structure_hook(Surrogate, _structure_surrogate)
 
 # Related to [15436]
 gc.collect()
