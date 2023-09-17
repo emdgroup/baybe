@@ -93,8 +93,10 @@ class DefaultScaler(Scaler):
 
     type = "DEFAULT"
 
-    def fit_transform(self, x: Tensor, y: Tensor) -> Tuple[Tensor, Tensor]:
-        # See base class. pylint:disable=missing-function-docstring
+    def fit_transform(  # noqa: D102
+        self, x: Tensor, y: Tensor
+    ) -> Tuple[Tensor, Tensor]:
+        # See base class.
 
         # Get the searchspace boundaries
         searchspace = to_tensor(self.searchspace)
