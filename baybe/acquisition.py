@@ -70,13 +70,11 @@ class AdapterModel(Model):
     """
 
     def __init__(self, surrogate: Surrogate):
-        # pylint: disable=missing-function-docstring
         super().__init__()
         self._surrogate = surrogate
 
     @property
-    def num_outputs(self) -> int:
-        """Return the number of outputs of the model."""
+    def num_outputs(self) -> int:  # noqa: D102
         # See base class.
         # TODO: So far, the usage is limited to single-output models.
         return 1
@@ -162,7 +160,7 @@ class PartialAcquisitionFunction:
         full_point = self._lift_partial_part(variable_part)
         return self.acqf(full_point)
 
-    def __getattr__(self, item):  # noqa: D105
+    def __getattr__(self, item):
         return getattr(self.acqf, item)
 
     def set_X_pending(self, X_pending: Optional[Tensor]):  # pylint: disable=C0103
