@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, List, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -263,7 +263,7 @@ class Objective(SerialMixin):
                 )
 
     @weights.validator
-    def _validate_weights(self, _: Any, weights: List[Union[int, float]]) -> None:
+    def _validate_weights(self, _: Any, weights: List[float]) -> None:
         """Validate target weights.
 
         Args:
@@ -272,14 +272,12 @@ class Objective(SerialMixin):
 
         Raises:
             ValueError: If the number of weights and the number of targets differ.
-
-        TODO: Check if the type hint is correct.
         """
         if weights is None:
             return
 
         # Assert that weights is a list of numbers
-        validator = deep_iterable(instance_of((int, float)), instance_of(list))
+        validator = deep_iterable(instance_of(float), instance_of(list))
         validator(self, _, weights)
 
         # Assert that weights has the correct length
