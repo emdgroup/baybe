@@ -70,6 +70,7 @@ docs = [
 examples = [
     "matplotlib>=3.7.3",
     "openpyxl>=3.0.9",
+    "pillow>=10.0.1", # Necessary due to vulnerability
     "plotly>=5.10.0",
     "seaborn>=0.12.2",
     "streamlit>=1.20.0",
