@@ -69,18 +69,17 @@ cattrs.register_structure_hook(Union[bool, float], lambda x, _: x)
 # TODO: Introduce encoding enums
 
 
-def validate_decorrelation(obj, attribute, value) -> None:
-    # Validation function which thus does not require a docstring.
-    # pylint:disable=missing-function-docstring
+def _validate_decorrelation(obj: Any, attribute: Any, value: float) -> None:
+    """Validate the decorrelation."""
     instance_of((bool, float))(obj, attribute, value)
     if isinstance(value, float):
         gt(0.0)(obj, attribute, value)
         lt(1.0)(obj, attribute, value)
 
 
-def validate_unique_values(obj, _, value) -> None:
-    # Validation function which thus does not require a docstring.
-    # pylint:disable=missing-function-docstring
+def _validate_unique_values(obj: Any, _: Any, value: list) -> None:
+    """Validate that there are no duplicates in ```value```."""
+    # Raises a ValueError if therer are duplicates in ```value```.
     if len(set(value)) != len(value):
         raise ValueError(
             f"Cannot assign the following values containing duplicates to "
@@ -146,8 +145,8 @@ class DiscreteParameter(Parameter, ABC):
     def comp_df(self) -> pd.DataFrame:
         """Return the computational representation of the parameter."""
 
-    def is_in_range(self, item: Any) -> bool:
-        # See base class. pylint: disable=missing-function-docstring
+    def is_in_range(self, item: Any) -> bool:  # noqa: D102
+        # See base class.
         return item in self.values
 
     def transform_rep_exp2comp(self, data: pd.Series) -> pd.DataFrame:
@@ -192,7 +191,7 @@ class CategoricalParameter(DiscreteParameter):
 
     # object variables
     _values: list = field(
-        converter=list, validator=[min_len(2), validate_unique_values]
+        converter=list, validator=[min_len(2), _validate_unique_values]
     )
     encoding: Literal["OHE", "INT"] = field(default="OHE")
 
@@ -202,7 +201,7 @@ class CategoricalParameter(DiscreteParameter):
         return self._values
 
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
+    def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
         if self.encoding == "OHE":
             cols = [f"{self.name}_{val}" for val in self.values]
@@ -234,24 +233,25 @@ class NumericalDiscreteParameter(DiscreteParameter):
         validator=[
             deep_iterable(instance_of((int, float)), instance_of(list)),
             min_len(2),
-            validate_unique_values,
+            _validate_unique_values,
         ],
     )
     tolerance: float = field(default=0.0)
 
     @tolerance.validator
-    def validate_tolerance(self, _, tolerance) -> None:
-        # Validate that the tolerance is safe.
+    def _validate_tolerance(self, _: Any, tolerance: float) -> None:
+        """Validate that the given tolerance is safe."""
         # The tolerance is the allowed experimental uncertainty when
         # reading in measured values. A tolerance larger than half the minimum
         # pdistance between parameter values is not allowed because that could cause
         # ambiguity when inputting data points later.
-        # pylint:disable=missing-function-docstring
+
         # NOTE: computing all pairwise distances can be avoided if we ensure that the
         #   values are ordered (which is currently not the case)
         dists = pdist(np.asarray(self.values).reshape(-1, 1))
         max_tol = dists.min() / 2.0
 
+        # Raises a ValueError: If the tolerance is not safe.
         if tolerance >= max_tol:
             raise ValueError(
                 f"Parameter {self.name} is initialized with tolerance "
@@ -260,18 +260,18 @@ class NumericalDiscreteParameter(DiscreteParameter):
             )
 
     @property
-    def values(self) -> list:
-        # See base class. pylint:disable=missing-function-docstring
+    def values(self) -> list:  # noqa: D102
+        # See base class.
         return self._values
 
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
-        # See base class. pylint:disable=missing-function-docstring
+    def comp_df(self) -> pd.DataFrame:  # noqa: D102
+        # See base class.
         comp_df = pd.DataFrame({self.name: self.values}, index=self.values)
         return comp_df
 
-    def is_in_range(self, item: float) -> bool:
-        # See base class. pylint:disable=missing-function-docstring
+    def is_in_range(self, item: float) -> bool:  # noqa: D102
+        # See base class.
         differences_acceptable = [
             np.abs(val - item) <= self.tolerance for val in self.values
         ]
@@ -294,8 +294,9 @@ class NumericalContinuousParameter(Parameter):
     bounds: Interval = field(default=None, converter=convert_bounds)
 
     @bounds.validator
-    def validate_bounds(self, _, value: Interval) -> None:
-        # pylint:disable=missing-function-docstring
+    def _validate_bounds(self, _: Any, value: Interval) -> None:
+        """Validate that the provided bounds are finite."""
+        # Raises an InfiniteIntervalError if the provided interval is not finite.
         if not value.is_finite:
             raise InfiniteIntervalError(
                 f"You are trying to initialize a parameter with an infinite interval "
@@ -303,8 +304,8 @@ class NumericalContinuousParameter(Parameter):
                 f"currently not supported."
             )
 
-    def is_in_range(self, item: float) -> bool:
-        # See base class. pylint:disable=missing-function-docstring
+    def is_in_range(self, item: float) -> bool:  # noqa: D102
+        # See base class.
 
         return self.bounds.contains(item)
 
@@ -331,13 +332,20 @@ class SubstanceParameter(DiscreteParameter):
     # object variables
     data: Dict[str, str] = field()
     decorrelate: Union[bool, float] = field(
-        default=True, validator=validate_decorrelation
+        default=True, validator=_validate_decorrelation
     )
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
 
     @encoding.validator
-    def validate_encoding(self, _, value) -> None:
-        # pylint: disable=missing-function-docstring
+    def _validate_encoding(self, _: Any, value: str) -> None:
+        """Validate that the chosen encoding can be used."""
+        # This validation is necessary since certain encodings are only useable when
+        # additional dependencies, in particular the ```chem``` dependency, have been
+        # installed.
+
+        # Raises an ImportError if the ```chem``` dependency was not installed but an
+        # encoding requiring this dependency is being used.
+
         if value in ["MORDRED"] and not (_MORDRED_INSTALLED and _RDKIT_INSTALLED):
             raise ImportError(
                 "The mordred/rdkit packages are not installed, a SubstanceParameter "
@@ -352,8 +360,9 @@ class SubstanceParameter(DiscreteParameter):
             )
 
     @data.validator
-    def validate_substance_data(self, _, value) -> None:
-        # pylint: disable=missing-function-docstring
+    def _validate_substance_data(self, _: Any, value: Dict[str, str]) -> None:
+        """Validate that the substance data, provided as SMIELS, is valid."""
+        # Raises a ValueError if one of the smiles does not appear to be valid.
         for name, smiles in value.items():
             if _RDKIT_INSTALLED and not is_valid_smiles(smiles):
                 raise ValueError(
@@ -369,9 +378,8 @@ class SubstanceParameter(DiscreteParameter):
         return list(self.data.keys())
 
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
+    def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
-        # pylint: disable=missing-function-docstring
         vals = list(self.data.values())
         pref = self.name + "_"
 
@@ -435,19 +443,23 @@ class TaskParameter(CategoricalParameter):
     )
 
     @active_values.validator
-    def validate_active_values(self, _, values):
+    def _validate_active_values(self, _: Any, values: list) -> None:
+        """Validate the active parameter values."""
         # TODO [16605]: Redesign metadata handling
-        # TODO [16954]: Make private; pylint:disable=missing-function-docstring
         if values is None:
             return
+        # Raises a ValueError if no active parameter is provided.
         if len(values) == 0:
             raise ValueError("At least one active parameter value is required.")
+        # Raises a ValueError if te active parameter values are not unique.
         if len(set(values)) != len(values):
             raise ValueError("The active parameter values must be unique.")
+        # Raises a ValueError if not all pactive values are valid parameter choise.
         if not all(v in self.values for v in values):
             raise ValueError("All active values must be valid parameter choices.")
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
+        """Set the ```active_values``` attribute to ```self.values```."""
         # TODO [16605]: Redesign metadata handling
         if self.active_values is None:
             object.__setattr__(self, "active_values", self.values)
@@ -472,32 +484,34 @@ class CustomDiscreteParameter(DiscreteParameter):
     # object variables
     data: pd.DataFrame = field(eq=eq_dataframe)
     decorrelate: Union[bool, float] = field(
-        default=True, validator=validate_decorrelation
+        default=True, validator=_validate_decorrelation
     )
     encoding = field(default="CUSTOM")
 
     @data.validator
-    def validate_custom_data(self, _, value) -> None:
-        # Validates the dataframe with the custom representation.
-        # TODO [16954] Make private. pylint: disable=missing-function-docstring
+    def _validate_custom_data(self, _: Any, value: pd.DataFrame) -> None:
+        """Validate the dataframe with the custom representation."""
+        # Raises a ValueError if the dataframe contains NaN.
         if value.isna().any().any():
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains NaN "
                 f"entries, which is not supported."
             )
+        # Raises a ValueError if the dataframe contains duplicated indices.
         if len(value) != len(set(value.index)):
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains "
                 f"duplicated indices. Please only provide dataframes with unique"
                 f" indices."
             )
-
+        # Raises a ValueError if the dataframe contains non-numeric values.
         if value.select_dtypes("number").shape[1] != value.shape[1]:
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains "
                 f"non-numeric values."
             )
-
+        # Raises a ValueError if the dataframe contains columns that only contain a
+        # single value.
         if any(value.nunique() == 1):
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} has columns "
@@ -510,8 +524,8 @@ class CustomDiscreteParameter(DiscreteParameter):
         return self.data.index.to_list()
 
     @cached_property
-    def comp_df(self) -> pd.DataFrame:
-        # See base class. pylint: disable=missing-function-docstring
+    def comp_df(self) -> pd.DataFrame:  # noqa: D102
+        # See base class.
         # The encoding is directly provided by the user
         comp_df = self.data
 
@@ -565,8 +579,9 @@ def parameter_cartesian_prod_to_df(
 #     https://***REMOVED***/_workitems/edit/12356/
 
 
-def remove_values_underscore(raw_unstructure_hook):
-    # pylint:disable=missing-function-docstring
+def _remove_values_underscore(raw_unstructure_hook):
+    """Replace the ```_values``` field with ```values```."""
+
     def wrapper(obj):
         dict_ = raw_unstructure_hook(obj)
         try:
@@ -578,8 +593,9 @@ def remove_values_underscore(raw_unstructure_hook):
     return wrapper
 
 
-def add_values_underscore(raw_structure_hook):
-    # pylint:disable=missing-function-docstring
+def _add_values_underscore(raw_structure_hook):
+    """Replace the ```values``` field with ```_values```."""
+
     def wrapper(dict_, _):
         try:
             dict_["_values"] = dict_.pop("values")
@@ -593,40 +609,27 @@ def add_values_underscore(raw_structure_hook):
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # Register (un-)structure hooks
-unstructure_hook = remove_values_underscore(unstructure_base)
-structure_hook = add_values_underscore(get_base_unstructure_hook(Parameter))
+unstructure_hook = _remove_values_underscore(unstructure_base)
+structure_hook = _add_values_underscore(get_base_unstructure_hook(Parameter))
 cattrs.register_unstructure_hook(Parameter, unstructure_hook)
 cattrs.register_structure_hook(Parameter, structure_hook)
 
 
 def _validate_parameter_names(parameters: List[Parameter]) -> None:
-    """Assert that a given collection of parameters has unique names.
-
-    Args:
-        parameters: List of Parameter objects.
-
-    Raises:
-        ValueError: If the given list contains parameters with the same name.
-    """
+    """Assert that a given collection of parameters has unique names."""
+    # Raises a ValueError if the given list contains parameters with the same name.
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
         raise ValueError("All parameters must have unique names.")
 
 
 def _validate_parameters(parameters: List[Parameter]) -> None:
-    """Assert that a given collection of parameters is valid.
-
-    Args:
-        parameters: List of Parameter objects.
-
-    Raises:
-        ValueError: If the given list of parameters is invalid.
-    """
-    # Assert: non-empty parameter list
+    """Assert that a given collection of parameters is valid."""
+    # Raises an EmptySpaceError if the parameter list is empty.
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
 
-    # Assert: at most one task parameter
+    # Raises a NotImplementedError if more than one TaskParameter is requested.
     # TODO [16932]: Remove once more task parameters are supported
     if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
         raise NotImplementedError(

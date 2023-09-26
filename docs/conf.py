@@ -131,6 +131,6 @@ autodoc_typehints_description_target = "documented_params"
 
 
 # Magic function doing magic stuff
-def setup(app):
+def setup(app):  # noqa: D103
     # We initialize all available surrogates once as this sets their name
     get_available_surrogates()

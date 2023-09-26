@@ -3,7 +3,7 @@
 #  https://github.com/python-attrs/cattrs/issues/354
 
 from enum import Enum
-from typing import cast, Dict, List, Optional, Tuple
+from typing import Any, cast, Dict, List, Optional, Tuple
 
 import cattrs
 import numpy as np
@@ -81,23 +81,24 @@ class SubspaceDiscrete:
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
     @exp_rep.validator
-    def validate_exp_rep(self, attribute, exp_rep: pd.DataFrame) -> None:
-        # TODO [16954] Make private; pylint:disable=missing-function-docstring
+    def _validate_exp_rep(self, _: Any, exp_rep: pd.DataFrame) -> None:
+        """Validate the experimental representation."""
+        # Raises a ValueError if the index of the provided dataframe contains duplicates
         if exp_rep.index.has_duplicates:
             raise ValueError(
-                f"The index of {attribute.name} contains duplicates. "
-                f"This is not allowed, as it can lead to hard-to-detect bugs."
+                "The index of this search space contains duplicates. "
+                "This is not allowed, as it can lead to hard-to-detect bugs."
             )
 
     @metadata.default
-    def default_metadata(self) -> pd.DataFrame:
-        # TODO: verify if this is still required
+    def _default_metadata(self) -> pd.DataFrame:
+        """Create the default metadata."""
         # If the discrete search space is empty, explicitly return an empty dataframe
         # instead of simply using a zero-length index. Otherwise, the boolean dtype
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
-        # TODO [16954] Make private; pylint:disable=missing-function-docstring
+        # TODO: verify if this is still required
         if self.is_empty:
             return pd.DataFrame(columns=_METADATA_COLUMNS)
 
@@ -109,9 +110,10 @@ class SubspaceDiscrete:
         return df
 
     @metadata.validator
-    def validate_metadata(self, _, metadata: pd.DataFrame) -> None:
-        # Validate that the metadata is compatible with inactive tasks
-        # TODO [16954] Make private; pylint:disable=missing-function-docstring
+    def _validate_metadata(self, _: Any, metadata: pd.DataFrame) -> None:
+        """Validate that the metadata is compatible with inactive tasks."""
+        # Raises a ValueError if the provided metadata allows testing parameter
+        # configurations for inactive tasks.
         off_task_idxs = ~self._on_task_configurations()
         if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
             raise ValueError(
@@ -120,10 +122,8 @@ class SubspaceDiscrete:
             )
 
     @comp_rep.default
-    def default_comp_rep(self) -> pd.DataFrame:
-        # Derives the computational search space representation from the experimental
-        # one if not explicitly passed to the constructor.
-        # pylint:disable=missing-function-docstring
+    def _default_comp_rep(self) -> pd.DataFrame:
+        """Create the default computational representation."""
         # Create a dataframe containing the computational parameter representation
         comp_rep = self.transform(self.exp_rep)
 
@@ -134,8 +134,7 @@ class SubspaceDiscrete:
 
         return comp_rep
 
-    def __attrs_post_init__(self):
-        # Exclude inactive tasks from search
+    def __attrs_post_init__(self) -> None:
         # TODO [16605]: Redesign metadata handling
         off_task_idxs = ~self._on_task_configurations()
         self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True
@@ -539,7 +538,7 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
 
     def __attrs_post_init__(self):
-        # pylint: disable=missing-function-docstring
+        """Validate parameters and record telemetry values."""
         _validate_parameters(self.parameters)
         _validate_constraints(self.discrete.constraints)
 
@@ -707,9 +706,9 @@ class SearchSpace(SerialMixin):
 #   https://github.com/python-attrs/cattrs/issues/40
 
 
-def structure_hook(dict_, type_):
-    # pylint: disable=missing-function-docstring
+def _structure_hook(dict_, type_):
+    """Structuring hook for SubspaceDiscrete."""
     return cattrs.structure_attrs_fromdict(dict_, type_)
 
 
-cattrs.register_structure_hook(SubspaceDiscrete, structure_hook)
+cattrs.register_structure_hook(SubspaceDiscrete, _structure_hook)

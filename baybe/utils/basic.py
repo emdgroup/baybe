@@ -19,6 +19,7 @@ class Dummy:
     """
 
     def __repr__(self):
+        """Return a representation of the placeholder."""
         return "<dummy>"
 
 

@@ -23,6 +23,8 @@ class RandomRecommender(NonPredictiveRecommender):
         batch_quantity: int,
         candidates_comp: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
+        # See base class.
+
         if searchspace.type == SearchSpaceType.DISCRETE:
             if candidates_comp is None:
                 raise TypeError(
@@ -54,7 +56,8 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
-        # See base class. pylint: disable=missing-function-docstring
+        # See base class.
+
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()

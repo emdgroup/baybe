@@ -91,21 +91,22 @@ class ThresholdCondition(Condition):
     tolerance: Optional[float] = field()
 
     @tolerance.default
-    def tolerance_default(self) -> Union[float, None]:
+    def _tolerance_default(self) -> Union[float, None]:
+        """Create the default value for the tolerance."""
         # Default value for the tolerance.
-        # pylint: disable=missing-function-docstring
         return 1e-8 if self.operator in _valid_tolerance_operators else None
 
     @tolerance.validator
-    def tolerance_validation(self, _, value) -> None:
-        # Validates the threshold condition tolerance.
-        # pylint: disable=missing-function-docstring
+    def _tolerance_validation(self, _: Any, value: float) -> None:
+        """Validate the threshold condition tolerance."""
+        # Raises a ValueError if the operator does not allow for setting a tolerance.
         if (self.operator not in _valid_tolerance_operators) and (value is not None):
             raise ValueError(
                 f"Setting the tolerance for a threshold condition is only valid "
                 f"with the following operators: {_valid_tolerance_operators}."
             )
-
+        # Raises a ValueError if the operator allows for setting a tolerance, but the
+        # provided tolerance is either less than 0 or None.
         if self.operator in _valid_tolerance_operators:
             if (value is None) or (value <= 0.0):
                 raise ValueError(
@@ -114,8 +115,8 @@ class ThresholdCondition(Condition):
                     f"or <= 0.0, but was {value}."
                 )
 
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        # See base class. pylint: disable=missing-function-docstring
+    def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
+        # See base class.
         if data.dtype.kind not in "iufb":
             raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
@@ -140,8 +141,8 @@ class SubSelectionCondition(Condition):
     # object variables
     selection: List[Any] = field()
 
-    def evaluate(self, data: pd.Series) -> pd.Series:
-        # See base class. pylint: disable=missing-function-docstring
+    def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
+        # See base class.
         return data.isin(self.selection)
 
 
@@ -167,9 +168,9 @@ class Constraint(ABC, SerialMixin):
     parameters: List[str] = field(validator=min_len(1))
 
     @parameters.validator
-    def validate_params(self, _, params) -> None:
-        # Validates the parameter list.
-        # pylint: disable=missing-function-docstring
+    def _validate_params(self, _: Any, params: List[str]) -> None:
+        """Validate the parameter list."""
+        # Raises a ValueError if params does not contain unique values.
         if len(params) != len(set(params)):
             raise ValueError(
                 f"The given 'parameters' list must have unique values "
@@ -206,8 +207,8 @@ class ExcludeConstraint(Constraint):
     conditions: List[Condition] = field(validator=min_len(1))
     combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint:disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         satisfied = [
             cond.evaluate(data[self.parameters[k]])
             for k, cond in enumerate(self.conditions)
@@ -229,8 +230,8 @@ class SumConstraint(Constraint):
     # object variables
     condition: ThresholdCondition = field()
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint:disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         evaluate_data = data[self.parameters].sum(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -254,8 +255,8 @@ class ProductConstraint(Constraint):
     # object variables
     condition: ThresholdCondition = field()
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint:disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         evaluate_data = data[self.parameters].prod(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
@@ -279,8 +280,8 @@ class NoLabelDuplicatesConstraint(Constraint):
     eval_during_creation: ClassVar[bool] = True
     eval_during_modeling: ClassVar[bool] = False
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint: disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
 
         return data.index[mask_bad]
@@ -299,8 +300,8 @@ class LinkedParametersConstraint(Constraint):
     eval_during_creation: ClassVar[bool] = True
     eval_during_modeling: ClassVar[bool] = False
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint:disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         mask_bad = data[self.parameters].nunique(axis=1) != 1
 
         return data.index[mask_bad]
@@ -338,9 +339,9 @@ class DependenciesConstraint(Constraint):
     permutation_invariant: bool = field(default=False)
 
     @affected_parameters.validator
-    def affected_parameters_validator(self, _, value) -> None:
-        # Ensure each set of affected parameters has exactly one condition.
-        # pylint: disable=missing-function-docstring
+    def _affected_parameters_validator(self, _: Any, value: List[List[str]]) -> None:
+        """Ensure that each set of affected parameters has exactly one condition."""
+        # Raises a ValueError if this is not the case.
         if len(self.conditions) != len(value):
             raise ValueError(
                 f"For the {self.__class__.__name__}, for each item in the "
@@ -348,8 +349,8 @@ class DependenciesConstraint(Constraint):
                 f"the conditions list."
             )
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint:disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
         censored_data = data.copy()
@@ -413,8 +414,8 @@ class PermutationInvarianceConstraint(Constraint):
     # object variables
     dependencies: Optional[DependenciesConstraint] = field(default=None)
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint:disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         # Get indices of entries with duplicate label entries. These will also be
         # dropped by this constraint.
         mask_duplicate_labels = pd.Series(False, index=data.index)
@@ -471,8 +472,8 @@ class CustomConstraint(Constraint):
     # object variables
     validator: Callable[[pd.Series], bool] = field()
 
-    def get_invalid(self, data: pd.DataFrame) -> pd.Index:
-        # See base class. pylint: disable=missing-function-docstring
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
         mask_bad = ~data[self.parameters].apply(self.validator, axis=1)
 
         return data.index[mask_bad]
@@ -499,7 +500,7 @@ cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint)
 
 
 def _custom_constraint_hook(*_) -> None:
-    # pylint: disable=missing-function-docstring
+    """Raisess a NotImplementedError when trying to serialize a CustomConstraint."""
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
@@ -508,14 +509,8 @@ cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
 
 
 def _validate_constraints(constraints: List[Constraint]) -> None:
-    """Asserts that a given collection of constraints is valid.
-
-    Args:
-        constraints: List of Constraint objects.
-
-    Raises:
-        ValueError: If the given list of constraints is invalid.
-    """
+    """Asserts that a given collection of constraints is valid."""
+    # Raises a ValueError if the given list of constraints is invalid.
     if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
             f"There is only one {DependenciesConstraint.__name__} allowed. "

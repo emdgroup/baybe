@@ -3,7 +3,7 @@
 import sys
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 import torch
@@ -17,6 +17,7 @@ if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
     #       class-method-decorators-in-python-3-8
     #   https://bugs.python.org/issue39679
     def _register(self, cls, method=None):
+        # pylint: disable=missing-function-docstring
         if hasattr(cls, "__func__"):
             setattr(cls, "__annotations__", cls.__func__.__annotations__)
         return self.dispatcher.register(cls, func=method)
@@ -41,8 +42,9 @@ class Interval:
     upper: float = field(converter=lambda x: float(x) if x is not None else np.inf)
 
     @upper.validator
-    def validate_order(self, _, value):
-        # Only used internally. pylint:disable = missing-function-docstring
+    def _validate_order(self, _: Any, value: float):
+        """Validate the order of the interval bounds."""
+        # Raises an ValueError if the upper end is not larger than the lower end.
         if value <= self.lower:
             raise ValueError(
                 f"The upper interval bound (provided value: {value}) must be larger "
@@ -71,17 +73,19 @@ class Interval:
     @singledispatchmethod
     @classmethod
     def create(cls, value):
-        # pylint: disable=missing-function-docstring
+        """Generic function for creating intervals."""
         raise NotImplementedError(f"Unsupported argument type: {type(value)}")
 
     @create.register
     @classmethod
     def _(cls, _: None):
+        """Overloaded implementation for creating an empty interval."""
         return Interval(-np.inf, np.inf)
 
     @create.register
     @classmethod
     def _(cls, bounds: Iterable):
+        """Overloaded implementation for creating an interval of an iterable."""
         return Interval(*bounds)
 
     def to_tuple(self):
