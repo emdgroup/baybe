@@ -37,7 +37,13 @@ class RandomRecommender(NonPredictiveRecommender):
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return cont_random
         disc_candidates, _ = searchspace.discrete.get_candidates(True, True)
-        disc_random = disc_candidates.sample(n=batch_quantity)
+
+        # TODO decide mechanism if number of possible discrete candidates is smaller
+        #  than batch size
+        disc_random = disc_candidates.sample(
+            n=batch_quantity,
+            replace=len(disc_candidates) < batch_quantity,
+        )
 
         cont_random.reset_index(drop=True)
         cont_random.index = disc_random.index
