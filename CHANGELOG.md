@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Include linting for all functions
 - Rewrite functions to distinguish between private and public ones
+- Unreachable telemetry endpoint now automatically disables telemetry and no longer cause
+any data submission loops
+- `add_fake_results` utility now considers potential target bounds
+
+### Fixed
+- Random recommendation failing for small discrete (sub-)spaces
+- Deserialization issue with `TaskParameter`
 
 # [0.5.0] - 2023-09-15
 ### Added
