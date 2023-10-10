@@ -1,6 +1,10 @@
 """Test for imposing continuous constraints."""
 
 import pytest
+from baybe.constraints import (
+    ContinuousEqualityConstraint,
+    ContinuousInequalityConstraint,
+)
 
 from baybe.utils import add_fake_results
 
@@ -69,3 +73,19 @@ def test_inequality2(baybe, n_iterations, batch_quantity):
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
+
+
+def test_invalid_constraints():
+    """Test invalid continuous constraint creations."""
+    with pytest.raises(ValueError):
+        # number of parameters and coefficients doesn't match
+        ContinuousEqualityConstraint(parameters=["A", "B"], coefficients=[1.0], rhs=0.0)
+        ContinuousEqualityConstraint(
+            parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
+        )
+        ContinuousInequalityConstraint(
+            parameters=["A", "B"], coefficients=[1.0], rhs=0.0
+        )
+        ContinuousInequalityConstraint(
+            parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
+        )
