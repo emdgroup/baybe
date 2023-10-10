@@ -17,7 +17,7 @@ from funcy import rpartial
 from numpy.typing import ArrayLike
 from torch import Tensor
 
-from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters import NumericalContinuousParameter, Parameter
 from baybe.utils import Dummy, get_base_unstructure_hook, SerialMixin, unstructure_base
 
 
@@ -179,6 +179,16 @@ class Constraint(ABC, SerialMixin):
                 f"The given 'parameters' list must have unique values "
                 f"but was: {params}."
             )
+
+    @property
+    def is_continuous(self):
+        """Flag indicating whether this is a constraint over continuous parameters."""
+        return isinstance(self, ContinuousConstraint)
+
+    @property
+    def is_discrete(self):
+        """Flag indicating whether this is a constraint over discrete parameters."""
+        return isinstance(self, DiscreteConstraint)
 
 
 @define
@@ -479,7 +489,7 @@ class ContinuousConstraint(Constraint, ABC):
     eval_during_modeling: ClassVar[bool] = True
 
     # object variables
-    coefficients: List[float] = field(factory=list)
+    coefficients: List[float] = field()
     rhs: float = field(default=0.0)
 
     @coefficients.validator
@@ -492,6 +502,11 @@ class ContinuousConstraint(Constraint, ABC):
                 "The given 'coefficients' list must have one floating point entry for "
                 "each entry in `parameters`"
             )
+
+    @coefficients.default
+    def _default_coefficients(self):
+        """Return equal weight coefficients as default."""
+        return [1.0] * len(self.parameters)
 
     def to_botorch(
         self, parameters: List[NumericalContinuousParameter]
@@ -577,11 +592,45 @@ cattrs.register_unstructure_hook(CustomConstraint, _custom_constraint_hook)
 cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
 
 
-def _validate_constraints(constraints: List[Constraint]) -> None:
+def _validate_constraints(
+    constraints: List[Constraint], parameters: List[Parameter]
+) -> None:
     """Asserts that a given collection of constraints is valid."""
-    # Raises a ValueError if the given list of constraints is invalid.
+    # Raises a ValueError if there is more than one DependenciesConstraint declared
     if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
             f"There is only one {DependenciesConstraint.__name__} allowed. "
             f"Please specify all dependencies in one single constraint."
         )
+
+    param_names_all = [p.name for p in parameters]
+    param_names_discrete = [p.name for p in parameters if p.is_discrete]
+    param_names_continuous = [p.name for p in parameters if not p.is_discrete]
+    for constraint in constraints:
+        # Raises a ValueError if any constraint contains an invalid parameter name
+        if not all(p in param_names_all for p in constraint.parameters):
+            raise ValueError(
+                f"You are trying to create a constraint with at least one parameter "
+                f"name that does not exist in the list of defined parameters. "
+                f"Parameter list of the affected constraint: {constraint.parameters}"
+            )
+
+        # Raises a ValueError if any continuous constraint includes a discrete parameter
+        if constraint.is_continuous and any(
+            p in param_names_discrete for p in constraint.parameters
+        ):
+            raise ValueError(
+                f"You are trying to initialize a continuous constraint over a "
+                f"parameter that is discrete. Parameter list of the affected "
+                f"constraint: {constraint.parameters}"
+            )
+
+        # Raises a ValueError if any discrete constraint includes a continuous parameter
+        if constraint.is_discrete and any(
+            p in param_names_continuous for p in constraint.parameters
+        ):
+            raise ValueError(
+                f"You are trying to initialize a discrete constraint over a parameter "
+                f"that is continuous. Parameter list of the affected constraint: "
+                f"{constraint.parameters}"
+            )

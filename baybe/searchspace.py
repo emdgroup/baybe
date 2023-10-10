@@ -546,9 +546,9 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
 
     def __attrs_post_init__(self):
-        """Validate parameters and record telemetry values."""
+        """Perform validation and record telemetry values."""
         _validate_parameters(self.parameters)
-        _validate_constraints(self.discrete.constraints)
+        _validate_constraints(self.constraints, self.parameters)
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
@@ -592,7 +592,7 @@ class SearchSpace(SerialMixin):
         #   ways of object creation) in this particular case.
         _validate_parameters(parameters)
         if constraints:
-            _validate_constraints(constraints)
+            _validate_constraints(constraints, parameters)
         else:
             constraints = []
 
@@ -601,9 +601,7 @@ class SearchSpace(SerialMixin):
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete
             ],
             constraints=[
-                cast(DiscreteConstraint, c)
-                for c in constraints
-                if isinstance(c, DiscreteConstraint)
+                cast(DiscreteConstraint, c) for c in constraints if c.is_discrete
             ],
             empty_encoding=empty_encoding,
         )
@@ -614,9 +612,7 @@ class SearchSpace(SerialMixin):
                 if not p.is_discrete
             ],
             constraints=[
-                cast(ContinuousConstraint, c)
-                for c in constraints
-                if isinstance(c, ContinuousConstraint)
+                cast(ContinuousConstraint, c) for c in constraints if c.is_continuous
             ],
         )
 
