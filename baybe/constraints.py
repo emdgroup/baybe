@@ -5,16 +5,19 @@
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import Any, Callable, ClassVar, List, Optional, Union
+from typing import Any, Callable, ClassVar, List, Optional, Tuple, Union
 
 import cattrs
 import numpy as np
 import pandas as pd
+import torch
 from attr import define, field
 from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
+from torch import Tensor
 
+from baybe.parameters import NumericalContinuousParameter
 from baybe.utils import Dummy, get_base_unstructure_hook, SerialMixin, unstructure_base
 
 
@@ -204,37 +207,6 @@ class DiscreteConstraint(Constraint, ABC):
         Returns:
             The dataframe indices of rows where the constraint is violated.
         """
-
-
-@define
-class ContinuousConstraint(Constraint, ABC):
-    """Abstract base class for continuous constraints.
-
-    Continuous constraints use parameter lists and coefficients to
-
-    Args:
-        parameters: see base class
-        coefficients: in-/equality coefficient for each entry in `parameters`
-        rhs: right-hand side of the in-/equality
-    """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = False
-    eval_during_modeling: ClassVar[bool] = True
-
-    # object variables
-    coefficients: List[float] = field(factory=list)
-    rhs: float = field(default=0.0)
-
-    @coefficients.validator
-    def _validate_coefficients(self, obj: Any, coefficients: List[float]) -> None:
-        """Validate the parameter list."""
-        # Raises a ValueError if params does not contain unique values.
-        if len(obj.parameters) != len(coefficients):
-            raise ValueError(
-                "The given 'coefficients' list must have one floating point entry for "
-                "each entry in `parameters`"
-            )
 
 
 @define
@@ -490,6 +462,84 @@ class CustomConstraint(DiscreteConstraint):
         return data.index[mask_bad]
 
 
+@define
+class ContinuousConstraint(Constraint, ABC):
+    """Abstract base class for continuous constraints.
+
+    Continuous constraints use parameter lists and coefficients to
+
+    Args:
+        parameters: see base class
+        coefficients: in-/equality coefficient for each entry in `parameters`
+        rhs: right-hand side of the in-/equality
+    """
+
+    # class variables
+    eval_during_creation: ClassVar[bool] = False
+    eval_during_modeling: ClassVar[bool] = True
+
+    # object variables
+    coefficients: List[float] = field(factory=list)
+    rhs: float = field(default=0.0)
+
+    @coefficients.validator
+    def _validate_coefficients(self, _: Any, coefficients: List[float]) -> None:
+        """Validate the parameter list."""
+        # Raises a ValueError if params does not contain unique values.
+        if len(self.parameters) != len(coefficients):
+            raise ValueError(
+                "The given 'coefficients' list must have one floating point entry for "
+                "each entry in `parameters`"
+            )
+
+    def to_botorch(
+        self, parameters: List[NumericalContinuousParameter]
+    ) -> Tuple[Tensor, Tensor, float]:
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ```optimize_acqf_*``` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: the parameter objects of the continuous space
+
+        Returns:
+            The tuple required by botorch.
+        """
+        param_indices = [ind for ind, p in parameters if p.name in self.parameters]
+
+        return (torch.Tensor(param_indices), torch.Tensor(self.coefficients), self.rhs)
+
+
+@define
+class ContinuousEqualityConstraint(ContinuousConstraint):
+    """Class for continuous equality constraints.
+
+    The constraint is defined as `sum_i[ x_i * c_i ] == rhs` where x_i are the
+    parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
+    The class has no content as it only serves the purpose of distinguishing the
+    constraints.
+
+    Args:
+        see base class
+    """
+
+
+@define
+class ContinuousInequalityConstraint(ContinuousConstraint):
+    """Class for continuous inequality constraints.
+
+    The constraint is defined as `sum_i[ x_i * c_i ] >= rhs` where x_i are the
+    parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
+    If you want to implement a constraint of the form `<=`, multiply ```rhs``` and
+    ```coefficients``` by -1. The class has no content as it only serves the purpose of
+    distinguishing the constraints.
+
+    Args:
+        see base class
+    """
+
+
 # the order in which the constraint types need to be applied during discrete subspace
 # filtering
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
@@ -512,7 +562,7 @@ cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint)
 
 
 def _custom_constraint_hook(*_) -> None:
-    """Raisess a NotImplementedError when trying to serialize a CustomConstraint."""
+    """Raises a NotImplementedError when trying to serialize a CustomConstraint."""
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
