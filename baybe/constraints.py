@@ -484,8 +484,9 @@ class ContinuousConstraint(Constraint, ABC):
 
     @coefficients.validator
     def _validate_coefficients(self, _: Any, coefficients: List[float]) -> None:
-        """Validate the parameter list."""
-        # Raises a ValueError if params does not contain unique values.
+        """Validate the coefficients."""
+        # Raises a ValueError if the number of coefficients doesn't match the number of
+        # parameters.
         if len(self.parameters) != len(coefficients):
             raise ValueError(
                 "The given 'coefficients' list must have one floating point entry for "
@@ -506,9 +507,15 @@ class ContinuousConstraint(Constraint, ABC):
         Returns:
             The tuple required by botorch.
         """
-        param_indices = [ind for ind, p in parameters if p.name in self.parameters]
+        param_indices = [
+            ind for ind, p in enumerate(parameters) if p.name in self.parameters
+        ]
 
-        return (torch.Tensor(param_indices), torch.Tensor(self.coefficients), self.rhs)
+        return (
+            torch.tensor(param_indices),
+            torch.tensor(self.coefficients),
+            self.rhs,
+        )
 
 
 @define
