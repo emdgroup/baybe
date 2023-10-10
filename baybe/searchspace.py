@@ -11,7 +11,13 @@ import pandas as pd
 import torch
 from attrs import define, field
 
-from baybe.constraints import _validate_constraints, Constraint, CONSTRAINTS_ORDER
+from baybe.constraints import (
+    _validate_constraints,
+    Constraint,
+    ContinuousConstraint,
+    DISCRETE_CONSTRAINTS_FILTERING_ORDER,
+    DiscreteConstraint,
+)
 from baybe.parameters import (
     _validate_parameter_names,
     _validate_parameters,
@@ -77,7 +83,7 @@ class SubspaceDiscrete:
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
     metadata: pd.DataFrame = field(eq=eq_dataframe)
     empty_encoding: bool = field(default=False)
-    constraints: List[Constraint] = field(factory=list)
+    constraints: List[DiscreteConstraint] = field(factory=list)
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
     @exp_rep.validator
@@ -163,7 +169,7 @@ class SubspaceDiscrete:
     def from_product(
         cls,
         parameters: List[DiscreteParameter],
-        constraints: Optional[List[Constraint]] = None,
+        constraints: Optional[List[DiscreteConstraint]] = None,
         empty_encoding: bool = False,
     ) -> "SubspaceDiscrete":
         """See :py:class:`baybe.searchspace.SearchSpace`."""
@@ -173,7 +179,8 @@ class SubspaceDiscrete:
         else:
             # Reorder the constraints according to their execution order
             constraints = sorted(
-                constraints, key=lambda x: CONSTRAINTS_ORDER.index(x.__class__)
+                constraints,
+                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
             )
 
         # Create a dataframe representing the experimental search space
@@ -267,7 +274,7 @@ class SubspaceDiscrete:
     def param_bounds_comp(self) -> torch.Tensor:
         """Return bounds as tensor.
 
-        Takes bounds from the parameter definitions, but discards bounds belonging to
+        Take bounds from the parameter definitions, but discards bounds belonging to
         columns that were filtered out during the creation of the space.
         """
         if not self.parameters:
@@ -386,6 +393,7 @@ class SubspaceContinuous:
     parameters: List[NumericalContinuousParameter] = field(
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
+    constraints: List[ContinuousConstraint] = field(factory=list)
 
     @classmethod
     def empty(cls) -> "SubspaceContinuous":
@@ -585,12 +593,18 @@ class SearchSpace(SerialMixin):
         _validate_parameters(parameters)
         if constraints:
             _validate_constraints(constraints)
+        else:
+            constraints = []
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
             parameters=[
                 cast(DiscreteParameter, p) for p in parameters if p.is_discrete
             ],
-            constraints=constraints,
+            constraints=[
+                cast(DiscreteConstraint, c)
+                for c in constraints
+                if isinstance(c, DiscreteConstraint)
+            ],
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
@@ -598,6 +612,11 @@ class SearchSpace(SerialMixin):
                 cast(NumericalContinuousParameter, p)
                 for p in parameters
                 if not p.is_discrete
+            ],
+            constraints=[
+                cast(ContinuousConstraint, c)
+                for c in constraints
+                if isinstance(c, ContinuousConstraint)
             ],
         )
 
@@ -611,7 +630,7 @@ class SearchSpace(SerialMixin):
     @property
     def constraints(self) -> List[Constraint]:
         """Return the constraints of the search space."""
-        return self.discrete.constraints
+        return self.discrete.constraints + self.continuous.constraints
 
     @property
     def type(self) -> SearchSpaceType:

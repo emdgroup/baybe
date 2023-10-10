@@ -177,6 +177,22 @@ class Constraint(ABC, SerialMixin):
                 f"but was: {params}."
             )
 
+
+@define
+class DiscreteConstraint(Constraint, ABC):
+    """Abstract base class for discrete constraints.
+
+    Discrete constraints use conditions and chain them together to filter unwanted
+    entries from the search space.
+
+    Args:
+        parameters: see base class
+    """
+
+    # class variables
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
+
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """Get the indices of dataframe entries that are invalid under the constraint.
@@ -191,17 +207,44 @@ class Constraint(ABC, SerialMixin):
 
 
 @define
-class ExcludeConstraint(Constraint):
+class ContinuousConstraint(Constraint, ABC):
+    """Abstract base class for continuous constraints.
+
+    Continuous constraints use parameter lists and coefficients to
+
+    Args:
+        parameters: see base class
+        coefficients: in-/equality coefficient for each entry in `parameters`
+        rhs: right-hand side of the in-/equality
+    """
+
+    # class variables
+    eval_during_creation: ClassVar[bool] = False
+    eval_during_modeling: ClassVar[bool] = True
+
+    # object variables
+    coefficients: List[float] = field(factory=list)
+    rhs: float = field(default=0.0)
+
+    @coefficients.validator
+    def _validate_coefficients(self, obj: Any, coefficients: List[float]) -> None:
+        """Validate the parameter list."""
+        # Raises a ValueError if params does not contain unique values.
+        if len(obj.parameters) != len(coefficients):
+            raise ValueError(
+                "The given 'coefficients' list must have one floating point entry for "
+                "each entry in `parameters`"
+            )
+
+
+@define
+class ExcludeConstraint(DiscreteConstraint):
     """Class for modelling exclusion constraints.
 
     Args:
         conditions: List of individual conditions.
         combiner: Operator encoding how to combine the individual conditions.
     """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     conditions: List[Condition] = field(validator=min_len(1))
@@ -218,14 +261,10 @@ class ExcludeConstraint(Constraint):
 
 
 @define
-class SumConstraint(Constraint):
+class SumConstraint(DiscreteConstraint):
     """Class for modelling sum constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -239,7 +278,7 @@ class SumConstraint(Constraint):
 
 
 @define
-class ProductConstraint(Constraint):
+class ProductConstraint(DiscreteConstraint):
     """Class for modelling product constraints.
 
     Args:
@@ -247,10 +286,6 @@ class ProductConstraint(Constraint):
     """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -263,7 +298,7 @@ class ProductConstraint(Constraint):
         return data.index[mask_bad]
 
 
-class NoLabelDuplicatesConstraint(Constraint):
+class NoLabelDuplicatesConstraint(DiscreteConstraint):
     """Constraint class for excluding entries where occurring labels are not unique.
 
     This can be useful to remove entries that arise from e.g. a permutation invariance
@@ -276,10 +311,6 @@ class NoLabelDuplicatesConstraint(Constraint):
     - A,C,B,C would be removed
     """
 
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
-
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
         mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
@@ -287,7 +318,7 @@ class NoLabelDuplicatesConstraint(Constraint):
         return data.index[mask_bad]
 
 
-class LinkedParametersConstraint(Constraint):
+class LinkedParametersConstraint(DiscreteConstraint):
     """Constraint class for linking the values of parameters.
 
     This constraint type effectively allows generating parameter sets that relate to
@@ -295,10 +326,6 @@ class LinkedParametersConstraint(Constraint):
     using different encodings. Linking the parameters removes all entries from the
     search space where the parameter values differ.
     """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -308,7 +335,7 @@ class LinkedParametersConstraint(Constraint):
 
 
 @define
-class DependenciesConstraint(Constraint):
+class DependenciesConstraint(DiscreteConstraint):
     """Constraint that specifies dependencies between parameters.
 
     For instance some parameters might only be relevant when another parameter has a
@@ -322,12 +349,6 @@ class DependenciesConstraint(Constraint):
             permutation invariant. This should not be changed by the user but by other
             constraints reusing this class.
     """
-
-    # class variables
-    # TODO update usage in different evaluation stages once that is implemented in
-    #  strategy and surrogate
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     conditions: List[Condition] = field()
@@ -390,7 +411,7 @@ class DependenciesConstraint(Constraint):
 
 
 @define
-class PermutationInvarianceConstraint(Constraint):
+class PermutationInvarianceConstraint(DiscreteConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
     More precisely, this means that, ```(val_from_param1, val_from_param2)``` is
@@ -404,12 +425,6 @@ class PermutationInvarianceConstraint(Constraint):
     Args:
         dependencies: Dependencies connected with the invariant parameters.
     """
-
-    # class variables
-    # TODO update usage in different evaluation stages once that is implemented in
-    #  strategy and surrogate
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     dependencies: Optional[DependenciesConstraint] = field(default=None)
@@ -458,16 +473,12 @@ class PermutationInvarianceConstraint(Constraint):
 
 
 @define
-class CustomConstraint(Constraint):
+class CustomConstraint(DiscreteConstraint):
     """Class for user-defined custom constraints.
 
     Args:
-        validator: A user-defined function modeling the validatio of the constraint.
+        validator: A user-defined function modeling the validation of the constraint.
     """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     validator: Callable[[pd.Series], bool] = field()
@@ -479,8 +490,9 @@ class CustomConstraint(Constraint):
         return data.index[mask_bad]
 
 
-# the order in which the constraint types need to be applied
-CONSTRAINTS_ORDER = (
+# the order in which the constraint types need to be applied during discrete subspace
+# filtering
+DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     CustomConstraint,
     ExcludeConstraint,
     NoLabelDuplicatesConstraint,
