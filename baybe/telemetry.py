@@ -6,6 +6,8 @@ import os
 import socket
 from typing import Dict, List, Union
 
+from urllib.parse import urlparse
+
 import pandas as pd
 
 from baybe.parameters import Parameter
@@ -53,28 +55,45 @@ TELEM_LABELS = {
 }
 
 # Create resources only if telemetry is activated
-# TODO: Need a more elegant solution here. Ideally, telemetry should become an opt-out
-#   dependency. Potential solution: when deactivated/not installed, load a mock package
-#   that mirrors the public functions in telemetry.py but does not do anything.
 if is_enabled():
-
-    _instruments = {}
-    _resource = Resource.create({"service.namespace": "BayBE", "service.name": "SDK"})
-    _reader = PeriodicExportingMetricReader(
-        exporter=OTLPMetricExporter(
-            endpoint=os.environ.get(
-                "BAYBE_TELEMETRY_HOST",
-                "***REMOVED***.elb."
-                "eu-central-1.amazonaws.com:4317",
-            ),
-            insecure=True,
-        )
+    _endpoint_url = os.environ.get(
+        "BAYBE_TELEMETRY_HOST",
+        "***REMOVED***."
+        "elb.eu-central-1.amazonaws.com:4317",
     )
-    _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
-    set_meter_provider(_provider)
 
-    # Setup Global Metric Provider
-    _meter = get_meter("aws-otel", "1.0")
+    # Test endpoint URL
+    try:
+        # Parse endpoint URL
+        _endpoint_url_parsed = urlparse(_endpoint_url)
+        _endpoint_hostname = _endpoint_url_parsed.hostname
+        _endpoint_port = _endpoint_url_parsed.port if _endpoint_url_parsed.port else 80
+
+        with socket.create_connection(
+            (_endpoint_hostname, _endpoint_port), timeout=2
+        ) as sock:
+            _instruments = {}
+            _resource = Resource.create(
+                {"service.namespace": "BayBE", "service.name": "SDK"}
+            )
+            _reader = PeriodicExportingMetricReader(
+                exporter=OTLPMetricExporter(
+                    endpoint=_endpoint_url,
+                    insecure=True,
+                )
+            )
+            _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
+            set_meter_provider(_provider)
+
+            # Setup Global Metric Provider
+            _meter = get_meter("aws-otel", "1.0")
+    except (socket.timeout, ConnectionRefusedError):
+        _logger.warning(
+            "WARNING: BayBE Telemetry endpoint %s cannot be reached. "
+            "Disabling telemetry.",
+            _endpoint_url,
+        )
+        os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
 
 
 def get_user_details() -> Dict[str, str]:

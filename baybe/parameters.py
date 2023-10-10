@@ -437,7 +437,7 @@ class TaskParameter(CategoricalParameter):
     # object variables
     # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
     #   declared as such because of the inheritance relationship.
-    encoding: Literal["INT"] = field(default="INT", init=False)
+    encoding: Literal["INT"] = field(default="INT")
     active_values: list = field(
         default=None, converter=lambda x: x if x is None else list(x)
     )

@@ -110,17 +110,23 @@ def add_fake_results(
         good_intervals = {}
         for target in baybe.targets:
             if target.mode == "MAX":
-                interv = (66, 100)
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
+                ubound = (
+                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
+                )
+                interv = (lbound, ubound)
             elif target.mode == "MIN":
-                interv = (0, 33)
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
+                ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
+                interv = (lbound, ubound)
             elif target.mode == "MATCH":
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = (
                     target.bounds.upper if np.isfinite(target.bounds.upper) else 100
                 )
                 interv = (
-                    lbound + 0.33 * (ubound - lbound),
-                    lbound + 0.66 * (ubound - lbound),
+                    lbound + 0.4 * (ubound - lbound),
+                    lbound + 0.6 * (ubound - lbound),
                 )
             else:
                 raise ValueError(
@@ -133,18 +139,24 @@ def add_fake_results(
         bad_intervals = {}
         for target in baybe.targets:
             if target.mode == "MAX":
-                interv = (0, 33)
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
+                ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
+                interv = (lbound, ubound)
             elif target.mode == "MIN":
-                interv = (66, 100)
+                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
+                ubound = (
+                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
+                )
+                interv = (lbound, ubound)
             elif target.mode == "MATCH":
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = (
                     target.bounds.upper if np.isfinite(target.bounds.upper) else 100
                 )
                 interv = (
-                    # Take as bad values and arbitrary interval above the match interval
-                    ubound + 0.5 * (ubound - lbound),
-                    ubound + 2.0 * (ubound - lbound),
+                    # Take as bad values the interval above the good interval
+                    lbound + 0.6 * (ubound - lbound),
+                    lbound + 1.2 * (ubound - lbound),
                 )
             else:
                 raise ValueError(
@@ -155,7 +167,7 @@ def add_fake_results(
     # Add the fake data for each target
     for target in baybe.targets:
         # Add bad values
-        data[target.name] = np.random.randint(
+        data[target.name] = np.random.uniform(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)
         )
 
@@ -168,7 +180,7 @@ def add_fake_results(
         # Overwrite bad values with good ones using the computed masks
         if len(masks) > 0:
             final_mask = pd.concat(masks, axis=1).all(axis=1)
-            data.loc[final_mask, target.name] = np.random.randint(
+            data.loc[final_mask, target.name] = np.random.uniform(
                 good_intervals[target.name][0],
                 good_intervals[target.name][1],
                 final_mask.sum(),
