@@ -1,4 +1,4 @@
-"""Test for imposing dependency constraints."""
+"""Test for imposing discrete constraints."""
 import math
 
 import pytest

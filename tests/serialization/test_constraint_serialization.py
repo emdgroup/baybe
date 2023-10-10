@@ -8,7 +8,8 @@ from baybe.constraints import Constraint
 
 @pytest.mark.parametrize(
     "constraint_names",
-    [[f"Constraint_{k}"] for k in range(1, 13)],
+    [[f"Constraint_{k}"] for k in range(1, 13)]  # Constraint_13 is expected to fail
+    + [[f"ContiConstraint_{k}"] for k in range(1, 5)],
 )
 @pytest.mark.parametrize("n_grid_points", [5])
 def test_constraint_serialization(constraints):

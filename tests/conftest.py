@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import pytest
 from baybe.constraints import (
+    ContinuousEqualityConstraint,
+    ContinuousInequalityConstraint,
     CustomConstraint,
     DependenciesConstraint,
     ExcludeConstraint,
@@ -429,6 +431,26 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
         "Constraint_13": CustomConstraint(
             parameters=["Pressure", "Solvent_1", "Temperature"],
             validator=custom_function,
+        ),
+        "ContiConstraint_1": ContinuousEqualityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 1.0],
+            rhs=0.3,
+        ),
+        "ContiConstraint_2": ContinuousEqualityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 3.0],
+            rhs=0.3,
+        ),
+        "ContiConstraint_3": ContinuousInequalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 1.0],
+            rhs=0.3,
+        ),
+        "ContiConstraint_4": ContinuousInequalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 3.0],
+            rhs=0.3,
         ),
     }
     return [
