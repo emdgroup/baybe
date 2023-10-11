@@ -10,11 +10,14 @@ import numpy as np
 import pandas as pd
 import torch
 from attrs import define, field
+from botorch.utils.sampling import get_polytope_samples
 
 from baybe.constraints import (
     _validate_constraints,
     Constraint,
     ContinuousConstraint,
+    ContinuousEqualityConstraint,
+    ContinuousInequalityConstraint,
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteConstraint,
 )
@@ -485,9 +488,22 @@ class SubspaceContinuous:
         """
         if not self.parameters:
             return pd.DataFrame()
-        points = torch.distributions.uniform.Uniform(*self.param_bounds_comp).sample(
-            torch.Size((n_points,))
+
+        points = get_polytope_samples(
+            n=n_points,
+            bounds=self.param_bounds_comp,
+            equality_constraints=[
+                c.to_botorch(self.parameters)
+                for c in self.constraints
+                if isinstance(c, ContinuousEqualityConstraint)
+            ],
+            inequality_constraints=[
+                c.to_botorch(self.parameters)
+                for c in self.constraints
+                if isinstance(c, ContinuousInequalityConstraint)
+            ],
         )
+
         return pd.DataFrame(points, columns=self.param_names)
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:

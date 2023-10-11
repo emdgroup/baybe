@@ -19,8 +19,7 @@ def run_iterations(baybe, n_iterations, batch_quantity):
 
         baybe.add_measurements(rec)
 
-    # return result, ignore initial recommendations
-    return baybe.measurements_exp.iloc[batch_quantity:, :]
+    return baybe.measurements_exp
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
