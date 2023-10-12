@@ -284,6 +284,7 @@ def register_custom_architecture(
             """Wraps around a custom architecture class."""
 
             joint_posterior: ClassVar[bool] = joint_posterior_attr
+            supports_transfer_learning: ClassVar[bool] = False
 
             def __init__(self, *args, **kwargs):
                 self.model = model_cls(*args, **kwargs)
@@ -837,6 +838,7 @@ class CustomONNXSurrogate(Surrogate):
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    supports_transfer_learning: ClassVar[bool] = False
 
     # Object variables
     onnx_input_name: str = field(validator=validators.instance_of(str))
