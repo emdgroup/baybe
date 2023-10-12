@@ -41,7 +41,7 @@ _WRAPPER_MODELS = (
     "SplitModel",
     "ScaledModel",
     "CustomArchitectureSurrogate",
-    "CustomPretrainedSurrogate",
+    "CustomONNXSurrogate",
 )
 
 
@@ -279,10 +279,7 @@ def register_custom_architecture(
     constant_target_catching: bool = True,
     batchify_posterior: bool = True,
 ):
-    """
-    Wraps a given Custom Class with fit and posterior functions
-    to enable BayBE to interface with custom architectures.
-    """
+    """Wraps a given Custom Model Architecture Class into a ```Surrogate```."""
 
     def construct_custom_architecture(model_cls):
         """Constructs a surrogate class wrapped around the custom class."""
@@ -294,27 +291,25 @@ def register_custom_architecture(
             model_params: Dict[str, Any] = field(factory=dict)
 
             def __init__(self, *args, **kwargs):
-                """Stores an instance of the underlying model class."""
                 self.model = model_cls(*args, **kwargs)
 
             def _fit(
                 self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
             ) -> None:
-                """See base class."""
                 return self.model._fit(  # pylint: disable=protected-access
                     searchspace, train_x, train_y
                 )
 
             def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-                """See base class."""
                 return self.model._posterior(  # pylint: disable=protected-access
                     candidates
                 )
 
             def __get_attribute__(self, attr):
-                """
-                Accesses the attributes of the class instance if available,
-                otherwise uses the attributes of the internal model instance.
+                """Accesses the attributes of the class instance if available.
+
+                If the attributes are not available,
+                it uses the attributes of the internal model instance.
                 """
                 # Try to retrieve the attribute in the class
                 try:
@@ -842,8 +837,8 @@ class BayesianLinearSurrogate(Surrogate):
 
 
 @define
-class CustomPretrainedSurrogate(Surrogate):
-    """A wrapper class for custom pretrained surrogate models"""
+class CustomONNXSurrogate(Surrogate):
+    """A wrapper class for custom pretrained surrogate models."""
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
@@ -859,8 +854,6 @@ class CustomPretrainedSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See base class."""
-
         model_inputs = {
             self.model_params["onnx_input_name"]: candidates.numpy().astype(np.float32)
         }
@@ -870,13 +863,12 @@ class CustomPretrainedSurrogate(Surrogate):
         return torch.from_numpy(results[0]), torch.from_numpy(results[1]).pow(2)
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See base class."""
         self._model = ort.InferenceSession(
             self.model_params["onnx"].encode("ISO-8859-1")
         )
 
 
-def block_serialize_custom_architecture(raw_unstructure_hook):
+def _block_serialize_custom_architecture(raw_unstructure_hook):
     """Raises error if attempt to serialize a custom architecture surrogate."""
 
     def wrapper(obj):
@@ -954,7 +946,7 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
 # Register (un-)structure hooks
 cattrs.register_unstructure_hook(
-    Surrogate, _remove_model(block_serialize_custom_architecture(unstructure_base))
+    Surrogate, _remove_model(_block_serialize_custom_architecture(unstructure_base))
 )
 cattrs.register_structure_hook(Surrogate, _structure_surrogate)
 
