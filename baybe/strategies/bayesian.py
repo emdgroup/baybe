@@ -20,10 +20,6 @@ from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_m
 from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.acquisition import debotorchize, PartialAcquisitionFunction
-from baybe.constraints import (
-    ContinuousEqualityConstraint,
-    ContinuousInequalityConstraint,
-)
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.strategies.recommender import (
@@ -310,13 +306,11 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 raw_samples=10,  # TODO make choice for raw_samples
                 equality_constraints=[
                     c.to_botorch(searchspace.continuous.parameters)
-                    for c in searchspace.continuous.constraints
-                    if isinstance(c, ContinuousEqualityConstraint)
+                    for c in searchspace.continuous.constraints_lin_eq
                 ],
                 inequality_constraints=[
                     c.to_botorch(searchspace.continuous.parameters)
-                    for c in searchspace.continuous.constraints
-                    if isinstance(c, ContinuousInequalityConstraint)
+                    for c in searchspace.continuous.constraints_lin_ineq
                 ],
             )
         except AttributeError as ex:

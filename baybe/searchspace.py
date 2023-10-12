@@ -15,7 +15,6 @@ from botorch.utils.sampling import get_polytope_samples
 from baybe.constraints import (
     _validate_constraints,
     Constraint,
-    ContinuousConstraint,
     ContinuousEqualityConstraint,
     ContinuousInequalityConstraint,
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
@@ -396,7 +395,8 @@ class SubspaceContinuous:
     parameters: List[NumericalContinuousParameter] = field(
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
-    constraints: List[ContinuousConstraint] = field(factory=list)
+    constraints_lin_eq: List[ContinuousEqualityConstraint] = field(factory=list)
+    constraints_lin_ineq: List[ContinuousInequalityConstraint] = field(factory=list)
 
     @classmethod
     def empty(cls) -> "SubspaceContinuous":
@@ -493,14 +493,10 @@ class SubspaceContinuous:
             n=n_points,
             bounds=self.param_bounds_comp,
             equality_constraints=[
-                c.to_botorch(self.parameters)
-                for c in self.constraints
-                if isinstance(c, ContinuousEqualityConstraint)
+                c.to_botorch(self.parameters) for c in self.constraints_lin_eq
             ],
             inequality_constraints=[
-                c.to_botorch(self.parameters)
-                for c in self.constraints
-                if isinstance(c, ContinuousInequalityConstraint)
+                c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
             ],
         )
 
@@ -627,8 +623,15 @@ class SearchSpace(SerialMixin):
                 for p in parameters
                 if not p.is_discrete
             ],
-            constraints=[
-                cast(ContinuousConstraint, c) for c in constraints if c.is_continuous
+            constraints_lin_eq=[
+                cast(ContinuousEqualityConstraint, c)
+                for c in constraints
+                if isinstance(c, ContinuousEqualityConstraint)
+            ],
+            constraints_lin_ineq=[
+                cast(ContinuousInequalityConstraint, c)
+                for c in constraints
+                if isinstance(c, ContinuousInequalityConstraint)
             ],
         )
 
@@ -642,7 +645,11 @@ class SearchSpace(SerialMixin):
     @property
     def constraints(self) -> List[Constraint]:
         """Return the constraints of the search space."""
-        return self.discrete.constraints + self.continuous.constraints
+        return (
+            self.discrete.constraints
+            + self.continuous.constraints_lin_eq
+            + self.continuous.constraints_lin_ineq
+        )
 
     @property
     def type(self) -> SearchSpaceType:
