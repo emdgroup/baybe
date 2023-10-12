@@ -509,7 +509,7 @@ class ContinuousConstraint(Constraint, ABC):
         return [1.0] * len(self.parameters)
 
     def to_botorch(
-        self, parameters: List[NumericalContinuousParameter]
+        self, parameters: List[NumericalContinuousParameter], idx_offset: int = 0
     ) -> Tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
@@ -518,17 +518,20 @@ class ContinuousConstraint(Constraint, ABC):
 
         Args:
             parameters: the parameter objects of the continuous space
+            idx_offset: offset to the provided parameter indices
 
         Returns:
             The tuple required by botorch.
         """
         param_indices = [
-            ind for ind, p in enumerate(parameters) if p.name in self.parameters
+            ind + idx_offset
+            for ind, p in enumerate(parameters)
+            if p.name in self.parameters
         ]
 
         return (
             torch.tensor(param_indices),
-            torch.tensor(self.coefficients),
+            torch.tensor(self.coefficients, dtype=torch.float64),
             self.rhs,
         )
 

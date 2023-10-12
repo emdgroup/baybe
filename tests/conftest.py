@@ -238,6 +238,10 @@ def fixture_parameters(
             name="Conti_finite2",
             bounds=(-1, 0),
         ),
+        NumericalContinuousParameter(
+            name="Conti_finite3",
+            bounds=(-1, 1),
+        ),
         CustomDiscreteParameter(
             name="Custom_1",
             data=pd.DataFrame(

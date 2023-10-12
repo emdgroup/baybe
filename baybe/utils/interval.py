@@ -98,7 +98,7 @@ class Interval:
 
     def to_tensor(self):
         """Transform the interval to a tensor."""
-        return torch.tensor([self.lower, self.upper])
+        return torch.tensor([self.lower, self.upper], dtype=torch.float64)
 
     def contains(self, number: float) -> bool:
         """Check whether the interval contains a given number.

@@ -456,7 +456,7 @@ class SubspaceContinuous:
     def param_bounds_comp(self) -> torch.Tensor:
         """Return bounds as tensor."""
         if not self.parameters:
-            return torch.empty(2, 0)
+            return torch.empty(2, 0, dtype=torch.float64)
         return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
 
     def transform(

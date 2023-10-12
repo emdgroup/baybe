@@ -1,8 +1,9 @@
-### Example for linear constraints in a continuous searchspace
+### Example for constraints in a hybrid searchspace
 # pylint: disable=missing-module-docstring
+import numpy as np
 
-# Example for optimizing a synthetic test functions in a continuous space with linear
-# constraints.
+# Example for optimizing a synthetic test functions in a hybrid space with one
+# constraint in the discrete subspace and one constraint in the continuous subspace.
 # All test functions that are available in BoTorch are also available here and wrapped
 # via the `botorch_function_wrapper`.
 
@@ -17,9 +18,10 @@
 from baybe import BayBE
 from baybe.constraints import (
     ContinuousEqualityConstraint,
-    ContinuousInequalityConstraint,
+    SumConstraint,
+    ThresholdCondition,
 )
-from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import botorch_function_wrapper
@@ -32,6 +34,11 @@ from botorch.test_functions import Rastrigin
 
 DIMENSION = 4
 TestFunctionClass = Rastrigin
+
+# stride for discrete parameters
+# if you make it too small it will make calculations expensive
+# if you make it too large constraints might not be satisfied anywhere
+STRIDE = 1.0
 
 if not hasattr(TestFunctionClass, "dim"):
     TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
@@ -47,30 +54,35 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 # Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
 # We use that data of the test function to deduce bounds and number of parameters.
 parameters = [
+    NumericalDiscreteParameter(
+        name=f"x_{k + 1}",
+        values=np.arange(
+            np.round(BOUNDS[0, k], 0),
+            np.round(BOUNDS[1, k], 0) + STRIDE,
+            STRIDE,
+        ).tolist(),
+    )
+    for k in range(0, DIMENSION // 2)
+] + [
     NumericalContinuousParameter(
         name=f"x_{k+1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )
-    for k in range(DIMENSION)
+    for k in range(DIMENSION // 2, DIMENSION)
 ]
 
 # We model the following constraints:
 # `1.0*x_1 + 1.0*x_2 = 1.0`
 # `1.0*x_3 - 1.0*x_4 = 2.0`
-# `1.0*x_1 + 1.0*x_3 >= 1.0`
-# `2.0*x_2 + 3.0*x_4 <= 1.0` which is equivalent to `-2.0*x_2 - 3.0*x_4 >= -1.0`
 constraints = [
-    ContinuousEqualityConstraint(
-        parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0
+    SumConstraint(
+        parameters=["x_1", "x_2"],
+        condition=ThresholdCondition(
+            threshold=1.0, operator="==", tolerance=STRIDE / 2.0
+        ),
     ),
     ContinuousEqualityConstraint(
         parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0
-    ),
-    ContinuousInequalityConstraint(
-        parameters=["x_1", "x_3"], coefficients=[1.0, 1.0], rhs=1.0
-    ),
-    ContinuousInequalityConstraint(
-        parameters=["x_2", "x_4"], coefficients=[-2.0, -3.0], rhs=-1.0
     ),
 ]
 
@@ -79,15 +91,15 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Const the BayBE object and run some iterations
+#### Const the BayBE object and run some interations
 
 baybe_obj = BayBE(
     searchspace=searchspace,
     objective=objective,
 )
 
-BATCH_QUANTITY = 3
-N_ITERATIONS = 3
+BATCH_QUANTITY = 5
+N_ITERATIONS = 2
 
 for k in range(N_ITERATIONS):
     recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
@@ -123,16 +135,4 @@ print(
     .abs()
     .lt(TOLERANCE)
     .all(),
-)
-
-# `1.0*x_1 + 1.0*x_3 >= 1.0`
-print(
-    "1.0*x_1 + 1.0*x_3 >= 1.0 satisfied in all recommendations? ",
-    (1.0 * measurements["x_1"] + 1.0 * measurements["x_3"]).ge(1.0 - TOLERANCE).all(),
-)
-
-# `2.0*x_2 + 3.0*x_4 <= 1.0`
-print(
-    "2.0*x_2 + 3.0*x_4 <= 1.0 satisfied in all recommendations? ",
-    (2.0 * measurements["x_2"] + 3.0 * measurements["x_4"]).le(1.0 + TOLERANCE).all(),
 )
