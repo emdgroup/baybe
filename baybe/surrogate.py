@@ -12,7 +12,7 @@ import cattrs
 import numpy as np
 import onnxruntime as ort
 import torch
-from attrs import define, field
+from attrs import define, field, validators
 from botorch.fit import fit_gpytorch_mll_torch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
@@ -82,16 +82,28 @@ def _prepare_targets(y: Tensor) -> Tensor:
     return y.to(_DTYPE)
 
 
-def _get_model_params_validator(model_init: Callable) -> Callable:
+def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callable:
     """Construct a validator based on the model class."""
 
     def validate_model_params(obj, _, model_params: dict) -> None:
         # Get model class name
         model = obj.__class__.__name__
 
+        if not model_params:
+            return
+
         # GP does not support additional model params
-        if "GaussianProcess" in model and model_params:
+        # Neither does custom models
+        if (
+            any(mdl_name in model for mdl_name in ("GaussianProcess", "Custom"))
+            and model_params
+        ):
             raise ValueError(f"{model} does not support model params.")
+
+        if not model_init:
+            raise ValueError(
+                f"Cannot validate model params for unrecognized Surrogate: {model}"
+            )
 
         # Invalid params
         invalid_params = ", ".join(
@@ -106,22 +118,6 @@ def _get_model_params_validator(model_init: Callable) -> Callable:
             raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
 
     return validate_model_params
-
-
-def _validate_custom_pretrained_params(obj, _, model_params: dict) -> None:
-    """Validates custom pretrain model params."""
-    try:
-        onnx_str = model_params["onnx"]
-        _ = model_params["onnx_input_name"]
-    except KeyError as exc:
-        raise ValueError(
-            f"Incomplete model params for {obj.__class__.__name__}"
-        ) from exc
-
-    try:
-        ort.InferenceSession(onnx_str.encode("ISO-8859-1"))
-    except Exception as exc:
-        raise ValueError(f"Invalid onnx str for {obj.__class__.__name__}") from exc
 
 
 def catch_constant_targets(model_cls: Type["Surrogate"]):
@@ -288,7 +284,6 @@ def register_custom_architecture(
             """Wraps around a custom architecture class."""
 
             joint_posterior: ClassVar[bool] = joint_posterior_attr
-            model_params: Dict[str, Any] = field(factory=dict)
 
             def __init__(self, *args, **kwargs):
                 self.model = model_cls(*args, **kwargs)
@@ -836,7 +831,7 @@ class BayesianLinearSurrogate(Surrogate):
         self._model.fit(train_x, train_y.ravel())
 
 
-@define
+@define(kw_only=True)
 class CustomONNXSurrogate(Surrogate):
     """A wrapper class for custom pretrained surrogate models."""
 
@@ -844,28 +839,28 @@ class CustomONNXSurrogate(Surrogate):
     joint_posterior: ClassVar[bool] = False
 
     # Object variables
+    onnx_input_name: str = field(validator=validators.instance_of(str))
+    onnx_str: str = field(validator=validators.instance_of(str))
+
     model_params: Dict[str, Any] = field(
-        factory=dict,
-        converter=dict,
-        validator=_validate_custom_pretrained_params,
+        factory=dict, converter=dict, validator=_get_model_params_validator()
     )
 
     _model: Optional[ort.InferenceSession] = field(init=False, default=None)
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        model_inputs = {
-            self.model_params["onnx_input_name"]: candidates.numpy().astype(np.float32)
-        }
+        model_inputs = {self.onnx_input_name: candidates.numpy().astype(np.float32)}
 
         results = self._model.run(None, model_inputs)
 
         return torch.from_numpy(results[0]), torch.from_numpy(results[1]).pow(2)
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        self._model = ort.InferenceSession(
-            self.model_params["onnx"].encode("ISO-8859-1")
-        )
+        try:
+            self._model = ort.InferenceSession(self.onnx_str.encode("ISO-8859-1"))
+        except Exception as exc:
+            raise ValueError("Invalid ONNX string") from exc
 
 
 def _block_serialize_custom_architecture(raw_unstructure_hook):
