@@ -1,9 +1,8 @@
 ### Example for surrogate model with a custom pretrained model
+# pylint: disable=missing-module-docstring
 
-"""
-This example shows the creation of a BayBE object,
-and the usage of pre-trained models as surrogates in BayBE.
-"""
+# This example shows how to pre-train a model and use it as a surrogate.
+# Please note that the model is not designed to be useful but to demonstrate the workflow.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
@@ -21,7 +20,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
-from baybe.surrogate import CustomPretrainedSurrogate
+from baybe.surrogate import CustomONNXSurrogate
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results, to_tensor
 from skl2onnx import convert_sklearn
@@ -108,31 +107,12 @@ onnx_str = convert_sklearn(
 #### Create a surrogate model with a pretrained model
 
 # onnx string must decoded with ISO-8859-1 for serialization purposes
-model_params = {
-    "onnx": onnx_str.decode("ISO-8859-1"),
-    "onnx_input_name": ONNX_INPUT_NAME,  # specify input name
-}
+onnx = onnx_str.decode("ISO-8859-1")
 
-surrogate_model = CustomPretrainedSurrogate(model_params=model_params)
-
-
-#### Validation
-
-invalid_model_params_no_name = {
-    "onnx": onnx_str.decode("ISO-8859-1"),
-}
-
-invalid_model_params_onnx = {
-    "onnx": onnx_str,
-    "onnx_input_name": ONNX_INPUT_NAME,  # specify input name
-}
-
-for invalid_model_params in (invalid_model_params_no_name, invalid_model_params_onnx):
-    try:
-        _ = CustomPretrainedSurrogate(model_params=invalid_model_params)
-    except ValueError as e:
-        print(f"Error message: {e}")
-
+surrogate_model = CustomONNXSurrogate(
+    onnx_str=onnx,
+    onnx_input_name=ONNX_INPUT_NAME,  # specify input name
+)
 
 #### Create BayBE object
 
@@ -161,9 +141,6 @@ baybe_obj.add_measurements(recommendation)
 
 #### Model Outputs
 
-# Note that this model is only triggered when there is data.
-print("Here you will see some model outputs as we set verbose to True")
-
 # Do another round of recommendations
 recommendation = baybe_obj.recommend(batch_quantity=2)
 
@@ -177,11 +154,15 @@ print(recommendation)
 # Note that this can be placed inside an overall baybe config
 # Refer to [`create_from_config`](./../Serialization/create_from_config.md) for an example
 
-CONFIG = {"type": "CustomPretrainedSurrogate", "model_params": model_params}
+CONFIG = {
+    "type": "CustomONNXSurrogate",
+    "onnx_str": onnx,
+    "onnx_input_name": ONNX_INPUT_NAME,
+}
 
 #### Model creation from dict (or json if string)
-model_from_python = CustomPretrainedSurrogate(model_params=model_params)
-model_from_configs = CustomPretrainedSurrogate.from_dict(CONFIG)
+model_from_python = CustomONNXSurrogate(onnx_str=onnx, onnx_input_name=ONNX_INPUT_NAME)
+model_from_configs = CustomONNXSurrogate.from_dict(CONFIG)
 
 # This configuration creates the same model
 assert model_from_python == model_from_configs
