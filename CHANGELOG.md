@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `Raises` section for validators and corresponding contributing guideline
+- Surrogate class for custom model architectures
+- Surrogate class for custom pre-trained ONNX models
 
 ## [0.5.1] - 2023-10-19
 ### Added
