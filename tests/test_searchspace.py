@@ -127,8 +127,9 @@ def test_invalid_constraint_parameter_combos():
         NumericalContinuousParameter("c1", (0, 2)),
         NumericalContinuousParameter("c2", (-1, 1)),
     ]
+
+    # Attempting continuous constraint over hybrid parameter set
     with pytest.raises(ValueError):
-        # Attempting continuous constraint over hybrid parameter set
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
@@ -138,7 +139,8 @@ def test_invalid_constraint_parameter_combos():
             ],
         )
 
-        # Attempting continuous constraint over hybrid parameter set
+    # Attempting continuous constraint over hybrid parameter set
+    with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
@@ -148,7 +150,8 @@ def test_invalid_constraint_parameter_combos():
             ],
         )
 
-        # Attempting discrete constraint over hybrid parameter set
+    # Attempting discrete constraint over hybrid parameter set
+    with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
@@ -159,7 +162,8 @@ def test_invalid_constraint_parameter_combos():
             ],
         )
 
-        # Attempting constraints over parameter set where a parameter does not exist
+    # Attempting constraints over parameter set where a parameter does not exist
+    with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
@@ -170,7 +174,8 @@ def test_invalid_constraint_parameter_combos():
             ],
         )
 
-        # Attempting constraints over parameter set where a parameter does not exist
+    # Attempting constraints over parameter set where a parameter does not exist
+    with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
