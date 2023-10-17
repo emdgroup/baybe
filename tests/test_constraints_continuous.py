@@ -100,15 +100,22 @@ def test_hybridspace_ineq(baybe, n_iterations, batch_quantity):
 
 def test_invalid_constraints():
     """Test invalid continuous constraint creations."""
+    # number of parameters and coefficients doesn't match
+
     with pytest.raises(ValueError):
-        # number of parameters and coefficients doesn't match
         ContinuousEqualityConstraint(parameters=["A", "B"], coefficients=[1.0], rhs=0.0)
+
+    with pytest.raises(ValueError):
         ContinuousEqualityConstraint(
             parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
         )
+
+    with pytest.raises(ValueError):
         ContinuousInequalityConstraint(
             parameters=["A", "B"], coefficients=[1.0], rhs=0.0
         )
+
+    with pytest.raises(ValueError):
         ContinuousInequalityConstraint(
             parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
         )
