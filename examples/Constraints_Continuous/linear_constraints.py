@@ -1,5 +1,6 @@
 ### Example for linear constraints in a continuous searchspace
 # pylint: disable=missing-module-docstring
+import numpy as np
 
 # Example for optimizing a synthetic test functions in a continuous space with linear
 # constraints.
@@ -108,21 +109,17 @@ TOLERANCE = 0.01
 # `1.0*x_1 + 1.0*x_2 = 1.0`
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
-    (1.0 * measurements["x_1"] + 1.0 * measurements["x_2"])
-    .sub(1.0)
-    .abs()
-    .lt(TOLERANCE)
-    .all(),
+    np.allclose(
+        1.0 * measurements["x_1"] + 1.0 * measurements["x_2"], 1.0, atol=TOLERANCE
+    ),
 )
 
 # `1.0*x_3 - 1.0*x_4 = 2.0`
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",
-    (1.0 * measurements["x_3"] - 1.0 * measurements["x_4"])
-    .sub(2.0)
-    .abs()
-    .lt(TOLERANCE)
-    .all(),
+    np.allclose(
+        1.0 * measurements["x_3"] - 1.0 * measurements["x_4"], 2.0, atol=TOLERANCE
+    ),
 )
 
 # `1.0*x_1 + 1.0*x_3 >= 1.0`
