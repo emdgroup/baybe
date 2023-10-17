@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - linear in-/equality constraints over continuous parameters
-- constrained optimization for the sequential greedy optimizer
+- constrained optimization for `SequentialGreedyRecommender`
 - `RandomRecommender` now supports linear in-/equality constraints via polytope sampling
 
 ### Changed
@@ -121,7 +121,7 @@ any data submission loops
 - Mechanisms for loading and validating config files
 - Telemetry via OpenTelemetry
 - More detailed package installation info
-- Fallback mechanism for NonPredictiveRecommenders
+- Fallback mechanism for `NonPredictiveRecommender`
 - Introduce naive hybrid recommender
 
 ### Changed
