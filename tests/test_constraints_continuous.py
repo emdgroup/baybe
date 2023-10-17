@@ -1,5 +1,5 @@
 """Test for imposing continuous constraints."""
-
+import numpy as np
 import pytest
 from baybe.constraints import (
     ContinuousEqualityConstraint,
@@ -30,13 +30,7 @@ def test_equality1(baybe, n_iterations, batch_quantity):
     res = run_iterations(baybe, n_iterations, batch_quantity)
     print(res)
 
-    assert (
-        (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"])
-        .sub(0.3)
-        .abs()
-        .lt(0.01)
-        .all()
-    )
+    assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -47,13 +41,7 @@ def test_equality2(baybe, n_iterations, batch_quantity):
     res = run_iterations(baybe, n_iterations, batch_quantity)
     print(res)
 
-    assert (
-        (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"])
-        .sub(0.3)
-        .abs()
-        .lt(0.01)
-        .all()
-    )
+    assert np.allclose(1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"], 0.3)
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -91,13 +79,7 @@ def test_hybridspace_eq(baybe, n_iterations, batch_quantity):
     res = run_iterations(baybe, n_iterations, batch_quantity)
     print(res)
 
-    assert (
-        (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"])
-        .sub(0.3)
-        .abs()
-        .lt(0.01)
-        .all()
-    )
+    assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
 
 
 @pytest.mark.slow
