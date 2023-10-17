@@ -10,17 +10,14 @@ import pandas as pd
 import torch
 from torch import Tensor
 
+from baybe.utils import DTypeFloatNumpy, DTypeFloatTorch
+
 if TYPE_CHECKING:
     from baybe.core import BayBE
     from baybe.parameters import Parameter
 
 # Logging
 _logger = logging.getLogger(__name__)
-
-# Data types
-# TODO: unclear why pylint wants PascalCase here
-_DTYPE_FLOAT_NUMPY = np.float64  # pylint: disable=invalid-name
-_DTYPE_FLOAT_TORCH = torch.float64  # pylint: disable=invalid-name
 
 
 def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
@@ -40,7 +37,7 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     #  care of this) df.values has been changed to df.values.astype(float),
     #  even though this seems like double casting here.
     out = (
-        torch.from_numpy(df.values.astype(_DTYPE_FLOAT_NUMPY)).to(_DTYPE_FLOAT_TORCH)
+        torch.from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
         for df in dfs
     )
     if len(dfs) == 1:

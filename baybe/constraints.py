@@ -18,7 +18,13 @@ from numpy.typing import ArrayLike
 from torch import Tensor
 
 from baybe.parameters import NumericalContinuousParameter, Parameter
-from baybe.utils import Dummy, get_base_unstructure_hook, SerialMixin, unstructure_base
+from baybe.utils import (
+    DTypeFloatTorch,
+    Dummy,
+    get_base_unstructure_hook,
+    SerialMixin,
+    unstructure_base,
+)
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
@@ -531,7 +537,7 @@ class ContinuousConstraint(Constraint, ABC):
 
         return (
             torch.tensor(param_indices),
-            torch.tensor(self.coefficients, dtype=torch.float64),
+            torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
             self.rhs,
         )
 

@@ -34,6 +34,7 @@ from baybe.parameters import (
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import (
     df_drop_single_value_columns,
+    DTypeFloatTorch,
     eq_dataframe,
     fuzzy_row_match,
     SerialMixin,
@@ -456,7 +457,7 @@ class SubspaceContinuous:
     def param_bounds_comp(self) -> torch.Tensor:
         """Return bounds as tensor."""
         if not self.parameters:
-            return torch.empty(2, 0, dtype=torch.float64)
+            return torch.empty(2, 0, dtype=DTypeFloatTorch)
         return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
 
     def transform(
