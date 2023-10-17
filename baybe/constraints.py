@@ -187,13 +187,13 @@ class Constraint(ABC, SerialMixin):
             )
 
     @property
-    def is_continuous(self):
-        """Flag indicating whether this is a constraint over continuous parameters."""
+    def is_continuous(self) -> bool:
+        """Boolean indicating if this is a constraint over continuous parameters."""
         return isinstance(self, ContinuousConstraint)
 
     @property
-    def is_discrete(self):
-        """Flag indicating whether this is a constraint over discrete parameters."""
+    def is_discrete(self) -> bool:
+        """Boolean indicating if this is a constraint over discrete parameters."""
         return isinstance(self, DiscreteConstraint)
 
 
@@ -500,13 +500,15 @@ class ContinuousConstraint(Constraint, ABC):
 
     @coefficients.validator
     def _validate_coefficients(self, _: Any, coefficients: List[float]) -> None:
-        """Validate the coefficients."""
-        # Raises a ValueError if the number of coefficients doesn't match the number of
-        # parameters.
+        """Validate the coefficients.
+
+        Raises a ValueError if the number of coefficients does not match the number of
+        parameters.
+        """
         if len(self.parameters) != len(coefficients):
             raise ValueError(
                 "The given 'coefficients' list must have one floating point entry for "
-                "each entry in `parameters`"
+                "each entry in `parameters`."
             )
 
     @coefficients.default
@@ -546,8 +548,9 @@ class ContinuousConstraint(Constraint, ABC):
 class ContinuousEqualityConstraint(ContinuousConstraint):
     """Class for continuous equality constraints.
 
-    The constraint is defined as `sum_i[ x_i * c_i ] == rhs` where x_i are the
+    The constraint is defined as `sum_i[ x_i * c_i ] == rhs`, where x_i are the
     parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
+
     The class has no content as it only serves the purpose of distinguishing the
     constraints.
 
@@ -560,10 +563,12 @@ class ContinuousEqualityConstraint(ContinuousConstraint):
 class ContinuousInequalityConstraint(ContinuousConstraint):
     """Class for continuous inequality constraints.
 
-    The constraint is defined as `sum_i[ x_i * c_i ] >= rhs` where x_i are the
+    The constraint is defined as `sum_i[ x_i * c_i ] >= rhs`, where x_i are the
     parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
     If you want to implement a constraint of the form `<=`, multiply ```rhs``` and
-    ```coefficients``` by -1. The class has no content as it only serves the purpose of
+    ```coefficients``` by -1.
+
+    The class has no content as it only serves the purpose of
     distinguishing the constraints.
 
     Args:
@@ -605,7 +610,7 @@ def _validate_constraints(
     constraints: List[Constraint], parameters: List[Parameter]
 ) -> None:
     """Asserts that a given collection of constraints is valid."""
-    # Raises a ValueError if there is more than one DependenciesConstraint declared
+    # Raise a ValueError if there is more than one DependenciesConstraint declared
     if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
             f"There is only one {DependenciesConstraint.__name__} allowed. "
@@ -616,7 +621,7 @@ def _validate_constraints(
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
     param_names_continuous = [p.name for p in parameters if not p.is_discrete]
     for constraint in constraints:
-        # Raises a ValueError if any constraint contains an invalid parameter name
+        # Raise a ValueError if any constraint contains an invalid parameter name
         if not all(p in param_names_all for p in constraint.parameters):
             raise ValueError(
                 f"You are trying to create a constraint with at least one parameter "
@@ -624,7 +629,7 @@ def _validate_constraints(
                 f"Parameter list of the affected constraint: {constraint.parameters}"
             )
 
-        # Raises a ValueError if any continuous constraint includes a discrete parameter
+        # Raise a ValueError if any continuous constraint includes a discrete parameter
         if constraint.is_continuous and any(
             p in param_names_discrete for p in constraint.parameters
         ):
@@ -634,7 +639,7 @@ def _validate_constraints(
                 f"constraint: {constraint.parameters}"
             )
 
-        # Raises a ValueError if any discrete constraint includes a continuous parameter
+        # Raise a ValueError if any discrete constraint includes a continuous parameter
         if constraint.is_discrete and any(
             p in param_names_continuous for p in constraint.parameters
         ):
