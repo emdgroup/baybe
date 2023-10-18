@@ -13,6 +13,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Tuple,
     Union,
 )
 
@@ -139,7 +140,7 @@ class DiscreteParameter(Parameter, ABC):
 
     @property
     @abstractmethod
-    def values(self) -> list:
+    def values(self) -> tuple:
         """The values the parameter can take."""
 
     @cached_property
@@ -192,13 +193,13 @@ class CategoricalParameter(DiscreteParameter):
     is_numeric: ClassVar[bool] = False
 
     # object variables
-    _values: list = field(
-        converter=list, validator=[min_len(2), _validate_unique_values]
+    _values: tuple = field(
+        converter=tuple, validator=[min_len(2), _validate_unique_values]
     )
     encoding: Literal["OHE", "INT"] = field(default="OHE")
 
     @property
-    def values(self) -> list:
+    def values(self) -> tuple:
         """The values of the parameter."""
         return self._values
 
@@ -230,8 +231,8 @@ class NumericalDiscreteParameter(DiscreteParameter):
     is_numeric: ClassVar[bool] = True
 
     # object variables
-    _values: List[float] = field(
-        converter=lambda x: cattrs.structure(x, List[float]),
+    _values: Tuple[float, ...] = field(
+        converter=lambda x: cattrs.structure(x, Tuple[float, ...]),
         validator=[
             min_len(2),
             _validate_unique_values,
@@ -266,7 +267,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
             )
 
     @property
-    def values(self) -> list:  # noqa: D102
+    def values(self) -> tuple:  # noqa: D102
         # See base class.
         return self._values
 
@@ -387,7 +388,7 @@ class SubstanceParameter(DiscreteParameter):
                 )
 
     @property
-    def values(self) -> list:
+    def values(self) -> tuple:
         """Returns the labels of the given set of molecules."""
         # Since the order of dictionary keys is important here, this will only work
         # for Python 3.7 or higher
@@ -455,17 +456,17 @@ class TaskParameter(CategoricalParameter):
     # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
     #   declared as such because of the inheritance relationship.
     encoding: Literal["INT"] = field(default="INT")
-    active_values: list = field(converter=list)
+    active_values: tuple = field(converter=tuple)
 
     @active_values.default
-    def _default_active_values(self) -> list:
+    def _default_active_values(self) -> tuple:
         """Set all parameters active by default."""
         # TODO [16605]: Redesign metadata handling
         return self.values
 
     @active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
-        self, _: Any, values: list
+        self, _: Any, values: tuple
     ) -> None:
         """Validate the active parameter values.
 
@@ -547,9 +548,9 @@ class CustomDiscreteParameter(DiscreteParameter):
             )
 
     @property
-    def values(self) -> list:
+    def values(self) -> tuple:
         """Returns the representing labels of the parameter."""
-        return self.data.index.to_list()
+        return tuple(self.data.index)
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
