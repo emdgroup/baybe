@@ -1,6 +1,4 @@
 """Surrogate models, such as Gaussian processes, random forests, etc."""
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
 
 import gc
 import sys

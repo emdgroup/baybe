@@ -1,7 +1,6 @@
 """Core functionality of BayBE. Main point of interaction via Python."""
 
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
+from __future__ import annotations
 
 import base64
 import json
@@ -149,7 +148,7 @@ class BayBE(SerialMixin):
         return self.objective.transform(self.measurements_exp)
 
     @classmethod
-    def from_config(cls, config_json: str) -> "BayBE":
+    def from_config(cls, config_json: str) -> BayBE:
         """Create a BayBE object from a configuration JSON.
 
         Args:

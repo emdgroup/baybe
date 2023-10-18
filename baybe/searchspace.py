@@ -1,6 +1,6 @@
 """Functionality for managing search spaces."""
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
+
+from __future__ import annotations
 
 from enum import Enum
 from typing import Any, cast, Dict, List, Optional, Tuple
@@ -170,7 +170,7 @@ class SubspaceDiscrete:
         return self.exp_rep[task_param.name].isin(task_param.active_values)
 
     @classmethod
-    def empty(cls) -> "SubspaceDiscrete":
+    def empty(cls) -> SubspaceDiscrete:
         """Creates an empty discrete subspace."""
         return SubspaceDiscrete(
             parameters=[],
@@ -184,7 +184,7 @@ class SubspaceDiscrete:
         parameters: List[DiscreteParameter],
         constraints: Optional[List[DiscreteConstraint]] = None,
         empty_encoding: bool = False,
-    ) -> "SubspaceDiscrete":
+    ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.SearchSpace`."""
         # Store the input
         if constraints is None:
@@ -218,7 +218,7 @@ class SubspaceDiscrete:
         df: pd.DataFrame,
         parameters: Optional[List[Parameter]] = None,
         empty_encoding: bool = False,
-    ) -> "SubspaceDiscrete":
+    ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
 
         Args:
@@ -414,12 +414,12 @@ class SubspaceContinuous:
     )
 
     @classmethod
-    def empty(cls) -> "SubspaceContinuous":
+    def empty(cls) -> SubspaceContinuous:
         """Create an empty continuous subspace."""
         return SubspaceContinuous([])
 
     @classmethod
-    def from_bounds(cls, bounds: pd.DataFrame) -> "SubspaceContinuous":
+    def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
         """Create a hyperrectangle-shaped continuous subspace with given bounds.
 
         Args:
@@ -441,7 +441,7 @@ class SubspaceContinuous:
         return SubspaceContinuous(parameters)
 
     @classmethod
-    def from_dataframe(cls, df: pd.DataFrame) -> "SubspaceContinuous":
+    def from_dataframe(cls, df: pd.DataFrame) -> SubspaceContinuous:
         """Create a hyperractangle-shaped continuous subspace from a dataframe.
 
         More precisely, create the smallest axis-aligned hyperrectangle-shaped
@@ -591,7 +591,7 @@ class SearchSpace(SerialMixin):
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-    ) -> "SearchSpace":
+    ) -> SearchSpace:
         """Create a search space from a cartesian product.
 
         In the search space, optional subsequent constraints are applied.

@@ -1,6 +1,4 @@
 """Functionality for parameter constraints."""
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
 
 import operator as ops
 from abc import ABC, abstractmethod

@@ -1,6 +1,4 @@
 """Functionality for different experimental parameter types."""
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
 
 from abc import ABC, abstractmethod
 from functools import cached_property

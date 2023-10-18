@@ -157,9 +157,7 @@ def simulate_transfer_learning(
 
 def simulate_scenarios(
     scenarios: Dict[Any, BayBE],
-    lookup: Optional[
-        Union[pd.DataFrame, Callable[[float, ...], Union[float, Tuple[float, ...]]]]
-    ] = None,
+    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
     batch_quantity: int = 1,
@@ -205,8 +203,6 @@ def simulate_scenarios(
                 parameter that specifies the search space partition considered for the
                 respective simulation.
     """
-    # TODO: Due to the "..." operator, sphinx does not render this properly. Might
-    # want to investigate in the future.
     _RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
 
     @dataclass
@@ -377,7 +373,7 @@ def _simulate_groupby(
 
 def simulate_experiment(
     baybe_obj: BayBE,
-    lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
+    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
     batch_quantity: int = 1,
