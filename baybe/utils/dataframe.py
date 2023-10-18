@@ -10,7 +10,7 @@ import pandas as pd
 import torch
 from torch import Tensor
 
-from baybe.utils import DTypeFloatNumpy, DTypeFloatTorch
+from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
     from baybe.core import BayBE
