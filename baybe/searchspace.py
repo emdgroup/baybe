@@ -11,6 +11,7 @@ import pandas as pd
 import torch
 from attrs import define, field
 from botorch.utils.sampling import get_polytope_samples
+from cattrs.errors import IterableValidationError
 
 from baybe.constraints import (
     _validate_constraints,
@@ -263,7 +264,7 @@ class SubspaceDiscrete:
                 values = series.drop_duplicates().values.tolist()
                 try:
                     param = NumericalDiscreteParameter(name=name, values=values)
-                except TypeError:
+                except IterableValidationError:
                     param = CategoricalParameter(name=name, values=values)
                 parameters.append(param)
 

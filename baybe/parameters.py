@@ -20,7 +20,7 @@ import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import deep_iterable, gt, instance_of, lt, min_len
+from attrs.validators import gt, instance_of, lt, min_len
 from scipy.spatial.distance import pdist
 
 from baybe.exceptions import EmptySearchSpaceError
@@ -61,7 +61,6 @@ if _RDKIT_INSTALLED:
 #       "In the future, cattrs will gain additional tools to make union handling even
 #       easier and automate generating these hooks."
 #       https://catt.rs/en/stable/unions.html
-cattrs.register_structure_hook(Union[int, float], lambda x, _: float(x))
 cattrs.register_structure_hook(Union[bool, float], lambda x, _: x)
 
 # TODO: Introduce encoding enums
@@ -231,10 +230,9 @@ class NumericalDiscreteParameter(DiscreteParameter):
     is_numeric: ClassVar[bool] = True
 
     # object variables
-    _values: List[Union[int, float]] = field(
-        converter=list,
+    _values: List[float] = field(
+        converter=lambda x: cattrs.structure(x, List[float]),
         validator=[
-            deep_iterable(instance_of((int, float)), instance_of(list)),
             min_len(2),
             _validate_unique_values,
         ],
