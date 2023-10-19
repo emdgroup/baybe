@@ -33,6 +33,7 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.surrogate import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
+from baybe.utils import add_fake_results, add_parameter_noise
 
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
@@ -607,3 +608,29 @@ def fixture_default_config():
             },""",
     )
     return cfg
+
+
+# Reusables
+
+# TODO consider turning this into a fixture returning a baybe object after running some
+#  fake iterations
+def run_iterations(
+    baybe: BayBE, n_iterations: int, batch_quantity: int, add_noise: bool = True
+) -> None:
+    """Run a baybe object for some fake iterations.
+
+    Args:
+        baybe: The baybe object encapsulating the experiment.
+        n_iterations: Number of iterations run.
+        batch_quantity: Number of recommended points per iteration.
+        add_noise: Flag whether measurement noise should be added every 2nd iteration.
+    """
+    for k in range(n_iterations):
+        rec = baybe.recommend(batch_quantity=batch_quantity)
+        # dont use parameter noise for these tests
+
+        add_fake_results(rec, baybe)
+        if add_noise and (k % 2):
+            add_parameter_noise(rec, baybe.parameters, noise_level=0.1)
+
+        baybe.add_measurements(rec)

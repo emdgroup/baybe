@@ -6,20 +6,7 @@ from baybe.constraints import (
     ContinuousInequalityConstraint,
 )
 
-from baybe.utils import add_fake_results
-
-
-def run_iterations(baybe, n_iterations, batch_quantity):
-    """Run a few fake iterations."""
-    for _ in range(n_iterations):
-        rec = baybe.recommend(batch_quantity=batch_quantity)
-        # dont use parameter noise for these tests
-
-        add_fake_results(rec, baybe)
-
-        baybe.add_measurements(rec)
-
-    return baybe.measurements_exp
+from .conftest import run_iterations
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -27,7 +14,8 @@ def run_iterations(baybe, n_iterations, batch_quantity):
 @pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
 def test_equality1(baybe, n_iterations, batch_quantity):
     """Test equality constraint with equal weights."""
-    res = run_iterations(baybe, n_iterations, batch_quantity)
+    run_iterations(baybe, n_iterations, batch_quantity, add_noise=False)
+    res = baybe.measurements_exp
     print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
@@ -38,7 +26,8 @@ def test_equality1(baybe, n_iterations, batch_quantity):
 @pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
 def test_equality2(baybe, n_iterations, batch_quantity):
     """Test equality constraint with unequal weights."""
-    res = run_iterations(baybe, n_iterations, batch_quantity)
+    run_iterations(baybe, n_iterations, batch_quantity, add_noise=False)
+    res = baybe.measurements_exp
     print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"], 0.3)
@@ -49,7 +38,8 @@ def test_equality2(baybe, n_iterations, batch_quantity):
 @pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
 def test_inequality1(baybe, n_iterations, batch_quantity):
     """Test inequality constraint with equal weights."""
-    res = run_iterations(baybe, n_iterations, batch_quantity)
+    run_iterations(baybe, n_iterations, batch_quantity, add_noise=False)
+    res = baybe.measurements_exp
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
@@ -60,7 +50,8 @@ def test_inequality1(baybe, n_iterations, batch_quantity):
 @pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
 def test_inequality2(baybe, n_iterations, batch_quantity):
     """Test inequality constraint with unequal weights."""
-    res = run_iterations(baybe, n_iterations, batch_quantity)
+    run_iterations(baybe, n_iterations, batch_quantity, add_noise=False)
+    res = baybe.measurements_exp
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
@@ -76,7 +67,8 @@ def test_inequality2(baybe, n_iterations, batch_quantity):
 @pytest.mark.parametrize("n_grid_points", [5], ids=["grid5"])
 def test_hybridspace_eq(baybe, n_iterations, batch_quantity):
     """Test equality constraint with equal weights."""
-    res = run_iterations(baybe, n_iterations, batch_quantity)
+    run_iterations(baybe, n_iterations, batch_quantity, add_noise=False)
+    res = baybe.measurements_exp
     print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
@@ -92,7 +84,8 @@ def test_hybridspace_eq(baybe, n_iterations, batch_quantity):
 @pytest.mark.parametrize("n_grid_points", [5], ids=["grid5"])
 def test_hybridspace_ineq(baybe, n_iterations, batch_quantity):
     """Test inequality constraint with equal weights."""
-    res = run_iterations(baybe, n_iterations, batch_quantity)
+    run_iterations(baybe, n_iterations, batch_quantity, add_noise=False)
+    res = baybe.measurements_exp
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
