@@ -15,8 +15,8 @@ from botorch.utils.sampling import get_polytope_samples
 from baybe.constraints import (
     _validate_constraints,
     Constraint,
-    ContinuousEqualityConstraint,
-    ContinuousInequalityConstraint,
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteConstraint,
 )
@@ -398,8 +398,10 @@ class SubspaceContinuous:
     parameters: List[NumericalContinuousParameter] = field(
         validator=lambda _1, _2, x: _validate_parameter_names(x)
     )
-    constraints_lin_eq: List[ContinuousEqualityConstraint] = field(factory=list)
-    constraints_lin_ineq: List[ContinuousInequalityConstraint] = field(factory=list)
+    constraints_lin_eq: List[ContinuousLinearEqualityConstraint] = field(factory=list)
+    constraints_lin_ineq: List[ContinuousLinearInequalityConstraint] = field(
+        factory=list
+    )
 
     @classmethod
     def empty(cls) -> "SubspaceContinuous":
@@ -627,14 +629,14 @@ class SearchSpace(SerialMixin):
                 if not p.is_discrete
             ],
             constraints_lin_eq=[
-                cast(ContinuousEqualityConstraint, c)
+                cast(ContinuousLinearEqualityConstraint, c)
                 for c in constraints
-                if isinstance(c, ContinuousEqualityConstraint)
+                if isinstance(c, ContinuousLinearEqualityConstraint)
             ],
             constraints_lin_ineq=[
-                cast(ContinuousInequalityConstraint, c)
+                cast(ContinuousLinearInequalityConstraint, c)
                 for c in constraints
-                if isinstance(c, ContinuousInequalityConstraint)
+                if isinstance(c, ContinuousLinearInequalityConstraint)
             ],
         )
 

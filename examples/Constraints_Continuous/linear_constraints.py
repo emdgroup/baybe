@@ -17,8 +17,8 @@ import numpy as np
 
 from baybe import BayBE
 from baybe.constraints import (
-    ContinuousEqualityConstraint,
-    ContinuousInequalityConstraint,
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
@@ -61,16 +61,16 @@ parameters = [
 # `1.0*x_1 + 1.0*x_3 >= 1.0`
 # `2.0*x_2 + 3.0*x_4 <= 1.0` which is equivalent to `-2.0*x_2 - 3.0*x_4 >= -1.0`
 constraints = [
-    ContinuousEqualityConstraint(
+    ContinuousLinearEqualityConstraint(
         parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0
     ),
-    ContinuousEqualityConstraint(
+    ContinuousLinearEqualityConstraint(
         parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0
     ),
-    ContinuousInequalityConstraint(
+    ContinuousLinearInequalityConstraint(
         parameters=["x_1", "x_3"], coefficients=[1.0, 1.0], rhs=1.0
     ),
-    ContinuousInequalityConstraint(
+    ContinuousLinearInequalityConstraint(
         parameters=["x_2", "x_4"], coefficients=[-2.0, -3.0], rhs=-1.0
     ),
 ]

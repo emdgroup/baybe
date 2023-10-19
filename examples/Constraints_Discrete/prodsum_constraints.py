@@ -11,7 +11,11 @@
 import numpy as np
 from baybe import BayBE
 
-from baybe.constraints import ProductConstraint, SumConstraint, ThresholdCondition
+from baybe.constraints import (
+    DiscreteProductConstraint,
+    DiscreteSumConstraint,
+    ThresholdCondition,
+)
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -67,15 +71,15 @@ parameters = [
 # Constraints are used when creating the searchspace object.
 # Thus, they need to be defined prior to the searchspace creation.
 
-sum_constraint_1 = SumConstraint(
+sum_constraint_1 = DiscreteSumConstraint(
     parameters=["NumParam1", "NumParam2"],
     condition=ThresholdCondition(threshold=150.0, operator="<="),
 )
-sum_constraint_2 = SumConstraint(
+sum_constraint_2 = DiscreteSumConstraint(
     parameters=["NumParam5", "NumParam6"],
     condition=ThresholdCondition(threshold=100, operator="=", tolerance=1.0),
 )
-prod_constraint = ProductConstraint(
+prod_constraint = DiscreteProductConstraint(
     parameters=["NumParam3", "NumParam4"],
     condition=ThresholdCondition(threshold=30, operator=">="),
 )

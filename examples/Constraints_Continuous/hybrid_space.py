@@ -17,8 +17,8 @@ import numpy as np
 
 from baybe import BayBE
 from baybe.constraints import (
-    ContinuousEqualityConstraint,
-    SumConstraint,
+    ContinuousLinearEqualityConstraint,
+    DiscreteSumConstraint,
     ThresholdCondition,
 )
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
@@ -75,13 +75,13 @@ parameters = [
 # `1.0*x_1 + 1.0*x_2 = 1.0`
 # `1.0*x_3 - 1.0*x_4 = 2.0`
 constraints = [
-    SumConstraint(
+    DiscreteSumConstraint(
         parameters=["x_1", "x_2"],
         condition=ThresholdCondition(
             threshold=1.0, operator="==", tolerance=STRIDE / 2.0
         ),
     ),
-    ContinuousEqualityConstraint(
+    ContinuousLinearEqualityConstraint(
         parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0
     ),
 ]

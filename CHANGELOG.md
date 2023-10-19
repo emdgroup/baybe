@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unreachable telemetry endpoints now automatically disables telemetry and no longer cause
 any data submission loops
 - `add_fake_results` utility now considers potential target bounds
+- Constraint names have been refactored to indicate whether they operate on discrete 
+or continuous parameters
 
 ### Fixed
 - Random recommendation failing for small discrete (sub-)spaces

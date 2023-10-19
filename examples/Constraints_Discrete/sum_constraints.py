@@ -17,10 +17,10 @@ import numpy as np
 from baybe import BayBE
 
 from baybe.constraints import (
-    DependenciesConstraint,
-    NoLabelDuplicatesConstraint,
-    PermutationInvarianceConstraint,
-    SumConstraint,
+    DiscreteDependenciesConstraint,
+    DiscreteNoLabelDuplicatesConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteSumConstraint,
     ThresholdCondition,
 )
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
@@ -62,9 +62,9 @@ parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 # The reason is that constraints are normally applied in a specific order.
 # However, the fractions should be invariant under permutations.
 # We thus require an explicit constraint for this.
-perm_inv_constraint = PermutationInvarianceConstraint(
+perm_inv_constraint = DiscretePermutationInvarianceConstraint(
     parameters=["Solv1", "Solv2", "Solv3"],
-    dependencies=DependenciesConstraint(
+    dependencies=DiscreteDependenciesConstraint(
         parameters=["Frac1", "Frac2", "Frac3"],
         conditions=[
             ThresholdCondition(threshold=0.0, operator=">"),
@@ -76,14 +76,14 @@ perm_inv_constraint = PermutationInvarianceConstraint(
 )
 
 # This is now the actual sum constraint
-sum_constraint = SumConstraint(
+sum_constraint = DiscreteSumConstraint(
     parameters=["Frac1", "Frac2", "Frac3"],
     condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
 )
 
 # The permutation invariance might create duplciate labels.
 # We thus include a constraint to remove them.
-no_duplicates_constraint = NoLabelDuplicatesConstraint(
+no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
     parameters=["Solv1", "Solv2", "Solv3"]
 )
 

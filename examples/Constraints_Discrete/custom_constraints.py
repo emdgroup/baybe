@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from baybe import BayBE
 
-from baybe.constraints import CustomConstraint
+from baybe.constraints import DiscreteCustomConstraint
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -69,7 +69,7 @@ def custom_function(ser: pd.Series) -> bool:
 
 
 # We now initialize the `CustomConstraint` with all parameters this function should have access to.
-constraint = CustomConstraint(
+constraint = DiscreteCustomConstraint(
     parameters=["Concentration", "Solvent", "Temperature"], validator=custom_function
 )
 

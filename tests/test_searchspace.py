@@ -3,9 +3,9 @@ import pandas as pd
 import pytest
 import torch
 from baybe.constraints import (
-    ContinuousEqualityConstraint,
-    ContinuousInequalityConstraint,
-    SumConstraint,
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
+    DiscreteSumConstraint,
     ThresholdCondition,
 )
 from baybe.exceptions import EmptySearchSpaceError
@@ -133,7 +133,7 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                ContinuousEqualityConstraint(
+                ContinuousLinearEqualityConstraint(
                     parameters=["c1", "c2", "d1"],
                 )
             ],
@@ -144,7 +144,7 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                ContinuousInequalityConstraint(
+                ContinuousLinearInequalityConstraint(
                     parameters=["c1", "c2", "d1"],
                 )
             ],
@@ -155,7 +155,7 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                SumConstraint(
+                DiscreteSumConstraint(
                     parameters=["d1", "d2", "c1"],
                     condition=ThresholdCondition(threshold=1.0, operator=">"),
                 )
@@ -167,7 +167,7 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                SumConstraint(
+                DiscreteSumConstraint(
                     parameters=["d1", "e7", "c1"],
                     condition=ThresholdCondition(threshold=1.0, operator=">"),
                 )
@@ -179,7 +179,7 @@ def test_invalid_constraint_parameter_combos():
         SearchSpace.from_product(
             parameters=parameters,
             constraints=[
-                ContinuousInequalityConstraint(
+                ContinuousLinearInequalityConstraint(
                     parameters=["c1", "e7", "d1"],
                 )
             ],

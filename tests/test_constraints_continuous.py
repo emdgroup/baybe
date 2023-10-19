@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 from baybe.constraints import (
-    ContinuousEqualityConstraint,
-    ContinuousInequalityConstraint,
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
 )
 
 from .conftest import run_iterations
@@ -96,19 +96,21 @@ def test_invalid_constraints():
     # number of parameters and coefficients doesn't match
 
     with pytest.raises(ValueError):
-        ContinuousEqualityConstraint(parameters=["A", "B"], coefficients=[1.0], rhs=0.0)
-
-    with pytest.raises(ValueError):
-        ContinuousEqualityConstraint(
-            parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
-        )
-
-    with pytest.raises(ValueError):
-        ContinuousInequalityConstraint(
+        ContinuousLinearEqualityConstraint(
             parameters=["A", "B"], coefficients=[1.0], rhs=0.0
         )
 
     with pytest.raises(ValueError):
-        ContinuousInequalityConstraint(
+        ContinuousLinearEqualityConstraint(
+            parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
+        )
+
+    with pytest.raises(ValueError):
+        ContinuousLinearInequalityConstraint(
+            parameters=["A", "B"], coefficients=[1.0], rhs=0.0
+        )
+
+    with pytest.raises(ValueError):
+        ContinuousLinearInequalityConstraint(
             parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
         )

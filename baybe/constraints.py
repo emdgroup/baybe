@@ -223,7 +223,7 @@ class DiscreteConstraint(Constraint, ABC):
 
 
 @define
-class ExcludeConstraint(DiscreteConstraint):
+class DiscreteExcludeConstraint(DiscreteConstraint):
     """Class for modelling exclusion constraints.
 
     Args:
@@ -246,7 +246,7 @@ class ExcludeConstraint(DiscreteConstraint):
 
 
 @define
-class SumConstraint(DiscreteConstraint):
+class DiscreteSumConstraint(DiscreteConstraint):
     """Class for modelling sum constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
@@ -263,7 +263,7 @@ class SumConstraint(DiscreteConstraint):
 
 
 @define
-class ProductConstraint(DiscreteConstraint):
+class DiscreteProductConstraint(DiscreteConstraint):
     """Class for modelling product constraints.
 
     Args:
@@ -283,7 +283,7 @@ class ProductConstraint(DiscreteConstraint):
         return data.index[mask_bad]
 
 
-class NoLabelDuplicatesConstraint(DiscreteConstraint):
+class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
     """Constraint class for excluding entries where occurring labels are not unique.
 
     This can be useful to remove entries that arise from e.g. a permutation invariance
@@ -303,7 +303,7 @@ class NoLabelDuplicatesConstraint(DiscreteConstraint):
         return data.index[mask_bad]
 
 
-class LinkedParametersConstraint(DiscreteConstraint):
+class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     """Constraint class for linking the values of parameters.
 
     This constraint type effectively allows generating parameter sets that relate to
@@ -320,7 +320,7 @@ class LinkedParametersConstraint(DiscreteConstraint):
 
 
 @define
-class DependenciesConstraint(DiscreteConstraint):
+class DiscreteDependenciesConstraint(DiscreteConstraint):
     """Constraint that specifies dependencies between parameters.
 
     For instance some parameters might only be relevant when another parameter has a
@@ -396,7 +396,7 @@ class DependenciesConstraint(DiscreteConstraint):
 
 
 @define
-class PermutationInvarianceConstraint(DiscreteConstraint):
+class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
     More precisely, this means that, ```(val_from_param1, val_from_param2)``` is
@@ -412,7 +412,7 @@ class PermutationInvarianceConstraint(DiscreteConstraint):
     """
 
     # object variables
-    dependencies: Optional[DependenciesConstraint] = field(default=None)
+    dependencies: Optional[DiscreteDependenciesConstraint] = field(default=None)
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -420,7 +420,9 @@ class PermutationInvarianceConstraint(DiscreteConstraint):
         # dropped by this constraint.
         mask_duplicate_labels = pd.Series(False, index=data.index)
         mask_duplicate_labels[
-            NoLabelDuplicatesConstraint(parameters=self.parameters).get_invalid(data)
+            DiscreteNoLabelDuplicatesConstraint(parameters=self.parameters).get_invalid(
+                data
+            )
         ] = True
 
         # Merge a permutation invariant representation of all affected parameters with
@@ -458,7 +460,7 @@ class PermutationInvarianceConstraint(DiscreteConstraint):
 
 
 @define
-class CustomConstraint(DiscreteConstraint):
+class DiscreteCustomConstraint(DiscreteConstraint):
     """Class for user-defined custom constraints.
 
     Args:
@@ -542,7 +544,7 @@ class ContinuousConstraint(Constraint, ABC):
 
 
 @define
-class ContinuousEqualityConstraint(ContinuousConstraint):
+class ContinuousLinearEqualityConstraint(ContinuousConstraint):
     """Class for continuous equality constraints.
 
     The constraint is defined as `sum_i[ x_i * c_i ] == rhs`, where x_i are the
@@ -555,7 +557,7 @@ class ContinuousEqualityConstraint(ContinuousConstraint):
 
 
 @define
-class ContinuousInequalityConstraint(ContinuousConstraint):
+class ContinuousLinearInequalityConstraint(ContinuousConstraint):
     """Class for continuous inequality constraints.
 
     The constraint is defined as `sum_i[ x_i * c_i ] >= rhs`, where x_i are the
@@ -572,14 +574,14 @@ class ContinuousInequalityConstraint(ContinuousConstraint):
 # the order in which the constraint types need to be applied during discrete subspace
 # filtering
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
-    CustomConstraint,
-    ExcludeConstraint,
-    NoLabelDuplicatesConstraint,
-    LinkedParametersConstraint,
-    SumConstraint,
-    ProductConstraint,
-    PermutationInvarianceConstraint,
-    DependenciesConstraint,
+    DiscreteCustomConstraint,
+    DiscreteExcludeConstraint,
+    DiscreteNoLabelDuplicatesConstraint,
+    DiscreteLinkedParametersConstraint,
+    DiscreteSumConstraint,
+    DiscreteProductConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteDependenciesConstraint,
 )
 
 
@@ -595,8 +597,8 @@ def _custom_constraint_hook(*_) -> None:
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
-cattrs.register_unstructure_hook(CustomConstraint, _custom_constraint_hook)
-cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
+cattrs.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
+cattrs.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
 
 
 def _validate_constraints(
@@ -604,9 +606,9 @@ def _validate_constraints(
 ) -> None:
     """Asserts that a given collection of constraints is valid."""
     # Raise a ValueError if there is more than one DependenciesConstraint declared
-    if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
+    if sum(isinstance(itm, DiscreteDependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
-            f"There is only one {DependenciesConstraint.__name__} allowed. "
+            f"There is only one {DiscreteDependenciesConstraint.__name__} allowed. "
             f"Please specify all dependencies in one single constraint."
         )
 

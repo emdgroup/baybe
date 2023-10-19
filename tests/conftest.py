@@ -7,16 +7,16 @@ import numpy as np
 import pandas as pd
 import pytest
 from baybe.constraints import (
-    ContinuousEqualityConstraint,
-    ContinuousInequalityConstraint,
-    CustomConstraint,
-    DependenciesConstraint,
-    ExcludeConstraint,
-    NoLabelDuplicatesConstraint,
-    PermutationInvarianceConstraint,
-    ProductConstraint,
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
+    DiscreteCustomConstraint,
+    DiscreteDependenciesConstraint,
+    DiscreteExcludeConstraint,
+    DiscreteNoLabelDuplicatesConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteProductConstraint,
+    DiscreteSumConstraint,
     SubSelectionCondition,
-    SumConstraint,
     ThresholdCondition,
 )
 from baybe.core import BayBE
@@ -355,7 +355,7 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
         return True
 
     valid_constraints = {
-        "Constraint_1": DependenciesConstraint(
+        "Constraint_1": DiscreteDependenciesConstraint(
             parameters=["Switch_1", "Switch_2"],
             conditions=[
                 SubSelectionCondition(selection=["on"]),
@@ -366,17 +366,17 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 ["Frame_A", "Frame_B"],
             ],
         ),
-        "Constraint_2": DependenciesConstraint(
+        "Constraint_2": DiscreteDependenciesConstraint(
             parameters=["Switch_1"],
             conditions=[SubSelectionCondition(selection=["on"])],
             affected_parameters=[["Solvent_1", "Fraction_1"]],
         ),
-        "Constraint_3": DependenciesConstraint(
+        "Constraint_3": DiscreteDependenciesConstraint(
             parameters=["Switch_2"],
             conditions=[SubSelectionCondition(selection=["right"])],
             affected_parameters=[["Frame_A", "Frame_B"]],
         ),
-        "Constraint_4": ExcludeConstraint(
+        "Constraint_4": DiscreteExcludeConstraint(
             parameters=["Temperature", "Solvent_1"],
             combiner="AND",
             conditions=[
@@ -384,7 +384,7 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 SubSelectionCondition(selection=list(mock_substances)[:2]),
             ],
         ),
-        "Constraint_5": ExcludeConstraint(
+        "Constraint_5": DiscreteExcludeConstraint(
             parameters=["Pressure", "Solvent_1"],
             combiner="AND",
             conditions=[
@@ -392,7 +392,7 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 SubSelectionCondition(selection=list(mock_substances)[-2:]),
             ],
         ),
-        "Constraint_6": ExcludeConstraint(
+        "Constraint_6": DiscreteExcludeConstraint(
             parameters=["Pressure", "Temperature"],
             combiner="AND",
             conditions=[
@@ -400,24 +400,24 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 ThresholdCondition(threshold=120, operator=">"),
             ],
         ),
-        "Constraint_7": NoLabelDuplicatesConstraint(
+        "Constraint_7": DiscreteNoLabelDuplicatesConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
         ),
-        "Constraint_8": SumConstraint(
+        "Constraint_8": DiscreteSumConstraint(
             parameters=["Fraction_1", "Fraction_2"],
             condition=ThresholdCondition(threshold=150, operator="<="),
         ),
-        "Constraint_9": ProductConstraint(
+        "Constraint_9": DiscreteProductConstraint(
             parameters=["Fraction_1", "Fraction_2"],
             condition=ThresholdCondition(threshold=30, operator=">="),
         ),
-        "Constraint_10": SumConstraint(
+        "Constraint_10": DiscreteSumConstraint(
             parameters=["Fraction_1", "Fraction_2"],
             condition=ThresholdCondition(threshold=100, operator="="),
         ),
-        "Constraint_11": PermutationInvarianceConstraint(
+        "Constraint_11": DiscretePermutationInvarianceConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
-            dependencies=DependenciesConstraint(
+            dependencies=DiscreteDependenciesConstraint(
                 parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
                 conditions=[
                     ThresholdCondition(threshold=0.0, operator=">"),
@@ -429,30 +429,30 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
             ),
         ),
-        "Constraint_12": SumConstraint(
+        "Constraint_12": DiscreteSumConstraint(
             parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
             condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.01),
         ),
-        "Constraint_13": CustomConstraint(
+        "Constraint_13": DiscreteCustomConstraint(
             parameters=["Pressure", "Solvent_1", "Temperature"],
             validator=custom_function,
         ),
-        "ContiConstraint_1": ContinuousEqualityConstraint(
+        "ContiConstraint_1": ContinuousLinearEqualityConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
             coefficients=[1.0, 1.0],
             rhs=0.3,
         ),
-        "ContiConstraint_2": ContinuousEqualityConstraint(
+        "ContiConstraint_2": ContinuousLinearEqualityConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
             coefficients=[1.0, 3.0],
             rhs=0.3,
         ),
-        "ContiConstraint_3": ContinuousInequalityConstraint(
+        "ContiConstraint_3": ContinuousLinearInequalityConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
             coefficients=[1.0, 1.0],
             rhs=0.3,
         ),
-        "ContiConstraint_4": ContinuousInequalityConstraint(
+        "ContiConstraint_4": ContinuousLinearInequalityConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
             coefficients=[1.0, 3.0],
             rhs=0.3,
