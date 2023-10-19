@@ -2,6 +2,12 @@
 import pandas as pd
 import pytest
 import torch
+from baybe.constraints import (
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
+    DiscreteSumConstraint,
+    ThresholdCondition,
+)
 from baybe.exceptions import EmptySearchSpaceError
 
 from baybe.parameters import (
@@ -111,3 +117,70 @@ def test_hyperrectangle_searchspace_creation():
 
     assert searchspace.type == SearchSpaceType.CONTINUOUS
     assert searchspace.parameters == parameters
+
+
+def test_invalid_constraint_parameter_combos():
+    """Testing invalid constraint-parameter combinations."""
+    parameters = [
+        NumericalDiscreteParameter("d1", values=[1, 2, 3]),
+        NumericalDiscreteParameter("d2", values=[0, 1, 2]),
+        NumericalContinuousParameter("c1", (0, 2)),
+        NumericalContinuousParameter("c2", (-1, 1)),
+    ]
+
+    # Attempting continuous constraint over hybrid parameter set
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                ContinuousLinearEqualityConstraint(
+                    parameters=["c1", "c2", "d1"],
+                )
+            ],
+        )
+
+    # Attempting continuous constraint over hybrid parameter set
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                ContinuousLinearInequalityConstraint(
+                    parameters=["c1", "c2", "d1"],
+                )
+            ],
+        )
+
+    # Attempting discrete constraint over hybrid parameter set
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                DiscreteSumConstraint(
+                    parameters=["d1", "d2", "c1"],
+                    condition=ThresholdCondition(threshold=1.0, operator=">"),
+                )
+            ],
+        )
+
+    # Attempting constraints over parameter set where a parameter does not exist
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                DiscreteSumConstraint(
+                    parameters=["d1", "e7", "c1"],
+                    condition=ThresholdCondition(threshold=1.0, operator=">"),
+                )
+            ],
+        )
+
+    # Attempting constraints over parameter set where a parameter does not exist
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                ContinuousLinearInequalityConstraint(
+                    parameters=["c1", "e7", "d1"],
+                )
+            ],
+        )

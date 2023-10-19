@@ -5,12 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Linear in-/equality constraints over continuous parameters
+- Constrained optimization for `SequentialGreedyRecommender`
+- `RandomRecommender` now supports linear in-/equality constraints via polytope sampling
+
 ### Changed
 - Include linting for all functions
 - Rewrite functions to distinguish between private and public ones
-- Unreachable telemetry endpoint now automatically disables telemetry and no longer cause
+- Unreachable telemetry endpoints now automatically disables telemetry and no longer cause
 any data submission loops
 - `add_fake_results` utility now considers potential target bounds
+- Constraint names have been refactored to indicate whether they operate on discrete 
+or continuous parameters
 
 ### Fixed
 - Random recommendation failing for small discrete (sub-)spaces
@@ -116,7 +123,7 @@ any data submission loops
 - Mechanisms for loading and validating config files
 - Telemetry via OpenTelemetry
 - More detailed package installation info
-- Fallback mechanism for NonPredictiveRecommenders
+- Fallback mechanism for `NonPredictiveRecommender`
 - Introduce naive hybrid recommender
 
 ### Changed

@@ -14,7 +14,8 @@ from baybe.strategies.bayesian import (
 from baybe.strategies.recommender import NonPredictiveRecommender, Recommender
 from baybe.surrogate import get_available_surrogates
 from baybe.utils.basic import get_subclasses
-from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+
+from .conftest import run_iterations
 
 ########################################################################################
 # Settings of the individual components to be tested
@@ -90,25 +91,6 @@ test_targets = [
     "Target_match_triangular",
     ["Target_max_bounded", "Target_min_bounded"],
 ]
-
-
-########################################################################################
-# Create tests for each of the above defined settings
-# TODO: The following is boilerplate code to avoid the Cartesian product that pytest
-#   would create when stacking all parametrizations on a single test function. There
-#   must be a better way ...
-########################################################################################
-
-
-def run_iterations(baybe, n_iterations, batch_quantity):
-    for k in range(n_iterations):
-        rec = baybe.recommend(batch_quantity=batch_quantity)
-
-        add_fake_results(rec, baybe)
-        if k % 2:
-            add_parameter_noise(rec, baybe.parameters, noise_level=0.1)
-
-        baybe.add_measurements(rec)
 
 
 # TODO: The following tests are deactivated because there is currently no Bayesian

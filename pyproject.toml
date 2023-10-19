@@ -21,7 +21,6 @@ dependencies = [
     "pandas>=1.4.2",
     "protobuf<=3.20.3",
     "pyarrow>=9.0.0,<10",  # indirectly needed by pandas, newer versions don't work in pipeline
-    "requests>=2.31.0",  # see AUDIT NOTE
     "scikit-learn>=1.1.1",
     "scikit-learn-extra>=0.3.0",
     "scipy>=1.10.1",
@@ -98,6 +97,8 @@ telemetry = [
     "opentelemetry-propagator-aws-xray>=1.0.0",
     "opentelemetry-exporter-otlp>=1.16.0",
     "opentelemetry-sdk-extension-aws>=2.0.0",
+    "requests>=2.31.0",  # see AUDIT NOTE
+    "urllib3>=2.0.7",  # see AUDIT NOTE
 ]
 
 test = [

@@ -13,7 +13,7 @@
 import numpy as np
 
 from baybe import BayBE
-from baybe.constraints import DependenciesConstraint, SubSelectionCondition
+from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondition
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -45,7 +45,7 @@ parameters = [solvent, switch1, switch2, fraction1, frame1, frame2]
 # The constraints are handled when creating the searchspace object.
 # It is thus necessary to define it before the searchspace creation.
 # Note that multiple dependencies have to be included in a single constraint object.
-constraint = DependenciesConstraint(
+constraint = DiscreteDependenciesConstraint(
     parameters=["Switch1", "Switch2"],
     conditions=[
         SubSelectionCondition(selection=["on"]),

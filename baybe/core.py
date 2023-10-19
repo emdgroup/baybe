@@ -80,7 +80,7 @@ def _searchspace_validation_hook(specs: dict, _) -> None:
     constraints = specs.get("constraints", None)
     if constraints:
         constraints = cattrs.structure(specs["constraints"], List[Constraint])
-        _validate_constraints(constraints)
+        _validate_constraints(constraints, parameters)
 
 
 _config_converter = cattrs.global_converter.copy()

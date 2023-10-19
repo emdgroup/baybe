@@ -13,7 +13,7 @@ import numpy as np
 
 from baybe import BayBE
 from baybe.constraints import (
-    ExcludeConstraint,
+    DiscreteExcludeConstraint,
     SubSelectionCondition,
     ThresholdCondition,
 )
@@ -59,7 +59,7 @@ parameters = [solvent, speed, temperature, pressure]
 # This constraint simulates a situation where solvents `C2` and `C4` are not
 # compatible with temperatures larger than 151 and should thus be excluded.
 
-constraint_1 = ExcludeConstraint(
+constraint_1 = DiscreteExcludeConstraint(
     parameters=["Temp", "Solv"],
     combiner="AND",
     conditions=[
@@ -70,7 +70,7 @@ constraint_1 = ExcludeConstraint(
 
 # This constraint simulates a situation where solvents `C5` and `C6` are not
 # compatible with pressures larger than 5 and should thus be excluded.
-constraint_2 = ExcludeConstraint(
+constraint_2 = DiscreteExcludeConstraint(
     parameters=["Pressure", "Solv"],
     combiner="AND",
     conditions=[
@@ -81,7 +81,7 @@ constraint_2 = ExcludeConstraint(
 
 # This constraint simulates a situation where pressures below 3 should never be
 # combined with temperatures above 120.
-constraint_3 = ExcludeConstraint(
+constraint_3 = DiscreteExcludeConstraint(
     parameters=["Pressure", "Temp"],
     combiner="AND",
     conditions=[

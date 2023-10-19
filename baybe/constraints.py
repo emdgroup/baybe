@@ -5,17 +5,26 @@
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import Any, Callable, ClassVar, List, Optional, Union
+from typing import Any, Callable, ClassVar, List, Optional, Tuple, Union
 
 import cattrs
 import numpy as np
 import pandas as pd
+import torch
 from attr import define, field
 from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
+from torch import Tensor
 
-from baybe.utils import Dummy, get_base_unstructure_hook, SerialMixin, unstructure_base
+from baybe.parameters import NumericalContinuousParameter, Parameter
+from baybe.utils import (
+    DTypeFloatTorch,
+    Dummy,
+    get_base_unstructure_hook,
+    SerialMixin,
+    unstructure_base,
+)
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
@@ -177,6 +186,29 @@ class Constraint(ABC, SerialMixin):
                 f"but was: {params}."
             )
 
+    @property
+    def is_continuous(self) -> bool:
+        """Boolean indicating if this is a constraint over continuous parameters."""
+        return isinstance(self, ContinuousConstraint)
+
+    @property
+    def is_discrete(self) -> bool:
+        """Boolean indicating if this is a constraint over discrete parameters."""
+        return isinstance(self, DiscreteConstraint)
+
+
+@define
+class DiscreteConstraint(Constraint, ABC):
+    """Abstract base class for discrete constraints.
+
+    Discrete constraints use conditions and chain them together to filter unwanted
+    entries from the search space.
+    """
+
+    # class variables
+    eval_during_creation: ClassVar[bool] = True
+    eval_during_modeling: ClassVar[bool] = False
+
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """Get the indices of dataframe entries that are invalid under the constraint.
@@ -191,17 +223,13 @@ class Constraint(ABC, SerialMixin):
 
 
 @define
-class ExcludeConstraint(Constraint):
+class DiscreteExcludeConstraint(DiscreteConstraint):
     """Class for modelling exclusion constraints.
 
     Args:
         conditions: List of individual conditions.
         combiner: Operator encoding how to combine the individual conditions.
     """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     conditions: List[Condition] = field(validator=min_len(1))
@@ -218,14 +246,10 @@ class ExcludeConstraint(Constraint):
 
 
 @define
-class SumConstraint(Constraint):
+class DiscreteSumConstraint(DiscreteConstraint):
     """Class for modelling sum constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -239,7 +263,7 @@ class SumConstraint(Constraint):
 
 
 @define
-class ProductConstraint(Constraint):
+class DiscreteProductConstraint(DiscreteConstraint):
     """Class for modelling product constraints.
 
     Args:
@@ -247,10 +271,6 @@ class ProductConstraint(Constraint):
     """
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     condition: ThresholdCondition = field()
@@ -263,7 +283,7 @@ class ProductConstraint(Constraint):
         return data.index[mask_bad]
 
 
-class NoLabelDuplicatesConstraint(Constraint):
+class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
     """Constraint class for excluding entries where occurring labels are not unique.
 
     This can be useful to remove entries that arise from e.g. a permutation invariance
@@ -276,10 +296,6 @@ class NoLabelDuplicatesConstraint(Constraint):
     - A,C,B,C would be removed
     """
 
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
-
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
         mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
@@ -287,7 +303,7 @@ class NoLabelDuplicatesConstraint(Constraint):
         return data.index[mask_bad]
 
 
-class LinkedParametersConstraint(Constraint):
+class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     """Constraint class for linking the values of parameters.
 
     This constraint type effectively allows generating parameter sets that relate to
@@ -295,10 +311,6 @@ class LinkedParametersConstraint(Constraint):
     using different encodings. Linking the parameters removes all entries from the
     search space where the parameter values differ.
     """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -308,7 +320,7 @@ class LinkedParametersConstraint(Constraint):
 
 
 @define
-class DependenciesConstraint(Constraint):
+class DiscreteDependenciesConstraint(DiscreteConstraint):
     """Constraint that specifies dependencies between parameters.
 
     For instance some parameters might only be relevant when another parameter has a
@@ -322,12 +334,6 @@ class DependenciesConstraint(Constraint):
             permutation invariant. This should not be changed by the user but by other
             constraints reusing this class.
     """
-
-    # class variables
-    # TODO update usage in different evaluation stages once that is implemented in
-    #  strategy and surrogate
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     conditions: List[Condition] = field()
@@ -390,7 +396,7 @@ class DependenciesConstraint(Constraint):
 
 
 @define
-class PermutationInvarianceConstraint(Constraint):
+class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
     More precisely, this means that, ```(val_from_param1, val_from_param2)``` is
@@ -405,14 +411,8 @@ class PermutationInvarianceConstraint(Constraint):
         dependencies: Dependencies connected with the invariant parameters.
     """
 
-    # class variables
-    # TODO update usage in different evaluation stages once that is implemented in
-    #  strategy and surrogate
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
-
     # object variables
-    dependencies: Optional[DependenciesConstraint] = field(default=None)
+    dependencies: Optional[DiscreteDependenciesConstraint] = field(default=None)
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -420,7 +420,9 @@ class PermutationInvarianceConstraint(Constraint):
         # dropped by this constraint.
         mask_duplicate_labels = pd.Series(False, index=data.index)
         mask_duplicate_labels[
-            NoLabelDuplicatesConstraint(parameters=self.parameters).get_invalid(data)
+            DiscreteNoLabelDuplicatesConstraint(parameters=self.parameters).get_invalid(
+                data
+            )
         ] = True
 
         # Merge a permutation invariant representation of all affected parameters with
@@ -458,16 +460,12 @@ class PermutationInvarianceConstraint(Constraint):
 
 
 @define
-class CustomConstraint(Constraint):
+class DiscreteCustomConstraint(DiscreteConstraint):
     """Class for user-defined custom constraints.
 
     Args:
-        validator: A user-defined function modeling the validatio of the constraint.
+        validator: A user-defined function modeling the validation of the constraint.
     """
-
-    # class variables
-    eval_during_creation: ClassVar[bool] = True
-    eval_during_modeling: ClassVar[bool] = False
 
     # object variables
     validator: Callable[[pd.Series], bool] = field()
@@ -479,16 +477,111 @@ class CustomConstraint(Constraint):
         return data.index[mask_bad]
 
 
-# the order in which the constraint types need to be applied
-CONSTRAINTS_ORDER = (
-    CustomConstraint,
-    ExcludeConstraint,
-    NoLabelDuplicatesConstraint,
-    LinkedParametersConstraint,
-    SumConstraint,
-    ProductConstraint,
-    PermutationInvarianceConstraint,
-    DependenciesConstraint,
+@define
+class ContinuousConstraint(Constraint, ABC):
+    """Abstract base class for continuous constraints.
+
+    Continuous constraints use parameter lists and coefficients to define in-/equality
+    constraints over a continuous parameter space.
+
+    Args:
+        parameters: See base class.
+        coefficients: In-/equality coefficient for each entry in ```parameters```.
+        rhs: Right-hand side value of the in-/equality.
+    """
+
+    # class variables
+    eval_during_creation: ClassVar[bool] = False
+    eval_during_modeling: ClassVar[bool] = True
+
+    # object variables
+    coefficients: List[float] = field()
+    rhs: float = field(default=0.0)
+
+    @coefficients.validator
+    def _validate_coefficients(self, _: Any, coefficients: List[float]) -> None:
+        """Validate the coefficients."""
+        # Raises a ValueError if the number of coefficients does not match the number of
+        # parameters.
+        if len(self.parameters) != len(coefficients):
+            raise ValueError(
+                "The given 'coefficients' list must have one floating point entry for "
+                "each entry in 'parameters'."
+            )
+
+    @coefficients.default
+    def _default_coefficients(self):
+        """Return equal weight coefficients as default."""
+        return [1.0] * len(self.parameters)
+
+    def to_botorch(
+        self, parameters: List[NumericalContinuousParameter], idx_offset: int = 0
+    ) -> Tuple[Tensor, Tensor, float]:
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ```optimize_acqf_*``` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            idx_offset: Offset to the provided parameter indices.
+
+        Returns:
+            The tuple required by botorch.
+        """
+        param_names = [p.name for p in parameters]
+        param_indices = [
+            param_names.index(p) + idx_offset
+            for p in self.parameters
+            if p in param_names
+        ]
+
+        return (
+            torch.tensor(param_indices),
+            torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
+            self.rhs,
+        )
+
+
+@define
+class ContinuousLinearEqualityConstraint(ContinuousConstraint):
+    """Class for continuous equality constraints.
+
+    The constraint is defined as `sum_i[ x_i * c_i ] == rhs`, where x_i are the
+    parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
+    The constraint is typically fulfilled up to a small numerical tolerance.
+
+    The class has no content as it only serves the purpose of distinguishing the
+    constraints.
+    """
+
+
+@define
+class ContinuousLinearInequalityConstraint(ContinuousConstraint):
+    """Class for continuous inequality constraints.
+
+    The constraint is defined as `sum_i[ x_i * c_i ] >= rhs`, where x_i are the
+    parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
+    If you want to implement a constraint of the form `<=`, multiply ```rhs``` and
+    ```coefficients``` by -1. The constraint is typically fulfilled up to a small
+    numerical tolerance.
+
+    The class has no content as it only serves the purpose of
+    distinguishing the constraints.
+    """
+
+
+# the order in which the constraint types need to be applied during discrete subspace
+# filtering
+DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
+    DiscreteCustomConstraint,
+    DiscreteExcludeConstraint,
+    DiscreteNoLabelDuplicatesConstraint,
+    DiscreteLinkedParametersConstraint,
+    DiscreteSumConstraint,
+    DiscreteProductConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteDependenciesConstraint,
 )
 
 
@@ -500,19 +593,53 @@ cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint)
 
 
 def _custom_constraint_hook(*_) -> None:
-    """Raisess a NotImplementedError when trying to serialize a CustomConstraint."""
+    """Raises a NotImplementedError when trying to serialize a CustomConstraint."""
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
-cattrs.register_unstructure_hook(CustomConstraint, _custom_constraint_hook)
-cattrs.register_structure_hook(CustomConstraint, _custom_constraint_hook)
+cattrs.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
+cattrs.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
 
 
-def _validate_constraints(constraints: List[Constraint]) -> None:
+def _validate_constraints(
+    constraints: List[Constraint], parameters: List[Parameter]
+) -> None:
     """Asserts that a given collection of constraints is valid."""
-    # Raises a ValueError if the given list of constraints is invalid.
-    if sum(isinstance(itm, DependenciesConstraint) for itm in constraints) > 1:
+    # Raise a ValueError if there is more than one DependenciesConstraint declared
+    if sum(isinstance(itm, DiscreteDependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
-            f"There is only one {DependenciesConstraint.__name__} allowed. "
+            f"There is only one {DiscreteDependenciesConstraint.__name__} allowed. "
             f"Please specify all dependencies in one single constraint."
         )
+
+    param_names_all = [p.name for p in parameters]
+    param_names_discrete = [p.name for p in parameters if p.is_discrete]
+    param_names_continuous = [p.name for p in parameters if not p.is_discrete]
+    for constraint in constraints:
+        # Raise a ValueError if any constraint contains an invalid parameter name
+        if not all(p in param_names_all for p in constraint.parameters):
+            raise ValueError(
+                f"You are trying to create a constraint with at least one parameter "
+                f"name that does not exist in the list of defined parameters. "
+                f"Parameter list of the affected constraint: {constraint.parameters}"
+            )
+
+        # Raise a ValueError if any continuous constraint includes a discrete parameter
+        if constraint.is_continuous and any(
+            p in param_names_discrete for p in constraint.parameters
+        ):
+            raise ValueError(
+                f"You are trying to initialize a continuous constraint over a "
+                f"parameter that is discrete. Parameter list of the affected "
+                f"constraint: {constraint.parameters}"
+            )
+
+        # Raise a ValueError if any discrete constraint includes a continuous parameter
+        if constraint.is_discrete and any(
+            p in param_names_continuous for p in constraint.parameters
+        ):
+            raise ValueError(
+                f"You are trying to initialize a discrete constraint over a parameter "
+                f"that is continuous. Parameter list of the affected constraint: "
+                f"{constraint.parameters}"
+            )

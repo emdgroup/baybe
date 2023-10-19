@@ -304,6 +304,16 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 q=batch_quantity,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
+                equality_constraints=[
+                    c.to_botorch(searchspace.continuous.parameters)
+                    for c in searchspace.continuous.constraints_lin_eq
+                ]
+                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+                inequality_constraints=[
+                    c.to_botorch(searchspace.continuous.parameters)
+                    for c in searchspace.continuous.constraints_lin_ineq
+                ]
+                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             )
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(
@@ -374,6 +384,22 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
                 fixed_features_list=fixed_features_list,
+                equality_constraints=[
+                    c.to_botorch(
+                        searchspace.continuous.parameters,
+                        idx_offset=len(candidates_comp.columns),
+                    )
+                    for c in searchspace.continuous.constraints_lin_eq
+                ]
+                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+                inequality_constraints=[
+                    c.to_botorch(
+                        searchspace.continuous.parameters,
+                        idx_offset=len(candidates_comp.columns),
+                    )
+                    for c in searchspace.continuous.constraints_lin_ineq
+                ]
+                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             )
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(

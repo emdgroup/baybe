@@ -7,14 +7,16 @@ import numpy as np
 import pandas as pd
 import pytest
 from baybe.constraints import (
-    CustomConstraint,
-    DependenciesConstraint,
-    ExcludeConstraint,
-    NoLabelDuplicatesConstraint,
-    PermutationInvarianceConstraint,
-    ProductConstraint,
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
+    DiscreteCustomConstraint,
+    DiscreteDependenciesConstraint,
+    DiscreteExcludeConstraint,
+    DiscreteNoLabelDuplicatesConstraint,
+    DiscretePermutationInvarianceConstraint,
+    DiscreteProductConstraint,
+    DiscreteSumConstraint,
     SubSelectionCondition,
-    SumConstraint,
     ThresholdCondition,
 )
 from baybe.core import BayBE
@@ -31,6 +33,7 @@ from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.surrogate import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
+from baybe.utils import add_fake_results, add_parameter_noise
 
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
@@ -236,6 +239,10 @@ def fixture_parameters(
             name="Conti_finite2",
             bounds=(-1, 0),
         ),
+        NumericalContinuousParameter(
+            name="Conti_finite3",
+            bounds=(-1, 1),
+        ),
         CustomDiscreteParameter(
             name="Custom_1",
             data=pd.DataFrame(
@@ -348,7 +355,7 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
         return True
 
     valid_constraints = {
-        "Constraint_1": DependenciesConstraint(
+        "Constraint_1": DiscreteDependenciesConstraint(
             parameters=["Switch_1", "Switch_2"],
             conditions=[
                 SubSelectionCondition(selection=["on"]),
@@ -359,17 +366,17 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 ["Frame_A", "Frame_B"],
             ],
         ),
-        "Constraint_2": DependenciesConstraint(
+        "Constraint_2": DiscreteDependenciesConstraint(
             parameters=["Switch_1"],
             conditions=[SubSelectionCondition(selection=["on"])],
             affected_parameters=[["Solvent_1", "Fraction_1"]],
         ),
-        "Constraint_3": DependenciesConstraint(
+        "Constraint_3": DiscreteDependenciesConstraint(
             parameters=["Switch_2"],
             conditions=[SubSelectionCondition(selection=["right"])],
             affected_parameters=[["Frame_A", "Frame_B"]],
         ),
-        "Constraint_4": ExcludeConstraint(
+        "Constraint_4": DiscreteExcludeConstraint(
             parameters=["Temperature", "Solvent_1"],
             combiner="AND",
             conditions=[
@@ -377,7 +384,7 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 SubSelectionCondition(selection=list(mock_substances)[:2]),
             ],
         ),
-        "Constraint_5": ExcludeConstraint(
+        "Constraint_5": DiscreteExcludeConstraint(
             parameters=["Pressure", "Solvent_1"],
             combiner="AND",
             conditions=[
@@ -385,7 +392,7 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 SubSelectionCondition(selection=list(mock_substances)[-2:]),
             ],
         ),
-        "Constraint_6": ExcludeConstraint(
+        "Constraint_6": DiscreteExcludeConstraint(
             parameters=["Pressure", "Temperature"],
             combiner="AND",
             conditions=[
@@ -393,24 +400,24 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 ThresholdCondition(threshold=120, operator=">"),
             ],
         ),
-        "Constraint_7": NoLabelDuplicatesConstraint(
+        "Constraint_7": DiscreteNoLabelDuplicatesConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
         ),
-        "Constraint_8": SumConstraint(
+        "Constraint_8": DiscreteSumConstraint(
             parameters=["Fraction_1", "Fraction_2"],
             condition=ThresholdCondition(threshold=150, operator="<="),
         ),
-        "Constraint_9": ProductConstraint(
+        "Constraint_9": DiscreteProductConstraint(
             parameters=["Fraction_1", "Fraction_2"],
             condition=ThresholdCondition(threshold=30, operator=">="),
         ),
-        "Constraint_10": SumConstraint(
+        "Constraint_10": DiscreteSumConstraint(
             parameters=["Fraction_1", "Fraction_2"],
             condition=ThresholdCondition(threshold=100, operator="="),
         ),
-        "Constraint_11": PermutationInvarianceConstraint(
+        "Constraint_11": DiscretePermutationInvarianceConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
-            dependencies=DependenciesConstraint(
+            dependencies=DiscreteDependenciesConstraint(
                 parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
                 conditions=[
                     ThresholdCondition(threshold=0.0, operator=">"),
@@ -422,13 +429,33 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
                 affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
             ),
         ),
-        "Constraint_12": SumConstraint(
+        "Constraint_12": DiscreteSumConstraint(
             parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
             condition=ThresholdCondition(threshold=100, operator="=", tolerance=0.01),
         ),
-        "Constraint_13": CustomConstraint(
+        "Constraint_13": DiscreteCustomConstraint(
             parameters=["Pressure", "Solvent_1", "Temperature"],
             validator=custom_function,
+        ),
+        "ContiConstraint_1": ContinuousLinearEqualityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 1.0],
+            rhs=0.3,
+        ),
+        "ContiConstraint_2": ContinuousLinearEqualityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 3.0],
+            rhs=0.3,
+        ),
+        "ContiConstraint_3": ContinuousLinearInequalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 1.0],
+            rhs=0.3,
+        ),
+        "ContiConstraint_4": ContinuousLinearInequalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 3.0],
+            rhs=0.3,
         ),
     }
     return [
@@ -581,3 +608,29 @@ def fixture_default_config():
             },""",
     )
     return cfg
+
+
+# Reusables
+
+# TODO consider turning this into a fixture returning a baybe object after running some
+#  fake iterations
+def run_iterations(
+    baybe: BayBE, n_iterations: int, batch_quantity: int, add_noise: bool = True
+) -> None:
+    """Run a baybe object for some fake iterations.
+
+    Args:
+        baybe: The baybe object encapsulating the experiment.
+        n_iterations: Number of iterations run.
+        batch_quantity: Number of recommended points per iteration.
+        add_noise: Flag whether measurement noise should be added every 2nd iteration.
+    """
+    for k in range(n_iterations):
+        rec = baybe.recommend(batch_quantity=batch_quantity)
+        # dont use parameter noise for these tests
+
+        add_fake_results(rec, baybe)
+        if add_noise and (k % 2):
+            add_parameter_noise(rec, baybe.parameters, noise_level=0.1)
+
+        baybe.add_measurements(rec)

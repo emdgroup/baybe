@@ -10,6 +10,8 @@ import torch
 from attrs import define, field
 from packaging import version
 
+from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
+
 # TODO: Remove when upgrading python version
 if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
     # Monkeypatching necessary due to functools bug fixed in 3.9.8
@@ -94,11 +96,11 @@ class Interval:
 
     def to_ndarray(self):
         """Transform the interval to a ndarray."""
-        return np.array([self.lower, self.upper])
+        return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
     def to_tensor(self):
         """Transform the interval to a tensor."""
-        return torch.tensor([self.lower, self.upper])
+        return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
     def contains(self, number: float) -> bool:
         """Check whether the interval contains a given number.
