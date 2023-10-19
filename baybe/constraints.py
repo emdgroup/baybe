@@ -527,10 +527,11 @@ class ContinuousConstraint(Constraint, ABC):
         Returns:
             The tuple required by botorch.
         """
+        param_names = [p.name for p in parameters]
         param_indices = [
-            ind + idx_offset
-            for ind, p in enumerate(parameters)
-            if p.name in self.parameters
+            param_names.index(p) + idx_offset
+            for p in self.parameters
+            if p in param_names
         ]
 
         return (
