@@ -6,14 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- linear in-/equality constraints over continuous parameters
-- constrained optimization for `SequentialGreedyRecommender`
+- Linear in-/equality constraints over continuous parameters
+- Constrained optimization for `SequentialGreedyRecommender`
 - `RandomRecommender` now supports linear in-/equality constraints via polytope sampling
 
 ### Changed
 - Include linting for all functions
 - Rewrite functions to distinguish between private and public ones
-- Unreachable telemetry endpoint now automatically disables telemetry and no longer cause
+- Unreachable telemetry endpoints now automatically disables telemetry and no longer cause
 any data submission loops
 - `add_fake_results` utility now considers potential target bounds
 

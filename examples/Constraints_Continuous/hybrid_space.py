@@ -35,9 +35,9 @@ from botorch.test_functions import Rastrigin
 DIMENSION = 4
 TestFunctionClass = Rastrigin
 
-# stride for discrete parameters
-# if you make it too small it will make calculations expensive
-# if you make it too large constraints might not be satisfied anywhere
+# Specify a numerical stride for discrete parameters.
+# If you make it too small, it will make calculations expensive.
+# If you make it too large, constraints might not be satisfied anywhere.
 STRIDE = 1.0
 
 if not hasattr(TestFunctionClass, "dim"):
@@ -91,7 +91,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Const the BayBE object and run some interations
+#### Construct the BayBE object and run some interations
 
 baybe_obj = BayBE(
     searchspace=searchspace,

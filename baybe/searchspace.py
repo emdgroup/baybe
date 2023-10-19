@@ -391,6 +391,8 @@ class SubspaceContinuous:
 
     Args:
         parameters: The list of parameters of the subspace.
+        constraints_lin_eq: List of linear equality constraints.
+        constraints_lin_ineq: List of linear inequality constraints.
     """
 
     parameters: List[NumericalContinuousParameter] = field(

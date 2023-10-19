@@ -80,7 +80,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Const the BayBE object and run some iterations
+#### Construct the BayBE object and run some iterations
 
 baybe_obj = BayBE(
     searchspace=searchspace,

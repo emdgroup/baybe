@@ -203,9 +203,6 @@ class DiscreteConstraint(Constraint, ABC):
 
     Discrete constraints use conditions and chain them together to filter unwanted
     entries from the search space.
-
-    Args:
-        parameters: see base class
     """
 
     # class variables
@@ -482,12 +479,13 @@ class CustomConstraint(DiscreteConstraint):
 class ContinuousConstraint(Constraint, ABC):
     """Abstract base class for continuous constraints.
 
-    Continuous constraints use parameter lists and coefficients to
+    Continuous constraints use parameter lists and coefficients to define in-/equality
+    constraints over a continuous parameter space.
 
     Args:
-        parameters: see base class
-        coefficients: in-/equality coefficient for each entry in `parameters`
-        rhs: right-hand side of the in-/equality
+        parameters: See base class.
+        coefficients: In-/equality coefficient for each entry in ```parameters```.
+        rhs: Right-hand side value of the in-/equality.
     """
 
     # class variables
@@ -500,15 +498,13 @@ class ContinuousConstraint(Constraint, ABC):
 
     @coefficients.validator
     def _validate_coefficients(self, _: Any, coefficients: List[float]) -> None:
-        """Validate the coefficients.
-
-        Raises a ValueError if the number of coefficients does not match the number of
-        parameters.
-        """
+        """Validate the coefficients."""
+        # Raises a ValueError if the number of coefficients does not match the number of
+        # parameters.
         if len(self.parameters) != len(coefficients):
             raise ValueError(
                 "The given 'coefficients' list must have one floating point entry for "
-                "each entry in `parameters`."
+                "each entry in 'parameters'."
             )
 
     @coefficients.default
@@ -525,8 +521,8 @@ class ContinuousConstraint(Constraint, ABC):
         https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
 
         Args:
-            parameters: the parameter objects of the continuous space
-            idx_offset: offset to the provided parameter indices
+            parameters: The parameter objects of the continuous space.
+            idx_offset: Offset to the provided parameter indices.
 
         Returns:
             The tuple required by botorch.
@@ -550,12 +546,10 @@ class ContinuousEqualityConstraint(ContinuousConstraint):
 
     The constraint is defined as `sum_i[ x_i * c_i ] == rhs`, where x_i are the
     parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
+    The constraint is typically fulfilled up to a small numerical tolerance.
 
     The class has no content as it only serves the purpose of distinguishing the
     constraints.
-
-    Args:
-        see base class
     """
 
 
@@ -566,13 +560,11 @@ class ContinuousInequalityConstraint(ContinuousConstraint):
     The constraint is defined as `sum_i[ x_i * c_i ] >= rhs`, where x_i are the
     parameter names from ```parameters``` and c_i are the entries of ```coefficients```.
     If you want to implement a constraint of the form `<=`, multiply ```rhs``` and
-    ```coefficients``` by -1.
+    ```coefficients``` by -1. The constraint is typically fulfilled up to a small
+    numerical tolerance.
 
     The class has no content as it only serves the purpose of
     distinguishing the constraints.
-
-    Args:
-        see base class
     """
 
 
