@@ -24,3 +24,8 @@ The infrastructure used to host the current documentation as well as the design 
 - When an inherited class sets one of the instance attributes, this attribute needs to be documented in the docstring of the inherited class.
 - All functions that are used for validation, serialization, initializing defaults and so on should have a one line docstring only. The description of what these functions actually do has to be provided by comments in the code itself.
 - Magic functions as well as `__init__` functions do not require a docstring.
+- Some special rules apply to writing docstrings for validators:
+    * All validators should begin with `_validate`.
+    * The docstring of a validator should contain a one-line description of what is being validated as well as a `Raises:` section with one line for each individual error.
+    * If necessary, a validator's docstring can contain an additional description of how the validation is being carried out.
+    * In particular, validators should **not** have an `Args:` section. Since having a `Raises:` but not an `Args:` section raises errors for  [pydoclint](https://github.com/jsh9/pydoclint), the two errors `DOC101` and `DOC103` need to be exlcuded for validators manually using `noqa`. Note that the corresponding comment `# noqa: DOC101, DOC103` needs to be one the same line as the `def` keyword of the declared validator.
