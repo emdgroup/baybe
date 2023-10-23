@@ -90,9 +90,14 @@ class SubspaceDiscrete:
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
     @exp_rep.validator
-    def _validate_exp_rep(self, _: Any, exp_rep: pd.DataFrame) -> None:
-        """Validate the experimental representation."""
-        # Raises a ValueError if the index of the provided dataframe contains duplicates
+    def _validate_exp_rep(  # noqa: DOC101, DOC103
+        self, _: Any, exp_rep: pd.DataFrame
+    ) -> None:
+        """Validate the experimental representation.
+
+        Raises:
+            ValueError: If the index of the provided dataframe contains duplicates.
+        """
         if exp_rep.index.has_duplicates:
             raise ValueError(
                 "The index of this search space contains duplicates. "
@@ -119,10 +124,15 @@ class SubspaceDiscrete:
         return df
 
     @metadata.validator
-    def _validate_metadata(self, _: Any, metadata: pd.DataFrame) -> None:
-        """Validate that the metadata is compatible with inactive tasks."""
-        # Raises a ValueError if the provided metadata allows testing parameter
-        # configurations for inactive tasks.
+    def _validate_metadata(  # noqa: DOC101, DOC103
+        self, _: Any, metadata: pd.DataFrame
+    ) -> None:
+        """Validate that the metadata is compatible with inactive tasks.
+
+        Raises:
+            ValueError: If the provided metadata allows testing parameter configurations
+                for inactive tasks.
+        """
         off_task_idxs = ~self._on_task_configurations()
         if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
             raise ValueError(
