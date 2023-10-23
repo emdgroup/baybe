@@ -244,9 +244,14 @@ class SequentialGreedyRecommender(BayesianRecommender):
     sampling_percentage: float = field(default=1.0)
 
     @sampling_percentage.validator
-    def _validate_percentage(self, _: Any, value: float) -> None:
-        """Validate that the given value is in fact a percentage."""
-        # Raises a ValueError if value is not between 0 and 1.
+    def _validate_percentage(  # noqa: DOC101, DOC103
+        self, _: Any, value: float
+    ) -> None:
+        """Validate that the given value is in fact a percentage.
+
+        Raises:
+            ValueError: If ```value``` is not between 0 and 1.
+        """
         if not 0 <= value <= 1:
             raise ValueError(
                 f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
