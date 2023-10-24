@@ -251,7 +251,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
         The tolerance is the allowed experimental uncertainty when
         reading in measured values. A tolerance larger than half the minimum
-        pdistance between parameter values is not allowed because that could cause
+        distance between parameter values is not allowed because that could cause
         ambiguity when inputting data points later.
 
         Raises:
@@ -305,10 +305,10 @@ class NumericalContinuousParameter(Parameter):
 
     @bounds.validator
     def _validate_bounds(self, _: Any, value: Interval) -> None:  # noqa: DOC101, DOC103
-        """Validate that the provided bounds are finite.
+        """Validate bounds.
 
         Raises:
-            InfiniteIntervalError: If the provided interval is not finite.
+            InfiniteIntervalError: If the provided interval is infinite.
         """
         if not value.is_finite:
             raise InfiniteIntervalError(
@@ -359,7 +359,7 @@ class SubstanceParameter(DiscreteParameter):
 
         Raises:
             ImportError: If the ```chem```dependency was not installed but an encoding
-                requiring this dependency is being used.
+                requiring this dependency is requested.
         """
         if value in ["MORDRED"] and not (_MORDRED_INSTALLED and _RDKIT_INSTALLED):
             raise ImportError(
@@ -378,10 +378,10 @@ class SubstanceParameter(DiscreteParameter):
     def _validate_substance_data(  # noqa: DOC101, DOC103
         self, _: Any, value: Dict[str, str]
     ) -> None:
-        """Validate that the substance data, provided as SMIELS, is valid.
+        """Validate that the substance data, provided as SMILES, is valid.
 
         Raises:
-            ValueError: If one of the smiles does not appear to be valid.
+            ValueError: If one or more of the SMILES are invalid.
         """
         for name, smiles in value.items():
             if _RDKIT_INSTALLED and not is_valid_smiles(smiles):
@@ -648,7 +648,7 @@ cattrs.register_structure_hook(Parameter, structure_hook)
 def _validate_parameter_names(  # noqa: DOC101, DOC103
     parameters: List[Parameter],
 ) -> None:
-    """Assert that a given collection of parameters has unique names.
+    """Validate the parameter names.
 
     Raises:
         ValueError: If the given list contains parameters with the same name.
@@ -659,11 +659,11 @@ def _validate_parameter_names(  # noqa: DOC101, DOC103
 
 
 def _validate_parameters(parameters: List[Parameter]) -> None:  # noqa: DOC101, DOC103
-    """Assert that a given collection of parameters is valid.
+    """Validate the parameters.
 
     Raises:
-        EmptySpaceError: If the parameter list is empty.
-        NotImplementedError: If more than one ```TaskParameter```is requested.
+        EmptySearchSpaceError: If the parameter list is empty.
+        NotImplementedError: If more than one ```TaskParameter``` is requested.
     """
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
