@@ -122,8 +122,8 @@ class NumericalTarget(Target, SerialMixin):
 
         Raises:
             ValueError: If the bounds are finite on one and infinite on the other end.
-            ValueError: If the target is in ```MATCH```mode but the provided bounds are
-                are not finite.
+            ValueError: If the target is in ```MATCH``` mode but the provided bounds are
+                are infinite.
         """
         # IMPROVE: We could also include half-way bounds, which however don't work
         # for the desirability approach
@@ -142,7 +142,7 @@ class NumericalTarget(Target, SerialMixin):
         """Validate that the given transform is compatible with the specified mode.
 
         Raises:
-            ValueError: If the specified bound transfrom function and the target mode
+            ValueError: If the specified bound transform function and the target mode
                 are not compatible.
         """
         if (value is not None) and (value not in _VALID_TRANSFORMS[self.mode]):
