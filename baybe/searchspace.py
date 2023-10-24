@@ -127,7 +127,7 @@ class SubspaceDiscrete:
     def _validate_metadata(  # noqa: DOC101, DOC103
         self, _: Any, metadata: pd.DataFrame
     ) -> None:
-        """Validate that the metadata is compatible with inactive tasks.
+        """Validate the metadata.
 
         Raises:
             ValueError: If the provided metadata allows testing parameter configurations
