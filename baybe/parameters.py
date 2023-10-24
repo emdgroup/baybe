@@ -450,17 +450,22 @@ class TaskParameter(CategoricalParameter):
 
     Args:
         encoding: The encoding of the parameter.
-        active_values: List of values describing for which tasks recommendations should
-            be given.
+        active_values: An optional list of values describing for which tasks
+            recommendations should be given. By default, all parameters are considered
+            active.
     """
 
     # object variables
     # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
     #   declared as such because of the inheritance relationship.
     encoding: Literal["INT"] = field(default="INT")
-    active_values: list = field(
-        default=None, converter=lambda x: x if x is None else list(x)
-    )
+    active_values: list = field(converter=list)
+
+    @active_values.default
+    def _default_active_values(self) -> list:
+        """Set all parameters active by default."""
+        # TODO [16605]: Redesign metadata handling
+        return self.values
 
     @active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
@@ -468,26 +473,23 @@ class TaskParameter(CategoricalParameter):
     ) -> None:
         """Validate the active parameter values.
 
+        If no such list is provided, no validation is being performed. In particular,
+        the errors listed below are only relevant if the ```values``` list is provided.
+
         Raises:
-            ValueError: If no active parameter is provided.
+            ValueError: If an empty active parameters list is provided.
             ValueError: If the active parameter values are not unique.
             ValueError: If not all active values are valid parameter choices.
         """
         # TODO [16605]: Redesign metadata handling
-        if values is None:
-            return
         if len(values) == 0:
-            raise ValueError("At least one active parameter value is required.")
+            raise ValueError(
+                "If an active parameters list is provided, it must not be empty."
+            )
         if len(set(values)) != len(values):
             raise ValueError("The active parameter values must be unique.")
         if not all(v in self.values for v in values):
             raise ValueError("All active values must be valid parameter choices.")
-
-    def __attrs_post_init__(self) -> None:
-        """Set the ```active_values``` attribute to ```self.values```."""
-        # TODO [16605]: Redesign metadata handling
-        if self.active_values is None:
-            object.__setattr__(self, "active_values", self.values)
 
 
 @define(frozen=True, slots=False)
