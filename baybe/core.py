@@ -251,10 +251,6 @@ class BayBE(SerialMixin):
         )
 
         # Read in measurements and add them to the database
-        # TODO: See if np.nan can be replaced with pd.NA once (de-)serialization is
-        #   in place. The current serializer set in the pydantic config does not support
-        #   pd.NA. Pandas' .to_json() can handle it but reading it back gives also
-        #   np.nan as result. Probably, the only way is a custom (de-)serializer.
         self.batches_done += 1
         to_insert = data.copy()
         to_insert["BatchNr"] = self.batches_done
