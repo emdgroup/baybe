@@ -70,6 +70,8 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
     Returns:
         The unstructured dict with the additional entry.
     """
+    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
+
     fun = make_dict_unstructure_fn(base.__class__, converter, **(overrides or {}))
     attrs_dict = fun(base)
     return {
@@ -93,6 +95,7 @@ def get_base_structure_hook(
     Returns:
         The hook.
     """
+    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
 
     def structure_base(val: dict, _) -> _T:
         _type = val["type"]
