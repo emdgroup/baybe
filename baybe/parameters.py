@@ -1,7 +1,7 @@
 """Functionality for different experimental parameter types."""
 
 from abc import ABC, abstractmethod
-from functools import cached_property
+from functools import cached_property, partial
 from typing import (
     Any,
     cast,
@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import gt, instance_of, lt, min_len
+from cattrs.gen import override
 from scipy.spatial.distance import pdist
 
 from baybe.exceptions import EmptySearchSpaceError
@@ -594,54 +595,15 @@ def parameter_cartesian_prod_to_df(
     return ret
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# TODO: This is a temporary workaround to remove the prefixed underscore of "_values"
-#   in the serialization dicts to make them user-friendly (e.g. for the BayBE config).
-#   There is a better, built-in solution in attrs using the `override` approach
-#   described here: https://github.com/python-attrs/cattrs/issues/23
-#   However, two things need to happen before we can easily apply it:
-#   * The subclassing support PR needs to merged, which avoids any further need
-#     for our custom "base" hooks used below.
-#     https://github.com/python-attrs/cattrs/pull/312
-#   * The converter structure has been optimized so that the hooks no longer need
-#     to be registered with the global converter:
-#     https://***REMOVED***/_workitems/edit/12356/
-
-
-def _remove_values_underscore(raw_unstructure_hook):
-    """Replace the ```_values``` field with ```values```."""
-
-    def wrapper(obj):
-        dict_ = raw_unstructure_hook(obj)
-        try:
-            dict_["values"] = dict_.pop("_values")
-        except KeyError:
-            pass
-        return dict_
-
-    return wrapper
-
-
-def _add_values_underscore(raw_structure_hook):
-    """Replace the ```values``` field with ```_values```."""
-
-    def wrapper(dict_, _):
-        try:
-            dict_["_values"] = dict_.pop("values")
-        except KeyError:
-            pass
-        return raw_structure_hook(dict_, _)
-
-    return wrapper
-
-
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
 # Register (un-)structure hooks
-unstructure_hook = _remove_values_underscore(unstructure_base)
-structure_hook = _add_values_underscore(get_base_structure_hook(Parameter))
-cattrs.register_unstructure_hook(Parameter, unstructure_hook)
-cattrs.register_structure_hook(Parameter, structure_hook)
+overrides = {"_values": override(rename="values")}
+cattrs.register_structure_hook(
+    Parameter,
+    get_base_structure_hook(Parameter, overrides=overrides),
+)
+cattrs.register_unstructure_hook(
+    Parameter, partial(unstructure_base, overrides=overrides)
+)
 
 
 def _validate_parameter_names(  # noqa: DOC101, DOC103

@@ -1,9 +1,10 @@
 """Serialization utilities."""
 
 import json
-from typing import Any, Callable, Type, TypeVar
+from typing import Any, Callable, Optional, Type, TypeVar
 
 import cattrs
+from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 
 from baybe.utils import get_subclasses
 
@@ -54,29 +55,36 @@ class SerialMixin:
         return cls.from_dict(json.loads(string))
 
 
-def unstructure_base(base: Any) -> dict:
+def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
     """Unstructures an object into a dictionary and adds an entry for the class name.
 
     Args:
         base: The object that should be unstructured.
+        overrides: An optional dictionary of cattrs-overrides for certain attributes.
 
     Returns:
         The unstructured dict with the additional entry.
     """
     converter = cattrs.global_converter
+    fun = make_dict_unstructure_fn(base.__class__, converter, **(overrides or {}))
+    attrs_dict = fun(base)
     return {
         "type": base.__class__.__name__,
-        **converter.unstructure_attrs_asdict(base),
+        **attrs_dict,
     }
 
 
-def get_base_structure_hook(base: Type[_T]) -> Callable[[dict], _T]:
+def get_base_structure_hook(
+    base: Type[_T],
+    overrides: Optional[dict] = None,
+) -> Callable[[dict], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
     Provides the inverse operation to ```unstructure_base```.
 
     Args:
         base: The corresponding class
+        overrides: An optional dictionary of cattrs-overrides for certain attributes.
 
     Returns:
         The hook.
@@ -87,6 +95,7 @@ def get_base_structure_hook(base: Type[_T]) -> Callable[[dict], _T]:
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
             raise ValueError(f"Unknown subclass {_type}.")
-        return cattrs.structure_attrs_fromdict(val, cls)
+        fun = make_dict_structure_fn(cls, cattrs.global_converter, **(overrides or {}))
+        return fun(val, cls)
 
     return structure_base
