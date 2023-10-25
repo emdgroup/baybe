@@ -90,9 +90,14 @@ class SubspaceDiscrete:
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
 
     @exp_rep.validator
-    def _validate_exp_rep(self, _: Any, exp_rep: pd.DataFrame) -> None:
-        """Validate the experimental representation."""
-        # Raises a ValueError if the index of the provided dataframe contains duplicates
+    def _validate_exp_rep(  # noqa: DOC101, DOC103
+        self, _: Any, exp_rep: pd.DataFrame
+    ) -> None:
+        """Validate the experimental representation.
+
+        Raises:
+            ValueError: If the index of the provided dataframe contains duplicates.
+        """
         if exp_rep.index.has_duplicates:
             raise ValueError(
                 "The index of this search space contains duplicates. "
@@ -119,10 +124,15 @@ class SubspaceDiscrete:
         return df
 
     @metadata.validator
-    def _validate_metadata(self, _: Any, metadata: pd.DataFrame) -> None:
-        """Validate that the metadata is compatible with inactive tasks."""
-        # Raises a ValueError if the provided metadata allows testing parameter
-        # configurations for inactive tasks.
+    def _validate_metadata(  # noqa: DOC101, DOC103
+        self, _: Any, metadata: pd.DataFrame
+    ) -> None:
+        """Validate the metadata.
+
+        Raises:
+            ValueError: If the provided metadata allows testing parameter configurations
+                for inactive tasks.
+        """
         off_task_idxs = ~self._on_task_configurations()
         if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
             raise ValueError(
@@ -175,7 +185,7 @@ class SubspaceDiscrete:
         constraints: Optional[List[DiscreteConstraint]] = None,
         empty_encoding: bool = False,
     ) -> "SubspaceDiscrete":
-        """See :py:class:`baybe.searchspace.SearchSpace`."""
+        """See :class:`baybe.searchspace.SearchSpace`."""
         # Store the input
         if constraints is None:
             constraints = []
@@ -217,10 +227,10 @@ class SubspaceDiscrete:
                 dataframe. If a match between column name and parameter name is found,
                 the corresponding parameter is used. If a column has no match in the
                 parameter list, a
-                :py:class:`baybe.parameters.NumericalDiscreteParameter` is created if
-                possible, or a :py:class:`baybe.parameters.CategoricalParameter` is used
+                :class:`baybe.parameters.NumericalDiscreteParameter` is created if
+                possible, or a :class:`baybe.parameters.CategoricalParameter` is used
                 as fallback.
-            empty_encoding: See :py:class:`baybe.searchspace.SearchSpace`.
+            empty_encoding: See :class:`baybe.searchspace.SearchSpace`.
 
         Returns:
             The created discrete subspace.
@@ -303,7 +313,7 @@ class SubspaceDiscrete:
             measurements: A dataframe containing parameter settings that should be
                 marked as measured.
             numerical_measurements_must_be_within_tolerance: See
-                :py:func:`baybe.utils.dataframe.fuzzy_row_match`.
+                :func:`baybe.utils.dataframe.fuzzy_row_match`.
         """
         inds_matched = fuzzy_row_match(
             self.exp_rep,
@@ -468,7 +478,7 @@ class SubspaceContinuous:
         self,
         data: pd.DataFrame,
     ) -> pd.DataFrame:
-        """See :py:func:`baybe.searchspace.SubspaceDiscrete.transform`.
+        """See :func:`baybe.searchspace.SubspaceDiscrete.transform`.
 
         Args:
             data: The data that should be transformed.

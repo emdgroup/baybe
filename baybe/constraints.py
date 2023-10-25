@@ -106,16 +106,19 @@ class ThresholdCondition(Condition):
         return 1e-8 if self.operator in _valid_tolerance_operators else None
 
     @tolerance.validator
-    def _tolerance_validation(self, _: Any, value: float) -> None:
-        """Validate the threshold condition tolerance."""
-        # Raises a ValueError if the operator does not allow for setting a tolerance.
+    def _validate_tolerance(self, _: Any, value: float) -> None:  # noqa: DOC101, DOC103
+        """Validate the threshold condition tolerance.
+
+        Raises:
+            ValueError: If the operator does not allow for setting a tolerance.
+            ValueError: If the operator allows for setting a tolerance, but the provided
+                tolerance is either less than 0 or ```None```.
+        """
         if (self.operator not in _valid_tolerance_operators) and (value is not None):
             raise ValueError(
                 f"Setting the tolerance for a threshold condition is only valid "
                 f"with the following operators: {_valid_tolerance_operators}."
             )
-        # Raises a ValueError if the operator allows for setting a tolerance, but the
-        # provided tolerance is either less than 0 or None.
         if self.operator in _valid_tolerance_operators:
             if (value is None) or (value <= 0.0):
                 raise ValueError(
@@ -177,9 +180,14 @@ class Constraint(ABC, SerialMixin):
     parameters: List[str] = field(validator=min_len(1))
 
     @parameters.validator
-    def _validate_params(self, _: Any, params: List[str]) -> None:
-        """Validate the parameter list."""
-        # Raises a ValueError if params does not contain unique values.
+    def _validate_params(  # noqa: DOC101, DOC103
+        self, _: Any, params: List[str]
+    ) -> None:
+        """Validate the parameter list.
+
+        Raises:
+            ValueError: If ```params``` contains duplicate values.
+        """
         if len(params) != len(set(params)):
             raise ValueError(
                 f"The given 'parameters' list must have unique values "
@@ -345,9 +353,15 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     permutation_invariant: bool = field(default=False)
 
     @affected_parameters.validator
-    def _affected_parameters_validator(self, _: Any, value: List[List[str]]) -> None:
-        """Ensure that each set of affected parameters has exactly one condition."""
-        # Raises a ValueError if this is not the case.
+    def _validate_affected_parameters(  # noqa: DOC101, DOC103
+        self, _: Any, value: List[List[str]]
+    ) -> None:
+        """Validate the affected parameters.
+
+        Raises:
+            ValueError: If one set of affected parameters does not have exactly one
+                condition.
+        """
         if len(self.conditions) != len(value):
             raise ValueError(
                 f"For the {self.__class__.__name__}, for each item in the "
@@ -402,7 +416,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     More precisely, this means that, ```(val_from_param1, val_from_param2)``` is
     equivalent to ```(val_from_param2, val_from_param1)```. Since it does not make sense
     to have this constraint with duplicated labels, this implementation also internally
-    applies the :py:func:`baybe.constraints.NoLabelDuplicatesConstraint`.
+    applies the :func:`baybe.constraints.DiscreteNoLabelDuplicatesConstraint`.
 
     Note: This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
@@ -499,10 +513,15 @@ class ContinuousConstraint(Constraint, ABC):
     rhs: float = field(default=0.0)
 
     @coefficients.validator
-    def _validate_coefficients(self, _: Any, coefficients: List[float]) -> None:
-        """Validate the coefficients."""
-        # Raises a ValueError if the number of coefficients does not match the number of
-        # parameters.
+    def _validate_coefficients(  # noqa: DOC101, DOC103
+        self, _: Any, coefficients: List[float]
+    ) -> None:
+        """Validate the coefficients.
+
+        Raises:
+            ValueError: If the number of coefficients does not match the number of
+                parameters.
+        """
         if len(self.parameters) != len(coefficients):
             raise ValueError(
                 "The given 'coefficients' list must have one floating point entry for "
@@ -601,11 +620,18 @@ cattrs.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_ho
 cattrs.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
 
 
-def _validate_constraints(
+def _validate_constraints(  # noqa: DOC101, DOC103
     constraints: List[Constraint], parameters: List[Parameter]
 ) -> None:
-    """Asserts that a given collection of constraints is valid."""
-    # Raise a ValueError if there is more than one DependenciesConstraint declared
+    """Assert that a given collection of constraints is valid.
+
+    Raises:
+        ValueError: If there is more than one
+            :class:`baybe.constraints.DiscreteDependenciesConstraint` declared.
+        ValueError: If any constraint contains an invalid parameter name.
+        ValueError: If any continuous constraint includes a discrete parameter.
+        ValueError: If any discrete constraint includes a continuous parameter.
+    """
     if sum(isinstance(itm, DiscreteDependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
             f"There is only one {DiscreteDependenciesConstraint.__name__} allowed. "
@@ -616,7 +642,6 @@ def _validate_constraints(
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
     param_names_continuous = [p.name for p in parameters if not p.is_discrete]
     for constraint in constraints:
-        # Raise a ValueError if any constraint contains an invalid parameter name
         if not all(p in param_names_all for p in constraint.parameters):
             raise ValueError(
                 f"You are trying to create a constraint with at least one parameter "
@@ -624,7 +649,6 @@ def _validate_constraints(
                 f"Parameter list of the affected constraint: {constraint.parameters}"
             )
 
-        # Raise a ValueError if any continuous constraint includes a discrete parameter
         if constraint.is_continuous and any(
             p in param_names_discrete for p in constraint.parameters
         ):
@@ -634,7 +658,6 @@ def _validate_constraints(
                 f"constraint: {constraint.parameters}"
             )
 
-        # Raise a ValueError if any discrete constraint includes a continuous parameter
         if constraint.is_discrete and any(
             p in param_names_continuous for p in constraint.parameters
         ):

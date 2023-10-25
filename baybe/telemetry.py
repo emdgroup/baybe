@@ -140,7 +140,7 @@ def telemetry_record_value(
 def _submit_scalar_value(
     instrument_name: str, value: Union[bool, int, float, str]
 ) -> None:
-    """See :py:func:`baybe.telemetry.telemetry_record_value`."""
+    """See :func:`baybe.telemetry.telemetry_record_value`."""
     if instrument_name in _instruments:
         histogram = _instruments[instrument_name]
     else:
@@ -164,7 +164,7 @@ def telemetry_record_recommended_measurement_percentage(
     previously recommended ones (called cached recommendations).
 
     The matching is performed via fuzzy row matching, using the utils function
-    :py:func:`baybe.utils.dataframe.fuzzy_row_match`. The calculation is only performed
+    :func:`baybe.utils.dataframe.fuzzy_row_match`. The calculation is only performed
     if telemetry is enabled. If no cached recommendation exists the percentage is not
     calculated and instead a different event ('naked initial measurement added') is
     recorded.

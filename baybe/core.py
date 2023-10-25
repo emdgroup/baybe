@@ -170,7 +170,7 @@ class BayBE(SerialMixin):
         """Extract the configuration of the BayBE object as JSON string.
 
         Note: This is not yet implemented. Use
-        :py:func:`baybe.utils.serialization.SerialMixin.to_json` instead
+        :func:`baybe.utils.serialization.SerialMixin.to_json` instead
 
         Returns:
             The configuration as JSON string.
@@ -209,7 +209,7 @@ class BayBE(SerialMixin):
 
         Args:
             data: The data to be added (with filled values for targets). Preferably
-                created via :py:func:`baybe.core.BayBE.recommend`.
+                created via :func:`baybe.core.BayBE.recommend`.
 
         Raises:
             ValueError: If one of the targets has missing values or NaNs in the provided

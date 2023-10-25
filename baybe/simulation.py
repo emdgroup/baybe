@@ -78,7 +78,7 @@ def simulate_transfer_learning(
 ) -> pd.DataFrame:
     """Simulate Bayesian optimization with transfer learning.
 
-    A wrapper around :py:func:`baybe.simulation.simulate_scenarios` that partitions the
+    A wrapper around :func:`baybe.simulation.simulate_scenarios` that partitions the
     search space into its tasks and simulates each task with the training data from the
     remaining tasks.
 
@@ -92,15 +92,15 @@ def simulate_transfer_learning(
     implemented at the moment.
 
     Args:
-        baybe: See :py:func:`baybe.simulation.simulate_experiment`.
-        lookup: See :py:func:`baybe.simulation.simulate_scenarios`.
-        batch_quantity: See :py:func:`baybe.simulation.simulate_scenarios`.
-        n_doe_iterations: See :py:func:`baybe.simulation.simulate_scenarios`.
-        groupby: See :py:func:`baybe.simulation.simulate_scenarios`.
-        n_mc_iterations: See :py:func:`baybe.simulation.simulate_scenarios`.
+        baybe: See :func:`baybe.simulation.simulate_experiment`.
+        lookup: See :func:`baybe.simulation.simulate_scenarios`.
+        batch_quantity: See :func:`baybe.simulation.simulate_scenarios`.
+        n_doe_iterations: See :func:`baybe.simulation.simulate_scenarios`.
+        groupby: See :func:`baybe.simulation.simulate_scenarios`.
+        n_mc_iterations: See :func:`baybe.simulation.simulate_scenarios`.
 
     Returns:
-        A dataframe as returned by :py:func:`baybe.simulation.simulate_scenarios` where
+        A dataframe as returned by :func:`baybe.simulation.simulate_scenarios` where
         the different tasks are represented in the ```Scenario``` column.
 
     Raises:
@@ -174,22 +174,22 @@ def simulate_scenarios(
 ) -> pd.DataFrame:
     """Simulation of multiple Bayesian optimization scenarios.
 
-    A wrapper function around :py:func:`baybe.simulation.simulate_experiment` that
+    A wrapper function around :func:`baybe.simulation.simulate_experiment` that
     allows to specify multiple simulation settings at once.
 
     Args:
         scenarios: A dictionary mapping scenario identifiers to DOE specifications.
-        lookup: See :py:func:`baybe.simulation.simulate_experiment`.
-        batch_quantity: See :py:func:`baybe.simulation.simulate_experiment`.
-        n_doe_iterations: See :py:func:`baybe.simulation.simulate_experiment`.
+        lookup: See :func:`baybe.simulation.simulate_experiment`.
+        batch_quantity: See :func:`baybe.simulation.simulate_experiment`.
+        n_doe_iterations: See :func:`baybe.simulation.simulate_experiment`.
         initial_data: A list of initial data sets for which the scenarios should be
             simulated.
         groupby: The names of the parameters to be used to partition the search space.
             A separate simulation will be conducted for each partition, with the search
             restricted to that partition.
         n_mc_iterations: The number of Monte Carlo simulations to be used.
-        impute_mode: See :py:func:`baybe.simulation.simulate_experiment`.
-        noise_percent: See :py:func:`baybe.simulation.simulate_experiment`.
+        impute_mode: See :func:`baybe.simulation.simulate_experiment`.
+        noise_percent: See :func:`baybe.simulation.simulate_experiment`.
 
     Returns:
         A dataframe like returned from `simulate_experiments` but with the following
@@ -289,23 +289,23 @@ def _simulate_groupby(
 ) -> pd.DataFrame:
     """Scenario simulation for different search space partitions.
 
-    A wrapper around :py:func:`baybe.simulation.simulate_experiment` that allows to
+    A wrapper around :func:`baybe.simulation.simulate_experiment` that allows to
     partition the search space into different groups and run separate simulations for
     all groups where the search is restricted to the corresponding partition.
 
     Args:
-        baybe_obj: See :py:func:`baybe.simulation.simulate_experiment`.
-        lookup: See :py:func:`baybe.simulation.simulate_experiment`.
-        batch_quantity: See :py:func:`baybe.simulation.simulate_experiment`.
-        n_doe_iterations: See :py:func:`baybe.simulation.simulate_experiment`.
-        initial_data: See :py:func:`baybe.simulation.simulate_experiment`.
-        groupby: See :py:func:`baybe.simulation.simulate_scenarios`.
-        random_seed: See :py:func:`baybe.simulation.simulate_experiment`.
-        impute_mode: See :py:func:`baybe.simulation.simulate_experiment`.
-        noise_percent: See :py:func:`baybe.simulation.simulate_experiment`.
+        baybe_obj: See :func:`baybe.simulation.simulate_experiment`.
+        lookup: See :func:`baybe.simulation.simulate_experiment`.
+        batch_quantity: See :func:`baybe.simulation.simulate_experiment`.
+        n_doe_iterations: See :func:`baybe.simulation.simulate_experiment`.
+        initial_data: See :func:`baybe.simulation.simulate_experiment`.
+        groupby: See :func:`baybe.simulation.simulate_scenarios`.
+        random_seed: See :func:`baybe.simulation.simulate_experiment`.
+        impute_mode: See :func:`baybe.simulation.simulate_experiment`.
+        noise_percent: See :func:`baybe.simulation.simulate_experiment`.
 
     Returns:
-        A dataframe like returned from :py:func:`baybe.simulation.simulate_experiments`,
+        A dataframe like returned from :func:`baybe.simulation.simulate_experiments`,
         but with additional ```groupby columns``` (named according to the specified
         groupby parameters) that subdivide the results into the different simulations.
 
@@ -606,10 +606,10 @@ def _look_up_target_values(
     Args:
         queries: A dataframe containing points to be queried.
         baybe_obj: The BayBE object for which the experiments should be simulated.
-        lookup: The lookup mechanism. See :py:func:`baybe.simulation.simulate_scenarios`
+        lookup: The lookup mechanism. See :func:`baybe.simulation.simulate_scenarios`
             for details.
         impute_mode: The used impute mode. See
-            :py:func:`baybe.simulation.simulate_scenarios` for details.
+            :func:`baybe.simulation.simulate_scenarios` for details.
 
     Raises:
         AssertionError: If an analytical function is used and an incorrect number of
@@ -708,7 +708,7 @@ def _impute_lookup(
         row: The data that should be matched with the lookup data frame.
         lookup: The lookup data frame.
         targets: Targets from the BayBE object, providing the required mode information.
-        mode: The used impute mode. See :py:func:`baybe.simulation.simulate_scenarios`
+        mode: The used impute mode. See :func:`baybe.simulation.simulate_scenarios`
             for details.
 
     Returns:

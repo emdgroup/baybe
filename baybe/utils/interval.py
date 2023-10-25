@@ -44,9 +44,12 @@ class Interval:
     upper: float = field(converter=lambda x: float(x) if x is not None else np.inf)
 
     @upper.validator
-    def _validate_order(self, _: Any, value: float):
-        """Validate the order of the interval bounds."""
-        # Raises an ValueError if the upper end is not larger than the lower end.
+    def _validate_order(self, _: Any, value: float):  # noqa: DOC101, DOC103
+        """Validate the order of the interval bounds.
+
+        Raises:
+            ValueError: If the upper end is not larger than the lower end.
+        """
         if value <= self.lower:
             raise ValueError(
                 f"The upper interval bound (provided value: {value}) must be larger "

@@ -61,7 +61,7 @@ def add_fake_results(
 
     Args:
         data: Output of the ```recommend``` function of a ```BayBE``` object, see
-            :py:func:`baybe.core.BayBE.recommend`.
+            :func:`baybe.core.BayBE.recommend`.
         baybe: The ```BayBE``` object, which provides configuration, targets, etc.
         good_reference_values: A dictionary containing parameter names (= dict keys) and
             respective parameter values (= dict values) that specify what will be
@@ -199,7 +199,7 @@ def add_parameter_noise(
 
     Args:
         data: Output of the ```recommend``` function of a ```BayBE``` object, see
-            :py:func:`baybe.core.BayBE.recommend`.
+            :func:`baybe.core.BayBE.recommend`.
         parameters: The parameters for which the values shall be corrupted.
         noise_type: Defines whether the noise should be additive or multiplicative.
         noise_level: Level/magnitude of the noise. Must be provided as numerical value

@@ -77,9 +77,14 @@ def _validate_decorrelation(obj: Any, attribute: Any, value: float) -> None:
         lt(1.0)(obj, attribute, value)
 
 
-def _validate_unique_values(obj: Any, _: Any, value: list) -> None:
-    """Validate that there are no duplicates in ```value```."""
-    # Raises a ValueError if therer are duplicates in ```value```.
+def _validate_unique_values(  # noqa: DOC101, DOC103
+    obj: Any, _: Any, value: list
+) -> None:
+    """Validate that there are no duplicates in ```value```.
+
+    Raises:
+        ValueError: If there are duplicates in ```value```.
+    """
     if len(set(value)) != len(value):
         raise ValueError(
             f"Cannot assign the following values containing duplicates to "
@@ -239,19 +244,24 @@ class NumericalDiscreteParameter(DiscreteParameter):
     tolerance: float = field(default=0.0)
 
     @tolerance.validator
-    def _validate_tolerance(self, _: Any, tolerance: float) -> None:
-        """Validate that the given tolerance is safe."""
-        # The tolerance is the allowed experimental uncertainty when
-        # reading in measured values. A tolerance larger than half the minimum
-        # pdistance between parameter values is not allowed because that could cause
-        # ambiguity when inputting data points later.
+    def _validate_tolerance(  # noqa: DOC101, DOC103
+        self, _: Any, tolerance: float
+    ) -> None:
+        """Validate that the given tolerance is safe.
 
+        The tolerance is the allowed experimental uncertainty when
+        reading in measured values. A tolerance larger than half the minimum
+        distance between parameter values is not allowed because that could cause
+        ambiguity when inputting data points later.
+
+        Raises:
+            ValueError: If the tolerance is not safe.
+        """
         # NOTE: computing all pairwise distances can be avoided if we ensure that the
         #   values are ordered (which is currently not the case)
         dists = pdist(np.asarray(self.values).reshape(-1, 1))
         max_tol = dists.min() / 2.0
 
-        # Raises a ValueError: If the tolerance is not safe.
         if tolerance >= max_tol:
             raise ValueError(
                 f"Parameter {self.name} is initialized with tolerance "
@@ -294,9 +304,12 @@ class NumericalContinuousParameter(Parameter):
     bounds: Interval = field(default=None, converter=convert_bounds)
 
     @bounds.validator
-    def _validate_bounds(self, _: Any, value: Interval) -> None:
-        """Validate that the provided bounds are finite."""
-        # Raises an InfiniteIntervalError if the provided interval is not finite.
+    def _validate_bounds(self, _: Any, value: Interval) -> None:  # noqa: DOC101, DOC103
+        """Validate bounds.
+
+        Raises:
+            InfiniteIntervalError: If the provided interval is infinite.
+        """
         if not value.is_finite:
             raise InfiniteIntervalError(
                 f"You are trying to initialize a parameter with an infinite interval "
@@ -337,15 +350,17 @@ class SubstanceParameter(DiscreteParameter):
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
 
     @encoding.validator
-    def _validate_encoding(self, _: Any, value: str) -> None:
-        """Validate that the chosen encoding can be used."""
-        # This validation is necessary since certain encodings are only useable when
-        # additional dependencies, in particular the ```chem``` dependency, have been
-        # installed.
+    def _validate_encoding(self, _: Any, value: str) -> None:  # noqa: DOC101, DOC103
+        """Validate that the chosen encoding can be used.
 
-        # Raises an ImportError if the ```chem``` dependency was not installed but an
-        # encoding requiring this dependency is being used.
+        This validation is necessary since certain encodings are only useable when
+        additional dependencies, in particular the ```chem``` dependency, have been
+        installed.
 
+        Raises:
+            ImportError: If the ```chem```dependency was not installed but an encoding
+                requiring this dependency is requested.
+        """
         if value in ["MORDRED"] and not (_MORDRED_INSTALLED and _RDKIT_INSTALLED):
             raise ImportError(
                 "The mordred/rdkit packages are not installed, a SubstanceParameter "
@@ -360,9 +375,14 @@ class SubstanceParameter(DiscreteParameter):
             )
 
     @data.validator
-    def _validate_substance_data(self, _: Any, value: Dict[str, str]) -> None:
-        """Validate that the substance data, provided as SMIELS, is valid."""
-        # Raises a ValueError if one of the smiles does not appear to be valid.
+    def _validate_substance_data(  # noqa: DOC101, DOC103
+        self, _: Any, value: Dict[str, str]
+    ) -> None:
+        """Validate that the substance data, provided as SMILES, is valid.
+
+        Raises:
+            ValueError: If one or more of the SMILES are invalid.
+        """
         for name, smiles in value.items():
             if _RDKIT_INSTALLED and not is_valid_smiles(smiles):
                 raise ValueError(
@@ -430,39 +450,46 @@ class TaskParameter(CategoricalParameter):
 
     Args:
         encoding: The encoding of the parameter.
-        active_values: List of values describing for which tasks recommendations should
-            be given.
+        active_values: An optional list of values describing for which tasks
+            recommendations should be given. By default, all parameters are considered
+            active.
     """
 
     # object variables
     # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
     #   declared as such because of the inheritance relationship.
     encoding: Literal["INT"] = field(default="INT")
-    active_values: list = field(
-        default=None, converter=lambda x: x if x is None else list(x)
-    )
+    active_values: list = field(converter=list)
+
+    @active_values.default
+    def _default_active_values(self) -> list:
+        """Set all parameters active by default."""
+        # TODO [16605]: Redesign metadata handling
+        return self.values
 
     @active_values.validator
-    def _validate_active_values(self, _: Any, values: list) -> None:
-        """Validate the active parameter values."""
+    def _validate_active_values(  # noqa: DOC101, DOC103
+        self, _: Any, values: list
+    ) -> None:
+        """Validate the active parameter values.
+
+        If no such list is provided, no validation is being performed. In particular,
+        the errors listed below are only relevant if the ```values``` list is provided.
+
+        Raises:
+            ValueError: If an empty active parameters list is provided.
+            ValueError: If the active parameter values are not unique.
+            ValueError: If not all active values are valid parameter choices.
+        """
         # TODO [16605]: Redesign metadata handling
-        if values is None:
-            return
-        # Raises a ValueError if no active parameter is provided.
         if len(values) == 0:
-            raise ValueError("At least one active parameter value is required.")
-        # Raises a ValueError if te active parameter values are not unique.
+            raise ValueError(
+                "If an active parameters list is provided, it must not be empty."
+            )
         if len(set(values)) != len(values):
             raise ValueError("The active parameter values must be unique.")
-        # Raises a ValueError if not all pactive values are valid parameter choise.
         if not all(v in self.values for v in values):
             raise ValueError("All active values must be valid parameter choices.")
-
-    def __attrs_post_init__(self) -> None:
-        """Set the ```active_values``` attribute to ```self.values```."""
-        # TODO [16605]: Redesign metadata handling
-        if self.active_values is None:
-            object.__setattr__(self, "active_values", self.values)
 
 
 @define(frozen=True, slots=False)
@@ -489,29 +516,34 @@ class CustomDiscreteParameter(DiscreteParameter):
     encoding = field(default="CUSTOM")
 
     @data.validator
-    def _validate_custom_data(self, _: Any, value: pd.DataFrame) -> None:
-        """Validate the dataframe with the custom representation."""
-        # Raises a ValueError if the dataframe contains NaN.
+    def _validate_custom_data(  # noqa: DOC101, DOC103
+        self, _: Any, value: pd.DataFrame
+    ) -> None:
+        """Validate the dataframe with the custom representation.
+
+        Raises:
+            ValueError: If the dataframe contains ```NaN```.
+            ValueError: If the dataframe contains duplicated indices.
+            ValueError: If the dataframe contains non-numeric values.
+            ValueError: If the dataframe contains columns that only contain a single
+                value.
+        """
         if value.isna().any().any():
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains NaN "
                 f"entries, which is not supported."
             )
-        # Raises a ValueError if the dataframe contains duplicated indices.
         if len(value) != len(set(value.index)):
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains "
                 f"duplicated indices. Please only provide dataframes with unique"
                 f" indices."
             )
-        # Raises a ValueError if the dataframe contains non-numeric values.
         if value.select_dtypes("number").shape[1] != value.shape[1]:
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains "
                 f"non-numeric values."
             )
-        # Raises a ValueError if the dataframe contains columns that only contain a
-        # single value.
         if any(value.nunique() == 1):
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} has columns "
@@ -615,21 +647,29 @@ cattrs.register_unstructure_hook(Parameter, unstructure_hook)
 cattrs.register_structure_hook(Parameter, structure_hook)
 
 
-def _validate_parameter_names(parameters: List[Parameter]) -> None:
-    """Assert that a given collection of parameters has unique names."""
-    # Raises a ValueError if the given list contains parameters with the same name.
+def _validate_parameter_names(  # noqa: DOC101, DOC103
+    parameters: List[Parameter],
+) -> None:
+    """Validate the parameter names.
+
+    Raises:
+        ValueError: If the given list contains parameters with the same name.
+    """
     param_names = [p.name for p in parameters]
     if len(set(param_names)) != len(param_names):
         raise ValueError("All parameters must have unique names.")
 
 
-def _validate_parameters(parameters: List[Parameter]) -> None:
-    """Assert that a given collection of parameters is valid."""
-    # Raises an EmptySpaceError if the parameter list is empty.
+def _validate_parameters(parameters: List[Parameter]) -> None:  # noqa: DOC101, DOC103
+    """Validate the parameters.
+
+    Raises:
+        EmptySearchSpaceError: If the parameter list is empty.
+        NotImplementedError: If more than one ```TaskParameter``` is requested.
+    """
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")
 
-    # Raises a NotImplementedError if more than one TaskParameter is requested.
     # TODO [16932]: Remove once more task parameters are supported
     if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
         raise NotImplementedError(

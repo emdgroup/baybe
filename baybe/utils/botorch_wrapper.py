@@ -7,7 +7,7 @@ from torch import Tensor
 def botorch_function_wrapper(test_function: SyntheticTestFunction):
     """Turn a BoTorch test function into a format accepted by lookup in simulations.
 
-    See :py:func:`baybe.simulation` for details.
+    See :mod:`baybe.simulation` for details.
 
     Args:
         test_function: The synthetic test function from ```botorch.test_functions```

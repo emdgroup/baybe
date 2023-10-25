@@ -117,16 +117,18 @@ class NumericalTarget(Target, SerialMixin):
         return None
 
     @bounds.validator
-    def _validate_bounds(self, _: Any, value: Interval) -> None:
-        """Validate the bounds."""
+    def _validate_bounds(self, _: Any, value: Interval) -> None:  # noqa: DOC101, DOC103
+        """Validate the bounds.
+
+        Raises:
+            ValueError: If the bounds are finite on one and infinite on the other end.
+            ValueError: If the target is in ```MATCH``` mode but the provided bounds are
+                are infinite.
+        """
         # IMPROVE: We could also include half-way bounds, which however don't work
         # for the desirability approach
-        # Raises a ValueError if the bounds are finite on one and infinite on the other
-        # end.
         if not (value.is_finite or not value.is_bounded):
             raise ValueError("Bounds must either be finite or infinite on *both* ends.")
-        # Raises a ValueError if the target is in ```MATCH``` mode but the provided
-        # bounds are not finite.
         if self.mode == "MATCH" and not value.is_finite:
             raise ValueError(
                 f"Target '{self.name}' is in 'MATCH' mode, which requires "
@@ -134,10 +136,15 @@ class NumericalTarget(Target, SerialMixin):
             )
 
     @bounds_transform_func.validator
-    def _validate_bounds_transform_func(self, _: Any, value: str) -> None:
-        """Validate that the given transform is compatible with the specified mode."""
-        # Raises a ValueError if the specified bound transform function and the target
-        # mode are not compatible.
+    def _validate_bounds_transform_func(  # noqa: DOC101, DOC103
+        self, _: Any, value: str
+    ) -> None:
+        """Validate that the given transform is compatible with the specified mode.
+
+        Raises:
+            ValueError: If the specified bound transform function and the target mode
+                are not compatible.
+        """
         if (value is not None) and (value not in _VALID_TRANSFORMS[self.mode]):
             raise ValueError(
                 f"You specified bounds for target '{self.name}', but your "
@@ -210,8 +217,15 @@ class Objective(SerialMixin):
         return [1.0] * len(self.targets)
 
     @targets.validator
-    def _validate_targets(self, _: Any, targets: List[NumericalTarget]) -> None:
-        """Validate targets depending on the objective mode."""
+    def _validate_targets(  # noqa: DOC101, DOC103
+        self, _: Any, targets: List[NumericalTarget]
+    ) -> None:
+        """Validate targets depending on the objective mode.
+
+        Raises:
+            ValueError: If multiple targets are specified when using objective mode
+                ```SINGLE```.
+        """
         # Raises a ValueError if multiple targets are specified when using objective
         # mode SINGLE.
         if (self.mode == "SINGLE") and (len(targets) != 1):
@@ -228,8 +242,14 @@ class Objective(SerialMixin):
                 )
 
     @weights.validator
-    def _validate_weights(self, _: Any, weights: List[float]) -> None:
-        """Validate target weights."""
+    def _validate_weights(  # noqa: DOC101, DOC103
+        self, _: Any, weights: List[float]
+    ) -> None:
+        """Validate target weights.
+
+        Raises:
+            ValueError: If the number of weights and the number of targets differ.
+        """
         if weights is None:
             return
 
@@ -237,7 +257,6 @@ class Objective(SerialMixin):
         validator = deep_iterable(instance_of(float), instance_of(list))
         validator(self, _, weights)
 
-        # Raises a ValueError if the number of weights and the number of targets differ.
         if len(weights) != len(self.targets):
             raise ValueError(
                 f"Weights list for your objective has {len(weights)} values, but you "
