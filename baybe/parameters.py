@@ -49,22 +49,6 @@ if _RDKIT_INSTALLED:
     if _MORDRED_INSTALLED:
         from baybe.utils import smiles_to_mordred_features
 
-# TODO[12356]: There should be a better way than registering with the global converter.
-# TODO: Think about what is the best approach to handle field unions. That is, when
-#  serializing e.g. a field of typy Union[int, float], it must be ensured that the
-#  deserialized type is correctly recovered, i.e. that a 1.0 is recovered as a float
-#  and not as an int. Potential options:
-#   1)  Adding explicit hooks like the ones below (probably registered with a custom
-#       converter, though)
-#   2)  Adding a converter to the field that resolves the types and ensures that the
-#       object always carries a specific type, removing the need for unions in the
-#       first place.
-#   3)  Waiting for the upcoming "attrs built-in approach". Quote from doc:
-#       "In the future, cattrs will gain additional tools to make union handling even
-#       easier and automate generating these hooks."
-#       https://catt.rs/en/stable/unions.html
-cattrs.register_structure_hook(Union[bool, float], lambda x, _: x)
-
 # TODO: Introduce encoding enums
 
 
@@ -596,7 +580,10 @@ def parameter_cartesian_prod_to_df(
 
 
 # Register (un-)structure hooks
-overrides = {"_values": override(rename="values")}
+overrides = {
+    "_values": override(rename="values"),
+    "decorrelate": override(struct_hook=lambda x, _: x),
+}
 cattrs.register_structure_hook(
     Parameter,
     get_base_structure_hook(Parameter, overrides=overrides),
