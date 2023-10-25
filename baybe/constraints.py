@@ -416,7 +416,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     More precisely, this means that, ```(val_from_param1, val_from_param2)``` is
     equivalent to ```(val_from_param2, val_from_param1)```. Since it does not make sense
     to have this constraint with duplicated labels, this implementation also internally
-    applies the :py:func:`baybe.constraints.DiscreteNoLabelDuplicatesConstraint`.
+    applies the :func:`baybe.constraints.DiscreteNoLabelDuplicatesConstraint`.
 
     Note: This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
@@ -627,7 +627,7 @@ def _validate_constraints(  # noqa: DOC101, DOC103
 
     Raises:
         ValueError: If there is more than one
-            :py:class:`baybe.constraints.DiscreteDependenciesConstraint` declared.
+            :class:`baybe.constraints.DiscreteDependenciesConstraint` declared.
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.

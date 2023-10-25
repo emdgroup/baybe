@@ -461,9 +461,9 @@ class NaiveHybridRecommender(Recommender):
 
     Args:
         disc_recommender: The recommender used for the discrete subspace.
-            Default: :py:class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
+            Default: :class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
         cont_recommender: The recommender used for the continuous subspace.
-            Default: :py:class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
+            Default: :class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
     """
 
     # TODO: This class (and potentially the recommender function signatures) need to

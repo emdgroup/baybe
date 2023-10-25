@@ -20,7 +20,7 @@ The infrastructure used to host the current documentation as well as the design 
 - Note that `pydocstyle` does not enforce docstrings for private methods. This is enforced via `pylint`. If a private function has a docstring, `pydocstyle` acknowledges it and checks it.
 - Function signatures need to have type hints for both inputs and the return type.
 - Type hints should not be added to the docstrings.
-- When referencing another class, function, or similar, use the syntax ``:py:func:`path.to.function` `` where `func` should be replaced by the respective keyword.
+- When referencing another class, function, or similar, use the syntax ``:func:`path.to.function` `` where `func` should be replaced by the respective keyword.
 - When parts of the comment should appear as `code` in the docstring, use triple backticks ```.
 - Since we use [attrs](https://www.attrs.org/en/stable/) for writing classes, the documentation of initialization functions needs to be done in the class docstring. In particular, instance attributes need to be documented there.
 - Class variables are documented by adding a docstring in the line below their declaration.

@@ -378,7 +378,7 @@ class Surrogate(ABC, SerialMixin):
         """Perform the actual posterior evaluation logic.
 
         In contrast to its public counterpart
-        :py:func:`baybe.surrogate.Surrogate.posterior`, no data
+        :func:`baybe.surrogate.Surrogate.posterior`, no data
         validation/transformation is carried out but only the raw posterior computation
         is conducted.
 
@@ -388,14 +388,14 @@ class Surrogate(ABC, SerialMixin):
         flag. The optional conversion to a covariance matrix is handled by the public
         method.
 
-        See :py:func:`baybe.surrogate.Surrogate.posterior` for details on the
+        See :func:`baybe.surrogate.Surrogate.posterior` for details on the
         parameters.
 
         Args:
             candidates: The candidates.
 
         Returns:
-            See :py:func:`baybe.surrogate.Surrogate.posterior`.
+            See :func:`baybe.surrogate.Surrogate.posterior`.
         """
 
     def fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
@@ -437,11 +437,11 @@ class Surrogate(ABC, SerialMixin):
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         """Perform the actual fitting logic.
 
-        In contrast to its public counterpart :py:func:`baybe.surrogate.Surrogate.fit`,
+        In contrast to its public counterpart :func:`baybe.surrogate.Surrogate.fit`,
         no data validation/transformation is carried out but only the raw fitting
         operation is conducted.
 
-        See :py:func:`baybe.surrogate.Surrogate.fit` for details on the parameters.
+        See :func:`baybe.surrogate.Surrogate.fit` for details on the parameters.
         """
 
 
