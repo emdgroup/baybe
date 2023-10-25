@@ -262,7 +262,7 @@ pieces of the puzzle together:
 ```python
 from baybe import Campaign
 
-baybe = Campaign(searchspace, objective, strategy)
+campaign = Campaign(searchspace, objective, strategy)
 ```
 
 With this object at hand, we can start our experimentation cycle.
@@ -281,7 +281,7 @@ The following illustrates one such possible sequence of interactions.
 Let us first ask for an initial set of recommendations:
 
 ```python
-df = baybe.recommend(batch_quantity=5)
+df = campaign.recommend(batch_quantity=5)
 ```
 
 For a particular random seed, the result could look as follows:
@@ -299,7 +299,7 @@ yields to the table and feed it back to BayBE:
 
 ```python
 df["Yield"] = [79, 54, 59, 95, 84]
-baybe.add_measurements(df)
+campaign.add_measurements(df)
 ```
 
 With the newly arrived data, BayBE will update its internal state and can produce a
