@@ -212,7 +212,7 @@ for order, file in enumerate(markdown_files):
                 # for a comment regarding the autodoc issue
                 # In our case, this is not a severe problem as we only rarely use
                 # ArrayLike and thus simply manually replace the corresponding lines.
-                if line.startswith("  * **arr** ([`Union`]"):
+                if " * **arr**" in line and "`Union`" in line:
                     # Get the first part with the convoluted type hint and the second
                     # part with the actual description
                     _, description = line.split("–")
@@ -222,7 +222,7 @@ for order, file in enumerate(markdown_files):
                         + "reference/typing.html#numpy.typing.ArrayLike)) - "
                     )
                     line = type_alias + description
-                if line.startswith("  * **x** (`Union`"):
+                if "* **x**" in line and "`Union`" in line:
                     # Get the first part with the convoluted type hint and the second
                     # part with the actual description
                     _, description = line.split("–")
@@ -232,7 +232,7 @@ for order, file in enumerate(markdown_files):
                         + "reference/typing.html#numpy.typing.ArrayLike)) - "
                     )
                     line = type_alias + description
-                if line.startswith("  * **y** (`Union`"):
+                if "* **y**" in line and "`Union`" in line:
                     # Get the first part with the convoluted type hint and the second
                     # part with the actual description
                     _, description = line.split("–")
