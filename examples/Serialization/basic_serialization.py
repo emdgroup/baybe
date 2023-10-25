@@ -11,7 +11,7 @@
 
 import numpy as np
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -52,7 +52,7 @@ parameters = [
 
 #### Creating the BayBE object
 
-baybe_orig = BayBE(
+baybe_orig = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
@@ -78,7 +78,7 @@ string = baybe_orig.to_json()
 
 # Deserialize the JSON string back to an object.
 print("Deserialized object")
-baybe_recreate = BayBE.from_json(string)
+baybe_recreate = Campaign.from_json(string)
 print(baybe_recreate, end="\n" * 3)
 
 # Verify that both objects are equal.

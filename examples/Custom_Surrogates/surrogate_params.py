@@ -13,7 +13,7 @@
 
 import numpy as np
 
-from baybe.core import BayBE
+from baybe.core import Campaign
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -79,7 +79,7 @@ except ValueError as e:
 
 #### Creating the BayBE object
 
-baybe_obj = BayBE(
+baybe_obj = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]

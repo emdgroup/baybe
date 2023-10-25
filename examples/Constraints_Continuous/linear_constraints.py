@@ -15,7 +15,7 @@ import numpy as np
 
 #### Necessary imports for this example
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
@@ -82,7 +82,7 @@ objective = Objective(
 
 #### Construct the BayBE object and run some iterations
 
-baybe_obj = BayBE(
+baybe_obj = Campaign(
     searchspace=searchspace,
     objective=objective,
 )

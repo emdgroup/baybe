@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -125,17 +125,17 @@ random_strategy = Strategy(recommender=RandomRecommender())
 
 # We now create one BayBE object per strategy.
 
-seq_greedy_baybe = BayBE(
+seq_greedy_baybe = Campaign(
     searchspace=searchspace,
     strategy=seq_greedy_strategy,
     objective=objective,
 )
-naive_hybrid_baybe = BayBE(
+naive_hybrid_baybe = Campaign(
     searchspace=searchspace,
     strategy=naive_hybrid_strategy,
     objective=objective,
 )
-random_baybe = BayBE(
+random_baybe = Campaign(
     searchspace=searchspace,
     strategy=random_strategy,
     objective=objective,

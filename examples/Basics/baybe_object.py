@@ -7,7 +7,7 @@
 
 #### Necessary imports for this example
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
@@ -93,7 +93,7 @@ objective = Objective(
 
 # We now finaly create the BayBE object using the objects configure previously.
 
-baybe_obj = BayBE(
+baybe_obj = Campaign(
     searchspace=searchspace,
     objective=objective,
 )

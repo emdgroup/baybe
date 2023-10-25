@@ -39,7 +39,7 @@ _validation_converter.register_structure_hook(
 
 
 @define
-class BayBE(SerialMixin):
+class Campaign(SerialMixin):
     """Main class for interaction with BayBE.
 
     Args:
@@ -96,7 +96,7 @@ class BayBE(SerialMixin):
         return self.objective.transform(self.measurements_exp)
 
     @classmethod
-    def from_config(cls, config_json: str) -> BayBE:
+    def from_config(cls, config_json: str) -> Campaign:
         """Create a BayBE object from a configuration JSON.
 
         Args:
@@ -110,7 +110,7 @@ class BayBE(SerialMixin):
             "parameters": config.pop("parameters"),
             "constraints": config.pop("constraints", None),
         }
-        return _config_converter.structure(config, BayBE)
+        return _config_converter.structure(config, Campaign)
 
     @classmethod
     def to_config(cls) -> str:
@@ -143,7 +143,7 @@ class BayBE(SerialMixin):
             "parameters": config.pop("parameters"),
             "constraints": config.pop("constraints", None),
         }
-        _validation_converter.structure(config, BayBE)
+        _validation_converter.structure(config, Campaign)
 
     def add_measurements(self, data: pd.DataFrame) -> None:
         """Add results from a dataframe to the internal database.
@@ -273,4 +273,4 @@ def _unstructure_with_version(obj: Any) -> dict:
     }
 
 
-converter.register_unstructure_hook(BayBE, _unstructure_with_version)
+converter.register_unstructure_hook(Campaign, _unstructure_with_version)

@@ -260,9 +260,9 @@ construct a BayBE object that brings all
 pieces of the puzzle together:
 
 ```python
-from baybe import BayBE
+from baybe import Campaign
 
-baybe = BayBE(searchspace, objective, strategy)
+baybe = Campaign(searchspace, objective, strategy)
 ```
 
 With this object at hand, we can start our experimentation cycle.

@@ -2,7 +2,7 @@
 
 import pytest
 
-from baybe.core import BayBE
+from baybe.core import Campaign
 from baybe.searchspace import SearchSpaceType
 from baybe.strategies.bayesian import (
     BayesianRecommender,
@@ -43,5 +43,5 @@ valid_naive_hybrid_recommenders = [
 def test_serialization_without_recommendation(baybe):
     """Serialize all possible hybrid recommender objects and test for equality."""
     baybe_orig_string = baybe.to_json()
-    baybe_recreate = BayBE.from_json(baybe_orig_string)
+    baybe_recreate = Campaign.from_json(baybe_orig_string)
     assert baybe == baybe_recreate

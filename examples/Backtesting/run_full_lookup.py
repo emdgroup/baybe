@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -101,8 +101,8 @@ objective = Objective(
 # In this example, we create two BayBE objects.
 # One uses the default recommender and the other one makes random recommendations.
 
-baybe = BayBE(searchspace=searchspace, objective=objective)
-baybe_rand = BayBE(
+baybe = Campaign(searchspace=searchspace, objective=objective)
+baybe_rand = Campaign(
     searchspace=searchspace,
     strategy=Strategy(recommender=RandomRecommender()),
     objective=objective,

@@ -17,7 +17,7 @@
 
 #### Necessary imports for this example
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
@@ -168,7 +168,7 @@ objective = Objective(
 
 # The strategy object can now be used together with the searchspace and the objective as follows.
 
-baybe_obj = BayBE(
+baybe_obj = Campaign(
     searchspace=searchspace,
     strategy=strategy,
     objective=objective,

@@ -10,7 +10,7 @@
 
 import numpy as np
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget, Objective
@@ -85,7 +85,7 @@ objective = Objective(
 
 #### Constructing the BayBE object and performing a recommendation
 
-baybe_obj = BayBE(
+baybe_obj = Campaign(
     searchspace=searchspace,
     objective=objective,
 )

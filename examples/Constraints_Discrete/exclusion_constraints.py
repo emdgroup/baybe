@@ -11,7 +11,7 @@
 
 import numpy as np
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.constraints import (
     DiscreteExcludeConstraint,
     SubSelectionCondition,
@@ -102,7 +102,7 @@ objective = Objective(
 )
 
 ### Creating and printing the BayBE object
-baybe_obj = BayBE(searchspace=searchspace, objective=objective)
+baybe_obj = Campaign(searchspace=searchspace, objective=objective)
 print(baybe_obj)
 
 

@@ -13,7 +13,7 @@ from torch import Tensor
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
-    from baybe.core import BayBE
+    from baybe.core import Campaign
     from baybe.parameters import Parameter
 
 # Logging
@@ -47,7 +47,7 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
 
 def add_fake_results(
     data: pd.DataFrame,
-    baybe: BayBE,
+    baybe: Campaign,
     good_reference_values: Optional[Dict[str, list]] = None,
     good_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
     bad_intervals: Optional[Dict[str, Tuple[float, float]]] = None,

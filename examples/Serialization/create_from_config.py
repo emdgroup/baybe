@@ -10,7 +10,7 @@
 
 #### Necessary imports
 
-from baybe import BayBE
+from baybe import Campaign
 
 #### The configuration dictionary as a string
 
@@ -87,7 +87,7 @@ CONFIG = str(
 
 # Although we know in this case that the config represents a valid configuration for a
 # BayBE object. If the config is invalid an exception will be thrown.
-baybe = BayBE.from_config(CONFIG)
+baybe = Campaign.from_config(CONFIG)
 
 # We now perform a recommendation as usual and print it.
 recommendation = baybe.recommend(batch_quantity=3)

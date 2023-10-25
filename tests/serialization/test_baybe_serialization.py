@@ -3,13 +3,13 @@
 
 import pytest
 
-from baybe.core import BayBE
+from baybe.core import Campaign
 from cattrs import ClassValidationError
 
 
-def roundtrip(baybe: BayBE) -> BayBE:
+def roundtrip(baybe: Campaign) -> Campaign:
     string = baybe.to_json()
-    return BayBE.from_json(string)
+    return Campaign.from_json(string)
 
 
 def test_baybe_serialization(baybe):
@@ -23,10 +23,10 @@ def test_baybe_serialization(baybe):
 
 
 def test_valid_config(config):
-    BayBE.validate_config(config)
+    Campaign.validate_config(config)
 
 
 def test_invalid_config(config):
     config = config.replace("CategoricalParameter", "CatParam")
     with pytest.raises(ClassValidationError):
-        BayBE.validate_config(config)
+        Campaign.validate_config(config)

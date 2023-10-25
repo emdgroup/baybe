@@ -47,7 +47,7 @@ except ImportError as ex:
         "baybe[simulation]`"
     ) from ex
 
-from baybe.core import BayBE
+from baybe.core import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
@@ -67,7 +67,7 @@ _DEFAULT_SEED = 1337
 
 
 def simulate_transfer_learning(
-    baybe: BayBE,
+    baybe: Campaign,
     lookup: pd.DataFrame,
     /,
     *,
@@ -123,7 +123,7 @@ def simulate_transfer_learning(
     task_param = task_params[0]
 
     # Create simulation objects for all tasks
-    scenarios: Dict[Any, BayBE] = {}
+    scenarios: Dict[Any, Campaign] = {}
     for task in task_param.values:
 
         # Create a baybe object that focuses only on the current task by excluding
@@ -156,7 +156,7 @@ def simulate_transfer_learning(
 
 
 def simulate_scenarios(
-    scenarios: Dict[Any, BayBE],
+    scenarios: Dict[Any, Campaign],
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
@@ -269,7 +269,7 @@ def simulate_scenarios(
 
 
 def _simulate_groupby(
-    baybe_obj: BayBE,
+    baybe_obj: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
     /,
     *,
@@ -372,7 +372,7 @@ def _simulate_groupby(
 
 
 def simulate_experiment(
-    baybe_obj: BayBE,
+    baybe_obj: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
@@ -589,7 +589,7 @@ def simulate_experiment(
 
 def _look_up_target_values(
     queries: pd.DataFrame,
-    baybe_obj: BayBE,
+    baybe_obj: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"

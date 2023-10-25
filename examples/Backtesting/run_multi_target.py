@@ -15,7 +15,7 @@
 from typing import Tuple
 
 import numpy as np
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -89,7 +89,7 @@ objective = Objective(
 
 #### Constructing a BayBE object and performing the simulation loop
 
-baybe_obj = BayBE(searchspace=searchspace, objective=objective)
+baybe_obj = Campaign(searchspace=searchspace, objective=objective)
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 scenarios = {"BayBE": baybe_obj}

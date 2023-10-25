@@ -12,7 +12,7 @@
 
 import numpy as np
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import NaiveHybridRecommender, Strategy
@@ -112,7 +112,7 @@ hybrid_strategy = Strategy(recommender=hybrid_recommender)
 
 ## Constructing the BayBE object and performing a recommendation
 
-baybe_obj = BayBE(
+baybe_obj = Campaign(
     searchspace=searchspace,
     objective=objective,
     strategy=hybrid_strategy,

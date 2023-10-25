@@ -22,7 +22,7 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
-from baybe.core import BayBE
+from baybe.core import Campaign
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
@@ -491,7 +491,7 @@ def fixture_default_constraint_selection():
 @pytest.fixture(name="baybe")
 def fixture_baybe(parameters, constraints, strategy, objective):
     """Returns a BayBE."""
-    return BayBE(
+    return Campaign(
         searchspace=SearchSpace.from_product(
             parameters=parameters, constraints=constraints
         ),
@@ -664,7 +664,7 @@ def fixture_default_onnx_surrogate(onnx_str) -> Union["CustomONNXSurrogate", Non
 # TODO consider turning this into a fixture returning a baybe object after running some
 #  fake iterations
 def run_iterations(
-    baybe: BayBE, n_iterations: int, batch_quantity: int, add_noise: bool = True
+    baybe: Campaign, n_iterations: int, batch_quantity: int, add_noise: bool = True
 ) -> None:
     """Run a baybe object for some fake iterations.
 
