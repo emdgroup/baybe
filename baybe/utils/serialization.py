@@ -12,6 +12,9 @@ from baybe.utils import get_subclasses
 
 _T = TypeVar("_T")
 
+converter = cattrs.Converter()
+"""The default converter for (de-)serializing BayBE-related objects."""
+
 
 class SerialMixin:
     """A mixin class providing serialization functionality."""
@@ -22,7 +25,7 @@ class SerialMixin:
 
     def to_dict(self) -> dict:
         """Create an object's dictionary representation."""
-        return cattrs.unstructure(self)
+        return converter.unstructure(self)
 
     @classmethod
     def from_dict(cls: Type[_T], dictionary: dict) -> _T:
@@ -34,7 +37,7 @@ class SerialMixin:
         Returns:
             The reconstructed object.
         """
-        return cattrs.structure(dictionary, cls)
+        return converter.structure(dictionary, cls)
 
     def to_json(self) -> str:
         """Create an object's JSON representation.
@@ -67,7 +70,6 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
     Returns:
         The unstructured dict with the additional entry.
     """
-    converter = cattrs.global_converter
     fun = make_dict_unstructure_fn(base.__class__, converter, **(overrides or {}))
     attrs_dict = fun(base)
     return {
@@ -97,7 +99,7 @@ def get_base_structure_hook(
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
             raise ValueError(f"Unknown subclass {_type}.")
-        fun = make_dict_structure_fn(cls, cattrs.global_converter, **(overrides or {}))
+        fun = make_dict_structure_fn(cls, converter, **(overrides or {}))
         return fun(val, cls)
 
     return structure_base
@@ -115,5 +117,5 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     return base64.b64encode(df.to_parquet()).decode("utf-8")
 
 
-cattrs.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
-cattrs.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
+converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)

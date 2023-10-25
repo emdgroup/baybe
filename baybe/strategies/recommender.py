@@ -3,14 +3,17 @@
 from abc import ABC, abstractmethod
 from typing import Callable, ClassVar, Optional
 
-import cattrs
 import pandas as pd
 from attrs import define
 
 from baybe.exceptions import NotEnoughPointsLeftError
 
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.utils import get_base_structure_hook, unstructure_base
+from baybe.utils.serialization import (
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
 
 
 def _select_candidates_and_recommend(
@@ -244,5 +247,5 @@ class NonPredictiveRecommender(Recommender, ABC):
 
 
 # Register (un-)structure hooks
-cattrs.register_unstructure_hook(Recommender, unstructure_base)
-cattrs.register_structure_hook(Recommender, get_base_structure_hook(Recommender))
+converter.register_unstructure_hook(Recommender, unstructure_base)
+converter.register_structure_hook(Recommender, get_base_structure_hook(Recommender))

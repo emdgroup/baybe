@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from functools import reduce
 from typing import Any, Callable, ClassVar, List, Optional, Tuple, Union
 
-import cattrs
 import numpy as np
 import pandas as pd
 import torch
@@ -23,6 +22,7 @@ from baybe.utils import (
     SerialMixin,
     unstructure_base,
 )
+from baybe.utils.serialization import converter
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
@@ -599,11 +599,11 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
 )
 
 
-# Register structure / unstructure hooks
-cattrs.register_unstructure_hook(Condition, unstructure_base)
-cattrs.register_structure_hook(Condition, get_base_structure_hook(Condition))
-cattrs.register_unstructure_hook(Constraint, unstructure_base)
-cattrs.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
+# Register (un-)structure hooks
+converter.register_unstructure_hook(Condition, unstructure_base)
+converter.register_structure_hook(Condition, get_base_structure_hook(Condition))
+converter.register_unstructure_hook(Constraint, unstructure_base)
+converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
 
 
 def _custom_constraint_hook(*_) -> None:
@@ -611,8 +611,8 @@ def _custom_constraint_hook(*_) -> None:
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
-cattrs.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
-cattrs.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
+converter.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
+converter.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
 
 
 def _validate_constraints(  # noqa: DOC101, DOC103

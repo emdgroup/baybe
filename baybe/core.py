@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from typing import List
 
-import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -20,21 +19,11 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
-from baybe.utils import eq_dataframe, SerialMixin
+from baybe.utils import eq_dataframe
+from baybe.utils.serialization import converter, SerialMixin
 
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# TODO[12356]: There should be a way to organize several converters, instead of
-#   registering the hooks with the global converter. The global converter is currently
-#   used so that all "basic" hooks (like DataFrame serializers) can be used at all
-#   hierarchy levels. Ideally, however, each module would define its own converters for
-#   its classes that can then be flexibly combined at the next higher level of the
-#   module hierarchy. For example, there could be several "Parameter converters" that
-#   implement different sorts of serialization logic. For the search space, one could
-#   then implement several serialization converters as well that arbitrarily combine
-#   parameter and constraint hooks/converters.
-
-
 def _searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     """A structuring hook that assembles the search space."""
     # A structuring hook that assembles the search space using the alternative `create`
@@ -42,10 +31,10 @@ def _searchspace_creation_hook(specs: dict, _) -> SearchSpace:
     # provided in a user-friendly format (i.e. via parameters and constraints).
     # IMPROVE: Instead of defining the partial structurings here in the hook,
     #   on *could* use a dedicated "BayBEConfig" class
-    parameters = cattrs.structure(specs["parameters"], List[Parameter])
+    parameters = converter.structure(specs["parameters"], List[Parameter])
     constraints = specs.get("constraints", None)
     if constraints:
-        constraints = cattrs.structure(specs["constraints"], List[Constraint])
+        constraints = converter.structure(specs["constraints"], List[Constraint])
     return SearchSpace.from_product(parameters, constraints)
 
 
@@ -55,19 +44,19 @@ def _searchspace_validation_hook(specs: dict, _) -> None:
     # creation step, thus intended for validation purposes only. Additionally,
     # explicitly asserts uniqueness of parameter names, since duplicates would only be
     # noticed during search space creation.
-    parameters = cattrs.structure(specs["parameters"], List[Parameter])
+    parameters = converter.structure(specs["parameters"], List[Parameter])
     _validate_parameters(parameters)
 
     constraints = specs.get("constraints", None)
     if constraints:
-        constraints = cattrs.structure(specs["constraints"], List[Constraint])
+        constraints = converter.structure(specs["constraints"], List[Constraint])
         _validate_constraints(constraints, parameters)
 
 
-_config_converter = cattrs.global_converter.copy()
+_config_converter = converter.copy()
 _config_converter.register_structure_hook(SearchSpace, _searchspace_creation_hook)
 
-_validation_converter = cattrs.global_converter.copy()
+_validation_converter = converter.copy()
 _validation_converter.register_structure_hook(SearchSpace, _searchspace_validation_hook)
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

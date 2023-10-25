@@ -38,6 +38,7 @@ from baybe.utils import (
     unstructure_base,
 )
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
+from baybe.utils.serialization import converter
 
 if _RDKIT_INSTALLED:
     from baybe.utils import (
@@ -584,11 +585,11 @@ overrides = {
     "_values": override(rename="values"),
     "decorrelate": override(struct_hook=lambda x, _: x),
 }
-cattrs.register_structure_hook(
+converter.register_structure_hook(
     Parameter,
     get_base_structure_hook(Parameter, overrides=overrides),
 )
-cattrs.register_unstructure_hook(
+converter.register_unstructure_hook(
     Parameter, partial(unstructure_base, overrides=overrides)
 )
 
