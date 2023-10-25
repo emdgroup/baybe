@@ -6,7 +6,7 @@
 # via the `botorch_function_wrapper`.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
 # We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
 

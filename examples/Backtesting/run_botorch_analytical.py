@@ -8,7 +8,7 @@
 # This example assumes some basic familiarity with using BayBE and how to use BoTorch test
 # functions in discrete searchspaces.
 # We thus refer to
-# 1. [`baybe_object`](./../Basics/baybe_object.md) for a basic example on how to use BayBE and
+# 1. [`campaign`](./../Basics/campaign.md) for a basic example on how to use BayBE and
 # 2. [`discrete_space`](./../Searchspaces/discrete_space.md) for details on using a
 # BoTorch test function.
 

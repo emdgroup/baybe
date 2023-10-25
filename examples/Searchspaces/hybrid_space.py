@@ -5,7 +5,7 @@
 # It focuses on the searchspace-related aspects and not on the custom test function.
 
 # This example assumes some basic familiarity with using BayBE and synthetic test functions.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # For details on using synthetic test functions, we refer to other examples in this directory.
 
 #### Necessary imports for this example

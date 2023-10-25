@@ -13,7 +13,7 @@
 
 
 # This examples assumes some basic familiarity with using BayBE.
-# We refer to [`baybe_object`](./baybe_object.md) for a more general and basic example.
+# We refer to [`campaign`](./campaign.md) for a more general and basic example.
 
 #### Necessary imports for this example
 
@@ -121,7 +121,7 @@ print(strategy)
 
 #### Example Searchspace and objective parameters
 
-# We use the same data used in the [`baybe_object`](./baybe_object.md) example.
+# We use the same data used in the [`campaign`](./campaign.md) example.
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",

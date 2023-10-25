@@ -6,7 +6,7 @@
 
 # This example assumes basic familiarty with BayBE, custom test functions and multiple targets.
 # For further details, we thus refer to
-# - [`baybe_object`](./../Basics/baybe_object.md) for a more general and basic example,
+# - [`campaign`](./../Basics/campaign.md) for a more general and basic example,
 # - [`run_custom_analytical`](./run_custom_analytical.md) for custom test functions, and
 # - [`desirability`](./../Multi_Target/desirability.md) for multiple targets.
 

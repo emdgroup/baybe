@@ -5,7 +5,7 @@
 # Most importantly, it demonstrates the creation of a custom hybrid searchspace.
 
 # This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
-# We refer to [`baybe_object`](./../Basics/baybe_object.md) for a more  basic example resp.
+# We refer to [`campaign`](./../Basics/campaign.md) for a more  basic example resp.
 # to [`run_custom_analytical`](./run_custom_analytical.md) for details on the lookup mechanism.
 
 #### Necessary imports for this example
