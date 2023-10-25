@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import base64
 import json
-from io import BytesIO
 from typing import List
 
 import cattrs
@@ -35,22 +33,6 @@ from baybe.utils import eq_dataframe, SerialMixin
 #   implement different sorts of serialization logic. For the search space, one could
 #   then implement several serialization converters as well that arbitrarily combine
 #   parameter and constraint hooks/converters.
-
-
-def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
-    """Hook for de-serializing a DataFrame."""
-    buffer = BytesIO()
-    buffer.write(base64.b64decode(string.encode("utf-8")))
-    return pd.read_parquet(buffer)
-
-
-def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
-    """Hook for serializing a DataFrame."""
-    return base64.b64encode(df.to_parquet()).decode("utf-8")
-
-
-cattrs.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
-cattrs.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
 
 
 def _searchspace_creation_hook(specs: dict, _) -> SearchSpace:

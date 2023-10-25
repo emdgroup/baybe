@@ -1,9 +1,11 @@
 """Serialization utilities."""
-
+import base64
 import json
+from io import BytesIO
 from typing import Any, Callable, Optional, Type, TypeVar
 
 import cattrs
+import pandas as pd
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 
 from baybe.utils import get_subclasses
@@ -99,3 +101,19 @@ def get_base_structure_hook(
         return fun(val, cls)
 
     return structure_base
+
+
+def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
+    """Hook for de-serializing a DataFrame."""
+    buffer = BytesIO()
+    buffer.write(base64.b64decode(string.encode("utf-8")))
+    return pd.read_parquet(buffer)
+
+
+def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
+    """Hook for serializing a DataFrame."""
+    return base64.b64encode(df.to_parquet()).decode("utf-8")
+
+
+cattrs.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
+cattrs.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
