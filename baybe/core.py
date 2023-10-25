@@ -23,14 +23,13 @@ from baybe.utils import eq_dataframe
 from baybe.utils.serialization import converter, SerialMixin
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def _searchspace_creation_hook(specs: dict, _) -> SearchSpace:
-    """A structuring hook that assembles the search space."""
-    # A structuring hook that assembles the search space using the alternative `create`
-    # constructor, which allows to deserialize search space specifications that are
-    # provided in a user-friendly format (i.e. via parameters and constraints).
-    # IMPROVE: Instead of defining the partial structurings here in the hook,
-    #   on *could* use a dedicated "BayBEConfig" class
+def _structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
+    """A structuring hook that assembles the search space from "config" format.
+
+    It uses the alternative :func:`baybe.searchspace.SearchSpace.from_product`
+    constructor, which allows to deserialize search space specifications that are
+    provided in a user-friendly format (i.e. via parameters and constraints).
+    """
     parameters = converter.structure(specs["parameters"], List[Parameter])
     constraints = specs.get("constraints", None)
     if constraints:
@@ -39,11 +38,13 @@ def _searchspace_creation_hook(specs: dict, _) -> SearchSpace:
 
 
 def _searchspace_validation_hook(specs: dict, _) -> None:
-    """A validation hook that does not create the search space."""
-    # Similar to `searchspace_creation_hook` but without the actual search space
-    # creation step, thus intended for validation purposes only. Additionally,
-    # explicitly asserts uniqueness of parameter names, since duplicates would only be
-    # noticed during search space creation.
+    """A validation hook that does not create the search space.
+
+    Similar to :func:`baybe.core.structure_searchspace_from_config` but without the
+    actual search space creation step, thus intended for validation purposes only.
+    It explicitly validates the given parameters and constraints since invalid
+    specifications would be otherwise noticed only later during search space creation.
+    """
     parameters = converter.structure(specs["parameters"], List[Parameter])
     _validate_parameters(parameters)
 
@@ -53,12 +54,15 @@ def _searchspace_validation_hook(specs: dict, _) -> None:
         _validate_constraints(constraints, parameters)
 
 
+# Create the converter for config deserialization
 _config_converter = converter.copy()
-_config_converter.register_structure_hook(SearchSpace, _searchspace_creation_hook)
+_config_converter.register_structure_hook(
+    SearchSpace, _structure_searchspace_from_config
+)
 
+# Create the converter for config validation
 _validation_converter = converter.copy()
 _validation_converter.register_structure_hook(SearchSpace, _searchspace_validation_hook)
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 @define
@@ -284,3 +288,16 @@ class BayBE(SerialMixin):
         telemetry_record_value(TELEM_LABELS["BATCH_QUANTITY"], batch_quantity)
 
         return rec
+
+
+def _unstructure_hook(obj) -> dict:
+    """Adds the package version to the created dictionary."""
+    from baybe import __version__  # pylint: disable=import-outside-toplevel
+
+    return {
+        **converter.unstructure_attrs_asdict(obj),
+        "version": __version__,
+    }
+
+
+converter.register_unstructure_hook(BayBE, _unstructure_hook)
