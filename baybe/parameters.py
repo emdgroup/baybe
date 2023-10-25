@@ -30,7 +30,7 @@ from baybe.utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
     eq_dataframe,
-    get_base_unstructure_hook,
+    get_base_structure_hook,
     InfiniteIntervalError,
     Interval,
     SerialMixin,
@@ -639,7 +639,7 @@ def _add_values_underscore(raw_structure_hook):
 
 # Register (un-)structure hooks
 unstructure_hook = _remove_values_underscore(unstructure_base)
-structure_hook = _add_values_underscore(get_base_unstructure_hook(Parameter))
+structure_hook = _add_values_underscore(get_base_structure_hook(Parameter))
 cattrs.register_unstructure_hook(Parameter, unstructure_hook)
 cattrs.register_structure_hook(Parameter, structure_hook)
 

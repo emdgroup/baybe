@@ -19,7 +19,7 @@ from baybe.parameters import NumericalContinuousParameter, Parameter
 from baybe.utils import (
     DTypeFloatTorch,
     Dummy,
-    get_base_unstructure_hook,
+    get_base_structure_hook,
     SerialMixin,
     unstructure_base,
 )
@@ -604,9 +604,9 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
 
 # Register structure / unstructure hooks
 cattrs.register_unstructure_hook(Condition, unstructure_base)
-cattrs.register_structure_hook(Condition, get_base_unstructure_hook(Condition))
+cattrs.register_structure_hook(Condition, get_base_structure_hook(Condition))
 cattrs.register_unstructure_hook(Constraint, unstructure_base)
-cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint))
+cattrs.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
 
 
 def _custom_constraint_hook(*_) -> None:

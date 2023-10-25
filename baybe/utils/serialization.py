@@ -70,7 +70,7 @@ def unstructure_base(base: Any) -> dict:
     }
 
 
-def get_base_unstructure_hook(base: Type[_T]) -> Callable[[dict], _T]:
+def get_base_structure_hook(base: Type[_T]) -> Callable[[dict], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
     Provides the inverse operation to ```unstructure_base```.
@@ -79,7 +79,7 @@ def get_base_unstructure_hook(base: Type[_T]) -> Callable[[dict], _T]:
         base: The corresponding class
 
     Returns:
-        The hook
+        The hook.
     """
 
     def structure_base(val: dict, _) -> _T:

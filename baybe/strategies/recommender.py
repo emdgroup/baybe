@@ -10,7 +10,7 @@ from attrs import define
 from baybe.exceptions import NotEnoughPointsLeftError
 
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.utils import get_base_unstructure_hook, unstructure_base
+from baybe.utils import get_base_structure_hook, unstructure_base
 
 
 def _select_candidates_and_recommend(
@@ -245,4 +245,4 @@ class NonPredictiveRecommender(Recommender, ABC):
 
 # Register (un-)structure hooks
 cattrs.register_unstructure_hook(Recommender, unstructure_base)
-cattrs.register_structure_hook(Recommender, get_base_unstructure_hook(Recommender))
+cattrs.register_structure_hook(Recommender, get_base_structure_hook(Recommender))
