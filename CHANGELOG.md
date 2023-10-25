@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `pyarrow` version pin
 
 ### Changed
+- `BayBE` class renamed to `Campaign`
 - Serialization no longer relies on cattrs' global converter
 - Refined (un-)structuring logic
 
