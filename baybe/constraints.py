@@ -336,19 +336,16 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     Args:
         conditions: The list of individual conditions.
         affected_parameters: The parameters affected by the individual conditions.
-        permutation_invariant: Flag that indicates whether the affected parameters are
-            permutation invariant. This should not be changed by the user but by other
-            constraints reusing this class.
     """
 
     # object variables
     conditions: List[Condition] = field()
     affected_parameters: List[List[str]] = field()
-    # TODO: This should be init=False, but would require changing the unstructuring
-    #   logic. Let's wait for the next cattrs release with the following PR to be merged
-    #   and then init=False attributes can be handled more elegantly:
-    #   https://github.com/python-attrs/cattrs/pull/395/commits
-    permutation_invariant: bool = field(default=False)
+
+    # for internal use only
+    permutation_invariant: bool = field(default=False, init=False)
+    """Flag that indicates whether the affected parameters are permutation invariant.
+    This should not be changed by the user but by other constraints using the class."""
 
     @affected_parameters.validator
     def _validate_affected_parameters(  # noqa: DOC101, DOC103

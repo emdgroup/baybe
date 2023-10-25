@@ -5,7 +5,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, cast, Dict, List, Optional, Tuple
 
-import cattrs
 import numpy as np
 import pandas as pd
 import torch
@@ -754,15 +753,3 @@ class SearchSpace(SerialMixin):
         comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
 
         return comp_rep
-
-
-# TODO: The following structuring hook is a workaround for field with init=False.
-#   https://github.com/python-attrs/cattrs/issues/40
-
-
-def _structure_hook(dict_, type_):
-    """Structuring hook for SubspaceDiscrete."""
-    return cattrs.structure_attrs_fromdict(dict_, type_)
-
-
-cattrs.register_structure_hook(SubspaceDiscrete, _structure_hook)

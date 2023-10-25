@@ -1057,20 +1057,6 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
     return wrapper
 
 
-def _remove_model(raw_unstructure_hook):
-    """Removes the model in a surrogate for serialization."""
-    # TODO: No longer required once the following feature is released:
-    #   https://github.com/python-attrs/cattrs/issues/40
-
-    def wrapper(obj):
-        dict_ = raw_unstructure_hook(obj)
-        dict_.pop("_model", None)
-        dict_.pop("target_value", None)
-        return dict_
-
-    return wrapper
-
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def _structure_surrogate(val, _):
     """Structures a surrogate model."""
@@ -1132,9 +1118,7 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 # Register (un-)structure hooks
 cattrs.register_unstructure_hook(
     Surrogate,
-    _decode_onnx_str(
-        _remove_model(_block_serialize_custom_architecture(unstructure_base))
-    ),
+    _decode_onnx_str(_block_serialize_custom_architecture(unstructure_base)),
 )
 cattrs.register_structure_hook(Surrogate, _structure_surrogate)
 
