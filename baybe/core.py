@@ -42,6 +42,16 @@ _validation_converter.register_structure_hook(
 class Campaign(SerialMixin):
     """Main class for interaction with BayBE.
 
+    Campaigns define and record the experimental process of carrying out a series of
+    measurements and the iterative sequence of events involved.
+
+    In particular, a campaign:
+    * defines the objective of an experimental process.
+    * defines the search space over which the experimental parameter may vary.
+    * defines a strategy for traversing the search space.
+    * Records the measurement data collected during the process.
+    * Records metadata about the progress of the experimental progress.
+
     Args:
         searchspace: The search space in which the experiments are conducted.
         objective: The optimization objective.
