@@ -47,7 +47,7 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
 
 def add_fake_results(
     data: pd.DataFrame,
-    baybe: Campaign,
+    campaign: Campaign,
     good_reference_values: Optional[Dict[str, list]] = None,
     good_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
     bad_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
@@ -60,9 +60,9 @@ def add_fake_results(
     new dataframe and that the dataframe is changed in-place.
 
     Args:
-        data: Output of the ```recommend``` function of a ```BayBE``` object, see
-            :func:`baybe.core.BayBE.recommend`.
-        baybe: The ```BayBE``` object, which provides configuration, targets, etc.
+        data: Output of the ```recommend``` function of a ```Campaign```, see
+            :func:`baybe.core.Campaign.recommend`.
+        campaign: The corresponding campaign, providing configuration, targets, etc.
         good_reference_values: A dictionary containing parameter names (= dict keys) and
             respective parameter values (= dict values) that specify what will be
             considered good parameter settings. Conditions for different parameters are
@@ -105,7 +105,7 @@ def add_fake_results(
     # Set defaults for good intervals
     if good_intervals is None:
         good_intervals = {}
-        for target in baybe.targets:
+        for target in campaign.targets:
             if target.mode == "MAX":
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
                 ubound = (
@@ -134,7 +134,7 @@ def add_fake_results(
     # Set defaults for bad intervals
     if bad_intervals is None:
         bad_intervals = {}
-        for target in baybe.targets:
+        for target in campaign.targets:
             if target.mode == "MAX":
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
@@ -162,7 +162,7 @@ def add_fake_results(
             bad_intervals[target.name] = interv
 
     # Add the fake data for each target
-    for target in baybe.targets:
+    for target in campaign.targets:
         # Add bad values
         data[target.name] = np.random.uniform(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)
@@ -198,8 +198,8 @@ def add_parameter_noise(
     dataframe is modified in-place, and that no new dataframe is returned.
 
     Args:
-        data: Output of the ```recommend``` function of a ```BayBE``` object, see
-            :func:`baybe.core.BayBE.recommend`.
+        data: Output of the ```recommend``` function of a ```Campaign``` object, see
+            :func:`baybe.core.Campaign.recommend`.
         parameters: The parameters for which the values shall be corrupted.
         noise_type: Defines whether the noise should be additive or multiplicative.
         noise_level: Level/magnitude of the noise. Must be provided as numerical value

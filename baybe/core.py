@@ -97,13 +97,13 @@ class Campaign(SerialMixin):
 
     @classmethod
     def from_config(cls, config_json: str) -> Campaign:
-        """Create a BayBE object from a configuration JSON.
+        """Create a campaign from a configuration JSON.
 
         Args:
             config_json: The string with the configuration JSON.
 
         Returns:
-            The constructed BayBE object.
+            The constructed campaign.
         """
         config = json.loads(config_json)
         config["searchspace"] = {
@@ -114,7 +114,7 @@ class Campaign(SerialMixin):
 
     @classmethod
     def to_config(cls) -> str:
-        """Extract the configuration of the BayBE object as JSON string.
+        """Extract the configuration of the campaign as JSON string.
 
         Note: This is not yet implemented. Use
         :func:`baybe.utils.serialization.SerialMixin.to_json` instead
@@ -133,7 +133,7 @@ class Campaign(SerialMixin):
 
     @classmethod
     def validate_config(cls, config_json: str) -> None:
-        """Validates a given BayBE configuration JSON.
+        """Validates a given campaign configuration JSON.
 
         Args:
             config_json: The JSON that should be validated.
@@ -150,13 +150,13 @@ class Campaign(SerialMixin):
 
         Each addition of data is considered a new batch. Added results are checked for
         validity. Categorical values need to have an exact match. For numerical values,
-        a BayBE flag determines if values that lie outside a specified tolerance
+        a campaign flag determines if values that lie outside a specified tolerance
         are accepted.
         Note that this modifies the provided data in-place.
 
         Args:
             data: The data to be added (with filled values for targets). Preferably
-                created via :func:`baybe.core.BayBE.recommend`.
+                created via :func:`baybe.core.Campaign.recommend`.
 
         Raises:
             ValueError: If one of the targets has missing values or NaNs in the provided

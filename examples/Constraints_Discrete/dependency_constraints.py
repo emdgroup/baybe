@@ -62,10 +62,10 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the BayBE object
+#### Creating and printing the campaign
 
-baybe_obj = Campaign(searchspace=searchspace, objective=objective)
-print(baybe_obj)
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
 
 #### Manual verification of the constraints
 
@@ -79,15 +79,15 @@ for kIter in range(N_ITERATIONS):
         f"Number entries with both switches on "
         f"(expected {7*len(dict_solvent)*2*2}): ",
         (
-            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
+            (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
         f"Number entries with Switch1 off " f"(expected {2*2}):       ",
         (
-            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "right")
+            (campaign.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
@@ -95,18 +95,18 @@ for kIter in range(N_ITERATIONS):
         f"(expected {7*len(dict_solvent)}):"
         f"      ",
         (
-            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "on")
-            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
+            (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
+            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
     print(
         "Number entries with both switches off (expected 1): ",
         (
-            (baybe_obj.searchspace.discrete.exp_rep["Switch1"] == "off")
-            & (baybe_obj.searchspace.discrete.exp_rep["Switch2"] == "left")
+            (campaign.searchspace.discrete.exp_rep["Switch1"] == "off")
+            & (campaign.searchspace.discrete.exp_rep["Switch2"] == "left")
         ).sum(),
     )
 
-    rec = baybe_obj.recommend(batch_quantity=5)
-    add_fake_results(rec, baybe_obj)
-    baybe_obj.add_measurements(rec)
+    rec = campaign.recommend(batch_quantity=5)
+    add_fake_results(rec, campaign)
+    campaign.add_measurements(rec)

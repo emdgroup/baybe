@@ -81,10 +81,10 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-### Creating and printing the BayBE object
+### Creating and printing the campaign
 
-baybe_obj = Campaign(searchspace=searchspace, objective=objective)
-print(baybe_obj)
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
 
 ### Manual verification of the constraint
 
@@ -97,40 +97,40 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with water, temp above 120 and concentration above 5:      ",
         (
-            baybe_obj.searchspace.discrete.exp_rep["Concentration"].apply(
+            campaign.searchspace.discrete.exp_rep["Concentration"].apply(
                 lambda x: x > 5
             )
-            & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(
+            & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
                 lambda x: x > 120
             )
-            & baybe_obj.searchspace.discrete.exp_rep["Solvent"].eq("water")
+            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("water")
         ).sum(),
     )
     print(
         "Number of entries with water, temp above 180 and concentration above 3:      ",
         (
-            baybe_obj.searchspace.discrete.exp_rep["Concentration"].apply(
+            campaign.searchspace.discrete.exp_rep["Concentration"].apply(
                 lambda x: x > 3
             )
-            & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(
+            & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
                 lambda x: x > 180
             )
-            & baybe_obj.searchspace.discrete.exp_rep["Solvent"].eq("water")
+            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("water")
         ).sum(),
     )
     print(
         "Number of entries with C3, temp above 180 and concentration above 3:         ",
         (
-            baybe_obj.searchspace.discrete.exp_rep["Concentration"].apply(
+            campaign.searchspace.discrete.exp_rep["Concentration"].apply(
                 lambda x: x > 3
             )
-            & baybe_obj.searchspace.discrete.exp_rep["Temperature"].apply(
+            & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
                 lambda x: x < 150
             )
-            & baybe_obj.searchspace.discrete.exp_rep["Solvent"].eq("C3")
+            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("C3")
         ).sum(),
     )
 
-    rec = baybe_obj.recommend(batch_quantity=5)
-    add_fake_results(rec, baybe_obj)
-    baybe_obj.add_measurements(rec)
+    rec = campaign.recommend(batch_quantity=5)
+    add_fake_results(rec, campaign)
+    campaign.add_measurements(rec)

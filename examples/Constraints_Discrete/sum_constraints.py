@@ -97,10 +97,10 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the BayBE object
+#### Creating and printing the campaign
 
-baybe_obj = Campaign(searchspace=searchspace, objective=objective)
-print(baybe_obj)
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
 
 #### Manual verification of the constraint
 
@@ -113,7 +113,7 @@ for kIter in range(N_ITERATIONS):
     print("### ASSERTS ###")
     print(
         "No. of searchspace entries where fractions do not sum to 100.0:      ",
-        baybe_obj.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]]
+        campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
@@ -122,17 +122,17 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         "No. of searchspace entries that have duplicate solvent labels:       ",
-        baybe_obj.searchspace.discrete.exp_rep[["Solv1", "Solv2", "Solv3"]]
+        campaign.searchspace.discrete.exp_rep[["Solv1", "Solv2", "Solv3"]]
         .nunique(axis=1)
         .ne(3)
         .sum(),
     )
     print(
         "No. of searchspace entries with permutation-invariant combinations:  ",
-        baybe_obj.searchspace.discrete.exp_rep[["Solv1", "Solv2", "Solv3"]]
+        campaign.searchspace.discrete.exp_rep[["Solv1", "Solv2", "Solv3"]]
         .apply(frozenset, axis=1)
         .to_frame()
-        .join(baybe_obj.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]])
+        .join(campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]])
         .duplicated()
         .sum(),
     )
@@ -141,7 +141,7 @@ for kIter in range(N_ITERATIONS):
     # points than intended due to numeric rounding
     print(
         f"No. of unique 1-solvent entries (exp. {math.comb(len(dict_solvents), 1)*1})",
-        (baybe_obj.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
+        (campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
         .sum(axis=1)
         .eq(2)
         .sum(),
@@ -149,7 +149,7 @@ for kIter in range(N_ITERATIONS):
     print(
         f"No. of unique 2-solvent entries (exp."
         f" {math.comb(len(dict_solvents), 2)*(12-2)})",
-        (baybe_obj.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
+        (campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
         .sum(axis=1)
         .eq(1)
         .sum(),
@@ -157,12 +157,12 @@ for kIter in range(N_ITERATIONS):
     print(
         f"No. of unique 3-solvent entries (exp."
         f" {math.comb(len(dict_solvents), 3)*((12-3)*(12-2))//2})",
-        (baybe_obj.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
+        (campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
         .sum(axis=1)
         .eq(0)
         .sum(),
     )
 
-    rec = baybe_obj.recommend(batch_quantity=5)
-    add_fake_results(rec, baybe_obj)
-    baybe_obj.add_measurements(rec)
+    rec = campaign.recommend(batch_quantity=5)
+    add_fake_results(rec, campaign)
+    campaign.add_measurements(rec)

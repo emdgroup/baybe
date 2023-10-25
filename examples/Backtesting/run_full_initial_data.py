@@ -101,12 +101,12 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Constructing BayBE objects for the simulation loop
+#### Constructing campaigns for the simulation loop
 
-# In this example, we create two BayBE objects.
+# In this example, we create two campaigns.
 # One uses the default recommender and the other one makes random recommendations.
-baybe = Campaign(searchspace=searchspace, objective=objective)
-baybe_rand = Campaign(
+campaign = Campaign(searchspace=searchspace, objective=objective)
+campaign_rand = Campaign(
     searchspace=searchspace,
     strategy=Strategy(recommender=RandomRecommender()),
     objective=objective,
@@ -117,8 +117,8 @@ baybe_rand = Campaign(
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # This function is where we provide the `initial_data` dataframe.
 # Note that this function enables to run multiple scenarios by a single function call.
-# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
-scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
+# For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 
 results = simulate_scenarios(
     scenarios,

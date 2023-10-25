@@ -34,7 +34,7 @@ N_MC_ITERATIONS = 3
 # We read the information about the conducted experiments from a .xlsx-file.
 # Depending on your system and settings, you might need to slightly adjust the following paths.
 # The reason is that it depends on the folder in which you execute the `python` call.
-# This code assumes that you call `python` either from the baybe folder or this folder.
+# This code assumes that you call `python` either from the repository root folder or this folder.
 
 try:
     lookup = pd.read_excel("./lookup.xlsx")
@@ -96,13 +96,13 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Constructing BayBE objects for the simulation loop
+#### Constructing campaigns for the simulation loop
 
-# In this example, we create two BayBE objects.
+# In this example, we create two campaigns.
 # One uses the default recommender and the other one makes random recommendations.
 
-baybe = Campaign(searchspace=searchspace, objective=objective)
-baybe_rand = Campaign(
+campaign = Campaign(searchspace=searchspace, objective=objective)
+campaign_rand = Campaign(
     searchspace=searchspace,
     strategy=Strategy(recommender=RandomRecommender()),
     objective=objective,
@@ -110,8 +110,8 @@ baybe_rand = Campaign(
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
-# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
-scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
+# For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 
 results = simulate_scenarios(
     scenarios,

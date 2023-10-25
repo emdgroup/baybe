@@ -101,9 +101,9 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-### Creating and printing the BayBE object
-baybe_obj = Campaign(searchspace=searchspace, objective=objective)
-print(baybe_obj)
+### Creating and printing the campaign
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
 
 
 ### Manual verification of the constraints
@@ -117,8 +117,8 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with either Solvents C2 or C4 and a temperature above 151: ",
         (
-            baybe_obj.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 151)
-            & baybe_obj.searchspace.discrete.exp_rep["Solv"].apply(
+            campaign.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 151)
+            & campaign.searchspace.discrete.exp_rep["Solv"].apply(
                 lambda x: x in ["C2", "C4"]
             )
         ).sum(),
@@ -126,8 +126,8 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with either Solvents C5 or C6 and a pressure above 5:      ",
         (
-            baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
-            & baybe_obj.searchspace.discrete.exp_rep["Solv"].apply(
+            campaign.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 5)
+            & campaign.searchspace.discrete.exp_rep["Solv"].apply(
                 lambda x: x in ["C5", "C6"]
             )
         ).sum(),
@@ -135,11 +135,11 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with pressure below 3 and temperature above 120:           ",
         (
-            baybe_obj.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x < 3)
-            & baybe_obj.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 120)
+            campaign.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x < 3)
+            & campaign.searchspace.discrete.exp_rep["Temp"].apply(lambda x: x > 120)
         ).sum(),
     )
 
-    rec = baybe_obj.recommend(batch_quantity=5)
-    add_fake_results(rec, baybe_obj)
-    baybe_obj.add_measurements(rec)
+    rec = campaign.recommend(batch_quantity=5)
+    add_fake_results(rec, campaign)
+    campaign.add_measurements(rec)

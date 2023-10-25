@@ -5,7 +5,7 @@
 # Such an object specifies the strategy adopted to make recommendations.
 # It has several parameters one can adjust, depending on the strategy the user wants to follow.
 
-# To apply the selected strategy, this object can be specified in the arguments of the BayBE object.
+# To apply the selected strategy, this object can be specified in the arguments of the campaign.
 # The different parameters the user can change are:
 # - The initial recommender
 # - The recommender with its surrogate model and its acquisition function
@@ -164,24 +164,24 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Creating the BayBE object
+#### Creating the campaign
 
 # The strategy object can now be used together with the searchspace and the objective as follows.
 
-baybe_obj = Campaign(
+campaign = Campaign(
     searchspace=searchspace,
     strategy=strategy,
     objective=objective,
 )
 
-# This BayBE object can then be used to get recommendations and add measurements:
+# This campaign can then be used to get recommendations and add measurements:
 
-recommendation = baybe_obj.recommend(batch_quantity=3)
+recommendation = campaign.recommend(batch_quantity=3)
 print("\n\nRecommended experiments: ")
 print(recommendation)
 
-add_fake_results(recommendation, baybe_obj)
+add_fake_results(recommendation, campaign)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 
-baybe_obj.add_measurements(recommendation)
+campaign.add_measurements(recommendation)

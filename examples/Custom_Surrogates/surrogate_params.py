@@ -77,9 +77,9 @@ except ValueError as e:
 # [`NGBoostModel`](https://stanfordmlgroup.github.io/ngboost/1-useage.html)
 # [`BayesianLinearModel`](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ARDRegression.html)
 
-#### Creating the BayBE object
+#### Creating the campaign
 
-baybe_obj = Campaign(
+campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
@@ -97,14 +97,14 @@ print("The model object in json format:")
 print(surrogate_model.to_json(), end="\n" * 3)
 
 # Let's do a first round of recommendation
-recommendation = baybe_obj.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_quantity=2)
 
-print("Recommendation from baybe object:")
+print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
-add_fake_results(recommendation, baybe_obj)
-baybe_obj.add_measurements(recommendation)
+add_fake_results(recommendation, campaign)
+campaign.add_measurements(recommendation)
 
 #### Model Outputs
 
@@ -112,16 +112,16 @@ baybe_obj.add_measurements(recommendation)
 print("Here you will see some model outputs as we set verbose to True")
 
 # Do another round of recommendations
-recommendation = baybe_obj.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_quantity=2)
 
 
 # Print second round of recommendations
-print("Recommendation from baybe object:")
+print("Recommendation from campaign:")
 print(recommendation)
 
 #### Using configuration instead
 
-# Note that this can be placed inside an overall baybe config
+# Note that this can be placed inside an overall campaign config
 # Refer to [`create_from_config`](./../Serialization/create_from_config.md) for an example
 
 # Note that the following explicit call `str()` is not strictly necessary.

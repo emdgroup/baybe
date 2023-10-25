@@ -40,8 +40,8 @@ valid_naive_hybrid_recommenders = [
     "parameter_names",
     [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
 )
-def test_serialization_without_recommendation(baybe):
+def test_serialization_without_recommendation(campaign):
     """Serialize all possible hybrid recommender objects and test for equality."""
-    baybe_orig_string = baybe.to_json()
-    baybe_recreate = Campaign.from_json(baybe_orig_string)
-    assert baybe == baybe_recreate
+    campaign_orig_string = campaign.to_json()
+    campaign_recreate = Campaign.from_json(campaign_orig_string)
+    assert campaign == campaign_recreate

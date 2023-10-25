@@ -80,9 +80,9 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Construct the BayBE object and run some iterations
+#### Construct the campaign and run some iterations
 
-baybe_obj = Campaign(
+campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
@@ -91,7 +91,7 @@ BATCH_QUANTITY = 3
 N_ITERATIONS = 3
 
 for k in range(N_ITERATIONS):
-    recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
+    recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
     # target value are looked up via the botorch wrapper
     target_values = []
@@ -100,10 +100,10 @@ for k in range(N_ITERATIONS):
 
     recommendation["Target"] = target_values
 
-    baybe_obj.add_measurements(recommendation)
+    campaign.add_measurements(recommendation)
 
 ### Verify the constraints
-measurements = baybe_obj.measurements_exp
+measurements = campaign.measurements_exp
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`

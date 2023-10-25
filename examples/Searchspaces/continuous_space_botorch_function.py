@@ -64,9 +64,9 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing the BayBE object and performing a recommendation
+#### Constructing the campaign and performing a recommendation
 
-baybe_obj = Campaign(
+campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
@@ -74,7 +74,7 @@ baybe_obj = Campaign(
 # Get a recommendation for a fixed batched quantity.
 
 BATCH_QUANTITY = 3
-recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
+recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.
@@ -88,8 +88,8 @@ for index, row in recommendation.iterrows():
 
 recommendation["Target"] = target_values
 
-# Here, we inform the BayBE object about our measurement.
+# Here, we inform the campaign about our measurement.
 
-baybe_obj.add_measurements(recommendation)
+campaign.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)

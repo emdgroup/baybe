@@ -14,22 +14,22 @@ target_xfails = []
     [1337, np.nan, "asd"],
     ids=["not_within_tol", "nan", "string_instead_float"],
 )
-def test_bad_parameter_input_value(baybe, good_reference_values, bad_val, request):
+def test_bad_parameter_input_value(campaign, good_reference_values, bad_val, request):
     """Test attempting to read in an invalid parameter value."""
     if request.node.callspec.id in param_xfails:
         pytest.xfail()
 
-    rec = baybe.recommend(batch_quantity=3)
+    rec = campaign.recommend(batch_quantity=3)
     add_fake_results(
         rec,
-        baybe,
+        campaign,
         good_reference_values=good_reference_values,
     )
 
     # Add an invalid value
     rec.Num_disc_1.iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
-        baybe.add_measurements(rec)
+        campaign.add_measurements(rec)
 
 
 @pytest.mark.parametrize(
@@ -37,19 +37,19 @@ def test_bad_parameter_input_value(baybe, good_reference_values, bad_val, reques
     [np.nan, "asd"],
     ids=["nan", "string_instead_float"],
 )
-def test_bad_target_input_value(baybe, good_reference_values, bad_val, request):
+def test_bad_target_input_value(campaign, good_reference_values, bad_val, request):
     """Test attempting to read in an invalid target value."""
     if request.node.callspec.id in target_xfails:
         pytest.xfail()
 
-    rec = baybe.recommend(batch_quantity=3)
+    rec = campaign.recommend(batch_quantity=3)
     add_fake_results(
         rec,
-        baybe,
+        campaign,
         good_reference_values=good_reference_values,
     )
 
     # Add an invalid value
     rec.Target_max.iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
-        baybe.add_measurements(rec)
+        campaign.add_measurements(rec)

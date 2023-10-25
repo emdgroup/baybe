@@ -146,15 +146,15 @@ INVALID_CONFIG = str(
 """
 )
 
-#### Verifictation of the two dictionaries
+#### Verification of the two dictionaries
 
 # The first validation should work
 Campaign.validate_config(CONFIG)
-print("Successfully validated first config and created a BayBE object!")
+print("Successfully validated first config and created a campaign!")
 
 # This should fail.
 try:
     Campaign.validate_config(INVALID_CONFIG)
-    baybe = Campaign.from_config(INVALID_CONFIG)
+    campaign = Campaign.from_config(INVALID_CONFIG)
 except ClassValidationError:
     print("Something is wrong with config 2 which is what we expected!")

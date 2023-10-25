@@ -1,9 +1,9 @@
 ### Basic example for using BayBE
 # pylint: disable=missing-module-docstring
 
-# This example shows how to create a BayBE object and how to use it.
+# This example shows how to create a campaign and how to use it.
 # It details how a user can first define parameters of the searchspace and the objective.
-# These can then be used to create a proper BayBE object that can be used to get recommendations.
+# These can then be used to create a proper campaign that can be used to get recommendations.
 
 #### Necessary imports for this example
 
@@ -49,7 +49,7 @@ dict_ligand = {
     "(t-Bu)PhCPhos": r"CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3",
 }
 
-# This part shows how to create the  parameter objects that are used to create the BayBE object.
+# This part shows how to create the parameter objects that are used to create the campaign.
 # We define the chemical substances parameters using the dictionaries defined previously.
 # Here, we use `"MORDRED"` encoding, but others are available.
 
@@ -68,7 +68,7 @@ concentration = NumericalDiscreteParameter(
     "Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
 )
 
-# To simplify the creation of the BayBE object, we collect all parameters in a single list.
+# To simplify the creation of the campaign, we collect all parameters in a single list.
 
 parameters = [solvent, base, ligand, temperature, concentration]
 
@@ -89,29 +89,29 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Creation of a BayBE object
+#### Creation of a campaign
 
-# We now finaly create the BayBE object using the objects configure previously.
+# We now finally create the campaign using the objects configure previously.
 
-baybe_obj = Campaign(
+campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
 
-# Note that an additional strategy object can be specified while creating the BayBE object.
+# Note that an additional strategy object can be specified while creating the campaign.
 # This object and its parameters are described in the basic example 'strategies'
 # If no strategy is supplied, a default one is used.
 # Details on strategies can be found in [`strategies`](./strategies.md)
 
 #### Getting a recommendation
 
-# In this part we use the BayBE object to recommend the next experiments to be conducted.
-# To do so we use the `recommend()` function of the BayBE object.
+# In this part we use the campaign to recommend the next experiments to be conducted.
+# To do so we use the `recommend()` function of the campaign.
 
 # The user can specify the size of the batch of recommendations desired.
 # The value needs to be an integer >= 1.
 
-recommendation = baybe_obj.recommend(batch_quantity=1)
+recommendation = campaign.recommend(batch_quantity=1)
 
 print("\n\nRecommended measurements with batch_quantity = 1: ")
 print(recommendation)
@@ -122,7 +122,7 @@ print(recommendation)
 # If we set a greater batch quantity, the `recommendation` dataframe contains more rows.
 
 for batch_quantity in [2, 3]:
-    recommendation = baybe_obj.recommend(batch_quantity=batch_quantity)
+    recommendation = campaign.recommend(batch_quantity=batch_quantity)
     print(f"\n\nRecommended measurements with batch_quantity = {batch_quantity}: ")
     print(recommendation)
 
@@ -132,12 +132,12 @@ for batch_quantity in [2, 3]:
 # This is done by creating a new column in the `recommendation` dataframe named after the target.
 # In this example, we use the `add_fake_results()` utility function to create some fake results.
 
-add_fake_results(recommendation, baybe_obj)
+add_fake_results(recommendation, campaign)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 
 # The recommendation dataframe now has a new column named `yield` filled with fake values.
 
-# Finally, we update the BayBE object by adding the measurement.
+# Finally, we update the campaign by adding the measurement.
 
-baybe_obj.add_measurements(recommendation)
+campaign.add_measurements(recommendation)

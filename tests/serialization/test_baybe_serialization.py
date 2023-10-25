@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring
-"""Test sserialization of BayBE objects."""
+"""Test serialization of campaigns."""
 
 import pytest
 
@@ -7,19 +7,19 @@ from baybe.core import Campaign
 from cattrs import ClassValidationError
 
 
-def roundtrip(baybe: Campaign) -> Campaign:
-    string = baybe.to_json()
+def roundtrip(campaign: Campaign) -> Campaign:
+    string = campaign.to_json()
     return Campaign.from_json(string)
 
 
-def test_baybe_serialization(baybe):
+def test_campaign_serialization(campaign):
 
-    baybe2 = roundtrip(baybe)
-    assert baybe == baybe2
+    campaign2 = roundtrip(campaign)
+    assert campaign == campaign2
 
-    baybe.recommend()
-    baybe2 = roundtrip(baybe)
-    assert baybe == baybe2
+    campaign.recommend()
+    campaign2 = roundtrip(campaign)
+    assert campaign == campaign2
 
 
 def test_valid_config(config):

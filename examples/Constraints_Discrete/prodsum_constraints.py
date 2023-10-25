@@ -94,10 +94,10 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the BayBE object
+#### Creating and printing the campaign
 
-baybe_obj = Campaign(searchspace=searchspace, objective=objective)
-print(baybe_obj)
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
 
 #### Manual verification of the constraints
 
@@ -111,7 +111,7 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with 1,2-sum above 150:      ",
         (
-            baybe_obj.searchspace.discrete.exp_rep[["NumParam1", "NumParam2"]].sum(
+            campaign.searchspace.discrete.exp_rep[["NumParam1", "NumParam2"]].sum(
                 axis=1
             )
             > 150.0
@@ -120,7 +120,7 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with 3,4-product under 30:   ",
         (
-            baybe_obj.searchspace.discrete.exp_rep[["NumParam3", "NumParam4"]].prod(
+            campaign.searchspace.discrete.exp_rep[["NumParam3", "NumParam4"]].prod(
                 axis=1
             )
             < 30
@@ -128,7 +128,7 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         "Number of entries with 5,6-sum unequal to 100: ",
-        baybe_obj.searchspace.discrete.exp_rep[["NumParam5", "NumParam6"]]
+        campaign.searchspace.discrete.exp_rep[["NumParam5", "NumParam6"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
@@ -136,6 +136,6 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
 
-    rec = baybe_obj.recommend(batch_quantity=5)
-    add_fake_results(rec, baybe_obj)
-    baybe_obj.add_measurements(rec)
+    rec = campaign.recommend(batch_quantity=5)
+    add_fake_results(rec, campaign)
+    campaign.add_measurements(rec)

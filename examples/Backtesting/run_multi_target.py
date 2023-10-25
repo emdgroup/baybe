@@ -87,12 +87,12 @@ objective = Objective(
 )
 
 
-#### Constructing a BayBE object and performing the simulation loop
+#### Constructing a campaign and performing the simulation loop
 
-baybe_obj = Campaign(searchspace=searchspace, objective=objective)
+campaign = Campaign(searchspace=searchspace, objective=objective)
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
-scenarios = {"BayBE": baybe_obj}
+scenarios = {"BayBE": campaign}
 
 results = simulate_scenarios(
     scenarios,
