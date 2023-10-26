@@ -18,14 +18,12 @@ dependencies = [
     "gpytorch>=1.9.1",
     "ngboost>=0.3.12",
     "numpy>=1.24.1",
-    "onnxruntime>=1.15.1",
     "pandas>=1.4.2",
     "protobuf<=3.20.3",
     "pyarrow>=9.0.0,<10",  # indirectly needed by pandas, newer versions don't work in pipeline
     "scikit-learn>=1.1.1",
     "scikit-learn-extra>=0.3.0",
     "scipy>=1.10.1",
-    "skl2onnx>=1.15.0",
     "setuptools-scm>=7.1.0",
     "torch>=1.11.0",
     "baybe[telemetry]",
@@ -45,11 +43,17 @@ chem = [
     "mordred>=1.2.0",
 ]
 
+onnx = [
+    "onnxruntime>=1.15.1",
+    "skl2onnx>=1.15.0",
+]
+
 dev = [
     "baybe[chem]",
     "baybe[docs]",
     "baybe[examples]",
     "baybe[lint]",
+    "baybe[onnx]",
     "baybe[simulation]",
     "baybe[telemetry]",
     "baybe[test]",

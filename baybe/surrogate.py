@@ -10,7 +10,7 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type
 
 import cattrs
 import numpy as np
-import onnxruntime as ort
+
 import torch
 from attrs import define, field, validators
 from botorch.fit import fit_gpytorch_mll_torch
@@ -30,6 +30,13 @@ from torch import Tensor
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
 from baybe.utils import get_subclasses, SerialMixin, unstructure_base
+
+try:
+    import onnxruntime as ort
+
+    _ONNX_INSTALLED = True
+except ImportError:
+    _ONNX_INSTALLED = False
 
 # Use float64 (which is recommended at least for BoTorch models)
 _DTYPE = torch.float64
@@ -912,44 +919,48 @@ class BayesianLinearSurrogate(Surrogate):
         self._model.fit(train_x, train_y.ravel())
 
 
-@define(kw_only=True)
-class CustomONNXSurrogate(Surrogate):
-    """A wrapper class for custom pretrained surrogate models.
+if _ONNX_INSTALLED:
 
-    Args:
-        onnx_input_name: The input name used for constructing the onnx str.
-        onnx_str: The onnx byte str representing the model.
-        _model: The actual model.
-        model_params: Optional model parameters.
-    """
+    @define(kw_only=True)
+    class CustomONNXSurrogate(Surrogate):
+        """A wrapper class for custom pretrained surrogate models.
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    supports_transfer_learning: ClassVar[bool] = False
+        Args:
+            onnx_input_name: The input name used for constructing the onnx str.
+            onnx_str: The onnx byte str representing the model.
+            _model: The actual model.
+            model_params: Optional model parameters.
+        """
 
-    # Object variables
-    onnx_input_name: str = field(validator=validators.instance_of(str))
-    onnx_str: bytes = field(validator=validators.instance_of(bytes))
+        # Class variables
+        joint_posterior: ClassVar[bool] = False
+        supports_transfer_learning: ClassVar[bool] = False
 
-    model_params: Dict[str, Any] = field(
-        factory=dict, converter=dict, validator=_get_model_params_validator()
-    )
+        # Object variables
+        onnx_input_name: str = field(validator=validators.instance_of(str))
+        onnx_str: bytes = field(validator=validators.instance_of(bytes))
 
-    _model: Optional[ort.InferenceSession] = field(init=False, default=None)
+        model_params: Dict[str, Any] = field(
+            factory=dict, converter=dict, validator=_get_model_params_validator()
+        )
 
-    @batchify
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        model_inputs = {self.onnx_input_name: candidates.numpy().astype(np.float32)}
+        _model: Optional[ort.InferenceSession] = field(init=False, default=None)
 
-        results = self._model.run(None, model_inputs)
+        @batchify
+        def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+            model_inputs = {self.onnx_input_name: candidates.numpy().astype(np.float32)}
 
-        return torch.from_numpy(results[0]), torch.from_numpy(results[1]).pow(2)
+            results = self._model.run(None, model_inputs)
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        try:
-            self._model = ort.InferenceSession(self.onnx_str)
-        except Exception as exc:
-            raise ValueError("Invalid ONNX string") from exc
+            return torch.from_numpy(results[0]), torch.from_numpy(results[1]).pow(2)
+
+        def _fit(
+            self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        ) -> None:
+            try:
+                self._model = ort.InferenceSession(self.onnx_str)
+            except Exception as exc:
+                raise ValueError("Invalid ONNX string") from exc
 
 
 def _decode_onnx_str(raw_unstructure_hook):
