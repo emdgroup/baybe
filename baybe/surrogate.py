@@ -92,7 +92,19 @@ def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callab
         A validator function to validate parameters.
     """
 
-    def validate_model_params(obj, _, model_params: dict) -> None:
+    def validate_model_params(obj: Any, _: Any, model_params: dict) -> None:
+        """Validates the model params attribute of an object.
+
+        Args:
+            obj: The object itself.
+            _: Placeholder for the `Attribute` parameter in attrs validators.
+            model_params: The model parameters to validate.
+
+        Raises:
+            ValueError: When model params are given for non-supported objects.
+            ValueError: When surrogate is not recognized (no valid model_init).
+            ValueError: When invalid params are given for a model.
+        """
         # Get model class name
         model = obj.__class__.__name__
 
@@ -101,10 +113,7 @@ def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callab
 
         # GP does not support additional model params
         # Neither does custom models
-        if (
-            any(mdl_name in model for mdl_name in ("GaussianProcess", "Custom"))
-            and model_params
-        ):
+        if "GaussianProcess" in model or "Custom" in model:
             raise ValueError(f"{model} does not support model params.")
 
         if not model_init:
@@ -134,7 +143,10 @@ def _validate_custom_arch_cls(model_cls: type) -> None:
         model_cls: The user defined model class.
 
     Raises:
-        ValueError: When incorrect attributes are given.
+        ValueError: When model_cls does not have _fit or _posterior.
+        ValueError: When _fit or _posterior is not a callable method.
+        ValueError: When _fit does not have the required signature.
+        ValueError: When _posterior does not have the required signature.
     """
     # Methods must exist
     if not (hasattr(model_cls, "_fit") and hasattr(model_cls, "_posterior")):
@@ -153,19 +165,25 @@ def _validate_custom_arch_cls(model_cls: type) -> None:
 
     # Methods must have the correct arguments
     params = fit.__code__.co_varnames[: fit.__code__.co_argcount]
-    cmp = Surrogate._fit.__code__.co_varnames  # pylint: disable=protected-access
 
-    if params != cmp:
+    if (
+        params
+        != Surrogate._fit.__code__.co_varnames  # pylint: disable=protected-access
+    ):
         raise ValueError(
-            "Invalid args in `_fit` method definition for custom architectures"
+            "Invalid args in `_fit` method definition for custom architecture. "
+            "Please refer to Surrogate._fit for the required function signature."
         )
 
     params = posterior.__code__.co_varnames[: posterior.__code__.co_argcount]
-    cmp = Surrogate._posterior.__code__.co_varnames  # pylint: disable=protected-access
 
-    if params != cmp:
+    if (
+        params
+        != Surrogate._posterior.__code__.co_varnames  # pylint: disable=protected-access
+    ):
         raise ValueError(
-            "Invalid args in `_posterior` method definition for custom architectures"
+            "Invalid args in `_posterior` method definition for custom architecture. "
+            "Please refer to Surrogate._posterior for the required function signature."
         )
 
 
@@ -323,13 +341,16 @@ def register_custom_architecture(
     joint_posterior_attr: bool = False,
     constant_target_catching: bool = True,
     batchify_posterior: bool = True,
-):
+) -> Callable:
     """Wraps a given Custom Model Architecture Class into a ```Surrogate```.
 
     Args:
-        joint_posterior_attr: If the model supports joint posterior.
-        constant_target_catching: If the model needs handling for 0 variance in y.
-        batchify_posterior: If the model is incompatible with input batching.
+        joint_posterior_attr: Boolean indicating if this model returns posterior
+            distribution jointly across candidates or on individual points.
+        constant_target_catching: Boolean indicating if this model cannot handle
+            constant target values and need the @catch_constant_targets decorator.
+        batchify_posterior: Boolean indicating if this model that is incompatible
+            with t- and q-batching and need the @batchify decorator for its posterior.
 
     Returns:
         A function that wraps around a model class based on the specifications.
@@ -950,7 +971,7 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
 
     def wrapper(obj):
         if obj.__class__.__name__ == "CustomArchitectureSurrogate":
-            raise RuntimeError(
+            raise NotImplementedError(
                 "Custom Architecture Surrogate Serialization is not supported"
             )
 
