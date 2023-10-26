@@ -34,6 +34,9 @@ from torch.autograd import Variable
 
 #### Architecture definition
 
+# Note that the following is an example `PyTorch` Neural Network.
+# Details of the setup is not the focus of BayBE but can be found in `Pytorch` guides.
+
 # Model Configuration
 INPUT_DIM = 10
 OUTPUT_DIM = 1
@@ -226,6 +229,4 @@ baybe_test = BayBE(
 try:
     baybe_test.to_json()
 except RuntimeError as e:
-    print()
     print(f"Serialization Error Message: {e}")
-    print()

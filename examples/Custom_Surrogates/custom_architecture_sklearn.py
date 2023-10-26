@@ -26,7 +26,7 @@ from baybe.surrogate import register_custom_architecture
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 
-# for `sklearn` stacking regressor
+# For `sklearn` stacking regressor
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import (
     GradientBoostingRegressor,
@@ -38,7 +38,13 @@ from sklearn.linear_model import LinearRegression, Ridge
 from torch import Tensor
 
 
-#### Architecture Definition
+#### Architecture Definition (Final Estimator)
+
+# The class must be an estimator as specified by the sklearn stacking regressor docs.
+# More details [here](https://scikit-learn.org/stable/developers/develop.html).
+
+# The choice of using tensors in fit/predict is purely for BayBE, not a requirement.
+
 
 # Final estimator
 class MeanVarEstimator(BaseEstimator, RegressorMixin):
@@ -173,6 +179,4 @@ baybe_test = BayBE(
 try:
     baybe_test.to_json()
 except RuntimeError as e:
-    print()
     print(f"Serialization Error Message: {e}")
-    print()

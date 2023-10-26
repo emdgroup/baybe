@@ -62,17 +62,17 @@ parameters = [
 
 #### "Pre-training" stage
 
-# Note that this example trains with several helpers built-in to BayBE
-# but this can be done independently (and elsewhere)
+# Note that this example trains with several helpers built-in to BayBE.
+# This can be done independently (and elsewhere).
 
-# The only requirement that BayBE needs is that the model is
-# in an onnx format which would return both the mean and standard deviation
+# The only requirement that BayBE needs is that the model is in an onnx format.
+# And The format should return both the mean and standard deviation.
 
-# This example is based on a `BayesianRidge` regressor from `sklearn`
-# where native conversion to onnx is supported via `skl2onnx`
+# This example is based on a `BayesianRidge` regressor from `sklearn`.
+# Its native conversion to onnx is supported via `skl2onnx`.
 
-# Please also note that this example does not give a useful model
-# but to show what the workflow is for using pre-trained surrogates in BayBE
+# Please also note that this example does not give a useful model.
+# Its purpose is to show the workflow for using pre-trained surrogates in BayBE.
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=None)
 train_x = to_tensor(searchspace.discrete.comp_rep)
@@ -91,7 +91,7 @@ options = {type(model): {"return_std": True}}
 # Specify what the input name is
 ONNX_INPUT_NAME = "example_input_name"
 
-# input dimensions and input type (shold always be a float)
+# input dimensions and input type (should always be a float)
 input_dim = train_x.size(dim=1)
 initial_type = [(ONNX_INPUT_NAME, FloatTensorType([None, input_dim]))]
 
