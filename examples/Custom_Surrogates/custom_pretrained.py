@@ -106,11 +106,8 @@ onnx_str = convert_sklearn(
 
 #### Create a surrogate model with a pretrained model
 
-# onnx string must decoded with ISO-8859-1 for serialization purposes
-onnx = onnx_str.decode("ISO-8859-1")
-
 surrogate_model = CustomONNXSurrogate(
-    onnx_str=onnx,
+    onnx_str=onnx_str,
     onnx_input_name=ONNX_INPUT_NAME,  # specify input name
 )
 
@@ -156,13 +153,19 @@ print(recommendation)
 
 CONFIG = {
     "type": "CustomONNXSurrogate",
-    "onnx_str": onnx,
+    "onnx_str": onnx_str,
     "onnx_input_name": ONNX_INPUT_NAME,
 }
 
 #### Model creation from dict (or json if string)
-model_from_python = CustomONNXSurrogate(onnx_str=onnx, onnx_input_name=ONNX_INPUT_NAME)
+model_from_python = CustomONNXSurrogate(
+    onnx_str=onnx_str, onnx_input_name=ONNX_INPUT_NAME
+)
 model_from_configs = CustomONNXSurrogate.from_dict(CONFIG)
 
 # This configuration creates the same model
 assert model_from_python == model_from_configs
+
+# JSON configuration (expects onnx_str to be decoded with `ISO-8859-1`)
+model_json = model_from_python.to_json()
+assert model_from_python == CustomONNXSurrogate.from_json(model_json)

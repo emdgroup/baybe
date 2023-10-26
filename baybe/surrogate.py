@@ -896,8 +896,8 @@ class CustomONNXSurrogate(Surrogate):
     """A wrapper class for custom pretrained surrogate models.
 
     Args:
-        onnx_input_name: the input name used for constructing the onnx str.
-        onnx_str: the onnx str representing the model.
+        onnx_input_name: The input name used for constructing the onnx str.
+        onnx_str: The onnx byte str representing the model.
         _model: The actual model.
         model_params: Optional model parameters.
     """
@@ -908,7 +908,7 @@ class CustomONNXSurrogate(Surrogate):
 
     # Object variables
     onnx_input_name: str = field(validator=validators.instance_of(str))
-    onnx_str: str = field(validator=validators.instance_of(str))
+    onnx_str: bytes = field(validator=validators.instance_of(bytes))
 
     model_params: Dict[str, Any] = field(
         factory=dict, converter=dict, validator=_get_model_params_validator()
@@ -926,9 +926,23 @@ class CustomONNXSurrogate(Surrogate):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         try:
-            self._model = ort.InferenceSession(self.onnx_str.encode("ISO-8859-1"))
+            self._model = ort.InferenceSession(self.onnx_str)
         except Exception as exc:
             raise ValueError("Invalid ONNX string") from exc
+
+
+def _decode_onnx_str(raw_unstructure_hook):
+    """Decodes onnx string for serialization purposes."""
+
+    def wrapper(obj):
+
+        dict_ = raw_unstructure_hook(obj)
+        if "onnx_str" in dict_:
+            dict_["onnx_str"] = dict_["onnx_str"].decode("ISO-8859-1")
+
+        return dict_
+
+    return wrapper
 
 
 def _block_serialize_custom_architecture(raw_unstructure_hook):
@@ -981,6 +995,12 @@ def _structure_surrogate(val, _):
     if cls is None:
         raise ValueError(f"Unknown subclass {_type}.")
 
+    # NOTE:
+    # This is a workaround for onnx str type being `str` or `bytes`
+    onnx_str = val.get("onnx_str", None)
+    if onnx_str and isinstance(onnx_str, str):
+        val["onnx_str"] = onnx_str.encode("ISO-8859-1")
+
     return cattrs.structure_attrs_fromdict(val, cls)
 
 
@@ -1013,7 +1033,10 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
 # Register (un-)structure hooks
 cattrs.register_unstructure_hook(
-    Surrogate, _remove_model(_block_serialize_custom_architecture(unstructure_base))
+    Surrogate,
+    _decode_onnx_str(
+        _remove_model(_block_serialize_custom_architecture(unstructure_base))
+    ),
 )
 cattrs.register_structure_hook(Surrogate, _structure_surrogate)
 

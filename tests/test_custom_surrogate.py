@@ -13,7 +13,7 @@ def test_invalid_onnx_creation():
 
     # Scenario: No onnx input name
     with pytest.raises(TypeError):
-        CustomONNXSurrogate(onnx_str="onnx_str")
+        CustomONNXSurrogate(onnx_str=b"onnx_str")
 
     # Scenario: No onnx str
     with pytest.raises(TypeError):
@@ -23,7 +23,7 @@ def test_invalid_onnx_creation():
     with pytest.raises(ValueError):
         CustomONNXSurrogate(
             onnx_input_name="input",
-            onnx_str="onnx_str",
+            onnx_str=b"onnx_str",
             model_params={"Non_empty_dict": True},
         )
 
@@ -31,7 +31,7 @@ def test_invalid_onnx_creation():
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "surrogate_model",
-    [CustomONNXSurrogate(onnx_input_name="input", onnx_str="onnx_str")],
+    [CustomONNXSurrogate(onnx_input_name="input", onnx_str=b"onnx_str")],
 )
 def test_invalid_onnx_str(baybe):
     """Invalid onnx string causes error during `fit`."""
