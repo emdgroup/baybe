@@ -83,7 +83,14 @@ def _prepare_targets(y: Tensor) -> Tensor:
 
 
 def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callable:
-    """Construct a validator based on the model class."""
+    """Construct a validator based on the model class.
+
+    Args:
+        model_init: The init method for the model.
+
+    Returns:
+        A validator function to validate parameters.
+    """
 
     def validate_model_params(obj, _, model_params: dict) -> None:
         # Get model class name
@@ -120,8 +127,15 @@ def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callab
     return validate_model_params
 
 
-def _validate_custom_arch_cls(model_cls):
-    """Validates a custom architecture to have the correct attributes."""
+def _validate_custom_arch_cls(model_cls: type) -> None:
+    """Validates a custom architecture to have the correct attributes.
+
+    Args:
+        model_cls: The user defined model class.
+
+    Raises:
+        ValueError: When incorrect attributes are given.
+    """
     # Methods must exist
     if not (hasattr(model_cls, "_fit") and hasattr(model_cls, "_posterior")):
         raise ValueError(
@@ -310,7 +324,16 @@ def register_custom_architecture(
     constant_target_catching: bool = True,
     batchify_posterior: bool = True,
 ):
-    """Wraps a given Custom Model Architecture Class into a ```Surrogate```."""
+    """Wraps a given Custom Model Architecture Class into a ```Surrogate```.
+
+    Args:
+        joint_posterior_attr: If the model supports joint posterior.
+        constant_target_catching: If the model needs handling for 0 variance in y.
+        batchify_posterior: If the model is incompatible with input batching.
+
+    Returns:
+        A function that wraps around a model class based on the specifications.
+    """
 
     def construct_custom_architecture(model_cls):
         """Constructs a surrogate class wrapped around the custom class."""
@@ -870,7 +893,14 @@ class BayesianLinearSurrogate(Surrogate):
 
 @define(kw_only=True)
 class CustomONNXSurrogate(Surrogate):
-    """A wrapper class for custom pretrained surrogate models."""
+    """A wrapper class for custom pretrained surrogate models.
+
+    Args:
+        onnx_input_name: the input name used for constructing the onnx str.
+        onnx_str: the onnx str representing the model.
+        _model: The actual model.
+        model_params: Optional model parameters.
+    """
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
@@ -955,7 +985,11 @@ def _structure_surrogate(val, _):
 
 
 def get_available_surrogates() -> List[Type[Surrogate]]:
-    """Lists all available surrogate models."""
+    """Lists all available surrogate models.
+
+    Returns:
+        A list of available surrogate classes.
+    """
     # List available names
     available_names = {
         cl.__name__
@@ -986,3 +1020,4 @@ cattrs.register_structure_hook(Surrogate, _structure_surrogate)
 # Related to [15436]
 gc.collect()
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# pylint: disable=too-many-lines
