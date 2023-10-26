@@ -291,7 +291,7 @@ class BayBE(SerialMixin):
 
 
 def _unstructure_hook(obj) -> dict:
-    """Adds the package version to the created dictionary."""
+    """Add the package version to the created dictionary."""
     from baybe import __version__  # pylint: disable=import-outside-toplevel
 
     return {

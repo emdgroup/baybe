@@ -61,7 +61,7 @@ class SerialMixin:
 
 
 def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
-    """Unstructures an object into a dictionary and adds an entry for the class name.
+    """Unstructure an object into a dictionary and adds an entry for the class name.
 
     Args:
         base: The object that should be unstructured.
