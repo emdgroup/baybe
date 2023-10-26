@@ -46,17 +46,17 @@ def test_invalid_onnx_str(baybe):
 def test_validate_architectures():
     """Test architecture class validation."""
     # Scenario: Empty Class
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         register_custom_architecture()(type("EmptyArch"))
         assert "must exist" in excinfo.value.message
 
     # Scenario: Class with just `_fit`
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         register_custom_architecture()(type("PartialArch", (), {"_fit": True}))
         assert "must exist" in excinfo.value.message
 
     # Scenario: Class with `_fit` and `_posterior` but not methods
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         register_custom_architecture()(
             type("PartialArch", (), {"_fit": True, "_posterior": True})
         )
@@ -66,7 +66,7 @@ def test_validate_architectures():
     def _invalid_func(invalid_param1, invalid_param2=1):
         return invalid_param1 + invalid_param2
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         register_custom_architecture()(
             type(
                 "InvalidArch", (), {"_fit": _invalid_func, "_posterior": _invalid_func}
@@ -78,7 +78,7 @@ def test_validate_architectures():
     def _valid_fit(self, searchspace, train_x, train_y):
         return self and searchspace and train_x and train_y
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         register_custom_architecture()(
             type("InvalidArch", (), {"_fit": _valid_fit, "_posterior": _invalid_func})
         )

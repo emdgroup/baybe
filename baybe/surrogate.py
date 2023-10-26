@@ -123,30 +123,36 @@ def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callab
 def _validate_custom_arch_cls(model_cls):
     """Validates a custom architecture to have the correct attributes."""
     # Methods must exist
-    assert hasattr(model_cls, "_fit") and hasattr(
-        model_cls, "_posterior"
-    ), "`_fit` and a `_posterior` must exist for custom architectures"
+    if not (hasattr(model_cls, "_fit") and hasattr(model_cls, "_posterior")):
+        raise ValueError(
+            "`_fit` and a `_posterior` must exist for custom architectures"
+        )
 
     fit = model_cls._fit  # pylint: disable=protected-access
     posterior = model_cls._posterior  # pylint: disable=protected-access
 
     # They must be methods
-    assert callable(fit) and callable(
-        posterior
-    ), "`_fit` and a `_posterior` must be methods for custom architectures"
+    if not (callable(fit) and callable(posterior)):
+        raise ValueError(
+            "`_fit` and a `_posterior` must be methods for custom architectures"
+        )
 
     # Methods must have the correct arguments
     params = fit.__code__.co_varnames[: fit.__code__.co_argcount]
     cmp = Surrogate._fit.__code__.co_varnames  # pylint: disable=protected-access
-    assert (
-        params == cmp
-    ), "Invalid arguments in `_fit` method definition for custom architectures"
+
+    if params != cmp:
+        raise ValueError(
+            "Invalid args in `_fit` method definition for custom architectures"
+        )
 
     params = posterior.__code__.co_varnames[: posterior.__code__.co_argcount]
     cmp = Surrogate._posterior.__code__.co_varnames  # pylint: disable=protected-access
-    assert (
-        params == cmp
-    ), "Invalid arguments in `_posterior` method definition for custom architectures"
+
+    if params != cmp:
+        raise ValueError(
+            "Invalid args in `_posterior` method definition for custom architectures"
+        )
 
 
 def catch_constant_targets(model_cls: Type["Surrogate"]):
