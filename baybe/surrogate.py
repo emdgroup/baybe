@@ -928,7 +928,6 @@ if _ONNX_INSTALLED:
         Args:
             onnx_input_name: The input name used for constructing the ONNX str.
             onnx_str: The ONNX byte str representing the model.
-            model_params: Optional model parameters.
         """
 
         # Class variables
@@ -938,9 +937,6 @@ if _ONNX_INSTALLED:
         # Object variables
         onnx_input_name: str = field(validator=validators.instance_of(str))
         onnx_str: bytes = field(validator=validators.instance_of(bytes))
-        model_params: Dict[str, Any] = field(
-            factory=dict, converter=dict, validator=_get_model_params_validator()
-        )
         _model: Optional[ort.InferenceSession] = field(init=False, default=None)
 
         @batchify
