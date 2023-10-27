@@ -349,15 +349,15 @@ def register_custom_architecture(
     constant_target_catching: bool = True,
     batchify_posterior: bool = True,
 ) -> Callable:
-    """Wraps a given Custom Model Architecture Class into a ```Surrogate```.
+    """Wraps a given custom model architecture class into a ```Surrogate```.
 
     Args:
-        joint_posterior_attr: Boolean indicating if this model returns posterior
+        joint_posterior_attr: Boolean indicating if the model returns a posterior
             distribution jointly across candidates or on individual points.
-        constant_target_catching: Boolean indicating if this model cannot handle
-            constant target values and need the @catch_constant_targets decorator.
-        batchify_posterior: Boolean indicating if this model that is incompatible
-            with t- and q-batching and need the @batchify decorator for its posterior.
+        constant_target_catching: Boolean indicating if the model cannot handle
+            constant target values and needs the @catch_constant_targets decorator.
+        batchify_posterior: Boolean indicating if the model is incompatible
+            with t- and q-batching and needs the @batchify decorator for its posterior.
 
     Returns:
         A function that wraps around a model class based on the specifications.
