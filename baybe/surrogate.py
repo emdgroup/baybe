@@ -926,9 +926,8 @@ if _ONNX_INSTALLED:
         """A wrapper class for custom pretrained surrogate models.
 
         Args:
-            onnx_input_name: The input name used for constructing the onnx str.
-            onnx_str: The onnx byte str representing the model.
-            _model: The actual model.
+            onnx_input_name: The input name used for constructing the ONNX str.
+            onnx_str: The ONNX byte str representing the model.
             model_params: Optional model parameters.
         """
 
@@ -939,19 +938,20 @@ if _ONNX_INSTALLED:
         # Object variables
         onnx_input_name: str = field(validator=validators.instance_of(str))
         onnx_str: bytes = field(validator=validators.instance_of(bytes))
-
         model_params: Dict[str, Any] = field(
             factory=dict, converter=dict, validator=_get_model_params_validator()
         )
-
         _model: Optional[ort.InferenceSession] = field(init=False, default=None)
 
         @batchify
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
             model_inputs = {self.onnx_input_name: candidates.numpy().astype(np.float32)}
-
             results = self._model.run(None, model_inputs)
 
+            # IMPROVE: At the moment, we assume that the second model output contains
+            #   standard deviations. Currently, most available ONNX converters care
+            #   about the mean only and it's not clear how this will be handled in the
+            #   future. Once there are more choices available, this should be revisited.
             return torch.from_numpy(results[0]), torch.from_numpy(results[1]).pow(2)
 
         def _fit(
@@ -964,7 +964,7 @@ if _ONNX_INSTALLED:
 
 
 def _decode_onnx_str(raw_unstructure_hook):
-    """Decodes onnx string for serialization purposes."""
+    """Decodes ONNX string for serialization purposes."""
 
     def wrapper(obj):
 
