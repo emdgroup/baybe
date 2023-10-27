@@ -621,7 +621,6 @@ class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
@@ -788,7 +787,6 @@ class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
@@ -840,7 +838,6 @@ class NGBoostSurrogate(Surrogate):
     """A natural-gradient-boosting surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
@@ -885,7 +882,6 @@ class BayesianLinearSurrogate(Surrogate):
     """A Bayesian linear regression surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
