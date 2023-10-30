@@ -1,8 +1,8 @@
 """Tests for custom surrogate models."""
 
 import pytest
+
 from baybe.surrogate import _ONNX_INSTALLED, register_custom_architecture
-from baybe.utils.dataframe import add_fake_results
 
 if _ONNX_INSTALLED:
     from baybe.surrogate import CustomONNXSurrogate
@@ -32,19 +32,10 @@ if _ONNX_INSTALLED:
                 model_params={"Non_empty_dict": True},
             )
 
-    @pytest.mark.slow
-    @pytest.mark.parametrize(
-        "surrogate_model",
-        [CustomONNXSurrogate(onnx_input_name="input", onnx_str=b"onnx_str")],
-    )
-    def test_invalid_onnx_str(baybe):
-        """Invalid onnx string causes error during `fit`."""
-        rec = baybe.recommend()
-        add_fake_results(rec, baybe)
-        baybe.add_measurements(rec)
-
-        with pytest.raises(ValueError):
-            baybe.recommend()
+    def test_invalid_onnx_str():
+        """Invalid onnx string causes error."""
+        with pytest.raises(Exception):
+            CustomONNXSurrogate(onnx_input_name="input", onnx_str=b"onnx_str")
 
 
 def test_validate_architectures():

@@ -933,7 +933,15 @@ if _ONNX_INSTALLED:
         # Object variables
         onnx_input_name: str = field(validator=validators.instance_of(str))
         onnx_str: bytes = field(validator=validators.instance_of(bytes))
-        _model: Optional[ort.InferenceSession] = field(init=False, default=None)
+        _model: ort.InferenceSession = field(init=False, eq=False)
+
+        @_model.default
+        def default_model(self) -> ort.InferenceSession:
+            """Instantiate the ONNX inference session."""
+            try:
+                return ort.InferenceSession(self.onnx_str)
+            except Exception as exc:
+                raise ValueError("Invalid ONNX string") from exc
 
         @batchify
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
@@ -949,10 +957,13 @@ if _ONNX_INSTALLED:
         def _fit(
             self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
         ) -> None:
-            try:
-                self._model = ort.InferenceSession(self.onnx_str)
-            except Exception as exc:
-                raise ValueError("Invalid ONNX string") from exc
+            # TODO: This method actually needs to raise a NotImplementedError because
+            #   ONNX surrogate models cannot be retrained. However, this would currently
+            #   break the code since `BayesianRecommender` assumes that surrogates
+            #   can be trained and attempts to do so for each new DOE iteration.
+            #   Therefore, a refactoring is required in order to properly incorporate
+            #   "static" surrogates and account for them in the exposed APIs.
+            pass
 
 
 def _decode_onnx_str(raw_unstructure_hook):
