@@ -27,6 +27,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ARDRegression
 from torch import Tensor
 
+from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
 from baybe.utils import get_subclasses, SerialMixin, unstructure_base
@@ -942,6 +943,12 @@ if _ONNX_INSTALLED:
                 return ort.InferenceSession(self.onnx_str)
             except Exception as exc:
                 raise ValueError("Invalid ONNX string") from exc
+
+        def __attrs_post_init__(self) -> None:
+            # TODO: This is a temporary workaround to avoid silent errors when users
+            #   provide model parameters to this class.
+            if self.model_params or not isinstance(self.model_params, dict):
+                raise ModelParamsNotSupportedError()
 
         @batchify
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:

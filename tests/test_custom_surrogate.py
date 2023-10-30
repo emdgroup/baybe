@@ -2,15 +2,13 @@
 
 import pytest
 
+from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.surrogate import _ONNX_INSTALLED, register_custom_architecture
 
 if _ONNX_INSTALLED:
     from baybe.surrogate import CustomONNXSurrogate
 
-
-if _ONNX_INSTALLED:
-
-    def test_invalid_onnx_creation():
+    def test_invalid_onnx_creation(onnx_str):
         """Invalid onnx model creation."""
         # Scenario: No input
         with pytest.raises(TypeError):
@@ -25,11 +23,11 @@ if _ONNX_INSTALLED:
             CustomONNXSurrogate(onnx_input_name="input")
 
         # Scenario: Model Params non-empty
-        with pytest.raises(ValueError):
+        with pytest.raises(ModelParamsNotSupportedError):
             CustomONNXSurrogate(
                 onnx_input_name="input",
-                onnx_str=b"onnx_str",
-                model_params={"Non_empty_dict": True},
+                onnx_str=onnx_str,
+                model_params={"Non_empty_dict": None},
             )
 
     def test_invalid_onnx_str():

@@ -1,11 +1,12 @@
 """PyTest configuration."""
 import os
-
 from typing import List
 
 import numpy as np
 import pandas as pd
 import pytest
+import torch
+
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
@@ -26,7 +27,6 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
@@ -34,7 +34,6 @@ from baybe.strategies.strategy import Strategy
 from baybe.surrogate import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results, add_parameter_noise
-
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
@@ -608,6 +607,32 @@ def fixture_default_config():
             },""",
     )
     return cfg
+
+
+@pytest.fixture
+def onnx_str() -> bytes:
+    """An example ONNX model string."""
+    from skl2onnx import convert_sklearn  # pylint: disable=import-outside-toplevel
+    from skl2onnx.common.data_types import (  # pylint: disable=import-outside-toplevel
+        FloatTensorType,
+    )
+    from sklearn.linear_model import (  # pylint: disable=import-outside-toplevel
+        BayesianRidge,
+    )
+
+    # Train sklearn model
+    train_x = torch.arange(10).view(-1, 1)
+    train_y = torch.arange(10).view(-1, 1)
+    model = BayesianRidge()
+    model.fit(train_x, train_y)
+
+    # Convert to ONNX string
+    input_dim = train_x.size(dim=1)
+    onnx_input_name = "input"
+    initial_types = [(onnx_input_name, FloatTensorType([None, input_dim]))]
+    binary = convert_sklearn(model, initial_types=initial_types).SerializeToString()
+
+    return binary
 
 
 # Reusables
