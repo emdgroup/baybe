@@ -23,14 +23,10 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
 from baybe.surrogate import register_custom_architecture
-
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
-
-# For `pytorch` neural network
 from torch import nn, Tensor
 from torch.autograd import Variable
-
 
 #### Architecture definition
 
@@ -107,8 +103,8 @@ class NeuralNetDropoutSurrogate:
     def __init__(self):
         self.model: Optional[nn.Module] = None
 
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor]:
-        """See baybe.surrogate.Surrogate."""
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See :class:`baybe.surrogate.Surrogate`."""
         self.model = self.model.train()  # keep dropout
         # Convert input from double to float
         candidates = Variable(candidates.type(torch.FloatTensor))
@@ -124,7 +120,7 @@ class NeuralNetDropoutSurrogate:
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See baybe.surrogate.Surrogate."""
+        """See :class:`baybe.surrogate.Surrogate`."""
         # Initialize Model
         self.model = NeuralNetDropout()
 

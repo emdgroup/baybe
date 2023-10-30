@@ -12,6 +12,7 @@
 from typing import Optional, Tuple
 
 import numpy as np
+import torch
 
 from baybe.core import BayBE
 from baybe.parameters import (
@@ -22,11 +23,8 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
 from baybe.surrogate import register_custom_architecture
-
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
-
-# For `sklearn` stacking regressor
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import (
     GradientBoostingRegressor,
@@ -34,7 +32,6 @@ from sklearn.ensemble import (
     StackingRegressor,
 )
 from sklearn.linear_model import LinearRegression, Ridge
-
 from torch import Tensor
 
 
@@ -54,10 +51,10 @@ class MeanVarEstimator(BaseEstimator, RegressorMixin):
         """No fit needed."""
         return
 
-    def predict(self, data: Tensor) -> Tuple[Tensor]:
+    def predict(self, data: Tensor) -> Tuple[Tensor, Tensor]:
         """Predict based on ensemble unweighted mean and variance."""
-        mean = Tensor(data.mean(axis=1))
-        var = Tensor(data.var(axis=1))
+        mean = torch.tensor(data.mean(axis=1))
+        var = torch.tensor(data.var(axis=1))
         return mean, var
 
 
@@ -75,12 +72,12 @@ class StackingRegressorSurrogate:
     def __init__(self):
         self.model: Optional[StackingRegressor] = None
 
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor]:
-        """See baybe.surrogate.Surrogate."""
+    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        """See :class:`baybe.surrogate.Surrogate`."""
         return self.model.predict(candidates)
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See baybe.surrogate.Surrogate."""
+        """See :class:`baybe.surrogate.Surrogate`."""
         estimators = [
             ("rf", RandomForestRegressor()),
             ("gb", GradientBoostingRegressor()),
