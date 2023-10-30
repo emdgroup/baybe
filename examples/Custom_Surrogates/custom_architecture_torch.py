@@ -26,7 +26,6 @@ from baybe.surrogate import register_custom_architecture
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results
 from torch import nn, Tensor
-from torch.autograd import Variable
 
 #### Architecture definition
 
@@ -107,7 +106,7 @@ class NeuralNetDropoutSurrogate:
         """See :class:`baybe.surrogate.Surrogate`."""
         self.model = self.model.train()  # keep dropout
         # Convert input from double to float
-        candidates = Variable(candidates.type(torch.FloatTensor))
+        candidates = candidates.float()
         # Run mc experiments through the NN with dropout
         predictions = torch.cat(
             [self.model(candidates).unsqueeze(dim=0) for _ in range(MC)]
@@ -129,8 +128,8 @@ class NeuralNetDropoutSurrogate:
         criterion = HYPERPARAMS["criterion"]()
 
         # Convert input from double to float
-        train_x = Variable(train_x.type(torch.FloatTensor))
-        train_y = Variable(train_y.type(torch.FloatTensor))
+        train_x = train_x.float()
+        train_y = train_y.float()
 
         # Training loop
         for _ in range(HYPERPARAMS["epochs"]):
@@ -208,21 +207,8 @@ print()
 
 #### Serialization
 
-# Create BayBE Object for serialization
-baybe_test = BayBE(
-    searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=Objective(
-        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
-    ),
-    strategy=Strategy(
-        recommender=SequentialGreedyRecommender(
-            surrogate_model=NeuralNetDropoutSurrogate()
-        ),
-        initial_recommender=FPSRecommender(),
-    ),
-)
 # Serialization of custom models is not supported
 try:
-    baybe_test.to_json()
+    baybe_obj.to_json()
 except RuntimeError as e:
     print(f"Serialization Error Message: {e}")

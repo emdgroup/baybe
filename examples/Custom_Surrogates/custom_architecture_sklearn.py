@@ -35,9 +35,9 @@ from sklearn.linear_model import LinearRegression, Ridge
 from torch import Tensor
 
 
-#### Architecture Definition (Final Estimator)
+#### Surrogate Definition with BayBE Registration
 
-# The class must be an estimator as specified by the sklearn stacking regressor docs.
+# The final estimator class must follow the sklearn estimator interface.
 # More details [here](https://scikit-learn.org/stable/developers/develop.html).
 
 # The choice of using tensors in fit/predict is purely for BayBE, not a requirement.
@@ -58,11 +58,8 @@ class MeanVarEstimator(BaseEstimator, RegressorMixin):
         return mean, var
 
 
-#### Surrogate Definition with BayBE Registration
-
-# The class must include `_fit` and `_posterior` functions with the correct signatures
-
 # Registration
+# The class must include `_fit` and `_posterior` functions with the correct signatures.
 @register_custom_architecture(
     joint_posterior_attr=False, constant_target_catching=False, batchify_posterior=True
 )
@@ -159,21 +156,8 @@ print()
 
 #### Serialization
 
-# Create BayBE Object for serialization
-baybe_test = BayBE(
-    searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=Objective(
-        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
-    ),
-    strategy=Strategy(
-        recommender=SequentialGreedyRecommender(
-            surrogate_model=StackingRegressorSurrogate()
-        ),
-        initial_recommender=FPSRecommender(),
-    ),
-)
 # Serialization of custom models is not supported
 try:
-    baybe_test.to_json()
+    baybe_obj.to_json()
 except RuntimeError as e:
     print(f"Serialization Error Message: {e}")
