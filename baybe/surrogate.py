@@ -52,6 +52,18 @@ _WRAPPER_MODELS = (
     "CustomONNXSurrogate",
 )
 
+_ONNX_ENCODING = "latin-1"
+"""Constant signifying the encoding for onnx byte strings in pretrained models.
+
+NOTE: This encoding is selected by choice for ONNX byte strings.
+This is not a requirement from ONNX but simply for the JSON format.
+The byte string from ONNX `.SerializeToString()` method has unknown encoding,
+which results in UnicodeDecodeError when using `.decode('utf-8')`.
+The use of latin-1 ensures there are no loss from the conversion of
+bytes to string and back, since the specification is a bijection between
+0-255 and the character set.
+"""
+
 
 def _prepare_inputs(x: Tensor) -> Tensor:
     """Validate and prepare the model input.
@@ -980,7 +992,7 @@ def _decode_onnx_str(raw_unstructure_hook):
 
         dict_ = raw_unstructure_hook(obj)
         if "onnx_str" in dict_:
-            dict_["onnx_str"] = dict_["onnx_str"].decode("ISO-8859-1")
+            dict_["onnx_str"] = dict_["onnx_str"].decode(_ONNX_ENCODING)
 
         return dict_
 
@@ -1041,7 +1053,7 @@ def _structure_surrogate(val, _):
     # This is a workaround for onnx str type being `str` or `bytes`
     onnx_str = val.get("onnx_str", None)
     if onnx_str and isinstance(onnx_str, str):
-        val["onnx_str"] = onnx_str.encode("ISO-8859-1")
+        val["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
 
     return cattrs.structure_attrs_fromdict(val, cls)
 
