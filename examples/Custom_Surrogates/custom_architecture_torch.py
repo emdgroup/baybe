@@ -1,7 +1,7 @@
 ### Example for surrogate model with a custom architecture using `pytorch`
 # pylint: disable=missing-module-docstring, unused-argument
 
-# This example shows how to define a `pytorch` model architecture and and use it as a surrogate.
+# This example shows how to define a `pytorch` model architecture and use it as a surrogate.
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
 
 # This example assumes some basic familiarity with using BayBE.
