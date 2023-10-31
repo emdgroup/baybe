@@ -37,11 +37,17 @@ parser.add_argument(
     "should not be used.",
     action="store_true",
 )
+parser.add_argument(
+    "--debug",
+    help="Activate debugging mode by not surpressing the output of conversion.",
+    action="store_true",
+)
 
 # Parse input arguments
 args = parser.parse_args()
 USE_HTML = args.html
 DIR = args.target_dir
+DEBUG = args.debug
 INCLUDE_PRIVATE = args.include_private
 PRETTIFY = not args.do_not_prettify
 
@@ -74,7 +80,10 @@ call = (
     if USE_HTML
     else ["sphinx-build", "-M", "markdown", "docs", "docs/build"]
 )
-check_call(call, stderr=DEVNULL, stdout=DEVNULL)
+if not DEBUG:
+    check_call(call, stderr=DEVNULL, stdout=DEVNULL)
+else:
+    check_call(call)
 
 # Get the path to the actual markdown files
 markdown_files = list(pathlib.Path("docs/build/markdown/sdk").glob("*.md"))
