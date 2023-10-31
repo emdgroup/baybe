@@ -118,13 +118,10 @@ def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callab
         A validator function to validate parameters.
     """
 
-    def validate_model_params(obj: Any, _: Any, model_params: dict) -> None:
+    def validate_model_params(  # noqa: DOC101, DOC103
+        obj: Any, _: Any, model_params: dict
+    ) -> None:
         """Validates the model params attribute of an object.
-
-        Args:
-            obj: The object itself.
-            _: Placeholder for the `Attribute` parameter in attrs validators.
-            model_params: The model parameters to validate.
 
         Raises:
             ValueError: When model params are given for non-supported objects.
