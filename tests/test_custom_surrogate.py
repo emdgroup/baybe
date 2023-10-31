@@ -1,8 +1,10 @@
 """Tests for custom surrogate models."""
 
 import pytest
+import torch
 
 from baybe.exceptions import ModelParamsNotSupportedError
+from baybe.searchspace import SearchSpace
 from baybe.surrogate import _ONNX_INSTALLED, register_custom_architecture
 
 if _ONNX_INSTALLED:
@@ -34,6 +36,14 @@ if _ONNX_INSTALLED:
         """Invalid onnx string causes error."""
         with pytest.raises(Exception):
             CustomONNXSurrogate(onnx_input_name="input", onnx_str=b"onnx_str")
+
+    @pytest.mark.parametrize("parameter_names", [["Categorical_1"]])
+    def test_unsupported_parameter_type(onnx_str, parameters):
+        """Using an ONNX model with unsupported parameters should raise an exception."""
+        surrogate = CustomONNXSurrogate(onnx_input_name="input", onnx_str=onnx_str)
+        searchspace = SearchSpace.from_product(parameters)
+        with pytest.raises(TypeError):
+            surrogate.fit(searchspace, torch.tensor([[0.0]]), torch.tensor([[0.0]]))
 
 
 def test_validate_architectures():

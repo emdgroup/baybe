@@ -28,6 +28,11 @@ from sklearn.linear_model import ARDRegression
 from torch import Tensor
 
 from baybe.exceptions import ModelParamsNotSupportedError
+from baybe.parameters import (
+    CustomDiscreteParameter,
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
 from baybe.utils import (
@@ -990,7 +995,30 @@ if _ONNX_INSTALLED:
             #   can be trained and attempts to do so for each new DOE iteration.
             #   Therefore, a refactoring is required in order to properly incorporate
             #   "static" surrogates and account for them in the exposed APIs.
-            pass
+
+            # TODO: The check needs to be moved somewhere else since the fit method
+            #   will no longer be called once the above issue is resolved. However,
+            #   implementing it outside the class is currently difficult due
+            #   to the fact that the class is not even declared when the optional
+            #   dependencies are missing (see issue 19298).
+            if any(
+                not isinstance(
+                    p,
+                    (
+                        NumericalDiscreteParameter,
+                        CustomDiscreteParameter,
+                        NumericalContinuousParameter,
+                    ),
+                )
+                for p in searchspace.parameters
+            ):
+                raise TypeError(
+                    f"To prevent potential hard-to-detect bugs that stem from wrong "
+                    f"wiring of model inputs, {self.__class__.__name__} "
+                    f"is currently restricted for use with parameters that have "
+                    f"a one-dimensional computational representation or "
+                    f"{CustomDiscreteParameter.__name__}."
+                )
 
 
 def _decode_onnx_str(raw_unstructure_hook):

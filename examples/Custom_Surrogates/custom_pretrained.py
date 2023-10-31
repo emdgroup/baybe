@@ -13,11 +13,7 @@ import numpy as np
 import torch
 
 from baybe.core import BayBE
-from baybe.parameters import (
-    CategoricalParameter,
-    NumericalDiscreteParameter,
-    SubstanceParameter,
-)
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
 from baybe.surrogate import CustomONNXSurrogate
@@ -26,18 +22,11 @@ from baybe.utils import add_fake_results, to_tensor
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 from skl2onnx.operator_converters.linear_regressor import convert_sklearn_bayesian_ridge
-
 from sklearn.linear_model import BayesianRidge
-
 
 #### Experiment Setup
 
 parameters = [
-    CategoricalParameter(
-        name="Granularity",
-        values=["coarse", "medium", "fine"],
-        encoding="OHE",
-    ),
     NumericalDiscreteParameter(
         name="Pressure[bar]",
         values=[1, 5, 10],
@@ -46,16 +35,6 @@ parameters = [
     NumericalDiscreteParameter(
         name="Temperature[degree_C]",
         values=np.linspace(100, 200, 10),
-    ),
-    SubstanceParameter(
-        name="Solvent",
-        data={
-            "Solvent A": "COC",
-            "Solvent B": "CCC",
-            "Solvent C": "O",
-            "Solvent D": "CS(=O)C",
-        },
-        encoding="MORDRED",
     ),
 ]
 
