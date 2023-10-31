@@ -9,9 +9,12 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 
-from baybe.constraints import _validate_constraints, Constraint
-from baybe.parameters import _validate_parameters, Parameter
-from baybe.searchspace import SearchSpace
+from baybe.parameters import Parameter
+from baybe.searchspace import (
+    _structure_searchspace_from_config,
+    _validate_searchspace_from_config,
+    SearchSpace,
+)
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 from baybe.telemetry import (
@@ -22,47 +25,17 @@ from baybe.telemetry import (
 from baybe.utils import eq_dataframe
 from baybe.utils.serialization import converter, SerialMixin
 
-
-def _structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
-    """A structuring hook that assembles the search space from "config" format.
-
-    It uses the alternative :func:`baybe.searchspace.SearchSpace.from_product`
-    constructor, which allows to deserialize search space specifications that are
-    provided in a user-friendly format (i.e. via parameters and constraints).
-    """
-    parameters = converter.structure(specs["parameters"], List[Parameter])
-    constraints = specs.get("constraints", None)
-    if constraints:
-        constraints = converter.structure(specs["constraints"], List[Constraint])
-    return SearchSpace.from_product(parameters, constraints)
-
-
-def _searchspace_validation_hook(specs: dict, _) -> None:
-    """A validation hook that does not create the search space.
-
-    Similar to :func:`baybe.core.structure_searchspace_from_config` but without the
-    actual search space creation step, thus intended for validation purposes only.
-    It explicitly validates the given parameters and constraints since invalid
-    specifications would be otherwise noticed only later during search space creation.
-    """
-    parameters = converter.structure(specs["parameters"], List[Parameter])
-    _validate_parameters(parameters)
-
-    constraints = specs.get("constraints", None)
-    if constraints:
-        constraints = converter.structure(specs["constraints"], List[Constraint])
-        _validate_constraints(constraints, parameters)
-
-
-# Create the converter for config deserialization
+# Converter for config deserialization
 _config_converter = converter.copy()
 _config_converter.register_structure_hook(
     SearchSpace, _structure_searchspace_from_config
 )
 
-# Create the converter for config validation
+# Converter for config validation
 _validation_converter = converter.copy()
-_validation_converter.register_structure_hook(SearchSpace, _searchspace_validation_hook)
+_validation_converter.register_structure_hook(
+    SearchSpace, _validate_searchspace_from_config
+)
 
 
 @define

@@ -33,6 +33,7 @@ from baybe.parameters import (
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import (
+    converter,
     df_drop_single_value_columns,
     DTypeFloatTorch,
     eq_dataframe,
@@ -753,3 +754,34 @@ class SearchSpace(SerialMixin):
         comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
 
         return comp_rep
+
+
+def _structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
+    """A structuring hook that assembles the search space from "config" format.
+
+    It uses the alternative :func:`baybe.searchspace.SearchSpace.from_product`
+    constructor, which allows to deserialize search space specifications that are
+    provided in a user-friendly format (i.e. via parameters and constraints).
+    """
+    parameters = converter.structure(specs["parameters"], List[Parameter])
+    constraints = specs.get("constraints", None)
+    if constraints:
+        constraints = converter.structure(specs["constraints"], List[Constraint])
+    return SearchSpace.from_product(parameters, constraints)
+
+
+def _validate_searchspace_from_config(specs: dict, _) -> None:
+    """A validation hook that does not create the search space.
+
+    Similar to :func:`baybe.core.structure_searchspace_from_config` but without the
+    actual search space creation step, thus intended for validation purposes only.
+    It explicitly validates the given parameters and constraints since invalid
+    specifications would be otherwise noticed only later during search space creation.
+    """
+    parameters = converter.structure(specs["parameters"], List[Parameter])
+    _validate_parameters(parameters)
+
+    constraints = specs.get("constraints", None)
+    if constraints:
+        constraints = converter.structure(specs["constraints"], List[Constraint])
+        _validate_constraints(constraints, parameters)
