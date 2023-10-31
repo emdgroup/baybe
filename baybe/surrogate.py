@@ -30,7 +30,13 @@ from torch import Tensor
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import get_subclasses, SerialMixin, unstructure_base
+from baybe.utils import (
+    DTypeFloatONNX,
+    DTypeFloatTorch,
+    get_subclasses,
+    SerialMixin,
+    unstructure_base,
+)
 
 try:
     import onnxruntime as ort
@@ -964,14 +970,19 @@ if _ONNX_INSTALLED:
 
         @batchify
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-            model_inputs = {self.onnx_input_name: candidates.numpy().astype(np.float32)}
+            model_inputs = {
+                self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)
+            }
             results = self._model.run(None, model_inputs)
 
             # IMPROVE: At the moment, we assume that the second model output contains
             #   standard deviations. Currently, most available ONNX converters care
             #   about the mean only and it's not clear how this will be handled in the
             #   future. Once there are more choices available, this should be revisited.
-            return torch.from_numpy(results[0]), torch.from_numpy(results[1]).pow(2)
+            return (
+                torch.from_numpy(results[0]).to(DTypeFloatTorch),
+                torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
+            )
 
         def _fit(
             self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
