@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import List
+from typing import Any, List
 
 import numpy as np
 import pandas as pd
@@ -263,7 +263,7 @@ class BayBE(SerialMixin):
         return rec
 
 
-def _unstructure_hook(obj) -> dict:
+def _unstructure_with_version(obj: Any) -> dict:
     """Add the package version to the created dictionary."""
     from baybe import __version__  # pylint: disable=import-outside-toplevel
 
@@ -273,4 +273,4 @@ def _unstructure_hook(obj) -> dict:
     }
 
 
-converter.register_unstructure_hook(BayBE, _unstructure_hook)
+converter.register_unstructure_hook(BayBE, _unstructure_with_version)
