@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bring your own model: surrogate classes for custom model architectures and pre-trained ONNX models
 
 ### Fixed
+- Now supports Python 3.11
 - Removed `pyarrow` version pin
 
 ## [0.5.1] - 2023-10-19

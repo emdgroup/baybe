@@ -190,6 +190,9 @@ stages:
           Py3.10:
             python.version: '3.10.x'
             tox.env: 'py310'
+          Py3.11:
+            python.version: '3.11.x'
+            tox.env: 'py311'
 
       steps:
       - checkout: self
