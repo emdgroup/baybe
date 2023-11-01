@@ -1,6 +1,8 @@
 """PyTest configuration."""
+from __future__ import annotations
+
 import os
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -31,7 +33,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.surrogate import CustomONNXSurrogate, GaussianProcessSurrogate
+from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results, add_parameter_noise
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
@@ -39,6 +41,9 @@ from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
 if _CHEM_INSTALLED:
     from baybe.parameters import SUBSTANCE_ENCODINGS, SubstanceParameter
+
+if _ONNX_INSTALLED:
+    from baybe.surrogate import CustomONNXSurrogate
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
@@ -613,8 +618,12 @@ def fixture_default_config():
 
 
 @pytest.fixture(name="onnx_str")
-def fixture_default_onnx_str() -> bytes:
+def fixture_default_onnx_str() -> Union[bytes, None]:
     """The default ONNX model string to be used if not specified differently."""
+    # TODO [19298]: There should be a cleaner way than returning None.
+    if not _ONNX_INSTALLED:
+        return None
+
     from skl2onnx import convert_sklearn  # pylint: disable=import-outside-toplevel
     from skl2onnx.common.data_types import (  # pylint: disable=import-outside-toplevel
         FloatTensorType,
@@ -642,8 +651,11 @@ def fixture_default_onnx_str() -> bytes:
 
 
 @pytest.fixture(name="onnx_surrogate")
-def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
+def fixture_default_onnx_surrogate(onnx_str) -> Union["CustomONNXSurrogate", None]:
     """The default ONNX model to be used if not specified differently."""
+    # TODO [19298]: There should be a cleaner way than returning None.
+    if not _ONNX_INSTALLED:
+        return None
     return CustomONNXSurrogate(onnx_input_name="input", onnx_str=onnx_str)
 
 
