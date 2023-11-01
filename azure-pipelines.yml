@@ -32,27 +32,6 @@ stages:
           Py3.10:
             python.version: '3.10.x'
             tox.env: 'py310'
-
-      steps:
-      - checkout: self
-
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '$(python.version)'
-        displayName: 'Use Python $(python.version)'
-
-      - script: |
-          pip install tox
-          tox -e lint
-        displayName: "Pre-commit linter/formatter stack"
-
-    - job: "Lint_Optional"
-      displayName: "Lint (Optional)"
-      pool:
-        vmImage: ubuntu-20.04
-
-      strategy:
-        matrix:
           Py3.11:
             python.version: '3.11.x'
             tox.env: 'py311'
@@ -69,7 +48,6 @@ stages:
           pip install tox
           tox -e lint
         displayName: "Pre-commit linter/formatter stack"
-        continueOnError: true
 
     - job: "Audit"
 
@@ -87,27 +65,6 @@ stages:
           Py3.10:
             python.version: '3.10.x'
             tox.env: 'py310'
-
-      steps:
-      - checkout: self
-
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '$(python.version)'
-        displayName: 'Use Python $(python.version)'
-
-      - script: |
-          pip install tox
-          tox -e audit
-        displayName: "Pip-audit"
-
-    - job: "Audit_Optional"
-      displayName: "Audit (Optional)"
-      pool:
-        vmImage: ubuntu-20.04
-
-      strategy:
-        matrix:
           Py3.11:
             python.version: '3.11.x'
             tox.env: 'py311'
@@ -124,7 +81,6 @@ stages:
           pip install tox
           tox -e audit
         displayName: "Pip-audit"
-        continueOnError: true
 
     - job: "Changelog"
       condition: |
@@ -169,6 +125,9 @@ stages:
           Py3.10:
             python.version: '3.10.x'
             tox.env: 'py310'
+          Py3.11:
+            python.version: '3.11.x'
+            tox.env: 'py311'
 
       steps:
       - checkout: self
@@ -215,49 +174,6 @@ stages:
           testResultsFiles: $(System.DefaultWorkingDirectory)/junit.xml
           #testRunTitle: 'Rest results for Python $(python.version)'
 
-    - job: "PyTest_Optional"
-      displayName: "Pytest (full, optional)"
-      pool:
-        vmImage: ubuntu-20.04
-
-      strategy:
-        matrix:
-          Py3.11:
-            python.version: '3.11.x'
-            tox.env: 'py311'
-
-      steps:
-      - checkout: self
-
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '$(python.version)'
-        displayName: 'Use Python $(python.version)'
-
-      - script: |
-          pip install tox unittest-xml-reporting pytest-azurepipelines
-          tox -e fulltest-$(tox.env) -- --cov-report=xml --junit-xml $(System.DefaultWorkingDirectory)/junit.xml
-        displayName: "PyTest"
-        continueOnError: true
-
-      # Fail if overall coverage is too low
-      - script: |
-          pip install coverage
-          coverage report --fail-under=$(coverage_overall_threshold)
-        displayName: "Assert Overall Coverage"
-        continueOnError: true
-
-      # Fail if any individual coverage is too low
-      - script: |
-          pip install coverage
-          coverage report |
-          grep -E -o '[0-9]+%' |
-          tr -d '%' |
-          sed '$d' |
-          awk '{if ($1<$(coverage_individual_threshold)) exit 1 }'
-        displayName: "Assert Individual Coverage"
-        continueOnError: true
-
     - job: "PyTest_Core"
       displayName: "Pytest (core)"
       pool:
@@ -274,6 +190,9 @@ stages:
           Py3.10:
             python.version: '3.10.x'
             tox.env: 'py310'
+          Py3.11:
+            python.version: '3.11.x'
+            tox.env: 'py311'
 
       steps:
       - checkout: self
