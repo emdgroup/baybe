@@ -31,7 +31,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.surrogate import GaussianProcessSurrogate
+from baybe.surrogate import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results, add_parameter_noise
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
@@ -168,6 +168,7 @@ def fixture_parameters(
     parameter_names: List[str], mock_substances, mock_categories, n_grid_points
 ):
     """Provides example parameters via specified names."""
+    # FIXME: n_grid_points causes duplicate test cases if the argument is not used
     valid_parameters = [
         CategoricalParameter(
             name="Categorical_1",
@@ -515,8 +516,10 @@ def fixture_default_acquisition_function():
 
 
 @pytest.fixture(name="surrogate_model")
-def fixture_default_surrogate_model():
+def fixture_default_surrogate_model(request, onnx_surrogate):
     """The default surrogate model to be used if not specified differently."""
+    if hasattr(request, "param") and request.param == "onnx":
+        return onnx_surrogate
     return GaussianProcessSurrogate()
 
 
@@ -609,9 +612,9 @@ def fixture_default_config():
     return cfg
 
 
-@pytest.fixture
-def onnx_str() -> bytes:
-    """An example ONNX model string."""
+@pytest.fixture(name="onnx_str")
+def fixture_default_onnx_str() -> bytes:
+    """The default ONNX model string to be used if not specified differently."""
     from skl2onnx import convert_sklearn  # pylint: disable=import-outside-toplevel
     from skl2onnx.common.data_types import (  # pylint: disable=import-outside-toplevel
         FloatTensorType,
@@ -630,9 +633,18 @@ def onnx_str() -> bytes:
     input_dim = train_x.size(dim=1)
     onnx_input_name = "input"
     initial_types = [(onnx_input_name, FloatTensorType([None, input_dim]))]
-    binary = convert_sklearn(model, initial_types=initial_types).SerializeToString()
+    options = {type(model): {"return_std": True}}
+    binary = convert_sklearn(
+        model, initial_types=initial_types, options=options
+    ).SerializeToString()
 
     return binary
+
+
+@pytest.fixture(name="onnx_surrogate")
+def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
+    """The default ONNX model to be used if not specified differently."""
+    return CustomONNXSurrogate(onnx_input_name="input", onnx_str=onnx_str)
 
 
 # Reusables

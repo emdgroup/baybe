@@ -27,8 +27,11 @@ from baybe.strategies.recommender import (
     NonPredictiveRecommender,
     Recommender,
 )
-from baybe.surrogate import GaussianProcessSurrogate, Surrogate
+from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate, Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
+
+if _ONNX_INSTALLED:
+    from baybe.surrogate import CustomONNXSurrogate
 
 
 @define
@@ -124,6 +127,9 @@ class BayesianRecommender(Recommender, ABC):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         # See base class.
+
+        if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
+            CustomONNXSurrogate.validate_compatibility(searchspace)
 
         acqf = self.setup_acquisition_function(searchspace, train_x, train_y)
 

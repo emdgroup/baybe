@@ -29,9 +29,11 @@ from torch import Tensor
 
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
+    CategoricalParameter,
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
@@ -995,26 +997,34 @@ if _ONNX_INSTALLED:
             #   can be trained and attempts to do so for each new DOE iteration.
             #   Therefore, a refactoring is required in order to properly incorporate
             #   "static" surrogates and account for them in the exposed APIs.
+            pass
 
-            # TODO: The check needs to be moved somewhere else since the fit method
-            #   will no longer be called once the above issue is resolved. However,
-            #   implementing it outside the class is currently difficult due
-            #   to the fact that the class is not even declared when the optional
-            #   dependencies are missing (see issue 19298).
-            if any(
-                not isinstance(
+        @classmethod
+        def validate_compatibility(cls, searchspace: SearchSpace) -> None:
+            """Validate if the class is compatible with a given search space.
+
+            Args:
+                searchspace: The search space to be tested for compatibility.
+
+            Raises:
+                TypeError: If the search space is incompatible with the class.
+            """
+            if not all(
+                isinstance(
                     p,
                     (
-                        NumericalDiscreteParameter,
-                        CustomDiscreteParameter,
                         NumericalContinuousParameter,
+                        NumericalDiscreteParameter,
+                        TaskParameter,
                     ),
                 )
+                or (isinstance(p, CustomDiscreteParameter) and not p.decorrelate)
+                or (isinstance(p, CategoricalParameter) and p.encoding == "INT")
                 for p in searchspace.parameters
             ):
                 raise TypeError(
                     f"To prevent potential hard-to-detect bugs that stem from wrong "
-                    f"wiring of model inputs, {self.__class__.__name__} "
+                    f"wiring of model inputs, {cls.__name__} "
                     f"is currently restricted for use with parameters that have "
                     f"a one-dimensional computational representation or "
                     f"{CustomDiscreteParameter.__name__}."

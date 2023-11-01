@@ -64,7 +64,7 @@ model.fit(train_x, train_y)
 
 #### Convert model to onnx
 
-# Need the option to return standard devication
+# Need the option to return standard deviation
 options = {type(model): {"return_std": True}}
 
 # Specify what the input name is
