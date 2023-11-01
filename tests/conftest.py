@@ -1,11 +1,14 @@
 """PyTest configuration."""
-import os
+from __future__ import annotations
 
-from typing import List
+import os
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
 import pytest
+import torch
+
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
@@ -26,20 +29,21 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.surrogate import GaussianProcessSurrogate
+from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget, Objective
 from baybe.utils import add_fake_results, add_parameter_noise
-
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
 if _CHEM_INSTALLED:
     from baybe.parameters import SUBSTANCE_ENCODINGS, SubstanceParameter
+
+if _ONNX_INSTALLED:
+    from baybe.surrogate import CustomONNXSurrogate
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
@@ -169,6 +173,7 @@ def fixture_parameters(
     parameter_names: List[str], mock_substances, mock_categories, n_grid_points
 ):
     """Provides example parameters via specified names."""
+    # FIXME: n_grid_points causes duplicate test cases if the argument is not used
     valid_parameters = [
         CategoricalParameter(
             name="Categorical_1",
@@ -516,8 +521,10 @@ def fixture_default_acquisition_function():
 
 
 @pytest.fixture(name="surrogate_model")
-def fixture_default_surrogate_model():
+def fixture_default_surrogate_model(request, onnx_surrogate):
     """The default surrogate model to be used if not specified differently."""
+    if hasattr(request, "param") and request.param == "onnx":
+        return onnx_surrogate
     return GaussianProcessSurrogate()
 
 
@@ -608,6 +615,48 @@ def fixture_default_config():
             },""",
     )
     return cfg
+
+
+@pytest.fixture(name="onnx_str")
+def fixture_default_onnx_str() -> Union[bytes, None]:
+    """The default ONNX model string to be used if not specified differently."""
+    # TODO [19298]: There should be a cleaner way than returning None.
+    if not _ONNX_INSTALLED:
+        return None
+
+    from skl2onnx import convert_sklearn  # pylint: disable=import-outside-toplevel
+    from skl2onnx.common.data_types import (  # pylint: disable=import-outside-toplevel
+        FloatTensorType,
+    )
+    from sklearn.linear_model import (  # pylint: disable=import-outside-toplevel
+        BayesianRidge,
+    )
+
+    # Train sklearn model
+    train_x = torch.arange(10).view(-1, 1)
+    train_y = torch.arange(10).view(-1, 1)
+    model = BayesianRidge()
+    model.fit(train_x, train_y)
+
+    # Convert to ONNX string
+    input_dim = train_x.size(dim=1)
+    onnx_input_name = "input"
+    initial_types = [(onnx_input_name, FloatTensorType([None, input_dim]))]
+    options = {type(model): {"return_std": True}}
+    binary = convert_sklearn(
+        model, initial_types=initial_types, options=options
+    ).SerializeToString()
+
+    return binary
+
+
+@pytest.fixture(name="onnx_surrogate")
+def fixture_default_onnx_surrogate(onnx_str) -> Union["CustomONNXSurrogate", None]:
+    """The default ONNX model to be used if not specified differently."""
+    # TODO [19298]: There should be a cleaner way than returning None.
+    if not _ONNX_INSTALLED:
+        return None
+    return CustomONNXSurrogate(onnx_input_name="input", onnx_str=onnx_str)
 
 
 # Reusables

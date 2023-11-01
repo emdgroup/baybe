@@ -43,11 +43,17 @@ chem = [
     "mordred>=1.2.0",
 ]
 
+onnx = [
+    "onnxruntime>=1.15.1",
+    "skl2onnx>=1.15.0",
+]
+
 dev = [
     "baybe[chem]",
     "baybe[docs]",
     "baybe[examples]",
     "baybe[lint]",
+    "baybe[onnx]",
     "baybe[simulation]",
     "baybe[telemetry]",
     "baybe[test]",

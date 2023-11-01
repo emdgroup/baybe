@@ -10,8 +10,9 @@ from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type
 
 import cattrs
 import numpy as np
+
 import torch
-from attrs import define, field
+from attrs import define, field, validators
 from botorch.fit import fit_gpytorch_mll_torch
 from botorch.models import SingleTaskGP
 from botorch.models.transforms.input import Normalize
@@ -26,9 +27,30 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import ARDRegression
 from torch import Tensor
 
+from baybe.exceptions import ModelParamsNotSupportedError
+from baybe.parameters import (
+    CategoricalParameter,
+    CustomDiscreteParameter,
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+    TaskParameter,
+)
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import get_subclasses, SerialMixin, unstructure_base
+from baybe.utils import (
+    DTypeFloatONNX,
+    DTypeFloatTorch,
+    get_subclasses,
+    SerialMixin,
+    unstructure_base,
+)
+
+try:
+    import onnxruntime as ort
+
+    _ONNX_INSTALLED = True
+except ImportError:
+    _ONNX_INSTALLED = False
 
 # Use float64 (which is recommended at least for BoTorch models)
 _DTYPE = torch.float64
@@ -36,7 +58,24 @@ _DTYPE = torch.float64
 # Define constants
 _MIN_TARGET_STD = 1e-6
 _MIN_VARIANCE = 1e-6
-_WRAPPER_MODELS = ("SplitModel", "ScaledModel")
+_WRAPPER_MODELS = (
+    "SplitModel",
+    "ScaledModel",
+    "CustomArchitectureSurrogate",
+    "CustomONNXSurrogate",
+)
+
+_ONNX_ENCODING = "latin-1"
+"""Constant signifying the encoding for onnx byte strings in pretrained models.
+
+NOTE: This encoding is selected by choice for ONNX byte strings.
+This is not a requirement from ONNX but simply for the JSON format.
+The byte string from ONNX `.SerializeToString()` method has unknown encoding,
+which results in UnicodeDecodeError when using `.decode('utf-8')`.
+The use of latin-1 ensures there are no loss from the conversion of
+bytes to string and back, since the specification is a bijection between
+0-255 and the character set.
+"""
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
@@ -76,16 +115,41 @@ def _prepare_targets(y: Tensor) -> Tensor:
     return y.to(_DTYPE)
 
 
-def _get_model_params_validator(model_init: Callable) -> Callable:
-    """Construct a validator based on the model class."""
+def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callable:
+    """Construct a validator based on the model class.
 
-    def validate_model_params(obj, _, model_params: dict) -> None:
+    Args:
+        model_init: The init method for the model.
+
+    Returns:
+        A validator function to validate parameters.
+    """
+
+    def validate_model_params(  # noqa: DOC101, DOC103
+        obj: Any, _: Any, model_params: dict
+    ) -> None:
+        """Validates the model params attribute of an object.
+
+        Raises:
+            ValueError: When model params are given for non-supported objects.
+            ValueError: When surrogate is not recognized (no valid model_init).
+            ValueError: When invalid params are given for a model.
+        """
         # Get model class name
         model = obj.__class__.__name__
 
+        if not model_params:
+            return
+
         # GP does not support additional model params
-        if "GaussianProcess" in model and model_params:
+        # Neither does custom models
+        if "GaussianProcess" in model or "Custom" in model:
             raise ValueError(f"{model} does not support model params.")
+
+        if not model_init:
+            raise ValueError(
+                f"Cannot validate model params for unrecognized Surrogate: {model}"
+            )
 
         # Invalid params
         invalid_params = ", ".join(
@@ -100,6 +164,57 @@ def _get_model_params_validator(model_init: Callable) -> Callable:
             raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
 
     return validate_model_params
+
+
+def _validate_custom_arch_cls(model_cls: type) -> None:
+    """Validates a custom architecture to have the correct attributes.
+
+    Args:
+        model_cls: The user defined model class.
+
+    Raises:
+        ValueError: When model_cls does not have _fit or _posterior.
+        ValueError: When _fit or _posterior is not a callable method.
+        ValueError: When _fit does not have the required signature.
+        ValueError: When _posterior does not have the required signature.
+    """
+    # Methods must exist
+    if not (hasattr(model_cls, "_fit") and hasattr(model_cls, "_posterior")):
+        raise ValueError(
+            "`_fit` and a `_posterior` must exist for custom architectures"
+        )
+
+    fit = model_cls._fit  # pylint: disable=protected-access
+    posterior = model_cls._posterior  # pylint: disable=protected-access
+
+    # They must be methods
+    if not (callable(fit) and callable(posterior)):
+        raise ValueError(
+            "`_fit` and a `_posterior` must be methods for custom architectures"
+        )
+
+    # Methods must have the correct arguments
+    params = fit.__code__.co_varnames[: fit.__code__.co_argcount]
+
+    if (
+        params
+        != Surrogate._fit.__code__.co_varnames  # pylint: disable=protected-access
+    ):
+        raise ValueError(
+            "Invalid args in `_fit` method definition for custom architecture. "
+            "Please refer to Surrogate._fit for the required function signature."
+        )
+
+    params = posterior.__code__.co_varnames[: posterior.__code__.co_argcount]
+
+    if (
+        params
+        != Surrogate._posterior.__code__.co_varnames  # pylint: disable=protected-access
+    ):
+        raise ValueError(
+            "Invalid args in `_posterior` method definition for custom architecture. "
+            "Please refer to Surrogate._posterior for the required function signature."
+        )
 
 
 def catch_constant_targets(model_cls: Type["Surrogate"]):
@@ -250,6 +365,85 @@ def scale_model(model_cls: Type["Surrogate"]):
     # assign the docstring of the class.
     ScaledModel.__doc__ = model_cls.__doc__
     return ScaledModel
+
+
+def register_custom_architecture(
+    joint_posterior_attr: bool = False,
+    constant_target_catching: bool = True,
+    batchify_posterior: bool = True,
+) -> Callable:
+    """Wraps a given custom model architecture class into a ```Surrogate```.
+
+    Args:
+        joint_posterior_attr: Boolean indicating if the model returns a posterior
+            distribution jointly across candidates or on individual points.
+        constant_target_catching: Boolean indicating if the model cannot handle
+            constant target values and needs the @catch_constant_targets decorator.
+        batchify_posterior: Boolean indicating if the model is incompatible
+            with t- and q-batching and needs the @batchify decorator for its posterior.
+
+    Returns:
+        A function that wraps around a model class based on the specifications.
+    """
+
+    def construct_custom_architecture(model_cls):
+        """Constructs a surrogate class wrapped around the custom class."""
+        _validate_custom_arch_cls(model_cls)
+
+        class CustomArchitectureSurrogate(Surrogate):
+            """Wraps around a custom architecture class."""
+
+            joint_posterior: ClassVar[bool] = joint_posterior_attr
+            supports_transfer_learning: ClassVar[bool] = False
+
+            def __init__(self, *args, **kwargs):
+                self.model = model_cls(*args, **kwargs)
+
+            def _fit(
+                self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+            ) -> None:
+                return self.model._fit(  # pylint: disable=protected-access
+                    searchspace, train_x, train_y
+                )
+
+            def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+                return self.model._posterior(  # pylint: disable=protected-access
+                    candidates
+                )
+
+            def __get_attribute__(self, attr):
+                """Accesses the attributes of the class instance if available.
+
+                If the attributes are not available,
+                it uses the attributes of the internal model instance.
+                """
+                # Try to retrieve the attribute in the class
+                try:
+                    val = super().__getattribute__(attr)
+                except AttributeError:
+                    pass
+                else:
+                    return val
+
+                # If the attribute is not overwritten, use that of the internal model
+                return self.model.__getattribute__(attr)
+
+        # Catch constant targets if needed
+        cls = (
+            catch_constant_targets(CustomArchitectureSurrogate)
+            if constant_target_catching
+            else CustomArchitectureSurrogate
+        )
+
+        # batchify posterior if needed
+        if batchify_posterior:
+            cls._posterior = batchify(  # pylint: disable=protected-access
+                cls._posterior  # pylint: disable=protected-access
+            )
+
+        return cls
+
+    return construct_custom_architecture
 
 
 def batchify(
@@ -450,7 +644,6 @@ class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
@@ -617,7 +810,6 @@ class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
@@ -669,7 +861,6 @@ class NGBoostSurrogate(Surrogate):
     """A natural-gradient-boosting surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
@@ -714,7 +905,6 @@ class BayesianLinearSurrogate(Surrogate):
     """A Bayesian linear regression surrogate model.
 
     Args:
-        _model: The actual model.
         model_params: Optional model parameters.
     """
 
@@ -746,6 +936,127 @@ class BayesianLinearSurrogate(Surrogate):
         # See base class.
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
+
+
+if _ONNX_INSTALLED:
+
+    @define(kw_only=True)
+    class CustomONNXSurrogate(Surrogate):
+        """A wrapper class for custom pretrained surrogate models.
+
+        Args:
+            onnx_input_name: The input name used for constructing the ONNX str.
+            onnx_str: The ONNX byte str representing the model.
+        """
+
+        # Class variables
+        joint_posterior: ClassVar[bool] = False
+        supports_transfer_learning: ClassVar[bool] = False
+
+        # Object variables
+        onnx_input_name: str = field(validator=validators.instance_of(str))
+        onnx_str: bytes = field(validator=validators.instance_of(bytes))
+        _model: ort.InferenceSession = field(init=False, eq=False)
+
+        @_model.default
+        def default_model(self) -> ort.InferenceSession:
+            """Instantiate the ONNX inference session."""
+            try:
+                return ort.InferenceSession(self.onnx_str)
+            except Exception as exc:
+                raise ValueError("Invalid ONNX string") from exc
+
+        def __attrs_post_init__(self) -> None:
+            # TODO: This is a temporary workaround to avoid silent errors when users
+            #   provide model parameters to this class.
+            if self.model_params or not isinstance(self.model_params, dict):
+                raise ModelParamsNotSupportedError()
+
+        @batchify
+        def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+            model_inputs = {
+                self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)
+            }
+            results = self._model.run(None, model_inputs)
+
+            # IMPROVE: At the moment, we assume that the second model output contains
+            #   standard deviations. Currently, most available ONNX converters care
+            #   about the mean only and it's not clear how this will be handled in the
+            #   future. Once there are more choices available, this should be revisited.
+            return (
+                torch.from_numpy(results[0]).to(DTypeFloatTorch),
+                torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
+            )
+
+        def _fit(
+            self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+        ) -> None:
+            # TODO: This method actually needs to raise a NotImplementedError because
+            #   ONNX surrogate models cannot be retrained. However, this would currently
+            #   break the code since `BayesianRecommender` assumes that surrogates
+            #   can be trained and attempts to do so for each new DOE iteration.
+            #   Therefore, a refactoring is required in order to properly incorporate
+            #   "static" surrogates and account for them in the exposed APIs.
+            pass
+
+        @classmethod
+        def validate_compatibility(cls, searchspace: SearchSpace) -> None:
+            """Validate if the class is compatible with a given search space.
+
+            Args:
+                searchspace: The search space to be tested for compatibility.
+
+            Raises:
+                TypeError: If the search space is incompatible with the class.
+            """
+            if not all(
+                isinstance(
+                    p,
+                    (
+                        NumericalContinuousParameter,
+                        NumericalDiscreteParameter,
+                        TaskParameter,
+                    ),
+                )
+                or (isinstance(p, CustomDiscreteParameter) and not p.decorrelate)
+                or (isinstance(p, CategoricalParameter) and p.encoding == "INT")
+                for p in searchspace.parameters
+            ):
+                raise TypeError(
+                    f"To prevent potential hard-to-detect bugs that stem from wrong "
+                    f"wiring of model inputs, {cls.__name__} "
+                    f"is currently restricted for use with parameters that have "
+                    f"a one-dimensional computational representation or "
+                    f"{CustomDiscreteParameter.__name__}."
+                )
+
+
+def _decode_onnx_str(raw_unstructure_hook):
+    """Decodes ONNX string for serialization purposes."""
+
+    def wrapper(obj):
+
+        dict_ = raw_unstructure_hook(obj)
+        if "onnx_str" in dict_:
+            dict_["onnx_str"] = dict_["onnx_str"].decode(_ONNX_ENCODING)
+
+        return dict_
+
+    return wrapper
+
+
+def _block_serialize_custom_architecture(raw_unstructure_hook):
+    """Raises error if attempt to serialize a custom architecture surrogate."""
+
+    def wrapper(obj):
+        if obj.__class__.__name__ == "CustomArchitectureSurrogate":
+            raise NotImplementedError(
+                "Custom Architecture Surrogate Serialization is not supported"
+            )
+
+        return raw_unstructure_hook(obj)
+
+    return wrapper
 
 
 def _remove_model(raw_unstructure_hook):
@@ -784,11 +1095,21 @@ def _structure_surrogate(val, _):
     if cls is None:
         raise ValueError(f"Unknown subclass {_type}.")
 
+    # NOTE:
+    # This is a workaround for onnx str type being `str` or `bytes`
+    onnx_str = val.get("onnx_str", None)
+    if onnx_str and isinstance(onnx_str, str):
+        val["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
+
     return cattrs.structure_attrs_fromdict(val, cls)
 
 
 def get_available_surrogates() -> List[Type[Surrogate]]:
-    """Lists all available surrogate models."""
+    """Lists all available surrogate models.
+
+    Returns:
+        A list of available surrogate classes.
+    """
     # List available names
     available_names = {
         cl.__name__
@@ -811,9 +1132,15 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
 
 # Register (un-)structure hooks
-cattrs.register_unstructure_hook(Surrogate, _remove_model(unstructure_base))
+cattrs.register_unstructure_hook(
+    Surrogate,
+    _decode_onnx_str(
+        _remove_model(_block_serialize_custom_architecture(unstructure_base))
+    ),
+)
 cattrs.register_structure_hook(Surrogate, _structure_surrogate)
 
 # Related to [15436]
 gc.collect()
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# pylint: disable=too-many-lines

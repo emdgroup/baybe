@@ -90,6 +90,7 @@ The available groups are:
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
+- `onnx`: Required for using custom surrogate models in ONNX format.
 - `simulation`: Enabling the `simulation` module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`.

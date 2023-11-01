@@ -28,3 +28,9 @@ class EmptySearchSpaceError(Exception):
 
 class NothingToSimulateError(Exception):
     """There is nothing to simulate because there are no testable configurations."""
+
+
+# TODO: This exception class is needed only temporarily in `CustomONNXSurrogate` until
+#   the use of `model_params` has be refactored.
+class ModelParamsNotSupportedError(Exception):
+    """The class does not support any model parameters."""
