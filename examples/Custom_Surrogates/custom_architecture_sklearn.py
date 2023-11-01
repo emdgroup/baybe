@@ -5,7 +5,7 @@
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 #### Necessary imports
 
@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 import numpy as np
 import torch
 
-from baybe.core import BayBE
+from baybe.core import Campaign
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -119,9 +119,9 @@ parameters = [
 ]
 
 
-#### Run BayBE iterations with custom surrogate
-# Create BayBE Object
-baybe_obj = BayBE(
+#### Run DOE iterations with custom surrogate
+# Create campaign
+campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
@@ -135,20 +135,20 @@ baybe_obj = BayBE(
 )
 
 # Let's do a first round of recommendation
-recommendation = baybe_obj.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_quantity=2)
 
-print("Recommendation from baybe object:")
+print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
-add_fake_results(recommendation, baybe_obj)
-baybe_obj.add_measurements(recommendation)
+add_fake_results(recommendation, campaign)
+campaign.add_measurements(recommendation)
 
 # Do another round of recommendations
-recommendation = baybe_obj.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_quantity=2)
 
 # Print second round of recommendations
-print("Recommendation from baybe object:")
+print("Recommendation from campaign:")
 print(recommendation)
 
 print()
@@ -158,6 +158,6 @@ print()
 
 # Serialization of custom models is not supported
 try:
-    baybe_obj.to_json()
+    campaign.to_json()
 except RuntimeError as e:
     print(f"Serialization Error Message: {e}")
