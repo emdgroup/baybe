@@ -24,7 +24,7 @@ from baybe.parameters import (
 from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import Strategy
-from baybe.surrogate import register_custom_architecture
+from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 from torch import nn, Tensor
@@ -105,7 +105,7 @@ class NeuralNetDropoutSurrogate:
         self.model: Optional[nn.Module] = None
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See :class:`baybe.surrogate.Surrogate`."""
+        """See :class:`baybe.surrogates.Surrogate`."""
         self.model = self.model.train()  # keep dropout
         # Convert input from double to float
         candidates = candidates.float()
@@ -121,7 +121,7 @@ class NeuralNetDropoutSurrogate:
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See :class:`baybe.surrogate.Surrogate`."""
+        """See :class:`baybe.surrogates.Surrogate`."""
         # Initialize Model
         self.model = NeuralNetDropout()
 

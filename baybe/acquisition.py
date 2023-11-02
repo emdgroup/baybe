@@ -1,4 +1,5 @@
 """Adapter for making BoTorch's acquisition functions work with other models."""
+
 from inspect import signature
 from typing import Any, Callable, List, Optional, Type
 
@@ -9,7 +10,7 @@ from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from torch import cat, squeeze, Tensor
 
-from baybe.surrogate import Surrogate
+from baybe.surrogates import Surrogate
 
 
 def debotorchize(acqf_cls: Type[AcquisitionFunction]):

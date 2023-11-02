@@ -4,7 +4,7 @@ import runpy
 from pathlib import Path
 
 import pytest
-from baybe.surrogate import _ONNX_INSTALLED
+from baybe.surrogates import _ONNX_INSTALLED
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED

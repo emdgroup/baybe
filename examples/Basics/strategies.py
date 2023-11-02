@@ -23,7 +23,7 @@ from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import Strategy
-from baybe.surrogate import (
+from baybe.surrogates import (
     BayesianLinearSurrogate,
     GaussianProcessSurrogate,
     NGBoostSurrogate,
@@ -54,7 +54,7 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # The surrogate model is then used by the acquisition function to make recommendations.
 
 # The following are some available basic surrogates
-# Use `baybe.surrogate.get_available_surrogates()` for a complete list
+# Use `baybe.surrogates.get_available_surrogates()` for a complete list
 available_surrogate_models = [
     GaussianProcessSurrogate(),
     RandomForestSurrogate(),

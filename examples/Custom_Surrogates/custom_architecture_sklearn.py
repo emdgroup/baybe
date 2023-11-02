@@ -24,7 +24,7 @@ from baybe.parameters import (
 from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import Strategy
-from baybe.surrogate import register_custom_architecture
+from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 from sklearn.base import BaseEstimator, RegressorMixin
@@ -72,11 +72,11 @@ class StackingRegressorSurrogate:
         self.model: Optional[StackingRegressor] = None
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        """See :class:`baybe.surrogate.Surrogate`."""
+        """See :class:`baybe.surrogates.Surrogate`."""
         return self.model.predict(candidates)
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """See :class:`baybe.surrogate.Surrogate`."""
+        """See :class:`baybe.surrogates.Surrogate`."""
         estimators = [
             ("rf", RandomForestRegressor()),
             ("gb", GradientBoostingRegressor()),

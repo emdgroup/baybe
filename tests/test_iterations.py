@@ -12,7 +12,7 @@ from baybe.recommenders.bayesian import (
 )
 
 from baybe.searchspace import SearchSpaceType
-from baybe.surrogate import get_available_surrogates
+from baybe.surrogates import get_available_surrogates
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations

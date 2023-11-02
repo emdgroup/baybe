@@ -18,7 +18,7 @@ from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import Strategy
-from baybe.surrogate import CustomONNXSurrogate
+from baybe.surrogates import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, to_tensor
 from skl2onnx import convert_sklearn

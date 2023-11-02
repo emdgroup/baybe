@@ -16,7 +16,7 @@ import torch
 from baybe.acquisition import debotorchize
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.surrogate import get_available_surrogates
+from baybe.surrogates import get_available_surrogates
 from botorch.acquisition import qExpectedImprovement
 from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial

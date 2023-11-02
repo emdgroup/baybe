@@ -34,7 +34,7 @@ from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies.strategy import Strategy
-from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate
+from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, add_parameter_noise
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
@@ -44,7 +44,7 @@ if _CHEM_INSTALLED:
     from baybe.parameters import SUBSTANCE_ENCODINGS, SubstanceParameter
 
 if _ONNX_INSTALLED:
-    from baybe.surrogate import CustomONNXSurrogate
+    from baybe.surrogates import CustomONNXSurrogate
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
