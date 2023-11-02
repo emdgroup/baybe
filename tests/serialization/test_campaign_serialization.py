@@ -3,7 +3,7 @@
 
 import pytest
 
-from baybe.core import Campaign
+from baybe.campaign import Campaign
 from cattrs import ClassValidationError
 
 

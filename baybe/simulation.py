@@ -47,7 +47,7 @@ except ImportError as ex:
         "baybe[simulation]`"
     ) from ex
 
-from baybe.core import Campaign
+from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType

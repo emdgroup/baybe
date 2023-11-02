@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 import torch
 
+from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
@@ -22,7 +23,6 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
-from baybe.core import Campaign
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,

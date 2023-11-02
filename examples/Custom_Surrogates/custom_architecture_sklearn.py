@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 import numpy as np
 import torch
 
-from baybe.core import Campaign
+from baybe.campaign import Campaign
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,

@@ -1,4 +1,4 @@
-"""Core functionality of BayBE. Main point of interaction via Python."""
+"""Functionality for managing DOE campaigns. Main point of interaction via Python."""
 
 from __future__ import annotations
 
@@ -166,7 +166,7 @@ class Campaign(SerialMixin):
 
         Args:
             data: The data to be added (with filled values for targets). Preferably
-                created via :func:`baybe.core.Campaign.recommend`.
+                created via :func:`baybe.campaign.Campaign.recommend`.
 
         Raises:
             ValueError: If one of the targets has missing values or NaNs in the provided

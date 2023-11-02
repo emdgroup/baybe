@@ -13,7 +13,7 @@ from torch import Tensor
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
-    from baybe.core import Campaign
+    from baybe.campaign import Campaign
     from baybe.parameters import Parameter
 
 # Logging
@@ -61,7 +61,7 @@ def add_fake_results(
 
     Args:
         data: Output of the ```recommend``` function of a ```Campaign```, see
-            :func:`baybe.core.Campaign.recommend`.
+            :func:`baybe.campaign.Campaign.recommend`.
         campaign: The corresponding campaign, providing configuration, targets, etc.
         good_reference_values: A dictionary containing parameter names (= dict keys) and
             respective parameter values (= dict values) that specify what will be
@@ -199,7 +199,7 @@ def add_parameter_noise(
 
     Args:
         data: Output of the ```recommend``` function of a ```Campaign``` object, see
-            :func:`baybe.core.Campaign.recommend`.
+            :func:`baybe.campaign.Campaign.recommend`.
         parameters: The parameters for which the values shall be corrupted.
         noise_type: Defines whether the noise should be additive or multiplicative.
         noise_level: Level/magnitude of the noise. Must be provided as numerical value

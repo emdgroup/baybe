@@ -773,8 +773,8 @@ def _structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
 def _validate_searchspace_from_config(specs: dict, _) -> None:
     """A validation hook that does not create the search space.
 
-    Similar to :func:`baybe.core.structure_searchspace_from_config` but without the
-    actual search space creation step, thus intended for validation purposes only.
+    Similar to :func:`baybe.searchspace.structure_searchspace_from_config` but without
+    the actual search space creation step, thus intended for validation purposes only.
     It explicitly validates the given parameters and constraints since invalid
     specifications would be otherwise noticed only later during search space creation.
     """

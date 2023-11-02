@@ -6,7 +6,7 @@ This script does some calls so that the results can be viewed on AWS CloudWatch.
 import os
 from random import randint
 
-from baybe.core import Campaign
+from baybe.campaign import Campaign
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender

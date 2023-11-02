@@ -1,6 +1,6 @@
 """BayBE — A Bayesian Back End for Design of Experiments."""
 
-from baybe.core import Campaign  # pylint: disable=wrong-import-position
+from baybe.campaign import Campaign  # pylint: disable=wrong-import-position
 
 
 def infer_version() -> str:  # pragma: no cover

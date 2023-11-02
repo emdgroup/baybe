@@ -47,7 +47,7 @@ Name                                 Stmts   Miss  Cover
 --------------------------------------------------------
 baybe/acquisition.py                    58      0   100%
 baybe/constraints.py                   170     10    94%
-baybe/core.py                          111      8    93%
+baybe/campaign.py                      111      8    93%
 ...
 --------------------------------------------------------
 TOTAL                                 1941    214    89%

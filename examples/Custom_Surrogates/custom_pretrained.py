@@ -12,7 +12,7 @@
 import numpy as np
 import torch
 
-from baybe.core import Campaign
+from baybe.campaign import Campaign
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy

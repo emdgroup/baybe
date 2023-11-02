@@ -2,7 +2,7 @@
 
 import pytest
 
-from baybe.core import Campaign
+from baybe.campaign import Campaign
 from baybe.searchspace import SearchSpaceType
 from baybe.strategies.bayesian import (
     BayesianRecommender,
