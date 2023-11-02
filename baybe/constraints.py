@@ -1,13 +1,10 @@
 """Functionality for parameter constraints."""
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
 
 import operator as ops
 from abc import ABC, abstractmethod
 from functools import reduce
 from typing import Any, Callable, ClassVar, List, Optional, Tuple, Union
 
-import cattrs
 import numpy as np
 import pandas as pd
 import torch
@@ -21,10 +18,11 @@ from baybe.parameters import NumericalContinuousParameter, Parameter
 from baybe.utils import (
     DTypeFloatTorch,
     Dummy,
-    get_base_unstructure_hook,
+    get_base_structure_hook,
     SerialMixin,
     unstructure_base,
 )
+from baybe.utils.serialization import converter
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
@@ -338,19 +336,16 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     Args:
         conditions: The list of individual conditions.
         affected_parameters: The parameters affected by the individual conditions.
-        permutation_invariant: Flag that indicates whether the affected parameters are
-            permutation invariant. This should not be changed by the user but by other
-            constraints reusing this class.
     """
 
     # object variables
     conditions: List[Condition] = field()
     affected_parameters: List[List[str]] = field()
-    # TODO: This should be init=False, but would require changing the unstructuring
-    #   logic. Let's wait for the next cattrs release with the following PR to be merged
-    #   and then init=False attributes can be handled more elegantly:
-    #   https://github.com/python-attrs/cattrs/pull/395/commits
-    permutation_invariant: bool = field(default=False)
+
+    # for internal use only
+    permutation_invariant: bool = field(default=False, init=False)
+    """Flag that indicates whether the affected parameters are permutation invariant.
+    This should not be changed by the user but by other constraints using the class."""
 
     @affected_parameters.validator
     def _validate_affected_parameters(  # noqa: DOC101, DOC103
@@ -604,11 +599,11 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
 )
 
 
-# Register structure / unstructure hooks
-cattrs.register_unstructure_hook(Condition, unstructure_base)
-cattrs.register_structure_hook(Condition, get_base_unstructure_hook(Condition))
-cattrs.register_unstructure_hook(Constraint, unstructure_base)
-cattrs.register_structure_hook(Constraint, get_base_unstructure_hook(Constraint))
+# Register (un-)structure hooks
+converter.register_unstructure_hook(Condition, unstructure_base)
+converter.register_structure_hook(Condition, get_base_structure_hook(Condition))
+converter.register_unstructure_hook(Constraint, unstructure_base)
+converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
 
 
 def _custom_constraint_hook(*_) -> None:
@@ -616,8 +611,8 @@ def _custom_constraint_hook(*_) -> None:
     raise NotImplementedError("CustomConstraint does not support de-/serialization.")
 
 
-cattrs.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
-cattrs.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
+converter.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
+converter.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
 
 
 def _validate_constraints(  # noqa: DOC101, DOC103

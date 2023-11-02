@@ -1,21 +1,20 @@
 """Core functionality of BayBE. Main point of interaction via Python."""
 
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
+from __future__ import annotations
 
-import base64
 import json
-from io import BytesIO
-from typing import List
+from typing import Any, List
 
-import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
 
-from baybe.constraints import _validate_constraints, Constraint
-from baybe.parameters import _validate_parameters, Parameter
-from baybe.searchspace import SearchSpace
+from baybe.parameters import Parameter
+from baybe.searchspace import (
+    _structure_searchspace_from_config,
+    _validate_searchspace_from_config,
+    SearchSpace,
+)
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget, Objective
 from baybe.telemetry import (
@@ -23,72 +22,20 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
-from baybe.utils import eq_dataframe, SerialMixin
+from baybe.utils import eq_dataframe
+from baybe.utils.serialization import converter, SerialMixin
 
+# Converter for config deserialization
+_config_converter = converter.copy()
+_config_converter.register_structure_hook(
+    SearchSpace, _structure_searchspace_from_config
+)
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# TODO[12356]: There should be a way to organize several converters, instead of
-#   registering the hooks with the global converter. The global converter is currently
-#   used so that all "basic" hooks (like DataFrame serializers) can be used at all
-#   hierarchy levels. Ideally, however, each module would define its own converters for
-#   its classes that can then be flexibly combined at the next higher level of the
-#   module hierarchy. For example, there could be several "Parameter converters" that
-#   implement different sorts of serialization logic. For the search space, one could
-#   then implement several serialization converters as well that arbitrarily combine
-#   parameter and constraint hooks/converters.
-
-
-def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
-    """Hook for de-serializing a DataFrame."""
-    buffer = BytesIO()
-    buffer.write(base64.b64decode(string.encode("utf-8")))
-    return pd.read_parquet(buffer)
-
-
-def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
-    """Hook for serializing a DataFrame."""
-    return base64.b64encode(df.to_parquet()).decode("utf-8")
-
-
-cattrs.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
-cattrs.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
-
-
-def _searchspace_creation_hook(specs: dict, _) -> SearchSpace:
-    """A structuring hook that assembles the search space."""
-    # A structuring hook that assembles the search space using the alternative `create`
-    # constructor, which allows to deserialize search space specifications that are
-    # provided in a user-friendly format (i.e. via parameters and constraints).
-    # IMPROVE: Instead of defining the partial structurings here in the hook,
-    #   on *could* use a dedicated "BayBEConfig" class
-    parameters = cattrs.structure(specs["parameters"], List[Parameter])
-    constraints = specs.get("constraints", None)
-    if constraints:
-        constraints = cattrs.structure(specs["constraints"], List[Constraint])
-    return SearchSpace.from_product(parameters, constraints)
-
-
-def _searchspace_validation_hook(specs: dict, _) -> None:
-    """A validation hook that does not create the search space."""
-    # Similar to `searchspace_creation_hook` but without the actual search space
-    # creation step, thus intended for validation purposes only. Additionally,
-    # explicitly asserts uniqueness of parameter names, since duplicates would only be
-    # noticed during search space creation.
-    parameters = cattrs.structure(specs["parameters"], List[Parameter])
-    _validate_parameters(parameters)
-
-    constraints = specs.get("constraints", None)
-    if constraints:
-        constraints = cattrs.structure(specs["constraints"], List[Constraint])
-        _validate_constraints(constraints, parameters)
-
-
-_config_converter = cattrs.global_converter.copy()
-_config_converter.register_structure_hook(SearchSpace, _searchspace_creation_hook)
-
-_validation_converter = cattrs.global_converter.copy()
-_validation_converter.register_structure_hook(SearchSpace, _searchspace_validation_hook)
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Converter for config validation
+_validation_converter = converter.copy()
+_validation_converter.register_structure_hook(
+    SearchSpace, _validate_searchspace_from_config
+)
 
 
 @define
@@ -149,7 +96,7 @@ class BayBE(SerialMixin):
         return self.objective.transform(self.measurements_exp)
 
     @classmethod
-    def from_config(cls, config_json: str) -> "BayBE":
+    def from_config(cls, config_json: str) -> BayBE:
         """Create a BayBE object from a configuration JSON.
 
         Args:
@@ -252,10 +199,6 @@ class BayBE(SerialMixin):
         )
 
         # Read in measurements and add them to the database
-        # TODO: See if np.nan can be replaced with pd.NA once (de-)serialization is
-        #   in place. The current serializer set in the pydantic config does not support
-        #   pd.NA. Pandas' .to_json() can handle it but reading it back gives also
-        #   np.nan as result. Probably, the only way is a custom (de-)serializer.
         self.batches_done += 1
         to_insert = data.copy()
         to_insert["BatchNr"] = self.batches_done
@@ -318,3 +261,16 @@ class BayBE(SerialMixin):
         telemetry_record_value(TELEM_LABELS["BATCH_QUANTITY"], batch_quantity)
 
         return rec
+
+
+def _unstructure_with_version(obj: Any) -> dict:
+    """Add the package version to the created dictionary."""
+    from baybe import __version__  # pylint: disable=import-outside-toplevel
+
+    return {
+        **converter.unstructure_attrs_asdict(obj),
+        "version": __version__,
+    }
+
+
+converter.register_unstructure_hook(BayBE, _unstructure_with_version)

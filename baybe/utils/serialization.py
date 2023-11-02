@@ -1,13 +1,19 @@
 """Serialization utilities."""
-
+import base64
 import json
-from typing import Any, Callable, Type, TypeVar
+from io import BytesIO
+from typing import Any, Callable, Optional, Type, TypeVar
 
 import cattrs
+import pandas as pd
+from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 
 from baybe.utils import get_subclasses
 
 _T = TypeVar("_T")
+
+converter = cattrs.Converter()
+"""The default converter for (de-)serializing BayBE-related objects."""
 
 
 class SerialMixin:
@@ -19,7 +25,7 @@ class SerialMixin:
 
     def to_dict(self) -> dict:
         """Create an object's dictionary representation."""
-        return cattrs.unstructure(self)
+        return converter.unstructure(self)
 
     @classmethod
     def from_dict(cls: Type[_T], dictionary: dict) -> _T:
@@ -31,7 +37,7 @@ class SerialMixin:
         Returns:
             The reconstructed object.
         """
-        return cattrs.structure(dictionary, cls)
+        return converter.structure(dictionary, cls)
 
     def to_json(self) -> str:
         """Create an object's JSON representation.
@@ -54,39 +60,65 @@ class SerialMixin:
         return cls.from_dict(json.loads(string))
 
 
-def unstructure_base(base: Any) -> dict:
-    """Unstructures an object into a dictionary and adds an entry for the class name.
+def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
+    """Unstructure an object into a dictionary and adds an entry for the class name.
 
     Args:
         base: The object that should be unstructured.
+        overrides: An optional dictionary of cattrs-overrides for certain attributes.
 
     Returns:
         The unstructured dict with the additional entry.
     """
-    converter = cattrs.global_converter
+    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
+
+    fun = make_dict_unstructure_fn(base.__class__, converter, **(overrides or {}))
+    attrs_dict = fun(base)
     return {
         "type": base.__class__.__name__,
-        **converter.unstructure_attrs_asdict(base),
+        **attrs_dict,
     }
 
 
-def get_base_unstructure_hook(base: Type[_T]) -> Callable[[dict], _T]:
+def get_base_structure_hook(
+    base: Type[_T],
+    overrides: Optional[dict] = None,
+) -> Callable[[dict], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
     Provides the inverse operation to ```unstructure_base```.
 
     Args:
         base: The corresponding class
+        overrides: An optional dictionary of cattrs-overrides for certain attributes.
 
     Returns:
-        The hook
+        The hook.
     """
+    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
 
     def structure_base(val: dict, _) -> _T:
         _type = val["type"]
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
             raise ValueError(f"Unknown subclass {_type}.")
-        return cattrs.structure_attrs_fromdict(val, cls)
+        fun = make_dict_structure_fn(cls, converter, **(overrides or {}))
+        return fun(val, cls)
 
     return structure_base
+
+
+def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
+    """Hook for de-serializing a DataFrame."""
+    buffer = BytesIO()
+    buffer.write(base64.b64decode(string.encode("utf-8")))
+    return pd.read_parquet(buffer)
+
+
+def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
+    """Hook for serializing a DataFrame."""
+    return base64.b64encode(df.to_parquet()).decode("utf-8")
+
+
+converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
+converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)

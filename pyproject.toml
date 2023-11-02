@@ -13,7 +13,7 @@ requires-python =">=3.8.6"
 dependencies = [
     "attrs>=22.2.0",
     "botorch>=0.8.1",
-    "cattrs>=22.2.0",
+    "cattrs@git+https://github.com/python-attrs/cattrs.git@18b042fd025c0d7ad70241442976421cbc4e93d3",  # TODO: change once released
     "funcy>=1.17",
     "gpytorch>=1.9.1",
     "ngboost>=0.3.12",

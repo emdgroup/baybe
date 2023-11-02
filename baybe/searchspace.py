@@ -1,16 +1,16 @@
 """Functionality for managing search spaces."""
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
+
+from __future__ import annotations
 
 from enum import Enum
 from typing import Any, cast, Dict, List, Optional, Tuple
 
-import cattrs
 import numpy as np
 import pandas as pd
 import torch
 from attrs import define, field
 from botorch.utils.sampling import get_polytope_samples
+from cattrs.errors import IterableValidationError
 
 from baybe.constraints import (
     _validate_constraints,
@@ -33,6 +33,7 @@ from baybe.parameters import (
 )
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import (
+    converter,
     df_drop_single_value_columns,
     DTypeFloatTorch,
     eq_dataframe,
@@ -170,7 +171,7 @@ class SubspaceDiscrete:
         return self.exp_rep[task_param.name].isin(task_param.active_values)
 
     @classmethod
-    def empty(cls) -> "SubspaceDiscrete":
+    def empty(cls) -> SubspaceDiscrete:
         """Creates an empty discrete subspace."""
         return SubspaceDiscrete(
             parameters=[],
@@ -184,7 +185,7 @@ class SubspaceDiscrete:
         parameters: List[DiscreteParameter],
         constraints: Optional[List[DiscreteConstraint]] = None,
         empty_encoding: bool = False,
-    ) -> "SubspaceDiscrete":
+    ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.SearchSpace`."""
         # Store the input
         if constraints is None:
@@ -218,7 +219,7 @@ class SubspaceDiscrete:
         df: pd.DataFrame,
         parameters: Optional[List[Parameter]] = None,
         empty_encoding: bool = False,
-    ) -> "SubspaceDiscrete":
+    ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
 
         Args:
@@ -263,7 +264,7 @@ class SubspaceDiscrete:
                 values = series.drop_duplicates().values.tolist()
                 try:
                     param = NumericalDiscreteParameter(name=name, values=values)
-                except TypeError:
+                except IterableValidationError:
                     param = CategoricalParameter(name=name, values=values)
                 parameters.append(param)
 
@@ -414,12 +415,12 @@ class SubspaceContinuous:
     )
 
     @classmethod
-    def empty(cls) -> "SubspaceContinuous":
+    def empty(cls) -> SubspaceContinuous:
         """Create an empty continuous subspace."""
         return SubspaceContinuous([])
 
     @classmethod
-    def from_bounds(cls, bounds: pd.DataFrame) -> "SubspaceContinuous":
+    def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
         """Create a hyperrectangle-shaped continuous subspace with given bounds.
 
         Args:
@@ -441,7 +442,7 @@ class SubspaceContinuous:
         return SubspaceContinuous(parameters)
 
     @classmethod
-    def from_dataframe(cls, df: pd.DataFrame) -> "SubspaceContinuous":
+    def from_dataframe(cls, df: pd.DataFrame) -> SubspaceContinuous:
         """Create a hyperractangle-shaped continuous subspace from a dataframe.
 
         More precisely, create the smallest axis-aligned hyperrectangle-shaped
@@ -591,7 +592,7 @@ class SearchSpace(SerialMixin):
         parameters: List[Parameter],
         constraints: Optional[List[Constraint]] = None,
         empty_encoding: bool = False,
-    ) -> "SearchSpace":
+    ) -> SearchSpace:
         """Create a search space from a cartesian product.
 
         In the search space, optional subsequent constraints are applied.
@@ -755,13 +756,32 @@ class SearchSpace(SerialMixin):
         return comp_rep
 
 
-# TODO: The following structuring hook is a workaround for field with init=False.
-#   https://github.com/python-attrs/cattrs/issues/40
+def _structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
+    """A structuring hook that assembles the search space from "config" format.
+
+    It uses the alternative :func:`baybe.searchspace.SearchSpace.from_product`
+    constructor, which allows to deserialize search space specifications that are
+    provided in a user-friendly format (i.e. via parameters and constraints).
+    """
+    parameters = converter.structure(specs["parameters"], List[Parameter])
+    constraints = specs.get("constraints", None)
+    if constraints:
+        constraints = converter.structure(specs["constraints"], List[Constraint])
+    return SearchSpace.from_product(parameters, constraints)
 
 
-def _structure_hook(dict_, type_):
-    """Structuring hook for SubspaceDiscrete."""
-    return cattrs.structure_attrs_fromdict(dict_, type_)
+def _validate_searchspace_from_config(specs: dict, _) -> None:
+    """A validation hook that does not create the search space.
 
+    Similar to :func:`baybe.core.structure_searchspace_from_config` but without the
+    actual search space creation step, thus intended for validation purposes only.
+    It explicitly validates the given parameters and constraints since invalid
+    specifications would be otherwise noticed only later during search space creation.
+    """
+    parameters = converter.structure(specs["parameters"], List[Parameter])
+    _validate_parameters(parameters)
 
-cattrs.register_structure_hook(SubspaceDiscrete, _structure_hook)
+    constraints = specs.get("constraints", None)
+    if constraints:
+        constraints = converter.structure(specs["constraints"], List[Constraint])
+        _validate_constraints(constraints, parameters)

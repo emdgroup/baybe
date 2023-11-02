@@ -1,7 +1,7 @@
 # Contributing to the development of BayBE
 
 This overview describes the basic aspects that are relevant when developing code for BayBE.
-Note that this is stil **under development**.
+Note that this is still **under development**.
 
 ## Writing docstrings
 
@@ -32,3 +32,4 @@ The infrastructure used to host the current documentation as well as the design 
     * If necessary, a validator's docstring can contain a more detailed additional description.
     * Validators should **not** have an `Args:` section. 
     * Since these guidelines raise errors for  [pydoclint](https://github.com/jsh9/pydoclint), add `# noqa: DOC101, DOC103` to the same line as the `def` keyword of the declared validator to disable the errors.
+- For custom [cattrs](https://catt.rs/) (un-)structuring hooks, a one-line docstring is sufficient.

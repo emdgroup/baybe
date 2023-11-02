@@ -1,6 +1,4 @@
 """Surrogate models, such as Gaussian processes, random forests, etc."""
-# TODO: ForwardRefs via __future__ annotations are currently disabled due to this issue:
-#  https://github.com/python-attrs/cattrs/issues/354
 
 import gc
 import sys
@@ -8,9 +6,7 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Type
 
-import cattrs
 import numpy as np
-
 import torch
 from attrs import define, field, validators
 from botorch.fit import fit_gpytorch_mll_torch
@@ -37,9 +33,9 @@ from baybe.parameters import (
 )
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
-from baybe.utils import (
-    DTypeFloatONNX,
-    DTypeFloatTorch,
+from baybe.utils import DTypeFloatONNX, DTypeFloatTorch
+from baybe.utils.serialization import (
+    converter,
     get_subclasses,
     SerialMixin,
     unstructure_base,
@@ -1059,20 +1055,6 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
     return wrapper
 
 
-def _remove_model(raw_unstructure_hook):
-    """Removes the model in a surrogate for serialization."""
-    # TODO: No longer required once the following feature is released:
-    #   https://github.com/python-attrs/cattrs/issues/40
-
-    def wrapper(obj):
-        dict_ = raw_unstructure_hook(obj)
-        dict_.pop("_model", None)
-        dict_.pop("target_value", None)
-        return dict_
-
-    return wrapper
-
-
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def _structure_surrogate(val, _):
     """Structures a surrogate model."""
@@ -1101,7 +1083,7 @@ def _structure_surrogate(val, _):
     if onnx_str and isinstance(onnx_str, str):
         val["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
 
-    return cattrs.structure_attrs_fromdict(val, cls)
+    return converter.structure_attrs_fromdict(val, cls)
 
 
 def get_available_surrogates() -> List[Type[Surrogate]]:
@@ -1132,13 +1114,11 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
 
 # Register (un-)structure hooks
-cattrs.register_unstructure_hook(
+converter.register_unstructure_hook(
     Surrogate,
-    _decode_onnx_str(
-        _remove_model(_block_serialize_custom_architecture(unstructure_base))
-    ),
+    _decode_onnx_str(_block_serialize_custom_architecture(unstructure_base)),
 )
-cattrs.register_structure_hook(Surrogate, _structure_surrogate)
+converter.register_structure_hook(Surrogate, _structure_surrogate)
 
 # Related to [15436]
 gc.collect()

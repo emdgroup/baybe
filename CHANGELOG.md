@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Now supports Python 3.11
 - Removed `pyarrow` version pin
 
+### Changed
+- Serialization no longer relies on cattrs' global converter
+- Refined (un-)structuring logic
+
 ## [0.5.1] - 2023-10-19
 ### Added
 - Linear in-/equality constraints over continuous parameters
