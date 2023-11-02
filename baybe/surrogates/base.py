@@ -201,7 +201,7 @@ def _structure_surrogate(val, _):
 
     _type = val["type"]
 
-    cls = getattr(sys.modules[__name__], _type, None)
+    cls = getattr(sys.modules[__package__], _type, None)
     # cls = getattr(baybe.surrogates, ...) if used in another module
 
     if cls is None:
@@ -231,7 +231,8 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
     # Convert them to classes
     available_classes = [
-        getattr(sys.modules[__name__], mdl_name, None) for mdl_name in available_names
+        getattr(sys.modules[__package__], mdl_name, None)
+        for mdl_name in available_names
     ]
 
     # TODO: The initialization of the classes is currently necessary for the renaming
