@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from baybe.recommenders.recommender import NonPredictiveRecommender
+from baybe.recommenders.base import NonPredictiveRecommender
 
 from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.utils.basic import get_subclasses

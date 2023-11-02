@@ -4,12 +4,12 @@
 from typing import get_args, get_type_hints
 
 import pytest
+from baybe.recommenders.base import NonPredictiveRecommender, Recommender
 from baybe.recommenders.bayesian import (
     BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.recommenders.recommender import NonPredictiveRecommender, Recommender
 
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogate import get_available_surrogates

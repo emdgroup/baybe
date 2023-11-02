@@ -22,7 +22,7 @@ from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.acquisition import debotorchize, PartialAcquisitionFunction
 from baybe.exceptions import NoMCAcquisitionFunctionError
-from baybe.recommenders.recommender import (
+from baybe.recommenders.base import (
     _select_candidates_and_recommend,
     NonPredictiveRecommender,
     Recommender,

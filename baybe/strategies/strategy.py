@@ -5,8 +5,9 @@ from typing import Optional
 import pandas as pd
 from attrs import define, field
 
+from baybe.recommenders.base import Recommender
+
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
-from baybe.recommenders.recommender import Recommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.utils import SerialMixin

@@ -13,7 +13,7 @@ from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
 from sklearn_extra.cluster import KMedoids
 
-from baybe.recommenders.recommender import NonPredictiveRecommender
+from baybe.recommenders.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
 
 _ScikitLearnModel = TypeVar("_ScikitLearnModel")
