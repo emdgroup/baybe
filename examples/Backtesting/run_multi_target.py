@@ -16,10 +16,11 @@ from typing import Tuple
 
 import numpy as np
 from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop
 

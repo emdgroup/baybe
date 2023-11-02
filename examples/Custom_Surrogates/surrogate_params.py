@@ -14,6 +14,7 @@
 import numpy as np
 
 from baybe.campaign import Campaign
+from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -22,7 +23,7 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
 from baybe.surrogate import NGBoostSurrogate
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
 

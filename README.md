@@ -156,7 +156,7 @@ We wrap the target object in an optimization `Objective`, to inform BayBE
 that this is the only target we would like to consider:
 
 ```python
-from baybe.targets import Objective
+from baybe.objective import Objective
 
 objective = Objective(mode="SINGLE", targets=[target])
 ```

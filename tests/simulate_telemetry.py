@@ -7,12 +7,13 @@ import os
 from random import randint
 
 from baybe.campaign import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.telemetry import get_user_details
 from baybe.utils.dataframe import add_fake_results
 

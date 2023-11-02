@@ -14,13 +14,14 @@ import pandas as pd
 from baybe import Campaign
 
 from baybe.constraints import DiscreteCustomConstraint
+from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
     SubstanceParameter,
 )
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
 ### Experiment setup

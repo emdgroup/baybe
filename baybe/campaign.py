@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 
+from baybe.objective import Objective
 from baybe.parameters import Parameter
 from baybe.searchspace import (
     _structure_searchspace_from_config,
@@ -16,7 +17,7 @@ from baybe.searchspace import (
     SearchSpace,
 )
 from baybe.strategies.strategy import Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.telemetry import (
     TELEM_LABELS,
     telemetry_record_recommended_measurement_percentage,

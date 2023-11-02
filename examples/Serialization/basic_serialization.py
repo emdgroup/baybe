@@ -12,6 +12,7 @@
 import numpy as np
 
 from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -19,7 +20,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 
 #### Experiment setup
 

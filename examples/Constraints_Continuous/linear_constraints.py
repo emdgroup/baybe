@@ -20,9 +20,10 @@ from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
+from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 
 from botorch.test_functions import Rastrigin

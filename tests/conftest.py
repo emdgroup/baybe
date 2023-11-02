@@ -23,6 +23,7 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
+from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
@@ -34,7 +35,7 @@ from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, add_parameter_noise
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 

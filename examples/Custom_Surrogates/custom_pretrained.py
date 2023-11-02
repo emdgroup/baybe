@@ -13,11 +13,12 @@ import numpy as np
 import torch
 
 from baybe.campaign import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
 from baybe.surrogate import CustomONNXSurrogate
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, to_tensor
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType

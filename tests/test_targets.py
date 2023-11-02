@@ -4,7 +4,8 @@
 
 import pytest
 
-from baybe.targets import NumericalTarget, Objective
+from baybe.objective import Objective
+from baybe.targets import NumericalTarget
 
 
 class TestInvalidTargetCreation:

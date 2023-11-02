@@ -11,9 +11,10 @@
 import numpy as np
 
 from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
 
