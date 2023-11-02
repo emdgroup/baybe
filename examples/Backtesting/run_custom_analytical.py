@@ -21,9 +21,10 @@ import seaborn as sns
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
+from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
+from baybe.strategies import Strategy
 from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop

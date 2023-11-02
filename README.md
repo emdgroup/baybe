@@ -245,7 +245,8 @@ details, and their configuration settings, see
 [baybe/strategies](./baybe/strategies).
 
 ```python
-from baybe.strategies import Strategy, SequentialGreedyRecommender, RandomRecommender
+from baybe.strategies import Strategy
+from baybe.recommenders import SequentialGreedyRecommender, RandomRecommender
 
 strategy = Strategy(
     initial_recommender=RandomRecommender(),

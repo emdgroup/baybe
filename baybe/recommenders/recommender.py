@@ -7,7 +7,6 @@ import pandas as pd
 from attrs import define
 
 from baybe.exceptions import NotEnoughPointsLeftError
-
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils.serialization import (
     converter,

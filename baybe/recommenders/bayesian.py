@@ -1,4 +1,5 @@
 """Different recommendation strategies that are based on Bayesian optimization."""
+
 from abc import ABC
 from functools import partial
 from typing import Any, Callable, ClassVar, Literal, Optional
@@ -21,12 +22,12 @@ from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.acquisition import debotorchize, PartialAcquisitionFunction
 from baybe.exceptions import NoMCAcquisitionFunctionError
-from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.strategies.recommender import (
+from baybe.recommenders.recommender import (
     _select_candidates_and_recommend,
     NonPredictiveRecommender,
     Recommender,
 )
+from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate, Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
 

@@ -11,8 +11,8 @@
 
 import numpy as np
 import pandas as pd
-from baybe import Campaign
 
+from baybe import Campaign
 from baybe.constraints import DiscreteCustomConstraint
 from baybe.objective import Objective
 from baybe.parameters import (

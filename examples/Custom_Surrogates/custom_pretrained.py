@@ -15,8 +15,9 @@ import torch
 from baybe.campaign import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
+from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
+from baybe.strategies import Strategy
 from baybe.surrogate import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, to_tensor

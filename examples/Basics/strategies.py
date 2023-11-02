@@ -20,8 +20,9 @@
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
+from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
+from baybe.strategies import Strategy
 from baybe.surrogate import (
     BayesianLinearSurrogate,
     GaussianProcessSurrogate,

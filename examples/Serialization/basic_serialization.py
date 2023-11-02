@@ -18,8 +18,9 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
     SubstanceParameter,
 )
+from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
+from baybe.strategies import Strategy
 from baybe.targets import NumericalTarget
 
 #### Experiment setup

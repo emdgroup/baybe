@@ -30,9 +30,9 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.recommenders.bayesian import SequentialGreedyRecommender
+from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
 from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
