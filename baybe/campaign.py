@@ -11,10 +11,10 @@ from attrs import define, field
 
 from baybe.objective import Objective
 from baybe.parameters import Parameter
-from baybe.searchspace import (
-    _structure_searchspace_from_config,
-    _validate_searchspace_from_config,
+from baybe.searchspace.core import (
     SearchSpace,
+    structure_searchspace_from_config,
+    validate_searchspace_from_config,
 )
 from baybe.strategies.strategy import Strategy
 from baybe.targets import NumericalTarget
@@ -29,13 +29,13 @@ from baybe.utils.serialization import converter, SerialMixin
 # Converter for config deserialization
 _config_converter = converter.copy()
 _config_converter.register_structure_hook(
-    SearchSpace, _structure_searchspace_from_config
+    SearchSpace, structure_searchspace_from_config
 )
 
 # Converter for config validation
 _validation_converter = converter.copy()
 _validation_converter.register_structure_hook(
-    SearchSpace, _validate_searchspace_from_config
+    SearchSpace, validate_searchspace_from_config
 )
 
 
