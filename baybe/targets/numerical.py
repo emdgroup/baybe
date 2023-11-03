@@ -1,14 +1,13 @@
-"""Functionality for different target variable types."""
+"""Numerical targets."""
 
 import logging
-from abc import ABC, abstractmethod
 from functools import partial
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal, Optional
 
-import numpy as np
 import pandas as pd
-from attrs import define, field
+from attr import define, field
 
+from baybe.targets.base import Target
 from baybe.utils import (
     bound_bell,
     bound_linear,
@@ -28,45 +27,6 @@ _VALID_TRANSFORMS = {
     "MIN": ["LINEAR"],
     "MATCH": ["TRIANGULAR", "BELL"],
 }
-
-
-def _normalize_weights(weights: List[float]) -> List[float]:
-    """Normalize a collection of weights such that they sum to 100.
-
-    Args:
-        weights: The un-normalized weights.
-
-    Returns:
-        The normalized weights.
-    """
-    return (100 * np.asarray(weights) / np.sum(weights)).tolist()
-
-
-@define(frozen=True)
-class Target(ABC):
-    """Abstract base class for all target variables.
-
-    Stores information about the range, transformations, etc.
-
-    Args:
-        name: The name of the target.
-    """
-
-    name: str = field()
-
-    @abstractmethod
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Transform data into computational representation.
-
-        The transformation depends on the target mode, e.g. minimization, maximization,
-        matching, etc.
-
-        Args:
-            data: The data to be transformed.
-
-        Returns:
-            A dataframe containing the transformed data.
-        """
 
 
 @define(frozen=True)

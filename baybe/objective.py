@@ -8,8 +8,20 @@ import pandas as pd
 from attr import define, field
 from attr.validators import deep_iterable, in_, instance_of, min_len
 
-from baybe.targets import _normalize_weights, NumericalTarget
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils import geom_mean, SerialMixin
+
+
+def _normalize_weights(weights: List[float]) -> List[float]:
+    """Normalize a collection of weights such that they sum to 100.
+
+    Args:
+        weights: The un-normalized weights.
+
+    Returns:
+        The normalized weights.
+    """
+    return (100 * np.asarray(weights) / np.sum(weights)).tolist()
 
 
 @define(frozen=True)
