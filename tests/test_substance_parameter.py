@@ -8,7 +8,7 @@ from .conftest import run_iterations
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
 if _CHEM_INSTALLED:
-    from baybe.parameters import SUBSTANCE_ENCODINGS
+    from baybe.parameters.substance import SUBSTANCE_ENCODINGS
 
 
 if _CHEM_INSTALLED:

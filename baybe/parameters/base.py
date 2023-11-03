@@ -1,0 +1,139 @@
+"""Base classes for all parameters."""
+
+from abc import ABC, abstractmethod
+from functools import cached_property, partial
+from typing import Any, ClassVar, Optional
+
+import pandas as pd
+from attr import define, field
+from attrs.validators import gt, instance_of, lt
+from cattrs.gen import override
+
+from baybe.utils import get_base_structure_hook, SerialMixin, unstructure_base
+
+from baybe.utils.serialization import converter
+
+# TODO: Introduce encoding enums
+
+
+def _validate_unique_values(  # noqa: DOC101, DOC103
+    obj: Any, _: Any, value: list
+) -> None:
+    """Validate that there are no duplicates in ```value```.
+
+    Raises:
+        ValueError: If there are duplicates in ```value```.
+    """
+    if len(set(value)) != len(value):
+        raise ValueError(
+            f"Cannot assign the following values containing duplicates to "
+            f"parameter {obj.name}: {value}."
+        )
+
+
+def _validate_decorrelation(obj: Any, attribute: Any, value: float) -> None:
+    """Validate the decorrelation."""
+    instance_of((bool, float))(obj, attribute, value)
+    if isinstance(value, float):
+        gt(0.0)(obj, attribute, value)
+        lt(1.0)(obj, attribute, value)
+
+
+@define(frozen=True, slots=False)
+class Parameter(ABC, SerialMixin):
+    """Abstract base class for all parameters.
+
+    Stores information about the type, range, constraints, etc. and handles in-range
+    checks, transformations etc.
+
+    Args:
+        name: The name of the parameter
+    """
+
+    # class variables
+    is_numeric: ClassVar[bool]
+    """Class variable encoding whether this parameter is numeric."""
+    is_discrete: ClassVar[bool]
+    """Class variable encoding whether this parameter is discrete."""
+
+    # object variables
+    name: str = field()
+
+    @abstractmethod
+    def is_in_range(self, item: Any) -> bool:
+        """Return whether an item is within the parameter range.
+
+        Args:
+            item: The item to be checked.
+
+        Returns:
+            ```True``` if the item is within the parameter range, ```False``` otherwise.
+        """
+
+
+@define(frozen=True, slots=False)
+class DiscreteParameter(Parameter, ABC):
+    """Abstract class for discrete parameters.
+
+    Args:
+        encoding: The encoding of the parameter.
+    """
+
+    # TODO [15280]: needs to be refactored
+
+    # class variables
+    is_discrete: ClassVar[bool] = True
+
+    # object variables
+    encoding: ClassVar[Optional[str]] = None
+
+    @property
+    @abstractmethod
+    def values(self) -> tuple:
+        """The values the parameter can take."""
+
+    @cached_property
+    @abstractmethod
+    def comp_df(self) -> pd.DataFrame:
+        """Return the computational representation of the parameter."""
+
+    def is_in_range(self, item: Any) -> bool:  # noqa: D102
+        # See base class.
+        return item in self.values
+
+    def transform_rep_exp2comp(self, data: pd.Series) -> pd.DataFrame:
+        """Transform data from experimental to computational representation.
+
+        Args:
+            data: Data to be transformed.
+
+        Returns:
+            The transformed version of the data.
+        """
+        if self.encoding:
+            # replace each label with the corresponding encoding
+            transformed = pd.merge(
+                left=data.rename("Labels").to_frame(),
+                left_on="Labels",
+                right=self.comp_df,
+                right_index=True,
+                how="left",
+            ).drop(columns="Labels")
+        else:
+            transformed = data.to_frame()
+
+        return transformed
+
+
+# Register (un-)structure hooks
+overrides = {
+    "_values": override(rename="values"),
+    "decorrelate": override(struct_hook=lambda x, _: x),
+}
+converter.register_structure_hook(
+    Parameter,
+    get_base_structure_hook(Parameter, overrides=overrides),
+)
+converter.register_unstructure_hook(
+    Parameter, partial(unstructure_base, overrides=overrides)
+)

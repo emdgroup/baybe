@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, cast, Dict, List, Optional, Tuple
+from typing import Any, cast, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -20,17 +20,14 @@ from baybe.constraints import (
     DiscreteConstraint,
     validate_constraints,
 )
+from baybe.exceptions import EmptySearchSpaceError
 from baybe.parameters import (
-    _validate_parameter_names,
-    _validate_parameters,
     CategoricalParameter,
-    DiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
-    Parameter,
-    parameter_cartesian_prod_to_df,
-    TaskParameter,
 )
+from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.categorical import TaskParameter
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import (
     converter,
@@ -785,3 +782,62 @@ def _validate_searchspace_from_config(specs: dict, _) -> None:
     if constraints:
         constraints = converter.structure(specs["constraints"], List[Constraint])
         validate_constraints(constraints, parameters)
+
+
+def parameter_cartesian_prod_to_df(
+    parameters: Iterable[Parameter],
+) -> pd.DataFrame:
+    """Create the Cartesian product of all parameter values.
+
+    Ignores continuous parameters.
+
+    Args:
+        parameters: List of parameter objects.
+
+    Returns:
+        A dataframe containing all possible discrete parameter value combinations.
+    """
+    lst_of_values = [
+        cast(DiscreteParameter, p).values for p in parameters if p.is_discrete
+    ]
+    lst_of_names = [p.name for p in parameters if p.is_discrete]
+    if len(lst_of_names) < 1:
+        return pd.DataFrame()
+
+    index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
+    ret = pd.DataFrame(index=index).reset_index()
+
+    return ret
+
+
+def _validate_parameter_names(  # noqa: DOC101, DOC103
+    parameters: List[Parameter],
+) -> None:
+    """Validate the parameter names.
+
+    Raises:
+        ValueError: If the given list contains parameters with the same name.
+    """
+    param_names = [p.name for p in parameters]
+    if len(set(param_names)) != len(param_names):
+        raise ValueError("All parameters must have unique names.")
+
+
+def _validate_parameters(parameters: List[Parameter]) -> None:  # noqa: DOC101, DOC103
+    """Validate the parameters.
+
+    Raises:
+        EmptySearchSpaceError: If the parameter list is empty.
+        NotImplementedError: If more than one ```TaskParameter``` is requested.
+    """
+    if not parameters:
+        raise EmptySearchSpaceError("At least one parameter must be provided.")
+
+    # TODO [16932]: Remove once more task parameters are supported
+    if len([p for p in parameters if isinstance(p, TaskParameter)]) > 1:
+        raise NotImplementedError(
+            "Currently, at most one task parameter can be considered."
+        )
+
+    # Assert: unique names
+    _validate_parameter_names(parameters)
