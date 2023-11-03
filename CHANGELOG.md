@@ -8,15 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `Raises` section for validators and corresponding contributing guideline
 - Bring your own model: surrogate classes for custom model architectures and pre-trained ONNX models
+- Test module for deprecation warnings
+
+### Changed
+- Reorganized modules into subpackages
+- Serialization no longer relies on cattrs' global converter
+- Refined (un-)structuring logic
 
 ### Fixed
 - Now supports Python 3.11
 - Removed `pyarrow` version pin
 
-### Changed
-- `BayBE` class renamed to `Campaign`
-- Serialization no longer relies on cattrs' global converter
-- Refined (un-)structuring logic
+### Deprecations
+- `BayBE` class replaced with `Campaign`
+- `baybe.surrogate` replaced with `baybe.surrogates`
+- `baybe.targets.Objective` replaced with `baybe.objective.Objective`
 
 ## [0.5.1] - 2023-10-19
 ### Added
