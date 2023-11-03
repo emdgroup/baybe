@@ -13,12 +13,12 @@ from botorch.utils.sampling import get_polytope_samples
 from cattrs.errors import IterableValidationError
 
 from baybe.constraints import (
-    _validate_constraints,
     Constraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
     DiscreteConstraint,
+    validate_constraints,
 )
 from baybe.parameters import (
     _validate_parameter_names,
@@ -576,7 +576,7 @@ class SearchSpace(SerialMixin):
     def __attrs_post_init__(self):
         """Perform validation and record telemetry values."""
         _validate_parameters(self.parameters)
-        _validate_constraints(self.constraints, self.parameters)
+        validate_constraints(self.constraints, self.parameters)
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
@@ -620,7 +620,7 @@ class SearchSpace(SerialMixin):
         #   ways of object creation) in this particular case.
         _validate_parameters(parameters)
         if constraints:
-            _validate_constraints(constraints, parameters)
+            validate_constraints(constraints, parameters)
         else:
             constraints = []
 
@@ -784,4 +784,4 @@ def _validate_searchspace_from_config(specs: dict, _) -> None:
     constraints = specs.get("constraints", None)
     if constraints:
         constraints = converter.structure(specs["constraints"], List[Constraint])
-        _validate_constraints(constraints, parameters)
+        validate_constraints(constraints, parameters)
