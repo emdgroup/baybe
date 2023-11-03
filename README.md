@@ -128,6 +128,11 @@ In that sense, the former carry information that **must be** provided by the use
 whereas the latter are **optional** settings that can also be set automatically
 by BayBE.
 
+A key element in the design of BayBE is the `Campaign` object.
+It acts as a central container for all the necessary information and objects
+associated with an experimentation process, ensuring that all independent model
+components (e.g. the objective function, the search space, etc.) are properly combined.
+
 The following example provides a step-by-step guide to what this translation process
 should look like, and how we can subsequently use BayBE to generate optimal sets of
 experimental conditions.
