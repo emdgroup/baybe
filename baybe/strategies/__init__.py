@@ -1,8 +1,7 @@
 """BayBE strategies."""
 
-from baybe.strategies.strategy import Strategy
-
+from baybe.strategies.scheduled import SplitStrategy
 
 __all__ = [
-    "Strategy",
+    "SplitStrategy",
 ]

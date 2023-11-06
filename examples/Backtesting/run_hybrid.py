@@ -24,7 +24,7 @@ from baybe.recommenders import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import Strategy
+from baybe.strategies import SplitStrategy
 from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop
@@ -115,13 +115,13 @@ objective = Objective(
 # Note that the recommender performs one optimization of the continuous subspace per sampled point.
 # We thus recommend to keep this parameter rather low.
 
-seq_greedy_strategy = Strategy(
+seq_greedy_strategy = SplitStrategy(
     recommender=SequentialGreedyRecommender(
         hybrid_sampler="Farthest", sampling_percentage=0.3
     ),
 )
-naive_hybrid_strategy = Strategy(recommender=NaiveHybridRecommender())
-random_strategy = Strategy(recommender=RandomRecommender())
+naive_hybrid_strategy = SplitStrategy(recommender=NaiveHybridRecommender())
+random_strategy = SplitStrategy(recommender=RandomRecommender())
 
 # We now create one campaign per strategy.
 

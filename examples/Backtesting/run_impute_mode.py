@@ -21,7 +21,7 @@ from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import Strategy
+from baybe.strategies import SplitStrategy
 from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop
@@ -102,7 +102,7 @@ objective = Objective(
 campaign = Campaign(searchspace=searchspace, objective=objective)
 campaign_rand = Campaign(
     searchspace=searchspace,
-    strategy=Strategy(recommender=RandomRecommender()),
+    strategy=SplitStrategy(recommender=RandomRecommender()),
     objective=objective,
 )
 

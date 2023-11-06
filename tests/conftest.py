@@ -1,4 +1,5 @@
 """PyTest configuration."""
+
 from __future__ import annotations
 
 import os
@@ -33,7 +34,7 @@ from baybe.parameters import (
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import SplitStrategy
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, add_parameter_noise
@@ -507,7 +508,7 @@ def fixture_default_strategy(
     initial_recommender,
 ):
     """The default strategy to be used if not specified differently."""
-    return Strategy(
+    return SplitStrategy(
         recommender=recommender,
         initial_recommender=initial_recommender,
         allow_repeated_recommendations=False,

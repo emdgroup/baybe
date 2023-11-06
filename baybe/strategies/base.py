@@ -1,25 +1,20 @@
-"""Strategies for Design of Experiments (DOE)."""
+"""Base classes for all strategies."""
 
+from abc import ABC, abstractmethod
 from typing import Optional
 
 import pandas as pd
-from attrs import define, field
+from attr import define, field
 
-from baybe.recommenders.base import Recommender
-
-from baybe.recommenders.bayesian import SequentialGreedyRecommender
-from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.utils import SerialMixin
 
 
 @define
-class Strategy(SerialMixin):
-    """Abstract base class for all DOE strategies.
+class Strategy(SerialMixin, ABC):
+    """Abstract base class for all BayBE strategies.
 
     Args:
-        initial_recommender: The initial recommender used by the strategy.
-        recommender: The recommender used by the strategy.
         allow_repeated_recommendations: Allow to make recommendations that were
             already recommended earlier. This only has an influence in discrete
             search spaces.
@@ -28,11 +23,10 @@ class Strategy(SerialMixin):
             search spaces.
     """
 
-    initial_recommender: Recommender = field(factory=RandomRecommender)
-    recommender: Recommender = field(factory=SequentialGreedyRecommender)
     allow_repeated_recommendations: bool = field(default=False)
     allow_recommending_already_measured: bool = field(default=False)
 
+    @abstractmethod
     def recommend(
         self,
         searchspace: SearchSpace,
@@ -51,16 +45,3 @@ class Strategy(SerialMixin):
         Returns:
             The DataFrame with the specific experiments recommended.
         """
-        recommender = (
-            self.initial_recommender if len(train_x) == 0 else self.recommender
-        )
-        rec = recommender.recommend(
-            searchspace,
-            batch_quantity,
-            train_x,
-            train_y,
-            self.allow_repeated_recommendations,
-            self.allow_recommending_already_measured,
-        )
-
-        return rec

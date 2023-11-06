@@ -24,7 +24,7 @@ from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import Strategy
+from baybe.strategies import SplitStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
@@ -89,10 +89,10 @@ objective = Objective(
 # To simplify adjusting the example for other strategies, we construct some strategy objects.
 # For details on strategy objects, we refer to [`strategies`](./../Basics/strategies.md).
 
-seq_greedy_EI_strategy = Strategy(
+seq_greedy_EI_strategy = SplitStrategy(
     recommender=SequentialGreedyRecommender(acquisition_function_cls="qEI"),
 )
-random_strategy = Strategy(recommender=RandomRecommender())
+random_strategy = SplitStrategy(recommender=RandomRecommender())
 
 # We now create one campaign per strategy.
 
