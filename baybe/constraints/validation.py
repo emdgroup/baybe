@@ -3,6 +3,7 @@
 from typing import List
 
 from baybe.constraints.base import Constraint
+from baybe.constraints.discrete import DiscreteDependenciesConstraint
 from baybe.parameters.base import Parameter
 
 
@@ -18,10 +19,6 @@ def validate_constraints(  # noqa: DOC101, DOC103
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.
     """
-    from baybe.constraints.discrete import (  # pylint: disable=import-outside-toplevel
-        DiscreteDependenciesConstraint,
-    )
-
     if sum(isinstance(itm, DiscreteDependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
             f"There is only one {DiscreteDependenciesConstraint.__name__} allowed. "
