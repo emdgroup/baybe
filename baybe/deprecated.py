@@ -2,14 +2,18 @@
 
 import warnings
 
+from attrs import define
+
 from baybe import Campaign
 
 
-def BayBE(*args, **kwargs) -> Campaign:  # pylint: disable=invalid-name
+@define
+class BayBE(Campaign):  # pylint: disable=abstract-method
     """A ```Campaign``` alias for backward compatibility."""
-    warnings.warn(
-        "The 'BayBE' class is deprecated and will be removed in a future version. "
-        "Please use the 'Campaign' class instead.",
-        DeprecationWarning,
-    )
-    return Campaign(*args, **kwargs)
+
+    def __attrs_pre_init__(self):
+        warnings.warn(
+            "The 'BayBE' class is deprecated and will be removed in a future version. "
+            "Please use the 'Campaign' class instead.",
+            DeprecationWarning,
+        )
