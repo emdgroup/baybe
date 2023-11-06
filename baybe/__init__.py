@@ -3,7 +3,7 @@
 import warnings
 
 from baybe.campaign import Campaign  # pylint: disable=wrong-import-position
-from baybe.deprecated import BayBE
+from baybe.deprecation import BayBE
 
 # Show deprecation warnings
 warnings.filterwarnings("default", category=DeprecationWarning, module="baybe")
