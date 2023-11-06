@@ -585,6 +585,7 @@ def fixture_default_config():
             ]
         },
         "strategy": {
+            "type": "SplitStrategy",
             "initial_recommender": {
                 "type": "RandomRecommender"
             },

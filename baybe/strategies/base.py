@@ -7,12 +7,8 @@ import pandas as pd
 from attr import define, field
 
 from baybe.searchspace import SearchSpace
-from baybe.utils.serialization import (
-    converter,
-    get_base_structure_hook,
-    SerialMixin,
-    unstructure_base,
-)
+from baybe.strategies.deprecation import structure_strategy
+from baybe.utils.serialization import converter, SerialMixin, unstructure_base
 
 
 @define
@@ -54,4 +50,4 @@ class Strategy(SerialMixin, ABC):
 
 # Register (un-)structure hooks
 converter.register_unstructure_hook(Strategy, unstructure_base)
-converter.register_structure_hook(Strategy, get_base_structure_hook(Strategy))
+converter.register_structure_hook(Strategy, structure_strategy)
