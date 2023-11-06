@@ -33,3 +33,11 @@ The infrastructure used to host the current documentation as well as the design 
     * Validators should **not** have an `Args:` section. 
     * Since these guidelines raise errors for  [pydoclint](https://github.com/jsh9/pydoclint), add `# noqa: DOC101, DOC103` to the same line as the `def` keyword of the declared validator to disable the errors.
 - For custom [cattrs](https://catt.rs/) (un-)structuring hooks, a one-line docstring is sufficient.
+
+## Adding functionality
+For most parts, BayBE's code is organized into different subpackages. When 
+extending its functionality (for instance, by adding new component subclasses), make 
+sure that the newly written code is well integrated into the existing package and 
+module hierarchy. In particular, public functionality should be imported into the 
+appropriate high-level namespaces for easy user import. For an example, see the 
+[parameter namespace](./baybe/parameters/__init__.py).
