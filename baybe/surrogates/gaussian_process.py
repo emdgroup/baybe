@@ -16,7 +16,7 @@ from torch import Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import _get_model_params_validator
+from baybe.surrogates.validation import get_model_params_validator
 
 
 @define
@@ -35,7 +35,7 @@ class GaussianProcessSurrogate(Surrogate):
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
-        validator=_get_model_params_validator(SingleTaskGP.__init__),
+        validator=get_model_params_validator(SingleTaskGP.__init__),
     )
     _model: Optional[SingleTaskGP] = field(init=False, default=None)
 

@@ -6,7 +6,6 @@ from typing import Any, ClassVar, Optional
 
 import pandas as pd
 from attr import define, field
-from attrs.validators import gt, instance_of, lt
 from cattrs.gen import override
 
 from baybe.utils import get_base_structure_hook, SerialMixin, unstructure_base
@@ -14,29 +13,6 @@ from baybe.utils import get_base_structure_hook, SerialMixin, unstructure_base
 from baybe.utils.serialization import converter
 
 # TODO: Introduce encoding enums
-
-
-def _validate_unique_values(  # noqa: DOC101, DOC103
-    obj: Any, _: Any, value: list
-) -> None:
-    """Validate that there are no duplicates in ```value```.
-
-    Raises:
-        ValueError: If there are duplicates in ```value```.
-    """
-    if len(set(value)) != len(value):
-        raise ValueError(
-            f"Cannot assign the following values containing duplicates to "
-            f"parameter {obj.name}: {value}."
-        )
-
-
-def _validate_decorrelation(obj: Any, attribute: Any, value: float) -> None:
-    """Validate the decorrelation."""
-    instance_of((bool, float))(obj, attribute, value)
-    if isinstance(value, float):
-        gt(0.0)(obj, attribute, value)
-        lt(1.0)(obj, attribute, value)
 
 
 @define(frozen=True, slots=False)

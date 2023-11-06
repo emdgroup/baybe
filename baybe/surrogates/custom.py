@@ -17,6 +17,7 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
+from baybe.surrogates.validation import validate_custom_architecture_cls
 from baybe.utils import DTypeFloatONNX, DTypeFloatTorch
 
 try:
@@ -25,57 +26,6 @@ try:
     _ONNX_INSTALLED = True
 except ImportError:
     _ONNX_INSTALLED = False
-
-
-def _validate_custom_arch_cls(model_cls: type) -> None:
-    """Validates a custom architecture to have the correct attributes.
-
-    Args:
-        model_cls: The user defined model class.
-
-    Raises:
-        ValueError: When model_cls does not have _fit or _posterior.
-        ValueError: When _fit or _posterior is not a callable method.
-        ValueError: When _fit does not have the required signature.
-        ValueError: When _posterior does not have the required signature.
-    """
-    # Methods must exist
-    if not (hasattr(model_cls, "_fit") and hasattr(model_cls, "_posterior")):
-        raise ValueError(
-            "`_fit` and a `_posterior` must exist for custom architectures"
-        )
-
-    fit = model_cls._fit  # pylint: disable=protected-access
-    posterior = model_cls._posterior  # pylint: disable=protected-access
-
-    # They must be methods
-    if not (callable(fit) and callable(posterior)):
-        raise ValueError(
-            "`_fit` and a `_posterior` must be methods for custom architectures"
-        )
-
-    # Methods must have the correct arguments
-    params = fit.__code__.co_varnames[: fit.__code__.co_argcount]
-
-    if (
-        params
-        != Surrogate._fit.__code__.co_varnames  # pylint: disable=protected-access
-    ):
-        raise ValueError(
-            "Invalid args in `_fit` method definition for custom architecture. "
-            "Please refer to Surrogate._fit for the required function signature."
-        )
-
-    params = posterior.__code__.co_varnames[: posterior.__code__.co_argcount]
-
-    if (
-        params
-        != Surrogate._posterior.__code__.co_varnames  # pylint: disable=protected-access
-    ):
-        raise ValueError(
-            "Invalid args in `_posterior` method definition for custom architecture. "
-            "Please refer to Surrogate._posterior for the required function signature."
-        )
 
 
 def register_custom_architecture(
@@ -99,7 +49,7 @@ def register_custom_architecture(
 
     def construct_custom_architecture(model_cls):
         """Constructs a surrogate class wrapped around the custom class."""
-        _validate_custom_arch_cls(model_cls)
+        validate_custom_architecture_cls(model_cls)
 
         class CustomArchitectureSurrogate(Surrogate):
             """Wraps around a custom architecture class."""

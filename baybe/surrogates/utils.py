@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Any, Callable, ClassVar, Optional, Tuple, Type, TYPE_CHECKING
+from typing import Callable, ClassVar, Tuple, Type, TYPE_CHECKING
 
 import torch
 from torch import Tensor
@@ -57,57 +57,6 @@ def _prepare_targets(y: Tensor) -> Tensor:
             "DESIRABILITY mode."
         )
     return y.to(_DTYPE)
-
-
-def _get_model_params_validator(model_init: Optional[Callable] = None) -> Callable:
-    """Construct a validator based on the model class.
-
-    Args:
-        model_init: The init method for the model.
-
-    Returns:
-        A validator function to validate parameters.
-    """
-
-    def validate_model_params(  # noqa: DOC101, DOC103
-        obj: Any, _: Any, model_params: dict
-    ) -> None:
-        """Validates the model params attribute of an object.
-
-        Raises:
-            ValueError: When model params are given for non-supported objects.
-            ValueError: When surrogate is not recognized (no valid model_init).
-            ValueError: When invalid params are given for a model.
-        """
-        # Get model class name
-        model = obj.__class__.__name__
-
-        if not model_params:
-            return
-
-        # GP does not support additional model params
-        # Neither does custom models
-        if "GaussianProcess" in model or "Custom" in model:
-            raise ValueError(f"{model} does not support model params.")
-
-        if not model_init:
-            raise ValueError(
-                f"Cannot validate model params for unrecognized Surrogate: {model}"
-            )
-
-        # Invalid params
-        invalid_params = ", ".join(
-            [
-                key
-                for key in model_params.keys()
-                if key not in model_init.__code__.co_varnames
-            ]
-        )
-
-        if invalid_params:
-            raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
-
-    return validate_model_params
 
 
 def catch_constant_targets(model_cls: Type[Surrogate]):

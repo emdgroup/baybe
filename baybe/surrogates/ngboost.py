@@ -9,12 +9,8 @@ from torch import Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import (
-    _get_model_params_validator,
-    batchify,
-    catch_constant_targets,
-    scale_model,
-)
+from baybe.surrogates.utils import batchify, catch_constant_targets, scale_model
+from baybe.surrogates.validation import get_model_params_validator
 
 
 @catch_constant_targets
@@ -37,7 +33,7 @@ class NGBoostSurrogate(Surrogate):
     model_params: Dict[str, Any] = field(
         factory=dict,
         converter=dict,
-        validator=_get_model_params_validator(NGBRegressor.__init__),
+        validator=get_model_params_validator(NGBRegressor.__init__),
     )
     _model: Optional[NGBRegressor] = field(init=False, default=None)
 

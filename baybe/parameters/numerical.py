@@ -10,7 +10,8 @@ from attr import define, field
 from attr.validators import min_len
 from scipy.spatial.distance import pdist
 
-from baybe.parameters.base import _validate_unique_values, DiscreteParameter, Parameter
+from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.validation import validate_unique_values
 from baybe.utils import convert_bounds, InfiniteIntervalError, Interval
 
 
@@ -33,7 +34,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
         converter=lambda x: cattrs.structure(x, Tuple[float, ...]),
         validator=[
             min_len(2),
-            _validate_unique_values,
+            validate_unique_values,
         ],
     )
     tolerance: float = field(default=0.0)

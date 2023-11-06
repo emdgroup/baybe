@@ -6,7 +6,8 @@ from typing import Any, ClassVar, Dict, get_args, get_type_hints, Literal, Union
 import pandas as pd
 from attr import define, field
 
-from baybe.parameters.base import _validate_decorrelation, DiscreteParameter
+from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.validation import validate_decorrelation
 from baybe.utils import df_drop_single_value_columns, df_uncorrelated_features
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
@@ -43,7 +44,7 @@ class SubstanceParameter(DiscreteParameter):
     # object variables
     data: Dict[str, str] = field()
     decorrelate: Union[bool, float] = field(
-        default=True, validator=_validate_decorrelation
+        default=True, validator=validate_decorrelation
     )
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
 

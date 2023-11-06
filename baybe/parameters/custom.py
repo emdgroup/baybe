@@ -6,7 +6,8 @@ from typing import Any, ClassVar, Union
 import pandas as pd
 from attr import define, field
 
-from baybe.parameters.base import _validate_decorrelation, DiscreteParameter
+from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.validation import validate_decorrelation
 from baybe.utils import df_uncorrelated_features, eq_dataframe
 
 
@@ -29,7 +30,7 @@ class CustomDiscreteParameter(DiscreteParameter):
     # object variables
     data: pd.DataFrame = field(eq=eq_dataframe)
     decorrelate: Union[bool, float] = field(
-        default=True, validator=_validate_decorrelation
+        default=True, validator=validate_decorrelation
     )
     encoding = field(default="CUSTOM")
 

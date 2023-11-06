@@ -8,7 +8,8 @@ import pandas as pd
 from attr import define, field
 from attr.validators import min_len
 
-from baybe.parameters.base import _validate_unique_values, DiscreteParameter
+from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.validation import validate_unique_values
 
 
 @define(frozen=True, slots=False)
@@ -29,7 +30,7 @@ class CategoricalParameter(DiscreteParameter):
 
     # object variables
     _values: tuple = field(
-        converter=tuple, validator=[min_len(2), _validate_unique_values]
+        converter=tuple, validator=[min_len(2), validate_unique_values]
     )
     encoding: Literal["OHE", "INT"] = field(default="OHE")
 

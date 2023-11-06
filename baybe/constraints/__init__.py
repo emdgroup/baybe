@@ -1,6 +1,6 @@
 """BayBE constraints."""
 
-from baybe.constraints.base import Constraint, validate_constraints
+from baybe.constraints.base import Constraint
 from baybe.constraints.conditions import (
     Condition,
     SubSelectionCondition,
@@ -23,6 +23,7 @@ from baybe.constraints.discrete import (
     DiscreteProductConstraint,
     DiscreteSumConstraint,
 )
+from baybe.constraints.validation import validate_constraints
 
 __all__ = [
     # --- Base classes --- #
@@ -46,6 +47,6 @@ __all__ = [
     "DiscreteProductConstraint",
     "DiscreteSumConstraint",
     # --- Other --- #
-    "DISCRETE_CONSTRAINTS_FILTERING_ORDER",
     "validate_constraints",
+    "DISCRETE_CONSTRAINTS_FILTERING_ORDER",
 ]
