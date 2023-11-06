@@ -3,7 +3,8 @@
 from typing import List
 
 from baybe.exceptions import EmptySearchSpaceError
-from baybe.parameters import Parameter, TaskParameter
+from baybe.parameters import TaskParameter
+from baybe.parameters.base import Parameter
 
 
 def validate_parameter_names(  # noqa: DOC101, DOC103

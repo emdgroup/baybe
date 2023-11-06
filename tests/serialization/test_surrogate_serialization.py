@@ -2,7 +2,7 @@
 """Test serialization of surrogates."""
 
 import pytest
-from baybe.surrogates import get_available_surrogates, Surrogate
+from baybe.surrogates.base import get_available_surrogates, Surrogate
 
 
 @pytest.mark.parametrize("surrogate", [cls() for cls in get_available_surrogates()])

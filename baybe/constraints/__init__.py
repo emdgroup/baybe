@@ -1,19 +1,12 @@
 """BayBE constraints."""
 
-from baybe.constraints.base import Constraint
-from baybe.constraints.conditions import (
-    Condition,
-    SubSelectionCondition,
-    ThresholdCondition,
-)
+from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
 from baybe.constraints.continuous import (
-    ContinuousConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
 from baybe.constraints.discrete import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
-    DiscreteConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
@@ -26,11 +19,6 @@ from baybe.constraints.discrete import (
 from baybe.constraints.validation import validate_constraints
 
 __all__ = [
-    # --- Base classes --- #
-    "Condition",
-    "Constraint",
-    "ContinuousConstraint",
-    "DiscreteConstraint",
     # --- Conditions --- #
     "SubSelectionCondition",
     "ThresholdCondition",

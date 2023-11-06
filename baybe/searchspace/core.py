@@ -10,18 +10,13 @@ import torch
 from attr import define, field
 
 from baybe.constraints import (
-    Constraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
-    DiscreteConstraint,
     validate_constraints,
 )
-from baybe.parameters import (
-    DiscreteParameter,
-    NumericalContinuousParameter,
-    Parameter,
-    TaskParameter,
-)
+from baybe.constraints.base import Constraint, DiscreteConstraint
+from baybe.parameters import NumericalContinuousParameter, TaskParameter
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import validate_parameters

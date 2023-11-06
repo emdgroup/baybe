@@ -10,7 +10,7 @@ from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from torch import cat, squeeze, Tensor
 
-from baybe.surrogates import Surrogate
+from baybe.surrogates.base import Surrogate
 
 
 def debotorchize(acqf_cls: Type[AcquisitionFunction]):

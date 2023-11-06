@@ -3,7 +3,7 @@
 
 import pytest
 
-from baybe.constraints import Constraint
+from baybe.constraints.base import Constraint
 
 
 @pytest.mark.parametrize(

@@ -23,4 +23,4 @@ def test_moved_objective(targets):
 def test_renamed_surrogate():
     """Importing from ```baybe.surrogate``` should raise a warning."""
     with pytest.warns(DeprecationWarning):
-        from baybe.surrogate import Surrogate  # noqa: F401
+        from baybe.surrogate import GaussianProcessSurrogate  # noqa: F401

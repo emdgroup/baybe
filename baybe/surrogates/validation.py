@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
-from baybe.surrogates import Surrogate
+from baybe.surrogates.base import Surrogate
 
 
 def validate_custom_architecture_cls(model_cls: type) -> None:

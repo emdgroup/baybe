@@ -2,8 +2,8 @@
 
 from typing import List
 
-from baybe.constraints import Constraint
-from baybe.parameters import Parameter
+from baybe.constraints.base import Constraint
+from baybe.parameters.base import Parameter
 
 
 def validate_constraints(  # noqa: DOC101, DOC103

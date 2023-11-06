@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from baybe.parameters import Parameter
+from baybe.parameters.base import Parameter
 from baybe.utils import fuzzy_row_match, strtobool
 
 _logger = logging.getLogger(__name__)

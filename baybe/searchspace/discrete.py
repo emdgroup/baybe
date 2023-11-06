@@ -10,14 +10,14 @@ import torch
 from attr import define, field
 from cattrs import IterableValidationError
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, DiscreteConstraint
+from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
+from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import (
     CategoricalParameter,
-    DiscreteParameter,
     NumericalDiscreteParameter,
-    Parameter,
     TaskParameter,
 )
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
 

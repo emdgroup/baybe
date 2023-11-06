@@ -3,7 +3,7 @@
 
 import pytest
 
-from baybe.parameters import Parameter
+from baybe.parameters.base import Parameter
 
 
 @pytest.mark.parametrize(

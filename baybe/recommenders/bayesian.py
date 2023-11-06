@@ -28,7 +28,8 @@ from baybe.recommenders.base import (
     Recommender,
 )
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate, Surrogate
+from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
+from baybe.surrogates.base import Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
 
 if _ONNX_INSTALLED:

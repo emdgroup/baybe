@@ -10,7 +10,7 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.objective import Objective
-from baybe.parameters import Parameter
+from baybe.parameters.base import Parameter
 from baybe.searchspace.core import (
     SearchSpace,
     structure_searchspace_from_config,

@@ -1,6 +1,6 @@
 """BayBE surrogates."""
 
-from baybe.surrogates.base import get_available_surrogates, Surrogate
+from baybe.surrogates.base import get_available_surrogates
 from baybe.surrogates.custom import _ONNX_INSTALLED, register_custom_architecture
 from baybe.surrogates.gaussian_process import GaussianProcessSurrogate
 from baybe.surrogates.linear import BayesianLinearSurrogate
@@ -17,7 +17,6 @@ __all__ = [
     "MeanPredictionSurrogate",
     "NGBoostSurrogate",
     "RandomForestSurrogate",
-    "Surrogate",
 ]
 
 if _ONNX_INSTALLED:
