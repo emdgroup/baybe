@@ -64,6 +64,7 @@ CONFIG = str(
         ]
     },
     "strategy": {
+        "type": "SplitStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"
         },
@@ -129,6 +130,7 @@ INVALID_CONFIG = str(
         ]
     },
     "strategy": {
+        "type": "SplitStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"
         },
