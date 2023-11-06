@@ -7,7 +7,12 @@ import pandas as pd
 from attr import define, field
 
 from baybe.searchspace import SearchSpace
-from baybe.utils import SerialMixin
+from baybe.utils.serialization import (
+    converter,
+    get_base_structure_hook,
+    SerialMixin,
+    unstructure_base,
+)
 
 
 @define
@@ -45,3 +50,8 @@ class Strategy(SerialMixin, ABC):
         Returns:
             The DataFrame with the specific experiments recommended.
         """
+
+
+# Register (un-)structure hooks
+converter.register_unstructure_hook(Strategy, unstructure_base)
+converter.register_structure_hook(Strategy, get_base_structure_hook(Strategy))
