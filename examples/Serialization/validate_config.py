@@ -150,11 +150,11 @@ INVALID_CONFIG = str(
 
 # The first validation should work
 Campaign.validate_config(CONFIG)
-print("Successfully validated first config and created a campaign!")
+print("The first config seems valid.")
 
 # This should fail.
 try:
     Campaign.validate_config(INVALID_CONFIG)
     campaign = Campaign.from_config(INVALID_CONFIG)
 except ClassValidationError:
-    print("Something is wrong with config 2 which is what we expected!")
+    print("Something is wrong with the second config, which is what we expected!")
