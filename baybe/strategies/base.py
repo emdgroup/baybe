@@ -6,6 +6,7 @@ from typing import Optional
 import pandas as pd
 from attr import define, field
 
+from baybe.recommenders.base import Recommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies.deprecation import structure_strategy
 from baybe.utils.serialization import converter, SerialMixin, unstructure_base
@@ -28,6 +29,25 @@ class Strategy(SerialMixin, ABC):
     allow_recommending_already_measured: bool = field(default=False)
 
     @abstractmethod
+    def select_recommender(
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
+    ) -> Recommender:
+        """Select a recommender for the given experimentation context.
+
+        Args:
+            searchspace: See :func:`baybe.strategies.base.Strategy.recommend`.
+            batch_quantity: See :func:`baybe.strategies.base.Strategy.recommend`.
+            train_x: See :func:`baybe.strategies.base.Strategy.recommend`.
+            train_y: See :func:`baybe.strategies.base.Strategy.recommend`.
+
+        Returns:
+            The selected recommender.
+        """
+
     def recommend(
         self,
         searchspace: SearchSpace,
@@ -46,6 +66,20 @@ class Strategy(SerialMixin, ABC):
         Returns:
             The DataFrame with the specific experiments recommended.
         """
+        recommender = self.select_recommender(
+            searchspace,
+            batch_quantity,
+            train_x,
+            train_y,
+        )
+        return recommender.recommend(
+            searchspace,
+            batch_quantity,
+            train_x,
+            train_y,
+            self.allow_repeated_recommendations,
+            self.allow_recommending_already_measured,
+        )
 
 
 # Register (un-)structure hooks

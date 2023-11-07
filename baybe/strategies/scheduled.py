@@ -25,27 +25,19 @@ class SplitStrategy(Strategy):
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
     switch_at: int = field(default=1)
 
-    def recommend(  # noqa: D102
+    def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> pd.DataFrame:
+    ) -> Recommender:
         # See base class.
 
-        recommender = (
+        return (
             self.recommender
             if len(train_x) >= self.switch_at
             else self.initial_recommender
-        )
-        return recommender.recommend(
-            searchspace,
-            batch_quantity,
-            train_x,
-            train_y,
-            self.allow_repeated_recommendations,
-            self.allow_recommending_already_measured,
         )
 
 
@@ -59,21 +51,13 @@ class SequentialStrategy(Strategy):
 
     recommenders: Iterable[Recommender] = field()
 
-    def recommend(  # noqa: D102
+    def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> pd.DataFrame:
+    ) -> Recommender:
         # See base class.
 
-        recommender = next(self.recommenders)
-        return recommender.recommend(
-            searchspace,
-            batch_quantity,
-            train_x,
-            train_y,
-            self.allow_repeated_recommendations,
-            self.allow_recommending_already_measured,
-        )
+        return next(self.recommenders)
