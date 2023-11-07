@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from itertools import chain
 from typing import List, Union
 
 import numpy as np
@@ -34,10 +35,10 @@ from baybe.parameters import (
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import SplitStrategy
+from baybe.strategies.scheduled import SequentialStrategy, SplitStrategy
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
@@ -502,18 +503,42 @@ def fixture_campaign(parameters, constraints, strategy, objective):
     )
 
 
-@pytest.fixture(name="strategy")
-def fixture_default_strategy(
-    recommender,
-    initial_recommender,
-):
-    """The default strategy to be used if not specified differently."""
+@pytest.fixture(name="split_strategy")
+def fixture_default_splitstrategy(recommender, initial_recommender):
+    """The default ```SplitStrategy``` to be used if not specified differently."""
     return SplitStrategy(
         recommender=recommender,
         initial_recommender=initial_recommender,
         allow_repeated_recommendations=False,
         allow_recommending_already_measured=False,
     )
+
+
+@pytest.fixture(name="sequential_strategy")
+def fixture_default_sequential_strategy():
+    """The default ```SequentialStrategy``` to be used if not specified differently."""
+    return SequentialStrategy(
+        recommenders=chain(
+            (RandomRecommender(),), hilberts_factory(SequentialGreedyRecommender)
+        ),
+        allow_repeated_recommendations=False,
+        allow_recommending_already_measured=False,
+    )
+
+
+@pytest.fixture(name="strategy")
+def fixture_select_strategy(request, split_strategy, sequential_strategy):
+    """Returns the requested strategy."""
+    # FIXME: The __name__ workaround is currently required due to failing equality
+    #   checks. The issue seems to be that `get_subclasses` returns different references
+    #   to the classes compared to what a regular import yields.
+    if not hasattr(request, "param") or (
+        request.param.__name__ == SplitStrategy.__name__
+    ):
+        return split_strategy
+    if request.param.__name__ == SequentialStrategy.__name__:
+        return sequential_strategy
+    raise NotImplementedError("unknown strategy type")
 
 
 @pytest.fixture(name="acquisition_function_cls")

@@ -1,6 +1,6 @@
 """Strategies that switch recommenders depending on the experimentation progress."""
 
-from typing import Optional
+from typing import Iterable, Optional
 
 import pandas as pd
 from attr import define, field
@@ -39,6 +39,36 @@ class SplitStrategy(Strategy):
             if len(train_x) >= self.switch_at
             else self.initial_recommender
         )
+        return recommender.recommend(
+            searchspace,
+            batch_quantity,
+            train_x,
+            train_y,
+            self.allow_repeated_recommendations,
+            self.allow_recommending_already_measured,
+        )
+
+
+@define(kw_only=True)
+class SequentialStrategy(Strategy):
+    """A strategy that uses a pre-defined sequence of recommenders.
+
+    Args:
+        recommenders: An iterable providing the recommenders to be used.
+    """
+
+    recommenders: Iterable[Recommender] = field()
+
+    def recommend(  # noqa: D102
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        # See base class.
+
+        recommender = next(self.recommenders)
         return recommender.recommend(
             searchspace,
             batch_quantity,

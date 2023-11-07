@@ -4,14 +4,15 @@
 from typing import get_args, get_type_hints
 
 import pytest
+
 from baybe.recommenders.base import NonPredictiveRecommender, Recommender
 from baybe.recommenders.bayesian import (
     BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
-
 from baybe.searchspace import SearchSpaceType
+from baybe.strategies.base import Strategy
 from baybe.surrogates import get_available_surrogates
 from baybe.utils.basic import get_subclasses
 
@@ -84,6 +85,8 @@ valid_naive_hybrid_recommenders = [
 valid_hybrid_recommenders.extend(valid_naive_hybrid_recommenders)
 valid_hybrid_recommenders.extend(valid_hybrid_sequential_greedy_recommenders)
 
+valid_strategies = get_subclasses(Strategy)
+
 test_targets = [
     "Target_max",
     "Target_min",
@@ -140,4 +143,9 @@ def test_iter_recommender_continuous(campaign, n_iterations, batch_quantity):
     [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
 )
 def test_iter_recommender_hybrid(campaign, n_iterations, batch_quantity):
+    run_iterations(campaign, n_iterations, batch_quantity)
+
+
+@pytest.mark.parametrize("strategy", valid_strategies, indirect=True)
+def test_strategies(campaign, n_iterations, batch_quantity):
     run_iterations(campaign, n_iterations, batch_quantity)

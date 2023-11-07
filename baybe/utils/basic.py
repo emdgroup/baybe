@@ -2,7 +2,7 @@
 
 import random
 from dataclasses import dataclass
-from typing import List, TypeVar
+from typing import Callable, Iterable, List, TypeVar
 
 import numpy as np
 import torch
@@ -60,3 +60,9 @@ def set_random_seed(seed: int):
     torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
+
+
+def hilberts_factory(factory: Callable[..., _T]) -> Iterable[_T]:
+    """Provides an infinite stream of the factory's products."""
+    while True:
+        yield factory()
