@@ -84,7 +84,7 @@ for k in range(randint(4, 6)):
 
 # Fake User1 - 5 iterations
 print("Fake User1")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1"
+os.environ["BAYBE_TELEMETRY_USERNAME"] = "FAKE_USER_1"
 campaign = Campaign(**config)
 for k in range(randint(2, 3)):
     dat = campaign.recommend(randint(3, 4))
@@ -93,7 +93,7 @@ for k in range(randint(2, 3)):
 
 # Fake User1a - Adds recommenations before calling recommend
 print("Fake User1a")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1a"
+os.environ["BAYBE_TELEMETRY_USERNAME"] = "FAKE_USER_1a"
 campaign = Campaign(**config)
 campaign.add_measurements(dat)
 for k in range(randint(2, 3)):
@@ -103,7 +103,7 @@ for k in range(randint(2, 3)):
 
 # Fake User2 - 2 iterations
 print("Fake User2")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_2"
+os.environ["BAYBE_TELEMETRY_USERNAME"] = "FAKE_USER_2"
 campaign = Campaign(**config)
 for k in range(2):
     dat = campaign.recommend(4)
@@ -112,7 +112,7 @@ for k in range(2):
 
 # Fake User3 - no telemetry
 print("Fake User3")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_3"
+os.environ["BAYBE_TELEMETRY_USERNAME"] = "FAKE_USER_3"
 os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
 campaign = Campaign(**config)
 for k in range(randint(5, 7)):
@@ -121,5 +121,5 @@ for k in range(randint(5, 7)):
     campaign.add_measurements(dat)
 
 # Cleanup
-os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
+os.environ.pop("BAYBE_TELEMETRY_USERNAME")
 os.environ.pop("BAYBE_TELEMETRY_ENABLED")

@@ -65,13 +65,13 @@ def disable_telemetry():
     """Disables telemetry during pytesting via fixture."""
     # Remember the original value of the environment variables
     telemetry_enabled_before = os.environ.get("BAYBE_TELEMETRY_ENABLED")
-    telemetry_userhash_before = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH")
-    telemetry_hosthash_before = os.environ.get("BAYBE_DEBUG_FAKE_HOSTHASH")
+    telemetry_userhash_before = os.environ.get("BAYBE_TELEMETRY_USERNAME")
+    telemetry_hosthash_before = os.environ.get("BAYBE_TELEMETRY_HOSTNAME")
 
     # Set the environment variable to a certain value for the duration of the tests
     os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
-    os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "PYTEST"
-    os.environ["BAYBE_DEBUG_FAKE_HOSTHASH"] = "PYTEST"
+    os.environ["BAYBE_TELEMETRY_USERNAME"] = "PYTEST"
+    os.environ["BAYBE_TELEMETRY_HOSTNAME"] = "PYTEST"
 
     # Yield control to the tests
     yield
@@ -83,14 +83,14 @@ def disable_telemetry():
         os.environ.pop("BAYBE_TELEMETRY_ENABLED")
 
     if telemetry_userhash_before is not None:
-        os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = telemetry_userhash_before
+        os.environ["BAYBE_TELEMETRY_USERNAME"] = telemetry_userhash_before
     else:
-        os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
+        os.environ.pop("BAYBE_TELEMETRY_USERNAME")
 
     if telemetry_hosthash_before is not None:
-        os.environ["BAYBE_DEBUG_FAKE_HOSTHASH"] = telemetry_hosthash_before
+        os.environ["BAYBE_TELEMETRY_HOSTNAME"] = telemetry_hosthash_before
     else:
-        os.environ.pop("BAYBE_DEBUG_FAKE_HOSTHASH")
+        os.environ.pop("BAYBE_TELEMETRY_HOSTNAME")
 
 
 # Add option to only run fast tests

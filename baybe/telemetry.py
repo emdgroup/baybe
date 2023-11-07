@@ -1,4 +1,25 @@
-"""Telemetry  functionality for BayBE."""
+"""Telemetry  functionality for BayBE.
+
+The following environment variables control the behavior of BayBE telemetry:
+
+BAYBE_TELEMETRY_ENABLED
+    Flag that can turn off telemetry entirely (default is `true`). To turn it off set it
+    to `false`.
+
+BAYBE_TELEMETRY_ENDPOINT
+    The receiving endpoint URL for telemetry data.
+
+BAYBE_TELEMETRY_TIMEOUT
+    The timeout in seconds for the check whether the endpoint URL is reachable.
+
+BAYBE_TELEMETRY_USERNAME
+    The name of the user executing BayBE code. Defaults to an irreversible hash of
+    the username according to the OS.
+
+BAYBE_TELEMETRY_HOSTNAME
+    The name of the machine executing BayBE code. Defaults to an irreversible hash of
+    the machine name.
+"""
 import getpass
 import hashlib
 import logging
@@ -57,7 +78,7 @@ TELEM_LABELS = {
 # Create resources only if telemetry is activated
 if is_enabled():
     _endpoint_url = os.environ.get(
-        "BAYBE_TELEMETRY_HOST",
+        "BAYBE_TELEMETRY_ENDPOINT",
         "***REMOVED***."
         "elb.eu-central-1.amazonaws.com:4317",
     )
@@ -87,7 +108,7 @@ if is_enabled():
 
             # Setup Global Metric Provider
             _meter = get_meter("aws-otel", "1.0")
-    except (socket.timeout, ConnectionRefusedError):
+    except (socket.timeout, socket.gaierror, ConnectionRefusedError):
         _logger.warning(
             "WARNING: BayBE Telemetry endpoint %s cannot be reached. "
             "Disabling telemetry.",
@@ -106,12 +127,12 @@ def get_user_details() -> Dict[str, str]:
     """
     from baybe import __version__  # pylint: disable=import-outside-toplevel
 
-    username_hash = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH", None) or (
+    username_hash = os.environ.get("BAYBE_TELEMETRY_USERNAME", None) or (
         hashlib.sha256(getpass.getuser().upper().encode())
         .hexdigest()
         .upper()[:10]  # take only first 10 digits to enhance readability in dashboard
     )
-    hostname_hash = os.environ.get("BAYBE_DEBUG_FAKE_HOSTHASH", None) or (
+    hostname_hash = os.environ.get("BAYBE_TELEMETRY_HOSTNAME", None) or (
         hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
     )
     # Alternatively one could take the MAC address like hex(uuid.getnode())
