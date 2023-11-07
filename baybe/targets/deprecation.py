@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 def Objective(*args, **kwargs) -> NewObjective:
-    """An ```Objective``` alias for backward compatibility."""
+    """An ``Objective`` alias for backward compatibility."""
     from baybe.objective import Objective as NewObjective
 
     warnings.warn(

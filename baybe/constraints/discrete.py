@@ -23,16 +23,14 @@ from baybe.utils.serialization import (
 
 @define
 class DiscreteExcludeConstraint(DiscreteConstraint):
-    """Class for modelling exclusion constraints.
-
-    Args:
-        conditions: List of individual conditions.
-        combiner: Operator encoding how to combine the individual conditions.
-    """
+    """Class for modelling exclusion constraints."""
 
     # object variables
     conditions: List[Condition] = field(validator=min_len(1))
+    """List of individual conditions."""
+
     combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
+    """Operator encoding how to combine the individual conditions."""
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -52,6 +50,7 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     # object variables
     condition: ThresholdCondition = field()
+    """The condition modeled by this constraint."""
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -63,16 +62,13 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
 @define
 class DiscreteProductConstraint(DiscreteConstraint):
-    """Class for modelling product constraints.
-
-    Args:
-        condition: The condition that is used for this constraint.
-    """
+    """Class for modelling product constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
     # object variables
     condition: ThresholdCondition = field()
+    """The condition that is used for this constraint."""
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -87,6 +83,7 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
 
     This can be useful to remove entries that arise from e.g. a permutation invariance
     as for instance here:
+
     - A,B,C,D would remain
     - A,A,B,C would be removed
     - A,A,B,B would be removed
@@ -125,15 +122,14 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     For instance some parameters might only be relevant when another parameter has a
     certain value (e.g. parameter switch is 'on'). All dependencies must be declared in
     a single constraint.
-
-    Args:
-        conditions: The list of individual conditions.
-        affected_parameters: The parameters affected by the individual conditions.
     """
 
     # object variables
     conditions: List[Condition] = field()
+    """The list of individual conditions."""
+
     affected_parameters: List[List[str]] = field()
+    """The parameters affected by the individual conditions."""
 
     # for internal use only
     permutation_invariant: bool = field(default=False, init=False)
@@ -201,20 +197,18 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     """Constraint class for declaring that a set of parameters is permutation invariant.
 
-    More precisely, this means that, ```(val_from_param1, val_from_param2)``` is
-    equivalent to ```(val_from_param2, val_from_param1)```. Since it does not make sense
+    More precisely, this means that, ``(val_from_param1, val_from_param2)`` is
+    equivalent to ``(val_from_param2, val_from_param1)``. Since it does not make sense
     to have this constraint with duplicated labels, this implementation also internally
-    applies the :func:`baybe.constraints.DiscreteNoLabelDuplicatesConstraint`.
+    applies the :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`.
 
-    Note: This constraint is evaluated during creation. In the future it might also be
+    *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
-
-    Args:
-        dependencies: Dependencies connected with the invariant parameters.
     """
 
     # object variables
     dependencies: Optional[DiscreteDependenciesConstraint] = field(default=None)
+    """Dependencies connected with the invariant parameters."""
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
@@ -263,14 +257,11 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
 @define
 class DiscreteCustomConstraint(DiscreteConstraint):
-    """Class for user-defined custom constraints.
-
-    Args:
-        validator: A user-defined function modeling the validation of the constraint.
-    """
+    """Class for user-defined custom constraints."""
 
     # object variables
     validator: Callable[[pd.Series], bool] = field()
+    """A user-defined function modeling the validation of the constraint."""
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.

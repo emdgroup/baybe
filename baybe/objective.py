@@ -28,26 +28,26 @@ def _normalize_weights(weights: List[float]) -> List[float]:
 
 @define(frozen=True)
 class Objective(SerialMixin):
-    """Class for managing optimization objectives.
-
-    Args:
-        mode: The optimization mode.
-        targets: The list of targets used for the objective.
-        weights: The weights used to balance the different targets. By default, all
-            weights are equally important.
-        combine_func: The function used to combine the different targets.
-    """
+    """Class for managing optimization objectives."""
 
     # TODO: The class currently directly depends on `NumericalTarget`. Once this
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
 
     mode: Literal["SINGLE", "DESIRABILITY"] = field()
+    """The optimization mode."""
+
     targets: List[NumericalTarget] = field(validator=min_len(1))
+    """The list of targets used for the objective."""
+
     weights: List[float] = field(converter=_normalize_weights)
+    """The weights used to balance the different targets. By default, all
+    weights are equally important."""
+
     combine_func: Literal["MEAN", "GEOM_MEAN"] = field(
         default="GEOM_MEAN", validator=in_(["MEAN", "GEOM_MEAN"])
     )
+    """The function used to combine the different targets."""
 
     @weights.default
     def _default_weights(self) -> List[float]:
@@ -63,7 +63,7 @@ class Objective(SerialMixin):
 
         Raises:
             ValueError: If multiple targets are specified when using objective mode
-                ```SINGLE```.
+                ``SINGLE``.
         """
         # Raises a ValueError if multiple targets are specified when using objective
         # mode SINGLE.
@@ -111,7 +111,7 @@ class Objective(SerialMixin):
 
         Returns:
             A dataframe with the targets in computational representation. Columns will
-            be as in the input (except when objective mode is ```DESIRABILITY```).
+            be as in the input (except when objective mode is ``DESIRABILITY``).
 
         Raises:
             ValueError: If the specified averaging function is unknown.

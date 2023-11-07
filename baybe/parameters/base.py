@@ -21,19 +21,18 @@ class Parameter(ABC, SerialMixin):
 
     Stores information about the type, range, constraints, etc. and handles in-range
     checks, transformations etc.
-
-    Args:
-        name: The name of the parameter
     """
 
     # class variables
     is_numeric: ClassVar[bool]
     """Class variable encoding whether this parameter is numeric."""
+
     is_discrete: ClassVar[bool]
     """Class variable encoding whether this parameter is discrete."""
 
     # object variables
     name: str = field()
+    """The name of the parameter"""
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
@@ -43,25 +42,23 @@ class Parameter(ABC, SerialMixin):
             item: The item to be checked.
 
         Returns:
-            ```True``` if the item is within the parameter range, ```False``` otherwise.
+            ``True`` if the item is within the parameter range, ``False`` otherwise.
         """
 
 
 @define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):
-    """Abstract class for discrete parameters.
-
-    Args:
-        encoding: The encoding of the parameter.
-    """
+    """Abstract class for discrete parameters."""
 
     # TODO [15280]: needs to be refactored
 
     # class variables
     is_discrete: ClassVar[bool] = True
+    # See base class.
 
     # object variables
     encoding: ClassVar[Optional[str]] = None
+    """The encoding of the parameter."""
 
     @property
     @abstractmethod

@@ -17,15 +17,15 @@ from baybe.surrogates.validation import get_model_params_validator
 @scale_model
 @define
 class NGBoostSurrogate(Surrogate):
-    """A natural-gradient-boosting surrogate model.
-
-    Args:
-        model_params: Optional model parameters.
-    """
+    """A natural-gradient-boosting surrogate model."""
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    # See base class.
+
     supports_transfer_learning: ClassVar[bool] = False
+    # See base class.
+
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
     """Class variable encoding the default model parameters."""
 
@@ -35,7 +35,10 @@ class NGBoostSurrogate(Surrogate):
         converter=dict,
         validator=get_model_params_validator(NGBRegressor.__init__),
     )
+    # See base class.
+
     _model: Optional[NGBRegressor] = field(init=False, default=None)
+    """The actual model."""
 
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}

@@ -60,7 +60,7 @@ def add_fake_results(
     new dataframe and that the dataframe is changed in-place.
 
     Args:
-        data: Output of the ```recommend``` function of a ```Campaign```, see
+        data: Output of the ``recommend`` function of a ``Campaign``, see
             :func:`baybe.campaign.Campaign.recommend`.
         campaign: The corresponding campaign, providing configuration, targets, etc.
         good_reference_values: A dictionary containing parameter names (= dict keys) and
@@ -72,16 +72,16 @@ def add_fake_results(
             respective "good" target value ranges (= dict values) in the form of
             2-tuples. Each target will be assigned a random value in its respective
             target range whenever the corresponding parameters meet the conditions
-            specified through ```good_reference_values```.
-        bad_intervals: Analogous to ```good_intervals``` but covering the cases where
+            specified through ``good_reference_values``.
+        bad_intervals: Analogous to ``good_intervals`` but covering the cases where
             the parameters lie outside the conditions specified through
-            ```good_reference_values```.
+            ``good_reference_values``.
 
     Raises:
         ValueError: If good values for a parameter were specified, but this parameter
             is not part of the dataframe.
         ValueError: If the target mode is unrecognized when trying to add fake values.
-        TypeError: If the entries in ```good_reference_values``` are not lists.
+        TypeError: If the entries in ``good_reference_values`` are not lists.
     """
     # Per default, there are no reference values for good parameters
     if good_reference_values is None:
@@ -198,17 +198,17 @@ def add_parameter_noise(
     dataframe is modified in-place, and that no new dataframe is returned.
 
     Args:
-        data: Output of the ```recommend``` function of a ```Campaign``` object, see
+        data: Output of the ``recommend`` function of a ``Campaign`` object, see
             :func:`baybe.campaign.Campaign.recommend`.
         parameters: The parameters for which the values shall be corrupted.
         noise_type: Defines whether the noise should be additive or multiplicative.
         noise_level: Level/magnitude of the noise. Must be provided as numerical value
-            for noise type ```absolute``` and as percentage for noise type
-            ```relative_percent```.
+            for noise type ``absolute`` and as percentage for noise type
+            ``relative_percent``.
 
     Raises:
-        ValueError: If ```noise_type``` is neither ```absolute``` nor
-            ```relative_percent```.
+        ValueError: If ``noise_type`` is neither ``absolute`` nor
+            ``relative_percent``.
     """
     # Validate input
     if noise_type not in ("relative_percent", "absolute"):
@@ -334,13 +334,13 @@ def fuzzy_row_match(
             dataframe.
         parameters: List of baybe parameter objects that are needed to identify
             potential tolerances.
-        numerical_measurements_must_be_within_tolerance: If ```True```, numerical
+        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
             parameters are matched with the search space elements only if there is a
-            match within the parameter tolerance. If ```False```, the closest match is
+            match within the parameter tolerance. If ``False``, the closest match is
             considered, irrespective of the distance.
 
     Returns:
-        The index of the matching rows in ```left_df```.
+        The index of the matching rows in ``left_df``.
 
     Raises:
         ValueError: If some rows are present in the right but not in the left dataframe.

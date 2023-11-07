@@ -29,23 +29,23 @@ class TwoPhaseStrategy(Strategy):
     The recommender is switched when a new (batch) recommendation is requested and
     the training data set size (i.e., the total number of collected measurements
     including those gathered before the strategy was active) is equal to or greater
-    than the number specified via the ```switch_after``` parameter.
+    than the number specified via the ``switch_after`` parameter.
 
     Note:
         Throughout each phase, the strategy reuses the **same** recommender object,
         that is, no new instances are created. Therefore, special attention is required
         when using the strategy with stateful recommenders.
-
-    Args:
-        initial_recommender: The initial recommender used by the strategy.
-        recommender: The recommender used by the strategy after the switch.
-        switch_after: The number of experiments after which the recommender
-            is switched for the next requested batch.
     """
 
     initial_recommender: Recommender = field(factory=RandomRecommender)
+    """The initial recommender used by the strategy."""
+
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
+    """The recommender used by the strategy after the switch."""
+
     switch_after: int = field(default=1)
+    """The number of experiments after which the recommender is switched for the next
+    requested batch."""
 
     def select_recommender(  # noqa: D102
         self,
@@ -83,29 +83,29 @@ class SequentialStrategy(Strategy):
         list. If this is not acceptable, consider using
         :class:`baybe.strategies.composite.StreamingSequentialStrategy` instead.
 
-    Args:
-        recommenders: A finite-length sequence of recommenders to be used.
-            (For infinite-length iterables, see
-            :class:`baybe.strategies.composite.StreamingSequentialStrategy`)
-        mode: Defines what shall happen when the last recommender in the sequence
-            has been consumed but additional recommender changes are triggered:
-            * "raise": An error is raised.
-            * "reuse_last": The last recommender in the sequence is used indefinitely.
-            * "cycle": The selection restarts from the beginning of the sequence.
-
     Raises:
         NoRecommendersLeftError: If more recommenders are requested than there are
-            recommenders available and ```mode="raise"```.
+            recommenders available and ``mode="raise"``.
     """
 
     # Exposed
     recommenders: List[Recommender] = field(
         converter=list, validator=deep_iterable(instance_of(Recommender))
     )
+    """A finite-length sequence of recommenders to be used. For infinite-length
+    iterables, see :class:`baybe.strategies.composite.StreamingSequentialStrategy`."""
+
     mode: Literal["raise", "reuse_last", "cyclic"] = field(
         default="raise",
         validator=in_(("raise", "reuse_last", "cyclic")),
     )
+    """Defines what shall happen when the last recommender in the sequence has been
+    consumed but additional recommender changes are triggered:
+
+        * ``"raise"``: An error is raised.
+        * ``"reuse_last"``: The last recommender in the sequence is used indefinitely.
+        * ``"cycle"``: The selection restarts from the beginning of the sequence.
+    """
 
     # Private
     # TODO: These should **not** be exposed via the constructor but the workaround
@@ -115,7 +115,10 @@ class SequentialStrategy(Strategy):
     #   `get_base_structure_hook` is currently designed prevents such a hook from
     #   taking action.
     _step: int = field(default=-1, alias="_step")
+    """Counts how often the recommender has already been switched."""
+
     _n_last_measurements: int = field(default=-1, alias="_n_last_measurements")
+    """The number of measurements that were available at the last call."""
 
     def select_recommender(  # noqa: D102
         self,
@@ -173,9 +176,6 @@ class StreamingSequentialStrategy(Strategy):
     explicit list conversion. Consequently, it supports arbitrary iterables, possibly
     of infinite length. The downside is that serialization is not supported.
 
-    Args:
-        recommenders: An iterable providing the recommenders to be used.
-
     Raises:
         NoRecommendersLeftError: If more recommenders are requested than there are
             recommenders available.
@@ -183,13 +183,21 @@ class StreamingSequentialStrategy(Strategy):
 
     # Exposed
     recommenders: Iterable[Recommender] = field()
+    """An iterable providing the recommenders to be used."""
 
     # Private
     # TODO: See :class:`baybe.strategies.composite.SequentialStrategy`
     _step: int = field(init=False, default=-1)
+    """Counts how often the recommender has already been switched."""
+
     _n_last_measurements: int = field(init=False, default=-1)
+    """The number of measurements that were available at the last call."""
+
     _iterator: Iterator = field(init=False)
+    """The iterator used to traverse the recommenders."""
+
     _last_recommender: Optional[Recommender] = field(init=False, default=None)
+    """The recommender returned from the last call."""
 
     @_iterator.default
     def default_iterator(self):

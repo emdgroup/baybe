@@ -31,28 +31,30 @@ class SubspaceDiscrete:
     Builds the subspace from parameter definitions and optional constraints, keeps
     track of search metadata, and provides access to candidate sets and different
     parameter views.
-
-    Args:
-        parameters: The list of parameters of the subspace.
-        exp_rep: The experimental representation of the subspace.
-        metadata: The metadata.
-        empty_encoding: Flag encoding whether an empty encoding is used.
-        constraints: A list of constraints for restricting the space.
-        comp_rep: The computational representation of the space.
-            Technically not required but added as an optional initializer argument to
-            allow ingestion from e.g. serialized objects and thereby speed up
-            construction. If not provided, the default hook will derive it from
-            ```exp_rep```.
     """
 
     parameters: List[DiscreteParameter] = field(
         validator=lambda _1, _2, x: validate_parameter_names(x)
     )
+    """The list of parameters of the subspace."""
+
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
+    """The experimental representation of the subspace."""
+
     metadata: pd.DataFrame = field(eq=eq_dataframe)
+    """The metadata."""
+
     empty_encoding: bool = field(default=False)
+    """Flag encoding whether an empty encoding is used."""
+
     constraints: List[DiscreteConstraint] = field(factory=list)
+    """A list of constraints for restricting the space."""
+
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
+    """The computational representation of the space. Technically not required but added
+    as an optional initializer argument to allow ingestion from e.g. serialized objects
+    and thereby speed up construction. If not provided, the default hook will derive it
+    from ``exp_rep``."""
 
     @exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103
@@ -150,7 +152,7 @@ class SubspaceDiscrete:
         constraints: Optional[List[DiscreteConstraint]] = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
-        """See :class:`baybe.searchspace.SearchSpace`."""
+        """See :class:`baybe.searchspace.core.SearchSpace`."""
         # Store the input
         if constraints is None:
             constraints = []
@@ -192,10 +194,11 @@ class SubspaceDiscrete:
                 dataframe. If a match between column name and parameter name is found,
                 the corresponding parameter is used. If a column has no match in the
                 parameter list, a
-                :class:`baybe.parameters.NumericalDiscreteParameter` is created if
-                possible, or a :class:`baybe.parameters.CategoricalParameter` is used
-                as fallback.
-            empty_encoding: See :class:`baybe.searchspace.SearchSpace`.
+                :class:`baybe.parameters.numerical.NumericalDiscreteParameter` is
+                created if possible, or a
+                :class:`baybe.parameters.categorical.CategoricalParameter` is used as
+                fallback.
+            empty_encoding: See :class:`baybe.searchspace.core.SearchSpace`.
 
         Returns:
             The created discrete subspace.
@@ -217,7 +220,6 @@ class SubspaceDiscrete:
         # Try to find a parameter match for each dataframe column
         parameters = []
         for name, series in df.items():
-
             # If a match is found, assert that the values are in range
             if match := specified_params.pop(name, None):
                 assert series.apply(match.is_in_range).all()
@@ -296,12 +298,12 @@ class SubspaceDiscrete:
         """Return the set of candidate parameter settings that can be tested.
 
         Args:
-            allow_repeated_recommendations: If ```True```, parameter settings that have
+            allow_repeated_recommendations: If ``True``, parameter settings that have
                 already been recommended in an earlier iteration are still considered
                 valid candidates. This is relevant, for instance, when an earlier
                 recommended parameter setting has not been measured by the user (for any
                 reason) after the corresponding recommendation was made.
-            allow_recommending_already_measured: If ```True```, parameters settings for
+            allow_recommending_already_measured: If ``True``, parameters settings for
                 which there are already target values available are still considered as
                 valid candidates.
 

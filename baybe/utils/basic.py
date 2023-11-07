@@ -28,9 +28,9 @@ def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> L
 
     Args:
         cls: The base class to retrieve subclasses for.
-        recursive: If ```True```, indirect subclasses (i.e. subclasses of subclasses)
+        recursive: If ``True``, indirect subclasses (i.e. subclasses of subclasses)
             are included.
-        abstract: If ```True```, abstract subclasses are included.
+        abstract: If ``True``, abstract subclasses are included.
 
     Returns:
         A list of subclasses for the given class.

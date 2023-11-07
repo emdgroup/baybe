@@ -31,33 +31,39 @@ class SubstanceParameter(DiscreteParameter):
     descriptors that have a maximum correlation of 0.7 reduces the number of
     descriptors to about 5-20. The number might be substantially higher with more
     labels given.
-
-    Args:
-        encoding: The encoding of the variable.
     """
 
-    # TODO: Since object variables are not inherited, we need to include it here again.
-    # This might change when moving towards html based documentation.
     # class variables
     is_numeric: ClassVar[bool] = False
+    # See base class.
 
     # object variables
     data: Dict[str, str] = field()
+    """A mapping that provides the SMILES strings for all available parameter values."""
+
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )
+    """Specifies the used decorrelation mode for the parameter encoding.
+
+        - ``False``: The encoding is used as is.
+        - ``True``: The encoding is decorrelated using a default correlation threshold.
+        - float in (0, 1): The encoding is decorrelated using the specified threshold.
+    """
+
     encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
+    # See base class.
 
     @encoding.validator
     def _validate_encoding(self, _: Any, value: str) -> None:  # noqa: DOC101, DOC103
         """Validate that the chosen encoding can be used.
 
-        This validation is necessary since certain encodings are only useable when
-        additional dependencies, in particular the ```chem``` dependency, have been
+        This validation is necessary since certain encodings are only usable when
+        additional dependencies, in particular the ``chem`` dependency, have been
         installed.
 
         Raises:
-            ImportError: If the ```chem```dependency was not installed but an encoding
+            ImportError: If the ``chem``dependency was not installed but an encoding
                 requiring this dependency is requested.
         """
         if value in ["MORDRED"] and not (_MORDRED_INSTALLED and _RDKIT_INSTALLED):

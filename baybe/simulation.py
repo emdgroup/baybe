@@ -82,9 +82,9 @@ def simulate_transfer_learning(
     search space into its tasks and simulates each task with the training data from the
     remaining tasks.
 
-    NOTE:
+    **NOTE:**
     Currently, the simulation only supports purely discrete search spaces. This is
-    because ```lookup``` serves both as the loop-closing element **and** as the source
+    because ``lookup`` serves both as the loop-closing element **and** as the source
     for off-task training data. For continuous (or mixed) spaces, the lookup mechanism
     would need to be either implemented as a callable (in which case the training data
     must be provided separately) or the continuous parameters need to be effectively
@@ -101,7 +101,7 @@ def simulate_transfer_learning(
 
     Returns:
         A dataframe as returned by :func:`baybe.simulation.simulate_scenarios` where
-        the different tasks are represented in the ```Scenario``` column.
+        the different tasks are represented in the ``Scenario`` column.
 
     Raises:
         NotImplementedError: If a non-dscrete search space is chosen.
@@ -125,7 +125,6 @@ def simulate_transfer_learning(
     # Create simulation objects for all tasks
     scenarios: Dict[Any, Campaign] = {}
     for task in task_param.values:
-
         # Create a campaign that focuses only on the current task by excluding
         # off-task configurations from the candidates list
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
@@ -190,18 +189,21 @@ def simulate_scenarios(
         noise_percent: See :func:`baybe.simulation.simulate_experiment`.
 
     Returns:
-        A dataframe like returned from `simulate_experiments` but with the following
-        additional columns:
-            * ```Scenario```: Specifies the scenario identifier of the respective
-                simulation.
-            * ```Random_Seed```: Specifies the random seed used for the respective
-                simulation.
-            * Optional, if ```initial_data``` is provided:
-                A column ```Initial_Data``` that pecifies the index of the initial data
-                set used for the respective simulation.
-            * Optional, if ```groupby``` is provided: A column for each ```groupby```
-                parameter that specifies the search space partition considered for the
-                respective simulation.
+        A dataframe like returned from :func:`baybe.simulation.simulate_experiment` but
+        with additional columns. See the ``Note`` for details.
+
+    Note:
+        The following additional columns are contained in the dataframe returned by this
+        function:
+
+        * ``Scenario``: Specifies the scenario identifier of the respective simulation.
+        * ``Random_Seed``: Specifies the random seed used for the respective simulation.
+        * Optional, if ``initial_data`` is provided: A column ``Initial_Data`` that
+          specifies the index of the initial data set used for the respective
+          simulation.
+        * Optional, if ``groupby`` is provided: A column for each ``groupby`` parameter
+          that specifies the search space partition considered for the respective
+          simulation.
     """
     _RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
 
@@ -302,7 +304,7 @@ def _simulate_groupby(
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.simulate_experiments`,
-        but with additional ```groupby columns``` (named according to the specified
+        but with additional ``groupby columns`` (named according to the specified
         groupby parameters) that subdivide the results into the different simulations.
 
     Raises:
@@ -325,7 +327,6 @@ def _simulate_groupby(
     # Simulate all subgroups
     dfs = []
     for group_id, group in groups:
-
         # Create a campaign that focuses only on the current group by excluding
         # off-group configurations from the candidates list
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
@@ -400,7 +401,7 @@ def simulate_experiment(
             Second, A callable, providing target values for the given parameter
             settings. can be chosen. The callable is assumed to return either a float
             or a tuple of floats and to accept an arbitrary number of floats as input.
-            Finally,```None``` can be chosen, producing fake results.
+            Finally,``None`` can be chosen, producing fake results.
         batch_quantity: The number of recommendations to be queried per iteration.
         n_doe_iterations:  The number of iterations to run the design-of-experiments
             loop. If not specified, the simulation proceeds until there are no more
@@ -410,35 +411,39 @@ def simulate_experiment(
         random_seed: The random seed used for the simulation.
         impute_mode: Specifies how a missing lookup will be handled.
             There are six different options available.
-            If ```"error"``` is chosen, an error will be thrown.
-            If ```"worst"``` is chosen, imputation uses the worst available value for
-            each target.
-            If ```"best"``` is chosen, imputation uses the best available value for each
-            target.
-            If ```"mean"``` is chosen, imputation uses the mean value for each target.
-            If ```"random"``` is chosen, a random row will be used as lookup.
-            If ```"ignore"``` is chosen, the search space is stripped before
-            recommendations are made so that unmeasured experiments will not be
-            recommended.
-        noise_percent: If not ```None```, relative noise in percent of
-            ```noise_percent``` will be applied to the parameter measurements.
+
+            - ``"error"``: An error will be thrown.
+            - ``"worst"``: Imputation uses the worst available value for each target.
+            - ``"best"``: Imputation uses the best available value for each target.
+            - ``"mean"``: Imputation uses the mean value for each target.
+            - ``"random"``: A random row will be used as lookup.
+            - ``"ignore"``: The search space is stripped before recommendations are made
+              so that unmeasured experiments will not be recommended.
+        noise_percent: If not ``None``, relative noise in percent of
+            ``noise_percent`` will be applied to the parameter measurements.
 
     Returns:
-        A dataframe ready for plotting, containing the following columns:
-            * ```Iteration```: corresponds to the DOE iteration (starting at 0)
-            * ```Num_Experiments```: corresponds to the running number of experiments
-                performed (usually x-axis)
-            * for each target a column ```{targetname}_IterBest```: corresponds to the
-                best result for that target at the respective iteration
-            * for each target a column ```{targetname}_CumBest```: corresponds to the
-                best result for that target up to including respective iteration
-            * for each target a column ```{targetname}_Measurements```: the individual
-                measurements obtained for the respective target and iteration
+        A dataframe ready for plotting, see the ``Note`` for details.
 
     Raises:
         TypeError: If a non-suitable lookup is chosen.
-        ValueError: If the impute mode ```ignore``` is chosen for non-dataframe lookup.
+        ValueError: If the impute mode ``ignore`` is chosen for non-dataframe lookup.
         ValueError: If a setup is provided that would run indefinitely.
+
+    Note:
+        The returned dataframe contains the following columns:
+
+        * ``Iteration``:
+          Corresponds to the DOE iteration (starting at 0)
+        * ``Num_Experiments``:
+          Corresponds to the running number of experiments performed (usually x-axis)
+        * for each target a column ``{targetname}_IterBest``:
+          Corresponds to the best result for that target at the respective iteration
+        * for each target a column ``{targetname}_CumBest``:
+          Corresponds to the best result for that target up to including
+          respective iteration
+        * for each target a column ``{targetname}_Measurements``:
+          The individual measurements obtained for the respective target and iteration
     """
     # TODO: Due to the "..." operator, sphinx does not render this properly. Might
     # want to investigate in the future.
@@ -495,7 +500,6 @@ def simulate_experiment(
     n_experiments = 0
     dfs = []
     while k_iteration < limit:
-
         # Get the next recommendations and corresponding measurements
         try:
             measured = campaign.recommend(batch_quantity=batch_quantity)
@@ -597,7 +601,7 @@ def _look_up_target_values(
 ):
     """Fill the target values in the query dataframe using the lookup mechanism.
 
-    Note that this does not create a new dataframe but modifies ```queries``` in-place.
+    Note that this does not create a new dataframe but modifies ``queries`` in-place.
 
     Args:
         queries: A dataframe containing points to be queried.
@@ -711,7 +715,7 @@ def _impute_lookup(
         The filled-in lookup results.
 
     Raises:
-        IndexError: If the mode ```"error"``` is chosen and at least one of the targets
+        IndexError: If the mode ``"error"`` is chosen and at least one of the targets
             could not be found.
     """
     # TODO: this function needs another code cleanup and refactoring

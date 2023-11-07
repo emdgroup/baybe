@@ -23,17 +23,14 @@ _ScikitLearnModel = TypeVar("_ScikitLearnModel")
 class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     """Intermediate class for cluster-based selection of discrete candidates.
 
-    Suitable for ```sklearn```-like models that have a ```fit``` and ```predict```
+    Suitable for ``sklearn``-like models that have a ``fit`` and ``predict``
     method. Specific model parameters and cluster sub-selection techniques can be
     declared in the derived classes.
-
-    Args:
-        model_params: The parameters for the used model. This is initialized with
-            reasonable default values for the derived child classes.
     """
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
+    # See base class.
     # TODO: "Type" should not appear in ClassVar. Both PyCharm and mypy complain, see
     #   also note in the mypy docs:
     #       https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
@@ -43,14 +40,20 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism
     #   that checks if a custom mechanism is implemented and uses default otherwise
     #   (similar to what is done in the recommenders)
+
     model_class: ClassVar[Type[_ScikitLearnModel]]
     """Class variable describing the model class."""
+
     model_cluster_num_parameter_name: ClassVar[str]
     """Class variable describing the name of the clustering parameter."""
+
     _use_custom_selector: ClassVar[bool] = False
+    """Class variable flagging whether a custom selector is being used."""
 
     # Object variables
     model_params: dict = field(factory=dict)
+    """The parameters for the used model. This is initialized with reasonable default
+    values for the derived child classes."""
 
     def _make_selection_default(
         self,
@@ -115,7 +118,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         # Set model parameters and perform fit
         model = self.model_class(
             **{self.model_cluster_num_parameter_name: batch_quantity},
-            **self.model_params
+            **self.model_params,
         )
         model.fit(candidates_scaled)
 
@@ -134,11 +137,17 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
     """Partitioning Around Medoids (PAM) initial clustering strategy."""
 
     model_class: ClassVar[Type[_ScikitLearnModel]] = KMedoids
+    # See base class.
+
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
+    # See base class.
+
     _use_custom_selector: ClassVar[bool] = True
+    # See base class.
 
     # Object variables
     model_params: dict = field()
+    # See base class.
 
     @model_params.default
     def _default_model_params(self) -> dict:
@@ -172,11 +181,17 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 
     # Class variables
     model_class: ClassVar[Type[_ScikitLearnModel]] = KMeans
+    # See base class.
+
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
+    # See base class.
+
     _use_custom_selector: ClassVar[bool] = True
+    # See base class.
 
     # Object variables
     model_params: dict = field()
+    # See base class.
 
     @model_params.default
     def _default_model_params(self) -> dict:
@@ -218,7 +233,10 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
 
     # Class variables
     model_class: ClassVar[Type[_ScikitLearnModel]] = GaussianMixture
+    # See base class.
+
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
+    # See base class.
 
     def _make_selection_custom(
         self,

@@ -48,38 +48,40 @@ class Campaign(SerialMixin):
     series of measurements and the iterative sequence of events involved.
 
     In particular, a campaign:
-    * defines the objective of an experimentation process.
-    * defines the search space over which the experimental parameter may vary.
-    * defines a strategy for traversing the search space.
-    * Records the measurement data collected during the process.
-    * Records metadata about the progress of the experimentation process.
-
-    Args:
-        searchspace: The search space in which the experiments are conducted.
-        objective: The optimization objective.
-        strategy: The employed strategy.
-        measurements_exp: The experimental representation of the conducted experiments.
-        numerical_measurements_must_be_within_tolerance: Flag for forcing numerical
-            measurements to be within tolerance.
-        n_batches_done: The number of already processed batches.
-        n_fits_done: The number of fits already done.
+        * Defines the objective of an experimentation process.
+        * Defines the search space over which the experimental parameter may vary.
+        * Defines a strategy for traversing the search space.
+        * Records the measurement data collected during the process.
+        * Records metadata about the progress of the experimentation process.
     """
 
     # DOE specifications
     searchspace: SearchSpace = field()
+    """The search space in which the experiments are conducted."""
+
     objective: Objective = field()
+    """The optimization objective."""
+
     strategy: Strategy = field(factory=TwoPhaseStrategy)
+    """The employed strategy"""
 
     # Data
     measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
+    """The experimental representation of the conducted experiments."""
+
     numerical_measurements_must_be_within_tolerance: bool = field(default=True)
+    """Flag for forcing numerical measurements to be within tolerance."""
 
     # Metadata
     n_batches_done: int = field(default=0)
+    """The number of already processed batches."""
+
     n_fits_done: int = field(default=0)
+    """The number of fits already done."""
 
     # Private
     _cached_recommendation: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
+    """The cached recommendations."""
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -239,7 +241,7 @@ class Campaign(SerialMixin):
             Dataframe containing the recommendations in experimental representation.
 
         Raises:
-            ValueError: If ```batch_quantity``` is smaller than 1.
+            ValueError: If ``batch_quantity`` is smaller than 1.
         """
         if batch_quantity < 1:
             raise ValueError(

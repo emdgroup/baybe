@@ -23,6 +23,7 @@ class Scaler(ABC):
 
     type: str
     """Class variable encoding the type of the scaler."""
+
     SUBCLASSES: Dict[str, Type[Scaler]] = {}
     """Class variable for all subclasses"""
 
@@ -92,6 +93,7 @@ class DefaultScaler(Scaler):
     """A scaler that normalizes inputs to the unit cube and standardizes targets."""
 
     type = "DEFAULT"
+    # See base class.
 
     def fit_transform(  # noqa: D102
         self, x: Tensor, y: Tensor

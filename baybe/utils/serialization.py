@@ -86,7 +86,7 @@ def get_base_structure_hook(
 ) -> Callable[[dict], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
-    Provides the inverse operation to ```unstructure_base```.
+    Provides the inverse operation to ``unstructure_base``.
 
     Args:
         base: The corresponding class

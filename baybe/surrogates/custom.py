@@ -1,4 +1,12 @@
-"""Functionality for building custom surrogates."""
+"""Functionality for building custom surrogates.
+
+Note that ONNX surrogate models cannot be retrained. However, having the surrogates
+raise a ``NotImplementedError`` would currently break the code since
+:class:`baybe.recommenders.bayesian.BayesianRecommender` assumes that surrogates can be
+trained and attempts to do so for each new DOE iteration.
+
+It is planned to solve this issue in the future.
+"""
 
 from typing import Callable, ClassVar, Tuple
 
@@ -33,7 +41,7 @@ def register_custom_architecture(
     constant_target_catching: bool = True,
     batchify_posterior: bool = True,
 ) -> Callable:
-    """Wraps a given custom model architecture class into a ```Surrogate```.
+    """Wraps a given custom model architecture class into a ``Surrogate``.
 
     Args:
         joint_posterior_attr: Boolean indicating if the model returns a posterior
@@ -113,19 +121,25 @@ if _ONNX_INSTALLED:
     class CustomONNXSurrogate(Surrogate):
         """A wrapper class for custom pretrained surrogate models.
 
-        Args:
-            onnx_input_name: The input name used for constructing the ONNX str.
-            onnx_str: The ONNX byte str representing the model.
+        Note that these surrogates cannot be retrained.
         """
 
         # Class variables
         joint_posterior: ClassVar[bool] = False
+        # See base class.
+
         supports_transfer_learning: ClassVar[bool] = False
+        # See base class.
 
         # Object variables
         onnx_input_name: str = field(validator=validators.instance_of(str))
+        """The input name used for constructing the ONNX str."""
+
         onnx_str: bytes = field(validator=validators.instance_of(bytes))
+        """The ONNX byte str representing the model."""
+
         _model: ort.InferenceSession = field(init=False, eq=False)
+        """The internal model."""
 
         @_model.default
         def default_model(self) -> ort.InferenceSession:

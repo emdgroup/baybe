@@ -31,13 +31,7 @@ _VALID_TRANSFORMS = {
 
 @define(frozen=True)
 class NumericalTarget(Target, SerialMixin):
-    """Class for numerical targets.
-
-    Args:
-        mode: The optimization mode.
-        bounds: Bounds of the value of the target.
-        bounds_transform_func: A function for transforming the bounds.
-    """
+    """Class for numerical targets."""
 
     # TODO: Introduce mode enum
 
@@ -51,8 +45,13 @@ class NumericalTarget(Target, SerialMixin):
     #       type annotation or type argument.
 
     mode: Literal["MIN", "MAX", "MATCH"] = field()
+    """The optimization mode."""
+
     bounds: Interval = field(default=None, converter=convert_bounds)
+    """Bounds of the value of the target."""
+
     bounds_transform_func: Optional[str] = field()
+    """A function for transforming the bounds."""
 
     @bounds_transform_func.default
     def _default_bounds_transform_func(self) -> Optional[str]:
@@ -75,7 +74,7 @@ class NumericalTarget(Target, SerialMixin):
 
         Raises:
             ValueError: If the bounds are finite on one and infinite on the other end.
-            ValueError: If the target is in ```MATCH``` mode but the provided bounds are
+            ValueError: If the target is in ``MATCH`` mode but the provided bounds are
                 are infinite.
         """
         # IMPROVE: We could also include half-way bounds, which however don't work

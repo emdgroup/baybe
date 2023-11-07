@@ -11,12 +11,10 @@ class Target(ABC):
     """Abstract base class for all target variables.
 
     Stores information about the range, transformations, etc.
-
-    Args:
-        name: The name of the target.
     """
 
     name: str = field()
+    """The name of the target."""
 
     @abstractmethod
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
