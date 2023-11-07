@@ -11,7 +11,7 @@ from baybe.strategies.deprecation import structure_strategy
 from baybe.utils.serialization import converter, SerialMixin, unstructure_base
 
 
-@define
+@define(kw_only=True)
 class Strategy(SerialMixin, ABC):
     """Abstract base class for all BayBE strategies.
 

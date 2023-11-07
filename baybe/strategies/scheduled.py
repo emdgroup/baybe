@@ -11,7 +11,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies.base import Strategy
 
 
-@define
+@define(kw_only=True)
 class SplitStrategy(Strategy):
     """A two-phased strategy that switches the recommender after some experiments.
 
