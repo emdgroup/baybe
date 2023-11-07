@@ -18,12 +18,12 @@ class SplitStrategy(Strategy):
     Args:
         initial_recommender: The initial recommender used by the strategy.
         recommender: The recommender used by the strategy after the switch.
-        switch_at: The number of experiments at which the recommender is switched.
+        switch_after: The number of experiments after which the recommender is switched.
     """
 
     initial_recommender: Recommender = field(factory=RandomRecommender)
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
-    switch_at: int = field(default=1)
+    switch_after: int = field(default=1)
 
     def select_recommender(  # noqa: D102
         self,
@@ -36,7 +36,7 @@ class SplitStrategy(Strategy):
 
         return (
             self.recommender
-            if len(train_x) >= self.switch_at
+            if len(train_x) >= self.switch_after
             else self.initial_recommender
         )
 
