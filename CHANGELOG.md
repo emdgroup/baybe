@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Raises` section for validators and corresponding contributing guideline
 - Bring your own model: surrogate classes for custom model architectures and pre-trained ONNX models
 - Test module for deprecation warnings
+- Option to control the switching point of `SplitStrategy` (former `Strategy`)
+- `SequentialStrategy` class
 
 ### Changed
 - Reorganized modules into subpackages
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BayBE` class replaced with `Campaign`
 - `baybe.surrogate` replaced with `baybe.surrogates`
 - `baybe.targets.Objective` replaced with `baybe.objective.Objective`
+- `baybe.strategies.Strategy` replaced with `baybe.strategies.SplitStrategy`
 
 ## [0.5.1] - 2023-10-19
 ### Added
