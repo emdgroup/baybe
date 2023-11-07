@@ -4,15 +4,15 @@
 from typing import get_args, get_type_hints
 
 import pytest
-
-from baybe.searchspace import SearchSpaceType
-from baybe.strategies.bayesian import (
+from baybe.recommenders.base import NonPredictiveRecommender, Recommender
+from baybe.recommenders.bayesian import (
     BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.strategies.recommender import NonPredictiveRecommender, Recommender
-from baybe.surrogate import get_available_surrogates
+
+from baybe.searchspace import SearchSpaceType
+from baybe.surrogates import get_available_surrogates
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations
@@ -98,39 +98,39 @@ test_targets = [
 #   MarginalRecommender (or similar) is re-added, the acqf-tests can be reactivated.
 # @pytest.mark.slow
 # @pytest.mark.parametrize("acquisition_function_cls", valid_acquisition_functions)
-# def test_iter_acquisition_function(baybe, n_iterations, batch_quantity):
-#     run_iterations(baybe, n_iterations, batch_quantity)
+# def test_iter_acquisition_function(campaign, n_iterations, batch_quantity):
+#     run_iterations(campaign, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("surrogate_model", valid_surrogate_models)
-def test_iter_surrogate_model(baybe, n_iterations, batch_quantity):
-    run_iterations(baybe, n_iterations, batch_quantity)
+def test_iter_surrogate_model(campaign, n_iterations, batch_quantity):
+    run_iterations(campaign, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("initial_recommender", valid_initial_recommenders)
-def test_iter_initial_recommender(baybe, n_iterations, batch_quantity):
-    run_iterations(baybe, n_iterations, batch_quantity)
+def test_iter_initial_recommender(campaign, n_iterations, batch_quantity):
+    run_iterations(campaign, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("target_names", test_targets)
-def test_iter_targets(baybe, n_iterations, batch_quantity):
-    run_iterations(baybe, n_iterations, batch_quantity)
+def test_iter_targets(campaign, n_iterations, batch_quantity):
+    run_iterations(campaign, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("recommender", valid_discrete_recommenders)
-def test_iter_recommender_discrete(baybe, n_iterations, batch_quantity):
-    run_iterations(baybe, n_iterations, batch_quantity)
+def test_iter_recommender_discrete(campaign, n_iterations, batch_quantity):
+    run_iterations(campaign, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("recommender", valid_continuous_recommenders)
 @pytest.mark.parametrize("parameter_names", ["Conti_finite1", "Conti_finite2"])
-def test_iter_recommender_continuous(baybe, n_iterations, batch_quantity):
-    run_iterations(baybe, n_iterations, batch_quantity)
+def test_iter_recommender_continuous(campaign, n_iterations, batch_quantity):
+    run_iterations(campaign, n_iterations, batch_quantity)
 
 
 @pytest.mark.slow
@@ -139,5 +139,5 @@ def test_iter_recommender_continuous(baybe, n_iterations, batch_quantity):
     "parameter_names",
     [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
 )
-def test_iter_recommender_hybrid(baybe, n_iterations, batch_quantity):
-    run_iterations(baybe, n_iterations, batch_quantity)
+def test_iter_recommender_hybrid(campaign, n_iterations, batch_quantity):
+    run_iterations(campaign, n_iterations, batch_quantity)

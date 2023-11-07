@@ -5,19 +5,21 @@
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 #### Necessary imports
 
 import numpy as np
 import torch
 
-from baybe.core import BayBE
+from baybe.campaign import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
+from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
-from baybe.surrogate import CustomONNXSurrogate
-from baybe.targets import NumericalTarget, Objective
+from baybe.strategies import Strategy
+from baybe.surrogates import CustomONNXSurrogate
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, to_tensor
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
@@ -90,9 +92,9 @@ surrogate_model = CustomONNXSurrogate(
     onnx_input_name=ONNX_INPUT_NAME,  # specify input name
 )
 
-#### Create BayBE object
+#### Create campaign
 
-baybe_obj = BayBE(
+campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
@@ -106,22 +108,22 @@ baybe_obj = BayBE(
 #### Iterate with recommendations and measurements
 
 # Let's do a first round of recommendation
-recommendation = baybe_obj.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_quantity=2)
 
-print("Recommendation from baybe object:")
+print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
-add_fake_results(recommendation, baybe_obj)
-baybe_obj.add_measurements(recommendation)
+add_fake_results(recommendation, campaign)
+campaign.add_measurements(recommendation)
 
 #### Model Outputs
 
 # Do another round of recommendations
-recommendation = baybe_obj.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_quantity=2)
 
 # Print second round of recommendations
-print("Recommendation from baybe object:")
+print("Recommendation from campaign:")
 print(recommendation)
 
 

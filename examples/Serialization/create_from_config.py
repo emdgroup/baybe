@@ -1,16 +1,16 @@
-### Example for creating BayBE objects from configs
+### Example for creating campaigns from configs
 # pylint: disable=missing-module-docstring
 
-# This example shows how to load a configuration file and use it to create a BayBE object.
-# In such a configuration file, the objects used to create a BayBE object are represented by
-# strings. We use the following configuration dictionaries, representing a valid BayBE object.
+# This example shows how to load a configuration file and use it to create a campaign.
+# In such a configuration file, the objects used to create a campaign are represented by
+# strings. We use the following configuration dictionaries, representing a valid campaign.
 
 # Note that the json format is required for the config file.
 # You can create such a config by providing a  dictionary with `"type":"name of the class"`.
 
 #### Necessary imports
 
-from baybe import BayBE
+from baybe import Campaign
 
 #### The configuration dictionary as a string
 
@@ -83,12 +83,12 @@ CONFIG = str(
 """
 )
 
-#### Creating a BayBE object from the configuration file
+#### Creating a campaign from the configuration file
 
 # Although we know in this case that the config represents a valid configuration for a
-# BayBE object. If the config is invalid an exception will be thrown.
-baybe = BayBE.from_config(CONFIG)
+# campaign. If the config is invalid an exception will be thrown.
+campaign = Campaign.from_config(CONFIG)
 
 # We now perform a recommendation as usual and print it.
-recommendation = baybe.recommend(batch_quantity=3)
+recommendation = campaign.recommend(batch_quantity=3)
 print(recommendation)

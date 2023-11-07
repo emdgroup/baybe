@@ -5,7 +5,7 @@
 # Most importantly, it demonstrates the creation of a custom hybrid searchspace.
 
 # This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
-# We refer to [`baybe_object`](./../Basics/baybe_object.md) for a more  basic example resp.
+# We refer to [`campaign`](./../Basics/campaign.md) for a more  basic example resp.
 # to [`run_custom_analytical`](./run_custom_analytical.md) for details on the lookup mechanism.
 
 #### Necessary imports for this example
@@ -14,18 +14,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
-from baybe.searchspace import SearchSpace
-from baybe.simulation import simulate_scenarios
-from baybe.strategies import (
+from baybe.recommenders import (
     NaiveHybridRecommender,
     RandomRecommender,
     SequentialGreedyRecommender,
-    Strategy,
 )
-from baybe.targets import NumericalTarget, Objective
-
+from baybe.searchspace import SearchSpace
+from baybe.simulation import simulate_scenarios
+from baybe.strategies import Strategy
+from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop
 
@@ -102,7 +102,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing BayBE objects for the simulation loop
+#### Constructing campaigns for the simulation loop
 
 # This example compares three different available hybrid recommenders:
 # The `SequentialGreedyRecommender`, the `NaiveHybridRecommedner` and the `RandomRecommender`.
@@ -123,19 +123,19 @@ seq_greedy_strategy = Strategy(
 naive_hybrid_strategy = Strategy(recommender=NaiveHybridRecommender())
 random_strategy = Strategy(recommender=RandomRecommender())
 
-# We now create one BayBE object per strategy.
+# We now create one campaign per strategy.
 
-seq_greedy_baybe = BayBE(
+seq_greedy_campaign = Campaign(
     searchspace=searchspace,
     strategy=seq_greedy_strategy,
     objective=objective,
 )
-naive_hybrid_baybe = BayBE(
+naive_hybrid_campaign = Campaign(
     searchspace=searchspace,
     strategy=naive_hybrid_strategy,
     objective=objective,
 )
-random_baybe = BayBE(
+random_campaign = Campaign(
     searchspace=searchspace,
     strategy=random_strategy,
     objective=objective,
@@ -143,11 +143,11 @@ random_baybe = BayBE(
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
-# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
+# For this, it is necessary to define a dictionary mapping scenario names to campaigns.
 scenarios = {
-    "Sequential greedy": seq_greedy_baybe,
-    "Naive hybrid": naive_hybrid_baybe,
-    "Random": random_baybe,
+    "Sequential greedy": seq_greedy_campaign,
+    "Naive hybrid": naive_hybrid_campaign,
+    "Random": random_campaign,
 }
 results = simulate_scenarios(
     scenarios,

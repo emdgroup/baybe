@@ -5,7 +5,7 @@
 # Such an object specifies the strategy adopted to make recommendations.
 # It has several parameters one can adjust, depending on the strategy the user wants to follow.
 
-# To apply the selected strategy, this object can be specified in the arguments of the BayBE object.
+# To apply the selected strategy, this object can be specified in the arguments of the campaign.
 # The different parameters the user can change are:
 # - The initial recommender
 # - The recommender with its surrogate model and its acquisition function
@@ -13,21 +13,23 @@
 
 
 # This examples assumes some basic familiarity with using BayBE.
-# We refer to [`baybe_object`](./baybe_object.md) for a more general and basic example.
+# We refer to [`campaign`](./campaign.md) for a more general and basic example.
 
 #### Necessary imports for this example
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
+from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
-from baybe.surrogate import (
+from baybe.strategies import Strategy
+from baybe.surrogates import (
     BayesianLinearSurrogate,
     GaussianProcessSurrogate,
     NGBoostSurrogate,
     RandomForestSurrogate,
 )
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
 #### Available initial strategies
@@ -52,7 +54,7 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # The surrogate model is then used by the acquisition function to make recommendations.
 
 # The following are some available basic surrogates
-# Use `baybe.surrogate.get_available_surrogates()` for a complete list
+# Use `baybe.surrogates.get_available_surrogates()` for a complete list
 available_surrogate_models = [
     GaussianProcessSurrogate(),
     RandomForestSurrogate(),
@@ -121,7 +123,7 @@ print(strategy)
 
 #### Example Searchspace and objective parameters
 
-# We use the same data used in the [`baybe_object`](./baybe_object.md) example.
+# We use the same data used in the [`campaign`](./campaign.md) example.
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
@@ -164,24 +166,24 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Creating the BayBE object
+#### Creating the campaign
 
 # The strategy object can now be used together with the searchspace and the objective as follows.
 
-baybe_obj = BayBE(
+campaign = Campaign(
     searchspace=searchspace,
     strategy=strategy,
     objective=objective,
 )
 
-# This BayBE object can then be used to get recommendations and add measurements:
+# This campaign can then be used to get recommendations and add measurements:
 
-recommendation = baybe_obj.recommend(batch_quantity=3)
+recommendation = campaign.recommend(batch_quantity=3)
 print("\n\nRecommended experiments: ")
 print(recommendation)
 
-add_fake_results(recommendation, baybe_obj)
+add_fake_results(recommendation, campaign)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 
-baybe_obj.add_measurements(recommendation)
+campaign.add_measurements(recommendation)

@@ -9,7 +9,7 @@
 # This example assumes some basic familiarity with using BayBE and how to use BoTorch test
 # functions in discrete searchspaces.
 # For further details, we thus refer to
-# - [`baybe_object`](./../Basics/baybe_object.md) for a basic example on how to use BayBE and
+# - [`campaign`](./../Basics/campaign.md) for a basic example on how to use BayBE and
 # - [here](./../Searchspaces/continuous_space_custom_function.md) for how to use a custom function.
 
 #### Necessary imports for this example
@@ -18,13 +18,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
+from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import RandomRecommender, SequentialGreedyRecommender, Strategy
-from baybe.targets import NumericalTarget, Objective
-
+from baybe.strategies import Strategy
+from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop
 
@@ -73,7 +74,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing BayBE objects for the simulation loop
+#### Constructing campaigns for the simulation loop
 
 # To simplify adjusting the example for other strategies, we construct some strategy objects.
 # For details on strategy objects, we refer to [`strategies`](./../Basics/strategies.md).
@@ -83,14 +84,14 @@ seq_greedy_EI_strategy = Strategy(
 )
 random_strategy = Strategy(recommender=RandomRecommender())
 
-# We now create one BayBE object per strategy.
+# We now create one campaign per strategy.
 
-seq_greedy_EI_baybe = BayBE(
+seq_greedy_EI_campaign = Campaign(
     searchspace=searchspace,
     strategy=seq_greedy_EI_strategy,
     objective=objective,
 )
-random_baybe = BayBE(
+random_campaign = Campaign(
     searchspace=searchspace,
     strategy=random_strategy,
     objective=objective,
@@ -100,10 +101,10 @@ random_baybe = BayBE(
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
-# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
+# For this, it is necessary to define a dictionary mapping scenario names to campaigns.
 scenarios = {
-    "Sequential greedy EI": seq_greedy_EI_baybe,
-    "Random": random_baybe,
+    "Sequential greedy EI": seq_greedy_EI_campaign,
+    "Random": random_campaign,
 }
 results = simulate_scenarios(
     scenarios,

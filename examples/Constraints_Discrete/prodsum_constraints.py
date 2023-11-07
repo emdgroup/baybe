@@ -4,25 +4,26 @@
 # This examples demonstrates an exclusion constraint using products and sums.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 #### Necessary imports for this example
 
 import numpy as np
-from baybe import BayBE
+from baybe import Campaign
 
 from baybe.constraints import (
     DiscreteProductConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
+from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
     SubstanceParameter,
 )
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
 #### Experiment setup
@@ -94,10 +95,10 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the BayBE object
+#### Creating and printing the campaign
 
-baybe_obj = BayBE(searchspace=searchspace, objective=objective)
-print(baybe_obj)
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
 
 #### Manual verification of the constraints
 
@@ -111,7 +112,7 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with 1,2-sum above 150:      ",
         (
-            baybe_obj.searchspace.discrete.exp_rep[["NumParam1", "NumParam2"]].sum(
+            campaign.searchspace.discrete.exp_rep[["NumParam1", "NumParam2"]].sum(
                 axis=1
             )
             > 150.0
@@ -120,7 +121,7 @@ for kIter in range(N_ITERATIONS):
     print(
         "Number of entries with 3,4-product under 30:   ",
         (
-            baybe_obj.searchspace.discrete.exp_rep[["NumParam3", "NumParam4"]].prod(
+            campaign.searchspace.discrete.exp_rep[["NumParam3", "NumParam4"]].prod(
                 axis=1
             )
             < 30
@@ -128,7 +129,7 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         "Number of entries with 5,6-sum unequal to 100: ",
-        baybe_obj.searchspace.discrete.exp_rep[["NumParam5", "NumParam6"]]
+        campaign.searchspace.discrete.exp_rep[["NumParam5", "NumParam6"]]
         .sum(axis=1)
         .apply(lambda x: x - 100.0)
         .abs()
@@ -136,6 +137,6 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
 
-    rec = baybe_obj.recommend(batch_quantity=5)
-    add_fake_results(rec, baybe_obj)
-    baybe_obj.add_measurements(rec)
+    rec = campaign.recommend(batch_quantity=5)
+    add_fake_results(rec, campaign)
+    campaign.add_measurements(rec)

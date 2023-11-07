@@ -6,17 +6,18 @@
 # via the `botorch_function_wrapper`.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
 # We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
 
 
 #### Necessary imports for this example
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 
 from botorch.test_functions import Rastrigin
@@ -64,9 +65,9 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing the BayBE object and performing a recommendation
+#### Constructing the campaign and performing a recommendation
 
-baybe_obj = BayBE(
+campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
@@ -74,7 +75,7 @@ baybe_obj = BayBE(
 # Get a recommendation for a fixed batched quantity.
 
 BATCH_QUANTITY = 3
-recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
+recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.
@@ -88,8 +89,8 @@ for index, row in recommendation.iterrows():
 
 recommendation["Target"] = target_values
 
-# Here, we inform the BayBE object about our measurement.
+# Here, we inform the campaign about our measurement.
 
-baybe_obj.add_measurements(recommendation)
+campaign.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)

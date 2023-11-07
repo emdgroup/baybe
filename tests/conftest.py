@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 import torch
 
+from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
@@ -22,28 +23,28 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
-from baybe.core import BayBE
+from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.recommenders.bayesian import SequentialGreedyRecommender
+from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.bayesian import SequentialGreedyRecommender
-from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.surrogate import _ONNX_INSTALLED, GaussianProcessSurrogate
-from baybe.targets import NumericalTarget, Objective
+from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, add_parameter_noise
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
 if _CHEM_INSTALLED:
-    from baybe.parameters import SUBSTANCE_ENCODINGS, SubstanceParameter
+    from baybe.parameters.substance import SUBSTANCE_ENCODINGS, SubstanceParameter
 
 if _ONNX_INSTALLED:
-    from baybe.surrogate import CustomONNXSurrogate
+    from baybe.surrogates.custom import CustomONNXSurrogate
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
@@ -488,10 +489,10 @@ def fixture_default_constraint_selection():
     return []
 
 
-@pytest.fixture(name="baybe")
-def fixture_baybe(parameters, constraints, strategy, objective):
-    """Returns a BayBE."""
-    return BayBE(
+@pytest.fixture(name="campaign")
+def fixture_campaign(parameters, constraints, strategy, objective):
+    """Returns a campaign."""
+    return Campaign(
         searchspace=SearchSpace.from_product(
             parameters=parameters, constraints=constraints
         ),
@@ -554,8 +555,8 @@ def fixture_default_objective(targets):
 def fixture_default_config():
     """The default config to be used if not specified differently."""
     # TODO: Once `to_config` is implemented, generate the default config from the
-    #   default baybe object instead of hardcoding it here. This avoids redundant code
-    #   and automatically keeps them synced.
+    #   default campaign object instead of hardcoding it here. This avoids redundant
+    #   code and automatically keeps them synced.
     cfg = """{
         "parameters": [
             {
@@ -661,25 +662,25 @@ def fixture_default_onnx_surrogate(onnx_str) -> Union["CustomONNXSurrogate", Non
 
 # Reusables
 
-# TODO consider turning this into a fixture returning a baybe object after running some
+# TODO consider turning this into a fixture returning a campaign after running some
 #  fake iterations
 def run_iterations(
-    baybe: BayBE, n_iterations: int, batch_quantity: int, add_noise: bool = True
+    campaign: Campaign, n_iterations: int, batch_quantity: int, add_noise: bool = True
 ) -> None:
-    """Run a baybe object for some fake iterations.
+    """Run a campaign for some fake iterations.
 
     Args:
-        baybe: The baybe object encapsulating the experiment.
+        campaign: The campaign encapsulating the experiments.
         n_iterations: Number of iterations run.
         batch_quantity: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
     """
     for k in range(n_iterations):
-        rec = baybe.recommend(batch_quantity=batch_quantity)
+        rec = campaign.recommend(batch_quantity=batch_quantity)
         # dont use parameter noise for these tests
 
-        add_fake_results(rec, baybe)
+        add_fake_results(rec, campaign)
         if add_noise and (k % 2):
-            add_parameter_noise(rec, baybe.parameters, noise_level=0.1)
+            add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
 
-        baybe.add_measurements(rec)
+        campaign.add_measurements(rec)

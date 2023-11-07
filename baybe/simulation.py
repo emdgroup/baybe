@@ -47,7 +47,7 @@ except ImportError as ex:
         "baybe[simulation]`"
     ) from ex
 
-from baybe.core import BayBE
+from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
@@ -67,7 +67,7 @@ _DEFAULT_SEED = 1337
 
 
 def simulate_transfer_learning(
-    baybe: BayBE,
+    campaign: Campaign,
     lookup: pd.DataFrame,
     /,
     *,
@@ -92,7 +92,7 @@ def simulate_transfer_learning(
     implemented at the moment.
 
     Args:
-        baybe: See :func:`baybe.simulation.simulate_experiment`.
+        campaign: See :func:`baybe.simulation.simulate_experiment`.
         lookup: See :func:`baybe.simulation.simulate_scenarios`.
         batch_quantity: See :func:`baybe.simulation.simulate_scenarios`.
         n_doe_iterations: See :func:`baybe.simulation.simulate_scenarios`.
@@ -107,7 +107,7 @@ def simulate_transfer_learning(
         NotImplementedError: If a non-dscrete search space is chosen.
     """
     # TODO: Currently, we assume a purely discrete search space
-    if baybe.searchspace.type != SearchSpaceType.DISCRETE:
+    if campaign.searchspace.type != SearchSpaceType.DISCRETE:
         raise NotImplementedError(
             "Currently, only purely discrete search spaces are supported. "
             "For details, see NOTE in the function docstring."
@@ -115,7 +115,7 @@ def simulate_transfer_learning(
 
     # TODO [16932]: Currently, we assume exactly one task parameter exists
     # Extract the single task parameter
-    task_params = [p for p in baybe.parameters if isinstance(p, TaskParameter)]
+    task_params = [p for p in campaign.parameters if isinstance(p, TaskParameter)]
     if len(task_params) > 1:
         raise NotImplementedError(
             "Currently, transfer learning supports only a single task parameter."
@@ -123,25 +123,25 @@ def simulate_transfer_learning(
     task_param = task_params[0]
 
     # Create simulation objects for all tasks
-    scenarios: Dict[Any, BayBE] = {}
+    scenarios: Dict[Any, Campaign] = {}
     for task in task_param.values:
 
-        # Create a baybe object that focuses only on the current task by excluding
+        # Create a campaign that focuses only on the current task by excluding
         # off-task configurations from the candidates list
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
-        baybe_task = deepcopy(baybe)
-        off_task_mask = baybe.searchspace.discrete.exp_rep[task_param.name] != task
+        campaign_task = deepcopy(campaign)
+        off_task_mask = campaign.searchspace.discrete.exp_rep[task_param.name] != task
         # TODO [16605]: Avoid direct manipulation of metadata
-        baybe_task.searchspace.discrete.metadata.loc[
+        campaign_task.searchspace.discrete.metadata.loc[
             off_task_mask.values, "dont_recommend"
         ] = True
 
         # Use all off-task data as training data
         df_train = lookup[lookup[task_param.name] != task]
-        baybe_task.add_measurements(df_train)
+        campaign_task.add_measurements(df_train)
 
         # Add the task scenario
-        scenarios[task] = baybe_task
+        scenarios[task] = campaign_task
 
     # Simulate all tasks
     return simulate_scenarios(
@@ -156,7 +156,7 @@ def simulate_transfer_learning(
 
 
 def simulate_scenarios(
-    scenarios: Dict[Any, BayBE],
+    scenarios: Dict[Any, Campaign],
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
@@ -269,7 +269,7 @@ def simulate_scenarios(
 
 
 def _simulate_groupby(
-    baybe_obj: BayBE,
+    campaign: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
     /,
     *,
@@ -290,7 +290,7 @@ def _simulate_groupby(
     all groups where the search is restricted to the corresponding partition.
 
     Args:
-        baybe_obj: See :func:`baybe.simulation.simulate_experiment`.
+        campaign: See :func:`baybe.simulation.simulate_experiment`.
         lookup: See :func:`baybe.simulation.simulate_experiment`.
         batch_quantity: See :func:`baybe.simulation.simulate_experiment`.
         n_doe_iterations: See :func:`baybe.simulation.simulate_experiment`.
@@ -318,32 +318,32 @@ def _simulate_groupby(
     #   space constructor, the integer-based indexing provides a second safety net.
     #   Hence, the "reset_index" call.
     if groupby is None:
-        groups = ((None, baybe_obj.searchspace.discrete.exp_rep.reset_index()),)
+        groups = ((None, campaign.searchspace.discrete.exp_rep.reset_index()),)
     else:
-        groups = baybe_obj.searchspace.discrete.exp_rep.reset_index().groupby(groupby)
+        groups = campaign.searchspace.discrete.exp_rep.reset_index().groupby(groupby)
 
     # Simulate all subgroups
     dfs = []
     for group_id, group in groups:
 
-        # Create a baybe object that focuses only on the current group by excluding
+        # Create a campaign that focuses only on the current group by excluding
         # off-group configurations from the candidates list
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
-        baybe_group = deepcopy(baybe_obj)
+        campaign_group = deepcopy(campaign)
         # TODO: Implement SubspaceDiscrete.__len__
         off_group_idx = np.full(
-            len(baybe_obj.searchspace.discrete.exp_rep), fill_value=True, dtype=bool
+            len(campaign.searchspace.discrete.exp_rep), fill_value=True, dtype=bool
         )
         off_group_idx[group.index.values] = False
         # TODO [16605]: Avoid direct manipulation of metadata
-        baybe_group.searchspace.discrete.metadata.loc[
+        campaign_group.searchspace.discrete.metadata.loc[
             off_group_idx, "dont_recommend"
         ] = True
 
         # Run the group simulation
         try:
             df_group = simulate_experiment(
-                baybe_group,
+                campaign_group,
                 lookup,
                 batch_quantity=batch_quantity,
                 n_doe_iterations=n_doe_iterations,
@@ -372,7 +372,7 @@ def _simulate_groupby(
 
 
 def simulate_experiment(
-    baybe_obj: BayBE,
+    campaign: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
@@ -392,7 +392,7 @@ def simulate_experiment(
     to be tested.
 
     Args:
-        baybe_obj: The DOE setting to be simulated.
+        campaign: The DOE setting to be simulated.
         lookup: The lookup used to close the loop, provided in the form of a dataframe
             or callable that define the targets for the queried parameter settings:
             First, a dataframe containing experimental settings and their target
@@ -457,9 +457,9 @@ def simulate_experiment(
         )
 
     # Validate the number of experimental steps
-    # TODO: Probably, we should add this as a property to BayBE
-    will_terminate = (baybe_obj.searchspace.type == SearchSpaceType.DISCRETE) and (
-        not baybe_obj.strategy.allow_recommending_already_measured
+    # TODO: Probably, we should add this as a property to Campaign
+    will_terminate = (campaign.searchspace.type == SearchSpaceType.DISCRETE) and (
+        not campaign.strategy.allow_recommending_already_measured
     )
     if (n_doe_iterations is None) and (not will_terminate):
         raise ValueError(
@@ -467,25 +467,25 @@ def simulate_experiment(
             "indefinitely. Hence, `n_doe_iterations` must be explicitly provided."
         )
 
-    # Create a fresh BayBE object and set the corresponding random seed
+    # Create a fresh campaign and set the corresponding random seed
     # TODO: Reconsider if deepcopies are required once [16605] is resolved
-    baybe_obj = deepcopy(baybe_obj)
+    campaign = deepcopy(campaign)
     set_random_seed(random_seed)
 
     # Add the initial data
     if initial_data is not None:
-        baybe_obj.add_measurements(initial_data)
+        campaign.add_measurements(initial_data)
 
     # For impute_mode 'ignore', do not recommend space entries that are not
     # available in the lookup
     # TODO [16605]: Avoid direct manipulation of metadata
     if impute_mode == "ignore":
-        searchspace = baybe_obj.searchspace.discrete.exp_rep
+        searchspace = campaign.searchspace.discrete.exp_rep
         missing_inds = searchspace.index[
             searchspace.merge(lookup, how="left", indicator=True)["_merge"]
             == "left_only"
         ]
-        baybe_obj.searchspace.discrete.metadata.loc[
+        campaign.searchspace.discrete.metadata.loc[
             missing_inds, "dont_recommend"
         ] = True
 
@@ -498,10 +498,10 @@ def simulate_experiment(
 
         # Get the next recommendations and corresponding measurements
         try:
-            measured = baybe_obj.recommend(batch_quantity=batch_quantity)
+            measured = campaign.recommend(batch_quantity=batch_quantity)
         except NotEnoughPointsLeftError:
             # TODO: This except block requires a more elegant solution
-            strategy = baybe_obj.strategy
+            strategy = campaign.strategy
             allow_repeated = strategy.allow_repeated_recommendations
             allow_measured = strategy.allow_recommending_already_measured
 
@@ -510,7 +510,7 @@ def simulate_experiment(
             # TODO: Currently, this is still possible due to bug [15917] though.
             assert not allow_measured
 
-            measured, _ = baybe_obj.searchspace.discrete.get_candidates(
+            measured, _ = campaign.searchspace.discrete.get_candidates(
                 allow_repeated_recommendations=allow_repeated,
                 allow_recommending_already_measured=allow_measured,
             )
@@ -519,7 +519,7 @@ def simulate_experiment(
                 break
 
         n_experiments += len(measured)
-        _look_up_target_values(measured, baybe_obj, lookup, impute_mode)
+        _look_up_target_values(measured, campaign, lookup, impute_mode)
 
         # Create the summary for the current iteration and store it
         result = pd.DataFrame(
@@ -529,7 +529,7 @@ def simulate_experiment(
                     "Num_Experiments": n_experiments,
                     **{
                         f"{target.name}_Measurements": measured[target.name].to_list()
-                        for target in baybe_obj.targets
+                        for target in campaign.targets
                     },
                 }
             ]
@@ -540,13 +540,13 @@ def simulate_experiment(
         if noise_percent:
             add_parameter_noise(
                 measured,
-                baybe_obj.parameters,
+                campaign.parameters,
                 noise_type="relative_percent",
                 noise_level=noise_percent,
             )
 
-        # Update the BayBE object
-        baybe_obj.add_measurements(measured)
+        # Update the campaign
+        campaign.add_measurements(measured)
 
         # Update the iteration counter
         k_iteration += 1
@@ -557,7 +557,7 @@ def simulate_experiment(
     results = pd.concat(dfs, ignore_index=True)
 
     # Add the instantaneous and running best values for all targets
-    for target in baybe_obj.targets:
+    for target in campaign.targets:
         # Define the summary functions for the current target
         if target.mode == "MAX":
             agg_fun = np.max
@@ -589,7 +589,7 @@ def simulate_experiment(
 
 def _look_up_target_values(
     queries: pd.DataFrame,
-    baybe_obj: BayBE,
+    campaign: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -601,7 +601,7 @@ def _look_up_target_values(
 
     Args:
         queries: A dataframe containing points to be queried.
-        baybe_obj: The BayBE object for which the experiments should be simulated.
+        campaign: The campaign for which the experiments should be simulated.
         lookup: The lookup mechanism. See :func:`baybe.simulation.simulate_scenarios`
             for details.
         impute_mode: The used impute mode. See
@@ -615,11 +615,11 @@ def _look_up_target_values(
     #   the different lookup modes should be implemented via multiple dispatch.
 
     # Extract all target names
-    target_names = [t.name for t in baybe_obj.targets]
+    target_names = [t.name for t in campaign.targets]
 
     # If no lookup is provided, invent some fake results
     if lookup is None:
-        add_fake_results(queries, baybe_obj)
+        add_fake_results(queries, campaign)
 
     # Compute the target values via a callable
     elif isinstance(lookup, Callable):
@@ -637,13 +637,13 @@ def _look_up_target_values(
         )
         # ... and assign this to measured_targets in order to have one column per target
         measured_targets[split_target_columns.columns] = split_target_columns
-        if measured_targets.shape[1] != len(baybe_obj.targets):
+        if measured_targets.shape[1] != len(campaign.targets):
             raise AssertionError(
                 "If you use an analytical function as lookup, make sure "
                 "the configuration has the right amount of targets "
                 "specified."
             )
-        for k_target, target in enumerate(baybe_obj.targets):
+        for k_target, target in enumerate(campaign.targets):
             queries[target.name] = measured_targets.iloc[:, k_target]
 
     # Get results via dataframe lookup (works only for exact matches)
@@ -677,7 +677,7 @@ def _look_up_target_values(
                         "It seems the search space was not correctly "
                         "reduced before recommendations were generated."
                     )
-                match_vals = _impute_lookup(row, lookup, baybe_obj.targets, impute_mode)
+                match_vals = _impute_lookup(row, lookup, campaign.targets, impute_mode)
 
             else:
                 # Exactly one match has been found
@@ -703,7 +703,7 @@ def _impute_lookup(
     Args:
         row: The data that should be matched with the lookup data frame.
         lookup: The lookup data frame.
-        targets: Targets from the BayBE object, providing the required mode information.
+        targets: The campaign targets, providing the required mode information.
         mode: The used impute mode. See :func:`baybe.simulation.simulate_scenarios`
             for details.
 

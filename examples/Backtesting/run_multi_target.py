@@ -6,7 +6,7 @@
 
 # This example assumes basic familiarty with BayBE, custom test functions and multiple targets.
 # For further details, we thus refer to
-# - [`baybe_object`](./../Basics/baybe_object.md) for a more general and basic example,
+# - [`campaign`](./../Basics/campaign.md) for a more general and basic example,
 # - [`run_custom_analytical`](./run_custom_analytical.md) for custom test functions, and
 # - [`desirability`](./../Multi_Target/desirability.md) for multiple targets.
 
@@ -15,11 +15,12 @@
 from typing import Tuple
 
 import numpy as np
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop
 
@@ -87,12 +88,12 @@ objective = Objective(
 )
 
 
-#### Constructing a BayBE object and performing the simulation loop
+#### Constructing a campaign and performing the simulation loop
 
-baybe_obj = BayBE(searchspace=searchspace, objective=objective)
+campaign = Campaign(searchspace=searchspace, objective=objective)
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
-scenarios = {"BayBE": baybe_obj}
+scenarios = {"BayBE": campaign}
 
 results = simulate_scenarios(
     scenarios,

@@ -3,14 +3,16 @@ from contextlib import nullcontext
 
 import pytest
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.exceptions import ModelParamsNotSupportedError
-from baybe.surrogate import _ONNX_INSTALLED, register_custom_architecture
+from baybe.surrogates import _ONNX_INSTALLED, register_custom_architecture
 
 from tests.conftest import run_iterations
 
 if _ONNX_INSTALLED:
-    from baybe.surrogate import CustomONNXSurrogate  # pylint: disable=ungrouped-imports
+    from baybe.surrogates import (  # pylint: disable=ungrouped-imports
+        CustomONNXSurrogate,
+    )
 
     def test_invalid_onnx_creation(onnx_str):
         """Invalid onnx model creation."""
@@ -44,12 +46,12 @@ if _ONNX_INSTALLED:
         ["parameter_names", "should_raise"],
         [(["Categorical_1"], True), (["SomeSetting"], False)],
     )
-    def test_supported_parameter_types(baybe: BayBE, should_raise: bool):
+    def test_supported_parameter_types(campaign: Campaign, should_raise: bool):
         """Using an ONNX model with unsupported parameters should raise an exception."""
-        run_iterations(baybe, n_iterations=1, batch_quantity=1)
+        run_iterations(campaign, n_iterations=1, batch_quantity=1)
         context = pytest.raises(TypeError) if should_raise else nullcontext()
         with context:
-            baybe.recommend(batch_quantity=1)
+            campaign.recommend(batch_quantity=1)
 
 
 def test_validate_architectures():

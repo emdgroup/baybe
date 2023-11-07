@@ -4,14 +4,16 @@
 # This example shows how an arbitrary python function can be used as lookup.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 #### Necessary imports
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
+
 
 #### Defining the custom test function
 
@@ -57,16 +59,16 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing the BayBE object and performing a recommendation
+#### Constructing the campaign and performing a recommendation
 
-baybe_obj = BayBE(
+campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
 
 # Get a recommendation for a fixed batched quantity.
 BATCH_QUANTITY = 3
-recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
+recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.
@@ -78,7 +80,7 @@ for index, row in recommendation.iterrows():
 # We add an additional column with the calculated target values.
 recommendation["Target"] = target_values
 
-# Here, we inform the BayBE object about our measurement.
-baybe_obj.add_measurements(recommendation)
+# Here, we inform the campaign about our measurement.
+campaign.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)

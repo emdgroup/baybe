@@ -7,7 +7,7 @@
 
 #### Necessary imports
 
-from baybe import BayBE
+from baybe import Campaign
 from cattrs import ClassValidationError
 
 #### Defining config dictionaries
@@ -146,15 +146,15 @@ INVALID_CONFIG = str(
 """
 )
 
-#### Verifictation of the two dictionaries
+#### Verification of the two dictionaries
 
 # The first validation should work
-BayBE.validate_config(CONFIG)
-print("Successfully validated first config and created a BayBE object!")
+Campaign.validate_config(CONFIG)
+print("The first config seems valid.")
 
 # This should fail.
 try:
-    BayBE.validate_config(INVALID_CONFIG)
-    baybe = BayBE.from_config(INVALID_CONFIG)
+    Campaign.validate_config(INVALID_CONFIG)
+    campaign = Campaign.from_config(INVALID_CONFIG)
 except ClassValidationError:
-    print("Something is wrong with config 2 which is what we expected!")
+    print("Something is wrong with the second config, which is what we expected!")

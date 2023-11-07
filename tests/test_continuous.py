@@ -11,11 +11,11 @@ import torch
         ["Conti_finite1", "Conti_finite2"],
     ],
 )
-def test_valid_configs(baybe):
+def test_valid_configs(campaign):
     """Test whether the given settings work without error."""
-    print(baybe.searchspace.continuous.param_bounds_comp.flatten())
+    print(campaign.searchspace.continuous.param_bounds_comp.flatten())
 
     assert all(
         torch.is_floating_point(itm)
-        for itm in baybe.searchspace.continuous.param_bounds_comp.flatten()
+        for itm in campaign.searchspace.continuous.param_bounds_comp.flatten()
     )

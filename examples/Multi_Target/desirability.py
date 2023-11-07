@@ -5,14 +5,15 @@
 # It uses a desirability value to handle several targets.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 #### Necessary imports for this example
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
 #### Experiment setup and creating the searchspace
@@ -92,10 +93,10 @@ objective = Objective(
 
 print(objective)
 
-#### Creating and printing the BayBE object
+#### Creating and printing the campaign
 
-baybe_obj = BayBE(searchspace=searchspace, objective=objective)
-print(baybe_obj)
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
 
 #### Performing some iterations
 
@@ -107,16 +108,16 @@ N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
-    rec = baybe_obj.recommend(batch_quantity=3)
+    rec = campaign.recommend(batch_quantity=3)
     print("\nRecommended measurements:\n", rec)
 
-    add_fake_results(rec, baybe_obj)
+    add_fake_results(rec, campaign)
     print("\nRecommended measurements with fake measured results:\n", rec)
 
-    baybe_obj.add_measurements(rec)
+    campaign.add_measurements(rec)
 
     print("\n\nInternal measurement dataframe computational representation Y:\n")
-    print(baybe_obj.measurements_targets_comp)
+    print(campaign.measurements_targets_comp)
 
 
 #### Addendum: Description of `bounds_transformation_func` functions

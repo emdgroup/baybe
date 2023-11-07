@@ -5,7 +5,7 @@
 # This allows us to access information about previously conducted experiments from .xlsx-files.
 
 # This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
-# We refer to [`baybe_object`](./../Basics/baybe_object.md) for a more  basic example resp.
+# We refer to [`campaign`](./../Basics/campaign.md) for a more  basic example resp.
 # to [`run_full_lookup`](./run_full_lookup.md) for details on the lookup mechanism.
 
 #### Necessary imports for this example
@@ -15,12 +15,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
+from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import RandomRecommender, Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.strategies import Strategy
+from baybe.targets import NumericalTarget
 
 #### Parameters for a full simulation loop
 
@@ -92,13 +94,13 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Constructing BayBE objects for the simulation loop
+#### Constructing campaigns for the simulation loop
 
-# In this example, we create two BayBE objects.
+# In this example, we create two campaigns.
 # One uses the default recommender and the other one makes random recommendations.
 
-baybe = BayBE(searchspace=searchspace, objective=objective)
-baybe_rand = BayBE(
+campaign = Campaign(searchspace=searchspace, objective=objective)
+campaign_rand = Campaign(
     searchspace=searchspace,
     strategy=Strategy(recommender=RandomRecommender()),
     objective=objective,
@@ -106,8 +108,8 @@ baybe_rand = BayBE(
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
-# For this, it is necessary to define a dictionary mapping scenario names to BayBE objects.
-scenarios = {"Test_Scenario": baybe, "Random": baybe_rand}
+# For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 
 # The lookup table does not contain data for all possible combination of parameters.
 # Consequently, we need to inform the function how to deal with missing entries.

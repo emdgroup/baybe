@@ -1,4 +1,4 @@
-"""Core functionality of BayBE. Main point of interaction via Python."""
+"""Functionality for managing DOE campaigns. Main point of interaction via Python."""
 
 from __future__ import annotations
 
@@ -9,14 +9,15 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 
-from baybe.parameters import Parameter
-from baybe.searchspace import (
-    _structure_searchspace_from_config,
-    _validate_searchspace_from_config,
+from baybe.objective import Objective
+from baybe.parameters.base import Parameter
+from baybe.searchspace.core import (
     SearchSpace,
+    structure_searchspace_from_config,
+    validate_searchspace_from_config,
 )
 from baybe.strategies.strategy import Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.telemetry import (
     TELEM_LABELS,
     telemetry_record_recommended_measurement_percentage,
@@ -28,19 +29,29 @@ from baybe.utils.serialization import converter, SerialMixin
 # Converter for config deserialization
 _config_converter = converter.copy()
 _config_converter.register_structure_hook(
-    SearchSpace, _structure_searchspace_from_config
+    SearchSpace, structure_searchspace_from_config
 )
 
 # Converter for config validation
 _validation_converter = converter.copy()
 _validation_converter.register_structure_hook(
-    SearchSpace, _validate_searchspace_from_config
+    SearchSpace, validate_searchspace_from_config
 )
 
 
 @define
-class BayBE(SerialMixin):
+class Campaign(SerialMixin):
     """Main class for interaction with BayBE.
+
+    Campaigns define and record an experimentation process, i.e. the execution of a
+    series of measurements and the iterative sequence of events involved.
+
+    In particular, a campaign:
+    * defines the objective of an experimentation process.
+    * defines the search space over which the experimental parameter may vary.
+    * defines a strategy for traversing the search space.
+    * Records the measurement data collected during the process.
+    * Records metadata about the progress of the experimentation process.
 
     Args:
         searchspace: The search space in which the experiments are conducted.
@@ -96,25 +107,25 @@ class BayBE(SerialMixin):
         return self.objective.transform(self.measurements_exp)
 
     @classmethod
-    def from_config(cls, config_json: str) -> BayBE:
-        """Create a BayBE object from a configuration JSON.
+    def from_config(cls, config_json: str) -> Campaign:
+        """Create a campaign from a configuration JSON.
 
         Args:
             config_json: The string with the configuration JSON.
 
         Returns:
-            The constructed BayBE object.
+            The constructed campaign.
         """
         config = json.loads(config_json)
         config["searchspace"] = {
             "parameters": config.pop("parameters"),
             "constraints": config.pop("constraints", None),
         }
-        return _config_converter.structure(config, BayBE)
+        return _config_converter.structure(config, Campaign)
 
     @classmethod
     def to_config(cls) -> str:
-        """Extract the configuration of the BayBE object as JSON string.
+        """Extract the configuration of the campaign as JSON string.
 
         Note: This is not yet implemented. Use
         :func:`baybe.utils.serialization.SerialMixin.to_json` instead
@@ -133,7 +144,7 @@ class BayBE(SerialMixin):
 
     @classmethod
     def validate_config(cls, config_json: str) -> None:
-        """Validates a given BayBE configuration JSON.
+        """Validates a given campaign configuration JSON.
 
         Args:
             config_json: The JSON that should be validated.
@@ -143,20 +154,20 @@ class BayBE(SerialMixin):
             "parameters": config.pop("parameters"),
             "constraints": config.pop("constraints", None),
         }
-        _validation_converter.structure(config, BayBE)
+        _validation_converter.structure(config, Campaign)
 
     def add_measurements(self, data: pd.DataFrame) -> None:
         """Add results from a dataframe to the internal database.
 
         Each addition of data is considered a new batch. Added results are checked for
         validity. Categorical values need to have an exact match. For numerical values,
-        a BayBE flag determines if values that lie outside a specified tolerance
+        a campaign flag determines if values that lie outside a specified tolerance
         are accepted.
         Note that this modifies the provided data in-place.
 
         Args:
             data: The data to be added (with filled values for targets). Preferably
-                created via :func:`baybe.core.BayBE.recommend`.
+                created via :func:`baybe.campaign.Campaign.recommend`.
 
         Raises:
             ValueError: If one of the targets has missing values or NaNs in the provided
@@ -273,4 +284,4 @@ def _unstructure_with_version(obj: Any) -> dict:
     }
 
 
-converter.register_unstructure_hook(BayBE, _unstructure_with_version)
+converter.register_unstructure_hook(Campaign, _unstructure_with_version)

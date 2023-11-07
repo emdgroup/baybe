@@ -6,13 +6,14 @@ This script does some calls so that the results can be viewed on AWS CloudWatch.
 import os
 from random import randint
 
-from baybe.core import BayBE
+from baybe.campaign import Campaign
+from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.strategies.bayesian import SequentialGreedyRecommender
 from baybe.strategies.sampling import RandomRecommender
 from baybe.strategies.strategy import Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.telemetry import get_user_details
 from baybe.utils.dataframe import add_fake_results
 
@@ -76,49 +77,49 @@ config = {
 
 # Actual User
 print(f"Actual User Details: {get_user_details()}")
-baybe_object = BayBE(**config)
+campaign = Campaign(**config)
 for k in range(randint(4, 6)):
-    dat = baybe_object.recommend(randint(2, 3))
-    add_fake_results(dat, baybe_object)
-    baybe_object.add_measurements(dat)
+    dat = campaign.recommend(randint(2, 3))
+    add_fake_results(dat, campaign)
+    campaign.add_measurements(dat)
 
 # Fake User1 - 5 iterations
 print("Fake User1")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1"
-baybe_object = BayBE(**config)
+campaign = Campaign(**config)
 for k in range(randint(2, 3)):
-    dat = baybe_object.recommend(randint(3, 4))
-    add_fake_results(dat, baybe_object)
-    baybe_object.add_measurements(dat)
+    dat = campaign.recommend(randint(3, 4))
+    add_fake_results(dat, campaign)
+    campaign.add_measurements(dat)
 
 # Fake User1a - Adds recommenations before calling recommend
 print("Fake User1a")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1a"
-baybe_object = BayBE(**config)
-baybe_object.add_measurements(dat)
+campaign = Campaign(**config)
+campaign.add_measurements(dat)
 for k in range(randint(2, 3)):
-    dat = baybe_object.recommend(randint(3, 4))
-    add_fake_results(dat, baybe_object)
-    baybe_object.add_measurements(dat)
+    dat = campaign.recommend(randint(3, 4))
+    add_fake_results(dat, campaign)
+    campaign.add_measurements(dat)
 
 # Fake User2 - 2 iterations
 print("Fake User2")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_2"
-baybe_object = BayBE(**config)
+campaign = Campaign(**config)
 for k in range(2):
-    dat = baybe_object.recommend(4)
-    add_fake_results(dat, baybe_object)
-    baybe_object.add_measurements(dat)
+    dat = campaign.recommend(4)
+    add_fake_results(dat, campaign)
+    campaign.add_measurements(dat)
 
 # Fake User3 - no telemetry
 print("Fake User3")
 os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_3"
 os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
-baybe_object = BayBE(**config)
+campaign = Campaign(**config)
 for k in range(randint(5, 7)):
-    dat = baybe_object.recommend(randint(2, 3))
-    add_fake_results(dat, baybe_object)
-    baybe_object.add_measurements(dat)
+    dat = campaign.recommend(randint(2, 3))
+    add_fake_results(dat, campaign)
+    campaign.add_measurements(dat)
 
 # Cleanup
 os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")

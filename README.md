@@ -128,6 +128,11 @@ In that sense, the former carry information that **must be** provided by the use
 whereas the latter are **optional** settings that can also be set automatically
 by BayBE.
 
+A key element in the design of BayBE is the `Campaign` object.
+It acts as a central container for all the necessary information and objects
+associated with an experimentation process, ensuring that all independent model
+components (e.g. the objective function, the search space, etc.) are properly combined.
+
 The following example provides a step-by-step guide to what this translation process
 should look like, and how we can subsequently use BayBE to generate optimal sets of
 experimental conditions.
@@ -156,7 +161,7 @@ We wrap the target object in an optimization `Objective`, to inform BayBE
 that this is the only target we would like to consider:
 
 ```python
-from baybe.targets import Objective
+from baybe.objective import Objective
 
 objective = Objective(mode="SINGLE", targets=[target])
 ```
@@ -245,7 +250,8 @@ details, and their configuration settings, see
 [baybe/strategies](./baybe/strategies).
 
 ```python
-from baybe.strategies import Strategy, SequentialGreedyRecommender, RandomRecommender
+from baybe.strategies import Strategy
+from baybe.recommenders import SequentialGreedyRecommender, RandomRecommender
 
 strategy = Strategy(
     initial_recommender=RandomRecommender(),
@@ -260,9 +266,9 @@ construct a BayBE object that brings all
 pieces of the puzzle together:
 
 ```python
-from baybe import BayBE
+from baybe import Campaign
 
-baybe = BayBE(searchspace, objective, strategy)
+campaign = Campaign(searchspace, objective, strategy)
 ```
 
 With this object at hand, we can start our experimentation cycle.
@@ -281,7 +287,7 @@ The following illustrates one such possible sequence of interactions.
 Let us first ask for an initial set of recommendations:
 
 ```python
-df = baybe.recommend(batch_quantity=5)
+df = campaign.recommend(batch_quantity=5)
 ```
 
 For a particular random seed, the result could look as follows:
@@ -299,7 +305,7 @@ yields to the table and feed it back to BayBE:
 
 ```python
 df["Yield"] = [79, 54, 59, 95, 84]
-baybe.add_measurements(df)
+campaign.add_measurements(df)
 ```
 
 With the newly arrived data, BayBE will update its internal state and can produce a

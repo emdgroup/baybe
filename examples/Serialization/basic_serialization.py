@@ -1,25 +1,27 @@
-### Example for the serialization of a BayBE object
+### Example for the serialization of a campaign
 # pylint: disable=missing-module-docstring
 
-# This example shows how to serialize and also de-serialize a BayBE object.
+# This example shows how to serialize and also de-serialize a campaign.
 # It demonstrates and shows that the "original" and "new" objects behave the same.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 #### Necessary imports
 
 import numpy as np
 
-from baybe import BayBE
+from baybe import Campaign
+from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
     SubstanceParameter,
 )
+from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import FPSRecommender, SequentialGreedyRecommender, Strategy
-from baybe.targets import NumericalTarget, Objective
+from baybe.strategies import Strategy
+from baybe.targets import NumericalTarget
 
 #### Experiment setup
 
@@ -50,9 +52,9 @@ parameters = [
     ),
 ]
 
-#### Creating the BayBE object
+#### Creating the campaign
 
-baybe_orig = BayBE(
+campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
@@ -65,33 +67,33 @@ baybe_orig = BayBE(
 
 #### Serialization and de-serialization
 
-# We begin by printing the original BayBE object
+# We begin by printing the original campaign
 print("Original object")
-print(baybe_orig, end="\n" * 3)
+print(campaign, end="\n" * 3)
 
-# We next serialize the BayBE object to JSON.
+# We next serialize the campaign to JSON.
 # This yields a JSON representation in string format.
 # Since it is rather complex, we do not print this string here.
 # Note: Dataframes are encoded via binary parquet and are hence not human-readable.
-string = baybe_orig.to_json()
+string = campaign.to_json()
 
 
 # Deserialize the JSON string back to an object.
 print("Deserialized object")
-baybe_recreate = BayBE.from_json(string)
-print(baybe_recreate, end="\n" * 3)
+campaign_recreate = Campaign.from_json(string)
+print(campaign_recreate, end="\n" * 3)
 
 # Verify that both objects are equal.
-assert baybe_orig == baybe_recreate
+assert campaign == campaign_recreate
 print("Passed basic assertion check!")
 
 #### Comparing recommendations in both objects
 
-# To further show how serialization affects working with BayBE objects, we will now
-# create and compare some recommendations in both bayBE objects.
+# To further show how serialization affects working with campaigns, we will now
+# create and compare some recommendations in both campaigns.
 
-recommendation_orig = baybe_orig.recommend(batch_quantity=2)
-recommendation_recreate = baybe_recreate.recommend(batch_quantity=2)
+recommendation_orig = campaign.recommend(batch_quantity=2)
+recommendation_recreate = campaign_recreate.recommend(batch_quantity=2)
 
 print("Recommendation from original object:")
 print(recommendation_orig)

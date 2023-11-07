@@ -8,21 +8,22 @@ import numpy as np
 # via the `botorch_function_wrapper`.
 
 # This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`baybe_object`](./../Basics/baybe_object.md) for a basic example.
+# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
 # We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
 
 
 #### Necessary imports for this example
 
-from baybe import BayBE
+from baybe import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
+from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget, Objective
+from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 
 from botorch.test_functions import Rastrigin
@@ -80,9 +81,9 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Construct the BayBE object and run some iterations
+#### Construct the campaign and run some iterations
 
-baybe_obj = BayBE(
+campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
@@ -91,7 +92,7 @@ BATCH_QUANTITY = 3
 N_ITERATIONS = 3
 
 for k in range(N_ITERATIONS):
-    recommendation = baybe_obj.recommend(batch_quantity=BATCH_QUANTITY)
+    recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
     # target value are looked up via the botorch wrapper
     target_values = []
@@ -100,10 +101,10 @@ for k in range(N_ITERATIONS):
 
     recommendation["Target"] = target_values
 
-    baybe_obj.add_measurements(recommendation)
+    campaign.add_measurements(recommendation)
 
 ### Verify the constraints
-measurements = baybe_obj.measurements_exp
+measurements = campaign.measurements_exp
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`
