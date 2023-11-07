@@ -1,6 +1,6 @@
 # pylint: disable=import-outside-toplevel
 
-"""Temporary serialization functionality for backward compatibility."""
+"""Temporary functionality for backward compatibility."""
 
 from __future__ import annotations
 
@@ -12,18 +12,19 @@ from cattrs.gen import make_dict_structure_fn
 from baybe.utils.serialization import converter, get_subclasses
 
 if TYPE_CHECKING:
-    from baybe.strategies.base import Strategy
+    from baybe.strategies.base import Strategy as BaseStrategy
+    from baybe.strategies.scheduled import SplitStrategy
 
 
-def structure_strategy(val: dict, _) -> Strategy:
+def structure_strategy(val: dict, _) -> BaseStrategy:
     """A ```Strategy` structure hook that uses ```SplitStrategy``` as fallback type."""
     from baybe.strategies import SplitStrategy
-    from baybe.strategies.base import Strategy
+    from baybe.strategies.base import Strategy as BaseStrategy
 
     try:
         _type = val["type"]
         cls = next(
-            (cl for cl in get_subclasses(Strategy) if cl.__name__ == _type), None
+            (cl for cl in get_subclasses(BaseStrategy) if cl.__name__ == _type), None
         )
     except KeyError:
         cls = SplitStrategy
@@ -37,3 +38,16 @@ def structure_strategy(val: dict, _) -> Strategy:
     fun = make_dict_structure_fn(cls, converter)
 
     return fun(val, cls)
+
+
+def Strategy(*args, **kwargs) -> SplitStrategy:  # pylint: disable=invalid-name
+    """A ```Strategy``` alias for backward compatibility."""
+    from baybe.strategies.scheduled import SplitStrategy
+
+    warnings.warn(
+        f"Using 'Strategy' directly is deprecated and will be removed in a future "
+        f"version. Please use '{SplitStrategy.__name__}' class instead.",
+        DeprecationWarning,
+    )
+
+    return SplitStrategy(*args, **kwargs)

@@ -7,6 +7,7 @@ import pytest
 
 from baybe import BayBE, Campaign
 from baybe.searchspace import SearchSpace
+from baybe.strategies import Strategy
 from baybe.targets import Objective
 
 
@@ -35,3 +36,9 @@ def test_missing_strategy_type(config):
     config_without_strategy_type = json.dumps(dict_)
     with pytest.warns(DeprecationWarning):
         Campaign.from_config(config_without_strategy_type)
+
+
+def test_deprecated_strategy_class():
+    """Using the deprecated ```Strategy``` class should raise a warning."""
+    with pytest.warns(DeprecationWarning):
+        Strategy()
