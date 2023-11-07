@@ -89,9 +89,17 @@ if is_enabled():
         _endpoint_url_parsed = urlparse(_endpoint_url)
         _endpoint_hostname = _endpoint_url_parsed.hostname
         _endpoint_port = _endpoint_url_parsed.port if _endpoint_url_parsed.port else 80
+        try:
+            _TIMEOUT_S = float(os.environ.get("BAYBE_TELEMETRY_TIMEOUT", "0.5"))
+        except (ValueError, TypeError):
+            _logger.warning(
+                "WARNING: Value passed for environment variable BAYBE_TELEMETRY_TIMEOUT"
+                " is not a valid floating point number. Using default of 0.5."
+            )
+            _TIMEOUT_S = 0.5
 
         with socket.create_connection(
-            (_endpoint_hostname, _endpoint_port), timeout=2
+            (_endpoint_hostname, _endpoint_port), timeout=_TIMEOUT_S
         ) as sock:
             _instruments = {}
             _resource = Resource.create(
@@ -130,12 +138,11 @@ def get_user_details() -> Dict[str, str]:
     username_hash = os.environ.get("BAYBE_TELEMETRY_USERNAME", None) or (
         hashlib.sha256(getpass.getuser().upper().encode())
         .hexdigest()
-        .upper()[:10]  # take only first 10 digits to enhance readability in dashboard
+        .upper()[:10]  # take only first 10 digits to enhance readability
     )
     hostname_hash = os.environ.get("BAYBE_TELEMETRY_HOSTNAME", None) or (
         hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
     )
-    # Alternatively one could take the MAC address like hex(uuid.getnode())
 
     return {"host": hostname_hash, "user": username_hash, "version": __version__}
 
