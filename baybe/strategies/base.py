@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 
 from baybe.recommenders.base import Recommender
 from baybe.searchspace import SearchSpace

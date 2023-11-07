@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def structure_strategy(val: dict, _) -> BaseStrategy:
-    """A ```Strategy` structure hook that uses ```SplitStrategy``` as fallback type."""
+    """A ```Strategy``` structure hook using ```SplitStrategy``` as fallback type."""
     from baybe.strategies import SplitStrategy
     from baybe.strategies.base import Strategy as BaseStrategy
 
