@@ -503,9 +503,9 @@ def fixture_campaign(parameters, constraints, strategy, objective):
     )
 
 
-@pytest.fixture(name="split_strategy")
-def fixture_default_splitstrategy(recommender, initial_recommender):
-    """The default ```SplitStrategy``` to be used if not specified differently."""
+@pytest.fixture(name="twophase_strategy")
+def fixture_default_twophase_strategy(recommender, initial_recommender):
+    """The default ```TwoPhaseStrategy``` to be used if not specified differently."""
     return TwoPhaseStrategy(
         recommender=recommender,
         initial_recommender=initial_recommender,
@@ -527,7 +527,7 @@ def fixture_default_sequential_strategy():
 
 
 @pytest.fixture(name="strategy")
-def fixture_select_strategy(request, split_strategy, sequential_strategy):
+def fixture_select_strategy(request, twophase_strategy, sequential_strategy):
     """Returns the requested strategy."""
     # FIXME: The __name__ workaround is currently required due to failing equality
     #   checks. The issue seems to be that `get_subclasses` returns different references
@@ -535,7 +535,7 @@ def fixture_select_strategy(request, split_strategy, sequential_strategy):
     if not hasattr(request, "param") or (
         request.param.__name__ == TwoPhaseStrategy.__name__
     ):
-        return split_strategy
+        return twophase_strategy
     if request.param.__name__ == SequentialStrategy.__name__:
         return sequential_strategy
     raise NotImplementedError("unknown strategy type")
@@ -610,7 +610,7 @@ def fixture_default_config():
             ]
         },
         "strategy": {
-            "type": "SplitStrategy",
+            "type": "TwoPhaseStrategy",
             "initial_recommender": {
                 "type": "RandomRecommender"
             },

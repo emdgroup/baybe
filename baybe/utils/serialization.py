@@ -101,7 +101,7 @@ def get_base_structure_hook(
         _type = val["type"]
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
-            raise ValueError(f"Unknown subclass {_type}.")
+            raise ValueError(f"Unknown subclass '{_type}'.")
         fun = make_dict_structure_fn(cls, converter, **(overrides or {}))
         return fun(val, cls)
 

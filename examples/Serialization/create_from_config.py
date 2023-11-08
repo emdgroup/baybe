@@ -66,7 +66,7 @@ CONFIG = str(
         ]
     },
     "strategy": {
-        "type": "SplitStrategy",
+        "type": "TwoPhaseStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"
         },

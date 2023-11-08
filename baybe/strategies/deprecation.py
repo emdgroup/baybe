@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 def structure_strategy(val: dict, _) -> BaseStrategy:
-    """A ```Strategy``` structure hook using ```SplitStrategy``` as fallback type."""
+    """A ```Strategy``` structure hook using ```TwoPhaseStrategy``` as fallback type."""
     from baybe.strategies import TwoPhaseStrategy
     from baybe.strategies.base import Strategy as BaseStrategy
 
@@ -26,6 +26,8 @@ def structure_strategy(val: dict, _) -> BaseStrategy:
         cls = next(
             (cl for cl in get_subclasses(BaseStrategy) if cl.__name__ == _type), None
         )
+        if cls is None:
+            raise ValueError(f"Unknown subclass '{_type}'.")
     except KeyError:
         cls = TwoPhaseStrategy
         warnings.warn(
