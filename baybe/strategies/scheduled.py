@@ -22,8 +22,8 @@ class TwoPhaseStrategy(Strategy):
     Args:
         initial_recommender: The initial recommender used by the strategy.
         recommender: The recommender used by the strategy after the switch.
-        switch_after:
-            The (minimum) number of experiments after which the recommender is switched.
+        switch_after: The (minimum) number of experiments after which the recommender
+            is switched.
     """
 
     initial_recommender: Recommender = field(factory=RandomRecommender)
@@ -57,8 +57,8 @@ class SequentialStrategy(Strategy):
         recommenders: An iterable providing the recommenders to be used.
 
     Raises:
-        StopIteration:
-            If more recommendations are requested than there are recommenders available.
+        StopIteration: If more (batch) recommendations are requested than there are
+            recommenders available.
     """
 
     recommenders: Iterable[Recommender] = field()
