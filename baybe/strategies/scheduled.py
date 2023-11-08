@@ -39,6 +39,8 @@ class TwoPhaseStrategy(Strategy):
         switch_after: The (minimum) number of "events" (depending on ```mode```) after
             which the recommender is switched.
         mode: The type of events to be counted to trigger the switch.
+        _n_batches_recommended: Ignore (for internal use only).
+        _n_experiments_recommended: Ignore (for internal use only).
     """
 
     # Exposed
@@ -51,8 +53,16 @@ class TwoPhaseStrategy(Strategy):
     )
 
     # Private
-    _n_batches_recommended: int = field(init=False, default=0)
-    _n_experiments_recommended: int = field(init=False, default=0)
+    # TODO: These should **not** be exposed via the constructor but the workaround
+    #   is currently needed for correct (de-)serialization. A proper approach would be
+    #   to not set them via the constructor but through a custom hook in combination
+    #   with `_cattrs_include_init_false=True`. However, the way
+    #   `get_base_structure_hook` is currently designed prevents such a hook from
+    #   taking action.
+    _n_batches_recommended: int = field(default=0, alias="_n_batches_recommended")
+    _n_experiments_recommended: int = field(
+        default=0, alias="_n_experiments_recommended"
+    )
 
     def select_recommender(  # noqa: D102
         self,
