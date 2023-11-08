@@ -13,12 +13,12 @@ from baybe.utils.serialization import converter, get_subclasses
 
 if TYPE_CHECKING:
     from baybe.strategies.base import Strategy as BaseStrategy
-    from baybe.strategies.scheduled import SplitStrategy
+    from baybe.strategies.scheduled import TwoPhaseStrategy
 
 
 def structure_strategy(val: dict, _) -> BaseStrategy:
     """A ```Strategy``` structure hook using ```SplitStrategy``` as fallback type."""
-    from baybe.strategies import SplitStrategy
+    from baybe.strategies import TwoPhaseStrategy
     from baybe.strategies.base import Strategy as BaseStrategy
 
     try:
@@ -27,10 +27,10 @@ def structure_strategy(val: dict, _) -> BaseStrategy:
             (cl for cl in get_subclasses(BaseStrategy) if cl.__name__ == _type), None
         )
     except KeyError:
-        cls = SplitStrategy
+        cls = TwoPhaseStrategy
         warnings.warn(
             f"A strategy has been specified without a corresponding type. "
-            f"As a fallback, '{SplitStrategy.__name__}' is used. "
+            f"As a fallback, '{TwoPhaseStrategy.__name__}' is used. "
             f"However, this behavior is deprecated and will be disabled in "
             f"a future version.",
             DeprecationWarning,
@@ -40,14 +40,14 @@ def structure_strategy(val: dict, _) -> BaseStrategy:
     return fun(val, cls)
 
 
-def Strategy(*args, **kwargs) -> SplitStrategy:  # pylint: disable=invalid-name
+def Strategy(*args, **kwargs) -> TwoPhaseStrategy:  # pylint: disable=invalid-name
     """A ```Strategy``` alias for backward compatibility."""
-    from baybe.strategies.scheduled import SplitStrategy
+    from baybe.strategies.scheduled import TwoPhaseStrategy
 
     warnings.warn(
         f"Using 'Strategy' directly is deprecated and will be removed in a future "
-        f"version. Please use '{SplitStrategy.__name__}' class instead.",
+        f"version. Please use '{TwoPhaseStrategy.__name__}' class instead.",
         DeprecationWarning,
     )
 
-    return SplitStrategy(*args, **kwargs)
+    return TwoPhaseStrategy(*args, **kwargs)

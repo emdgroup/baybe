@@ -35,7 +35,7 @@ from baybe.parameters import (
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.scheduled import SequentialStrategy, SplitStrategy
+from baybe.strategies.scheduled import SequentialStrategy, TwoPhaseStrategy
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory
@@ -506,7 +506,7 @@ def fixture_campaign(parameters, constraints, strategy, objective):
 @pytest.fixture(name="split_strategy")
 def fixture_default_splitstrategy(recommender, initial_recommender):
     """The default ```SplitStrategy``` to be used if not specified differently."""
-    return SplitStrategy(
+    return TwoPhaseStrategy(
         recommender=recommender,
         initial_recommender=initial_recommender,
         allow_repeated_recommendations=False,
@@ -533,7 +533,7 @@ def fixture_select_strategy(request, split_strategy, sequential_strategy):
     #   checks. The issue seems to be that `get_subclasses` returns different references
     #   to the classes compared to what a regular import yields.
     if not hasattr(request, "param") or (
-        request.param.__name__ == SplitStrategy.__name__
+        request.param.__name__ == TwoPhaseStrategy.__name__
     ):
         return split_strategy
     if request.param.__name__ == SequentialStrategy.__name__:

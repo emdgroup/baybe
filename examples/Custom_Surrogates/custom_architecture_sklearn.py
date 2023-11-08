@@ -23,7 +23,7 @@ from baybe.parameters import (
 )
 from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import SplitStrategy
+from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
@@ -128,7 +128,7 @@ campaign = Campaign(
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
-    strategy=SplitStrategy(
+    strategy=TwoPhaseStrategy(
         recommender=SequentialGreedyRecommender(
             surrogate_model=StackingRegressorSurrogate()
         ),

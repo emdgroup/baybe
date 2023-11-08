@@ -12,7 +12,7 @@ from baybe.strategies.base import Strategy
 
 
 @define(kw_only=True)
-class SplitStrategy(Strategy):
+class TwoPhaseStrategy(Strategy):
     """A two-phased strategy that switches the recommender after some experiments.
 
     Args:

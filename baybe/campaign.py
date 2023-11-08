@@ -16,7 +16,7 @@ from baybe.searchspace.core import (
     structure_searchspace_from_config,
     validate_searchspace_from_config,
 )
-from baybe.strategies import SplitStrategy
+from baybe.strategies import TwoPhaseStrategy
 from baybe.strategies.base import Strategy
 from baybe.targets import NumericalTarget
 from baybe.telemetry import (
@@ -68,7 +68,7 @@ class Campaign(SerialMixin):
     # DOE specifications
     searchspace: SearchSpace = field()
     objective: Objective = field()
-    strategy: Strategy = field(factory=SplitStrategy)
+    strategy: Strategy = field(factory=TwoPhaseStrategy)
 
     # Data
     measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
