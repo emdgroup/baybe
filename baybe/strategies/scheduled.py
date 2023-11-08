@@ -15,10 +15,15 @@ from baybe.strategies.base import Strategy
 class TwoPhaseStrategy(Strategy):
     """A two-phased strategy that switches the recommender after some experiments.
 
+    The recommender is switched when a new (batch) recommendation is requested and
+    the total number of already performed experiments is equal to or greater than the
+    number specified via the ```switch_after``` parameter.
+
     Args:
         initial_recommender: The initial recommender used by the strategy.
         recommender: The recommender used by the strategy after the switch.
-        switch_after: The number of experiments after which the recommender is switched.
+        switch_after:
+            The (minimum) number of experiments after which the recommender is switched.
     """
 
     initial_recommender: Recommender = field(factory=RandomRecommender)
@@ -45,8 +50,15 @@ class TwoPhaseStrategy(Strategy):
 class SequentialStrategy(Strategy):
     """A strategy that uses a pre-defined sequence of recommenders.
 
+    A new recommender is taken from the sequence after each recommended batch until
+    all recommenders are exhausted.
+
     Args:
         recommenders: An iterable providing the recommenders to be used.
+
+    Raises:
+        StopIteration:
+            If more recommendations are requested than there are recommenders available.
     """
 
     recommenders: Iterable[Recommender] = field()
