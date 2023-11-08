@@ -529,14 +529,9 @@ def fixture_default_sequential_strategy():
 @pytest.fixture(name="strategy")
 def fixture_select_strategy(request, twophase_strategy, sequential_strategy):
     """Returns the requested strategy."""
-    # FIXME: The __name__ workaround is currently required due to failing equality
-    #   checks. The issue seems to be that `get_subclasses` returns different references
-    #   to the classes compared to what a regular import yields.
-    if not hasattr(request, "param") or (
-        request.param.__name__ == TwoPhaseStrategy.__name__
-    ):
+    if not hasattr(request, "param") or (request.param == TwoPhaseStrategy):
         return twophase_strategy
-    if request.param.__name__ == SequentialStrategy.__name__:
+    if request.param == SequentialStrategy:
         return sequential_strategy
     raise NotImplementedError("unknown strategy type")
 
