@@ -4,7 +4,10 @@ import argparse
 import os
 import pathlib
 import shutil
-from subprocess import check_call, DEVNULL
+from subprocess import check_call, DEVNULL, STDOUT
+
+from tqdm import tqdm
+
 
 from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 
@@ -29,12 +32,31 @@ parser.add_argument(
     help="Activate debugging mode by not surpressing the output of conversion.",
     action="store_true",
 )
+parser.add_argument(
+    "-e",
+    "--ignore_examples",
+    help="Ignore the examples and do not include them into the documentation.",
+    action="store_true",
+)
+parser.add_argument(
+    "-w",
+    "--include_warnings",
+    help="Include warnings when processing the examples. The detault is ignoring them.",
+    action="store_true",
+)
+
 
 # Parse input arguments
 args = parser.parse_args()
 DIR = args.target_dir
 DEBUG = args.debug
 INCLUDE_PRIVATE = args.include_private
+IGNORE_EXAMPLES = args.ignore_examples
+INCLUDE_WARNINGS = args.include_warnings
+
+# We adjust the environment variable if we decide to ignore warnings
+if not INCLUDE_WARNINGS:
+    os.environ["PYTHONWARNINGS"] = "ignore"
 
 # Disable telemtetry
 os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
@@ -44,6 +66,146 @@ sdk_dir = pathlib.Path("docs/sdk")
 autosummary_dir = pathlib.Path("docs/_autosummary")
 # Output destination
 destination_dir = pathlib.Path(DIR)
+
+
+def create_example_documentation(example_dest_dir: str, debug: bool):
+    """A function that creates the documentation version of the examples files.
+
+    Note that this deletes the destination directory if it already exists.
+
+    Args:
+        example_dest_dir: The destination directory.
+        debug: Flag indicating whether conversion should be run in debug mode with
+            more information.
+    """
+    # Folder where the .md files created are stored
+    examples_directory = pathlib.Path(example_dest_dir)
+
+    # if the destination directory already exists it is deleted
+    if examples_directory.is_dir():
+        shutil.rmtree(examples_directory)
+
+    # Copy the examples folder in the destination directory
+    shutil.copytree("examples", examples_directory)
+
+    # List all directories in the examples folder
+    directories = [d for d in examples_directory.iterdir() if d.is_dir()]
+
+    # For the toctree of the top level example folder, we need to keep track of all
+    # folders. We thus write the header here and populate it during the execution of the
+    # examples
+    ex_file = "# Examples\n\nThese examples show how to use BayBE.\n\n```{toctree}\n"
+
+    # Iterate over the directories. Only print output in debug mode.
+    for sub_directory in (pbar := tqdm(directories, disable=not debug)):
+
+        # Get the name of the current folder
+        # Format it by replacing underscores and capitalizing the words
+        folder_name = sub_directory.stem
+        formatted = " ".join(word.capitalize() for word in folder_name.split("_"))
+
+        # Attach the link to the folder to the top level toctree.
+        ex_file += formatted + f"<{folder_name}/{folder_name}>\n"
+
+        # We need to create a file for the inclusion of the folder
+        subdir_toctree = f"# {folder_name}\n\n" + "```{toctree}\n"
+
+        # Set description of progressbar
+        pbar.set_description("Overall progress")
+
+        # list all .py files in the subdirectory that need to be converted
+        py_files = list(sub_directory.glob("**/*.py"))
+
+        # Iterate through the individual example files
+        for file in (inner_pbar := tqdm(py_files, leave=False, disable=not debug)):
+
+            # Include the name of the file to the toctree
+            # Format it by replacing underscores and capitalizing the words
+            file_name = file.stem
+            formatted = " ".join(word.capitalize() for word in file_name.split("_"))
+            # Remove duplicate "constraints" for the files in the constraints folder.
+            if "Constraints" in folder_name and "Constraints" in formatted:
+                formatted = formatted.replace("Constraints", "")
+
+            # Also format the Prodsum name to Product/Sum
+            if "Prodsum" in formatted:
+                formatted = formatted.replace("Prodsum", "Product/Sum")
+            subdir_toctree += formatted + f"<{file_name}>\n"
+
+            # Set description for progress bar
+            inner_pbar.set_description(f"Progressing {folder_name}")
+
+            # Create the Markdown file:
+
+            # 1. Convert the file to jupyter notebook
+            check_call(["p2j", file], stdout=DEVNULL, stderr=STDOUT)
+
+            notebook_path = file.with_suffix(".ipynb")
+
+            # 2. Execute the notebook
+            check_call(
+                [
+                    "jupyter",
+                    "nbconvert",
+                    "--execute",
+                    "--to",
+                    "notebook",
+                    "--inplace",
+                    notebook_path,
+                ],
+                stdout=DEVNULL,
+                stderr=STDOUT,
+            )
+
+            # 3. Convert the notebook to markdown
+            check_call(
+                ["jupyter", "nbconvert", "--to", "markdown", notebook_path],
+                stdout=DEVNULL,
+                stderr=STDOUT,
+            )
+
+            # CLEANUP
+            # Remove all lines that try to include a png file as well as the lines
+            # that just contain a pylint exception
+            markdown_path = file.with_suffix(".md")
+            with open(markdown_path, "r", encoding="UTF-8") as markdown_file:
+                lines = markdown_file.readlines()
+
+            lines = [
+                line
+                for line in lines
+                if "![png]" not in line and not line.startswith("pylint")
+            ]
+
+            # Rewrite the file
+            with open(markdown_path, "w", encoding="UTF-8") as markdown_file:
+                markdown_file.writelines(lines)
+
+        # Write last line of toctree file for this directory and write the file
+        subdir_toctree += "```"
+        with open(
+            sub_directory / f"{sub_directory.name}.md", "w", encoding="UTF-8"
+        ) as f:
+            f.write(subdir_toctree)
+
+    # Write last line of top level toctree file and write the file
+    ex_file += "```"
+    with open(
+        examples_directory / f"{examples_directory.name}.md", "w", encoding="UTF-8"
+    ) as f:
+        f.write(ex_file)
+
+    # Remove remaining files and subdirectories from the destination directory
+    # Remove any not markdown files
+    for file in examples_directory.glob("**/*"):
+        if file.is_file() and file.suffix != ".md":
+            file.unlink(file)
+
+    # Remove any remaining empty subdirectories
+    for subdirectory in examples_directory.glob("*/*"):
+        if subdirectory.is_dir() and not any(subdirectory.iterdir()):
+            subdirectory.rmdir()
+
 
 # Collect all of the directories and delete them if they still exist.
 # Note that destination_dir is last here as we re-use this later while ignoring this
@@ -64,6 +226,13 @@ call = [
     f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
 ]
 
+# Process examples if required.
+if not IGNORE_EXAMPLES:
+    if DEBUG:
+        print("Processing the examples")
+        create_example_documentation(example_dest_dir="docs/examples", debug=True)
+    else:
+        create_example_documentation(example_dest_dir="docs/examples", debug=False)
 # For some weird reason, we need to call sphinx-build twice
 if not DEBUG:
     check_call(call, stderr=DEVNULL, stdout=DEVNULL)
@@ -80,3 +249,13 @@ shutil.move(documentation, destination_dir)
 for directory in directores[:-1]:
     if directory.is_dir():
         shutil.rmtree(directory)
+
+# If we decided to not ignore the examples, we delete the created markdown files
+if not IGNORE_EXAMPLES:
+    example_directory = pathlib.Path("docs/examples")
+    if example_directory.is_dir():
+        shutil.rmtree(example_directory)
+
+# If we decided to ignore warnings, we now do no want to ignore them anymore
+if not INCLUDE_WARNINGS:
+    os.environ["PYTHONWARNING"] = "default"
