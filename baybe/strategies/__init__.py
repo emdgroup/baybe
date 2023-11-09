@@ -1,7 +1,7 @@
 """BayBE strategies."""
 
+from baybe.strategies.composite import SequentialStrategy, TwoPhaseStrategy
 from baybe.strategies.deprecation import Strategy
-from baybe.strategies.scheduled import SequentialStrategy, TwoPhaseStrategy
 
 __all__ = [
     "SequentialStrategy",

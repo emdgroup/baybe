@@ -35,7 +35,7 @@ from baybe.parameters import (
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.scheduled import SequentialStrategy, TwoPhaseStrategy
+from baybe.strategies.composite import SequentialStrategy, TwoPhaseStrategy
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory

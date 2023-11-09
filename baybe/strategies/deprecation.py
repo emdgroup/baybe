@@ -13,13 +13,13 @@ from baybe.utils.serialization import converter, get_subclasses
 
 if TYPE_CHECKING:
     from baybe.strategies.base import Strategy as BaseStrategy
-    from baybe.strategies.scheduled import TwoPhaseStrategy
+    from baybe.strategies.composite import TwoPhaseStrategy
 
 
 def structure_strategy(val: dict, _) -> BaseStrategy:
     """A ```Strategy``` structure hook using ```TwoPhaseStrategy``` as fallback type."""
-    from baybe.strategies import TwoPhaseStrategy
     from baybe.strategies.base import Strategy as BaseStrategy
+    from baybe.strategies.composite import TwoPhaseStrategy
 
     try:
         _type = val["type"]
@@ -44,7 +44,7 @@ def structure_strategy(val: dict, _) -> BaseStrategy:
 
 def Strategy(*args, **kwargs) -> TwoPhaseStrategy:  # pylint: disable=invalid-name
     """A ```Strategy``` alias for backward compatibility."""
-    from baybe.strategies.scheduled import TwoPhaseStrategy
+    from baybe.strategies.composite import TwoPhaseStrategy
 
     warnings.warn(
         f"Using 'Strategy' directly is deprecated and will be removed in a future "
