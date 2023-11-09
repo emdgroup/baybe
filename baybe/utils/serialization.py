@@ -122,3 +122,14 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
 
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+
+
+def serialization_unsupported_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
+    """A hook that prevents serialization of the passed object.
+
+    Raises:
+         NotImplementedError: Always.
+    """
+    raise NotImplementedError(
+        f"Serializing objects of type '{obj.__class__.__name__}' is not supported."
+    )

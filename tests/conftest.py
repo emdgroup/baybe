@@ -35,7 +35,11 @@ from baybe.parameters import (
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.composite import SequentialStrategy, TwoPhaseStrategy
+from baybe.strategies.composite import (
+    SequentialStrategy,
+    StreamingSequentialStrategy,
+    TwoPhaseStrategy,
+)
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory
@@ -518,6 +522,16 @@ def fixture_default_twophase_strategy(recommender, initial_recommender):
 def fixture_default_sequential_strategy():
     """The default ```SequentialStrategy``` to be used if not specified differently."""
     return SequentialStrategy(
+        recommenders=[RandomRecommender(), SequentialGreedyRecommender()],
+        allow_repeated_recommendations=False,
+        allow_recommending_already_measured=False,
+    )
+
+
+@pytest.fixture(name="streaming_sequential_strategy")
+def fixture_default_streaming_sequential_strategy():
+    """The default ```StreamingSequentialStrategy``` to be used."""
+    return StreamingSequentialStrategy(
         recommenders=chain(
             (RandomRecommender(),), hilberts_factory(SequentialGreedyRecommender)
         ),
@@ -527,12 +541,16 @@ def fixture_default_sequential_strategy():
 
 
 @pytest.fixture(name="strategy")
-def fixture_select_strategy(request, twophase_strategy, sequential_strategy):
+def fixture_select_strategy(
+    request, twophase_strategy, sequential_strategy, streaming_sequential_strategy
+):
     """Returns the requested strategy."""
     if not hasattr(request, "param") or (request.param == TwoPhaseStrategy):
         return twophase_strategy
     if request.param == SequentialStrategy:
         return sequential_strategy
+    if request.param == StreamingSequentialStrategy:
+        return streaming_sequential_strategy
     raise NotImplementedError("unknown strategy type")
 
 

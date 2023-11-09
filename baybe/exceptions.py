@@ -34,3 +34,7 @@ class NothingToSimulateError(Exception):
 #   the use of `model_params` has be refactored.
 class ModelParamsNotSupportedError(Exception):
     """The class does not support any model parameters."""
+
+
+class NoRecommendersLeftError(Exception):
+    """A recommender is requested by a strategy but there are no recommenders left."""

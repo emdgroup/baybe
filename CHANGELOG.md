@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bring your own model: surrogate classes for custom model architectures and pre-trained ONNX models
 - Test module for deprecation warnings
 - Option to control the switching point of `TwoPhaseStrategy` (former `Strategy`)
-- `SequentialStrategy` class
+- `SequentialStrategy` and `StreamingSequentialStrategy` classes
 
 ### Changed
 - Reorganized modules into subpackages
