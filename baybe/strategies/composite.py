@@ -125,16 +125,22 @@ class SequentialStrategy(Strategy):
         recommenders: A finite-length sequence of recommenders to be used.
             (For infinite-length iterables, see
             :class:`baybe.strategies.composite.StreamingSequentialStrategy`)
+        reuse_last: A flag indicating if the last recommender in the sequence shall be
+            reused in case more queries are made than recommenders are available.
+            Note: If ```True```, the strategy reuses the **same** recommender object,
+            that is, no new instances are created. Therefore, special attention is
+            required when using this option with stateful recommenders.
 
     Raises:
         NoRecommendersLeftError: If more (batch) recommendations are requested than
-            there are recommenders available.
+            there are recommenders available and ```reuse_last=False```.
     """
 
     # Exposed
     recommenders: List[Recommender] = field(
         converter=list, validator=deep_iterable(instance_of(Recommender))
     )
+    reuse_last: bool = field(default=False)
 
     # Private
     # TODO: See :class:`baybe.strategies.composite.TwoPhaseStrategy`.
@@ -149,8 +155,13 @@ class SequentialStrategy(Strategy):
     ) -> Recommender:
         # See base class.
 
+        # Get the index for retrieving the recommender
+        idx = self._step
+        if self.reuse_last:
+            idx = min(idx, len(self.recommenders) - 1)
+
         try:
-            recommender = self.recommenders[self._step]
+            recommender = self.recommenders[idx]
         except IndexError as ex:
             raise NoRecommendersLeftError(
                 f"The strategy has been queried {self._step+1} time(s) but the "

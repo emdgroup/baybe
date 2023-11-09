@@ -1,5 +1,7 @@
 """Tests for the strategies package."""
 
+from contextlib import nullcontext
+
 import pytest
 
 from baybe.exceptions import NoRecommendersLeftError
@@ -16,12 +18,13 @@ from baybe.strategies.composite import SequentialStrategy, StreamingSequentialSt
 RECOMMENDERS = [RandomRecommender(), FPSRecommender(), SequentialGreedyRecommender()]
 
 
+@pytest.mark.parametrize("reuse_last", [False, True])
 @pytest.mark.parametrize("recommenders", [RECOMMENDERS])
-def test_sequential_strategy(recommenders):
+def test_sequential_strategy(recommenders, reuse_last):
     """The strategy should provide its recommenders in the right order."""
     parameters = [NumericalDiscreteParameter(name="test", values=[0, 1])]
     searchspace = SearchSpace.from_product(parameters)
-    strategy = SequentialStrategy(recommenders=recommenders)
+    strategy = SequentialStrategy(recommenders=recommenders, reuse_last=reuse_last)
 
     # The returned recommenders should coincide with what was put in
     for reference in recommenders[:-1]:
@@ -34,7 +37,7 @@ def test_sequential_strategy(recommenders):
     assert rec2 == recommenders[2]
 
     # Requesting more batches than there are recommenders should raise an error
-    with pytest.raises(NoRecommendersLeftError):
+    with nullcontext() if reuse_last else pytest.raises(NoRecommendersLeftError):
         strategy.select_recommender(searchspace)
 
 
