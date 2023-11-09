@@ -7,7 +7,7 @@
 
 # This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
-# We refer to [`run_full_lookup`](./run_full_lookup.md) for details on the lookup mechanism.
+# We refer to [`full_lookup`](./full_lookup.md) for details on the lookup mechanism.
 
 #### Necessary imports for this example
 
@@ -34,7 +34,7 @@ N_DOE_ITERATIONS = 5
 
 #### Lookup functionality and data creation
 
-# See [`run_full_lookup`](./run_full_lookup.md) for details.
+# See [`full_lookup`](./full_lookup.md) for details.
 
 try:
     lookup = pd.read_excel("./lookup.xlsx")

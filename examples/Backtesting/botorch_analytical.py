@@ -29,7 +29,7 @@ from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 from botorch.test_functions import Rastrigin
 
-### Parameters for a full simulation loop
+#### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
@@ -37,7 +37,7 @@ from botorch.test_functions import Rastrigin
 N_MC_ITERATIONS = 2
 N_DOE_ITERATIONS = 2
 
-### Defining the test function
+#### Defining the test function
 
 # See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
 

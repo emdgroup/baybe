@@ -27,7 +27,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-### Experiment setup
+#### Experiment setup
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {
@@ -55,7 +55,7 @@ pressure = NumericalDiscreteParameter(
 
 parameters = [solvent, speed, temperature, pressure]
 
-### Creating the constraint
+#### Creating the constraint
 
 # This constraint simulates a situation where solvents `C2` and `C4` are not
 # compatible with temperatures larger than 151 and should thus be excluded.
@@ -91,7 +91,7 @@ constraint_3 = DiscreteExcludeConstraint(
     ],
 )
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 # We now create the searchspace using the previously defined constraints.
 searchspace = SearchSpace.from_product(
@@ -102,12 +102,12 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-### Creating and printing the campaign
+#### Creating and printing the campaign
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
 
-### Manual verification of the constraints
+#### Manual verification of the constraints
 
 # The following loop performs some iterations and manually verifies the given constraints.
 N_ITERATIONS = 3
