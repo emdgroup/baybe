@@ -18,15 +18,16 @@ class TwoPhaseStrategy(Strategy):
 
     The recommender is switched when a new (batch) recommendation is requested **and**
     the criterion specified via ```mode``` is fulfilled:
-    * "batches": The strategy has been queried ```switch_after``` times.
-    * "experiments": The strategy has provided at least ```switch_after``` experimental
-        configurations.
-    * "total_experiments": The total number of available experiments (including those
+    * "recommended_batches": The strategy has been queried ```switch_after``` times.
+    * "recommended_experiments": The strategy has provided at least ```switch_after```
+        experimental configurations.
+    * "total_measurements": The total number of available experiments (including those
         gathered before the strategy was active) is at least ```switch_after```.
 
     Note:
         When ```batch_quantity=1``` is set throughout **all** queries, the strategy
-        behaves identically for ```mode="batches"``` and ```mode="experiments"```.
+        behaves identically for ```mode="recommended_batches"``` and
+        ```mode="recommended_experiments"```.
 
     Note:
         Throughout each phase, the strategy reuses the **same** recommender object,
@@ -47,9 +48,13 @@ class TwoPhaseStrategy(Strategy):
     initial_recommender: Recommender = field(factory=RandomRecommender)
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
     switch_after: int = field(default=1)
-    mode: Literal["batches", "experiments", "total_experiments"] = field(
-        default="total_experiments",
-        validator=in_(("batches", "experiments", "total_experiments")),
+    mode: Literal[
+        "recommended_batches", "recommended_experiments", "total_measurements"
+    ] = field(
+        default="total_measurements",
+        validator=in_(
+            ("recommended_batches", "recommended_experiments", "total_measurements")
+        ),
     )
 
     # Private
@@ -74,9 +79,9 @@ class TwoPhaseStrategy(Strategy):
         # See base class.
 
         n_done = {
-            "batches": self._n_batches_recommended,
-            "experiments": self._n_experiments_recommended,
-            "total_experiments": len(train_x),
+            "recommended_batches": self._n_batches_recommended,
+            "recommended_experiments": self._n_experiments_recommended,
+            "total_measurements": len(train_x),
         }[self.mode]
         return (
             self.recommender
