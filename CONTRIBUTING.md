@@ -21,8 +21,8 @@ The infrastructure used to host the current documentation as well as the design 
 - Function signatures need to have type hints for both inputs and the return type.
 - Type hints should not be added to the docstrings.
 - When referencing another class, function, or similar, use the syntax ``:func:`path.to.function` `` where `func` should be replaced by the respective keyword.
-- When parts of the comment should appear as `code` in the docstring, use triple backticks ```.
-- Since we use [attrs](https://www.attrs.org/en/stable/) for writing classes, the documentation of initialization functions needs to be done in the class docstring. In particular, instance attributes need to be documented there.
+- When parts of the comment should appear as `code` in the docstring, use double backticks ``.
+- Since we use [attrs](https://www.attrs.org/en/stable/) for writing classes,  initialization functions are not documented. Instance attributes thus need to be documented using a docstring in the line below their declaration.
 - Class variables are documented by adding a docstring in the line below their declaration.
 - When an inherited class sets one of the instance attributes, this attribute needs to be documented in the docstring of the inherited class.
 - Magic functions do not require a docstring.
@@ -39,5 +39,5 @@ For most parts, BayBE's code is organized into different subpackages. When
 extending its functionality (for instance, by adding new component subclasses), make 
 sure that the newly written code is well integrated into the existing package and 
 module hierarchy. In particular, public functionality should be imported into the 
-appropriate high-level namespaces for easy user import. For an example, see the 
-[parameter namespace](./baybe/parameters/__init__.py).
+appropriate high-level namespaces for easy user import. For an example, see the
+[parameter namespace](baybe.parameters).
