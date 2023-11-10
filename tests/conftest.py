@@ -31,6 +31,7 @@ from baybe.parameters import (
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.recommenders.base import Recommender
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
@@ -278,6 +279,11 @@ def fixture_parameters(
                 },
                 index=["A", "B", "C"],
             ),
+        ),
+        TaskParameter(
+            name="Task",
+            values=["A", "B", "C"],
+            active_values=["A", "B"],
         ),
     ]
 

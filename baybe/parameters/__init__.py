@@ -9,10 +9,10 @@ from baybe.parameters.numerical import (
 from baybe.parameters.substance import SubstanceParameter
 
 __all__ = [
-    "SubstanceParameter",
     "CategoricalParameter",
-    "TaskParameter",
     "CustomDiscreteParameter",
-    "NumericalDiscreteParameter",
     "NumericalContinuousParameter",
+    "NumericalDiscreteParameter",
+    "SubstanceParameter",
+    "TaskParameter",
 ]
