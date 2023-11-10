@@ -11,7 +11,7 @@ from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.recommenders.base import Recommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies.base import Strategy
-from baybe.utils import serialization_unsupported_hook
+from baybe.utils import block_deserialization_hook, block_serialization_hook
 from baybe.utils.serialization import converter
 
 
@@ -221,7 +221,10 @@ class StreamingSequentialStrategy(Strategy):
         return recommender
 
 
-# Prevent breaking serialization of the iterable
+# The recommender iterable cannot be serialized
 converter.register_unstructure_hook(
-    StreamingSequentialStrategy, serialization_unsupported_hook
+    StreamingSequentialStrategy, block_serialization_hook
+)
+converter.register_structure_hook(
+    StreamingSequentialStrategy, block_deserialization_hook
 )
