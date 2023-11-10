@@ -21,16 +21,10 @@ class TwoPhaseStrategy(Strategy):
 
     The recommender is switched when a new (batch) recommendation is requested **and**
     the criterion specified via ```mode``` is fulfilled:
-    * "recommended_batches": The strategy has been queried ```switch_after``` times.
-    * "recommended_experiments": The strategy has provided at least ```switch_after```
-        experimental configurations.
-    * "total_measurements": The total number of available experiments (including those
+    * "measurements": The total number of collected measurements (including those
         gathered before the strategy was active) is at least ```switch_after```.
-
-    Note:
-        When ```batch_quantity=1``` is set throughout **all** queries, the strategy
-        behaves identically for ```mode="recommended_batches"``` and
-        ```mode="recommended_experiments"```.
+    * "batches": The total number of collected batches (including those
+        gathered before the strategy was active) is at least ```switch_after```.
 
     Note:
         Throughout each phase, the strategy reuses the **same** recommender object,
@@ -40,73 +34,35 @@ class TwoPhaseStrategy(Strategy):
     Args:
         initial_recommender: The initial recommender used by the strategy.
         recommender: The recommender used by the strategy after the switch.
-        switch_after: The (minimum) number of "events" (depending on ```mode```) after
-            which the recommender is switched.
+        switch_after: The number of "events" (depending on ```mode```) after which
+            the recommender is switched.
         mode: The type of events to be counted to trigger the switch.
-        _n_batches_recommended: Ignore (for internal use only).
-        _n_experiments_recommended: Ignore (for internal use only).
     """
 
-    # Exposed
     initial_recommender: Recommender = field(factory=RandomRecommender)
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
     switch_after: int = field(default=1)
-    mode: Literal[
-        "recommended_batches", "recommended_experiments", "total_measurements"
-    ] = field(
-        default="total_measurements",
-        validator=in_(
-            ("recommended_batches", "recommended_experiments", "total_measurements")
-        ),
-    )
-
-    # Private
-    # TODO: These should **not** be exposed via the constructor but the workaround
-    #   is currently needed for correct (de-)serialization. A proper approach would be
-    #   to not set them via the constructor but through a custom hook in combination
-    #   with `_cattrs_include_init_false=True`. However, the way
-    #   `get_base_structure_hook` is currently designed prevents such a hook from
-    #   taking action.
-    _n_batches_recommended: int = field(default=0, alias="_n_batches_recommended")
-    _n_experiments_recommended: int = field(
-        default=0, alias="_n_experiments_recommended"
+    mode: Literal["measurements", "batches"] = field(
+        default="measurements",
+        validator=in_(("measurements", "batches")),
     )
 
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
+        n_batches_done: int,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
         # See base class.
 
-        n_done = {
-            "recommended_batches": self._n_batches_recommended,
-            "recommended_experiments": self._n_experiments_recommended,
-            "total_measurements": len(train_x),
-        }[self.mode]
+        n_done = n_batches_done if self.mode == "batches" else len(train_x)
         return (
             self.recommender
             if n_done >= self.switch_after
             else self.initial_recommender
         )
-
-    def recommend(  # noqa: D102
-        self,
-        searchspace: SearchSpace,
-        batch_quantity: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
-    ) -> pd.DataFrame:
-        # See base class.
-
-        recommendation = super().recommend(
-            searchspace, batch_quantity, train_x, train_y
-        )
-        self._n_batches_recommended += 1
-        self._n_experiments_recommended += batch_quantity
-        return recommendation
 
 
 @define(kw_only=True)
@@ -143,12 +99,18 @@ class SequentialStrategy(Strategy):
     reuse_last: bool = field(default=False)
 
     # Private
-    # TODO: See :class:`baybe.strategies.composite.TwoPhaseStrategy`.
+    # TODO: These should **not** be exposed via the constructor but the workaround
+    #   is currently needed for correct (de-)serialization. A proper approach would be
+    #   to not set them via the constructor but through a custom hook in combination
+    #   with `_cattrs_include_init_false=True`. However, the way
+    #   `get_base_structure_hook` is currently designed prevents such a hook from
+    #   taking action.
     _step: int = field(default=0, alias="_step")
 
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
+        n_batches_done: int,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
@@ -203,6 +165,7 @@ class StreamingSequentialStrategy(Strategy):
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
+        n_batches_done: int,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,

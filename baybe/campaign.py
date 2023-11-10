@@ -260,6 +260,7 @@ class Campaign(SerialMixin):
         # Get the recommended search space entries
         rec = self.strategy.recommend(
             self.searchspace,
+            self.n_batches_done,
             batch_quantity,
             self.measurements_parameters_comp,
             self.measurements_targets_comp,
