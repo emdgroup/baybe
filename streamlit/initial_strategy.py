@@ -109,9 +109,7 @@ def main():
     # create the strategy and generate the recommendations
     # TODO: The acquisition function should become optional for model-free methods
     strategy = selection_strategies[strategy_name]()
-    selection = strategy.recommend(
-        searchspace=searchspace, n_batches_done=0, batch_quantity=n_selected
-    )
+    selection = strategy.recommend(searchspace=searchspace, batch_quantity=n_selected)
 
     # show the result
     fig = plot_point_selection(points.values, selection.index.values, strategy_name)

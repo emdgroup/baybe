@@ -1,10 +1,10 @@
 """Strategies that switch recommenders depending on the experimentation progress."""
 
-from typing import Iterable, Iterator, List, Literal, Optional
+from typing import Iterable, Iterator, List, Optional
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import deep_iterable, in_, instance_of
+from attrs.validators import deep_iterable, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
@@ -17,14 +17,12 @@ from baybe.utils.serialization import converter
 
 @define(kw_only=True)
 class TwoPhaseStrategy(Strategy):
-    """A two-phased strategy that switches the recommender after a specified event.
+    """A two-phased strategy that switches the recommender at a certain specified point.
 
-    The recommender is switched when a new (batch) recommendation is requested **and**
-    the criterion specified via ```mode``` is fulfilled:
-    * "measurements": The total number of collected measurements (including those
-        gathered before the strategy was active) is at least ```switch_after```.
-    * "batches": The total number of collected batches (including those
-        gathered before the strategy was active) is at least ```switch_after```.
+    The recommender is switched when a new (batch) recommendation is requested and
+    the training data set size (i.e., the total number of collected measurements
+    including those gathered before the strategy was active) is equal to or greater
+    than the number specified via the ```switch_after``` parameter.
 
     Note:
         Throughout each phase, the strategy reuses the **same** recommender object,
@@ -34,33 +32,26 @@ class TwoPhaseStrategy(Strategy):
     Args:
         initial_recommender: The initial recommender used by the strategy.
         recommender: The recommender used by the strategy after the switch.
-        switch_after: The number of "events" (depending on ```mode```) after which
-            the recommender is switched.
-        mode: The type of events to be counted to trigger the switch.
+        switch_after: The number of experiments after which the recommender
+            is switched for the next requested batch.
     """
 
     initial_recommender: Recommender = field(factory=RandomRecommender)
     recommender: Recommender = field(factory=SequentialGreedyRecommender)
     switch_after: int = field(default=1)
-    mode: Literal["measurements", "batches"] = field(
-        default="measurements",
-        validator=in_(("measurements", "batches")),
-    )
 
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        n_batches_done: int,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
         # See base class.
 
-        n_done = n_batches_done if self.mode == "batches" else len(train_x)
         return (
             self.recommender
-            if n_done >= self.switch_after
+            if len(train_x) >= self.switch_after
             else self.initial_recommender
         )
 
@@ -110,7 +101,6 @@ class SequentialStrategy(Strategy):
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        n_batches_done: int,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
@@ -165,7 +155,6 @@ class StreamingSequentialStrategy(Strategy):
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        n_batches_done: int,
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
