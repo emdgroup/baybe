@@ -523,7 +523,7 @@ def fixture_default_sequential_strategy():
     """The default ```SequentialStrategy``` to be used if not specified differently."""
     return SequentialStrategy(
         recommenders=[RandomRecommender(), SequentialGreedyRecommender()],
-        reuse_last=True,
+        mode="reuse_last",
         allow_repeated_recommendations=False,
         allow_recommending_already_measured=False,
     )

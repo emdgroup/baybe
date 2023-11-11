@@ -1,10 +1,10 @@
 """Strategies that switch recommenders depending on the experimentation progress."""
 
-from typing import Iterable, Iterator, List, Optional
+from typing import Iterable, Iterator, List, Literal, Optional
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import deep_iterable, instance_of
+from attrs.validators import deep_iterable, in_, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
@@ -60,8 +60,10 @@ class TwoPhaseStrategy(Strategy):
 class SequentialStrategy(Strategy):
     """A strategy that uses a pre-defined sequence of recommenders.
 
-    A new recommender is taken from the sequence after each recommended batch until
-    all recommenders are exhausted.
+    A new recommender is taken from the sequence whenever at least one new measurement
+    is available, until all recommenders are exhausted. More precisely, a recommender
+    change is triggered whenever the size of the training dataset increases; the
+    actual content of the dataset is ignored.
 
     Note:
         The provided sequence of recommenders will be internally pre-collected into a
@@ -72,22 +74,25 @@ class SequentialStrategy(Strategy):
         recommenders: A finite-length sequence of recommenders to be used.
             (For infinite-length iterables, see
             :class:`baybe.strategies.composite.StreamingSequentialStrategy`)
-        reuse_last: A flag indicating if the last recommender in the sequence shall be
-            reused in case more queries are made than recommenders are available.
-            Note: If ```True```, the strategy reuses the **same** recommender object,
-            that is, no new instances are created. Therefore, special attention is
-            required when using this option with stateful recommenders.
+        mode: Defines what shall happen when the last recommender in the sequence
+            has been consumed but additional recommender changes are triggered:
+            * "raise": An error is raised.
+            * "reuse_last": The last recommender in the sequence is used indefinitely.
+            * "cycle": The selection restarts from the beginning of the sequence.
 
     Raises:
-        NoRecommendersLeftError: If more (batch) recommendations are requested than
-            there are recommenders available and ```reuse_last=False```.
+        NoRecommendersLeftError: If more recommenders are requested than there are
+            recommenders available and ```mode="raise"```.
     """
 
     # Exposed
     recommenders: List[Recommender] = field(
         converter=list, validator=deep_iterable(instance_of(Recommender))
     )
-    reuse_last: bool = field(default=False)
+    mode: Literal["raise", "reuse_last", "cyclic"] = field(
+        default="raise",
+        validator=in_(("raise", "reuse_last", "cyclic")),
+    )
 
     # Private
     # TODO: These should **not** be exposed via the constructor but the workaround
@@ -96,7 +101,8 @@ class SequentialStrategy(Strategy):
     #   with `_cattrs_include_init_false=True`. However, the way
     #   `get_base_structure_hook` is currently designed prevents such a hook from
     #   taking action.
-    _step: int = field(default=0, alias="_step")
+    _step: int = field(default=-1, alias="_step")
+    _n_last_measurements: int = field(default=-1, alias="_n_last_measurements")
 
     def select_recommender(  # noqa: D102
         self,
@@ -107,20 +113,36 @@ class SequentialStrategy(Strategy):
     ) -> Recommender:
         # See base class.
 
-        # Get the index for retrieving the recommender
-        idx = self._step
-        if self.reuse_last:
-            idx = min(idx, len(self.recommenders) - 1)
+        # If the training dataset size has increased, move to the next recommender
+        if len(train_x) > self._n_last_measurements:
+            self._step += 1
+        # If the training dataset size has decreased, something went wrong
+        elif len(train_x) < self._n_last_measurements:
+            raise RuntimeError(
+                f"The training dataset size decreased from {self._n_last_measurements} "
+                f"to {len(train_x)} since the last function call, which indicates that "
+                f"'{self.__class__.__name__}' was not used as intended."
+            )
 
+        # Get the right index for the "next" recommender
+        idx = self._step
+        if self.mode == "reuse_last":
+            idx = min(idx, len(self.recommenders) - 1)
+        elif self.mode == "cyclic":
+            idx %= len(self.recommenders)
+
+        # Get the recommender
         try:
             recommender = self.recommenders[idx]
         except IndexError as ex:
             raise NoRecommendersLeftError(
-                f"The strategy has been queried {self._step+1} time(s) but the "
-                f"provided sequence of recommenders contains only "
-                f"{self._step} element(s)."
+                f"A total of {self._step+1} recommender(s) was/were requested but the "
+                f"provided sequence contains only {self._step} element(s)."
             ) from ex
-        self._step += 1
+
+        # Remember the training dataset size for the next call
+        self._n_last_measurements = len(train_x)
+
         return recommender
 
 
@@ -136,7 +158,7 @@ class StreamingSequentialStrategy(Strategy):
         recommenders: An iterable providing the recommenders to be used.
 
     Raises:
-        StopIteration: If more (batch) recommendations are requested than there are
+        NoRecommendersLeftError: If more recommenders are requested than there are
             recommenders available.
     """
 
@@ -144,8 +166,11 @@ class StreamingSequentialStrategy(Strategy):
     recommenders: Iterable[Recommender] = field()
 
     # Private
+    # TODO: See :class:`baybe.strategies.composite.SequentialStrategy`
+    _step: int = field(init=False, default=-1)
+    _n_last_measurements: int = field(init=False, default=-1)
     _iterator: Iterator = field(init=False)
-    _step: int = field(init=False, default=0)
+    _last_recommender: Optional[Recommender] = field(init=False, default=None)
 
     @_iterator.default
     def default_iterator(self):
@@ -161,16 +186,34 @@ class StreamingSequentialStrategy(Strategy):
     ) -> Recommender:
         # See base class.
 
+        use_last = True
+
+        # If the training dataset size has increased, move to the next recommender
+        if len(train_x) > self._n_last_measurements:
+            self._step += 1
+            use_last = False
+        # If the training dataset size has decreased, something went wrong
+        elif len(train_x) < self._n_last_measurements:
+            raise RuntimeError(
+                f"The training dataset size decreased from {self._n_last_measurements} "
+                f"to {len(train_x)} since the last function call, which indicates that "
+                f"'{self.__class__.__name__}' was not used as intended."
+            )
+
+        # Get the recommender
         try:
-            recommender = next(self._iterator)
+            if not use_last:
+                self._last_recommender = next(self._iterator)
         except StopIteration as ex:
             raise NoRecommendersLeftError(
-                f"The strategy has been queried {self._step+1} time(s) but the "
-                f"provided sequence of recommenders contains only "
-                f"{self._step} element(s)."
+                f"A total of {self._step+1} recommender(s) was/were requested but the "
+                f"provided iterator provided only {self._step} element(s)."
             ) from ex
-        self._step += 1
-        return recommender
+
+        # Remember the training dataset size for the next call
+        self._n_last_measurements = len(train_x)
+
+        return self._last_recommender
 
 
 # The recommender iterable cannot be serialized
