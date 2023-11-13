@@ -12,7 +12,7 @@ from baybe.utils import get_subclasses
 
 _T = TypeVar("_T")
 
-converter = cattrs.Converter(forbid_extra_keys=True)
+converter = cattrs.Converter()
 """The default converter for (de-)serializing BayBE-related objects."""
 
 
