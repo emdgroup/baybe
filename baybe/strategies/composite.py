@@ -8,11 +8,18 @@ from attrs.validators import deep_iterable, in_, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
-from baybe.recommenders.base import Recommender
+from baybe.recommenders.base import NonPredictiveRecommender, Recommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies.base import Strategy
 from baybe.utils import block_deserialization_hook, block_serialization_hook
 from baybe.utils.serialization import converter
+
+
+# TODO: Make predictive recommenders handle empty training data
+_unsupported_recommender_error = ValueError(
+    f"For cases where no training is available, the selected recommender "
+    f"must be a subclass of '{NonPredictiveRecommender.__name__}'."
+)
 
 
 @define
@@ -48,6 +55,12 @@ class TwoPhaseStrategy(Strategy):
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
         # See base class.
+
+        # FIXME: enable predictive recommenders for empty training data
+        if (train_x is None or len(train_x) == 0) and not isinstance(
+            self.initial_recommender, NonPredictiveRecommender
+        ):
+            raise _unsupported_recommender_error
 
         return (
             self.recommender
@@ -143,6 +156,12 @@ class SequentialStrategy(Strategy):
         # Remember the training dataset size for the next call
         self._n_last_measurements = len(train_x)
 
+        # FIXME: enable predictive recommenders for empty training data
+        if (train_x is None or len(train_x) == 0) and not isinstance(
+            recommender, NonPredictiveRecommender
+        ):
+            raise _unsupported_recommender_error
+
         return recommender
 
 
@@ -212,6 +231,12 @@ class StreamingSequentialStrategy(Strategy):
 
         # Remember the training dataset size for the next call
         self._n_last_measurements = len(train_x)
+
+        # FIXME: enable predictive recommenders for empty training data
+        if (train_x is None or len(train_x) == 0) and not isinstance(
+            self._last_recommender, NonPredictiveRecommender
+        ):
+            raise _unsupported_recommender_error
 
         return self._last_recommender
 
