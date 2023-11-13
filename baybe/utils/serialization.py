@@ -101,7 +101,7 @@ def get_base_structure_hook(
         _type = val["type"]
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
-            raise ValueError(f"Unknown subclass {_type}.")
+            raise ValueError(f"Unknown subclass '{_type}'.")
         fun = make_dict_structure_fn(cls, converter, **(overrides or {}))
         return fun(val, cls)
 
@@ -122,3 +122,25 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
 
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+
+
+def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
+    """A hook that prevents serialization of the passed object.
+
+    Raises:
+         NotImplementedError: Always.
+    """
+    raise NotImplementedError(
+        f"Serializing objects of type '{obj.__class__.__name__}' is not supported."
+    )
+
+
+def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC103
+    """A hook that prevents deserialization into a specific type.
+
+    Raises:
+         NotImplementedError: Always.
+    """
+    raise NotImplementedError(
+        f"Deserialization into '{cls.__name__}' is not supported."
+    )

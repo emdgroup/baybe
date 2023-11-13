@@ -17,7 +17,7 @@ from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import NaiveHybridRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import Strategy
+from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 
@@ -110,7 +110,7 @@ objective = Objective(
 
 hybrid_recommender = NaiveHybridRecommender()
 
-hybrid_strategy = Strategy(recommender=hybrid_recommender)
+hybrid_strategy = TwoPhaseStrategy(recommender=hybrid_recommender)
 
 ## Constructing the campaign and performing a recommendation
 

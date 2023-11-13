@@ -64,6 +64,7 @@ CONFIG = str(
         ]
     },
     "strategy": {
+        "type": "TwoPhaseStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"
         },
@@ -74,6 +75,7 @@ CONFIG = str(
             },
             "acquisition_function_cls": "qEI"
         },
+        "switch_after": 1,
         "allow_repeated_recommendations": false,
         "allow_recommending_already_measured": false
     }
@@ -129,6 +131,7 @@ INVALID_CONFIG = str(
         ]
     },
     "strategy": {
+        "type": "TwoPhaseStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"
         },

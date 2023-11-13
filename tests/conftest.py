@@ -1,8 +1,10 @@
 """PyTest configuration."""
+
 from __future__ import annotations
 
 import os
-from typing import List, Union
+from itertools import chain
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -30,13 +32,19 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.recommenders.base import Recommender
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.strategy import Strategy
+from baybe.strategies.base import Strategy
+from baybe.strategies.composite import (
+    SequentialStrategy,
+    StreamingSequentialStrategy,
+    TwoPhaseStrategy,
+)
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils import add_fake_results, add_parameter_noise
+from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
@@ -501,18 +509,52 @@ def fixture_campaign(parameters, constraints, strategy, objective):
     )
 
 
-@pytest.fixture(name="strategy")
-def fixture_default_strategy(
-    recommender,
-    initial_recommender,
-):
-    """The default strategy to be used if not specified differently."""
-    return Strategy(
+@pytest.fixture(name="twophase_strategy")
+def fixture_default_twophase_strategy(recommender, initial_recommender):
+    """The default ```TwoPhaseStrategy``` to be used if not specified differently."""
+    return TwoPhaseStrategy(
         recommender=recommender,
         initial_recommender=initial_recommender,
         allow_repeated_recommendations=False,
         allow_recommending_already_measured=False,
     )
+
+
+@pytest.fixture(name="sequential_strategy")
+def fixture_default_sequential_strategy():
+    """The default ```SequentialStrategy``` to be used if not specified differently."""
+    return SequentialStrategy(
+        recommenders=[RandomRecommender(), SequentialGreedyRecommender()],
+        mode="reuse_last",
+        allow_repeated_recommendations=False,
+        allow_recommending_already_measured=False,
+    )
+
+
+@pytest.fixture(name="streaming_sequential_strategy")
+def fixture_default_streaming_sequential_strategy():
+    """The default ```StreamingSequentialStrategy``` to be used."""
+    return StreamingSequentialStrategy(
+        recommenders=chain(
+            (RandomRecommender(),), hilberts_factory(SequentialGreedyRecommender)
+        ),
+        allow_repeated_recommendations=False,
+        allow_recommending_already_measured=False,
+    )
+
+
+@pytest.fixture(name="strategy")
+def fixture_select_strategy(
+    request, twophase_strategy, sequential_strategy, streaming_sequential_strategy
+):
+    """Returns the requested strategy."""
+    if not hasattr(request, "param") or (request.param == TwoPhaseStrategy):
+        return twophase_strategy
+    if request.param == SequentialStrategy:
+        return sequential_strategy
+    if request.param == StreamingSequentialStrategy:
+        return streaming_sequential_strategy
+    raise NotImplementedError("unknown strategy type")
 
 
 @pytest.fixture(name="acquisition_function_cls")
@@ -584,6 +626,7 @@ def fixture_default_config():
             ]
         },
         "strategy": {
+            "type": "TwoPhaseStrategy",
             "initial_recommender": {
                 "type": "RandomRecommender"
             },
@@ -592,6 +635,7 @@ def fixture_default_config():
                 "surrogate_model_cls": "GP",
                 "acquisition_function_cls": "qEI"
             },
+            "switch_after": 1,
             "allow_repeated_recommendations": false,
             "allow_recommending_already_measured": false
         }
@@ -684,3 +728,22 @@ def run_iterations(
             add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
 
         campaign.add_measurements(rec)
+
+
+def get_dummy_training_data(length: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Create column-less input and target dataframes of specified length."""
+    df = pd.DataFrame(np.empty((length, 0)))
+    return df, df
+
+
+def get_dummy_searchspace() -> SearchSpace:
+    """Create a dummy searchspace whose actual content is irrelevant."""
+    parameters = [NumericalDiscreteParameter(name="test", values=[0, 1])]
+    return SearchSpace.from_product(parameters)
+
+
+def select_recommender(strategy: Strategy, training_size: int) -> Recommender:
+    """Select a recommender for given training dataset size."""
+    searchspace = get_dummy_searchspace()
+    df_x, df_y = get_dummy_training_data(training_size)
+    return strategy.select_recommender(searchspace, train_x=df_x, train_y=df_y)

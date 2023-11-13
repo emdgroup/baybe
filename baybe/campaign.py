@@ -16,7 +16,8 @@ from baybe.searchspace.core import (
     structure_searchspace_from_config,
     validate_searchspace_from_config,
 )
-from baybe.strategies.strategy import Strategy
+from baybe.strategies import TwoPhaseStrategy
+from baybe.strategies.base import Strategy
 from baybe.targets import NumericalTarget
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -60,22 +61,22 @@ class Campaign(SerialMixin):
         measurements_exp: The experimental representation of the conducted experiments.
         numerical_measurements_must_be_within_tolerance: Flag for forcing numerical
             measurements to be within tolerance.
-        batches_done: The number of already processed batches.
-        fits_done: The number of fits already done.
+        n_batches_done: The number of already processed batches.
+        n_fits_done: The number of fits already done.
     """
 
     # DOE specifications
     searchspace: SearchSpace = field()
     objective: Objective = field()
-    strategy: Strategy = field(factory=Strategy)
+    strategy: Strategy = field(factory=TwoPhaseStrategy)
 
     # Data
     measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
     numerical_measurements_must_be_within_tolerance: bool = field(default=True)
 
     # Metadata
-    batches_done: int = field(default=0)
-    fits_done: int = field(default=0)
+    n_batches_done: int = field(default=0)
+    n_fits_done: int = field(default=0)
 
     # Private
     _cached_recommendation: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
@@ -210,9 +211,9 @@ class Campaign(SerialMixin):
         )
 
         # Read in measurements and add them to the database
-        self.batches_done += 1
+        self.n_batches_done += 1
         to_insert = data.copy()
-        to_insert["BatchNr"] = self.batches_done
+        to_insert["BatchNr"] = self.n_batches_done
         to_insert["FitNr"] = np.nan
 
         self.measurements_exp = pd.concat(
@@ -253,8 +254,8 @@ class Campaign(SerialMixin):
 
         # Update recommendation meta data
         if len(self.measurements_exp) > 0:
-            self.fits_done += 1
-            self.measurements_exp["FitNr"].fillna(self.fits_done, inplace=True)
+            self.n_fits_done += 1
+            self.measurements_exp["FitNr"].fillna(self.n_fits_done, inplace=True)
 
         # Get the recommended search space entries
         rec = self.strategy.recommend(

@@ -250,10 +250,10 @@ details, and their configuration settings, see
 [baybe/strategies](./baybe/strategies).
 
 ```python
-from baybe.strategies import Strategy
+from baybe.strategies import TwoPhaseStrategy
 from baybe.recommenders import SequentialGreedyRecommender, RandomRecommender
 
-strategy = Strategy(
+strategy = TwoPhaseStrategy(
     initial_recommender=RandomRecommender(),
     recommender=SequentialGreedyRecommender(),
 )

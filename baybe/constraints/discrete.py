@@ -14,7 +14,11 @@ from baybe.constraints.conditions import (
     ThresholdCondition,
 )
 from baybe.utils import Dummy
-from baybe.utils.serialization import converter
+from baybe.utils.serialization import (
+    block_deserialization_hook,
+    block_serialization_hook,
+    converter,
+)
 
 
 @define
@@ -289,10 +293,6 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
 )
 
 
-def _custom_constraint_hook(*_) -> None:
-    """Raises a NotImplementedError when trying to serialize a CustomConstraint."""
-    raise NotImplementedError("CustomConstraint does not support de-/serialization.")
-
-
-converter.register_unstructure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
-converter.register_structure_hook(DiscreteCustomConstraint, _custom_constraint_hook)
+# Prevent (de-)serialization of custom constraints
+converter.register_unstructure_hook(DiscreteCustomConstraint, block_serialization_hook)
+converter.register_structure_hook(DiscreteCustomConstraint, block_deserialization_hook)
