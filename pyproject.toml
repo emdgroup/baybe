@@ -52,6 +52,7 @@ dev = [
     "baybe[docs]",
     "baybe[examples]",
     "baybe[lint]",
+    "baybe[mypy]",
     "baybe[onnx]",
     "baybe[simulation]",
     "baybe[telemetry]",
@@ -84,11 +85,14 @@ examples = [
 ]
 
 lint = [
-    "mypy>=1.2.0",
     "pre-commit==2.19.0",  # see DEV TOOLS NOTE
     "pydoclint==0.2.1", # see DEV TOOLS NOTE
     "ruff==0.1.6", # see DEV TOOLS NOTE
     "typos==1.16.23" # see DEV TOOLS NOTE
+]
+
+mypy = [
+    "mypy>=1.6.1",
 ]
 
 simulation = [
@@ -122,17 +126,3 @@ local_scheme = "dirty-tag"
 
 [tool.setuptools]
 packages = ["baybe"]
-
-[tool.mypy]
-files = [
-    "baybe/core.py",
-    "baybe/parameters.py",
-    "baybe/searchspace.py",
-]
-
-[[tool.mypy.overrides]]
-module = 'scipy.spatial.distance'
-ignore_missing_imports = true
-
-# TODO[12327]: Find a way to automatically install all mypy stubs during the
-#   installation, to avoid having to call "mypy --install-types" afterwards.
