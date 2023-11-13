@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Now supports Python 3.11
 - Removed `pyarrow` version pin
+- Deserialization no longer silently drops unknown arguments
 
 ### Deprecations
 - `BayBE` class replaced with `Campaign`
