@@ -1,47 +1,22 @@
 """Tests for the strategies package."""
 
-from typing import Tuple
-
-import numpy as np
-import pandas as pd
 import pytest
 
 from baybe.exceptions import NoRecommendersLeftError
-from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
     FPSRecommender,
     RandomRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.recommenders.base import Recommender
-from baybe.searchspace import SearchSpace
-from baybe.strategies.base import Strategy
 from baybe.strategies.composite import (
     SequentialStrategy,
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
 
+from tests.conftest import select_recommender
+
 RECOMMENDERS = [RandomRecommender(), FPSRecommender(), SequentialGreedyRecommender()]
-
-
-def get_dummy_training_data(length: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Create column-less input and target dataframes of specified length."""
-    df = pd.DataFrame(np.empty((length, 0)))
-    return df, df
-
-
-def get_dummy_searchspace() -> SearchSpace:
-    """Create a dummy searchspace whose actual content is irrelevant."""
-    parameters = [NumericalDiscreteParameter(name="test", values=[0, 1])]
-    return SearchSpace.from_product(parameters)
-
-
-def select_recommender(strategy: Strategy, training_size: int) -> Recommender:
-    """Select a recommender for given training dataset size."""
-    searchspace = get_dummy_searchspace()
-    df_x, df_y = get_dummy_training_data(training_size)
-    return strategy.select_recommender(searchspace, train_x=df_x, train_y=df_y)
 
 
 def test_twophase_strategy():
