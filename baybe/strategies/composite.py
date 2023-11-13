@@ -15,7 +15,7 @@ from baybe.utils import block_deserialization_hook, block_serialization_hook
 from baybe.utils.serialization import converter
 
 
-@define(kw_only=True)
+@define
 class TwoPhaseStrategy(Strategy):
     """A two-phased strategy that switches the recommender at a certain specified point.
 
@@ -56,7 +56,7 @@ class TwoPhaseStrategy(Strategy):
         )
 
 
-@define(kw_only=True)
+@define
 class SequentialStrategy(Strategy):
     """A strategy that uses a pre-defined sequence of recommenders.
 
@@ -146,7 +146,7 @@ class SequentialStrategy(Strategy):
         return recommender
 
 
-@define(kw_only=True)
+@define
 class StreamingSequentialStrategy(Strategy):
     """A strategy that switches between recommenders from an iterable.
 

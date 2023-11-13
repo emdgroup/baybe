@@ -12,7 +12,7 @@ from baybe.strategies.deprecation import structure_strategy
 from baybe.utils.serialization import converter, SerialMixin, unstructure_base
 
 
-@define(kw_only=True)
+@define
 class Strategy(SerialMixin, ABC):
     """Abstract base class for all BayBE strategies.
 
@@ -25,8 +25,8 @@ class Strategy(SerialMixin, ABC):
             search spaces.
     """
 
-    allow_repeated_recommendations: bool = field(default=False)
-    allow_recommending_already_measured: bool = field(default=False)
+    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
+    allow_recommending_already_measured: bool = field(default=False, kw_only=True)
 
     @abstractmethod
     def select_recommender(
