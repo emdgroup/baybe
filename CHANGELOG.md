@@ -11,11 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test module for deprecation warnings
 - Option to control the switching point of `TwoPhaseStrategy` (former `Strategy`)
 - `SequentialStrategy` and `StreamingSequentialStrategy` classes
+- Telemetry env variable `BAYBE_TELEMETRY_TIMEOUT` for setting the connection test timeout
 
 ### Changed
 - Reorganized modules into subpackages
 - Serialization no longer relies on cattrs' global converter
 - Refined (un-)structuring logic
+- Telemetry env variable `BAYBE_TELEMETRY_HOST` renamed to `BAYBE_TELEMETRY_ENDPOINT`
+- Telemetry env variable `BAYBE_DEBUG_FAKE_USERHASH` renamed to `BAYBE_TELEMETRY_USERNAME`
+- Telemetry env variable `BAYBE_DEBUG_FAKE_HOSTHASH` renamed to `BAYBE_TELEMETRY_HOSTNAME`
 
 ### Fixed
 - Now supports Python 3.11
