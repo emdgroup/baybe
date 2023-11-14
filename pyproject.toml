@@ -91,6 +91,7 @@ lint = [
     "pre-commit==2.19.0",  # see DEV TOOLS NOTE
     "pydoclint==0.2.1", # see DEV TOOLS NOTE
     "pylint==2.17.2",  # see DEV TOOLS NOTE
+    "ruff==0.1.5", # see DEV TOOLS NOTE
     "ufmt==1.3.2",  # see DEV TOOLS NOTE
     "usort==1.0.2",  # see DEV TOOLS NOTE
 ]
