@@ -84,16 +84,10 @@ examples = [
 ]
 
 lint = [
-    "black==22.3.0",  # see DEV TOOLS NOTE
-    "flake8==4.0.1",  # see DEV TOOLS NOTE
-    "flake8-docstrings==1.7.0", # see DEV TOOLS NOTE
     "mypy>=1.2.0",
     "pre-commit==2.19.0",  # see DEV TOOLS NOTE
     "pydoclint==0.2.1", # see DEV TOOLS NOTE
-    "pylint==2.17.2",  # see DEV TOOLS NOTE
     "ruff==0.1.5", # see DEV TOOLS NOTE
-    "ufmt==1.3.2",  # see DEV TOOLS NOTE
-    "usort==1.0.2",  # see DEV TOOLS NOTE
 ]
 
 simulation = [
@@ -127,43 +121,6 @@ local_scheme = "dirty-tag"
 
 [tool.setuptools]
 packages = ["baybe"]
-
-[tool.black]
-line-length = 88
-
-[tool.pylint.TYPECHECK]
-# List of members which are set dynamically and missed by pylint inference
-# system, and so shouldn't trigger E1101 when accessed. Python regular
-# expressions are accepted.
-generated-members = "torch.*"
-
-[tool.pylint.MASTER]
-ignore-paths = "docs/*"
-
-[tool.pylint.'MESSAGES CONTROL']
-disable = [
-    "broad-except",  # catching base exception is common for RDKit mol validation etc
-    "duplicate-code",  # duplicate code happens eg in similar debug scripts
-    "cyclic-import",  # seems like it commonly produces false positives
-	"fixme",  # fixme hints should be allowed
-	"too-many-instance-attributes",  # BayBE class has quite a few members
-	"too-many-branches",  # can maybe be optimized later
-    "too-few-public-methods",  # too strict, this happens in several places
-	"no-member",  # seems RDKit objects in some modules can never be found by IDEs
-    "no-name-in-module",  # seems RDKit objects in some modules can never be found by IDEs
-    "too-many-arguments",  # too strict (encountered in history module)
-    "too-many-locals",  # too strict (encountered in history module)
-	"too-many-nested-blocks",  # too strict (encountered in history module)
-	"too-many-statements",  # too strict (encountered in history module)
-	"unsubscriptable-object",  # well known false positive
-	# -> see https://github.com/PyCQA/pylint/issues/1498
-    "wrong-import-order",  # handled by ufmt
-    "import-error",  # otherwise linting can only succeed in full dev environment
-	]
-no-docstring-rgx = "__.*__"
-
-[tool.pylint.BASIC]
-good-names=["i", "j", "k", "x", "y", "ex", "df", "fh"] # allow these variable names
 
 [tool.mypy]
 files = [
