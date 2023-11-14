@@ -15,7 +15,11 @@ from baybe.constraints import (
     validate_constraints,
 )
 from baybe.constraints.base import Constraint, DiscreteConstraint
-from baybe.parameters import NumericalContinuousParameter, TaskParameter
+from baybe.parameters import (
+    NumericalContinuousParameter,
+    SubstanceEncoding,
+    TaskParameter,
+)
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
@@ -170,12 +174,16 @@ class SearchSpace(SerialMixin):
     @property
     def contains_mordred(self) -> bool:
         """Indicates if any of the discrete parameters uses ``MORDRED`` encoding."""
-        return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
+        return any(
+            p.encoding is SubstanceEncoding.MORDRED for p in self.discrete.parameters
+        )
 
     @property
     def contains_rdkit(self) -> bool:
         """Indicates if any of the discrete parameters uses ``RDKIT`` encoding."""
-        return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
+        return any(
+            p.encoding is SubstanceEncoding.RDKIT for p in self.discrete.parameters
+        )
 
     @property
     def param_bounds_comp(self) -> torch.Tensor:

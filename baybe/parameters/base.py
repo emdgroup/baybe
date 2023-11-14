@@ -8,10 +8,9 @@ import pandas as pd
 from attr import define, field
 from cattrs.gen import override
 
+from baybe.parameters.enum import ParameterEncoding
 from baybe.utils import SerialMixin, get_base_structure_hook, unstructure_base
 from baybe.utils.serialization import converter
-
-# TODO: Introduce encoding enums
 
 
 @define(frozen=True, slots=False)
@@ -55,9 +54,8 @@ class DiscreteParameter(Parameter, ABC):
     is_discrete: ClassVar[bool] = True
     # See base class.
 
-    # object variables
-    encoding: ClassVar[Optional[str]] = None
-    """The encoding of the parameter."""
+    encoding: Optional[ParameterEncoding] = field(init=False, default=None)
+    """An optional encoding strategy for the parameter."""
 
     @property
     @abstractmethod

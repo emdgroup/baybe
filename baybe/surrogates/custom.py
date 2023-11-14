@@ -16,6 +16,7 @@ from torch import Tensor
 
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
+    CategoricalEncoding,
     CategoricalParameter,
     CustomDiscreteParameter,
     NumericalContinuousParameter,
@@ -196,7 +197,10 @@ if _ONNX_INSTALLED:
                     ),
                 )
                 or (isinstance(p, CustomDiscreteParameter) and not p.decorrelate)
-                or (isinstance(p, CategoricalParameter) and p.encoding == "INT")
+                or (
+                    isinstance(p, CategoricalParameter)
+                    and p.encoding is CategoricalEncoding.INT
+                )
                 for p in searchspace.parameters
             ):
                 raise TypeError(

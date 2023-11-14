@@ -1,12 +1,13 @@
 """Substance parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Dict, Literal, Union, get_args, get_type_hints
+from typing import Any, ClassVar, Dict, Union
 
 import pandas as pd
 from attr import define, field
 
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils import df_drop_single_value_columns, df_uncorrelated_features
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
@@ -51,7 +52,10 @@ class SubstanceParameter(DiscreteParameter):
         - float in (0, 1): The encoding is decorrelated using the specified threshold.
     """
 
-    encoding: Literal["MORDRED", "RDKIT", "MORGAN_FP"] = field(default="MORDRED")
+    encoding: SubstanceEncoding = field(
+        default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding
+    )
+
     # See base class.
 
     @encoding.validator
@@ -66,13 +70,18 @@ class SubstanceParameter(DiscreteParameter):
             ImportError: If the ``chem``dependency was not installed but an encoding
                 requiring this dependency is requested.
         """
-        if value in ["MORDRED"] and not (_MORDRED_INSTALLED and _RDKIT_INSTALLED):
+        if value is SubstanceEncoding.MORDRED and not (
+            _MORDRED_INSTALLED and _RDKIT_INSTALLED
+        ):
             raise ImportError(
                 "The mordred/rdkit packages are not installed, a SubstanceParameter "
                 "with MORDRED encoding cannot be used. Consider installing baybe with "
                 "'chem' dependency like 'pip install baybe[chem]'"
             )
-        if value in ["RDKIT", "MORGAN_FP"] and not _RDKIT_INSTALLED:
+        if (
+            value in [SubstanceEncoding.RDKIT, SubstanceEncoding.MORGAN_FP]
+            and not _RDKIT_INSTALLED
+        ):
             raise ImportError(
                 "The rdkit package is not installed, a SubstanceParameter with "
                 "RDKIT or MORGAN_FP encoding cannot be used. Consider installing baybe "
@@ -109,11 +118,11 @@ class SubstanceParameter(DiscreteParameter):
         pref = self.name + "_"
 
         # Get the raw fingerprints
-        if self.encoding == "MORDRED":
+        if self.encoding is SubstanceEncoding.MORDRED:
             comp_df = smiles_to_mordred_features(vals, prefix=pref)
-        elif self.encoding == "RDKIT":
+        elif self.encoding is SubstanceEncoding.RDKIT:
             comp_df = smiles_to_rdkit_features(vals, prefix=pref)
-        elif self.encoding == "MORGAN_FP":
+        elif self.encoding is SubstanceEncoding.MORGAN_FP:
             comp_df = smiles_to_fp_features(vals, prefix=pref)
         else:
             raise ValueError(
@@ -140,7 +149,3 @@ class SubstanceParameter(DiscreteParameter):
                 comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
         return comp_df
-
-
-# Available encodings for substance parameters
-SUBSTANCE_ENCODINGS = get_args(get_type_hints(SubstanceParameter)["encoding"])
