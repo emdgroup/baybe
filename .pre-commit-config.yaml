@@ -2,24 +2,19 @@
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
 repos:
-- repo: https://github.com/omnilib/ufmt
-  rev: v1.3.2  # see FORMATTER NOTE
+- repo: https://github.com/jsh9/pydoclint
+  rev: 0.2.1
   hooks:
-    - id: ufmt
-      additional_dependencies:
-        - black == 22.3.0  # see FORMATTER NOTE
-        - usort == 1.0.2  # see FORMATTER NOTE
-- repo: https://github.com/pycqa/flake8
-  rev: 4.0.1
+    - id: pydoclint
+      args: [--config=pydoclint.cfg]
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.5
   hooks:
-    - id: flake8
-      additional_dependencies:
-        - pydoclint==0.2.1
-        - flake8-docstrings==1.7.0
-- repo: local
-  hooks:
-    - id: pylint
-      name: pylint
-      entry: pylint
-      language: system
-      types: [python]
+  - id: ruff
+    name: "ruff (general)"
+    args: [--config=ruff_general.cfg]
+  - id: ruff
+    name: "ruff (misc)"
+    args: [--config=ruff_misc.cfg]
+  - id: ruff-format
+
