@@ -22,8 +22,10 @@ class CategoricalParameter(DiscreteParameter):
     # See base class.
 
     # object variables
+    # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
     _values: tuple = field(
-        converter=tuple, validator=[min_len(2), validate_unique_values]
+        converter=tuple,
+        validator=[min_len(2), validate_unique_values],  # type: ignore
     )
     # See base class.
 

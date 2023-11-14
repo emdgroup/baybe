@@ -100,9 +100,10 @@ overrides = {
     "_values": override(rename="values"),
     "decorrelate": override(struct_hook=lambda x, _: x),
 }
+# FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(
     Parameter,
-    get_base_structure_hook(Parameter, overrides=overrides),
+    get_base_structure_hook(Parameter, overrides=overrides),  # type: ignore
 )
 converter.register_unstructure_hook(
     Parameter, partial(unstructure_base, overrides=overrides)
