@@ -79,8 +79,7 @@ TELEM_LABELS = {
 if is_enabled():
     _endpoint_url = os.environ.get(
         "BAYBE_TELEMETRY_ENDPOINT",
-        "***REMOVED***."
-        "elb.eu-central-1.amazonaws.com:4317",
+        "https://public.telemetry.baybe.p.uptimize.merckgroup.com:4317",
     )
 
     # Test endpoint URL
