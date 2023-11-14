@@ -100,7 +100,7 @@ class SubstanceParameter(DiscreteParameter):
         """Returns the labels of the given set of molecules."""
         # Since the order of dictionary keys is important here, this will only work
         # for Python 3.7 or higher
-        return list(self.data.keys())
+        return tuple(self.data.keys())
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
