@@ -120,7 +120,7 @@ if is_enabled():
         # any telemetry timeouts or interference for the user in case of unexpected
         # errors. Possible ones are for instance ``socket.gaierror`` in case the user
         # has no internet connection.
-        _logger.warning(
+        _logger.info(
             "WARNING: BayBE Telemetry endpoint %s cannot be reached. "
             "Disabling telemetry.",
             _endpoint_url,
