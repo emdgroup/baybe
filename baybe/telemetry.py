@@ -1,4 +1,4 @@
-"""Telemetry  functionality for BayBE.
+"""Telemetry functionality for BayBE.
 
 The following environment variables control the behavior of BayBE telemetry:
 
@@ -115,7 +115,11 @@ if is_enabled():
 
             # Setup Global Metric Provider
             _meter = get_meter("aws-otel", "1.0")
-    except (socket.timeout, socket.gaierror, ConnectionRefusedError):
+    except Exception:
+        # Catching broad exception here and disabling telemetry in that case to avoid
+        # any telemetry timeouts or interference for the user in case of unexpected
+        # errors. Possible ones are for instance ``socket.gaierror`` in case the user
+        # has no internet connection.
         _logger.warning(
             "WARNING: BayBE Telemetry endpoint %s cannot be reached. "
             "Disabling telemetry.",
