@@ -12,9 +12,8 @@ It provides the necessary functionality to:
 - handle measurements data and feed it back into the experimental design.
 - compare different DOE strategies through backtesting with synthetic and real data.
 
-## NOTE 
+## ❗🚧 This repository is under **heavy active development**. 🚧❗
 
-This repository is under **heavy active development**.
 Please note that the provided functionality and user interfaces are not stable and may
 change in newer releases.
 Therefore, if you would like to use the code in its current early stage, we recommend
