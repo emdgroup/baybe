@@ -30,6 +30,7 @@ from typing import Dict, List, Union
 from urllib.parse import urlparse
 
 import pandas as pd
+import requests
 
 from baybe.parameters.base import Parameter
 from baybe.utils import fuzzy_row_match, strtobool
@@ -111,7 +112,9 @@ if is_enabled():
         _endpoint_hostname = _endpoint_url_parsed.hostname
         _endpoint_port = _endpoint_url_parsed.port if _endpoint_url_parsed.port else 80
         try:
-            _TIMEOUT_S = float(os.environ.get(VARNAME_TELEMETRY_TIMEOUT, None))
+            _TIMEOUT_S = float(
+                os.environ.get(VARNAME_TELEMETRY_TIMEOUT, DEFAULT_TELEMETRY_TIMEOUT)
+            )
         except (ValueError, TypeError):
             _logger.warning(
                 "WARNING: Value passed for environment variable BAYBE_TELEMETRY_TIMEOUT"
@@ -120,24 +123,28 @@ if is_enabled():
             )
             _TIMEOUT_S = float(DEFAULT_TELEMETRY_TIMEOUT)
 
-        with socket.create_connection(
-            (_endpoint_hostname, _endpoint_port), timeout=_TIMEOUT_S
-        ) as sock:
-            _instruments = {}
-            _resource = Resource.create(
-                {"service.namespace": "BayBE", "service.name": "SDK"}
-            )
-            _reader = PeriodicExportingMetricReader(
-                exporter=OTLPMetricExporter(
-                    endpoint=_endpoint_url,
-                    insecure=True,
-                )
-            )
-            _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
-            set_meter_provider(_provider)
+        # Send a test request. If there is no internet connection or a firewall is
+        # present this will throw an error and telemetry will be deactivated.
+        response = requests.get(
+            "http://verkehrsnachrichten.merck.de/", timeout=_TIMEOUT_S
+        )
+        if response.status_code != 200:
+            raise requests.RequestException("Cannot reach telemetry network.")
 
-            # Setup Global Metric Provider
-            _meter = get_meter("aws-otel", "1.0")
+        # User has connectivity to the telemetry endpoint, so we initialize
+        _instruments = {}
+        _resource = Resource.create(
+            {"service.namespace": "BayBE", "service.name": "SDK"}
+        )
+        _reader = PeriodicExportingMetricReader(
+            exporter=OTLPMetricExporter(
+                endpoint=_endpoint_url,
+                insecure=True,
+            )
+        )
+        _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
+        set_meter_provider(_provider)
+        _meter = get_meter("aws-otel", "1.0")
     except Exception:
         # Catching broad exception here and disabling telemetry in that case to avoid
         # any telemetry timeouts or interference for the user in case of unexpected
