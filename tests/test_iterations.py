@@ -88,10 +88,10 @@ valid_hybrid_recommenders.extend(valid_hybrid_sequential_greedy_recommenders)
 valid_strategies = get_subclasses(Strategy)
 
 test_targets = [
-    "Target_max",
-    "Target_min",
-    "Target_match_bell",
-    "Target_match_triangular",
+    ["Target_max"],
+    ["Target_min"],
+    ["Target_match_bell"],
+    ["Target_match_triangular"],
     ["Target_max_bounded", "Target_min_bounded"],
 ]
 
@@ -131,7 +131,7 @@ def test_iter_recommender_discrete(campaign, n_iterations, batch_quantity):
 
 @pytest.mark.slow
 @pytest.mark.parametrize("recommender", valid_continuous_recommenders)
-@pytest.mark.parametrize("parameter_names", ["Conti_finite1", "Conti_finite2"])
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 def test_iter_recommender_continuous(campaign, n_iterations, batch_quantity):
     run_iterations(campaign, n_iterations, batch_quantity)
 
