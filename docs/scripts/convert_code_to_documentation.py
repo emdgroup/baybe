@@ -4,7 +4,7 @@ import argparse
 import os
 import pathlib
 import shutil
-from subprocess import check_call, DEVNULL, STDOUT
+from subprocess import CalledProcessError, check_call, DEVNULL, STDOUT
 
 from tqdm import tqdm
 
@@ -16,10 +16,10 @@ parser.add_argument(
     "-t",
     "--target_dir",
     help="Destination directory in which the build will be saved (relative).\
-    That is, a folder named 'build' will be created and this folder contains the\
-    html files. Note that this folder is being deleted if it already exists!\
-    Default is a subfolder 'build' which is being placed in the current folder.",
-    default="./build",
+    Note that building the documentation actually happens within the doc folder.\
+    After building the documentation, it will be copied to this folder.\
+    Default is a subfolder 'docs' placed in `build`.",
+    default="./build/docs",
 )
 parser.add_argument(
     "-p",
@@ -48,7 +48,7 @@ parser.add_argument(
 
 # Parse input arguments
 args = parser.parse_args()
-DIR = args.target_dir
+DESTINATION_DIR = args.target_dir
 DEBUG = args.debug
 INCLUDE_PRIVATE = args.include_private
 IGNORE_EXAMPLES = args.ignore_examples
@@ -64,8 +64,7 @@ os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 build_dir = pathlib.Path("docs/build")
 sdk_dir = pathlib.Path("docs/sdk")
 autosummary_dir = pathlib.Path("docs/_autosummary")
-# Output destination
-destination_dir = pathlib.Path(DIR)
+destination_dir = pathlib.Path(DESTINATION_DIR)
 
 
 def create_example_documentation(example_dest_dir: str, debug: bool):
@@ -89,7 +88,7 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
     shutil.copytree("examples", examples_directory)
 
     # List all directories in the examples folder
-    directories = [d for d in examples_directory.iterdir() if d.is_dir()]
+    ex_directories = [d for d in examples_directory.iterdir() if d.is_dir()]
 
     # For the toctree of the top level example folder, we need to keep track of all
     # folders. We thus write the header here and populate it during the execution of the
@@ -97,8 +96,7 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
     ex_file = "# Examples\n\nThese examples show how to use BayBE.\n\n```{toctree}\n"
 
     # Iterate over the directories. Only print output in debug mode.
-    for sub_directory in (pbar := tqdm(directories, disable=not debug)):
-
+    for sub_directory in (pbar := tqdm(ex_directories, disable=not debug)):
         # Get the name of the current folder
         # Format it by replacing underscores and capitalizing the words
         folder_name = sub_directory.stem
@@ -118,7 +116,6 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
 
         # Iterate through the individual example files
         for file in (inner_pbar := tqdm(py_files, leave=False, disable=not debug)):
-
             # Include the name of the file to the toctree
             # Format it by replacing underscores and capitalizing the words
             file_name = file.stem
@@ -208,47 +205,61 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
 
 
 # Collect all of the directories and delete them if they still exist.
-# Note that destination_dir is last here as we re-use this later while ignoring this
-directores = [build_dir, sdk_dir, autosummary_dir, destination_dir]
+directories = [sdk_dir, autosummary_dir, build_dir, destination_dir]
 
-for directory in directores:
+for directory in directories:
     if directory.is_dir():
         shutil.rmtree(directory)
 
+# The call for checking external links.
+link_call = [
+    "sphinx-build",
+    "-b",
+    "linkcheck",
+    "docs",
+    build_dir,
+    "-D",
+    f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
+]
 # The actual call that will be made to build the documentation
-call = [
+building_call = [
     "sphinx-build",
     "-b",
     "html",
     "docs",
-    "docs/build",
+    build_dir,
     "-D",
     f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
+    "-n",  # Being nitpicky
 ]
 
 # Process examples if required.
 if not IGNORE_EXAMPLES:
-    if DEBUG:
-        print("Processing the examples")
-        create_example_documentation(example_dest_dir="docs/examples", debug=True)
-    else:
-        create_example_documentation(example_dest_dir="docs/examples", debug=False)
-# For some weird reason, we need to call sphinx-build twice
-if not DEBUG:
-    check_call(call, stderr=DEVNULL, stdout=DEVNULL)
-    check_call(call, stderr=DEVNULL, stdout=DEVNULL)
-else:
-    check_call(call)
-    check_call(call)
+    create_example_documentation(example_dest_dir="docs/examples", debug=DEBUG)
 
-# Copy the files to the intended location
-documentation = pathlib.Path(build_dir)
-shutil.move(documentation, destination_dir)
+
+try:
+    check_call(
+        link_call if DEBUG else link_call + ["-Q"],
+    )
+    check_call(
+        building_call if DEBUG else building_call + ["-q"],
+    )
+    print("No critical error detected.")
+except CalledProcessError:
+    print(
+        """One of the processes raised a critical error. Re-running with more output."""
+    )
+    check_call(link_call)
+    check_call(building_call)
 
 # Clean the other files
-for directory in directores[:-1]:
+for directory in [sdk_dir, autosummary_dir]:
     if directory.is_dir():
         shutil.rmtree(directory)
+
+documentation = pathlib.Path(build_dir)
+shutil.move(documentation, destination_dir)
 
 # If we decided to not ignore the examples, we delete the created markdown files
 if not IGNORE_EXAMPLES:
