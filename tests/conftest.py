@@ -31,6 +31,7 @@ from baybe.parameters import (
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.recommenders.base import Recommender
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
@@ -183,6 +184,11 @@ def fixture_parameters(
 ):
     """Provides example parameters via specified names."""
     # FIXME: n_grid_points causes duplicate test cases if the argument is not used
+
+    # Required for the selection to work as intended (if the input was a single string,
+    # the list comprehension would match substrings instead)
+    assert isinstance(parameter_names, list)
+
     valid_parameters = [
         CategoricalParameter(
             name="Categorical_1",
@@ -279,6 +285,11 @@ def fixture_parameters(
                 index=["A", "B", "C"],
             ),
         ),
+        TaskParameter(
+            name="Task",
+            values=["A", "B", "C"],
+            active_values=["A", "B"],
+        ),
     ]
 
     if _CHEM_INSTALLED:
@@ -316,6 +327,10 @@ def fixture_parameters(
 @pytest.fixture(name="targets")
 def fixture_targets(target_names: List[str]):
     """Provides example targets via specified names."""
+    # Required for the selection to work as intended (if the input was a single string,
+    # the list comprehension would match substrings instead)
+    assert isinstance(target_names, list)
+
     valid_targets = [
         NumericalTarget(
             name="Target_max",
@@ -356,6 +371,9 @@ def fixture_targets(target_names: List[str]):
 @pytest.fixture(name="constraints")
 def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_points):
     """Provides example constraints via specified names."""
+    # Required for the selection to work as intended (if the input was a single string,
+    # the list comprehension would match substrings instead)
+    assert isinstance(constraint_names, list)
 
     def custom_function(ser: pd.Series) -> bool:
         if ser.Solvent_1 == "water":
