@@ -7,6 +7,8 @@ import re
 import shutil
 from subprocess import check_call, DEVNULL
 
+from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--html",
@@ -50,7 +52,7 @@ sphinx_apidoc_options = ["members", "show-inheritance", private_members]
 
 # Only use options that were actually set
 os.environ["SPHINX_APIDOC_OPTIONS"] = ",".join(filter(None, sphinx_apidoc_options))
-os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
+os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 build_dir = pathlib.Path("docs/build")
 sdk_dir = pathlib.Path("docs/sdk")
 # Output destination
