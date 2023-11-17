@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Now supports Python 3.11
 - Removed `pyarrow` version pin
 - `TaskParameter` added to serialization test
+- Deserialization (e.g. from config) no longer silently drops unknown arguments
 
 ### Deprecations
 - `BayBE` class replaced with `Campaign`

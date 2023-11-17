@@ -98,11 +98,13 @@ def get_base_structure_hook(
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
 
     def structure_base(val: dict, _) -> _T:
-        _type = val["type"]
+        _type = val.pop("type")
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
             raise ValueError(f"Unknown subclass '{_type}'.")
-        fun = make_dict_structure_fn(cls, converter, **(overrides or {}))
+        fun = make_dict_structure_fn(
+            cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
+        )
         return fun(val, cls)
 
     return structure_base
