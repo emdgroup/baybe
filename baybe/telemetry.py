@@ -1,4 +1,28 @@
-"""Telemetry  functionality for BayBE."""
+"""Telemetry functionality for BayBE.
+
+The following environment variables control the behavior of BayBE telemetry:
+
+BAYBE_TELEMETRY_ENABLED
+    Flag that can turn off telemetry entirely (default is `true`). To turn it off set it
+    to `false`.
+
+BAYBE_TELEMETRY_ENDPOINT
+    The receiving endpoint URL for telemetry data.
+
+BAYBE_TELEMETRY_VPN_CHECK
+    Flag turning an initial telemetry connectivity check on/off (default is `true`).
+
+BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT
+    The timeout in seconds for the check whether the endpoint URL is reachable.
+
+BAYBE_TELEMETRY_USERNAME
+    The name of the user executing BayBE code. Defaults to an irreversible hash of
+    the username according to the OS.
+
+BAYBE_TELEMETRY_HOSTNAME
+    The name of the machine executing BayBE code. Defaults to an irreversible hash of
+    the machine name.
+"""
 import getpass
 import hashlib
 import logging
@@ -9,40 +33,36 @@ from typing import Dict, List, Union
 from urllib.parse import urlparse
 
 import pandas as pd
+import requests
 
 from baybe.parameters.base import Parameter
 from baybe.utils import fuzzy_row_match, strtobool
 
 _logger = logging.getLogger(__name__)
 
-try:
-    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-        OTLPMetricExporter,
-    )
-    from opentelemetry.metrics import get_meter, set_meter_provider
-    from opentelemetry.sdk.metrics import MeterProvider
-    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-    from opentelemetry.sdk.resources import Resource
-except ImportError:
-    # Failed telemetry install/import should not fail baybe, so telemetry is being
-    # disabled in that case
-    if strtobool(os.environ.get("BAYBE_TELEMETRY_ENABLED", "true")):
-        _logger.warning(
-            "Opentelemetry could not be imported, potentially it is not "
-            "installed. Disabling baybe telemetry."
-        )
-    os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
+# Telemetry environment variable names
+VARNAME_TELEMETRY_ENABLED = "BAYBE_TELEMETRY_ENABLED"
+VARNAME_TELEMETRY_ENDPOINT = "BAYBE_TELEMETRY_ENDPOINT"
+VARNAME_TELEMETRY_VPN_CHECK = "BAYBE_TELEMETRY_VPN_CHECK"
+VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT = "BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT"
+VARNAME_TELEMETRY_USERNAME = "BAYBE_TELEMETRY_USERNAME"
+VARNAME_TELEMETRY_HOSTNAME = "BAYBE_TELEMETRY_HOSTNAME"
 
+# Telemetry settings defaults
+DEFAULT_TELEMETRY_ENABLED = "true"
+DEFAULT_TELEMETRY_ENDPOINT = (
+    "https://public.telemetry.baybe.p.uptimize.merckgroup.com:4317"
+)
+DEFAULT_TELEMETRY_VPN_CHECK = "true"
+DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT = "0.5"
+DEFAULT_TELEMETRY_USERNAME = (
+    hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
+)  # this hash is irreversible and cannot identify the user or their machine
+DEFAULT_TELEMETRY_HOSTNAME = (
+    hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
+)  # this hash is irreversible and cannot identify the user or their machine
 
-def is_enabled() -> bool:
-    """Tell whether telemetry currently is enabled.
-
-    Telemetry can be disabled by setting the respective environment variable.
-    """
-    return strtobool(os.environ.get("BAYBE_TELEMETRY_ENABLED", "true"))
-
-
-# Global telemetry labels
+# Telemetry labels for metrics
 TELEM_LABELS = {
     "RECOMMENDED_MEASUREMENTS_PERCENTAGE": "value_recommended-measurements-percentage",
     "BATCH_QUANTITY": "value_batch-quantity",
@@ -54,12 +74,40 @@ TELEM_LABELS = {
     "NAKED_INITIAL_MEASUREMENTS": "count_naked-initial-measurements-added",
 }
 
-# Create resources only if telemetry is activated
+# Attempt telemetry import
+try:
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+        OTLPMetricExporter,
+    )
+    from opentelemetry.metrics import get_meter, set_meter_provider
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+    from opentelemetry.sdk.resources import Resource
+except ImportError:
+    # Failed telemetry install/import should not fail baybe, so telemetry is being
+    # disabled in that case
+    if strtobool(os.environ.get(VARNAME_TELEMETRY_ENABLED, DEFAULT_TELEMETRY_ENABLED)):
+        _logger.warning(
+            "Opentelemetry could not be imported, potentially it is not "
+            "installed. Disabling baybe telemetry."
+        )
+    os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
+
+
+def is_enabled() -> bool:
+    """Tell whether telemetry currently is enabled.
+
+    Telemetry can be disabled by setting the respective environment variable.
+    """
+    return strtobool(
+        os.environ.get(VARNAME_TELEMETRY_ENABLED, DEFAULT_TELEMETRY_ENABLED)
+    )
+
+
+# Attempt telemetry initialization
 if is_enabled():
     _endpoint_url = os.environ.get(
-        "BAYBE_TELEMETRY_HOST",
-        "***REMOVED***."
-        "elb.eu-central-1.amazonaws.com:4317",
+        VARNAME_TELEMETRY_ENDPOINT, DEFAULT_TELEMETRY_ENDPOINT
     )
 
     # Test endpoint URL
@@ -68,32 +116,58 @@ if is_enabled():
         _endpoint_url_parsed = urlparse(_endpoint_url)
         _endpoint_hostname = _endpoint_url_parsed.hostname
         _endpoint_port = _endpoint_url_parsed.port if _endpoint_url_parsed.port else 80
-
-        with socket.create_connection(
-            (_endpoint_hostname, _endpoint_port), timeout=2
-        ) as sock:
-            _instruments = {}
-            _resource = Resource.create(
-                {"service.namespace": "BayBE", "service.name": "SDK"}
-            )
-            _reader = PeriodicExportingMetricReader(
-                exporter=OTLPMetricExporter(
-                    endpoint=_endpoint_url,
-                    insecure=True,
+        try:
+            _TIMEOUT_S = float(
+                os.environ.get(
+                    VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT,
+                    DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT,
                 )
             )
-            _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
-            set_meter_provider(_provider)
+        except (ValueError, TypeError):
+            _logger.warning(
+                "WARNING: Value passed for environment variable %s"
+                " is not a valid floating point number. Using default of %s.",
+                VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT,
+                DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT,
+            )
+            _TIMEOUT_S = float(DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT)
 
-            # Setup Global Metric Provider
-            _meter = get_meter("aws-otel", "1.0")
-    except (socket.timeout, ConnectionRefusedError):
-        _logger.warning(
+        # Send a test request. If there is no internet connection or a firewall is
+        # present this will throw an error and telemetry will be deactivated.
+        if strtobool(
+            os.environ.get(VARNAME_TELEMETRY_VPN_CHECK, DEFAULT_TELEMETRY_VPN_CHECK)
+        ):
+            response = requests.get(
+                "http://verkehrsnachrichten.merck.de/", timeout=_TIMEOUT_S
+            )
+            if response.status_code != 200:
+                raise requests.RequestException("Cannot reach telemetry network.")
+
+        # User has connectivity to the telemetry endpoint, so we initialize
+        _instruments = {}
+        _resource = Resource.create(
+            {"service.namespace": "BayBE", "service.name": "SDK"}
+        )
+        _reader = PeriodicExportingMetricReader(
+            exporter=OTLPMetricExporter(
+                endpoint=_endpoint_url,
+                insecure=True,
+            )
+        )
+        _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
+        set_meter_provider(_provider)
+        _meter = get_meter("aws-otel", "1.0")
+    except Exception:
+        # Catching broad exception here and disabling telemetry in that case to avoid
+        # any telemetry timeouts or interference for the user in case of unexpected
+        # errors. Possible ones are for instance ``socket.gaierror`` in case the user
+        # has no internet connection.
+        _logger.info(
             "WARNING: BayBE Telemetry endpoint %s cannot be reached. "
             "Disabling telemetry.",
             _endpoint_url,
         )
-        os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
+        os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
 
 def get_user_details() -> Dict[str, str]:
@@ -106,15 +180,12 @@ def get_user_details() -> Dict[str, str]:
     """
     from baybe import __version__  # pylint: disable=import-outside-toplevel
 
-    username_hash = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH", None) or (
-        hashlib.sha256(getpass.getuser().upper().encode())
-        .hexdigest()
-        .upper()[:10]  # take only first 10 digits to enhance readability in dashboard
+    username_hash = os.environ.get(
+        VARNAME_TELEMETRY_USERNAME, DEFAULT_TELEMETRY_USERNAME
     )
-    hostname_hash = os.environ.get("BAYBE_DEBUG_FAKE_HOSTHASH", None) or (
-        hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
+    hostname_hash = os.environ.get(
+        VARNAME_TELEMETRY_HOSTNAME, DEFAULT_TELEMETRY_HOSTNAME
     )
-    # Alternatively one could take the MAC address like hex(uuid.getnode())
 
     return {"host": hostname_hash, "user": username_hash, "version": __version__}
 

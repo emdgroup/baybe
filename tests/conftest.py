@@ -45,6 +45,11 @@ from baybe.strategies.composite import (
 )
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
+from baybe.telemetry import (
+    VARNAME_TELEMETRY_ENABLED,
+    VARNAME_TELEMETRY_HOSTNAME,
+    VARNAME_TELEMETRY_USERNAME,
+)
 from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory
 from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
@@ -64,33 +69,33 @@ if _ONNX_INSTALLED:
 def disable_telemetry():
     """Disables telemetry during pytesting via fixture."""
     # Remember the original value of the environment variables
-    telemetry_enabled_before = os.environ.get("BAYBE_TELEMETRY_ENABLED")
-    telemetry_userhash_before = os.environ.get("BAYBE_DEBUG_FAKE_USERHASH")
-    telemetry_hosthash_before = os.environ.get("BAYBE_DEBUG_FAKE_HOSTHASH")
+    telemetry_enabled_before = os.environ.get(VARNAME_TELEMETRY_ENABLED)
+    telemetry_userhash_before = os.environ.get(VARNAME_TELEMETRY_USERNAME)
+    telemetry_hosthash_before = os.environ.get(VARNAME_TELEMETRY_HOSTNAME)
 
     # Set the environment variable to a certain value for the duration of the tests
-    os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
-    os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "PYTEST"
-    os.environ["BAYBE_DEBUG_FAKE_HOSTHASH"] = "PYTEST"
+    os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
+    os.environ[VARNAME_TELEMETRY_USERNAME] = "PYTEST"
+    os.environ[VARNAME_TELEMETRY_HOSTNAME] = "PYTEST"
 
     # Yield control to the tests
     yield
 
     # Restore the original value of the environment variables
     if telemetry_enabled_before is not None:
-        os.environ["BAYBE_TELEMETRY_ENABLED"] = telemetry_enabled_before
+        os.environ[VARNAME_TELEMETRY_ENABLED] = telemetry_enabled_before
     else:
-        os.environ.pop("BAYBE_TELEMETRY_ENABLED")
+        os.environ.pop(VARNAME_TELEMETRY_ENABLED)
 
     if telemetry_userhash_before is not None:
-        os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = telemetry_userhash_before
+        os.environ[VARNAME_TELEMETRY_USERNAME] = telemetry_userhash_before
     else:
-        os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
+        os.environ.pop(VARNAME_TELEMETRY_USERNAME)
 
     if telemetry_hosthash_before is not None:
-        os.environ["BAYBE_DEBUG_FAKE_HOSTHASH"] = telemetry_hosthash_before
+        os.environ[VARNAME_TELEMETRY_HOSTNAME] = telemetry_hosthash_before
     else:
-        os.environ.pop("BAYBE_DEBUG_FAKE_HOSTHASH")
+        os.environ.pop(VARNAME_TELEMETRY_HOSTNAME)
 
 
 # Add option to only run fast tests

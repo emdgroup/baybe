@@ -13,7 +13,11 @@ from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
-from baybe.telemetry import get_user_details
+from baybe.telemetry import (
+    get_user_details,
+    VARNAME_TELEMETRY_ENABLED,
+    VARNAME_TELEMETRY_USERNAME,
+)
 from baybe.utils.dataframe import add_fake_results
 
 dict_solvent = {
@@ -73,7 +77,6 @@ config = {
     "numerical_measurements_must_be_within_tolerance": True,
 }
 
-
 # Actual User
 print(f"Actual User Details: {get_user_details()}")
 campaign = Campaign(**config)
@@ -84,7 +87,7 @@ for k in range(randint(4, 6)):
 
 # Fake User1 - 5 iterations
 print("Fake User1")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1"
+os.environ[VARNAME_TELEMETRY_USERNAME] = "FAKE_USER_1"
 campaign = Campaign(**config)
 for k in range(randint(2, 3)):
     dat = campaign.recommend(randint(3, 4))
@@ -93,7 +96,7 @@ for k in range(randint(2, 3)):
 
 # Fake User1a - Adds recommenations before calling recommend
 print("Fake User1a")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_1a"
+os.environ[VARNAME_TELEMETRY_USERNAME] = "FAKE_USER_1a"
 campaign = Campaign(**config)
 campaign.add_measurements(dat)
 for k in range(randint(2, 3)):
@@ -103,7 +106,7 @@ for k in range(randint(2, 3)):
 
 # Fake User2 - 2 iterations
 print("Fake User2")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_2"
+os.environ[VARNAME_TELEMETRY_USERNAME] = "FAKE_USER_2"
 campaign = Campaign(**config)
 for k in range(2):
     dat = campaign.recommend(4)
@@ -112,8 +115,8 @@ for k in range(2):
 
 # Fake User3 - no telemetry
 print("Fake User3")
-os.environ["BAYBE_DEBUG_FAKE_USERHASH"] = "FAKE_USER_3"
-os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
+os.environ[VARNAME_TELEMETRY_USERNAME] = "FAKE_USER_3"
+os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 campaign = Campaign(**config)
 for k in range(randint(5, 7)):
     dat = campaign.recommend(randint(2, 3))
@@ -121,5 +124,5 @@ for k in range(randint(5, 7)):
     campaign.add_measurements(dat)
 
 # Cleanup
-os.environ.pop("BAYBE_DEBUG_FAKE_USERHASH")
-os.environ.pop("BAYBE_TELEMETRY_ENABLED")
+os.environ.pop(VARNAME_TELEMETRY_USERNAME)
+os.environ.pop(VARNAME_TELEMETRY_ENABLED)
