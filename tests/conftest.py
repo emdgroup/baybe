@@ -650,7 +650,6 @@ def fixture_default_config():
             },
             "recommender": {
                 "type": "SequentialGreedyRecommender",
-                "surrogate_model_cls": "GP",
                 "acquisition_function_cls": "qEI"
             },
             "switch_after": 1,
