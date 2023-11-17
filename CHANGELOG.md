@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telemetry env variable `BAYBE_TELEMETRY_HOST` renamed to `BAYBE_TELEMETRY_ENDPOINT`
 - Telemetry env variable `BAYBE_DEBUG_FAKE_USERHASH` renamed to `BAYBE_TELEMETRY_USERNAME`
 - Telemetry env variable `BAYBE_DEBUG_FAKE_HOSTHASH` renamed to `BAYBE_TELEMETRY_HOSTNAME`
+- Bumped cattrs version
 
 ### Fixed
 - Now supports Python 3.11
