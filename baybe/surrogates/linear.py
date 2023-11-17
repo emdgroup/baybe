@@ -1,4 +1,11 @@
-"""Linear surrogates."""
+"""Linear surrogates.
+
+Currently, the documentation for this surrogate is not available. This is due to a bug
+in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750.
+
+Since we plan to refactor the surrogates, this part of the documentation will be
+available in the future. Thus, please have a look in the source code directly.
+"""
 
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
