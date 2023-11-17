@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test module for deprecation warnings
 - Option to control the switching point of `TwoPhaseStrategy` (former `Strategy`)
 - `SequentialStrategy` and `StreamingSequentialStrategy` classes
-- Telemetry env variable `BAYBE_TELEMETRY_TIMEOUT` for setting the connection test timeout
+- Telemetry env variable `BAYBE_TELEMETRY_VPN_CHECK` turning the initial connectivity check on/off 
+- Telemetry env variable `BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT` for setting the connectivity check timeout
 
 ### Changed
 - Reorganized modules into subpackages

@@ -9,7 +9,10 @@ BAYBE_TELEMETRY_ENABLED
 BAYBE_TELEMETRY_ENDPOINT
     The receiving endpoint URL for telemetry data.
 
-BAYBE_TELEMETRY_TIMEOUT
+BAYBE_TELEMETRY_VPN_CHECK
+    Flag turning an initial telemetry connectivity check on/off (default is `true`).
+
+BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT
     The timeout in seconds for the check whether the endpoint URL is reachable.
 
 BAYBE_TELEMETRY_USERNAME
@@ -40,7 +43,8 @@ _logger = logging.getLogger(__name__)
 # Telemetry environment variable names
 VARNAME_TELEMETRY_ENABLED = "BAYBE_TELEMETRY_ENABLED"
 VARNAME_TELEMETRY_ENDPOINT = "BAYBE_TELEMETRY_ENDPOINT"
-VARNAME_TELEMETRY_TIMEOUT = "BAYBE_TELEMETRY_TIMEOUT"
+VARNAME_TELEMETRY_VPN_CHECK = "BAYBE_TELEMETRY_VPN_CHECK"
+VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT = "BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT"
 VARNAME_TELEMETRY_USERNAME = "BAYBE_TELEMETRY_USERNAME"
 VARNAME_TELEMETRY_HOSTNAME = "BAYBE_TELEMETRY_HOSTNAME"
 
@@ -49,7 +53,8 @@ DEFAULT_TELEMETRY_ENABLED = "true"
 DEFAULT_TELEMETRY_ENDPOINT = (
     "https://public.telemetry.baybe.p.uptimize.merckgroup.com:4317"
 )
-DEFAULT_TELEMETRY_TIMEOUT = "0.5"
+DEFAULT_TELEMETRY_VPN_CHECK = "true"
+DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT = "0.5"
 DEFAULT_TELEMETRY_USERNAME = (
     hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
 )  # this hash is irreversible and cannot identify the user or their machine
@@ -113,23 +118,30 @@ if is_enabled():
         _endpoint_port = _endpoint_url_parsed.port if _endpoint_url_parsed.port else 80
         try:
             _TIMEOUT_S = float(
-                os.environ.get(VARNAME_TELEMETRY_TIMEOUT, DEFAULT_TELEMETRY_TIMEOUT)
+                os.environ.get(
+                    VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT,
+                    DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT,
+                )
             )
         except (ValueError, TypeError):
             _logger.warning(
-                "WARNING: Value passed for environment variable BAYBE_TELEMETRY_TIMEOUT"
+                "WARNING: Value passed for environment variable %s"
                 " is not a valid floating point number. Using default of %s.",
-                DEFAULT_TELEMETRY_TIMEOUT,
+                VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT,
+                DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT,
             )
-            _TIMEOUT_S = float(DEFAULT_TELEMETRY_TIMEOUT)
+            _TIMEOUT_S = float(DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT)
 
         # Send a test request. If there is no internet connection or a firewall is
         # present this will throw an error and telemetry will be deactivated.
-        response = requests.get(
-            "http://verkehrsnachrichten.merck.de/", timeout=_TIMEOUT_S
-        )
-        if response.status_code != 200:
-            raise requests.RequestException("Cannot reach telemetry network.")
+        if strtobool(
+            os.environ.get(VARNAME_TELEMETRY_VPN_CHECK, DEFAULT_TELEMETRY_VPN_CHECK)
+        ):
+            response = requests.get(
+                "http://verkehrsnachrichten.merck.de/", timeout=_TIMEOUT_S
+            )
+            if response.status_code != 200:
+                raise requests.RequestException("Cannot reach telemetry network.")
 
         # User has connectivity to the telemetry endpoint, so we initialize
         _instruments = {}
