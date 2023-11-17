@@ -231,6 +231,7 @@ building_call = [
     "-D",
     f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
     "-n",  # Being nitpicky
+    "-W",  # Fail when encountering an error or a warning
 ]
 
 # Process examples if required.
@@ -245,7 +246,6 @@ try:
     check_call(
         building_call if DEBUG else building_call + ["-q"],
     )
-    print("No critical error detected.")
 except CalledProcessError:
     print(
         """One of the processes raised a critical error. Re-running with more output."""
