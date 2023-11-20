@@ -28,6 +28,7 @@ How to contribute <misc/contributing_link>
     :caption: Misc
 
     Known issues <known_issues>
+    FAQ <faq>
     Changelog <misc/changelog_link>
     Contributors <misc/contributors_link>
     License <misc/license_link>
