@@ -126,6 +126,9 @@ html_theme = "sphinx_rtd_theme"
 # We want to have links to the source
 html_show_sourcelink = True
 
+# Everything in the module has the prefix baybe
+modindex_common_prefix = ["baybe."]
+
 # -- Options for intersphinx extension ---------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#configuration
 
