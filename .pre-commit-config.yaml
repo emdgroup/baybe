@@ -21,4 +21,5 @@ repos:
   rev: v1.16.23
   hooks:
     - id: typos
+      args: [] # empty args to avoid typos automatically correcting the typos
 

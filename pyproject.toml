@@ -136,7 +136,3 @@ ignore_missing_imports = true
 
 # TODO[12327]: Find a way to automatically install all mypy stubs during the
 #   installation, to avoid having to call "mypy --install-types" afterwards.
-
-# Configuration for the spell checker typos
-[tool.typos.files]
-extend-exclude = ["tests/*"] # We don't care for spell checking in the tests
