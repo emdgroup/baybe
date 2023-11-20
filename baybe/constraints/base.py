@@ -112,6 +112,7 @@ class ContinuousConstraint(Constraint, ABC):
     # object variables
     coefficients: List[float] = field()
     """In-/equality coefficient for each entry in ``parameters``."""
+
     rhs: float = field(default=0.0)
     """Right-hand side value of the in-/equality."""
 

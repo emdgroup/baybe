@@ -107,8 +107,10 @@ class PartialAcquisitionFunction:
 
     acqf: AcquisitionFunction
     """The acquisition function for the hybrid space."""
+
     pinned_part: Tensor
     """The values that will be attached whenever evaluating the acquisition function."""
+
     pin_discrete: Tensor
     """A flag for denoting whether ``pinned_part`` corresponds to the discrete
     subspace."""
