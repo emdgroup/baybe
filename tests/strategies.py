@@ -15,6 +15,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
 from baybe.utils import DTypeFloatNumpy
 
 _largest_lower_interval = np.nextafter(
@@ -30,6 +31,26 @@ parameter_name = st.text(min_size=1)
 
 categories = st.lists(st.text(min_size=1), min_size=2, unique=True)
 """A strategy that creates parameter categories."""
+
+
+@st.composite
+def smiles(draw: st.DrawFn):
+    """Generates short SMILES strings."""
+    n_atoms = draw(st.integers(min_value=0, max_value=19))
+    string = "C"
+    for _ in range(n_atoms):
+        next_atom = random.choice("CNO") if string[-1] == "C" else random.choice("C")
+        string += next_atom
+    return string
+
+
+@st.composite
+def substance_data(draw: st.DrawFn):
+    """Generates data for class:`baybe.parameters.substance.SubstanceParameter`."""
+    n_substances = draw(st.integers(min_value=1, max_value=10))
+    names = draw(st.lists(st.text(), min_size=n_substances, max_size=n_substances))
+    substances = draw(st.lists(smiles(), min_size=n_substances, max_size=n_substances))
+    return dict(zip(names, substances))
 
 
 @st.composite
@@ -83,12 +104,30 @@ def task_parameter(draw: st.DrawFn):
     return TaskParameter(name=name, values=values, active_values=active_values)
 
 
+@st.composite
+def substance_parameter(draw: st.DrawFn):
+    """Generates class:`baybe.parameters.substance.SubstanceParameter`."""
+    name = draw(parameter_name)
+    data = draw(substance_data())
+    decorrelate = draw(
+        st.one_of(
+            st.booleans(),
+            st.floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
+        )
+    )
+    encoding = draw(st.sampled_from(SubstanceEncoding))
+    return SubstanceParameter(
+        name=name, data=data, decorrelate=decorrelate, encoding=encoding
+    )
+
+
 parameter = st.one_of(
     [
         numerical_discrete_parameter(),
         numerical_continuous_parameter(),
         categorical_parameter(),
         task_parameter(),
+        substance_parameter(),
     ]
 )
 """A strategy that creates parameters."""
