@@ -1,11 +1,16 @@
 """Hypothesis strategies."""
+import random
 
 import hypothesis.strategies as st
 import numpy as np
 from hypothesis import assume
 
 from baybe.exceptions import NumericalUnderflowError
-from baybe.parameters.categorical import CategoricalEncoding, CategoricalParameter
+from baybe.parameters.categorical import (
+    CategoricalEncoding,
+    CategoricalParameter,
+    TaskParameter,
+)
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -22,6 +27,9 @@ still exists a larger but finite number for the upper interval end.
 
 parameter_name = st.text(min_size=1)
 """A strategy that creates parameter names."""
+
+categories = st.lists(st.text(min_size=1), min_size=2, unique=True)
+"""A strategy that creates parameter categories."""
 
 
 @st.composite
@@ -61,9 +69,18 @@ def numerical_continuous_parameter(draw: st.DrawFn):
 def categorical_parameter(draw: st.DrawFn):
     """Generates class:`baybe.parameters.categorical.CategoricalParameter`."""
     name = draw(parameter_name)
-    values = draw(st.lists(st.text(min_size=1), min_size=2, unique=True))
+    values = draw(categories)
     encoding = draw(st.sampled_from(CategoricalEncoding))
     return CategoricalParameter(name=name, values=values, encoding=encoding)
+
+
+@st.composite
+def task_parameter(draw: st.DrawFn):
+    """Generates class:`baybe.parameters.categorical.TaskParameter`."""
+    name = draw(parameter_name)
+    values = draw(categories)
+    active_values = random.sample(values, random.randint(0, len(values)))
+    return TaskParameter(name=name, values=values, active_values=active_values)
 
 
 parameter = st.one_of(
@@ -71,6 +88,7 @@ parameter = st.one_of(
         numerical_discrete_parameter(),
         numerical_continuous_parameter(),
         categorical_parameter(),
+        task_parameter(),
     ]
 )
 """A strategy that creates parameters."""
