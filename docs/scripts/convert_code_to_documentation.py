@@ -29,7 +29,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--debug",
-    help="Activate debugging mode by not surpressing the output of conversion.",
+    help="Activate debugging mode by not suppressing the output of conversion.",
     action="store_true",
 )
 parser.add_argument(
@@ -41,7 +41,7 @@ parser.add_argument(
 parser.add_argument(
     "-w",
     "--include_warnings",
-    help="Include warnings when processing the examples. The detault is ignoring them.",
+    help="Include warnings when processing the examples. The default is ignoring them.",
     action="store_true",
 )
 
