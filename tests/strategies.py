@@ -5,6 +5,7 @@ import numpy as np
 from hypothesis import assume
 
 from baybe.exceptions import NumericalUnderflowError
+from baybe.parameters.categorical import CategoricalEncoding, CategoricalParameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -56,10 +57,20 @@ def numerical_continuous_parameter(draw: st.DrawFn):
     return NumericalContinuousParameter(name=name, bounds=(lower, upper))
 
 
+@st.composite
+def categorical_parameter(draw: st.DrawFn):
+    """Generates class:`baybe.parameters.categorical.CategoricalParameter`."""
+    name = draw(parameter_name)
+    values = draw(st.lists(st.text(min_size=1), min_size=2, unique=True))
+    encoding = draw(st.sampled_from(CategoricalEncoding))
+    return CategoricalParameter(name=name, values=values, encoding=encoding)
+
+
 parameter = st.one_of(
     [
         numerical_discrete_parameter(),
         numerical_continuous_parameter(),
+        categorical_parameter(),
     ]
 )
 """A strategy that creates parameters."""
