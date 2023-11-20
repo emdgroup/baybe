@@ -71,6 +71,8 @@ docs = [
 ]
 
 examples = [
+    "baybe[chem]", # Required for some of the examples
+    "baybe[onnx]", # Required for some of the examples
     "matplotlib>=3.7.3",
     "openpyxl>=3.0.9",
     "pillow>=10.0.1", # Necessary due to vulnerability
