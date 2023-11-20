@@ -167,7 +167,7 @@ objective = Objective(mode="SINGLE", targets=[target])
 
 In cases where we need to consider multiple (potentially competing) targets, the
 role of the [`Objective`](baybe.objective.Objective) is to define how these targets should be balanced.
-For more details, see [our concept regarding targets](docs/concepts/targets.md).
+For more details, see [the targets section of the user guide](docs/userguide/targets.md).
 
 ### Defining the Search Space
 
@@ -210,11 +210,11 @@ type-specific settings. In particular case above, for instance:
   the substance parameter "Solvent".
 
 For more parameter types and their details, see
-[our concept regarding parameters](docs/concepts/parameters).
+[parameters section of the user guide](docs/userguide/parameters).
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters.
-Details can be found in [our concept regarding constraints](docs/concepts/constraints).
+Details can be found in [the constraints section of the user guids](docs/userguide/constraints).
 In this example, we assume no further constraints and explicitly indicate this with an
 empty variable, for the sake of demonstration:
 
@@ -246,7 +246,7 @@ For our chemistry example, we combine two selection strategies:
 
 For more details on the different strategies, their underlying algorithmic
 details, and their configuration settings, see
-[our concept regarding strategies](docs/concepts/strategy).
+[the strategies section of the user guide](docs/userguide/strategy).
 
 ```python
 from baybe.strategies import TwoPhaseStrategy

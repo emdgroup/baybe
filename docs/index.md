@@ -6,7 +6,7 @@
 
 Overview <self>
 Readme <misc/readme_link>
-Package concepts <concepts/concepts>
+User Guide <userguide/userguide>
 Examples <examples/examples>
 How to contribute <misc/contributing_link>
 ```

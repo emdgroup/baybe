@@ -1,6 +1,6 @@
-# Our super concepts
+# User guide
 
-This file contains super concepts.
+This file contains a general user guide for BayBE.
 
 ```{toctree}
 Campaigns <campaigns>
