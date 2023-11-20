@@ -1,11 +1,9 @@
 ### Example for linear constraints in a continuous searchspace
-# pylint: disable=missing-module-docstring
 
 # Example for optimizing a synthetic test functions in a continuous space with linear
 # constraints.
 # All test functions that are available in BoTorch are also available here and wrapped
 # via the `botorch_function_wrapper`.
-
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
@@ -16,6 +14,8 @@
 #### Necessary imports for this example
 
 import numpy as np
+from botorch.test_functions import Rastrigin
+
 from baybe import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -27,8 +27,6 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 
-from botorch.test_functions import Rastrigin
-
 #### Defining the test function
 
 # See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
@@ -37,7 +35,7 @@ DIMENSION = 4
 TestFunctionClass = Rastrigin
 
 if not hasattr(TestFunctionClass, "dim"):
-    TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
+    TestFunction = TestFunctionClass(dim=DIMENSION)
 else:
     TestFunction = TestFunctionClass()
     DIMENSION = TestFunctionClass().dim

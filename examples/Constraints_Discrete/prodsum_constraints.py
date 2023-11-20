@@ -1,5 +1,4 @@
-### Example for using exlusion constraints incorporating sums and products
-# pylint: disable=missing-module-docstring
+### Example for using exclusion constraints incorporating sums and products
 
 # This examples demonstrates an exclusion constraint using products and sums.
 
@@ -9,8 +8,8 @@
 #### Necessary imports for this example
 
 import numpy as np
-from baybe import Campaign
 
+from baybe import Campaign
 from baybe.constraints import (
     DiscreteProductConstraint,
     DiscreteSumConstraint,

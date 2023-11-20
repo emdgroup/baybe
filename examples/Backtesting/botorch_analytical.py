@@ -1,5 +1,4 @@
 ### Example for full simulation loop using a BoTorch test function
-# pylint: disable=missing-module-docstring
 
 # This example shows a simulation loop for a single target with a BoTorch test function as lookup.
 # That is, we perform several Monte Carlo runs with several iterations.
@@ -17,6 +16,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
 from baybe.objective import Objective
@@ -27,7 +27,6 @@ from baybe.simulation import simulate_scenarios
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
-from botorch.test_functions import Rastrigin
 
 #### Parameters for a full simulation loop
 
@@ -45,7 +44,7 @@ DIMENSION = 4
 TestFunctionClass = Rastrigin
 
 if not hasattr(TestFunctionClass, "dim"):
-    TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
+    TestFunction = TestFunctionClass(dim=DIMENSION)
 else:
     print(
         f"\nYou choose a dimension of {DIMENSION} for the test function"

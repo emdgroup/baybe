@@ -1,5 +1,4 @@
 ### Example for surrogate model with a custom pretrained model
-# pylint: disable=missing-module-docstring
 
 # This example shows how to pre-train a model and use it as a surrogate.
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
@@ -11,6 +10,10 @@
 
 import numpy as np
 import torch
+from skl2onnx import convert_sklearn
+from skl2onnx.common.data_types import FloatTensorType
+from skl2onnx.operator_converters.linear_regressor import convert_sklearn_bayesian_ridge
+from sklearn.linear_model import BayesianRidge
 
 from baybe.campaign import Campaign
 from baybe.objective import Objective
@@ -21,10 +24,6 @@ from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, to_tensor
-from skl2onnx import convert_sklearn
-from skl2onnx.common.data_types import FloatTensorType
-from skl2onnx.operator_converters.linear_regressor import convert_sklearn_bayesian_ridge
-from sklearn.linear_model import BayesianRidge
 
 #### Experiment Setup
 

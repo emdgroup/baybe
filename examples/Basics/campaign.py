@@ -1,5 +1,4 @@
 ### Basic example for using BayBE
-# pylint: disable=missing-module-docstring
 
 # This example shows how to create a campaign and how to use it.
 # It details how a user can first define parameters of the searchspace and the objective.
@@ -82,7 +81,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # In this part we specify the objective of the optimization process.
 # In this example, we consider a single numerical target.
 # The user indicates the target variable as well as what he is trying to achieve.
-# That is, the user can decide wheter to maximize, minimize or match a specific value.
+# That is, the user can decide whether to maximize, minimize or match a specific value.
 # In this example, we maximize the yield of a reaction.
 # Hence, we indicate that the target is numerical, named `"yield"` and use the mode `"MAX"`.
 

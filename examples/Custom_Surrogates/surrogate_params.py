@@ -1,6 +1,4 @@
 ### Example for custom parameter passing in surrogate models
-# pylint: disable=line-too-long
-# pylint: disable=missing-module-docstring
 
 # This example shows how to define surrogate models with custom model parameters.
 # It also shows the validations that are done and how to specify these parameters through
@@ -26,7 +24,6 @@ from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import NGBoostSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
-
 
 #### Experiment Setup
 

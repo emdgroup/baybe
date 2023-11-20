@@ -1,5 +1,4 @@
 ### Example for surrogate model with a custom architecture using `sklearn`
-# pylint: disable=missing-module-docstring, unused-argument
 
 # This example shows how to define a `sklearn` model architecture and use it as a surrogate.
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
@@ -13,6 +12,14 @@ from typing import Optional, Tuple
 
 import numpy as np
 import torch
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    RandomForestRegressor,
+    StackingRegressor,
+)
+from sklearn.linear_model import LinearRegression, Ridge
+from torch import Tensor
 
 from baybe.campaign import Campaign
 from baybe.objective import Objective
@@ -27,15 +34,6 @@ from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
-from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.ensemble import (
-    GradientBoostingRegressor,
-    RandomForestRegressor,
-    StackingRegressor,
-)
-from sklearn.linear_model import LinearRegression, Ridge
-from torch import Tensor
-
 
 #### Surrogate Definition with BayBE Registration
 
@@ -85,7 +83,9 @@ class StackingRegressorSurrogate:
         ]
 
         self.model = StackingRegressor(
-            estimators=estimators, final_estimator=MeanVarEstimator(), cv=2  # 2 fold cv
+            estimators=estimators,
+            final_estimator=MeanVarEstimator(),
+            cv=2,
         )
 
         self.model.fit(train_x, train_y.ravel())

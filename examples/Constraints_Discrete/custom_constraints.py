@@ -1,5 +1,4 @@
 ### Example for using custom constraints in discrete searchspaces
-# pylint: disable=missing-module-docstring
 
 # This examples shows how a custom constraint can be created for a discrete searchspace.
 # That is, it shows how the user can define a constraint restricting the searchspace.
@@ -56,15 +55,15 @@ parameters = [solvent, speed, temperature, concentration]
 # We thus need to define our constraint first as follows.
 
 
-def custom_function(ser: pd.Series) -> bool:
-    """This constraint implements a custom user-defined filter/validation functionality."""
-    if ser.Solvent == "water":
-        if ser.Temperature > 120 and ser.Concentration > 5:
+def custom_function(series: pd.Series) -> bool:
+    """This constraint implements a custom user-defined filter/validation functionality."""  # noqa: D401
+    if series.Solvent == "water":
+        if series.Temperature > 120 and series.Concentration > 5:
             return False
-        if ser.Temperature > 180 and ser.Concentration > 3:
+        if series.Temperature > 180 and series.Concentration > 3:
             return False
-    if ser.Solvent == "C3":
-        if ser.Temperature < 150 and ser.Concentration > 3:
+    if series.Solvent == "C3":
+        if series.Temperature < 150 and series.Concentration > 3:
             return False
     return True
 

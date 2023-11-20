@@ -1,5 +1,4 @@
 ### Example for creating campaigns from configs
-# pylint: disable=missing-module-docstring
 
 # This example shows how to load a configuration file and use it to create a campaign.
 # In such a configuration file, the objects used to create a campaign are represented by

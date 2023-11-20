@@ -1,5 +1,4 @@
 ### Example for using a synthetic BoTorch test function in a continuous searchspace
-# pylint: disable=missing-module-docstring
 
 # Example for using the synthetic test functions in a continuous spaces.
 # All test functions that are available in BoTorch are also available here and wrapped
@@ -13,14 +12,14 @@
 
 #### Necessary imports for this example
 
+from botorch.test_functions import Rastrigin
+
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
-
-from botorch.test_functions import Rastrigin
 
 #### Defining the test function
 
@@ -30,7 +29,7 @@ DIMENSION = 4
 TestFunctionClass = Rastrigin
 
 if not hasattr(TestFunctionClass, "dim"):
-    TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
+    TestFunction = TestFunctionClass(dim=DIMENSION)
 elif TestFunctionClass().dim == DIMENSION:
     TestFunction = TestFunctionClass()
 else:

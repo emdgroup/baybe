@@ -1,5 +1,4 @@
 ### Example for full simulation loop using a table-based lookup mechanism with incomplete data
-# pylint: disable=missing-module-docstring
 
 # This example shows a simulation for a direct arylation where not all combinations were measured.
 # This allows us to access information about previously conducted experiments from .xlsx-files.
@@ -11,7 +10,6 @@
 #### Necessary imports for this example
 
 import matplotlib.pyplot as plt
-
 import pandas as pd
 import seaborn as sns
 

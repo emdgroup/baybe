@@ -1,5 +1,4 @@
 ### Example for the serialization of a campaign
-# pylint: disable=missing-module-docstring
 
 # This example shows how to serialize and also de-serialize a campaign.
 # It demonstrates and shows that the "original" and "new" objects behave the same.
