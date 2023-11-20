@@ -35,5 +35,4 @@ How to contribute <misc/contributing_link>
 
 # Indices and Tables
 
-- {ref}`genindex`
 - {ref}`modindex`
