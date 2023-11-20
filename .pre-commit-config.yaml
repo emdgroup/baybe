@@ -17,4 +17,8 @@ repos:
     name: "ruff (misc)"
     args: [--config=ruff_misc.cfg]
   - id: ruff-format
+- repo: https://github.com/crate-ci/typos
+  rev: v1.16.23
+  hooks:
+    - id: typos
 

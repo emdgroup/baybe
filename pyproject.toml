@@ -88,6 +88,7 @@ lint = [
     "pre-commit==2.19.0",  # see DEV TOOLS NOTE
     "pydoclint==0.2.1", # see DEV TOOLS NOTE
     "ruff==0.1.5", # see DEV TOOLS NOTE
+    "typos==1.16.23" # see DEV TOOLS NOTE
 ]
 
 simulation = [
@@ -135,3 +136,7 @@ ignore_missing_imports = true
 
 # TODO[12327]: Find a way to automatically install all mypy stubs during the
 #   installation, to avoid having to call "mypy --install-types" afterwards.
+
+# Configuration for the spell checker typos
+[tool.typos.files]
+extend-exclude = ["tests/*"] # We don't care for spell checking in the tests
