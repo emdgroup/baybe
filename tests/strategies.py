@@ -1,10 +1,26 @@
 """Hypothesis strategies."""
 
 import hypothesis.strategies as st
+import numpy as np
 from hypothesis import assume
 
 from baybe.exceptions import NumericalUnderflowError
-from baybe.parameters.numerical import NumericalDiscreteParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
+from baybe.utils import DTypeFloatNumpy
+
+_largest_lower_interval = np.nextafter(
+    np.nextafter(np.inf, 0, dtype=DTypeFloatNumpy), 0, dtype=DTypeFloatNumpy
+)
+"""
+The largest possible value for the lower end of a continuous interval such that there
+still exists a larger but finite number for the upper interval end.
+"""
+
+parameter_name = st.text(min_size=1)
+"""A strategy that creates parameter names."""
 
 
 @st.composite
@@ -12,7 +28,7 @@ def numerical_discrete_parameter(  # pylint: disable=inconsistent-return-stateme
     draw: st.DrawFn,
 ):
     """Generates class:`baybe.parameters.numerical.NumericalDiscreteParameter`."""
-    name = draw(st.text(min_size=1))
+    name = draw(parameter_name)
     values = draw(
         st.lists(
             st.one_of(
@@ -31,5 +47,19 @@ def numerical_discrete_parameter(  # pylint: disable=inconsistent-return-stateme
         assume(False)
 
 
-parameter = st.one_of([numerical_discrete_parameter()])
+@st.composite
+def numerical_continuous_parameter(draw: st.DrawFn):
+    """Generates class:`baybe.parameters.numerical.NumericalContinuousParameter`."""
+    name = draw(parameter_name)
+    lower = draw(st.floats(max_value=_largest_lower_interval, allow_infinity=False))
+    upper = draw(st.floats(min_value=lower, exclude_min=True, allow_infinity=False))
+    return NumericalContinuousParameter(name=name, bounds=(lower, upper))
+
+
+parameter = st.one_of(
+    [
+        numerical_discrete_parameter(),
+        numerical_continuous_parameter(),
+    ]
+)
 """A strategy that creates parameters."""
