@@ -12,6 +12,9 @@ from baybe.parameters.enum import ParameterEncoding
 from baybe.utils import SerialMixin, get_base_structure_hook, unstructure_base
 from baybe.utils.serialization import converter
 
+# TODO: Reactive slots in all classes once cached_property is supported:
+#   https://github.com/python-attrs/attrs/issues/164
+
 
 @define(frozen=True, slots=False)
 class Parameter(ABC, SerialMixin):
