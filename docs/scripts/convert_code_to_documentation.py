@@ -6,10 +6,9 @@ import pathlib
 import shutil
 from subprocess import CalledProcessError, check_call, DEVNULL, STDOUT
 
-from tqdm import tqdm
-
-
 from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
+
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -139,27 +138,31 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
 
             notebook_path = file.with_suffix(".ipynb")
 
-            # 2. Execute the notebook
-            check_call(
-                [
-                    "jupyter",
-                    "nbconvert",
-                    "--execute",
-                    "--to",
-                    "notebook",
-                    "--inplace",
-                    notebook_path,
-                ],
-                stdout=DEVNULL,
-                stderr=STDOUT,
-            )
+            # 2. Execute the notebook and convert to markdown.
+            convert_execute = [
+                "jupyter",
+                "nbconvert",
+                "--execute",
+                "--to",
+                "notebook",
+                "--inplace",
+                notebook_path,
+            ]
+            to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
-            # 3. Convert the notebook to markdown
-            check_call(
-                ["jupyter", "nbconvert", "--to", "markdown", notebook_path],
-                stdout=DEVNULL,
-                stderr=STDOUT,
-            )
+            # Check whether the debug flag is being used.
+            if debug:
+                check_call(
+                    convert_execute,
+                )
+                check_call(to_markdown)
+            else:
+                check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
+                check_call(
+                    to_markdown,
+                    stdout=DEVNULL,
+                    stderr=STDOUT,
+                )
 
             # CLEANUP
             # Remove all lines that try to include a png file as well as the lines
