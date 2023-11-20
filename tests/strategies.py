@@ -4,6 +4,7 @@ import random
 import hypothesis.strategies as st
 import numpy as np
 from hypothesis import assume
+from hypothesis.extra.pandas import columns, data_frames
 
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.categorical import (
@@ -11,6 +12,7 @@ from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
 )
+from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -25,6 +27,12 @@ _largest_lower_interval = np.nextafter(
 The largest possible value for the lower end of a continuous interval such that there
 still exists a larger but finite number for the upper interval end.
 """
+
+_decorrelate = st.one_of(
+    st.booleans(),
+    st.floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
+)
+"""A strategy that creates decorrelation settings."""
 
 parameter_name = st.text(min_size=1)
 """A strategy that creates parameter names."""
@@ -51,6 +59,19 @@ def substance_data(draw: st.DrawFn):
     names = draw(st.lists(st.text(), min_size=n_substances, max_size=n_substances))
     substances = draw(st.lists(smiles(), min_size=n_substances, max_size=n_substances))
     return dict(zip(names, substances))
+
+
+@st.composite
+def custom_encodings(draw: st.DrawFn):
+    """Generates data for class:`baybe.parameters.custom.CustomDiscreteParameter`."""
+    index = st.lists(st.text(), min_size=2, max_size=10, unique=True)
+    cols = columns(
+        names_or_number=10,
+        elements=st.floats(allow_nan=False),
+        unique=True,
+        dtype=DTypeFloatNumpy,
+    )
+    return draw(data_frames(index=index, columns=cols))
 
 
 @st.composite
@@ -109,16 +130,20 @@ def substance_parameter(draw: st.DrawFn):
     """Generates class:`baybe.parameters.substance.SubstanceParameter`."""
     name = draw(parameter_name)
     data = draw(substance_data())
-    decorrelate = draw(
-        st.one_of(
-            st.booleans(),
-            st.floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
-        )
-    )
+    decorrelate = draw(_decorrelate)
     encoding = draw(st.sampled_from(SubstanceEncoding))
     return SubstanceParameter(
         name=name, data=data, decorrelate=decorrelate, encoding=encoding
     )
+
+
+@st.composite
+def custom_parameter(draw: st.DrawFn):
+    """Generates class:`baybe.parameters.custom.CustomDiscreteParameter`."""
+    name = draw(parameter_name)
+    data = draw(custom_encodings())
+    decorrelate = draw(_decorrelate)
+    return CustomDiscreteParameter(name=name, data=data, decorrelate=decorrelate)
 
 
 parameter = st.one_of(
@@ -128,6 +153,7 @@ parameter = st.one_of(
         categorical_parameter(),
         task_parameter(),
         substance_parameter(),
+        custom_parameter(),
     ]
 )
 """A strategy that creates parameters."""
