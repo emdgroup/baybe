@@ -52,7 +52,7 @@ class NGBoostSurrogate(Surrogate):
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         # Get predictions
         dists = self._model.pred_dist(candidates)
 
@@ -63,5 +63,5 @@ class NGBoostSurrogate(Surrogate):
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class. pylint:disable=missing-function-docstring
+        # See base class.
         self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())

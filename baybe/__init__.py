@@ -2,7 +2,7 @@
 
 import warnings
 
-from baybe.campaign import Campaign  # pylint: disable=wrong-import-position
+from baybe.campaign import Campaign
 from baybe.deprecation import BayBE
 
 # Show deprecation warnings
@@ -10,7 +10,7 @@ warnings.filterwarnings("default", category=DeprecationWarning, module="baybe")
 
 
 def infer_version() -> str:  # pragma: no cover
-    """Determines the package version for the different ways the code can be invoked."""
+    """Determine the package version for the different ways the code can be invoked."""
     # ----------------------------------------------------------------------------------
     # Attempt 1:
     # If the package has been installed, read the version from the metadata created
@@ -18,7 +18,7 @@ def infer_version() -> str:  # pragma: no cover
     # determined via setuptools_scm from the git history. (If the install had been
     # attempted without the git folder in place, setuptools_scm would have complained,
     # causing the installation process to fail.)
-    from importlib.metadata import version  # pylint: disable=import-outside-toplevel
+    from importlib.metadata import version
 
     try:
         return version(__name__)
@@ -29,9 +29,9 @@ def infer_version() -> str:  # pragma: no cover
     # Attempt 2:
     # If the package is not installed, try to replicate the version on the fly, using
     # the same logic by invoking setuptools_scm.
-    from pathlib import Path  # pylint: disable=import-outside-toplevel
+    from pathlib import Path
 
-    from setuptools_scm import get_version  # pylint: disable=import-outside-toplevel
+    from setuptools_scm import get_version
 
     try:
         return get_version(

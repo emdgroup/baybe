@@ -1,5 +1,3 @@
-# pylint: disable=wildcard-import,wrong-import-position,unused-wildcard-import
-
 """A temporary namespace alias for backward compatibility."""
 
 import warnings

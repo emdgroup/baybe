@@ -2,7 +2,6 @@
 
 import ssl
 import urllib.request
-
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Type, Union
@@ -36,7 +35,7 @@ def name_to_smiles(name: str) -> str:
     """Convert from chemical name to SMILES string using chemical identifier resolver.
 
     This script is useful to combine with ``df.apply`` from pandas, hence it does not
-    throw exceptions for invalid molecules but instead returns an ampty string for
+    throw exceptions for invalid molecules but instead returns an empty string for
     easy subsequent postprocessing of the data frame.
 
     Args:

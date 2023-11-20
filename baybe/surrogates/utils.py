@@ -1,11 +1,9 @@
-# pylint: disable=import-outside-toplevel
-
 """Utilities for working with surrogates."""
 
 from __future__ import annotations
 
 from functools import wraps
-from typing import Callable, ClassVar, Tuple, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, ClassVar, Tuple, Type
 
 import torch
 from torch import Tensor
@@ -91,12 +89,10 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
             self.model_params = self.model.model_params
 
         def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-            """Calls the posterior function of the internal model instance."""
-            mean, var = self.model._posterior(  # pylint: disable=protected-access
-                candidates
-            )
+            """Call the posterior function of the internal model instance."""
+            mean, var = self.model._posterior(candidates)
 
-            # If a joint posterior is expected but the model has been overriden by one
+            # If a joint posterior is expected but the model has been overridden by one
             # that does not provide covariance information, construct a diagonal
             # covariance matrix
             if self.joint_posterior and not self.model.joint_posterior:
@@ -120,7 +116,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
             self.model.fit(searchspace, train_x, train_y)
 
         def __getattribute__(self, attr):
-            """Accesses the attributes of the class instance if available.
+            """Access the attributes of the class instance if available.
 
             If the attributes are not available, it uses the attributes of the internal
             model instance.
@@ -176,9 +172,7 @@ def scale_model(model_cls: Type[Surrogate]):
             output accordingly.
             """
             candidates = self.scaler.transform(candidates)
-            mean, covar = self.model._posterior(  # pylint: disable=protected-access
-                candidates
-            )
+            mean, covar = self.model._posterior(candidates)
             return self.scaler.untransform(mean, covar)
 
         def _fit(
@@ -190,7 +184,7 @@ def scale_model(model_cls: Type[Surrogate]):
             self.model.fit(searchspace, train_x, train_y)
 
         def __getattribute__(self, attr):
-            """Accesses the attributes of the class instance if available.
+            """Access the attributes of the class instance if available.
 
             If the attributes are not available, it uses the attributes of the internal
             model instance.
@@ -230,7 +224,7 @@ def batchify(
 
     @wraps(posterior)
     def sequential_posterior(model: Surrogate, candidates: Tensor) -> [Tensor, Tensor]:
-        """A posterior function replacement that processes batches sequentially.
+        """Replace the posterior function by one that processes batches sequentially.
 
         Args:
             model: The ``Surrogate`` model.
@@ -249,7 +243,7 @@ def batchify(
 
         # If the posterior function provides full covariance information, call it
         # t-batch by t-batch
-        if model.joint_posterior:  # pylint: disable=no-else-return
+        if model.joint_posterior:
             # Flatten all t-batch dimensions into a single one
             flattened = candidates.flatten(end_dim=-3)
 

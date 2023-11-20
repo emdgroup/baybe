@@ -7,7 +7,6 @@ from typing import Callable, Iterable, List, TypeVar
 import numpy as np
 import torch
 
-
 _T = TypeVar("_T")
 
 
@@ -35,11 +34,10 @@ def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> L
     Returns:
         A list of subclasses for the given class.
     """
-    from baybe.utils import is_abstract  # pylint: disable=import-outside-toplevel
+    from baybe.utils import is_abstract
 
     subclasses = []
     for subclass in cls.__subclasses__():
-
         # Append direct subclass only if it is not abstract
         if abstract or not is_abstract(subclass):
             subclasses.append(subclass)
@@ -52,7 +50,7 @@ def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> L
 
 
 def set_random_seed(seed: int):
-    """Sets the global random seed.
+    """Set the global random seed.
 
     Args:
         seed: The chosen global random seed.
@@ -63,6 +61,6 @@ def set_random_seed(seed: int):
 
 
 def hilberts_factory(factory: Callable[..., _T]) -> Iterable[_T]:
-    """Provides an infinite stream of the factory's products."""
+    """Provide an infinite stream of the factory's products."""
     while True:
         yield factory()

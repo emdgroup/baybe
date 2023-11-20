@@ -22,6 +22,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -29,7 +30,6 @@ from typing import (
     Literal,
     Optional,
     Tuple,
-    TYPE_CHECKING,
     Union,
 )
 
@@ -104,7 +104,7 @@ def simulate_transfer_learning(
         the different tasks are represented in the ``Scenario`` column.
 
     Raises:
-        NotImplementedError: If a non-dscrete search space is chosen.
+        NotImplementedError: If a non-discrete search space is chosen.
     """
     # TODO: Currently, we assume a purely discrete search space
     if campaign.searchspace.type != SearchSpaceType.DISCRETE:
@@ -169,7 +169,7 @@ def simulate_scenarios(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
-    """Simulation of multiple Bayesian optimization scenarios.
+    """Simulate multiple Bayesian optimization scenarios.
 
     A wrapper function around :func:`baybe.simulation.simulate_experiment` that
     allows to specify multiple simulation settings at once.
@@ -205,7 +205,7 @@ def simulate_scenarios(
           that specifies the search space partition considered for the respective
           simulation.
     """
-    _RESULT_VARIABLE = "simulation_result"  # pylint: disable=invalid-name
+    _RESULT_VARIABLE = "simulation_result"
 
     @dataclass
     class SimulationResult:
@@ -218,7 +218,7 @@ def simulate_scenarios(
         result: pd.DataFrame
 
     @xyz.label(var_names=[_RESULT_VARIABLE])
-    def simulate(  # pylint: disable=invalid-name
+    def simulate(
         Scenario: str,
         Random_Seed=None,
         Initial_Data=None,
@@ -240,7 +240,7 @@ def simulate_scenarios(
         )
 
     def unpack_simulation_results(array: DataArray) -> pd.DataFrame:
-        """Turns the xyzpy simulation results into a flat dataframe."""
+        """Turn the xyzpy simulation results into a flat dataframe."""
         # Convert to dataframe and remove the wrapper layer
         series = array.to_series()
         series = series.apply(lambda x: x.result)
@@ -251,8 +251,7 @@ def simulate_scenarios(
             df_setting = pd.DataFrame(
                 [setting], columns=series.index.names, index=df_result.index
             )
-            df_result = pd.concat([df_setting, df_result], axis=1)
-            dfs.append(df_result)
+            dfs.append(pd.concat([df_setting, df_result], axis=1))
 
         # Concatenate all results into a single dataframe
         return pd.concat(dfs, ignore_index=True)
@@ -386,7 +385,7 @@ def simulate_experiment(
     ] = "error",
     noise_percent: Optional[float] = None,
 ) -> pd.DataFrame:
-    """Simulates a Bayesian optimization loop.
+    """Simulate a Bayesian optimization loop.
 
     The most basic type of simulation. Runs a single execution of the loop either
     for a specified number of steps or until there are no more configurations left
@@ -572,9 +571,9 @@ def simulate_experiment(
         elif target.mode == "MATCH":
             match_val = np.mean(target.bounds)
             agg_fun = partial(closest_element, target=match_val)
-            cum_fun = lambda x: np.array(  # noqa: E731, pylint: disable=C3001
+            cum_fun = lambda x: np.array(  # noqa: E731
                 np.frompyfunc(
-                    partial(closer_element, target=match_val),  # pylint: disable=W0640
+                    partial(closer_element, target=match_val),
                     2,
                     1,
                 ).accumulate(x),

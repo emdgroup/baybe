@@ -1,5 +1,3 @@
-# pylint: disable=import-outside-toplevel
-
 """Temporary functionality for backward compatibility."""
 
 from __future__ import annotations
@@ -17,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def structure_strategy(val: dict, _) -> BaseStrategy:
-    """A ``Strategy`` structure hook using ``TwoPhaseStrategy`` as fallback type."""
+    """A ``Strategy`` structure hook using ``TwoPhaseStrategy`` as fallback type."""  # noqa: D401 (imperative mood)
     from baybe.strategies.base import Strategy as BaseStrategy
     from baybe.strategies.composite import TwoPhaseStrategy
 
@@ -42,8 +40,8 @@ def structure_strategy(val: dict, _) -> BaseStrategy:
     return fun(val, cls)
 
 
-def Strategy(*args, **kwargs) -> TwoPhaseStrategy:  # pylint: disable=invalid-name
-    """A ``Strategy`` alias for backward compatibility."""
+def Strategy(*args, **kwargs) -> TwoPhaseStrategy:
+    """A ``Strategy`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
     from baybe.strategies.composite import TwoPhaseStrategy
 
     warnings.warn(

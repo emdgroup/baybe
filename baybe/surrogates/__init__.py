@@ -8,7 +8,6 @@ from baybe.surrogates.naive import MeanPredictionSurrogate
 from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 
-
 __all__ = [
     "get_available_surrogates",
     "register_custom_architecture",

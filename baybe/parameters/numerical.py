@@ -12,7 +12,7 @@ from scipy.spatial.distance import pdist
 
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.validation import validate_unique_values
-from baybe.utils import convert_bounds, InfiniteIntervalError, Interval
+from baybe.utils import InfiniteIntervalError, Interval, convert_bounds
 
 
 @define(frozen=True, slots=False)

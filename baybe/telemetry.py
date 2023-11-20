@@ -29,7 +29,6 @@ import logging
 import os
 import socket
 from typing import Dict, List, Union
-
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -178,7 +177,7 @@ def get_user_details() -> Dict[str, str]:
     Returns:
         The hostname and username in hashed format as well as the package version.
     """
-    from baybe import __version__  # pylint: disable=import-outside-toplevel
+    from baybe import __version__
 
     username_hash = os.environ.get(
         VARNAME_TELEMETRY_USERNAME, DEFAULT_TELEMETRY_USERNAME

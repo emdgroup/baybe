@@ -41,7 +41,7 @@ def register_custom_architecture(
     constant_target_catching: bool = True,
     batchify_posterior: bool = True,
 ) -> Callable:
-    """Wraps a given custom model architecture class into a ``Surrogate``.
+    """Wrap a given custom model architecture class into a ```Surrogate```.
 
     Args:
         joint_posterior_attr: Boolean indicating if the model returns a posterior
@@ -56,7 +56,7 @@ def register_custom_architecture(
     """
 
     def construct_custom_architecture(model_cls):
-        """Constructs a surrogate class wrapped around the custom class."""
+        """Construct a surrogate class wrapped around the custom class."""
         validate_custom_architecture_cls(model_cls)
 
         class CustomArchitectureSurrogate(Surrogate):
@@ -71,17 +71,13 @@ def register_custom_architecture(
             def _fit(
                 self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
             ) -> None:
-                return self.model._fit(  # pylint: disable=protected-access
-                    searchspace, train_x, train_y
-                )
+                return self.model._fit(searchspace, train_x, train_y)
 
             def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
-                return self.model._posterior(  # pylint: disable=protected-access
-                    candidates
-                )
+                return self.model._posterior(candidates)
 
             def __get_attribute__(self, attr):
-                """Accesses the attributes of the class instance if available.
+                """Access the attributes of the class instance if available.
 
                 If the attributes are not available,
                 it uses the attributes of the internal model instance.
@@ -106,9 +102,7 @@ def register_custom_architecture(
 
         # batchify posterior if needed
         if batchify_posterior:
-            cls._posterior = batchify(  # pylint: disable=protected-access
-                cls._posterior  # pylint: disable=protected-access
-            )
+            cls._posterior = batchify(cls._posterior)
 
         return cls
 

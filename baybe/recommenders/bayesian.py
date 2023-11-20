@@ -12,20 +12,20 @@ from botorch.acquisition import (
     ExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
+    UpperConfidenceBound,
     qExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
-    UpperConfidenceBound,
 )
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
 from sklearn.metrics import pairwise_distances_argmin
 
-from baybe.acquisition import debotorchize, PartialAcquisitionFunction
+from baybe.acquisition import PartialAcquisitionFunction, debotorchize
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.recommenders.base import (
-    _select_candidates_and_recommend,
     NonPredictiveRecommender,
     Recommender,
+    _select_candidates_and_recommend,
 )
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
@@ -563,13 +563,11 @@ class NaiveHybridRecommender(Recommender):
             acqf_func_dict = {"acquisition_function": disc_acqf_part}
 
         # Call the private function of the discrete recommender and get the indices
-        disc_rec_idx = (
-            self.disc_recommender._recommend_discrete(  # pylint: disable=W0212
-                **(acqf_func_dict),
-                searchspace=searchspace,
-                candidates_comp=candidates_comp,
-                batch_quantity=batch_quantity,
-            )
+        disc_rec_idx = self.disc_recommender._recommend_discrete(
+            **(acqf_func_dict),
+            searchspace=searchspace,
+            candidates_comp=candidates_comp,
+            batch_quantity=batch_quantity,
         )
 
         # Get one random discrete point that will be attached when evaluating the
@@ -587,7 +585,7 @@ class NaiveHybridRecommender(Recommender):
             acqf=cont_acqf, pinned_part=disc_part, pin_discrete=True
         )
         # Call the private function of the continuous recommender
-        rec_cont = self.cont_recommender._recommend_continuous(  # pylint: disable=W0212
+        rec_cont = self.cont_recommender._recommend_continuous(
             cont_acqf_part, searchspace, batch_quantity
         )
 

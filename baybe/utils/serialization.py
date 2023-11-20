@@ -111,14 +111,14 @@ def get_base_structure_hook(
 
 
 def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
-    """Hook for de-serializing a DataFrame."""
+    """De-serialize a DataFrame."""
     buffer = BytesIO()
     buffer.write(base64.b64decode(string.encode("utf-8")))
     return pd.read_parquet(buffer)
 
 
 def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
-    """Hook for serializing a DataFrame."""
+    """Serialize a DataFrame."""
     return base64.b64encode(df.to_parquet()).decode("utf-8")
 
 
@@ -127,7 +127,7 @@ converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
 
 
 def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
-    """A hook that prevents serialization of the passed object.
+    """Prevent serialization of the passed object.
 
     Raises:
          NotImplementedError: Always.
@@ -138,7 +138,7 @@ def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
 
 
 def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC103
-    """A hook that prevents deserialization into a specific type.
+    """Prevent deserialization into a specific type.
 
     Raises:
          NotImplementedError: Always.

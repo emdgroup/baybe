@@ -158,7 +158,7 @@ class Surrogate(ABC, SerialMixin):
 
 
 def _decode_onnx_str(raw_unstructure_hook):
-    """Decodes ONNX string for serialization purposes."""
+    """Decode ONNX string for serialization purposes."""
 
     def wrapper(obj):
         dict_ = raw_unstructure_hook(obj)
@@ -171,7 +171,7 @@ def _decode_onnx_str(raw_unstructure_hook):
 
 
 def _block_serialize_custom_architecture(raw_unstructure_hook):
-    """Raises error if attempt to serialize a custom architecture surrogate."""
+    """Raise error if attempt to serialize a custom architecture surrogate."""
     # TODO: Should be replaced with `serialization.block_serialization_hook`.
     #   However, the class definition of `CustomArchitectureSurrogate` is needs
     #   to be fixed first, which is broken due to the handling of `model_params`.
@@ -191,7 +191,7 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def _structure_surrogate(val, _):
-    """Structures a surrogate model."""
+    """Structure a surrogate model."""
     # TODO [15436]
     # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
 
@@ -221,7 +221,7 @@ def _structure_surrogate(val, _):
 
 
 def get_available_surrogates() -> List[Type[Surrogate]]:
-    """Lists all available surrogate models.
+    """List all available surrogate models.
 
     Returns:
         A list of available surrogate classes.
@@ -241,9 +241,7 @@ def get_available_surrogates() -> List[Type[Surrogate]]:
 
     # TODO: The initialization of the classes is currently necessary for the renaming
     #  to take place (see [15436] and NOTE in `structure_surrogate`).
-    [  # pylint: disable=expression-not-assigned
-        cl() for cl in available_classes if cl is not None
-    ]
+    [cl() for cl in available_classes if cl is not None]
 
     return [cl for cl in available_classes if cl is not None]
 

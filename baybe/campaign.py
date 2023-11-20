@@ -25,7 +25,7 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils import eq_dataframe
-from baybe.utils.serialization import converter, SerialMixin
+from baybe.utils.serialization import SerialMixin, converter
 
 # Converter for config deserialization
 _config_converter = converter.copy()
@@ -147,7 +147,7 @@ class Campaign(SerialMixin):
 
     @classmethod
     def validate_config(cls, config_json: str) -> None:
-        """Validates a given campaign configuration JSON.
+        """Validate a given campaign configuration JSON.
 
         Args:
             config_json: The JSON that should be validated.
@@ -279,7 +279,7 @@ class Campaign(SerialMixin):
 
 def _unstructure_with_version(obj: Any) -> dict:
     """Add the package version to the created dictionary."""
-    from baybe import __version__  # pylint: disable=import-outside-toplevel
+    from baybe import __version__
 
     return {
         **converter.unstructure_attrs_asdict(obj),

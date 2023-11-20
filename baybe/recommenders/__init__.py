@@ -11,7 +11,6 @@ from baybe.recommenders.clustering import (
 )
 from baybe.recommenders.sampling import FPSRecommender, RandomRecommender
 
-
 __all__ = [
     "FPSRecommender",
     "GaussianMixtureClusteringRecommender",
