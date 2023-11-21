@@ -6,7 +6,7 @@ Note that this is still **under development**.
 ## Writing docstrings
 
 The docstrings that are used for BayBE are based on the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
-These docstrings are used to automatically create the documentation using [Sphinx](https://www.sphinx-doc.org/en/master/index.html).
+These docstrings are used to create the documentation using [Sphinx](https://www.sphinx-doc.org/en/master/index.html).
 
 The infrastructure used to host the current documentation as well as the design decision that were taken when developing BayBE make it necessary to adhere to the following guidelines when writing docstrings.
 
@@ -14,16 +14,16 @@ The infrastructure used to host the current documentation as well as the design 
     * docstrings need to have a short one-line summary at the top, 
     * an optional extended summary or description below and
     * all relevant sections (`Args`, `Raises`, ...).
-- Each function needs to have a docstring. The only exception are functions that inherit their docstring from a parent class. In this case, the following comments should be added:
-    * At the end of the line containing the `def` for the function, add `# noqa: D102` to disable that error.
+- Each function needs to have a docstring. The only exception are functions that inherit their docstring from a parent class. In this case, be added the following:
+    * At the end of the line containing the `def` for the function, add `# noqa: D102`.
     * Have the comment `# See base class.` as the first line of the function.
 - Note that `pydocstyle` does not enforce docstrings for private methods. If a private function has a docstring, `pydocstyle` acknowledges it and checks it.
 - Function signatures need to have type hints for both inputs and the return type.
 - Type hints should not be added to the docstrings.
-- When referencing another class, function, or similar, use the syntax ``:func:`path.to.function` `` where `func` should be replaced by the respective keyword.
+- When referencing another class, function, or similar, use ``:func:`path.to.function` `` where `func` should be replaced by the respective keyword.
 - When parts of the comment should appear as `code` in the docstring, use double backticks ``.
-- Since we use [attrs](https://www.attrs.org/en/stable/) for writing classes,  initialization functions are not documented. Instance attributes thus need to be documented using a docstring in the line below their declaration.
-- Class variables are documented by adding a docstring in the line below their declaration.
+- Document instance attributes and class variables by adding a docstring in the line below their declaration.
+- Include a blank line after the documentation of attributes and class variables.
 - When an inherited class sets one of the instance attributes, this attribute needs to be documented in the docstring of the inherited class.
 - Magic functions do not require a docstring.
 - Some special rules apply to writing docstrings for validators:
