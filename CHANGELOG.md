@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Script for building HTML documentation and corresponding `tox` environment
+- Linter `typos` for spellchecking
+
+### Changed
+- Replacing `pylint`, `flake8`, `µfmt` and `usort` with `ruff`
 
 ### Deprecations
-- Markdown based documentation replaced by HTML based documentation
+- Markdown based documentation replaced with HTML based documentation
 
 ## [0.6.0] - 2023-11-17
 ### Added
