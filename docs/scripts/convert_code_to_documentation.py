@@ -4,11 +4,11 @@ import argparse
 import os
 import pathlib
 import shutil
-from subprocess import CalledProcessError, check_call, DEVNULL, STDOUT
-
-from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
+from subprocess import DEVNULL, STDOUT, CalledProcessError, check_call
 
 from tqdm import tqdm
+
+from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -67,7 +67,7 @@ destination_dir = pathlib.Path(DESTINATION_DIR)
 
 
 def create_example_documentation(example_dest_dir: str, debug: bool):
-    """A function that creates the documentation version of the examples files.
+    """Create the documentation version of the examples files.
 
     Note that this deletes the destination directory if it already exists.
 
@@ -165,17 +165,12 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
                 )
 
             # CLEANUP
-            # Remove all lines that try to include a png file as well as the lines
-            # that just contain a pylint exception
+            # Remove all lines that try to include a png file
             markdown_path = file.with_suffix(".md")
             with open(markdown_path, "r", encoding="UTF-8") as markdown_file:
                 lines = markdown_file.readlines()
 
-            lines = [
-                line
-                for line in lines
-                if "![png]" not in line and not line.startswith("pylint")
-            ]
+            lines = [line for line in lines if "![png]" not in line]
 
             # Rewrite the file
             with open(markdown_path, "w", encoding="UTF-8") as markdown_file:

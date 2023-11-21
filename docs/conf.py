@@ -184,7 +184,7 @@ def setup(app):  # noqa: D103
 
 
 def autodoc_process_docstring(app, what, name, obj, options, lines):
-    """Function used for hooking into the docstring processing."""
+    """Process the docstrings that sphinx creates."""
     if "__init__" in name and len(lines) > 0:
         lines.append(
             "For details on the parameters, see **Public attributes and properties**."
