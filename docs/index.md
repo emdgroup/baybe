@@ -8,7 +8,7 @@ Overview <self>
 Readme <misc/readme_link>
 User Guide <userguide/userguide>
 Examples <examples/examples>
-How to contribute <misc/contributing_link>
+How To Contribute <misc/contributing_link>
 ```
 
 # Package documentation
@@ -27,7 +27,7 @@ How to contribute <misc/contributing_link>
     :titlesonly:
     :caption: Misc
 
-    Known issues <known_issues>
+    Known Issues <known_issues>
     FAQ <faq>
     Changelog <misc/changelog_link>
     Contributors <misc/contributors_link>
