@@ -33,15 +33,13 @@ class InfiniteIntervalError(Exception):
 
 @define
 class Interval:
-    """Intervals on the real number line.
-
-    Args:
-        lower: The lower end of the interval.
-        upper: The upper end of the interval.
-    """
+    """Intervals on the real number line."""
 
     lower: float = field(converter=lambda x: float(x) if x is not None else -np.inf)
+    """The lower end of the interval."""
+
     upper: float = field(converter=lambda x: float(x) if x is not None else np.inf)
+    """The upper end of the interval."""
 
     @upper.validator
     def _validate_order(self, _: Any, value: float):  # noqa: DOC101, DOC103

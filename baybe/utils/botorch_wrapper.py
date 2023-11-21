@@ -10,7 +10,8 @@ def botorch_function_wrapper(test_function: SyntheticTestFunction):
     See :mod:`baybe.simulation` for details.
 
     Args:
-        test_function: The synthetic test function from ```botorch.test_functions```
+        test_function: The synthetic test function from BoTorch. See
+            https://botorch.org/api/test_functions.html.
 
     Returns:
         A wrapped version of the provided function.

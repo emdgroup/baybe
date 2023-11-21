@@ -7,7 +7,7 @@ from numpy.typing import ArrayLike
 def bound_linear(
     arr: ArrayLike, lower: float, upper: float, descending: bool
 ) -> np.ndarray:
-    """Linearly map values in a specified interval ```[lower, upper]``` to ```[0, 1]```.
+    """Linearly map values in a specified interval ``[lower, upper]`` to ``[0, 1]``.
 
     Outside the specified interval, the function remains constant.
     That is, 0 or 1, depending on the side and selected mode.
@@ -16,8 +16,8 @@ def bound_linear(
         arr: The values to be mapped.
         lower: The lower boundary of the linear mapping interval.
         upper: The upper boundary of the linear mapping interval.
-        descending: If ```True```, the function values decrease from 1 to 0 in the
-            specified interval. If ```False```, they increase from 0 to 1.
+        descending: If ``True``, the function values decrease from 1 to 0 in the
+            specified interval. If ``False``, they increase from 0 to 1.
 
     Returns:
         An array containing the transformed values.
@@ -36,7 +36,7 @@ def bound_linear(
 
 
 def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
-    """Map values to the interval ```[0, 1]``` in a "triangular" fashion.
+    """Map values to the interval ``[0, 1]`` in a "triangular" fashion.
 
     The shape of the function is "triangular" in that is 0 outside a specified interval
     and linearly increases to 1 from both interval ends, reaching the value 1 at the
@@ -61,7 +61,7 @@ def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
 
 
 def bound_bell(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
-    """Map values to the interval ```[0, 1]``` in a "Gaussian bell" fashion.
+    """Map values to the interval ``[0, 1]`` in a "Gaussian bell" fashion.
 
     The shape of the function is "Gaussian bell curve", specified through the boundary
     values of the sigma interval. Reaches the maximum value of 1 at the interval center.

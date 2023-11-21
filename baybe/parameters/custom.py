@@ -17,22 +17,28 @@ class CustomDiscreteParameter(DiscreteParameter):
 
     For these parameters, the user can read in a precomputed representation for labels,
     e.g. from quantum chemistry.
-
-    Args:
-        data: The data for the custom parameter.
-        decorrelate: Flag encoding whether the provided data should be decorrelated.
-        encoding: The encoding of the parameter.
     """
 
     # class variables
     is_numeric: ClassVar[bool] = False
+    # See base class.
 
     # object variables
     data: pd.DataFrame = field(eq=eq_dataframe)
+    """A mapping that provides the encoding for all available parameter values."""
+
     decorrelate: Union[bool, float] = field(
         default=True, validator=validate_decorrelation
     )
+    """Specifies the used decorrelation mode for the parameter encoding.
+
+        - ``False``: The encoding is used as is.
+        - ``True``: The encoding is decorrelated using a default correlation threshold.
+        - float in (0, 1): The encoding is decorrelated using the specified threshold.
+    """
+
     encoding = field(default="CUSTOM")
+    # See base class.
 
     @data.validator
     def _validate_custom_data(  # noqa: DOC101, DOC103
@@ -41,7 +47,7 @@ class CustomDiscreteParameter(DiscreteParameter):
         """Validate the dataframe with the custom representation.
 
         Raises:
-            ValueError: If the dataframe contains ```NaN```.
+            ValueError: If the dataframe contains ``NaN``.
             ValueError: If the dataframe contains duplicated indices.
             ValueError: If the dataframe contains non-numeric values.
             ValueError: If the dataframe contains columns that only contain a single

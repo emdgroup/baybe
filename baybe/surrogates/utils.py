@@ -60,12 +60,12 @@ def _prepare_targets(y: Tensor) -> Tensor:
 
 
 def catch_constant_targets(model_cls: Type[Surrogate]):
-    """Wrap a ```Surrogate``` class that cannot handle constant training target values.
+    """Wrap a ``Surrogate`` class that cannot handle constant training target values.
 
     In the wrapped class, these cases are handled by a separate model type.
 
     Args:
-        model_cls: A ```Surrogate``` class that should be wrapped.
+        model_cls: A ``Surrogate`` class that should be wrapped.
 
     Returns:
         A wrapped version of the class.
@@ -82,6 +82,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
 
         # The posterior mode is chosen to match that of the wrapped model class
         joint_posterior: ClassVar[bool] = model_cls.joint_posterior
+        # See base class.
 
         def __init__(self, *args, **kwargs):
             super().__init__()
@@ -143,10 +144,10 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
 
 
 def scale_model(model_cls: Type[Surrogate]):
-    """Wrap a ```Surrogate``` class such that it operates with scaled representations.
+    """Wrap a ``Surrogate`` class such that it operates with scaled representations.
 
     Args:
-        model_cls: A ```Surrogate``` model class that should be wrapped.
+        model_cls: A ``Surrogate`` model class that should be wrapped.
 
     Returns:
         A wrapped version of the class.
@@ -160,6 +161,7 @@ def scale_model(model_cls: Type[Surrogate]):
 
         # The posterior mode is chosen to match that of the wrapped model class
         joint_posterior: ClassVar[bool] = model_cls.joint_posterior
+        # See base class.
 
         def __init__(self, *args, **kwargs):
             self.model = model_cls(*args, **kwargs)
@@ -214,13 +216,13 @@ def scale_model(model_cls: Type[Surrogate]):
 def batchify(
     posterior: Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]
 ) -> Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]:
-    """Wrap ```Surrogate``` posterior functions to enable proper batching.
+    """Wrap ``Surrogate`` posterior functions to enable proper batching.
 
     More precisely, this wraps model that are incompatible with t- and q-batching such
     that they become able to process batched inputs.
 
     Args:
-        posterior: The original ```posterior``` function.
+        posterior: The original ``posterior`` function.
 
     Returns:
         The wrapped posterior function.
@@ -231,7 +233,7 @@ def batchify(
         """A posterior function replacement that processes batches sequentially.
 
         Args:
-            model: The ```Surrogate``` model.
+            model: The ``Surrogate`` model.
             candidates: The candidates tensor.
 
         Returns:
@@ -248,7 +250,6 @@ def batchify(
         # If the posterior function provides full covariance information, call it
         # t-batch by t-batch
         if model.joint_posterior:  # pylint: disable=no-else-return
-
             # Flatten all t-batch dimensions into a single one
             flattened = candidates.flatten(end_dim=-3)
 
@@ -265,7 +266,6 @@ def batchify(
         # Otherwise, flatten all t- and q-batches into a single q-batch dimension
         # and evaluate the posterior function in one go
         else:
-
             # Flatten *all* batches into the q-batch dimension
             flattened = candidates.flatten(end_dim=-2)
 

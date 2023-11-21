@@ -14,25 +14,20 @@ from baybe.parameters.validation import validate_unique_values
 
 @define(frozen=True, slots=False)
 class CategoricalParameter(DiscreteParameter):
-    """Parameter class for categorical parameters.
-
-    Args:
-        encoding: The encoding of the parameter.
-    """
-
-    # TODO: Since object variables are not inherited, we need to include it here again.
-    # Due to this, changes in such variables are not auto-documented by Sphinx, making
-    # it necessary to change them manually.
-    # This might change when moving towards html based documentation.
+    """Parameter class for categorical parameters."""
 
     # class variables
     is_numeric: ClassVar[bool] = False
+    # See base class.
 
     # object variables
     _values: tuple = field(
         converter=tuple, validator=[min_len(2), validate_unique_values]
     )
+    # See base class.
+
     encoding: Literal["OHE", "INT"] = field(default="OHE")
+    # See base class.
 
     @property
     def values(self) -> tuple:
@@ -54,20 +49,17 @@ class CategoricalParameter(DiscreteParameter):
 
 @define(frozen=True, slots=False)
 class TaskParameter(CategoricalParameter):
-    """Parameter class for task parameters.
-
-    Args:
-        encoding: The encoding of the parameter.
-        active_values: An optional list of values describing for which tasks
-            recommendations should be given. By default, all parameters are considered
-            active.
-    """
+    """Parameter class for task parameters."""
 
     # object variables
     # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
     #   declared as such because of the inheritance relationship.
     encoding: Literal["INT"] = field(default="INT")
+    # See base class.
+
     active_values: tuple = field(converter=tuple)
+    """An optional list of values describing for which tasks recommendations should be
+    given. By default, all parameters are considered active."""
 
     @active_values.default
     def _default_active_values(self) -> tuple:
@@ -82,7 +74,7 @@ class TaskParameter(CategoricalParameter):
         """Validate the active parameter values.
 
         If no such list is provided, no validation is being performed. In particular,
-        the errors listed below are only relevant if the ```values``` list is provided.
+        the errors listed below are only relevant if the ``values`` list is provided.
 
         Raises:
             ValueError: If an empty active parameters list is provided.

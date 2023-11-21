@@ -42,8 +42,8 @@ def _select_candidates_and_recommend(
         The recommendation in experimental representation.
 
     Raises:
-        NotEnoughPointsLeftError: If there are fewer than ```batch_quantity``` points
-            left for potentail recommendation.
+        NotEnoughPointsLeftError: If there are fewer than ``batch_quantity`` points
+            left for potential recommendation.
     """
     # IMPROVE: See if the there is a more elegant way to share this functionality
     #   among all purely discrete recommenders (without introducing complicates class

@@ -24,7 +24,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-### Experiment setup
+#### Experiment setup
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {
@@ -50,7 +50,7 @@ concentration = NumericalDiscreteParameter(
 
 parameters = [solvent, speed, temperature, concentration]
 
-### Creating the constraint
+#### Creating the constraint
 
 # The constraints are handled when creating the searchspace object.
 # We thus need to define our constraint first as follows.
@@ -74,7 +74,7 @@ constraint = DiscreteCustomConstraint(
     parameters=["Concentration", "Solvent", "Temperature"], validator=custom_function
 )
 
-### Creating the searchspace and the objective
+#### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
@@ -82,12 +82,12 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-### Creating and printing the campaign
+#### Creating and printing the campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
-### Manual verification of the constraint
+#### Manual verification of the constraint
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 N_ITERATIONS = 5

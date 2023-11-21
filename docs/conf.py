@@ -8,7 +8,7 @@ import sys
 
 # We need to "trick" sphinx due to it thinking that decorated classes are just aliases
 # We thus need to import and later define some specific names
-from baybe.surrogate import get_available_surrogates
+from baybe.surrogates import get_available_surrogates
 
 # -- Path setup --------------------------------------------------------------
 
@@ -17,7 +17,8 @@ __location__ = os.path.dirname(__file__)
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.join(__location__, "../src"))
+# Seems to be not necessary at the moment
+# sys.path.insert(0, os.path.join(__location__, "../examples"))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -48,7 +49,15 @@ except FileNotFoundError:
     pass
 
 try:
-    args = ["--implicit-namespaces", "-M", "-T", "-e", "-f", "-o", output_dir]
+    args = [
+        "--implicit-namespaces",
+        "-M",
+        "-T",
+        "-e",
+        "-f",
+        "-o",
+        output_dir,
+    ]
 
     apidoc.main(
         [
@@ -68,23 +77,18 @@ except Exception as e:
 # autodoc_typehints
 extensions = [
     "sphinx.ext.napoleon",  # Necessary for numpy/google docstrings to work
-    "sphinx_toolbox.more_autodoc.typehints",  # Proper typehints 1
-    "sphinx_autodoc_typehints",  # Proper typehints 2
+    "sphinx_autodoc_typehints",  # Proper typehints
     "sphinx.ext.autodoc",  # Crucial for autodocumentation
-    "sphinx_autodoc_defaultargs",  # Automatic documentation of default values
+    "sphinx.ext.autosummary",  # Autosummary
     "sphinx.ext.intersphinx",  # Links to other documentations like numpy, python,...
-    "sphinx_markdown_builder",  # Necessary for building the markdown files.
+    "sphinx.ext.viewcode",  # Links to code
 ]
 
-# Necessary additional code for dealing with defaults.
-rst_prolog = """
-.. |default| raw:: html
 
-    Default:"""
-
-# Not sure about this, seems to be default stuff that is always used
-templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+# Tell sphinx where to find the templates
+templates_path = ["templates"]
+# Tell sphinx which files should be excluded
+exclude_patterns = ["sdk"]
 
 # Enable markdown
 # Note that we do not need additional configuration here.
@@ -93,18 +97,42 @@ extensions.append("myst_parser")
 # The suffix of source filename
 source_suffix = [".rst", ".md"]
 
+# Here, we define regex expressions for errors produced by nitpick that we want to
+# ignore.
+nitpick_ignore_regex = [
+    # Ignore everything that does not include baybe
+    (r"py:.*", r"^(?!.*baybe).*"),
+    # Ignore errors that are from inherited classes we cannot control
+    (r"py:.*", r".*DTypeFloatNumpy.*"),
+    (r"py:.*", r".*DTypeFloatONNX.*"),
+    (r"py:.*", r".*AdapterModel.*"),
+    # Ignore the functions that we manually delete from in child classes
+    (r"py:.*", r".*from_dict.*"),
+    (r"py:.*", r".*from_json.*"),
+    (r"py:.*", r".*to_dict.*"),
+    (r"py:.*", r".*to_json.*"),
+    (r"py:.*", r".*_T.*"),
+    # Ignore files for which no __init__ is available at all
+    (r"py:.*", "baybe.constraints.conditions.Condition.__init__"),
+    (r"py:.*", "baybe.utils.serialization.SerialMixin.__init__"),
+    (r"DeprecationWarning:", ""),
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-# On purpose not deleted since this will become relevant once we write the html version
 
-# html_theme = "furo"
-# html_static_path = ["_static"]
+# We use the read-the-docs theme
+html_theme = "sphinx_rtd_theme"
+# We want to have links to the source
+html_show_sourcelink = True
 
+# Everything in the module has the prefix baybe
+modindex_common_prefix = ["baybe."]
 
 # -- Options for intersphinx extension ---------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#configuration
 
+# Mappings to all external packages that we want to have clickable links to
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
@@ -112,25 +140,52 @@ intersphinx_mapping = {
     "sklearn_extra": ("https://scikit-learn-extra.readthedocs.io/en/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "torch": ("https://pytorch.org/docs/master/", None),
+    "rdkit": ("https://rdkit.org/docs/", None),
 }
 
 # --- Options for autodoc typehints and autodoc -------------------------------
 # https://pypi.org/project/sphinx-autodoc-typehints/
 
+# For some reason, sphinx does not like it if we use the -D option to just tell it
+# that we want to include private members. We thus manually verify whether the option
+# was set.
+private_members = "True" in sys.argv[sys.argv.index("-D") + 1]
+
+# Represent typehints whenever possible.
 autodoc_typehints = "both"
-# Separate class names and init functions
+# Separate class names and init functions.
 autodoc_class_signature = "separated"
-# Preserve the defaults
-autodoc_preserve_defaults = True
+# Do not preserve the defaults as we want them to be evaluated due to attrs
+# Seems to be bugged for attrs defaults, see
+# https://github.com/sphinx-toolbox/sphinx-toolbox/issues/146
+autodoc_preserve_defaults = False
+# Set the default options that should be used for autodoc
 autodoc_default_options = {
-    "members": True,  # Also document members of classes
-    "member-order": "bysource",  # Order as in source files (alternative is alphabetic)
-    "exclude-members": "__init__",  # Do not include inits
+    # Order by type (function, attribute...), required for proper inheritance
+    "member-order": "groupwise",
+    # Include private members if this was requested
+    "private-members": private_members,
 }
+# Only show parameters that are documented.
 autodoc_typehints_description_target = "documented_params"
+# Shorten the links in the function signatures
+autodoc_typehints_format = "short"
+python_use_unqualified_type_names = True
+# Typehints should be shown in the signature
+typehints_use_signature = True
 
 
-# Magic function doing magic stuff
+# This function enables us to hook into the internal sphinx processes
+# These allow us to change docstrings (resp. how they are processed) which is currently
+# necessary for properly rendering the surrogates
 def setup(app):  # noqa: D103
-    # We initialize all available surrogates once as this sets their name
     get_available_surrogates()
+    app.connect("autodoc-process-docstring", autodoc_process_docstring)
+
+
+def autodoc_process_docstring(app, what, name, obj, options, lines):
+    """Function used for hooking into the docstring processing."""
+    if "__init__" in name and len(lines) > 0:
+        lines.append(
+            "For details on the parameters, see **Public attributes and properties**."
+        )

@@ -30,12 +30,15 @@ class SearchSpaceType(Enum):
     DISCRETE = "DISCRETE"
     """Flag for discrete search spaces resp. compatibility with discrete search
     spaces."""
+
     CONTINUOUS = "CONTINUOUS"
     """Flag for continuous search spaces resp. compatibility with continuous
     search spaces."""
+
     EITHER = "EITHER"
     """Flag compatibility with either discrete or continuous, but not hybrid
     search spaces."""
+
     HYBRID = "HYBRID"
     """Flag for hybrid search spaces resp. compatibility with hybrid search spaces."""
 
@@ -51,15 +54,13 @@ class SearchSpace(SerialMixin):
     passed parameter list can contain parameters in arbitrary order, the
     aforementioned objects (by convention) list discrete parameters first, followed
     by continuous ones.
-
-    Args:
-        discrete: The (potentially empty) discrete subspace of the overall search space.
-        continuous: The (potentially empty) continuous subspace of the overall
-            search space.
     """
 
     discrete: SubspaceDiscrete = field(factory=SubspaceDiscrete.empty)
+    """The (potentially empty) discrete subspace of the overall search space."""
+
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
+    """The (potentially empty) continuous subspace of the overall search space."""
 
     def __attrs_post_init__(self):
         """Perform validation and record telemetry values."""
@@ -93,7 +94,7 @@ class SearchSpace(SerialMixin):
             parameters: The parameters spanning the search space.
             constraints: An optional set of constraints restricting the valid parameter
                 space.
-            empty_encoding: If ```True```, uses an "empty" encoding for all parameters.
+            empty_encoding: If ``True``, uses an "empty" encoding for all parameters.
                 This is useful, for instance, in combination with random search
                 strategies that do not read the actual parameter values, since it avoids
                 the (potentially costly) transformation of the parameter values to their
@@ -168,12 +169,12 @@ class SearchSpace(SerialMixin):
 
     @property
     def contains_mordred(self) -> bool:
-        """Indicates if any of the discrete parameters uses ```MORDRED``` encoding."""
+        """Indicates if any of the discrete parameters uses ``MORDRED`` encoding."""
         return any(p.encoding == "MORDRED" for p in self.discrete.parameters)
 
     @property
     def contains_rdkit(self) -> bool:
-        """Indicates if any of the discrete parameters uses ```RDKIT``` encoding."""
+        """Indicates if any of the discrete parameters uses ``RDKIT`` encoding."""
         return any(p.encoding == "RDKIT" for p in self.discrete.parameters)
 
     @property
@@ -247,7 +248,7 @@ class SearchSpace(SerialMixin):
 def structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
     """A structuring hook that assembles the search space from "config" format.
 
-    It uses the alternative :func:`baybe.searchspace.SearchSpace.from_product`
+    It uses the alternative :func:`baybe.searchspace.core.SearchSpace.from_product`
     constructor, which allows to deserialize search space specifications that are
     provided in a user-friendly format (i.e. via parameters and constraints).
     """
@@ -261,9 +262,9 @@ def structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
 def validate_searchspace_from_config(specs: dict, _) -> None:
     """A validation hook that does not create the search space.
 
-    Similar to :func:`baybe.searchspace.structure_searchspace_from_config` but without
-    the actual search space creation step, thus intended for validation purposes only.
-    It explicitly validates the given parameters and constraints since invalid
+    Similar to :func:`baybe.searchspace.core.structure_searchspace_from_config` but
+    without the actual search space creation step, thus intended for validation purposes
+    only. It explicitly validates the given parameters and constraints since invalid
     specifications would be otherwise noticed only later during search space creation.
     """
     parameters = converter.structure(specs["parameters"], List[Parameter])

@@ -15,7 +15,7 @@ from baybe.utils import SerialMixin
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """The counterpart to ```numpy.isclose```.
+    """The counterpart to ``numpy.isclose``.
 
     Args:
         x: First input array to compare.
@@ -24,7 +24,7 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
         atol: The absolute tolerance parameter.
 
     Returns:
-        Returns a boolean array of where ```x``` and ```y``` are not equal within the
+        Returns a boolean array of where ``x`` and ``y`` are not equal within the
         given tolerances.
 
     """
@@ -73,18 +73,17 @@ class Condition(ABC, SerialMixin):
 
 @define
 class ThresholdCondition(Condition):
-    """Class for modelling threshold-based conditions.
-
-    Args:
-        threshold: The threshold value used in the condition.
-        operator: The operator used in the condition.
-        tolerance: A numerical tolerance. Set to a reasonable default tolerance.
-    """
+    """Class for modelling threshold-based conditions."""
 
     # object variables
     threshold: float = field()
+    """The threshold value used in the condition."""
+
     operator: str = field(validator=[in_(_threshold_operators)])
+    """The operator used in the condition."""
+
     tolerance: Optional[float] = field()
+    """A numerical tolerance. Set to a reasonable default tolerance."""
 
     @tolerance.default
     def _tolerance_default(self) -> Union[float, None]:
@@ -99,7 +98,7 @@ class ThresholdCondition(Condition):
         Raises:
             ValueError: If the operator does not allow for setting a tolerance.
             ValueError: If the operator allows for setting a tolerance, but the provided
-                tolerance is either less than 0 or ```None```.
+                tolerance is either less than 0 or ``None``.
         """
         if (self.operator not in _valid_tolerance_operators) and (value is not None):
             raise ValueError(
@@ -131,14 +130,11 @@ class ThresholdCondition(Condition):
 
 @define
 class SubSelectionCondition(Condition):
-    """Class for defining valid parameter entries.
-
-    Args:
-        selection: The list of items which are considered valid.
-    """
+    """Class for defining valid parameter entries."""
 
     # object variables
     selection: List[Any] = field()
+    """The list of items which are considered valid."""
 
     def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
         # See base class.

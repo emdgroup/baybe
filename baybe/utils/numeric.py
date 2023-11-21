@@ -11,21 +11,20 @@ DTypeFloatTorch = torch.float64
 """Floating point data type used for torch tensors."""
 
 DTypeFloatONNX = np.float32
-"""
-Floating point data type used for ONNX models.
+"""Floating point data type used for ONNX models.
 
 Currently, ONNX runtime does not seem to have full support for double precision.
 There is no clear documentation but some references can be found here (version 1.16.0):
-* https://onnx.ai/sklearn-onnx/auto_tutorial/
-    plot_abegin_convert_pipeline.html#converts-the-model
-* https://onnx.ai/sklearn-onnx/auto_tutorial/plot_ebegin_float_double.html
-"""
+
+ * https://onnx.ai/sklearn-onnx/auto_tutorial/plot_abegin_convert_pipeline.html#converts-the-model
+ * https://onnx.ai/sklearn-onnx/auto_tutorial/plot_ebegin_float_double.html
+"""  # noqa: E501
 
 
 def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
     """Calculate the (weighted) geometric mean along the second axis of a 2-D array.
 
-    Alternative to ```gmean``` from scipy that avoids logarithms and division errors.
+    Alternative to ``gmean`` from scipy that avoids logarithms and division errors.
 
     Args:
         arr: The array containing the values for the mean computation.

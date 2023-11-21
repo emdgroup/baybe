@@ -17,17 +17,18 @@ class MeanPredictionSurrogate(Surrogate):
 
     It provides the average value of the training targets
     as posterior mean and a (data-independent) constant posterior variance.
-
-    Args:
-        target_value: The value of the posterior mean.
     """
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    # See base class.
+
     supports_transfer_learning: ClassVar[bool] = False
+    # See base class.
 
     # Object variables
     target_value: Optional[float] = field(init=False, default=None)
+    """The value of the posterior mean."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:

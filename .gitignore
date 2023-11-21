@@ -28,3 +28,8 @@ htmlcov
 
 # Pictures created by backtesting
 *.png
+
+# Folders that are temporarily created when building the documentation
+docs/_autosummary
+docs/examples
+docs/sdk

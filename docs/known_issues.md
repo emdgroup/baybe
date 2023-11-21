@@ -39,7 +39,7 @@ circumvent the problem:
 import sys
 sys.excepthook = sys.__excepthook__
 ```
-* Manually [format the exception](https://github.com/agronholm/exceptiongroup/blob/8b8791b662c0f62a574a09f305cd204dfb0a6a05/README.rst?plain=1#L107) thrown by the problematic code:
+* Manually [format the exception](https://github.com/agronholm/exceptiongroup/blob/8b8791b662c0f62a574a09f305cd204dfb0a6a05/README.rst?plain=1) thrown by the problematic code:
 ```python
 import exceptiongroup
 from cattrs import ClassValidationError

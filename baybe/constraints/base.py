@@ -26,20 +26,19 @@ class Constraint(ABC, SerialMixin):
 
     Constraints use conditions and chain them together to filter unwanted entries from
     the search space.
-
-    Args:
-        parameters: The list of parameters used for the constraint.
     """
 
     # class variables
     # TODO: it might turn out these are not needed at a later development stage
     eval_during_creation: ClassVar[bool]
     """Class variable encoding whether the condition is evaluated during creation."""
+
     eval_during_modeling: ClassVar[bool]
     """Class variable encoding whether the condition is evaluated during modeling."""
 
     # Object variables
     parameters: List[str] = field(validator=min_len(1))
+    """The list of parameters used for the constraint."""
 
     @parameters.validator
     def _validate_params(  # noqa: DOC101, DOC103
@@ -48,7 +47,7 @@ class Constraint(ABC, SerialMixin):
         """Validate the parameter list.
 
         Raises:
-            ValueError: If ```params``` contains duplicate values.
+            ValueError: If ``params`` contains duplicate values.
         """
         if len(params) != len(set(params)):
             raise ValueError(
@@ -77,7 +76,10 @@ class DiscreteConstraint(Constraint, ABC):
 
     # class variables
     eval_during_creation: ClassVar[bool] = True
+    # See base class.
+
     eval_during_modeling: ClassVar[bool] = False
+    # See base class.
 
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
@@ -98,20 +100,21 @@ class ContinuousConstraint(Constraint, ABC):
 
     Continuous constraints use parameter lists and coefficients to define in-/equality
     constraints over a continuous parameter space.
-
-    Args:
-        parameters: See base class.
-        coefficients: In-/equality coefficient for each entry in ```parameters```.
-        rhs: Right-hand side value of the in-/equality.
     """
 
     # class variables
     eval_during_creation: ClassVar[bool] = False
+    # See base class.
+
     eval_during_modeling: ClassVar[bool] = True
+    # See base class.
 
     # object variables
     coefficients: List[float] = field()
+    """In-/equality coefficient for each entry in ``parameters``."""
+
     rhs: float = field(default=0.0)
+    """Right-hand side value of the in-/equality."""
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
@@ -139,7 +142,7 @@ class ContinuousConstraint(Constraint, ABC):
     ) -> Tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
-        Used in calling ```optimize_acqf_*``` functions, for details see
+        Used in calling ``optimize_acqf_*`` functions, for details see
         https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
 
         Args:

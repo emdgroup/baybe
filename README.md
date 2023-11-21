@@ -12,15 +12,14 @@ It provides the necessary functionality to:
 - handle measurements data and feed it back into the experimental design.
 - compare different DOE strategies through backtesting with synthetic and real data.
 
-## :exclamation::construction: NOTE :construction::exclamation:
+## ❗🚧 This repository is under **heavy active development**. 🚧❗
 
-This repository is under **heavy active development**.
 Please note that the provided functionality and user interfaces are not stable and may
 change in newer releases.
 Therefore, if you would like to use the code in its current early stage, we recommend
 pinning the version during installation to prevent possible changes in the backend.
 In case of questions or comments, feel free to reach out to the **BayBE Dev Team** (see
-[pyproject.toml](./pyproject.toml) for contact details).
+[the contributors page](docs/misc/contributors_link) for contact details).
 
 ## Installation
 
@@ -86,12 +85,12 @@ pip install baybe[chem,simulation]
 ```
 
 The available groups are:
-- `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
+- `chem`: Cheminformatics utilities (e.g. for the [`SubstanceParameter`](baybe.parameters.substance.SubstanceParameter)).
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
 - `onnx`: Required for using custom surrogate models in ONNX format.
-- `simulation`: Enabling the `simulation` module.
+- `simulation`: Enabling the [`simulation`](baybe.simulation) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`.
 
@@ -128,7 +127,7 @@ In that sense, the former carry information that **must be** provided by the use
 whereas the latter are **optional** settings that can also be set automatically
 by BayBE.
 
-A key element in the design of BayBE is the `Campaign` object.
+A key element in the design of BayBE is the [`Campaign`](baybe.campaign.Campaign) object.
 It acts as a central container for all the necessary information and objects
 associated with an experimentation process, ensuring that all independent model
 components (e.g. the objective function, the search space, etc.) are properly combined.
@@ -145,7 +144,7 @@ simultaneously, as an introductory example, we consider a simple scenario where 
 goal is to **maximize** a single numerical target that represents the yield of a
 chemical reaction.
 
-In BayBE's language, the reaction yield can be represented as a `NumericalTarget`
+In BayBE's language, the reaction yield can be represented as a [`NumericalTarget`](baybe.targets.numerical)
 object:
 
 ```python
@@ -157,7 +156,7 @@ target = NumericalTarget(
 )
 ```
 
-We wrap the target object in an optimization `Objective`, to inform BayBE
+We wrap the target object in an optimization [`Objective`](baybe.objective.Objective), to inform BayBE
 that this is the only target we would like to consider:
 
 ```python
@@ -167,8 +166,8 @@ objective = Objective(mode="SINGLE", targets=[target])
 ```
 
 In cases where we need to consider multiple (potentially competing) targets, the
-role of the `Objective` is to define how these targets should be balanced.
-For more details, see [baybe/targets.py](./baybe/targets.py).
+role of the [`Objective`](baybe.objective.Objective) is to define how these targets should be balanced.
+For more details, see [the targets section of the user guide](docs/userguide/targets.md).
 
 ### Defining the Search Space
 
@@ -211,11 +210,11 @@ type-specific settings. In particular case above, for instance:
   the substance parameter "Solvent".
 
 For more parameter types and their details, see
-[baybe/parameters.py](./baybe/parameters.py).
+[parameters section of the user guide](docs/userguide/parameters).
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters.
-Details can be found in [baybe/constraints.py](./baybe/constraints.py).
+Details can be found in [the constraints section of the user guids](docs/userguide/constraints).
 In this example, we assume no further constraints and explicitly indicate this with an
 empty variable, for the sake of demonstration:
 
@@ -224,7 +223,7 @@ constraints = None
 ```
 
 With the parameter and constraint definitions at hand, we can now create our
-`SearchSpace`:
+[`SearchSpace`](baybe.searchspace):
 
 ```python
 from baybe.searchspace import SearchSpace
@@ -247,7 +246,7 @@ For our chemistry example, we combine two selection strategies:
 
 For more details on the different strategies, their underlying algorithmic
 details, and their configuration settings, see
-[baybe/strategies](./baybe/strategies).
+[the strategies section of the user guide](docs/userguide/strategy).
 
 ```python
 from baybe.strategies import TwoPhaseStrategy

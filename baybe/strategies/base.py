@@ -14,19 +14,15 @@ from baybe.utils.serialization import converter, SerialMixin, unstructure_base
 
 @define
 class Strategy(SerialMixin, ABC):
-    """Abstract base class for all BayBE strategies.
-
-    Args:
-        allow_repeated_recommendations: Allow to make recommendations that were
-            already recommended earlier. This only has an influence in discrete
-            search spaces.
-        allow_recommending_already_measured: Allow to output recommendations that
-            were measured previously. This only has an influence in discrete
-            search spaces.
-    """
+    """Abstract base class for all BayBE strategies."""
 
     allow_repeated_recommendations: bool = field(default=False, kw_only=True)
+    """Allow to make recommendations that were already recommended earlier. This only
+    has an influence in discrete search spaces."""
+
     allow_recommending_already_measured: bool = field(default=False, kw_only=True)
+    """Allow to output recommendations that were measured previously. This only has an
+    influence in discrete search spaces."""
 
     @abstractmethod
     def select_recommender(

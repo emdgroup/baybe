@@ -7,7 +7,7 @@
 # This example assumes basic familiarty with BayBE, custom test functions and multiple targets.
 # For further details, we thus refer to
 # - [`campaign`](./../Basics/campaign.md) for a more general and basic example,
-# - [`run_custom_analytical`](./run_custom_analytical.md) for custom test functions, and
+# - [`custom_analytical`](./custom_analytical.md) for custom test functions, and
 # - [`desirability`](./../Multi_Target/desirability.md) for multiple targets.
 
 #### Necessary imports for this example
@@ -33,7 +33,7 @@ N_DOE_ITERATIONS = 4
 #### Defining the test function
 
 
-# See [`run_custom_analytical`](./run_custom_analytical.md) for details
+# See [`custom_analytical`](./custom_analytical.md) for details
 def sum_of_squares(*x: float) -> Tuple[float, float]:
     """Calculates the sum of squares."""
     res = 0

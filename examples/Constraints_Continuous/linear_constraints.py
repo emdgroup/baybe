@@ -1,6 +1,5 @@
 ### Example for linear constraints in a continuous searchspace
 # pylint: disable=missing-module-docstring
-import numpy as np
 
 # Example for optimizing a synthetic test functions in a continuous space with linear
 # constraints.
@@ -10,11 +9,13 @@ import numpy as np
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
-# We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
+# We thus refer to [`discrete_space`](./../Searchspaces/discrete_space.md) for
+# details on this aspect.
 
 
 #### Necessary imports for this example
 
+import numpy as np
 from baybe import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -103,7 +104,7 @@ for k in range(N_ITERATIONS):
 
     campaign.add_measurements(recommendation)
 
-### Verify the constraints
+#### Verify the constraints
 measurements = campaign.measurements_exp
 TOLERANCE = 0.01
 

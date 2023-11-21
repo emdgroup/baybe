@@ -25,7 +25,8 @@ def validate_parameters(parameters: List[Parameter]) -> None:  # noqa: DOC101, D
 
     Raises:
         EmptySearchSpaceError: If the parameter list is empty.
-        NotImplementedError: If more than one ```TaskParameter``` is requested.
+        NotImplementedError: If more than one
+            :class:`baybe.parameters.categorical.TaskParameter` is requested.
     """
     if not parameters:
         raise EmptySearchSpaceError("At least one parameter must be provided.")

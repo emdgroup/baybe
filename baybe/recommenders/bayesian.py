@@ -38,17 +38,15 @@ if _ONNX_INSTALLED:
 
 @define
 class BayesianRecommender(Recommender, ABC):
-    """An abstract class for Bayesian Recommenders.
-
-    Args:
-        surrogate_model: The used surrogate model.
-        acquisition_function_cls: The used acquisition function class.
-    """
+    """An abstract class for Bayesian Recommenders."""
 
     surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
+    """The used surrogate model."""
+
     acquisition_function_cls: Literal[
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
     ] = field(default="qEI")
+    """The used acquisition function class."""
 
     def _get_acquisition_function_cls(
         self,
@@ -225,31 +223,30 @@ class BayesianRecommender(Recommender, ABC):
 class SequentialGreedyRecommender(BayesianRecommender):
     """Recommender using sequential Greedy optimization.
 
-    This recommender implements the BoTorch functions ```optimize_acqf_discrete```,
-    ```optimize_acqf``` and ```optimize_acqf_mixed``` for the optimization of discrete,
+    This recommender implements the BoTorch functions ``optimize_acqf_discrete``,
+    ``optimize_acqf`` and ``optimize_acqf_mixed`` for the optimization of discrete,
     continuous and hybrid search spaces. In particular, it can be applied in all
     kinds of search spaces.
     It is important to note that this algorithm performs a brute-force optimization in
     hybrid search spaces which can be computationally expensive. Thus, the behavior of
     the algorithm in hybrid search spaces can be controlled by two additional
     parameters.
-
-    Args:
-        hybrid_sampler: Strategy used for sampling the discrete subspace when performing
-            hybrid search space optimization.
-        sampling_percentage: Percentage of discrete search space that is sampled when
-            performing hybrid search space optimization. Ignored when
-            ```hybrid_sampler="None"```.
     """
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+    # See base class.
 
     # Object variables
     hybrid_sampler: str = field(
         validator=validators.in_(["None", "Farthest", "Random"]), default="None"
     )
+    """Strategy used for sampling the discrete subspace when performing hybrid search
+    space optimization."""
+
     sampling_percentage: float = field(default=1.0)
+    """Percentage of discrete search space that is sampled when performing hybrid search
+    space optimization. Ignored when ``hybrid_sampler="None"``."""
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -258,7 +255,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         """Validate that the given value is in fact a percentage.
 
         Raises:
-            ValueError: If ```value``` is not between 0 and 1.
+            ValueError: If ``value`` is not between 0 and 1.
         """
         if not 0 <= value <= 1:
             raise ValueError(
@@ -344,7 +341,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         searchspace: SearchSpace,
         batch_quantity: int,
     ) -> pd.DataFrame:
-        """Recommend points using the ```optimize_acqf_mixed``` function of BoTorch.
+        """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
 
         This functions samples points from the discrete subspace, performs optimization
         in the continuous subspace with these points being fixed and returns the best
@@ -466,12 +463,6 @@ class NaiveHybridRecommender(Recommender):
     subspace. Each of the subspaces is optimized on its own, and the recommenders for
     those subspaces can be chosen upon initilaization. If this recommender is used on
     a non-hybrid space, it uses the corresponding recommender.
-
-    Args:
-        disc_recommender: The recommender used for the discrete subspace.
-            Default: :class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
-        cont_recommender: The recommender used for the continuous subspace.
-            Default: :class:`baybe.strategies.bayesian.SequentialGreedyRecommender`
     """
 
     # TODO: This class (and potentially the recommender function signatures) need to
@@ -480,6 +471,7 @@ class NaiveHybridRecommender(Recommender):
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+    # See base class.
 
     # Object variables
     # TODO This used to be a Union of BayesianRecommender and NonPredictiveRecommender.
@@ -489,7 +481,12 @@ class NaiveHybridRecommender(Recommender):
     # these two subclasses such that we might be able to easily spot a potential problem
     # that might come up when implementing new subclasses of Recommender
     disc_recommender: Recommender = field(factory=SequentialGreedyRecommender)
+    """The recommender used for the discrete subspace. Default:
+    :class:`baybe.recommenders.bayesian.SequentialGreedyRecommender`"""
+
     cont_recommender: BayesianRecommender = field(factory=SequentialGreedyRecommender)
+    """The recommender used for the continuous subspace. Default:
+    :class:`baybe.recommenders.bayesian.SequentialGreedyRecommender`"""
 
     def recommend(  # noqa: D102
         self,

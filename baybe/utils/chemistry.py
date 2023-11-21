@@ -35,7 +35,7 @@ _memory_utils = Memory(_cachedir / "utils")
 def name_to_smiles(name: str) -> str:
     """Convert from chemical name to SMILES string using chemical identifier resolver.
 
-    This script is useful to combine with ```df.apply``` from pandas, hence it does not
+    This script is useful to combine with ``df.apply`` from pandas, hence it does not
     throw exceptions for invalid molecules but instead returns an ampty string for
     easy subsequent postprocessing of the data frame.
 
@@ -98,7 +98,7 @@ if _RDKIT_INSTALLED:
                 smiles_list: List of SMILES strings.
                 prefix: Name prefix for each descriptor
                     (e.g., nBase --> <prefix>_nBase).
-                dropna: If ```True```, drops columns that contain NaNs.
+                dropna: If ``True``, drops columns that contain NaNs.
 
             Returns:
                 Dataframe containing overlapping Mordred descriptors for each SMILES
@@ -147,7 +147,7 @@ if _RDKIT_INSTALLED:
         Args:
             smiles_list: List of SMILES strings.
             prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-            dropna: If ```True```, drops columns that contain NaNs.
+            dropna: If ``True``, drops columns that contain NaNs.
 
         Returns:
             Dataframe containing overlapping RDKit descriptors for each SMILES string.
@@ -213,7 +213,7 @@ if _RDKIT_INSTALLED:
             smiles: SMILES string to be tested.
 
         Returns:
-            ```True``` if the provided SMILES is valid, ```False``` else.
+            ``True`` if the provided SMILES is valid, ``False`` else.
         """
         try:
             mol = Chem.MolFromSmiles(smiles)

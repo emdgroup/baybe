@@ -8,10 +8,10 @@ from attr.validators import gt, instance_of, lt
 def validate_unique_values(  # noqa: DOC101, DOC103
     obj: Any, _: Any, value: list
 ) -> None:
-    """Validate that there are no duplicates in ```value```.
+    """Validate that there are no duplicates in ``value``.
 
     Raises:
-        ValueError: If there are duplicates in ```value```.
+        ValueError: If there are duplicates in ``value``.
     """
     if len(set(value)) != len(value):
         raise ValueError(

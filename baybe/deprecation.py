@@ -9,7 +9,7 @@ from baybe import Campaign
 
 @define
 class BayBE(Campaign):  # pylint: disable=abstract-method
-    """A ```Campaign``` alias for backward compatibility."""
+    """A :class:`baybe.campaign.Campaign` alias for backward compatibility."""
 
     def __attrs_pre_init__(self):
         warnings.warn(

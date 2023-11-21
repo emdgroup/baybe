@@ -245,9 +245,9 @@ def telemetry_record_recommended_measurement_percentage(
         measurements: The measurements which are supposed to be checked against cached
             recommendations.
         parameters: The list of parameters spanning the entire search space.
-        numerical_measurements_must_be_within_tolerance: If ```True```, numerical
+        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
             parameter entries are matched with the reference elements only if there is
-            a match within the parameter tolerance. If ```False```, the closest match
+            a match within the parameter tolerance. If ``False``, the closest match
             is considered, irrespective of the distance.
     """
     if is_enabled():

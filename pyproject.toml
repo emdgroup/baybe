@@ -3,9 +3,9 @@ name = "baybe"
 description = "Bayesian Back End for Design of Experiments"
 authors = [
     {name = "Martin Fitzner (Merck KGaA, Darmstadt, Germany)", email = "martin.fitzner@merckgroup.com"},
-    {name = "Adrian Šošić (Merck KGaA, Darmstadt, Germany)", email = "adrian.sosic@merckgroup.com"},
+    {name = "Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany)", email = "adrian.sosic@merckgroup.com"},
     {name = "Alexander Hopp (Merck KGaA, Darmstadt, Germany)", email = "alexander.hopp@merckgroup.com"},
-    {name = "Alex Lee (Merck KGaA, Darmstadt, Germany)", email = "alex.lee@emdgroup.com"},
+    {name = "Alex Lee (EMD Electronics, Tempe, Arizona, USA)", email = "alex.lee@emdgroup.com"},
 ]
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -66,12 +66,14 @@ docs = [
     "jupyter>=1.0.0",
     "myst-parser>=2.0.0",
     "sphinx>=7.1.1",
-    "sphinx-autodoc-defaultargs>=0.1.2",
-    "sphinx-markdown-builder==0.6.4",
-    "sphinx-toolbox>=3.5.0"
+    "sphinx-autodoc-typehints>=1.24.0",
+    "sphinx-rtd-theme>=1.3.0",
 ]
 
 examples = [
+    "baybe[chem]", # Required for some of the examples
+    "baybe[onnx]", # Required for some of the examples
+    "baybe[simulation]", # Required for some of the examples
     "matplotlib>=3.7.3",
     "openpyxl>=3.0.9",
     "pillow>=10.0.1", # Necessary due to vulnerability

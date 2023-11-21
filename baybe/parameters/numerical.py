@@ -17,17 +17,11 @@ from baybe.utils import convert_bounds, InfiniteIntervalError, Interval
 
 @define(frozen=True, slots=False)
 class NumericalDiscreteParameter(DiscreteParameter):
-    """Parameter class for discrete numerical parameters (a.k.a. setpoints).
-
-    Args:
-        tolerance: The absolute tolerance used for deciding whether a value is in range.
-            A tolerance larger than half the minimum distance between parameter values
-            is not allowed because that could cause ambiguity when inputting data points
-            later.
-    """
+    """Parameter class for discrete numerical parameters (a.k.a. setpoints)."""
 
     # class variables
     is_numeric: ClassVar[bool] = True
+    # See base class.
 
     # object variables
     _values: Tuple[float, ...] = field(
@@ -37,7 +31,12 @@ class NumericalDiscreteParameter(DiscreteParameter):
             validate_unique_values,
         ],
     )
+    """The values the parameter can take."""
+
     tolerance: float = field(default=0.0)
+    """The absolute tolerance used for deciding whether a value is in range. A tolerance
+        larger than half the minimum distance between parameter values is not allowed
+        because that could cause ambiguity when inputting data points later."""
 
     @tolerance.validator
     def _validate_tolerance(  # noqa: DOC101, DOC103
@@ -86,18 +85,18 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
 @define(frozen=True, slots=False)
 class NumericalContinuousParameter(Parameter):
-    """Parameter class for continuous numerical parameters.
-
-    Args:
-        bounds: The bounds of the parameter.
-    """
+    """Parameter class for continuous numerical parameters."""
 
     # class variables
     is_numeric: ClassVar[bool] = True
+    # See base class.
+
     is_discrete: ClassVar[bool] = False
+    # See base class.
 
     # object variables
     bounds: Interval = field(default=None, converter=convert_bounds)
+    """The bounds of the parameter."""
 
     @bounds.validator
     def _validate_bounds(self, _: Any, value: Interval) -> None:  # noqa: DOC101, DOC103

@@ -22,9 +22,9 @@ def farthest_point_sampling(
             whose first dimension corresponds to the point index.
         n_samples: The total number of points to be selected.
         initialization: Determines how the first points are selected. When
-            ```"farthest"``` is chosen, the first two selected points are those with the
+            ``"farthest"`` is chosen, the first two selected points are those with the
             largest distance. If only a single point is requested, it is selected
-            randomly from these two. When ```"random"``` is chosen, the first point is
+            randomly from these two. When ``"random"`` is chosen, the first point is
             selected uniformly at random.
 
     Returns:

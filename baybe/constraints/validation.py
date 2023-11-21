@@ -14,7 +14,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
 
     Raises:
         ValueError: If there is more than one
-            :class:`baybe.constraints.DiscreteDependenciesConstraint` declared.
+            :class:`baybe.constraints.discrete.DiscreteDependenciesConstraint` declared.
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.

@@ -6,7 +6,7 @@
 
 # This examples assumes some basic familiarity with using BayBE and the lookup mechanism.
 # We refer to [`campaign`](./../Basics/campaign.md) for a more  basic example resp.
-# to [`run_custom_analytical`](./run_custom_analytical.md) for details on the lookup mechanism.
+# to [`custom_analytical`](./custom_analytical.md) for details on the lookup mechanism.
 
 #### Necessary imports for this example
 
@@ -37,7 +37,7 @@ N_DOE_ITERATIONS = 2
 #### Defining the test function.
 
 
-# See [`here`](./run_custom_analytical.md) for details on the custom analytical test function.
+# See [`here`](./custom_analytical.md) for details on the custom analytical test function.
 def sum_of_squares(*x: float) -> float:
     """Calculates the sum of squares."""
     res = 0

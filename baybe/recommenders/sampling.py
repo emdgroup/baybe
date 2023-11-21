@@ -17,6 +17,7 @@ class RandomRecommender(NonPredictiveRecommender):
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
+    # See base class.
 
     def _recommend_hybrid(
         self,
@@ -56,6 +57,7 @@ class FPSRecommender(NonPredictiveRecommender):
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
+    # See base class.
 
     def _recommend_discrete(
         self,

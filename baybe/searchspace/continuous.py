@@ -26,20 +26,20 @@ class SubspaceContinuous:
     Builds the subspace from parameter definitions, keeps
     track of search metadata, and provides access to candidate sets and different
     parameter views.
-
-    Args:
-        parameters: The list of parameters of the subspace.
-        constraints_lin_eq: List of linear equality constraints.
-        constraints_lin_ineq: List of linear inequality constraints.
     """
 
     parameters: List[NumericalContinuousParameter] = field(
         validator=lambda _1, _2, x: validate_parameter_names(x)
     )
+    """The list of parameters of the subspace."""
+
     constraints_lin_eq: List[ContinuousLinearEqualityConstraint] = field(factory=list)
+    """List of linear equality constraints."""
+
     constraints_lin_ineq: List[ContinuousLinearInequalityConstraint] = field(
         factory=list
     )
+    """List of linear inequality constraints."""
 
     @classmethod
     def empty(cls) -> SubspaceContinuous:
@@ -106,7 +106,7 @@ class SubspaceContinuous:
         self,
         data: pd.DataFrame,
     ) -> pd.DataFrame:
-        """See :func:`baybe.searchspace.SubspaceDiscrete.transform`.
+        """See :func:`baybe.searchspace.discrete.SubspaceDiscrete.transform`.
 
         Args:
             data: The data that should be transformed.

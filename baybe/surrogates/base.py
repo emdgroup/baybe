@@ -38,16 +38,15 @@ bytes to string and back, since the specification is a bijection between
 
 @define
 class Surrogate(ABC, SerialMixin):
-    """Abstract base class for all surrogate models.
-
-    Args:
-        model_params: Optional model parameters.
-    """
+    """Abstract base class for all surrogate models."""
 
     # Class variables
     joint_posterior: ClassVar[bool]
     """Class variable encoding whether or not a joint posterior is calculated."""
+
     supports_transfer_learning: ClassVar[bool]
+    """Class variable encoding whether or not the surrogate supports transfer
+    learning."""
 
     # Object variables
     # TODO: In a next refactoring, the user friendliness could be improved by directly
@@ -55,14 +54,15 @@ class Surrogate(ABC, SerialMixin):
     #   expecting them in the form of an unstructured dictionary. This would also
     #   remove the need for the current `_get_model_params_validator` logic.
     model_params: Dict[str, Any] = field(factory=dict)
+    """Optional model parameters."""
 
     def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         """Evaluate the surrogate model at the given candidate points.
 
         Args:
             candidates: The candidate points, represented as a tensor of shape
-                ```(*t, q, d)```, where ```t``` denotes the "t-batch" shape, ```q```
-                denotes the "q-batch" shape, and ```d``` is the input dimension. For
+                ``(*t, q, d)``, where ``t`` denotes the "t-batch" shape, ``q``
+                denotes the "q-batch" shape, and ``d`` is the input dimension. For
                 more details about batch shapes, see: https://botorch.org/docs/batching
 
         Returns:
@@ -94,9 +94,9 @@ class Surrogate(ABC, SerialMixin):
         validation/transformation is carried out but only the raw posterior computation
         is conducted.
 
-        Note that the public ```posterior``` method *always* returns a full covariance
+        Note that the public ``posterior`` method *always* returns a full covariance
         matrix. By contrast, this method may return either a covariance matrix or a
-        tensor of marginal variances, depending on the models ```joint_posterior```
+        tensor of marginal variances, depending on the models ``joint_posterior``
         flag. The optional conversion to a covariance matrix is handled by the public
         method.
 
@@ -161,7 +161,6 @@ def _decode_onnx_str(raw_unstructure_hook):
     """Decodes ONNX string for serialization purposes."""
 
     def wrapper(obj):
-
         dict_ = raw_unstructure_hook(obj)
         if "onnx_str" in dict_:
             dict_["onnx_str"] = dict_["onnx_str"].decode(_ONNX_ENCODING)

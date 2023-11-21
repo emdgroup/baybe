@@ -4,6 +4,7 @@ from inspect import signature
 from typing import Any, Callable, List, Optional, Type
 
 import gpytorch.distributions
+from attr import define
 from botorch.acquisition import AcquisitionFunction
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
@@ -18,7 +19,7 @@ def debotorchize(acqf_cls: Type[AcquisitionFunction]):
 
     This wrapped function becomes generally usable in combination with other non-BoTorch
     surrogate models. This is required since BoTorch's acquisition functions expect a
-    ```botorch.model.Model``` to work with, hindering their general use with arbitrary
+    ``botorch.model.Model`` to work with, hindering their general use with arbitrary
     probabilistic models. The wrapper class returned by this function resolves this
     issue by operating as an adapter that internally creates a helper BoTorch model,
     which serves as a translation layer and is passed to the selected BoTorch
@@ -94,31 +95,28 @@ class AdapterModel(Model):
         return GPyTorchPosterior(mvn)
 
 
+@define
 class PartialAcquisitionFunction:
     """Acquisition function for evaluating points in a hybrid search space.
 
     It can either pin the discrete or the continuous part. The pinned part is assumed
-    to be a tensor of dimension ```d x 1``` where d is the computational dimension of
+    to be a tensor of dimension ``d x 1`` where d is the computational dimension of
     the search space that is to be pinned. The acquisition function is assumed to be
     defined for the full hybrid space.
-
-    Args:
-        acqf: The acquisition function for the hybrid space.
-        pinned_part: The values that will be attached whenever evaluating the
-            acquisition function.
-        pin_discrete: A flag for denoting whether the pinned_part corresponds to the
-            discrete subspace
     """
 
-    def __init__(
-        self, acqf: AcquisitionFunction, pinned_part: Tensor, pin_discrete: bool
-    ):
-        self.acqf = acqf
-        self.pinned_part = pinned_part
-        self.pin_discrete = pin_discrete
+    acqf: AcquisitionFunction
+    """The acquisition function for the hybrid space."""
+
+    pinned_part: Tensor
+    """The values that will be attached whenever evaluating the acquisition function."""
+
+    pin_discrete: Tensor
+    """A flag for denoting whether ``pinned_part`` corresponds to the discrete
+    subspace."""
 
     def _lift_partial_part(self, partial_part: Tensor) -> Tensor:
-        """Lift ```partial_part``` to the original hybrid space.
+        """Lift ``partial_part`` to the original hybrid space.
 
         Depending on whether the discrete or the variable part of the search space is
         pinned, this function identifies whether the partial_part is the continuous
@@ -167,12 +165,12 @@ class PartialAcquisitionFunction:
     def set_X_pending(self, X_pending: Optional[Tensor]):  # pylint: disable=C0103
         """Inform the acquisition function about pending design points.
 
-        Enhances the original ```set_X_pending``` function from the full acquisition
+        Enhances the original ``set_X_pending`` function from the full acquisition
         function as we need to store the full point, i.e., the point in the hybrid space
-        for the ```PartialAcquisitionFunction``` to work properly.
+        for the ``PartialAcquisitionFunction`` to work properly.
 
         Args:
-            X_pending: ```n x d``` Tensor with n d-dim design points that have been
+            X_pending: ``n x d`` Tensor with n d-dim design points that have been
                 submitted for evaluation but have not yet been evaluated.
         """
         if X_pending is not None:  # Lift point to hybrid space and add additional dim

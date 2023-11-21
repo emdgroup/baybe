@@ -1,4 +1,11 @@
-"""Linear surrogates."""
+"""Linear surrogates.
+
+Currently, the documentation for this surrogate is not available. This is due to a bug
+in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750.
+
+Since we plan to refactor the surrogates, this part of the documentation will be
+available in the future. Thus, please have a look in the source code directly.
+"""
 
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
@@ -17,15 +24,14 @@ from baybe.surrogates.validation import get_model_params_validator
 @scale_model
 @define
 class BayesianLinearSurrogate(Surrogate):
-    """A Bayesian linear regression surrogate model.
-
-    Args:
-        model_params: Optional model parameters.
-    """
+    """A Bayesian linear regression surrogate model."""
 
     # Class variables
     joint_posterior: ClassVar[bool] = False
+    # See base class.
+
     supports_transfer_learning: ClassVar[bool] = False
+    # See base class.
 
     # Object variables
     model_params: Dict[str, Any] = field(
@@ -33,7 +39,10 @@ class BayesianLinearSurrogate(Surrogate):
         converter=dict,
         validator=get_model_params_validator(ARDRegression.__init__),
     )
+    # See base class.
+
     _model: Optional[ARDRegression] = field(init=False, default=None)
+    """The actual model."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:

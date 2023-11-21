@@ -21,15 +21,14 @@ from baybe.surrogates.validation import get_model_params_validator
 
 @define
 class GaussianProcessSurrogate(Surrogate):
-    """A Gaussian process surrogate model.
-
-    Args:
-        model_params: Optional model parameters.
-    """
+    """A Gaussian process surrogate model."""
 
     # Class variables
     joint_posterior: ClassVar[bool] = True
+    # See base class.
+
     supports_transfer_learning: ClassVar[bool] = True
+    # See base class.
 
     # Object variables
     model_params: Dict[str, Any] = field(
@@ -37,7 +36,10 @@ class GaussianProcessSurrogate(Surrogate):
         converter=dict,
         validator=get_model_params_validator(SingleTaskGP.__init__),
     )
+    # See base class.
+
     _model: Optional[SingleTaskGP] = field(init=False, default=None)
+    """The actual model."""
 
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         # See base class.
