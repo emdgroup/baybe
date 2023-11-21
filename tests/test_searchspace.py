@@ -2,6 +2,7 @@
 import pandas as pd
 import pytest
 import torch
+
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
@@ -9,7 +10,6 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.exceptions import EmptySearchSpaceError
-
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,

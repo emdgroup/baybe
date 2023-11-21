@@ -1,8 +1,8 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring
 """Test serialization of surrogates."""
 
 import pytest
-from baybe.surrogates.base import get_available_surrogates, Surrogate
+
+from baybe.surrogates.base import Surrogate, get_available_surrogates
 
 
 @pytest.mark.parametrize("surrogate", [cls() for cls in get_available_surrogates()])

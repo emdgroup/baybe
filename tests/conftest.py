@@ -380,14 +380,14 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
     # the list comprehension would match substrings instead)
     assert isinstance(constraint_names, list)
 
-    def custom_function(ser: pd.Series) -> bool:
-        if ser.Solvent_1 == "water":
-            if ser.Temperature > 120 and ser.Pressure > 5:
+    def custom_function(series: pd.Series) -> bool:
+        if series.Solvent_1 == "water":
+            if series.Temperature > 120 and series.Pressure > 5:
                 return False
-            if ser.Temperature > 180 and ser.Pressure > 3:
+            if series.Temperature > 180 and series.Pressure > 3:
                 return False
-        if ser.Solvent_1 == "C3":
-            if ser.Temperature < 150 and ser.Pressure > 3:
+        if series.Solvent_1 == "C3":
+            if series.Temperature < 150 and series.Pressure > 3:
                 return False
         return True
 
@@ -691,13 +691,9 @@ def fixture_default_onnx_str() -> Union[bytes, None]:
     if not _ONNX_INSTALLED:
         return None
 
-    from skl2onnx import convert_sklearn  # pylint: disable=import-outside-toplevel
-    from skl2onnx.common.data_types import (  # pylint: disable=import-outside-toplevel
-        FloatTensorType,
-    )
-    from sklearn.linear_model import (  # pylint: disable=import-outside-toplevel
-        BayesianRidge,
-    )
+    from skl2onnx import convert_sklearn
+    from skl2onnx.common.data_types import FloatTensorType
+    from sklearn.linear_model import BayesianRidge
 
     # Train sklearn model
     train_x = torch.arange(10).view(-1, 1)
@@ -727,6 +723,7 @@ def fixture_default_onnx_surrogate(onnx_str) -> Union["CustomONNXSurrogate", Non
 
 
 # Reusables
+
 
 # TODO consider turning this into a fixture returning a campaign after running some
 #  fake iterations

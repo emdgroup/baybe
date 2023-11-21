@@ -1,4 +1,3 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring
 # TODO: This file needs to be refactored.
 """Tests various configurations for a small number of iterations."""
 from typing import get_args, get_type_hints

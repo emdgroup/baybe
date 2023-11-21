@@ -1,4 +1,3 @@
-# pylint: disable=import-outside-toplevel,unused-import
 """Deprecation tests."""
 
 import json

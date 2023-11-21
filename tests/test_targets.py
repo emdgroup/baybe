@@ -1,5 +1,3 @@
-# pylint: disable=missing-function-docstring
-
 """Tests for the targets module."""
 
 import pytest

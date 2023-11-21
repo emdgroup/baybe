@@ -6,13 +6,10 @@ import pytest
 from baybe import Campaign
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.surrogates import _ONNX_INSTALLED, register_custom_architecture
-
 from tests.conftest import run_iterations
 
 if _ONNX_INSTALLED:
-    from baybe.surrogates import (  # pylint: disable=ungrouped-imports
-        CustomONNXSurrogate,
-    )
+    from baybe.surrogates import CustomONNXSurrogate
 
     def test_invalid_onnx_creation(onnx_str):
         """Invalid onnx model creation."""

@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
