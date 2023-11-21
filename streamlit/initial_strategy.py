@@ -3,12 +3,12 @@
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from sklearn.datasets import make_blobs
+
 import streamlit as st
 from baybe.recommenders.base import NonPredictiveRecommender
-
 from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.utils.basic import get_subclasses
-from sklearn.datasets import make_blobs
 
 
 def uniform_distribution(n_points: int) -> np.ndarray:
@@ -67,7 +67,7 @@ selection_strategies = {
 
 
 def main():
-    """Creates the streamlit dashboard."""
+    """Create the streamlit dashboard."""
     # show docstring in dashboard
     st.info(__doc__)
 
