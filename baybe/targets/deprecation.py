@@ -1,5 +1,3 @@
-# pylint: disable=invalid-name,import-outside-toplevel
-
 """Temporary name aliases for backward compatibility."""
 
 from __future__ import annotations
@@ -12,7 +10,7 @@ if TYPE_CHECKING:
 
 
 def Objective(*args, **kwargs) -> NewObjective:
-    """An ``Objective`` alias for backward compatibility."""
+    """An ``Objective`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
     from baybe.objective import Objective as NewObjective
 
     warnings.warn(

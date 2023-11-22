@@ -1,5 +1,4 @@
 ### Example for using dependency constraints in discrete searchspaces
-# pylint: disable=missing-module-docstring
 
 # This example shows how a dependency constraint can be created for a discrete searchspace.
 # For instance, some parameters might only be relevant when another parameter has a certain value.

@@ -1,7 +1,7 @@
 """Substance parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Dict, get_args, get_type_hints, Literal, Union
+from typing import Any, ClassVar, Dict, Literal, Union, get_args, get_type_hints
 
 import pandas as pd
 from attr import define, field
@@ -121,10 +121,7 @@ class SubstanceParameter(DiscreteParameter):
             )
 
         # Drop NaN and constant columns
-        # Due to the above if clauses pylint thinks comp_df could become None
-        comp_df = comp_df.loc[
-            :, ~comp_df.isna().any(axis=0)  # pylint: disable=invalid-unary-operand-type
-        ]
+        comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
         comp_df = df_drop_single_value_columns(comp_df)
 
         # If there are bool columns, convert them to int (possible for Mordred)

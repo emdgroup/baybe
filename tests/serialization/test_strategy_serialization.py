@@ -1,4 +1,3 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring
 """Test serialization of strategies."""
 
 import pytest
@@ -10,7 +9,6 @@ from baybe.strategies import (
     TwoPhaseStrategy,
 )
 from baybe.strategies.base import Strategy
-
 from tests.conftest import select_recommender
 
 # Create some recommenders of different class for better differentiation after roundtrip

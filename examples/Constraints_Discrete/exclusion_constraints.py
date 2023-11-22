@@ -1,5 +1,4 @@
 ### Example for using exclusion constraints in discrete searchspaces
-# pylint: disable=missing-module-docstring
 
 # This examples shows how an exclusion constraint can be created for a discrete searchspace.
 # This can be used if some parameter values are incompatible with values of another parameter.

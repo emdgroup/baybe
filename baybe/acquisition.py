@@ -9,7 +9,7 @@ from botorch.acquisition import AcquisitionFunction
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from torch import cat, squeeze, Tensor
+from torch import Tensor, cat, squeeze
 
 from baybe.surrogates.base import Surrogate
 
@@ -162,7 +162,7 @@ class PartialAcquisitionFunction:
     def __getattr__(self, item):
         return getattr(self.acqf, item)
 
-    def set_X_pending(self, X_pending: Optional[Tensor]):  # pylint: disable=C0103
+    def set_X_pending(self, X_pending: Optional[Tensor]):
         """Inform the acquisition function about pending design points.
 
         Enhances the original ``set_X_pending`` function from the full acquisition

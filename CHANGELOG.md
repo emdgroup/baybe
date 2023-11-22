@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Script for building HTML documentation and corresponding `tox` environment
+- Linter `typos` for spellchecking
+
+### Changed
+- Replacing `pylint`, `flake8`, `µfmt` and `usort` with `ruff`
+
+### Deprecations
+- Markdown based documentation replaced with HTML based documentation
+
 ## [0.6.0] - 2023-11-17
 ### Added
 - `Raises` section for validators and corresponding contributing guideline
@@ -13,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SequentialStrategy` and `StreamingSequentialStrategy` classes
 - Telemetry env variable `BAYBE_TELEMETRY_VPN_CHECK` turning the initial connectivity check on/off 
 - Telemetry env variable `BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT` for setting the connectivity check timeout
-- Script for building HTML documentation and corresponding `tox` environment
 
 ### Changed
 - Reorganized modules into subpackages
@@ -35,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `baybe.surrogate` replaced with `baybe.surrogates`
 - `baybe.targets.Objective` replaced with `baybe.objective.Objective`
 - `baybe.strategies.Strategy` replaced with `baybe.strategies.TwoPhaseStrategy`
-- Markdown based documentation replaced by HTML based documentation
 
 ## [0.5.1] - 2023-10-19
 ### Added

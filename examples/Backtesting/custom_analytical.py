@@ -1,5 +1,4 @@
 ### Example for full simulation loop using a custom analytical test function
-# pylint: disable=missing-module-docstring
 
 # This example shows a simulation loop for a single target with a custom test function as lookup.
 # That is, we perform several Monte Carlo runs with several iterations.
@@ -41,7 +40,7 @@ N_DOE_ITERATIONS = 2
 
 
 def sum_of_squares(*x: float) -> float:
-    """Calculates the sum of squares."""
+    """Calculate the sum of squares."""
     res = 0
     for y in x:
         res += y**2

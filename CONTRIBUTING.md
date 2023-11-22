@@ -17,7 +17,7 @@ The infrastructure used to host the current documentation as well as the design 
 - Each function needs to have a docstring. The only exception are functions that inherit their docstring from a parent class. In this case, the following comments should be added:
     * At the end of the line containing the `def` for the function, add `# noqa: D102` to disable that error.
     * Have the comment `# See base class.` as the first line of the function.
-- Note that `pydocstyle` does not enforce docstrings for private methods. This is enforced via `pylint`. If a private function has a docstring, `pydocstyle` acknowledges it and checks it.
+- Note that `pydocstyle` does not enforce docstrings for private methods. If a private function has a docstring, `pydocstyle` acknowledges it and checks it.
 - Function signatures need to have type hints for both inputs and the return type.
 - Type hints should not be added to the docstrings.
 - When referencing another class, function, or similar, use the syntax ``:func:`path.to.function` `` where `func` should be replaced by the respective keyword.

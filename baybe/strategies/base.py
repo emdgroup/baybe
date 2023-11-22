@@ -9,7 +9,7 @@ from attrs import define, field
 from baybe.recommenders.base import Recommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies.deprecation import structure_strategy
-from baybe.utils.serialization import converter, SerialMixin, unstructure_base
+from baybe.utils.serialization import SerialMixin, converter, unstructure_base
 
 
 @define

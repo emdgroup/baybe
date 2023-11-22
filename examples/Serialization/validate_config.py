@@ -1,5 +1,4 @@
 ### Example for validation of a config file
-# pylint: disable=missing-module-docstring
 
 # This example shows how to load and validate a user defined configuration file.
 # We use the two configuration dictionaries.
@@ -7,8 +6,9 @@
 
 #### Necessary imports
 
-from baybe import Campaign
 from cattrs import ClassValidationError
+
+from baybe import Campaign
 
 #### Defining config dictionaries
 

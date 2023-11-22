@@ -84,7 +84,7 @@ class Scaler(ABC):
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
-        """Registers new subclasses dynamically."""
+        """Register new subclasses dynamically."""
         super().__init_subclass__(**kwargs)
         cls.SUBCLASSES[cls.type] = cls
 
@@ -111,16 +111,16 @@ class DefaultScaler(Scaler):
         std = torch.std(y, dim=0)
 
         # Functions for input and target scaling
-        self.scale_x = lambda l: (l - bounds[0]) / (bounds[1] - bounds[0])
-        self.scale_y = lambda l: (l - mean) / std
+        self.scale_x = lambda x: (x - bounds[0]) / (bounds[1] - bounds[0])
+        self.scale_y = lambda x: (x - mean) / std
 
         # Functions for inverse input and target scaling
-        self.unscale_x = lambda l: l * (bounds[1] - bounds[0]) + bounds[0]
-        self.unscale_y = lambda l: l * std + mean
+        self.unscale_x = lambda x: x * (bounds[1] - bounds[0]) + bounds[0]
+        self.unscale_y = lambda x: x * std + mean
 
         # Functions for inverse mean and variance scaling
-        self.unscale_m = lambda l: l * std + mean
-        self.unscale_s = lambda l: l * std**2
+        self.unscale_m = lambda x: x * std + mean
+        self.unscale_s = lambda x: x * std**2
 
         # Flag that the scaler has been fitted
         self.fitted = True

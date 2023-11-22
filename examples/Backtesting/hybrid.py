@@ -1,5 +1,4 @@
 ### Example for full simulation loop using a custom analytical test function in a hybrid space
-# pylint: disable=missing-module-docstring
 
 # This example shows a simulation loop for a single target with a custom test function as lookup.
 # Most importantly, it demonstrates the creation of a custom hybrid searchspace.
@@ -39,7 +38,7 @@ N_DOE_ITERATIONS = 2
 
 # See [`here`](./custom_analytical.md) for details on the custom analytical test function.
 def sum_of_squares(*x: float) -> float:
-    """Calculates the sum of squares."""
+    """Calculate the sum of squares."""
     res = 0
     for y in x:
         res += y**2
@@ -70,7 +69,7 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
 # The following parameter decides how many points each discrete dimension should have.
 # Note that this example uses the `SequentialGreedyRecommender` (among others).
 # This recommender performs a brute-force optimization over the discrete subspace.
-# We thus heavily advise to keep the number of discrete parmeters and points rather small here.
+# We thus heavily advise to keep the number of discrete parameters and points rather small here.
 POINTS_PER_DIM = 6
 
 
@@ -107,7 +106,7 @@ objective = Objective(
 # This example compares three different available hybrid recommenders:
 # The `SequentialGreedyRecommender`, the `NaiveHybridRecommedner` and the `RandomRecommender`.
 # For each of them, we initialize one strategy object.
-# Note that it is possible to further specify the behavor of the `SequentialGreedyRecommender`.
+# Note that it is possible to further specify the behavior of the `SequentialGreedyRecommender`.
 # Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control
 # - how much of the discrete subspace should be explored
 # - how these points should be sampled.

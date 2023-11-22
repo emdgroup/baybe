@@ -1,0 +1,53 @@
+line-length = 88 # Maximum line length
+
+# These errors are ignored in general
+extend-ignore = [
+    "D105", # Missing docstring in magic functions
+    "D107", # Missing docstring in __init__
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements
+    "PLR2004" # Magic value used in comparison
+]
+
+[lint.per-file-ignores]
+"examples/*" = [ 
+        # Error for having multiple # signs per row
+        "E266",
+        # Error regarding too long lines
+        "E501",
+        # Missing module docstrings
+        "D100"
+]
+"baybe/utils/__init__.py" = ["F401","F403"]
+"baybe/strategies/__init__.py" = ["F401"]
+# Exclude errors for the exception file as enforcing short summaries and similar 
+# things would not be reasonable.
+"baybe/exceptions.py" = ["D205", "D212", "D415"]
+# Missing module docstrings in module/package
+"tests/__init__.py" =  ["D100", "D104"]
+"tests/serialization/__init__.py" = ["D100", "D104"]
+"docs/conf.py" = ["D100"]
+# Ignore missing docstrings in public methods/functions and imperative mood in tests
+"tests/*" = ["D102", "D103", "D401"]
+
+
+[lint]
+# Here, we explicitly choose the rules that ruff should verify.
+# For a full list of available rules, see https://docs.astral.sh/ruff/rules/
+select=[
+    "D", # Enforce all pydocstyle rules, will be filtered by the convention.
+    "D401", # Enforce imparative mood for docstrings
+    "E501", # Add 'line-too-long' rule to the enforced rule set.
+    "F", # Rules of flake8 according to https://docs.astral.sh/ruff/rules/#pyflakes-f,
+    "I", # isort
+    "E4", # default choice of ruff
+    "E7", # default choice of ruff
+    "E9", # default choice of ruff
+    "W", # Warnings
+    "PL", # Pylint
+
+]
+
+[lint.pydocstyle]
+convention = "google"

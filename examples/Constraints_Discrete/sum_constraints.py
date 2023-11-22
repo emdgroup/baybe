@@ -1,5 +1,4 @@
 ### Example for using a sum constraint in a discrete searchspace
-# pylint: disable=missing-module-docstring
 
 # Example for imposing sum constraints for discrete parameters.
 # The constraints simulate a situation where we want to mix up to three solvents.
@@ -14,8 +13,8 @@
 import math
 
 import numpy as np
-from baybe import Campaign
 
+from baybe import Campaign
 from baybe.constraints import (
     DiscreteDependenciesConstraint,
     DiscreteNoLabelDuplicatesConstraint,
@@ -58,7 +57,8 @@ parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 
 #### Creating the constraint
 
-# Since the constraints are required for the creation of the searchspace, we create them next.
+# Since the constraints are required for the creation of the searchspace, we create
+# them next.
 # Note that we need a `PermutationInvarianceConstraint` here.
 # The reason is that constraints are normally applied in a specific order.
 # However, the fractions should be invariant under permutations.
@@ -82,7 +82,7 @@ sum_constraint = DiscreteSumConstraint(
     condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
 )
 
-# The permutation invariance might create duplciate labels.
+# The permutation invariance might create duplicate labels.
 # We thus include a constraint to remove them.
 no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
     parameters=["Solv1", "Solv2", "Solv3"]

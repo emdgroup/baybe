@@ -54,7 +54,6 @@ def farthest_point_sampling(
 
     # Successively add the points with the largest distance
     while len(selected_point_indices) < n_samples:
-
         # Collect distances between selected and remaining points
         dist = dist_matrix[np.ix_(remaining_point_indices, selected_point_indices)]
 

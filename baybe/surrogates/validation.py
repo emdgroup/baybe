@@ -8,7 +8,7 @@ from baybe.surrogates.base import Surrogate
 
 
 def validate_custom_architecture_cls(model_cls: type) -> None:
-    """Validates a custom architecture to have the correct attributes.
+    """Validate a custom architecture to have the correct attributes.
 
     Args:
         model_cls: The user defined model class.
@@ -25,8 +25,8 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
             "`_fit` and a `_posterior` must exist for custom architectures"
         )
 
-    fit = model_cls._fit  # pylint: disable=protected-access
-    posterior = model_cls._posterior  # pylint: disable=protected-access
+    fit = model_cls._fit
+    posterior = model_cls._posterior
 
     # They must be methods
     if not (callable(fit) and callable(posterior)):
@@ -37,10 +37,7 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
     # Methods must have the correct arguments
     params = fit.__code__.co_varnames[: fit.__code__.co_argcount]
 
-    if (
-        params
-        != Surrogate._fit.__code__.co_varnames  # pylint: disable=protected-access
-    ):
+    if params != Surrogate._fit.__code__.co_varnames:
         raise ValueError(
             "Invalid args in `_fit` method definition for custom architecture. "
             "Please refer to Surrogate._fit for the required function signature."
@@ -48,10 +45,7 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
 
     params = posterior.__code__.co_varnames[: posterior.__code__.co_argcount]
 
-    if (
-        params
-        != Surrogate._posterior.__code__.co_varnames  # pylint: disable=protected-access
-    ):
+    if params != Surrogate._posterior.__code__.co_varnames:
         raise ValueError(
             "Invalid args in `_posterior` method definition for custom architecture. "
             "Please refer to Surrogate._posterior for the required function signature."
@@ -71,7 +65,7 @@ def get_model_params_validator(model_init: Optional[Callable] = None) -> Callabl
     def validate_model_params(  # noqa: DOC101, DOC103
         obj: Any, _: Any, model_params: dict
     ) -> None:
-        """Validates the model params attribute of an object.
+        """Validate the model params attribute of an object.
 
         Raises:
             ValueError: When model params are given for non-supported objects.

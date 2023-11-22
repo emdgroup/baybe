@@ -1,5 +1,4 @@
 ### Example for using different strategies
-# pylint: disable=missing-module-docstring
 
 # This example shows how to create and use strategy objects.
 # Such an object specifies the strategy adopted to make recommendations.

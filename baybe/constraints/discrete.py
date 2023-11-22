@@ -9,9 +9,9 @@ from attr.validators import in_, min_len
 
 from baybe.constraints.base import DiscreteConstraint
 from baybe.constraints.conditions import (
-    _valid_logic_combiners,
     Condition,
     ThresholdCondition,
+    _valid_logic_combiners,
 )
 from baybe.utils import Dummy
 from baybe.utils.serialization import (

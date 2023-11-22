@@ -19,7 +19,6 @@ if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
     #       class-method-decorators-in-python-3-8
     #   https://bugs.python.org/issue39679
     def _register(self, cls, method=None):
-        # pylint: disable=missing-function-docstring
         if hasattr(cls, "__func__"):
             setattr(cls, "__annotations__", cls.__func__.__annotations__)
         return self.dispatcher.register(cls, func=method)
@@ -76,7 +75,7 @@ class Interval:
     @singledispatchmethod
     @classmethod
     def create(cls, value):
-        """Generic function for creating intervals."""
+        """Create an interval from various input types."""
         raise NotImplementedError(f"Unsupported argument type: {type(value)}")
 
     @create.register

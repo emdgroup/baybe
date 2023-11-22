@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import cast, List, Optional
+from typing import List, Optional, cast
 
 import pandas as pd
 import torch
@@ -21,7 +21,7 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import validate_parameters
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils import converter, SerialMixin
+from baybe.utils import SerialMixin, converter
 
 
 class SearchSpaceType(Enum):
@@ -246,7 +246,7 @@ class SearchSpace(SerialMixin):
 
 
 def structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
-    """A structuring hook that assembles the search space from "config" format.
+    """Assemble the search space from "config" format.
 
     It uses the alternative :func:`baybe.searchspace.core.SearchSpace.from_product`
     constructor, which allows to deserialize search space specifications that are
@@ -260,7 +260,7 @@ def structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
 
 
 def validate_searchspace_from_config(specs: dict, _) -> None:
-    """A validation hook that does not create the search space.
+    """Validate but do not create the search space.
 
     Similar to :func:`baybe.searchspace.core.structure_searchspace_from_config` but
     without the actual search space creation step, thus intended for validation purposes

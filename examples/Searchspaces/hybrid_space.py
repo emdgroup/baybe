@@ -1,5 +1,4 @@
 ### Example for using synthetic test functions in hybrid spaces
-# pylint: disable=missing-module-docstring
 
 # This examples shows how to optimize a custom test function in a hybrid searchspace.
 # It focuses on the searchspace-related aspects and not on the custom test function.
@@ -11,6 +10,7 @@
 #### Necessary imports for this example
 
 import numpy as np
+from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
 from baybe.objective import Objective
@@ -20,8 +20,6 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
-
-from botorch.test_functions import Rastrigin
 
 #### Defining the test function and the hybrid dimensions
 
@@ -44,7 +42,7 @@ TestFunctionClass = Rastrigin
 # This part checks if the test function already has a fixed dimension.
 # In that case, we print a warning and replace DIMENSION.
 if not hasattr(TestFunctionClass, "dim"):
-    TestFunction = TestFunctionClass(dim=DIMENSION)  # pylint: disable = E1123
+    TestFunction = TestFunctionClass(dim=DIMENSION)
 elif TestFunctionClass().dim == DIMENSION:
     TestFunction = TestFunctionClass()
 else:

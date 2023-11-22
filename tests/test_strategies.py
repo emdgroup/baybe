@@ -13,7 +13,6 @@ from baybe.strategies.composite import (
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
-
 from tests.conftest import select_recommender
 
 RECOMMENDERS = [RandomRecommender(), FPSRecommender(), SequentialGreedyRecommender()]

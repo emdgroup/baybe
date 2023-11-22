@@ -1,5 +1,4 @@
 ### Example for using the multi target mode for the objective
-# pylint: disable=missing-module-docstring
 
 # Example for using the multi target mode for the objective.
 # It uses a desirability value to handle several targets.

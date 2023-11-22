@@ -14,9 +14,9 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.telemetry import (
-    get_user_details,
     VARNAME_TELEMETRY_ENABLED,
     VARNAME_TELEMETRY_USERNAME,
+    get_user_details,
 )
 from baybe.utils.dataframe import add_fake_results
 

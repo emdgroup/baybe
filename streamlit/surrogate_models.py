@@ -1,4 +1,3 @@
-# pylint: disable=unused-argument
 """Compare different surrogate model and verify their predictions.
 
 The purpose of this script is to compare different surrogate models and verify that
@@ -10,16 +9,16 @@ when the input and output scales are changed.
 
 import matplotlib.pyplot as plt
 import numpy as np
-import streamlit as st
 import torch
+from botorch.acquisition import qExpectedImprovement
+from botorch.optim import optimize_acqf_discrete
+from funcy import rpartial
 
+import streamlit as st
 from baybe.acquisition import debotorchize
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import get_available_surrogates
-from botorch.acquisition import qExpectedImprovement
-from botorch.optim import optimize_acqf_discrete
-from funcy import rpartial
 
 # define constants
 N_PARAMETER_VALUES = 1000
@@ -58,7 +57,7 @@ def linear(
 
 
 def main():
-    """Creates the streamlit dashboard."""
+    """Create the streamlit dashboard."""
     # basic settings
     plt.style.use("seaborn-v0_8-paper")  # 'seaborn' is depreciated since matplotlib 3.6
 

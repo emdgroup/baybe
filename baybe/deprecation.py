@@ -8,7 +8,7 @@ from baybe import Campaign
 
 
 @define
-class BayBE(Campaign):  # pylint: disable=abstract-method
+class BayBE(Campaign):
     """A :class:`baybe.campaign.Campaign` alias for backward compatibility."""
 
     def __attrs_pre_init__(self):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Iterable, List, Literal, Optional, Tuple, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -218,7 +218,6 @@ def add_parameter_noise(
         )
 
     for param in (p for p in parameters if p.is_numeric):
-
         # Add selected noise type
         if noise_type == "relative_percent":
             data[param.name] *= np.random.uniform(

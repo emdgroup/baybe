@@ -9,12 +9,12 @@ from attr import define, field
 
 from baybe.targets.base import Target
 from baybe.utils import (
+    Interval,
+    SerialMixin,
     bound_bell,
     bound_linear,
     bound_triangular,
     convert_bounds,
-    Interval,
-    SerialMixin,
 )
 
 _logger = logging.getLogger(__name__)

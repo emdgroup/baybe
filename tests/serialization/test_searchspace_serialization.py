@@ -1,7 +1,7 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring
 """Test serialization of searchspaces."""
 
 import pytest
+
 from baybe.searchspace import SearchSpace
 
 

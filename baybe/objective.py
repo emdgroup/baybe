@@ -11,7 +11,7 @@ from attr import define, field
 from attr.validators import deep_iterable, in_, instance_of, min_len
 
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils import geom_mean, SerialMixin
+from baybe.utils import SerialMixin, geom_mean
 
 
 def _normalize_weights(weights: List[float]) -> List[float]:

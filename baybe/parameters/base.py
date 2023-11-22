@@ -8,8 +8,7 @@ import pandas as pd
 from attr import define, field
 from cattrs.gen import override
 
-from baybe.utils import get_base_structure_hook, SerialMixin, unstructure_base
-
+from baybe.utils import SerialMixin, get_base_structure_hook, unstructure_base
 from baybe.utils.serialization import converter
 
 # TODO: Introduce encoding enums

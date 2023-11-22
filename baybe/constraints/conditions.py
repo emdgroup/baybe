@@ -15,7 +15,9 @@ from baybe.utils import SerialMixin
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """The counterpart to ``numpy.isclose``.
+    """Return a boolean array indicating where ``x`` and ``y`` are not close.
+
+    The counterpart to ``numpy.isclose``.
 
     Args:
         x: First input array to compare.
@@ -61,7 +63,7 @@ class Condition(ABC, SerialMixin):
 
     @abstractmethod
     def evaluate(self, data: pd.Series) -> pd.Series:
-        """Evaluates the condition on a given data series.
+        """Evaluate the condition on a given data series.
 
         Args:
             data: A series containing parameter values.

@@ -1,5 +1,4 @@
 ### Example for surrogate model with a custom architecture using `pytorch`
-# pylint: disable=missing-module-docstring, unused-argument
 
 # This example shows how to define a `pytorch` model architecture and use it as a surrogate.
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
@@ -13,6 +12,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import torch
+from torch import Tensor, nn
 
 from baybe.campaign import Campaign
 from baybe.objective import Objective
@@ -27,7 +27,6 @@ from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
-from torch import nn, Tensor
 
 #### Architecture definition
 
@@ -54,12 +53,12 @@ MC = 100
 
 # Helper functions
 def _create_linear_block(in_features: int, out_features: int) -> list:
-    """Creates a linear block with dropout and relu activation."""
+    """Create a linear block with dropout and relu activation."""
     return [nn.Linear(in_features, out_features), nn.Dropout(p=DROPOUT), nn.ReLU()]
 
 
 def _create_hidden_layers(num_neurons: List[int]) -> list:
-    """Creates all hidden layers comprised of linear blocks."""
+    """Create all hidden layers comprised of linear blocks."""
     layers = []
     for in_features, out_features in zip(num_neurons, num_neurons[1:]):
         layers.extend(_create_linear_block(in_features, out_features))
@@ -93,6 +92,7 @@ class NeuralNetDropout(nn.Module):
 #### Surrogate Definition with BayBE Registration
 
 # The class must include `_fit` and `_posterior` functions with the correct signatures
+
 
 # Registration
 @register_custom_architecture(

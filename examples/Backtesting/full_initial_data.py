@@ -1,5 +1,4 @@
 ### Example for full simulation loop using a table-based lookup mechanism with initial data
-# pylint: disable=missing-module-docstring
 
 # This example shows a simulation for a direct arylation where all combinations have been measured.
 # It also demonstrates how to use initial data by using a lookup mechanism.
@@ -12,7 +11,6 @@
 #### Necessary imports for this example
 
 import matplotlib.pyplot as plt
-
 import pandas as pd
 import seaborn as sns
 

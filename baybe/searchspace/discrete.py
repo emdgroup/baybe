@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, cast, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -126,7 +126,7 @@ class SubspaceDiscrete:
         self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True
 
     def _on_task_configurations(self) -> pd.Series:
-        """Retrieves the parameter configurations for the active tasks."""
+        """Retrieve the parameter configurations for the active tasks."""
         # TODO [16932]: This only works for a single parameter
         try:
             task_param = next(
@@ -138,7 +138,7 @@ class SubspaceDiscrete:
 
     @classmethod
     def empty(cls) -> SubspaceDiscrete:
-        """Creates an empty discrete subspace."""
+        """Create an empty discrete subspace."""
         return SubspaceDiscrete(
             parameters=[],
             exp_rep=pd.DataFrame(),

@@ -13,8 +13,8 @@ from baybe.constraints.conditions import Condition
 from baybe.parameters import NumericalContinuousParameter
 from baybe.utils import (
     DTypeFloatTorch,
-    get_base_structure_hook,
     SerialMixin,
+    get_base_structure_hook,
     unstructure_base,
 )
 from baybe.utils.serialization import converter

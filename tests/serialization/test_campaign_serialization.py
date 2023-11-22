@@ -1,10 +1,9 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring
 """Test serialization of campaigns."""
 
 import pytest
+from cattrs import ClassValidationError
 
 from baybe.campaign import Campaign
-from cattrs import ClassValidationError
 
 
 def roundtrip(campaign: Campaign) -> Campaign:
@@ -13,7 +12,6 @@ def roundtrip(campaign: Campaign) -> Campaign:
 
 
 def test_campaign_serialization(campaign):
-
     campaign2 = roundtrip(campaign)
     assert campaign == campaign2
 

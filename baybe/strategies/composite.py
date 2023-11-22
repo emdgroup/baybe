@@ -14,7 +14,6 @@ from baybe.strategies.base import Strategy
 from baybe.utils import block_deserialization_hook, block_serialization_hook
 from baybe.utils.serialization import converter
 
-
 # TODO: Make predictive recommenders handle empty training data
 _unsupported_recommender_error = ValueError(
     f"For cases where no training is available, the selected recommender "

@@ -79,7 +79,7 @@ class SubspaceContinuous:
             df: The dataframe specifying the points of the subspace.
 
         Returns:
-            Ths constructed subspace.
+            The constructed subspace.
         """
         # TODO: Add option for convex hull once constraints are in place
         bounds = pd.concat([df.min(), df.max()], axis=1).T
