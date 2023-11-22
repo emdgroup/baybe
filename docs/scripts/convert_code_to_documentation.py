@@ -229,7 +229,6 @@ building_call = [
     "-D",
     f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
     "-n",  # Being nitpicky
-    "-W",  # Fail when encountering an error or a warning
 ]
 
 # Process examples if required.
@@ -241,8 +240,9 @@ try:
     check_call(
         link_call if DEBUG else link_call + ["-Q"],
     )
+    # We only want to fail if we are not in debug mode
     check_call(
-        building_call if DEBUG else building_call + ["-q"],
+        building_call if DEBUG else building_call + ["-q", "-W"],
     )
 except CalledProcessError:
     print(
