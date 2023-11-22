@@ -8,14 +8,11 @@ repos:
     - id: pydoclint
       args: [--config=pydoclint.cfg]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.5
+  rev: v0.1.6
   hooks:
   - id: ruff
-    name: "ruff (general)"
-    args: [--config=ruff_general.cfg]
-  - id: ruff
-    name: "ruff (misc)"
-    args: [--config=ruff_misc.cfg]
+    name: "ruff"
+    args: [--config=ruff.cfg]
   - id: ruff-format
 - repo: https://github.com/crate-ci/typos
   rev: v1.16.23

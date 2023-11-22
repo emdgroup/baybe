@@ -87,7 +87,7 @@ lint = [
     "mypy>=1.2.0",
     "pre-commit==2.19.0",  # see DEV TOOLS NOTE
     "pydoclint==0.2.1", # see DEV TOOLS NOTE
-    "ruff==0.1.5", # see DEV TOOLS NOTE
+    "ruff==0.1.6", # see DEV TOOLS NOTE
     "typos==1.16.23" # see DEV TOOLS NOTE
 ]
 
