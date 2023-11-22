@@ -12,7 +12,6 @@ repos:
   hooks:
   - id: ruff
     name: "ruff"
-    args: [--config=ruff.cfg]
   - id: ruff-format
 - repo: https://github.com/crate-ci/typos
   rev: v1.16.23
