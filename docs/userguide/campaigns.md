@@ -24,7 +24,7 @@ We refer to the [`Searchspace`](baybe.searchspace.core.SearchSpace) class resp. 
 The following additional aspects (and corresponding public ``arguments``) are available to further specify a campaign:
 * **A strategy ``strategy``:**: The strategy that is used during the campaign. As a default, a [`TwoPhaseStrategy`](baybe.strategies.composite.TwoPhaseStrategy) is employed. For more details on strategies, see [here](./strategy).
 * **Conducted experiments ``measurements_exp``**: A pandas ``DataFrame`` containing the experimental representation of previously conducted experiments. Preferably, the entries of this ``DataFrame`` were created by a previous campaign using [the campaigns recommend function](baybe.campaign.Campaign.recommend). If no such ``DataFrame`` is provided, it is assumed that no experiments were conducted previously.
-* **Numerical tolerance ``numerical_measurements_must_be_within_tolerance``**: This is a flag for forcing numerical measurements to be within a pre-defined tolerance. The default value is ``True``.
+* **Numerical tolerance ``numerical_measurements_must_be_within_tolerance``**: This is a flag for forcing numerical measurements to be within a pre-defined tolerance. The default value is ``True``. Note that the actual setting of the tolerances is controlled as a part of the respective parameter.
 * **Previously done batches ``n_batches_done``** The number of previously processed batches. The default value is 0.
 * **Previously done fits ``n_fits_done``**: The number of previously done fits. The default value is 0.
 
