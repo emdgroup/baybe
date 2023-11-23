@@ -1,8 +1,9 @@
 """Validation functionality for parameters."""
 
-from typing import Any
+from typing import Any, Sequence
 
-from attr.validators import gt, instance_of, lt
+import numpy as np
+from attrs.validators import gt, instance_of, lt
 
 
 def validate_unique_values(  # noqa: DOC101, DOC103
@@ -26,3 +27,16 @@ def validate_decorrelation(obj: Any, attribute: Any, value: float) -> None:
     if isinstance(value, float):
         gt(0.0)(obj, attribute, value)
         lt(1.0)(obj, attribute, value)
+
+
+def validate_is_finite(obj: Any, _: Any, value: Sequence[float]) -> None:
+    """Validate that ``value`` contains no infinity/nan.
+
+    Raises:
+        ValueError: If ``value`` contains infinity/nan.
+    """
+    if not all(np.isfinite(value)):
+        raise ValueError(
+            f"Cannot assign the following values containing infinity/nan to "
+            f"parameter {obj.name}: {value}."
+        )
