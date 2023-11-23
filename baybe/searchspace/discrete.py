@@ -198,7 +198,7 @@ class SubspaceDiscrete:
                 created if possible, or a
                 :class:`baybe.parameters.categorical.CategoricalParameter` is used as
                 fallback.
-            empty_encoding: See :class:`baybe.searchspace.core.SearchSpace`.
+            empty_encoding: See :func:`baybe.searchspace.core.SearchSpace.from_product`.
 
         Returns:
             The created discrete subspace.
