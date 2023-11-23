@@ -367,6 +367,7 @@ A list of know issues can be found [here](docs/known_issues.md).
 ## License
 
 Copyright 2022-2023 Merck KGaA, Darmstadt, Germany
+and/or its affiliates. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
