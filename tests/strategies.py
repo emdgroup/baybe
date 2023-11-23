@@ -55,9 +55,8 @@ def smiles(draw: st.DrawFn):
 @st.composite
 def substance_data(draw: st.DrawFn):
     """Generates data for class:`baybe.parameters.substance.SubstanceParameter`."""
-    n_substances = draw(st.integers(min_value=1, max_value=10))
-    names = draw(st.lists(st.text(), min_size=n_substances, max_size=n_substances))
-    substances = draw(st.lists(smiles(), min_size=n_substances, max_size=n_substances))
+    names = draw(st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True))
+    substances = draw(st.lists(smiles(), min_size=len(names), max_size=len(names)))
     return dict(zip(names, substances))
 
 
