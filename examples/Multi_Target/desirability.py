@@ -17,7 +17,7 @@ from baybe.utils import add_fake_results
 
 #### Experiment setup and creating the searchspace
 
-Categorical_1 = CategoricalParameter("Cat_1", values=[22, 33], encoding="OHE")
+Categorical_1 = CategoricalParameter("Cat_1", values=["22", "33"], encoding="OHE")
 Categorical_2 = CategoricalParameter(
     "Cat_2",
     values=["very bad", "bad", "OK", "good", "very good"],
