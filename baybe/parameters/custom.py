@@ -3,8 +3,10 @@
 from functools import cached_property
 from typing import Any, ClassVar, Union
 
+import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field
+from attrs.validators import min_len
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CustomEncoding
@@ -25,7 +27,7 @@ class CustomDiscreteParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    data: pd.DataFrame = field(eq=eq_dataframe)
+    data: pd.DataFrame = field(validator=min_len(2), eq=eq_dataframe)
     """A mapping that provides the encoding for all available parameter values."""
 
     decorrelate: Union[bool, float] = field(
@@ -54,21 +56,30 @@ class CustomDiscreteParameter(DiscreteParameter):
             ValueError: If the dataframe contains columns that only contain a single
                 value.
         """
-        if value.isna().any().any():
-            raise ValueError(
-                f"The custom dataframe for parameter {self.name} contains NaN "
-                f"entries, which is not supported."
-            )
-        if len(value) != len(set(value.index)):
-            raise ValueError(
-                f"The custom dataframe for parameter {self.name} contains "
-                f"duplicated indices. Please only provide dataframes with unique"
-                f" indices."
-            )
         if value.select_dtypes("number").shape[1] != value.shape[1]:
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} contains "
                 f"non-numeric values."
+            )
+        if not all(isinstance(x, str) for x in value.index):
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} contains non-string "
+                f"index values."
+            )
+        if not all(len(x) > 0 for x in value.index):
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} contains empty string "
+                f"index values."
+            )
+        if not np.isfinite(value.values).all():
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} contains nan/infinity "
+                f"entries."
+            )
+        if len(value) != len(set(value.index)):
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} contains "
+                f"duplicated indices."
             )
         if any(value.nunique() == 1):
             raise ValueError(

@@ -28,7 +28,7 @@ class CategoricalParameter(DiscreteParameter):
         validator=[
             min_len(2),
             validate_unique_values,  # type: ignore
-            deep_iterable(member_validator=instance_of(str)),
+            deep_iterable(member_validator=[instance_of(str), min_len(1)]),
         ],
     )
     # See base class.

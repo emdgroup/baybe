@@ -11,7 +11,7 @@ from attrs.validators import min_len
 
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import DiscreteParameter, Parameter
-from baybe.parameters.validation import validate_unique_values
+from baybe.parameters.validation import validate_is_finite, validate_unique_values
 from baybe.utils import DTypeFloatNumpy, InfiniteIntervalError, Interval, convert_bounds
 
 
@@ -27,11 +27,12 @@ class NumericalDiscreteParameter(DiscreteParameter):
     # NOTE: The parameter values are assumed to be sorted by the tolerance validator.
     _values: Tuple[float, ...] = field(
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
-        converter=lambda x: cattrs.structure(sorted(x), Tuple[float, ...]),  # type: ignore
+        converter=lambda x: sorted(cattrs.structure(x, Tuple[float, ...])),  # type: ignore
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),
             validate_unique_values,  # type: ignore
+            validate_is_finite,
         ],
     )
     """The values the parameter can take."""

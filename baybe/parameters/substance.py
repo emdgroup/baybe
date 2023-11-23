@@ -4,7 +4,8 @@ from functools import cached_property
 from typing import Any, ClassVar, Dict, Union
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
+from attrs.validators import and_, deep_mapping, instance_of, min_len
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
@@ -21,6 +22,9 @@ if _RDKIT_INSTALLED:
 
     if _MORDRED_INSTALLED:
         from baybe.utils import smiles_to_mordred_features
+
+Smiles = str
+"""Type alias for SMILES strings."""
 
 
 @define(frozen=True, slots=False)
@@ -39,7 +43,14 @@ class SubstanceParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    data: Dict[str, str] = field()
+    data: Dict[str, Smiles] = field(
+        validator=deep_mapping(
+            mapping_validator=min_len(2),
+            # TODO: Create cattrs issue for required `and_` and value/key_validator
+            key_validator=and_(instance_of(str), min_len(1)),
+            value_validator=lambda *x: None,
+        )
+    )
     """A mapping that provides the SMILES strings for all available parameter values."""
 
     decorrelate: Union[bool, float] = field(
@@ -89,7 +100,7 @@ class SubstanceParameter(DiscreteParameter):
 
     @data.validator
     def _validate_substance_data(  # noqa: DOC101, DOC103
-        self, _: Any, value: Dict[str, str]
+        self, _: Any, value: Dict[str, Smiles]
     ) -> None:
         """Validate that the substance data, provided as SMILES, is valid.
 
