@@ -6,7 +6,6 @@ from baybe.parameters.enum import (
     CategoricalEncoding,
     CustomEncoding,
     SubstanceEncoding,
-    TaskEncoding,
 )
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
@@ -23,6 +22,5 @@ __all__ = [
     "NumericalDiscreteParameter",
     "SubstanceEncoding",
     "SubstanceParameter",
-    "TaskEncoding",
     "TaskParameter",
 ]

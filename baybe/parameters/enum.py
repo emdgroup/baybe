@@ -14,12 +14,6 @@ class CategoricalEncoding(ParameterEncoding):
     INT = "INT"
 
 
-class TaskEncoding(ParameterEncoding):
-    """Available encodings for task parameters."""
-
-    INT = "INT"
-
-
 class SubstanceEncoding(ParameterEncoding):
     """Available encodings for substance parameters."""
 

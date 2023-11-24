@@ -9,7 +9,7 @@ from attr import define, field
 from attr.validators import min_len
 
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.enum import CategoricalEncoding, TaskEncoding
+from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
 
 
@@ -61,7 +61,7 @@ class TaskParameter(CategoricalParameter):
     """An optional list of values describing for which tasks recommendations should be
     given. By default, all parameters are considered active."""
 
-    encoding: TaskEncoding = field(default=TaskEncoding.INT, init=False)
+    encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
     @active_values.default
