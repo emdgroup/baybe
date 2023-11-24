@@ -63,10 +63,10 @@ def substance_data(draw: st.DrawFn):
 @st.composite
 def custom_encodings(draw: st.DrawFn):
     """Generates data for class:`baybe.parameters.custom.CustomDiscreteParameter`."""
-    index = st.lists(st.text(), min_size=2, max_size=10, unique=True)
+    index = st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True)
     cols = columns(
         names_or_number=10,
-        elements=st.floats(allow_nan=False),
+        elements=st.floats(allow_nan=False, allow_infinity=False),
         unique=True,
         dtype=DTypeFloatNumpy,
     )
