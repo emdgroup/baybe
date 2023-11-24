@@ -33,7 +33,7 @@ class Parameter(ABC, SerialMixin):
     """Class variable encoding whether this parameter is discrete."""
 
     # object variables
-    name: str = field(validator=[instance_of(str), min_len(1)])
+    name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
 
     @abstractmethod

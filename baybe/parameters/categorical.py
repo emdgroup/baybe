@@ -22,14 +22,13 @@ class CategoricalParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
     _values: Tuple[str, ...] = field(
         converter=tuple,
-        validator=[
+        validator=(
             min_len(2),
-            validate_unique_values,  # type: ignore
-            deep_iterable(member_validator=[instance_of(str), min_len(1)]),
-        ],
+            validate_unique_values,
+            deep_iterable(member_validator=(instance_of(str), min_len(1))),
+        ),
     )
     # See base class.
 
