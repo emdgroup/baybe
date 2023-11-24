@@ -46,7 +46,7 @@ class SubstanceParameter(DiscreteParameter):
     data: Dict[str, Smiles] = field(
         validator=deep_mapping(
             mapping_validator=min_len(2),
-            # TODO: Create cattrs issue for required `and_` and value/key_validator
+            # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1206
             key_validator=and_(instance_of(str), min_len(1)),
             value_validator=lambda *x: None,
         )
