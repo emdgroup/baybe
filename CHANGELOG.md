@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parameter encoding enums
 - `mypy` for parameters package
 - `tox` environments for `mypy`
+- `hypothesis` strategies and tests for parameters module
 
 ### Changed
 - Replacing `pylint`, `flake8`, `µfmt` and `usort` with `ruff`
