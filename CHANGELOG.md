@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Linter `typos` for spellchecking
 - Parameter encoding enums
 - `mypy` for parameters package
+- `tox` environments for `mypy`
 
 ### Changed
 - Replacing `pylint`, `flake8`, `µfmt` and `usort` with `ruff`
