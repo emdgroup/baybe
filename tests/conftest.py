@@ -31,6 +31,7 @@ from baybe.parameters import (
     CustomDiscreteParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    SubstanceEncoding,
     TaskParameter,
 )
 from baybe.recommenders.base import Recommender
@@ -55,7 +56,7 @@ from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
 _CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
 if _CHEM_INSTALLED:
-    from baybe.parameters.substance import SUBSTANCE_ENCODINGS, SubstanceParameter
+    from baybe.parameters.substance import SubstanceParameter
 
 if _ONNX_INSTALLED:
     from baybe.surrogates.custom import CustomONNXSurrogate
@@ -312,7 +313,7 @@ def fixture_parameters(
                     data=mock_substances,
                     encoding=encoding,
                 )
-                for encoding in SUBSTANCE_ENCODINGS
+                for encoding in SubstanceEncoding
             ],
         ]
     else:

@@ -8,10 +8,12 @@ import pandas as pd
 from attr import define, field
 from cattrs.gen import override
 
+from baybe.parameters.enum import ParameterEncoding
 from baybe.utils import SerialMixin, get_base_structure_hook, unstructure_base
 from baybe.utils.serialization import converter
 
-# TODO: Introduce encoding enums
+# TODO: Reactive slots in all classes once cached_property is supported:
+#   https://github.com/python-attrs/attrs/issues/164
 
 
 @define(frozen=True, slots=False)
@@ -55,9 +57,8 @@ class DiscreteParameter(Parameter, ABC):
     is_discrete: ClassVar[bool] = True
     # See base class.
 
-    # object variables
-    encoding: ClassVar[Optional[str]] = None
-    """The encoding of the parameter."""
+    encoding: Optional[ParameterEncoding] = field(init=False, default=None)
+    """An optional encoding strategy for the parameter."""
 
     @property
     @abstractmethod
@@ -102,9 +103,10 @@ overrides = {
     "_values": override(rename="values"),
     "decorrelate": override(struct_hook=lambda x, _: x),
 }
+# FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(
     Parameter,
-    get_base_structure_hook(Parameter, overrides=overrides),
+    get_base_structure_hook(Parameter, overrides=overrides),  # type: ignore
 )
 converter.register_unstructure_hook(
     Parameter, partial(unstructure_base, overrides=overrides)

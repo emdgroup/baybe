@@ -8,9 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Script for building HTML documentation and corresponding `tox` environment
 - Linter `typos` for spellchecking
+- Parameter encoding enums
+- `mypy` for parameters package
+- `tox` environments for `mypy`
 
 ### Changed
 - Replacing `pylint`, `flake8`, `µfmt` and `usort` with `ruff`
+
+### Fixed
+- `encoding` is no longer a class variable
+- Now installed with correct `pandas` dependency flag
 
 ### Deprecations
 - Markdown based documentation replaced with HTML based documentation

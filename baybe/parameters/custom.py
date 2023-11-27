@@ -7,6 +7,7 @@ import pandas as pd
 from attr import define, field
 
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import CustomEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils import df_uncorrelated_features, eq_dataframe
 
@@ -37,7 +38,7 @@ class CustomDiscreteParameter(DiscreteParameter):
         - float in (0, 1): The encoding is decorrelated using the specified threshold.
     """
 
-    encoding = field(default="CUSTOM")
+    encoding: CustomEncoding = field(init=False, default=CustomEncoding.CUSTOM)
     # See base class.
 
     @data.validator

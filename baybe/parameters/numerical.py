@@ -25,10 +25,12 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
     # object variables
     _values: Tuple[float, ...] = field(
-        converter=lambda x: cattrs.structure(x, Tuple[float, ...]),
+        # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
+        converter=lambda x: cattrs.structure(x, Tuple[float, ...]),  # type: ignore
+        # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),
-            validate_unique_values,
+            validate_unique_values,  # type: ignore
         ],
     )
     """The values the parameter can take."""

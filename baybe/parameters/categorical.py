@@ -1,7 +1,7 @@
 """Categorical parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -9,6 +9,7 @@ from attr import define, field
 from attr.validators import min_len
 
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
 
 
@@ -21,12 +22,16 @@ class CategoricalParameter(DiscreteParameter):
     # See base class.
 
     # object variables
+    # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
     _values: tuple = field(
-        converter=tuple, validator=[min_len(2), validate_unique_values]
+        converter=tuple,
+        validator=[min_len(2), validate_unique_values],  # type: ignore
     )
     # See base class.
 
-    encoding: Literal["OHE", "INT"] = field(default="OHE")
+    encoding: CategoricalEncoding = field(
+        default=CategoricalEncoding.OHE, converter=CategoricalEncoding
+    )
     # See base class.
 
     @property
@@ -37,10 +42,10 @@ class CategoricalParameter(DiscreteParameter):
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
-        if self.encoding == "OHE":
+        if self.encoding is CategoricalEncoding.OHE:
             cols = [f"{self.name}_{val}" for val in self.values]
             comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
-        elif self.encoding == "INT":
+        elif self.encoding is CategoricalEncoding.INT:
             comp_df = pd.DataFrame(range(len(self.values)), columns=[self.name])
         comp_df.index = pd.Index(self.values)
 
@@ -52,14 +57,12 @@ class TaskParameter(CategoricalParameter):
     """Parameter class for task parameters."""
 
     # object variables
-    # IMPROVE: The encoding effectively becomes a class variable here, but cannot be
-    #   declared as such because of the inheritance relationship.
-    encoding: Literal["INT"] = field(default="INT")
-    # See base class.
-
     active_values: tuple = field(converter=tuple)
     """An optional list of values describing for which tasks recommendations should be
     given. By default, all parameters are considered active."""
+
+    encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
+    # See base class.
 
     @active_values.default
     def _default_active_values(self) -> tuple:

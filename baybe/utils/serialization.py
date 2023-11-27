@@ -83,7 +83,7 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
 def get_base_structure_hook(
     base: Type[_T],
     overrides: Optional[dict] = None,
-) -> Callable[[dict], _T]:
+) -> Callable[[dict, Type[_T]], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
     Provides the inverse operation to ``unstructure_base``.
@@ -97,7 +97,7 @@ def get_base_structure_hook(
     """
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
 
-    def structure_base(val: dict, _) -> _T:
+    def structure_base(val: dict, _: Type[_T]) -> _T:
         _type = val.pop("type")
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
