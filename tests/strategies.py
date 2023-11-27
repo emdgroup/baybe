@@ -74,7 +74,7 @@ def custom_encodings(draw: st.DrawFn):
 
 
 @st.composite
-def numerical_discrete_parameter(  # pylint: disable=inconsistent-return-statements
+def numerical_discrete_parameter(
     draw: st.DrawFn,
 ):
     """Generate class:`baybe.parameters.numerical.NumericalDiscreteParameter`."""
