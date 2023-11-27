@@ -87,7 +87,7 @@ class CustomDiscreteParameter(DiscreteParameter):
         # The encoding is directly provided by the user
         # We prepend the parameter name to the columns names to avoid potential
         # conflicts with other parameters
-        comp_df = self.data.rename(columns=lambda x: f"{self.name}_" + x)
+        comp_df = self.data.rename(columns=lambda x: f"{self.name}_{x}")
 
         # Get a decorrelated subset of the provided features
         if self.decorrelate:
