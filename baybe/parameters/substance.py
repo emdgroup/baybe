@@ -55,7 +55,6 @@ class SubstanceParameter(DiscreteParameter):
     encoding: SubstanceEncoding = field(
         default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding
     )
-
     # See base class.
 
     @encoding.validator
@@ -117,7 +116,7 @@ class SubstanceParameter(DiscreteParameter):
         vals = list(self.data.values())
         pref = self.name + "_"
 
-        # Get the raw fingerprints
+        # Get the raw descriptors
         if self.encoding is SubstanceEncoding.MORDRED:
             comp_df = smiles_to_mordred_features(vals, prefix=pref)
         elif self.encoding is SubstanceEncoding.RDKIT:
@@ -141,7 +140,7 @@ class SubstanceParameter(DiscreteParameter):
         # Label the rows with the molecule names
         comp_df.index = pd.Index(self.values)
 
-        # Get a decorrelated subset of the fingerprints
+        # Get a decorrelated subset of the descriptors
         if self.decorrelate:
             if isinstance(self.decorrelate, bool):
                 comp_df = df_uncorrelated_features(comp_df)
