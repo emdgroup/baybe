@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `encoding` is no longer a class variable
+- Now installed with correct `pandas` dependency flag
 
 ### Deprecations
 - Markdown based documentation replaced with HTML based documentation
