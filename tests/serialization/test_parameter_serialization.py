@@ -1,24 +1,15 @@
 """Test serialization of parameters."""
 
-import pytest
+from hypothesis import given
 
 from baybe.parameters.base import Parameter
 
+from ..strategies import parameter
 
-@pytest.mark.parametrize(
-    "parameter_names",
-    [
-        ["Categorical_1"],
-        ["Num_disc_1"],
-        ["Custom_1"],
-        ["Solvent_1"],
-        ["Conti_finite1"],
-        ["Task"],
-    ],
-)
-@pytest.mark.parametrize("n_grid_points", [5])
-def test_parameter_serialization(parameters):
-    param = parameters[0]
+
+@given(parameter)
+def test_parameter_roundtrip(param: Parameter):
+    """A serialization roundtrip yields an equivalent object."""
     string = param.to_json()
     param2 = Parameter.from_json(string)
-    assert param == param2
+    assert param == param2, (param, param2)

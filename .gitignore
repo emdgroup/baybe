@@ -23,6 +23,7 @@ build
 .tox
 .coverage
 .coverage.*
+.hypothesis/
 .pytest_cache
 htmlcov
 

@@ -1,12 +1,12 @@
 """Categorical parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Tuple
 
 import numpy as np
 import pandas as pd
 from attr import define, field
-from attr.validators import min_len
+from attr.validators import deep_iterable, instance_of, min_len
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
@@ -22,10 +22,13 @@ class CategoricalParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
-    _values: tuple = field(
+    _values: Tuple[str, ...] = field(
         converter=tuple,
-        validator=[min_len(2), validate_unique_values],  # type: ignore
+        validator=(
+            min_len(2),
+            validate_unique_values,
+            deep_iterable(member_validator=(instance_of(str), min_len(1))),
+        ),
     )
     # See base class.
 
