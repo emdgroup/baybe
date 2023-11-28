@@ -4,8 +4,8 @@
 
 ... no matter if bug fixes, new features, or just typo corrections.
 
-The docstrings that are used for BayBE are based on the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
-These docstrings are used to automatically create the documentation using [Sphinx](https://www.sphinx-doc.org/en/master/index.html).
+To shorten the overall development and review process, this page contains are a
+few sections that can make your life easier.
 
 ## General Workflow
 
@@ -49,16 +49,17 @@ In any case, these checks are also conducted in our CI pipeline, which must pass
 before your pull request is considered ready for review. 
 If you have questions or problems, simply ask for advice.
 
-* We use [ruff](https://docs.astral.sh/ruff/) for code linting and formatting.
-* We use [mypy](https://mypy.readthedocs.io/) for static type checking.
-* We use [pydocstyle](http://www.pydocstyle.org/) and 
-  [pydoclint](https://github.com/jsh9/pydoclint) for analysing docstrings.
-* We use [typos](https://github.com/crate-ci/typos) for basic spell checking.
-* We use [pytest](https://docs.pytest.org/) for testing.
-* We use [pytest-cov](https://pytest-cov.readthedocs.io/) for measuring coverage.
-* We use [sphinx](https://www.sphinx-doc.org/) for generating our documentation.
-* We use [pip-audit](https://github.com/pypa/pip-audit) for detecting vulnerabilities.
-* We use [tox](https://tox.wiki/) for orchestrating all the above.
+| Tool                                                                                            | Purpose                      |
+|:------------------------------------------------------------------------------------------------|:-----------------------------|
+| [ruff](https://docs.astral.sh/ruff/)                                                            | code linting and formatting  |
+| [mypy](https://mypy.readthedocs.io/)                                                            | static type checking         |
+| [pydocstyle](http://www.pydocstyle.org/)   <br/> [pydoclint](https://github.com/jsh9/pydoclint) | analysing docstrings         |
+| [typos](https://github.com/crate-ci/typos)                                                      | basic spell checking         |
+| [pytest](https://docs.pytest.org/)                                                              | testing                      |
+| [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measuring test coverage      |
+| [sphinx](https://www.sphinx-doc.org/)                                                           | generating our documentation |
+| [pip-audit](https://github.com/pypa/pip-audit)                                                  | detecting vulnerabilities    |
+| [tox](https://tox.wiki/)                                                                        | orchestrating all the above  |
 
 Executing a specific one of these tools is easiest by using the corresponding
 [tox](https://tox.wiki/) environment,
@@ -105,25 +106,10 @@ Apart from that, we generally recommend adhering to the following guideline:
     * a short one-line summary at the top, 
     * an optional extended summary or description below and
     * all relevant sections (`Args`, `Raises`, ...).
-- Each function needs to have a docstring. The only exception are functions that inherit their docstring from a parent class. In this case, the following comments should be added:
-    * At the end of the line containing the `def` for the function, add `# noqa: D102` to disable that error.
-    * Have the comment `# See base class.` as the first line of the function.
-- Note that `pydocstyle` does not enforce docstrings for private methods. If a private function has a docstring, `pydocstyle` acknowledges it and checks it.
-- Function signatures need to have type hints for both inputs and the return type.
-- Type hints should not be added to the docstrings.
-- When referencing another class, function, or similar, use the syntax ``:func:`path.to.function` `` where `func` should be replaced by the respective keyword.
-- When parts of the comment should appear as `code` in the docstring, use double backticks ``.
-- Since we use [attrs](https://www.attrs.org/en/stable/) for writing classes,  initialization functions are not documented. Instance attributes thus need to be documented using a docstring in the line below their declaration.
-- Class variables are documented by adding a docstring in the line below their declaration.
-- When an inherited class sets one of the instance attributes, this attribute needs to be documented in the docstring of the inherited class.
-- Magic functions do not require a docstring.
-- Some special rules apply to writing docstrings for validators:
-    * All validators should begin with `_validate`.
-    * The docstring of a validator should contain a one-line description of what is being validated as well as a `Raises:` section.
-    * If necessary, a validator's docstring can contain a more detailed additional description.
-    * Validators should **not** have an `Args:` section. 
-    * Since these guidelines raise errors for  [pydoclint](https://github.com/jsh9/pydoclint), add `# noqa: DOC101, DOC103` to the same line as the `def` keyword of the declared validator to disable the errors.
-- For custom [cattrs](https://catt.rs/) (un-)structuring hooks, a one-line docstring is sufficient.
+  
+  Potential exceptions are functions whose docstring is to be fully inherited from a 
+  parent class.
+  In this case, use `# noqa: D102` to disable the automatic checks locally.
 
 - Use type hints (for variables/constants, attributes, function/method signatures, ...).
   Avoid repeating type hints in docstrings.
