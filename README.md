@@ -85,14 +85,14 @@ The available groups are:
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
 
-## Getting Started
+## Quick Start
 
 BayBE is a DOE software built to streamline your experimental process.
 It can process measurement data from previous experiments and, based on these, provide
 optimal experimental designs to further improve your target quantities.
 
 In order to make use of BayBE's optimization capabilities, you need to translate your
-real-world optimization problem into mathematical language.
+real-world problem into mathematical language.
 To do so, you should ask yourself the following questions:
 
 * What should be optimized?
