@@ -10,6 +10,8 @@
 <a href="https://github.com/emdgroup/BayBE/pulls"><img src="https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&color=%23ff79c6"/></a>
 <a href="http://www.apache.org/licenses/LICENSE-2.0"><img src="https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&color=%234c1"/></a>
 
+[![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/images/banner2.svg)](https://github.com/emdgroup/baybe)
+
   <p><a href="https://emdgroup.github.io/baybe">Documentation</a></p>
 </div>
 
@@ -295,6 +297,9 @@ campaign.add_measurements(df)
 
 With the newly arrived data, BayBE will update its internal state and can produce a
 refined design for the next iteration.
+
+## Telemetry
+
 
 
 ## Known Issues
