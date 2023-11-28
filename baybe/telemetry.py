@@ -1,27 +1,77 @@
 """Telemetry functionality for BayBE.
 
-The following environment variables control the behavior of BayBE telemetry:
+Important:
+    BayBE collects anonymous usage statistics **only** for employees of Merck KGaA,
+    Darmstadt, Germany and/or its affiliates. The recording of metrics is turned off
+    for all other users and impossible due to a VPN block. In any case, the usage
+    statistics do **not** involve logging of recorded measurements, targets or any
+    project information that would allow for reconstruction of details. The user and
+    host machine names are irreversibly anonymized.
 
-BAYBE_TELEMETRY_ENABLED
+**Monitored quantities are:**
+    * ``batch_quantity`` used when querying recommendations
+    * Number of parameters in the search space
+    * Number of constraints in the search space
+    * How often ``recommend`` was called
+    * How often ``add_measurements`` was called
+    * How often a search space is newly created
+    * How often initial measurements are added before recommendations were calculated
+      ("naked initial measurements")
+    * The fraction of measurements added that correspond to previous recommendations
+    * Each measurement is associated with an irreversible has of the user- and hostname
+
+**The following environment variables control the behavior of BayBE telemetry:**
+
+``BAYBE_TELEMETRY_ENABLED``
     Flag that can turn off telemetry entirely (default is `true`). To turn it off set it
     to `false`.
 
-BAYBE_TELEMETRY_ENDPOINT
+``BAYBE_TELEMETRY_ENDPOINT``
     The receiving endpoint URL for telemetry data.
 
-BAYBE_TELEMETRY_VPN_CHECK
+``BAYBE_TELEMETRY_VPN_CHECK``
     Flag turning an initial telemetry connectivity check on/off (default is `true`).
 
-BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT
+``BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT``
     The timeout in seconds for the check whether the endpoint URL is reachable.
 
-BAYBE_TELEMETRY_USERNAME
+``BAYBE_TELEMETRY_USERNAME``
     The name of the user executing BayBE code. Defaults to an irreversible hash of
     the username according to the OS.
 
-BAYBE_TELEMETRY_HOSTNAME
+``BAYBE_TELEMETRY_HOSTNAME``
     The name of the machine executing BayBE code. Defaults to an irreversible hash of
     the machine name.
+
+If you wish to disable logging, you can set the following environment variable:
+
+.. code-block:: terminal
+
+    export BAYBE_TELEMETRY_ENABLED=false
+
+or in Python:
+
+.. code-block:: python
+
+    import os
+    os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
+
+before calling any BayBE functionality.
+
+Telemetry can be re-enabled by simply removing the variable:
+
+.. code-block:: terminal
+
+    unset BAYBE_TELEMETRY_ENABLED
+
+or in Python:
+
+.. code-block:: python
+
+    os.environ.pop["BAYBE_TELEMETRY_ENABLED"]
+
+Note, however, that (un-)setting the variable in the shell will not affect the running
+Python session.
 """
 import getpass
 import hashlib

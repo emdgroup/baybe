@@ -296,55 +296,6 @@ campaign.add_measurements(df)
 With the newly arrived data, BayBE will update its internal state and can produce a
 refined design for the next iteration.
 
-## Telemetry
-
-By default, BayBE collects anonymous usage statistics.
-Note that this does **not** involve logging of recorded measurements, targets or any
-project information that would allow the reconstruction of details.
-
-Monitored quantities are:
-
-- `batch_quantity` used when querying recommendations
-- number of parameters in the search space
-- number of constraints in the search space
-- how often `recommend` was called
-- how often `add_measurements` was called
-- how often a search space is newly created
-- how often initial measurements are added before recommendations were calculated
-  ("naked initial measurements")
-- the fraction of measurements added that correspond to previous recommendations
-
-These metrics are vital to demonstrating the impact of the project and
-– should you find BayBE useful – we kindly ask you to leave telemetry activated.
-If you wish to disable logging, you can set the following environment variable:
-
-```bash
-export BAYBE_TELEMETRY_ENABLED=false
-```
-
-or in python:
-
-```python
-import os
-
-os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
-```
-
-before calling any BayBE functionality.
-Telemetry can be re-enabled by simply removing the variable:
-
-```bash
-unset BAYBE_TELEMETRY_ENABLED
-```
-
-or in python:
-
-```python
-os.environ.pop["BAYBE_TELEMETRY_ENABLED"]
-```
-
-Note, however, that (un-)setting the variable in the shell will not affect the running
-Python session.
 
 ## Known Issues
 A list of know issues can be found [here](docs/known_issues.md).
