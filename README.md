@@ -28,40 +28,18 @@ It provides the necessary functionality to:
 - compare different DOE strategies through backtesting with synthetic and real data.
 
 ## Installation
-
-There are several ways to install BayBE.
-Essentially, these can be divided into 1) installation from Azure Artifacts via pip
-or 2) direct installation from this repository using git.
-
-### Installation from Azure Artifacts
-
-If a specific **released** BayBE version is to be installed, this can be achieved via
-[Azure Artifacts](https://***REMOVED***/_artifacts/feed/artifacts).
-
-The most convenient way for this is to generate a personal access token (PAT) on the
-[user settings page](https://***REMOVED***/_usersSettings/tokens).
-Once the token is created, BayBE can be installed via
+### From Package Index
+The easiest way to install BayBE is via PyPI or Conda:
 
 ```bash
-pip install --extra-index-url https://artifacts:<token>@pkgs.***REMOVED***/_packaging/artifacts/pypi/simple/ baybe
+pip install baybe
 ```
 
-where `<token>` needs to be replaced with your PAT.
-Note that, instead of passing the `--extra-index-url` option directly as an argument
-to the `install` command, you can alternatively create a `pip.conf` file containing
-the same information.
-
-A second way to authenticate instead of using a PAT is via `artifacts-keyring`.
-To do so, ensure that all [prerequisites](https://pypi.org/project/artifacts-keyring/)
-are fulfilled and run:
-
 ```bash
-pip install keyring artifacts-keyring
-pip install --extra-index-url https://pkgs.***REMOVED***/_packaging/artifacts/pypi/simple/ baybe
+conda install --channel=conda-forge baybe
 ```
 
 ### Installation from Repository
-
 If you need finer control and would like to install a specific commit that has not been
 released under a certain version tag, you can do so by installing BayBE directly from
 the repository.
@@ -73,8 +51,9 @@ pip install .
 ```
 
 There are additional dependencies that can be installed corresponding to linters, 
-plotters etc. (`dev`). A developer would typically also install the package in editable mode 
-('-e').
+formatters etc. (e.g. `dev`). A developer would typically also install the package in 
+editable mode ('-e') which ensures that changes to the code do not require a 
+reinstallation.
 
 ```bash
 pip install -e '.[dev]'
@@ -99,7 +78,7 @@ The available groups are:
 - `onnx`: Required for using custom surrogate models in ONNX format.
 - `simulation`: Enabling the [`simulation`](baybe.simulation) module.
 - `test`: Required for running the tests.
-- `dev`: All of the above plus `tox` and `pip-audit`.
+- `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
 
 ## Getting Started
