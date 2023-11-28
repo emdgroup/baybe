@@ -1,3 +1,18 @@
+<div align="center">
+  <br/>
+  
+[![ci](https://github.com/emdgroup/BayBE/actions/workflows/ci.yml/badge.svg)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aci.yml)
+[![regular](https://github.com/emdgroup/BayBE/actions/workflows/regular.yml/badge.svg)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aregular.yml)
+<a href="https://pypi.org/project/baybe/"><img src="https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supported%20Python%20versions&color=%23ffb86c"/></a>
+<a href="https://anaconda.org/conda-forge/baybe"><img src="https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&color=%23bd93f9" alt="Conda Version"/></a>
+<a href="https://pypi.org/project/baybe/"><img src="https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20version&color=%23bd93f9"/></a>
+<a href="https://github.com/emdgroup/BayBE/issues"><img src="https://img.shields.io/github/issues/emdgroup/BayBE?style=flat-square&color=%23ff79c6"/></a>
+<a href="https://github.com/emdgroup/BayBE/pulls"><img src="https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&color=%23ff79c6"/></a>
+<a href="http://www.apache.org/licenses/LICENSE-2.0"><img src="https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&color=%234c1"/></a>
+
+  <p><a href="https://emdgroup.github.io/baybe">Documentation</a></p>
+</div>
+
 # BayBE — A Bayesian Back End for Design of Experiments
 
 This software package provides a general-purpose toolbox for **Design of Experiments
