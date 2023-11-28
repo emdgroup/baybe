@@ -1,0 +1,129 @@
+# NOTES:
+# - The map syntax used for matrix is flagged red but actually works
+# - This runs everything in Python 3.8, 3.9, 3.10 and 3.11
+# - No environments are cached due to space limit
+
+name: Regular Checks
+on:
+  schedule:
+    # Run roughly every 15 days at 02:08 UTC
+    - cron: '8 2 1,16 * *'
+  workflow_dispatch:
+
+env:
+  COVERAGE_OVERALL_THRESH: 70      # threshold for overall coverage check
+  COVERAGE_INDIVIDUAL_THRESH: 45   # threshold for individual coverage check
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    strategy:
+      matrix:
+        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+    name: Lint ${{ matrix.py-version.semantic }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        id: setup-python
+        with:
+          python-version: ${{ matrix.py-version.semantic }}
+      - name: Run linting
+        run: |
+          pip install tox
+          tox -e lint-${{ matrix.py-version.tox }}
+
+  typecheck:
+    needs: [lint]
+    strategy:
+      matrix:
+        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+    name: Type Check ${{ matrix.py-version.semantic }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        id: setup-python
+        with:
+          python-version: ${{ matrix.py-version.semantic }}
+      - name: Run type check
+        run: |
+          pip install tox
+          tox -e mypy-${{ matrix.py-version.tox }}
+
+  audit:
+    needs: [lint]
+    strategy:
+      matrix:
+        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+    name: Audit ${{ matrix.py-version.semantic }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        id: setup-python
+        with:
+          python-version: ${{ matrix.py-version.semantic }}
+      - name: Run pip-audit
+        run: |
+          pip install tox
+          tox -e audit-${{ matrix.py-version.tox }}
+
+  coretest:
+    needs: [typecheck, audit]
+    strategy:
+      matrix:
+        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+    name: Core Tests ${{ matrix.py-version.semantic }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        id: setup-python
+        with:
+          python-version: ${{ matrix.py-version.semantic }}
+      - uses: actions/cache@v3
+        with:
+          path: .tox/coretest-${{ matrix.py-version.tox }}
+          key: coretest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
+      - name: Run core tests
+        run: |
+          pip install tox
+          tox -e coretest-${{ matrix.py-version.tox }}
+
+  fulltest:
+    needs: [typecheck, audit]
+    strategy:
+      matrix:
+        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+    name: Full Tests ${{ matrix.py-version.semantic }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        id: setup-python
+        with:
+          python-version: ${{ matrix.py-version.semantic }}
+      - uses: actions/cache@v3
+        with:
+          path: .tox/fulltest-${{ matrix.py-version.tox }}
+          key: fulltest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
+      - name: Run full tests
+        run: |
+          pip install tox
+          tox -e fulltest-${{ matrix.py-version.tox }} -- --cov-report=xml
+      - name: "Assert Overall Coverage"
+        run: |
+          pip install coverage
+          coverage report --fail-under=${{ env.COVERAGE_OVERALL_THRESH }}
+      - name: "Assert Individual Coverage"
+        shell: bash
+        run: |
+          coverage report |
+          grep -E -o '[0-9]+%' |
+          tr -d '%' |
+          sed '$d' |
+          awk '{if ( $1<${{ env.COVERAGE_INDIVIDUAL_THRESH }} ) exit 1 }'
