@@ -27,15 +27,6 @@ It provides the necessary functionality to:
 - handle measurements data and feed it back into the experimental design.
 - compare different DOE strategies through backtesting with synthetic and real data.
 
-## ❗🚧 This repository is under **heavy active development**. 🚧❗
-
-Please note that the provided functionality and user interfaces are not stable and may
-change in newer releases.
-Therefore, if you would like to use the code in its current early stage, we recommend
-pinning the version during installation to prevent possible changes in the backend.
-In case of questions or comments, feel free to reach out to the **BayBE Dev Team** (see
-[the contributors page](docs/misc/contributors_link) for contact details).
-
 ## Installation
 
 There are several ways to install BayBE.
