@@ -17,17 +17,19 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-This software package provides a general-purpose toolbox for **Design of Experiments
-(DOE)**.
+The **Bay**esian **B**ack **E**nd provides a general-purpose toolbox for Bayesian Design of 
+Experiments, focusing on additions that enable real-world experimental campaigns.
 
-It provides the necessary functionality to:
-
-- manage experimental design spaces that can be defined through various types of
-  experimental parameters.
-- execute different kinds of DOE strategies, levering both classical and
-  machine-learning-based models.
-- handle measurements data and feed it back into the experimental design.
-- compare different DOE strategies through backtesting with synthetic and real data.
+Besides functionality to perform a typical recommend-measure loop, BayBE's highlights are:
+- Custom parameter encodings: Improve your campaign with domain knowledge
+- Built-in chemical encodings: Improve your campaign with chemical knowledge
+- Single and multiple targets with min, max and match objectives
+- Custom surrogate models: For specialized problems or active learning
+- Hybrid (mixed continuous and discrete) spaces
+- Transfer learning: Mix data from multiple campaigns and accelerate optimization
+- Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
+- Fully typed and hypothesis-tested: Robust code base
+- The entire state of your campaign is fully de-/serializable: Useful for storing results in databases
 
 ## Installation
 ### From Package Index
@@ -41,7 +43,7 @@ pip install baybe
 conda install --channel=conda-forge baybe
 ```
 
-### Installation from Repository
+### From Repository
 If you need finer control and would like to install a specific commit that has not been
 released under a certain version tag, you can do so by installing BayBE directly from
 the repository.
@@ -297,9 +299,6 @@ campaign.add_measurements(df)
 
 With the newly arrived data, BayBE will update its internal state and can produce a
 refined design for the next iteration.
-
-## Telemetry
-
 
 
 ## Known Issues
