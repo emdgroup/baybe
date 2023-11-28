@@ -12,7 +12,11 @@
 
 [![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/images/banner2.svg)](https://github.com/emdgroup/baybe)
 
-  <p><a href="https://emdgroup.github.io/baybe">Documentation</a></p>
+<a href="https://emdgroup.github.io/baybe/_autosummary/baybe.html">Documentation<a/>
+&nbsp;•&nbsp;
+<a href="https://emdgroup.github.io/baybe/userguide.html">User Guide<a/>
+&nbsp;•&nbsp;
+<a href="https://emdgroup.github.io/baybe/misc/contributing_link.html">Contribute<a/>
 </div>
 
 # BayBE — A Bayesian Back End for Design of Experiments
@@ -87,85 +91,38 @@ The available groups are:
 
 ## Quick Start
 
-BayBE is a DOE software built to streamline your experimental process.
-It can process measurement data from previous experiments and, based on these, provide
-optimal experimental designs to further improve your target quantities.
-
-In order to make use of BayBE's optimization capabilities, you need to translate your
-real-world problem into mathematical language.
-To do so, you should ask yourself the following questions:
-
-* What should be optimized?
-* What are the degrees of freedom?
-* (Optional) What optimization strategy should be used?
-
-Conveniently, the answer to each of these questions can be directly expressed in the
-form of objects in BayBE's ecosystem that can be easily mixed and matched:
-
-| Part of the Problem Specification                     | Defining BayBE Objects    |
-|:------------------------------------------------------|:--------------------------|
-| What should be optimized?                             | `Objective`, `Target`     |
-| What are the degrees of freedom?                      | `Parameter`, `Constraint` | 
-| (Optional) What optimization strategy should be used? | `Strategy`, `Recommender` |
-
-The objects in the first two table rows can be regarded as embodiments of the
-**mathematical DOE specifications** in digital form, as they fully define the underlying
-optimization problem.
-By contrast, the objects in the last row rather provide **algorithmic details**
-on how the DOE problem should be solved.
-In that sense, the former carry information that **must be** provided by the user,
-whereas the latter are **optional** settings that can also be set automatically
-by BayBE.
-
-A key element in the design of BayBE is the [`Campaign`](baybe.campaign.Campaign) object.
-It acts as a central container for all the necessary information and objects
-associated with an experimentation process, ensuring that all independent model
-components (e.g. the objective function, the search space, etc.) are properly combined.
-
-The following example provides a step-by-step guide to what this translation process
-should look like, and how we can subsequently use BayBE to generate optimal sets of
-experimental conditions.
+Let us consider a simple experiment where we have three parameters and want to maximize 
+a single target called `Yield`.
 
 ### Defining the Optimization Objective
 
-We start by defining an optimization objective.
-While BayBE ships with the necessary functionality to optimize multiple targets
-simultaneously, as an introductory example, we consider a simple scenario where our
-goal is to **maximize** a single numerical target that represents the yield of a
-chemical reaction.
-
-In BayBE's language, the reaction yield can be represented as a [`NumericalTarget`](baybe.targets.numerical)
-object:
+In BayBE's language, the `Yield` can be represented as a 
+[`NumericalTarget`](baybe.targets.numerical) which we pass into an `Objective`.
 
 ```python
 from baybe.targets import NumericalTarget
+from baybe.objective import Objective
 
 target = NumericalTarget(
     name="Yield",
     mode="MAX",
 )
-```
-
-We wrap the target object in an optimization [`Objective`](baybe.objective.Objective), to inform BayBE
-that this is the only target we would like to consider:
-
-```python
-from baybe.objective import Objective
-
 objective = Objective(mode="SINGLE", targets=[target])
 ```
 
 In cases where we need to consider multiple (potentially competing) targets, the
-role of the [`Objective`](baybe.objective.Objective) is to define how these targets should be balanced.
-For more details, see [the targets section of the user guide](docs/userguide/targets.md).
+role of the [`Objective`](baybe.objective.Objective) is to define additional settings, 
+e.g. how these targets should be balanced. In `SINGLE` mode, however, there are no 
+additional settings. For more details, see 
+[the targets section of the user guide](docs/userguide/targets.md).
 
 ### Defining the Search Space
 
 Next, we inform BayBE about the available "control knobs", that is, the underlying
-system parameters we can tune to optimize our targets.
-This also involves specifying their ranges and other parameter-specific details.
+system parameters we can tune to optimize our targets. This also involves specifying 
+their values/ranges and other parameter-specific details.
 
-For our reaction example, we assume that we can control the following three quantities:
+For our example, we assume that we can control the following three quantities:
 
 ```python
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter, SubstanceParameter
@@ -174,46 +131,37 @@ parameters = [
     CategoricalParameter(
         name="Granularity",
         values=["coarse", "medium", "fine"],
-        encoding="OHE",
+        encoding="OHE", # one-hot encoding of categories
     ),
     NumericalDiscreteParameter(
         name="Pressure[bar]",
         values=[1, 5, 10],
-        tolerance=0.2,
+        tolerance=0.2, # allows experimental inaccuracies up to 0.2 when reading values 
     ),
     SubstanceParameter(
         name="Solvent",
-        data={"Solvent A": "COC", "Solvent B": "CCC", "Solvent C": "O",
-              "Solvent D": "CS(=O)C"},
-        encoding="MORDRED",
+        data={"Solvent A": "COC", "Solvent B": "CCC", # label-SMILES pairs
+              "Solvent C": "O", "Solvent D": "CS(=O)C"},
+        encoding="MORDRED", # chemical encoding via mordred package
     ),
 ]
+
+constraints = None
 ```
-
-Note that each parameter is of a different **type** and thus requires its own
-type-specific settings. In particular case above, for instance:
-
-* `encoding=OHE` activates one-hot-encoding for the categorical parameter "Granularity".
-* `tolerance=0.2` allows experimental inaccuracies up to 0.2 when reading values for
-  "Pressure[bar]".
-* `encoding=MORDRED`triggers computation of MORDRED cheminformatics descriptors for
-  the substance parameter "Solvent".
 
 For more parameter types and their details, see
 [parameters section of the user guide](docs/userguide/parameters).
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
-relationships between our parameters.
-Details can be found in [the constraints section of the user guids](docs/userguide/constraints).
-In this example, we assume no further constraints and explicitly indicate this with an
-empty variable, for the sake of demonstration:
+relationships between our parameters. Details can be found in 
+[the constraints section of the user guide](docs/userguide/constraints). In this 
+example, we assume no further constraints and explicitly indicate this with an empty 
+variable `constraints`.
 
-```python
-constraints = None
-```
 
 With the parameter and constraint definitions at hand, we can now create our
-[`SearchSpace`](baybe.searchspace):
+[`SearchSpace`](baybe.searchspace) based on the product of all possible parameter 
+values:
 
 ```python
 from baybe.searchspace import SearchSpace
@@ -224,15 +172,13 @@ searchspace = SearchSpace.from_product(parameters, constraints)
 ### Optional: Defining the Optimization Strategy
 
 As an optional step, we can specify details on how the optimization should be
-conducted.
-If omitted, BayBE will choose a default setting.
+conducted. If omitted, BayBE will choose a default setting.
 
-For our chemistry example, we combine two selection strategies:
+For our example, we combine two selection strategies:
 
 1. In cases where no measurements have been made prior to the interaction with BayBE,
-   a random experiment selection strategy is used to produce initial recommendations.
-2. As soon as the first measurements are available, we switch to a Bayesian approach
-   where points are selected greedily from a probabilistic prediction model.
+   a selection via `initial_recommender` is used.
+2. As soon as the first measurements are available, we switch to `recommender`.
 
 For more details on the different strategies, their underlying algorithmic
 details, and their configuration settings, see
@@ -240,19 +186,17 @@ details, and their configuration settings, see
 
 ```python
 from baybe.strategies import TwoPhaseStrategy
-from baybe.recommenders import SequentialGreedyRecommender, RandomRecommender
+from baybe.recommenders import SequentialGreedyRecommender, FPSRecommender
 
 strategy = TwoPhaseStrategy(
-    initial_recommender=RandomRecommender(),
-    recommender=SequentialGreedyRecommender(),
+    initial_recommender=FPSRecommender(), # farthest point sampling
+    recommender=SequentialGreedyRecommender(), # Bayesian model-based optimization
 )
 ```
 
 ### The Optimization Loop
 
-Having provided the answers to [all questions above](#getting-started), we can now
-construct a BayBE object that brings all
-pieces of the puzzle together:
+We can now construct a BayBE object that brings all pieces of the puzzle together:
 
 ```python
 from baybe import Campaign
@@ -267,16 +211,11 @@ In particular:
 * We can `add_measurements` for certain experimental settings to BayBE's database.
 
 Note that these two steps can be performed in any order.
-In particular, available measurement data can be submitted at any time.
-Also, we can start the interaction with either command and repeat the same type of
-command immediately after its previous call, e.g., if the required number of
-recommendations has changed.
-
-The following illustrates one such possible sequence of interactions.
-Let us first ask for an initial set of recommendations:
+In particular, available measurements can be submitted at any time and also several 
+times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_quantity=5)
+df = campaign.recommend(batch_quantity=3)
 ```
 
 For a particular random seed, the result could look as follows:
@@ -286,19 +225,18 @@ For a particular random seed, the result could look as follows:
 | medium        | 1               | Solvent B |
 | medium        | 5               | Solvent D |
 | fine          | 5               | Solvent C |
-| fine          | 5               | Solvent A |
-| medium        | 10              | Solvent B |
 
 After having conducted the corresponding experiments, we can add our measured
-yields to the table and feed it back to BayBE:
+targets to the table and feed it back to BayBE:
 
 ```python
-df["Yield"] = [79, 54, 59, 95, 84]
+df["Yield"] = [79.8, 54.1, 59.4]
 campaign.add_measurements(df)
 ```
 
 With the newly arrived data, BayBE will update its internal state and can produce a
-refined design for the next iteration.
+refined design for the next iteration. This loop would typically continue until a 
+desired target value has been achieved in the experiment.
 
 
 ## Known Issues
