@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Github CI pipelines
 - Optional --force option for force building the documentation despite errors
 - Enabled passing optional arguments to `tox -e docs` calls
+- Logo and banner images
+
+###
+- reworked README
 
 ### Changed
 - Now has concise contribution guidelines
