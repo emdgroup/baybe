@@ -1,16 +1,18 @@
 <div align="center">
   <br/>
-  
-[![ci](https://github.com/emdgroup/BayBE/actions/workflows/ci.yml/badge.svg)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aci.yml)
-[![regular](https://github.com/emdgroup/BayBE/actions/workflows/regular.yml/badge.svg)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aregular.yml)
-<a href="https://pypi.org/project/baybe/"><img src="https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supported%20Python%20versions&color=%23ffb86c"/></a>
-<a href="https://anaconda.org/conda-forge/baybe"><img src="https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&color=%23bd93f9" alt="Conda Version"/></a>
-<a href="https://pypi.org/project/baybe/"><img src="https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20version&color=%23bd93f9"/></a>
-<a href="https://github.com/emdgroup/BayBE/issues"><img src="https://img.shields.io/github/issues/emdgroup/BayBE?style=flat-square&color=%23ff79c6"/></a>
-<a href="https://github.com/emdgroup/BayBE/pulls"><img src="https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&color=%23ff79c6"/></a>
-<a href="http://www.apache.org/licenses/LICENSE-2.0"><img src="https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&color=%234c1"/></a>
 
-[![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/images/banner2.svg)](https://github.com/emdgroup/baybe)
+[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aci.yml)
+[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aregular.yml)
+[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Adocs.yml)
+
+[![Supported Python version](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supported%20Python%20Versions&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
+[![PyPI version](https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20Version&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
+[![Conda version](https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&labelColor=96d7d2&color=ffdcb9)](https://anaconda.org/conda-forge/baybe)
+[![Issues](https://img.shields.io/github/issues/emdgroup/BayBE?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/issues)
+[![PRs](https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/pulls)
+[![License](https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&labelColor=96d7d2&color=ffdcb9)](http://www.apache.org/licenses/LICENSE-2.0)
+
+[![Logo](https://raw.githubusercontent.com/emdgroup/BayBE/main/docs/images/banner2.svg)](https://github.com/emdgroup/baybe)
 
 <a href="https://emdgroup.github.io/baybe/_autosummary/baybe.html">Documentation<a/>
 &nbsp;•&nbsp;
@@ -21,8 +23,8 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-The **Bay**esian **B**ack **E**nd provides a general-purpose toolbox for Bayesian Design of 
-Experiments, focusing on additions that enable real-world experimental campaigns.
+The Bayesian Back End (**BayBE**) provides a general-purpose toolbox for Bayesian Design
+of Experiments, focusing on additions that enable real-world experimental campaigns.
 
 Besides functionality to perform a typical recommend-measure loop, BayBE's highlights are:
 - Custom parameter encodings: Improve your campaign with domain knowledge
@@ -33,7 +35,7 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - Transfer learning: Mix data from multiple campaigns and accelerate optimization
 - Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
 - Fully typed and hypothesis-tested: Robust code base
-- The entire state of your campaign is fully de-/serializable: Useful for storing results in databases
+- All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
 
 ## Installation
 ### From Package Index
@@ -44,7 +46,7 @@ pip install baybe
 ```
 
 ```bash
-conda install --channel=conda-forge baybe
+conda install -c conda-forge baybe
 ```
 
 A certain released version of the package can installed by specifying the
@@ -78,6 +80,13 @@ which ensures that changes to the code do not require a reinstallation.
 
 ```bash
 pip install -e .
+```
+
+If you need to add additional dependencies make sure to use the correct syntax 
+including `''`:
+
+```bash
+pip install -e '.[dev]'
 ```
 
 ### Optional Dependencies

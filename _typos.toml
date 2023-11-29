@@ -1,2 +1,0 @@
-[type.md]
-extend-ignore-identifiers-re = ['^E*nd$'] # ignore `**E**nd` in README.md
