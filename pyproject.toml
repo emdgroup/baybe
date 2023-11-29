@@ -28,6 +28,7 @@ keywords = [
     "Bayesian Optmization",
     "Design of Experiments",
     "DOE",
+    "Optimization",
 ]
 dynamic = ['version']
 
