@@ -45,7 +45,7 @@ Important:
 
 If you wish to disable logging, you can set the following environment variable:
 
-.. code-block:: terminal
+.. code-block:: console
 
     export BAYBE_TELEMETRY_ENABLED=false
 
@@ -60,7 +60,7 @@ before calling any BayBE functionality.
 
 Telemetry can be re-enabled by simply removing the variable:
 
-.. code-block:: terminal
+.. code-block:: console
 
     unset BAYBE_TELEMETRY_ENABLED
 
