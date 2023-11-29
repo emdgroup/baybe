@@ -14,30 +14,50 @@ we recommend the following workflow:
 
 1. Clone a [fork](https://github.com/emdgroup/BayBE/fork) of the repository to 
    your local machine.
+
 1. Create and activate a virtual python environment using one of the supported 
    python versions.
+
 1. Change into the root folder of the cloned repository and install an editable version
    including all development dependencies:
    ```console
    pip install -e '.[dev]'
    ```
+
 1. Run our tests to verify everything works as expected:
    ```console
    pytest
    ```
+
 1. Install our [pre-commit](https://pre-commit.com/) hooks:
    ```console
    pre-commit install
    ```
+
 1. Create a new branch for your contribution:
    ```console
    git checkout -b <your_branch_name>
    ```
+
 1. **Implement your changes.**
+
+1. Optional but recommended to prevent complaints from our CI pipeline: Test your code.
+
+   Testing against a single python can be achieved via `tox -e <version>`. For instance:
+   ```bash
+   tox -e py311
+   ```
+
+   If you want to challenge your machine, you can run all version tests in parallel via:
+   ```bash
+   tox -p
+   ```
+
 1. Push the updated branch back to your fork:
    ```console
    git push origin
    ```
+
 1. Open a pull request via Github's web page.
 
 ## Developer Tools
