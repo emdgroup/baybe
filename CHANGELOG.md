@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Github CI pipelines
+- Optional --force option for force building the documentation despite errors
+- Enabled passing optional arguments to `tox -e docs` calls
 
 ### Changed
 - Now has concise contribution guidelines
