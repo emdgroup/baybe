@@ -4,7 +4,7 @@ import argparse
 import os
 import pathlib
 import shutil
-from subprocess import DEVNULL, STDOUT, CalledProcessError, check_call
+from subprocess import DEVNULL, STDOUT, CalledProcessError, check_call, run
 
 from tqdm import tqdm
 
@@ -248,8 +248,10 @@ except CalledProcessError:
     print(
         """One of the processes raised a critical error. Re-running with more output."""
     )
-    check_call(link_call)
-    check_call(building_call)
+    # We do not want to fail the next two calls, even if an error code is returned.
+    # Hence, we us run instad of check_call
+    run(link_call, check=False)
+    run(building_call + ["--keep-going"], check=False)
 
 # Clean the other files
 for directory in [sdk_dir, autosummary_dir]:
