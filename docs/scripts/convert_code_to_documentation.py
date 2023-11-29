@@ -43,6 +43,12 @@ parser.add_argument(
     help="Include warnings when processing the examples. The default is ignoring them.",
     action="store_true",
 )
+parser.add_argument(
+    "-f",
+    "--force",
+    help="Force-build the documentation, even when there are warnings or errors.",
+    action="store_true",
+)
 
 
 # Parse input arguments
@@ -52,6 +58,7 @@ DEBUG = args.debug
 INCLUDE_PRIVATE = args.include_private
 IGNORE_EXAMPLES = args.ignore_examples
 INCLUDE_WARNINGS = args.include_warnings
+FORCE = args.force
 
 # We adjust the environment variable if we decide to ignore warnings
 if not INCLUDE_WARNINGS:
@@ -245,13 +252,19 @@ try:
         building_call if DEBUG else building_call + ["-q"],
     )
 except CalledProcessError:
-    print(
-        """One of the processes raised a critical error. Re-running with more output."""
-    )
-    # We do not want to fail the next two calls, even if an error code is returned.
-    # Hence, we us run instad of check_call
-    run(link_call, check=False)
-    run(building_call + ["--keep-going"], check=False)
+    print("""One of the processes raised a critical error.""")
+    if DEBUG:
+        print("Re-running both calls with more informative output.")
+        check_call(link_call)
+        check_call(building_call)
+    elif FORCE:
+        print("Force-building the documentation, ignoring errors and warnings.")
+        # We do not want to fail the next two calls, even if an error code is returned.
+        # Hence, we usw run instead of check_call
+        run(link_call, check=False)
+        run(building_call + ["--keep-going"], check=False)
+    else:
+        print("For more information, re-run using the --debug flag.")
 
 # Clean the other files
 for directory in [sdk_dir, autosummary_dir]:
