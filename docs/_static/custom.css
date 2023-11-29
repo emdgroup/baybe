@@ -1,0 +1,24 @@
+/*This file contains the options for changing the generated HTML Output*/
+
+/*Remove border around logo*/
+.sidebar-logo-container {
+    margin: 0;
+}
+
+.sidebar-search-container {
+    margin-top: 0;
+}
+
+a.sidebar-brand {
+    padding: 0;
+}
+
+/*Reduce left and right margins*/
+
+.sidebar-drawer {
+    width: calc(40% - 26em);
+}
+
+.content {
+    width: calc(100% - 10em);
+}
