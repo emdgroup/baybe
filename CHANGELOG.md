@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enabled passing optional arguments to `tox -e docs` calls
 - Logo and banner images
 
-###
-- reworked README
+### Changed
+- reworked README for GitHub landing page
 
 ### Changed
 - Now has concise contribution guidelines

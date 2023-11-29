@@ -18,7 +18,7 @@ Important:
     * How often initial measurements are added before recommendations were calculated
       ("naked initial measurements")
     * The fraction of measurements added that correspond to previous recommendations
-    * Each measurement is associated with an irreversible has of the user- and hostname
+    * Each measurement is associated with an irreversible hash of the user- and hostname
 
 **The following environment variables control the behavior of BayBE telemetry:**
 
