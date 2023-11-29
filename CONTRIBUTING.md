@@ -145,6 +145,18 @@ Apart from that, we generally recommend adhering to the following guideline:
 - Place attribute docstrings below the attribute declaration, not in the class 
   docstring.
   Separate different attributes using a blank line.
+  For example:
+  ```python
+  @define
+  class Cookies:
+    """A delicious recipe for chocolate-banana cookies."""
+  
+    chocolate: float
+    """Chocolate is naturally measured in terms of floats."""
+  
+    bananas: int
+    """For bananas, we use integers, of course."""
+  ```
 
 - Unless another more specific name is suitable, use our default naming convention for 
   `attrs` built-ins (defaults, converters, validators):
