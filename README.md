@@ -82,7 +82,7 @@ which ensures that changes to the code do not require a reinstallation.
 pip install -e .
 ```
 
-If you need to add additional dependencies make sure to use the correct syntax 
+If you need to add additional dependencies, make sure to use the correct syntax 
 including `''`:
 
 ```bash

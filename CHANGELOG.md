@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Logo and banner images
 
 ### Changed
-- reworked README for GitHub landing page
+- Reworked README for GitHub landing page
 
 ### Changed
 - Now has concise contribution guidelines
