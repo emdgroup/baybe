@@ -31,21 +31,6 @@ keywords = [
     "Optimization",
 ]
 dynamic = ['version']
-
-[project.urls]
-Homepage = "https://emdgroup.github.io/baybe/"
-Documentation = "https://emdgroup.github.io/baybe/_autosummary/baybe.html"
-Changelog = "https://emdgroup.github.io/baybe/misc/changelog_link.html"
-GitHub = "https://github.com/emdgroup/baybe/"
-Issues = "https://github.com/emdgroup/baybe/issues/"
-
-# DEV TOOLS NOTE: The versions of all dev tools should be consistent everywhere
-# (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
-
-# AUDIT NOTE: The marked packages are secondary dependencies but their versions are
-# set explicitly because the otherwise installed default versions have been flagged
-# for vulnerabilities by pip-audit
-
 dependencies = [
     "attrs>=22.2.0",
     "botorch>=0.8.1",
@@ -63,6 +48,20 @@ dependencies = [
     "torch>=1.11.0",
     "baybe[telemetry]",
 ]
+
+[project.urls]
+Homepage = "https://emdgroup.github.io/baybe/"
+Documentation = "https://emdgroup.github.io/baybe/_autosummary/baybe.html"
+Changelog = "https://emdgroup.github.io/baybe/misc/changelog_link.html"
+GitHub = "https://github.com/emdgroup/baybe/"
+Issues = "https://github.com/emdgroup/baybe/issues/"
+
+# DEV TOOLS NOTE: The versions of all dev tools should be consistent everywhere
+# (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
+
+# AUDIT NOTE: The marked packages are secondary dependencies but their versions are
+# set explicitly because the otherwise installed default versions have been flagged
+# for vulnerabilities by pip-audit
 
 [project.optional-dependencies]
 chem = [
