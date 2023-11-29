@@ -68,11 +68,11 @@ pip install -e '.[dev]'
 ```
 
 ### Optional Dependencies
-There are several dependency groups that can be installed during pip installation like
+There are several dependency groups that can be installed during pip installation, like
 ```bash
 pip install baybe[test,lint] # will install baybe with additional dependency groups `test` and `lint`
 ```
-To get the most out of `baybe` we recommend to install at least
+To get the most out of `baybe`, we recommend to install at least
 ```bash
 pip install baybe[chem,simulation]
 ```
@@ -97,7 +97,7 @@ a single target called `Yield`.
 ### Defining the Optimization Objective
 
 In BayBE's language, the `Yield` can be represented as a 
-[`NumericalTarget`](baybe.targets.numerical) which we pass into an `Objective`.
+[`NumericalTarget`](baybe.targets.numerical), which we pass into an `Objective`.
 
 ```python
 from baybe.targets import NumericalTarget
@@ -145,28 +145,24 @@ parameters = [
         encoding="MORDRED", # chemical encoding via mordred package
     ),
 ]
-
-constraints = None
 ```
 
-For more parameter types and their details, see
+For more parameter types and their details, see the
 [parameters section of the user guide](docs/userguide/parameters).
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters. Details can be found in 
 [the constraints section of the user guide](docs/userguide/constraints). In this 
-example, we assume no further constraints and explicitly indicate this with an empty 
-variable `constraints`.
-
+example, we assume no further constraints.
 
 With the parameter and constraint definitions at hand, we can now create our
-[`SearchSpace`](baybe.searchspace) based on the product of all possible parameter 
-values:
+[`SearchSpace`](baybe.searchspace) based on the Cartesian product of all possible 
+parameter values:
 
 ```python
 from baybe.searchspace import SearchSpace
 
-searchspace = SearchSpace.from_product(parameters, constraints)
+searchspace = SearchSpace.from_product(parameters)
 ```
 
 ### Optional: Defining the Optimization Strategy
@@ -196,7 +192,7 @@ strategy = TwoPhaseStrategy(
 
 ### The Optimization Loop
 
-We can now construct a BayBE object that brings all pieces of the puzzle together:
+We can now construct a campaign object that brings all pieces of the puzzle together:
 
 ```python
 from baybe import Campaign
@@ -208,7 +204,8 @@ With this object at hand, we can start our experimentation cycle.
 In particular:
 
 * We can ask BayBE to `recommend` new experiments.
-* We can `add_measurements` for certain experimental settings to BayBE's database.
+* We can `add_measurements` for certain experimental settings to the campaign's 
+  database.
 
 Note that these two steps can be performed in any order.
 In particular, available measurements can be submitted at any time and also several 
@@ -227,16 +224,16 @@ For a particular random seed, the result could look as follows:
 | fine          | 5               | Solvent C |
 
 After having conducted the corresponding experiments, we can add our measured
-targets to the table and feed it back to BayBE:
+targets to the table and feed it back to the campaign:
 
 ```python
 df["Yield"] = [79.8, 54.1, 59.4]
 campaign.add_measurements(df)
 ```
 
-With the newly arrived data, BayBE will update its internal state and can produce a
-refined design for the next iteration. This loop would typically continue until a 
-desired target value has been achieved in the experiment.
+With the newly arrived data, BayBE can produce a refined design for the next iteration.
+This loop would typically continue until a desired target value has been achieved in
+the experiment.
 
 
 ## Known Issues
