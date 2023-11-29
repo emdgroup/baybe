@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Github CI pipelines
+- Github release pipeline
 
 ### Changed
 - Now has concise contribution guidelines
