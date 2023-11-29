@@ -12,7 +12,7 @@
 [![PRs](https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/pulls)
 [![License](https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&labelColor=96d7d2&color=ffdcb9)](http://www.apache.org/licenses/LICENSE-2.0)
 
-[![Logo](https://raw.githubusercontent.com/emdgroup/BayBE/main/docs/images/banner2.svg)](https://github.com/emdgroup/baybe)
+[![Logo](https://raw.githubusercontent.com/emdgroup/BayBE/main/docs/_static/banner2.svg)](https://github.com/emdgroup/BayBE)
 
 <a href="https://emdgroup.github.io/baybe/_autosummary/baybe.html">Documentation<a/>
 &nbsp;•&nbsp;
