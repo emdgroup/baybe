@@ -1,43 +1,176 @@
-# Contributing to the development of BayBE
+# Contributing to BayBE
 
-This overview describes the basic aspects that are relevant when developing code for BayBE.
-Note that this is still **under development**.
+**All contributions to BayBE are welcome!**
 
-## Writing docstrings
+... no matter if bug fixes, new features, or just typo corrections.
 
-The docstrings that are used for BayBE are based on the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
-These docstrings are used to automatically create the documentation using [Sphinx](https://www.sphinx-doc.org/en/master/index.html).
+To shorten the overall development and review process, this page contains are a
+few sections that can make your life easier.
 
-The infrastructure used to host the current documentation as well as the design decision that were taken when developing BayBE make it necessary to adhere to the following guidelines when writing docstrings.
+## General Workflow
 
-- The basic rules of the Google Python Style Guide apply, so most importantly:
-    * docstrings need to have a short one-line summary at the top, 
+To implement your contributions in a local development environment,
+we recommend the following workflow:
+
+1. Clone a [fork](https://github.com/emdgroup/BayBE/fork) of the repository to 
+   your local machine.
+
+1. Create and activate a virtual python environment using one of the supported 
+   python versions.
+
+1. Change into the root folder of the cloned repository and install an editable version
+   including all development dependencies:
+   ```console
+   pip install -e '.[dev]'
+   ```
+
+1. Run our tests to verify everything works as expected:
+   ```console
+   pytest
+   ```
+
+1. Install our [pre-commit](https://pre-commit.com/) hooks:
+   ```console
+   pre-commit install
+   ```
+
+1. Create a new branch for your contribution:
+   ```console
+   git checkout -b <your_branch_name>
+   ```
+
+1. **Implement your changes.**
+
+1. Optional but recommended to prevent complaints from our CI pipeline: Test your code.
+
+   Testing against a single python can be achieved via `tox -e <version>`. For instance:
+   ```bash
+   tox -e py311
+   ```
+
+   If you want to challenge your machine, you can run all version tests in parallel via:
+   ```bash
+   tox -p
+   ```
+
+1. Push the updated branch back to your fork:
+   ```console
+   git push origin
+   ```
+
+1. Open a pull request via Github's web page.
+
+## Developer Tools
+
+In order to maintain a high code quality, we use a variety of code developer tools. 
+When following the above described workflow, [pre-commit](https://pre-commit.com/)
+will automatically trigger (most) necessary checks during your development process.
+In any case, these checks are also conducted in our CI pipeline, which must pass 
+before your pull request is considered ready for review. 
+If you have questions or problems, simply ask for advice.
+
+| Tool                                                                                            | Purpose                                   |
+|:------------------------------------------------------------------------------------------------|:------------------------------------------|
+| [ruff](https://docs.astral.sh/ruff/)                                                            | code linting and formatting               |
+| [mypy](https://mypy.readthedocs.io/)                                                            | static type checking                      |
+| [pydocstyle](http://www.pydocstyle.org/)   <br/> [pydoclint](https://github.com/jsh9/pydoclint) | analyzing docstrings                      |
+| [typos](https://github.com/crate-ci/typos)                                                      | basic spell checking                      |
+| [pytest](https://docs.pytest.org/)                                                              | testing                                   |
+| [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measuring test coverage                   |
+| [sphinx](https://www.sphinx-doc.org/)                                                           | generating our documentation              |
+| [pip-audit](https://github.com/pypa/pip-audit)                                                  | detecting vulnerabilities in dependencies |
+| [tox](https://tox.wiki/)                                                                        | orchestrating all the above               |
+
+Executing a specific one of these tools is easiest by using the corresponding
+[tox](https://tox.wiki/) environment,
+```console
+tox -e <env>
+```
+where `<env>` is any of the environment names found via `tox list`.
+
+
+## Code Design
+
+When reading BayBE's code, you will notice certain re-occurring design patterns.
+These patterns are by no means enforced, but following them can streamline your
+own development process:
+
+* We build most our classes with [attrs](https://www.attrs.org/), which is useful 
+  for lean class design and attribute validation.
+* Our (de-)serialization machinery is built upon [cattrs](https://catt.rs/), separating
+  object serialization from class design.
+* The modular nature of BayBE's components is reflected in our test suite through
+  the use of [hypothesis](https://hypothesis.readthedocs.io/) property tests.
+
+## Extending BayBE's Functionality
+
+For most parts, BayBE's code and functional components are organized into different 
+subpackages.
+When extending its functionality (for instance, by adding new component subclasses),
+make sure that the newly written code is well integrated into the existing package and
+module hierarchy.
+In particular, public functionality should be imported into the appropriate high-level
+namespaces for easier user import. For an example, see our
+[parameter namespace](baybe/parameters/__init__.py).
+
+## Writing Docstrings
+
+Our docstrings generally follow the 
+[Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
+Basic style and consistency checks are automatically performed via 
+[pre-commit](https://pre-commit.com/) during development and in our CI pipeline.
+
+Apart from that, we generally recommend adhering to the following guideline:
+
+- Each function should have a docstring containing:
+    * a short one-line summary at the top, 
     * an optional extended summary or description below and
     * all relevant sections (`Args`, `Raises`, ...).
-- Each function needs to have a docstring. The only exception are functions that inherit their docstring from a parent class. In this case, the following comments should be added:
-    * At the end of the line containing the `def` for the function, add `# noqa: D102` to disable that error.
-    * Have the comment `# See base class.` as the first line of the function.
-- Note that `pydocstyle` does not enforce docstrings for private methods. If a private function has a docstring, `pydocstyle` acknowledges it and checks it.
-- Function signatures need to have type hints for both inputs and the return type.
-- Type hints should not be added to the docstrings.
-- When referencing another class, function, or similar, use the syntax ``:func:`path.to.function` `` where `func` should be replaced by the respective keyword.
-- When parts of the comment should appear as `code` in the docstring, use double backticks ``.
-- Since we use [attrs](https://www.attrs.org/en/stable/) for writing classes,  initialization functions are not documented. Instance attributes thus need to be documented using a docstring in the line below their declaration.
-- Class variables are documented by adding a docstring in the line below their declaration.
-- When an inherited class sets one of the instance attributes, this attribute needs to be documented in the docstring of the inherited class.
-- Magic functions do not require a docstring.
-- Some special rules apply to writing docstrings for validators:
-    * All validators should begin with `_validate`.
-    * The docstring of a validator should contain a one-line description of what is being validated as well as a `Raises:` section.
-    * If necessary, a validator's docstring can contain a more detailed additional description.
-    * Validators should **not** have an `Args:` section. 
-    * Since these guidelines raise errors for  [pydoclint](https://github.com/jsh9/pydoclint), add `# noqa: DOC101, DOC103` to the same line as the `def` keyword of the declared validator to disable the errors.
-- For custom [cattrs](https://catt.rs/) (un-)structuring hooks, a one-line docstring is sufficient.
+  
+  Potential exceptions are functions whose docstring is to be fully inherited from a 
+  parent class.
+  In this case, use `# noqa: D102` to disable the automatic checks locally.
 
-## Adding functionality
-For most parts, BayBE's code is organized into different subpackages. When 
-extending its functionality (for instance, by adding new component subclasses), make 
-sure that the newly written code is well integrated into the existing package and 
-module hierarchy. In particular, public functionality should be imported into the 
-appropriate high-level namespaces for easy user import. For an example, see the
-[parameter namespace](baybe.parameters).
+- Use type hints (for variables/constants, attributes, function/method signatures, ...).
+  Avoid repeating type hints in docstrings.
+
+- When referencing objects (classes, functions, ...),
+  use ``:<key>:`path.to.function` `` where `<key>` is to be replaced with the 
+  respective keyword (`class`, `func`, ...)
+
+- Use double backticks for literals like in ``` ``MyString`` ```.
+
+### Docstrings for `attrs` classes 
+
+- Place attribute docstrings below the attribute declaration, not in the class 
+  docstring.
+  Separate different attributes using a blank line.
+  For example:
+  ```python
+  @define
+  class Cookies:
+    """A delicious recipe for chocolate-banana cookies."""
+  
+    chocolate: float
+    """Chocolate is naturally measured in terms of floats."""
+  
+    bananas: int
+    """For bananas, we use integers, of course."""
+  ```
+
+- Unless another more specific name is suitable, use our default naming convention for 
+  `attrs` built-ins (defaults, converters, validators):
+  ```python
+  @my_attribute.default
+  def _default_my_attribute(self): ...
+  
+  @my_attribute.converter
+  def _convert_my_attribute(self): ...
+  
+  @my_attribute.validator
+  def _validate_my_attribute(self, attribute, value): ...
+  ```
+  A one-line docstring suffices for these methods, but they should have a `Raises:` 
+  section if applicable. Linter warnings regarding missing attribute docstrings can be 
+  silenced using `# noqa: DOC101, DOC103`.
+  

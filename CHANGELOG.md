@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Github CI pipelines
 
+### Changed
+- Now has concise contribution guidelines
+
 ## [0.6.1] - 2023-11-27
 ### Added
 - Script for building HTML documentation and corresponding `tox` environment
