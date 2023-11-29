@@ -47,10 +47,25 @@ pip install baybe
 conda install --channel=conda-forge baybe
 ```
 
-### From Repository
+A certain released version of the package can installed by specifying the
+corresponding version tag in the form `baybe==x.y.z`.
+
+### From GitHub
 If you need finer control and would like to install a specific commit that has not been
 released under a certain version tag, you can do so by installing BayBE directly from
-the repository.
+GitHub via git and specifying the corresponding 
+[git ref](https://pip.pypa.io/en/stable/topics/vcs-support/#git). 
+
+For instance, to install the latest commit of the main branch, run:
+
+```bash
+pip install git+https://github.com/emdgroup/BayBE.git@main
+```
+
+
+### From Local Clone
+
+Alternatively, you can install the package from your own local copy.
 First, clone the repository, navigate to the repository root folder, check out the
 desired commit, and run:
 
@@ -58,17 +73,15 @@ desired commit, and run:
 pip install .
 ```
 
-There are additional dependencies that can be installed corresponding to linters, 
-formatters etc. (e.g. `dev`). A developer would typically also install the package in 
-editable mode ('-e') which ensures that changes to the code do not require a 
-reinstallation.
+A developer would typically also install the package in editable mode ('-e'),
+which ensures that changes to the code do not require a reinstallation.
 
 ```bash
-pip install -e '.[dev]'
+pip install -e .
 ```
 
 ### Optional Dependencies
-There are several dependency groups that can be installed during pip installation, like
+There are several dependency groups that can be selected during pip installation, like
 ```bash
 pip install baybe[test,lint] # will install baybe with additional dependency groups `test` and `lint`
 ```
