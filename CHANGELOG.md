@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Github CI pipelines
+- GitHub CI pipelines
+- GitHub Documentation pipeline
 - Optional --force option for force building the documentation despite errors
 - Enabled passing optional arguments to `tox -e docs` calls
 - Logo and banner images
@@ -16,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Now has concise contribution guidelines
+
+### Removed
+- `--debug` flag for documentation building
 
 ## [0.6.1] - 2023-11-27
 ### Added

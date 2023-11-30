@@ -27,11 +27,6 @@ parser.add_argument(
     action="store_true",
 )
 parser.add_argument(
-    "--debug",
-    help="Activate debugging mode by not suppressing the output of conversion.",
-    action="store_true",
-)
-parser.add_argument(
     "-e",
     "--ignore_examples",
     help="Ignore the examples and do not include them into the documentation.",
@@ -54,7 +49,6 @@ parser.add_argument(
 # Parse input arguments
 args = parser.parse_args()
 DESTINATION_DIR = args.target_dir
-DEBUG = args.debug
 INCLUDE_PRIVATE = args.include_private
 IGNORE_EXAMPLES = args.ignore_examples
 INCLUDE_WARNINGS = args.include_warnings
@@ -73,7 +67,7 @@ autosummary_dir = pathlib.Path("docs/_autosummary")
 destination_dir = pathlib.Path(DESTINATION_DIR)
 
 
-def create_example_documentation(example_dest_dir: str, debug: bool):
+def create_example_documentation(example_dest_dir: str):
     """Create the documentation version of the examples files.
 
     Note that this deletes the destination directory if it already exists.
@@ -102,7 +96,7 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
     ex_file = "# Examples\n\nThese examples show how to use BayBE.\n\n```{toctree}\n"
 
     # Iterate over the directories. Only print output in debug mode.
-    for sub_directory in (pbar := tqdm(ex_directories, disable=not debug)):
+    for sub_directory in (pbar := tqdm(ex_directories)):
         # Get the name of the current folder
         # Format it by replacing underscores and capitalizing the words
         folder_name = sub_directory.stem
@@ -121,7 +115,7 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
         py_files = list(sub_directory.glob("**/*.py"))
 
         # Iterate through the individual example files
-        for file in (inner_pbar := tqdm(py_files, leave=False, disable=not debug)):
+        for file in (inner_pbar := tqdm(py_files, leave=False)):
             # Include the name of the file to the toctree
             # Format it by replacing underscores and capitalizing the words
             file_name = file.stem
@@ -158,18 +152,12 @@ def create_example_documentation(example_dest_dir: str, debug: bool):
             to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
             # Check whether the debug flag is being used.
-            if debug:
-                check_call(
-                    convert_execute,
-                )
-                check_call(to_markdown)
-            else:
-                check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
-                check_call(
-                    to_markdown,
-                    stdout=DEVNULL,
-                    stderr=STDOUT,
-                )
+            check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
+            check_call(
+                to_markdown,
+                stdout=DEVNULL,
+                stderr=STDOUT,
+            )
 
             # CLEANUP
             # Remove all lines that try to include a png file
@@ -241,30 +229,22 @@ building_call = [
 
 # Process examples if required.
 if not IGNORE_EXAMPLES:
-    create_example_documentation(example_dest_dir="docs/examples", debug=DEBUG)
+    create_example_documentation(example_dest_dir="docs/examples")
 
 
 try:
-    check_call(
-        link_call if DEBUG else link_call + ["-Q"],
-    )
-    check_call(
-        building_call if DEBUG else building_call + ["-q"],
-    )
+    check_call(link_call)
+    check_call(building_call)
 except CalledProcessError:
-    print("""One of the processes raised a critical error.""")
-    if DEBUG:
-        print("Re-running both calls with more informative output.")
-        check_call(link_call)
-        check_call(building_call)
-    elif FORCE:
+    print(
+        """One process raised a critical error. Consider running with --force flag."""
+    )
+    if FORCE:
         print("Force-building the documentation, ignoring errors and warnings.")
         # We do not want to fail the next two calls, even if an error code is returned.
         # Hence, we usw run instead of check_call
         run(link_call, check=False)
         run(building_call + ["--keep-going"], check=False)
-    else:
-        print("For more information, re-run using the --debug flag.")
 
 # Clean the other files
 for directory in [sdk_dir, autosummary_dir]:
