@@ -162,6 +162,8 @@ html_theme_options = {
         "color-sidebar-item-background--hover": LIGHT_BLUE,
         # Color of the links in the left side bar
         "color-sidebar-link-text": "white",
+        # Color of text in the right navigation side bar when chosen
+        "color-toc-item-text--active": DARK_BLUE,
     },
     # Colors for dark mode.
     "dark_css_variables": {
