@@ -166,6 +166,9 @@ html_theme_options = {
         "color-toc-item-text--active": DARK_BLUE,
         # The color around the search bar
         "color-sidebar-search-border": BROWN,
+        # Color of the search text and icon
+        "color-sidebar-search-text": "white",
+        "color-sidebar-search-icon": BROWN,
     },
     # Colors for dark mode.
     "dark_css_variables": {
@@ -198,9 +201,6 @@ html_theme_options = {
         "color-toc-item-text": LIGHT_BLUE,
         # Color of search bar when clicking search
         "color-sidebar-search-background--focus": DARK_BLUE,
-        # Color of the search text
-        "color-sidebar-search-text": "white",
-        "color-sidebar-search-icon": "white",
     },
     # Logos. Location is relative to _static folder.
     "light_logo": "logo1.svg",  # Logo for light mode

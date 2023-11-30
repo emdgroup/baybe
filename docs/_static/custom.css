@@ -22,3 +22,8 @@ a.sidebar-brand {
 .content {
     width: calc(100% - 10em);
 }
+
+/*The color of the "Search" placeholder in the sidebar*/
+.sidebar-search::placeholder {
+    color: #ffdcb9;
+}
