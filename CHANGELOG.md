@@ -14,9 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Reworked README for GitHub landing page
-
-### Changed
 - Now has concise contribution guidelines
+- Use Furo theme for documentation
+
 
 ### Removed
 - `--debug` flag for documentation building
