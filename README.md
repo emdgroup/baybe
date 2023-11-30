@@ -1,64 +1,73 @@
+<div align="center">
+  <br/>
+
+[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aci.yml)
+[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aregular.yml)
+[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Adocs.yml)
+
+[![Supported Python version](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supported%20Python%20Versions&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
+[![PyPI version](https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20Version&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
+[![Conda version](https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&labelColor=96d7d2&color=ffdcb9)](https://anaconda.org/conda-forge/baybe)
+[![Issues](https://img.shields.io/github/issues/emdgroup/BayBE?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/issues)
+[![PRs](https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/pulls)
+[![License](https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&labelColor=96d7d2&color=ffdcb9)](http://www.apache.org/licenses/LICENSE-2.0)
+
+[![Logo](https://raw.githubusercontent.com/emdgroup/BayBE/main/docs/_static/banner2.svg)](https://github.com/emdgroup/BayBE)
+
+<a href="https://emdgroup.github.io/baybe/_autosummary/baybe.html">Documentation<a/>
+&nbsp;•&nbsp;
+<a href="https://emdgroup.github.io/baybe/userguide.html">User Guide<a/>
+&nbsp;•&nbsp;
+<a href="https://emdgroup.github.io/baybe/misc/contributing_link.html">Contribute<a/>
+</div>
+
 # BayBE — A Bayesian Back End for Design of Experiments
 
-This software package provides a general-purpose toolbox for **Design of Experiments
-(DOE)**.
+The Bayesian Back End (**BayBE**) provides a general-purpose toolbox for Bayesian Design
+of Experiments, focusing on additions that enable real-world experimental campaigns.
 
-It provides the necessary functionality to:
-
-- manage experimental design spaces that can be defined through various types of
-  experimental parameters.
-- execute different kinds of DOE strategies, levering both classical and
-  machine-learning-based models.
-- handle measurements data and feed it back into the experimental design.
-- compare different DOE strategies through backtesting with synthetic and real data.
-
-## ❗🚧 This repository is under **heavy active development**. 🚧❗
-
-Please note that the provided functionality and user interfaces are not stable and may
-change in newer releases.
-Therefore, if you would like to use the code in its current early stage, we recommend
-pinning the version during installation to prevent possible changes in the backend.
-In case of questions or comments, feel free to reach out to the **BayBE Dev Team** (see
-[the contributors page](docs/misc/contributors_link) for contact details).
+Besides functionality to perform a typical recommend-measure loop, BayBE's highlights are:
+- Custom parameter encodings: Improve your campaign with domain knowledge
+- Built-in chemical encodings: Improve your campaign with chemical knowledge
+- Single and multiple targets with min, max and match objectives
+- Custom surrogate models: For specialized problems or active learning
+- Hybrid (mixed continuous and discrete) spaces
+- Transfer learning: Mix data from multiple campaigns and accelerate optimization
+- Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
+- Fully typed and hypothesis-tested: Robust code base
+- All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
 
 ## Installation
-
-There are several ways to install BayBE.
-Essentially, these can be divided into 1) installation from Azure Artifacts via pip
-or 2) direct installation from this repository using git.
-
-### Installation from Azure Artifacts
-
-If a specific **released** BayBE version is to be installed, this can be achieved via
-[Azure Artifacts](https://***REMOVED***/_artifacts/feed/artifacts).
-
-The most convenient way for this is to generate a personal access token (PAT) on the
-[user settings page](https://***REMOVED***/_usersSettings/tokens).
-Once the token is created, BayBE can be installed via
+### From Package Index
+The easiest way to install BayBE is via PyPI or Conda:
 
 ```bash
-pip install --extra-index-url https://artifacts:<token>@pkgs.***REMOVED***/_packaging/artifacts/pypi/simple/ baybe
+pip install baybe
 ```
-
-where `<token>` needs to be replaced with your PAT.
-Note that, instead of passing the `--extra-index-url` option directly as an argument
-to the `install` command, you can alternatively create a `pip.conf` file containing
-the same information.
-
-A second way to authenticate instead of using a PAT is via `artifacts-keyring`.
-To do so, ensure that all [prerequisites](https://pypi.org/project/artifacts-keyring/)
-are fulfilled and run:
 
 ```bash
-pip install keyring artifacts-keyring
-pip install --extra-index-url https://pkgs.***REMOVED***/_packaging/artifacts/pypi/simple/ baybe
+conda install -c conda-forge baybe
 ```
 
-### Installation from Repository
+A certain released version of the package can installed by specifying the
+corresponding version tag in the form `baybe==x.y.z`.
 
+### From GitHub
 If you need finer control and would like to install a specific commit that has not been
 released under a certain version tag, you can do so by installing BayBE directly from
-the repository.
+GitHub via git and specifying the corresponding 
+[git ref](https://pip.pypa.io/en/stable/topics/vcs-support/#git). 
+
+For instance, to install the latest commit of the main branch, run:
+
+```bash
+pip install git+https://github.com/emdgroup/BayBE.git@main
+```
+
+
+### From Local Clone
+
+Alternatively, you can install the package from your own local copy.
 First, clone the repository, navigate to the repository root folder, check out the
 desired commit, and run:
 
@@ -66,20 +75,26 @@ desired commit, and run:
 pip install .
 ```
 
-There are additional dependencies that can be installed corresponding to linters, 
-plotters etc. (`dev`). A developer would typically also install the package in editable mode 
-('-e').
+A developer would typically also install the package in editable mode ('-e'),
+which ensures that changes to the code do not require a reinstallation.
+
+```bash
+pip install -e .
+```
+
+If you need to add additional dependencies, make sure to use the correct syntax 
+including `''`:
 
 ```bash
 pip install -e '.[dev]'
 ```
 
 ### Optional Dependencies
-There are several dependency groups that can be installed during pip installation like
+There are several dependency groups that can be selected during pip installation, like
 ```bash
 pip install baybe[test,lint] # will install baybe with additional dependency groups `test` and `lint`
 ```
-To get the most out of `baybe` we recommend to install at least
+To get the most out of `baybe`, we recommend to install at least
 ```bash
 pip install baybe[chem,simulation]
 ```
@@ -93,90 +108,43 @@ The available groups are:
 - `onnx`: Required for using custom surrogate models in ONNX format.
 - `simulation`: Enabling the [`simulation`](baybe.simulation) module.
 - `test`: Required for running the tests.
-- `dev`: All of the above plus `tox` and `pip-audit`.
+- `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
 
-## Getting Started
+## Quick Start
 
-BayBE is a DOE software built to streamline your experimental process.
-It can process measurement data from previous experiments and, based on these, provide
-optimal experimental designs to further improve your target quantities.
-
-In order to make use of BayBE's optimization capabilities, you need to translate your
-real-world optimization problem into mathematical language.
-To do so, you should ask yourself the following questions:
-
-* What should be optimized?
-* What are the degrees of freedom?
-* (Optional) What optimization strategy should be used?
-
-Conveniently, the answer to each of these questions can be directly expressed in the
-form of objects in BayBE's ecosystem that can be easily mixed and matched:
-
-| Part of the Problem Specification                     | Defining BayBE Objects    |
-|:------------------------------------------------------|:--------------------------|
-| What should be optimized?                             | `Objective`, `Target`     |
-| What are the degrees of freedom?                      | `Parameter`, `Constraint` | 
-| (Optional) What optimization strategy should be used? | `Strategy`, `Recommender` |
-
-The objects in the first two table rows can be regarded as embodiments of the
-**mathematical DOE specifications** in digital form, as they fully define the underlying
-optimization problem.
-By contrast, the objects in the last row rather provide **algorithmic details**
-on how the DOE problem should be solved.
-In that sense, the former carry information that **must be** provided by the user,
-whereas the latter are **optional** settings that can also be set automatically
-by BayBE.
-
-A key element in the design of BayBE is the [`Campaign`](baybe.campaign.Campaign) object.
-It acts as a central container for all the necessary information and objects
-associated with an experimentation process, ensuring that all independent model
-components (e.g. the objective function, the search space, etc.) are properly combined.
-
-The following example provides a step-by-step guide to what this translation process
-should look like, and how we can subsequently use BayBE to generate optimal sets of
-experimental conditions.
+Let us consider a simple experiment where we have three parameters and want to maximize 
+a single target called `Yield`.
 
 ### Defining the Optimization Objective
 
-We start by defining an optimization objective.
-While BayBE ships with the necessary functionality to optimize multiple targets
-simultaneously, as an introductory example, we consider a simple scenario where our
-goal is to **maximize** a single numerical target that represents the yield of a
-chemical reaction.
-
-In BayBE's language, the reaction yield can be represented as a [`NumericalTarget`](baybe.targets.numerical)
-object:
+In BayBE's language, the `Yield` can be represented as a 
+[`NumericalTarget`](baybe.targets.numerical), which we pass into an `Objective`.
 
 ```python
 from baybe.targets import NumericalTarget
+from baybe.objective import Objective
 
 target = NumericalTarget(
     name="Yield",
     mode="MAX",
 )
-```
-
-We wrap the target object in an optimization [`Objective`](baybe.objective.Objective), to inform BayBE
-that this is the only target we would like to consider:
-
-```python
-from baybe.objective import Objective
-
 objective = Objective(mode="SINGLE", targets=[target])
 ```
 
 In cases where we need to consider multiple (potentially competing) targets, the
-role of the [`Objective`](baybe.objective.Objective) is to define how these targets should be balanced.
-For more details, see [the targets section of the user guide](docs/userguide/targets.md).
+role of the [`Objective`](baybe.objective.Objective) is to define additional settings, 
+e.g. how these targets should be balanced. In `SINGLE` mode, however, there are no 
+additional settings. For more details, see 
+[the targets section of the user guide](docs/userguide/targets.md).
 
 ### Defining the Search Space
 
 Next, we inform BayBE about the available "control knobs", that is, the underlying
-system parameters we can tune to optimize our targets.
-This also involves specifying their ranges and other parameter-specific details.
+system parameters we can tune to optimize our targets. This also involves specifying 
+their values/ranges and other parameter-specific details.
 
-For our reaction example, we assume that we can control the following three quantities:
+For our example, we assume that we can control the following three quantities:
 
 ```python
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter, SubstanceParameter
@@ -185,65 +153,50 @@ parameters = [
     CategoricalParameter(
         name="Granularity",
         values=["coarse", "medium", "fine"],
-        encoding="OHE",
+        encoding="OHE", # one-hot encoding of categories
     ),
     NumericalDiscreteParameter(
         name="Pressure[bar]",
         values=[1, 5, 10],
-        tolerance=0.2,
+        tolerance=0.2, # allows experimental inaccuracies up to 0.2 when reading values 
     ),
     SubstanceParameter(
         name="Solvent",
-        data={"Solvent A": "COC", "Solvent B": "CCC", "Solvent C": "O",
-              "Solvent D": "CS(=O)C"},
-        encoding="MORDRED",
+        data={"Solvent A": "COC", "Solvent B": "CCC", # label-SMILES pairs
+              "Solvent C": "O", "Solvent D": "CS(=O)C"},
+        encoding="MORDRED", # chemical encoding via mordred package
     ),
 ]
 ```
 
-Note that each parameter is of a different **type** and thus requires its own
-type-specific settings. In particular case above, for instance:
-
-* `encoding=OHE` activates one-hot-encoding for the categorical parameter "Granularity".
-* `tolerance=0.2` allows experimental inaccuracies up to 0.2 when reading values for
-  "Pressure[bar]".
-* `encoding=MORDRED`triggers computation of MORDRED cheminformatics descriptors for
-  the substance parameter "Solvent".
-
-For more parameter types and their details, see
+For more parameter types and their details, see the
 [parameters section of the user guide](docs/userguide/parameters).
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
-relationships between our parameters.
-Details can be found in [the constraints section of the user guids](docs/userguide/constraints).
-In this example, we assume no further constraints and explicitly indicate this with an
-empty variable, for the sake of demonstration:
-
-```python
-constraints = None
-```
+relationships between our parameters. Details can be found in 
+[the constraints section of the user guide](docs/userguide/constraints). In this 
+example, we assume no further constraints.
 
 With the parameter and constraint definitions at hand, we can now create our
-[`SearchSpace`](baybe.searchspace):
+[`SearchSpace`](baybe.searchspace) based on the Cartesian product of all possible 
+parameter values:
 
 ```python
 from baybe.searchspace import SearchSpace
 
-searchspace = SearchSpace.from_product(parameters, constraints)
+searchspace = SearchSpace.from_product(parameters)
 ```
 
 ### Optional: Defining the Optimization Strategy
 
 As an optional step, we can specify details on how the optimization should be
-conducted.
-If omitted, BayBE will choose a default setting.
+conducted. If omitted, BayBE will choose a default setting.
 
-For our chemistry example, we combine two selection strategies:
+For our example, we combine two selection strategies:
 
 1. In cases where no measurements have been made prior to the interaction with BayBE,
-   a random experiment selection strategy is used to produce initial recommendations.
-2. As soon as the first measurements are available, we switch to a Bayesian approach
-   where points are selected greedily from a probabilistic prediction model.
+   a selection via `initial_recommender` is used.
+2. As soon as the first measurements are available, we switch to `recommender`.
 
 For more details on the different strategies, their underlying algorithmic
 details, and their configuration settings, see
@@ -251,19 +204,17 @@ details, and their configuration settings, see
 
 ```python
 from baybe.strategies import TwoPhaseStrategy
-from baybe.recommenders import SequentialGreedyRecommender, RandomRecommender
+from baybe.recommenders import SequentialGreedyRecommender, FPSRecommender
 
 strategy = TwoPhaseStrategy(
-    initial_recommender=RandomRecommender(),
-    recommender=SequentialGreedyRecommender(),
+    initial_recommender=FPSRecommender(), # farthest point sampling
+    recommender=SequentialGreedyRecommender(), # Bayesian model-based optimization
 )
 ```
 
 ### The Optimization Loop
 
-Having provided the answers to [all questions above](#getting-started), we can now
-construct a BayBE object that brings all
-pieces of the puzzle together:
+We can now construct a campaign object that brings all pieces of the puzzle together:
 
 ```python
 from baybe import Campaign
@@ -275,19 +226,15 @@ With this object at hand, we can start our experimentation cycle.
 In particular:
 
 * We can ask BayBE to `recommend` new experiments.
-* We can `add_measurements` for certain experimental settings to BayBE's database.
+* We can `add_measurements` for certain experimental settings to the campaign's 
+  database.
 
 Note that these two steps can be performed in any order.
-In particular, available measurement data can be submitted at any time.
-Also, we can start the interaction with either command and repeat the same type of
-command immediately after its previous call, e.g., if the required number of
-recommendations has changed.
-
-The following illustrates one such possible sequence of interactions.
-Let us first ask for an initial set of recommendations:
+In particular, available measurements can be submitted at any time and also several 
+times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_quantity=5)
+df = campaign.recommend(batch_quantity=3)
 ```
 
 For a particular random seed, the result could look as follows:
@@ -297,69 +244,19 @@ For a particular random seed, the result could look as follows:
 | medium        | 1               | Solvent B |
 | medium        | 5               | Solvent D |
 | fine          | 5               | Solvent C |
-| fine          | 5               | Solvent A |
-| medium        | 10              | Solvent B |
 
 After having conducted the corresponding experiments, we can add our measured
-yields to the table and feed it back to BayBE:
+targets to the table and feed it back to the campaign:
 
 ```python
-df["Yield"] = [79, 54, 59, 95, 84]
+df["Yield"] = [79.8, 54.1, 59.4]
 campaign.add_measurements(df)
 ```
 
-With the newly arrived data, BayBE will update its internal state and can produce a
-refined design for the next iteration.
+With the newly arrived data, BayBE can produce a refined design for the next iteration.
+This loop would typically continue until a desired target value has been achieved in
+the experiment.
 
-## Telemetry
-
-By default, BayBE collects anonymous usage statistics.
-Note that this does **not** involve logging of recorded measurements, targets or any
-project information that would allow the reconstruction of details.
-
-Monitored quantities are:
-
-- `batch_quantity` used when querying recommendations
-- number of parameters in the search space
-- number of constraints in the search space
-- how often `recommend` was called
-- how often `add_measurements` was called
-- how often a search space is newly created
-- how often initial measurements are added before recommendations were calculated
-  ("naked initial measurements")
-- the fraction of measurements added that correspond to previous recommendations
-
-These metrics are vital to demonstrating the impact of the project and
-– should you find BayBE useful – we kindly ask you to leave telemetry activated.
-If you wish to disable logging, you can set the following environment variable:
-
-```bash
-export BAYBE_TELEMETRY_ENABLED=false
-```
-
-or in python:
-
-```python
-import os
-
-os.environ["BAYBE_TELEMETRY_ENABLED"] = "false"
-```
-
-before calling any BayBE functionality.
-Telemetry can be re-enabled by simply removing the variable:
-
-```bash
-unset BAYBE_TELEMETRY_ENABLED
-```
-
-or in python:
-
-```python
-os.environ.pop["BAYBE_TELEMETRY_ENABLED"]
-```
-
-Note, however, that (un-)setting the variable in the shell will not affect the running
-Python session.
 
 ## Known Issues
 A list of know issues can be found [here](docs/known_issues.md).
