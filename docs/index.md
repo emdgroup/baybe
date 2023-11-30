@@ -2,13 +2,16 @@
 :maxdepth: 2
 :titlesonly:
 :caption: General
+:hidden:
 
-
-Overview <self>
 Readme <misc/readme_link>
 User Guide <userguide/userguide>
 Examples <examples/examples>
 How To Contribute <misc/contributing_link>
+```
+
+```{include} ../README.md
+:relative-docs: docs/
 ```
 
 # Package documentation
@@ -26,6 +29,7 @@ How To Contribute <misc/contributing_link>
     :maxdepth: 2
     :titlesonly:
     :caption: Misc
+    :hidden:
 
     Known Issues <known_issues>
     FAQ <faq>
