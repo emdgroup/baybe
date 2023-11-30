@@ -164,6 +164,8 @@ html_theme_options = {
         "color-sidebar-link-text": "white",
         # Color of text in the right navigation side bar when chosen
         "color-toc-item-text--active": DARK_BLUE,
+        # The color around the search bar
+        "color-sidebar-search-border": BROWN,
     },
     # Colors for dark mode.
     "dark_css_variables": {
