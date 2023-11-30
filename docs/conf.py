@@ -139,23 +139,36 @@ html_theme_options = {
     "sidebar_hide_name": True,
     # Colors for light mode. For details on the keys, see colors for dark mode.
     "light_css_variables": {
-        "color-background-secondary": BROWN,
+        "color-background-secondary": DARK_BLUE,
         "color-background-border": "transparent",
-        "color-brand-primary": DARK_BLUE,
-        "color-brand-secondary": DARK_BLUE,
+        # Colors of headings in left sidebar
+        # "color-foreground-primary": "white",
+        "color-brand-primary": BROWN,
+        "color-brand-secondary": BROWN,
+        # "Muted" text
+        "color-foreground-muted": "white",
         "color-highlight-on-target": BROWN,
         "color-api-background": BROWN,
         "color-api-pre-name": LIGHT_BLUE,
         "color-api-name": DARK_BLUE,
         "color-toc-item-text": "black",
         "color-inline-code-background": "#efeff4",  # Very lightlight gray
+        # Color of search bar when clicking search
+        "color-sidebar-search-background--focus": DARK_BLUE,
+        "color-link": DARK_BLUE,
+        # Color when hovering over the item expander in the left sidebar.
+        "color-sidebar-item-expander-background--hover": LIGHT_BLUE,
+        # Color when hovering over an item in the left sidebar
+        "color-sidebar-item-background--hover": LIGHT_BLUE,
+        # Color of the links in the left side bar
+        "color-sidebar-link-text": "white",
     },
     # Colors for dark mode.
     "dark_css_variables": {
         # Background of content
         "color-background-primary": LIGHT_GRAY,
         "color-background-secondary": DARK_BLUE,
-        # Colors of headings in left sidebar
+        # Colors of texts and other "foreground" elements
         "color-foreground-primary": "white",
         "color-foreground-secondary": "white",
         # General borders
@@ -186,7 +199,7 @@ html_theme_options = {
         "color-sidebar-search-icon": "white",
     },
     # Logos. Location is relative to _static folder.
-    "light_logo": "logo2.svg",  # Logo for light mode
+    "light_logo": "logo1.svg",  # Logo for light mode
     "dark_logo": "logo1.svg",  # Logo for dark mode
 }
 
