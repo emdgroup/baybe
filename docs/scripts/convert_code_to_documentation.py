@@ -197,6 +197,37 @@ def create_example_documentation(example_dest_dir: str):
             subdirectory.rmdir()
 
 
+def adjust_banner(file_path: str, light_banner: str, dark_banner: str) -> None:
+    """Adjust the banner to have different versions for light and dark furo style.
+
+    Args:
+        file_path: The (relative) path to the file that needs to be adjusted. Typically
+            the index and README_link file.
+        light_banner: The name of the light mode banner.
+        dark_banner: The name of the dark mode banner.
+    """
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    line_index = None
+    for i, line in enumerate(lines):
+        if "banner" in line:
+            line_index = i
+            break
+
+    if line_index is not None:
+        line = lines[line_index]
+        light_line = line.replace("reference external", "reference external only-light")
+        lines[line_index] = light_line
+        # lines.insert(line_index + 1, light_line)
+        dark_line = light_line.replace("only-light", "only-dark")
+        dark_line = dark_line.replace(light_banner, dark_banner)
+        lines[line_index + 1] = dark_line
+
+        with open(file_path, "w") as file:
+            file.writelines(lines)
+
+
 # Collect all of the directories and delete them if they still exist.
 directories = [sdk_dir, autosummary_dir, build_dir, destination_dir]
 
@@ -245,6 +276,12 @@ except CalledProcessError:
         # Hence, we usw run instead of check_call
         run(link_call, check=False)
         run(building_call + ["--keep-going"], check=False)
+
+# Adjust the banner in the index and the README
+adjust_banner("docs/build/index.html", light_banner="banner2", dark_banner="banner1")
+adjust_banner(
+    "docs/build/misc/readme_link.html", light_banner="banner2", dark_banner="banner1"
+)
 
 # Clean the other files
 for directory in [sdk_dir, autosummary_dir]:
