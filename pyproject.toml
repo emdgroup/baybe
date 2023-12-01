@@ -1,12 +1,6 @@
 [project]
 name = "baybe"
 description = "Bayesian Back End for Design of Experiments"
-authors = [
-    { name = "Martin Fitzner (Merck KGaA, Darmstadt, Germany)", email = "martin.fitzner@merckgroup.com" },
-    { name = "Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany)", email = "adrian.sosic@merckgroup.com" },
-    { name = "Alexander Hopp (Merck KGaA, Darmstadt, Germany)", email = "alexander.hopp@merckgroup.com" },
-    { name = "Alex Lee (EMD Electronics, Tempe, Arizona, USA)", email = "alex.lee@emdgroup.com" },
-]
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python =">=3.8,<3.12"
