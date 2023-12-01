@@ -208,7 +208,8 @@ html_theme_options = {
 }
 
 # Ignored links for linkcheck
-linkcheck_ignore = ["https://pypi.org/project/baybe/"]
+if "BAYBE_DOCS_LINKCHECK_IGNORE" in os.environ:
+    linkcheck_ignore = ["https://emdgroup.github.io/baybe/"]
 
 
 # Everything in the module has the prefix baybe
