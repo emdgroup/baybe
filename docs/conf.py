@@ -24,7 +24,7 @@ __location__ = os.path.dirname(__file__)
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "BayBE"
-copyright = "2022-2023, Merck KGaA"
+copyright = "2022-2023 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
 author = "Martin Fitzner, Adrian Šošić, Alexander Hopp, Alex Lee"
 
 
@@ -122,9 +122,95 @@ nitpick_ignore_regex = [
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # We use the read-the-docs theme
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 # We want to have links to the source
 html_show_sourcelink = True
+# Use the provided html theme
+html_static_path = ["_static"]
+html_css_files = ["custom.css"]
+# Change the colors. The following colors are used:
+BROWN = "#ffdcb9"
+DARK_BLUE = "#0f69af"
+LIGHT_BLUE = "#65bbca"
+DARK_GRAY = "#212723"  # The dark gray of Githubs Dimmed Theme
+LIGHT_GRAY = "#2c333b"  # The dark gray of Githubs Dimmed Theme
+html_theme_options = {
+    # We do not want the name of the package shown separately in the left sidebar
+    "sidebar_hide_name": True,
+    # Colors for light mode. For details on the keys, see colors for dark mode.
+    "light_css_variables": {
+        "color-background-secondary": DARK_BLUE,
+        "color-background-border": "transparent",
+        # Colors of headings in left sidebar
+        # "color-foreground-primary": "white",
+        "color-brand-primary": BROWN,
+        "color-brand-secondary": BROWN,
+        # "Muted" text
+        "color-foreground-muted": "white",
+        "color-highlight-on-target": BROWN,
+        "color-api-background": BROWN,
+        "color-api-pre-name": LIGHT_BLUE,
+        "color-api-name": DARK_BLUE,
+        "color-toc-item-text": "black",
+        "color-inline-code-background": "#efeff4",  # Very lightlight gray
+        # Color of search bar when clicking search
+        "color-sidebar-search-background--focus": DARK_BLUE,
+        "color-link": DARK_BLUE,
+        # Color when hovering over the item expander in the left sidebar.
+        "color-sidebar-item-expander-background--hover": LIGHT_BLUE,
+        # Color when hovering over an item in the left sidebar
+        "color-sidebar-item-background--hover": LIGHT_BLUE,
+        # Color of the links in the left side bar
+        "color-sidebar-link-text": "white",
+        # Color of text in the right navigation side bar when chosen
+        "color-toc-item-text--active": DARK_BLUE,
+        # The color around the search bar
+        "color-sidebar-search-border": BROWN,
+        # Color of the search text and icon
+        "color-sidebar-search-text": "white",
+        "color-sidebar-search-icon": BROWN,
+    },
+    # Colors for dark mode.
+    "dark_css_variables": {
+        # Background of content
+        "color-background-primary": LIGHT_GRAY,
+        "color-background-secondary": DARK_BLUE,
+        # Colors of texts and other "foreground" elements
+        "color-foreground-primary": "white",
+        "color-foreground-secondary": "white",
+        # General borders
+        "color-background-border": "transparent",
+        # Two general colors for several aspects of the color cheme
+        "color-brand-primary": BROWN,
+        "color-brand-secondary": "black",
+        # "Muted" text
+        "color-foreground-muted": "white",
+        # Background of the current target (e.g. after clicking on an internal link)
+        "color-highlight-on-target": DARK_BLUE,
+        # General backgrounds of headers and similar in the API
+        "color-api-background": DARK_BLUE,
+        # Names in the API
+        "color-api-name": BROWN,
+        # Prefix in API names (e.g. baybe.campaign)
+        "color-api-pre-name": "white",
+        # Background formlinks
+        "color-inline-code-background": "transparent",
+        # The color of links
+        "color-link": BROWN,
+        # Color of text in the right navigation side bar
+        "color-toc-item-text": LIGHT_BLUE,
+        # Color of search bar when clicking search
+        "color-sidebar-search-background--focus": DARK_BLUE,
+    },
+    # Logos. Location is relative to _static folder.
+    "light_logo": "logo1.svg",  # Logo for light mode
+    "dark_logo": "logo1.svg",  # Logo for dark mode
+}
+
+# Ignored links for linkcheck
+if "BAYBE_DOCS_LINKCHECK_IGNORE" in os.environ:
+    linkcheck_ignore = ["https://emdgroup.github.io/baybe/"]
+
 
 # Everything in the module has the prefix baybe
 modindex_common_prefix = ["baybe."]

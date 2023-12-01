@@ -4,7 +4,7 @@ import argparse
 import os
 import pathlib
 import shutil
-from subprocess import DEVNULL, STDOUT, CalledProcessError, check_call, run
+from subprocess import DEVNULL, STDOUT, check_call, run
 
 from tqdm import tqdm
 
@@ -74,8 +74,6 @@ def create_example_documentation(example_dest_dir: str):
 
     Args:
         example_dest_dir: The destination directory.
-        debug: Flag indicating whether conversion should be run in debug mode with
-            more information.
     """
     # Folder where the .md files created are stored
     examples_directory = pathlib.Path(example_dest_dir)
@@ -95,7 +93,7 @@ def create_example_documentation(example_dest_dir: str):
     # examples
     ex_file = "# Examples\n\nThese examples show how to use BayBE.\n\n```{toctree}\n"
 
-    # Iterate over the directories. Only print output in debug mode.
+    # Iterate over the directories.
     for sub_directory in (pbar := tqdm(ex_directories)):
         # Get the name of the current folder
         # Format it by replacing underscores and capitalizing the words
@@ -151,7 +149,6 @@ def create_example_documentation(example_dest_dir: str):
             ]
             to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
-            # Check whether the debug flag is being used.
             check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
             check_call(
                 to_markdown,
@@ -197,6 +194,37 @@ def create_example_documentation(example_dest_dir: str):
             subdirectory.rmdir()
 
 
+def adjust_banner(file_path: str, light_banner: str, dark_banner: str) -> None:
+    """Adjust the banner to have different versions for light and dark furo style.
+
+    Args:
+        file_path: The (relative) path to the file that needs to be adjusted. Typically
+            the index and README_link file.
+        light_banner: The name of the light mode banner.
+        dark_banner: The name of the dark mode banner.
+    """
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    line_index = None
+    for i, line in enumerate(lines):
+        if "banner" in line:
+            line_index = i
+            break
+
+    if line_index is not None:
+        line = lines[line_index]
+        light_line = line.replace("reference external", "reference external only-light")
+        lines[line_index] = light_line
+        # lines.insert(line_index + 1, light_line)
+        dark_line = light_line.replace("only-light", "only-dark")
+        dark_line = dark_line.replace(light_banner, dark_banner)
+        lines[line_index + 1] = dark_line
+
+        with open(file_path, "w") as file:
+            file.writelines(lines)
+
+
 # Collect all of the directories and delete them if they still exist.
 directories = [sdk_dir, autosummary_dir, build_dir, destination_dir]
 
@@ -232,19 +260,21 @@ if not IGNORE_EXAMPLES:
     create_example_documentation(example_dest_dir="docs/examples")
 
 
-try:
+if FORCE:
+    print("Force-building the documentation, ignoring errors and warnings.")
+    # In force mode, we do not want to fail, even if an error code is returned.
+    # Hence, we use run instead of check_call
+    run(link_call, check=False)
+    run(building_call + ["--keep-going"], check=False)
+else:
     check_call(link_call)
     check_call(building_call)
-except CalledProcessError:
-    print(
-        """One process raised a critical error. Consider running with --force flag."""
-    )
-    if FORCE:
-        print("Force-building the documentation, ignoring errors and warnings.")
-        # We do not want to fail the next two calls, even if an error code is returned.
-        # Hence, we usw run instead of check_call
-        run(link_call, check=False)
-        run(building_call + ["--keep-going"], check=False)
+
+# Adjust the banner in the index and the README
+adjust_banner("docs/build/index.html", light_banner="banner2", dark_banner="banner1")
+adjust_banner(
+    "docs/build/misc/readme_link.html", light_banner="banner2", dark_banner="banner1"
+)
 
 # Clean the other files
 for directory in [sdk_dir, autosummary_dir]:

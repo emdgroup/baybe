@@ -1,3 +1,4 @@
 # Constraints
 
-This file contains information about constraints.
+This page will soon contain information about constraints.
+In the meantime, please see the [examples](../../examples/examples) instead.

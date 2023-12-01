@@ -1,3 +1,4 @@
 # Simulation
 
-This file contains information about simulations.
+This page will soon contain information about simulations.
+In the meantime, please see the [examples](../../examples/examples) instead.

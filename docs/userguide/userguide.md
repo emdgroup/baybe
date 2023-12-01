@@ -1,6 +1,8 @@
 # User guide
 
-This file contains a general user guide for BayBE.
+Here, you will soon find user guides with instructions on how to use BayBE.
+These are currently being worked on.
+In the meantime, we refer to the [examples](../../examples/examples) instead.
 
 ```{toctree}
 Campaigns <campaigns>
