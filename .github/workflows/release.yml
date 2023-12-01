@@ -1,0 +1,84 @@
+name: Build & Publish Package
+
+on:
+  push:
+    tags: 
+      - '*'
+  release:
+    types:
+      - published
+      
+concurrency:
+  group: ${{ github.event_name }}_${{  github.ref_name }}
+
+jobs:
+  # Build and verify wheels
+  build:
+    name: Build & Verify Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Create Wheel
+        run: |
+          pip install wheel
+          pip wheel . --no-deps --wheel-dir dist
+          ls -lat dist
+      - name: Check Wheel
+        shell: bash
+        run: |
+          pip install check-wheel-contents     
+          check-wheel-contents dist/*.whl
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Wheels_${{  github.ref_name }}
+          path: dist
+
+  # Upload to Test PyPI on every tag
+  release-test-pypi:
+    needs: build
+    name: Publish PyPI TEST
+    environment: release-test-pypi
+    if: github.repository_owner == 'emdgroup' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packages built
+        uses: actions/download-artifact@v3
+        with:
+          name: Wheels_${{  github.ref_name }}
+          path: dist
+      - name: Upload package to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_TOKEN }}
+
+  # Upload to real PyPI on GitHub Releases.
+  release-pypi:
+    needs: build
+    name: Publish PyPI PROD
+    environment: release-pypi
+    if: github.repository_owner == 'emdgroup' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v4
+        id: setup-python
+        with:
+          python-version: '3.11'
+      - name: Install test-package
+        run: |
+          pip install --index-url https://test.pypi.org/simple/ baybe
+      - name: Download packages built
+        uses: actions/download-artifact@v3
+        with:
+          name: Wheels_${{  github.ref_name }}
+          path: dist
+      - name: Upload package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}

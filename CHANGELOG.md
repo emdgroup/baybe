@@ -12,12 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enabled passing optional arguments to `tox -e docs` calls
 - Logo and banner images
 - Project metadata to pyproject.toml
+- PyPI release pipeline
 
 ### Changed
 - Reworked README for GitHub landing page
 - Now has concise contribution guidelines
 - Use Furo theme for documentation
-
 
 ### Removed
 - `--debug` flag for documentation building
