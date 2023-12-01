@@ -72,7 +72,7 @@ jobs:
           python-version: '3.11'
       - name: Install test-package
         run: |
-          pip install --index-url https://test.pypi.org/simple/ baybe==${{  github.ref_name }}
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ baybe==${{  github.ref_name }}
       - name: Download packages built
         uses: actions/download-artifact@v3
         with:
