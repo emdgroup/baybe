@@ -74,8 +74,6 @@ def create_example_documentation(example_dest_dir: str):
 
     Args:
         example_dest_dir: The destination directory.
-        debug: Flag indicating whether conversion should be run in debug mode with
-            more information.
     """
     # Folder where the .md files created are stored
     examples_directory = pathlib.Path(example_dest_dir)
@@ -95,7 +93,7 @@ def create_example_documentation(example_dest_dir: str):
     # examples
     ex_file = "# Examples\n\nThese examples show how to use BayBE.\n\n```{toctree}\n"
 
-    # Iterate over the directories. Only print output in debug mode.
+    # Iterate over the directories.
     for sub_directory in (pbar := tqdm(ex_directories)):
         # Get the name of the current folder
         # Format it by replacing underscores and capitalizing the words
@@ -151,7 +149,6 @@ def create_example_documentation(example_dest_dir: str):
             ]
             to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
-            # Check whether the debug flag is being used.
             check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
             check_call(
                 to_markdown,
