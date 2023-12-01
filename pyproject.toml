@@ -1,6 +1,9 @@
 [project]
 name = "baybe"
 description = "Bayesian Back End for Design of Experiments"
+authors = [
+    {name = "Merck KGaA, Darmstadt, Germany"},
+]
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python =">=3.8,<3.12"
