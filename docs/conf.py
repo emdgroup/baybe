@@ -24,7 +24,7 @@ __location__ = os.path.dirname(__file__)
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "BayBE"
-copyright = "2022-2023, Merck KGaA"
+copyright = "2022-2023 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
 author = "Martin Fitzner, Adrian Šošić, Alexander Hopp, Alex Lee"
 
 
