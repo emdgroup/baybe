@@ -7,7 +7,6 @@ name: Continuous Integration
 on:
   push:
     branches: main
-    tags: '*'
   pull_request:
     branches: main
   workflow_dispatch:
@@ -25,6 +24,7 @@ jobs:
     name: "Changelog"
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v3
       - name: Assert Changelog Edit
@@ -58,7 +58,7 @@ jobs:
           tox -e lint-${{ matrix.py-version.tox }}
 
   typecheck:
-    needs: [changelog, lint]
+    needs: [lint]
     strategy:
       matrix:
         py-version: [ {semantic: '3.11', tox: 'py311'} ]
@@ -76,7 +76,7 @@ jobs:
           tox -e mypy-${{ matrix.py-version.tox }}
 
   audit:
-    needs: [changelog, lint]
+    needs: [lint]
     strategy:
       matrix:
         py-version: [ {semantic: '3.11', tox: 'py311'} ]

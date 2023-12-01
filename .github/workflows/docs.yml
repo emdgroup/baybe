@@ -3,11 +3,10 @@ name: Documentation
 on:
   push:
     branches: main
-  workflow_dispatch:  # Allow manually triggering the workflow
+  workflow_dispatch:
 
 concurrency:
-  group: >-
-    ${{ github.workflow }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
