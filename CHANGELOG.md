@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Logo and banner images
 - Project metadata to pyproject.toml
 - PyPI release pipeline
+- Favicon for homepage
 
 ### Changed
 - Reworked README for GitHub landing page
