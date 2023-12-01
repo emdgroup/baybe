@@ -105,7 +105,7 @@ The available groups are:
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
 - `mypy`: Required for static type checking.
-- `onnx`: Required for using custom surrogate models in ONNX format.
+- `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
 - `simulation`: Enabling the [`simulation`](baybe.simulation) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
