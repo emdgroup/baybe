@@ -1,3 +1,4 @@
 # Strategies
 
-This file contains information about strategies.
+This page will soon contain information about strategies.
+In the meantime, please see the [examples](../../examples/examples) instead.

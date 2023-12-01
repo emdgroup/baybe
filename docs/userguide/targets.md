@@ -1,3 +1,4 @@
 # The file on targets
 
-This file should contain information about targets
+This page will soon contain information about targets.
+In the meantime, please see the [examples](../../examples/examples) instead.
