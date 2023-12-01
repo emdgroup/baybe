@@ -7,5 +7,11 @@
 - Alex Lee (EMD Electronics, Tempe, Arizona, USA) [Contact](mailto:alex.lee@emdgroup.com), [Github](https://github.com/galaxee87)
 
 ## Contributors
+- Daniel Weber (Merck KGaA, Darmstadt, Germany):  
+  Telemetry prototype
 - Emeline Sola (during an internship at Merck KGaA, Darmstadt, Germany):  
   Auto-documentation of the examples
+- Sourabh Agrawal (Sigma-Aldrich Chemicals Private Limited):
+  Initial implementation of additional surrogate models and clustering methods
+- Julie Fang (Merck Life Science KGaA, Darmstadt, Germany):  
+  Farthest point sampling
