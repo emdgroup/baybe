@@ -92,11 +92,11 @@ pip install -e '.[dev]'
 ### Optional Dependencies
 There are several dependency groups that can be selected during pip installation, like
 ```bash
-pip install baybe[test,lint] # will install baybe with additional dependency groups `test` and `lint`
+pip install 'baybe[test,lint]' # will install baybe with additional dependency groups `test` and `lint`
 ```
 To get the most out of `baybe`, we recommend to install at least
 ```bash
-pip install baybe[chem,simulation]
+pip install 'baybe[chem,simulation]'
 ```
 
 The available groups are:
