@@ -1,18 +1,18 @@
 <div align="center">
   <br/>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aci.yml)
-[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aregular.yml)
-[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Adocs.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions?query=workflow%3Aci.yml)
+[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions?query=workflow%3Aregular.yml)
+[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions?query=workflow%3Adocs.yml)
 
 [![Supported Python version](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supported%20Python%20Versions&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
 [![PyPI version](https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20Version&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
 [![Conda version](https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&labelColor=96d7d2&color=ffdcb9)](https://anaconda.org/conda-forge/baybe)
-[![Issues](https://img.shields.io/github/issues/emdgroup/BayBE?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/issues)
-[![PRs](https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/pulls)
+[![Issues](https://img.shields.io/github/issues/emdgroup/baybe?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/issues)
+[![PRs](https://img.shields.io/github/issues-pr/emdgroup/baybe?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/pulls)
 [![License](https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&labelColor=96d7d2&color=ffdcb9)](http://www.apache.org/licenses/LICENSE-2.0)
 
-[![Logo](https://raw.githubusercontent.com/emdgroup/BayBE/main/docs/_static/banner2.svg)](https://github.com/emdgroup/BayBE)
+[![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/_static/banner2.svg)](https://github.com/emdgroup/baybe)
 
 <a href="https://emdgroup.github.io/baybe/_autosummary/baybe.html">Documentation<a/>
 &nbsp;•&nbsp;
@@ -61,7 +61,7 @@ GitHub via git and specifying the corresponding
 For instance, to install the latest commit of the main branch, run:
 
 ```bash
-pip install git+https://github.com/emdgroup/BayBE.git@main
+pip install git+https://github.com/emdgroup/baybe.git@main
 ```
 
 
