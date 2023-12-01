@@ -102,13 +102,13 @@ pip install 'baybe[chem,simulation]'
 ```
 
 The available groups are:
-- `chem`: Cheminformatics utilities (e.g. for the [`SubstanceParameter`](baybe.parameters.substance.SubstanceParameter)).
+- `chem`: Cheminformatics utilities (e.g. for the [`SubstanceParameter`](https://emdgroup.github.io/baybe/_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter)).
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
 - `mypy`: Required for static type checking.
 - `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
-- `simulation`: Enabling the [`simulation`](baybe.simulation) module.
+- `simulation`: Enabling the [`simulation`](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
@@ -121,7 +121,9 @@ a single target called `Yield`.
 ### Defining the Optimization Objective
 
 In BayBE's language, the `Yield` can be represented as a 
-[`NumericalTarget`](baybe.targets.numerical), which we pass into an `Objective`.
+[`NumericalTarget`](https://emdgroup.github.io/baybe/userguide/targets.html),
+which we pass into an
+[`Objective`](https://emdgroup.github.io/baybe/userguide/objective.html).
 
 ```python
 from baybe.targets import NumericalTarget
@@ -135,10 +137,11 @@ objective = Objective(mode="SINGLE", targets=[target])
 ```
 
 In cases where we need to consider multiple (potentially competing) targets, the
-role of the [`Objective`](baybe.objective.Objective) is to define additional settings, 
-e.g. how these targets should be balanced. In `SINGLE` mode, however, there are no 
-additional settings. For more details, see 
-[the targets section of the user guide](docs/userguide/targets.md).
+role of the [`Objective`](https://emdgroup.github.io/baybe/userguide/objective.html)
+is to define additional settings, e.g. how these targets should be balanced.
+In `SINGLE` mode, however, there are no additional settings.
+For more details, see 
+[the objective section of the user guide](https://emdgroup.github.io/baybe/userguide/objective.html).
 
 ### Defining the Search Space
 
@@ -172,16 +175,16 @@ parameters = [
 ```
 
 For more parameter types and their details, see the
-[parameters section of the user guide](docs/userguide/parameters).
+[parameters section of the user guide](https://emdgroup.github.io/baybe/userguide/parameters.html).
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters. Details can be found in 
-[the constraints section of the user guide](docs/userguide/constraints). In this 
-example, we assume no further constraints.
+[the constraints section of the user guide](https://emdgroup.github.io/baybe/userguide/constraints.html).
+In this example, we assume no further constraints.
 
 With the parameter and constraint definitions at hand, we can now create our
-[`SearchSpace`](baybe.searchspace) based on the Cartesian product of all possible 
-parameter values:
+[`SearchSpace`](https://emdgroup.github.io/baybe/userguide/searchspace.html) 
+based on the Cartesian product of all possible parameter values:
 
 ```python
 from baybe.searchspace import SearchSpace
@@ -202,7 +205,7 @@ For our example, we combine two selection strategies:
 
 For more details on the different strategies, their underlying algorithmic
 details, and their configuration settings, see
-[the strategies section of the user guide](docs/userguide/strategy).
+[the strategies section of the user guide](https://emdgroup.github.io/baybe/userguide/strategy.html).
 
 ```python
 from baybe.strategies import TwoPhaseStrategy
