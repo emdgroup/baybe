@@ -34,6 +34,7 @@ Contribute <misc/contributing_link>
     Known Issues <known_issues>
     FAQ <faq>
     Changelog <misc/changelog_link>
+    Github <https://github.com/emdgroup/baybe/>
     Contributors <misc/contributors_link>
     License <misc/license_link>
 ```
