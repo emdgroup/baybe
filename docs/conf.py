@@ -128,6 +128,7 @@ html_show_sourcelink = True
 # Use the provided html theme
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
+html_favicon = "_static/favicon.ico"
 # Change the colors. The following colors are used:
 BROWN = "#ffdcb9"
 DARK_BLUE = "#0f69af"
