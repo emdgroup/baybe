@@ -4,7 +4,7 @@ import argparse
 import os
 import pathlib
 import shutil
-from subprocess import DEVNULL, STDOUT, CalledProcessError, check_call, run
+from subprocess import DEVNULL, STDOUT, check_call, run
 
 from tqdm import tqdm
 
@@ -260,19 +260,15 @@ if not IGNORE_EXAMPLES:
     create_example_documentation(example_dest_dir="docs/examples")
 
 
-try:
+if FORCE:
+    print("Force-building the documentation, ignoring errors and warnings.")
+    # In force mode, we do not want to fail, even if an error code is returned.
+    # Hence, we use run instead of check_call
+    run(link_call, check=False)
+    run(building_call + ["--keep-going"], check=False)
+else:
     check_call(link_call)
     check_call(building_call)
-except CalledProcessError:
-    print(
-        """One process raised a critical error. Consider running with --force flag."""
-    )
-    if FORCE:
-        print("Force-building the documentation, ignoring errors and warnings.")
-        # We do not want to fail the next two calls, even if an error code is returned.
-        # Hence, we usw run instead of check_call
-        run(link_call, check=False)
-        run(building_call + ["--keep-going"], check=False)
 
 # Adjust the banner in the index and the README
 adjust_banner("docs/build/index.html", light_banner="banner2", dark_banner="banner1")
