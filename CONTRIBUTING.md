@@ -43,15 +43,23 @@ we recommend the following workflow:
 
 1. Optional but recommended to prevent complaints from our CI pipeline: Test your code.
 
-   Testing against a single python can be achieved via `tox -e <version>`. For instance:
-   ```bash
-   tox -e py311
+   There are several test environments you can run via `tox`, each corresponding to a
+   [developer tool](#developer-tools) in a certain Python version. You can see all 
+   available environments via `tox list`.
+   
+   For instance, running all code tests in Python 3.11 can be achieved via:
+   ```console
+   tox -e fulltest-py311
    ```
 
-   If you want to challenge your machine, you can run all version tests in parallel via:
-   ```bash
+   If you want to challenge your machine, you can run all checks in all Python versions
+   in parallel via:
+   ```console
    tox -p
    ```
+   
+   This can be considered the ultimate one-stop check to make sure your code is ready 
+   for merge. 
 
 1. Push the updated branch back to your fork:
    ```console
