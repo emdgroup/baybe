@@ -104,13 +104,13 @@ pip install 'baybe[chem,simulation]'
 ```
 
 The available groups are:
-- `chem`: Cheminformatics utilities (e.g. for the [`SubstanceParameter`](https://emdgroup.github.io/baybe/_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter)).
+- `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
 - `mypy`: Required for static type checking.
 - `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
-- `simulation`: Enabling the [`simulation`](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
+- `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
@@ -122,10 +122,8 @@ a single target called `Yield`.
 
 ### Defining the Optimization Objective
 
-In BayBE's language, the `Yield` can be represented as a 
-[`NumericalTarget`](https://emdgroup.github.io/baybe/userguide/targets.html),
-which we pass into an
-[`Objective`](https://emdgroup.github.io/baybe/userguide/objective.html).
+In BayBE's language, the `Yield` can be represented as a `NumericalTarget`,
+which we pass into an `Objective`.
 
 ```python
 from baybe.targets import NumericalTarget
@@ -139,8 +137,8 @@ objective = Objective(mode="SINGLE", targets=[target])
 ```
 
 In cases where we need to consider multiple (potentially competing) targets, the
-role of the [`Objective`](https://emdgroup.github.io/baybe/userguide/objective.html)
-is to define additional settings, e.g. how these targets should be balanced.
+role of the `Objective` is to define additional settings, e.g. how these targets should
+be balanced.
 In `SINGLE` mode, however, there are no additional settings.
 For more details, see 
 [the objective section of the user guide](https://emdgroup.github.io/baybe/userguide/objective.html).
@@ -185,8 +183,7 @@ relationships between our parameters. Details can be found in
 In this example, we assume no further constraints.
 
 With the parameter and constraint definitions at hand, we can now create our
-[`SearchSpace`](https://emdgroup.github.io/baybe/userguide/searchspace.html) 
-based on the Cartesian product of all possible parameter values:
+`SearchSpace` based on the Cartesian product of all possible parameter values:
 
 ```python
 from baybe.searchspace import SearchSpace
