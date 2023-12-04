@@ -266,7 +266,7 @@ the experiment.
 
 
 ## Known Issues
-A list of know issues can be found [here](docs/known_issues.md).
+A list of know issues can be found [here](https://emdgroup.github.io/baybe/known_issues.html).
 
 
 ## License
