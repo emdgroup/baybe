@@ -153,7 +153,8 @@ html_theme_options = {
         "color-api-pre-name": LIGHT_BLUE,
         "color-api-name": DARK_BLUE,
         "color-toc-item-text": "black",
-        "color-inline-code-background": "#efeff4",  # Very lightlight gray
+        # Background of code in text
+        "color-inline-code-background": "#efeff4",  # Very light gray
         # Color of search bar when clicking search
         "color-sidebar-search-background--focus": DARK_BLUE,
         "color-link": DARK_BLUE,
@@ -194,8 +195,8 @@ html_theme_options = {
         "color-api-name": BROWN,
         # Prefix in API names (e.g. baybe.campaign)
         "color-api-pre-name": "white",
-        # Background formlinks
-        "color-inline-code-background": "transparent",
+        # Background of code in text
+        "color-inline-code-background": DARK_GRAY,  # Gray
         # The color of links
         "color-link": BROWN,
         # Color of text in the right navigation side bar
