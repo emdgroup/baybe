@@ -152,7 +152,11 @@ their values/ranges and other parameter-specific details.
 For our example, we assume that we can control the following three quantities:
 
 ```python
-from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter, SubstanceParameter
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
 
 parameters = [
     CategoricalParameter(
