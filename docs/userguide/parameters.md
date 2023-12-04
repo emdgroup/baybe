@@ -1,12 +1,12 @@
 # Parameters
 
-Parameters are fundamental for BayBE, as they configure the ```SearchSpace``` and serve 
+Parameters are fundamental for BayBE, as they configure the ``SearchSpace`` and serve 
 as the direct link to the controllable variables in your experiment. 
 Before starting an iterative campaign, the user is required to specify the exact 
 parameters they can control and want to consider in their optimization.
 
 ```{note}
-BayBE identifies each parameter by a ```name```. All parameter names in one 
+BayBE identifies each parameter by a ``name``. All parameter names in one 
 campaign must be unique.
 ```
 
@@ -15,10 +15,10 @@ two parameter types: Discrete and continuous parameters.
 
 ## Continuous Parameters
 
-### ```NumericalContinuousParameter```
+### ``NumericalContinuousParameter``
 This is currently the only continuous parameter BayBE supports. 
 This parameters type defines possible values from a numerical interval called 
-```bounds```, and thus has an infinite amount of possibilities. 
+``bounds``, and thus has an infinite amount of possibilities. 
 Unless restrained by constraints, BayBE will consider any possible parameter value that 
 lies within the chosen interval.
 
@@ -37,7 +37,7 @@ These values can be numeric or label-like and are transformed internally before 
 ingested by the surrogate model.
 
 ```{note}
-We call the process of transforming labels into numbers ```encoding```. 
+We call the process of transforming labels into numbers ``encoding``. 
 To make labels usable in machine learning, we assign each label one or more numbers. 
 While there are trivial ways of doing this, BayBE also provides methods to avoid 
 problematic biases and even introduce useful information into the resulting latent 
@@ -45,12 +45,12 @@ number space. For different parameters different types of encoding make sense. T
 situations are reflected by the different discrete parameter types BayBE offers.
 ```
 
-### ```NumericalDiscreteParameter```
+### ``NumericalDiscreteParameter``
 This is the right type for parameters that have numerical values.
-We support sets with equidistant values like ```(1, 2, 3, 4, 5)``` but also unevenly 
-spaced sets of numbers like ```(0.2, 1.0, 2.0, 5.0, 10.0, 50.0)```.
+We support sets with equidistant values like ``(1, 2, 3, 4, 5)`` but also unevenly 
+spaced sets of numbers like ``(0.2, 1.0, 2.0, 5.0, 10.0, 50.0)``.
 
-This parameter also supports specifying a ```tolerance```. If specified, BayBE might 
+This parameter also supports specifying a ``tolerance``. If specified, BayBE might 
 throw an error if measurements are added that are not within that specified tolerance 
 from any of the possible values.
 
@@ -63,16 +63,16 @@ NumericalDiscreteParameter(
 )
 ```
 
-### ```CategoricalParameter```
-A ```CategoricalParameter``` supports sets of strings as labels. 
+### ``CategoricalParameter``
+A ``CategoricalParameter`` supports sets of strings as labels. 
 This is most suitable if the experimental choices cannot easily be translated into a 
 number. 
-Examples for this could be vendors like ```("Vendor A", "Vendor B", "Vendor C")``` or 
-post codes like ```("PO16 7GZ", "GU16 7HF", "L1 8JQ")```.
+Examples for this could be vendors like ``("Vendor A", "Vendor B", "Vendor C")`` or 
+post codes like ``("PO16 7GZ", "GU16 7HF", "L1 8JQ")``.
 
 Categorical parameters in BayBE can be encoded via integer or one-hot encoding. For some
 cases this makes sense, e.g. if we had a parameter for a setting with values 
-```("low", "medium", "high")```, an integer-encoding into values ```(1, 2, 3)``` would 
+``("low", "medium", "high")``, an integer-encoding into values ``(1, 2, 3)`` would 
 be reasonable.
 
 ```python
@@ -88,21 +88,21 @@ CategoricalParameter(
 However, in some cases this kind of encoding introduces an unreasonable bias into the 
 surrogate model.
 Take for instance a parameter for a choice of solvents with values 
-```("Solvent A", "Solvent B", "Solvent C")```. Encoding these with ```(1, 2, 3)``` as 
+``("Solvent A", "Solvent B", "Solvent C")``. Encoding these with ``(1, 2, 3)`` as 
 above would imply that "Solvent A" is more similar to "Solvent B" than to "Solvent C" 
 because the number 1 is closer to 2 than to 3. 
 This implied ordering is however not generally the case for the provided labels.
 In general, it is not even possible to describe the similarity between labels by 
 ordering across one single dimension.
-For this reason we also provide the ```SubstanceParameter``` which encodes labels 
+For this reason we also provide the ``SubstanceParameter`` which encodes labels 
 corresponding to small molecules with chemical descriptors, capturing their similarities
 much better and without the need for the user to think about ordering and similarity at 
 all.
-This concept is generalized in the ```CustomDiscreteParameter``` where the user can 
+This concept is generalized in the ``CustomDiscreteParameter`` where the user can 
 provide their own custom set of descriptors for each label.
 
-### ```SubstanceParameter```
-Instead of ```values```, this parameter accepts ```data``` in form of a dictionary. The 
+### ``SubstanceParameter``
+Instead of ``values``, this parameter accepts ``data`` in form of a dictionary. The 
 items correspond to pairs of labels and [SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system).
 SMILES are a string based representation of molecular structures. 
 Based on these, BayBE can assign each label a set of molecular descriptors as encoding.
@@ -124,39 +124,39 @@ SubstanceParameter(
 )
 ```
 
-The ```encoding``` options define what kind of descriptors are calculated:
-* ```MORDRED```: 2D descriptors from the [Mordred package](https://mordred-descriptor.github.io/documentation/master/)
-* ```RDKIT```: 2D descriptors from the [RDKit package](https://www.rdkit.org/)
-* ```MORGAN_FP```: Morgan fingerprints calculated with RDKit (1024 bits, radius 4)
+The ``encoding`` options define what kind of descriptors are calculated:
+* ``MORDRED``: 2D descriptors from the [Mordred package](https://mordred-descriptor.github.io/documentation/master/)
+* ``RDKIT``: 2D descriptors from the [RDKit package](https://www.rdkit.org/)
+* ``MORGAN_FP``: Morgan fingerprints calculated with RDKit (1024 bits, radius 4)
 
 These calculations will typically result in 500 to 1500 numbers per molecule.
 To avoid detrimental effects on the surrogate model fit we reduce the number of 
 descriptors before using them via decorrelation. 
-The ```decorrelate``` option in the example above specifies that only descriptors that 
+The ``decorrelate`` option in the example above specifies that only descriptors that 
 have a correlation lower than 0.7 to any other descriptor will be kept. 
 This usually reduces the number of descriptors to 10-50, depending on the specific 
-items in ```data```.
+items in ``data``.
 
 ```{warning}
-The descriptors calculated for a ```SubstanceParameter``` were developed to describe 
+The descriptors calculated for a ``SubstanceParameter`` were developed to describe 
 small molecules and are not suitable for other substances. If you deal with large 
 molecules like polymers, or arbitrary substance mixtures, we recommend to provide your 
-own descriptors via the ```CustomParameter```.
+own descriptors via the ``CustomParameter``.
 ```
 
 ```{warning}
-The ```SubstanceParameter``` is only available if BayBE was installed with the 
-additional ```chem``` dependency.
+The ``SubstanceParameter`` is only available if BayBE was installed with the 
+additional ``chem`` dependency.
 ```
 
-### ```CustomDiscreteParameter```
-The ```encoding``` concept introduced above is generalized by the 
-```CustomParameter```.
+### ``CustomDiscreteParameter``
+The ``encoding`` concept introduced above is generalized by the 
+``CustomParameter``.
 Here, the user is expected to provide their own descriptors for the encoding.
 
 Take for instance a parameter that corresponds to the choice of a polymer. Polymers are
 not well represented by the small molecule descriptors utilized in the 
-```SubstanceParameter```. 
+``SubstanceParameter``. 
 But one could provide experimental measurements or common metrics used to classify 
 polymers:
 
@@ -178,15 +178,15 @@ CustomDiscreteParameter(
 )
 ```
 
-With the ```CustomParameter``` you can also encode parameter labels that have nothing to do 
+With the ``CustomParameter`` you can also encode parameter labels that have nothing to do 
 with substances. 
 For example, a parameter corresponding to the choice of a vendor is typically not 
 easily encoded with standard means.
 In BayBE's framework you can provide numbers corresponding e.g. to delivery time, 
 reliability or average price of the vendor to encode the labels with these via the 
-```CustomParameter```.
+``CustomParameter``.
 
-### ```TaskParameter```
+### ``TaskParameter``
 Often, several experimental campaigns involve similar or even identical parameters but 
 still have one or more differences. 
 For example, when optimizing reagents in a chemical reaction, the reactants remain 
