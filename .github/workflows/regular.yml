@@ -19,6 +19,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
+  # Warns about broken links in the docs. Especially useful for
+  # those that point to our own github.io page (linkcheck is disabled in the
+  # CI pipeline, because the respective pages are yet to be created at that time).
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with: {python-version: "3.11"}
+      - name: Build Docs
+        run: |
+          pip install tox
+          tox -e docs-py311
+
   lint:
     strategy:
       matrix:

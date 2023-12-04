@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
+env:
+  BAYBE_DOCS_LINKCHECK_IGNORE: true  # Ignore link checks to github.io (pages might not yet exist)
+
 jobs:
   build:
     runs-on: ubuntu-latest
