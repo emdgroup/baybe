@@ -51,8 +51,8 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 #### Creating the searchspace and the objective
 
-# Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
-# We use that data of the test function to deduce bounds and number of parameters.
+# Since the searchspace is continuous, we construct `NumericalContinuousParameter`.
+# We use the data of the test function to deduce bounds and number of parameters.
 parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k + 1}",
