@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyPI release pipeline
 - Favicon for homepage
 - More literature references
+- First drafts of first user guides
 
 ### Changed
 - Reworked README for GitHub landing page
