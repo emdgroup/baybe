@@ -7,6 +7,7 @@ In the meantime, we refer to the [examples](../../examples/examples) instead.
 ```{toctree}
 Campaigns <campaigns>
 Constraints <constraints>
+Objective <objective>
 Parameters <parameters>
 Recommender <recommender>
 Search spaces <searchspace>

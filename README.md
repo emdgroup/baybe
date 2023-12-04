@@ -1,24 +1,28 @@
 <div align="center">
   <br/>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aci.yml)
-[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Aregular.yml)
-[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/BayBE/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/BayBE/actions?query=workflow%3Adocs.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/ci.yml)
+[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/regular.yml)
+[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/docs.yml)
 
 [![Supported Python version](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supported%20Python%20Versions&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
 [![PyPI version](https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20Version&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
-[![Conda version](https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&labelColor=96d7d2&color=ffdcb9)](https://anaconda.org/conda-forge/baybe)
-[![Issues](https://img.shields.io/github/issues/emdgroup/BayBE?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/issues)
-[![PRs](https://img.shields.io/github/issues-pr/emdgroup/BayBE?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/BayBE/pulls)
+[![Conda version](https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&labelColor=96d7d2&color=ffdcb9)](https://anaconda.org/conda-forge/baybe/)
+[![Issues](https://img.shields.io/github/issues/emdgroup/baybe?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/issues/)
+[![PRs](https://img.shields.io/github/issues-pr/emdgroup/baybe?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/pulls/)
 [![License](https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&labelColor=96d7d2&color=ffdcb9)](http://www.apache.org/licenses/LICENSE-2.0)
 
-[![Logo](https://raw.githubusercontent.com/emdgroup/BayBE/main/docs/_static/banner2.svg)](https://github.com/emdgroup/BayBE)
+[![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/_static/banner2.svg)](https://github.com/emdgroup/baybe/)
 
+&nbsp;
+<a href="https://emdgroup.github.io/baybe/">Homepage<a/>
+&nbsp;•&nbsp;
+<a href="https://emdgroup.github.io/baybe/userguide/userguide.html">User Guide<a/>
+&nbsp;•&nbsp;
 <a href="https://emdgroup.github.io/baybe/_autosummary/baybe.html">Documentation<a/>
 &nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/userguide.html">User Guide<a/>
-&nbsp;•&nbsp;
 <a href="https://emdgroup.github.io/baybe/misc/contributing_link.html">Contribute<a/>
+&nbsp;
 </div>
 
 # BayBE — A Bayesian Back End for Design of Experiments
@@ -61,7 +65,7 @@ GitHub via git and specifying the corresponding
 For instance, to install the latest commit of the main branch, run:
 
 ```bash
-pip install git+https://github.com/emdgroup/BayBE.git@main
+pip install git+https://github.com/emdgroup/baybe.git@main
 ```
 
 
@@ -92,21 +96,21 @@ pip install -e '.[dev]'
 ### Optional Dependencies
 There are several dependency groups that can be selected during pip installation, like
 ```bash
-pip install baybe[test,lint] # will install baybe with additional dependency groups `test` and `lint`
+pip install 'baybe[test,lint]' # will install baybe with additional dependency groups `test` and `lint`
 ```
 To get the most out of `baybe`, we recommend to install at least
 ```bash
-pip install baybe[chem,simulation]
+pip install 'baybe[chem,simulation]'
 ```
 
 The available groups are:
-- `chem`: Cheminformatics utilities (e.g. for the [`SubstanceParameter`](baybe.parameters.substance.SubstanceParameter)).
+- `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
 - `lint`: Required for linting and formatting.
 - `mypy`: Required for static type checking.
-- `onnx`: Required for using custom surrogate models in ONNX format.
-- `simulation`: Enabling the [`simulation`](baybe.simulation) module.
+- `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
+- `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
@@ -118,8 +122,8 @@ a single target called `Yield`.
 
 ### Defining the Optimization Objective
 
-In BayBE's language, the `Yield` can be represented as a 
-[`NumericalTarget`](baybe.targets.numerical), which we pass into an `Objective`.
+In BayBE's language, the `Yield` can be represented as a `NumericalTarget`,
+which we pass into an `Objective`.
 
 ```python
 from baybe.targets import NumericalTarget
@@ -133,10 +137,11 @@ objective = Objective(mode="SINGLE", targets=[target])
 ```
 
 In cases where we need to consider multiple (potentially competing) targets, the
-role of the [`Objective`](baybe.objective.Objective) is to define additional settings, 
-e.g. how these targets should be balanced. In `SINGLE` mode, however, there are no 
-additional settings. For more details, see 
-[the targets section of the user guide](docs/userguide/targets.md).
+role of the `Objective` is to define additional settings, e.g. how these targets should
+be balanced.
+In `SINGLE` mode, however, there are no additional settings.
+For more details, see 
+[the objective section of the user guide](https://emdgroup.github.io/baybe/userguide/objective.html).
 
 ### Defining the Search Space
 
@@ -170,16 +175,15 @@ parameters = [
 ```
 
 For more parameter types and their details, see the
-[parameters section of the user guide](docs/userguide/parameters).
+[parameters section of the user guide](https://emdgroup.github.io/baybe/userguide/parameters.html).
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters. Details can be found in 
-[the constraints section of the user guide](docs/userguide/constraints). In this 
-example, we assume no further constraints.
+[the constraints section of the user guide](https://emdgroup.github.io/baybe/userguide/constraints.html).
+In this example, we assume no further constraints.
 
 With the parameter and constraint definitions at hand, we can now create our
-[`SearchSpace`](baybe.searchspace) based on the Cartesian product of all possible 
-parameter values:
+`SearchSpace` based on the Cartesian product of all possible parameter values:
 
 ```python
 from baybe.searchspace import SearchSpace
@@ -200,7 +204,7 @@ For our example, we combine two selection strategies:
 
 For more details on the different strategies, their underlying algorithmic
 details, and their configuration settings, see
-[the strategies section of the user guide](docs/userguide/strategy).
+[the strategies section of the user guide](https://emdgroup.github.io/baybe/userguide/strategy.html).
 
 ```python
 from baybe.strategies import TwoPhaseStrategy
@@ -259,7 +263,7 @@ the experiment.
 
 
 ## Known Issues
-A list of know issues can be found [here](docs/known_issues.md).
+A list of know issues can be found [here](https://emdgroup.github.io/baybe/known_issues.html).
 
 
 ## License
