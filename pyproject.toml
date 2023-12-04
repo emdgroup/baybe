@@ -1,6 +1,6 @@
 [project]
 name = "baybe"
-description = "Bayesian Back End for Design of Experiments"
+description = "A Bayesian Back End for Design of Experiments"
 authors = [
     {name = "Merck KGaA, Darmstadt, Germany"},
 ]
