@@ -4,14 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0] - 2023-12-04
 ### Added
 - GitHub CI pipelines
-- GitHub Documentation pipeline
-- Optional --force option for force building the documentation despite errors
+- GitHub documentation pipeline
+- Optional `--force` option for building the documentation despite errors
 - Enabled passing optional arguments to `tox -e docs` calls
 - Logo and banner images
-- Project metadata to pyproject.toml
+- Project metadata for pyproject.toml
 - PyPI release pipeline
 - Favicon for homepage
 - More literature references
