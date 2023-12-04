@@ -27,3 +27,7 @@ a.sidebar-brand {
 .sidebar-search::placeholder {
     color: #ffdcb9;
 }
+
+thead {
+    color: #ffffff;
+}
