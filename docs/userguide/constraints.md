@@ -16,7 +16,7 @@ discrete / continuous parameters.
 ```{note}
 Currently, BayBE does not support hybrid constraints, that is, constraints which 
 operate on a mixed set of discrete and continuous parameters. If such a constraint is 
-necessary in almost al cases it is possible to rephrase the parametrization so that 
+necessary in almost all cases it is possible to rephrase the parametrization so that 
 the parameter set is exclusively discrete or continuous.
 ```
 
@@ -64,7 +64,7 @@ $c_i$ is the coefficient for that parameter. $\text{rhs}$ is a user-chosen numbe
 
 ```{info}
 You can specify a constraint involving ```<=``` instead of ```>=``` by multiplying 
-both sides by -1, i.e. multiply both the coefficients and rhs by -1.
+both sides, i.e. the coefficients and rhs, by -1.
 ```
 
 Let us amend the example from 

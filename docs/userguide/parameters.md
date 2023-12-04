@@ -10,9 +10,8 @@ BayBE identifies each parameter by a ```name```. All parameter names in one
 campaign must be unique.
 ```
 
-BayBE distinguishes several parameter types. Because under the hood they need to be 
-treated very differently, we classify parameters in two different families: discrete 
-and continuous parameters.
+Because under the hood they need to be treated very differently, BayBE distinguishes 
+two parameter types: Discrete and continuous parameters.
 
 ## Continuous Parameters
 
@@ -33,7 +32,7 @@ NumericalContinuousParameter(
 ```
 
 ## Discrete Parameters
-A discrete parameter has a finite, countable set of possible values. 
+A discrete parameter has a finite set of possible values. 
 These values can be numeric or label-like and are transformed internally before being 
 ingested by the surrogate model.
 
@@ -151,7 +150,7 @@ additional ```chem``` dependency.
 ```
 
 ### ```CustomDiscreteParameter```
-Take the ```encoding``` concept introduced above is generalized by the 
+The ```encoding``` concept introduced above is generalized by the 
 ```CustomParameter```.
 Here, the user is expected to provide their own descriptors for the encoding.
 

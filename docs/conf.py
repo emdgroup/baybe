@@ -83,7 +83,7 @@ extensions = [
     "sphinx.ext.intersphinx",  # Links to other documentations like numpy, python,...
     "sphinx.ext.viewcode",  # Links to code
 ]
-myst_enable_extensions = ["dollarmath"]
+myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
 
 
 # Tell sphinx where to find the templates
