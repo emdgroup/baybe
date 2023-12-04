@@ -41,11 +41,13 @@ we recommend the following workflow:
 
 1. **Implement your changes.**
 
-1. Optional but recommended to prevent complaints from our CI pipeline: Test your code.
+1. Optional but recommended to prevent complaints from our CI pipeline:
+   **Test your code.**
 
    There are several test environments you can run via `tox`, each corresponding to a
-   [developer tool](#developer-tools) in a certain Python version. You can see all 
-   available environments via `tox list`.
+   [developer tool](#developer-tools) in a certain Python version. 
+   You can retrieve all available environments via `tox list`.
+   For more information, see our [README about tests](tests/README.md).
    
    For instance, running all code tests in Python 3.11 can be achieved via:
    ```console
