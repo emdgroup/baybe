@@ -51,7 +51,7 @@ We support sets with equidistant values like ``(1, 2, 3, 4, 5)`` but also uneven
 spaced sets of numbers like ``(0.2, 1.0, 2.0, 5.0, 10.0, 50.0)``.
 
 The parameter type also supports specifying a ``tolerance``.
-If specified, BayBE might throw an error if measurements are added that are not within 
+If specified, BayBE throws an error if measurements are added that are not within 
 that specified tolerance from any of the possible values.
 
 ```python
