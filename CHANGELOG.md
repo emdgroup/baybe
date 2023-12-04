@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Project metadata to pyproject.toml
 - PyPI release pipeline
 - Favicon for homepage
+- More literature references
 
 ### Changed
 - Reworked README for GitHub landing page

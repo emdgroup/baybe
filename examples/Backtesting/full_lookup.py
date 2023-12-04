@@ -32,6 +32,8 @@ N_MC_ITERATIONS = 3
 #### Lookup functionality and data creation
 
 # We read the information about the conducted experiments from a .xlsx-file.
+# This data set was obtained from [Shields, B.J., Stevens et al. Nature 590, 89–96 (2021)](https://doi.org/10.1038/s41586-021-03213-y) and contains measurements of a reaction yield,
+# varying typical reaction conditions.
 # Depending on your system and settings, you might need to slightly adjust the following paths.
 # The reason is that it depends on the folder in which you execute the `python` call.
 # This code assumes that you call `python` either from the repository root folder or this folder.

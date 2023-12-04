@@ -278,7 +278,10 @@ def df_drop_string_columns(
 def df_uncorrelated_features(
     df: pd.DataFrame, exclude_list: Optional[List[str]] = None, threshold: float = 0.7
 ):
-    """Return an uncorrelated set of features. Adapted from edbo.
+    """Return an uncorrelated set of features.
+
+    Adapted from edbo (https://github.com/b-shields/edbo ,
+    https://doi.org/10.1038/s41586-021-03213-y).
 
     Args:
         df: The dataframe to be cleaned
