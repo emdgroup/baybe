@@ -12,9 +12,10 @@ Constraints <constraints>
 Objective <objective>
 Parameters <parameters>
 Recommender <recommender>
-Search spaces <searchspace>
+Search Spaces <searchspace>
 Simulation <simulation>
 Strategy <strategy>
 Surrogates <surrogates>
 Targets <targets>
+Transfer Learning <transfer_learning>
 ```
