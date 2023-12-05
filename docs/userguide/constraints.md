@@ -27,6 +27,7 @@ Not all surrogate models are able to treat continuous constraints. In such situa
 the constraints are currently silently ignored.
 ```   
 
+(CLEQ)=
 ### ``ContinuousLinearEqualityConstraint``
 This linear constraint asserts that the following equation is true (up to numerical 
 rounding errors): 
@@ -68,7 +69,7 @@ both sides, i.e. the coefficients and rhs, by -1.
 ```
 
 Let us amend the example from 
-[`ContinuousLinearEqualityConstraint`](#continuouslinearequalityconstraint) and assume 
+[`ContinuousLinearEqualityConstraint`](#CLEQ) and assume 
 that there is always a fourth component to the mixture which serves as a "filler".
 In such a case we might want to ensure that the first three components only make up to 
 80% of the mixture. 
@@ -147,7 +148,7 @@ DiscreteExcludeConstraint(
 
 ### ``DiscreteSumConstraint`` and ``DiscreteProductConstraint``
 These constraints constrain sums or products of numerical parameters. In the example 
-from [``ContinuousLinearEqualityConstraint``](#continuouslinearequalityconstraint) we 
+from [``ContinuousLinearEqualityConstraint``](#CLEQ) we 
 had three continuous parameters ``x_1``, ``x_2`` and ``x_3`` which needed to sum 
 up to 1.0.
 If these parameters were instead discrete, the corresponding constraint would look like:
