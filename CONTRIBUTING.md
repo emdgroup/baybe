@@ -47,7 +47,7 @@ we recommend the following workflow:
    There are several test environments you can run via `tox`, each corresponding to a
    [developer tool](#developer-tools) in a certain Python version. 
    You can retrieve all available environments via `tox list`.
-   For more information, see our [README about tests](tests/README.md).
+   For more information, see our [README about tests](https://github.com/emdgroup/baybe/blob/main/tests/README.md).
    
    For instance, running all code tests in Python 3.11 can be achieved via:
    ```console
@@ -70,6 +70,7 @@ we recommend the following workflow:
 
 1. Open a pull request via Github's web page.
 
+(developer-tools)=
 ## Developer Tools
 
 In order to maintain a high code quality, we use a variety of code developer tools. 
@@ -98,7 +99,7 @@ tox -e <env>
 ```
 where `<env>` is any of the environment names found via `tox list`.
 
-
+(code-design)=
 ## Code Design
 
 When reading BayBE's code, you will notice certain re-occurring design patterns.
@@ -121,7 +122,7 @@ make sure that the newly written code is well integrated into the existing packa
 module hierarchy.
 In particular, public functionality should be imported into the appropriate high-level
 namespaces for easier user import. For an example, see our
-[parameter namespace](baybe/parameters/__init__.py).
+[parameter namespace](https://github.com/emdgroup/baybe/blob/main/baybe/parameters/__init__.py).
 
 ## Writing Docstrings
 
