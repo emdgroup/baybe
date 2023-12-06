@@ -23,10 +23,14 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      - name: Create Wheel
+      - name: Clean
         run: |
-          pip install wheel
-          pip wheel . --no-deps --wheel-dir dist
+          python -c 'import shutil; [shutil.rmtree(p, True) for p in ("build", "dist")]'
+          python -c 'import pathlib, shutil; [shutil.rmtree(p, True) for p in pathlib.Path(".").glob("*.egg-info")]'
+      - name: Create Wheel and Dist
+        run: |
+          pip install build
+          python -m build --sdist --wheel --outdir dist/ .
           ls -lat dist
       - name: Check Wheel
         shell: bash
@@ -36,7 +40,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: Wheels_${{  github.ref_name }}
+          name: Dist_${{  github.ref_name }}
           path: dist
 
   # Upload to Test PyPI on every tag
@@ -50,7 +54,7 @@ jobs:
       - name: Download packages built
         uses: actions/download-artifact@v3
         with:
-          name: Wheels_${{  github.ref_name }}
+          name: Dist_${{  github.ref_name }}
           path: dist
       - name: Upload package to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -76,7 +80,7 @@ jobs:
       - name: Download packages built
         uses: actions/download-artifact@v3
         with:
-          name: Wheels_${{  github.ref_name }}
+          name: Dist_${{  github.ref_name }}
           path: dist
       - name: Upload package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
