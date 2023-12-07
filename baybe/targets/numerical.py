@@ -120,17 +120,18 @@ class NumericalTarget(Target, SerialMixin):
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.
 
-        transformed = data.copy()
-
         # When bounds are given, apply the respective transform
         if self.bounds.is_bounded:
             func = _get_target_transform(self.mode, self.transform_mode)
-            transformed = func(transformed, *self.bounds.to_tuple())
+            transformed = func(data, *self.bounds.to_tuple())
 
         # If no bounds are given, simply negate all target values for ``MIN`` mode.
         # For ``MAX`` mode, nothing needs to be done.
         # For ``MATCH`` mode, the validators avoid a situation without specified bounds.
         elif self.mode is TargetMode.MIN:
-            transformed = -transformed
+            transformed = -data
+
+        else:
+            transformed = data.copy()
 
         return transformed

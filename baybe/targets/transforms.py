@@ -20,9 +20,9 @@ def linear_transform(
             specified interval. If ``False``, they increase from 0 to 1.
 
     Returns:
-        An array containing the transformed values.
+        A new array containing the transformed values.
     """
-    arr = np.array(arr)
+    arr = np.asarray(arr)
     if descending:
         res = (upper - arr) / (upper - lower)
         res[arr > upper] = 0.0
@@ -48,10 +48,10 @@ def triangular_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarr
         upper:The upper end of the triangle interval. Above, the mapped values are 0.
 
     Returns:
-        An array containing the transformed values.
+        A new array containing the transformed values.
     """
+    arr = np.asarray(arr)
     mid = lower + (upper - lower) / 2
-    arr = np.array(arr)
     res = (arr - lower) / (mid - lower)
     res[arr > mid] = (upper - arr[arr > mid]) / (upper - mid)
     res[arr > upper] = 0.0
@@ -72,8 +72,9 @@ def bell_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
         upper: The input value corresponding to the lower sigma interval boundary.
 
     Returns:
-        An array containing the transformed values.
+        A new array containing the transformed values.
     """
+    arr = np.asarray(arr)
     mean = np.mean([lower, upper])
     std = (upper - lower) / 2
     res = np.exp(-((arr - mean) ** 2) / (2.0 * std**2))
