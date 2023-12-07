@@ -350,25 +350,25 @@ def fixture_targets(target_names: List[str]):
             name="Target_max_bounded",
             mode="MAX",
             bounds=(0, 100),
-            target_transform="LINEAR",
+            transform_mode="LINEAR",
         ),
         NumericalTarget(
             name="Target_min_bounded",
             mode="MIN",
             bounds=(0, 100),
-            target_transform="LINEAR",
+            transform_mode="LINEAR",
         ),
         NumericalTarget(
             name="Target_match_bell",
             mode="MATCH",
             bounds=(0, 100),
-            target_transform="BELL",
+            transform_mode="BELL",
         ),
         NumericalTarget(
             name="Target_match_triangular",
             mode="MATCH",
             bounds=(0, 100),
-            target_transform="TRIANGULAR",
+            transform_mode="TRIANGULAR",
         ),
     ]
     return [t for t in valid_targets if t.name in target_names]

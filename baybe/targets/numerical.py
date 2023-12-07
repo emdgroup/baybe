@@ -8,17 +8,17 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.targets.base import Target
-from baybe.targets.enum import TargetMode, TargetTransform
+from baybe.targets.enum import TargetMode, TargetTransformMode
 from baybe.targets.transforms import bound_bell, bound_linear, bound_triangular
 from baybe.utils import Interval, SerialMixin, convert_bounds
 
-_VALID_TRANSFORMS: Dict[TargetMode, Sequence[TargetTransform]] = {
-    TargetMode.MAX: (TargetTransform.LINEAR,),
-    TargetMode.MIN: (TargetTransform.LINEAR,),
-    TargetMode.MATCH: (TargetTransform.TRIANGULAR, TargetTransform.BELL),
+_VALID_TRANSFORM_MODES: Dict[TargetMode, Sequence[TargetTransformMode]] = {
+    TargetMode.MAX: (TargetTransformMode.LINEAR,),
+    TargetMode.MIN: (TargetTransformMode.LINEAR,),
+    TargetMode.MATCH: (TargetTransformMode.TRIANGULAR, TargetTransformMode.BELL),
 }
-"""A mapping from target modes to allowed target transforms. If multiple transforms
-are allowed, the first entry is used as default option."""
+"""A mapping from target modes to allowed target transform modes.
+If multiple transform modes are allowed, the first entry is used as default option."""
 
 
 @define(frozen=True)
@@ -40,16 +40,16 @@ class NumericalTarget(Target, SerialMixin):
     bounds: Interval = field(default=None, converter=convert_bounds)
     """Optional target bounds."""
 
-    target_transform: Optional[TargetTransform] = field(
-        converter=lambda x: None if x is None else TargetTransform(x)
+    transform_mode: Optional[TargetTransformMode] = field(
+        converter=lambda x: None if x is None else TargetTransformMode(x)
     )
-    """An optional target transform."""
+    """An optional target transform mode."""
 
-    @target_transform.default
-    def _default_target_transform(self) -> Optional[TargetTransform]:
-        """Provide the default transform for bounded targets."""
+    @transform_mode.default
+    def _default_transform_mode(self) -> Optional[TargetTransformMode]:
+        """Provide the default transform mode for bounded targets."""
         if self.bounds.is_bounded:
-            fun = _VALID_TRANSFORMS[self.mode][0]
+            fun = _VALID_TRANSFORM_MODES[self.mode][0]
             warnings.warn(
                 f"The transformation mode for target '{self.name}' "
                 f"in '{self.mode.name}' mode has not been specified. "
@@ -78,9 +78,9 @@ class NumericalTarget(Target, SerialMixin):
                 f"which requires finite bounds."
             )
 
-    @target_transform.validator
-    def _validate_target_transform(  # noqa: DOC101, DOC103
-        self, _: Any, value: Optional[TargetTransform]
+    @transform_mode.validator
+    def _validate_transform_mode(  # noqa: DOC101, DOC103
+        self, _: Any, value: Optional[TargetTransformMode]
     ) -> None:
         """Validate that the given transform is compatible with the specified mode.
 
@@ -88,12 +88,12 @@ class NumericalTarget(Target, SerialMixin):
             ValueError: If the specified bound transform function and the target mode
                 are not compatible.
         """
-        if (value is not None) and (value not in _VALID_TRANSFORMS[self.mode]):
+        if (value is not None) and (value not in _VALID_TRANSFORM_MODES[self.mode]):
             raise ValueError(
                 f"You specified bounds for target '{self.name}', but your "
                 f"specified bound transform function '{value}' is not compatible "
                 f"with the target mode {self.mode}'. It must be one "
-                f"of {_VALID_TRANSFORMS[self.mode]}."
+                f"of {_VALID_TRANSFORM_MODES[self.mode]}."
             )
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
@@ -107,14 +107,14 @@ class NumericalTarget(Target, SerialMixin):
 
         # Specify all bound transforms
         bounds_transform_funcs = {
-            TargetTransform.LINEAR: bound_linear,
-            TargetTransform.TRIANGULAR: bound_triangular,
-            TargetTransform.BELL: bound_bell,
+            TargetTransformMode.LINEAR: bound_linear,
+            TargetTransformMode.TRIANGULAR: bound_triangular,
+            TargetTransformMode.BELL: bound_bell,
         }
 
         # When bounds are given, apply the respective transform
         if self.bounds.is_bounded:
-            func = bounds_transform_funcs[self.target_transform]
+            func = bounds_transform_funcs[self.transform_mode]
             if self.mode is TargetMode.MAX:
                 func = partial(func, descending=False)
             elif self.mode is TargetMode.MIN:
