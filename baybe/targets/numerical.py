@@ -86,7 +86,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @target_transform.validator
     def _validate_target_transform(  # noqa: DOC101, DOC103
-        self, _: Any, value: str
+        self, _: Any, value: Optional[TargetTransform]
     ) -> None:
         """Validate that the given transform is compatible with the specified mode.
 
