@@ -1,6 +1,6 @@
 """Numerical targets."""
 
-import logging
+import warnings
 from functools import partial
 from typing import Any, Optional
 
@@ -17,8 +17,6 @@ from baybe.utils import (
     bound_triangular,
     convert_bounds,
 )
-
-_logger = logging.getLogger(__name__)
 
 _VALID_TRANSFORMS = {
     TargetMode.MAX: (TargetTransform.LINEAR,),
@@ -58,12 +56,11 @@ class NumericalTarget(Target, SerialMixin):
         """Provide the default transform for bounded targets."""
         if self.bounds.is_bounded:
             fun = _VALID_TRANSFORMS[self.mode][0]
-            _logger.warning(
-                "The bound transform function for target '%s' in mode '%s' has not "
-                "been specified. Setting the bound transform function to '%s'.",
-                self.name,
-                self.mode,
-                fun,
+            warnings.warn(
+                f"The transformation mode for target '{self.name}' "
+                f"in '{self.mode.name}' mode has not been specified. "
+                f"Setting the bound transform function to '{fun.name}'.",
+                UserWarning,
             )
             return fun
         return None
