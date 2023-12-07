@@ -2,10 +2,10 @@
 
 import warnings
 from functools import partial
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Sequence
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode, TargetTransform
@@ -18,7 +18,7 @@ from baybe.utils import (
     convert_bounds,
 )
 
-_VALID_TRANSFORMS = {
+_VALID_TRANSFORMS: Dict[TargetMode, Sequence[TargetTransform]] = {
     TargetMode.MAX: (TargetTransform.LINEAR,),
     TargetMode.MIN: (TargetTransform.LINEAR,),
     TargetMode.MATCH: (TargetTransform.TRIANGULAR, TargetTransform.BELL),
