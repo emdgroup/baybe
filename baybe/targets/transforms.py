@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 
-def bound_linear(
+def linear_transform(
     arr: ArrayLike, lower: float, upper: float, descending: bool
 ) -> np.ndarray:
     """Linearly map values in a specified interval ``[lower, upper]`` to ``[0, 1]``.
@@ -35,7 +35,7 @@ def bound_linear(
     return res
 
 
-def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
+def triangular_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     """Map values to the interval ``[0, 1]`` in a "triangular" fashion.
 
     The shape of the function is "triangular" in that is 0 outside a specified interval
@@ -60,7 +60,7 @@ def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     return res
 
 
-def bound_bell(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
+def bell_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     """Map values to the interval ``[0, 1]`` in a "Gaussian bell" fashion.
 
     The shape of the function is "Gaussian bell curve", specified through the boundary

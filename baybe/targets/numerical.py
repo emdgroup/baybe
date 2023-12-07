@@ -2,14 +2,20 @@
 
 import warnings
 from functools import partial
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence
 
+import numpy as np
 import pandas as pd
 from attrs import define, field
+from numpy.typing import ArrayLike
 
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode, TargetTransformMode
-from baybe.targets.transforms import bound_bell, bound_linear, bound_triangular
+from baybe.targets.transforms import (
+    bell_transform,
+    linear_transform,
+    triangular_transform,
+)
 from baybe.utils import Interval, SerialMixin, convert_bounds
 
 _VALID_TRANSFORM_MODES: Dict[TargetMode, Sequence[TargetTransformMode]] = {
@@ -19,6 +25,21 @@ _VALID_TRANSFORM_MODES: Dict[TargetMode, Sequence[TargetTransformMode]] = {
 }
 """A mapping from target modes to allowed target transform modes.
 If multiple transform modes are allowed, the first entry is used as default option."""
+
+
+def _get_target_transform(
+    mode: TargetMode, transform_mode: TargetTransformMode
+) -> Callable[[ArrayLike, float, float], np.ndarray]:
+    """Provide the correct target transform for the given modes."""
+    if transform_mode is TargetTransformMode.TRIANGULAR:
+        return triangular_transform
+    if transform_mode is TargetTransformMode.BELL:
+        return bell_transform
+    if transform_mode is TargetTransformMode.LINEAR:
+        if mode is TargetMode.MAX:
+            return partial(linear_transform, descending=False)
+        elif mode is TargetMode.MIN:
+            return partial(linear_transform, descending=True)
 
 
 @define(frozen=True)
@@ -101,24 +122,9 @@ class NumericalTarget(Target, SerialMixin):
 
         transformed = data.copy()
 
-        # TODO: potentially introduce an abstract base class for the transforms
-        #   -> this would remove the necessity to maintain the following dict
-        #   -> also, it would create a common signature, avoiding the `partial` calls
-
-        # Specify all bound transforms
-        bounds_transform_funcs = {
-            TargetTransformMode.LINEAR: bound_linear,
-            TargetTransformMode.TRIANGULAR: bound_triangular,
-            TargetTransformMode.BELL: bound_bell,
-        }
-
         # When bounds are given, apply the respective transform
         if self.bounds.is_bounded:
-            func = bounds_transform_funcs[self.transform_mode]
-            if self.mode is TargetMode.MAX:
-                func = partial(func, descending=False)
-            elif self.mode is TargetMode.MIN:
-                func = partial(func, descending=True)
+            func = _get_target_transform(self.mode, self.transform_mode)
             transformed = func(transformed, *self.bounds.to_tuple())
 
         # If no bounds are given, simply negate all target values for ``MIN`` mode.

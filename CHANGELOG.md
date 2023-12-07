@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transform_mode`
+- Moved and renamed target transform utility functions
 
 ### Removed
 - Conda install instructions and version badge
