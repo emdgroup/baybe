@@ -1,4 +1,4 @@
-"""Hypothesis strategies."""
+"""Hypothesis strategies for parameters."""
 
 import hypothesis.strategies as st
 import numpy as np
