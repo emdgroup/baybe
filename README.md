@@ -5,9 +5,8 @@
 [![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/regular.yml)
 [![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/docs.yml)
 
-[![Supported Python version](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supported%20Python%20Versions&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
+[![Supports Python](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supports%20Python&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
 [![PyPI version](https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20Version&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
-[![Conda version](https://img.shields.io/conda/vn/conda-forge/baybe.svg?style=flat-square&label=Conda%20Forge%20Version&labelColor=96d7d2&color=ffdcb9)](https://anaconda.org/conda-forge/baybe/)
 [![Issues](https://img.shields.io/github/issues/emdgroup/baybe?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/issues/)
 [![PRs](https://img.shields.io/github/issues-pr/emdgroup/baybe?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/pulls/)
 [![License](https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&labelColor=96d7d2&color=ffdcb9)](http://www.apache.org/licenses/LICENSE-2.0)
@@ -43,14 +42,10 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 
 ## Installation
 ### From Package Index
-The easiest way to install BayBE is via PyPI or Conda:
+The easiest way to install BayBE is via PyPI:
 
 ```bash
 pip install baybe
-```
-
-```bash
-conda install -c conda-forge baybe
 ```
 
 A certain released version of the package can installed by specifying the
