@@ -2,12 +2,13 @@
 
 import logging
 from functools import partial
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 
 import pandas as pd
 from attr import define, field
 
 from baybe.targets.base import Target
+from baybe.targets.enum import TargetMode
 from baybe.utils import (
     Interval,
     SerialMixin,
@@ -23,9 +24,9 @@ _logger = logging.getLogger(__name__)
 # TODO: potentially introduce an abstract base class for the transforms
 #   -> this would remove the necessity to maintain the following dict
 _VALID_TRANSFORMS = {
-    "MAX": ["LINEAR"],
-    "MIN": ["LINEAR"],
-    "MATCH": ["TRIANGULAR", "BELL"],
+    TargetMode.MAX: ["LINEAR"],
+    TargetMode.MIN: ["LINEAR"],
+    TargetMode.MATCH: ["TRIANGULAR", "BELL"],
 }
 
 
@@ -44,8 +45,8 @@ class NumericalTarget(Target, SerialMixin):
     #       appear in the signature for __init__. A converter will override an explicit
     #       type annotation or type argument.
 
-    mode: Literal["MIN", "MAX", "MATCH"] = field()
-    """The optimization mode."""
+    mode: TargetMode = field(converter=TargetMode)
+    """The target mode."""
 
     bounds: Interval = field(default=None, converter=convert_bounds)
     """Bounds of the value of the target."""
@@ -74,17 +75,17 @@ class NumericalTarget(Target, SerialMixin):
 
         Raises:
             ValueError: If the bounds are finite on one and infinite on the other end.
-            ValueError: If the target is in ``MATCH`` mode but the provided bounds are
+            ValueError: If the target is in ``MATCH`` mode but the provided bounds
                 are infinite.
         """
         # IMPROVE: We could also include half-way bounds, which however don't work
         # for the desirability approach
         if not (value.is_finite or not value.is_bounded):
             raise ValueError("Bounds must either be finite or infinite on *both* ends.")
-        if self.mode == "MATCH" and not value.is_finite:
+        if self.mode is TargetMode.MATCH and not value.is_finite:
             raise ValueError(
-                f"Target '{self.name}' is in 'MATCH' mode, which requires "
-                f"finite bounds."
+                f"Target '{self.name}' is in {TargetMode.MATCH.name} mode,"
+                f"which requires finite bounds."
             )
 
     @bounds_transform_func.validator
@@ -124,16 +125,16 @@ class NumericalTarget(Target, SerialMixin):
         # When bounds are given, apply the respective transform
         if self.bounds.is_bounded:
             func = bounds_transform_funcs[self.bounds_transform_func]
-            if self.mode == "MAX":
+            if self.mode is TargetMode.MAX:
                 func = partial(func, descending=False)
-            elif self.mode == "MIN":
+            elif self.mode is TargetMode.MIN:
                 func = partial(func, descending=True)
             transformed = func(transformed, *self.bounds.to_tuple())
 
-        # If no bounds are given, simply negate all target values for "MIN" mode.
-        # For "MAX" mode, nothing needs to be done.
-        # For "MATCH" mode, the validators avoid a situation without specified bounds.
-        elif self.mode == "MIN":
+        # If no bounds are given, simply negate all target values for ``MIN`` mode.
+        # For ``MAX`` mode, nothing needs to be done.
+        # For ``MATCH`` mode, the validators avoid a situation without specified bounds.
+        elif self.mode is TargetMode.MIN:
             transformed = -transformed
 
         return transformed

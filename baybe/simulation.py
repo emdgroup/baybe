@@ -51,6 +51,7 @@ from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
+from baybe.targets.enum import TargetMode
 from baybe.utils import (
     add_fake_results,
     add_parameter_noise,
@@ -562,13 +563,13 @@ def simulate_experiment(
     # Add the instantaneous and running best values for all targets
     for target in campaign.targets:
         # Define the summary functions for the current target
-        if target.mode == "MAX":
+        if target.mode is TargetMode.MAX:
             agg_fun = np.max
             cum_fun = np.maximum.accumulate
-        elif target.mode == "MIN":
+        elif target.mode is TargetMode.MIN:
             agg_fun = np.min
             cum_fun = np.minimum.accumulate
-        elif target.mode == "MATCH":
+        elif target.mode is TargetMode.MATCH:
             match_val = np.mean(target.bounds)
             agg_fun = partial(closest_element, target=match_val)
             cum_fun = lambda x: np.array(  # noqa: E731
@@ -725,11 +726,11 @@ def _impute_lookup(
     elif mode == "worst":
         worst_vals = []
         for target in targets:
-            if target.mode == "MAX":
+            if target.mode is TargetMode.MAX:
                 worst_vals.append(lookup.loc[:, target.name].min().flatten()[0])
-            elif target.mode == "MIN":
+            elif target.mode is TargetMode.MIN:
                 worst_vals.append(lookup.loc[:, target.name].max().flatten()[0])
-            if target.mode == "MATCH":
+            if target.mode is TargetMode.MATCH:
                 worst_vals.append(
                     lookup.loc[
                         lookup.loc[
@@ -742,11 +743,11 @@ def _impute_lookup(
     elif mode == "best":
         best_vals = []
         for target in targets:
-            if target.mode == "MAX":
+            if target.mode is TargetMode.MAX:
                 best_vals.append(lookup.loc[:, target.name].max().flatten()[0])
-            elif target.mode == "MIN":
+            elif target.mode is TargetMode.MIN:
                 best_vals.append(lookup.loc[:, target.name].min().flatten()[0])
-            if target.mode == "MATCH":
+            if target.mode is TargetMode.MATCH:
                 best_vals.append(
                     lookup.loc[
                         lookup.loc[
