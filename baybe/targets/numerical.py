@@ -20,14 +20,13 @@ from baybe.utils import (
 
 _logger = logging.getLogger(__name__)
 
-
-# TODO: potentially introduce an abstract base class for the transforms
-#   -> this would remove the necessity to maintain the following dict
 _VALID_TRANSFORMS = {
-    TargetMode.MAX: [TargetTransform.LINEAR],
-    TargetMode.MIN: [TargetTransform.LINEAR],
-    TargetMode.MATCH: [TargetTransform.TRIANGULAR, TargetTransform.BELL],
+    TargetMode.MAX: (TargetTransform.LINEAR,),
+    TargetMode.MIN: (TargetTransform.LINEAR,),
+    TargetMode.MATCH: (TargetTransform.TRIANGULAR, TargetTransform.BELL),
 }
+"""A mapping from target modes to allowed target transforms. If multiple transforms
+are allowed, the first entry is used as default option."""
 
 
 @define(frozen=True)
@@ -47,14 +46,16 @@ class NumericalTarget(Target, SerialMixin):
     """The target mode."""
 
     bounds: Interval = field(default=None, converter=convert_bounds)
-    """Bounds of the value of the target."""
+    """Optional target bounds."""
 
-    bounds_transform_func: Optional[str] = field()
-    """A function for transforming the bounds."""
+    target_transform: Optional[TargetTransform] = field(
+        converter=lambda x: None if x is None else TargetTransform(x)
+    )
+    """An optional target transform."""
 
-    @bounds_transform_func.default
-    def _default_bounds_transform_func(self) -> Optional[str]:
-        """Create the default bounds transform function."""
+    @target_transform.default
+    def _default_target_transform(self) -> Optional[TargetTransform]:
+        """Provide the default transform for bounded targets."""
         if self.bounds.is_bounded:
             fun = _VALID_TRANSFORMS[self.mode][0]
             _logger.warning(
@@ -86,8 +87,8 @@ class NumericalTarget(Target, SerialMixin):
                 f"which requires finite bounds."
             )
 
-    @bounds_transform_func.validator
-    def _validate_bounds_transform_func(  # noqa: DOC101, DOC103
+    @target_transform.validator
+    def _validate_target_transform(  # noqa: DOC101, DOC103
         self, _: Any, value: str
     ) -> None:
         """Validate that the given transform is compatible with the specified mode.
@@ -122,7 +123,7 @@ class NumericalTarget(Target, SerialMixin):
 
         # When bounds are given, apply the respective transform
         if self.bounds.is_bounded:
-            func = bounds_transform_funcs[self.bounds_transform_func]
+            func = bounds_transform_funcs[self.target_transform]
             if self.mode is TargetMode.MAX:
                 func = partial(func, descending=False)
             elif self.mode is TargetMode.MIN:

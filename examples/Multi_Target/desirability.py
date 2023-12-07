@@ -45,20 +45,20 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # Note that in this multi target mode, the user must specify bounds for each target.
 
 Target_1 = NumericalTarget(
-    name="Target_1", mode="MAX", bounds=(0, 100), bounds_transform_func="LINEAR"
+    name="Target_1", mode="MAX", bounds=(0, 100), target_transform="LINEAR"
 )
 Target_2 = NumericalTarget(
-    name="Target_2", mode="MIN", bounds=(0, 100), bounds_transform_func="LINEAR"
+    name="Target_2", mode="MIN", bounds=(0, 100), target_transform="LINEAR"
 )
 
-# For each target it is also possible to specify a `bounds_transformation_func` function.
+# For each target it is also possible to specify a `target_transform` function.
 # A detailed discussion of this functionality can be found at the end of this example.
 
 # In this example, define a third target working with the mode `MATCH`.
-# We furthermore use `bounds_transform_func="BELL"`.
+# We furthermore use `target_transform="BELL"`.
 
 Target_3 = NumericalTarget(
-    name="Target_3", mode="MATCH", bounds=(45, 55), bounds_transform_func="BELL"
+    name="Target_3", mode="MATCH", bounds=(45, 55), target_transform="BELL"
 )
 
 # Note that the `MATCH` mode seeks to have the target at the mean between the two bounds.
@@ -119,7 +119,7 @@ for kIter in range(N_ITERATIONS):
     print(campaign.measurements_targets_comp)
 
 
-#### Addendum: Description of `bounds_transformation_func` functions
+#### Addendum: Description of `target_transform` functions
 
 # This function is used to transform target values to the interval `[0,1]` for `MAX`/`MIN` mode.
 # An ascending or decreasing `LINEAR` function is used per default.

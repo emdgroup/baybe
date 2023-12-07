@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Target enums 
 
+### Changed
+- Renamed `bounds_transform_func` target attribute to `target_transform`
+
 ### Removed
 - Conda install instructions and version badge
 
