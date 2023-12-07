@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Target mode enum
+- Target enums 
 
 ### Removed
 - Conda install instructions and version badge

@@ -8,7 +8,7 @@ import pandas as pd
 from attr import define, field
 
 from baybe.targets.base import Target
-from baybe.targets.enum import TargetMode
+from baybe.targets.enum import TargetMode, TargetTransform
 from baybe.utils import (
     Interval,
     SerialMixin,
@@ -24,17 +24,15 @@ _logger = logging.getLogger(__name__)
 # TODO: potentially introduce an abstract base class for the transforms
 #   -> this would remove the necessity to maintain the following dict
 _VALID_TRANSFORMS = {
-    TargetMode.MAX: ["LINEAR"],
-    TargetMode.MIN: ["LINEAR"],
-    TargetMode.MATCH: ["TRIANGULAR", "BELL"],
+    TargetMode.MAX: [TargetTransform.LINEAR],
+    TargetMode.MIN: [TargetTransform.LINEAR],
+    TargetMode.MATCH: [TargetTransform.TRIANGULAR, TargetTransform.BELL],
 }
 
 
 @define(frozen=True)
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
-
-    # TODO: Introduce mode enum
 
     # NOTE: The type annotations of `bounds` are correctly overridden by the attrs
     #   converter. Nonetheless, PyCharm's linter might incorrectly raise a type warning
@@ -117,9 +115,9 @@ class NumericalTarget(Target, SerialMixin):
 
         # Specify all bound transforms
         bounds_transform_funcs = {
-            "LINEAR": bound_linear,
-            "TRIANGULAR": bound_triangular,
-            "BELL": bound_bell,
+            TargetTransform.LINEAR: bound_linear,
+            TargetTransform.TRIANGULAR: bound_triangular,
+            TargetTransform.BELL: bound_bell,
         }
 
         # When bounds are given, apply the respective transform

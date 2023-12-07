@@ -14,3 +14,16 @@ class TargetMode(Enum):
 
     MATCH = "MATCH"
     """The target should be close to a given value."""
+
+
+class TargetTransform(Enum):
+    """Available target transforms."""
+
+    LINEAR = "LINEAR"
+    """Linear transformation."""
+
+    TRIANGULAR = "TRIANGULAR"
+    """Transformation using triangular-shaped function."""
+
+    BELL = "BELL"
+    """Transformation using bell-shaped function."""
