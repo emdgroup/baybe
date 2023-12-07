@@ -9,14 +9,8 @@ from attrs import define, field
 
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode, TargetTransform
-from baybe.utils import (
-    Interval,
-    SerialMixin,
-    bound_bell,
-    bound_linear,
-    bound_triangular,
-    convert_bounds,
-)
+from baybe.targets.transforms import bound_bell, bound_linear, bound_triangular
+from baybe.utils import Interval, SerialMixin, convert_bounds
 
 _VALID_TRANSFORMS: Dict[TargetMode, Sequence[TargetTransform]] = {
     TargetMode.MAX: (TargetTransform.LINEAR,),
