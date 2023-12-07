@@ -2,7 +2,7 @@
 
 import warnings
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence, cast
 
 import numpy as np
 import pandas as pd
@@ -40,6 +40,7 @@ def _get_target_transform(
             return partial(linear_transform, descending=False)
         elif mode is TargetMode.MIN:
             return partial(linear_transform, descending=True)
+    raise RuntimeError("This line should be impossible to reach.")
 
 
 @define(frozen=True)
@@ -122,8 +123,16 @@ class NumericalTarget(Target, SerialMixin):
 
         # When bounds are given, apply the respective transform
         if self.bounds.is_bounded:
-            func = _get_target_transform(self.mode, self.transform_mode)
-            transformed = func(data, *self.bounds.to_tuple())
+            func = _get_target_transform(
+                # TODO[typing]: For bounded targets (see if clause), the attrs default
+                #   ensures there is always a transform mode specified.
+                #   Use function overloads to make this explicit.
+                self.mode,
+                cast(TargetTransformMode, self.transform_mode),
+            )
+            transformed = pd.DataFrame(
+                func(data, *self.bounds.to_tuple()), index=data.index
+            )
 
         # If no bounds are given, simply negate all target values for ``MIN`` mode.
         # For ``MAX`` mode, nothing needs to be done.
