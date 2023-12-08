@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Target enums 
 - `mypy` for targets and intervals
 - Tests for code blocks in README and user guides
+- `hypothesis` strategies and tests for targets and intervals
+- De-/serialization of target subclasses via base class
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transformation`
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecations
 - `Interval.is_finite` replaced with `Interval.is_bounded`
+- Specifying target configs without explicit type information is deprecated
 
 ## [0.7.1] - 2023-12-07
 ### Added
