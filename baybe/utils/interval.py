@@ -4,7 +4,7 @@ import sys
 import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import Any, Union
+from typing import Any, Tuple, Union
 
 import numpy as np
 import torch
@@ -12,6 +12,9 @@ from attrs import define, field
 from packaging import version
 
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
+
+# TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs
+#   are supported: https://bugs.python.org/issue41987
 
 # TODO: Remove when upgrading python version
 if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
@@ -42,35 +45,35 @@ class Interval:
     """The upper end of the interval."""
 
     @upper.validator
-    def _validate_order(self, _: Any, value: float):  # noqa: DOC101, DOC103
+    def _validate_order(self, _: Any, upper: float) -> None:  # noqa: DOC101, DOC103
         """Validate the order of the interval bounds.
 
         Raises:
             ValueError: If the upper end is not larger than the lower end.
         """
-        if value <= self.lower:
+        if upper <= self.lower:
             raise ValueError(
-                f"The upper interval bound (provided value: {value}) must be larger "
+                f"The upper interval bound (provided value: {upper}) must be larger "
                 f"than the lower bound (provided value: {self.lower})."
             )
 
     @property
-    def is_closed(self):
+    def is_closed(self) -> bool:
         """Check whether the interval is closed."""
         return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
-    def is_half_open(self):
+    def is_half_open(self) -> bool:
         """Check whether the interval is half-open."""
         return np.isfinite(self.lower) ^ np.isfinite(self.upper)
 
     @property
-    def is_open(self):
+    def is_open(self) -> bool:
         """Check whether the interval is open."""
         return (not np.isfinite(self.lower)) and (not np.isfinite(self.upper))
 
     @property
-    def is_finite(self):
+    def is_finite(self) -> bool:
         """Check whether the interval is finite."""
         warnings.warn(
             "The use of 'Interval.is_finite' is deprecated and will be disabled in "
@@ -80,7 +83,7 @@ class Interval:
         return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
-    def is_bounded(self):
+    def is_bounded(self) -> bool:
         """Check whether the interval is bounded."""
         warnings.warn(
             "The use of 'Interval.is_bounded' is deprecated and will be disabled in "
@@ -91,7 +94,7 @@ class Interval:
         return np.isfinite(self.lower) or np.isfinite(self.upper)
 
     @property
-    def center(self):
+    def center(self) -> float:
         """The center of the interval. Only applicable for closed intervals."""
         if not self.is_closed:
             raise InfiniteIntervalError(
@@ -101,7 +104,7 @@ class Interval:
 
     @singledispatchmethod
     @classmethod
-    def create(cls, value):
+    def create(cls, value: Any):
         """Create an interval from various input types."""
         raise NotImplementedError(f"Unsupported argument type: {type(value)}")
 
@@ -117,15 +120,15 @@ class Interval:
         """Overloaded implementation for creating an interval of an iterable."""
         return Interval(*bounds)
 
-    def to_tuple(self):
+    def to_tuple(self) -> Tuple[float, float]:
         """Transform the interval to a tuple."""
         return self.lower, self.upper
 
-    def to_ndarray(self):
+    def to_ndarray(self) -> np.ndarray:
         """Transform the interval to a ndarray."""
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
-    def to_tensor(self):
+    def to_tensor(self) -> torch.Tensor:
         """Transform the interval to a tensor."""
         return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
