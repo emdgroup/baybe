@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Conda install instructions and version badge
 
+### Deprecations
+- `Interval.is_finite` replaced with `Interval.is_closed`
+- `Interval.is_bounded` replaced with `Interval.is_closed` / `Interval.is_half_open`
+
 ## [0.7.1] - 2023-12-07
 ### Added
 - Release pipeline now also publishes source distributions

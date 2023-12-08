@@ -70,7 +70,7 @@ class NumericalTarget(Target, SerialMixin):
     @transform_mode.default
     def _default_transform_mode(self) -> Optional[TargetTransformMode]:
         """Provide the default transform mode for bounded targets."""
-        if self.bounds.is_bounded:
+        if self.bounds.is_closed:
             fun = _VALID_TRANSFORM_MODES[self.mode][0]
             warnings.warn(
                 f"The transformation mode for target '{self.name}' "
@@ -82,7 +82,7 @@ class NumericalTarget(Target, SerialMixin):
         return None
 
     @bounds.validator
-    def _validate_bounds(self, _: Any, value: Interval) -> None:  # noqa: DOC101, DOC103
+    def _validate_bounds(self, _: Any, bounds: Interval) -> None:  # noqa: DOC101, DOC103
         """Validate the bounds.
 
         Raises:
@@ -92,9 +92,9 @@ class NumericalTarget(Target, SerialMixin):
         """
         # IMPROVE: We could also include half-way bounds, which however don't work
         # for the desirability approach
-        if not (value.is_finite or not value.is_bounded):
+        if bounds.is_half_open:
             raise ValueError("Bounds must either be finite or infinite on *both* ends.")
-        if self.mode is TargetMode.MATCH and not value.is_finite:
+        if self.mode is TargetMode.MATCH and not bounds.is_closed:
             raise ValueError(
                 f"Target '{self.name}' is in {TargetMode.MATCH.name} mode,"
                 f"which requires finite bounds."
@@ -121,8 +121,8 @@ class NumericalTarget(Target, SerialMixin):
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.
 
-        # When bounds are given, apply the respective transform
-        if self.bounds.is_bounded:
+        # When (closed) bounds are given, apply the respective transform
+        if self.bounds.is_closed:
             func = _get_target_transform(
                 # TODO[typing]: For bounded targets (see if clause), the attrs default
                 #   ensures there is always a transform mode specified.

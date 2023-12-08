@@ -74,7 +74,7 @@ class Objective(SerialMixin):
         # Raises a ValueError if there are unbounded targets when using objective mode
         # DESIRABILITY.
         if self.mode == "DESIRABILITY":
-            if any(not target.bounds.is_bounded for target in targets):
+            if any(not target.bounds.is_closed for target in targets):
                 raise ValueError(
                     "In 'DESIRABILITY' mode for multiple targets, each target must "
                     "have bounds defined."
