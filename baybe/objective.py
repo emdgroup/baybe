@@ -10,6 +10,7 @@ import pandas as pd
 from attr import define, field
 from attr.validators import deep_iterable, in_, instance_of, min_len
 
+from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils import SerialMixin, geom_mean
 
@@ -37,7 +38,7 @@ class Objective(SerialMixin):
     mode: Literal["SINGLE", "DESIRABILITY"] = field()
     """The optimization mode."""
 
-    targets: List[NumericalTarget] = field(validator=min_len(1))
+    targets: List[Target] = field(validator=min_len(1))
     """The list of targets used for the objective."""
 
     weights: List[float] = field(converter=_normalize_weights)
