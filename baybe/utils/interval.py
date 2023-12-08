@@ -24,7 +24,7 @@ if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
             setattr(cls, "__annotations__", cls.__func__.__annotations__)
         return self.dispatcher.register(cls, func=method)
 
-    singledispatchmethod.register = _register
+    singledispatchmethod.register = _register  # type: ignore[method-assign]
 
 
 class InfiniteIntervalError(Exception):
