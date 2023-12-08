@@ -5,9 +5,16 @@ from abc import ABC, abstractmethod
 import pandas as pd
 from attrs import define, field
 
+from baybe.utils import (
+    SerialMixin,
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
+
 
 @define(frozen=True)
-class Target(ABC):
+class Target(ABC, SerialMixin):
     """Abstract base class for all target variables.
 
     Stores information about the range, transformations, etc.
@@ -29,3 +36,8 @@ class Target(ABC):
         Returns:
             A dataframe containing the transformed data.
         """
+
+
+# Register (un-)structure hooks
+converter.register_structure_hook(Target, get_base_structure_hook(Target))
+converter.register_unstructure_hook(Target, unstructure_base)
