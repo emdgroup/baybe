@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Target enums 
+- `mypy` for targets package
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transform_mode`
