@@ -8,11 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Target enums 
 - `mypy` for targets and intervals
+- Tests for code blocks in README and user guides
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transformation`
 - `Interval.is_bounded` now implements the mathematical definition of boundedness
 - Moved and renamed target transform utility functions
+
+### Fixed
+- Wrong threshold operator in constraints user guide
 
 ### Removed
 - Conda install instructions and version badge
