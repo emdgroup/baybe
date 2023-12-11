@@ -61,7 +61,7 @@ def substance_data(draw: st.DrawFn):
 
 
 @st.composite
-def custom_encodings(draw: st.DrawFn):
+def custom_descriptors(draw: st.DrawFn):
     """Generate data for class:`baybe.parameters.custom.CustomDiscreteParameter`."""
     index = st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True)
     cols = columns(
@@ -140,7 +140,7 @@ def substance_parameter(draw: st.DrawFn):
 def custom_parameter(draw: st.DrawFn):
     """Generate class:`baybe.parameters.custom.CustomDiscreteParameter`."""
     name = draw(parameter_name)
-    data = draw(custom_encodings())
+    data = draw(custom_descriptors())
     decorrelate = draw(_decorrelate)
     return CustomDiscreteParameter(name=name, data=data, decorrelate=decorrelate)
 
