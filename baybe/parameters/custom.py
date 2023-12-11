@@ -50,11 +50,12 @@ class CustomDiscreteParameter(DiscreteParameter):
         """Validate the dataframe with the custom representation.
 
         Raises:
-            ValueError: If the dataframe contains ``NaN``.
-            ValueError: If the dataframe contains duplicated indices.
             ValueError: If the dataframe contains non-numeric values.
-            ValueError: If the dataframe contains columns that only contain a single
-                value.
+            ValueError: If the dataframe index contains non-string values.
+            ValueError: If the dataframe index contains empty strings.
+            ValueError: If the dataframe contains ``NaN``.
+            ValueError: If the dataframe index contains duplicates.
+            ValueError: If the dataframe contains columns with only one unique value.
         """
         if value.select_dtypes("number").shape[1] != value.shape[1]:
             raise ValueError(
