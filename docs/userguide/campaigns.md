@@ -1,25 +1,159 @@
 # Campaigns
 
-## General information
+Campaigns play a crucial role in Design of Experiments, and consequently also for BayBE.
+They serve as a structured framework for defining and documenting an experimentation
+process. The [`Campaign`](baybe.campaign.Campaign) class is used to model campaigns and 
+serves as the primary interface for interacting with BayBE.
+While creating a campaign can be as simple as specifying a search space with experimental
+parameters and an optimization objective, there are numerous additional aspects that can
+be customized and fine-tuned.
 
-[`Campaigns`](baybe.campaign.Campaign) are the central objects of BayBE. They are used to organize the different aspects and are the main point of interaction via python.
+## Our example: Optimizing the brewing of coffee
 
-Campaigns define and record an experimentation process, i.e. the execution of a
-series of measurements and the iterative sequence of events involved.
+Since a researcher is a person turning caffeine into either theory or code, we use the
+example of optimizing the process of brewing coffee in this user guide.
 
-## Attributes and properties
+We use the following parameters for optimizing our brewing process:
+* **Grind size:** The grind size influences the extraction of the flavors.
+The available options are ``[coarse, rather_coarse, rather_fine, fine]``.
+* **Water temperature:** The temperature affects the rate at which the coffee compounds
+are extracted. We can vary the temperature in 0.1°C increments within the range of
+90.5°C to 96°C.
+* **Brewing time:** The brewing time can influence the coffee flavor due to potential
+over- or under-extraction. We allow brewing times between 120 and 360 seconds, with the
+ability to stop brewing after each 10-second interval.
 
-To construct a new campaign, it is necessary to provide two objects.
-1. **A search space:** The parameter space in which the campaign operates. It can be a purely discrete, purely continuous or hybir space.
-We refer to the [`Searchspace`](baybe.searchspace.core.SearchSpace) class resp. the corresponding [user guide](./searchspace) for more details.
-2. **An objective:** The optimization objective. It is possible to either optimize a single target or to combine different targets. We refer to the [`Objective`](baybe.objective.Objective) class resp. the corresponding [user guide](./objective) for more details.
+## Minimal definition of a campaign
 
-The following additional aspects are available to further specify a campaign:
-* **A strategy:**: The strategy that is used during the campaign. As a default, a [`TwoPhaseStrategy`](baybe.strategies.composite.TwoPhaseStrategy) is employed. For more details on strategies, see [here](./strategy).
-* **Conducted experiments**: A pandas ``DataFrame`` containing the experimental representation of previously conducted experiments. Preferably, the entries of this ``DataFrame`` were created by a previous campaign using [the campaigns recommend function](baybe.campaign.Campaign.recommend). If no such ``DataFrame`` is provided, it is assumed that no experiments were conducted previously.
-* **Numerical tolerance**: This is a flag for forcing numerical measurements to be within a pre-defined tolerance. Note that the setting of the tolerances is controlled as a part of the respective parameter.
-* **Previously done batches and fits** In case that a campaign builds upon previously condiucted experiments, it is possible to provide the number of previously done batches and fits.
+When constructing a campaign, it is necessary to provide two objects:
+A search space (see [class](baybe.searchspace.core.SearchSpace) resp. [user guide](./searchspace))
+and an optimization objective (see [class](baybe.objective.Objective) resp. [user guide](./objective)).
 
-## How to use campaigns
+The search space describes the possible configuration of parameters that can be tested during the campaign.
 
-We have a detailed example explaining how to use the ``Campaign`` object in our examples, so please see [here](./../../examples/Basics/campaign) for all necessary information.
+```python
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
+from baybe.searchspace import SearchSpace
+
+grind_size = CategoricalParameter(name="grind_size", values=["coarse", "rather_coarse", "rather_fine", "fine"])
+temp = NumericalDiscreteParameter(name="temp", values = tuple([t/10.0 for t in range (905, 961)]))
+time = NumericalDiscreteParameter(name="time", values = tuple(range(120, 370, 10)))
+
+space = SearchSpace.from_product([grind_size, temp, time])
+```
+
+We refer to the [parameters](./parameters) resp. [search spaces](./searchspace) user
+guides for more details.
+
+To assess the quality of our coffee, we use a subjective evaluation method
+involving tasting and assigning a rating on a scale of 1 to 10, where a higher score
+indicates better quality.
+
+```python
+from baybe.targets import NumericalTarget
+from baybe.objective import Objective
+
+target = NumericalTarget(name="quality", mode="MAX", bounds=(1,10))
+objective = Objective(mode="SINGLE", targets=[target])
+```
+
+Combining the search space and the objective now enables us to create a campaign.
+
+```python
+from baybe.campaign import Campaign
+
+campaign = Campaign(searchspace=space, objective=objective)
+```
+
+## Getting a recommendation and adding a measurement
+
+```{attention}
+Adding recommendations and measurements using the `recommend` and `add_measurements`
+functions is the safe only way to inform a `Campaign` object about new measurements.
+These functions update the necessary metadata that is crucial for the proper
+execution of a campaign. It is important to rely on these functions to maintain the
+integrity and reliability of the campaign's execution.
+```
+
+To obtain a recommendation for the next experiment, we can query the campaign and use
+the [`recommend`](baybe.campaign.Campaign.recommend) function. The function takes only
+one argument, which is the `batch_quantity` keyword. This specifies the desired size of
+the batch of experiments to be conducted.
+
+```python
+rec = campaign.recommend(batch_quantity=3)
+```
+
+The `recommend` function returns a `DataFrame` with `batch_quantity` many rows, each 
+representing a set of parameters from the search space.
+To add measurements, we expand the `DataFrame` by adding a new column for the target.
+We can then provide the campaign with these measurements and receive a new
+recommendation.
+
+```python
+rec["quality"] = [2,4,9]
+campaign.add_measurements(rec)
+new_rec = campaign.recommend(batch_quantity=5)
+```
+
+## Further specification of campaigns
+
+Although only a search space and an objective are necessary to create a campaign,
+several other aspects can be changed by the user.
+1. **A strategy:**: By default, campaigns use the composite
+[`TwoPhaseStrategy`](baybe.strategies.composite.TwoPhaseStrategy).
+This can be changed using the `strategy` keyword.
+2. **Numerical tolerance**: By default, numerical measurements are required to fall into
+a predefined tolerance. This requirement can be disabled by using the
+`numerical_measurements_must_be_within_tolerance` flag.
+
+
+## Details on design and functionality
+
+### Batch sizes and their influence on recommendations
+
+The `batch_quantity` keyword allows you to adjust the number of recommendations returned
+by the `recommend` function. However, it is important to understand the difference
+between performing multiple recommendations with batch size of 1 and a single
+recommendation with a larger batch size.
+* **Larger batch size**: When using a larger batch size, the recommended experiments are
+chosen to *jointly* optimized the acquisition function.
+This means that the recommendations are made considering the interaction of multiple
+experiments together.
+* **Smaller batch size**: When making several smaller recommendations, each *individual*
+recommendation optimizes the acquisition function at the specific point in time when it
+is requested. In this case, the recommendations are made independently of each other
+without considering the joint optimization.
+
+### Caching of recommendations
+
+Whenever recommendations are made, the `Campaign` object caches them. If measurements
+for the recommendations are added, then the cached recommendations are deleted. However,
+if no measurements are added and the `recommend` function is called again, then the
+`Campaign` object simply returns the cached recommendations instead of generating new
+ones. This caching mechanism helps to optimize performance by avoiding unnecessary
+re-computations when measurements are not provided.
+
+### Serialization
+
+Like most of the objects managed by BayBE, `Campaign` objects in BayBE can be serialized
+and deserialized using the [`to_json`](baybe.utils.serialization.SerialMixin.to_json)
+method. This method converts the `Campaign` to a string in `json` format. As expected,
+serializing and de-serializing a campaign yields the exact identical object:
+```python
+campaign_json = campaign.to_json()
+recreated_campaign = Campaign.from_json(campaign_json)
+assert campaign == recreated_campaign
+```
+For more information on serialization, using the `to_json` and `from_json` methods, we
+refer to the corresponding [examples](./../../examples/Serialization/Serialization).
+
+It is also possible to specify a `Campaign` via a configuration string and the function
+[`Campaign.from_config`](baybe.campaign.Campaign.from_config).
+As fully specifying a configuration takes too much, we refer to the corresponding
+[example](./../../examples/Serialization/create_from_config).
+
+### Further information
+
+For an additional and more condensed example explaining the `Campaign` object, we refer
+to the corresponding [example](./../../examples/Basics/campaign).
