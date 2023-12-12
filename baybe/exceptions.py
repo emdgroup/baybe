@@ -41,4 +41,4 @@ class NoRecommendersLeftError(Exception):
 
 
 class NumericalUnderflowError(Exception):
-    """A certain computation would lead to numerical underflow."""
+    """A computation would lead to numerical underflow."""
