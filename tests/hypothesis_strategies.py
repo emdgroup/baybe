@@ -120,7 +120,9 @@ def task_parameter(draw: st.DrawFn):
     """Generate class:`baybe.parameters.categorical.TaskParameter`."""
     name = draw(parameter_name)
     values = draw(categories)
-    active_values = random.sample(values, random.randint(0, len(values)))
+    active_values = draw(
+        st.lists(st.sampled_from(values), min_size=1, max_size=len(values), unique=True)
+    )
     return TaskParameter(name=name, values=values, active_values=active_values)
 
 
