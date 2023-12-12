@@ -54,7 +54,7 @@ def smiles(draw: st.DrawFn):
 
 @st.composite
 def substance_data(draw: st.DrawFn):
-    """Generate data for class:`baybe.parameters.substance.SubstanceParameter`."""
+    """Generate data for :class:`baybe.parameters.substance.SubstanceParameter`."""
     names = draw(st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True))
     substances = draw(st.lists(smiles(), min_size=len(names), max_size=len(names)))
     return dict(zip(names, substances))
@@ -62,7 +62,7 @@ def substance_data(draw: st.DrawFn):
 
 @st.composite
 def custom_descriptors(draw: st.DrawFn):
-    """Generate data for class:`baybe.parameters.custom.CustomDiscreteParameter`."""
+    """Generate data for :class:`baybe.parameters.custom.CustomDiscreteParameter`."""
     index = st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True)
     cols = columns(
         names_or_number=10,
@@ -77,7 +77,7 @@ def custom_descriptors(draw: st.DrawFn):
 def numerical_discrete_parameter(
     draw: st.DrawFn,
 ):
-    """Generate class:`baybe.parameters.numerical.NumericalDiscreteParameter`."""
+    """Generate :class:`baybe.parameters.numerical.NumericalDiscreteParameter`."""
     name = draw(parameter_name)
     values = draw(
         st.lists(
@@ -99,7 +99,7 @@ def numerical_discrete_parameter(
 
 @st.composite
 def numerical_continuous_parameter(draw: st.DrawFn):
-    """Generate class:`baybe.parameters.numerical.NumericalContinuousParameter`."""
+    """Generate :class:`baybe.parameters.numerical.NumericalContinuousParameter`."""
     name = draw(parameter_name)
     lower = draw(st.floats(max_value=_largest_lower_interval, allow_infinity=False))
     upper = draw(st.floats(min_value=lower, exclude_min=True, allow_infinity=False))
@@ -108,7 +108,7 @@ def numerical_continuous_parameter(draw: st.DrawFn):
 
 @st.composite
 def categorical_parameter(draw: st.DrawFn):
-    """Generate class:`baybe.parameters.categorical.CategoricalParameter`."""
+    """Generate :class:`baybe.parameters.categorical.CategoricalParameter`."""
     name = draw(parameter_name)
     values = draw(categories)
     encoding = draw(st.sampled_from(CategoricalEncoding))
@@ -117,7 +117,7 @@ def categorical_parameter(draw: st.DrawFn):
 
 @st.composite
 def task_parameter(draw: st.DrawFn):
-    """Generate class:`baybe.parameters.categorical.TaskParameter`."""
+    """Generate :class:`baybe.parameters.categorical.TaskParameter`."""
     name = draw(parameter_name)
     values = draw(categories)
     active_values = draw(
@@ -128,7 +128,7 @@ def task_parameter(draw: st.DrawFn):
 
 @st.composite
 def substance_parameter(draw: st.DrawFn):
-    """Generate class:`baybe.parameters.substance.SubstanceParameter`."""
+    """Generate :class:`baybe.parameters.substance.SubstanceParameter`."""
     name = draw(parameter_name)
     data = draw(substance_data())
     decorrelate = draw(_decorrelate)
@@ -140,7 +140,7 @@ def substance_parameter(draw: st.DrawFn):
 
 @st.composite
 def custom_parameter(draw: st.DrawFn):
-    """Generate class:`baybe.parameters.custom.CustomDiscreteParameter`."""
+    """Generate :class:`baybe.parameters.custom.CustomDiscreteParameter`."""
     name = draw(parameter_name)
     data = draw(custom_descriptors())
     decorrelate = draw(_decorrelate)
