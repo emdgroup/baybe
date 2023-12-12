@@ -28,7 +28,7 @@ The largest possible value for the lower end of a continuous interval such that 
 still exists a larger but finite number for the upper interval end.
 """
 
-_decorrelate = st.one_of(
+decorrelation = st.one_of(
     st.booleans(),
     st.floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
 )
@@ -131,7 +131,7 @@ def substance_parameter(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.substance.SubstanceParameter`."""
     name = draw(parameter_name)
     data = draw(substance_data())
-    decorrelate = draw(_decorrelate)
+    decorrelate = draw(decorrelation)
     encoding = draw(st.sampled_from(SubstanceEncoding))
     return SubstanceParameter(
         name=name, data=data, decorrelate=decorrelate, encoding=encoding
@@ -143,7 +143,7 @@ def custom_parameter(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.custom.CustomDiscreteParameter`."""
     name = draw(parameter_name)
     data = draw(custom_descriptors())
-    decorrelate = draw(_decorrelate)
+    decorrelate = draw(decorrelation)
     return CustomDiscreteParameter(name=name, data=data, decorrelate=decorrelate)
 
 
