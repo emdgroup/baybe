@@ -32,6 +32,7 @@ dependencies = [
     "attrs>=22.2.0",
     "botorch>=0.8.1",
     "cattrs>=23.2.0",
+    "exceptiongroup",
     "funcy>=1.17",
     "gpytorch>=1.9.1",
     "ngboost>=0.3.12",

@@ -122,7 +122,12 @@ def test_invalid_values_task_parameter(values, active_values, error):
         param({"": "C", "A": "C"}, ValueError, id="empty_string"),
         param({"A": "C"}, ValueError, id="only_one_value"),
         param({"A": "C", 1: "C"}, TypeError, id="not_a_string"),
-        param({"A": "C", "B": "X"}, ValueError, id="invalid_smiles"),
+        param({"A": "C", "B": "X", "C": "Y"}, ValueError, id="invalid_smiles"),
+        param(
+            {"A": "CC", "B": "C-C", "C": "CCO", "D": "OCC"},
+            ValueError,
+            id="duplicate_substances",
+        ),
     ],
 )
 def test_invalid_data_substance_parameter(data, error):

@@ -10,12 +10,24 @@ from attrs.validators import and_, deep_mapping, instance_of, min_len
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
-from baybe.utils import df_drop_single_value_columns, df_uncorrelated_features
-from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
+from baybe.utils import (
+    df_drop_single_value_columns,
+    df_uncorrelated_features,
+    get_canonical_smiles,
+    group_duplicate_values,
+)
+from baybe.utils.chemistry import (
+    _MORDRED_INSTALLED,
+    _RDKIT_INSTALLED,
+)
+
+try:  # For python < 3.11, use the exceptiongroup backport
+    ExceptionGroup
+except NameError:
+    from exceptiongroup import ExceptionGroup
 
 if _RDKIT_INSTALLED:
     from baybe.utils import (
-        is_valid_smiles,
         smiles_to_fp_features,
         smiles_to_rdkit_features,
     )
@@ -100,19 +112,42 @@ class SubstanceParameter(DiscreteParameter):
 
     @data.validator
     def _validate_substance_data(  # noqa: DOC101, DOC103
-        self, _: Any, value: Dict[str, Smiles]
+        self, _: Any, data: Dict[str, Smiles]
     ) -> None:
         """Validate that the substance data, provided as SMILES, is valid.
 
         Raises:
             ValueError: If one or more of the SMILES are invalid.
+            ValueError: If the several entries represent the same substance.
         """
-        for name, smiles in value.items():
-            if _RDKIT_INSTALLED and not is_valid_smiles(smiles):
-                raise ValueError(
-                    f"The SMILES '{smiles}' for molecule '{name}' does "
-                    f"not appear to be valid."
+        # Check for invalid SMILES
+        canonical_smiles = {}
+        exceptions = []
+        for name, smiles in data.items():
+            try:
+                canonical_smiles[name] = get_canonical_smiles(smiles)
+            except ValueError:
+                exceptions.append(
+                    ValueError(
+                        f"The SMILES '{smiles}' for molecule '{name}' does "
+                        f"not appear to be valid."
+                    )
                 )
+        if exceptions:
+            raise ExceptionGroup("invalid SMILES", exceptions)
+
+        # Check for duplicate substances
+        if groups := group_duplicate_values(canonical_smiles):
+            exceptions = []
+            for group, substances in groups.items():
+                group_data = {s: data[s] for s in substances}
+                exceptions.append(
+                    ValueError(
+                        f"The following entries all represent the same substance "
+                        f"'{group}': {group_data}."
+                    )
+                )
+            raise ExceptionGroup("duplicate substances", exceptions)
 
     @property
     def values(self) -> tuple:
