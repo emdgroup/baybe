@@ -1,5 +1,4 @@
 """Hypothesis strategies."""
-import random
 
 import hypothesis.strategies as st
 import numpy as np
@@ -47,7 +46,7 @@ def smiles(draw: st.DrawFn):
     n_atoms = draw(st.integers(min_value=0, max_value=19))
     string = "C"
     for _ in range(n_atoms):
-        next_atom = random.choice("CNO") if string[-1] == "C" else random.choice("C")
+        next_atom = draw(st.sampled_from("CNO")) if string[-1] == "C" else "C"
         string += next_atom
     return string
 
