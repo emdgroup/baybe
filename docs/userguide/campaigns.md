@@ -8,12 +8,6 @@ While creating a campaign can be as simple as specifying a search space with exp
 parameters and an optimization objective, there are numerous additional aspects that can
 be customized and fine-tuned.
 
-```{note}
-This user guide touches on several  other classes, terms and concepts that are not
-elaborated on in detail. However, links to the relevant user guides and classes are
-provided.
-```
-
 ## Our example: Optimizing the brewing of coffee
 
 Since a researcher is a person turning caffeine into either theory or code, we use the
