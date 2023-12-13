@@ -2,10 +2,8 @@
 
 import hypothesis.strategies as st
 import numpy as np
-from hypothesis import assume
 from hypothesis.extra.pandas import columns, data_frames
 
-from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.categorical import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -90,12 +88,19 @@ def numerical_discrete_parameter(
             unique=True,
         )
     )
-
-    # Reject examples where the tolerance validator cannot be satisfied
-    try:
-        return NumericalDiscreteParameter(name=name, values=values)
-    except NumericalUnderflowError:
-        assume(False)
+    max_tolerance = np.diff(np.sort(values)).min() / 2
+    if max_tolerance == 0.0:
+        tolerance = 0.0
+    else:
+        tolerance = draw(
+            st.floats(
+                min_value=0.0,
+                max_value=max_tolerance,
+                allow_nan=False,
+                exclude_max=True,
+            )
+        )
+    return NumericalDiscreteParameter(name=name, values=values, tolerance=tolerance)
 
 
 @st.composite

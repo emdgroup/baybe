@@ -70,9 +70,9 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
         if tolerance >= (max_tol := min_dist / 2.0):
             raise ValueError(
-                f"Parameter {self.name} is initialized with tolerance "
-                f"{tolerance} but due to the values {self.values} a "
-                f"maximum tolerance of {max_tol} is suggested to avoid ambiguity."
+                f"Parameter '{self.name}' is initialized with tolerance {tolerance} "
+                f"but due to the given parameter values {self.values}, the specified "
+                f"tolerance must be smaller than {max_tol} to avoid ambiguity."
             )
 
     @property
