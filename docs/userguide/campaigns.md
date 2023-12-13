@@ -113,7 +113,7 @@ parameter
 conducted experiments, it is possible to provide the number of previously done batches
 and fits. This is done via the keywords `n_batches_done` resp. `n_fits_done`.
 
-## Further information
+### Further information
 
 For an additional and more condensed example explaining the `Campaign` object, we refer
 to the corresponding [example](./../../examples/Basics/campaign).
