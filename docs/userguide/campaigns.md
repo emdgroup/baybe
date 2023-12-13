@@ -67,6 +67,14 @@ campaign = Campaign(searchspace=space, objective=objective)
 
 ## Getting a recommendation and adding a measurement
 
+```{attention}
+Adding recommendations and measurements using the `recommend` and `add_measurements`
+functions is the safe only way to inform a `Campaign` object about new measurements.
+These functions update the necessary metadata that is crucial for the proper
+execution of a campaign. It is important to rely on these functions to maintain the
+integrity and reliability of the campaign's execution.
+```
+
 To obtain a recommendation for the next experiment, we can query the campaign and use
 the [`recommend`](baybe.campaign.Campaign.recommend) function. The function takes only
 one argument, which is the `batch_quantity` keyword. This specifies the desired size of
