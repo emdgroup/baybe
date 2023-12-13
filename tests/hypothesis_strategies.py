@@ -15,7 +15,8 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
-from baybe.utils import DTypeFloatNumpy
+from baybe.utils.chemistry import get_canonical_smiles
+from baybe.utils.numeric import DTypeFloatNumpy
 
 _largest_lower_interval = np.nextafter(
     np.nextafter(np.inf, 0, dtype=DTypeFloatNumpy), 0, dtype=DTypeFloatNumpy
@@ -56,6 +57,7 @@ def substance_data(draw: st.DrawFn):
     substances = draw(
         st.lists(smiles(), min_size=len(names), max_size=len(names), unique=True)
     )
+    substances = list(set(get_canonical_smiles(s) for s in substances))
     return dict(zip(names, substances))
 
 
