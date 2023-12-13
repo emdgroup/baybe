@@ -88,22 +88,17 @@ campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ```
 
-## Further specification of campaign
+## Further specification of campaigns
 
 Although only a search space and an objective are necessary to create a campaign,
 several other aspects can be changed by the user.
 1. **A strategy:**: By default, campaigns use the composite
-[`TwoPhaseStrategy`](baybe.strategies.composite.TwoPhaseStrategy). This strategy uses a
-[`RandomRecommender`](baybe.recommenders.sampling.RandomRecommender) for the initial
-recommendation and then switches to a [`SequentialGreedyRecommender`](baybe.recommenders.bayesian.SequentialGreedyRecommender).
-However, using the `strategy` keyword, you can specify a different strategy.
-For more details on strategies, see the corresponding [`submodule`](baybe.strategies) or
-[user guide](./strategy).
-* **Numerical tolerance**: By default, numerical measurements are required to fall into a
-predefined tolerance. However, you can disable this requirement by using the
+[`TwoPhaseStrategy`](baybe.strategies.composite.TwoPhaseStrategy).
+This can be changed using the `strategy` keyword.
+2. **Numerical tolerance**: By default, numerical measurements are required to fall into
+a predefined tolerance. This requirement can be disabled by using the
 `numerical_measurements_must_be_within_tolerance` flag.
-Note that the setting of the tolerances is controlled as a part of the respective
-parameter
+
 
 ## Details on design and functionality
 
