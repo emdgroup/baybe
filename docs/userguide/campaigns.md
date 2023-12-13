@@ -117,6 +117,15 @@ recommendation optimizes the acquisition function at the specific point in time 
 is requested. In this case, the recommendations are made independently of each other
 without considering the joint optimization.
 
+### Caching of recommendations
+
+Whenever recommendations are made, the `Campaign` object caches them. If measurements
+for the recommendations are added, then the cached recommendations are deleted. However,
+if no measurements are added and the `recommend` function is called again, then the
+`Campaign` object simply returns the cached recommendations instead of generating new
+ones. This caching mechanism helps to optimize performance by avoiding unnecessary
+re-computations when measurements are not provided.
+
 ### Further information
 
 For an additional and more condensed example explaining the `Campaign` object, we refer
