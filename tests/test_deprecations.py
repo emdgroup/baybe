@@ -48,9 +48,3 @@ def test_deprecated_interval_is_finite():
     """Using the deprecated ``Interval.is_finite`` property should raise a warning."""
     with pytest.warns(DeprecationWarning):
         Interval(0, 1).is_finite
-
-
-def test_deprecated_interval_is_bounded():
-    """Using the deprecated ``Interval.is_bounded`` property should raise a warning."""
-    with pytest.warns(DeprecationWarning):
-        Interval(0, 1).is_bounded

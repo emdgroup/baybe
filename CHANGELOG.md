@@ -11,14 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transform_mode`
+- `Interval.is_bounded` now implements the mathematical definition of boundedness
 - Moved and renamed target transform utility functions
 
 ### Removed
 - Conda install instructions and version badge
 
 ### Deprecations
-- `Interval.is_finite` replaced with `Interval.is_closed`
-- `Interval.is_bounded` replaced with `Interval.is_closed` / `Interval.is_half_open`
+- `Interval.is_finite` replaced with `Interval.is_bounded`
 
 ## [0.7.1] - 2023-12-07
 ### Added

@@ -58,45 +58,39 @@ class Interval:
             )
 
     @property
-    def is_closed(self) -> bool:
-        """Check whether the interval is closed."""
-        return np.isfinite(self.lower) and np.isfinite(self.upper)
+    def is_bounded(self) -> bool:
+        """Check if the interval is bounded."""
+        return self.is_left_bounded and self.is_right_bounded
 
     @property
-    def is_half_open(self) -> bool:
-        """Check whether the interval is half-open."""
-        return np.isfinite(self.lower) ^ np.isfinite(self.upper)
+    def is_left_bounded(self) -> bool:
+        """Check if the interval is left-bounded."""
+        return np.isfinite(self.lower)
 
     @property
-    def is_open(self) -> bool:
-        """Check whether the interval is open."""
-        return (not np.isfinite(self.lower)) and (not np.isfinite(self.upper))
+    def is_right_bounded(self) -> bool:
+        """Check if the interval is right-bounded."""
+        return np.isfinite(self.upper)
+
+    @property
+    def is_half_bounded(self) -> bool:
+        """Check if the interval is half-bounded."""
+        return self.is_left_bounded ^ self.is_right_bounded
 
     @property
     def is_finite(self) -> bool:
         """Check whether the interval is finite."""
         warnings.warn(
             "The use of 'Interval.is_finite' is deprecated and will be disabled in "
-            "a future version. Use 'Interval.is_closed' instead.",
+            "a future version. Use 'Interval.is_bounded' instead.",
             DeprecationWarning,
         )
         return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
-    def is_bounded(self) -> bool:
-        """Check whether the interval is bounded."""
-        warnings.warn(
-            "The use of 'Interval.is_bounded' is deprecated and will be disabled in "
-            "a future version. Use 'Interval.is_bounded' or 'Interval.is_half_open' "
-            "instead, depending on the situation.",
-            DeprecationWarning,
-        )
-        return np.isfinite(self.lower) or np.isfinite(self.upper)
-
-    @property
     def center(self) -> float:
-        """The center of the interval. Only applicable for closed intervals."""
-        if not self.is_closed:
+        """The center of the interval. Only applicable for bounded intervals."""
+        if not self.is_bounded:
             raise InfiniteIntervalError(
                 f"The interval {self} is infinite and thus has no center."
             )

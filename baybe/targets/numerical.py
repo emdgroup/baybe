@@ -70,7 +70,7 @@ class NumericalTarget(Target, SerialMixin):
     @transform_mode.default
     def _default_transform_mode(self) -> Optional[TargetTransformMode]:
         """Provide the default transform mode for bounded targets."""
-        if self.bounds.is_closed:
+        if self.bounds.is_bounded:
             fun = _VALID_TRANSFORM_MODES[self.mode][0]
             warnings.warn(
                 f"The transformation mode for target '{self.name}' "
@@ -86,15 +86,15 @@ class NumericalTarget(Target, SerialMixin):
         """Validate the bounds.
 
         Raises:
-            ValueError: If the bounds are finite on one and infinite on the other end.
+            ValueError: If the target is defined on a half-bounded interval.
             ValueError: If the target is in ``MATCH`` mode but the provided bounds
                 are infinite.
         """
         # IMPROVE: We could also include half-way bounds, which however don't work
-        # for the desirability approach
-        if bounds.is_half_open:
-            raise ValueError("Bounds must either be finite or infinite on *both* ends.")
-        if self.mode is TargetMode.MATCH and not bounds.is_closed:
+        #   for the desirability approach
+        if bounds.is_half_bounded:
+            raise ValueError("Targets on half-bounded intervals are not supported.")
+        if self.mode is TargetMode.MATCH and not bounds.is_bounded:
             raise ValueError(
                 f"Target '{self.name}' is in {TargetMode.MATCH.name} mode,"
                 f"which requires finite bounds."
@@ -121,8 +121,8 @@ class NumericalTarget(Target, SerialMixin):
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.
 
-        # When (closed) bounds are given, apply the respective transform
-        if self.bounds.is_closed:
+        # When finite bounds are given, apply the respective transform
+        if self.bounds.is_bounded:
             func = _get_target_transform(
                 # TODO[typing]: For bounded targets (see if clause), the attrs default
                 #   ensures there is always a transform mode specified.
