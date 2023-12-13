@@ -105,6 +105,23 @@ predefined tolerance. However, you can disable this requirement by using the
 Note that the setting of the tolerances is controlled as a part of the respective
 parameter
 
+## Details on design and functionality
+
+### Batch sizes and their influence on recommendations
+
+The `batch_quantity` keyword allows you to adjust the number of recommendations returned
+by the `recommend` function. However, it is important to understand the difference
+between performing multiple recommendations with batch size of 1 and a single
+recommendation with a larger batch size.
+* **Larger batch size**: When using a larger batch size, the recommended experiments are
+chosen to *jointly* optimized the acquisition function.
+This means that the recommendations are made considering the interaction of multiple
+experiments together.
+* **Smaller batch size**: When making several smaller recommendations, each *individual*
+recommendation optimizes the acquisition function at the specific point in time when it
+is requested. In this case, the recommendations are made independently of each other
+without considering the joint optimization.
+
 ### Further information
 
 For an additional and more condensed example explaining the `Campaign` object, we refer
