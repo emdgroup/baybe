@@ -56,6 +56,11 @@ class NumericalDiscreteParameter(DiscreteParameter):
         Raises:
             ValueError: If the tolerance is not safe.
         """
+        # For zero tolerance, the only left requirement is that all parameter values
+        # are distinct, which is already ensured by the corresponding validator.
+        if tolerance == 0.0:
+            return
+
         min_dist = np.diff(self.values).min()
         if min_dist == (eps := np.nextafter(0, 1, dtype=DTypeFloatNumpy)):
             raise NumericalUnderflowError(
