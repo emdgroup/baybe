@@ -134,6 +134,25 @@ if no measurements are added and the `recommend` function is called again, then 
 ones. This caching mechanism helps to optimize performance by avoiding unnecessary
 re-computations when measurements are not provided.
 
+### Serialization
+
+Like most of the objects managed by BayBE, `Campaign` objects in BayBE can be serialized
+and deserialized using the [`to_json`](baybe.utils.serialization.SerialMixin.to_json)
+method. This method converts the `Campaign` to a string in `json` format. As expected,
+serializing and de-serializing a campaign yields the exact identical object:
+```python
+campaign_json = campaign.to_json()
+recreated_campaign = Campaign.from_json(campaign_json)
+assert campaign == recreated_campaign
+```
+For more information on serialization, using the `to_json` and `from_json` methods, we
+refer to the corresponding [examples](./../../examples/Serialization/Serialization).
+
+It is also possible to specify a `Campaign` via a configuration string and the function
+[`Campaign.from_config`](baybe.campaign.Campaign.from_config).
+As fully specifying a configuration takes too much, we refer to the corresponding
+[example](./../../examples/Serialization/create_from_config).
+
 ### Further information
 
 For an additional and more condensed example explaining the `Campaign` object, we refer
