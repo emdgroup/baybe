@@ -2,7 +2,7 @@
 
 Campaigns play a crucial role in Design of Experiments, and consequently also for BayBE.
 They serve as a structured framework for defining and documenting an experimentation
-process. The [`Campaign`](baybe.campaign.Campaign) class is used to model camaings and 
+process. The [`Campaign`](baybe.campaign.Campaign) class is used to model campaigns and 
 serves as the primary interface for interacting with BayBE.
 While creating a campaign can be as simple as specifying a search space with experimental
 parameters and an optimization objective, there are numerous additional aspects that can
@@ -10,7 +10,7 @@ be customized and fine-tuned.
 
 ```{note}
 This user guide touches on several  other classes, terms and concepts that are not
-elaborated on in detail. However, links to the relevant user goides and classes are
+elaborated on in detail. However, links to the relevant user guides and classes are
 provided.
 ```
 
@@ -94,7 +94,7 @@ campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ```
 
-## Further specifictation of campaign
+## Further specification of campaign
 
 Although only a search space and an objective are necessary to create a campaign,
 several other aspects can be changed by the user.
@@ -110,13 +110,13 @@ have a `DataFrame` representing them, you can provide it using the `measurements
 keyword. Preferably, the `DataFrame` was created by a previous
 campaign using [the campaigns recommend function](baybe.campaign.Campaign.recommend).
 If no `DataFrame` is provided, it is assumed that no experiments were conducted previously.
-* **Numerical tolerance**: By default, numerical measurements are required to fall
-predefined tolerance. However, you can disable this requirement by uing the
-`numrical_measurements_must_be_within_tolerance` flag.
+* **Numerical tolerance**: By default, numerical measurements are required to fall into a
+predefined tolerance. However, you can disable this requirement by using the
+`numerical_measurements_must_be_within_tolerance` flag.
 Note that the setting of the tolerances is controlled as a part of the respective
 parameter
 * **Previously done batches and fits** If the campaign builds upon previously
-condiucted experiments, it is possible to provide the number of previously done batches
+conducted experiments, it is possible to provide the number of previously done batches
 and fits. This is done via the keywords `n_batches_done` resp. `n_fits_done`.
 
 ## Further information
