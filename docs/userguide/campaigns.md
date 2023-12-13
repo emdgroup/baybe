@@ -99,19 +99,11 @@ recommendation and then switches to a [`SequentialGreedyRecommender`](baybe.reco
 However, using the `strategy` keyword, you can specify a different strategy.
 For more details on strategies, see the corresponding [`submodule`](baybe.strategies) or
 [user guide](./strategy).
-* **Previously conducted experiments**: If you have previously conducted experiments and
-have a `DataFrame` representing them, you can provide it using the `measurements_exp`
-keyword. Preferably, the `DataFrame` was created by a previous
-campaign using [the campaigns recommend function](baybe.campaign.Campaign.recommend).
-If no `DataFrame` is provided, it is assumed that no experiments were conducted previously.
 * **Numerical tolerance**: By default, numerical measurements are required to fall into a
 predefined tolerance. However, you can disable this requirement by using the
 `numerical_measurements_must_be_within_tolerance` flag.
 Note that the setting of the tolerances is controlled as a part of the respective
 parameter
-* **Previously done batches and fits** If the campaign builds upon previously
-conducted experiments, it is possible to provide the number of previously done batches
-and fits. This is done via the keywords `n_batches_done` resp. `n_fits_done`.
 
 ### Further information
 
