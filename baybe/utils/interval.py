@@ -119,11 +119,11 @@ class Interval:
         return self.lower, self.upper
 
     def to_ndarray(self) -> np.ndarray:
-        """Transform the interval to a ndarray."""
+        """Transform the interval to a :class:`numpy.ndarray`."""
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
     def to_tensor(self) -> torch.Tensor:
-        """Transform the interval to a tensor."""
+        """Transform the interval to a :class:`torch.Tensor`."""
         return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
     def contains(self, number: float) -> bool:
