@@ -10,7 +10,7 @@ from attrs import define, field
 from numpy.typing import ArrayLike
 
 from baybe.targets.base import Target
-from baybe.targets.enum import TargetMode, TargetTransformMode
+from baybe.targets.enum import TargetMode, TargetTransformation
 from baybe.targets.transforms import (
     bell_transform,
     linear_transform,
@@ -18,24 +18,24 @@ from baybe.targets.transforms import (
 )
 from baybe.utils import Interval, SerialMixin, convert_bounds
 
-_VALID_TRANSFORM_MODES: Dict[TargetMode, Sequence[TargetTransformMode]] = {
-    TargetMode.MAX: (TargetTransformMode.LINEAR,),
-    TargetMode.MIN: (TargetTransformMode.LINEAR,),
-    TargetMode.MATCH: (TargetTransformMode.TRIANGULAR, TargetTransformMode.BELL),
+_VALID_TRANSFORMATIONS: Dict[TargetMode, Sequence[TargetTransformation]] = {
+    TargetMode.MAX: (TargetTransformation.LINEAR,),
+    TargetMode.MIN: (TargetTransformation.LINEAR,),
+    TargetMode.MATCH: (TargetTransformation.TRIANGULAR, TargetTransformation.BELL),
 }
-"""A mapping from target modes to allowed target transform modes.
-If multiple transform modes are allowed, the first entry is used as default option."""
+"""A mapping from target modes to allowed target transformations.
+If multiple transformations are allowed, the first entry is used as default option."""
 
 
-def _get_target_transform(
-    mode: TargetMode, transform_mode: TargetTransformMode
+def _get_target_transformation(
+    mode: TargetMode, transformation: TargetTransformation
 ) -> Callable[[ArrayLike, float, float], np.ndarray]:
-    """Provide the correct target transform for the given modes."""
-    if transform_mode is TargetTransformMode.TRIANGULAR:
+    """Provide the transform callable for the given target mode and transform type."""
+    if transformation is TargetTransformation.TRIANGULAR:
         return triangular_transform
-    if transform_mode is TargetTransformMode.BELL:
+    if transformation is TargetTransformation.BELL:
         return bell_transform
-    if transform_mode is TargetTransformMode.LINEAR:
+    if transformation is TargetTransformation.LINEAR:
         if mode is TargetMode.MAX:
             return partial(linear_transform, descending=False)
         elif mode is TargetMode.MIN:
@@ -62,20 +62,20 @@ class NumericalTarget(Target, SerialMixin):
     bounds: Interval = field(default=None, converter=convert_bounds)
     """Optional target bounds."""
 
-    transform_mode: Optional[TargetTransformMode] = field(
-        converter=lambda x: None if x is None else TargetTransformMode(x)
+    transformation: Optional[TargetTransformation] = field(
+        converter=lambda x: None if x is None else TargetTransformation(x)
     )
-    """An optional target transform mode."""
+    """An optional target transformation."""
 
-    @transform_mode.default
-    def _default_transform_mode(self) -> Optional[TargetTransformMode]:
-        """Provide the default transform mode for bounded targets."""
+    @transformation.default
+    def _default_transformation(self) -> Optional[TargetTransformation]:
+        """Provide the default transformation for bounded targets."""
         if self.bounds.is_bounded:
-            fun = _VALID_TRANSFORM_MODES[self.mode][0]
+            fun = _VALID_TRANSFORMATIONS[self.mode][0]
             warnings.warn(
-                f"The transformation mode for target '{self.name}' "
+                f"The transformation for target '{self.name}' "
                 f"in '{self.mode.name}' mode has not been specified. "
-                f"Setting the bound transform function to '{fun.name}'.",
+                f"Setting the transformation to '{fun.name}'.",
                 UserWarning,
             )
             return fun
@@ -100,35 +100,34 @@ class NumericalTarget(Target, SerialMixin):
                 f"which requires finite bounds."
             )
 
-    @transform_mode.validator
-    def _validate_transform_mode(  # noqa: DOC101, DOC103
-        self, _: Any, value: Optional[TargetTransformMode]
+    @transformation.validator
+    def _validate_transformation(  # noqa: DOC101, DOC103
+        self, _: Any, value: Optional[TargetTransformation]
     ) -> None:
-        """Validate that the given transform is compatible with the specified mode.
+        """Validate that the given transformation is compatible with the specified mode.
 
         Raises:
-            ValueError: If the specified bound transform function and the target mode
-                are not compatible.
+            ValueError: If the target transformation and mode are not compatible.
         """
-        if (value is not None) and (value not in _VALID_TRANSFORM_MODES[self.mode]):
+        if (value is not None) and (value not in _VALID_TRANSFORMATIONS[self.mode]):
             raise ValueError(
                 f"You specified bounds for target '{self.name}', but your "
-                f"specified bound transform function '{value}' is not compatible "
+                f"specified transformation '{value}' is not compatible "
                 f"with the target mode {self.mode}'. It must be one "
-                f"of {_VALID_TRANSFORM_MODES[self.mode]}."
+                f"of {_VALID_TRANSFORMATIONS[self.mode]}."
             )
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.
 
-        # When bounds are given, apply the respective transform
+        # When bounds are given, apply the respective transformation
         if self.bounds.is_bounded:
-            func = _get_target_transform(
+            func = _get_target_transformation(
                 # TODO[typing]: For bounded targets (see if clause), the attrs default
-                #   ensures there is always a transform mode specified.
+                #   ensures there is always a transformation specified.
                 #   Use function overloads to make this explicit.
                 self.mode,
-                cast(TargetTransformMode, self.transform_mode),
+                cast(TargetTransformation, self.transformation),
             )
             transformed = pd.DataFrame(
                 func(data, *self.bounds.to_tuple()), index=data.index

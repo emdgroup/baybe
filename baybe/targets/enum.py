@@ -16,8 +16,8 @@ class TargetMode(Enum):
     """The target should be close to a given value."""
 
 
-class TargetTransformMode(Enum):
-    """Available modes for target transforms."""
+class TargetTransformation(Enum):
+    """Available target transformations."""
 
     LINEAR = "LINEAR"
     """Linear transformation."""
