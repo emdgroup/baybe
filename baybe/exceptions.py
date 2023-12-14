@@ -38,3 +38,7 @@ class ModelParamsNotSupportedError(Exception):
 
 class NoRecommendersLeftError(Exception):
     """A recommender is requested by a strategy but there are no recommenders left."""
+
+
+class NumericalUnderflowError(Exception):
+    """A computation would lead to numerical underflow."""

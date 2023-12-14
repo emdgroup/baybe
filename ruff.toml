@@ -27,6 +27,7 @@ extend-ignore = [
 # Missing module docstrings in module/package
 "tests/__init__.py" =  ["D100", "D104"]
 "tests/serialization/__init__.py" = ["D100", "D104"]
+"tests/validation/__init__.py" = ["D100", "D104"]
 "docs/conf.py" = ["D100"]
 # Ignore missing docstrings in public methods/functions and imperative mood in tests
 "tests/*" = ["D102", "D103", "D401"]

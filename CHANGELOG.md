@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.1] - 2023-12-07
 ### Added
 - Release pipeline now also publishes source distributions
+- `hypothesis` strategies and tests for parameters package
+
+### Changed
+- Reworked validation tests for parameters package
+- `SubstanceParameter` now collects inconsistent user input in an `ExceptionGroup`
 
 ### Fixed
 - Link handling in documentation

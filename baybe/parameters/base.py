@@ -5,7 +5,8 @@ from functools import cached_property, partial
 from typing import Any, ClassVar, Optional
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
+from attrs.validators import instance_of, min_len
 from cattrs.gen import override
 
 from baybe.parameters.enum import ParameterEncoding
@@ -32,7 +33,7 @@ class Parameter(ABC, SerialMixin):
     """Class variable encoding whether this parameter is discrete."""
 
     # object variables
-    name: str = field()
+    name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
 
     @abstractmethod

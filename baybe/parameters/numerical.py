@@ -6,13 +6,13 @@ from typing import Any, ClassVar, Tuple
 import cattrs
 import numpy as np
 import pandas as pd
-from attr import define, field
-from attr.validators import min_len
-from scipy.spatial.distance import pdist
+from attrs import define, field
+from attrs.validators import min_len
 
+from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import DiscreteParameter, Parameter
-from baybe.parameters.validation import validate_unique_values
-from baybe.utils import InfiniteIntervalError, Interval, convert_bounds
+from baybe.parameters.validation import validate_is_finite, validate_unique_values
+from baybe.utils import DTypeFloatNumpy, InfiniteIntervalError, Interval, convert_bounds
 
 
 @define(frozen=True, slots=False)
@@ -24,13 +24,15 @@ class NumericalDiscreteParameter(DiscreteParameter):
     # See base class.
 
     # object variables
+    # NOTE: The parameter values are assumed to be sorted by the tolerance validator.
     _values: Tuple[float, ...] = field(
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
-        converter=lambda x: cattrs.structure(x, Tuple[float, ...]),  # type: ignore
+        converter=lambda x: sorted(cattrs.structure(x, Tuple[float, ...])),  # type: ignore
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),
             validate_unique_values,  # type: ignore
+            validate_is_finite,
         ],
     )
     """The values the parameter can take."""
@@ -54,16 +56,23 @@ class NumericalDiscreteParameter(DiscreteParameter):
         Raises:
             ValueError: If the tolerance is not safe.
         """
-        # NOTE: computing all pairwise distances can be avoided if we ensure that the
-        #   values are ordered (which is currently not the case)
-        dists = pdist(np.asarray(self.values).reshape(-1, 1))
-        max_tol = dists.min() / 2.0
+        # For zero tolerance, the only left requirement is that all parameter values
+        # are distinct, which is already ensured by the corresponding validator.
+        if tolerance == 0.0:
+            return
 
-        if tolerance >= max_tol:
+        min_dist = np.diff(self.values).min()
+        if min_dist == (eps := np.nextafter(0, 1, dtype=DTypeFloatNumpy)):
+            raise NumericalUnderflowError(
+                f"The distance between any two parameter values must be at least "
+                f"twice the size of the used floating point resolution of {eps}."
+            )
+
+        if tolerance >= (max_tol := min_dist / 2.0):
             raise ValueError(
-                f"Parameter {self.name} is initialized with tolerance "
-                f"{tolerance} but due to the values {self.values} a "
-                f"maximum tolerance of {max_tol} is suggested to avoid ambiguity."
+                f"Parameter '{self.name}' is initialized with tolerance {tolerance} "
+                f"but due to the given parameter values {self.values}, the specified "
+                f"tolerance must be smaller than {max_tol} to avoid ambiguity."
             )
 
     @property

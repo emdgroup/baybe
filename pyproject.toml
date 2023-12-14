@@ -32,6 +32,7 @@ dependencies = [
     "attrs>=22.2.0",
     "botorch>=0.8.1",
     "cattrs>=23.2.0",
+    "exceptiongroup",
     "funcy>=1.17",
     "gpytorch>=1.9.1",
     "ngboost>=0.3.12",
@@ -134,6 +135,7 @@ telemetry = [
 ]
 
 test = [
+    "hypothesis[pandas]>=6.88.4",
     "pytest>=7.2.0",
     "pytest-cov>=4.1.0",
 ]

@@ -219,3 +219,10 @@ if _RDKIT_INSTALLED:
             return mol is not None
         except Exception:
             return False
+
+    def get_canonical_smiles(smiles: str) -> str:
+        """Return the "canonical" representation of the given SMILES."""
+        try:
+            return Chem.MolToSmiles(Chem.MolFromSmiles(smiles))
+        except Exception:
+            raise ValueError(f"The SMILES '{smiles}' does not appear to be valid.")
