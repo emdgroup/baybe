@@ -38,9 +38,10 @@ def _get_target_transformation(
     if transformation is TargetTransformation.LINEAR:
         if mode is TargetMode.MAX:
             return partial(linear_transform, descending=False)
-        elif mode is TargetMode.MIN:
+        if mode is TargetMode.MIN:
             return partial(linear_transform, descending=True)
-    raise RuntimeError("This line should be impossible to reach.")
+        raise ValueError(f"Unrecognized target mode: '{mode}'.")
+    raise ValueError(f"Unrecognized target transformation: '{transformation}'.")
 
 
 @define(frozen=True)
