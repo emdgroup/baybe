@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -214,6 +216,7 @@ html_theme_options = {
 if "BAYBE_DOCS_LINKCHECK_IGNORE" in os.environ:
     linkcheck_ignore = ["https://emdgroup.github.io/baybe/"]
 
+autodoc_type_aliases = {"Smiles": "Smiles"}
 
 # Everything in the module has the prefix baybe
 modindex_common_prefix = ["baybe."]
