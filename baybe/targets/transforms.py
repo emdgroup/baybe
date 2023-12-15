@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 
-def bound_linear(
+def linear_transform(
     arr: ArrayLike, lower: float, upper: float, descending: bool
 ) -> np.ndarray:
     """Linearly map values in a specified interval ``[lower, upper]`` to ``[0, 1]``.
@@ -20,9 +20,9 @@ def bound_linear(
             specified interval. If ``False``, they increase from 0 to 1.
 
     Returns:
-        An array containing the transformed values.
+        A new array containing the transformed values.
     """
-    arr = np.array(arr)
+    arr = np.asarray(arr)
     if descending:
         res = (upper - arr) / (upper - lower)
         res[arr > upper] = 0.0
@@ -35,7 +35,7 @@ def bound_linear(
     return res
 
 
-def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
+def triangular_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     """Map values to the interval ``[0, 1]`` in a "triangular" fashion.
 
     The shape of the function is "triangular" in that is 0 outside a specified interval
@@ -48,10 +48,10 @@ def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
         upper:The upper end of the triangle interval. Above, the mapped values are 0.
 
     Returns:
-        An array containing the transformed values.
+        A new array containing the transformed values.
     """
+    arr = np.asarray(arr)
     mid = lower + (upper - lower) / 2
-    arr = np.array(arr)
     res = (arr - lower) / (mid - lower)
     res[arr > mid] = (upper - arr[arr > mid]) / (upper - mid)
     res[arr > upper] = 0.0
@@ -60,7 +60,7 @@ def bound_triangular(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     return res
 
 
-def bound_bell(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
+def bell_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     """Map values to the interval ``[0, 1]`` in a "Gaussian bell" fashion.
 
     The shape of the function is "Gaussian bell curve", specified through the boundary
@@ -72,8 +72,9 @@ def bound_bell(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
         upper: The input value corresponding to the lower sigma interval boundary.
 
     Returns:
-        An array containing the transformed values.
+        A new array containing the transformed values.
     """
+    arr = np.asarray(arr)
     mean = np.mean([lower, upper])
     std = (upper - lower) / 2
     res = np.exp(-((arr - mean) ** 2) / (2.0 * std**2))

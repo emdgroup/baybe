@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 
 
 @define(frozen=True)

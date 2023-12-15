@@ -22,7 +22,7 @@ class TestInvalidTargetCreation:
                 name="incompatible_transform",
                 mode="MATCH",
                 bounds=(0, 100),
-                bounds_transform_func="LINEAR",
+                transformation="LINEAR",
             )
 
     def test_invalid_transformation(self):
@@ -31,7 +31,7 @@ class TestInvalidTargetCreation:
                 name="invalid_transform",
                 mode="MATCH",
                 bounds=(0, 100),
-                bounds_transform_func="SOME_STUFF",
+                transformation="SOME_STUFF",
             )
 
 

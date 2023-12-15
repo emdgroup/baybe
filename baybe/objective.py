@@ -110,8 +110,8 @@ class Objective(SerialMixin):
                 contain more columns.
 
         Returns:
-            A dataframe with the targets in computational representation. Columns will
-            be as in the input (except when objective mode is ``DESIRABILITY``).
+            A new dataframe with the targets in computational representation. Columns
+            will be as in the input (except when objective mode is ``DESIRABILITY``).
 
         Raises:
             ValueError: If the specified averaging function is unknown.

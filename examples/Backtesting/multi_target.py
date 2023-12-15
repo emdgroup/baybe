@@ -67,10 +67,10 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # We use two targets here.
 # The first target is maximized and the second target is minimized during the optimization process.
 Target_1 = NumericalTarget(
-    name="Target_1", mode="MAX", bounds=(0, 100), bounds_transform_func="LINEAR"
+    name="Target_1", mode="MAX", bounds=(0, 100), transformation="LINEAR"
 )
 Target_2 = NumericalTarget(
-    name="Target_2", mode="MIN", bounds=(0, 100), bounds_transform_func="LINEAR"
+    name="Target_2", mode="MIN", bounds=(0, 100), transformation="LINEAR"
 )
 
 

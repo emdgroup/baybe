@@ -10,6 +10,7 @@ import pandas as pd
 import torch
 from torch import Tensor
 
+from baybe.targets.enum import TargetMode
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
@@ -106,17 +107,17 @@ def add_fake_results(
     if good_intervals is None:
         good_intervals = {}
         for target in campaign.targets:
-            if target.mode == "MAX":
+            if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
                 ubound = (
                     target.bounds.upper if np.isfinite(target.bounds.upper) else 100
                 )
                 interv = (lbound, ubound)
-            elif target.mode == "MIN":
+            elif target.mode is TargetMode.MIN:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
                 interv = (lbound, ubound)
-            elif target.mode == "MATCH":
+            elif target.mode is TargetMode.MATCH:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = (
                     target.bounds.upper if np.isfinite(target.bounds.upper) else 100
@@ -135,17 +136,17 @@ def add_fake_results(
     if bad_intervals is None:
         bad_intervals = {}
         for target in campaign.targets:
-            if target.mode == "MAX":
+            if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
                 interv = (lbound, ubound)
-            elif target.mode == "MIN":
+            elif target.mode is TargetMode.MIN:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
                 ubound = (
                     target.bounds.upper if np.isfinite(target.bounds.upper) else 100
                 )
                 interv = (lbound, ubound)
-            elif target.mode == "MATCH":
+            elif target.mode is TargetMode.MATCH:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = (
                     target.bounds.upper if np.isfinite(target.bounds.upper) else 100
