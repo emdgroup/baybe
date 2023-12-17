@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `mypy` for targets and intervals
 
 ### Changed
-- Renamed `bounds_transform_func` target attribute to `transform_mode`
+- Renamed `bounds_transform_func` target attribute to `transformation`
 - `Interval.is_bounded` now implements the mathematical definition of boundedness
 - Moved and renamed target transform utility functions
 
