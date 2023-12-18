@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved and renamed target transform utility functions
 
 ### Fixed
-- Wrong threshold operator in constraints user guide
+- Wrong use of `tolerance` argument in constraints user guide
 
 ### Removed
 - Conda install instructions and version badge

@@ -99,8 +99,7 @@ from baybe.constraints import ThresholdCondition
 
 ThresholdCondition( # will select all values above 150
     threshold = 150, 
-    operator = "=",
-    tolerance = 0.2 # optional, with this 149.82 would still be valid
+    operator = ">",
 )
 ```
 
