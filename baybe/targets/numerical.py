@@ -83,19 +83,19 @@ class NumericalTarget(Target, SerialMixin):
         return None
 
     @bounds.validator
-    def _validate_bounds(self, _: Any, value: Interval) -> None:  # noqa: DOC101, DOC103
+    def _validate_bounds(self, _: Any, bounds: Interval) -> None:  # noqa: DOC101, DOC103
         """Validate the bounds.
 
         Raises:
-            ValueError: If the bounds are finite on one and infinite on the other end.
+            ValueError: If the target is defined on a half-bounded interval.
             ValueError: If the target is in ``MATCH`` mode but the provided bounds
                 are infinite.
         """
         # IMPROVE: We could also include half-way bounds, which however don't work
-        # for the desirability approach
-        if not (value.is_finite or not value.is_bounded):
-            raise ValueError("Bounds must either be finite or infinite on *both* ends.")
-        if self.mode is TargetMode.MATCH and not value.is_finite:
+        #   for the desirability approach
+        if bounds.is_half_bounded:
+            raise ValueError("Targets on half-bounded intervals are not supported.")
+        if self.mode is TargetMode.MATCH and not bounds.is_bounded:
             raise ValueError(
                 f"Target '{self.name}' is in {TargetMode.MATCH.name} mode,"
                 f"which requires finite bounds."

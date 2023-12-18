@@ -1,9 +1,10 @@
 """Utilities for handling intervals."""
 
 import sys
+import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import Any, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -11,6 +12,9 @@ from attrs import define, field
 from packaging import version
 
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
+
+# TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs
+#   are supported: https://bugs.python.org/issue41987
 
 # TODO: Remove when upgrading python version
 if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
@@ -23,7 +27,7 @@ if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
             setattr(cls, "__annotations__", cls.__func__.__annotations__)
         return self.dispatcher.register(cls, func=method)
 
-    singledispatchmethod.register = _register
+    singledispatchmethod.register = _register  # type: ignore[method-assign]
 
 
 class InfiniteIntervalError(Exception):
@@ -41,40 +45,58 @@ class Interval:
     """The upper end of the interval."""
 
     @upper.validator
-    def _validate_order(self, _: Any, value: float):  # noqa: DOC101, DOC103
+    def _validate_order(self, _: Any, upper: float) -> None:  # noqa: DOC101, DOC103
         """Validate the order of the interval bounds.
 
         Raises:
             ValueError: If the upper end is not larger than the lower end.
         """
-        if value <= self.lower:
+        if upper <= self.lower:
             raise ValueError(
-                f"The upper interval bound (provided value: {value}) must be larger "
+                f"The upper interval bound (provided value: {upper}) must be larger "
                 f"than the lower bound (provided value: {self.lower})."
             )
 
     @property
-    def is_finite(self):
+    def is_bounded(self) -> bool:
+        """Check if the interval is bounded."""
+        return self.is_left_bounded and self.is_right_bounded
+
+    @property
+    def is_left_bounded(self) -> bool:
+        """Check if the interval is left-bounded."""
+        return np.isfinite(self.lower)
+
+    @property
+    def is_right_bounded(self) -> bool:
+        """Check if the interval is right-bounded."""
+        return np.isfinite(self.upper)
+
+    @property
+    def is_half_bounded(self) -> bool:
+        """Check if the interval is half-bounded."""
+        return self.is_left_bounded ^ self.is_right_bounded
+
+    @property
+    def is_finite(self) -> bool:
         """Check whether the interval is finite."""
+        warnings.warn(
+            "The use of 'Interval.is_finite' is deprecated and will be disabled in "
+            "a future version. Use 'Interval.is_bounded' instead.",
+            DeprecationWarning,
+        )
         return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
-    def is_bounded(self):
-        """Check whether the interval is bounded."""
-        return np.isfinite(self.lower) or np.isfinite(self.upper)
-
-    @property
-    def center(self):
-        """The center of the interval. Only applicable for finite intervals."""
-        if not self.is_finite:
-            raise InfiniteIntervalError(
-                f"The interval {self} is infinite and thus has no center."
-            )
+    def center(self) -> Optional[float]:
+        """The center of the interval, or ``None`` if the interval is unbounded."""
+        if not self.is_bounded:
+            return None
         return (self.lower + self.upper) / 2
 
     @singledispatchmethod
     @classmethod
-    def create(cls, value):
+    def create(cls, value: Any):
         """Create an interval from various input types."""
         raise NotImplementedError(f"Unsupported argument type: {type(value)}")
 
@@ -90,16 +112,16 @@ class Interval:
         """Overloaded implementation for creating an interval of an iterable."""
         return Interval(*bounds)
 
-    def to_tuple(self):
-        """Transfor the interval to a tuple."""
+    def to_tuple(self) -> Tuple[float, float]:
+        """Transform the interval to a tuple."""
         return self.lower, self.upper
 
-    def to_ndarray(self):
-        """Transform the interval to a ndarray."""
+    def to_ndarray(self) -> np.ndarray:
+        """Transform the interval to a :class:`numpy.ndarray`."""
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
-    def to_tensor(self):
-        """Transform the interval to a tensor."""
+    def to_tensor(self) -> torch.Tensor:
+        """Transform the interval to a :class:`torch.Tensor`."""
         return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
     def contains(self, number: float) -> bool:

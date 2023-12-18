@@ -114,11 +114,11 @@ class NumericalContinuousParameter(Parameter):
         """Validate bounds.
 
         Raises:
-            InfiniteIntervalError: If the provided interval is infinite.
+            InfiniteIntervalError: If the provided interval is not finite.
         """
-        if not value.is_finite:
+        if not value.is_bounded:
             raise InfiniteIntervalError(
-                f"You are trying to initialize a parameter with an infinite interval "
+                f"You are trying to initialize a parameter with an infinite range "
                 f"of {value.to_tuple()}. Infinite intervals for parameters are "
                 f"currently not supported."
             )
