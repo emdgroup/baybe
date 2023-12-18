@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -117,6 +119,11 @@ nitpick_ignore_regex = [
     (r"py:.*", "baybe.constraints.conditions.Condition.__init__"),
     (r"py:.*", "baybe.utils.serialization.SerialMixin.__init__"),
     (r"DeprecationWarning:", ""),
+    # Ignore the generics in utils.basic
+    # Might be able to us a regex here, is done explicitly at the moment for full
+    # transparency.
+    (r"py:class", "baybe.utils.basic._T"),
+    (r"py:class", "baybe.utils.basic._U"),
 ]
 
 # -- Options for HTML output -------------------------------------------------
@@ -214,6 +221,7 @@ html_theme_options = {
 if "BAYBE_DOCS_LINKCHECK_IGNORE" in os.environ:
     linkcheck_ignore = ["https://emdgroup.github.io/baybe/"]
 
+autodoc_type_aliases = {"Smiles": "Smiles"}
 
 # Everything in the module has the prefix baybe
 modindex_common_prefix = ["baybe."]

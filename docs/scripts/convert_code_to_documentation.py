@@ -85,13 +85,26 @@ def create_example_documentation(example_dest_dir: str):
     # Copy the examples folder in the destination directory
     shutil.copytree("examples", examples_directory)
 
-    # List all directories in the examples folder
-    ex_directories = [d for d in examples_directory.iterdir() if d.is_dir()]
-
     # For the toctree of the top level example folder, we need to keep track of all
     # folders. We thus write the header here and populate it during the execution of the
     # examples
-    ex_file = "# Examples\n\nThese examples show how to use BayBE.\n\n```{toctree}\n"
+    ex_file = """# Examples\n\n```{toctree}\n:maxdepth: 2\n\n"""
+
+    # List all directories in the examples folder
+    ex_directories = [d for d in examples_directory.iterdir() if d.is_dir()]
+
+    # This list contains the order of the examples as we want to have them in the end.
+    # The examples that should be the first ones are already included here and skipped
+    # later on. ALl other are just included.
+    ex_order = [
+        "Basics<Basics/Basics>\n",
+        "Searchspaces<Searchspaces/Searchspaces>\n",
+        "Constraints Discrete<Constraints_Discrete/Constraints_Discrete>\n",
+        "Constraints Continuous<Constraints_Continuous/Constraints_Continuous>\n",
+        "Multi Target<Multi_Target/Multi_Target>\n",
+        "Serialization<Serialization/Serialization>\n",
+        "Custom Surrogates<Custom_Surrogates/Custom_Surrogates>\n",
+    ]
 
     # Iterate over the directories.
     for sub_directory in (pbar := tqdm(ex_directories)):
@@ -100,11 +113,14 @@ def create_example_documentation(example_dest_dir: str):
         folder_name = sub_directory.stem
         formatted = " ".join(word.capitalize() for word in folder_name.split("_"))
 
-        # Attach the link to the folder to the top level toctree.
-        ex_file += formatted + f"<{folder_name}/{folder_name}>\n"
+        # Create the link to the folder to the top level toctree.
+        ex_file_entry = formatted + f"<{folder_name}/{folder_name}>\n"
+        # Add it to the list of examples if it is not already contained
+        if ex_file_entry not in ex_order:
+            ex_order.append(ex_file_entry)
 
         # We need to create a file for the inclusion of the folder
-        subdir_toctree = f"# {folder_name}\n\n" + "```{toctree}\n"
+        subdir_toctree = f"# {folder_name}\n\n" + "```{toctree}\n:maxdepth: 2\n\n"
 
         # Set description of progressbar
         pbar.set_description("Overall progress")
@@ -175,6 +191,8 @@ def create_example_documentation(example_dest_dir: str):
         ) as f:
             f.write(subdir_toctree)
 
+    # Append the ordered list of examples to the file for the top level folder
+    ex_file += "".join(ex_order)
     # Write last line of top level toctree file and write the file
     ex_file += "```"
     with open(
