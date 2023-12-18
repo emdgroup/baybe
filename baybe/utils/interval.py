@@ -4,7 +4,7 @@ import sys
 import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import Any, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -88,12 +88,10 @@ class Interval:
         return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
-    def center(self) -> float:
-        """The center of the interval. Only applicable for bounded intervals."""
+    def center(self) -> Optional[float]:
+        """The center of the interval, or ``None`` if the interval is unbounded."""
         if not self.is_bounded:
-            raise InfiniteIntervalError(
-                f"The interval {self} is infinite and thus has no center."
-            )
+            return None
         return (self.lower + self.upper) / 2
 
     @singledispatchmethod
