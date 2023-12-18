@@ -19,14 +19,11 @@ def interval(
         (exclude_bounded, exclude_half_bounded, exclude_fully_unbounded)
     ), "At least one Interval type must be allowed."
 
-    # Create interval from ordered pair of floats / None
-    lower = draw(st.none() | st.floats(max_value=float("inf"), exclude_max=True))
-    min_value = lower if lower is not None else float("-inf")
-    upper = draw(st.none() | st.floats(min_value=min_value, exclude_min=True))
-    bounds = [lower, upper]
-    if None not in bounds:
-        bounds.sort()
-    interval = Interval(*bounds)
+    # Create interval from ordered pair of floats
+    bounds = (
+        st.tuples(st.floats(), st.floats()).map(sorted).filter(lambda x: x[0] < x[1])
+    )
+    interval = Interval.create(draw(bounds))
 
     # Filter excluded intervals
     if exclude_bounded:
