@@ -26,6 +26,7 @@ extend-ignore = [
 "baybe/exceptions.py" = ["D205", "D212", "D415"]
 # Missing module docstrings in module/package
 "tests/__init__.py" =  ["D100", "D104"]
+"tests/docs/__init__.py" = ["D100", "D104"]
 "tests/serialization/__init__.py" = ["D100", "D104"]
 "tests/validation/__init__.py" = ["D100", "D104"]
 "docs/conf.py" = ["D100"]
