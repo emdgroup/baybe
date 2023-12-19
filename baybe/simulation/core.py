@@ -403,7 +403,7 @@ def simulate_experiment(
                 break
 
         n_experiments += len(measured)
-        _look_up_target_values(measured, campaign, lookup, impute_mode)
+        _look_up_target_values(measured, campaign.targets, lookup, impute_mode)
 
         # Create the summary for the current iteration and store it
         result = pd.DataFrame(

@@ -6,8 +6,8 @@ from typing import Callable, List, Literal, Optional, Union
 import numpy as np
 import pandas as pd
 
-from baybe import Campaign
 from baybe.targets import NumericalTarget, TargetMode
+from baybe.targets.base import Target
 from baybe.utils import add_fake_results
 
 _logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 def _look_up_target_values(
     queries: pd.DataFrame,
-    campaign: Campaign,
+    targets: List[Target],
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -27,7 +27,7 @@ def _look_up_target_values(
 
     Args:
         queries: A dataframe containing points to be queried.
-        campaign: The campaign for which the experiments should be simulated.
+        targets: The BayBE targets.
         lookup: The lookup mechanism. See :func:`baybe.simulation.simulate_scenarios`
             for details.
         impute_mode: The used impute mode. See
@@ -37,15 +37,16 @@ def _look_up_target_values(
         AssertionError: If an analytical function is used and an incorrect number of
             targets was specified.
     """
+    # TODO: Rewrite docstring.
     # TODO: This function needs another code cleanup and refactoring. In particular,
     #   the different lookup modes should be implemented via multiple dispatch.
 
     # Extract all target names
-    target_names = [t.name for t in campaign.targets]
+    target_names = [t.name for t in targets]
 
     # If no lookup is provided, invent some fake results
     if lookup is None:
-        add_fake_results(queries, campaign)
+        add_fake_results(queries, targets)
 
     # Compute the target values via a callable
     elif isinstance(lookup, Callable):
@@ -53,7 +54,7 @@ def _look_up_target_values(
         #   column ordering, which is not robust. Instead, the callable should return
         #   a dataframe with properly labeled columns.
 
-        # Since the return of a lookup function is a a tuple, the following code stores
+        # Since the return of a lookup function is a tuple, the following code stores
         # tuples of floats in a single column with label 0:
         measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
         # We transform this column to a DataFrame in which there is an individual
@@ -63,13 +64,13 @@ def _look_up_target_values(
         )
         # ... and assign this to measured_targets in order to have one column per target
         measured_targets[split_target_columns.columns] = split_target_columns
-        if measured_targets.shape[1] != len(campaign.targets):
+        if measured_targets.shape[1] != len(targets):
             raise AssertionError(
                 "If you use an analytical function as lookup, make sure "
                 "the configuration has the right amount of targets "
                 "specified."
             )
-        for k_target, target in enumerate(campaign.targets):
+        for k_target, target in enumerate(targets):
             queries[target.name] = measured_targets.iloc[:, k_target]
 
     # Get results via dataframe lookup (works only for exact matches)
@@ -103,7 +104,7 @@ def _look_up_target_values(
                         "It seems the search space was not correctly "
                         "reduced before recommendations were generated."
                     )
-                match_vals = _impute_lookup(row, lookup, campaign.targets, impute_mode)
+                match_vals = _impute_lookup(row, lookup, targets, impute_mode)
 
             else:
                 # Exactly one match has been found
