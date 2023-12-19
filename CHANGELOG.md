@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Wrong use of `tolerance` argument in constraints user guide
 - Errors with generics and type aliases in documentation
+- Deduplication bug in substance_data hypothesis strategy
 
 ### Removed
 - Conda install instructions and version badge

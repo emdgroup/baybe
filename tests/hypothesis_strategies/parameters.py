@@ -49,9 +49,13 @@ def substance_data(draw: st.DrawFn):
     """Generate data for :class:`baybe.parameters.substance.SubstanceParameter`."""
     names = draw(st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True))
     substances = draw(
-        st.lists(smiles(), min_size=len(names), max_size=len(names), unique=True)
+        st.lists(
+            smiles().map(get_canonical_smiles),
+            min_size=len(names),
+            max_size=len(names),
+            unique=True,
+        )
     )
-    substances = list(set(get_canonical_smiles(s) for s in substances))
     return dict(zip(names, substances))
 
 
