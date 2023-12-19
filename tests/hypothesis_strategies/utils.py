@@ -31,6 +31,6 @@ def interval(
     if exclude_half_bounded:
         assume(not interval.is_half_bounded)
     if exclude_fully_unbounded:
-        assume(interval.is_left_bounded or interval.is_right_bounded)
+        assume(not interval.is_fully_unbounded)
 
     return interval
