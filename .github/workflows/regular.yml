@@ -38,6 +38,7 @@ jobs:
 
   lint:
     strategy:
+      fail-fast: false
       matrix:
         py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Lint ${{ matrix.py-version.semantic }}
@@ -56,6 +57,7 @@ jobs:
   typecheck:
     needs: [lint]
     strategy:
+      fail-fast: false
       matrix:
         py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
@@ -74,6 +76,7 @@ jobs:
   audit:
     needs: [lint]
     strategy:
+      fail-fast: false
       matrix:
         py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Audit ${{ matrix.py-version.semantic }}
@@ -92,6 +95,7 @@ jobs:
   coretest:
     needs: [typecheck, audit]
     strategy:
+      fail-fast: false
       matrix:
         py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Core Tests ${{ matrix.py-version.semantic }}
@@ -114,6 +118,7 @@ jobs:
   fulltest:
     needs: [typecheck, audit]
     strategy:
+      fail-fast: false
       matrix:
         py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}

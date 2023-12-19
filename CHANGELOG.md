@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for code blocks in README and user guides
 - `hypothesis` strategies and tests for targets and intervals
 - De-/serialization of target subclasses via base class
+- Docs building check now part of CI
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transformation`
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Conda install instructions and version badge
+- Early fail for different Python versions in regular pipeline
 
 ### Deprecations
 - `Interval.is_finite` replaced with `Interval.is_bounded`
