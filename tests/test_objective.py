@@ -1,38 +1,9 @@
-"""Tests for the targets module."""
+"""Tests for the objective module."""
 
 import pytest
 
 from baybe.objective import Objective
 from baybe.targets import NumericalTarget
-
-
-class TestInvalidTargetCreation:
-    """Invalid target creation raises expected error."""
-
-    def test_missing_bounds_for_match_mode(self):
-        with pytest.raises(ValueError):
-            NumericalTarget(
-                name="missing_bounds",
-                mode="MATCH",
-            )
-
-    def test_incompatible_transformation_for_match_mode(self):
-        with pytest.raises(ValueError):
-            NumericalTarget(
-                name="incompatible_transform",
-                mode="MATCH",
-                bounds=(0, 100),
-                transformation="LINEAR",
-            )
-
-    def test_invalid_transformation(self):
-        with pytest.raises(ValueError):
-            NumericalTarget(
-                name="invalid_transform",
-                mode="MATCH",
-                bounds=(0, 100),
-                transformation="SOME_STUFF",
-            )
 
 
 class TestInvalidObjectiveCreation:

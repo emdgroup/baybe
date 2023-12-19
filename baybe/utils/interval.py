@@ -78,6 +78,11 @@ class Interval:
         return self.is_left_bounded ^ self.is_right_bounded
 
     @property
+    def is_fully_unbounded(self) -> bool:
+        """Check if the interval represents the entire real number line."""
+        return not (self.is_left_bounded or self.is_right_bounded)
+
+    @property
     def is_finite(self) -> bool:
         """Check whether the interval is finite."""
         warnings.warn(

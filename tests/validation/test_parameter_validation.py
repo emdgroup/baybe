@@ -10,7 +10,6 @@ from cattrs.errors import IterableValidationError
 from pytest import param
 
 from baybe.parameters.categorical import (
-    CategoricalEncoding,
     CategoricalParameter,
     TaskParameter,
 )
@@ -19,7 +18,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
+from baybe.parameters.substance import SubstanceParameter
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.interval import InfiniteIntervalError
 
@@ -86,12 +85,6 @@ def test_invalid_bounds_numerical_continuous_parameter(bounds):
         NumericalContinuousParameter(name="invalid_values", bounds=bounds)
 
 
-@pytest.mark.parametrize("encoding", [e.name for e in CategoricalEncoding])
-def test_string_encoding_categorical_parameter(encoding):
-    """The encoding can also be specified as a string instead of an enum value."""
-    CategoricalParameter(name="string_encoding", values=["A", "B"], encoding=encoding)
-
-
 @pytest.mark.parametrize(
     ("values", "error"),
     [
@@ -129,14 +122,6 @@ def test_invalid_values_task_parameter(values, active_values, error):
     with pytest.raises(error):
         """Providing invalid (active) parameter values raises an exception."""
         TaskParameter(name="invalid_values", values=values, active_values=active_values)
-
-
-@pytest.mark.parametrize("encoding", [e.name for e in SubstanceEncoding])
-def test_string_encoding_substance_parameter(encoding):
-    """The encoding can also be specified as a string instead of an enum value."""
-    SubstanceParameter(
-        name="string_encoding", data={"A": "C", "B": "CC"}, encoding=encoding
-    )
 
 
 @pytest.mark.parametrize(

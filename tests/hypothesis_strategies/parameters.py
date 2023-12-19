@@ -1,4 +1,4 @@
-"""Hypothesis strategies."""
+"""Hypothesis strategies for parameters."""
 
 import hypothesis.strategies as st
 import numpy as np
@@ -18,13 +18,7 @@ from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
 from baybe.utils.chemistry import get_canonical_smiles
 from baybe.utils.numeric import DTypeFloatNumpy
 
-_largest_lower_interval = np.nextafter(
-    np.nextafter(np.inf, 0, dtype=DTypeFloatNumpy), 0, dtype=DTypeFloatNumpy
-)
-"""
-The largest possible value for the lower end of a continuous interval such that there
-still exists a larger but finite number for the upper interval end.
-"""
+from .utils import interval
 
 decorrelation = st.one_of(
     st.booleans(),
@@ -55,9 +49,13 @@ def substance_data(draw: st.DrawFn):
     """Generate data for :class:`baybe.parameters.substance.SubstanceParameter`."""
     names = draw(st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True))
     substances = draw(
-        st.lists(smiles(), min_size=len(names), max_size=len(names), unique=True)
+        st.lists(
+            smiles().map(get_canonical_smiles),
+            min_size=len(names),
+            max_size=len(names),
+            unique=True,
+        )
     )
-    substances = list(set(get_canonical_smiles(s) for s in substances))
     return dict(zip(names, substances))
 
 
@@ -109,9 +107,8 @@ def numerical_discrete_parameter(
 def numerical_continuous_parameter(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.numerical.NumericalContinuousParameter`."""
     name = draw(parameter_name)
-    lower = draw(st.floats(max_value=_largest_lower_interval, allow_infinity=False))
-    upper = draw(st.floats(min_value=lower, exclude_min=True, allow_infinity=False))
-    return NumericalContinuousParameter(name=name, bounds=(lower, upper))
+    bounds = draw(interval(exclude_half_bounded=True, exclude_fully_unbounded=True))
+    return NumericalContinuousParameter(name=name, bounds=bounds)
 
 
 @st.composite

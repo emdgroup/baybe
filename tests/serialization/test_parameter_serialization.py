@@ -7,7 +7,7 @@ from pytest import param
 
 from baybe.parameters.base import Parameter
 
-from ..hypothesis_strategies import (
+from ..hypothesis_strategies.parameters import (
     categorical_parameter,
     custom_parameter,
     numerical_continuous_parameter,
