@@ -64,11 +64,15 @@ Using the optional `strategy` keyword, it is possible to provide a different
 For more information on strategies in general, we refer to the corresponding
 [user guide](./strategy).
 
-### Creating a campaign via a configuration
+### Creating a campaign via a JSON config
 
-It is also possible to specify a `Campaign` via a configuration string and the function
-[`Campaign.from_config`](baybe.campaign.Campaign.from_config).
-As fully specifying a configuration takes too much, we refer to the corresponding
+It is also possible to specify a `Campaign` via a configuration string and using the
+function [`Campaign.from_config`](baybe.campaign.Campaign.from_config).
+The specification of config files as well as what they contain are automatically
+derived from the class structure.
+Furthermore, a config file can be valuated using the function 
+[Campaign.validate_config](baybe.campaign.Campaign.validate_config).
+For more details and a full exemplary config, we refer to the corresponding
 [example](./../../examples/Serialization/create_from_config).
 
 ## Getting recommendations
@@ -76,11 +80,14 @@ As fully specifying a configuration takes too much, we refer to the correspondin
 ### Basics
 
 ```{attention}
-Adding recommendations and measurements using the `recommend` and `add_measurements`
-functions is the safe only way to inform a `Campaign` object about new measurements.
+Obtaining recommendations and measurements using the `recommend` and `add_measurements`
+functions is the only safe way to inform a `Campaign` object about new measurements.
 These functions update the necessary metadata that is crucial for the proper
 execution of a campaign. It is important to rely on these functions to maintain the
 integrity and reliability of the campaign's execution.
+
+Further note that we currently also expose other fields via the constructor. This is
+only temporary, and the corresponding fields should be ignored.
 ```
 
 To obtain a recommendation for the next experiment, we can query the campaign and use
@@ -100,14 +107,17 @@ representing a set of parameters from the search space.
 Regarding the choice of a suitable `batch_size`, it is important to understand the
 difference between performing multiple recommendations with batch size of 1 and a single
 recommendation with a larger batch size.
-* **Larger batch size**: When using a larger batch size, the recommended experiments are
-chosen to *jointly* optimized the acquisition function.
+* **Batch size larger than 1**: When using a larger batch size, the recommended experiments
+are chosen to *jointly* optimized the acquisition function.
 This means that the recommendations are made considering the interaction of multiple
 experiments together.
-* **Smaller batch size**: When making several smaller recommendations, each *individual*
+* **Batch size of 1**: When making several smaller recommendations, each *individual*
 recommendation optimizes the acquisition function at the specific point in time when it
 is requested. In this case, the recommendations are made independently of each other
 without considering the joint optimization.
+Note that this distinction might not be relevant or applicable for all possible
+situation, for example when using recommenders that do not perform joint optimization.
+
 
 ### Caching of recommendations
 
@@ -115,7 +125,10 @@ Whenever recommendations are made, the `Campaign` object caches them. If measure
 for the recommendations are added, then the cached recommendations are deleted. However,
 if no measurements are added and the `recommend` function is called again, then the
 `Campaign` object simply returns the cached recommendations instead of generating new
-ones. This caching mechanism helps to optimize performance by avoiding unnecessary
+ones. In addition, the cache is also reset if the batch size of the repeated call has
+changed compared to the first one. This is due to the way the batch size influences
+which points are being recommended.
+This caching mechanism helps to optimize performance by avoiding unnecessary
 re-computations when measurements are not provided.
 
 ## Adding measurements
@@ -130,7 +143,7 @@ campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ```
 
-In discrete or hybrid search space, numerical measurements are required to fall into a
+For discrete parameters, measurements are required to fall into a
 predefined tolerance by default.
 This tolerance is defined on the level of the individual parameters.
 This requirement can be disabled by using the `numerical_measurements_must_be_within_tolerance` flag.
