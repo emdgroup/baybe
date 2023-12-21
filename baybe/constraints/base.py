@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, ClassVar, List, Tuple
 
 import pandas as pd
-import torch
+
 from attr import define, field
 from attr.validators import min_len
 from torch import Tensor
@@ -18,6 +18,7 @@ from baybe.utils import (
     unstructure_base,
 )
 from baybe.utils.serialization import converter
+from baybe.utils.lazy_loader import LazyLoader
 
 
 @define
@@ -158,7 +159,8 @@ class ContinuousConstraint(Constraint, ABC):
             for p in self.parameters
             if p in param_names
         ]
-
+        lazy_loader = LazyLoader("torch")
+        torch = lazy_loader.load()
         return (
             torch.tensor(param_indices),
             torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
