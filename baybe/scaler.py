@@ -6,10 +6,11 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, Tuple, Type
 
 import pandas as pd
-import torch
+
 from torch import Tensor
 
 from baybe.utils import to_tensor
+from baybe.utils.lazy_loader import LazyLoader
 
 _ScaleFun = Callable[[Tensor], Tensor]
 
@@ -94,12 +95,16 @@ class DefaultScaler(Scaler):
 
     type = "DEFAULT"
     # See base class.
-
+    
     def fit_transform(  # noqa: D102
         self, x: Tensor, y: Tensor
     ) -> Tuple[Tensor, Tensor]:
         # See base class.
 
+        # Load PyTorch using our LazyLoader class
+        lazy_loader = LazyLoader("torch")
+        torch = lazy_loader.load()
+        
         # Get the searchspace boundaries
         searchspace = to_tensor(self.searchspace)
         bounds = torch.vstack(
