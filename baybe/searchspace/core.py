@@ -6,7 +6,7 @@ from enum import Enum
 from typing import List, Optional, cast
 
 import pandas as pd
-import torch
+from torch import Tensor
 from attr import define, field
 
 from baybe.constraints import (
@@ -26,6 +26,7 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import validate_parameters
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils import SerialMixin, converter
+from baybe.utils.lazy_loader import LazyLoader
 
 
 class SearchSpaceType(Enum):
@@ -186,8 +187,10 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def param_bounds_comp(self) -> torch.Tensor:
-        """Return bounds as tensor."""
+    def param_bounds_comp(self) -> Tensor:
+        """Return bounds as tensor. `torch` is loaded lazily in this function."""
+        lazy_loader = LazyLoader("torch")
+        torch = lazy_loader.load()
         return torch.hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
