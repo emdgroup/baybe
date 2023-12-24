@@ -288,6 +288,14 @@ Suppose that we are creating a mixture which has up to three solvents, i.e. para
 In this situation, all combinations from the following table would be equivalent, 
 hence the ``SearchSpace`` should effectively only contain one of them.
 
+|   | Solvent 1    | Solvent 2    | Solvent 3    |
+|---|--------------|--------------|--------------|
+| 1 | Substance 43 | Substance 3  | Substance 12 |
+| 2 | Substance 43 | Substance 12 | Substance 3  |
+| 3 | Substance 3  | Substance 12 | Substance 43 |
+| 4 | Substance 3  | Substance 43 | Substance 12 |
+| 5 | Substance 12 | Substance 43 | Substance 3  |
+| 6 | Substance 12 | Substance 3  | Substance 43 |
 
 The usage of ``DiscretePermutationInvarianceConstraint`` is also part of the
 [example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
