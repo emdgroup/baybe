@@ -247,6 +247,24 @@ BayBE requires that all dependencies are declared in a single
 ``DiscreteDependenciesConstraint``'s will throw a validation error.
 ```
 
+In the example below we mimic a situation where there are two switches and each switch 
+activates two other parameters that are only relevant if the first switch is "on" / the 
+second switch is on "right" respectively.
+```python
+from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondition
+DiscreteDependenciesConstraint(
+    parameters=["Switch1", "Switch2"],  # these are two parameters 
+    conditions=[
+        SubSelectionCondition(selection=["on"]),     # Values of Switch1 that activate the affected parameters
+        SubSelectionCondition(selection=["right"]),  # Values of Switch2 that activate the affected parameters
+    ],
+    affected_parameters=[
+      ["Solvent", "Fraction"],  # parameters affected by "Switch1"
+      ["Frame1", "Frame2"]      # parameters affected by "Switch2"
+    ],
+)
+```
+
 ### ``DiscretePermutationInvarianceConstraint``
 Content coming soon...
 
