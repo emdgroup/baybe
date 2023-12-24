@@ -264,6 +264,7 @@ DiscreteDependenciesConstraint(
     ],
 )
 ```
+An end to end example can be found [here](../../examples/Constraints_Discrete/dependency_constraints).
 
 ### ``DiscretePermutationInvarianceConstraint``
 Content coming soon...
