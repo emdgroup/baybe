@@ -252,6 +252,7 @@ irrelevant. Since in our example "off" is still a valid value for the switch, th
 ``SearchSpace`` will still retain an entry for that combination, showing arbitrary 
 values for the ``affected_parameters`` (which can be ignored).
 
+(DDC)=
 ```{note}
 BayBE requires that all dependencies are declared in a single 
 ``DiscreteDependenciesConstraint``, creating a ``SearchSpace`` from multiple 
@@ -263,6 +264,7 @@ activates two other parameters that are only relevant if the first switch is "on
 second switch is on "right" respectively.
 ```python
 from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondition
+
 DiscreteDependenciesConstraint(
     parameters=["Switch1", "Switch2"],  # these are two parameters 
     conditions=[
@@ -279,7 +281,16 @@ DiscreteDependenciesConstraint(
 An end to end example can be found [here](../../examples/Constraints_Discrete/dependency_constraints).
 
 ### ``DiscretePermutationInvarianceConstraint``
-Content coming soon...
+Permutation invariance is a property where combinations of values of multiple
+parameters do not depend on their order due to some symmetry in the experiment. 
+Suppose that we are creating a mixture which has up to three solvents, i.e. parameters 
+"Solvent 1", "Solvent 2", "Solvent 3".
+In this situation, all combinations from the following table would be equivalent, 
+hence the ``SearchSpace`` should effectively only contain one of them.
+
+
+The usage of ``DiscretePermutationInvarianceConstraint`` is also part of the
+[example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
 
 ### ``DiscreteCustomConstraint``
 With this constraint you can specify a completely custom filter:
