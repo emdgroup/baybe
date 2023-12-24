@@ -194,6 +194,9 @@ Without this constraint, combinations like below would be possible:
 | 2 | THF      | Water    |                                          |
 | 3 | Octanol  | Octanol  | would be excluded                        |
 
+The usage of ``DiscreteNoLabelDuplicatesConstraint`` is part of the
+[example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
+
 ### ``DiscreteLinkedParametersConstraint``
 The ``DiscreteLinkedParametersConstraint`` in a sense is the opposite of the 
 ``DiscreteNoLabelDuplicatesConstraint``. 
@@ -274,6 +277,7 @@ An end to end example can be found [here](../../examples/Constraints_Discrete/de
 
 ### ``DiscretePermutationInvarianceConstraint``
 Content coming soon...
+Find a detailed example [here](../../examples/Constraints_Discrete/mixture_constraints).
 
 ### ``DiscreteCustomConstraint``
 With this constraint you can specify a completely custom filter:
