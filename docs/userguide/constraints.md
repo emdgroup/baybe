@@ -313,6 +313,26 @@ dependent on other parameters, we require that the dependencies are provided as 
 ``DiscreteDependenciesConstraint`` discussed [here](#DDC).
 ```
 
+The ``DiscretePermutationInvarianceConstraint`` below applies to out example and 
+removes permutation invariant combinations of solvents that have additional 
+dependencies as well:
+```python
+from baybe.constraints import DiscretePermutationInvarianceConstraint, DiscreteDependenciesConstraint, ThresholdCondition
+
+DiscretePermutationInvarianceConstraint(
+    parameters=["Solvent 1", "Solvent 2", "Solvent 3"],
+    dependencies=DiscreteDependenciesConstraint(  # optional, `dependencies` is only required if some entries in parameters have dependencies on other parameters
+        parameters=["Fraction 1", "Fraction 2", "Fraction 3"],
+        conditions=[
+            ThresholdCondition(threshold=0.0, operator=">"),
+            ThresholdCondition(threshold=0.0, operator=">"),
+            ThresholdCondition(threshold=0.0, operator=">"),
+        ],
+        affected_parameters=[["Solvent 1"], ["Solvent 2"], ["Solvent 3"]],
+    ),
+)
+```
+
 The usage of ``DiscretePermutationInvarianceConstraint`` is also part of the
 [example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
 
