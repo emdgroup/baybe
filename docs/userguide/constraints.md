@@ -297,6 +297,13 @@ hence the ``SearchSpace`` should effectively only contain one of them.
 | 5 | Substance 12 | Substance 43 | Substance 3  |
 | 6 | Substance 12 | Substance 3  | Substance 43 |
 
+Let's add to the mixture example the fact that not only the choice of substance but also 
+their relative mixture factions are parameters "Fraction 1", "Fraction 2" and 
+"Fraction 3".
+This example also implies that the solvent parameters depend on their corresponding 
+fraction being ``> 0.0``. This means we have a campaign that allows "up to, but not necessarily, 
+three solvents".
+
 The usage of ``DiscretePermutationInvarianceConstraint`` is also part of the
 [example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
 
