@@ -304,6 +304,15 @@ This example also implies that the solvent parameters depend on their correspond
 fraction being ``> 0.0``. This means we have a campaign that allows "up to, but not necessarily, 
 three solvents".
 
+```{important}
+If some of the ``parameters`` of the ``DiscretePermutationInvarianceConstraint`` are 
+dependent on other parameters, we require that the dependencies are provided as a 
+``DiscreteDependenciesConstraint`` to the ``dependencies`` argument of the 
+``DiscretePermutationInvarianceConstraint``. This 
+``DiscreteDependenciesConstraint`` will not count towards the maximum limit of one 
+``DiscreteDependenciesConstraint`` discussed [here](#DDC).
+```
+
 The usage of ``DiscretePermutationInvarianceConstraint`` is also part of the
 [example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
 
