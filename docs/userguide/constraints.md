@@ -84,6 +84,9 @@ ContinuousLinearInequalityConstraint(
 ),
 ```
 
+Find a detailed example for ``ContinuousLinearEqualityConstraint`` and 
+``ContinuousLinearInequalityConstraint`` [here](../../examples/Constraints_Continuous/linear_constraints).
+
 ## Conditions
 Conditions are elements used within discrete constraints. 
 While discrete constraints can operate on one or multiple parameters, a condition 
@@ -277,7 +280,6 @@ An end to end example can be found [here](../../examples/Constraints_Discrete/de
 
 ### ``DiscretePermutationInvarianceConstraint``
 Content coming soon...
-Find a detailed example [here](../../examples/Constraints_Discrete/mixture_constraints).
 
 ### ``DiscreteCustomConstraint``
 With this constraint you can specify a completely custom filter:
