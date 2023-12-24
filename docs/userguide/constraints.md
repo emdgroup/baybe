@@ -145,6 +145,9 @@ DiscreteExcludeConstraint(
 )
 ```
 
+A more detailed demonstration for this constraint type can be found 
+[here](../../examples/Constraints_Discrete/exclusion_constraints).
+
 ### ``DiscreteSumConstraint`` and ``DiscreteProductConstraint``
 These constraints constrain sums or products of numerical parameters. In the example 
 from [``ContinuousLinearEqualityConstraint``](#CLEQ) we 
@@ -162,6 +165,8 @@ DiscreteSumConstraint(
         tolerance = 0.001) # optional, with this 0.999 or 1.001 would also be valid
 )
 ```
+
+An end to end example can be found [here](../../examples/Constraints_Discrete/prodsum_constraints).
 
 ### ``DiscreteNoLabelDuplicatesConstraint``
 Sometimes duplicated labels in several parameters are undesirable.
@@ -264,6 +269,7 @@ DiscreteDependenciesConstraint(
     ],
 )
 ```
+
 An end to end example can be found [here](../../examples/Constraints_Discrete/dependency_constraints).
 
 ### ``DiscretePermutationInvarianceConstraint``
@@ -292,6 +298,8 @@ DiscreteCustomConstraint(
     validator = custom_filter
 )
 ```
+
+Find a detailed example [here](../../examples/Constraints_Discrete/custom_constraints).
 
 ```{warning}
 Due to the arbitrary nature of code and dependencies that can be used in the 
