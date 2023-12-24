@@ -222,7 +222,14 @@ DiscreteLinkedParametersConstraint(
 | 3 | Octanol           | Octanol             |                                         |
 
 ### ``DiscreteDependenciesConstraint``
-Content coming soon...
+A dependency is a situation where parameters depend on other parameters.
+Let's say an experimental setup has a parameter called "Switch" which turns on 
+pieces of equipment that are optional.
+This means the other parameters (called ``affected_parameters``) are only relevant if 
+the "Switch" parameter has the value "on". If the switch is "off", the affected parameters 
+are irrelevant.
+
+For defining a dependency you must provide:
 
 ### ``DiscretePermutationInvarianceConstraint``
 Content coming soon...
