@@ -241,6 +241,12 @@ irrelevant. Since in our example "off" is still a valid value for the switch, th
 ``SearchSpace`` will still retain an entry for that combination, showing arbitrary 
 values for the ``affected_parameters`` (which can be ignored).
 
+```{note}
+BayBE requires that all dependencies are declared in a single 
+``DiscreteDependenciesConstraint``, creating a ``SearchSpace`` from multiple 
+``DiscreteDependenciesConstraint``'s will throw a validation error.
+```
+
 ### ``DiscretePermutationInvarianceConstraint``
 Content coming soon...
 
