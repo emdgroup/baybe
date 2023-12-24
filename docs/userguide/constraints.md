@@ -230,6 +230,16 @@ the "Switch" parameter has the value "on". If the switch is "off", the affected 
 are irrelevant.
 
 For defining a dependency you must provide:
+1) A list ``parameters`` with the names of the parameters upon which others depend.
+2) A list of ``Condition``'s which specify the values of the corresponding entries in 
+   ``parameters`` which "activate" the dependent parameters.
+3) A list of lists, each containing the ``affected_parameters``, which become relevant 
+   only if the corresponding entry in ``parameters`` is active as specified by the entry in ``conditions``.
+
+Internally, BayBE drops entries from the ``SearchSpace`` where affected parameters are 
+irrelevant. Since in our example "off" is still a valid value for the switch, the 
+``SearchSpace`` will still retain an entry for that combination, showing arbitrary 
+values for the ``affected_parameters`` (which can be ignored).
 
 ### ``DiscretePermutationInvarianceConstraint``
 Content coming soon...
