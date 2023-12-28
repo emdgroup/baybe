@@ -240,7 +240,8 @@ This means the other parameters (called ``affected_parameters``) are only releva
 the "Switch" parameter has the value "on". If the switch is "off", the affected parameters 
 are irrelevant.
 
-For defining a dependency you must provide:
+You can specify such a dependency with the ``DiscreteDependenciesConstraint``, which 
+requires:
 1) A list ``parameters`` with the names of the parameters upon which others depend.
 2) A list of ``Condition``'s which specify the values of the corresponding entries in 
    ``parameters`` which "activate" the dependent parameters.
@@ -266,10 +267,10 @@ second switch is on "right" respectively.
 from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondition
 
 DiscreteDependenciesConstraint(
-    parameters=["Switch1", "Switch2"],  # these are two parameters 
+    parameters=["Switch1", "Switch2"],  # the two parameters upon which others depend
     conditions=[
-        SubSelectionCondition(selection=["on"]),     # Values of Switch1 that activate the affected parameters
-        SubSelectionCondition(selection=["right"]),  # Values of Switch2 that activate the affected parameters
+        SubSelectionCondition(selection=["on"]),     # values of Switch1 that activate the affected parameters
+        SubSelectionCondition(selection=["right"]),  # values of Switch2 that activate the affected parameters
     ],
     affected_parameters=[
       ["Solvent", "Fraction"],  # parameters affected by "Switch1"
@@ -301,7 +302,8 @@ Let's add to the mixture example the fact that not only the choice of substance 
 their relative mixture factions are parameters "Fraction 1", "Fraction 2" and 
 "Fraction 3".
 This example also implies that the solvent parameters depend on their corresponding 
-fraction being ``> 0.0``. This means we have a campaign that allows "up to, but not necessarily, 
+fraction being ``> 0.0``, because in the case ``== 0.0`` the choice of solvent is 
+irrelevant. This models a campaign that allows "up to, but not necessarily, 
 three solvents".
 
 ```{important}
@@ -313,15 +315,18 @@ dependent on other parameters, we require that the dependencies are provided as 
 ``DiscreteDependenciesConstraint`` discussed [here](#DDC).
 ```
 
-The ``DiscretePermutationInvarianceConstraint`` below applies to out example and 
+The ``DiscretePermutationInvarianceConstraint`` below applies to our example and 
 removes permutation invariant combinations of solvents that have additional 
 dependencies as well:
+
 ```python
 from baybe.constraints import DiscretePermutationInvarianceConstraint, DiscreteDependenciesConstraint, ThresholdCondition
 
 DiscretePermutationInvarianceConstraint(
     parameters=["Solvent 1", "Solvent 2", "Solvent 3"],
-    dependencies=DiscreteDependenciesConstraint(  # optional, `dependencies` is only required if some entries in parameters have dependencies on other parameters
+    # `dependencies` is optional, it is only required if some of the permutation 
+    # invariant entries in `parameters` have dependencies on other parameters
+    dependencies=DiscreteDependenciesConstraint(
         parameters=["Fraction 1", "Fraction 2", "Fraction 3"],
         conditions=[
             ThresholdCondition(threshold=0.0, operator=">"),
