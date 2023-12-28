@@ -298,6 +298,16 @@ hence the ``SearchSpace`` should effectively only contain one of them.
 | 5 | Substance 12 | Substance 43 | Substance 3  |
 | 6 | Substance 12 | Substance 3  | Substance 43 |
 
+```{note}
+Complex properties such as permutation invariance not only affect the search space, but 
+should ideally also constrain the surrogate model. For instance, the kernels in a 
+Gaussian process can be made permutation invariant to reflect this constraint, which 
+generally results in a better learning curve. Note, however, that not all surrogate 
+models provided by BayBE can easlily include such invariances. In these cases the 
+invariance is silently ignored, which will not be an issue, but just means these models 
+cannot benefit from a priori known constraints and invariances between parameters.
+```
+
 Let's add to the mixture example the fact that not only the choice of substance but also 
 their relative mixture factions are parameters "Fraction 1", "Fraction 2" and 
 "Fraction 3".
