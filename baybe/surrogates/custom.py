@@ -10,9 +10,8 @@ It is planned to solve this issue in the future.
 
 from typing import Callable, ClassVar, Tuple
 
-import torch
 from attrs import define, field, validators
-from torch import Tensor
+from torch import from_numpy, Tensor
 
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
@@ -162,8 +161,8 @@ if _ONNX_INSTALLED:
             #   about the mean only and it's not clear how this will be handled in the
             #   future. Once there are more choices available, this should be revisited.
             return (
-                torch.from_numpy(results[0]).to(DTypeFloatTorch),
-                torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
+                from_numpy(results[0]).to(DTypeFloatTorch),
+                from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
             )
 
         def _fit(

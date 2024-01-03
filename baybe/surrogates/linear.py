@@ -9,10 +9,9 @@ available in the future. Thus, please have a look in the source code directly.
 
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
-import torch
 from attr import define, field
 from sklearn.linear_model import ARDRegression
-from torch import Tensor
+from torch import from_numpy, Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -51,8 +50,8 @@ class BayesianLinearSurrogate(Surrogate):
         dists = self._model.predict(candidates.numpy(), return_std=True)
 
         # Split into posterior mean and variance
-        mean = torch.from_numpy(dists[0])
-        var = torch.from_numpy(dists[1]).pow(2)
+        mean = from_numpy(dists[0])
+        var = from_numpy(dists[1]).pow(2)
 
         return mean, var
 

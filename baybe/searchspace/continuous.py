@@ -6,9 +6,10 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-import torch
+
 from attr import define, field
 from botorch.utils.sampling import get_polytope_samples
+from torch import empty, stack, Tensor
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -96,11 +97,11 @@ class SubspaceContinuous:
         return [p.name for p in self.parameters]
 
     @property
-    def param_bounds_comp(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> Tensor:
         """Return bounds as tensor."""
         if not self.parameters:
-            return torch.empty(2, 0, dtype=DTypeFloatTorch)
-        return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
+            return empty(2, 0, dtype=DTypeFloatTorch)
+        return stack([p.bounds.to_tensor() for p in self.parameters]).T
 
     def transform(
         self,

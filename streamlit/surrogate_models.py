@@ -9,7 +9,7 @@ when the input and output scales are changed.
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
+from torch import from_numpy, linspace, manual_seed
 from botorch.acquisition import qExpectedImprovement
 from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
@@ -99,7 +99,7 @@ def main():
 
     # fix the chosen random seed
     np.random.seed(random_seed)
-    torch.manual_seed(random_seed)
+    manual_seed(random_seed)
 
     # select the test function and the surrogate model class
     fun = rpartial(
@@ -111,10 +111,10 @@ def main():
     )
 
     # create the input grid and corresponding target values
-    test_x = torch.linspace(
+    test_x = linspace(
         lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES
     )
-    test_y = torch.from_numpy(fun(test_x.numpy()))
+    test_y = from_numpy(fun(test_x.numpy()))
 
     # randomly select the specified number of training data points
     train_idx = np.random.choice(

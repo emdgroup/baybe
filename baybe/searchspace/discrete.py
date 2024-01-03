@@ -6,10 +6,10 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
-import torch
+
 from attr import define, field
 from cattrs import IterableValidationError
-
+from torch import empty, from_numpy, Tensor
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
 from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import (
@@ -251,14 +251,14 @@ class SubspaceDiscrete:
         return len(self.parameters) == 0
 
     @property
-    def param_bounds_comp(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> Tensor:
         """Return bounds as tensor.
 
         Take bounds from the parameter definitions, but discards bounds belonging to
         columns that were filtered out during the creation of the space.
         """
         if not self.parameters:
-            return torch.empty(2, 0)
+            return empty(2, 0)
         bounds = np.hstack(
             [
                 np.vstack([p.comp_df[col].min(), p.comp_df[col].max()])
@@ -267,7 +267,7 @@ class SubspaceDiscrete:
                 if col in self.comp_rep.columns
             ]
         )
-        return torch.from_numpy(bounds)
+        return from_numpy(bounds)
 
     def mark_as_measured(
         self,

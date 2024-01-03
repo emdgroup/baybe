@@ -2,12 +2,12 @@
 from typing import List
 
 import numpy as np
-import torch
+from torch import float64
 
 DTypeFloatNumpy = np.float64
 """Floating point data type used for numpy arrays."""
 
-DTypeFloatTorch = torch.float64
+DTypeFloatTorch = float64
 """Floating point data type used for torch tensors."""
 
 DTypeFloatONNX = np.float32

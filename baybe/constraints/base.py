@@ -7,7 +7,7 @@ import pandas as pd
 
 from attr import define, field
 from attr.validators import min_len
-from torch import Tensor
+from torch import Tensor, tensor
 
 from baybe.constraints.conditions import Condition
 from baybe.parameters import NumericalContinuousParameter
@@ -18,7 +18,6 @@ from baybe.utils import (
     unstructure_base,
 )
 from baybe.utils.serialization import converter
-from baybe.utils.lazy_loader import LazyLoader
 
 
 @define
@@ -159,11 +158,10 @@ class ContinuousConstraint(Constraint, ABC):
             for p in self.parameters
             if p in param_names
         ]
-        lazy_loader = LazyLoader("torch")
-        torch = lazy_loader.load()
+
         return (
-            torch.tensor(param_indices),
-            torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
+            tensor(param_indices),
+            tensor(self.coefficients, dtype=DTypeFloatTorch),
             self.rhs,
         )
 

@@ -2,9 +2,8 @@
 
 from typing import ClassVar, Optional, Tuple
 
-import torch
 from attr import define, field
-from torch import Tensor
+from torch import ones, Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -34,8 +33,8 @@ class MeanPredictionSurrogate(Surrogate):
     def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
         # See base class.
         # TODO: use target value bounds for covariance scaling when explicitly provided
-        mean = self.target_value * torch.ones([len(candidates)])
-        var = torch.ones(len(candidates))
+        mean = self.target_value * ones([len(candidates)])
+        var = ones(len(candidates))
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:

@@ -2,7 +2,6 @@
 
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
-import torch
 from attr import define, field
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
@@ -12,7 +11,7 @@ from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior
-from torch import Tensor
+from torch import tensor, Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -117,8 +116,8 @@ class GaussianProcessSurrogate(Surrogate):
             batch_shape=batch_shape,
             outputscale_prior=outputscale_prior[0],
         )
-        base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
-        base_covar_module.base_kernel.lengthscale = torch.tensor([lengthscale_prior[1]])
+        base_covar_module.outputscale = tensor([outputscale_prior[1]])
+        base_covar_module.base_kernel.lengthscale = tensor([lengthscale_prior[1]])
 
         # create GP covariance
         if task_idx is None:
@@ -135,7 +134,7 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood = GaussianLikelihood(
             noise_prior=noise_prior[0], batch_shape=batch_shape
         )
-        likelihood.noise = torch.tensor([noise_prior[1]])
+        likelihood.noise = tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
         self._model = SingleTaskGP(

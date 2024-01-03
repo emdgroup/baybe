@@ -5,9 +5,8 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar, Dict, List, Tuple, Type
 
-import torch
 from attr import define, field
-from torch import Tensor
+from torch import Tensor, diag_embed, eye
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
@@ -78,10 +77,10 @@ class Surrogate(ABC, SerialMixin):
         # Apply covariance transformation for marginal posterior models
         if not self.joint_posterior:
             # Convert to tensor containing covariance matrices
-            covar = torch.diag_embed(covar)
+            covar = diag_embed(covar)
 
         # Add small diagonal variances for numerical stability
-        covar.add_(torch.eye(covar.shape[-1]) * _MIN_VARIANCE)
+        covar.add_(eye(covar.shape[-1]) * _MIN_VARIANCE)
 
         return mean, covar
 

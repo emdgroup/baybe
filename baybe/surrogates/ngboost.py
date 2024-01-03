@@ -9,10 +9,9 @@ available in the future. Thus, please have a look in the source code directly.
 
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
-import torch
 from attr import define, field
 from ngboost import NGBRegressor
-from torch import Tensor
+from torch import from_numpy, Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -57,8 +56,8 @@ class NGBoostSurrogate(Surrogate):
         dists = self._model.pred_dist(candidates)
 
         # Split into posterior mean and variance
-        mean = torch.from_numpy(dists.mean())
-        var = torch.from_numpy(dists.var)
+        mean = from_numpy(dists.mean())
+        var = from_numpy(dists.var)
 
         return mean, var
 

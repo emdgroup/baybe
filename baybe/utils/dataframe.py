@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import torch
-from torch import Tensor
+
+from torch import from_numpy, Tensor
 
 from baybe.targets.enum import TargetMode
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
@@ -38,7 +38,7 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     #  care of this) df.values has been changed to df.values.astype(float),
     #  even though this seems like double casting here.
     out = (
-        torch.from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
+        from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
         for df in dfs
     )
     if len(dfs) == 1:

@@ -10,10 +10,10 @@ available in the future. Thus, please have a look in the source code directly.
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
 import numpy as np
-import torch
+
 from attr import define, field
 from sklearn.ensemble import RandomForestRegressor
-from torch import Tensor
+from torch import from_numpy, Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -53,7 +53,7 @@ class RandomForestSurrogate(Surrogate):
         # NOTE: explicit conversion to ndarray is needed due to a pytorch issue:
         # https://github.com/pytorch/pytorch/pull/51731
         # https://github.com/pytorch/pytorch/issues/13918
-        predictions = torch.from_numpy(
+        predictions = from_numpy(
             np.asarray(
                 [
                     self._model.estimators_[tree].predict(candidates)
