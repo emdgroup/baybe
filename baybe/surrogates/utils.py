@@ -5,8 +5,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING, Callable, ClassVar, Tuple, Type
 
-import torch
-from torch import Tensor
+from torch import Tensor, float64
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
@@ -14,8 +13,8 @@ from baybe.searchspace import SearchSpace
 if TYPE_CHECKING:
     from baybe.surrogates.base import Surrogate
 
-# Use float64 (which is recommended at least for BoTorch models)
-_DTYPE = torch.float64
+# Use Pytorch's float64 (which is recommended at least for BoTorch models)
+_DTYPE = float64
 
 _MIN_TARGET_STD = 1e-6
 
