@@ -15,7 +15,7 @@ from baybe.parameters.validation import validate_is_finite, validate_unique_valu
 from baybe.utils import DTypeFloatNumpy, InfiniteIntervalError, Interval, convert_bounds
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class NumericalDiscreteParameter(DiscreteParameter):
     """Parameter class for discrete numerical parameters (a.k.a. setpoints)."""
 
@@ -94,7 +94,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
         return any(differences_acceptable)
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class NumericalContinuousParameter(Parameter):
     """Parameter class for continuous numerical parameters."""
 

@@ -29,7 +29,7 @@ keywords = [
 ]
 dynamic = ['version']
 dependencies = [
-    "attrs>=22.2.0",
+    "attrs>=24.1.0",
     "botorch>=0.8.1",
     "cattrs>=23.2.0",
     "exceptiongroup",

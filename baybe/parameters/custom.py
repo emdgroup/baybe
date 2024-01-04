@@ -14,7 +14,7 @@ from baybe.parameters.validation import validate_decorrelation
 from baybe.utils import df_uncorrelated_features, eq_dataframe
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class CustomDiscreteParameter(DiscreteParameter):
     """Custom parameters.
 
