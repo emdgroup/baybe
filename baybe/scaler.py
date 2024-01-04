@@ -95,7 +95,7 @@ class DefaultScaler(Scaler):
 
     type = "DEFAULT"
     # See base class.
-    
+
     def fit_transform(  # noqa: D102
         self, x: Tensor, y: Tensor
     ) -> Tuple[Tensor, Tensor]:
@@ -104,7 +104,7 @@ class DefaultScaler(Scaler):
         # Load PyTorch using our LazyLoader class
         lazy_loader = LazyLoader("torch")
         torch = lazy_loader.load()
-        
+
         # Get the searchspace boundaries
         searchspace = to_tensor(self.searchspace)
         bounds = torch.vstack(

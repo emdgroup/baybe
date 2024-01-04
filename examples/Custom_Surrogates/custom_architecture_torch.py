@@ -110,9 +110,7 @@ class NeuralNetDropoutSurrogate:
         # Convert input from double to float
         candidates = candidates.float()
         # Run mc experiments through the NN with dropout
-        predictions = cat(
-            [self.model(candidates).unsqueeze(dim=0) for _ in range(MC)]
-        )
+        predictions = cat([self.model(candidates).unsqueeze(dim=0) for _ in range(MC)])
 
         # Compute posterior mean and variance
         mean = predictions.mean(dim=0)

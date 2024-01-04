@@ -38,8 +38,7 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     #  care of this) df.values has been changed to df.values.astype(float),
     #  even though this seems like double casting here.
     out = (
-        from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
-        for df in dfs
+        from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch) for df in dfs
     )
     if len(dfs) == 1:
         out = next(out)

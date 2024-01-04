@@ -111,9 +111,7 @@ def main():
     )
 
     # create the input grid and corresponding target values
-    test_x = linspace(
-        lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES
-    )
+    test_x = linspace(lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES)
     test_y = from_numpy(fun(test_x.numpy()))
 
     # randomly select the specified number of training data points
