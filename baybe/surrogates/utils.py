@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING, Callable, ClassVar, Tuple, Type
 
-from torch import Tensor, float64
+from torch import Tensor, float64, diag_embed, std, reshape, stack
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
@@ -96,7 +96,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
             # covariance matrix
             if self.joint_posterior and not self.model.joint_posterior:
                 # Convert to tensor containing covariance matrices
-                var = torch.diag_embed(var)
+                var = diag_embed(var)
 
             return mean, var
 
@@ -108,7 +108,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
 
             # https://github.com/pytorch/pytorch/issues/29372
             # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
-            if torch.std(train_y.ravel(), unbiased=False) < _MIN_TARGET_STD:
+            if std(train_y.ravel(), unbiased=False) < _MIN_TARGET_STD:
                 self.model = MeanPredictionSurrogate()
 
             # Fit the selected model with the training data
@@ -251,8 +251,8 @@ def batchify(
 
             # Collect the results and restore the batch dimensions
             mean, covar = zip(*out)
-            mean = torch.reshape(torch.stack(mean), t_shape + (q_shape,))
-            covar = torch.reshape(torch.stack(covar), t_shape + (q_shape, q_shape))
+            mean = reshape(stack(mean), t_shape + (q_shape,))
+            covar = reshape(stack(covar), t_shape + (q_shape, q_shape))
 
             return mean, covar
 
@@ -266,8 +266,8 @@ def batchify(
             mean, var = posterior(model, flattened)
 
             # Restore the batch dimensions
-            mean = torch.reshape(mean, t_shape + (q_shape,))
-            var = torch.reshape(var, t_shape + (q_shape,))
+            mean = reshape(mean, t_shape + (q_shape,))
+            var = reshape(var, t_shape + (q_shape,))
 
             return mean, var
 
