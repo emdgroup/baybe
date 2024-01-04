@@ -146,7 +146,7 @@ new_rec = campaign.recommend(batch_quantity=5)
 For discrete parameters, measurements are required to fall into a
 predefined tolerance by default.
 This tolerance is defined on the level of the individual parameters.
-This requirement can be disabled by using the `numerical_measurements_must_be_within_tolerance` flag.
+This requirement can be disabled upon initialization of a Campaign by using the `numerical_measurements_must_be_within_tolerance` flag.
 
 ## Serialization
 
