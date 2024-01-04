@@ -16,7 +16,7 @@ from baybe.utils.interval import InfiniteIntervalError, Interval, convert_bounds
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class NumericalDiscreteParameter(DiscreteParameter):
     """Parameter class for discrete numerical parameters (a.k.a. setpoints)."""
 
@@ -97,7 +97,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
         return any(differences_acceptable)
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class NumericalContinuousParameter(ContinuousParameter):
     """Parameter class for continuous numerical parameters."""
 

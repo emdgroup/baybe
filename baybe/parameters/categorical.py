@@ -14,7 +14,7 @@ from baybe.parameters.validation import validate_unique_values
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class CategoricalParameter(DiscreteParameter):
     """Parameter class for categorical parameters."""
 
@@ -60,7 +60,7 @@ class CategoricalParameter(DiscreteParameter):
         return comp_df
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class TaskParameter(CategoricalParameter):
     """Parameter class for task parameters."""
 

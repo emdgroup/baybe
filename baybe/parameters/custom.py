@@ -16,7 +16,7 @@ from baybe.utils.dataframe import df_uncorrelated_features
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class CustomDiscreteParameter(DiscreteParameter):
     """Custom parameters.
 
