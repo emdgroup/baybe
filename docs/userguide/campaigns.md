@@ -80,11 +80,11 @@ For more details and a full exemplary config, we refer to the corresponding
 ### Basics
 
 ```{attention}
-Obtaining recommendations and measurements using the `recommend` and `add_measurements`
-functions is the only safe way to inform a `Campaign` object about new measurements.
-These functions update the necessary metadata that is crucial for the proper
-execution of a campaign. It is important to rely on these functions to maintain the
-integrity and reliability of the campaign's execution.
+Obtaining recommendations resp. adding measurements using the `recommend` resp.
+`add_measurements` functions is the only safe way to inform a `Campaign` object about
+new measurements. These functions update the necessary metadata that is crucial for the
+proper execution of a campaign. It is important to rely on these functions to maintain
+the integrity and reliability of the campaign's execution.
 
 Further note that we currently also expose other fields via the constructor. This is
 only temporary, and the corresponding fields should be ignored.
