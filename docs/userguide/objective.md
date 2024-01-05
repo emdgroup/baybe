@@ -50,3 +50,9 @@ $$
 \text{MEAN} &= \frac{1}{\sum w_i}\sum_{i} w_i \cdot t_i \\
 \text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum w_i}
 $$
+
+```{attention}
+Due to the combination of targets of potentially different scale, in `DESIRABILITY` 
+objective mode, all provided targets must have `bounds` specified so they can be 
+normalized before being combined.
+```
