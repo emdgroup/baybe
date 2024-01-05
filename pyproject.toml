@@ -110,6 +110,7 @@ examples = [
 ]
 
 lint = [
+    "flake8==7.0.0", # see DEV TOOLS NOTE
     "pre-commit==2.19.0", # see DEV TOOLS NOTE
     "pydoclint==0.2.1", # see DEV TOOLS NOTE
     "ruff==0.1.6", # see DEV TOOLS NOTE
