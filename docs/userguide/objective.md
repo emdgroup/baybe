@@ -28,3 +28,16 @@ from baybe.objective import Objective
 target1 = NumericalTarget(name="yield", mode="MIN", bounds=(0, 100))
 objective = Objective(mode="SINGLE", targets=[target1])
 ```
+
+### ``DESIRABILITY``
+The ``DESIRABILITY`` mode enables you to combine multiple targets via scalarization 
+into a single value, a method well know and also utilized in classical DOE.
+
+Besides `mode` and `targets`, this objective type has two additional optional arguments:
+* `weights`: Some targets might be more important than others.
+  You can specify the relative weights of the targets in this argument.
+  BayBE automatically normalizes the numbers you provide, so only the relations between 
+  the weights matter.
+* `combine_func`: Specifies the function used for combining the transformed targets. 
+  You can choose between `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
+  geometric mean respectively.
