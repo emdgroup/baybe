@@ -6,8 +6,8 @@ from enum import Enum
 from typing import List, Optional, cast
 
 import pandas as pd
-from torch import Tensor, hstack
 from attr import define, field
+from torch import Tensor, hstack
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,

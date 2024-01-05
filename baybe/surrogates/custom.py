@@ -11,7 +11,7 @@ It is planned to solve this issue in the future.
 from typing import Callable, ClassVar, Tuple
 
 from attrs import define, field, validators
-from torch import from_numpy, Tensor
+from torch import Tensor, from_numpy
 
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (

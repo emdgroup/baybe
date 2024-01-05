@@ -11,8 +11,8 @@
 from typing import List, Optional, Tuple
 
 import numpy as np
+from torch import Tensor, cat, nn
 from torch.optim import Adam
-from torch import Tensor, nn, cat
 
 from baybe.campaign import Campaign
 from baybe.objective import Objective

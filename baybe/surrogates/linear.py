@@ -11,7 +11,7 @@ from typing import Any, ClassVar, Dict, Optional, Tuple
 
 from attr import define, field
 from sklearn.linear_model import ARDRegression
-from torch import from_numpy, Tensor
+from torch import Tensor, from_numpy
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate

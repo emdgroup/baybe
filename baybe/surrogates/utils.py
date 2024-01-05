@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING, Callable, ClassVar, Tuple, Type
 
-from torch import Tensor, float64, diag_embed, std, reshape, stack
+from torch import Tensor, diag_embed, float64, reshape, stack, std
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace

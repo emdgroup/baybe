@@ -7,9 +7,9 @@ from functools import singledispatchmethod
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
-from torch import tensor, Tensor
 from attrs import define, field
 from packaging import version
+from torch import Tensor, tensor
 
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
 

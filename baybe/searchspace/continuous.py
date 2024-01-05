@@ -6,10 +6,9 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-
 from attr import define, field
 from botorch.utils.sampling import get_polytope_samples
-from torch import empty, stack, Tensor
+from torch import Tensor, empty, stack
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,

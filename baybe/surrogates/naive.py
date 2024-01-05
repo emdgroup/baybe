@@ -3,7 +3,7 @@
 from typing import ClassVar, Optional, Tuple
 
 from attr import define, field
-from torch import ones, Tensor
+from torch import Tensor, ones
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate

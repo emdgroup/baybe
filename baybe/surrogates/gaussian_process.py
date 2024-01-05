@@ -11,7 +11,7 @@ from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior
-from torch import tensor, Tensor
+from torch import Tensor, tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate

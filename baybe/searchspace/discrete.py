@@ -6,10 +6,10 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
-
 from attr import define, field
 from cattrs import IterableValidationError
-from torch import empty, from_numpy, Tensor
+from torch import Tensor, empty, from_numpy
+
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
 from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import (

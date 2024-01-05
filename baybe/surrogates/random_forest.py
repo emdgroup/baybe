@@ -10,10 +10,9 @@ available in the future. Thus, please have a look in the source code directly.
 from typing import Any, ClassVar, Dict, Optional, Tuple
 
 import numpy as np
-
 from attr import define, field
 from sklearn.ensemble import RandomForestRegressor
-from torch import from_numpy, Tensor
+from torch import Tensor, from_numpy
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate

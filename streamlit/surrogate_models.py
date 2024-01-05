@@ -9,10 +9,10 @@ when the input and output scales are changed.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from torch import from_numpy, linspace, manual_seed
 from botorch.acquisition import qExpectedImprovement
 from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
+from torch import from_numpy, linspace, manual_seed
 
 import streamlit as st
 from baybe.acquisition import debotorchize

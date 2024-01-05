@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 from typing import Any, ClassVar, List, Tuple
 
 import pandas as pd
-
 from attr import define, field
 from attr.validators import min_len
 from torch import Tensor, tensor

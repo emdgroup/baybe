@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-
-from torch import from_numpy, Tensor
+from torch import Tensor, from_numpy
 
 from baybe.targets.enum import TargetMode
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch

@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, Tuple, Type
 
 import pandas as pd
-
 from torch import Tensor
 
 from baybe.utils import to_tensor
