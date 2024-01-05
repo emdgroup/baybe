@@ -15,3 +15,7 @@ Besides their ``name``, numerical targets have the following attributes:
 * **A transformation function:** When bounds are provided, a ``transformation`` is 
   used to map target values onto the [0,1] interval.
 
+Below a visualization of possible choices for ``transformation``, where `lower` and 
+`upper` are the entries provided via `bounds`:
+![Transforms](../_static/target_transforms.svg)
+
