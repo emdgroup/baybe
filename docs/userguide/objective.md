@@ -41,3 +41,12 @@ Besides `mode` and `targets`, this objective type has two additional optional ar
 * `combine_func`: Specifies the function used for combining the transformed targets. 
   You can choose between `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
   geometric mean respectively.
+
+The definitions of the means are as follows, where $t_i$ enumerate the **scaled** target 
+observations for a single measurement and $w_i$ are the weights associated with the 
+respective target:
+
+$$
+\text{MEAN} &= \frac{1}{\sum w_i}\sum_{i} w_i \cdot t_i \\
+\text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum w_i}
+$$
