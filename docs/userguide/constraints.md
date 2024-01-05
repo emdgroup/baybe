@@ -8,8 +8,10 @@ their combinations. Such constraints could for example be:
 * Certain settings are dependent on other parameters, e.g. a set of parameters only
   becomes relevant if another parameter called `"Switch"` has the value `"on"`.
 
-Similar to parameters, BayBE distinguishes two families of constraints: discrete and
-continuous constraints.
+Similar to parameters, BayBE distinguishes two families of constraints in its 
+[`Constraint`](baybe.constraints.base.Constraint) class: discrete and
+continuous constraints ([`DiscreteConstraint`](baybe.constraints.base.DiscreteConstraint), 
+[`ContinuousConstraint`](baybe.constraints.base.ContinuousConstraint)).
 A constraint is called discrete/continuous if it operates on a set of exclusively
 discrete/continuous parameters.
 
@@ -129,7 +131,7 @@ might include invalid combinations, which can be removed again by applying const
 Discrete constraints have in common that they operate on one or more parameters,
 identified by the ``parameters`` member, which expects a list of parameter names as
 strings.
-All of these parameters must be present in the campaign specification.
+All of these parameters must be present in the search space specification.
 
 ### ``DiscreteExcludeConstraint``
 This constraint simply removes a set of search space elements, according to its
@@ -246,7 +248,7 @@ parameters are irrelevant.
 You can specify such a dependency with the ``DiscreteDependenciesConstraint``, which
 requires:
 1) A list ``parameters`` with the names of the parameters upon which others depend.
-2) A list of ``Condition``'s specifying the values of the corresponding entries in
+2) A list ``conditions``, specifying the values of the corresponding entries in
    ``parameters`` that "activate" the dependent parameters.
 3) A list of lists, each containing the ``affected_parameters``, which become relevant
    only if the corresponding entry in ``parameters`` is active as specified by the 
