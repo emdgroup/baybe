@@ -13,3 +13,18 @@ To create an objective, it is necessary to provide at the following:
 ```{note}
 We are actively working on adding more objective modes for multiple targets.
 ```
+
+## Supported Optimization Modes
+Currently, BayBE offers two optimization modes.
+
+### ``SINGLE``
+In the ``SINGLE`` mode, objectives focus on optimizing a single target. 
+Nearly all of the [examples](../../examples/examples) use this objective mode.
+
+```python
+from baybe.targets import NumericalTarget
+from baybe.objective import Objective
+
+target1 = NumericalTarget(name="yield", mode="MIN", bounds=(0, 100))
+objective = Objective(mode="SINGLE", targets=[target1])
+```
