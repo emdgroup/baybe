@@ -11,8 +11,8 @@
 from typing import List, Optional, Tuple
 
 import numpy as np
-import torch
-from torch import Tensor, nn
+from torch import Tensor, cat, nn
+from torch.optim import Adam
 
 from baybe.campaign import Campaign
 from baybe.objective import Objective
@@ -44,7 +44,7 @@ HYPERPARAMS = {
     "epochs": 10,
     "lr": 1e-3,
     "criterion": nn.MSELoss,
-    "optimizer": torch.optim.Adam,
+    "optimizer": Adam,
 }
 
 # MC Parameters
@@ -110,9 +110,7 @@ class NeuralNetDropoutSurrogate:
         # Convert input from double to float
         candidates = candidates.float()
         # Run mc experiments through the NN with dropout
-        predictions = torch.cat(
-            [self.model(candidates).unsqueeze(dim=0) for _ in range(MC)]
-        )
+        predictions = cat([self.model(candidates).unsqueeze(dim=0) for _ in range(MC)])
 
         # Compute posterior mean and variance
         mean = predictions.mean(dim=0)

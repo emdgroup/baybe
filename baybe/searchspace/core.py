@@ -6,8 +6,8 @@ from enum import Enum
 from typing import List, Optional, cast
 
 import pandas as pd
-import torch
 from attr import define, field
+from torch import Tensor, hstack
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -186,9 +186,9 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def param_bounds_comp(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> Tensor:
         """Return bounds as tensor."""
-        return torch.hstack(
+        return hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
 

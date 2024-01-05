@@ -4,10 +4,9 @@ from abc import ABC, abstractmethod
 from typing import Any, ClassVar, List, Tuple
 
 import pandas as pd
-import torch
 from attr import define, field
 from attr.validators import min_len
-from torch import Tensor
+from torch import Tensor, tensor
 
 from baybe.constraints.conditions import Condition
 from baybe.parameters import NumericalContinuousParameter
@@ -160,8 +159,8 @@ class ContinuousConstraint(Constraint, ABC):
         ]
 
         return (
-            torch.tensor(param_indices),
-            torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
+            tensor(param_indices),
+            tensor(self.coefficients, dtype=DTypeFloatTorch),
             self.rhs,
         )
 

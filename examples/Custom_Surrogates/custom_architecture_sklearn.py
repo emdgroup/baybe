@@ -11,7 +11,6 @@
 from typing import Optional, Tuple
 
 import numpy as np
-import torch
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import (
     GradientBoostingRegressor,
@@ -19,7 +18,7 @@ from sklearn.ensemble import (
     StackingRegressor,
 )
 from sklearn.linear_model import LinearRegression, Ridge
-from torch import Tensor
+from torch import Tensor, tensor
 
 from baybe.campaign import Campaign
 from baybe.objective import Objective
@@ -53,8 +52,8 @@ class MeanVarEstimator(BaseEstimator, RegressorMixin):
 
     def predict(self, data: Tensor) -> Tuple[Tensor, Tensor]:
         """Predict based on ensemble unweighted mean and variance."""
-        mean = torch.tensor(data.mean(axis=1))
-        var = torch.tensor(data.var(axis=1))
+        mean = tensor(data.mean(axis=1))
+        var = tensor(data.var(axis=1))
         return mean, var
 
 

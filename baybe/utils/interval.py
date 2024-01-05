@@ -7,9 +7,9 @@ from functools import singledispatchmethod
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
-import torch
 from attrs import define, field
 from packaging import version
+from torch import Tensor, tensor
 
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
 
@@ -125,9 +125,9 @@ class Interval:
         """Transform the interval to a :class:`numpy.ndarray`."""
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
-    def to_tensor(self) -> torch.Tensor:
+    def to_tensor(self) -> Tensor:
         """Transform the interval to a :class:`torch.Tensor`."""
-        return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
+        return tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
     def contains(self, number: float) -> bool:
         """Check whether the interval contains a given number.
