@@ -47,3 +47,27 @@ We simply need to choose the bounds so that the midpoint is the desired value.
 The spread of the bounds interval defines how fast the acceptability of a measurement 
 falls off away from the match value, also depending on the choice of ``transformation``.
 
+In the example below, ``match_targetA`` will treat all values ``< 45`` and ``> 55`` as 
+equally bad, while ``match_targetB`` is more forgiving in that it chooses a bell curve 
+transformation instead of triangular, and also uses a wider interval of bounds.
+Both targets are configured to match the midpoint of ``bounds`` as optimal, in this case 
+a value of ``50``:
+
+```python
+from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
+
+match_targetA = NumericalTarget(
+    name='Target3A',
+    mode=TargetMode.MATCH,
+    bounds=(45, 55),  # mandatory in MATCH mode
+    transformation=TargetTransformation.TRIANGULAR  # optional, applied if bounds are not None
+)
+match_targetB = NumericalTarget(
+    name='Target3B',
+    mode="MATCH",
+    bounds=(0, 100),  # mandatory in MATCH mode
+    transformation=TargetTransformation.BELL  # optional, applied if bounds are not None
+)
+```
+
+Targets are used in nearly all [examples](../../examples/examples).
