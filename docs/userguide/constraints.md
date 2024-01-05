@@ -118,7 +118,7 @@ In case a specific subset of values needs to be selected, it can be done with th
 from baybe.constraints import SubSelectionCondition
 
 SubSelectionCondition( # will select two solvents identified by their labels
-    selection = ["Solvent A", "Solvent B"]
+    selection = ["Ethanol", "DMF"]
 )
 ```
 
@@ -137,7 +137,7 @@ All of these parameters must be present in the search space specification.
 This constraint simply removes a set of search space elements, according to its
 specifications.
 
-The following example would exclude entries where "Solvent A" and "Solvent B" are combined with
+The following example would exclude entries where "Ethanol" and "DMF" are combined with
 temperatures above 150, which might be due to their chemical instability at those
 temperatures:
 ```python
@@ -148,7 +148,7 @@ DiscreteExcludeConstraint(
     combiner = "AND", # specifies how the conditions are logically combined
     conditions = [ # requires one condition for each entry in parameters
         ThresholdCondition(threshold = 150, operator = ">"),
-        SubSelectionCondition(selection = ["Solvent A", "Solvent B"]),
+        SubSelectionCondition(selection = ["Ethanol", "DMF"]),
     ]
 )
 ```
@@ -190,17 +190,17 @@ We can exclude such occurrences with the ``DiscreteNoLabelDuplicatesConstraint``
 from baybe.constraints import  DiscreteNoLabelDuplicatesConstraint
 
 DiscreteNoLabelDuplicatesConstraint(
-    parameters=["Solvent1", "Solvent2"]
+    parameters=["Solvent_1", "Solvent_2"]
 )
 ```
 
 Without this constraint, combinations like below would be possible:
 
-|   | Solvent1 | Solvent2 | With DiscreteNoLabelDuplicatesConstraint |
-|---|----------|----------|------------------------------------------|
-| 1 | Water    | Water    | would be excluded                        |
-| 2 | THF      | Water    |                                          |
-| 3 | Octanol  | Octanol  | would be excluded                        |
+|   | Solvent_1 | Solvent_2 | With DiscreteNoLabelDuplicatesConstraint |
+|---|-----------|-----------|------------------------------------------|
+| 1 | Water     | Water     | would be excluded                        |
+| 2 | THF       | Water     |                                          |
+| 3 | Octanol   | Octanol   | would be excluded                        |
 
 The usage of ``DiscreteNoLabelDuplicatesConstraint`` is part of the
 [example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
@@ -273,14 +273,14 @@ second switch is set to `"right"`, respectively.
 from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondition
 
 DiscreteDependenciesConstraint(
-    parameters=["Switch1", "Switch2"],  # the two parameters upon which others depend
+    parameters=["Switch_1", "Switch_2"],  # the two parameters upon which others depend
     conditions=[
-        SubSelectionCondition(selection=["on"]),     # values of Switch1 that activate the affected parameters
-        SubSelectionCondition(selection=["right"]),  # values of Switch2 that activate the affected parameters
+        SubSelectionCondition(selection=["on"]),     # values of Switch_1 that activate the affected parameters
+        SubSelectionCondition(selection=["right"]),  # values of Switch_2 that activate the affected parameters
     ],
     affected_parameters=[
-      ["Solvent", "Fraction"],  # parameters affected by Switch1
-      ["Frame1", "Frame2"]      # parameters affected by Switch2
+      ["Solvent", "Fraction"],  # parameters affected by Switch_1
+      ["Frame_1", "Frame_2"]    # parameters affected by Switch_2
     ],
 )
 ```
@@ -291,18 +291,18 @@ An end to end example can be found [here](../../examples/Constraints_Discrete/de
 Permutation invariance is a property where combinations of values of multiple
 parameters do not depend on their order due to some symmetry in the experiment.
 Suppose we create a mixture containing up to three solvents, i.e. parameters
-"Solvent 1", "Solvent 2", "Solvent 3".
+"Solvent_1", "Solvent_2", "Solvent_3".
 In this situation, all combinations from the following table would be equivalent,
 hence the ``SearchSpace`` should effectively only contain one of them.
 
-|   | Solvent 1    | Solvent 2    | Solvent 3    |
+|   | Solvent_1    | Solvent_2    | Solvent_3    |
 |---|--------------|--------------|--------------|
-| 1 | Substance 43 | Substance 3  | Substance 12 |
-| 2 | Substance 43 | Substance 12 | Substance 3  |
-| 3 | Substance 3  | Substance 12 | Substance 43 |
-| 4 | Substance 3  | Substance 43 | Substance 12 |
-| 5 | Substance 12 | Substance 43 | Substance 3  |
-| 6 | Substance 12 | Substance 3  | Substance 43 |
+| 1 | Substance_43 | Substance_3  | Substance_12 |
+| 2 | Substance_43 | Substance_12 | Substance_3  |
+| 3 | Substance_3  | Substance_12 | Substance_43 |
+| 4 | Substance_3  | Substance_43 | Substance_12 |
+| 5 | Substance_12 | Substance_43 | Substance_3  |
+| 6 | Substance_12 | Substance_3  | Substance_43 |
 
 ```{note}
 Complex properties such as permutation invariance not only affect the search space but
@@ -315,8 +315,8 @@ cannot benefit from a priori known constraints and invariances between parameter
 ```
 
 Let's add to the mixture example the fact that not only the choice of substance but also
-their relative mixture fractions are parameters, i.e. "Fraction 1", "Fraction 2" and
-"Fraction 3".
+their relative mixture fractions are parameters, i.e. "Fraction_1", "Fraction_2" and
+"Fraction_3".
 This also implies that the solvent parameters depend on their corresponding
 fraction being ``> 0.0``, because in the case ``== 0.0`` the choice of solvent is
 irrelevant. This models a scenario that allows "up to, but not necessarily,
@@ -339,17 +339,17 @@ dependencies as well:
 from baybe.constraints import DiscretePermutationInvarianceConstraint, DiscreteDependenciesConstraint, ThresholdCondition
 
 DiscretePermutationInvarianceConstraint(
-    parameters=["Solvent 1", "Solvent 2", "Solvent 3"],
+    parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
     # `dependencies` is optional; it is only required if some of the permutation
     # invariant entries in `parameters` have dependencies on other parameters
     dependencies=DiscreteDependenciesConstraint(
-        parameters=["Fraction 1", "Fraction 2", "Fraction 3"],
+        parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
         conditions=[
             ThresholdCondition(threshold=0.0, operator=">"),
             ThresholdCondition(threshold=0.0, operator=">"),
             ThresholdCondition(threshold=0.0, operator=">"),
         ],
-        affected_parameters=[["Solvent 1"], ["Solvent 2"], ["Solvent 3"]],
+        affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
     ),
 )
 ```
