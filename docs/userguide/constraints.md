@@ -264,7 +264,7 @@ BayBE requires that all dependencies are declared in a single
 ``DiscreteDependenciesConstraint``'s will throw a validation error.
 ```
 
-In the example, below we mimic a situation where there are two switches and each switch
+In the example below, we mimic a situation where there are two switches and each switch
 activates two other parameters that are only relevant if the first switch is `"on"` / the
 second switch is set to `"right"`, respectively.
 ```python
