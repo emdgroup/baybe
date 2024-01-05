@@ -29,7 +29,9 @@ def validate_decorrelation(obj: Any, attribute: Any, value: float) -> None:
         lt(1.0)(obj, attribute, value)
 
 
-def validate_is_finite(obj: Any, _: Any, value: Sequence[float]) -> None:
+def validate_is_finite(  # noqa: DOC101, DOC103
+    obj: Any, _: Any, value: Sequence[float]
+) -> None:
     """Validate that ``value`` contains no infinity/nan.
 
     Raises:

@@ -2,11 +2,12 @@
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
 repos:
-- repo: https://github.com/jsh9/pydoclint
-  rev: 0.2.1
+- repo: https://github.com/pycqa/flake8
+  rev: 7.0.0
   hooks:
-    - id: pydoclint
-      args: [--config=pydoclint.toml]
+    - id: flake8
+      additional_dependencies: [pydoclint]  
+      args: [--select=DOC, --config=pydoclint.toml]
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.1.6
   hooks:
