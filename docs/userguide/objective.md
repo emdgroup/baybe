@@ -56,3 +56,22 @@ Due to the combination of targets of potentially different scale, in `DESIRABILI
 objective mode, all provided targets must have `bounds` specified so they can be 
 normalized before being combined.
 ```
+
+In the example below we use three different targets (which all have a different goal) 
+and weigh the first target a twice as important as each of the remaining targets:
+```python
+from baybe.targets import NumericalTarget
+from baybe.objective import Objective
+
+target1 = NumericalTarget(name="t1", mode="MIN", bounds=(0, 100)) # bounds for all targets are mandatory for a DESIRABILITY objective
+target2 = NumericalTarget(name="t2", mode="MIN", bounds=(0, 100))
+target3 = NumericalTarget(name="t3", mode="MATCH", bounds=(40, 60))
+objective = Objective(
+    mode="DESIRABILITY", 
+    targets=[target1, target2, target3],
+    weights=[2.0, 1.0, 1.0], # optional, by default all weights are equal
+    combine_func="GEOM_MEAN" # optional, geometrical mean is the default
+)
+```
+
+For a complete example demonstrating desirability mode, see [here](./../../examples/Multi_Target/desirability).
