@@ -36,3 +36,14 @@ min_target = NumericalTarget(
     transformation=TargetTransformation.LINEAR  # optional, will be applied if bounds are not None
 )
 ```
+
+### `MATCH` mode
+If you want to match a desired value, the ``TargetMode.MATCH`` mode is the right choice.
+In this mode, ``bounds`` are required and different transformations compared to ``MIN`` 
+and ``MAX`` modes are allowed.
+
+Assume we want to instruct BayBE to match a value of 50 in "Target3".
+We simply need to choose the bounds so that the midpoint is the desired value.
+The spread of the bounds interval defines how fast the acceptability of a measurement 
+falls off away from the match value, also depending on the choice of ``transformation``.
+
