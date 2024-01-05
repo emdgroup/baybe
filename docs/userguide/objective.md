@@ -9,3 +9,7 @@ To create an objective, it is necessary to provide at the following:
   different target functions.
 * A list of ``targets``: The list of targets that are optimized. Note that the 
   ``SINGLE`` mode also requires a list containing the single target.
+
+```{note}
+We are actively working on adding more objective modes for multiple targets.
+```
