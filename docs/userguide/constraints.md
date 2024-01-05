@@ -6,7 +6,7 @@ their combinations. Such constraints could for example be:
 * For chemical reactions, a reagent might be incompatible with high temperatures, hence
   these combinations must be excluded.
 * Certain settings are dependent on other parameters, e.g. a set of parameters only
-  becomes relevant if another parameter called "Switch" has the value "on".
+  becomes relevant if another parameter called `"Switch"` has the value `"on"`.
 
 Similar to parameters, BayBE distinguishes two families of constraints: discrete and
 continuous constraints.
@@ -237,11 +237,11 @@ DiscreteLinkedParametersConstraint(
 
 ### ``DiscreteDependenciesConstraint``
 A dependency is a situation where parameters depend on other parameters.
-Let's say an experimental setup has a parameter called "Switch", which turns on
+Let's say an experimental setup has a parameter called `"Switch"`, which turns on
 pieces of equipment that are optional.
 This means the other parameters (called ``affected_parameters``) are only relevant if
-the "Switch" parameter has the value "on". If the switch is "off", the affected parameters
-are irrelevant.
+the switch parameter has the value `"on"`. If the switch is `"off"`, the affected 
+parameters are irrelevant.
 
 You can specify such a dependency with the ``DiscreteDependenciesConstraint``, which
 requires:
@@ -249,10 +249,11 @@ requires:
 2) A list of ``Condition``'s specifying the values of the corresponding entries in
    ``parameters`` that "activate" the dependent parameters.
 3) A list of lists, each containing the ``affected_parameters``, which become relevant
-   only if the corresponding entry in ``parameters`` is active as specified by the entry in ``conditions``.
+   only if the corresponding entry in ``parameters`` is active as specified by the 
+   entry in ``conditions``.
 
 Internally, BayBE drops elements from the ``SearchSpace`` where affected parameters are
-irrelevant. Since in our example "off" is still a valid value for the switch, the
+irrelevant. Since in our example `"off"` is still a valid value for the switch, the
 ``SearchSpace`` will still retain **one** configuration for that setting, showing arbitrary
 values for the ``affected_parameters`` (which can be ignored).
 
@@ -264,8 +265,8 @@ BayBE requires that all dependencies are declared in a single
 ```
 
 In the example, below we mimic a situation where there are two switches and each switch
-activates two other parameters that are only relevant if the first switch is "on" / the
-second switch is set to "right", respectively.
+activates two other parameters that are only relevant if the first switch is `"on"` / the
+second switch is set to `"right"`, respectively.
 ```python
 from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondition
 
@@ -276,8 +277,8 @@ DiscreteDependenciesConstraint(
         SubSelectionCondition(selection=["right"]),  # values of Switch2 that activate the affected parameters
     ],
     affected_parameters=[
-      ["Solvent", "Fraction"],  # parameters affected by "Switch1"
-      ["Frame1", "Frame2"]      # parameters affected by "Switch2"
+      ["Solvent", "Fraction"],  # parameters affected by Switch1
+      ["Frame1", "Frame2"]      # parameters affected by Switch2
     ],
 )
 ```
