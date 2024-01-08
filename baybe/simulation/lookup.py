@@ -1,7 +1,7 @@
 """Target lookup mechanisms."""
 
 import warnings
-from typing import Callable, List, Literal, Optional, Union
+from typing import Callable, Collection, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ def look_up_targets(
 
     # Compute the target values via a callable
     elif isinstance(lookup, Callable):
-        _lookup_targets_from_callable(queries, targets, lookup)
+        _lookup_targets_from_callable(queries, [t.name for t in targets], lookup)
 
     # Get results via dataframe lookup (works only for exact matches)
     # IMPROVE: Although its not too important for a simulation, this
@@ -58,7 +58,7 @@ def look_up_targets(
 
 def _lookup_targets_from_callable(
     queries: pd.DataFrame,
-    targets: List[Target],
+    target_names: Collection[str],
     lookup: Callable[[pd.DataFrame], pd.DataFrame],
 ) -> None:
     """Look up target values from a callable."""
@@ -66,7 +66,7 @@ def _lookup_targets_from_callable(
     responses = lookup(queries)
 
     # Assert that all targets are contained in the response
-    if not (exp := set(t.name for t in targets)).issubset(act := set(responses)):
+    if not (exp := set(target_names)).issubset(act := set(responses)):
         raise ValueError(
             f"The provided lookup callable yielded values for the labels {act} but "
             f"required are values for {exp}."
