@@ -274,14 +274,8 @@ def simulate_experiment(
 
     Args:
         campaign: The DOE setting to be simulated.
-        lookup: The lookup used to close the loop, provided in the form of a dataframe
-            or callable that define the targets for the queried parameter settings:
-            First, a dataframe containing experimental settings and their target
-            results can be chosen.
-            Second, A callable, providing target values for the given parameter
-            settings. can be chosen. The callable is assumed to return either a float
-            or a tuple of floats and to accept an arbitrary number of floats as input.
-            Finally,``None`` can be chosen, producing fake results.
+        lookup: A lookup to close the loop.
+            See :func:`baybe.simulation.lookup.look_up_targets` for details.
         batch_quantity: The number of recommendations to be queried per iteration.
         n_doe_iterations:  The number of iterations to run the design-of-experiments
             loop. If not specified, the simulation proceeds until there are no more

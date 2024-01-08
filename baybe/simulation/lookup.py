@@ -1,7 +1,7 @@
 """Target lookup mechanisms."""
 
 import warnings
-from typing import Callable, Collection, List, Literal, Optional, Union
+from typing import Callable, Collection, List, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -10,38 +10,45 @@ from baybe.targets import NumericalTarget, TargetMode
 from baybe.targets.base import Target
 from baybe.utils import add_fake_results
 
+CallableLookup = Callable[[pd.DataFrame], pd.DataFrame]
+"""A callable that can be used to retrieve target values for given parameter
+configurations."""
+
 
 def look_up_targets(
     queries: pd.DataFrame,
     targets: List[Target],
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
-    impute_mode: Literal[
-        "error", "worst", "best", "mean", "random", "ignore"
-    ] = "error",
-):
-    """Fill the target values in the query dataframe using the lookup mechanism.
+    lookup: Union[pd.DataFrame, CallableLookup, None] = None,
+    impute_mode: Literal["error", "worst", "best", "mean", "random"] = "error",
+) -> None:
+    """Fill the target values for given parameter configurations via a lookup mechanism.
 
     Note that this does not create a new dataframe but modifies ``queries`` in-place.
 
     Args:
-        queries: A dataframe containing points to be queried.
-        targets: The BayBE targets.
-        lookup: The lookup mechanism. See :func:`baybe.simulation.simulate_scenarios`
+        queries: A dataframe containing the parameter configurations.
+        targets: The targets whose values should be filled.
+        lookup: An optional lookup mechanism, provided in the form of a dataframe
+            or callable, that defines the targets for the queried parameter settings.
+            If omitted, fake values will be used.
+
+            - pd.DataFrame: Each row contains the one parameter configuration and the
+              corresponding target values.
+            - callable: A callable that can be used to retrieve target values for given
+              parameter configurations. Expects a dataframe where each row corresponds
+              to one parameter configuration (columns names being the parameter names)
+              and must return a dataframe containing the corresponding target values
+              (column names being the target names), where each row holds the targets
+              for the corresponding parameter row.
+        impute_mode: Specifies how a missing lookup will be handled (only relevant
+            for dataframe lookups). See :func:`baybe.simulation.simulate_experiment`
             for details.
-        impute_mode: The used impute mode. See
-            :func:`baybe.simulation.simulate_scenarios` for details.
 
     Raises:
         AssertionError: If an analytical function is used and an incorrect number of
             targets was specified.
     """
-    # TODO: Rewrite docstring.
-    # TODO: This function needs another code cleanup and refactoring. In particular,
-    #   the different lookup modes should be implemented via multiple dispatch.
-
-    # Extract all target names
-
-    # If no lookup is provided, invent some fake results
+    # If no lookup is provided, invent some fake values
     if lookup is None:
         add_fake_results(queries, targets)
 
@@ -49,7 +56,7 @@ def look_up_targets(
     elif isinstance(lookup, Callable):
         _lookup_targets_from_callable(queries, [t.name for t in targets], lookup)
 
-    # Get results via dataframe lookup (works only for exact matches)
+    # Get the results via dataframe lookup (works only for exact matches)
     # IMPROVE: Although its not too important for a simulation, this
     #  could also be implemented for approximate matches
     elif isinstance(lookup, pd.DataFrame):
@@ -59,9 +66,9 @@ def look_up_targets(
 def _lookup_targets_from_callable(
     queries: pd.DataFrame,
     target_names: Collection[str],
-    lookup: Callable[[pd.DataFrame], pd.DataFrame],
+    lookup: CallableLookup,
 ) -> None:
-    """Look up target values from a callable."""
+    """Look up target values via a callable."""
     # Evaluate the callable
     responses = lookup(queries)
 
@@ -76,17 +83,24 @@ def _lookup_targets_from_callable(
     queries[responses.columns] = responses
 
 
-def _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode):
+def _lookup_targets_from_dataframe(
+    queries: pd.DataFrame,
+    targets: List[Target],
+    lookup: CallableLookup,
+    impute_mode: Literal["error", "worst", "best", "mean", "random"] = "error",
+) -> None:
+    """Look up target values from a dataframe."""
     target_names = [t.name for t in targets]
     all_match_vals = []
+
+    # IMPROVE: speed up the matching using a join
     for _, row in queries.iterrows():
-        # IMPROVE: to the entire matching at once via a merge
         ind = lookup[
             (lookup.loc[:, row.index] == row).all(axis=1, skipna=False)
         ].index.values
 
         if len(ind) > 1:
-            # More than two instances of this parameter combination
+            # More than one instance of this parameter combination
             # have been measured
             warnings.warn(
                 f"The lookup rows with indexes {ind} seem to be "
@@ -113,6 +127,7 @@ def _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode):
 
         # Collect the matches
         all_match_vals.append(match_vals)
+
     # Add the lookup values
     queries.loc[:, target_names] = np.asarray(all_match_vals)
 
@@ -121,17 +136,15 @@ def _impute_lookup(
     row: pd.Series,
     lookup: pd.DataFrame,
     targets: List[NumericalTarget],
-    mode: Literal["error", "best", "worst", "mean", "random"] = "error",
+    mode: Literal["error", "worst", "best", "mean", "random"] = "error",
 ) -> np.ndarray:
     """Perform data imputation for missing lookup values.
 
-    Depending on the chosen mode, this might raise errors instead.
-
     Args:
-        row: The data that should be matched with the lookup data frame.
-        lookup: The lookup data frame.
-        targets: The campaign targets, providing the required mode information.
-        mode: The used impute mode. See :func:`baybe.simulation.simulate_scenarios`
+        row: The parameter configuration for which the target values should be imputed.
+        lookup: The lookup dataframe.
+        targets: The targets, providing the required mode information.
+        mode: The used impute mode. See :func:`baybe.simulation.lookup.look_up_targets`
             for details.
 
     Returns:
