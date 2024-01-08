@@ -108,7 +108,7 @@ def _lookup_targets_from_dataframe(
                 f"random one.",
                 UserWarning,
             )
-            match_vals = lookup.loc[np.random.choice(ind), target_names].values
+            match_vals = lookup.loc[np.random.choice(ind), target_names]
 
         elif len(ind) < 1:
             # Parameter combination cannot be looked up and needs to be
@@ -123,13 +123,13 @@ def _lookup_targets_from_dataframe(
 
         else:
             # Exactly one match has been found
-            match_vals = lookup.loc[ind[0], target_names].values
+            match_vals = lookup.loc[ind[0], target_names]
 
         # Collect the matches
         all_match_vals.append(match_vals)
 
     # Add the lookup values
-    queries.loc[:, target_names] = np.asarray(all_match_vals)
+    queries.loc[:, target_names] = pd.concat(all_match_vals, axis=1).T
 
 
 def _impute_lookup(
@@ -137,7 +137,7 @@ def _impute_lookup(
     lookup: pd.DataFrame,
     targets: List[NumericalTarget],
     mode: Literal["error", "worst", "best", "mean", "random"] = "error",
-) -> np.ndarray:
+) -> pd.Series:
     """Perform data imputation for missing lookup values.
 
     Args:
@@ -148,7 +148,7 @@ def _impute_lookup(
             for details.
 
     Returns:
-        The filled-in lookup results.
+        The imputed values for the targets.
 
     Raises:
         IndexError: If the mode ``"error"`` is chosen and at least one of the targets
@@ -159,7 +159,7 @@ def _impute_lookup(
     target_names = [t.name for t in targets]
 
     if mode == "mean":
-        return lookup[target_names].mean(axis=0).values
+        return lookup[target_names].mean(axis=0)
 
     elif mode == "worst":
         worst_vals = []
@@ -177,7 +177,7 @@ def _impute_lookup(
                         target.name,
                     ].flatten()[0]
                 )
-        return np.array(worst_vals)
+        return pd.Series(worst_vals, index=target_names)
 
     elif mode == "best":
         best_vals = []
@@ -195,14 +195,14 @@ def _impute_lookup(
                         target.name,
                     ].flatten()[0]
                 )
-        return np.array(best_vals)
+        return pd.Series(best_vals, index=target_names)
 
     elif mode == "random":
         vals = []
         randindex = np.random.choice(lookup.index)
         for target in targets:
             vals.append(lookup.loc[randindex, target.name].flatten()[0])
-        return np.array(vals)
+        return pd.Series(vals, index=target_names)
 
     raise IndexError(
         f"Cannot match the recommended row {row} to any of the rows in the lookup."
