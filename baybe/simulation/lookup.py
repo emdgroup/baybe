@@ -1,6 +1,6 @@
 """Target lookup mechanisms."""
 
-import logging
+import warnings
 from typing import Callable, List, Literal, Optional, Union
 
 import numpy as np
@@ -9,8 +9,6 @@ import pandas as pd
 from baybe.targets import NumericalTarget, TargetMode
 from baybe.targets.base import Target
 from baybe.utils import add_fake_results
-
-_logger = logging.getLogger(__name__)
 
 
 def look_up_targets(
@@ -58,7 +56,7 @@ def look_up_targets(
         _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode)
 
 
-def _lookup_targets_from_dataframe(queries, targets, lookup):
+def _lookup_targets_from_callable(queries, targets, lookup):
     # TODO: Currently, the alignment of return values to targets is based on the
     #   column ordering, which is not robust. Instead, the callable should return
     #   a dataframe with properly labeled columns.
@@ -94,11 +92,11 @@ def _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode):
         if len(ind) > 1:
             # More than two instances of this parameter combination
             # have been measured
-            _logger.warning(
-                "The lookup rows with indexes %s seem to be "
-                "duplicates regarding parameter values. Choosing a "
-                "random one.",
-                ind,
+            warnings.warn(
+                f"The lookup rows with indexes {ind} seem to be "
+                f"duplicates regarding parameter values. Choosing a "
+                f"random one.",
+                UserWarning,
             )
             match_vals = lookup.loc[np.random.choice(ind), target_names].values
 
