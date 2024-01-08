@@ -68,7 +68,7 @@ $$
 where $x_i$ is the value of the $i$'th parameter affected by the constraint,
 $c_i$ is the coefficient for that parameter, and $\text{rhs}$ is a user-chosen number.
 
-```{info}
+```{note}
 You can specify a constraint involving ``<=`` instead of ``>=`` by multiplying
 both sides, i.e. the coefficients and rhs, by -1.
 ```
