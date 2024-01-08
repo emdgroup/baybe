@@ -315,10 +315,14 @@ hence the `SearchSpace` should effectively only contain one of them.
 Complex properties such as permutation invariance not only affect the search space but
 should ideally also constrain the surrogate model. For instance, the kernels in a
 Gaussian process can be made permutation-invariant to reflect this constraint, which
-generally results in a better learning curve. Note, however, that not all surrogate
-models provided by BayBE can easily include such invariances. In these cases, the
-invariance is ignored during model fitting, which will not be an issue, but just means these models
-cannot benefit from a priori known constraints and invariances between parameters.
+generally results in a better learning curve. Note that at this stage no
+surrogate model provided by BayBE takes care of these invariances. This means the
+invariance is ignored during model fitting and these models do not benefit
+from a priori known constraints and invariances between parameters. However, generally,
+the optimization will still work. We are in the process of enabling this as new feature,
+but in the meantime the user can introduce their own
+[custom surrogate model](../../examples/Custom_Surrogates/Custom_Surrogates)
+to include these.
 ```
 
 Let's add to the mixture example the fact that not only the choice of substance but also
