@@ -9,9 +9,9 @@ their combinations. Such constraints could for example be:
   becomes relevant if another parameter called `"Switch"` has the value `"on"`.
 
 Similar to parameters, BayBE distinguishes two families of constraints, derived from the 
-abstract [``Constraint``](baybe.constraints.base.Constraint) class: discrete and
-continuous constraints ([``DiscreteConstraint``](baybe.constraints.base.DiscreteConstraint), 
-[``ContinuousConstraint``](baybe.constraints.base.ContinuousConstraint)).
+abstract [`Constraint`](baybe.constraints.base.Constraint) class: discrete and
+continuous constraints ([`DiscreteConstraint`](baybe.constraints.base.DiscreteConstraint), 
+[`ContinuousConstraint`](baybe.constraints.base.ContinuousConstraint)).
 A constraint is called discrete/continuous if it operates on a set of exclusively
 discrete/continuous parameters.
 
@@ -31,7 +31,7 @@ the constraints are currently silently ignored.
 
 (CLEQ)=
 ### ContinuousLinearEqualityConstraint
-The [``ContinuousLinearEqualityConstraint``](baybe.constraints.continuous.ContinuousLinearEqualityConstraint)
+The [`ContinuousLinearEqualityConstraint`](baybe.constraints.continuous.ContinuousLinearEqualityConstraint)
 asserts that the following equation is true (up to numerical rounding errors):
 
 $$
@@ -41,8 +41,8 @@ $$
 where $x_i$ is the value of the $i$'th parameter affected by the constraint,
 $c_i$ is the coefficient for that parameter, and $\text{rhs}$ is a user-chosen number.
 
-As an example, let's assume we have three parameters named ``x_1``, ``x_2`` and
-``x_3``, which describe the relative concentrations in a mixture campaign.
+As an example, let's assume we have three parameters named `x_1`, `x_2` and
+`x_3`, which describe the relative concentrations in a mixture campaign.
 The constraint assuring that they always sum up to 1.0 would look like this:
 ```python
 from baybe.constraints import ContinuousLinearEqualityConstraint
@@ -58,7 +58,7 @@ A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
 ### ContinuousLinearInequalityConstraint
-The [``ContinuousLinearInequalityConstraint``](baybe.constraints.continuous.ContinuousLinearInequalityConstraint)
+The [`ContinuousLinearInequalityConstraint`](baybe.constraints.continuous.ContinuousLinearInequalityConstraint)
 asserts that the following equation is true (up to numerical rounding errors):
 
 $$
@@ -69,11 +69,11 @@ where $x_i$ is the value of the $i$'th parameter affected by the constraint,
 $c_i$ is the coefficient for that parameter, and $\text{rhs}$ is a user-chosen number.
 
 ```{note}
-You can specify a constraint involving ``<=`` instead of ``>=`` by multiplying
+You can specify a constraint involving `<=` instead of `>=` by multiplying
 both sides, i.e. the coefficients and rhs, by -1.
 ```
 
-Let us amend [the example from ``ContinuousLinearEqualityConstraint``](#CLEQ) and assume
+Let us amend [the example from `ContinuousLinearEqualityConstraint`](#CLEQ) and assume
 that there is always a fourth component to the mixture that serves as a "filler".
 In such a case, we might want to ensure that the first three components only make up to
 80% of the mixture.
@@ -100,7 +100,7 @@ logical expressions for them.
 
 ### ThresholdCondition
 For numerical parameters, we might want to select a certain range, which can be
-achieved with a [``ThresholdCondition``](baybe.constraints.conditions.ThresholdCondition):
+achieved with a [`ThresholdCondition`](baybe.constraints.conditions.ThresholdCondition):
 ```python
 from baybe.constraints import ThresholdCondition
 
@@ -112,7 +112,7 @@ ThresholdCondition( # will select all values above 150
 
 ### SubSelectionCondition
 In case a specific subset of values needs to be selected, it can be done with the
-[``SubSelectionCondition``](baybe.constraints.conditions.SubSelectionCondition):
+[`SubSelectionCondition`](baybe.constraints.conditions.SubSelectionCondition):
 ```python
 from baybe.constraints import SubSelectionCondition
 
@@ -124,16 +124,16 @@ SubSelectionCondition( # will select two solvents identified by their labels
 ## Discrete Constraints
 Discrete constraints currently do not affect the optimization process directly.
 Instead, they act as a filter on the search space.
-For instance, a search space created via [``from_product``](baybe.searchspace.core.SearchSpace.from_product) 
+For instance, a search space created via [`from_product`](baybe.searchspace.core.SearchSpace.from_product) 
 might include invalid combinations, which can be removed again by applying constraints.
 
 Discrete constraints have in common that they operate on one or more parameters,
-identified by the ``parameters`` member, which expects a list of parameter names as
+identified by the `parameters` member, which expects a list of parameter names as
 strings.
 All of these parameters must be present in the search space specification.
 
 ### DiscreteExcludeConstraint
-The [``DiscreteExcludeConstraint``](baybe.constraints.discrete.DiscreteExcludeConstraint)
+The [`DiscreteExcludeConstraint`](baybe.constraints.discrete.DiscreteExcludeConstraint)
 constraint simply removes a set of search space elements, according to its
 specifications.
 
@@ -157,11 +157,11 @@ A more detailed example can be found
 [here](../../examples/Constraints_Discrete/exclusion_constraints).
 
 ### DiscreteSumConstraint and DiscreteProductConstraint
-[``DiscreteSumConstraint``](baybe.constraints.discrete.DiscreteSumConstraint)
-and [``DiscreteProductConstraint``](baybe.constraints.discrete.DiscreteProductConstraint)
+[`DiscreteSumConstraint`](baybe.constraints.discrete.DiscreteSumConstraint)
+and [`DiscreteProductConstraint`](baybe.constraints.discrete.DiscreteProductConstraint)
 impose conditions on sums or products of numerical parameters.
-[In the example from ``ContinuousLinearEqualityConstraint``](#CLEQ), we
-had three continuous parameters ``x_1``, ``x_2`` and ``x_3``, which needed to sum
+[In the example from `ContinuousLinearEqualityConstraint`](#CLEQ), we
+had three continuous parameters `x_1`, `x_2` and `x_3`, which needed to sum
 up to 1.0.
 If these parameters were instead discrete, the corresponding constraint would look like:
 ```python
@@ -183,11 +183,11 @@ Sometimes, duplicated labels in several parameters are undesirable.
 Consider an example with two solvents that describe different mixture
 components.
 These might have the exact same or overlapping sets of possible values, e.g.
-``["Water", "THF", "Octanol"]``.
+`["Water", "THF", "Octanol"]`.
 It would not necessarily be reasonable to allow values in which both solvents show the
 same label/component.
 We can exclude such occurrences with the
-[``DiscreteNoLabelDuplicatesConstraint``](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint):
+[`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint):
 
 ```python
 from baybe.constraints import  DiscreteNoLabelDuplicatesConstraint
@@ -205,13 +205,13 @@ Without this constraint, combinations like below would be possible:
 | 2 | THF       | Water     |                                          |
 | 3 | Octanol   | Octanol   | would be excluded                        |
 
-The usage of ``DiscreteNoLabelDuplicatesConstraint`` is part of the
+The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
 [example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
 
 ### DiscreteLinkedParametersConstraint
-The [``DiscreteLinkedParametersConstraint``](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
+The [`DiscreteLinkedParametersConstraint`](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
 is, in a sense, the opposite of the
-[``DiscreteNoLabelDuplicatesConstraint``](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint).
+[`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint).
 It will ensure that **only** entries with duplicated labels are present.
 This can be useful, for instance, in situations where we have one parameter but would
 like to include it with several encodings:
@@ -245,30 +245,30 @@ DiscreteLinkedParametersConstraint(
 A dependency is a situation where parameters depend on other parameters.
 Let's say an experimental setup has a parameter called `"Switch"`, which turns on
 pieces of equipment that are optional.
-This means the other parameters (called ``affected_parameters``) are only relevant if
+This means the other parameters (called `affected_parameters`) are only relevant if
 the switch parameter has the value `"on"`. If the switch is `"off"`, the affected 
 parameters are irrelevant.
 
 You can specify such a dependency with the
-[``DiscreteDependenciesConstraint``](baybe.constraints.discrete.DiscreteDependenciesConstraint)
+[`DiscreteDependenciesConstraint`](baybe.constraints.discrete.DiscreteDependenciesConstraint)
 , which requires:
-1) A list ``parameters`` with the names of the parameters upon which others depend.
-2) A list ``conditions``, specifying the values of the corresponding entries in
-   ``parameters`` that "activate" the dependent parameters.
-3) A list of lists, each containing the ``affected_parameters``, which become relevant
-   only if the corresponding entry in ``parameters`` is active as specified by the 
-   entry in ``conditions``.
+1) A list `parameters` with the names of the parameters upon which others depend.
+2) A list `conditions`, specifying the values of the corresponding entries in
+   `parameters` that "activate" the dependent parameters.
+3) A list of lists, each containing the `affected_parameters`, which become relevant
+   only if the corresponding entry in `parameters` is active as specified by the 
+   entry in `conditions`.
 
-Internally, BayBE drops elements from the ``SearchSpace`` where affected parameters are
+Internally, BayBE drops elements from the `SearchSpace` where affected parameters are
 irrelevant. Since in our example `"off"` is still a valid value for the switch, the
-``SearchSpace`` will still retain **one** configuration for that setting, showing arbitrary
-values for the ``affected_parameters`` (which can be ignored).
+`SearchSpace` will still retain **one** configuration for that setting, showing arbitrary
+values for the `affected_parameters` (which can be ignored).
 
 (DDC)=
 ```{note}
 BayBE requires that all dependencies are declared in a single
-``DiscreteDependenciesConstraint``. Creating a ``SearchSpace`` from multiple
-``DiscreteDependenciesConstraint``'s will throw a validation error.
+`DiscreteDependenciesConstraint`. Creating a `SearchSpace` from multiple
+`DiscreteDependenciesConstraint`'s will throw a validation error.
 ```
 
 In the example below, we mimic a situation where there are two switches and each switch
@@ -294,13 +294,13 @@ An end to end example can be found [here](../../examples/Constraints_Discrete/de
 
 ### DiscretePermutationInvarianceConstraint
 Permutation invariance, enabled by the 
-[``DiscretePermutationInvarianceConstraint``](baybe.constraints.discrete.DiscretePermutationInvarianceConstraint)
+[`DiscretePermutationInvarianceConstraint`](baybe.constraints.discrete.DiscretePermutationInvarianceConstraint)
 , is a property where combinations of values of multiple
 parameters do not depend on their order due to some symmetry in the experiment.
 Suppose we create a mixture containing up to three solvents, i.e. parameters
 "Solvent_1", "Solvent_2", "Solvent_3".
 In this situation, all combinations from the following table would be equivalent,
-hence the ``SearchSpace`` should effectively only contain one of them.
+hence the `SearchSpace` should effectively only contain one of them.
 
 |   | Solvent_1    | Solvent_2    | Solvent_3    |
 |---|--------------|--------------|--------------|
@@ -325,20 +325,20 @@ Let's add to the mixture example the fact that not only the choice of substance 
 their relative mixture fractions are parameters, i.e. "Fraction_1", "Fraction_2" and
 "Fraction_3".
 This also implies that the solvent parameters depend on their corresponding
-fraction being ``> 0.0``, because in the case ``== 0.0`` the choice of solvent is
+fraction being `> 0.0`, because in the case `== 0.0` the choice of solvent is
 irrelevant. This models a scenario that allows "up to, but not necessarily,
 three solvents".
 
 ```{important}
-If some of the ``parameters`` of the ``DiscretePermutationInvarianceConstraint`` are
+If some of the `parameters` of the `DiscretePermutationInvarianceConstraint` are
 dependent on other parameters, we require that the dependencies are provided as a
-``DiscreteDependenciesConstraint`` to the ``dependencies`` argument of the
-``DiscretePermutationInvarianceConstraint``. This
-``DiscreteDependenciesConstraint`` will not count towards the maximum limit of one
-``DiscreteDependenciesConstraint`` discussed [here](#DDC).
+`DiscreteDependenciesConstraint` to the `dependencies` argument of the
+`DiscretePermutationInvarianceConstraint`. This
+`DiscreteDependenciesConstraint` will not count towards the maximum limit of one
+`DiscreteDependenciesConstraint` discussed [here](#DDC).
 ```
 
-The ``DiscretePermutationInvarianceConstraint`` below applies to our example and
+The `DiscretePermutationInvarianceConstraint` below applies to our example and
 removes permutation-invariant combinations of solvents that have additional
 dependencies as well:
 
@@ -361,11 +361,11 @@ DiscretePermutationInvarianceConstraint(
 )
 ```
 
-The usage of ``DiscretePermutationInvarianceConstraint`` is also part of the
+The usage of `DiscretePermutationInvarianceConstraint` is also part of the
 [example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
 
 ### DiscreteCustomConstraint
-With a [``DiscreteCustomConstraint``](baybe.constraints.discrete.DiscreteCustomConstraint) 
+With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
 constraint, you can specify a completely custom filter:
 
 ```python
@@ -393,7 +393,7 @@ Find a detailed example [here](../../examples/Constraints_Discrete/custom_constr
 
 ```{warning}
 Due to the arbitrary nature of code and dependencies that can be used in the
-``DiscreteCustomConstraint``, de-/serializability cannot be guaranteed. As a consequence,
-using a ``DiscreteCustomConstraint`` results in an error if you attempt to serialize
+`DiscreteCustomConstraint`, de-/serializability cannot be guaranteed. As a consequence,
+using a `DiscreteCustomConstraint` results in an error if you attempt to serialize
 the corresponding object or higher-level objects containing it.
 ```
