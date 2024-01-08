@@ -56,28 +56,24 @@ def look_up_targets(
         _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode)
 
 
-def _lookup_targets_from_callable(queries, targets, lookup):
-    # TODO: Currently, the alignment of return values to targets is based on the
-    #   column ordering, which is not robust. Instead, the callable should return
-    #   a dataframe with properly labeled columns.
-    # Since the return of a lookup function is a tuple, the following code stores
-    # tuples of floats in a single column with label 0:
-    measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
-    # We transform this column to a DataFrame in which there is an individual
-    # column for each of the targets....
-    split_target_columns = pd.DataFrame(
-        measured_targets[0].to_list(), index=measured_targets.index
-    )
-    # ... and assign this to measured_targets in order to have one column per target
-    measured_targets[split_target_columns.columns] = split_target_columns
-    if measured_targets.shape[1] != len(targets):
-        raise AssertionError(
-            "If you use an analytical function as lookup, make sure "
-            "the configuration has the right amount of targets "
-            "specified."
+def _lookup_targets_from_callable(
+    queries: pd.DataFrame,
+    targets: List[Target],
+    lookup: Callable[[pd.DataFrame], pd.DataFrame],
+) -> None:
+    """Look up target values from a callable."""
+    # Evaluate the callable
+    responses = lookup(queries)
+
+    # Assert that all targets are contained in the response
+    if not (exp := set(t.name for t in targets)).issubset(act := set(responses)):
+        raise ValueError(
+            f"The provided lookup callable yielded values for the labels {act} but "
+            f"required are values for {exp}."
         )
-    for k_target, target in enumerate(targets):
-        queries[target.name] = measured_targets.iloc[:, k_target]
+
+    # Insert the target values in-place
+    queries[responses.columns] = responses
 
 
 def _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode):

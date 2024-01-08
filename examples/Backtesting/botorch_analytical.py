@@ -26,7 +26,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils import add_dataframe_layer
 
 #### Parameters for a full simulation loop
 
@@ -55,7 +55,6 @@ else:
     DIMENSION = TestFunctionClass().dim
 
 BOUNDS = TestFunction.bounds
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 #### Creating the searchspace and the objective
 
@@ -79,9 +78,8 @@ parameters = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
+targets = [NumericalTarget(name="Target", mode="MIN")]
+objective = Objective(mode="SINGLE", targets=targets)
 
 #### Constructing campaigns for the simulation loop
 
@@ -118,7 +116,7 @@ scenarios = {
 }
 results = simulate_scenarios(
     scenarios,
-    WRAPPED_FUNCTION,
+    add_dataframe_layer(TestFunction, [t.name for t in targets]),
     batch_quantity=3,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,

@@ -8,6 +8,7 @@
 #### Necessary imports for this example
 
 import numpy as np
+import pandas as pd
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
@@ -15,18 +16,18 @@ from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils import add_dataframe_layer
 
 #### Defining the test function
 
-# BoTorch offers a variety of different test functions, all of which can be used.
-# Note that some test functions are only defined for specific dimensions.
-# If the dimension you provide is not available for the chose function, a warning will be printed.
+# BoTorch offers a variety of test functions, all of which can be used for this example.
+# Note that some test functions are only defined for a specific number of input dimensions.
+# If the dimensionality you provide is not available for the chosen function, a warning will be printed.
 # In addition, the dimension is then adjusted automatically.
 
 # Note that choosing a different test function requires to change the `import` statement.
-# All test functions that are available in BoTorch are also available here and are later wrapped
-# via the `botorch_function_wrapper`.
+# All test functions that are available in BoTorch can be used here.
+
 DIMENSION = 4
 TestFunctionClass = Rastrigin
 
@@ -53,11 +54,6 @@ else:
 
 BOUNDS = TestFunction.bounds
 
-# It is necessary to "translate" the BoTorch function such that it can be used by BayBE.
-# This is done by using the `botorch_function_wrapper` function.
-
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
-
 #### Creating the searchspace and the objective
 
 # In this example, we construct a purely discrete space.
@@ -79,9 +75,8 @@ parameters = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
+targets = [NumericalTarget(name="Target", mode="MIN")]
+objective = Objective(mode="SINGLE", targets=targets)
 
 #### Constructing the campaign and performing a recommendation
 
@@ -94,17 +89,13 @@ campaign = Campaign(
 BATCH_QUANTITY = 3
 recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
-# Evaluate the test function.
-# Note that we need iterate through the rows of the recommendation.
-# Furthermore, we need to interpret the row as a list.
-target_values = []
-for index, row in recommendation.iterrows():
-    target_values.append(WRAPPED_FUNCTION(*row.to_list()))
+# We now evaluate the test function. For this purpose, we wrap it such that it
+# supports dataframe inputs and outputs. The target values are then appended to the
+# recommendations dataframe.
+WRAPPED_FUNCTION = add_dataframe_layer(TestFunction, [t.name for t in targets])
+measurements = pd.concat([recommendation, WRAPPED_FUNCTION(recommendation)], axis=1)
 
-# We add an additional column with the calculated target values.
-recommendation["Target"] = target_values
-
-# Here, we inform the campaign about our measurement.
-campaign.add_measurements(recommendation)
-print("\n\nRecommended experiments with measured values: ")
-print(recommendation)
+# Lastly, we inform the campaign about our measurement.
+campaign.add_measurements(measurements)
+print("\n\nRecommended experiments with measured values:")
+print(measurements)

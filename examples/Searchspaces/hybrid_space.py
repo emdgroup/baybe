@@ -10,6 +10,7 @@
 #### Necessary imports for this example
 
 import numpy as np
+import pandas as pd
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
@@ -19,7 +20,7 @@ from baybe.recommenders import NaiveHybridRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils import add_dataframe_layer
 
 #### Defining the test function and the hybrid dimensions
 
@@ -68,7 +69,6 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
     )
 
 BOUNDS = TestFunction.bounds
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 #### Constructing the hybrid searchspace
 
@@ -95,9 +95,8 @@ disc_parameters = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=disc_parameters + cont_parameters)
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
+targets = [NumericalTarget(name="Target", mode="MIN")]
+objective = Objective(mode="SINGLE", targets=targets)
 
 #### Constructing hybrid recommenders
 
@@ -122,17 +121,13 @@ campaign = Campaign(
 BATCH_QUANTITY = 3
 recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
-# Evaluate the test function.
-# Note that we need iterate through the rows of the recommendation.
-# Furthermore, we need to interpret the row as a list.
-target_values = []
-for index, row in recommendation.iterrows():
-    target_values.append(WRAPPED_FUNCTION(*row.to_list()))
+# We now evaluate the test function. For this purpose, we wrap it such that it
+# supports dataframe inputs and outputs. The target values are then appended to the
+# recommendations dataframe.
+WRAPPED_FUNCTION = add_dataframe_layer(TestFunction, [t.name for t in targets])
+measurements = pd.concat([recommendation, WRAPPED_FUNCTION(recommendation)], axis=1)
 
-# We add an additional column with the calculated target values.
-recommendation["Target"] = target_values
-
-# Here, we inform the campaign about our measurement.
-campaign.add_measurements(recommendation)
-print("\n\nRecommended experiments with measured values: ")
-print(recommendation)
+# Lastly, we inform the campaign about our measurement.
+campaign.add_measurements(measurements)
+print("\n\nRecommended experiments with measured values:")
+print(measurements)
