@@ -157,15 +157,17 @@ def _impute_lookup(
     # TODO: this function needs another code cleanup and refactoring
 
     target_names = [t.name for t in targets]
+
     if mode == "mean":
-        match_vals = lookup.loc[:, target_names].mean(axis=0).values
+        return lookup[target_names].mean(axis=0).values
+
     elif mode == "worst":
         worst_vals = []
         for target in targets:
             if target.mode is TargetMode.MAX:
-                worst_vals.append(lookup.loc[:, target.name].min().flatten()[0])
+                worst_vals.append(lookup[target.name].min().flatten()[0])
             elif target.mode is TargetMode.MIN:
-                worst_vals.append(lookup.loc[:, target.name].max().flatten()[0])
+                worst_vals.append(lookup[target.name].max().flatten()[0])
             if target.mode is TargetMode.MATCH:
                 worst_vals.append(
                     lookup.loc[
@@ -175,14 +177,15 @@ def _impute_lookup(
                         target.name,
                     ].flatten()[0]
                 )
-        match_vals = np.array(worst_vals)
+        return np.array(worst_vals)
+
     elif mode == "best":
         best_vals = []
         for target in targets:
             if target.mode is TargetMode.MAX:
-                best_vals.append(lookup.loc[:, target.name].max().flatten()[0])
+                best_vals.append(lookup[target.name].max().flatten()[0])
             elif target.mode is TargetMode.MIN:
-                best_vals.append(lookup.loc[:, target.name].min().flatten()[0])
+                best_vals.append(lookup[target.name].min().flatten()[0])
             if target.mode is TargetMode.MATCH:
                 best_vals.append(
                     lookup.loc[
@@ -192,17 +195,15 @@ def _impute_lookup(
                         target.name,
                     ].flatten()[0]
                 )
-        match_vals = np.array(best_vals)
+        return np.array(best_vals)
+
     elif mode == "random":
         vals = []
         randindex = np.random.choice(lookup.index)
         for target in targets:
             vals.append(lookup.loc[randindex, target.name].flatten()[0])
-        match_vals = np.array(vals)
-    else:
-        raise IndexError(
-            f"Cannot match the recommended row {row} to any of "
-            f"the rows in the lookup."
-        )
+        return np.array(vals)
 
-    return match_vals
+    raise IndexError(
+        f"Cannot match the recommended row {row} to any of the rows in the lookup."
+    )
