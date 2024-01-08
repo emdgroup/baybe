@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved and renamed target transform utility functions
 - Examples have two levels of headings in the table of content
 - Fix orders of examples in table of content
+- Simulation-related functions now consistently operate with dataframes and series
+- Lookup functions are decoupled from BayBE objects where possible
 
 ### Fixed
 - Wrong use of `tolerance` argument in constraints user guide
@@ -32,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - `Interval.is_finite` replaced with `Interval.is_bounded`
 - Specifying target configs without explicit type information is deprecated
+- `simulate_experiment` renamed to `simulate_campaign`
 
 ## [0.7.1] - 2023-12-07
 ### Added
