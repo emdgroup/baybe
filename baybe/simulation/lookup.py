@@ -13,7 +13,7 @@ from baybe.utils import add_fake_results
 _logger = logging.getLogger(__name__)
 
 
-def _look_up_target_values(
+def look_up_targets(
     queries: pd.DataFrame,
     targets: List[Target],
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
@@ -42,7 +42,6 @@ def _look_up_target_values(
     #   the different lookup modes should be implemented via multiple dispatch.
 
     # Extract all target names
-    target_names = [t.name for t in targets]
 
     # If no lookup is provided, invent some fake results
     if lookup is None:
@@ -50,71 +49,78 @@ def _look_up_target_values(
 
     # Compute the target values via a callable
     elif isinstance(lookup, Callable):
-        # TODO: Currently, the alignment of return values to targets is based on the
-        #   column ordering, which is not robust. Instead, the callable should return
-        #   a dataframe with properly labeled columns.
-
-        # Since the return of a lookup function is a tuple, the following code stores
-        # tuples of floats in a single column with label 0:
-        measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
-        # We transform this column to a DataFrame in which there is an individual
-        # column for each of the targets....
-        split_target_columns = pd.DataFrame(
-            measured_targets[0].to_list(), index=measured_targets.index
-        )
-        # ... and assign this to measured_targets in order to have one column per target
-        measured_targets[split_target_columns.columns] = split_target_columns
-        if measured_targets.shape[1] != len(targets):
-            raise AssertionError(
-                "If you use an analytical function as lookup, make sure "
-                "the configuration has the right amount of targets "
-                "specified."
-            )
-        for k_target, target in enumerate(targets):
-            queries[target.name] = measured_targets.iloc[:, k_target]
+        _lookup_targets_from_callable(queries, targets, lookup)
 
     # Get results via dataframe lookup (works only for exact matches)
     # IMPROVE: Although its not too important for a simulation, this
     #  could also be implemented for approximate matches
     elif isinstance(lookup, pd.DataFrame):
-        all_match_vals = []
-        for _, row in queries.iterrows():
-            # IMPROVE: to the entire matching at once via a merge
-            ind = lookup[
-                (lookup.loc[:, row.index] == row).all(axis=1, skipna=False)
-            ].index.values
+        _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode)
 
-            if len(ind) > 1:
-                # More than two instances of this parameter combination
-                # have been measured
-                _logger.warning(
-                    "The lookup rows with indexes %s seem to be "
-                    "duplicates regarding parameter values. Choosing a "
-                    "random one.",
-                    ind,
+
+def _lookup_targets_from_dataframe(queries, targets, lookup):
+    # TODO: Currently, the alignment of return values to targets is based on the
+    #   column ordering, which is not robust. Instead, the callable should return
+    #   a dataframe with properly labeled columns.
+    # Since the return of a lookup function is a tuple, the following code stores
+    # tuples of floats in a single column with label 0:
+    measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
+    # We transform this column to a DataFrame in which there is an individual
+    # column for each of the targets....
+    split_target_columns = pd.DataFrame(
+        measured_targets[0].to_list(), index=measured_targets.index
+    )
+    # ... and assign this to measured_targets in order to have one column per target
+    measured_targets[split_target_columns.columns] = split_target_columns
+    if measured_targets.shape[1] != len(targets):
+        raise AssertionError(
+            "If you use an analytical function as lookup, make sure "
+            "the configuration has the right amount of targets "
+            "specified."
+        )
+    for k_target, target in enumerate(targets):
+        queries[target.name] = measured_targets.iloc[:, k_target]
+
+
+def _lookup_targets_from_dataframe(queries, targets, lookup, impute_mode):
+    target_names = [t.name for t in targets]
+    all_match_vals = []
+    for _, row in queries.iterrows():
+        # IMPROVE: to the entire matching at once via a merge
+        ind = lookup[
+            (lookup.loc[:, row.index] == row).all(axis=1, skipna=False)
+        ].index.values
+
+        if len(ind) > 1:
+            # More than two instances of this parameter combination
+            # have been measured
+            _logger.warning(
+                "The lookup rows with indexes %s seem to be "
+                "duplicates regarding parameter values. Choosing a "
+                "random one.",
+                ind,
+            )
+            match_vals = lookup.loc[np.random.choice(ind), target_names].values
+
+        elif len(ind) < 1:
+            # Parameter combination cannot be looked up and needs to be
+            # imputed.
+            if impute_mode == "ignore":
+                raise AssertionError(
+                    "Something went wrong for impute_mode 'ignore'. "
+                    "It seems the search space was not correctly "
+                    "reduced before recommendations were generated."
                 )
-                match_vals = lookup.loc[np.random.choice(ind), target_names].values
+            match_vals = _impute_lookup(row, lookup, targets, impute_mode)
 
-            elif len(ind) < 1:
-                # Parameter combination cannot be looked up and needs to be
-                # imputed.
-                if impute_mode == "ignore":
-                    raise AssertionError(
-                        "Something went wrong for impute_mode 'ignore'. "
-                        "It seems the search space was not correctly "
-                        "reduced before recommendations were generated."
-                    )
-                match_vals = _impute_lookup(row, lookup, targets, impute_mode)
+        else:
+            # Exactly one match has been found
+            match_vals = lookup.loc[ind[0], target_names].values
 
-            else:
-                # Exactly one match has been found
-                match_vals = lookup.loc[ind[0], target_names].values
-
-            # Collect the matches
-            all_match_vals.append(match_vals)
-
-        # Add the lookup values
-        queries.loc[:, target_names] = np.asarray(all_match_vals)
+        # Collect the matches
+        all_match_vals.append(match_vals)
+    # Add the lookup values
+    queries.loc[:, target_names] = np.asarray(all_match_vals)
 
 
 def _impute_lookup(
