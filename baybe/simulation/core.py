@@ -1,5 +1,5 @@
 """Core simulation and backtesting functionality."""
-
+import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
@@ -223,7 +223,7 @@ def _simulate_groupby(
 
         # Run the group simulation
         try:
-            df_group = simulate_experiment(
+            df_group = simulate_campaign(
                 campaign_group,
                 lookup,
                 batch_quantity=batch_quantity,
@@ -252,7 +252,7 @@ def _simulate_groupby(
     return df
 
 
-def simulate_experiment(
+def simulate_campaign(
     campaign: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
@@ -463,3 +463,13 @@ def simulate_experiment(
         results[cumbest_cols] = cum_fun(results[iterbest_col])
 
     return results
+
+
+def simulate_experiment(*args, **kwargs) -> pd.DataFrame:
+    """A :func:`simulate_campaign` alias for backward compatibility."""  # noqa: D401
+    warnings.warn(
+        "Using 'simulate_experiment' is deprecated and will be removed in a future "
+        "version. Please use the 'simulate_campaign' instead.",
+        DeprecationWarning,
+    )
+    return simulate_campaign(*args, **kwargs)

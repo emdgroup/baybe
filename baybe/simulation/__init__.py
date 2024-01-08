@@ -15,9 +15,14 @@ applied context:
     optimization to provide target values.
 """
 
-from baybe.simulation.core import simulate_experiment, simulate_scenarios
+from baybe.simulation.core import (
+    simulate_campaign,
+    simulate_experiment,
+    simulate_scenarios,
+)
 
 __all__ = [
+    "simulate_campaign",
     "simulate_experiment",
     "simulate_scenarios",
 ]
