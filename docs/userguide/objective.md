@@ -1,24 +1,77 @@
 # Objective
 
-## General Information
+The [`Objective`](baybe.objective.Objective) instructs BayBE how to deal with multiple
+targets (if applicable).
 
-Objectives allows you to effectively manage the optimization objective and are implemented by the [`Objective`](baybe.objective.Objective) class.
-By defining objectives, you can optimize a single target function or combine multiple target functions using different modes.
-To create an objective, it is necessary to provide at least the following:
-* **An optimization mode:** This can be either ``SINGLE`` or ``DESIRABILITY``, denoting either the optimization of a single target function or a combination of different target functions.
-* **A list of targets:** The list of targets that are optimized. Note that the ``SINGLE`` mode also requires a list containing the single target. See [here](./targets) for details.
+To create an objective, it is necessary to provide the following:
+* An optimization `mode`: This can be either `SINGLE` or `DESIRABILITY`,
+  denoting the optimization of a single target function or a combination of
+  different target functions respectively.
+* A list of `targets`: The list of targets that are optimized. Note that the
+  `SINGLE` mode also requires a list containing the single target.
+
+```{note}
+We are actively working on adding more objective modes for multiple targets.
+```
 
 ## Supported Optimization Modes
-
 Currently, BayBE offers two optimization modes.
 
-### Single Target Optimization: The ``SINGLE`` mode
+### SINGLE
+In the `SINGLE` mode, objectives focus on optimizing a single target. 
+Nearly all of the [examples](../../examples/examples) use this objective mode.
 
-In the ``SINGLE`` mode, objectives focus on maximizing or minimizing a single target. 
-Nearly all of the examples use this objective mode.
+```python
+from baybe.targets import NumericalTarget
+from baybe.objective import Objective
 
-### Combining multiple targets: The ``DESIRABILITY`` mode
+target1 = NumericalTarget(name="yield", mode="MIN", bounds=(0, 100))
+objective = Objective(mode="SINGLE", targets=[target1])
+```
 
-The ``DESIRABILITY`` mode enables you to combine multiple targets into a unified objective using the ``combine_func``. This function effectively merges the list of targets into a single target, with mean and geometric mean beig the current available options. Additionally, you can assign weights to individual targets, enhancing their significance as needed.
+### DESIRABILITY
+The ``DESIRABILITY`` mode enables you to combine multiple targets via scalarization 
+into a single value, a method well know and also utilized in classical DOE.
 
-For a practical example demonstrating this mode, see [here](./../../examples/Multi_Target/desirability).
+Besides `mode` and `targets`, this objective type has two additional optional arguments:
+* `weights`: Some targets might be more important than others.
+  You can specify the relative weights of the targets in this argument.
+  BayBE automatically normalizes the numbers you provide, so only the relations between 
+  them matter.
+* `combine_func`: Specifies the function used for combining the transformed targets. 
+  You can choose between `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
+  geometric mean respectively.
+
+The definitions of the means are as follows, where $t_i$ enumerate the **scaled** target 
+observations for a single measurement and $w_i$ are the weights associated with the 
+respective target:
+
+$$
+\text{MEAN} &= \frac{1}{\sum w_i}\sum_{i} w_i \cdot t_i \\
+\text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum w_i}
+$$
+
+```{attention}
+Due to the combination of targets of potentially different scale, in `DESIRABILITY` 
+objective mode, all provided targets must have `bounds` specified so they can be 
+normalized before being combined.
+```
+
+In the example below we use three different targets (which all have a different goal) 
+and weigh the first target a twice as important as each of the remaining targets:
+```python
+from baybe.targets import NumericalTarget
+from baybe.objective import Objective
+
+target1 = NumericalTarget(name="t1", mode="MIN", bounds=(0, 100))
+target2 = NumericalTarget(name="t2", mode="MIN", bounds=(0, 100))
+target3 = NumericalTarget(name="t3", mode="MATCH", bounds=(40, 60))
+objective = Objective(
+    mode="DESIRABILITY", 
+    targets=[target1, target2, target3],
+    weights=[2.0, 1.0, 1.0], # optional, by default all weights are equal
+    combine_func="GEOM_MEAN" # optional, geometrical mean is the default
+)
+```
+
+For a complete example demonstrating desirability mode, see [here](./../../examples/Multi_Target/desirability).
