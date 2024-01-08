@@ -373,15 +373,14 @@ import pandas as pd
 import numpy as np
 from baybe.constraints import DiscreteCustomConstraint
 
-def custom_filter(series: pd.Series) -> bool: # this signature is required
+def custom_filter(df: pd.DataFrame) -> pd.Series: # this signature is required
     """
     In this example, we exclude entries where the square root of the
-    temperature times the cubed pressure are larger than 5.6 by returning False in
-    those cases, and True otherwise.
+    temperature times the cubed pressure are larger than 5.6.
     """
-    if np.sqrt(series.Temperature) * np.power(series.Pressure,3) > 5.6:
-        return False
-    return True
+    mask_good = np.sqrt(df["Temperature"]) * np.power(df["Pressure"], 3) <= 5.6
+
+    return mask_good
 
 DiscreteCustomConstraint(
     parameters = ["Pressure", "Temperature"], # the custom function will have access to these variables
