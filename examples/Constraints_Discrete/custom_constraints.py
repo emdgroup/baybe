@@ -55,17 +55,32 @@ parameters = [solvent, speed, temperature, concentration]
 # We thus need to define our constraint first as follows.
 
 
-def custom_function(series: pd.Series) -> bool:
+def custom_function(df: pd.DataFrame) -> pd.Series:
     """This constraint implements a custom user-defined filter/validation functionality."""  # noqa: D401
-    if series.Solvent == "water":
-        if series.Temperature > 120 and series.Concentration > 5:
-            return False
-        if series.Temperature > 180 and series.Concentration > 3:
-            return False
-    if series.Solvent == "C3":
-        if series.Temperature < 150 and series.Concentration > 3:
-            return False
-    return True
+    # Situation 1: We only want entries where the solvent water is used with
+    # temperatures <= 120 and concentrations <= 5
+    mask_bad1 = (
+        (df["Solvent"] == "water")
+        & (df["Temperature"] > 120)
+        & (df["Concentration"] > 5)
+    )
+
+    # Situation 2: We only want entries where the solvent C2 is used with
+    # temperatures <= 180 and concentrations <= 3
+    mask_bad2 = (
+        (df["Solvent"] == "C2") & (df["Temperature"] > 180) & (df["Concentration"] > 3)
+    )
+
+    # Situation 3: We only want entries where the solvent C3 is used with
+    # temperatures <= 150 and concentrations <= 3
+    mask_bad3 = (
+        (df["Solvent"] == "C3") & (df["Temperature"] > 150) & (df["Concentration"] > 3)
+    )
+
+    # Combine all situations
+    mask_good = ~(mask_bad1 | mask_bad2 | mask_bad3)
+
+    return mask_good
 
 
 # We now initialize the `CustomConstraint` with all parameters this function should have access to.
@@ -89,13 +104,13 @@ print(campaign)
 #### Manual verification of the constraint
 
 # The following loop performs some recommendations and manually verifies the given constraints.
-N_ITERATIONS = 5
+N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
     print("### ASSERTS ###")
     print(
-        "Number of entries with water, temp above 120 and concentration above 5:      ",
+        "Number of entries with water, temp > 120 and concentration > 5:      ",
         (
             campaign.searchspace.discrete.exp_rep["Concentration"].apply(
                 lambda x: x > 5
@@ -107,7 +122,7 @@ for kIter in range(N_ITERATIONS):
         ).sum(),
     )
     print(
-        "Number of entries with water, temp above 180 and concentration above 3:      ",
+        "Number of entries with C2, temp > 180 and concentration > 3:         ",
         (
             campaign.searchspace.discrete.exp_rep["Concentration"].apply(
                 lambda x: x > 3
@@ -115,17 +130,17 @@ for kIter in range(N_ITERATIONS):
             & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
                 lambda x: x > 180
             )
-            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("water")
+            & campaign.searchspace.discrete.exp_rep["Solvent"].eq("C2")
         ).sum(),
     )
     print(
-        "Number of entries with C3, temp above 180 and concentration above 3:         ",
+        "Number of entries with C3, temp > 150 and concentration > 3:         ",
         (
             campaign.searchspace.discrete.exp_rep["Concentration"].apply(
                 lambda x: x > 3
             )
             & campaign.searchspace.discrete.exp_rep["Temperature"].apply(
-                lambda x: x < 150
+                lambda x: x > 150
             )
             & campaign.searchspace.discrete.exp_rep["Solvent"].eq("C3")
         ).sum(),

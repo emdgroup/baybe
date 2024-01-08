@@ -260,12 +260,14 @@ class DiscreteCustomConstraint(DiscreteConstraint):
     """Class for user-defined custom constraints."""
 
     # object variables
-    validator: Callable[[pd.Series], bool] = field()
-    """A user-defined function modeling the validation of the constraint."""
+    validator: Callable[[pd.DataFrame], pd.Series] = field()
+    """A user-defined function modeling the validation of the constraint. The expected
+    return is a pandas series with boolean entries True/False for search space elements
+    you want to keep/remove."""
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
-        mask_bad = ~data[self.parameters].apply(self.validator, axis=1)
+        mask_bad = ~self.validator(data[self.parameters])
 
         return data.index[mask_bad]
 

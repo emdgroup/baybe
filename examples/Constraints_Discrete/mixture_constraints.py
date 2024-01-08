@@ -1,9 +1,9 @@
-### Example for using a sum constraint in a discrete searchspace
+### Example for using a mixture use case in a discrete searchspace
 
 # Example for imposing sum constraints for discrete parameters.
 # The constraints simulate a situation where we want to mix up to three solvents.
 # However, their respective fractions need to sum up to 100.
-# Also, the solvents should never be chosen twice.
+# Also, the solvents should never be chosen twice, which requires various other constraints.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
