@@ -82,7 +82,7 @@ print(f"Actual User Details: {get_user_details()}")
 campaign = Campaign(**config)
 for k in range(randint(4, 6)):
     dat = campaign.recommend(randint(2, 3))
-    add_fake_results(dat, campaign)
+    add_fake_results(dat, campaign.targets)
     campaign.add_measurements(dat)
 
 # Fake User1 - 5 iterations
@@ -91,7 +91,7 @@ os.environ[VARNAME_TELEMETRY_USERNAME] = "FAKE_USER_1"
 campaign = Campaign(**config)
 for k in range(randint(2, 3)):
     dat = campaign.recommend(randint(3, 4))
-    add_fake_results(dat, campaign)
+    add_fake_results(dat, campaign.targets)
     campaign.add_measurements(dat)
 
 # Fake User1a - Adds recommenations before calling recommend
@@ -101,7 +101,7 @@ campaign = Campaign(**config)
 campaign.add_measurements(dat)
 for k in range(randint(2, 3)):
     dat = campaign.recommend(randint(3, 4))
-    add_fake_results(dat, campaign)
+    add_fake_results(dat, campaign.targets)
     campaign.add_measurements(dat)
 
 # Fake User2 - 2 iterations
@@ -110,7 +110,7 @@ os.environ[VARNAME_TELEMETRY_USERNAME] = "FAKE_USER_2"
 campaign = Campaign(**config)
 for k in range(2):
     dat = campaign.recommend(4)
-    add_fake_results(dat, campaign)
+    add_fake_results(dat, campaign.targets)
     campaign.add_measurements(dat)
 
 # Fake User3 - no telemetry
@@ -120,7 +120,7 @@ os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 campaign = Campaign(**config)
 for k in range(randint(5, 7)):
     dat = campaign.recommend(randint(2, 3))
-    add_fake_results(dat, campaign)
+    add_fake_results(dat, campaign.targets)
     campaign.add_measurements(dat)
 
 # Cleanup
