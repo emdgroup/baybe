@@ -8,16 +8,13 @@ import pytest
 
 from .utils import extract_code_blocks
 
-
-def test_readme():
-    """The blocks in the README become a valid python script when concatenated."""
-    readme_code = "\n".join(extract_code_blocks("README.md"))
-    exec(readme_code)
+doc_files = ["README.md", *Path("docs/userguide/").rglob("*.md")]
+"""Files whose code blocks are to be checked."""
 
 
-@pytest.mark.parametrize("file", Path("docs/userguide/").rglob("*.md"))
-def test_userguide(file: Path):
-    """The blocks in the user guide become a valid python script when concatenated.
+@pytest.mark.parametrize("file", doc_files)
+def test_code_executability(file: Path):
+    """The code blocks in the file become a valid python script when concatenated.
 
     Blocks surrounded with "triple-tilde" are ignored.
     """
@@ -25,9 +22,9 @@ def test_userguide(file: Path):
     exec(userguide_code)
 
 
-@pytest.mark.parametrize("file", Path("docs/userguide/").rglob("*.md"))
-def test_userguide_code_format(file: Path):
-    """The blocks in the user guide are properly formatted.
+@pytest.mark.parametrize("file", doc_files)
+def test_code_format(file: Path):
+    """The code blocks in the file are properly formatted.
 
     If it fails, run `pytest` with the `-s` flag to show the necessary format changes.
     """
