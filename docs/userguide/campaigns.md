@@ -26,10 +26,10 @@ other aspects of the campaign (see [here](#AM) for details on
 from baybe import Campaign
 
 campaign = Campaign(
-    searchspace=my_searchspace,  # Required
-    objective=my_objective,  # Required
-    strategy=my_strategy,  # Optional
-    numerical_measurements_must_be_within_tolerance=my_boolean,  # Optional
+    searchspace=searchspace,  # Required
+    objective=objective,  # Required
+    strategy=strategy,  # Optional
+    numerical_measurements_must_be_within_tolerance=boolean,  # Optional
 )
 ~~~
 
@@ -108,7 +108,7 @@ Measurements are added by expanding the  `DataFrame` that was created by the `re
 function by adding a new column for the target. 
 
 ~~~python
-rec["my_target"] = [2,4,9] # 3 values matching the batch_quantity of 3
+rec["Target_max"] = [2,4,9] # 3 values matching the batch_quantity of 3
 campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ~~~
