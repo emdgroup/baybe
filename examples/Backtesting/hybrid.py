@@ -11,6 +11,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from baybe import Campaign
@@ -37,12 +38,9 @@ N_DOE_ITERATIONS = 2
 
 
 # See [`here`](./custom_analytical.md) for details on the custom analytical test function.
-def sum_of_squares(*x: float) -> float:
-    """Calculate the sum of squares."""
-    res = 0
-    for y in x:
-        res += y**2
-    return res
+def sum_of_squares(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate the sum of squares of all parameter values."""
+    return np.square(df).sum(axis=1).rename("Target").to_frame()
 
 
 # For our actual experiment, we need to specify the number of dimension that we want to use.

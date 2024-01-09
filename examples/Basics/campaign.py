@@ -132,7 +132,7 @@ for batch_quantity in [2, 3]:
 # This is done by creating a new column in the `recommendation` dataframe named after the target.
 # In this example, we use the `add_fake_results()` utility function to create some fake results.
 
-add_fake_results(recommendation, campaign)
+add_fake_results(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 

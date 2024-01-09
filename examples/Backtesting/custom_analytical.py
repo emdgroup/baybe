@@ -15,6 +15,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from baybe import Campaign
@@ -39,12 +40,9 @@ N_DOE_ITERATIONS = 2
 # See [here](./../Searchspaces/continuous_space_custom_function.md) for details.
 
 
-def sum_of_squares(*x: float) -> float:
-    """Calculate the sum of squares."""
-    res = 0
-    for y in x:
-        res += y**2
-    return res
+def sum_of_squares(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate the sum of squares of all parameter values."""
+    return np.square(df).sum(axis=1).rename("Target").to_frame()
 
 
 DIMENSION = 4
