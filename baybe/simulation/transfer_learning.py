@@ -10,6 +10,8 @@ from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
 from baybe.simulation.core import simulate_scenarios
 
+# TODO: Write test/example for transfer learning and reactivate coverage
+
 
 def simulate_transfer_learning(
     campaign: Campaign,
