@@ -26,8 +26,8 @@ that lies within the chosen interval.
 from baybe.parameters import NumericalContinuousParameter
 
 NumericalContinuousParameter(
-   name = "Temperature",
-   bounds = (0, 100),
+    name="Temperature",
+    bounds=(0, 100),
 )
 ```
 
@@ -58,8 +58,9 @@ that specified tolerance from any of the possible values.
 from baybe.parameters import NumericalDiscreteParameter
 
 NumericalDiscreteParameter(
-   name = "Temperature",
-   values = (0, 10, 20, 30, 40, 50), # you can also use np.arange or similar to provide values
+    name="Temperature",
+    # you can also use np.arange or similar to provide values
+    values=(0, 10, 20, 30, 40, 50),
 )
 ```
 
@@ -80,9 +81,9 @@ be reasonable.
 from baybe.parameters import CategoricalParameter
 
 CategoricalParameter(
-   name = "Intensity",
-   values = ("low", "medium" ,"high"),
-   encoding = "INT", # optional, uses integer encoding as described above
+    name="Intensity",
+    values=("low", "medium", "high"),
+    encoding="INT",  # optional, uses integer encoding as described above
 )
 ```
 
@@ -119,8 +120,8 @@ SubstanceParameter(
         "1-Octanol": "CCCCCCCCO",
         "Toluene": "CC1=CC=CC=C1",
     },
-    encoding = "MORDRED", # optional
-    decorrelate = 0.7, # optional
+    encoding="MORDRED",  # optional
+    decorrelate=0.7,  # optional
 )
 ```
 
@@ -164,17 +165,18 @@ polymers:
 import pandas as pd
 from baybe.parameters import CustomDiscreteParameter
 
-descriptors = pd.DataFrame({
+descriptors = pd.DataFrame(
+    {
         "Glass_Transition_TempC": [20, -71, -39],
         "Weight_kDalton": [120, 32, 241],
-    }, 
-   index = ["Polymer A", "Polymer B", "Polymer C"] # put labels in the index
+    },
+    index=["Polymer A", "Polymer B", "Polymer C"],  # put labels in the index
 )
 
 CustomDiscreteParameter(
-    name = "Polymer",
-    data = descriptors,
-    decorrelate = True, # optional, uses default correlation threshold
+    name="Polymer",
+    data=descriptors,
+    decorrelate=True,  # optional, uses default correlation threshold
 )
 ```
 

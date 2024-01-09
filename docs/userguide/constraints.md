@@ -48,9 +48,9 @@ The constraint assuring that they always sum up to 1.0 would look like this:
 from baybe.constraints import ContinuousLinearEqualityConstraint
 
 ContinuousLinearEqualityConstraint(
-    parameters = ["x_1", "x_2", "x_3"], # these parameters must exist in the search space
-    coefficients = [1.0, 1.0, 1.0],
-    rhs = 1.0
+    parameters=["x_1", "x_2", "x_3"],  # these parameters must exist in the search space
+    coefficients=[1.0, 1.0, 1.0],
+    rhs=1.0,
 )
 ```
 
@@ -82,10 +82,10 @@ The following constraint would achieve this:
 from baybe.constraints import ContinuousLinearInequalityConstraint
 
 ContinuousLinearInequalityConstraint(
-    parameters = ["x_1", "x_2", "x_3"], # these parameters must exist in the search space
-    coefficients = [-1.0, -1.0, -1.0],
-    rhs = -0.8 # coefficients and rhs are negated because we model a `<=` constraint
-),
+    parameters=["x_1", "x_2", "x_3"],  # these parameters must exist in the search space
+    coefficients=[-1.0, -1.0, -1.0],
+    rhs=-0.8,  # coefficients and rhs are negated because we model a `<=` constraint
+)
 ```
 
 A more detailed example can be found
@@ -104,9 +104,9 @@ achieved with a [`ThresholdCondition`](baybe.constraints.conditions.ThresholdCon
 ```python
 from baybe.constraints import ThresholdCondition
 
-ThresholdCondition( # will select all values above 150
-    threshold = 150,
-    operator = ">",
+ThresholdCondition(  # will select all values above 150
+    threshold=150,
+    operator=">",
 )
 ```
 
@@ -116,8 +116,8 @@ In case a specific subset of values needs to be selected, it can be done with th
 ```python
 from baybe.constraints import SubSelectionCondition
 
-SubSelectionCondition( # will select two solvents identified by their labels
-    selection = ["Ethanol", "DMF"]
+SubSelectionCondition(  # will select two solvents identified by their labels
+    selection=["Ethanol", "DMF"]
 )
 ```
 
@@ -141,15 +141,19 @@ The following example would exclude entries where "Ethanol" and "DMF" are combin
 temperatures above 150, which might be due to their chemical instability at those
 temperatures:
 ```python
-from baybe.constraints import DiscreteExcludeConstraint, ThresholdCondition, SubSelectionCondition
+from baybe.constraints import (
+    DiscreteExcludeConstraint,
+    ThresholdCondition,
+    SubSelectionCondition,
+)
 
 DiscreteExcludeConstraint(
-    parameters = ["Temperature", "Solvent"], # names of the affected parameters
-    combiner = "AND", # specifies how the conditions are logically combined
-    conditions = [ # requires one condition for each entry in parameters
-        ThresholdCondition(threshold = 150, operator = ">"),
-        SubSelectionCondition(selection = ["Ethanol", "DMF"]),
-    ]
+    parameters=["Temperature", "Solvent"],  # names of the affected parameters
+    combiner="AND",  # specifies how the conditions are logically combined
+    conditions=[  # requires one condition for each entry in parameters
+        ThresholdCondition(threshold=150, operator=">"),
+        SubSelectionCondition(selection=["Ethanol", "DMF"]),
+    ],
 )
 ```
 
@@ -168,11 +172,12 @@ If these parameters were instead discrete, the corresponding constraint would lo
 from baybe.constraints import DiscreteSumConstraint, ThresholdCondition
 
 DiscreteSumConstraint(
-    parameters = ["x_1", "x_2", "x_3"],
-    condition = ThresholdCondition( # set condition that should apply to the sum
-        threshold = 1.0,
-        operator = "=",
-        tolerance = 0.001) # optional; here, everything between 0.999 and 1.001 would also be considered valid
+    parameters=["x_1", "x_2", "x_3"],
+    condition=ThresholdCondition(  # set condition that should apply to the sum
+        threshold=1.0,
+        operator="=",
+        tolerance=0.001,  # optional; here, everything between 0.999 and 1.001 would also be considered valid
+    ),
 )
 ```
 
@@ -190,11 +195,9 @@ We can exclude such occurrences with the
 [`DiscreteNoLabelDuplicatesConstraint`](baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint):
 
 ```python
-from baybe.constraints import  DiscreteNoLabelDuplicatesConstraint
+from baybe.constraints import DiscreteNoLabelDuplicatesConstraint
 
-DiscreteNoLabelDuplicatesConstraint(
-    parameters=["Solvent_1", "Solvent_2"]
-)
+DiscreteNoLabelDuplicatesConstraint(parameters=["Solvent_1", "Solvent_2"])
 ```
 
 Without this constraint, combinations like below would be possible:
@@ -221,17 +224,17 @@ from baybe.constraints import DiscreteLinkedParametersConstraint
 
 dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
 solvent_encoding1 = SubstanceParameter(
-    name = 'Solvent_RDKIT_enc',
-    data = dict_solvents,
-    encoding = "RDKIT",
+    name="Solvent_RDKIT_enc",
+    data=dict_solvents,
+    encoding="RDKIT",
 )
 solvent_encoding2 = SubstanceParameter(
-    name = 'Solvent_MORDRED_enc',
-    data = dict_solvents,
-    encoding = "MORDRED",
+    name="Solvent_MORDRED_enc",
+    data=dict_solvents,
+    encoding="MORDRED",
 )
 DiscreteLinkedParametersConstraint(
-    parameters = ["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"]
+    parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"]
 )
 ```
 
@@ -280,12 +283,18 @@ from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondit
 DiscreteDependenciesConstraint(
     parameters=["Switch_1", "Switch_2"],  # the two parameters upon which others depend
     conditions=[
-        SubSelectionCondition(selection=["on"]),     # values of Switch_1 that activate the affected parameters
-        SubSelectionCondition(selection=["right"]),  # values of Switch_2 that activate the affected parameters
+        SubSelectionCondition(
+            # values of Switch_1 that activate the affected parameters
+            selection=["on"]
+        ),
+        SubSelectionCondition(
+            # values of Switch_2 that activate the affected parameters
+            selection=["right"]
+        ),
     ],
     affected_parameters=[
-      ["Solvent", "Fraction"],  # parameters affected by Switch_1
-      ["Frame_1", "Frame_2"]    # parameters affected by Switch_2
+        ["Solvent", "Fraction"],  # parameters affected by Switch_1
+        ["Frame_1", "Frame_2"],  # parameters affected by Switch_2
     ],
 )
 ```
@@ -347,7 +356,11 @@ removes permutation-invariant combinations of solvents that have additional
 dependencies as well:
 
 ```python
-from baybe.constraints import DiscretePermutationInvarianceConstraint, DiscreteDependenciesConstraint, ThresholdCondition
+from baybe.constraints import (
+    DiscretePermutationInvarianceConstraint,
+    DiscreteDependenciesConstraint,
+    ThresholdCondition,
+)
 
 DiscretePermutationInvarianceConstraint(
     parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
@@ -377,7 +390,8 @@ import pandas as pd
 import numpy as np
 from baybe.constraints import DiscreteCustomConstraint
 
-def custom_filter(df: pd.DataFrame) -> pd.Series: # this signature is required
+
+def custom_filter(df: pd.DataFrame) -> pd.Series:  # this signature is required
     """
     In this example, we exclude entries where the square root of the
     temperature times the cubed pressure are larger than 5.6.
@@ -386,9 +400,13 @@ def custom_filter(df: pd.DataFrame) -> pd.Series: # this signature is required
 
     return mask_good
 
+
 DiscreteCustomConstraint(
-    parameters = ["Pressure", "Temperature"], # the custom function will have access to these variables
-    validator = custom_filter
+    parameters=[  # the custom function will have access to these variables
+        "Pressure",
+        "Temperature",
+    ],
+    validator=custom_filter,
 )
 ```
 

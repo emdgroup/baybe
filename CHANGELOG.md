@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hypothesis` strategies and tests for targets and intervals
 - De-/serialization of target subclasses via base class
 - Docs building check now part of CI
+- Automatic formatting checks for code examples in documentation
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transformation`

@@ -157,18 +157,22 @@ parameters = [
     CategoricalParameter(
         name="Granularity",
         values=["coarse", "medium", "fine"],
-        encoding="OHE", # one-hot encoding of categories
+        encoding="OHE",  # one-hot encoding of categories
     ),
     NumericalDiscreteParameter(
         name="Pressure[bar]",
         values=[1, 5, 10],
-        tolerance=0.2, # allows experimental inaccuracies up to 0.2 when reading values 
+        tolerance=0.2,  # allows experimental inaccuracies up to 0.2 when reading values
     ),
     SubstanceParameter(
         name="Solvent",
-        data={"Solvent A": "COC", "Solvent B": "CCC", # label-SMILES pairs
-              "Solvent C": "O", "Solvent D": "CS(=O)C"},
-        encoding="MORDRED", # chemical encoding via mordred package
+        data={
+            "Solvent A": "COC",
+            "Solvent B": "CCC",  # label-SMILES pairs
+            "Solvent C": "O",
+            "Solvent D": "CS(=O)C",
+        },
+        encoding="MORDRED",  # chemical encoding via mordred package
     ),
 ]
 ```
@@ -210,8 +214,8 @@ from baybe.strategies import TwoPhaseStrategy
 from baybe.recommenders import SequentialGreedyRecommender, FPSRecommender
 
 strategy = TwoPhaseStrategy(
-    initial_recommender=FPSRecommender(), # farthest point sampling
-    recommender=SequentialGreedyRecommender(), # Bayesian model-based optimization
+    initial_recommender=FPSRecommender(),  # farthest point sampling
+    recommender=SequentialGreedyRecommender(),  # Bayesian model-based optimization
 )
 ```
 
