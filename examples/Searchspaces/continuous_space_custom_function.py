@@ -7,6 +7,9 @@
 
 #### Necessary imports
 
+import numpy as np
+import pandas as pd
+
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
@@ -23,12 +26,9 @@ from baybe.targets import NumericalTarget
 # In this example, we implement a simple sum of squares function with a single output.
 
 
-def sum_of_squares(*x: float) -> float:
-    """Calculate the sum of squares."""
-    res = 0
-    for y in x:
-        res += y**2
-    return res
+def sum_of_squares(df: pd.DataFrame) -> pd.DataFrame:
+    """Calculate the sum of squares of all parameter values."""
+    return np.square(df).sum(axis=1).rename("Target").to_frame()
 
 
 TEST_FUNCTION = sum_of_squares
@@ -68,17 +68,11 @@ campaign = Campaign(
 BATCH_QUANTITY = 3
 recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
 
-# Evaluate the test function.
-# Note that we need iterate through the rows of the recommendation.
-# Furthermore, we need to interpret the row as a list.
-target_values = []
-for index, row in recommendation.iterrows():
-    target_values.append(TEST_FUNCTION(*row.to_list()))
+# We now evaluate the test function. The target values are then appended to the
+# recommendations dataframe.
+measurements = pd.concat([recommendation, TEST_FUNCTION(recommendation)], axis=1)
 
-# We add an additional column with the calculated target values.
-recommendation["Target"] = target_values
-
-# Here, we inform the campaign about our measurement.
-campaign.add_measurements(recommendation)
-print("\n\nRecommended experiments with measured values: ")
-print(recommendation)
+# Lastly, we inform the campaign about our measurement.
+campaign.add_measurements(measurements)
+print("\n\nRecommended experiments with measured values:")
+print(measurements)
