@@ -91,8 +91,8 @@ situation, for example when using recommenders that do not perform joint optimiz
 
 ### Caching of recommendations
 
-Whenever recommendations are made, the `Campaign` object caches them. If measurements
-for the recommendations are added, then the cached recommendations are deleted. However,
+Whenever recommendations are made, the `Campaign` object caches them. If any new 
+measurements are added, then the cached recommendations are deleted. However,
 if no measurements are added and the `recommend` function is called again, then the
 `Campaign` object returns the cached recommendations instead of generating new
 ones. In addition, the cache is also reset if the batch size of the repeated call has
