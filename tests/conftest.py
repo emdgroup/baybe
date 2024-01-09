@@ -543,6 +543,12 @@ def fixture_campaign(parameters, constraints, strategy, objective):
     )
 
 
+@pytest.fixture(name="searchspace")
+def fixture_searchspace(parameters, constraints):
+    """Returns a searchspace."""
+    return SearchSpace.from_product(parameters=parameters, constraints=constraints)
+
+
 @pytest.fixture(name="twophase_strategy")
 def fixture_default_twophase_strategy(recommender, initial_recommender):
     """The default ```TwoPhaseStrategy``` to be used if not specified differently."""
