@@ -1,5 +1,4 @@
 ### Example for using a synthetic BoTorch test function in a continuous searchspace
-import pandas as pd
 
 # Example for using the synthetic test functions in a continuous spaces.
 # All test functions that are available in BoTorch can be used here.
@@ -7,7 +6,9 @@ import pandas as pd
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
 # We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
+
 #### Necessary imports for this example
+import pandas as pd
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
