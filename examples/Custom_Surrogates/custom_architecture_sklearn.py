@@ -143,7 +143,7 @@ print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
-add_fake_results(recommendation, campaign)
+add_fake_results(recommendation, campaign.targets)
 campaign.add_measurements(recommendation)
 
 # Do another round of recommendations

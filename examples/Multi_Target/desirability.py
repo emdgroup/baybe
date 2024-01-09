@@ -110,7 +110,7 @@ for kIter in range(N_ITERATIONS):
     rec = campaign.recommend(batch_quantity=3)
     print("\nRecommended measurements:\n", rec)
 
-    add_fake_results(rec, campaign)
+    add_fake_results(rec, campaign.targets)
     print("\nRecommended measurements with fake measured results:\n", rec)
 
     campaign.add_measurements(rec)

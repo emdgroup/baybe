@@ -14,11 +14,15 @@ from baybe.targets.enum import TargetMode
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
-    from baybe.campaign import Campaign
     from baybe.parameters import Parameter
+    from baybe.targets.base import Target
 
 # Logging
 _logger = logging.getLogger(__name__)
+
+# TODO: Most functions contained in this module are not utils but strongly coupled
+#   to BayBE objects. These dependencies should either be removed or the functions
+#   should be moved to the simulation package.
 
 
 def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
@@ -48,7 +52,7 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
 
 def add_fake_results(
     data: pd.DataFrame,
-    campaign: Campaign,
+    targets: List[Target],
     good_reference_values: Optional[Dict[str, list]] = None,
     good_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
     bad_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
@@ -63,7 +67,7 @@ def add_fake_results(
     Args:
         data: Output of the ``recommend`` function of a ``Campaign``, see
             :func:`baybe.campaign.Campaign.recommend`.
-        campaign: The corresponding campaign, providing configuration, targets, etc.
+        targets: The corresponding BayBE targets.
         good_reference_values: A dictionary containing parameter names (= dict keys) and
             respective parameter values (= dict values) that specify what will be
             considered good parameter settings. Conditions for different parameters are
@@ -106,7 +110,7 @@ def add_fake_results(
     # Set defaults for good intervals
     if good_intervals is None:
         good_intervals = {}
-        for target in campaign.targets:
+        for target in targets:
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
                 ubound = (
@@ -135,7 +139,7 @@ def add_fake_results(
     # Set defaults for bad intervals
     if bad_intervals is None:
         bad_intervals = {}
-        for target in campaign.targets:
+        for target in targets:
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
@@ -163,7 +167,7 @@ def add_fake_results(
             bad_intervals[target.name] = interv
 
     # Add the fake data for each target
-    for target in campaign.targets:
+    for target in targets:
         # Add bad values
         data[target.name] = np.random.uniform(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)

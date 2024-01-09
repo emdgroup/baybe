@@ -743,7 +743,7 @@ def run_iterations(
         rec = campaign.recommend(batch_quantity=batch_quantity)
         # dont use parameter noise for these tests
 
-        add_fake_results(rec, campaign)
+        add_fake_results(rec, campaign.targets)
         if add_noise and (k % 2):
             add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
 

@@ -11,9 +11,9 @@
 
 #### Necessary imports for this example
 
-from typing import Tuple
 
 import numpy as np
+import pandas as pd
 
 from baybe import Campaign
 from baybe.objective import Objective
@@ -34,12 +34,11 @@ N_DOE_ITERATIONS = 4
 
 
 # See [`custom_analytical`](./custom_analytical.md) for details
-def sum_of_squares(*x: float) -> Tuple[float, float]:
-    """Calculate the sum of squares."""
-    res = 0
-    for y in x:
-        res += y**2
-    return res, 2 * res**2 - 1
+def target_function(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute two targets for each parameter configuration."""
+    out = np.square(df).sum(axis=1).rename("Target_1").to_frame()
+    out["Target_2"] = 2 * np.square(out["Target_1"]) - 1
+    return out
 
 
 DIMENSION = 4
@@ -97,7 +96,7 @@ scenarios = {"BayBE": campaign}
 
 results = simulate_scenarios(
     scenarios,
-    sum_of_squares,
+    target_function,
     batch_quantity=2,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,

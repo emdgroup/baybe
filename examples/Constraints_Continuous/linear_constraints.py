@@ -2,8 +2,7 @@
 
 # Example for optimizing a synthetic test functions in a continuous space with linear
 # constraints.
-# All test functions that are available in BoTorch are also available here and wrapped
-# via the `botorch_function_wrapper`.
+# All test functions that are available in BoTorch can be used here.
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
@@ -14,6 +13,7 @@
 #### Necessary imports for this example
 
 import numpy as np
+import pandas as pd
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
@@ -25,7 +25,7 @@ from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils import add_dataframe_layer
 
 #### Defining the test function
 
@@ -41,7 +41,6 @@ else:
     DIMENSION = TestFunctionClass().dim
 
 BOUNDS = TestFunction.bounds
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 #### Creating the searchspace and the objective
 
@@ -76,9 +75,8 @@ constraints = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
+targets = [NumericalTarget(name="Target", mode="MIN")]
+objective = Objective(mode="SINGLE", targets=targets)
 
 #### Construct the campaign and run some iterations
 
@@ -89,17 +87,13 @@ campaign = Campaign(
 
 BATCH_QUANTITY = 3
 N_ITERATIONS = 3
+WRAPPED_FUNCTION = add_dataframe_layer(TestFunction, [t.name for t in targets])
 
 for k in range(N_ITERATIONS):
     recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
-
-    # target value are looked up via the botorch wrapper
-    target_values = []
-    for index, row in recommendation.iterrows():
-        target_values.append(WRAPPED_FUNCTION(*row.to_list()))
-
-    recommendation["Target"] = target_values
-
+    recommendation = pd.concat(
+        [recommendation, WRAPPED_FUNCTION(recommendation)], axis=1
+    )
     campaign.add_measurements(recommendation)
 
 #### Verify the constraints

@@ -6,6 +6,7 @@ import pytest
 
 from baybe import BayBE, Campaign
 from baybe.searchspace import SearchSpace
+from baybe.simulation.core import simulate_experiment
 from baybe.strategies import Strategy
 from baybe.targets import Objective
 from baybe.targets.base import Target
@@ -62,3 +63,10 @@ def test_missing_target_type():
                 }
             )
         )
+
+
+def test_deprecated_simulate_experiment():
+    """Using the deprecated ``simulate_experiment`` function raises a warning."""
+    with pytest.warns(DeprecationWarning):
+        with pytest.raises(Exception):
+            simulate_experiment()
