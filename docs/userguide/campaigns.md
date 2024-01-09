@@ -122,8 +122,10 @@ This requirement can be disabled upon initialization of a campaign using the
 ## Serialization
 
 Like most of the objects managed by BayBE, `Campaign` objects can be serialized and
-deserialized using the [`to_json`](baybe.utils.serialization.SerialMixin.to_json)
-method. This method converts the `Campaign` to a string in `json` format. As expected,
+deserialized using the [`to_json`](baybe.utils.serialization.SerialMixin.to_json) and
+[`from_json`](baybe.utils.serialization.SerialMixin.from_json) methods.
+These methods convert the `Campaign` to a string in `json` format resp. convert a string
+in`json` format to a `Campaign` object. As expected,
 serializing and de-serializing a campaign yields the exact identical object:
 ~~~python
 campaign_json = campaign.to_json()
