@@ -41,7 +41,7 @@ def look_up_targets(
               (column names being the target names), where each row holds the targets
               for the corresponding parameter row.
         impute_mode: Specifies how a missing lookup will be handled (only relevant
-            for dataframe lookups). See :func:`baybe.simulation.simulate_experiment`
+            for dataframe lookups). See :func:`baybe.simulation.core.simulate_campaign`
             for details.
 
     Raises:

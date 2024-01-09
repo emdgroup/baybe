@@ -37,7 +37,7 @@ def simulate_transfer_learning(
     implemented at the moment.
 
     Args:
-        campaign: See :func:`baybe.simulation.simulate_experiment`.
+        campaign: See :func:`baybe.simulation.simulate_campaign`.
         lookup: See :func:`baybe.simulation.simulate_scenarios`.
         batch_quantity: See :func:`baybe.simulation.simulate_scenarios`.
         n_doe_iterations: See :func:`baybe.simulation.simulate_scenarios`.
