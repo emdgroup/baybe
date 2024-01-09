@@ -129,7 +129,7 @@ def _lookup_targets_from_dataframe(
         all_match_vals.append(match_vals)
 
     # Add the lookup values
-    queries.loc[:, target_names] = pd.concat(all_match_vals, axis=1).T
+    queries.loc[:, target_names] = pd.concat(all_match_vals, axis=1).T.values
 
 
 def _impute_lookup(
