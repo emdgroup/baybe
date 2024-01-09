@@ -17,8 +17,11 @@ def test_readme():
 
 @pytest.mark.parametrize("file", Path("docs/userguide/").rglob("*.md"))
 def test_userguide(file: Path):
-    """The blocks in the user guide become a valid python script when concatenated."""
-    userguide_code = "\n".join(extract_code_blocks(file))
+    """The blocks in the user guide become a valid python script when concatenated.
+
+    Blocks surrounded with "triple-tilde" are ignored.
+    """
+    userguide_code = "\n".join(extract_code_blocks(file, include_tilde=False))
     exec(userguide_code)
 
 
