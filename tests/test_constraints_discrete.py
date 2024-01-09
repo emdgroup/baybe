@@ -228,7 +228,7 @@ def test_custom(campaign):
     (
         campaign.searchspace.discrete.exp_rep["Pressure"].apply(lambda x: x > 3)
         & campaign.searchspace.discrete.exp_rep["Temperature"].apply(lambda x: x > 180)
-        & campaign.searchspace.discrete.exp_rep["Solvent_1"].eq("water")
+        & campaign.searchspace.discrete.exp_rep["Solvent_1"].eq("C2")
     ).sum()
     assert num_entries == 0
 

@@ -381,16 +381,26 @@ def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_poi
     # the list comprehension would match substrings instead)
     assert isinstance(constraint_names, list)
 
-    def custom_function(series: pd.Series) -> bool:
-        if series.Solvent_1 == "water":
-            if series.Temperature > 120 and series.Pressure > 5:
-                return False
-            if series.Temperature > 180 and series.Pressure > 3:
-                return False
-        if series.Solvent_1 == "C3":
-            if series.Temperature < 150 and series.Pressure > 3:
-                return False
-        return True
+    def custom_function(df: pd.DataFrame) -> pd.Series:
+        mask_good = ~(
+            (
+                (df["Solvent_1"] == "water")
+                & (df["Temperature"] > 120)
+                & (df["Pressure"] > 5)
+            )
+            | (
+                (df["Solvent_1"] == "C2")
+                & (df["Temperature"] > 180)
+                & (df["Pressure"] > 3)
+            )
+            | (
+                (df["Solvent_1"] == "C3")
+                & (df["Temperature"] < 150)
+                & (df["Pressure"] > 3)
+            )
+        )
+
+        return mask_good
 
     valid_constraints = {
         "Constraint_1": DiscreteDependenciesConstraint(
