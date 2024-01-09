@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wrong use of `tolerance` argument in constraints user guide
 - Errors with generics and type aliases in documentation
 - Deduplication bug in substance_data hypothesis strategy
+- Parameter classes are now slotted due to `cached_property` attrs support
 
 ### Removed
 - Conda install instructions and version badge
