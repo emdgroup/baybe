@@ -23,9 +23,9 @@ def simulate_transfer_learning(
 ) -> pd.DataFrame:
     """Simulate Bayesian optimization with transfer learning.
 
-    A wrapper around :func:`baybe.simulation.simulate_scenarios` that partitions the
-    search space into its tasks and simulates each task with the training data from the
-    remaining tasks.
+    A wrapper around :func:`baybe.simulation.core.simulate_scenarios` that partitions
+    the search space into its tasks and simulates each task with the training data from
+    the remaining tasks.
 
     **NOTE:**
     Currently, the simulation only supports purely discrete search spaces. This is
@@ -37,16 +37,16 @@ def simulate_transfer_learning(
     implemented at the moment.
 
     Args:
-        campaign: See :func:`baybe.simulation.simulate_experiment`.
-        lookup: See :func:`baybe.simulation.simulate_scenarios`.
-        batch_quantity: See :func:`baybe.simulation.simulate_scenarios`.
-        n_doe_iterations: See :func:`baybe.simulation.simulate_scenarios`.
-        groupby: See :func:`baybe.simulation.simulate_scenarios`.
-        n_mc_iterations: See :func:`baybe.simulation.simulate_scenarios`.
+        campaign: See :func:`baybe.simulation.core.simulate_campaign`.
+        lookup: See :func:`baybe.simulation.core.simulate_scenarios`.
+        batch_quantity: See :func:`baybe.simulation.core.simulate_scenarios`.
+        n_doe_iterations: See :func:`baybe.simulation.core.simulate_scenarios`.
+        groupby: See :func:`baybe.simulation.core.simulate_scenarios`.
+        n_mc_iterations: See :func:`baybe.simulation.core.simulate_scenarios`.
 
     Returns:
-        A dataframe as returned by :func:`baybe.simulation.simulate_scenarios` where
-        the different tasks are represented in the ``Scenario`` column.
+        A dataframe as returned by :func:`baybe.simulation.core.simulate_scenarios`
+        where the different tasks are represented in the ``Scenario`` column.
 
     Raises:
         NotImplementedError: If a non-discrete search space is chosen.
