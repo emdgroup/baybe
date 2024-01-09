@@ -1,6 +1,6 @@
 # Campaigns
 
-Campaigns play a crucial role in Design of Experiments, and consequently also for BayBE.
+Campaigns play a crucial role in Design of Experiments (DOE), and consequently also for BayBE.
 They serve as a structured framework for defining and documenting an experimentation
 process.
 
