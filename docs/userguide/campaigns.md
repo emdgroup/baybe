@@ -87,6 +87,8 @@ each other without considering the joint optimization.
 
 Note that this distinction might not be relevant or applicable for all possible
 situation, for example when using recommenders that do not perform joint optimization.
+Currently, the sequential greedy recommender is the only available recommender
+performing joint optimization.
 ```
 
 ### Caching of recommendations
