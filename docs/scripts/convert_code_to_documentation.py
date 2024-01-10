@@ -154,15 +154,20 @@ def create_example_documentation(example_dest_dir: str):
             notebook_path = file.with_suffix(".ipynb")
 
             # 2. Execute the notebook and convert to markdown.
+            # This is only done if we decide not to ignore the examples.
+            # The creation of the files themselves and converting them to markdown still
+            # happens since we need the files to check for link integrity.
             convert_execute = [
                 "jupyter",
                 "nbconvert",
-                "--execute",
                 "--to",
                 "notebook",
                 "--inplace",
                 notebook_path,
             ]
+            if not IGNORE_EXAMPLES:
+                convert_execute.append("--execute")
+
             to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
             check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
@@ -274,8 +279,8 @@ building_call = [
 ]
 
 # Process examples if required.
-if not IGNORE_EXAMPLES:
-    create_example_documentation(example_dest_dir="docs/examples")
+# Note that ignoring of examples now happens by simply not executing them.
+create_example_documentation(example_dest_dir="docs/examples")
 
 
 if FORCE:
@@ -302,11 +307,10 @@ for directory in [sdk_dir, autosummary_dir]:
 documentation = pathlib.Path(build_dir)
 shutil.move(documentation, destination_dir)
 
-# If we decided to not ignore the examples, we delete the created markdown files
-if not IGNORE_EXAMPLES:
-    example_directory = pathlib.Path("docs/examples")
-    if example_directory.is_dir():
-        shutil.rmtree(example_directory)
+# Delete the created markdown files of the examples.
+example_directory = pathlib.Path("docs/examples")
+if example_directory.is_dir():
+    shutil.rmtree(example_directory)
 
 # If we decided to ignore warnings, we now do no want to ignore them anymore
 if not INCLUDE_WARNINGS:
