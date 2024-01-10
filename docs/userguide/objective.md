@@ -31,16 +31,16 @@ objective = Objective(mode="SINGLE", targets=[target1])
 ```
 
 ### DESIRABILITY
-The `DESIRABILITY` mode enables you to combine multiple targets via scalarization 
+The `DESIRABILITY` mode enables the combination multiple targets via scalarization 
 into a single value, a method also utilized in classical DOE.
 
 Besides `mode` and `targets`, this objective type has two additional optional arguments:
 * `weights`: Some targets might be more important than others.
-  You can specify the relative weights of the targets in this argument.
-  BayBE automatically normalizes the numbers you provide, so only the relations between 
+  It is possible to specify the relative weights of the targets in this argument.
+  BayBE automatically normalizes the numbers provided, so only the relations between 
   them matter.
 * `combine_func`: Specifies the function used for combining the transformed targets. 
-  You can choose between `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
+  The choices are `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
   geometric mean respectively.
 
 The definitions of the means are as follows, where $t_i$ enumerate the **scaled** target 
