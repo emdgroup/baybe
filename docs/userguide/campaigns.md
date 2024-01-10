@@ -132,6 +132,8 @@ campaign_json = campaign.to_json()
 recreated_campaign = Campaign.from_json(campaign_json)
 assert campaign == recreated_campaign
 ~~~
+Note that the serialization stores the `DataFrame` objects associated with the
+`Campaign` object in a special encoding that is not human-readable.
 For more information on serialization, using the `to_json` and `from_json` methods, we
 refer to the corresponding [examples](./../../examples/Serialization/Serialization).
 
