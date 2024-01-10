@@ -1,25 +1,34 @@
 # Campaigns
 
-Campaigns play a crucial role in Design of Experiments (DOE), and consequently also for BayBE.
-They serve as a structured framework for defining and documenting an experimentation
-process.
+[... add some brief general (non-BayBE related!) intro about campaigns here: what are
+they, why do they naturally arise in the context of Bayesian optimization ... similar
+to the general part in other guide sections ...]
+In summary, campaigns are an integral part of Bayesian optimization and, accordingly,
+they also play a central role in BayBE.
 
-The [`Campaign`](baybe.campaign.Campaign) class is used to model campaigns and 
-serves as the primary interface for interacting with BayBE as a user. This class is
-responsible for handling the data, making recommendations, adding measurements and
-most other tasks.
+The [`Campaign`](baybe.campaign.Campaign) class provides a structured framework for 
+defining and documenting an experimentation process.
+It further serves as the primary interface for interacting with BayBE as a user
+since it is responsible for handling experimental data, making recommendations, adding
+measurements, and most other user-related tasks.
 
 ## Creating a campaign
 
-### Using the campaign class
+### Basic creation
 
-When constructing a campaign, it is necessary to provide two objects:
-A search space (see [class](baybe.searchspace.core.SearchSpace) resp. [user guide](./searchspace))
-and an optimization objective (see [class](baybe.objective.Objective) resp. [user guide](./objective)).
-Optionally, it is possible to provide a different strategy
-(see [class](baybe.strategies.base.Strategy) resp. [user guide](./strategy)) and specify
-other aspects of the campaign (see [here](#AM) for details on
-`numerical_measurements_must_be_within_tolerance`).
+Creating a campaign requires specifying at least two pieces of information that
+describe the underlying optimization problem at hand:
+
+| Campaign Specification                     | BayBE Class                                                                               |
+|:-------------------------------------------|:------------------------------------------------------------------------------------------|
+| What should be optimized in the campaign?  | `Objective` ([class](baybe.objective.Objective) / [user guide](./objective))              |
+| Which experimental factors can be altered? | `SearchSpace` ([class](baybe.searchspace.core.SearchSpace) / [user guide](./searchspace)) |
+
+Apart from this basic configuration, it is possible to provide additional instructions, 
+such as the specific optimization 
+`Strategy`&nbsp;([class](baybe.strategies.base.Strategy) 
+/ [user guide](./strategy)) to be used, as well as other aspects of the campaign 
+(see [here](#AM) for details on `numerical_measurements_must_be_within_tolerance`).
 
 
 ~~~python
@@ -34,18 +43,19 @@ campaign = Campaign(
 ~~~
 
 ```{attention}
-Note that we currently also expose other fields via the constructor. This is
-only temporary, and the corresponding fields should be ignored.
+Note that we currently also expose other fields via the constructor. 
+This is only temporary, and the corresponding fields should be ignored.
 ```
 
-### Creating a campaign via a JSON config
-
-It is also possible to specify a `Campaign` via a configuration string and using the
-function [`Campaign.from_config`](baybe.campaign.Campaign.from_config).
-The specification of config files as well as what they contain are automatically
-derived from the class structure.
-Furthermore, a config file can be validated using 
-[Campaign.validate_config](baybe.campaign.Campaign.validate_config).
+### Creation from a JSON config
+Instead of using the default constructor, it is also possible to create a `Campaign` 
+from a JSON configuration string via 
+[`Campaign.from_config`](baybe.campaign.Campaign.from_config).
+Herein, the expected JSON schema of the string should mirror the class
+hierarchy of the objects nested in the corresponding campaign object.
+The string can be easily validated using
+[Campaign.validate_config](baybe.campaign.Campaign.validate_config) without
+instantiating the object, which skips the potentially costly search space creation step.
 For more details and a full exemplary config, we refer to the corresponding
 [example](./../../examples/Serialization/create_from_config).
 
@@ -61,17 +71,17 @@ proper execution of a campaign. It is important to rely on these functions to ma
 the integrity and reliability of the campaign's execution.
 ```
 
-To obtain a recommendation for the next experiment, we can query the campaign and use
-the [`recommend`](baybe.campaign.Campaign.recommend) function. The function takes only
-the `batch_quantity` keyword, specifying the desired size of
-the batch of experiments to be conducted.
+To obtain a recommendation for the next batch of experiments, we can query the 
+campaign via the [`recommend`](baybe.campaign.Campaign.recommend) method.
+It expects a parameter `batch_quantity` that specifies the desired number of 
+experiments to be conducted.
 
 ~~~python
 rec = campaign.recommend(batch_quantity=3)
 ~~~
 
-The `recommend` function returns a `DataFrame` with `batch_quantity` many rows, each 
-representing a set of parameters from the search space.
+Calling the function returns a `DataFrame` with `batch_quantity` many rows, each
+representing a particular parameter configuration from the campaign's search space.
 
 ```{important}
 There is a difference between performing multiple recommendations
@@ -81,7 +91,7 @@ are chosen to *jointly* optimized the acquisition function.
 This means that the recommendations are made considering the interaction of multiple
 experiments together.
 * **Batch size of 1**: When making several smaller recommendations instead, each
-*individual* recommendation optimizes the acquisition function at the specific point in 
+*individual* recommendation optimizes the acquisition function at the specific point in
 time when it is requested. In this case, the recommendations are made independently of
 each other without considering the joint optimization.
 
@@ -93,21 +103,24 @@ performing joint optimization.
 
 ### Caching of recommendations
 
-Whenever recommendations are made, the `Campaign` object caches them. If any new 
-measurements are added, then the cached recommendations are deleted. However,
-if no measurements are added and the `recommend` function is called again, then the
-`Campaign` object returns the cached recommendations instead of generating new
-ones. In addition, the cache is also reset if the batch size of the repeated call has
-changed compared to the first one. This is due to the way the batch size influences
-which points are being recommended.
-This caching mechanism helps to optimize performance by avoiding unnecessary
-re-computations when measurements are not provided.
+The `Campaign` object caches the last batch of recommendations returned, in order to 
+avoid unnecessary computations for subsequent queries between which the status
+of the campaign has not changed. 
+The cache is invalidated as soon as new measurements are added or a different
+batch size is desired.
+The latter is necessary because each batch is optimized for the specific number of 
+experiments requested (see note above).
 
 (AM)=
 ## Adding measurements
 
-Measurements are added by expanding the  `DataFrame` that was created by the `recommend`
-function by adding a new column for the target. 
+Available experimental data can be added at any time during the campaign lifecycle using
+the [`add_measurements`](baybe.campaign.Campaign.add_measurements) method, 
+which expects a `DataFrame` containing the values of the used experimental parameters
+and all corresponding target measurements.
+If measurements are to be added immediately after a call to `recommend`,
+this is most easily achieved by augmenting the  `DataFrame` returned from that call 
+with the respective target columns.
 
 ~~~python
 rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_quantity of 3
@@ -115,32 +128,43 @@ campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ~~~
 
-For discrete parameters, measurements are required to fall into a
-predefined tolerance by default.
-This tolerance is defined on the level of the individual parameters.
-This requirement can be disabled upon initialization of a campaign using the
-`numerical_measurements_must_be_within_tolerance` flag.
+```{note}
+For discrete parameters, the parameter values associated with the provided measurements
+are required to fall into a predefined tolerance interval by default, which is
+defined on the level of the individual parameters.
+This requirement can be disabled using the 
+`numerical_measurements_must_be_within_tolerance` flag of the campaign.
+```
+
 
 ## Serialization
 
 Like most of the objects managed by BayBE, `Campaign` objects can be serialized and
 deserialized using the [`to_json`](baybe.utils.serialization.SerialMixin.to_json) and
-[`from_json`](baybe.utils.serialization.SerialMixin.from_json) methods.
-These methods convert the `Campaign` to a string in `json` format resp. convert a string
-in`json` format to a `Campaign` object. As expected,
-serializing and de-serializing a campaign yields the exact identical object:
+[`from_json`](baybe.utils.serialization.SerialMixin.from_json) methods, which 
+allow to convert between Python objects their corresponding representation in JSON 
+format. 
+These representations are fully equivalent, meaning that serializing and subsequently 
+deserializing a campaign yields an exact copy of the object:
+
 ~~~python
 campaign_json = campaign.to_json()
 recreated_campaign = Campaign.from_json(campaign_json)
 assert campaign == recreated_campaign
 ~~~
-Note that the serialization stores the `DataFrame` objects associated with the
-`Campaign` object in a special encoding that is not human-readable.
-For more information on serialization, using the `to_json` and `from_json` methods, we
+
+```{note}
+Note that `DataFrame` objects associated with the `Campaign` object are converted to 
+a binary format during serialization, which has the consequence that their JSON 
+representation is not human-readable.
+```
+
+For more information on serialization, we
 refer to the corresponding [examples](./../../examples/Serialization/Serialization).
 
 ## Further information
 
-In all of the [examples](./../../examples/examples), a campaign is created. For more
-details on how to create campaigns for a specific use case, we thus propose to have
-a look at the most suitable example.
+Campaigns are created as a first step in most of our 
+[examples](./../../examples/examples).
+For more details on how to define campaigns for a specific use case, we thus propose 
+to have a look at the most suitable example.
