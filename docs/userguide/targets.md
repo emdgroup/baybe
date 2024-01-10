@@ -26,12 +26,12 @@ Here two examples for simple maximization and minimization targets:
 from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
 
 max_target = NumericalTarget(
-    name="Target1",
+    name="Target_1",
     mode=TargetMode.MAX,  # can also be provided as string "MAX"
 )
 
 min_target = NumericalTarget(
-    name="Target2",
+    name="Target_2",
     mode="MIN",  # can also be provided as TargetMode.MIN
     bounds=(0,100),  # optional, values < 0 are mapped to 1 and values > 100 are mapped to 0
     transformation=TargetTransformation.LINEAR  # optional, will be applied if bounds are not None
@@ -58,13 +58,13 @@ a value of `50`:
 from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
 
 match_targetA = NumericalTarget(
-    name="Target3A",
+    name="Target_3A",
     mode=TargetMode.MATCH,
     bounds=(45, 55),  # mandatory in MATCH mode
     transformation=TargetTransformation.TRIANGULAR  # optional, applied if bounds are not None
 )
 match_targetB = NumericalTarget(
-    name="Target3B",
+    name="Target_3B",
     mode="MATCH",
     bounds=(0, 100),  # mandatory in MATCH mode
     transformation=TargetTransformation.BELL  # optional, applied if bounds are not None

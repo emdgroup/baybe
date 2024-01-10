@@ -63,9 +63,9 @@ and weigh the first target a twice as important as each of the remaining targets
 from baybe.targets import NumericalTarget
 from baybe.objective import Objective
 
-target1 = NumericalTarget(name="t1", mode="MIN", bounds=(0, 100))
-target2 = NumericalTarget(name="t2", mode="MIN", bounds=(0, 100))
-target3 = NumericalTarget(name="t3", mode="MATCH", bounds=(40, 60))
+target1 = NumericalTarget(name="t_1", mode="MIN", bounds=(0, 100))
+target2 = NumericalTarget(name="t_2", mode="MIN", bounds=(0, 100))
+target3 = NumericalTarget(name="t_3", mode="MATCH", bounds=(40, 60))
 objective = Objective(
     mode="DESIRABILITY", 
     targets=[target1, target2, target3],
