@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Errors with generics and type aliases in documentation
 - Deduplication bug in substance_data hypothesis 
 - Use pydoclint as flake8 plugin and not as a stand-alone linter
+- Margins in documentation for desktop and mobile version
 
 ### Removed
 - Conda install instructions and version badge

@@ -16,11 +16,11 @@ a.sidebar-brand {
 /*Reduce left and right margins*/
 
 .sidebar-drawer {
-    width: calc(40% - 26em);
+    width: calc(10%);
 }
 
 .content {
-    width: calc(100% - 10em);
+    width: calc(90%);
 }
 
 /*The color of the "Search" placeholder in the sidebar*/
