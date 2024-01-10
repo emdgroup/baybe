@@ -72,7 +72,7 @@ jobs:
       - name: Build Docs
         run: |
           pip install tox
-          tox -e docs-py311
+          tox -e docs-py311 -- -e
           
   typecheck:
     needs: [lint]
