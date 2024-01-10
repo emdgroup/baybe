@@ -30,8 +30,8 @@ objective = Objective(mode="SINGLE", targets=[target1])
 ```
 
 ### DESIRABILITY
-The ``DESIRABILITY`` mode enables you to combine multiple targets via scalarization 
-into a single value, a method well know and also utilized in classical DOE.
+The `DESIRABILITY` mode enables you to combine multiple targets via scalarization 
+into a single value, a method also utilized in classical DOE.
 
 Besides `mode` and `targets`, this objective type has two additional optional arguments:
 * `weights`: Some targets might be more important than others.
@@ -57,7 +57,7 @@ objective mode, all provided targets must have `bounds` specified so they can be
 normalized before being combined.
 ```
 
-In the example below we use three different targets (which all have a different goal) 
+In the example below, we use three different targets (which all have a different goal) 
 and weigh the first target a twice as important as each of the remaining targets:
 ```python
 from baybe.targets import NumericalTarget

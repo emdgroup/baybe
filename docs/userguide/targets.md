@@ -16,12 +16,12 @@ has the following attributes:
 * **A transformation function:** When bounds are provided, a `transformation` is
   used to map target values onto the [0,1] interval.
 
-Below a visualization of possible choices for `transformation`, where `lower` and
+Below is a visualization of possible choices for `transformation`, where `lower` and
 `upper` are the entries provided via `bounds`:
 ![Transforms](../_static/target_transforms.svg)
 
 ### MIN and MAX mode
-Here two examples for simple maximization and minimization targets:
+Here are two examples for simple maximization and minimization targets:
 ```python
 from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
 
