@@ -7,8 +7,9 @@ To create an objective, it is necessary to provide the following:
 * An optimization `mode`: This can be either `SINGLE` or `DESIRABILITY`,
   denoting the optimization of a single target function or a combination of
   different target functions respectively.
-* A list of `targets`: The list of targets that are optimized. Note that the
-  `SINGLE` mode also requires a list containing the single target.
+* A list of `targets`: The list of targets that are optimized (see user guide for
+  [`Target`](../../userguide/targets)). Note that the `SINGLE` mode also requires a
+  list containing the single target.
 
 ```{note}
 We are actively working on adding more objective modes for multiple targets.
