@@ -14,7 +14,7 @@ has the following attributes:
   the target or whether we want to match a specific value.
 * **Bounds:** Define `bounds` that constrain the range of target values.
 * **A transformation function:** When bounds are provided, a `transformation` is
-  used to map target values onto the [0,1] interval.
+  used to map target values onto the [0, 1] interval.
 
 Below is a visualization of possible choices for `transformation`, where `lower` and
 `upper` are the entries provided via `bounds`:
