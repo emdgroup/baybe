@@ -33,8 +33,8 @@ max_target = NumericalTarget(
 min_target = NumericalTarget(
     name="Target_2",
     mode="MIN",  # can also be provided as TargetMode.MIN
-    bounds=(0,100),  # optional, values < 0 are mapped to 1 and values > 100 are mapped to 0
-    transformation=TargetTransformation.LINEAR  # optional, will be applied if bounds are not None
+    bounds=(0, 100),  # optional
+    transformation=TargetTransformation.LINEAR,  # optional, will be applied if bounds are not None
 )
 ```
 
@@ -61,13 +61,13 @@ match_targetA = NumericalTarget(
     name="Target_3A",
     mode=TargetMode.MATCH,
     bounds=(45, 55),  # mandatory in MATCH mode
-    transformation=TargetTransformation.TRIANGULAR  # optional, applied if bounds are not None
+    transformation=TargetTransformation.TRIANGULAR,  # optional, applied if bounds are not None
 )
 match_targetB = NumericalTarget(
     name="Target_3B",
     mode="MATCH",
     bounds=(0, 100),  # mandatory in MATCH mode
-    transformation=TargetTransformation.BELL  # optional, applied if bounds are not None
+    transformation=TargetTransformation.BELL,  # optional, applied if bounds are not None
 )
 ```
 

@@ -68,10 +68,10 @@ target_1 = NumericalTarget(name="t_1", mode="MIN", bounds=(0, 100))
 target_2 = NumericalTarget(name="t_2", mode="MIN", bounds=(0, 100))
 target_3 = NumericalTarget(name="t_3", mode="MATCH", bounds=(40, 60))
 objective = Objective(
-    mode="DESIRABILITY", 
+    mode="DESIRABILITY",
     targets=[target_1, target_2, target_3],
-    weights=[2.0, 1.0, 1.0], # optional, by default all weights are equal
-    combine_func="GEOM_MEAN" # optional, geometrical mean is the default
+    weights=[2.0, 1.0, 1.0],  # optional, by default all weights are equal
+    combine_func="GEOM_MEAN",  # optional, geometrical mean is the default
 )
 ```
 
