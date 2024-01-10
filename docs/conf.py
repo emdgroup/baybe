@@ -210,6 +210,8 @@ html_theme_options = {
         "color-link": BROWN,
         # Color of text in the right navigation side bar
         "color-toc-item-text": LIGHT_BLUE,
+        # Color of text in the right navigation side bar when chosen
+        "color-toc-item-text--active": BROWN,
         # Color of search bar when clicking search
         "color-sidebar-search-background--focus": DARK_BLUE,
     },
