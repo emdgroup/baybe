@@ -108,7 +108,7 @@ Measurements are added by expanding the  `DataFrame` that was created by the `re
 function by adding a new column for the target. 
 
 ~~~python
-rec["Target_max"] = [2,4,9] # 3 values matching the batch_quantity of 3
+rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_quantity of 3
 campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ~~~
