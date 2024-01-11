@@ -107,6 +107,9 @@ def _lookup_targets_from_dataframe(
                 f"random one.",
                 UserWarning,
             )
+            # TODO: This situation should not be handled by the function but rather be
+            #   prevented by the user in the first place, which can be easily done
+            #   with an input deduplication.
             match_vals = lookup.loc[np.random.choice(ind), target_names]
 
         elif len(ind) < 1:
