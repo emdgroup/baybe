@@ -157,7 +157,8 @@ campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ~~~
 
-After adding the measurements the corresponding `DataFrame` thus has the following form:
+After adding the measurements, the corresponding `DataFrame` thus has the following 
+form:
 
 |    | Categorical_1   | Categorical_2   |   Num_disc_1 |   Target_max |
 |---:|:----------------|:----------------|-------------:|-------------:|
@@ -191,15 +192,17 @@ recreated_campaign = Campaign.from_json(campaign_json)
 assert campaign == recreated_campaign
 ~~~
 
+This provides an easy way to persist the current state of your campaign for long 
+term storage and continue the experimentation at a later point in time.
+For more information on serialization, we
+refer to the corresponding [examples](./../../examples/Serialization/Serialization).
+
 ```{admonition} Dataframe serialization
 :class: note
 Note that `DataFrame` objects associated with the `Campaign` object are converted to 
 a binary format during serialization, which has the consequence that their JSON 
 representation is not human-readable.
 ```
-
-For more information on serialization, we
-refer to the corresponding [examples](./../../examples/Serialization/Serialization).
 
 ## Further information
 
