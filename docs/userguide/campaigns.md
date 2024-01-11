@@ -165,7 +165,8 @@ After adding the measurements the corresponding `DataFrame` thus has the followi
 | 18 | C               | bad             |            1 |            4 |
 |  9 | B               | bad             |            1 |            9 |
 
-```{note}
+```{admonition} Parameter tolerances
+:class: note
 For discrete parameters, the parameter values associated with the provided measurements
 are required to fall into a predefined tolerance interval by default, which is
 defined on the level of the individual parameters.
@@ -190,7 +191,8 @@ recreated_campaign = Campaign.from_json(campaign_json)
 assert campaign == recreated_campaign
 ~~~
 
-```{note}
+```{admonition} Dataframe serialization
+:class: note
 Note that `DataFrame` objects associated with the `Campaign` object are converted to 
 a binary format during serialization, which has the consequence that their JSON 
 representation is not human-readable.
