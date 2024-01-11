@@ -45,8 +45,7 @@ def look_up_targets(
             for details.
 
     Raises:
-        AssertionError: If an analytical function is used and an incorrect number of
-            targets was specified.
+        ValueError: If the provided lookup callable returns the wrong targets.
     """
     # If no lookup is provided, invent some fake values
     if lookup is None:
