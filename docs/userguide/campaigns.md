@@ -1,9 +1,10 @@
 # Campaigns
 
-[... add some brief general (non-BayBE related!) intro about campaigns here: what are
-they, why do they naturally arise in the context of Bayesian optimization ... similar
-to the general part in other guide sections ...]
-In summary, campaigns are an integral part of Bayesian optimization and, accordingly,
+When it comes to Bayesian optimization, campaigns emerge as an essential component.
+They encompass a group of interconnected experiments that collectively aim to navigate
+the search space and find an optimal solution. They take center stage in orchestrating
+the iterative process of selecting, evaluating, and refining candidate solutions.
+Thus, campaigns are an integral part of Bayesian optimization and, accordingly,
 they also play a central role in BayBE.
 
 The [`Campaign`](baybe.campaign.Campaign) class provides a structured framework for 
