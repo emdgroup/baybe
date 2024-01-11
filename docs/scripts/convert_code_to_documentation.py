@@ -311,7 +311,3 @@ shutil.move(documentation, destination_dir)
 example_directory = pathlib.Path("docs/examples")
 if example_directory.is_dir():
     shutil.rmtree(example_directory)
-
-# If we decided to ignore warnings, we now do no want to ignore them anymore
-if not INCLUDE_WARNINGS:
-    os.environ["PYTHONWARNING"] = "default"
