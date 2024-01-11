@@ -6,10 +6,15 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
+from baybe.recommenders import RandomRecommender
+from baybe.strategies import TwoPhaseStrategy
+
 from .utils import extract_code_blocks
 
 doc_files = ["README.md", *Path("docs/userguide/").rglob("*.md")]
 """Files whose code blocks are to be checked."""
+doc_files_pseudocode = [Path("docs/userguide/campaigns.md")]
+"""Files which contain pseudocode that needs to be checked using fixtures."""
 
 
 @pytest.mark.parametrize("file", doc_files)
@@ -20,6 +25,29 @@ def test_code_executability(file: Path):
     """
     userguide_code = "\n".join(extract_code_blocks(file, include_tilde=False))
     exec(userguide_code)
+
+
+@pytest.mark.parametrize("file", doc_files_pseudocode)
+@pytest.mark.parametrize(
+    "strategy",
+    [
+        TwoPhaseStrategy(
+            initial_recommender=RandomRecommender(), recommender=RandomRecommender()
+        )
+    ],
+)
+@pytest.mark.parametrize("boolean", [True, False])
+def test_pseudocode_executability(
+    file: Path, searchspace, objective, strategy, boolean
+):
+    """The pseudocode blocks in the file are a valid python script when using fixtures.
+
+    Blocks surrounded with "triple-backticks" are included.
+    Due to a bug related to the serialization of the default strategy, this currently
+    uses a non-default strategy.
+    """
+    userguide_pseudocode = "\n".join(extract_code_blocks(file, include_tilde=True))
+    exec(userguide_pseudocode)
 
 
 @pytest.mark.parametrize("file", doc_files)

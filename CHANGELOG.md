@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Interval.is_finite` replaced with `Interval.is_bounded`
 - Specifying target configs without explicit type information is deprecated
 
+### Changed
+- New version of campaign user guide and basic example
+
 ## [0.7.1] - 2023-12-07
 ### Added
 - Release pipeline now also publishes source distributions
