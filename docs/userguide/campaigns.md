@@ -93,22 +93,41 @@ with the three parameters `Categorial_1`, `Categorical_2` and `Num_disc_1`:
 | 18 | C               | bad             |            1 |
 |  9 | B               | bad             |            1 |
 
-```{important}
-There is a difference between performing multiple recommendations
-with batch size of 1 and a single recommendation with a larger batch size.
-* **Batch size larger than 1**: The recommended experiments
-are chosen to *jointly* optimized the acquisition function.
-This means that the recommendations are made considering the interaction of multiple
-experiments together.
-* **Batch size of 1**: When making several smaller recommendations instead, each
-*individual* recommendation optimizes the acquisition function at the specific point in
-time when it is requested. In this case, the recommendations are made independently of
-each other without considering the joint optimization.
+```{admonition} Batch optimization
+:class: important
+In general, the parameter configurations in a recommended batch are **jointly**
+optimized and therefore tailored to the specific batch size requested. 
+This means that for two batches of different requested sizes, the smaller batch will not 
+necessarily correspond to a subset of the configurations contained in the larger batch. 
+An intuitive explanation for this phenomenon is that the more experiments one can 
+afford to run, the less need there is to focus on "safe bets" and the more room
+becomes available to test "high-risk/high-gain" configurations, since only one of the
+tested configurations from the batch has to perform well.
 
-Note that this distinction might not be relevant or applicable for all possible
-situation, for example when using recommenders that do not perform joint optimization.
-Currently, the sequential greedy recommender is the only available recommender
-performing joint optimization.
+**The bottom line is:** You should always ask for exactly as many
+recommendations as you are willing to run parallel experiments in your next 
+experimental iteration.
+An approach where only a subset of experiments taken from a larger recommended batch is
+used is strongly discouraged.
+
+**Note:** While the above distinction is true in the general case, it may not be 
+relevant for all configured settings, for instance, when the used recommender 
+is not capable of joint optimization. Currently, the 
+[SequentialGreedyRecommender](baybe.recommenders.bayesian.SequentialGreedyRecommender)
+is the only recommender available that performs joint optimization.
+```
+
+```{admonition} Sequential vs. parallel experimentation
+:class: note
+If you have a fixed experimental budget but the luxury of choosing 
+whether to run your experiments sequentially or in parallel, sequential 
+experimentation will give you the better overall results in expectation.
+This is because in the sequential approach, each subsequent recommendation can 
+leverage the additional data from previous iterations, which allows 
+more accurate predictive models to be built. However, in real-world use cases, the 
+question is typically answered by other factors, such as whether parallel
+experimentation is feasible in the first place, or whether the given time budget 
+even allows for sequential runs.
 ```
 
 ### Caching of recommendations
