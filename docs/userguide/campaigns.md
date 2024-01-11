@@ -79,10 +79,19 @@ experiments to be conducted.
 
 ~~~python
 rec = campaign.recommend(batch_quantity=3)
+print(rec.to_markdown())
 ~~~
 
 Calling the function returns a `DataFrame` with `batch_quantity` many rows, each
 representing a particular parameter configuration from the campaign's search space.
+Thus, the following might be a `DataFrame` returned by `recommend` in a search space
+with the three parameters `Categorial_1`, `Categorical_2` and `Num_disc_1`:
+
+|    | Categorical_1   | Categorical_2   |   Num_disc_1 |
+|---:|:----------------|:----------------|-------------:|
+| 15 | B               | good            |            1 |
+| 18 | C               | bad             |            1 |
+|  9 | B               | bad             |            1 |
 
 ```{important}
 There is a difference between performing multiple recommendations
@@ -128,6 +137,14 @@ rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_quantity of 3
 campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_quantity=5)
 ~~~
+
+After adding the measurements the corresponding `DataFrame` thus has the following form:
+
+|    | Categorical_1   | Categorical_2   |   Num_disc_1 |   Target_max |
+|---:|:----------------|:----------------|-------------:|-------------:|
+| 15 | B               | good            |            1 |            2 |
+| 18 | C               | bad             |            1 |            4 |
+|  9 | B               | bad             |            1 |            9 |
 
 ```{note}
 For discrete parameters, the parameter values associated with the provided measurements
