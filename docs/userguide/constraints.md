@@ -15,7 +15,8 @@ continuous constraints ([`DiscreteConstraint`](baybe.constraints.base.DiscreteCo
 A constraint is called discrete/continuous if it operates on a set of exclusively
 discrete/continuous parameters.
 
-```{note}
+```{admonition} Hybrid constraints
+:class: note
 Currently, BayBE does not support hybrid constraints, that is, constraints which
 operate on a mixed set of discrete and continuous parameters. If such a constraint is
 necessary, it is possible to rephrase the parametrization so that the parameter set
@@ -68,7 +69,8 @@ $$
 where $x_i$ is the value of the $i$'th parameter affected by the constraint,
 $c_i$ is the coefficient for that parameter, and $\text{rhs}$ is a user-chosen number.
 
-```{note}
+```{admonition} Reversing the inequality
+:class: note
 You can specify a constraint involving `<=` instead of `>=` by multiplying
 both sides, i.e. the coefficients and rhs, by -1.
 ```
@@ -268,7 +270,7 @@ irrelevant. Since in our example `"off"` is still a valid value for the switch, 
 values for the `affected_parameters` (which can be ignored).
 
 (DDC)=
-```{note}
+```{important}
 BayBE requires that all dependencies are declared in a single
 `DiscreteDependenciesConstraint`. Creating a `SearchSpace` from multiple
 `DiscreteDependenciesConstraint`'s will throw a validation error.
