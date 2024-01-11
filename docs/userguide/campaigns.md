@@ -65,11 +65,11 @@ For more details and a full exemplary config, we refer to the corresponding
 ### Basics
 
 ```{attention}
-Obtaining recommendations resp. adding measurements using the `recommend` resp.
-`add_measurements` functions is the only safe way to inform a `Campaign` object about
-new measurements. These functions update the necessary metadata that is crucial for the
-proper execution of a campaign. It is important to rely on these functions to maintain
-the integrity and reliability of the campaign's execution.
+Requesting recommendations via `recommend` and adding measurements via
+`add_measurements` is the only intended way to interact with a `Campaign` object.
+These methods update the necessary metadata that is crucial for the proper execution of
+a campaign. We recommend to rely on these methods to maintain the integrity and
+reliability of the object.
 ```
 
 To obtain a recommendation for the next batch of experiments, we can query the 
