@@ -6,7 +6,7 @@ import pytest
 
 from baybe import BayBE, Campaign
 from baybe.searchspace import SearchSpace
-from baybe.simulation.core import simulate_experiment
+from baybe.simulation import simulate_experiment
 from baybe.strategies import Strategy
 from baybe.targets import Objective
 from baybe.targets.base import Target

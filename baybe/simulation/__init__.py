@@ -17,9 +17,9 @@ applied context:
 
 from baybe.simulation.core import (
     simulate_campaign,
-    simulate_experiment,
     simulate_scenarios,
 )
+from baybe.simulation.deprecation import simulate_experiment
 
 __all__ = [
     "simulate_campaign",
