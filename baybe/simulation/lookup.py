@@ -10,7 +10,7 @@ from baybe.targets import NumericalTarget, TargetMode
 from baybe.targets.base import Target
 from baybe.utils import add_fake_results
 
-CallableLookup = Callable[[pd.DataFrame], pd.DataFrame]
+_TCallableLookup = Callable[[pd.DataFrame], pd.DataFrame]
 """A callable that can be used to retrieve target values for given parameter
 configurations."""
 
@@ -18,7 +18,7 @@ configurations."""
 def look_up_targets(
     queries: pd.DataFrame,
     targets: List[Target],
-    lookup: Union[pd.DataFrame, CallableLookup, None] = None,
+    lookup: Union[pd.DataFrame, _TCallableLookup, None] = None,
     impute_mode: Literal["error", "worst", "best", "mean", "random"] = "error",
 ) -> None:
     """Fill the target values for given parameter configurations via a lookup mechanism.
@@ -65,7 +65,7 @@ def look_up_targets(
 def _lookup_targets_from_callable(
     queries: pd.DataFrame,
     target_names: Collection[str],
-    lookup: CallableLookup,
+    lookup: _TCallableLookup,
 ) -> None:
     """Look up target values via a callable."""
     # Evaluate the callable
@@ -85,7 +85,7 @@ def _lookup_targets_from_callable(
 def _lookup_targets_from_dataframe(
     queries: pd.DataFrame,
     targets: List[Target],
-    lookup: CallableLookup,
+    lookup: _TCallableLookup,
     impute_mode: Literal["error", "worst", "best", "mean", "random"] = "error",
 ) -> None:
     """Look up target values from a dataframe."""
