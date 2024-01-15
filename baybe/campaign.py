@@ -13,7 +13,6 @@ from baybe.objective import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import (
     SearchSpace,
-    structure_searchspace_from_config,
     validate_searchspace_from_config,
 )
 from baybe.strategies import TwoPhaseStrategy
@@ -25,13 +24,11 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils import eq_dataframe
-from baybe.utils.serialization import SerialMixin, converter
+from baybe.utils.serialization import SerialMixin, converter, select_constructor_hook
 
 # Converter for config deserialization
 _config_converter = converter.copy()
-_config_converter.register_structure_hook(
-    SearchSpace, structure_searchspace_from_config
-)
+_config_converter.register_structure_hook(SearchSpace, select_constructor_hook)
 
 # Converter for config validation
 _validation_converter = converter.copy()
@@ -120,10 +117,6 @@ class Campaign(SerialMixin):
             The constructed campaign.
         """
         config = json.loads(config_json)
-        config["searchspace"] = {
-            "parameters": config.pop("parameters"),
-            "constraints": config.pop("constraints", None),
-        }
         return _config_converter.structure(config, Campaign)
 
     @classmethod

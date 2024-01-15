@@ -20,50 +20,53 @@ from baybe import Campaign
 CONFIG = str(
     """
 {
-    "parameters": [
-        {
-            "type": "CategoricalParameter",
-            "name": "Granularity",
-            "values": [
-                "coarse",
-                "fine",
-                "ultra-fine"
+    "searchspace": {
+        "constructor": "from_product",
+            "parameters": [
+                {
+                    "type": "CategoricalParameter",
+                    "name": "Granularity",
+                    "values": [
+                        "coarse",
+                        "fine",
+                        "ultra-fine"
+                    ],
+                    "encoding": "OHE"
+                },
+                {
+                    "type": "NumericalDiscreteParameter",
+                    "name": "Pressure[bar]",
+                    "values": [
+                        1,
+                        5,
+                        10
+                    ],
+                    "tolerance": 0.2
+                },
+                {
+                    "type": "SubstanceParameter",
+                    "name": "Solvent",
+                    "data": {
+                        "Solvent A": "COC",
+                        "Solvent B": "CCCCC",
+                        "Solvent C": "COCOC",
+                        "Solvent D": "CCOCCOCCN"
+                    },
+                    "decorrelate": true,
+                    "encoding": "MORDRED"
+                }
             ],
-            "encoding": "OHE"
+            "constraints": []
         },
-        {
-            "type": "NumericalDiscreteParameter",
-            "name": "Pressure[bar]",
-            "values": [
-                1,
-                5,
-                10
-            ],
-            "tolerance": 0.2
+        "objective": {
+            "mode": "SINGLE",
+            "targets": [
+                {
+                    "name": "Yield",
+                    "mode": "MAX"
+                }
+            ]
         },
-        {
-            "type": "SubstanceParameter",
-            "name": "Solvent",
-            "data": {
-                "Solvent A": "COC",
-                "Solvent B": "CCCCC",
-                "Solvent C": "COCOC",
-                "Solvent D": "CCOCCOCCN"
-            },
-            "decorrelate": true,
-            "encoding": "MORDRED"
-        }
-    ],
-    "constraints": [],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "Yield",
-                "mode": "MAX"
-            }
-        ]
-    },
     "strategy": {
         "type": "TwoPhaseStrategy",
         "initial_recommender": {

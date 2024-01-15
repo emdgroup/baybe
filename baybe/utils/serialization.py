@@ -1,8 +1,9 @@
 """Serialization utilities."""
+
 import base64
 import json
 from io import BytesIO
-from typing import Any, Callable, Optional, Type, TypeVar
+from typing import Any, Callable, Optional, Type, TypeVar, get_type_hints
 
 import cattrs
 import pandas as pd
@@ -122,10 +123,6 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     return base64.b64encode(df.to_parquet()).decode("utf-8")
 
 
-converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
-converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
-
-
 def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
     """Prevent serialization of the passed object.
 
@@ -146,3 +143,27 @@ def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC1
     raise NotImplementedError(
         f"Deserialization into '{cls.__name__}' is not supported."
     )
+
+
+def select_constructor_hook(specs: dict, cls: Type[_T]) -> _T:
+    """Use the constructor specified in the 'constructor' field for deserialization."""
+    # If a constructor is specified, use it
+    specs = specs.copy()
+    if constructor_name := specs.pop("constructor", None):
+        constructor = getattr(cls, constructor_name)
+
+        # Extract the constructor parameter types and deserialize the arguments
+        type_hints = get_type_hints(constructor)
+        for key, value in specs.items():
+            annotation = type_hints[key]
+            specs[key] = converter.structure(specs[key], annotation)
+
+        # Call the constructor with the deserialized arguments
+        return constructor(**specs)
+
+    # Otherwise, use the regular __init__ method
+    return converter.structure_attrs_fromdict(specs, cls)
+
+
+converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
+converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
