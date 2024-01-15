@@ -8,8 +8,8 @@ from attrs import define, field
 
 from baybe.recommenders.base import Recommender
 from baybe.searchspace import SearchSpace
+from baybe.serialization import SerialMixin, converter, unstructure_base
 from baybe.strategies.deprecation import structure_strategy
-from baybe.utils.serialization import SerialMixin, converter, unstructure_base
 
 
 @define

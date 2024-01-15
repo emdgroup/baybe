@@ -10,8 +10,12 @@ from attrs.validators import instance_of, min_len
 from cattrs.gen import override
 
 from baybe.parameters.enum import ParameterEncoding
-from baybe.utils import SerialMixin, get_base_structure_hook, unstructure_base
-from baybe.utils.serialization import converter
+from baybe.serialization import (
+    SerialMixin,
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164

@@ -11,13 +11,15 @@ from torch import Tensor
 
 from baybe.constraints.conditions import Condition
 from baybe.parameters import NumericalContinuousParameter
-from baybe.utils import (
-    DTypeFloatTorch,
+from baybe.serialization import (
     SerialMixin,
+    converter,
     get_base_structure_hook,
     unstructure_base,
 )
-from baybe.utils.serialization import converter
+from baybe.utils import (
+    DTypeFloatTorch,
+)
 
 
 @define

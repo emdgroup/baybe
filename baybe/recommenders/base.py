@@ -8,7 +8,7 @@ from attrs import define
 
 from baybe.exceptions import NotEnoughPointsLeftError
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.utils.serialization import (
+from baybe.serialization import (
     converter,
     get_base_structure_hook,
     unstructure_base,

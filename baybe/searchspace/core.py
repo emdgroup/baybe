@@ -24,8 +24,8 @@ from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import validate_parameters
+from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils.serialization import SerialMixin, converter, select_constructor_hook
 
 
 class SearchSpaceType(Enum):

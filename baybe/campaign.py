@@ -15,6 +15,7 @@ from baybe.searchspace.core import (
     SearchSpace,
     validate_searchspace_from_config,
 )
+from baybe.serialization import SerialMixin, converter
 from baybe.strategies import TwoPhaseStrategy
 from baybe.strategies.base import Strategy
 from baybe.targets import NumericalTarget
@@ -24,7 +25,6 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils import eq_dataframe
-from baybe.utils.serialization import SerialMixin, converter
 
 # Converter for config validation
 _validation_converter = converter.copy()

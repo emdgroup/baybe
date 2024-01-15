@@ -16,8 +16,8 @@ from baybe.constraints import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace.validation import validate_parameter_names
+from baybe.serialization import converter, select_constructor_hook
 from baybe.utils import DTypeFloatTorch
-from baybe.utils.serialization import converter, select_constructor_hook
 
 
 @define

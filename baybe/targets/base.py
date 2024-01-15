@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import pandas as pd
 from attrs import define, field
 
-from baybe.utils import (
+from baybe.serialization import (
     SerialMixin,
     converter,
     get_base_structure_hook,

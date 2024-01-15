@@ -13,12 +13,12 @@ from baybe.constraints.conditions import (
     ThresholdCondition,
     _valid_logic_combiners,
 )
-from baybe.utils import Dummy
-from baybe.utils.serialization import (
+from baybe.serialization import (
     block_deserialization_hook,
     block_serialization_hook,
     converter,
 )
+from baybe.utils import Dummy
 
 
 @define

@@ -1,7 +1,6 @@
-"""Serialization utilities."""
+"""Converter and hooks."""
 
 import base64
-import json
 from io import BytesIO
 from typing import Any, Callable, Optional, Type, TypeVar, get_type_hints
 
@@ -9,56 +8,10 @@ import cattrs
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 
-from baybe.utils import get_subclasses
-
 _T = TypeVar("_T")
 
 converter = cattrs.Converter()
 """The default converter for (de-)serializing BayBE-related objects."""
-
-
-class SerialMixin:
-    """A mixin class providing serialization functionality."""
-
-    # Use slots so that the derived classes also remain slotted
-    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
-    __slots__ = ()
-
-    def to_dict(self) -> dict:
-        """Create an object's dictionary representation."""
-        return converter.unstructure(self)
-
-    @classmethod
-    def from_dict(cls: Type[_T], dictionary: dict) -> _T:
-        """Create an object from its dictionary representation.
-
-        Args:
-            dictionary: The dictionary representation.
-
-        Returns:
-            The reconstructed object.
-        """
-        return converter.structure(dictionary, cls)
-
-    def to_json(self) -> str:
-        """Create an object's JSON representation.
-
-        Returns:
-            The JSON representation as a string.
-        """
-        return json.dumps(self.to_dict())
-
-    @classmethod
-    def from_json(cls: Type[_T], string: str) -> _T:
-        """Create an object from its JSON representation.
-
-        Args:
-            string: The JSON representation of the object.
-
-        Returns:
-            The reconstructed object.
-        """
-        return cls.from_dict(json.loads(string))
 
 
 def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
@@ -97,6 +50,7 @@ def get_base_structure_hook(
         The hook.
     """
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
+    from baybe.utils import get_subclasses
 
     def structure_base(val: dict, _: Type[_T]) -> _T:
         _type = val.pop("type")
@@ -165,5 +119,6 @@ def select_constructor_hook(specs: dict, cls: Type[_T]) -> _T:
     return converter.structure_attrs_fromdict(specs, cls)
 
 
+# Register un-/structure hooks
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
