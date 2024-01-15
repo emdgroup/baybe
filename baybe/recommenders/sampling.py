@@ -46,7 +46,6 @@ class RandomRecommender(NonPredictiveRecommender):
             replace=len(disc_candidates) < batch_quantity,
         )
 
-        cont_random.reset_index(drop=True)
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)
 
