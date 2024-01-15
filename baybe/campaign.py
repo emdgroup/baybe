@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import warnings
 from typing import Any, List
 
 import numpy as np
@@ -112,49 +111,13 @@ class Campaign(SerialMixin):
 
         Returns:
             The constructed campaign.
-
-        Raises:
-            ValueError: If the provided config is invalid.
         """
+        from baybe.deprecation import compatibilize_config
+
         config = json.loads(config_json)
 
         # Temporarily enable backward compatibility
-        if "parameters" in config:
-            if "searchspace" in config:
-                raise ValueError(
-                    "Something is wrong with your campaign config. "
-                    "It neither adheres to the deprecated nor the new format."
-                )
-            warnings.warn(
-                '''
-                Specifying parameters/constraints at the top level of the
-                campaign configuration JSON is deprecated and will not be
-                supported in future releases.
-                Instead, use a dedicated "searchspace" field that can be
-                used to customize the creation of the search space,
-                offering the possibility to specify a desired constructor.
-
-                To replicate the old behavior, use
-                """
-                ...
-                "searchspace": {
-                    "constructor": "from_product",
-                    "parameters": <your parameter configuration>,
-                    "constraints": <your constraints configuration>
-                }
-                ...
-                """
-
-                For the available constructors and the parameters they expect,
-                see `baybe.searchspace.core.SearchSpace`.''',
-                UserWarning,
-            )
-            config = config.copy()
-            config["searchspace"] = {
-                "constructor": "from_product",
-                "parameters": config.pop("parameters"),
-                "constraints": config.pop("constraints", None),
-            }
+        config = compatibilize_config(config)
 
         return converter.structure(config, Campaign)
 
