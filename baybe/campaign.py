@@ -147,11 +147,13 @@ class Campaign(SerialMixin):
         Args:
             config_json: The JSON that should be validated.
         """
+        from baybe.deprecation import compatibilize_config
+
         config = json.loads(config_json)
-        config["searchspace"] = {
-            "parameters": config.pop("parameters"),
-            "constraints": config.pop("constraints", None),
-        }
+
+        # Temporarily enable backward compatibility
+        config = compatibilize_config(config)
+
         _validation_converter.structure(config, Campaign)
 
     def add_measurements(self, data: pd.DataFrame) -> None:

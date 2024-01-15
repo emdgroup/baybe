@@ -254,20 +254,20 @@ class SearchSpace(SerialMixin):
 
 
 def validate_searchspace_from_config(specs: dict, _) -> None:
-    """Validate but do not create the search space.
+    """Validate the search space specifications while skipping costly creation steps."""
+    # For product spaces, only validate the inputs
+    if specs.get("constructor", None) == "from_product":
+        parameters = converter.structure(specs["parameters"], List[Parameter])
+        validate_parameters(parameters)
 
-    Similar to :func:`baybe.searchspace.core.structure_searchspace_from_config` but
-    without the actual search space creation step, thus intended for validation purposes
-    only. It explicitly validates the given parameters and constraints since invalid
-    specifications would be otherwise noticed only later during search space creation.
-    """
-    parameters = converter.structure(specs["parameters"], List[Parameter])
-    validate_parameters(parameters)
+        constraints = specs.get("constraints", None)
+        if constraints:
+            constraints = converter.structure(specs["constraints"], List[Constraint])
+            validate_constraints(constraints, parameters)
 
-    constraints = specs.get("constraints", None)
-    if constraints:
-        constraints = converter.structure(specs["constraints"], List[Constraint])
-        validate_constraints(constraints, parameters)
+    # For all other types, validate by construction
+    else:
+        converter.structure(specs, SearchSpace)
 
 
 # Register deserialization hook
