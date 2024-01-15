@@ -43,7 +43,7 @@ dependencies = [
     "scikit-learn-extra>=0.3.0",
     "scipy>=1.10.1",
     "setuptools-scm>=7.1.0",
-    "torch>=1.11.0",
+    "torch>=1.13.1",
     "baybe[telemetry]",
 ]
 
