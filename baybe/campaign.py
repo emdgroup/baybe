@@ -16,7 +16,6 @@ from baybe.searchspace.core import (
     SearchSpace,
     validate_searchspace_from_config,
 )
-from baybe.searchspace.deprecation import structure_searchspace_from_config
 from baybe.strategies import TwoPhaseStrategy
 from baybe.strategies.base import Strategy
 from baybe.targets import NumericalTarget
@@ -27,12 +26,6 @@ from baybe.telemetry import (
 )
 from baybe.utils import eq_dataframe
 from baybe.utils.serialization import SerialMixin, converter
-
-# Converter for deprecated config deserialization
-_deprecated_config_converter = converter.copy()
-_deprecated_config_converter.register_structure_hook(
-    SearchSpace, structure_searchspace_from_config
-)
 
 # Converter for config validation
 _validation_converter = converter.copy()
@@ -119,11 +112,19 @@ class Campaign(SerialMixin):
 
         Returns:
             The constructed campaign.
+
+        Raises:
+            ValueError: If the provided config is invalid.
         """
         config = json.loads(config_json)
 
         # Temporarily enable backward compatibility
         if "parameters" in config:
+            if "searchspace" in config:
+                raise ValueError(
+                    "Something is wrong with your campaign config. "
+                    "It neither adheres to the deprecated nor the new format."
+                )
             warnings.warn(
                 '''
                 Specifying parameters/constraints at the top level of the
@@ -150,10 +151,10 @@ class Campaign(SerialMixin):
             )
             config = config.copy()
             config["searchspace"] = {
+                "constructor": "from_product",
                 "parameters": config.pop("parameters"),
                 "constraints": config.pop("constraints", None),
             }
-            return _deprecated_config_converter.structure(config, Campaign)
 
         return converter.structure(config, Campaign)
 
