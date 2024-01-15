@@ -26,11 +26,7 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils import eq_dataframe
-from baybe.utils.serialization import SerialMixin, converter, select_constructor_hook
-
-# Converter for config deserialization
-_config_converter = converter.copy()
-_config_converter.register_structure_hook(SearchSpace, select_constructor_hook)
+from baybe.utils.serialization import SerialMixin, converter
 
 # Converter for deprecated config deserialization
 _deprecated_config_converter = converter.copy()
@@ -159,7 +155,7 @@ class Campaign(SerialMixin):
             }
             return _deprecated_config_converter.structure(config, Campaign)
 
-        return _config_converter.structure(config, Campaign)
+        return converter.structure(config, Campaign)
 
     @classmethod
     def to_config(cls) -> str:

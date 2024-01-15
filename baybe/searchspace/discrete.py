@@ -20,6 +20,7 @@ from baybe.parameters import (
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
+from baybe.utils.serialization import converter, select_constructor_hook
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
@@ -382,3 +383,7 @@ def parameter_cartesian_prod_to_df(
     ret = pd.DataFrame(index=index).reset_index()
 
     return ret
+
+
+# Register deserialization hook
+converter.register_structure_hook(SubspaceDiscrete, select_constructor_hook)

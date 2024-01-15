@@ -17,6 +17,7 @@ from baybe.constraints import (
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.utils import DTypeFloatTorch
+from baybe.utils.serialization import converter, select_constructor_hook
 
 
 @define
@@ -177,3 +178,7 @@ class SubspaceContinuous:
         )
 
         return pd.DataFrame(index=index).reset_index()
+
+
+# Register deserialization hook
+converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)

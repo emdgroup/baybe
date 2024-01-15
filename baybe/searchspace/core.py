@@ -25,7 +25,7 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import validate_parameters
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils import SerialMixin, converter
+from baybe.utils.serialization import SerialMixin, converter, select_constructor_hook
 
 
 class SearchSpaceType(Enum):
@@ -268,3 +268,7 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
     if constraints:
         constraints = converter.structure(specs["constraints"], List[Constraint])
         validate_constraints(constraints, parameters)
+
+
+# Register deserialization hook
+converter.register_structure_hook(SearchSpace, select_constructor_hook)
