@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from typing import Any, List
 
 import numpy as np
@@ -15,6 +16,7 @@ from baybe.searchspace.core import (
     SearchSpace,
     validate_searchspace_from_config,
 )
+from baybe.searchspace.deprecation import structure_searchspace_from_config
 from baybe.strategies import TwoPhaseStrategy
 from baybe.strategies.base import Strategy
 from baybe.targets import NumericalTarget
@@ -29,6 +31,12 @@ from baybe.utils.serialization import SerialMixin, converter, select_constructor
 # Converter for config deserialization
 _config_converter = converter.copy()
 _config_converter.register_structure_hook(SearchSpace, select_constructor_hook)
+
+# Converter for deprecated config deserialization
+_deprecated_config_converter = converter.copy()
+_deprecated_config_converter.register_structure_hook(
+    SearchSpace, structure_searchspace_from_config
+)
 
 # Converter for config validation
 _validation_converter = converter.copy()
@@ -117,6 +125,40 @@ class Campaign(SerialMixin):
             The constructed campaign.
         """
         config = json.loads(config_json)
+
+        # Temporarily enable backward compatibility
+        if "parameters" in config:
+            warnings.warn(
+                '''
+                Specifying parameters/constraints at the top level of the
+                campaign configuration JSON is deprecated and will not be
+                supported in future releases.
+                Instead, use a dedicated "searchspace" field that can be
+                used to customize the creation of the search space,
+                offering the possibility to specify a desired constructor.
+
+                To replicate the old behavior, use
+                """
+                ...
+                "searchspace": {
+                    "constructor": "from_product",
+                    "parameters": <your parameter configuration>,
+                    "constraints": <your constraints configuration>
+                }
+                ...
+                """
+
+                For the available constructors and the parameters they expect,
+                see `baybe.searchspace.core.SearchSpace`.''',
+                UserWarning,
+            )
+            config = config.copy()
+            config["searchspace"] = {
+                "parameters": config.pop("parameters"),
+                "constraints": config.pop("constraints", None),
+            }
+            return _deprecated_config_converter.structure(config, Campaign)
+
         return _config_converter.structure(config, Campaign)
 
     @classmethod
