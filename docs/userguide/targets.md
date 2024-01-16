@@ -67,7 +67,7 @@ match_targetB = NumericalTarget(
     name="Target_3B",
     mode="MATCH",
     bounds=(0, 100),  # mandatory in MATCH mode
-    transformation=TargetTransformation.BELL,  # optional, applied if bounds are not None
+    transformation="BELL",  # can also be provided as TargetTransformation.BELL
 )
 ```
 
