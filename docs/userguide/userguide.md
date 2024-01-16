@@ -8,7 +8,7 @@ Parameters <parameters>
 Recommender <recommender>
 Search Spaces <searchspace>
 Simulation <simulation>
-Strategy <strategy>
+Strategies <strategies>
 Surrogates <surrogates>
 Targets <targets>
 Transfer Learning <transfer_learning>
