@@ -13,27 +13,15 @@ from baybe.parameters.validation import validate_decorrelation
 from baybe.utils import (
     df_drop_single_value_columns,
     df_uncorrelated_features,
-    get_canonical_smiles,
     group_duplicate_values,
 )
-from baybe.utils.chemistry import (
-    _MORDRED_INSTALLED,
-    _RDKIT_INSTALLED,
-)
+from baybe.utils.optional import import_optional_module
 
 try:  # For python < 3.11, use the exceptiongroup backport
     ExceptionGroup
 except NameError:
     from exceptiongroup import ExceptionGroup
 
-if _RDKIT_INSTALLED:
-    from baybe.utils import (
-        smiles_to_fp_features,
-        smiles_to_rdkit_features,
-    )
-
-    if _MORDRED_INSTALLED:
-        from baybe.utils import smiles_to_mordred_features
 
 Smiles = str
 """Type alias for SMILES strings."""
@@ -92,6 +80,12 @@ class SubstanceParameter(DiscreteParameter):
             ImportError: If the ``chem``dependency was not installed but an encoding
                 requiring this dependency is requested.
         """
+        _MORDRED_INSTALLED = import_optional_module(
+            "baybe.utils.chemistry", "_MORDRED_INSTALLED", error="warn"
+        )
+        _RDKIT_INSTALLED = import_optional_module(
+            "baybe.utils.chemistry", "_RDKIT_INSTALLED", error="warn"
+        )
         if value is SubstanceEncoding.MORDRED and not (
             _MORDRED_INSTALLED and _RDKIT_INSTALLED
         ):
@@ -123,6 +117,9 @@ class SubstanceParameter(DiscreteParameter):
         # Check for invalid SMILES
         canonical_smiles = {}
         exceptions = []
+        get_canonical_smiles = import_optional_module(
+            "baybe.utils.chemistry", attribute="get_canonical_smiles", error="raise"
+        )
         for name, smiles in data.items():
             try:
                 canonical_smiles[name] = get_canonical_smiles(smiles)
@@ -156,11 +153,22 @@ class SubstanceParameter(DiscreteParameter):
         # for Python 3.7 or higher
         return tuple(self.data.keys())
 
+    # TODO: @Roya not sure if dynamic import in cached_property is a good practice
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
         vals = list(self.data.values())
         pref = self.name + "_"
+
+        smiles_to_mordred_features = import_optional_module(
+            "baybe.utils.chemistry", "smiles_to_mordred_features", error="warn"
+        )
+        smiles_to_rdkit_features = import_optional_module(
+            "baybe.utils.chemistry", "smiles_to_rdkit_features", error="warn"
+        )
+        smiles_to_fp_features = import_optional_module(
+            "baybe.utils.chemistry", "smiles_to_fp_features", error="warn"
+        )
 
         # Get the raw descriptors
         if self.encoding is SubstanceEncoding.MORDRED:
