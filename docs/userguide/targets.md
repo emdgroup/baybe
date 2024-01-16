@@ -10,11 +10,11 @@ The way BayBE treats multiple targets is then controlled via the
 ## NumericalTarget
 Besides the `name`, a [`NumericalTarget`](baybe.targets.numerical.NumericalTarget)
 has the following attributes:
-* **The optimization** `mode`: This specifies whether we want to minimize or maximize
+* **The optimization** `mode`: Specifies whether we want to minimize/maximize
   the target or whether we want to match a specific value.
-* **Bounds:** Define `bounds` that constrain the range of target values.
-* **A transformation function:** When bounds are provided, a `transformation` is
-  used to map target values onto the [0, 1] interval.
+* **Bounds**: Defines `bounds` that constrain the range of target values.
+* **A** `transformation` **function**: When bounds are provided, this is
+  used to map target values into the [0, 1] interval.
 
 Below is a visualization of possible choices for `transformation`, where `lower` and
 `upper` are the entries provided via `bounds`:

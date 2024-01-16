@@ -43,9 +43,9 @@ Besides `mode` and `targets`, this objective type has two additional optional ar
   The choices are `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
   geometric mean respectively.
 
-The definitions of the means are as follows, where $t_i$ enumerate the **scaled** target 
-observations for a single measurement and $w_i$ are the weights associated with the 
-respective target:
+The definitions of the means are as follows, where $\{t_i\}$ enumerate the **scaled**
+target observations for a single measurement and $\{w_i\}$ are the weights associated
+with the respective target:
 
 $$
 \text{MEAN} &= \frac{1}{\sum w_i}\sum_{i} w_i \cdot t_i \\
@@ -59,7 +59,7 @@ normalized before being combined.
 ```
 
 In the example below, we use three different targets (which all have a different goal) 
-and weigh the first target a twice as important as each of the remaining targets:
+and weigh the first target twice as important as each of the other targets:
 ```python
 from baybe.targets import NumericalTarget
 from baybe.objective import Objective
@@ -71,7 +71,7 @@ objective = Objective(
     mode="DESIRABILITY",
     targets=[target_1, target_2, target_3],
     weights=[2.0, 1.0, 1.0],  # optional, by default all weights are equal
-    combine_func="GEOM_MEAN",  # optional, geometrical mean is the default
+    combine_func="GEOM_MEAN",  # optional, geometric mean is the default
 )
 ```
 
