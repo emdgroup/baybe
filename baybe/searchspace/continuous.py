@@ -70,20 +70,20 @@ class SubspaceContinuous:
         return SubspaceContinuous(parameters)
 
     @classmethod
-    def from_dataframe(cls, df: pd.DataFrame) -> SubspaceContinuous:
+    def from_dataframe(cls, dataframe: pd.DataFrame) -> SubspaceContinuous:
         """Create a hyperractangle-shaped continuous subspace from a dataframe.
 
         More precisely, create the smallest axis-aligned hyperrectangle-shaped
         continuous subspace that contains the points specified in the given dataframe.
 
         Args:
-            df: The dataframe specifying the points of the subspace.
+            dataframe: The dataframe specifying the points of the subspace.
 
         Returns:
             The constructed subspace.
         """
         # TODO: Add option for convex hull once constraints are in place
-        bounds = pd.concat([df.min(), df.max()], axis=1).T
+        bounds = pd.concat([dataframe.min(), dataframe.max()], axis=1).T
         return cls.from_bounds(bounds)
 
     @property

@@ -183,14 +183,15 @@ class SubspaceDiscrete:
     @classmethod
     def from_dataframe(
         cls,
-        df: pd.DataFrame,
+        dataframe: pd.DataFrame,
         parameters: Optional[List[Parameter]] = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
 
         Args:
-            df: The experimental representation of the search space to be created.
+            dataframe: The experimental representation of the search space to be
+                created.
             parameters: Optional parameters corresponding to the columns in the given
                 dataframe. If a match between column name and parameter name is found,
                 the corresponding parameter is used. If a column has no match in the
@@ -220,7 +221,7 @@ class SubspaceDiscrete:
 
         # Try to find a parameter match for each dataframe column
         parameters = []
-        for name, series in df.items():
+        for name, series in dataframe.items():
             # If a match is found, assert that the values are in range
             if match := specified_params.pop(name, None):
                 assert series.apply(match.is_in_range).all()
@@ -243,7 +244,7 @@ class SubspaceDiscrete:
             )
 
         return SubspaceDiscrete(
-            parameters=parameters, exp_rep=df, empty_encoding=empty_encoding
+            parameters=parameters, exp_rep=dataframe, empty_encoding=empty_encoding
         )
 
     @property
