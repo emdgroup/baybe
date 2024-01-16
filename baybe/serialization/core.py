@@ -1,7 +1,6 @@
 """Converter and hooks."""
-
 import base64
-from io import BytesIO
+import pickle
 from typing import Any, Callable, Optional, Type, TypeVar, get_type_hints
 
 import cattrs
@@ -66,15 +65,15 @@ def get_base_structure_hook(
 
 
 def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
-    """De-serialize a DataFrame."""
-    buffer = BytesIO()
-    buffer.write(base64.b64decode(string.encode("utf-8")))
-    return pd.read_parquet(buffer)
+    """Deserialize a DataFrame."""
+    pickled_df = base64.b64decode(string.encode("utf-8"))
+    return pickle.loads(pickled_df)
 
 
 def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     """Serialize a DataFrame."""
-    return base64.b64encode(df.to_parquet()).decode("utf-8")
+    pickled_df = pickle.dumps(df)
+    return base64.b64encode(pickled_df).decode("utf-8")
 
 
 def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
