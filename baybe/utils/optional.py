@@ -14,24 +14,23 @@ def import_optional_module(
     """Import an optional module.
 
     Args:
-        name (str): The name of the module.
-        attribute (Optional[str], optional): The name of an attribute to import from
-        the module.
-        error (Literal["raise", "warn", "ignore"], optional): How to handle errors.
-        One of:
-            - "raise": raise an error if the module cannot be imported.
-            - "warn": raise a warning if the module cannot be imported.
-            - "ignore": ignore the missing module and return `None`.
+        name: The name of the module.
+        attribute: The name of an attribute to import from the module.
+        error: How to handle errors.
+            One of:
+                - "raise": Raise an error if the module cannot be imported.
+                - "warn": Raise a warning if the module cannot be imported.
+                - "ignore": Ignore the missing module and return `None`.
 
     Returns:
-        Optional[Any]: The imported module or attribute from the module, or `None` if
-        the module could not be imported.
+        Optional[Any]: The imported module or attribute from the module, or `None`
+             if the module could not be imported.
 
     Raises:
         ValueError: If the given error type value is not in the provided list of
-        accepted values: 'raise', 'warn', 'ignore'.
-
-        ModuleNotFoundError: If the requested module is not found.
+             accepted values: 'raise', 'warn', 'ignore'.
+        ModuleNotFoundError: If the requested module is not found and the `error` is set
+            to "raise".
     """
     if error not in ("raise", "warn", "ignore"):
         raise ValueError(
