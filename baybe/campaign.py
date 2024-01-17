@@ -126,7 +126,7 @@ class Campaign(SerialMixin):
         """Extract the configuration of the campaign as JSON string.
 
         Note: This is not yet implemented. Use
-        :func:`baybe.utils.serialization.SerialMixin.to_json` instead
+        :func:`baybe.serialization.mixin.SerialMixin.to_json` instead
 
         Returns:
             The configuration as JSON string.
