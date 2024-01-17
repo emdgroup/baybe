@@ -415,12 +415,6 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 f"acquisition functions."
             ) from ex
 
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # TODO [14819]: The following code is necessary due to floating point
-        #   inaccuracies introduced by BoTorch (potentially due to some float32
-        #   conversion?). The current workaround is the match the recommendations back
-        #   to the closest candidate points.
-
         # Split discrete and continuous parts
         disc_points = points[:, : len(candidates_comp.columns)]
         cont_points = points[:, len(candidates_comp.columns) :]
@@ -443,7 +437,6 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # Adjust the index of the continuous part and create overall recommendations
         rec_cont_exp.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
-        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         return rec_exp
 
