@@ -52,10 +52,11 @@ $$
 \text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum w_i}
 $$
 
-```{attention}
+```{admonition} Mandatory Target Bounds
+:class: attention
 Due to the combination of targets of potentially different scale, in `DESIRABILITY` 
 objective mode, all provided targets must have `bounds` specified so they can be 
-normalized before being combined.
+normalized via scaling before being combined.
 ```
 
 In the example below, we use three different targets (which all have a different goal) 
