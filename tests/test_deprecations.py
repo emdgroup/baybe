@@ -70,37 +70,9 @@ deprecated_config = """
         {
             "type": "CategoricalParameter",
             "name": "Granularity",
-            "values": [
-                "coarse",
-                "fine",
-                "ultra-fine"
-            ],
-            "encoding": "OHE"
-        },
-        {
-            "type": "NumericalDiscreteParameter",
-            "name": "Pressure[bar]",
-            "values": [
-                1,
-                5,
-                10
-            ],
-            "tolerance": 0.2
-        },
-        {
-            "type": "SubstanceParameter",
-            "name": "Solvent",
-            "data": {
-                "Solvent A": "COC",
-                "Solvent B": "CCCCC",
-                "Solvent C": "COCOC",
-                "Solvent D": "CCOCCOCCN"
-            },
-            "decorrelate": true,
-            "encoding": "MORDRED"
+            "values": ["coarse", "fine", "ultra-fine"]
         }
     ],
-    "constraints": [],
     "objective": {
         "mode": "SINGLE",
         "targets": [
@@ -109,22 +81,6 @@ deprecated_config = """
                 "mode": "MAX"
             }
         ]
-    },
-    "strategy": {
-        "type": "TwoPhaseStrategy",
-        "initial_recommender": {
-            "type": "FPSRecommender"
-        },
-        "recommender": {
-            "type": "SequentialGreedyRecommender",
-            "surrogate_model": {
-                "type": "GaussianProcessSurrogate"
-            },
-            "acquisition_function_cls": "qEI"
-        },
-        "switch_after": 1,
-        "allow_repeated_recommendations": false,
-        "allow_recommending_already_measured": false
     }
 }
 """
