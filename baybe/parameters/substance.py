@@ -81,10 +81,10 @@ class SubstanceParameter(DiscreteParameter):
                 requiring this dependency is requested.
         """
         _MORDRED_INSTALLED = import_optional_module(
-            "baybe.utils.chemistry", "_MORDRED_INSTALLED", error="warn"
+            "baybe.utils.chemistry", "_MORDRED_INSTALLED", error="raise"
         )
         _RDKIT_INSTALLED = import_optional_module(
-            "baybe.utils.chemistry", "_RDKIT_INSTALLED", error="warn"
+            "baybe.utils.chemistry", "_RDKIT_INSTALLED", error="raise"
         )
         if value is SubstanceEncoding.MORDRED and not (
             _MORDRED_INSTALLED and _RDKIT_INSTALLED
@@ -117,6 +117,8 @@ class SubstanceParameter(DiscreteParameter):
         # Check for invalid SMILES
         canonical_smiles = {}
         exceptions = []
+
+        # Dynamically load get_canonical_smiles() from utils.chemistry
         get_canonical_smiles = import_optional_module(
             "baybe.utils.chemistry", attribute="get_canonical_smiles", error="raise"
         )
@@ -153,21 +155,21 @@ class SubstanceParameter(DiscreteParameter):
         # for Python 3.7 or higher
         return tuple(self.data.keys())
 
-    # TODO: @Roya not sure if dynamic import in cached_property is a good practice
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
         vals = list(self.data.values())
         pref = self.name + "_"
 
+        # Dynamically load these functions from utils.chemistry
         smiles_to_mordred_features = import_optional_module(
-            "baybe.utils.chemistry", "smiles_to_mordred_features", error="warn"
+            "baybe.utils.chemistry", "smiles_to_mordred_features", error="raise"
         )
         smiles_to_rdkit_features = import_optional_module(
-            "baybe.utils.chemistry", "smiles_to_rdkit_features", error="warn"
+            "baybe.utils.chemistry", "smiles_to_rdkit_features", error="raise"
         )
         smiles_to_fp_features = import_optional_module(
-            "baybe.utils.chemistry", "smiles_to_fp_features", error="warn"
+            "baybe.utils.chemistry", "smiles_to_fp_features", error="raise"
         )
 
         # Get the raw descriptors
