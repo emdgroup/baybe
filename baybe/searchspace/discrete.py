@@ -208,6 +208,12 @@ class SubspaceDiscrete(SerialMixin):
         Raises:
             ValueError: If several parameters with identical names are provided.
             ValueError: If a parameter was specified for which no match was found.
+
+        Note:
+            For columns that have no corresponding entry provided via `parameters`,
+            default values will be used for optional arguments during creation.
+            If you want to set specific values, you must provide a corresponding
+            parameter object.
         """
         # Turn the specified parameters into a dict and check for duplicate names
         specified_params: Dict[str, Parameter] = {}

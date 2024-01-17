@@ -146,6 +146,50 @@ class SearchSpace(SerialMixin):
 
         return SearchSpace(discrete=discrete, continuous=continuous)
 
+    @classmethod
+    def from_dataframe(
+        cls,
+        dataframe: pd.DataFrame,
+        parameters: List[Parameter],
+    ) -> SearchSpace:
+        """Create a search space from a specified set of parameter configuration.
+
+        The way in which the contents of the columns are interpreted depends on the
+        types of the corresponding parameter objects provided. For details, see
+        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.from_dataframe` and
+        :meth:`baybe.searchspace.continuous.SubspaceContinuous.from_dataframe`.
+
+        Args:
+            dataframe: A dataframe whose parameter configurations are used as
+                search space specification.
+            parameters: The corresponding parameter objects, one for each column
+                in `dataframe`.
+
+        Returns:
+            The created search space.
+
+        Raises:
+            ValueError: If the dataframe columns do not match with the parameters.
+        """
+        if set(p.name for p in parameters) != set(dataframe.columns.values):
+            raise ValueError(
+                "The provided dataframe columns must match exactly with the specified "
+                "parameter names."
+            )
+
+        disc_params = [p for p in parameters if p.is_discrete]
+        cont_params = [p for p in parameters if not p.is_discrete]
+
+        # TODO: The continuous classmethod does not yet accept a parameter argument.
+        return SearchSpace(
+            discrete=SubspaceDiscrete.from_dataframe(
+                dataframe[[p.name for p in disc_params]], disc_params
+            ),
+            continuous=SubspaceContinuous.from_dataframe(
+                dataframe[[p.name for p in cont_params]],
+            ),
+        )
+
     @property
     def parameters(self) -> List[Parameter]:
         """Return the list of parameters of the search space."""
