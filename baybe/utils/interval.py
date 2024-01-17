@@ -159,7 +159,7 @@ def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
 def use_fallback_constructor_hook(value: Any, cls: Type[Interval]) -> Interval:
     """Use the singledispatch mechanism as fallback to parse arbitrary input."""
     if isinstance(value, dict):
-        return converter.structure(value, cls)
+        return converter.structure_attrs_fromdict(value, cls)
     return Interval.create(value)
 
 
