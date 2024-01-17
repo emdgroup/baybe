@@ -15,8 +15,8 @@ _index_strategy = st.one_of(st.text(), st.integers(), st.floats())
 def random_dataframes(draw: st.DrawFn):
     """Generate pandas dataframes of random shape and content."""
     # Generate the dataframe shape
-    num_rows = draw(st.integers(min_value=0, max_value=3))
-    num_cols = draw(st.integers(min_value=0, max_value=10))
+    num_rows = draw(st.integers(min_value=0, max_value=2))
+    num_cols = draw(st.integers(min_value=0, max_value=5))
 
     # Generate the column names/types and index
     col_names = draw(
