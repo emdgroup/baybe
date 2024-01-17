@@ -8,14 +8,12 @@ from typing import Any, Literal, Optional
 
 def import_optional_module(
     name: str,
-    attribute: Optional[str] = None,
     error: Literal["raise", "warn", "ignore"] = "raise",
 ) -> Optional[Any]:
     """Import an optional module.
 
     Args:
         name: The name of the module.
-        attribute: The name of an attribute to import from the module.
         error: How to handle errors.
             One of:
                 - "raise": Raise an error if the module cannot be imported.
@@ -23,7 +21,7 @@ def import_optional_module(
                 - "ignore": Ignore the missing module and return `None`.
 
     Returns:
-        Optional[Any]: The imported module or attribute from the module, or `None`
+        Union[ModuleType, None]: The imported module or `None`
              if the module could not be imported.
 
     Raises:
@@ -40,14 +38,9 @@ def import_optional_module(
 
     try:
         module = importlib.import_module(name)
-        if attribute is not None and module is not None:
-            module = getattr(module, attribute)
         return module
     except ModuleNotFoundError as exc:
-        msg = (
-            f"Missing optional dependency '{name}'. "
-            f"Use pip or conda to install {name}."
-        )
+        msg = f"Missing optional dependency '{name}'. "
         if error == "raise":
             raise type(exc)(msg) from None
         if error == "warn":
