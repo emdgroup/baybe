@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- BoTorch dependency bumped to `>=0.9.3`
+
+### Removed
+- Workaround for BoTorch hybrid recommender data type
+- Support for Python 3.8
+
 ## [0.7.2] - 2024-01-24
 ### Added
 - Target enums 
@@ -46,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Specifying target configs without explicit type information is deprecated
 - Specifying parameters/constraints at the top level of a campaign configuration JSON is
   deprecated. Instead, an explicit `searchspace` field must be provided with an optional
-  `constructor` entry.
+  `constructor` entry
 
 ## [0.7.1] - 2023-12-07
 ### Added
