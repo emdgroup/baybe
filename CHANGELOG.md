@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deduplication bug in substance_data hypothesis 
 - Use pydoclint as flake8 plugin and not as a stand-alone linter
 - Margins in documentation for desktop and mobile version
+- `Interval`s can now also be deserialized from a bounds iterable
 
 ### Removed
 - Conda install instructions and version badge
