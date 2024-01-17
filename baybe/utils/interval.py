@@ -12,7 +12,7 @@ from attrs import define, field
 from packaging import version
 
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
-from baybe.utils.serialization import converter
+from baybe.utils.serialization import SerialMixin, converter
 
 # TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs
 #   are supported: https://bugs.python.org/issue41987
@@ -36,7 +36,7 @@ class InfiniteIntervalError(Exception):
 
 
 @define
-class Interval:
+class Interval(SerialMixin):
     """Intervals on the real number line."""
 
     lower: float = field(converter=lambda x: float(x) if x is not None else -np.inf)
