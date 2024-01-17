@@ -1,6 +1,6 @@
 # NOTES:
 # - The map syntax used for matrix is flagged red but actually works
-# - This runs everything in Python 3.8, 3.9, 3.10 and 3.11
+# - This runs everything in Python 3.9, 3.10 and 3.11
 # - No environments are cached due to space limit
 
 name: Regular Checks
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+        py-version: [ {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+        py-version: [ {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +78,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+        py-version: [ {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +97,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+        py-version: [ {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -120,7 +120,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
+        py-version: [ {semantic: '3.9', tox: 'py39'}, {semantic: '3.10', tox: 'py310'}, {semantic: '3.11', tox: 'py311'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:

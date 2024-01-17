@@ -1,6 +1,6 @@
 # NOTES:
 # - The map syntax used for matrix is flagged red but actually works
-# - This runs everything in Python 3.11, except the fulltest which is also run in 3.8
+# - This runs everything in Python 3.11, except the fulltest which is also run in 3.9
 # - Only coretest and fulltest environments are cached due to space limit
 
 name: Continuous Integration
@@ -114,7 +114,7 @@ jobs:
     needs: [typecheck, audit]
     strategy:
       matrix:
-        py-version: [ {semantic: '3.8', tox: 'py38'} ]
+        py-version: [ {semantic: '3.11', tox: 'py311'} ]
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -136,7 +136,7 @@ jobs:
     needs: [typecheck, audit]
     strategy:
       matrix:
-        py-version: [ {semantic: '3.8', tox: 'py38'}, {semantic: '3.11', tox: 'py311'} ]
+        py-version: [ {semantic: '3.9', tox: 'py39'}, {semantic: '3.11', tox: 'py311'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
