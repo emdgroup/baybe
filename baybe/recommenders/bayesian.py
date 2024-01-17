@@ -293,7 +293,6 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 on=list(candidates_comp),
             )["index"]
         )
-        assert len(points) == len(idxs)
 
         return idxs
 
@@ -380,7 +379,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # format expected by BoTorch
         # TODO: Currently assumes that discrete parameters are first and continuous
         #   second. Once parameter redesign [11611] is completed, we might adjust this.
-        candidates_comp.columns = list(range(len(candidates_comp.columns)))
+        num_comp_columns = len(candidates_comp.columns)
+        candidates_comp.columns = list(range(num_comp_columns))
         fixed_features_list = candidates_comp.to_dict("records")
 
         # Actual call of the BoTorch optimization routine
@@ -395,7 +395,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 equality_constraints=[
                     c.to_botorch(
                         searchspace.continuous.parameters,
-                        idx_offset=len(candidates_comp.columns),
+                        idx_offset=num_comp_columns,
                     )
                     for c in searchspace.continuous.constraints_lin_eq
                 ]
@@ -403,7 +403,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 inequality_constraints=[
                     c.to_botorch(
                         searchspace.continuous.parameters,
-                        idx_offset=len(candidates_comp.columns),
+                        idx_offset=num_comp_columns,
                     )
                     for c in searchspace.continuous.constraints_lin_ineq
                 ]
@@ -416,8 +416,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
             ) from ex
 
         # Split discrete and continuous parts
-        disc_points = points[:, : len(candidates_comp.columns)]
-        cont_points = points[:, len(candidates_comp.columns) :]
+        disc_points = points[:, :num_comp_columns]
+        cont_points = points[:, num_comp_columns:]
 
         # Get selected candidate indices
         idxs = pd.Index(
