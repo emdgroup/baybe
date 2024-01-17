@@ -4,7 +4,6 @@ from abc import ABC
 from functools import partial
 from typing import Any, Callable, ClassVar, Literal, Optional
 
-import numpy as np
 import pandas as pd
 from attrs import define, field, validators
 from botorch.acquisition import (
@@ -18,7 +17,6 @@ from botorch.acquisition import (
     qUpperConfidenceBound,
 )
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
-from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.acquisition import PartialAcquisitionFunction, debotorchize
 from baybe.exceptions import NoMCAcquisitionFunctionError
@@ -427,27 +425,22 @@ class SequentialGreedyRecommender(BayesianRecommender):
         disc_points = points[:, : len(candidates_comp.columns)]
         cont_points = points[:, len(candidates_comp.columns) :]
 
-        # Find the closest match with the discrete candidates
-        candidates_comp_np = candidates_comp.to_numpy()
-        disc_points_np = disc_points.numpy()
-        if not disc_points_np.flags["C_CONTIGUOUS"]:
-            disc_points_np = np.ascontiguousarray(disc_points_np)
-        if not candidates_comp_np.flags["C_CONTIGUOUS"]:
-            candidates_comp_np = np.ascontiguousarray(candidates_comp_np)
-        disc_idxs_iloc = pairwise_distances_argmin(
-            disc_points_np, candidates_comp_np, metric="manhattan"
+        # Get selected candidate indices
+        idxs = pd.Index(
+            pd.merge(
+                candidates_comp.reset_index(),
+                pd.DataFrame(disc_points, columns=candidates_comp.columns),
+                on=list(candidates_comp),
+            )["index"]
         )
 
-        # Get the actual search space dataframe indices
-        disc_idxs_loc = candidates_comp.iloc[disc_idxs_iloc].index
-
         # Get experimental representation of discrete and continuous parts
-        rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs_loc]
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[idxs]
         rec_cont_exp = pd.DataFrame(
             cont_points, columns=searchspace.continuous.param_names
         )
 
-        # Adjust the index of the continuous part and concatenate both
+        # Adjust the index of the continuous part and create overall recommendations
         rec_cont_exp.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
         # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
