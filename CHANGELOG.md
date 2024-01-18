@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix orders of examples in table of content
 - `DiscreteCustomConstraint` validator now expects data frame instead of series
 - `ignore_example` flag builds but does not execute examples when building documentation
+- New user guide versions for campaigns, targets and objectives
 
 ### Fixed
 - Wrong use of `tolerance` argument in constraints user guide
@@ -38,9 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - `Interval.is_finite` replaced with `Interval.is_bounded`
 - Specifying target configs without explicit type information is deprecated
-
-### Changed
-- New version of campaign user guide and basic example
 
 ## [0.7.1] - 2023-12-07
 ### Added
