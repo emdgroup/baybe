@@ -117,7 +117,7 @@ nitpick_ignore_regex = [
     (r"py:.*", r".*_T.*"),
     # Ignore files for which no __init__ is available at all
     (r"py:.*", "baybe.constraints.conditions.Condition.__init__"),
-    (r"py:.*", "baybe.utils.serialization.SerialMixin.__init__"),
+    (r"py:.*", "baybe.serialization.mixin.SerialMixin.__init__"),
     (r"DeprecationWarning:", ""),
     # Ignore the generics in utils.basic
     # Might be able to us a regex here, is done explicitly at the moment for full
