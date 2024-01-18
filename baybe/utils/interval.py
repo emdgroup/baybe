@@ -4,7 +4,7 @@ import sys
 import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -12,6 +12,7 @@ from attrs import define, field
 from packaging import version
 
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
+from baybe.utils.serialization import SerialMixin, converter
 
 # TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs
 #   are supported: https://bugs.python.org/issue41987
@@ -35,7 +36,7 @@ class InfiniteIntervalError(Exception):
 
 
 @define
-class Interval:
+class Interval(SerialMixin):
     """Intervals on the real number line."""
 
     lower: float = field(converter=lambda x: float(x) if x is not None else -np.inf)
@@ -153,3 +154,14 @@ def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
     if isinstance(bounds, Interval):
         return bounds
     return Interval.create(bounds)
+
+
+def use_fallback_constructor_hook(value: Any, cls: Type[Interval]) -> Interval:
+    """Use the singledispatch mechanism as fallback to parse arbitrary input."""
+    if isinstance(value, dict):
+        return converter.structure_attrs_fromdict(value, cls)
+    return Interval.create(value)
+
+
+# Register structure hooks
+converter.register_structure_hook(Interval, use_fallback_constructor_hook)
