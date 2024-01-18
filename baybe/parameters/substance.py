@@ -27,10 +27,6 @@ Smiles = str
 """Type alias for SMILES strings."""
 
 
-chemistry_utils = import_optional_module("baybe.utils.chemistry", error="raise")
-"""Variable for holding baybe.utils.chemistry."""
-
-
 @define(frozen=True, slots=False)
 class SubstanceParameter(DiscreteParameter):
     """Generic substances that are treated with cheminformatics descriptors.
@@ -84,8 +80,12 @@ class SubstanceParameter(DiscreteParameter):
             ImportError: If the ``chem``dependency was not installed but an encoding
                 requiring this dependency is requested.
         """
-        _MORDRED_INSTALLED = chemistry_utils._MORDRED_INSTALLED  # type: ignore
-        _RDKIT_INSTALLED = chemistry_utils._RDKIT_INSTALLED  # type: ignore
+        _MORDRED_INSTALLED = import_optional_module(
+            "baybe.utils.chemistry", "_MORDRED_INSTALLED", error="warn"
+        )
+        _RDKIT_INSTALLED = import_optional_module(
+            "baybe.utils.chemistry", "_RDKIT_INSTALLED", error="warn"
+        )
         if value is SubstanceEncoding.MORDRED and not (
             _MORDRED_INSTALLED and _RDKIT_INSTALLED
         ):
@@ -117,11 +117,12 @@ class SubstanceParameter(DiscreteParameter):
         # Check for invalid SMILES
         canonical_smiles = {}
         exceptions = []
-
-        # Dynamically load get_canonical_smiles() from utils.chemistry
+        get_canonical_smiles = import_optional_module(
+            "baybe.utils.chemistry", attribute="get_canonical_smiles", error="raise"
+        )
         for name, smiles in data.items():
             try:
-                canonical_smiles[name] = chemistry_utils.get_canonical_smiles(smiles)  # type: ignore
+                canonical_smiles[name] = get_canonical_smiles(smiles)  # type: ignore
             except ValueError:
                 exceptions.append(
                     ValueError(
@@ -152,19 +153,30 @@ class SubstanceParameter(DiscreteParameter):
         # for Python 3.7 or higher
         return tuple(self.data.keys())
 
+    # TODO: @Roya not sure if dynamic import in cached_property is a good practice
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
         vals = list(self.data.values())
         pref = self.name + "_"
 
+        smiles_to_mordred_features = import_optional_module(
+            "baybe.utils.chemistry", "smiles_to_mordred_features", error="warn"
+        )
+        smiles_to_rdkit_features = import_optional_module(
+            "baybe.utils.chemistry", "smiles_to_rdkit_features", error="warn"
+        )
+        smiles_to_fp_features = import_optional_module(
+            "baybe.utils.chemistry", "smiles_to_fp_features", error="warn"
+        )
+
         # Get the raw descriptors
         if self.encoding is SubstanceEncoding.MORDRED:
-            comp_df = chemistry_utils.smiles_to_mordred_features(vals, prefix=pref)  # type: ignore
+            comp_df = smiles_to_mordred_features(vals, prefix=pref)  # type: ignore
         elif self.encoding is SubstanceEncoding.RDKIT:
-            comp_df = chemistry_utils.smiles_to_rdkit_features(vals, prefix=pref)  # type: ignore
+            comp_df = smiles_to_rdkit_features(vals, prefix=pref)  # type: ignore
         elif self.encoding is SubstanceEncoding.MORGAN_FP:
-            comp_df = chemistry_utils.smiles_to_fp_features(vals, prefix=pref)  # type: ignore
+            comp_df = smiles_to_fp_features(vals, prefix=pref)  # type: ignore
         else:
             raise ValueError(
                 f"Unknown parameter encoding {self.encoding} for parameter {self.name}."
