@@ -28,7 +28,7 @@ describe the underlying optimization problem at hand:
 Apart from this basic configuration, it is possible to provide additional instructions, 
 such as the specific optimization 
 `Strategy`&nbsp;([class](baybe.strategies.base.Strategy) 
-/ [user guide](./strategy)) to be used, as well as other aspects of the campaign 
+/ [user guide](./strategies)) to be used, as well as other aspects of the campaign 
 (see [here](#AM) for details on `numerical_measurements_must_be_within_tolerance`).
 
 
