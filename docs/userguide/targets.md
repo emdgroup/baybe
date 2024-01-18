@@ -48,11 +48,11 @@ We simply need to choose the bounds so that the midpoint is the desired value.
 The spread of the bounds interval defines how fast the acceptability of a measurement
 falls off away from the match value, also depending on the choice of `transformation`.
 
-In the example below, `match_targetA` will treat all values `< 45` and `> 55` as
+In the example below, `match_targetA` will treat all values < 45 and > 55 as
 equally bad, while `match_targetB` is more forgiving in that it chooses a bell curve
-transformation instead of triangular, and also uses a wider interval of bounds.
-Both targets are configured to match the midpoint of `bounds` as optimal, in this case
-a value of `50`:
+transformation instead of a triangular one, and also uses a wider interval of bounds.
+Both targets are configured such that the midpoint of `bounds` (in this case 50) 
+becomes the optimal value:
 
 ```python
 from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
@@ -82,6 +82,6 @@ For example: If your experimental outcome is a categorical ranking into "bad",
 "mediocre" and "good", you could use a NumericalTarget with bounds (1, 3), where the
 categories correspond to values 1, 2 and 3 respectively.
 If your target category is not ordinal, the transformation into a numerical target is
-not straight forward, which is a current limitation of BayBE.
+not straightforward, which is a current limitation of BayBE.
 We are looking into adding more target options in the future.
 ```

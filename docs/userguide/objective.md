@@ -19,8 +19,8 @@ We are actively working on adding more objective modes for multiple targets.
 Currently, BayBE offers two optimization modes.
 
 ### SINGLE
-In the `SINGLE` mode, objectives focus on optimizing a single target. 
-Nearly all of the [examples](../../examples/examples) use this objective mode.
+In `SINGLE` mode, objectives focus on optimizing a single target. 
+Nearly [examples](../../examples/examples) use this objective mode.
 
 ```python
 from baybe.targets import NumericalTarget
@@ -34,11 +34,12 @@ objective = Objective(mode="SINGLE", targets=[target_1])
 The `DESIRABILITY` mode enables the combination multiple targets via scalarization 
 into a single value, a method also utilized in classical DOE.
 
-Besides `mode` and `targets`, this objective type has two additional optional arguments:
+Besides `mode` and `targets`, this objective type takes two additional optional
+arguments:
 * `weights`: Some targets might be more important than others.
   It is possible to specify the relative weights of the targets in this argument.
-  BayBE automatically normalizes the numbers provided, so only the relations between 
-  them matter.
+  BayBE automatically normalizes the numbers provided, so only their relative values 
+  matter.
 * `combine_func`: Specifies the function used for combining the transformed targets. 
   The choices are `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
   geometric mean respectively.
