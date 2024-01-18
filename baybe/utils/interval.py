@@ -11,8 +11,8 @@ import torch
 from attrs import define, field
 from packaging import version
 
+from baybe.serialization import SerialMixin, converter
 from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
-from baybe.utils.serialization import SerialMixin, converter
 
 # TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs
 #   are supported: https://bugs.python.org/issue41987
