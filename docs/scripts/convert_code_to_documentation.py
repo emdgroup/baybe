@@ -149,7 +149,9 @@ def create_example_documentation(example_dest_dir: str):
             # Create the Markdown file:
 
             # 1. Convert the file to jupyter notebook
-            check_call(["p2j", file], stdout=DEVNULL, stderr=STDOUT)
+            check_call(
+                ["jupytext", "--to", "notebook", file], stdout=DEVNULL, stderr=STDOUT
+            )
 
             notebook_path = file.with_suffix(".ipynb")
 
@@ -168,7 +170,7 @@ def create_example_documentation(example_dest_dir: str):
             if not IGNORE_EXAMPLES:
                 convert_execute.append("--execute")
 
-            to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
+            to_markdown = ["jupytext", "--to", "markdown", notebook_path]
 
             check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
             check_call(
