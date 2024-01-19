@@ -139,4 +139,4 @@ results_6hc_no_tl = simulate_scenarios(
 results = pd.concat([results_with_tf, results_3hc_no_tl, results_6hc_no_tl])
 sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
 plt.gcf().set_size_inches(24, 8)
-plt.savefig("./run_analytical.png")
+plt.savefig("./run_transfer_learning.png")
