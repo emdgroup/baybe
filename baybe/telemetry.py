@@ -78,7 +78,7 @@ import hashlib
 import logging
 import os
 import socket
-from typing import Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Union
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -132,6 +132,9 @@ try:
     from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
     from opentelemetry.sdk.resources import Resource
+
+    if TYPE_CHECKING:
+        from opentelemetry.metrics import Histogram
 except ImportError:
     # Failed telemetry install/import should not fail baybe, so telemetry is being
     # disabled in that case
@@ -193,7 +196,7 @@ if is_enabled():
                 raise requests.RequestException("Cannot reach telemetry network.")
 
         # User has connectivity to the telemetry endpoint, so we initialize
-        _instruments = {}
+        _instruments: Dict[str, Histogram] = {}
         _resource = Resource.create(
             {"service.namespace": "BayBE", "service.name": "SDK"}
         )
@@ -239,9 +242,7 @@ def get_user_details() -> Dict[str, str]:
     return {"host": hostname_hash, "user": username_hash, "version": __version__}
 
 
-def telemetry_record_value(
-    instrument_name: str, value: Union[bool, int, float, str]
-) -> None:
+def telemetry_record_value(instrument_name: str, value: Union[int, float]) -> None:
     """Transmit a given value under a given label to the telemetry backend.
 
     The values are recorded as histograms, i.e. the info about record time and sample
@@ -257,9 +258,7 @@ def telemetry_record_value(
         _submit_scalar_value(instrument_name, value)
 
 
-def _submit_scalar_value(
-    instrument_name: str, value: Union[bool, int, float, str]
-) -> None:
+def _submit_scalar_value(instrument_name: str, value: Union[int, float]) -> None:
     """See :func:`baybe.telemetry.telemetry_record_value`."""
     if instrument_name in _instruments:
         histogram = _instruments[instrument_name]
