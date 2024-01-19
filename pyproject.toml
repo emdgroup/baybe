@@ -120,6 +120,7 @@ lint = [
 mypy = [
     "mypy>=1.6.1",
     "pandas-stubs>=2.0.3.230814",
+    "funcy-stubs>=0.1.1"
 ]
 
 simulation = [
