@@ -180,16 +180,17 @@ times before querying the next recommendations.
 
 ```python
 df = campaign.recommend(batch_quantity=3)
+print(df)
 ```
 
-For a particular random seed, `df` could look as follows:
+> ```python
+>    Granularity  Pressure[bar]    Solvent
+> 15      medium            1.0  Solvent D
+> 10      coarse           10.0  Solvent C
+> 29        fine            5.0  Solvent B
+> ```
 
-```python
-   Granularity  Pressure[bar]    Solvent
-15      medium            1.0  Solvent D
-10      coarse           10.0  Solvent C
-29        fine            5.0  Solvent B
-```
+Note that the specific recommendations will depend on the data that has already been fed to the model and random number generator seed that is used.
 
 After having conducted the corresponding experiments, we can add our measured
 targets to the table and feed it back to the campaign:
