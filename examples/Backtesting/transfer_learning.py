@@ -38,10 +38,13 @@ from baybe.utils import botorch_function_wrapper
 # Also, since the test function we use here is defined for several dimension, we choose
 # a dimension.
 
-DIMENSION = 3
-N_MC_ITERATIONS = 6
-N_DOE_ITERATIONS = 5
-BATCH_QUANTITY = 1
+# Note that these values were chosen to enable a fast execution. We provide "recommended"
+# values for obtaining a fast yet informative example.
+
+DIMENSION = 3  # Recommendation: 3
+N_MC_ITERATIONS = 2  # Recommendation: 6
+N_DOE_ITERATIONS = 2  # Recommendation: 5
+BATCH_QUANTITY = 1  # Recommendation: 1
 
 #### Defining the tasks
 
@@ -65,7 +68,7 @@ test_functions = {
 # The parameter `POINTS_PER_DIM` controls the number of points per dimension.
 # Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
 # The bounds are defined by the test function.
-POINTS_PER_DIM = 6
+POINTS_PER_DIM = 6  # Recommended: 6
 BOUNDS = Hartmann().bounds
 
 # We define one numerical discrete parameters per dimension, as well as a ``TaskParameter``.
