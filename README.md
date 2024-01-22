@@ -43,7 +43,7 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 
 ## Quick Start
 
-First, install the `baybe` PyPI package with the `chem` and `simulation` dependency groups.
+First, install the `baybe` PyPI package with the `chem` and `simulation` dependency groups. For additional details, see the [advanced installation instructions](#advanced-installation).
 
 ```bash
 pip install 'baybe[chem,simulation]'
