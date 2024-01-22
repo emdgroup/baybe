@@ -6,11 +6,11 @@ import warnings
 from typing import Any, Literal, Optional
 
 
-def import_optional_module(
+def optional_import(
     name: str,
     attribute: Optional[str] = None,
     error: Literal["raise", "warn", "ignore"] = "raise",
-) -> Optional[Any]:
+) -> Any:
     """Import an optional module.
 
     Args:
@@ -23,14 +23,14 @@ def import_optional_module(
                 - "ignore": Ignore the missing module and return `None`.
 
     Returns:
-        Optional[Any]: The imported module or attribute from the module, or `None`
-             if the module could not be imported.
+        The imported module or attribute from the module, or ``None``
+            if the module could not be imported.
 
     Raises:
         ValueError: If the given error type value is not in the provided list of
              accepted values: 'raise', 'warn', 'ignore'.
-        ModuleNotFoundError: If the requested module is not found and the `error` is set
-            to "raise".
+        ModuleNotFoundError: If the requested module is not found and the
+            ``error`` is set to "raise".
     """
     if error not in ("raise", "warn", "ignore"):
         raise ValueError(
