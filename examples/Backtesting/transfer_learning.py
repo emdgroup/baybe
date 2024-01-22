@@ -130,22 +130,30 @@ results = simulate_transfer_learning(
 # To showcase the improvement, we also optimize the same tasks independently and use
 # the `simulate_scenarios` function.
 
-parameters_without_tl = parameters[:-1]  # We do not need the task parameter here
-
+parameters_no_tl = parameters[:-1]  # We need new task parameters
+scenarios = {}  # Dictionary of all scenarios
+# Iterate over all available test functions to create one campaign for each function
 for function in test_functions:
-    hartmann_function = test_functions[function]  # Get actual function
-    campaign_no_tl = Campaign(
-        searchspace=SearchSpace.from_product(parameters_without_tl), objective=objective
+    hartmann_function = test_functions[function]  # Get current test function
+    task_parameter = TaskParameter(  # Create TaskParameter
+        name="Function",
+        values=("Hartmann", "CHartmann", "CSHartmann"),
+        active_values=[function],
     )
-    scenario = {f"{function}_no_TL": campaign_no_tl}
-    results_no_tl = simulate_scenarios(
-        scenario,
-        hartmann_function,
-        batch_quantity=BATCH_QUANTITY,
-        n_doe_iterations=N_DOE_ITERATIONS,
-        n_mc_iterations=N_MC_ITERATIONS,
+    campaign = Campaign(
+        searchspace=SearchSpace.from_product(parameters_no_tl + [task_parameter]),
+        objective=objective,
     )
-    results = pd.concat([results, results_no_tl])
+    scenarios[f"{function}_no_TL"] = campaign
+
+results_no_tl = simulate_scenarios(
+    scenarios,
+    lookup,
+    batch_quantity=BATCH_QUANTITY,
+    n_doe_iterations=N_DOE_ITERATIONS,
+    n_mc_iterations=N_MC_ITERATIONS,
+)
+results = pd.concat([results, results_no_tl])
 
 
 # We concatenate all the results and show them in a single plot.
