@@ -1,6 +1,6 @@
 """A collection of point sampling algorithms."""
 
-from typing import Literal
+from typing import List, Literal
 
 import numpy as np
 from sklearn.metrics import pairwise_distances
@@ -10,7 +10,7 @@ def farthest_point_sampling(
     points: np.ndarray,
     n_samples: int = 1,
     initialization: Literal["farthest", "random"] = "farthest",
-) -> np.ndarray:
+) -> List[int]:
     """Sample points according to a farthest point heuristic.
 
     Creates a subset of a collection of points by successively adding points with the
@@ -28,7 +28,7 @@ def farthest_point_sampling(
             selected uniformly at random.
 
     Returns:
-        An array containing the positional indices of the selected points.
+        A list containing the positional indices of the selected points.
 
     Raises:
         ValueError: If an unknown initialization strategy is used.
@@ -41,9 +41,11 @@ def farthest_point_sampling(
         selected_point_indices = [np.random.randint(0, len(points))]
     elif initialization == "farthest":
         idx_1d = np.argmax(dist_matrix)
-        selected_point_indices = list(np.unravel_index(idx_1d, dist_matrix.shape))
+        selected_point_indices = list(
+            map(int, np.unravel_index(idx_1d, dist_matrix.shape))
+        )
         if n_samples == 1:
-            return np.random.choice(selected_point_indices, 1)
+            return np.random.choice(selected_point_indices, 1).tolist()
     else:
         raise ValueError(f"unknown initialization strategy: '{initialization}'")
 
