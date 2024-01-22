@@ -81,7 +81,7 @@ Next, we inform BayBE about the available "control knobs", that is, the underlyi
 system parameters we can tune to optimize our targets. This also involves specifying 
 their values/ranges and other parameter-specific details.
 
-For our example, we assume that we can control three quantities -- `Granularity`, `Pressure[bar]`, and `Solvent` -- as follows:
+For our example, we assume that we can control three quantities&mdash;`Granularity`, `Pressure[bar]`, and `Solvent`&mdash;as follows:
 
 ```python
 from baybe.parameters import (
