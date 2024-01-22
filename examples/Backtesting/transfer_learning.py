@@ -16,7 +16,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from botorch.test_functions import SixHumpCamel, ThreeHumpCamel
+from botorch.test_functions.synthetic import (
+    ConstrainedHartmann,
+    ConstrainedHartmannSmooth,
+    Hartmann,
+)
 
 from baybe import Campaign
 from baybe.objective import Objective
@@ -29,36 +33,61 @@ from baybe.utils import botorch_function_wrapper
 #### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
-# These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
+# These are the number of Monte Carlo runs, the number of experiments to be conducted per run
+# and the batch quantity.
+# Also, since the test function we use here is defined for several dimension, we choose
+# a dimension.
 
-N_MC_ITERATIONS = 9
+DIMENSION = 3
+N_MC_ITERATIONS = 6
 N_DOE_ITERATIONS = 5
+BATCH_QUANTITY = 1
 
 #### Defining the tasks
 
-# We use two similar two-dimensional test functions imported from BoTorch.
-# We use them to create a lookup table after creating the search space and the objective.
-three_hump_camel = botorch_function_wrapper(ThreeHumpCamel())
-six_hump_camel = botorch_function_wrapper(SixHumpCamel())
+# We use three variants of the Hartmann Test function from botorch.
+# These are the general Hartmann function, a constrained variant, and tow constrained
+# variants. For details, see [here](https://botorch.org/v/0.1.4/api/test_functions.html).
+hartmann = botorch_function_wrapper(Hartmann(dim=DIMENSION))
+c_hartmann = botorch_function_wrapper(ConstrainedHartmann(dim=DIMENSION))
+cs_hartmann = botorch_function_wrapper(ConstrainedHartmannSmooth(dim=DIMENSION))
+
+# We define a dictionary mapping the names of the functions to the objects since this
+# will be useful later.
+test_functions = {
+    "Hartmann": hartmann,
+    "CHartmann": c_hartmann,
+    "CSHartmann": cs_hartmann,
+}
 
 #### Creating the searchspace and the objective
 
 # The parameter `POINTS_PER_DIM` controls the number of points per dimension.
-# Note that the searchspace will have `POINTS_PER_DIM**2` many points.
+# Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
+# The bounds are defined by the test function.
+POINTS_PER_DIM = 6
+BOUNDS = Hartmann().bounds
 
-POINTS_PER_DIM = 10
-
-# We define two numerical discrete parameters, as well as a ``TaskParameter``.
+# We define one numerical discrete parameters per dimension, as well as a ``TaskParameter``.
 # This parameter contains the information about the different tasks that we have in this
 # transfer learning example.
-x1 = NumericalDiscreteParameter(
-    name="x_1", values=list(np.linspace(-2, 2, POINTS_PER_DIM))
+parameters = [
+    NumericalDiscreteParameter(
+        name=f"x{k}",
+        values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
+    )
+    for k in range(DIMENSION)
+]
+
+# In this backtesting example, the goal is to use transfer learning to learn all three
+# test functions and using the available data for all three of them. Thus, we do not
+# declare any `active_values` here.
+# For more details on these, we refer to the [userguide](./../../userguide/transfer_learning.md).
+
+task_param = TaskParameter(
+    name="Function", values=("Hartmann", "CHartmann", "CSHartmann")
 )
-x2 = NumericalDiscreteParameter(
-    name="x_2", values=list(np.linspace(-2, 2, POINTS_PER_DIM))
-)
-task_param = TaskParameter(name="Function", values=("ThreeHump", "SixHump"))
-parameters = [x1, x2, task_param]
+parameters.append(task_param)
 
 # We now create the searchspace, objective and campaign.
 
@@ -74,32 +103,26 @@ campaign = Campaign(searchspace=searchspace, objective=objective)
 # parameter, including one for the ``TaskParameter`` and one column for the target value.
 # The table is created by constructing one dataframe per task and concatenating them.
 
-x = x1.values
-y = x2.values
-xx, yy = np.meshgrid(x, y)
+grid = np.meshgrid(*[parameters[k].values for k in range(DIMENSION)])
 
+lookup = pd.DataFrame()
 
-lookup_3hc = pd.DataFrame({"x_1": xx.flatten(), "x_2": yy.flatten()})
-lookup_3hc["Target"] = lookup_3hc.apply(three_hump_camel, axis=1)
-lookup_3hc["Function"] = "ThreeHump"
+for function in test_functions:
+    hartmann_function = test_functions[function]  # Get actual function
+    lookup_tmp = pd.DataFrame({f"x{k}": grid[k].flatten() for k in range(DIMENSION)})
+    lookup_tmp["Target"] = lookup_tmp.apply(hartmann_function, axis=1)
+    lookup_tmp["Function"] = function
+    lookup = pd.concat([lookup, lookup_tmp], ignore_index=True)
 
-lookup_6hc = pd.DataFrame({"x_1": xx.flatten(), "x_2": yy.flatten()})
-lookup_6hc["Target"] = lookup_6hc.apply(six_hump_camel, axis=1)
-lookup_6hc["Function"] = "SixHump"
-
-lookup = pd.concat([lookup_3hc, lookup_6hc], ignore_index=True)
-
-# We print the first ten rows to show how the table looks like
-print(lookup.head(10))
 
 #### Performing the simulation loop
 
 # We can now use the `simulate_transfer_learning` function to simulate a full experiment.
 
-results_with_tf = simulate_transfer_learning(
+results = simulate_transfer_learning(
     campaign,
     lookup,
-    batch_quantity=1,
+    batch_quantity=BATCH_QUANTITY,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )
@@ -107,36 +130,26 @@ results_with_tf = simulate_transfer_learning(
 # To showcase the improvement, we also optimize the same tasks independently and use
 # the `simulate_scenarios` function.
 
-parameters_without_tl = [x1, x2]
-campaign_without_tl_3hc = Campaign(
-    searchspace=SearchSpace.from_product([x1, x2]), objective=objective
-)
-campaign_without_tl_6hc = Campaign(
-    searchspace=SearchSpace.from_product([x1, x2]), objective=objective
-)
+parameters_without_tl = parameters[:-1]  # We do not need the task parameter here
 
-scenarios_3hc = {"ThreeHump no TL": campaign_without_tl_3hc}
-scenarios_6hc = {"SixHump no TL": campaign_without_tl_6hc}
-
-results_3hc_no_tl = simulate_scenarios(
-    scenarios_3hc,
-    three_hump_camel,
-    batch_quantity=1,
-    n_doe_iterations=N_DOE_ITERATIONS,
-    n_mc_iterations=N_MC_ITERATIONS,
-)
-
-results_6hc_no_tl = simulate_scenarios(
-    scenarios_6hc,
-    six_hump_camel,
-    batch_quantity=1,
-    n_doe_iterations=N_DOE_ITERATIONS,
-    n_mc_iterations=N_MC_ITERATIONS,
-)
+for function in test_functions:
+    hartmann_function = test_functions[function]  # Get actual function
+    campaign_no_tl = Campaign(
+        searchspace=SearchSpace.from_product(parameters_without_tl), objective=objective
+    )
+    scenario = {f"{function}_no_TL": campaign_no_tl}
+    results_no_tl = simulate_scenarios(
+        scenario,
+        hartmann_function,
+        batch_quantity=BATCH_QUANTITY,
+        n_doe_iterations=N_DOE_ITERATIONS,
+        n_mc_iterations=N_MC_ITERATIONS,
+    )
+    results = pd.concat([results, results_no_tl])
 
 
 # We concatenate all the results and show them in a single plot.
-results = pd.concat([results_with_tf, results_3hc_no_tl, results_6hc_no_tl])
+
 sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
 plt.gcf().set_size_inches(24, 8)
 plt.savefig("./run_transfer_learning.png")
