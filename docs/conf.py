@@ -215,6 +215,9 @@ html_theme_options = {
     # Logos. Location is relative to _static folder.
     "light_logo": "logo1.svg",  # Logo for light mode
     "dark_logo": "logo1.svg",  # Logo for dark mode
+    "source_repository": "https://github.com/emdgroup/baybe/",
+    "source_branch": "main",
+    "source_directory": "docs/",
 }
 
 # Ignored links for linkcheck
