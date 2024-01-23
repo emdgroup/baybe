@@ -122,25 +122,6 @@ class Campaign(SerialMixin):
         return converter.structure(config, Campaign)
 
     @classmethod
-    def to_config(cls) -> str:
-        """Extract the configuration of the campaign as JSON string.
-
-        Note: This is not yet implemented. Use
-        :func:`baybe.serialization.mixin.SerialMixin.to_json` instead
-
-        Returns:
-            The configuration as JSON string.
-
-        Raises:
-            NotImplementedError: When trying to use this function.
-        """
-        # TODO: Ideally, this should extract a "minimal" configuration, that is,
-        #   default values should not be exported, which cattrs supports via the
-        #   'omit_if_default' option. Can be Implemented once the converter structure
-        #   has been cleaned up.
-        raise NotImplementedError()
-
-    @classmethod
     def validate_config(cls, config_json: str) -> None:
         """Validate a given campaign configuration JSON.
 
