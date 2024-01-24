@@ -6,14 +6,14 @@ import pandas as pd
 
 from baybe.parameters.base import Parameter
 
-_T = TypeVar("_T")
+_TParameter = TypeVar("_TParameter", bound=Parameter)
 
 
 def get_parameters_from_dataframe(
     df: pd.DataFrame,
-    factory: Callable[[str, Collection[Any]], _T],
-    parameters: Optional[List[_T]] = None,
-) -> List[_T]:
+    factory: Callable[[str, Collection[Any]], _TParameter],
+    parameters: Optional[List[_TParameter]] = None,
+) -> List[_TParameter]:
     """Create a list of parameters from a dataframe.
 
     Returns one parameter for each column of the given dataframe. By default,
@@ -42,7 +42,7 @@ def get_parameters_from_dataframe(
         ValueError: If a parameter was specified for which no match was found.
     """
     # Turn the pre-specified parameters into a dict and check for duplicate names
-    specified_params: Dict[str, Parameter] = {}
+    specified_params: Dict[str, _TParameter] = {}
     if parameters is not None:
         for param in parameters:
             if param.name in specified_params:
@@ -54,6 +54,7 @@ def get_parameters_from_dataframe(
     # Try to find a parameter match for each dataframe column
     parameters = []
     for name, series in df.items():
+        assert isinstance(name, str)
         unique_values = series.unique()
 
         # If a match is found, assert that the values are in range
