@@ -88,7 +88,7 @@ class SubspaceContinuous(SerialMixin):
                 attributes. If a match between column name and parameter name is found,
                 the corresponding parameter object is used. If a column has no match in
                 the parameter list, a new
-                :class:`baybe.parameters.continuous.NumericalContinuousParameter`
+                :class:`baybe.parameters.numerical.NumericalContinuousParameter`
                 is created with default optional arguments. For more details, see
                 :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
 
