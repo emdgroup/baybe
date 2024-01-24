@@ -7,7 +7,7 @@ from hypothesis.extra.pandas import column, data_frames
 
 from baybe.serialization import deserialize_dataframe, serialize_dataframe
 
-_index_strategy = st.one_of(st.text(max_size=5), st.integers(), st.floats())
+_index_strategy = st.one_of(st.text(), st.integers(), st.floats())
 """A strategy for generating dataframe indexes."""
 
 
