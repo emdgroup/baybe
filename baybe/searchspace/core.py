@@ -149,10 +149,10 @@ class SearchSpace(SerialMixin):
     @classmethod
     def from_dataframe(
         cls,
-        dataframe: pd.DataFrame,
+        df: pd.DataFrame,
         parameters: List[Parameter],
     ) -> SearchSpace:
-        """Create a search space from a specified set of parameter configuration.
+        """Create a search space from a specified set of parameter configurations.
 
         The way in which the contents of the columns are interpreted depends on the
         types of the corresponding parameter objects provided. For details, see
@@ -160,10 +160,10 @@ class SearchSpace(SerialMixin):
         :meth:`baybe.searchspace.continuous.SubspaceContinuous.from_dataframe`.
 
         Args:
-            dataframe: A dataframe whose parameter configurations are used as
+            df: A dataframe whose parameter configurations are used as
                 search space specification.
             parameters: The corresponding parameter objects, one for each column
-                in `dataframe`.
+                in the provided dataframe.
 
         Returns:
             The created search space.
@@ -171,7 +171,7 @@ class SearchSpace(SerialMixin):
         Raises:
             ValueError: If the dataframe columns do not match with the parameters.
         """
-        if set(p.name for p in parameters) != set(dataframe.columns.values):
+        if set(p.name for p in parameters) != set(df.columns.values):
             raise ValueError(
                 "The provided dataframe columns must match exactly with the specified "
                 "parameter names."
@@ -180,13 +180,12 @@ class SearchSpace(SerialMixin):
         disc_params = [p for p in parameters if p.is_discrete]
         cont_params = [p for p in parameters if not p.is_discrete]
 
-        # TODO: The continuous classmethod does not yet accept a parameter argument.
         return SearchSpace(
             discrete=SubspaceDiscrete.from_dataframe(
-                dataframe[[p.name for p in disc_params]], disc_params
+                df[[p.name for p in disc_params]], disc_params
             ),
             continuous=SubspaceContinuous.from_dataframe(
-                dataframe[[p.name for p in cont_params]],
+                df[[p.name for p in cont_params]], cont_params
             ),
         )
 
