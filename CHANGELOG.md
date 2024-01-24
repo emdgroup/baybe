@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.2] - 2024-01-24
 ### Added
 - Target enums 
 - `mypy` for targets and intervals
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docs building check now part of CI
 - Automatic formatting checks for code examples in documentation
 - Deserialization of classes with classmethod constructors can now be customized
-  by providing an optional `constructor` field.
+  by providing an optional `constructor` field
 - `SearchSpace.from_dataframe` convenience constructor
 
 ### Changed
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved and renamed target transform utility functions
 - Examples have two levels of headings in the table of content
 - Fix orders of examples in table of content
-- `DiscreteCustomConstraint` validator now expects data frame instead of series
+- `DiscreteCustomConstraint` validator now expects dataframe instead of series
 - `ignore_example` flag builds but does not execute examples when building documentation
 - New user guide versions for campaigns, targets and objectives
 - Binarization of dataframes now happens via pickling
