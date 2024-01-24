@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 from cattrs.gen import make_dict_structure_fn
 
-from baybe.utils.serialization import converter, get_subclasses
+from baybe.serialization import converter
+from baybe.utils import get_subclasses
 
 if TYPE_CHECKING:
     from baybe.strategies.base import Strategy as BaseStrategy

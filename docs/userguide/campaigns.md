@@ -179,8 +179,8 @@ This requirement can be disabled using the
 ## Serialization
 
 Like most of the objects managed by BayBE, `Campaign` objects can be serialized and
-deserialized using the [`to_json`](baybe.utils.serialization.SerialMixin.to_json) and
-[`from_json`](baybe.utils.serialization.SerialMixin.from_json) methods, which 
+deserialized using the [`to_json`](baybe.serialization.mixin.SerialMixin.to_json) and
+[`from_json`](baybe.serialization.mixin.SerialMixin.from_json) methods, which 
 allow to convert between Python objects their corresponding representation in JSON 
 format. 
 These representations are fully equivalent, meaning that serializing and subsequently 

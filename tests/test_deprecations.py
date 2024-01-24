@@ -62,3 +62,31 @@ def test_missing_target_type():
                 }
             )
         )
+
+
+deprecated_config = """
+{
+    "parameters": [
+        {
+            "type": "CategoricalParameter",
+            "name": "Granularity",
+            "values": ["coarse", "fine", "ultra-fine"]
+        }
+    ],
+    "objective": {
+        "mode": "SINGLE",
+        "targets": [
+            {
+                "name": "Yield",
+                "mode": "MAX"
+            }
+        ]
+    }
+}
+"""
+
+
+def test_deprecated_config():
+    """Using the deprecated config format raises a warning."""
+    with pytest.warns(UserWarning):
+        Campaign.from_config(deprecated_config)

@@ -13,9 +13,9 @@ from baybe.objective import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import (
     SearchSpace,
-    structure_searchspace_from_config,
     validate_searchspace_from_config,
 )
+from baybe.serialization import SerialMixin, converter
 from baybe.strategies import TwoPhaseStrategy
 from baybe.strategies.base import Strategy
 from baybe.targets import NumericalTarget
@@ -25,13 +25,6 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils import eq_dataframe
-from baybe.utils.serialization import SerialMixin, converter
-
-# Converter for config deserialization
-_config_converter = converter.copy()
-_config_converter.register_structure_hook(
-    SearchSpace, structure_searchspace_from_config
-)
 
 # Converter for config validation
 _validation_converter = converter.copy()
@@ -119,31 +112,14 @@ class Campaign(SerialMixin):
         Returns:
             The constructed campaign.
         """
+        from baybe.deprecation import compatibilize_config
+
         config = json.loads(config_json)
-        config["searchspace"] = {
-            "parameters": config.pop("parameters"),
-            "constraints": config.pop("constraints", None),
-        }
-        return _config_converter.structure(config, Campaign)
 
-    @classmethod
-    def to_config(cls) -> str:
-        """Extract the configuration of the campaign as JSON string.
+        # Temporarily enable backward compatibility
+        config = compatibilize_config(config)
 
-        Note: This is not yet implemented. Use
-        :func:`baybe.utils.serialization.SerialMixin.to_json` instead
-
-        Returns:
-            The configuration as JSON string.
-
-        Raises:
-            NotImplementedError: When trying to use this function.
-        """
-        # TODO: Ideally, this should extract a "minimal" configuration, that is,
-        #   default values should not be exported, which cattrs supports via the
-        #   'omit_if_default' option. Can be Implemented once the converter structure
-        #   has been cleaned up.
-        raise NotImplementedError()
+        return converter.structure(config, Campaign)
 
     @classmethod
     def validate_config(cls, config_json: str) -> None:
@@ -152,11 +128,13 @@ class Campaign(SerialMixin):
         Args:
             config_json: The JSON that should be validated.
         """
+        from baybe.deprecation import compatibilize_config
+
         config = json.loads(config_json)
-        config["searchspace"] = {
-            "parameters": config.pop("parameters"),
-            "constraints": config.pop("constraints", None),
-        }
+
+        # Temporarily enable backward compatibility
+        config = compatibilize_config(config)
+
         _validation_converter.structure(config, Campaign)
 
     def add_measurements(self, data: pd.DataFrame) -> None:

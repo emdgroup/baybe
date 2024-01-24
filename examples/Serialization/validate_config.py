@@ -19,41 +19,44 @@ from baybe import Campaign
 CONFIG = str(
     """
 {
-    "parameters": [
-        {
-            "type": "CategoricalParameter",
-            "name": "Granularity",
-            "values": [
-                "coarse",
-                "fine",
-                "ultra-fine"
-            ],
-            "encoding": "OHE"
-        },
-        {
-            "type": "NumericalDiscreteParameter",
-            "name": "Pressure[bar]",
-            "values": [
-                1,
-                5,
-                10
-            ],
-            "tolerance": 0.2
-        },
-        {
-            "type": "SubstanceParameter",
-            "name": "Solvent",
-            "data": {
-                "Solvent A": "COC",
-                "Solvent B": "CCCCC",
-                "Solvent C": "COCOC",
-                "Solvent D": "CCOCCOCCN"
+    "searchspace": {
+        "constructor": "from_product",
+        "parameters": [
+            {
+                "type": "CategoricalParameter",
+                "name": "Granularity",
+                "values": [
+                    "coarse",
+                    "fine",
+                    "ultra-fine"
+                ],
+                "encoding": "OHE"
             },
-            "decorrelate": true,
-            "encoding": "MORDRED"
-        }
-    ],
-    "constraints": [],
+            {
+                "type": "NumericalDiscreteParameter",
+                "name": "Pressure[bar]",
+                "values": [
+                    1,
+                    5,
+                    10
+                ],
+                "tolerance": 0.2
+            },
+            {
+                "type": "SubstanceParameter",
+                "name": "Solvent",
+                "data": {
+                    "Solvent A": "COC",
+                    "Solvent B": "CCCCC",
+                    "Solvent C": "COCOC",
+                    "Solvent D": "CCOCCOCCN"
+                },
+                "decorrelate": true,
+                "encoding": "MORDRED"
+            }
+        ],
+        "constraints": []
+    },
     "objective": {
         "mode": "SINGLE",
         "targets": [
@@ -86,41 +89,44 @@ CONFIG = str(
 INVALID_CONFIG = str(
     """
 {
-    "parameters": [
-        {
-            "type": "INVALID_TYPE",
-            "name": "Granularity",
-            "values": [
-                "coarse",
-                "fine",
-                "ultra-fine"
-            ],
-            "encoding": "OHE"
-        },
-        {
-            "type": "NumericalDiscreteParameter",
-            "name": "Pressure[bar]",
-            "values": [
-                1,
-                5,
-                10
-            ],
-            "tolerance": 0.2
-        },
-        {
-            "type": "SubstanceParameter",
-            "name": "Solvent",
-            "data": {
-                "Solvent A": "COC",
-                "Solvent B": "CCCCC",
-                "Solvent C": "COCOC",
-                "Solvent D": "CCOCCOCCN"
+    "searchspace": {
+        "constructor": "from_product",
+        "parameters": [
+            {
+                "type": "INVALID_TYPE",
+                "name": "Granularity",
+                "values": [
+                    "coarse",
+                    "fine",
+                    "ultra-fine"
+                ],
+                "encoding": "OHE"
             },
-            "decorrelate": true,
-            "encoding": "MORDRED"
-        }
-    ],
-    "constraints": [],
+            {
+                "type": "NumericalDiscreteParameter",
+                "name": "Pressure[bar]",
+                "values": [
+                    1,
+                    5,
+                    10
+                ],
+                "tolerance": 0.2
+            },
+            {
+                "type": "SubstanceParameter",
+                "name": "Solvent",
+                "data": {
+                    "Solvent A": "COC",
+                    "Solvent B": "CCCCC",
+                    "Solvent C": "COCOC",
+                    "Solvent D": "CCOCCOCCN"
+                },
+                "decorrelate": true,
+                "encoding": "MORDRED"
+            }
+        ],
+        "constraints": []
+    },
     "objective": {
         "mode": "SINGLE",
         "targets": [

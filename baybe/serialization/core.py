@@ -1,63 +1,16 @@
-"""Serialization utilities."""
+"""Converter and hooks."""
 import base64
-import json
-from io import BytesIO
-from typing import Any, Callable, Optional, Type, TypeVar
+import pickle
+from typing import Any, Callable, Optional, Type, TypeVar, get_type_hints
 
 import cattrs
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 
-from baybe.utils import get_subclasses
-
 _T = TypeVar("_T")
 
 converter = cattrs.Converter()
 """The default converter for (de-)serializing BayBE-related objects."""
-
-
-class SerialMixin:
-    """A mixin class providing serialization functionality."""
-
-    # Use slots so that the derived classes also remain slotted
-    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
-    __slots__ = ()
-
-    def to_dict(self) -> dict:
-        """Create an object's dictionary representation."""
-        return converter.unstructure(self)
-
-    @classmethod
-    def from_dict(cls: Type[_T], dictionary: dict) -> _T:
-        """Create an object from its dictionary representation.
-
-        Args:
-            dictionary: The dictionary representation.
-
-        Returns:
-            The reconstructed object.
-        """
-        return converter.structure(dictionary, cls)
-
-    def to_json(self) -> str:
-        """Create an object's JSON representation.
-
-        Returns:
-            The JSON representation as a string.
-        """
-        return json.dumps(self.to_dict())
-
-    @classmethod
-    def from_json(cls: Type[_T], string: str) -> _T:
-        """Create an object from its JSON representation.
-
-        Args:
-            string: The JSON representation of the object.
-
-        Returns:
-            The reconstructed object.
-        """
-        return cls.from_dict(json.loads(string))
 
 
 def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
@@ -96,6 +49,7 @@ def get_base_structure_hook(
         The hook.
     """
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
+    from baybe.utils import get_subclasses
 
     def structure_base(val: dict, _: Type[_T]) -> _T:
         _type = val.pop("type")
@@ -111,19 +65,15 @@ def get_base_structure_hook(
 
 
 def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
-    """De-serialize a DataFrame."""
-    buffer = BytesIO()
-    buffer.write(base64.b64decode(string.encode("utf-8")))
-    return pd.read_parquet(buffer)
+    """Deserialize a DataFrame."""
+    pickled_df = base64.b64decode(string.encode("utf-8"))
+    return pickle.loads(pickled_df)
 
 
 def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     """Serialize a DataFrame."""
-    return base64.b64encode(df.to_parquet()).decode("utf-8")
-
-
-converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
-converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+    pickled_df = pickle.dumps(df)
+    return base64.b64encode(pickled_df).decode("utf-8")
 
 
 def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
@@ -146,3 +96,28 @@ def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC1
     raise NotImplementedError(
         f"Deserialization into '{cls.__name__}' is not supported."
     )
+
+
+def select_constructor_hook(specs: dict, cls: Type[_T]) -> _T:
+    """Use the constructor specified in the 'constructor' field for deserialization."""
+    # If a constructor is specified, use it
+    specs = specs.copy()
+    if constructor_name := specs.pop("constructor", None):
+        constructor = getattr(cls, constructor_name)
+
+        # Extract the constructor parameter types and deserialize the arguments
+        type_hints = get_type_hints(constructor)
+        for key, value in specs.items():
+            annotation = type_hints[key]
+            specs[key] = converter.structure(specs[key], annotation)
+
+        # Call the constructor with the deserialized arguments
+        return constructor(**specs)
+
+    # Otherwise, use the regular __init__ method
+    return converter.structure_attrs_fromdict(specs, cls)
+
+
+# Register un-/structure hooks
+converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
+converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)

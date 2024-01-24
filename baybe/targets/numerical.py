@@ -9,6 +9,7 @@ import pandas as pd
 from attrs import define, field
 from numpy.typing import ArrayLike
 
+from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode, TargetTransformation
 from baybe.targets.transforms import (
@@ -16,7 +17,7 @@ from baybe.targets.transforms import (
     linear_transform,
     triangular_transform,
 )
-from baybe.utils import Interval, SerialMixin, convert_bounds
+from baybe.utils import Interval, convert_bounds
 
 _VALID_TRANSFORMATIONS: Dict[TargetMode, Sequence[TargetTransformation]] = {
     TargetMode.MAX: (TargetTransformation.LINEAR,),

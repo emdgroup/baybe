@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import Any, Collection, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -15,12 +15,14 @@ from baybe.constraints import (
     ContinuousLinearInequalityConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
+from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils import DTypeFloatTorch
 
 
 @define
-class SubspaceContinuous:
+class SubspaceContinuous(SerialMixin):
     """Class for managing continuous subspaces.
 
     Builds the subspace from parameter definitions, keeps
@@ -69,21 +71,41 @@ class SubspaceContinuous:
         return SubspaceContinuous(parameters)
 
     @classmethod
-    def from_dataframe(cls, df: pd.DataFrame) -> SubspaceContinuous:
-        """Create a hyperractangle-shaped continuous subspace from a dataframe.
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        parameters: Optional[List[NumericalContinuousParameter]] = None,
+    ) -> SubspaceContinuous:
+        """Create a hyperrectangle-shaped continuous subspace from a dataframe.
 
         More precisely, create the smallest axis-aligned hyperrectangle-shaped
         continuous subspace that contains the points specified in the given dataframe.
 
         Args:
-            df: The dataframe specifying the points of the subspace.
+            df: The dataframe specifying the points spanning the subspace.
+            parameters: Optional parameter objects corresponding to the columns in the
+                given dataframe that can be provided to explicitly control parameter
+                attributes. If a match between column name and parameter name is found,
+                the corresponding parameter object is used. If a column has no match in
+                the parameter list, a new
+                :class:`baybe.parameters.numerical.NumericalContinuousParameter`
+                is created with default optional arguments. For more details, see
+                :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
 
         Returns:
-            The constructed subspace.
+            The created continuous subspace.
         """
         # TODO: Add option for convex hull once constraints are in place
-        bounds = pd.concat([df.min(), df.max()], axis=1).T
-        return cls.from_bounds(bounds)
+
+        def continuous_parameter_factory(name: str, values: Collection[Any]):
+            return NumericalContinuousParameter(name, (min(values), max(values)))
+
+        # Get the full list of both explicitly and implicitly defined parameter
+        parameters = get_parameters_from_dataframe(
+            df, continuous_parameter_factory, parameters
+        )
+
+        return cls(parameters)
 
     @property
     def is_empty(self) -> bool:
@@ -177,3 +199,7 @@ class SubspaceContinuous:
         )
 
         return pd.DataFrame(index=index).reset_index()
+
+
+# Register deserialization hook
+converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)

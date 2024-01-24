@@ -10,9 +10,12 @@ from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.recommenders.base import NonPredictiveRecommender, Recommender
 from baybe.searchspace import SearchSpace
+from baybe.serialization import (
+    block_deserialization_hook,
+    block_serialization_hook,
+    converter,
+)
 from baybe.strategies.base import Strategy
-from baybe.utils import block_deserialization_hook, block_serialization_hook
-from baybe.utils.serialization import converter
 
 # TODO: Make predictive recommenders handle empty training data
 _unsupported_recommender_error = ValueError(

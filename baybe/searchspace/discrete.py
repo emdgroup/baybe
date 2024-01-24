@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
+from typing import Any, Collection, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -18,14 +18,16 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
+from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils import df_drop_single_value_columns, eq_dataframe, fuzzy_row_match
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
 
 @define
-class SubspaceDiscrete:
+class SubspaceDiscrete(SerialMixin):
     """Class for managing discrete subspaces.
 
     Builds the subspace from parameter definitions and optional constraints, keeps
@@ -183,67 +185,45 @@ class SubspaceDiscrete:
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[List[Parameter]] = None,
+        parameters: Optional[List[DiscreteParameter]] = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
 
         Args:
             df: The experimental representation of the search space to be created.
-            parameters: Optional parameters corresponding to the columns in the given
-                dataframe. If a match between column name and parameter name is found,
-                the corresponding parameter is used. If a column has no match in the
-                parameter list, a
+            parameters: Optional parameter objects corresponding to the columns in the
+                given dataframe that can be provided to explicitly control parameter
+                attributes. If a match between column name and parameter name is found,
+                the corresponding parameter object is used. If a column has no match in
+                the parameter list, a
                 :class:`baybe.parameters.numerical.NumericalDiscreteParameter` is
                 created if possible, or a
                 :class:`baybe.parameters.categorical.CategoricalParameter` is used as
-                fallback.
+                fallback. For both types, default values are used for their optional
+                arguments. For more details, see
+                :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
             empty_encoding: See :func:`baybe.searchspace.core.SearchSpace.from_product`.
 
         Returns:
             The created discrete subspace.
-
-        Raises:
-            ValueError: If several parameters with identical names are provided.
-            ValueError: If a parameter was specified for which no match was found.
         """
-        # Turn the specified parameters into a dict and check for duplicate names
-        specified_params: Dict[str, Parameter] = {}
-        if parameters is not None:
-            for param in parameters:
-                if param.name in specified_params:
-                    raise ValueError(
-                        f"You provided several parameters with the name {param.name}."
-                    )
-                specified_params[param.name] = param
 
-        # Try to find a parameter match for each dataframe column
-        parameters = []
-        for name, series in df.items():
-            # If a match is found, assert that the values are in range
-            if match := specified_params.pop(name, None):
-                assert series.apply(match.is_in_range).all()
-                parameters.append(match)
+        def discrete_parameter_factory(
+            name: str, values: Collection[Any]
+        ) -> DiscreteParameter:
+            """Try to create a numerical parameter or use a categorical fallback."""
+            try:
+                return NumericalDiscreteParameter(name=name, values=values)
+            except IterableValidationError:
+                return CategoricalParameter(name=name, values=values)
 
-            # Otherwise, try to create a numerical parameter or use categorical fallback
-            else:
-                values = series.drop_duplicates().values.tolist()
-                try:
-                    param = NumericalDiscreteParameter(name=name, values=values)
-                except IterableValidationError:
-                    param = CategoricalParameter(name=name, values=values)
-                parameters.append(param)
-
-        # By now, all parameters must have been used
-        if specified_params:
-            raise ValueError(
-                f"For the following parameters you specified, no match could be found "
-                f"in the given dataframe: {specified_params.values()}."
-            )
-
-        return SubspaceDiscrete(
-            parameters=parameters, exp_rep=df, empty_encoding=empty_encoding
+        # Get the full list of both explicitly and implicitly defined parameter
+        parameters = get_parameters_from_dataframe(
+            df, discrete_parameter_factory, parameters
         )
+
+        return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
 
     @property
     def is_empty(self) -> bool:
@@ -382,3 +362,7 @@ def parameter_cartesian_prod_to_df(
     ret = pd.DataFrame(index=index).reset_index()
 
     return ret
+
+
+# Register deserialization hook
+converter.register_structure_hook(SubspaceDiscrete, select_constructor_hook)

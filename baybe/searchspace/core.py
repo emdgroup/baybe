@@ -24,8 +24,8 @@ from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import validate_parameters
+from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils import SerialMixin, converter
 
 
 class SearchSpaceType(Enum):
@@ -146,6 +146,49 @@ class SearchSpace(SerialMixin):
 
         return SearchSpace(discrete=discrete, continuous=continuous)
 
+    @classmethod
+    def from_dataframe(
+        cls,
+        df: pd.DataFrame,
+        parameters: List[Parameter],
+    ) -> SearchSpace:
+        """Create a search space from a specified set of parameter configurations.
+
+        The way in which the contents of the columns are interpreted depends on the
+        types of the corresponding parameter objects provided. For details, see
+        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.from_dataframe` and
+        :meth:`baybe.searchspace.continuous.SubspaceContinuous.from_dataframe`.
+
+        Args:
+            df: A dataframe whose parameter configurations are used as
+                search space specification.
+            parameters: The corresponding parameter objects, one for each column
+                in the provided dataframe.
+
+        Returns:
+            The created search space.
+
+        Raises:
+            ValueError: If the dataframe columns do not match with the parameters.
+        """
+        if set(p.name for p in parameters) != set(df.columns.values):
+            raise ValueError(
+                "The provided dataframe columns must match exactly with the specified "
+                "parameter names."
+            )
+
+        disc_params = [p for p in parameters if p.is_discrete]
+        cont_params = [p for p in parameters if not p.is_discrete]
+
+        return SearchSpace(
+            discrete=SubspaceDiscrete.from_dataframe(
+                df[[p.name for p in disc_params]], disc_params
+            ),
+            continuous=SubspaceContinuous.from_dataframe(
+                df[[p.name for p in cont_params]], cont_params
+            ),
+        )
+
     @property
     def parameters(self) -> List[Parameter]:
         """Return the list of parameters of the search space."""
@@ -253,32 +296,22 @@ class SearchSpace(SerialMixin):
         return comp_rep
 
 
-def structure_searchspace_from_config(specs: dict, _) -> SearchSpace:
-    """Assemble the search space from "config" format.
-
-    It uses the alternative :func:`baybe.searchspace.core.SearchSpace.from_product`
-    constructor, which allows to deserialize search space specifications that are
-    provided in a user-friendly format (i.e. via parameters and constraints).
-    """
-    parameters = converter.structure(specs["parameters"], List[Parameter])
-    constraints = specs.get("constraints", None)
-    if constraints:
-        constraints = converter.structure(specs["constraints"], List[Constraint])
-    return SearchSpace.from_product(parameters, constraints)
-
-
 def validate_searchspace_from_config(specs: dict, _) -> None:
-    """Validate but do not create the search space.
+    """Validate the search space specifications while skipping costly creation steps."""
+    # For product spaces, only validate the inputs
+    if specs.get("constructor", None) == "from_product":
+        parameters = converter.structure(specs["parameters"], List[Parameter])
+        validate_parameters(parameters)
 
-    Similar to :func:`baybe.searchspace.core.structure_searchspace_from_config` but
-    without the actual search space creation step, thus intended for validation purposes
-    only. It explicitly validates the given parameters and constraints since invalid
-    specifications would be otherwise noticed only later during search space creation.
-    """
-    parameters = converter.structure(specs["parameters"], List[Parameter])
-    validate_parameters(parameters)
+        constraints = specs.get("constraints", None)
+        if constraints:
+            constraints = converter.structure(specs["constraints"], List[Constraint])
+            validate_constraints(constraints, parameters)
 
-    constraints = specs.get("constraints", None)
-    if constraints:
-        constraints = converter.structure(specs["constraints"], List[Constraint])
-        validate_constraints(constraints, parameters)
+    # For all other types, validate by construction
+    else:
+        converter.structure(specs, SearchSpace)
+
+
+# Register deserialization hook
+converter.register_structure_hook(SearchSpace, select_constructor_hook)

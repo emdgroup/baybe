@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Target enums 
 - `mypy` for targets and intervals
 - Tests for code blocks in README and user guides
-- `hypothesis` strategies and tests for targets and intervals
+- `hypothesis` strategies and roundtrip tests for targets, intervals, and dataframes
 - De-/serialization of target subclasses via base class
 - Docs building check now part of CI
 - Automatic formatting checks for code examples in documentation
+- Deserialization of classes with classmethod constructors can now be customized
+  by providing an optional `constructor` field.
+- `SearchSpace.from_dataframe` convenience constructor
 
 ### Changed
 - Renamed `bounds_transform_func` target attribute to `transformation`
@@ -23,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DiscreteCustomConstraint` validator now expects data frame instead of series
 - `ignore_example` flag builds but does not execute examples when building documentation
 - New user guide versions for campaigns, targets and objectives
+- Binarization of dataframes now happens via pickling
 
 ### Fixed
 - Wrong use of `tolerance` argument in constraints user guide
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use pydoclint as flake8 plugin and not as a stand-alone linter
 - Margins in documentation for desktop and mobile version
 - `Interval`s can now also be deserialized from a bounds iterable
+- `SubspaceDiscrete` and `SubspaceContinuous` now have de-/serialization methods
 
 ### Removed
 - Conda install instructions and version badge
@@ -39,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - `Interval.is_finite` replaced with `Interval.is_bounded`
 - Specifying target configs without explicit type information is deprecated
+- Specifying parameters/constraints at the top level of a campaign configuration JSON is
+  deprecated. Instead, an explicit `searchspace` field must be provided with an optional
+  `constructor` entry.
 
 ## [0.7.1] - 2023-12-07
 ### Added

@@ -9,4 +9,3 @@ from baybe.utils.dataframe import *
 from baybe.utils.interval import *
 from baybe.utils.numeric import *
 from baybe.utils.sampling_algorithms import *
-from baybe.utils.serialization import *

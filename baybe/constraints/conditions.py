@@ -11,7 +11,7 @@ from attr.validators import in_
 from funcy import rpartial
 from numpy.typing import ArrayLike
 
-from baybe.utils import SerialMixin
+from baybe.serialization import SerialMixin
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
