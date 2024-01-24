@@ -15,7 +15,6 @@ from baybe.utils import (
     df_uncorrelated_features,
     group_duplicate_values,
 )
-from baybe.utils.optional import optional_import
 
 try:  # For python < 3.11, use the exceptiongroup backport
     ExceptionGroup
@@ -68,42 +67,6 @@ class SubstanceParameter(DiscreteParameter):
     )
     # See base class.
 
-    @encoding.validator
-    def _validate_encoding(self, _: Any, value: str) -> None:  # noqa: DOC101, DOC103
-        """Validate that the chosen encoding can be used.
-
-        This validation is necessary since certain encodings are only usable when
-        additional dependencies, in particular the ``chem`` dependency, have been
-        installed.
-
-        Raises:
-            ImportError: If the ``chem``dependency was not installed but an encoding
-                requiring this dependency is requested.
-        """
-        _MORDRED_INSTALLED = optional_import(
-            "baybe.utils.chemistry", "_MORDRED_INSTALLED", error="raise"
-        )
-        _RDKIT_INSTALLED = optional_import(
-            "baybe.utils.chemistry", "_RDKIT_INSTALLED", error="raise"
-        )
-        if value is SubstanceEncoding.MORDRED and not (
-            _MORDRED_INSTALLED and _RDKIT_INSTALLED
-        ):
-            raise ImportError(
-                "The mordred/rdkit packages are not installed, a SubstanceParameter "
-                "with MORDRED encoding cannot be used. Consider installing baybe with "
-                "'chem' dependency like 'pip install baybe[chem]'"
-            )
-        if (
-            value in [SubstanceEncoding.RDKIT, SubstanceEncoding.MORGAN_FP]
-            and not _RDKIT_INSTALLED
-        ):
-            raise ImportError(
-                "The rdkit package is not installed, a SubstanceParameter with "
-                "RDKIT or MORGAN_FP encoding cannot be used. Consider installing baybe "
-                "with 'chem' dependency like 'pip install baybe[chem]'"
-            )
-
     @data.validator
     def _validate_substance_data(  # noqa: DOC101, DOC103
         self, _: Any, data: Dict[str, Smiles]
@@ -115,14 +78,14 @@ class SubstanceParameter(DiscreteParameter):
             ValueError: If the several entries represent the same substance.
         """
         # Check for invalid SMILES
+        from baybe.utils import chemistry
+
         canonical_smiles = {}
         exceptions = []
-        get_canonical_smiles = optional_import(
-            "baybe.utils.chemistry", attribute="get_canonical_smiles", error="raise"
-        )
+
         for name, smiles in data.items():
             try:
-                canonical_smiles[name] = get_canonical_smiles(smiles)
+                canonical_smiles[name] = chemistry.get_canonical_smiles(smiles)
             except ValueError:
                 exceptions.append(
                     ValueError(
@@ -156,26 +119,18 @@ class SubstanceParameter(DiscreteParameter):
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
+        from baybe.utils import chemistry
+
         vals = list(self.data.values())
         pref = self.name + "_"
 
-        smiles_to_mordred_features = optional_import(
-            "baybe.utils.chemistry", "smiles_to_mordred_features", error="raise"
-        )
-        smiles_to_rdkit_features = optional_import(
-            "baybe.utils.chemistry", "smiles_to_rdkit_features", error="raise"
-        )
-        smiles_to_fp_features = optional_import(
-            "baybe.utils.chemistry", "smiles_to_fp_features", error="raise"
-        )
-
         # Get the raw descriptors
         if self.encoding is SubstanceEncoding.MORDRED:
-            comp_df = smiles_to_mordred_features(vals, prefix=pref)
+            comp_df = chemistry.smiles_to_mordred_features(vals, prefix=pref)
         elif self.encoding is SubstanceEncoding.RDKIT:
-            comp_df = smiles_to_rdkit_features(vals, prefix=pref)
+            comp_df = chemistry.smiles_to_rdkit_features(vals, prefix=pref)
         elif self.encoding is SubstanceEncoding.MORGAN_FP:
-            comp_df = smiles_to_fp_features(vals, prefix=pref)
+            comp_df = chemistry.smiles_to_fp_features(vals, prefix=pref)
         else:
             raise ValueError(
                 f"Unknown parameter encoding {self.encoding} for parameter {self.name}."
