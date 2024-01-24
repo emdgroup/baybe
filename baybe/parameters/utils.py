@@ -54,7 +54,9 @@ def get_parameters_from_dataframe(
     # Try to find a parameter match for each dataframe column
     parameters = []
     for name, series in df.items():
-        assert isinstance(name, str)
+        assert isinstance(
+            name, str
+        ), "The given dataframe must only contain string-valued column names."
         unique_values = series.unique()
 
         # If a match is found, assert that the values are in range
