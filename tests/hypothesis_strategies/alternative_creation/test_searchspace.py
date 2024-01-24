@@ -9,10 +9,10 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.searchspace import SubspaceContinuous
+from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 
-# Example inputs for testing
+# Discrete inputs for testing
 s_x = pd.Series([1, 2, 3], name="x")
 p_x = NumericalDiscreteParameter(name="x", values=[1, 2, 3])
 p_x_over = NumericalDiscreteParameter(name="x", values=[1, 2, 3, 4])
@@ -20,6 +20,18 @@ p_x_under = NumericalDiscreteParameter(name="x", values=[1, 2])
 s_y = pd.Series(["a", "b", "c"], name="y")
 p_y = CategoricalParameter(name="y", values=["a", "b", "c"])
 df_discrete = pd.concat([s_x, s_y], axis=1)
+
+# Continuous inputs for testing
+s_a = pd.Series([1, 2, 3], name="a")
+p_a = NumericalContinuousParameter(name="a", bounds=(1, 3))
+p_a_over = NumericalContinuousParameter(name="a", bounds=(1, 4))
+p_a_under = NumericalContinuousParameter(name="a", bounds=(1, 2))
+s_b = pd.Series([10, 15, 20], name="b")
+p_b = NumericalContinuousParameter(name="b", bounds=(10, 20))
+df_continuous = pd.concat([s_a, s_b], axis=1)
+
+# Mixed inputs for testing
+df = pd.concat([df_discrete, df_continuous], axis=1)
 
 
 @pytest.mark.parametrize(
@@ -46,16 +58,6 @@ def test_discrete_space_creation_from_dataframe(df, parameters, expected):
             SubspaceDiscrete.from_dataframe(df, parameters)
 
 
-# Example inputs for testing
-s_a = pd.Series([1, 2, 3], name="a")
-p_a = NumericalContinuousParameter(name="a", bounds=(1, 3))
-p_a_over = NumericalContinuousParameter(name="a", bounds=(1, 4))
-p_a_under = NumericalContinuousParameter(name="a", bounds=(1, 2))
-s_b = pd.Series([10, 15, 20], name="b")
-p_b = NumericalContinuousParameter(name="b", bounds=(10, 20))
-df_continuous = pd.concat([s_a, s_b], axis=1)
-
-
 @pytest.mark.parametrize(
     ("df", "parameters", "expected"),
     [
@@ -75,4 +77,23 @@ def test_continuous_space_creation_from_dataframe(df, parameters, expected):
         assert actual == expected, (actual, expected)
     else:
         with pytest.raises(expected):
-            SubspaceDiscrete.from_dataframe(df, parameters)
+            SubspaceContinuous.from_dataframe(df, parameters)
+
+
+@pytest.mark.parametrize(
+    ("df", "parameters", "expected"),
+    [
+        param(df, [p_x, p_y, p_a, p_b], [p_x, p_y, p_a, p_b], id="match"),
+        param(df, [p_x, p_x, p_x, p_x], ValueError, id="duplicates"),
+        param(df, [p_x], ValueError, id="missing"),
+    ],
+)
+def test_searchspace_creation_from_dataframe(df, parameters, expected):
+    """Parameters are automatically inferred and exceptions are triggered."""
+    if isinstance(expected, list):
+        subspace = SearchSpace.from_dataframe(df, parameters)
+        actual = subspace.parameters
+        assert actual == expected, (actual, expected)
+    else:
+        with pytest.raises(expected):
+            SearchSpace.from_dataframe(df, parameters)
