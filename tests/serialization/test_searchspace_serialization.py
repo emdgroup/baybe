@@ -32,7 +32,7 @@ def test_from_dataframe_deserialization(searchspace):
     config = """
     {
         "constructor": "from_dataframe",
-        "dataframe": __fillin_dataframe__,
+        "df": __fillin_dataframe__,
         "parameters": __fillin__parameters__
     }
     """.replace("__fillin_dataframe__", df_string).replace(
