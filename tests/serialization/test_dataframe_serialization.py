@@ -1,8 +1,10 @@
 """Test serialization of dataframes."""
 
+import os
+
 import hypothesis.strategies as st
 import pandas as pd
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.pandas import column, data_frames
 
 from baybe.serialization import deserialize_dataframe, serialize_dataframe
@@ -39,6 +41,7 @@ def random_dataframes(draw: st.DrawFn):
 
 
 @given(random_dataframes())
+@settings(suppress_health_check=[HealthCheck.too_slow] if "CI" in os.environ else [])
 def test_dataframe_roundtrip(df: pd.DataFrame):
     """A serialization roundtrip yields an equivalent object."""
     string = serialize_dataframe(df)
