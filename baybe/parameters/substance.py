@@ -77,12 +77,11 @@ class SubstanceParameter(DiscreteParameter):
             ValueError: If one or more of the SMILES are invalid.
             ValueError: If the several entries represent the same substance.
         """
-        # Check for invalid SMILES
         from baybe.utils import chemistry
 
+        # Check for invalid SMILES
         canonical_smiles = {}
         exceptions = []
-
         for name, smiles in data.items():
             try:
                 canonical_smiles[name] = chemistry.get_canonical_smiles(smiles)
@@ -119,6 +118,7 @@ class SubstanceParameter(DiscreteParameter):
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
+
         from baybe.utils import chemistry
 
         vals = list(self.data.values())
