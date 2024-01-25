@@ -170,13 +170,10 @@ Apart from that, we generally recommend adhering to the following guideline:
   ```
 
 - Unless another more specific name is suitable, use our default naming convention for 
-  `attrs` built-ins (defaults, converters, validators):
+  `attrs` defaults and validators:
   ```python
   @my_attribute.default
   def _default_my_attribute(self): ...
-  
-  @my_attribute.converter
-  def _convert_my_attribute(self): ...
   
   @my_attribute.validator
   def _validate_my_attribute(self, attribute, value): ...
