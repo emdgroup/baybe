@@ -26,7 +26,7 @@ This can happen, for example, while engineering the configuration for later API
 calls and testing it locally **using PyCharm**.
 
 ## How to avoid
-If you encounter the problem, you can use one of the following workarounds to
+If you encounter the problem, you can use **any** of the following workarounds to
 circumvent the problem:
 * Run the code from the terminal instead of inside PyCharm
 * Change PyCharm's run configuration from "Run with Python Console" to "Emulate
