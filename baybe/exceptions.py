@@ -42,3 +42,7 @@ class NoRecommendersLeftError(Exception):
 
 class NumericalUnderflowError(Exception):
     """A computation would lead to numerical underflow."""
+
+
+class OptionalImportError(Exception):
+    """Attempted to import an optional but uninstalled dependency."""
