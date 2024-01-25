@@ -2,18 +2,14 @@
 
 import random
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, Protocol, TypeVar
+from typing import Callable, Dict, Iterable, List, TypeVar
 
 import numpy as np
 import torch
 
+_C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
 _U = TypeVar("_U")
-
-
-class _TClassWithSubclasses(Protocol):
-    def __subclasses__(self) -> List:
-        ...
 
 
 @dataclass(frozen=True, repr=False)
@@ -28,9 +24,7 @@ class Dummy:
         return "<dummy>"
 
 
-def get_subclasses(
-    cls: _TClassWithSubclasses, recursive: bool = True, abstract: bool = False
-) -> List[_TClassWithSubclasses]:
+def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> List[_C]:
     """Return a list of subclasses for the given class.
 
     Args:
