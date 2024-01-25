@@ -84,8 +84,6 @@ class Campaign(SerialMixin):
     @property
     def targets(self) -> List[Target]:
         """The targets of the underlying objective."""
-        # TODO: Currently, the `Objective` class is directly coupled to
-        #  `NumericalTarget`, hence the return type.
         return self.objective.targets
 
     @property
