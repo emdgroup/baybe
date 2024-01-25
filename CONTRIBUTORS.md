@@ -15,3 +15,5 @@
   Initial implementation of additional surrogate models and clustering methods
 - Julie Fang (Merck Life Science KGaA, Darmstadt, Germany):  
   Farthest point sampling
+- Roya Javadi (Vector Institute, Toronto, Canada):
+  Import optimization
