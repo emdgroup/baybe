@@ -25,6 +25,7 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
+from baybe.exceptions import OptionalImportError
 from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
@@ -52,11 +53,15 @@ from baybe.telemetry import (
     VARNAME_TELEMETRY_USERNAME,
 )
 from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory
-from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
-_CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
-if _CHEM_INSTALLED:
+try:
+    import baybe.utils.chemistry  # noqa: F401  # Tests if chem deps are available
     from baybe.parameters.substance import SubstanceParameter
+
+    _CHEM_INSTALLED = True
+except OptionalImportError:
+    _CHEM_INSTALLED = False
+
 
 if _ONNX_INSTALLED:
     from baybe.surrogates.custom import CustomONNXSurrogate
