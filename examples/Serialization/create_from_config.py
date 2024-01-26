@@ -62,6 +62,7 @@ CONFIG = str(
         "mode": "SINGLE",
         "targets": [
             {
+                "type": "NumericalTarget",
                 "name": "Yield",
                 "mode": "MAX"
             }

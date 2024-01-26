@@ -79,11 +79,12 @@ except Exception as e:
 # autodoc_typehints
 extensions = [
     "sphinx.ext.napoleon",  # Necessary for numpy/google docstrings to work
-    "sphinx_autodoc_typehints",  # Proper typehints
     "sphinx.ext.autodoc",  # Crucial for autodocumentation
     "sphinx.ext.autosummary",  # Autosummary
     "sphinx.ext.intersphinx",  # Links to other documentations like numpy, python,...
     "sphinx.ext.viewcode",  # Links to code
+    "sphinx_autodoc_typehints",  # Proper typehints
+    "sphinx_copybutton",  # Copy button for code blocks
 ]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
 
@@ -209,6 +210,8 @@ html_theme_options = {
         "color-link": BROWN,
         # Color of text in the right navigation side bar
         "color-toc-item-text": LIGHT_BLUE,
+        # Color of text in the right navigation side bar when chosen
+        "color-toc-item-text--active": BROWN,
         # Color of search bar when clicking search
         "color-sidebar-search-background--focus": DARK_BLUE,
     },

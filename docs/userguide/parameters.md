@@ -5,7 +5,8 @@ as the direct link to the controllable variables in your experiment.
 Before starting an iterative campaign, the user is required to specify the exact 
 parameters they can control and want to consider in their optimization.
 
-```{note}
+```{admonition} Parameter names
+:class: note
 BayBE identifies each parameter by a ``name``. All parameter names in one 
 campaign must be unique.
 ```
@@ -36,7 +37,8 @@ A discrete parameter has a finite set of possible values.
 These values can be numeric or label-like and are transformed internally before being 
 ingested by the surrogate model.
 
-```{note}
+```{admonition} Parameter encoding
+:class: note
 We call the process of transforming labels into numbers ``encoding``. 
 To make labels usable in machine learning, we assign each label one or more numbers. 
 While there are trivial ways of doing this, BayBE also provides methods to avoid 
@@ -145,7 +147,8 @@ molecules like polymers or arbitrary substance mixtures, we recommend to provide
 own descriptors via the ``CustomParameter``.
 ```
 
-```{note}
+```{admonition} Optional dependency
+:class: note
 The ``SubstanceParameter`` is only available if BayBE was installed with the 
 additional ``chem`` dependency.
 ```

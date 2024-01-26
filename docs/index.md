@@ -32,7 +32,6 @@ Contribute <misc/contributing_link>
     :hidden:
 
     Known Issues <known_issues>
-    FAQ <faq>
     Changelog <misc/changelog_link>
     Github <https://github.com/emdgroup/baybe/>
     Contributors <misc/contributors_link>

@@ -178,11 +178,12 @@ parameters = [
 ```
 
 For more parameter types and their details, see the
-[parameters section of the user guide](https://emdgroup.github.io/baybe/userguide/parameters.html).
+[parameters section](https://emdgroup.github.io/baybe/userguide/parameters.html)
+of the user guide.
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
-relationships between our parameters. Details can be found in 
-[the constraints section of the user guide](https://emdgroup.github.io/baybe/userguide/constraints.html).
+relationships between our parameters. Details can be found in the
+[constraints section](https://emdgroup.github.io/baybe/userguide/constraints.html) of the user guide.
 In this example, we assume no further constraints.
 
 With the parameter and constraint definitions at hand, we can now create our
@@ -206,8 +207,8 @@ For our example, we combine two selection strategies:
 2. As soon as the first measurements are available, we switch to `recommender`.
 
 For more details on the different strategies, their underlying algorithmic
-details, and their configuration settings, see
-[the strategies section of the user guide](https://emdgroup.github.io/baybe/userguide/strategy.html).
+details, and their configuration settings, see the
+[strategies section](https://emdgroup.github.io/baybe/userguide/strategy.html) of the user guide.
 
 ```python
 from baybe.strategies import TwoPhaseStrategy
