@@ -20,9 +20,11 @@ from baybe.simulation.core import (
     simulate_scenarios,
 )
 from baybe.simulation.deprecation import simulate_experiment
+from baybe.simulation.transfer_learning import simulate_transfer_learning
 
 __all__ = [
     "simulate_campaign",
     "simulate_experiment",
     "simulate_scenarios",
+    "simulate_transfer_learning",
 ]
