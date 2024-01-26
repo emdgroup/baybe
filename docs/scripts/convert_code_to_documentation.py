@@ -120,7 +120,7 @@ def create_example_documentation(example_dest_dir: str):
             ex_order.append(ex_file_entry)
 
         # We need to create a file for the inclusion of the folder
-        subdir_toctree = f"# {folder_name}\n\n" + "```{toctree}\n:maxdepth: 2\n\n"
+        subdir_toctree = f"# {folder_name}\n\n" + "```{toctree}\n:maxdepth: 1\n\n"
 
         # Set description of progressbar
         pbar.set_description("Overall progress")
