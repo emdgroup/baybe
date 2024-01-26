@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Optional `chem` dependencies are lazily imported
+- Explicit top-level files for example folders
+- Remove additional headings in table of contents of examples
 
 ### Fixed
 - Several minor issues in documentation
