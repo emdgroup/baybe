@@ -6,9 +6,8 @@ from pathlib import Path
 import pytest
 
 from baybe.surrogates import _ONNX_INSTALLED
-from baybe.utils.chemistry import _MORDRED_INSTALLED, _RDKIT_INSTALLED
 
-_CHEM_INSTALLED = _MORDRED_INSTALLED and _RDKIT_INSTALLED
+from ..conftest import _CHEM_INSTALLED
 
 
 @pytest.mark.slow
