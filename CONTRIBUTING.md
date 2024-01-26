@@ -152,7 +152,7 @@ Apart from that, we generally recommend adhering to the following guideline:
 
 - Use double backticks for literals like in ``` ``MyString`` ```.
 
-### Docstrings for `attrs` classes 
+## Writing `attrs` classes 
 
 - Place attribute docstrings below the attribute declaration, not in the class 
   docstring.
