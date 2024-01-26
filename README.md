@@ -82,7 +82,7 @@ Next, we inform BayBE about the available "control knobs", that is, the underlyi
 system parameters we can tune to optimize our targets. This also involves specifying 
 their values/ranges and other parameter-specific details.
 
-For our example, we assume that we can control three quantities – `Granularity`,
+For our example, we assume that we can control three parameters – `Granularity`,
 `Pressure[bar]`, and `Solvent` – as follows:
 
 ```python
