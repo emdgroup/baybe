@@ -147,7 +147,8 @@ Apart from that, we generally recommend adhering to the following guideline:
 
 - When referencing objects (classes, functions, ...),
   use ``:<key>:`path.to.function` `` where `<key>` is to be replaced with the 
-  respective keyword (`class`, `func`, ...)
+  respective [role](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects)
+  (`class`, `func`, ...)
 
 - Use double backticks for literals like in ``` ``MyString`` ```.
 
