@@ -7,6 +7,7 @@ from typing import Callable, Dict, Iterable, List, TypeVar
 import numpy as np
 import torch
 
+_C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
 _U = TypeVar("_U")
 
@@ -23,7 +24,7 @@ class Dummy:
         return "<dummy>"
 
 
-def get_subclasses(cls: _T, recursive: bool = True, abstract: bool = False) -> List[_T]:
+def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> List[_C]:
     """Return a list of subclasses for the given class.
 
     Args:
@@ -81,7 +82,7 @@ def group_duplicate_values(dictionary: Dict[_T, _U]) -> Dict[_U, List[_T]]:
         >>> group_duplicate_values({"A": 1, "B": 2, "C": 1, "D": 3})
         {1: ['B', 'C']}
     """
-    group = {}
+    group: Dict[_U, List[_T]] = {}
     for key, value in dictionary.items():
         group.setdefault(value, []).append(key)
     return {k: v for k, v in group.items() if len(v) > 1}

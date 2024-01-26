@@ -18,7 +18,7 @@ from baybe.searchspace.core import (
 from baybe.serialization import SerialMixin, converter
 from baybe.strategies import TwoPhaseStrategy
 from baybe.strategies.base import Strategy
-from baybe.targets import NumericalTarget
+from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
     telemetry_record_recommended_measurement_percentage,
@@ -82,10 +82,8 @@ class Campaign(SerialMixin):
         return self.searchspace.parameters
 
     @property
-    def targets(self) -> List[NumericalTarget]:
+    def targets(self) -> List[Target]:
         """The targets of the underlying objective."""
-        # TODO: Currently, the `Objective` class is directly coupled to
-        #  `NumericalTarget`, hence the return type.
         return self.objective.targets
 
     @property

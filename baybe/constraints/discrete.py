@@ -1,7 +1,7 @@
 """Discrete constraints."""
 
 from functools import reduce
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, cast
 
 import pandas as pd
 from attr import define, field
@@ -159,7 +159,9 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         # with a dummy value to cause degeneracy.
         censored_data = data.copy()
         for k, _ in enumerate(self.parameters):
-            censored_data.loc[
+            # .loc assignments are not supported by mypy + pandas-stubs yet
+            # See https://github.com/pandas-dev/pandas-stubs/issues/572
+            censored_data.loc[  # type: ignore[call-overload]
                 ~self.conditions[k].evaluate(data[self.parameters[k]]),
                 self.affected_parameters[k],
             ] = Dummy()
@@ -183,7 +185,10 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
             [
                 censored_data[other_params],
                 censored_data[all_affected_params].apply(
-                    frozenset if self.permutation_invariant else tuple, axis=1
+                    cast(Callable, frozenset)
+                    if self.permutation_invariant
+                    else cast(Callable, tuple),
+                    axis=1,
                 ),
             ],
             axis=1,
@@ -228,7 +233,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         df_eval = pd.concat(
             [
                 data[other_params].copy(),
-                data[self.parameters].apply(frozenset, axis=1),
+                data[self.parameters].apply(cast(Callable, frozenset), axis=1),
             ],
             axis=1,
         ).loc[

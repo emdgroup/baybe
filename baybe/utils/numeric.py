@@ -21,14 +21,14 @@ There is no clear documentation but some references can be found here (version 1
 """  # noqa: E501
 
 
-def geom_mean(arr: np.ndarray, weights: List[float] = None) -> np.ndarray:
+def geom_mean(arr: np.ndarray, weights: List[float]) -> np.ndarray:
     """Calculate the (weighted) geometric mean along the second axis of a 2-D array.
 
     Alternative to ``gmean`` from scipy that avoids logarithms and division errors.
 
     Args:
         arr: The array containing the values for the mean computation.
-        weights: Optional weights for the mean computation.
+        weights: Weights for the mean computation.
 
     Returns:
         A 1-D array containing the row-wise geometric means of the given array.

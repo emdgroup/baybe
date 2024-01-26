@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Copy button for code blocks in documentation
+- `mypy` for campaign, constraints and telemetry
 
 ### Changed
 - Optional `chem` dependencies are lazily imported

@@ -123,6 +123,7 @@ nitpick_ignore_regex = [
     # Ignore the generics in utils.basic
     # Might be able to us a regex here, is done explicitly at the moment for full
     # transparency.
+    (r"py:class", "baybe.utils.basic._C"),
     (r"py:class", "baybe.utils.basic._T"),
     (r"py:class", "baybe.utils.basic._U"),
 ]
