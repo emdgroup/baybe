@@ -28,7 +28,7 @@ def geom_mean(arr: np.ndarray, weights: List[float]) -> np.ndarray:
 
     Args:
         arr: The array containing the values for the mean computation.
-        weights: Optional weights for the mean computation.
+        weights: Weights for the mean computation.
 
     Returns:
         A 1-D array containing the row-wise geometric means of the given array.
