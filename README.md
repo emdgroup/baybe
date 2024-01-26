@@ -185,12 +185,12 @@ df = campaign.recommend(batch_quantity=3)
 print(df)
 ```
 
-> ```python
->    Granularity  Pressure[bar]    Solvent
-> 15      medium            1.0  Solvent D
-> 10      coarse           10.0  Solvent C
-> 29        fine            5.0  Solvent B
-> ```
+```none
+   Granularity  Pressure[bar]    Solvent
+15      medium            1.0  Solvent D
+10      coarse           10.0  Solvent C
+29        fine            5.0  Solvent B
+```
 
 Note that the specific recommendations will depend on both the data
 already fed to the campaign and the random number generator seed that is used.
