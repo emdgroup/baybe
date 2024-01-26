@@ -43,14 +43,15 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 
 ## Quick Start
 
-First, install the `baybe` PyPI package with the `chem` and `simulation` dependency groups. For additional details, see the [advanced installation instructions](#advanced-installation).
+Let us consider a simple experiment where we control three parameters and want to
+maximize a single target called `Yield`.
 
-```bash
-pip install 'baybe[chem,simulation]'
-```
-
-Let us consider a simple experiment where we have three parameters and want to maximize 
-a single target called `Yield`.
+First, install BayBE into your Python environment: 
+```bash 
+pip install baybe 
+``` 
+For more information on this step, see our
+[detailed installation instructions](#installation).
 
 ### Defining the Optimization Objective
 
@@ -81,7 +82,8 @@ Next, we inform BayBE about the available "control knobs", that is, the underlyi
 system parameters we can tune to optimize our targets. This also involves specifying 
 their values/ranges and other parameter-specific details.
 
-For our example, we assume that we can control three quantities&mdash;`Granularity`, `Pressure[bar]`, and `Solvent`&mdash;as follows:
+For our example, we assume that we can control three quantities – `Granularity`,
+`Pressure[bar]`, and `Solvent` – as follows:
 
 ```python
 from baybe.parameters import (
@@ -190,7 +192,8 @@ print(df)
 > 29        fine            5.0  Solvent B
 > ```
 
-Note that the specific recommendations will depend on the data that has already been fed to the model and random number generator seed that is used.
+Note that the specific recommendations will depend on both the data
+already fed to the campaign and the random number generator seed that is used.
 
 After having conducted the corresponding experiments, we can add our measured
 targets to the table and feed it back to the campaign:
@@ -204,19 +207,9 @@ With the newly arrived data, BayBE can produce a refined design for the next ite
 This loop would typically continue until a desired target value has been achieved in
 the experiment.
 
-## Authors
 
-- Martin Fitzner (Merck KGaA, Darmstadt, Germany), [Contact](mailto:martin.fitzner@merckgroup.com), [Github](https://github.com/Scienfitz)
-- Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany), [Contact](mailto:adrian.sosic@merckgroup.com), [Github](https://github.com/AdrianSosic)
-- Alexander Hopp (Merck KGaA, Darmstadt, Germany) [Contact](mailto:alexander.hopp@merckgroup.com), [Github](https://github.com/AVHopp)
-- Alex Lee (EMD Electronics, Tempe, Arizona, USA) [Contact](mailto:alex.lee@emdgroup.com), [Github](https://github.com/galaxee87)
-
-
-## Known Issues
-A list of know issues can be found [here](https://emdgroup.github.io/baybe/known_issues.html).
-
-
-## Advanced Installation
+(installation)=
+## Installation
 ### From Package Index
 The easiest way to install BayBE is via PyPI:
 
@@ -230,8 +223,8 @@ corresponding version tag in the form `baybe==x.y.z`.
 ### From GitHub
 If you need finer control and would like to install a specific commit that has not been
 released under a certain version tag, you can do so by installing BayBE directly from
-GitHub via git and specifying the corresponding 
-[git ref](https://pip.pypa.io/en/stable/topics/vcs-support/#git). 
+GitHub via git and specifying the corresponding
+[git ref](https://pip.pypa.io/en/stable/topics/vcs-support/#git).
 
 For instance, to install the latest commit of the main branch, run:
 
@@ -257,7 +250,7 @@ which ensures that changes to the code do not require a reinstallation.
 pip install -e .
 ```
 
-If you need to add additional dependencies, make sure to use the correct syntax 
+If you need to add additional dependencies, make sure to use the correct syntax
 including `''`:
 
 ```bash
@@ -284,6 +277,19 @@ The available groups are:
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
+
+
+## Authors
+
+- Martin Fitzner (Merck KGaA, Darmstadt, Germany), [Contact](mailto:martin.fitzner@merckgroup.com), [Github](https://github.com/Scienfitz)
+- Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany), [Contact](mailto:adrian.sosic@merckgroup.com), [Github](https://github.com/AdrianSosic)
+- Alexander Hopp (Merck KGaA, Darmstadt, Germany) [Contact](mailto:alexander.hopp@merckgroup.com), [Github](https://github.com/AVHopp)
+- Alex Lee (EMD Electronics, Tempe, Arizona, USA) [Contact](mailto:alex.lee@emdgroup.com), [Github](https://github.com/galaxee87)
+
+
+## Known Issues
+A list of know issues can be found [here](https://emdgroup.github.io/baybe/known_issues.html).
+
 
 ## License
 
