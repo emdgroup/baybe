@@ -1,4 +1,4 @@
-### Example for surrogate model with a custom architecture using `sklearn`
+## Example for surrogate model with a custom architecture using `sklearn`
 
 # This example shows how to define a `sklearn` model architecture and use it as a surrogate.
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports
+### Necessary imports
 
 from typing import Optional, Tuple
 
@@ -35,7 +35,7 @@ from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Surrogate Definition with BayBE Registration
+### Surrogate Definition with BayBE Registration
 
 # The final estimator class must follow the sklearn estimator interface.
 # More details [here](https://scikit-learn.org/stable/developers/develop.html).
@@ -91,7 +91,7 @@ class StackingRegressorSurrogate:
         self.model.fit(train_x, train_y.ravel())
 
 
-#### Experiment Setup
+### Experiment Setup
 
 parameters = [
     CategoricalParameter(
@@ -121,7 +121,7 @@ parameters = [
 ]
 
 
-#### Run DOE iterations with custom surrogate
+### Run DOE iterations with custom surrogate
 # Create campaign
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
@@ -156,7 +156,7 @@ print(recommendation)
 print()
 
 
-#### Serialization
+### Serialization
 
 # Serialization of custom models is not supported
 try:

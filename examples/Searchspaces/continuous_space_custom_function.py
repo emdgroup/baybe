@@ -1,11 +1,11 @@
-### Example for using a custom BoTorch test function in a continuous searchspace
+## Example for using a custom BoTorch test function in a continuous searchspace
 
 # This example shows how an arbitrary python function can be used as lookup.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports
+### Necessary imports
 
 from baybe import Campaign
 from baybe.objective import Objective
@@ -13,7 +13,7 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 
-#### Defining the custom test function
+### Defining the custom test function
 
 # The function should accept an arbitrary or fixed amount of floats as input.
 # It needs to return either a single float or a tuple of floats.
@@ -41,7 +41,7 @@ TEST_FUNCTION = sum_of_squares
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 parameters = [
     NumericalContinuousParameter(
@@ -57,7 +57,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing the campaign and performing a recommendation
+### Constructing the campaign and performing a recommendation
 
 campaign = Campaign(
     searchspace=searchspace,

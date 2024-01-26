@@ -1,10 +1,10 @@
-### Basic example for using BayBE
+## Basic example for using BayBE
 
 # This example shows how to create a campaign and how to use it.
 # It is intended to be used as a first point of interaction with campaign after having
 # read the corresponding [user guide](./../../userguide/campaigns).
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 from baybe import Campaign
 from baybe.objective import Objective
@@ -13,7 +13,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Setup
+### Setup
 
 # This example presents the optimization of a direct Arylation reaction in a discrete
 # space. For this, we require data for solvents, ligands and bases.
@@ -73,7 +73,7 @@ campaign = Campaign(
     objective=objective,
 )
 
-#### Getting a recommendation and adding measurements
+### Getting a recommendation and adding measurements
 
 # We use the `recommend()` function of the campaign for getting measurements.
 

@@ -1,11 +1,11 @@
-### Example for using a synthetic BoTorch test function in a discrete searchspace
+## Example for using a synthetic BoTorch test function in a discrete searchspace
 
 # Example for using the synthetic test functions in discrete spaces.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 from botorch.test_functions import Rastrigin
@@ -17,7 +17,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import botorch_function_wrapper
 
-#### Defining the test function
+### Defining the test function
 
 # BoTorch offers a variety of different test functions, all of which can be used.
 # Note that some test functions are only defined for specific dimensions.
@@ -58,7 +58,7 @@ BOUNDS = TestFunction.bounds
 
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # In this example, we construct a purely discrete space.
 # The parameter `POINTS_PER_DIM` controls the number of points per dimension.
@@ -83,7 +83,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing the campaign and performing a recommendation
+### Constructing the campaign and performing a recommendation
 
 campaign = Campaign(
     searchspace=searchspace,

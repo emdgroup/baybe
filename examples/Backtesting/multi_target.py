@@ -1,4 +1,4 @@
-### Example for full simulation loop using the multi target mode for custom analytic functions
+## Example for full simulation loop using the multi target mode for custom analytic functions
 
 # This example shows how to use a multi target objective for a custom analytic function.
 # It uses a desirability value to handle several targets.
@@ -9,7 +9,7 @@
 # - [`custom_analytical`](./custom_analytical.md) for custom test functions, and
 # - [`desirability`](./../Multi_Target/desirability.md) for multiple targets.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 from typing import Tuple
 
@@ -22,7 +22,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 
-#### Parameters for a full simulation loop
+### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
@@ -30,7 +30,7 @@ from baybe.targets import NumericalTarget
 N_MC_ITERATIONS = 2
 N_DOE_ITERATIONS = 4
 
-#### Defining the test function
+### Defining the test function
 
 
 # See [`custom_analytical`](./custom_analytical.md) for details
@@ -45,7 +45,7 @@ def sum_of_squares(*x: float) -> Tuple[float, float]:
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-#### Creating the searchspace
+### Creating the searchspace
 
 # In this example, we construct a purely discrete space with 10 points per dimension.
 parameters = [
@@ -60,7 +60,7 @@ parameters = [
 searchspace = SearchSpace.from_product(parameters=parameters)
 
 
-#### Creating multiple target object
+### Creating multiple target object
 
 # The multi target mode is handled when creating the objective object.
 # Thus we first need to define the different targets.
@@ -74,7 +74,7 @@ Target_2 = NumericalTarget(
 )
 
 
-#### Creating the objective object
+### Creating the objective object
 
 # We collect the two targets in a list and use this list to construct the objective.
 
@@ -88,7 +88,7 @@ objective = Objective(
 )
 
 
-#### Constructing a campaign and performing the simulation loop
+### Constructing a campaign and performing the simulation loop
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 

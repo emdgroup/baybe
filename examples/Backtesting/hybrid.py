@@ -1,4 +1,4 @@
-### Example for full simulation loop using a custom analytical test function in a hybrid space
+## Example for full simulation loop using a custom analytical test function in a hybrid space
 
 # This example shows a simulation loop for a single target with a custom test function as lookup.
 # Most importantly, it demonstrates the creation of a custom hybrid searchspace.
@@ -7,7 +7,7 @@
 # We refer to [`campaign`](./../Basics/campaign.md) for a more  basic example resp.
 # to [`custom_analytical`](./custom_analytical.md) for details on the lookup mechanism.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,14 +26,14 @@ from baybe.simulation import simulate_scenarios
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
-#### Parameters for a full simulation loop
+### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 N_MC_ITERATIONS = 2
 N_DOE_ITERATIONS = 2
 
-#### Defining the test function.
+### Defining the test function.
 
 
 # See [`here`](./custom_analytical.md) for details on the custom analytical test function.
@@ -52,7 +52,7 @@ def sum_of_squares(*x: float) -> float:
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
-#### Constructing the hybrid searchspace
+### Constructing the hybrid searchspace
 
 # Our goal is to construct a hybrid searchspace containing discrete and continuous parameters.
 # We thus need to specify which indices should be discrete and which should be continuous.
@@ -101,7 +101,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing campaigns for the simulation loop
+### Constructing campaigns for the simulation loop
 
 # This example compares three different available hybrid recommenders:
 # The `SequentialGreedyRecommender`, the `NaiveHybridRecommedner` and the `RandomRecommender`.
