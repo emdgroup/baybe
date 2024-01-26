@@ -217,7 +217,7 @@ The easiest way to install BayBE is via PyPI:
 pip install baybe
 ```
 
-A certain released version of the package can installed by specifying the
+A certain released version of the package can be installed by specifying the
 corresponding version tag in the form `baybe==x.y.z`.
 
 ### From GitHub
