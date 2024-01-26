@@ -119,8 +119,13 @@ def create_example_documentation(example_dest_dir: str):
         if ex_file_entry not in ex_order:
             ex_order.append(ex_file_entry)
 
-        # We need to create a file for the inclusion of the folder
-        subdir_toctree = f"# {folder_name}\n\n" + "```{toctree}\n:maxdepth: 1\n\n"
+        # We need to create a file for the inclusion of the folder.
+        # We thus get the content of the corresponding header file.
+        header_folder_name = sub_directory / f"{folder_name}_Header.md"
+        with open(header_folder_name, "r") as file:
+            header = "\n".join(file.readlines())
+
+        subdir_toctree = header + "\n```{toctree}\n:maxdepth: 1\n\n"
 
         # Set description of progressbar
         pbar.set_description("Overall progress")
@@ -210,8 +215,9 @@ def create_example_documentation(example_dest_dir: str):
     # Remove remaining files and subdirectories from the destination directory
     # Remove any not markdown files
     for file in examples_directory.glob("**/*"):
-        if file.is_file() and file.suffix != ".md":
-            file.unlink(file)
+        if file.is_file():
+            if file.suffix != ".md" or "Header" in file.name:
+                file.unlink(file)
 
     # Remove any remaining empty subdirectories
     for subdirectory in examples_directory.glob("*/*"):
