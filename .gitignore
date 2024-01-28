@@ -21,10 +21,11 @@ build
 
 # Testing
 .tox
-.coverage
-.coverage.*
-.hypothesis/
+.coverage*
+.hypothesis
 .pytest_cache
+.mypy_cache
+.ruff_cache
 htmlcov
 
 # Pictures created by backtesting
