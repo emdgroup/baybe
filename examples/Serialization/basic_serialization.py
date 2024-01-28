@@ -73,7 +73,7 @@ print(campaign, end="\n" * 3)
 # We next serialize the campaign to JSON.
 # This yields a JSON representation in string format.
 # Since it is rather complex, we do not print this string here.
-# Note: Dataframes are encoded via binary parquet and are hence not human-readable.
+# Note: Dataframes are binary-encoded and are hence not human-readable.
 string = campaign.to_json()
 
 
