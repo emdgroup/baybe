@@ -25,11 +25,10 @@ describe the underlying optimization problem at hand:
 | What should be optimized in the campaign?  | `Objective` ([class](baybe.objective.Objective) / [user guide](./objective))              |
 | Which experimental factors can be altered? | `SearchSpace` ([class](baybe.searchspace.core.SearchSpace) / [user guide](./searchspace)) |
 
-Apart from this basic configuration, it is possible to provide additional instructions, 
-such as the specific optimization 
+Apart from this basic configuration, it is possible to further define the specific
+optimization 
 `Strategy`&nbsp;([class](baybe.strategies.base.Strategy) 
-/ [user guide](./strategies)) to be used, as well as other aspects of the campaign 
-(see [here](#AM) for details on `numerical_measurements_must_be_within_tolerance`).
+/ [user guide](./strategies)) to be used.
 
 
 ~~~python
@@ -39,7 +38,6 @@ campaign = Campaign(
     searchspace=searchspace,  # Required
     objective=objective,  # Required
     strategy=strategy,  # Optional
-    numerical_measurements_must_be_within_tolerance=boolean,  # Optional
 )
 ~~~
 
@@ -158,8 +156,8 @@ form:
 For discrete parameters, the parameter values associated with the provided measurements
 are required to fall into a predefined tolerance interval by default, which is
 defined on the level of the individual parameters.
-This requirement can be disabled using the 
-`numerical_measurements_must_be_within_tolerance` flag of the campaign.
+This requirement can be disabled using the method's
+`numerical_measurements_must_be_within_tolerance` flag.
 ```
 
 
