@@ -59,12 +59,6 @@ class Campaign(SerialMixin):
     strategy: Strategy = field(factory=TwoPhaseStrategy)
     """The employed strategy"""
 
-    # Data
-    measurements_exp: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
-    )
-    """The experimental representation of the conducted experiments."""
-
     # Metadata
     n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
@@ -73,6 +67,11 @@ class Campaign(SerialMixin):
     """The number of fits already done."""
 
     # Private
+    _measurements_exp: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    )
+    """The experimental representation of the conducted experiments."""
+
     _cached_recommendation: pd.DataFrame = field(
         factory=pd.DataFrame, eq=eq_dataframe, init=False
     )
@@ -89,18 +88,18 @@ class Campaign(SerialMixin):
         return self.objective.targets
 
     @property
-    def measurements_parameters_comp(self) -> pd.DataFrame:
+    def _measurements_parameters_comp(self) -> pd.DataFrame:
         """The computational representation of the measured parameters."""
-        if len(self.measurements_exp) < 1:
+        if len(self._measurements_exp) < 1:
             return pd.DataFrame()
-        return self.searchspace.transform(self.measurements_exp)
+        return self.searchspace.transform(self._measurements_exp)
 
     @property
-    def measurements_targets_comp(self) -> pd.DataFrame:
+    def _measurements_targets_comp(self) -> pd.DataFrame:
         """The computational representation of the measured targets."""
-        if len(self.measurements_exp) < 1:
+        if len(self._measurements_exp) < 1:
             return pd.DataFrame()
-        return self.objective.transform(self.measurements_exp)
+        return self.objective.transform(self._measurements_exp)
 
     @classmethod
     def from_config(cls, config_json: str) -> Campaign:
@@ -202,8 +201,8 @@ class Campaign(SerialMixin):
         to_insert["BatchNr"] = self.n_batches_done
         to_insert["FitNr"] = np.nan
 
-        self.measurements_exp = pd.concat(
-            [self.measurements_exp, to_insert], axis=0, ignore_index=True
+        self._measurements_exp = pd.concat(
+            [self._measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
         # Telemetry
@@ -239,16 +238,16 @@ class Campaign(SerialMixin):
             return self._cached_recommendation
 
         # Update recommendation meta data
-        if len(self.measurements_exp) > 0:
+        if len(self._measurements_exp) > 0:
             self.n_fits_done += 1
-            self.measurements_exp["FitNr"].fillna(self.n_fits_done, inplace=True)
+            self._measurements_exp["FitNr"].fillna(self.n_fits_done, inplace=True)
 
         # Get the recommended search space entries
         rec = self.strategy.recommend(
             self.searchspace,
             batch_quantity,
-            self.measurements_parameters_comp,
-            self.measurements_targets_comp,
+            self._measurements_parameters_comp,
+            self._measurements_targets_comp,
         )
 
         # Cache the recommendations
