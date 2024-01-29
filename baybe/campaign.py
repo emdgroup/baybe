@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
-from typing import Any, List
+from typing import List
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -59,21 +60,25 @@ class Campaign(SerialMixin):
     """The employed strategy"""
 
     # Data
-    measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
+    measurements_exp: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    )
     """The experimental representation of the conducted experiments."""
 
     numerical_measurements_must_be_within_tolerance: bool = field(default=True)
     """Flag for forcing numerical measurements to be within tolerance."""
 
     # Metadata
-    n_batches_done: int = field(default=0)
+    n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
 
-    n_fits_done: int = field(default=0)
+    n_fits_done: int = field(default=0, init=False)
     """The number of fits already done."""
 
     # Private
-    _cached_recommendation: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
+    _cached_recommendation: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    )
     """The cached recommendations."""
 
     @property
@@ -253,14 +258,21 @@ class Campaign(SerialMixin):
         return rec
 
 
-def _unstructure_with_version(obj: Any) -> dict:
+def _add_version(dict_: dict) -> dict:
     """Add the package version to the created dictionary."""
     from baybe import __version__
 
-    return {
-        **converter.unstructure_attrs_asdict(obj),
-        "version": __version__,
-    }
+    return {**dict_, "version": __version__}
 
 
-converter.register_unstructure_hook(Campaign, _unstructure_with_version)
+# Register de-/serialization hooks
+unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
+    Campaign, converter, _cattrs_include_init_false=True
+)
+structure_hook = cattrs.gen.make_dict_structure_fn(
+    Campaign, converter, _cattrs_include_init_false=True
+)
+converter.register_unstructure_hook(
+    Campaign, lambda x: _add_version(unstructure_hook(x))
+)
+converter.register_structure_hook(Campaign, structure_hook)
