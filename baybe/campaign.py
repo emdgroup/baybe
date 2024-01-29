@@ -65,9 +65,6 @@ class Campaign(SerialMixin):
     )
     """The experimental representation of the conducted experiments."""
 
-    numerical_measurements_must_be_within_tolerance: bool = field(default=True)
-    """Flag for forcing numerical measurements to be within tolerance."""
-
     # Metadata
     n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
@@ -140,7 +137,11 @@ class Campaign(SerialMixin):
 
         _validation_converter.structure(config, Campaign)
 
-    def add_measurements(self, data: pd.DataFrame) -> None:
+    def add_measurements(
+        self,
+        data: pd.DataFrame,
+        numerical_measurements_must_be_within_tolerance: bool = True,
+    ) -> None:
         """Add results from a dataframe to the internal database.
 
         Each addition of data is considered a new batch. Added results are checked for
@@ -152,6 +153,8 @@ class Campaign(SerialMixin):
         Args:
             data: The data to be added (with filled values for targets). Preferably
                 created via :func:`baybe.campaign.Campaign.recommend`.
+            numerical_measurements_must_be_within_tolerance: Flag indicating if
+                numerical parameters need to be within their tolerances.
 
         Raises:
             ValueError: If one of the targets has missing values or NaNs in the provided
@@ -190,7 +193,7 @@ class Campaign(SerialMixin):
         # Update meta data
         # TODO: refactor responsibilities
         self.searchspace.discrete.mark_as_measured(
-            data, self.numerical_measurements_must_be_within_tolerance
+            data, numerical_measurements_must_be_within_tolerance
         )
 
         # Read in measurements and add them to the database
@@ -209,7 +212,7 @@ class Campaign(SerialMixin):
             self._cached_recommendation,
             data,
             self.parameters,
-            self.numerical_measurements_must_be_within_tolerance,
+            numerical_measurements_must_be_within_tolerance,
         )
 
     def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
