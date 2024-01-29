@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 
+from baybe.exceptions import DeprecationError
 from baybe.objective import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import (
@@ -76,6 +77,19 @@ class Campaign(SerialMixin):
         factory=pd.DataFrame, eq=eq_dataframe, init=False
     )
     """The cached recommendations."""
+
+    # Deprecation
+    numerical_measurements_must_be_within_tolerance: bool = field(default=None)
+    """Deprecated! Raises an error when used."""
+
+    @numerical_measurements_must_be_within_tolerance.validator
+    def _validate_tolerance_flag(self, _, value) -> None:
+        if value is not None:
+            raise DeprecationError(
+                f"Passing a 'numerical_measurements_must_be_within_tolerance' flag to "
+                f"the constructor is deprecated. The flag has become a parameter of "
+                f"{self.__class__.__name__}.{Campaign.add_measurements.__name__}."
+            )
 
     @property
     def data(self) -> pd.DataFrame:
@@ -274,7 +288,11 @@ def _add_version(dict_: dict) -> dict:
 
 # Register de-/serialization hooks
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
-    Campaign, converter, _cattrs_include_init_false=True
+    Campaign,
+    converter,
+    _cattrs_include_init_false=True,
+    # TODO: Remove once deprecation got expired:
+    numerical_measurements_must_be_within_tolerance=cattrs.override(omit=True),
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
     Campaign, converter, _cattrs_include_init_false=True
