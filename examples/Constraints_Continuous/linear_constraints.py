@@ -103,7 +103,7 @@ for k in range(N_ITERATIONS):
     campaign.add_measurements(recommendation)
 
 #### Verify the constraints
-measurements = campaign._measurements_exp
+measurements = campaign.data
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`

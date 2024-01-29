@@ -16,7 +16,7 @@ from .conftest import run_iterations
 def test_equality1(campaign, n_iterations, batch_quantity):
     """Test equality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
-    res = campaign._measurements_exp
+    res = campaign.data
     print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
@@ -28,7 +28,7 @@ def test_equality1(campaign, n_iterations, batch_quantity):
 def test_equality2(campaign, n_iterations, batch_quantity):
     """Test equality constraint with unequal weights."""
     run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
-    res = campaign._measurements_exp
+    res = campaign.data
     print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"], 0.3)
@@ -40,7 +40,7 @@ def test_equality2(campaign, n_iterations, batch_quantity):
 def test_inequality1(campaign, n_iterations, batch_quantity):
     """Test inequality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
-    res = campaign._measurements_exp
+    res = campaign.data
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
@@ -52,7 +52,7 @@ def test_inequality1(campaign, n_iterations, batch_quantity):
 def test_inequality2(campaign, n_iterations, batch_quantity):
     """Test inequality constraint with unequal weights."""
     run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
-    res = campaign._measurements_exp
+    res = campaign.data
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
@@ -69,7 +69,7 @@ def test_inequality2(campaign, n_iterations, batch_quantity):
 def test_hybridspace_eq(campaign, n_iterations, batch_quantity):
     """Test equality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
-    res = campaign._measurements_exp
+    res = campaign.data
     print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
@@ -86,7 +86,7 @@ def test_hybridspace_eq(campaign, n_iterations, batch_quantity):
 def test_hybridspace_ineq(campaign, n_iterations, batch_quantity):
     """Test inequality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
-    res = campaign._measurements_exp
+    res = campaign.data
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()

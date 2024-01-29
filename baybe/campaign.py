@@ -78,6 +78,11 @@ class Campaign(SerialMixin):
     """The cached recommendations."""
 
     @property
+    def data(self) -> pd.DataFrame:
+        """The experimental data added to the Campaign."""
+        return self._measurements_exp
+
+    @property
     def parameters(self) -> List[Parameter]:
         """The parameters of the underlying search space."""
         return self.searchspace.parameters
