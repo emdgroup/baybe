@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Copy button for code blocks in documentation
 - `mypy` for campaign, constraints and telemetry
+- Remove `botorch_function_wrapper` from global namespace of `baybe.utils`
 
 ### Changed
 - Optional `chem` dependencies are lazily imported
