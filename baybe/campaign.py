@@ -243,6 +243,7 @@ class Campaign(SerialMixin):
 
         Args:
             batch_size: Number of requested recommendations.
+            batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
