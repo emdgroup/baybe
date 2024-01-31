@@ -8,14 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Copy button for code blocks in documentation
 - `mypy` for campaign, constraints and telemetry
+- Top-level example summaries
 
 ### Changed
 - Optional `chem` dependencies are lazily imported
-- Explicit top-level files for example folders
-- Remove additional headings in table of contents of examples
 
 ### Fixed
 - Several minor issues in documentation
+
+### Removed
+- Detailed headings in table of contents of examples
 
 ## [0.7.2] - 2024-01-24
 ### Added
