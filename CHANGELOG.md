@@ -113,14 +113,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Replacing `pylint`, `flake8`, `µfmt` and `usort` with `ruff`
+- Markdown based documentation replaced with HTML based documentation
 
 ### Fixed
 - `encoding` is no longer a class variable
 - Now installed with correct `pandas` dependency flag
 - `comp_df` column names for `CustomDiscreteParameter` are now safe
-
-### Deprecations
-- Markdown based documentation replaced with HTML based documentation
 
 ## [0.6.0] - 2023-11-17
 ### Added
