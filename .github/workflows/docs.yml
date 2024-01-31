@@ -1,9 +1,6 @@
 name: Documentation
 
-on:
-  release:
-    types:
-      - published
+on: workflow_dispatch
 
 concurrency:
   group: ${{ github.workflow }}
