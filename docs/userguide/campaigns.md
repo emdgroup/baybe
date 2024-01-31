@@ -59,15 +59,15 @@ For more details and a full exemplary config, we refer to the corresponding
 
 To obtain a recommendation for the next batch of experiments, we can query the 
 campaign via the [`recommend`](baybe.campaign.Campaign.recommend) method.
-It expects a parameter `batch_quantity` that specifies the desired number of 
+It expects a parameter `batch_size` that specifies the desired number of 
 experiments to be conducted.
 
 ~~~python
-rec = campaign.recommend(batch_quantity=3)
+rec = campaign.recommend(batch_size=3)
 print(rec.to_markdown())
 ~~~
 
-Calling the function returns a `DataFrame` with `batch_quantity` many rows, each
+Calling the function returns a `DataFrame` with `batch_size` many rows, each
 representing a particular parameter configuration from the campaign's search space.
 Thus, the following might be a `DataFrame` returned by `recommend` in a search space
 with the three parameters `Categorial_1`, `Categorical_2` and `Num_disc_1`:
@@ -137,9 +137,9 @@ this is most easily achieved by augmenting the  `DataFrame` returned from that c
 with the respective target columns.
 
 ~~~python
-rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_quantity of 3
+rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_size of 3
 campaign.add_measurements(rec)
-new_rec = campaign.recommend(batch_quantity=5)
+new_rec = campaign.recommend(batch_size=5)
 ~~~
 
 After adding the measurements, the corresponding `DataFrame` thus has the following 

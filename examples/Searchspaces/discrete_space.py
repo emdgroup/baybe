@@ -91,8 +91,8 @@ campaign = Campaign(
 )
 
 # Get a recommendation for a fixed batched quantity.
-BATCH_QUANTITY = 3
-recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+BATCH_SIZE = 3
+recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.

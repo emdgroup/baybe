@@ -15,6 +15,6 @@ from .conftest import _CHEM_INSTALLED, run_iterations
     [["Categorical_1", f"Substance_1_{enc}"] for enc in SubstanceEncoding],
     ids=[enc.name for enc in SubstanceEncoding],
 )
-def test_run_iterations(campaign, batch_quantity, n_iterations):
+def test_run_iterations(campaign, batch_size, n_iterations):
     """Test running some iterations with fake results and a substance parameter."""
-    run_iterations(campaign, n_iterations, batch_quantity)
+    run_iterations(campaign, n_iterations, batch_size)

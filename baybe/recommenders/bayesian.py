@@ -120,7 +120,7 @@ class BayesianRecommender(Recommender, ABC):
     def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
         allow_repeated_recommendations: bool = False,
@@ -137,20 +137,20 @@ class BayesianRecommender(Recommender, ABC):
             return _select_candidates_and_recommend(
                 searchspace,
                 partial(self._recommend_discrete, acqf),
-                batch_quantity,
+                batch_size,
                 allow_repeated_recommendations,
                 allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(acqf, searchspace, batch_quantity)
-        return self._recommend_hybrid(acqf, searchspace, batch_quantity)
+            return self._recommend_continuous(acqf, searchspace, batch_size)
+        return self._recommend_hybrid(acqf, searchspace, batch_size)
 
     def _recommend_discrete(
         self,
         acquisition_function: Callable,
         searchspace: SearchSpace,
         candidates_comp: pd.DataFrame,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.Index:
         """Calculate recommendations in a discrete search space.
 
@@ -161,7 +161,7 @@ class BayesianRecommender(Recommender, ABC):
                 be made.
             candidates_comp: The computational representation of all possible
                 candidates.
-            batch_quantity: The size of the calculated batch.
+            batch_size: The size of the calculated batch.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -176,7 +176,7 @@ class BayesianRecommender(Recommender, ABC):
         self,
         acquisition_function: Callable,
         searchspace: SearchSpace,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.DataFrame:
         """Calculate recommendations in a continuous search space.
 
@@ -185,7 +185,7 @@ class BayesianRecommender(Recommender, ABC):
                 recommendation.
             searchspace: The continuous search space in which the recommendations should
                 be made.
-            batch_quantity: The size of the calculated batch.
+            batch_size: The size of the calculated batch.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -199,7 +199,7 @@ class BayesianRecommender(Recommender, ABC):
         self,
         acquisition_function: Callable,
         searchspace: SearchSpace,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.DataFrame:
         """Calculate recommendations in a hybrid search space.
 
@@ -208,7 +208,7 @@ class BayesianRecommender(Recommender, ABC):
                 recommendation.
             searchspace: The hybrid search space in which the recommendations should
                 be made.
-            batch_quantity: The size of the calculated batch.
+            batch_size: The size of the calculated batch.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -267,7 +267,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         acquisition_function: Callable,
         searchspace: SearchSpace,
         candidates_comp: pd.DataFrame,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.Index:
         # See base class.
 
@@ -275,7 +275,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         candidates_tensor = to_tensor(candidates_comp)
         try:
             points, _ = optimize_acqf_discrete(
-                acquisition_function, batch_quantity, candidates_tensor
+                acquisition_function, batch_size, candidates_tensor
             )
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(
@@ -303,7 +303,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         self,
         acquisition_function: Callable,
         searchspace: SearchSpace,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -311,7 +311,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
             points, _ = optimize_acqf(
                 acq_function=acquisition_function,
                 bounds=searchspace.continuous.param_bounds_comp,
-                q=batch_quantity,
+                q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
                 equality_constraints=[
@@ -339,7 +339,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         self,
         acquisition_function: Callable,
         searchspace: SearchSpace,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.DataFrame:
         """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
 
@@ -353,7 +353,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         Args:
             acquisition_function: The acquisition function to be optimized.
             searchspace: The search space in which the recommendations should be made.
-            batch_quantity: The size of the calculated batch.
+            batch_size: The size of the calculated batch.
 
         Returns:
             The recommended points.
@@ -390,7 +390,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
             points, _ = optimize_acqf_mixed(
                 acq_function=acquisition_function,
                 bounds=searchspace.param_bounds_comp,
-                q=batch_quantity,
+                q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
                 fixed_features_list=fixed_features_list,
@@ -491,7 +491,7 @@ class NaiveHybridRecommender(Recommender):
     def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
         allow_repeated_recommendations: bool = False,
@@ -519,7 +519,7 @@ class NaiveHybridRecommender(Recommender):
         if degenerate_recommender is not None:
             return degenerate_recommender.recommend(
                 searchspace=searchspace,
-                batch_quantity=batch_quantity,
+                batch_size=batch_size,
                 train_x=train_x,
                 train_y=train_y,
                 allow_repeated_recommendations=allow_repeated_recommendations,
@@ -567,7 +567,7 @@ class NaiveHybridRecommender(Recommender):
             **(acqf_func_dict),
             searchspace=searchspace,
             candidates_comp=candidates_comp,
-            batch_quantity=batch_quantity,
+            batch_size=batch_size,
         )
 
         # Get one random discrete point that will be attached when evaluating the
@@ -586,7 +586,7 @@ class NaiveHybridRecommender(Recommender):
         )
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(
-            cont_acqf_part, searchspace, batch_quantity
+            cont_acqf_part, searchspace, batch_size
         )
 
         # Glue the solutions together and return them

@@ -9,7 +9,7 @@ Important:
     host machine names are irreversibly anonymized.
 
 **Monitored quantities are:**
-    * ``batch_quantity`` used when querying recommendations
+    * ``batch_size`` used when querying recommendations
     * Number of parameters in the search space
     * Number of constraints in the search space
     * How often ``recommend`` was called
@@ -114,7 +114,7 @@ DEFAULT_TELEMETRY_HOSTNAME = (
 # Telemetry labels for metrics
 TELEM_LABELS = {
     "RECOMMENDED_MEASUREMENTS_PERCENTAGE": "value_recommended-measurements-percentage",
-    "BATCH_QUANTITY": "value_batch-quantity",
+    "BATCH_SIZE": "value_batch-quantity",
     "COUNT_ADD_RESULTS": "count_add-results",
     "COUNT_RECOMMEND": "count_recommend",
     "NUM_PARAMETERS": "value_num-parameters",

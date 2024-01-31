@@ -188,7 +188,7 @@ campaign = Campaign(
 )
 
 # Let's do a first round of recommendation
-recommendation = campaign.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_size=2)
 
 print("Recommendation from campaign:")
 print(recommendation)
@@ -198,7 +198,7 @@ add_fake_results(recommendation, campaign)
 campaign.add_measurements(recommendation)
 
 # Do another round of recommendations
-recommendation = campaign.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_size=2)
 
 # Print second round of recommendations
 print("Recommendation from campaign:")

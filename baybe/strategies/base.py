@@ -28,7 +28,7 @@ class Strategy(SerialMixin, ABC):
     def select_recommender(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
@@ -36,7 +36,7 @@ class Strategy(SerialMixin, ABC):
 
         Args:
             searchspace: See :func:`baybe.strategies.base.Strategy.recommend`.
-            batch_quantity: See :func:`baybe.strategies.base.Strategy.recommend`.
+            batch_size: See :func:`baybe.strategies.base.Strategy.recommend`.
             train_x: See :func:`baybe.strategies.base.Strategy.recommend`.
             train_y: See :func:`baybe.strategies.base.Strategy.recommend`.
 
@@ -47,7 +47,7 @@ class Strategy(SerialMixin, ABC):
     def recommend(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
@@ -55,7 +55,7 @@ class Strategy(SerialMixin, ABC):
 
         Args:
             searchspace: The search space in which the experiments are conducted.
-            batch_quantity: The number of experiments to be conducted in parallel.
+            batch_size: The number of experiments to be conducted in parallel.
             train_x: The features of the conducted experiments.
             train_y: The corresponding response values.
 
@@ -64,13 +64,13 @@ class Strategy(SerialMixin, ABC):
         """
         recommender = self.select_recommender(
             searchspace,
-            batch_quantity,
+            batch_size,
             train_x,
             train_y,
         )
         return recommender.recommend(
             searchspace,
-            batch_quantity,
+            batch_size,
             train_x,
             train_y,
             self.allow_repeated_recommendations,
