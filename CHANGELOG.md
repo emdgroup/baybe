@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Passing `numerical_measurements_must_be_within_tolerance` to the `Campaign` 
   constructor is no longer supported. Instead, `Campaign.add_measurements` now
   takes an additional parameter to control the behavior.
+- `batch_quantity` replaced with `batch_size`
 
 ## [0.7.2] - 2024-01-24
 ### Added
