@@ -234,7 +234,11 @@ class Campaign(SerialMixin):
             numerical_measurements_must_be_within_tolerance,
         )
 
-    def recommend(self, batch_size: int = 5) -> pd.DataFrame:
+    def recommend(
+        self,
+        batch_size: int = 5,
+        batch_quantity: int = None,  # type: ignore[assignment]
+    ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
@@ -246,6 +250,13 @@ class Campaign(SerialMixin):
         Raises:
             ValueError: If ``batch_size`` is smaller than 1.
         """
+        if batch_quantity is not None:
+            raise DeprecationError(
+                f"Passing the keyword 'batch_quantity' to "
+                f"'{self.__class__.__name__}.{self.recommend.__name__}' is deprecated. "
+                f"Use 'batch_size' instead."
+            )
+
         if batch_size < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
