@@ -64,7 +64,7 @@ campaign = Campaign(
     objective=objective,
 )
 
-# Get a recommendation for a fixed batched quantity.
+# Get a recommendation for a fixed batch size.
 BATCH_SIZE = 3
 recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 

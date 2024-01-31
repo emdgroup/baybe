@@ -32,7 +32,7 @@ def _select_candidates_and_recommend(
     Args:
         searchspace: The search space.
         recommend: The Callable representing the recommendation function.
-        batch_size: The chosen batch quantity.
+        batch_size: The chosen batch size.
         allow_repeated_recommendations: Allow to make recommendations that were already
             recommended earlier.
         allow_recommending_already_measured: Allow to output recommendations that were
