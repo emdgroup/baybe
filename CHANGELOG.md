@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Several minor issues in documentation
+- Private `Campaign` attributes are now private and no longer exposed via constructor
 
 ### Removed
 - `botorch_function_wrapper` from `baybe.utils` namespace
