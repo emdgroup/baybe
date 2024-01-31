@@ -19,7 +19,7 @@ from baybe.recommenders import NaiveHybridRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 #### Defining the test function and the hybrid dimensions
 

@@ -26,7 +26,7 @@ from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 #### Defining the test function
 

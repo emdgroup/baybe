@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Several minor issues in documentation
 
+### Removed
+- `botorch_function_wrapper` from `baybe.utils` namespace
+
 ## [0.7.2] - 2024-01-24
 ### Added
 - Target enums 

@@ -26,7 +26,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 #### Parameters for a full simulation loop
 
