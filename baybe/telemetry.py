@@ -114,7 +114,7 @@ DEFAULT_TELEMETRY_HOSTNAME = (
 # Telemetry labels for metrics
 TELEM_LABELS = {
     "RECOMMENDED_MEASUREMENTS_PERCENTAGE": "value_recommended-measurements-percentage",
-    "BATCH_SIZE": "value_batch-quantity",
+    "BATCH_SIZE": "value_batch-size",
     "COUNT_ADD_RESULTS": "count_add-results",
     "COUNT_RECOMMEND": "count_recommend",
     "NUM_PARAMETERS": "value_num-parameters",
