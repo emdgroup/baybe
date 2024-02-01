@@ -147,7 +147,7 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
             if not ignore_examples:
                 convert_execute.append("--execute")
 
-            to_markdown = ["jupytext", "--to", "markdown", notebook_path]
+            to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
             check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
             check_call(
