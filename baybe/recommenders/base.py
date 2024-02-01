@@ -1,7 +1,7 @@
 """Base classes for all recommenders."""
 
 from abc import ABC, abstractmethod
-from typing import Callable, ClassVar, Optional
+from typing import Callable, ClassVar, Optional, Protocol
 
 import pandas as pd
 from attrs import define
@@ -81,23 +81,17 @@ def _select_candidates_and_recommend(
     return rec
 
 
-@define
-class Recommender(ABC):
-    """Abstract base class for all recommenders."""
+class RecommenderProtocol(Protocol):
+    """Type protocol specifying the interface recommenders need to implement."""
 
-    # Class variables
-    compatibility: ClassVar[SearchSpaceType]
-    """Class variable describing the search space compatibility."""
-
-    @abstractmethod
     def recommend(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
+        batch_quantity: int,
+        train_x: Optional[pd.DataFrame],
+        train_y: Optional[pd.DataFrame],
+        allow_repeated_recommendations: bool,
+        allow_recommending_already_measured: bool,
     ) -> pd.DataFrame:
         """Recommend (a batch of) points in the search space.
 
@@ -116,6 +110,28 @@ class Recommender(ABC):
         Returns:
             A DataFrame containing the recommendations as individual rows.
         """
+        ...
+
+
+@define
+class Recommender(ABC, RecommenderProtocol):
+    """Abstract base class for all recommenders."""
+
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType]
+    """Class variable describing the search space compatibility."""
+
+    @abstractmethod
+    def recommend(
+        self,
+        searchspace: SearchSpace,
+        batch_quantity: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
+    ) -> pd.DataFrame:
+        """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
 
 
 @define
