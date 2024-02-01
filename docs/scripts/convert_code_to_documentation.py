@@ -122,8 +122,7 @@ def create_example_documentation(example_dest_dir: str):
         # We need to create a file for the inclusion of the folder.
         # We thus get the content of the corresponding header file.
         header_folder_name = sub_directory / f"{folder_name}_Header.md"
-        with open(header_folder_name, "r") as file:
-            header = "".join(file.readlines())
+        header = header_folder_name.read_text()
 
         subdir_toctree = header + "\n```{toctree}\n:maxdepth: 1\n\n"
 
