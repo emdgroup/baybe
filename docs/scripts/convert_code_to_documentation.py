@@ -123,7 +123,7 @@ def create_example_documentation(example_dest_dir: str):
         # We thus get the content of the corresponding header file.
         header_folder_name = sub_directory / f"{folder_name}_Header.md"
         with open(header_folder_name, "r") as file:
-            header = "\n".join(file.readlines())
+            header = "".join(file.readlines())
 
         subdir_toctree = header + "\n```{toctree}\n:maxdepth: 1\n\n"
 
