@@ -71,14 +71,17 @@ recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.
 # Furthermore, we need to interpret the row as a list.
+
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(TEST_FUNCTION(*row.to_list()))
 
 # We add an additional column with the calculated target values.
+
 recommendation["Target"] = target_values
 
 # Here, we inform the campaign about our measurement.
+
 campaign.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)

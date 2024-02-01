@@ -25,12 +25,14 @@ from baybe.utils.botorch_wrapper import botorch_function_wrapper
 # Note that choosing a different test function requires to change the `import` statement.
 # All test functions that are available in BoTorch are also available here and are later wrapped
 # via the `botorch_function_wrapper`.
+
 DIMENSION = 4
 TestFunctionClass = Rastrigin
 
 # This code checks if the test function is only available for a specific dimension.
 # In that case, we print a warning and replace `DIMENSION`.
 # In addition, it constructs the actual `TestFunction` object.
+
 if not hasattr(TestFunctionClass, "dim"):
     TestFunction = TestFunctionClass(dim=DIMENSION)
 elif TestFunctionClass().dim == DIMENSION:
@@ -95,14 +97,17 @@ recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.
 # Furthermore, we need to interpret the row as a list.
+
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(WRAPPED_FUNCTION(*row.to_list()))
 
 # We add an additional column with the calculated target values.
+
 recommendation["Target"] = target_values
 
 # Here, we inform the campaign about our measurement.
+
 campaign.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)

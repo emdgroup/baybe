@@ -33,7 +33,9 @@ N_DOE_ITERATIONS = 4
 ### Defining the test function
 
 
-# See [`custom_analytical`](./custom_analytical.md) for details
+# See [`custom_analytical`](./custom_analytical.md) for details.
+
+
 def sum_of_squares(*x: float) -> Tuple[float, float]:
     """Calculate the sum of squares."""
     res = 0
@@ -48,6 +50,7 @@ BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 ### Creating the searchspace
 
 # In this example, we construct a purely discrete space with 10 points per dimension.
+
 parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k+1}",
@@ -66,6 +69,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # Thus we first need to define the different targets.
 # We use two targets here.
 # The first target is maximized and the second target is minimized during the optimization process.
+
 Target_1 = NumericalTarget(
     name="Target_1", mode="MAX", bounds=(0, 100), transformation="LINEAR"
 )
@@ -93,6 +97,7 @@ objective = Objective(
 campaign = Campaign(searchspace=searchspace, objective=objective)
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
+
 scenarios = {"BayBE": campaign}
 
 results = simulate_scenarios(

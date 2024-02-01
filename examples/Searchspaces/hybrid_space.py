@@ -34,6 +34,7 @@ DIMENSION = 6
 # In particular, if the function that you want to use is only available for a fixed
 # dimension, then these will be overwritten by distributing the first half of the
 # dimension to `DISC_INDICES` and the remaining ones to `CONT_INDICES`.
+
 DISC_INDICES = [0, 1, 2]
 CONT_INDICES = [3, 4, 5]
 
@@ -41,6 +42,7 @@ TestFunctionClass = Rastrigin
 
 # This part checks if the test function already has a fixed dimension.
 # In that case, we print a warning and replace DIMENSION.
+
 if not hasattr(TestFunctionClass, "dim"):
     TestFunction = TestFunctionClass(dim=DIMENSION)
 elif TestFunctionClass().dim == DIMENSION:
@@ -61,6 +63,7 @@ else:
 # If this fails, then either the intersection between the index sets is not empty or the test
 # function has another dimension.
 # Note that this might in particular happen for test functions that ignore the `dim` keyword!
+
 if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
     raise ValueError(
         "Either the intersection between CONT_IND and DISC_IND is not empty or your "
@@ -73,9 +76,11 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 ### Constructing the hybrid searchspace
 
 # The following parameter decides how many points each discrete dimension should have.
+
 POINTS_PER_DIM = 3
 
 # Construct the continuous parameters as `NumericContinuous` parameters.
+
 cont_parameters = [
     NumericalContinuousParameter(
         name=f"x_{k+1}",
@@ -85,6 +90,7 @@ cont_parameters = [
 ]
 
 # Construct the discrete parameters as `NumericalDiscreteParameters`.
+
 disc_parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k+1}",
@@ -107,7 +113,6 @@ objective = Objective(
 # We use the default choices, which is the `SequentialGreedyRecommender`.
 
 hybrid_recommender = NaiveHybridRecommender()
-
 hybrid_strategy = TwoPhaseStrategy(recommender=hybrid_recommender)
 
 ### Constructing the campaign and performing a recommendation
@@ -125,14 +130,17 @@ recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.
 # Furthermore, we need to interpret the row as a list.
+
 target_values = []
 for index, row in recommendation.iterrows():
     target_values.append(WRAPPED_FUNCTION(*row.to_list()))
 
 # We add an additional column with the calculated target values.
+
 recommendation["Target"] = target_values
 
 # Here, we inform the campaign about our measurement.
+
 campaign.add_measurements(recommendation)
 print("\n\nRecommended experiments with measured values: ")
 print(recommendation)

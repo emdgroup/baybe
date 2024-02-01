@@ -159,11 +159,13 @@ INVALID_CONFIG = str(
 
 ### Verification of the two dictionaries
 
-# The first validation should work
+# The first validation should work.
+
 Campaign.validate_config(CONFIG)
 print("The first config seems valid.")
 
 # This should fail.
+
 try:
     Campaign.validate_config(INVALID_CONFIG)
     campaign = Campaign.from_config(INVALID_CONFIG)

@@ -44,13 +44,10 @@ parameters = [
 
 # Note that this example trains with several helpers built-in to BayBE.
 # This can be done independently (and elsewhere).
-
 # The only requirement that BayBE needs is that the model is in an onnx format.
 # And The format should return both the mean and standard deviation.
-
 # This example is based on a `BayesianRidge` regressor from `sklearn`.
 # Its native conversion to onnx is supported via `skl2onnx`.
-
 # Please also note that this example does not give a useful model.
 # Its purpose is to show the workflow for using pre-trained surrogates in BayBE.
 
@@ -59,6 +56,7 @@ train_x = to_tensor(searchspace.discrete.comp_rep)
 train_y = torch.rand(train_x.size(dim=0))  # train with a random y vector
 
 # Define model and fit
+
 model = BayesianRidge()
 model.fit(train_x, train_y)
 
@@ -66,16 +64,20 @@ model.fit(train_x, train_y)
 ### Convert model to onnx
 
 # Need the option to return standard deviation
+
 options = {type(model): {"return_std": True}}
 
 # Specify what the input name is
+
 ONNX_INPUT_NAME = "example_input_name"
 
 # input dimensions and input type (should always be a float)
+
 input_dim = train_x.size(dim=1)
 initial_type = [(ONNX_INPUT_NAME, FloatTensorType([None, input_dim]))]
 
 # Conversion
+
 onnx_str = convert_sklearn(
     model,
     initial_types=initial_type,
@@ -113,6 +115,7 @@ print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
+
 add_fake_results(recommendation, campaign)
 campaign.add_measurements(recommendation)
 
@@ -122,6 +125,7 @@ campaign.add_measurements(recommendation)
 recommendation = campaign.recommend(batch_size=2)
 
 # Print second round of recommendations
+
 print("Recommendation from campaign:")
 print(recommendation)
 
@@ -144,8 +148,10 @@ model_from_python = CustomONNXSurrogate(
 model_from_configs = CustomONNXSurrogate.from_dict(CONFIG)
 
 # This configuration creates the same model
+
 assert model_from_python == model_from_configs
 
 # JSON configuration (expects onnx_str to be decoded with `ISO-8859-1`)
+
 model_json = model_from_python.to_json()
 assert model_from_python == CustomONNXSurrogate.from_json(model_json)

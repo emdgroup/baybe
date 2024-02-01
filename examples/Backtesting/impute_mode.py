@@ -26,12 +26,14 @@ from baybe.targets import NumericalTarget
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
+
 N_MC_ITERATIONS = 2
 N_DOE_ITERATIONS = 5
 
 ### Lookup functionality and data creation
 
 # See [`full_lookup`](./full_lookup.md) for details.
+
 try:
     lookup = pd.read_excel("./lookup_withmissing.xlsx")
 except FileNotFoundError:
@@ -42,6 +44,7 @@ except FileNotFoundError:
 
 # As usual, we set up some experiment.
 # Note that we now need to ensure that the names fit the names in the provided .xlsx file!
+
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
     "Butyornitrile": r"CCCC#N",
@@ -107,6 +110,7 @@ campaign_rand = Campaign(
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
 # For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+
 scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 
 # The lookup table does not contain data for all possible combination of parameters.
@@ -131,6 +135,7 @@ results = simulate_scenarios(
 )
 
 # The following lines plot the results and save the plot in run_impute_mode.png
+
 max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"

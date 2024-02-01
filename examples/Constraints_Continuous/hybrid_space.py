@@ -38,6 +38,7 @@ TestFunctionClass = Rastrigin
 # Specify a numerical stride for discrete parameters.
 # If you make it too small, it will make calculations expensive.
 # If you make it too large, constraints might not be satisfied anywhere.
+
 STRIDE = 1.0
 
 if not hasattr(TestFunctionClass, "dim"):
@@ -53,6 +54,7 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 # Since the searchspace is continuous, we construct `NumericalContinuousParameter`.
 # We use the data of the test function to deduce bounds and number of parameters.
+
 parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k + 1}",
@@ -74,6 +76,7 @@ parameters = [
 # We model the following constraints:
 # `1.0*x_1 + 1.0*x_2 = 1.0`
 # `1.0*x_3 - 1.0*x_4 = 2.0`
+
 constraints = [
     DiscreteSumConstraint(
         parameters=["x_1", "x_2"],
@@ -118,6 +121,7 @@ measurements = campaign.measurements
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`
+
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
     np.allclose(
@@ -126,6 +130,7 @@ print(
 )
 
 # `1.0*x_3 - 1.0*x_4 = 2.0`
+
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",
     np.allclose(

@@ -31,6 +31,7 @@ from baybe.utils import add_fake_results
 ### Experiment setup
 
 # This parameter denotes the tolerance with regard to the calculation of the sum.
+
 SUM_TOLERANCE = 1.0
 
 dict_solvents = {
@@ -42,7 +43,9 @@ dict_solvents = {
 solvent1 = SubstanceParameter(name="Solv1", data=dict_solvents, encoding="MORDRED")
 solvent2 = SubstanceParameter(name="Solv2", data=dict_solvents, encoding="MORDRED")
 solvent3 = SubstanceParameter(name="Solv3", data=dict_solvents, encoding="MORDRED")
+
 # Parameters for representing the fraction.
+
 fraction1 = NumericalDiscreteParameter(
     name="Frac1", values=list(np.linspace(0, 100, 12)), tolerance=0.2
 )
@@ -63,6 +66,7 @@ parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 # The reason is that constraints are normally applied in a specific order.
 # However, the fractions should be invariant under permutations.
 # We thus require an explicit constraint for this.
+
 perm_inv_constraint = DiscretePermutationInvarianceConstraint(
     parameters=["Solv1", "Solv2", "Solv3"],
     dependencies=DiscreteDependenciesConstraint(
@@ -77,6 +81,7 @@ perm_inv_constraint = DiscretePermutationInvarianceConstraint(
 )
 
 # This is now the actual sum constraint
+
 sum_constraint = DiscreteSumConstraint(
     parameters=["Frac1", "Frac2", "Frac3"],
     condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
@@ -84,6 +89,7 @@ sum_constraint = DiscreteSumConstraint(
 
 # The permutation invariance might create duplicate labels.
 # We thus include a constraint to remove them.
+
 no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
     parameters=["Solv1", "Solv2", "Solv3"]
 )

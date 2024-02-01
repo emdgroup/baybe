@@ -67,6 +67,7 @@ campaign = Campaign(
 ### Serialization and de-serialization
 
 # We begin by printing the original campaign
+
 print("Original object")
 print(campaign, end="\n" * 3)
 
@@ -74,10 +75,12 @@ print(campaign, end="\n" * 3)
 # This yields a JSON representation in string format.
 # Since it is rather complex, we do not print this string here.
 # Note: Dataframes are encoded via binary parquet and are hence not human-readable.
+
 string = campaign.to_json()
 
 
 # Deserialize the JSON string back to an object.
+
 print("Deserialized object")
 campaign_recreate = Campaign.from_json(string)
 print(campaign_recreate, end="\n" * 3)
