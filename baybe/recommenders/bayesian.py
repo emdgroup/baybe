@@ -27,7 +27,12 @@ from baybe.recommenders.base import (
     Recommender,
     _select_candidates_and_recommend,
 )
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.searchspace import (
+    SearchSpace,
+    SearchSpaceType,
+    SubspaceContinuous,
+    SubspaceDiscrete,
+)
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.utils import farthest_point_sampling, to_tensor
@@ -142,13 +147,15 @@ class BayesianRecommender(Recommender, ABC):
                 allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(acqf, searchspace, batch_quantity)
+            return self._recommend_continuous(
+                acqf, searchspace.continuous, batch_quantity
+            )
         return self._recommend_hybrid(acqf, searchspace, batch_quantity)
 
     def _recommend_discrete(
         self,
         acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
@@ -157,8 +164,8 @@ class BayesianRecommender(Recommender, ABC):
         Args:
             acquisition_function: The acquisition function used for choosing the
                 recommendation.
-            searchspace: The discrete search space in which the recommendations should
-                be made.
+            subspace_discrete: The discrete subspace in which the recommendations
+                should be made.
             candidates_comp: The computational representation of all possible
                 candidates.
             batch_quantity: The size of the calculated batch.
@@ -175,7 +182,7 @@ class BayesianRecommender(Recommender, ABC):
     def _recommend_continuous(
         self,
         acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_continuous: SubspaceContinuous,
         batch_quantity: int,
     ) -> pd.DataFrame:
         """Calculate recommendations in a continuous search space.
@@ -183,8 +190,8 @@ class BayesianRecommender(Recommender, ABC):
         Args:
             acquisition_function: The acquisition function used for choosing the
                 recommendation.
-            searchspace: The continuous search space in which the recommendations should
-                be made.
+            subspace_continuous: The continuous subspace in which the recommendations
+                should be made.
             batch_quantity: The size of the calculated batch.
 
         Raises:
@@ -265,7 +272,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
     def _recommend_discrete(
         self,
         acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
@@ -302,7 +309,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
     def _recommend_continuous(
         self,
         acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_continuous: SubspaceContinuous,
         batch_quantity: int,
     ) -> pd.DataFrame:
         # See base class.
@@ -310,18 +317,18 @@ class SequentialGreedyRecommender(BayesianRecommender):
         try:
             points, _ = optimize_acqf(
                 acq_function=acquisition_function,
-                bounds=searchspace.continuous.param_bounds_comp,
+                bounds=subspace_continuous.param_bounds_comp,
                 q=batch_quantity,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
                 equality_constraints=[
-                    c.to_botorch(searchspace.continuous.parameters)
-                    for c in searchspace.continuous.constraints_lin_eq
+                    c.to_botorch(subspace_continuous.parameters)
+                    for c in subspace_continuous.constraints_lin_eq
                 ]
                 or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
                 inequality_constraints=[
-                    c.to_botorch(searchspace.continuous.parameters)
-                    for c in searchspace.continuous.constraints_lin_ineq
+                    c.to_botorch(subspace_continuous.parameters)
+                    for c in subspace_continuous.constraints_lin_ineq
                 ]
                 or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             )
@@ -332,7 +339,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
             ) from ex
 
         # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=searchspace.continuous.param_names)
+        rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
         return rec
 
     def _recommend_hybrid(
@@ -565,7 +572,7 @@ class NaiveHybridRecommender(Recommender):
         # Call the private function of the discrete recommender and get the indices
         disc_rec_idx = self.disc_recommender._recommend_discrete(
             **(acqf_func_dict),
-            searchspace=searchspace,
+            subspace_discrete=searchspace.discrete,
             candidates_comp=candidates_comp,
             batch_quantity=batch_quantity,
         )
@@ -586,7 +593,7 @@ class NaiveHybridRecommender(Recommender):
         )
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(
-            cont_acqf_part, searchspace, batch_quantity
+            cont_acqf_part, searchspace.continuous, batch_quantity
         )
 
         # Glue the solutions together and return them

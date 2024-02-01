@@ -14,7 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn_extra.cluster import KMedoids
 
 from baybe.recommenders.base import NonPredictiveRecommender
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
 
 _ScikitLearnModel = TypeVar("_ScikitLearnModel")
 
@@ -102,7 +102,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     def _recommend_discrete(
         self,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
@@ -111,7 +111,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
-        scaler.fit(searchspace.discrete.comp_rep)
+        scaler.fit(subspace_discrete.comp_rep)
 
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 

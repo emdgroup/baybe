@@ -7,7 +7,12 @@ import pandas as pd
 from attrs import define
 
 from baybe.exceptions import NotEnoughPointsLeftError
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.searchspace import (
+    SearchSpace,
+    SearchSpaceType,
+    SubspaceContinuous,
+    SubspaceDiscrete,
+)
 from baybe.serialization import (
     converter,
     get_base_structure_hook,
@@ -17,7 +22,7 @@ from baybe.serialization import (
 
 def _select_candidates_and_recommend(
     searchspace: SearchSpace,
-    recommend: Callable[[SearchSpace, pd.DataFrame, int], pd.Index],
+    recommend_discrete: Callable[[SubspaceDiscrete, pd.DataFrame, int], pd.Index],
     batch_quantity: int = 1,
     allow_repeated_recommendations: bool = False,
     allow_recommending_already_measured: bool = True,
@@ -31,7 +36,8 @@ def _select_candidates_and_recommend(
 
     Args:
         searchspace: The search space.
-        recommend: The Callable representing the recommendation function.
+        recommend_discrete: The Callable representing the discrete recommendation
+            function.
         batch_quantity: The chosen batch quantity.
         allow_repeated_recommendations: Allow to make recommendations that were already
             recommended earlier.
@@ -71,7 +77,7 @@ def _select_candidates_and_recommend(
         )
 
     # Get recommendations
-    idxs = recommend(searchspace, candidates_comp, batch_quantity)
+    idxs = recommend_discrete(searchspace.discrete, candidates_comp, batch_quantity)
     rec = searchspace.discrete.exp_rep.loc[idxs, :]
 
     # Update metadata
@@ -159,7 +165,8 @@ class NonPredictiveRecommender(Recommender, ABC):
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
-                searchspace=searchspace, batch_quantity=batch_quantity
+                subspace_continuous=searchspace.continuous,
+                batch_quantity=batch_quantity,
             )
         return self._recommend_hybrid(
             searchspace=searchspace, batch_quantity=batch_quantity
@@ -167,15 +174,15 @@ class NonPredictiveRecommender(Recommender, ABC):
 
     def _recommend_discrete(
         self,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_quantity: int,
     ) -> pd.Index:
         """Calculate recommendations in a discrete search space.
 
         Args:
-            searchspace: The discrete search space in which the recommendations should
-                be made.
+            subspace_discrete: The discrete subspace in which the recommendations
+                should be made.
             candidates_comp: The computational representation of all possible candidates
             batch_quantity: The size of the calculated batch.
 
@@ -188,7 +195,9 @@ class NonPredictiveRecommender(Recommender, ABC):
         """
         try:
             return self._recommend_hybrid(
-                searchspace=searchspace,
+                searchspace=SearchSpace(
+                    discrete=subspace_discrete, continuous=SubspaceContinuous.empty()
+                ),
                 batch_quantity=batch_quantity,
                 candidates_comp=candidates_comp,
             ).index
@@ -202,13 +211,13 @@ class NonPredictiveRecommender(Recommender, ABC):
             ) from exc
 
     def _recommend_continuous(
-        self, searchspace: SearchSpace, batch_quantity: int
+        self, subspace_continuous: SubspaceContinuous, batch_quantity: int
     ) -> pd.DataFrame:
         """Calculate recommendations in a continuous search space.
 
         Args:
-            searchspace: The continuous search space in which the recommendations should
-                be made.
+            subspace_continuous: The continuous subspace in which the recommendations
+                should be made.
             batch_quantity: The size of the calculated batch.
 
         Raises:
@@ -221,7 +230,10 @@ class NonPredictiveRecommender(Recommender, ABC):
         # _recommend_hybrid instead.
         try:
             return self._recommend_hybrid(
-                searchspace=searchspace, batch_quantity=batch_quantity
+                searchspace=SearchSpace(
+                    discrete=SubspaceDiscrete.empty(), continuous=subspace_continuous
+                ),
+                batch_quantity=batch_quantity,
             )
         except NotImplementedError as exc:
             raise NotImplementedError(
