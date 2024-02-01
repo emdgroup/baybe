@@ -787,4 +787,4 @@ def select_recommender(strategy: Strategy, training_size: int) -> Recommender:
     """Select a recommender for given training dataset size."""
     searchspace = get_dummy_searchspace()
     df_x, df_y = get_dummy_training_data(training_size)
-    return strategy.select_recommender(searchspace, train_x=df_x, train_y=df_y)
+    return strategy._select_recommender(searchspace, train_x=df_x, train_y=df_y)
