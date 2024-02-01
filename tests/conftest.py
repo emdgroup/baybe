@@ -558,10 +558,7 @@ def fixture_searchspace(parameters, constraints):
 def fixture_default_twophase_strategy(recommender, initial_recommender):
     """The default ```TwoPhaseStrategy``` to be used if not specified differently."""
     return TwoPhaseStrategy(
-        recommender=recommender,
-        initial_recommender=initial_recommender,
-        allow_repeated_recommendations=False,
-        allow_recommending_already_measured=False,
+        recommender=recommender, initial_recommender=initial_recommender
     )
 
 
@@ -571,8 +568,6 @@ def fixture_default_sequential_strategy():
     return SequentialStrategy(
         recommenders=[RandomRecommender(), SequentialGreedyRecommender()],
         mode="reuse_last",
-        allow_repeated_recommendations=False,
-        allow_recommending_already_measured=False,
     )
 
 
@@ -583,8 +578,6 @@ def fixture_default_streaming_sequential_strategy():
         recommenders=chain(
             (RandomRecommender(),), hilberts_factory(SequentialGreedyRecommender)
         ),
-        allow_repeated_recommendations=False,
-        allow_recommending_already_measured=False,
     )
 
 
@@ -679,9 +672,7 @@ def fixture_default_config():
                 "type": "SequentialGreedyRecommender",
                 "acquisition_function_cls": "qEI"
             },
-            "switch_after": 1,
-            "allow_repeated_recommendations": false,
-            "allow_recommending_already_measured": false
+            "switch_after": 1
         }
     }
     """.replace(

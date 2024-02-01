@@ -76,6 +76,8 @@ def simulate_transfer_learning(
     n_doe_iterations: Optional[int] = None,
     groupby: Optional[List[str]] = None,
     n_mc_iterations: int = 1,
+    allow_repeated_recommendations: bool = False,
+    allow_recommending_already_measured: bool = True,
 ) -> pd.DataFrame:
     """Simulate Bayesian optimization with transfer learning.
 
@@ -99,6 +101,10 @@ def simulate_transfer_learning(
         n_doe_iterations: See :func:`baybe.simulation.simulate_scenarios`.
         groupby: See :func:`baybe.simulation.simulate_scenarios`.
         n_mc_iterations: See :func:`baybe.simulation.simulate_scenarios`.
+        allow_repeated_recommendations: See
+            :func:`baybe.simulation.simulate_experiment`.
+        allow_recommending_already_measured: See
+            :func:`baybe.simulation.simulate_experiment`.
 
     Returns:
         A dataframe as returned by :func:`baybe.simulation.simulate_scenarios` where
@@ -152,6 +158,8 @@ def simulate_transfer_learning(
         groupby=groupby,
         n_mc_iterations=n_mc_iterations,
         impute_mode="ignore",
+        allow_repeated_recommendations=allow_repeated_recommendations,
+        allow_recommending_already_measured=allow_recommending_already_measured,
     )
 
 
@@ -169,6 +177,8 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
+    allow_repeated_recommendations: bool = False,
+    allow_recommending_already_measured: bool = True,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -188,6 +198,10 @@ def simulate_scenarios(
         n_mc_iterations: The number of Monte Carlo simulations to be used.
         impute_mode: See :func:`baybe.simulation.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.simulate_experiment`.
+        allow_repeated_recommendations: See
+            :func:`baybe.simulation.simulate_experiment`.
+        allow_recommending_already_measured: See
+            :func:`baybe.simulation.simulate_experiment`.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.simulate_experiment` but
@@ -237,6 +251,8 @@ def simulate_scenarios(
                 random_seed=Random_Seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
+                allow_repeated_recommendations=allow_repeated_recommendations,
+                allow_recommending_already_measured=allow_recommending_already_measured,
             )
         )
 
@@ -284,6 +300,8 @@ def _simulate_groupby(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
+    allow_repeated_recommendations: bool = False,
+    allow_recommending_already_measured: bool = True,
 ) -> pd.DataFrame:
     """Scenario simulation for different search space partitions.
 
@@ -301,6 +319,10 @@ def _simulate_groupby(
         random_seed: See :func:`baybe.simulation.simulate_experiment`.
         impute_mode: See :func:`baybe.simulation.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.simulate_experiment`.
+        allow_repeated_recommendations: See
+            :func:`baybe.simulation.simulate_experiment`.
+        allow_recommending_already_measured: See
+            :func:`baybe.simulation.simulate_experiment`.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.simulate_experiments`,
@@ -352,6 +374,8 @@ def _simulate_groupby(
                 random_seed=random_seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
+                allow_repeated_recommendations=allow_repeated_recommendations,
+                allow_recommending_already_measured=allow_recommending_already_measured,
             )
         except NothingToSimulateError:
             continue
@@ -385,6 +409,8 @@ def simulate_experiment(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
+    allow_repeated_recommendations: bool = False,
+    allow_recommending_already_measured: bool = True,
 ) -> pd.DataFrame:
     """Simulate a Bayesian optimization loop.
 
@@ -421,6 +447,11 @@ def simulate_experiment(
               so that unmeasured experiments will not be recommended.
         noise_percent: If not ``None``, relative noise in percent of
             ``noise_percent`` will be applied to the parameter measurements.
+        allow_repeated_recommendations: Allow to make recommendations that were
+            already recommended earlier. This only has an influence in discrete search
+            spaces.
+        allow_recommending_already_measured: Allow to output recommendations that were
+            measured previously. This only has an influence in discrete search spaces.
 
     Returns:
         A dataframe ready for plotting, see the ``Note`` for details.
@@ -464,7 +495,7 @@ def simulate_experiment(
     # Validate the number of experimental steps
     # TODO: Probably, we should add this as a property to Campaign
     will_terminate = (campaign.searchspace.type == SearchSpaceType.DISCRETE) and (
-        not campaign.strategy.allow_recommending_already_measured
+        not allow_recommending_already_measured
     )
     if (n_doe_iterations is None) and (not will_terminate):
         raise ValueError(
@@ -504,19 +535,14 @@ def simulate_experiment(
         try:
             measured = campaign.recommend(batch_quantity=batch_quantity)
         except NotEnoughPointsLeftError:
-            # TODO: This except block requires a more elegant solution
-            strategy = campaign.strategy
-            allow_repeated = strategy.allow_repeated_recommendations
-            allow_measured = strategy.allow_recommending_already_measured
-
             # Sanity check: if the variable was True, the except block should have
             # been impossible to reach in the first place
             # TODO: Currently, this is still possible due to bug [15917] though.
-            assert not allow_measured
+            assert not allow_recommending_already_measured
 
             measured, _ = campaign.searchspace.discrete.get_candidates(
-                allow_repeated_recommendations=allow_repeated,
-                allow_recommending_already_measured=allow_measured,
+                allow_repeated_recommendations=allow_repeated_recommendations,
+                allow_recommending_already_measured=allow_recommending_already_measured,
             )
 
             if len(measured) == 0:

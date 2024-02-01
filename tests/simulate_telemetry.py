@@ -71,8 +71,6 @@ config = {
     "strategy": TwoPhaseStrategy(
         recommender=SequentialGreedyRecommender(),
         initial_recommender=RandomRecommender(),
-        allow_repeated_recommendations=False,
-        allow_recommending_already_measured=False,
     ),
     "numerical_measurements_must_be_within_tolerance": True,
 }
