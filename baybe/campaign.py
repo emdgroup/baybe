@@ -93,7 +93,7 @@ class Campaign(SerialMixin):
             )
 
     @property
-    def data(self) -> pd.DataFrame:
+    def measurements(self) -> pd.DataFrame:
         """The experimental data added to the Campaign."""
         return self._measurements_exp
 
