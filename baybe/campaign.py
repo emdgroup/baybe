@@ -84,6 +84,7 @@ class Campaign(SerialMixin):
 
     @numerical_measurements_must_be_within_tolerance.validator
     def _validate_tolerance_flag(self, _, value) -> None:
+        """Raise a DeprecationError if the tolerance flag is used."""
         if value is not None:
             raise DeprecationError(
                 f"Passing 'numerical_measurements_must_be_within_tolerance' to "
