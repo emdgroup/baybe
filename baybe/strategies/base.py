@@ -4,25 +4,17 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import pandas as pd
-from attrs import define, field
+from attrs import define
 
-from baybe.recommenders.base import Recommender
+from baybe.recommenders.base import Recommender, RecommenderProtocol
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 from baybe.strategies.deprecation import structure_strategy
 
 
 @define
-class Strategy(SerialMixin, ABC):
+class Strategy(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all BayBE strategies."""
-
-    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
-    """Allow to make recommendations that were already recommended earlier. This only
-    has an influence in discrete search spaces."""
-
-    allow_recommending_already_measured: bool = field(default=False, kw_only=True)
-    """Allow to output recommendations that were measured previously. This only has an
-    influence in discrete search spaces."""
 
     @abstractmethod
     def select_recommender(
@@ -50,18 +42,10 @@ class Strategy(SerialMixin, ABC):
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
+        allow_repeated_recommendations: bool = False,
+        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
-        """Recommend the next experiments to be conducted.
-
-        Args:
-            searchspace: The search space in which the experiments are conducted.
-            batch_quantity: The number of experiments to be conducted in parallel.
-            train_x: The features of the conducted experiments.
-            train_y: The corresponding response values.
-
-        Returns:
-            The DataFrame with the specific experiments recommended.
-        """
+        """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
         recommender = self.select_recommender(
             searchspace,
             batch_quantity,
@@ -73,8 +57,8 @@ class Strategy(SerialMixin, ABC):
             batch_quantity,
             train_x,
             train_y,
-            self.allow_repeated_recommendations,
-            self.allow_recommending_already_measured,
+            allow_repeated_recommendations,
+            allow_recommending_already_measured,
         )
 
 
