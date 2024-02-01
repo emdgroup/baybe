@@ -134,10 +134,10 @@ def fixture_n_iterations(request):
 
 @pytest.fixture(
     params=[pytest.param(1, marks=pytest.mark.slow), 3],
-    name="batch_quantity",
+    name="batch_size",
     ids=["b1", "b3"],
 )
-def fixture_batch_quantity(request):
+def fixture_batch_size(request):
     """Number of recommendations requested per iteration.
 
     Testing 1 as edge case and 3 as a case for >1.
@@ -750,18 +750,18 @@ def fixture_default_onnx_surrogate(onnx_str) -> Union["CustomONNXSurrogate", Non
 # TODO consider turning this into a fixture returning a campaign after running some
 #  fake iterations
 def run_iterations(
-    campaign: Campaign, n_iterations: int, batch_quantity: int, add_noise: bool = True
+    campaign: Campaign, n_iterations: int, batch_size: int, add_noise: bool = True
 ) -> None:
     """Run a campaign for some fake iterations.
 
     Args:
         campaign: The campaign encapsulating the experiments.
         n_iterations: Number of iterations run.
-        batch_quantity: Number of recommended points per iteration.
+        batch_size: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
     """
     for k in range(n_iterations):
-        rec = campaign.recommend(batch_quantity=batch_quantity)
+        rec = campaign.recommend(batch_size=batch_size)
         # dont use parameter noise for these tests
 
         add_fake_results(rec, campaign)

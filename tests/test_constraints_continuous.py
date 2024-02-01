@@ -12,10 +12,10 @@ from .conftest import run_iterations
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
-@pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
-def test_equality1(campaign, n_iterations, batch_quantity):
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_equality1(campaign, n_iterations, batch_size):
     """Test equality constraint with equal weights."""
-    run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
 
@@ -24,10 +24,10 @@ def test_equality1(campaign, n_iterations, batch_quantity):
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_2"]])
-@pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
-def test_equality2(campaign, n_iterations, batch_quantity):
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_equality2(campaign, n_iterations, batch_size):
     """Test equality constraint with unequal weights."""
-    run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
 
@@ -36,10 +36,10 @@ def test_equality2(campaign, n_iterations, batch_quantity):
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_3"]])
-@pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
-def test_inequality1(campaign, n_iterations, batch_quantity):
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_inequality1(campaign, n_iterations, batch_size):
     """Test inequality constraint with equal weights."""
-    run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
 
@@ -48,10 +48,10 @@ def test_inequality1(campaign, n_iterations, batch_quantity):
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_4"]])
-@pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
-def test_inequality2(campaign, n_iterations, batch_quantity):
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_inequality2(campaign, n_iterations, batch_size):
     """Test inequality constraint with unequal weights."""
-    run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
 
@@ -64,11 +64,11 @@ def test_inequality2(campaign, n_iterations, batch_quantity):
     [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
 )
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
-@pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 @pytest.mark.parametrize("n_grid_points", [5], ids=["grid5"])
-def test_hybridspace_eq(campaign, n_iterations, batch_quantity):
+def test_hybridspace_eq(campaign, n_iterations, batch_size):
     """Test equality constraint with equal weights."""
-    run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
 
@@ -81,11 +81,11 @@ def test_hybridspace_eq(campaign, n_iterations, batch_quantity):
     [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
 )
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_3"]])
-@pytest.mark.parametrize("batch_quantity", [5], ids=["b5"])
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 @pytest.mark.parametrize("n_grid_points", [5], ids=["grid5"])
-def test_hybridspace_ineq(campaign, n_iterations, batch_quantity):
+def test_hybridspace_ineq(campaign, n_iterations, batch_size):
     """Test inequality constraint with equal weights."""
-    run_iterations(campaign, n_iterations, batch_quantity, add_noise=False)
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
 

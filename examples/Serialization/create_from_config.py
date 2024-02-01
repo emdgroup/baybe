@@ -95,5 +95,5 @@ CONFIG = str(
 campaign = Campaign.from_config(CONFIG)
 
 # We now perform a recommendation as usual and print it.
-recommendation = campaign.recommend(batch_quantity=3)
+recommendation = campaign.recommend(batch_size=3)
 print(recommendation)

@@ -98,7 +98,7 @@ scenarios = {"BayBE": campaign}
 results = simulate_scenarios(
     scenarios,
     sum_of_squares,
-    batch_quantity=2,
+    batch_size=2,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )

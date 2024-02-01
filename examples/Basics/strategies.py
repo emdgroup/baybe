@@ -80,8 +80,8 @@ available_acq_functions = [
     "UCB",  # upper confidence bound with beta of 1.0
 ]
 
-# Note that the qvailability of the acquisition functions might depend on the `batch_quantity`:
-#   - If `batch_quantity` is set to 1, all available acquisition functions can be chosen
+# Note that the qvailability of the acquisition functions might depend on the `batch_size`:
+#   - If `batch_size` is set to 1, all available acquisition functions can be chosen
 #   - If a larger value is chosen, only those that allow batching.
 #       That is, 'q'-variants of the acquisition functions must be chosen.
 
@@ -177,7 +177,7 @@ campaign = Campaign(
 
 # This campaign can then be used to get recommendations and add measurements:
 
-recommendation = campaign.recommend(batch_quantity=3)
+recommendation = campaign.recommend(batch_size=3)
 print("\n\nRecommended experiments: ")
 print(recommendation)
 

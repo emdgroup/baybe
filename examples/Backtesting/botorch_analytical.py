@@ -119,7 +119,7 @@ scenarios = {
 results = simulate_scenarios(
     scenarios,
     WRAPPED_FUNCTION,
-    batch_quantity=3,
+    batch_size=3,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )

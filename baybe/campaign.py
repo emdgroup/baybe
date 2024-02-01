@@ -234,27 +234,39 @@ class Campaign(SerialMixin):
             numerical_measurements_must_be_within_tolerance,
         )
 
-    def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
+    def recommend(
+        self,
+        batch_size: int = 5,
+        batch_quantity: int = None,  # type: ignore[assignment]
+    ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
-            batch_quantity: Number of requested recommendations.
+            batch_size: Number of requested recommendations.
+            batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
 
         Raises:
-            ValueError: If ``batch_quantity`` is smaller than 1.
+            ValueError: If ``batch_size`` is smaller than 1.
         """
-        if batch_quantity < 1:
+        if batch_quantity is not None:
+            raise DeprecationError(
+                f"Passing the keyword 'batch_quantity' to "
+                f"'{self.__class__.__name__}.{self.recommend.__name__}' is deprecated. "
+                f"Use 'batch_size' instead."
+            )
+
+        if batch_size < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
-                f"{batch_quantity=}."
+                f"{batch_size=}."
             )
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
-        if len(self._cached_recommendation) == batch_quantity:
+        if len(self._cached_recommendation) == batch_size:
             return self._cached_recommendation
 
         # Update recommendation meta data
@@ -265,7 +277,7 @@ class Campaign(SerialMixin):
         # Get the recommended search space entries
         rec = self.strategy.recommend(
             self.searchspace,
-            batch_quantity,
+            batch_size,
             self._measurements_parameters_comp,
             self._measurements_targets_comp,
         )
@@ -275,7 +287,7 @@ class Campaign(SerialMixin):
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
-        telemetry_record_value(TELEM_LABELS["BATCH_QUANTITY"], batch_quantity)
+        telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
 
         return rec
 

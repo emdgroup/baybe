@@ -87,11 +87,11 @@ campaign = Campaign(
     objective=objective,
 )
 
-BATCH_QUANTITY = 3
+BATCH_SIZE = 3
 N_ITERATIONS = 3
 
 for k in range(N_ITERATIONS):
-    recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+    recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
     # target value are looked up via the botorch wrapper
     target_values = []

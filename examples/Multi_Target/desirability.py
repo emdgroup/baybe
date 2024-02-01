@@ -107,7 +107,7 @@ N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n##### ITERATION {kIter+1} #####")
 
-    rec = campaign.recommend(batch_quantity=3)
+    rec = campaign.recommend(batch_size=3)
     print("\nRecommended measurements:\n", rec)
 
     add_fake_results(rec, campaign)
