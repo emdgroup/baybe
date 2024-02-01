@@ -8,16 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Copy button for code blocks in documentation
 - `mypy` for campaign, constraints and telemetry
+- `RecommenderProtocol` as common interface for `Strategy` and `Recommender`
 
 ### Changed
 - Optional `chem` dependencies are lazily imported
 - Order of README sections
+- `allow_repeated_recommendations` and `allow_recommending_already_measured` are now 
+  attributes of `Recommender` and no longer attributes of `Strategy`
 
 ### Fixed
 - Several minor issues in documentation
 
 ### Removed
 - `botorch_function_wrapper` from `baybe.utils` namespace
+- Previously deprecated possibility to deserialize `Strategy` objects without `type` field
 
 ## [0.7.2] - 2024-01-24
 ### Added
