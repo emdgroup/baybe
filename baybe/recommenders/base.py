@@ -262,5 +262,7 @@ class NonPredictiveRecommender(Recommender, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(Recommender, unstructure_base)
-converter.register_structure_hook(Recommender, get_base_structure_hook(Recommender))
+converter.register_unstructure_hook(RecommenderProtocol, unstructure_base)
+converter.register_structure_hook(
+    RecommenderProtocol, get_base_structure_hook(RecommenderProtocol)
+)
