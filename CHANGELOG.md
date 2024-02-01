@@ -15,13 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Several minor issues in documentation
-- Private `Campaign` attributes are now private and no longer exposed via constructor
+- Visibility and constructor exposure of `Campaign` attributes that should be private
 
 ### Removed
 - `botorch_function_wrapper` from `baybe.utils` namespace
 
 ### Deprecations
-- Passing a `numerical_measurements_must_be_within_tolerance` to the `Campaign` 
+- Passing `numerical_measurements_must_be_within_tolerance` to the `Campaign` 
   constructor is no longer supported. Instead, `Campaign.add_measurements` now
   takes an additional parameter to control the behavior.
 

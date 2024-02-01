@@ -86,7 +86,7 @@ class Campaign(SerialMixin):
     def _validate_tolerance_flag(self, _, value) -> None:
         if value is not None:
             raise DeprecationError(
-                f"Passing a 'numerical_measurements_must_be_within_tolerance' flag to "
+                f"Passing 'numerical_measurements_must_be_within_tolerance' to "
                 f"the constructor is deprecated. The flag has become a parameter of "
                 f"{self.__class__.__name__}.{Campaign.add_measurements.__name__}."
             )

@@ -49,4 +49,4 @@ class OptionalImportError(Exception):
 
 
 class DeprecationError(Exception):
-    """Can be used to signal deprecations to the user, interrupting code exception."""
+    """Signals the use of a deprecated mechanism to the user, interrupting execution."""
