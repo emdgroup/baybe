@@ -1,6 +1,6 @@
 """Base classes for all recommenders."""
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Callable, ClassVar, Optional, Protocol
 
 import pandas as pd
@@ -119,7 +119,7 @@ class Recommender(ABC, RecommenderProtocol):
     compatibility: ClassVar[SearchSpaceType]
     """Class variable describing the search space compatibility."""
 
-    # Instance
+    # Object variables
     allow_repeated_recommendations: bool = field(default=False)
     """Allow to make recommendations that were already recommended earlier. This only
     has an influence in discrete search spaces."""
@@ -127,16 +127,6 @@ class Recommender(ABC, RecommenderProtocol):
     allow_recommending_already_measured: bool = field(default=True)
     """Allow to output recommendations that were measured previously. This only has an
     influence in discrete search spaces."""
-
-    @abstractmethod
-    def recommend(
-        self,
-        searchspace: SearchSpace,
-        batch_quantity: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
-    ) -> pd.DataFrame:
-        """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
 
 
 @define
