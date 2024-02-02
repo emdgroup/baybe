@@ -1,3 +1,4 @@
 # Multi Target
 
-These examples show the multi target capabilities supported by BayBE.
+These examples demonstrate BayBE's
+{ref}`Multi-Target Capabilities <userguide/objective:desirability>`.

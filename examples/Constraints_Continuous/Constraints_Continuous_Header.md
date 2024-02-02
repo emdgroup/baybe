@@ -1,4 +1,5 @@
 # Constraints Continuous
 
-These examples demonstrate how continuous constraints can be used in continuous and
-hybrid search spaces.
+These examples demonstrate how
+{ref}`Continuous Parameter Constraints <userguide/constraints:continuous constraints>`
+can be applied to continuous and hybrid search spaces.

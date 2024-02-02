@@ -1,3 +1,4 @@
 # Searchspaces
 
-These examples demonstrate how to set up and use the different kind of search spaces supported by BayBE.
+These examples demonstrate various ways to configure
+{doc}`Search Spaces </userguide/searchspace>`.

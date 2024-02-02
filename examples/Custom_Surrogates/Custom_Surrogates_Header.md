@@ -1,3 +1,3 @@
 # Custom Surrogates
 
-These examples show how to use custom pretrained models and architectures.
+These examples demonstrate how to use custom {doc}`Surrogate </userguide/surrogates>` architectures and pre-trained [ONNX](https://onnx.ai) models.
