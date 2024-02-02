@@ -130,6 +130,10 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._U"),
 ]
 
+
+# Ignore the warnings that are given by autosectionlabel
+suppress_warnings = ["autosectionlabel.*"]
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
