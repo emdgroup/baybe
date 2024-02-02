@@ -34,12 +34,14 @@ from baybe.utils import add_fake_results
 # Details of the setup is not the focus of BayBE but can be found in `Pytorch` guides.
 
 # Model Configuration
+
 INPUT_DIM = 10
 OUTPUT_DIM = 1
 DROPOUT = 0.5
 NUM_NEURONS = [128, 32, 8]
 
 # Model training hyperparameters
+
 HYPERPARAMS = {
     "epochs": 10,
     "lr": 1e-3,
@@ -48,10 +50,13 @@ HYPERPARAMS = {
 }
 
 # MC Parameters
+
 MC = 100
 
 
 # Helper functions
+
+
 def _create_linear_block(in_features: int, out_features: int) -> list:
     """Create a linear block with dropout and relu activation."""
     return [nn.Linear(in_features, out_features), nn.Dropout(p=DROPOUT), nn.ReLU()]
@@ -67,6 +72,8 @@ def _create_hidden_layers(num_neurons: List[int]) -> list:
 
 
 # Model Architecture
+
+
 class NeuralNetDropout(nn.Module):
     """Pytorch implementation of Neural Network with Dropout."""
 
@@ -95,6 +102,8 @@ class NeuralNetDropout(nn.Module):
 
 
 # Registration
+
+
 @register_custom_architecture(
     joint_posterior_attr=False, constant_target_catching=False, batchify_posterior=True
 )
@@ -174,6 +183,7 @@ parameters = [
 
 ### Run DOE iterations with custom surrogate
 # Create campaign
+
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
@@ -194,6 +204,7 @@ print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
+
 add_fake_results(recommendation, campaign)
 campaign.add_measurements(recommendation)
 
@@ -201,6 +212,7 @@ campaign.add_measurements(recommendation)
 recommendation = campaign.recommend(batch_size=2)
 
 # Print second round of recommendations
+
 print("Recommendation from campaign:")
 print(recommendation)
 
@@ -210,6 +222,7 @@ print()
 ### Serialization
 
 # Serialization of custom models is not supported
+
 try:
     campaign.to_json()
 except RuntimeError as e:

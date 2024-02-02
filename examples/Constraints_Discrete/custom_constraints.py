@@ -84,6 +84,7 @@ def custom_function(df: pd.DataFrame) -> pd.Series:
 
 
 # We now initialize the `CustomConstraint` with all parameters this function should have access to.
+
 constraint = DiscreteCustomConstraint(
     parameters=["Concentration", "Solvent", "Temperature"], validator=custom_function
 )
@@ -104,6 +105,7 @@ print(campaign)
 ### Manual verification of the constraint
 
 # The following loop performs some recommendations and manually verifies the given constraints.
+
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n#### ITERATION {kIter+1} ####")

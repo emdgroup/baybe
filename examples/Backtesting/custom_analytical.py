@@ -4,7 +4,6 @@
 # That is, we perform several Monte Carlo runs with several iterations.
 # In addition, we also store and display the results.
 
-
 # This example assumes some basic familiarity with using BayBE and how to use BoTorch test
 # functions in discrete searchspaces.
 # For further details, we thus refer to
@@ -101,6 +100,7 @@ random_campaign = Campaign(
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
 # For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+
 scenarios = {
     "Sequential greedy EI": seq_greedy_EI_campaign,
     "Random": random_campaign,
@@ -114,6 +114,7 @@ results = simulate_scenarios(
 )
 
 # The following lines plot the results and save the plot in run_analytical.png
+
 sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
 plt.gcf().set_size_inches(24, 8)
 plt.savefig("./run_analytical.png")

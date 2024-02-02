@@ -45,6 +45,7 @@ parameters = [solvent, switch1, switch2, fraction1, frame1, frame2]
 # The constraints are handled when creating the searchspace object.
 # It is thus necessary to define it before the searchspace creation.
 # Note that multiple dependencies have to be included in a single constraint object.
+
 constraint = DiscreteDependenciesConstraint(
     parameters=["Switch1", "Switch2"],
     conditions=[
@@ -70,6 +71,7 @@ print(campaign)
 ### Manual verification of the constraints
 
 # The following loop performs some recommendations and manually verifies the given constraints.
+
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
     print(f"\n#### ITERATION {kIter+1} ####")

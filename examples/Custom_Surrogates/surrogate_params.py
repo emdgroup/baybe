@@ -58,6 +58,7 @@ parameters = [
 
 # Please note that model_params is an optional argument:
 # The defaults will be used if none specified
+
 surrogate_model = NGBoostSurrogate(model_params={"n_estimators": 50, "verbose": True})
 
 ### Validation of model parameters
@@ -92,6 +93,7 @@ campaign = Campaign(
 ### Iterate with recommendations and measurements
 
 # We can print the surrogate model object
+
 print("The model object in json format:")
 print(surrogate_model.to_json(), end="\n" * 3)
 
@@ -108,6 +110,7 @@ campaign.add_measurements(recommendation)
 ### Model Outputs
 
 # Note that this model is only triggered when there is data.
+
 print("Here you will see some model outputs as we set verbose to True")
 
 # Do another round of recommendations
@@ -115,6 +118,7 @@ recommendation = campaign.recommend(batch_size=2)
 
 
 # Print second round of recommendations
+
 print("Recommendation from campaign:")
 print(recommendation)
 
@@ -126,6 +130,7 @@ print(recommendation)
 # Note that the following explicit call `str()` is not strictly necessary.
 # It is included since our method of converting this example to a markdown file does not interpret
 # this part of the code as `python` code if we do not include this call.
+
 CONFIG = str(
     """
 {
@@ -142,4 +147,5 @@ CONFIG = str(
 recreate_model = NGBoostSurrogate.from_json(CONFIG)
 
 # This configuration creates the same model
+
 assert recreate_model == surrogate_model

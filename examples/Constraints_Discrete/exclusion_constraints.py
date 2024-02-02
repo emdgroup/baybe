@@ -29,6 +29,7 @@ from baybe.utils import add_fake_results
 ### Experiment setup
 
 # We begin by setting up some parameters for our experiments.
+
 dict_solvent = {
     "water": "O",
     "C1": "C",
@@ -70,6 +71,7 @@ constraint_1 = DiscreteExcludeConstraint(
 
 # This constraint simulates a situation where solvents `C5` and `C6` are not
 # compatible with pressures larger than 5 and should thus be excluded.
+
 constraint_2 = DiscreteExcludeConstraint(
     parameters=["Pressure", "Solv"],
     combiner="AND",
@@ -81,6 +83,7 @@ constraint_2 = DiscreteExcludeConstraint(
 
 # This constraint simulates a situation where pressures below 3 should never be
 # combined with temperatures above 120.
+
 constraint_3 = DiscreteExcludeConstraint(
     parameters=["Pressure", "Temp"],
     combiner="AND",
@@ -93,6 +96,7 @@ constraint_3 = DiscreteExcludeConstraint(
 ### Creating the searchspace and the objective
 
 # We now create the searchspace using the previously defined constraints.
+
 searchspace = SearchSpace.from_product(
     parameters=parameters, constraints=[constraint_1, constraint_2, constraint_3]
 )
@@ -109,6 +113,7 @@ print(campaign)
 ### Manual verification of the constraints
 
 # The following loop performs some iterations and manually verifies the given constraints.
+
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n#### ITERATION {kIter+1} ####")

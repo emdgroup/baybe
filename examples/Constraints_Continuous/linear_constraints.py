@@ -10,7 +10,6 @@
 # We thus refer to [`discrete_space`](./../Searchspaces/discrete_space.md) for
 # details on this aspect.
 
-
 ### Necessary imports for this example
 
 import numpy as np
@@ -47,6 +46,7 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 # Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
 # We use that data of the test function to deduce bounds and number of parameters.
+
 parameters = [
     NumericalContinuousParameter(
         name=f"x_{k+1}",
@@ -60,6 +60,7 @@ parameters = [
 # `1.0*x_3 - 1.0*x_4 = 2.0`
 # `1.0*x_1 + 1.0*x_3 >= 1.0`
 # `2.0*x_2 + 3.0*x_4 <= 1.0` which is equivalent to `-2.0*x_2 - 3.0*x_4 >= -1.0`
+
 constraints = [
     ContinuousLinearEqualityConstraint(
         parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0
@@ -102,11 +103,13 @@ for k in range(N_ITERATIONS):
 
     campaign.add_measurements(recommendation)
 
-#### Verify the constraints
+### Verify the constraints
+
 measurements = campaign.measurements
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`
+
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
     np.allclose(
@@ -115,6 +118,7 @@ print(
 )
 
 # `1.0*x_3 - 1.0*x_4 = 2.0`
+
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",
     np.allclose(
@@ -123,12 +127,14 @@ print(
 )
 
 # `1.0*x_1 + 1.0*x_3 >= 1.0`
+
 print(
     "1.0*x_1 + 1.0*x_3 >= 1.0 satisfied in all recommendations? ",
     (1.0 * measurements["x_1"] + 1.0 * measurements["x_3"]).ge(1.0 - TOLERANCE).all(),
 )
 
 # `2.0*x_2 + 3.0*x_4 <= 1.0`
+
 print(
     "2.0*x_2 + 3.0*x_4 <= 1.0 satisfied in all recommendations? ",
     (2.0 * measurements["x_2"] + 3.0 * measurements["x_4"]).le(1.0 + TOLERANCE).all(),

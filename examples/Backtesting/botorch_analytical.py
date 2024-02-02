@@ -125,6 +125,7 @@ results = simulate_scenarios(
 )
 
 # The following lines plot the results and save the plot in run_analytical.png
+
 sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
 plt.gcf().set_size_inches(24, 8)
 plt.savefig("./run_analytical.png")

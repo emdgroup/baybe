@@ -28,6 +28,7 @@ from baybe.targets import NumericalTarget
 # For the full simulation, we need to define an additional parameter.
 # Since this example uses initial data, we only need to define the number of iterations per run.
 # The number of runs is determined by the number of initial data points provided.
+
 N_DOE_ITERATIONS = 5
 
 ### Lookup functionality and data creation
@@ -47,10 +48,12 @@ except FileNotFoundError:
 # To include initial data, we sample some rows from the lookup table.
 # Note that the initial_data needs to be a list of `pd.DataFrame` objects.
 # One experiment will be performed per provided initial data set.
+
 initial_data = [lookup.sample(n=5), lookup.sample(n=5), lookup.sample(n=5)]
 
 # As usual, we set up some experiment.
 # Note that we now need to ensure that the names fit the names in the provided .xlsx file!
+
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
     "Butyornitrile": r"CCCC#N",
@@ -105,6 +108,7 @@ objective = Objective(
 
 # In this example, we create two campaigns.
 # One uses the default recommender and the other one makes random recommendations.
+
 campaign = Campaign(searchspace=searchspace, objective=objective)
 campaign_rand = Campaign(
     searchspace=searchspace,
@@ -118,6 +122,7 @@ campaign_rand = Campaign(
 # This function is where we provide the `initial_data` dataframe.
 # Note that this function enables to run multiple scenarios by a single function call.
 # For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+
 scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 
 results = simulate_scenarios(
@@ -129,6 +134,7 @@ results = simulate_scenarios(
 )
 
 # The following lines plot the results and save the plot in run_full_initial_data.png
+
 max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"

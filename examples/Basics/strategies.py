@@ -53,7 +53,8 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # The surrogate model is then used by the acquisition function to make recommendations.
 
 # The following are some available basic surrogates
-# Use `baybe.surrogates.get_available_surrogates()` for a complete list
+# Use `baybe.surrogates.get_available_surrogates()` for a complete list.
+
 available_surrogate_models = [
     GaussianProcessSurrogate(),
     RandomForestSurrogate(),
@@ -62,6 +63,7 @@ available_surrogate_models = [
 ]
 
 # Per default a Gaussian Process is used
+
 SURROGATE_MODEL = GaussianProcessSurrogate()
 
 
@@ -94,8 +96,8 @@ ACQ_FUNCTION = "qEI"
 # Two other boolean hyperparameters can be specified when creating a strategy object.
 # The first one allows the recommendation of points that were already recommended previously.
 # The second one allows the recommendation of points that have already been measured.
-
 # Per default, they are set to `True`.
+
 ALLOW_REPEATED_RECOMMENDATIONS = True
 ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 

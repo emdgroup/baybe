@@ -30,6 +30,7 @@ from baybe.targets import NumericalTarget
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
+
 N_MC_ITERATIONS = 2
 N_DOE_ITERATIONS = 2
 
@@ -37,6 +38,8 @@ N_DOE_ITERATIONS = 2
 
 
 # See [`here`](./custom_analytical.md) for details on the custom analytical test function.
+
+
 def sum_of_squares(*x: float) -> float:
     """Calculate the sum of squares."""
     res = 0
@@ -49,6 +52,7 @@ def sum_of_squares(*x: float) -> float:
 # This is necessary to know for the creation of the parameters.
 # Similarly, it is necessary to state the bounds of the parameters.
 # These should be provided as a list of two-dimensional tuples.
+
 DIMENSION = 4
 BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
@@ -56,10 +60,12 @@ BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
 
 # Our goal is to construct a hybrid searchspace containing discrete and continuous parameters.
 # We thus need to specify which indices should be discrete and which should be continuous.
+
 CONT_INDICES = [0, 1]
 DISC_INDICES = [2, 3]
 
 # This code verifies whether the provided indices agree with `DIMENSION`.
+
 if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
     raise ValueError(
         "Either the intersection between CONT_IND and DISC_IND is not empty or your "
@@ -70,10 +76,12 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
 # Note that this example uses the `SequentialGreedyRecommender` (among others).
 # This recommender performs a brute-force optimization over the discrete subspace.
 # We thus heavily advise to keep the number of discrete parameters and points rather small here.
+
 POINTS_PER_DIM = 6
 
 
 # Construct the continuous parameters as NumericContinuous parameters.
+
 cont_parameters = [
     NumericalContinuousParameter(
         name=f"x_{k+1}",
@@ -83,6 +91,7 @@ cont_parameters = [
 ]
 
 # Construct the discrete parameters as `NumericalDiscreteParameters`.
+
 disc_parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k+1}",
@@ -93,6 +102,7 @@ disc_parameters = [
 ]
 
 # Concatenate the continuous and discrete parameters.
+
 parameters = cont_parameters + disc_parameters
 
 # Construct searchspace and objective.
@@ -143,6 +153,7 @@ random_campaign = Campaign(
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
 # For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+
 scenarios = {
     "Sequential greedy": seq_greedy_campaign,
     "Naive hybrid": naive_hybrid_campaign,
@@ -157,6 +168,7 @@ results = simulate_scenarios(
 )
 
 # The following lines plot the results and save the plot in run_analytical.png
+
 sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
 plt.gcf().set_size_inches(24, 8)
 plt.savefig("./run_hybrid.png")

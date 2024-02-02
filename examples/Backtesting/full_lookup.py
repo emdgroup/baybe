@@ -48,6 +48,7 @@ except FileNotFoundError:
 
 # As usual, we set up some experiment.
 # Note that we now need to ensure that the names fit the names in the provided .xlsx file!
+
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
     "Butyornitrile": r"CCCC#N",
@@ -113,6 +114,7 @@ campaign_rand = Campaign(
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
 # For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+
 scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 
 results = simulate_scenarios(
@@ -124,6 +126,7 @@ results = simulate_scenarios(
 )
 
 # The following lines plot the results and save the plot in run_full_lookup.png
+
 max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"

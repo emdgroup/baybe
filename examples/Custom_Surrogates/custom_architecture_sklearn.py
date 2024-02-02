@@ -42,8 +42,9 @@ from baybe.utils import add_fake_results
 
 # The choice of using tensors in fit/predict is purely for BayBE, not a requirement.
 
-
 # Final estimator
+
+
 class MeanVarEstimator(BaseEstimator, RegressorMixin):
     """Stack final estimator for mean and variance."""
 
@@ -59,7 +60,10 @@ class MeanVarEstimator(BaseEstimator, RegressorMixin):
 
 
 # Registration
+
 # The class must include `_fit` and `_posterior` functions with the correct signatures.
+
+
 @register_custom_architecture(
     joint_posterior_attr=False, constant_target_catching=False, batchify_posterior=True
 )
@@ -123,6 +127,7 @@ parameters = [
 
 ### Run DOE iterations with custom surrogate
 # Create campaign
+
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
@@ -143,6 +148,7 @@ print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
+
 add_fake_results(recommendation, campaign)
 campaign.add_measurements(recommendation)
 
@@ -150,6 +156,7 @@ campaign.add_measurements(recommendation)
 recommendation = campaign.recommend(batch_size=2)
 
 # Print second round of recommendations
+
 print("Recommendation from campaign:")
 print(recommendation)
 
@@ -159,6 +166,7 @@ print()
 ### Serialization
 
 # Serialization of custom models is not supported
+
 try:
     campaign.to_json()
 except RuntimeError as e:

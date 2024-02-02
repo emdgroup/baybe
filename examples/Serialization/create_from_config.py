@@ -92,6 +92,7 @@ CONFIG = str(
 
 # Although we know in this case that the config represents a valid configuration for a
 # campaign. If the config is invalid an exception will be thrown.
+
 campaign = Campaign.from_config(CONFIG)
 
 # We now perform a recommendation as usual and print it.
