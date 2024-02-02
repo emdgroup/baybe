@@ -13,6 +13,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -33,8 +35,11 @@ from baybe.utils.botorch_wrapper import botorch_function_wrapper
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
-N_MC_ITERATIONS = 2
-N_DOE_ITERATIONS = 2
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 30
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 15
+BATCH_SIZE = 1 if SMOKE_TEST else 3
 
 ### Defining the test function
 
@@ -119,7 +124,7 @@ scenarios = {
 results = simulate_scenarios(
     scenarios,
     WRAPPED_FUNCTION,
-    batch_size=3,
+    batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )
