@@ -107,7 +107,7 @@ N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
     print(f"\n\n#### ITERATION {kIter+1} ####")
 
-    rec = campaign.recommend(batch_quantity=3)
+    rec = campaign.recommend(batch_size=3)
     print("\nRecommended measurements:\n", rec)
 
     add_fake_results(rec, campaign)
@@ -116,7 +116,7 @@ for kIter in range(N_ITERATIONS):
     campaign.add_measurements(rec)
 
     print("\n\nInternal measurement dataframe computational representation Y:\n")
-    print(campaign.measurements_targets_comp)
+    print(campaign._measurements_targets_comp)
 
 
 ### Addendum: Description of `transformation` functions

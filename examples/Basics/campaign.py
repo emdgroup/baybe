@@ -77,9 +77,9 @@ campaign = Campaign(
 
 # We use the `recommend()` function of the campaign for getting measurements.
 
-recommendation = campaign.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_size=2)
 
-print("\n\nRecommended measurements with batch_quantity = 2: ")
+print("\n\nRecommended measurements with batch_size = 2: ")
 print(recommendation)
 
 # Adding target values is done by creating a new column in the `recommendation`

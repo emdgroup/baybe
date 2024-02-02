@@ -26,7 +26,7 @@ from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 ### Defining the test function
 
@@ -98,11 +98,11 @@ campaign = Campaign(
     objective=objective,
 )
 
-BATCH_QUANTITY = 5
+BATCH_SIZE = 5
 N_ITERATIONS = 2
 
 for k in range(N_ITERATIONS):
-    recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+    recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
     # target value are looked up via the botorch wrapper
     target_values = []
@@ -114,7 +114,7 @@ for k in range(N_ITERATIONS):
     campaign.add_measurements(recommendation)
 
 ### Verify the constraints
-measurements = campaign.measurements_exp
+measurements = campaign.measurements
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`

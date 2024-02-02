@@ -19,7 +19,7 @@ from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 ### Defining the test function
 
@@ -71,10 +71,10 @@ campaign = Campaign(
     objective=objective,
 )
 
-# Get a recommendation for a fixed batched quantity.
+# Get a recommendation for a fixed batch size.
 
-BATCH_QUANTITY = 3
-recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+BATCH_SIZE = 3
+recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.

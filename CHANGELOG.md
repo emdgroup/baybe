@@ -12,9 +12,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Optional `chem` dependencies are lazily imported
+- Order of README sections
 
 ### Fixed
 - Several minor issues in documentation
+- Visibility and constructor exposure of `Campaign` attributes that should be private
+
+### Removed
+- `botorch_function_wrapper` from `baybe.utils` namespace
+
+### Deprecations
+- Passing `numerical_measurements_must_be_within_tolerance` to the `Campaign` 
+  constructor is no longer supported. Instead, `Campaign.add_measurements` now
+  takes an additional parameter to control the behavior.
+- `batch_quantity` replaced with `batch_size`
 
 ### Removed
 - Detailed headings in table of contents of examples
@@ -106,14 +117,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Replacing `pylint`, `flake8`, `µfmt` and `usort` with `ruff`
+- Markdown based documentation replaced with HTML based documentation
 
 ### Fixed
 - `encoding` is no longer a class variable
 - Now installed with correct `pandas` dependency flag
 - `comp_df` column names for `CustomDiscreteParameter` are now safe
-
-### Deprecations
-- Markdown based documentation replaced with HTML based documentation
 
 ## [0.6.0] - 2023-11-17
 ### Added

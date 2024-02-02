@@ -40,80 +40,18 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - Fully typed and hypothesis-tested: Robust code base
 - All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
 
-## Installation
-### From Package Index
-The easiest way to install BayBE is via PyPI:
-
-```bash
-pip install baybe
-```
-
-A certain released version of the package can installed by specifying the
-corresponding version tag in the form `baybe==x.y.z`.
-
-### From GitHub
-If you need finer control and would like to install a specific commit that has not been
-released under a certain version tag, you can do so by installing BayBE directly from
-GitHub via git and specifying the corresponding 
-[git ref](https://pip.pypa.io/en/stable/topics/vcs-support/#git). 
-
-For instance, to install the latest commit of the main branch, run:
-
-```bash
-pip install git+https://github.com/emdgroup/baybe.git@main
-```
-
-
-### From Local Clone
-
-Alternatively, you can install the package from your own local copy.
-First, clone the repository, navigate to the repository root folder, check out the
-desired commit, and run:
-
-```bash
-pip install .
-```
-
-A developer would typically also install the package in editable mode ('-e'),
-which ensures that changes to the code do not require a reinstallation.
-
-```bash
-pip install -e .
-```
-
-If you need to add additional dependencies, make sure to use the correct syntax 
-including `''`:
-
-```bash
-pip install -e '.[dev]'
-```
-
-### Optional Dependencies
-There are several dependency groups that can be selected during pip installation, like
-```bash
-pip install 'baybe[test,lint]' # will install baybe with additional dependency groups `test` and `lint`
-```
-To get the most out of `baybe`, we recommend to install at least
-```bash
-pip install 'baybe[chem,simulation]'
-```
-
-The available groups are:
-- `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
-- `docs`: Required for creating the documentation.
-- `examples`: Required for running the examples/streamlit.
-- `lint`: Required for linting and formatting.
-- `mypy`: Required for static type checking.
-- `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
-- `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
-- `test`: Required for running the tests.
-- `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
-
 
 ## Quick Start
 
-Let us consider a simple experiment where we have three parameters and want to maximize 
-a single target called `Yield`.
+Let us consider a simple experiment where we control three parameters and want to
+maximize a single target called `Yield`.
+
+First, install BayBE into your Python environment: 
+```bash 
+pip install baybe 
+``` 
+For more information on this step, see our
+[detailed installation instructions](#installation).
 
 ### Defining the Optimization Objective
 
@@ -144,7 +82,8 @@ Next, we inform BayBE about the available "control knobs", that is, the underlyi
 system parameters we can tune to optimize our targets. This also involves specifying 
 their values/ranges and other parameter-specific details.
 
-For our example, we assume that we can control the following three quantities:
+For our example, we assume that we can control three parameters – `Granularity`,
+`Pressure[bar]`, and `Solvent` – as follows:
 
 ```python
 from baybe.parameters import (
@@ -242,16 +181,19 @@ In particular, available measurements can be submitted at any time and also seve
 times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_quantity=3)
+df = campaign.recommend(batch_size=3)
+print(df)
 ```
 
-For a particular random seed, the result could look as follows:
+```none
+   Granularity  Pressure[bar]    Solvent
+15      medium            1.0  Solvent D
+10      coarse           10.0  Solvent C
+29        fine            5.0  Solvent B
+```
 
-| Granularity   | Pressure[bar]   | Solvent   |
-|---------------|-----------------|-----------|
-| medium        | 1               | Solvent B |
-| medium        | 5               | Solvent D |
-| fine          | 5               | Solvent C |
+Note that the specific recommendations will depend on both the data
+already fed to the campaign and the random number generator seed that is used.
 
 After having conducted the corresponding experiments, we can add our measured
 targets to the table and feed it back to the campaign:
@@ -264,6 +206,78 @@ campaign.add_measurements(df)
 With the newly arrived data, BayBE can produce a refined design for the next iteration.
 This loop would typically continue until a desired target value has been achieved in
 the experiment.
+
+
+(installation)=
+## Installation
+### From Package Index
+The easiest way to install BayBE is via PyPI:
+
+```bash
+pip install baybe
+```
+
+A certain released version of the package can be installed by specifying the
+corresponding version tag in the form `baybe==x.y.z`.
+
+### From GitHub
+If you need finer control and would like to install a specific commit that has not been
+released under a certain version tag, you can do so by installing BayBE directly from
+GitHub via git and specifying the corresponding
+[git ref](https://pip.pypa.io/en/stable/topics/vcs-support/#git).
+
+For instance, to install the latest commit of the main branch, run:
+
+```bash
+pip install git+https://github.com/emdgroup/baybe.git@main
+```
+
+
+### From Local Clone
+
+Alternatively, you can install the package from your own local copy.
+First, clone the repository, navigate to the repository root folder, check out the
+desired commit, and run:
+
+```bash
+pip install .
+```
+
+A developer would typically also install the package in editable mode ('-e'),
+which ensures that changes to the code do not require a reinstallation.
+
+```bash
+pip install -e .
+```
+
+If you need to add additional dependencies, make sure to use the correct syntax
+including `''`:
+
+```bash
+pip install -e '.[dev]'
+```
+
+### Optional Dependencies
+There are several dependency groups that can be selected during pip installation, like
+```bash
+pip install 'baybe[test,lint]' # will install baybe with additional dependency groups `test` and `lint`
+```
+To get the most out of `baybe`, we recommend to install at least
+```bash
+pip install 'baybe[chem,simulation]'
+```
+
+The available groups are:
+- `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
+- `docs`: Required for creating the documentation.
+- `examples`: Required for running the examples/streamlit.
+- `lint`: Required for linting and formatting.
+- `mypy`: Required for static type checking.
+- `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
+- `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
+- `test`: Required for running the tests.
+- `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
+
 
 ## Authors
 

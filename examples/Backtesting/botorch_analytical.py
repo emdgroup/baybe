@@ -26,7 +26,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 ### Parameters for a full simulation loop
 
@@ -119,7 +119,7 @@ scenarios = {
 results = simulate_scenarios(
     scenarios,
     WRAPPED_FUNCTION,
-    batch_quantity=3,
+    batch_size=3,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )

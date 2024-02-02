@@ -19,7 +19,7 @@ from baybe.recommenders import NaiveHybridRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
-from baybe.utils import botorch_function_wrapper
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 ### Defining the test function and the hybrid dimensions
 
@@ -110,7 +110,7 @@ hybrid_recommender = NaiveHybridRecommender()
 
 hybrid_strategy = TwoPhaseStrategy(recommender=hybrid_recommender)
 
-## Constructing the campaign and performing a recommendation
+### Constructing the campaign and performing a recommendation
 
 campaign = Campaign(
     searchspace=searchspace,
@@ -118,9 +118,9 @@ campaign = Campaign(
     strategy=hybrid_strategy,
 )
 
-# Get a recommendation for a fixed batched quantity.
-BATCH_QUANTITY = 3
-recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+# Get a recommendation for a fixed batch size.
+BATCH_SIZE = 3
+recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.

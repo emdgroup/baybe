@@ -5,6 +5,7 @@ import json
 import pytest
 
 from baybe import BayBE, Campaign
+from baybe.exceptions import DeprecationError
 from baybe.searchspace import SearchSpace
 from baybe.strategies import Strategy
 from baybe.targets import Objective
@@ -90,3 +91,16 @@ def test_deprecated_config():
     """Using the deprecated config format raises a warning."""
     with pytest.warns(UserWarning):
         Campaign.from_config(deprecated_config)
+
+
+@pytest.mark.parametrize("flag", [False, True])
+def test_deprecated_campaign_tolerance_flag(flag):
+    """Constructing a Campaign with the deprecated tolerance flag raises an error."""
+    with pytest.raises(DeprecationError):
+        Campaign(None, None, None, numerical_measurements_must_be_within_tolerance=flag)
+
+
+def test_deprecated_batch_quantity_keyword(campaign):
+    """Using the deprecated batch_quantity keyword raises an error."""
+    with pytest.raises(DeprecationError):
+        campaign.recommend(batch_quantity=5)  # noqa: E999

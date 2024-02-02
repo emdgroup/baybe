@@ -91,8 +91,8 @@ print("Passed basic assertion check!")
 # To further show how serialization affects working with campaigns, we will now
 # create and compare some recommendations in both campaigns.
 
-recommendation_orig = campaign.recommend(batch_quantity=2)
-recommendation_recreate = campaign_recreate.recommend(batch_quantity=2)
+recommendation_orig = campaign.recommend(batch_size=2)
+recommendation_recreate = campaign_recreate.recommend(batch_size=2)
 
 print("Recommendation from original object:")
 print(recommendation_orig)

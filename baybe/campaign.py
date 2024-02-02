@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
-from typing import Any, List
+from typing import List
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
 
+from baybe.exceptions import DeprecationError
 from baybe.objective import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import (
@@ -58,23 +60,42 @@ class Campaign(SerialMixin):
     strategy: Strategy = field(factory=TwoPhaseStrategy)
     """The employed strategy"""
 
-    # Data
-    measurements_exp: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
-    """The experimental representation of the conducted experiments."""
-
-    numerical_measurements_must_be_within_tolerance: bool = field(default=True)
-    """Flag for forcing numerical measurements to be within tolerance."""
-
     # Metadata
-    n_batches_done: int = field(default=0)
+    n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
 
-    n_fits_done: int = field(default=0)
+    n_fits_done: int = field(default=0, init=False)
     """The number of fits already done."""
 
     # Private
-    _cached_recommendation: pd.DataFrame = field(factory=pd.DataFrame, eq=eq_dataframe)
+    _measurements_exp: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    )
+    """The experimental representation of the conducted experiments."""
+
+    _cached_recommendation: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    )
     """The cached recommendations."""
+
+    # Deprecation
+    numerical_measurements_must_be_within_tolerance: bool = field(default=None)
+    """Deprecated! Raises an error when used."""
+
+    @numerical_measurements_must_be_within_tolerance.validator
+    def _validate_tolerance_flag(self, _, value) -> None:
+        """Raise a DeprecationError if the tolerance flag is used."""
+        if value is not None:
+            raise DeprecationError(
+                f"Passing 'numerical_measurements_must_be_within_tolerance' to "
+                f"the constructor is deprecated. The flag has become a parameter of "
+                f"{self.__class__.__name__}.{Campaign.add_measurements.__name__}."
+            )
+
+    @property
+    def measurements(self) -> pd.DataFrame:
+        """The experimental data added to the Campaign."""
+        return self._measurements_exp
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -87,18 +108,18 @@ class Campaign(SerialMixin):
         return self.objective.targets
 
     @property
-    def measurements_parameters_comp(self) -> pd.DataFrame:
+    def _measurements_parameters_comp(self) -> pd.DataFrame:
         """The computational representation of the measured parameters."""
-        if len(self.measurements_exp) < 1:
+        if len(self._measurements_exp) < 1:
             return pd.DataFrame()
-        return self.searchspace.transform(self.measurements_exp)
+        return self.searchspace.transform(self._measurements_exp)
 
     @property
-    def measurements_targets_comp(self) -> pd.DataFrame:
+    def _measurements_targets_comp(self) -> pd.DataFrame:
         """The computational representation of the measured targets."""
-        if len(self.measurements_exp) < 1:
+        if len(self._measurements_exp) < 1:
             return pd.DataFrame()
-        return self.objective.transform(self.measurements_exp)
+        return self.objective.transform(self._measurements_exp)
 
     @classmethod
     def from_config(cls, config_json: str) -> Campaign:
@@ -135,7 +156,11 @@ class Campaign(SerialMixin):
 
         _validation_converter.structure(config, Campaign)
 
-    def add_measurements(self, data: pd.DataFrame) -> None:
+    def add_measurements(
+        self,
+        data: pd.DataFrame,
+        numerical_measurements_must_be_within_tolerance: bool = True,
+    ) -> None:
         """Add results from a dataframe to the internal database.
 
         Each addition of data is considered a new batch. Added results are checked for
@@ -147,6 +172,8 @@ class Campaign(SerialMixin):
         Args:
             data: The data to be added (with filled values for targets). Preferably
                 created via :func:`baybe.campaign.Campaign.recommend`.
+            numerical_measurements_must_be_within_tolerance: Flag indicating if
+                numerical parameters need to be within their tolerances.
 
         Raises:
             ValueError: If one of the targets has missing values or NaNs in the provided
@@ -185,7 +212,7 @@ class Campaign(SerialMixin):
         # Update meta data
         # TODO: refactor responsibilities
         self.searchspace.discrete.mark_as_measured(
-            data, self.numerical_measurements_must_be_within_tolerance
+            data, numerical_measurements_must_be_within_tolerance
         )
 
         # Read in measurements and add them to the database
@@ -194,8 +221,8 @@ class Campaign(SerialMixin):
         to_insert["BatchNr"] = self.n_batches_done
         to_insert["FitNr"] = np.nan
 
-        self.measurements_exp = pd.concat(
-            [self.measurements_exp, to_insert], axis=0, ignore_index=True
+        self._measurements_exp = pd.concat(
+            [self._measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
         # Telemetry
@@ -204,43 +231,55 @@ class Campaign(SerialMixin):
             self._cached_recommendation,
             data,
             self.parameters,
-            self.numerical_measurements_must_be_within_tolerance,
+            numerical_measurements_must_be_within_tolerance,
         )
 
-    def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
+    def recommend(
+        self,
+        batch_size: int = 5,
+        batch_quantity: int = None,  # type: ignore[assignment]
+    ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
-            batch_quantity: Number of requested recommendations.
+            batch_size: Number of requested recommendations.
+            batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
 
         Raises:
-            ValueError: If ``batch_quantity`` is smaller than 1.
+            ValueError: If ``batch_size`` is smaller than 1.
         """
-        if batch_quantity < 1:
+        if batch_quantity is not None:
+            raise DeprecationError(
+                f"Passing the keyword 'batch_quantity' to "
+                f"'{self.__class__.__name__}.{self.recommend.__name__}' is deprecated. "
+                f"Use 'batch_size' instead."
+            )
+
+        if batch_size < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
-                f"{batch_quantity=}."
+                f"{batch_size=}."
             )
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
-        if len(self._cached_recommendation) == batch_quantity:
+        if len(self._cached_recommendation) == batch_size:
             return self._cached_recommendation
 
         # Update recommendation meta data
-        if len(self.measurements_exp) > 0:
+        if len(self._measurements_exp) > 0:
             self.n_fits_done += 1
-            self.measurements_exp["FitNr"].fillna(self.n_fits_done, inplace=True)
+            self._measurements_exp["FitNr"].fillna(self.n_fits_done, inplace=True)
 
         # Get the recommended search space entries
         rec = self.strategy.recommend(
             self.searchspace,
-            batch_quantity,
-            self.measurements_parameters_comp,
-            self.measurements_targets_comp,
+            batch_size,
+            self._measurements_parameters_comp,
+            self._measurements_targets_comp,
         )
 
         # Cache the recommendations
@@ -248,19 +287,30 @@ class Campaign(SerialMixin):
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
-        telemetry_record_value(TELEM_LABELS["BATCH_QUANTITY"], batch_quantity)
+        telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
 
         return rec
 
 
-def _unstructure_with_version(obj: Any) -> dict:
+def _add_version(dict_: dict) -> dict:
     """Add the package version to the created dictionary."""
     from baybe import __version__
 
-    return {
-        **converter.unstructure_attrs_asdict(obj),
-        "version": __version__,
-    }
+    return {**dict_, "version": __version__}
 
 
-converter.register_unstructure_hook(Campaign, _unstructure_with_version)
+# Register de-/serialization hooks
+unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
+    Campaign,
+    converter,
+    _cattrs_include_init_false=True,
+    # TODO: Remove once deprecation got expired:
+    numerical_measurements_must_be_within_tolerance=cattrs.override(omit=True),
+)
+structure_hook = cattrs.gen.make_dict_structure_fn(
+    Campaign, converter, _cattrs_include_init_false=True
+)
+converter.register_unstructure_hook(
+    Campaign, lambda x: _add_version(unstructure_hook(x))
+)
+converter.register_structure_hook(Campaign, structure_hook)

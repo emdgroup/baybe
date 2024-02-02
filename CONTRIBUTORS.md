@@ -17,3 +17,5 @@
   Farthest point sampling
 - Roya Javadi (Vector Institute, Toronto, Canada):
   Import optimization
+- Sterling Baird (Acceleration Consortium, Toronto, Canada):
+  Documentation and general feedback

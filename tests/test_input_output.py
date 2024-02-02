@@ -19,7 +19,7 @@ def test_bad_parameter_input_value(campaign, good_reference_values, bad_val, req
     if request.node.callspec.id in param_xfails:
         pytest.xfail()
 
-    rec = campaign.recommend(batch_quantity=3)
+    rec = campaign.recommend(batch_size=3)
     add_fake_results(
         rec,
         campaign,
@@ -42,7 +42,7 @@ def test_bad_target_input_value(campaign, good_reference_values, bad_val, reques
     if request.node.callspec.id in target_xfails:
         pytest.xfail()
 
-    rec = campaign.recommend(batch_quantity=3)
+    rec = campaign.recommend(batch_size=3)
     add_fake_results(
         rec,
         campaign,

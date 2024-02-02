@@ -52,7 +52,7 @@ class TwoPhaseStrategy(Strategy):
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
@@ -125,7 +125,7 @@ class SequentialStrategy(Strategy):
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
@@ -209,7 +209,7 @@ class StreamingSequentialStrategy(Strategy):
     def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
