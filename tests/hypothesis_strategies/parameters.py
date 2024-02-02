@@ -1,7 +1,6 @@
 """Hypothesis strategies for parameters."""
 
 import hypothesis.strategies as st
-import numpy as np
 from hypothesis.extra.pandas import columns, data_frames
 
 from baybe.parameters.categorical import (
@@ -88,18 +87,7 @@ def numerical_discrete_parameter(
             unique=True,
         )
     )
-    max_tolerance = np.diff(np.sort(values)).min() / 2
-    if max_tolerance == 0.0:
-        tolerance = 0.0
-    else:
-        tolerance = draw(
-            st.floats(
-                min_value=0.0,
-                max_value=max_tolerance,
-                allow_nan=False,
-                exclude_max=True,
-            )
-        )
+    tolerance = draw(st.floats(min_value=0.0))
     return NumericalDiscreteParameter(name=name, values=values, tolerance=tolerance)
 
 
