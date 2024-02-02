@@ -110,6 +110,7 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
             # Include the name of the file to the toctree
             # Format it by replacing underscores and capitalizing the words
             file_name = file.stem
+
             formatted = " ".join(word.capitalize() for word in file_name.split("_"))
             # Remove duplicate "constraints" for the files in the constraints folder.
             if "Constraints" in folder_name and "Constraints" in formatted:
@@ -162,7 +163,24 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
             with open(markdown_path, "r", encoding="UTF-8") as markdown_file:
                 lines = markdown_file.readlines()
 
+            # Delete lines we do not want to have in our documentation
+            lines = [line for line in lines if "![svg]" not in line]
             lines = [line for line in lines if "![png]" not in line]
+            lines = [line for line in lines if "<Figure size" not in line]
+
+            # We check whether pre-built light and dark plots exist. If so, we append
+            # corresponding lines to our markdown file for including them.
+            light_figure = pathlib.Path(sub_directory / (file_name + "_light.svg"))
+            dark_figure = pathlib.Path(sub_directory / (file_name + "_dark.svg"))
+            if light_figure.is_file() and dark_figure.is_file():
+                lines.append(f"```{{image}} {file_name}_light.svg\n")
+                lines.append(":align: center\n")
+                lines.append(":class: only-light\n")
+                lines.append("```\n")
+                lines.append(f"```{{image}} {file_name}_dark.svg\n")
+                lines.append(":align: center\n")
+                lines.append(":class: only-dark\n")
+                lines.append("```\n")
 
             # Rewrite the file
             with open(markdown_path, "w", encoding="UTF-8") as markdown_file:
@@ -188,7 +206,7 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
     # Remove any not markdown files
     for file in examples_directory.glob("**/*"):
         if file.is_file():
-            if file.suffix != ".md" or "Header" in file.name:
+            if file.suffix not in (".md", ".svg") or "Header" in file.name:
                 file.unlink(file)
 
     # Remove any remaining empty subdirectories
