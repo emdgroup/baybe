@@ -16,7 +16,7 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all BayBE strategies."""
 
     @abstractmethod
-    def _select_recommender(
+    def select_recommender(
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -45,7 +45,7 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
         allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
-        recommender = self._select_recommender(
+        recommender = self.select_recommender(
             searchspace,
             batch_quantity,
             train_x,

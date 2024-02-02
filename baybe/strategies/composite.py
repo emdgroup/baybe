@@ -49,7 +49,7 @@ class TwoPhaseStrategy(Strategy):
     """The number of experiments after which the recommender is switched for the next
     requested batch."""
 
-    def _select_recommender(  # noqa: D102
+    def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -122,7 +122,7 @@ class SequentialStrategy(Strategy):
     _n_last_measurements: int = field(default=-1, alias="_n_last_measurements")
     """The number of measurements that were available at the last call."""
 
-    def _select_recommender(  # noqa: D102
+    def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
@@ -206,7 +206,7 @@ class StreamingSequentialStrategy(Strategy):
         """Initialize the recommender iterator."""
         return iter(self.recommenders)
 
-    def _select_recommender(  # noqa: D102
+    def select_recommender(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_quantity: int = 1,
