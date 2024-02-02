@@ -69,10 +69,11 @@ config = {
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
     "strategy": TwoPhaseStrategy(
-        recommender=SequentialGreedyRecommender(),
+        recommender=SequentialGreedyRecommender(
+            allow_repeated_recommendations=False,
+            allow_recommending_already_measured=False,
+        ),
         initial_recommender=RandomRecommender(),
-        allow_repeated_recommendations=False,
-        allow_recommending_already_measured=False,
     ),
     "numerical_measurements_must_be_within_tolerance": True,
 }

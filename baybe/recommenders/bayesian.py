@@ -132,8 +132,6 @@ class BayesianRecommender(Recommender, ABC):
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -147,8 +145,8 @@ class BayesianRecommender(Recommender, ABC):
                 searchspace,
                 self._recommend_discrete,
                 batch_quantity,
-                allow_repeated_recommendations,
-                allow_recommending_already_measured,
+                self.allow_repeated_recommendations,
+                self.allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(searchspace.continuous, batch_quantity)
@@ -490,8 +488,6 @@ class NaiveHybridRecommender(Recommender):
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -509,6 +505,13 @@ class NaiveHybridRecommender(Recommender):
         # the corresponding recommendation function in that case
         degenerate_recommender = None
         if searchspace.type == SearchSpaceType.DISCRETE:
+            # Override child attributes
+            self.disc_recommender.allow_repeated_recommendations = (
+                self.allow_repeated_recommendations
+            )
+            self.disc_recommender.allow_recommending_already_measured = (
+                self.allow_recommending_already_measured
+            )
             degenerate_recommender = self.disc_recommender
         elif searchspace.type == SearchSpaceType.CONTINUOUS:
             degenerate_recommender = self.cont_recommender
@@ -518,8 +521,6 @@ class NaiveHybridRecommender(Recommender):
                 batch_quantity=batch_quantity,
                 train_x=train_x,
                 train_y=train_y,
-                allow_repeated_recommendations=allow_repeated_recommendations,
-                allow_recommending_already_measured=allow_recommending_already_measured,
             )
 
         # We are in a hybrid setting now

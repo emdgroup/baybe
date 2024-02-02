@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, ClassVar, Optional, Protocol
 
 import pandas as pd
-from attrs import define
+from attrs import define, field
 
 from baybe.exceptions import NotEnoughPointsLeftError
 from baybe.searchspace import (
@@ -96,8 +96,6 @@ class RecommenderProtocol(Protocol):
         batch_quantity: int,
         train_x: Optional[pd.DataFrame],
         train_y: Optional[pd.DataFrame],
-        allow_repeated_recommendations: bool,
-        allow_recommending_already_measured: bool,
     ) -> pd.DataFrame:
         """Recommend (a batch of) points in the search space.
 
@@ -106,12 +104,6 @@ class RecommenderProtocol(Protocol):
             batch_quantity: The number of points that should be recommended.
             train_x: The training data used to train the model.
             train_y: The training labels used to train the model.
-            allow_repeated_recommendations: Allow to make recommendations that were
-                already recommended earlier. This only has an influence in discrete
-                search spaces.
-            allow_recommending_already_measured: Allow to output recommendations that
-                were measured previously. This only has an influence in discrete
-                search spaces.
 
         Returns:
             A DataFrame containing the recommendations as individual rows.
@@ -127,6 +119,15 @@ class Recommender(ABC, RecommenderProtocol):
     compatibility: ClassVar[SearchSpaceType]
     """Class variable describing the search space compatibility."""
 
+    # Instance
+    allow_repeated_recommendations: bool = field(default=False)
+    """Allow to make recommendations that were already recommended earlier. This only
+    has an influence in discrete search spaces."""
+
+    allow_recommending_already_measured: bool = field(default=True)
+    """Allow to output recommendations that were measured previously. This only has an
+    influence in discrete search spaces."""
+
     @abstractmethod
     def recommend(
         self,
@@ -134,8 +135,6 @@ class Recommender(ABC, RecommenderProtocol):
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
 
@@ -150,8 +149,6 @@ class NonPredictiveRecommender(Recommender, ABC):
         batch_quantity: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -160,8 +157,8 @@ class NonPredictiveRecommender(Recommender, ABC):
                 searchspace,
                 self._recommend_discrete,
                 batch_quantity,
-                allow_repeated_recommendations,
-                allow_recommending_already_measured,
+                self.allow_repeated_recommendations,
+                self.allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
