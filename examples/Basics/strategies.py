@@ -85,7 +85,7 @@ available_acq_functions = [
 #   - If a larger value is chosen, only those that allow batching.
 #       That is, 'q'-variants of the acquisition functions must be chosen.
 
-# The default acquisition function is q-Expected Improvement.
+# The default he acquisition function is q-Expected Improvement.
 
 ACQ_FUNCTION = "qEI"
 
@@ -103,13 +103,15 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 
 # To create the strategy object, each parameter described above can be specified as follows.
 # Note that they all have default values.
-# Therefore, one does not need to specify all of them to create a strategy object.
+# Therefore one does not need to specify all of them to create a strategy object.
 
 strategy = TwoPhaseStrategy(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=SequentialGreedyRecommender(
         surrogate_model=SURROGATE_MODEL, acquisition_function_cls=ACQ_FUNCTION
     ),
+    allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
+    allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,
 )
 
 print(strategy)
@@ -175,11 +177,7 @@ campaign = Campaign(
 
 # This campaign can then be used to get recommendations and add measurements:
 
-recommendation = campaign.recommend(
-    batch_quantity=3,
-    allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
-    allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,
-)
+recommendation = campaign.recommend(batch_quantity=3)
 print("\n\nRecommended experiments: ")
 print(recommendation)
 
