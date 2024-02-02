@@ -207,22 +207,11 @@ class Campaign(SerialMixin):
             self.numerical_measurements_must_be_within_tolerance,
         )
 
-    def recommend(
-        self,
-        batch_quantity: int = 5,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
-    ) -> pd.DataFrame:
+    def recommend(self, batch_quantity: int = 5) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
             batch_quantity: Number of requested recommendations.
-            allow_repeated_recommendations: Allow to make recommendations that were
-                already recommended earlier. This only has an influence in discrete
-                search spaces.
-            allow_recommending_already_measured: Allow to output recommendations that
-                were measured previously. This only has an influence in discrete
-                search spaces.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
@@ -252,8 +241,6 @@ class Campaign(SerialMixin):
             batch_quantity,
             self.measurements_parameters_comp,
             self.measurements_targets_comp,
-            allow_repeated_recommendations,
-            allow_recommending_already_measured,
         )
 
         # Cache the recommendations
