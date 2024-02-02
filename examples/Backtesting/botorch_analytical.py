@@ -15,9 +15,7 @@
 
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
@@ -29,6 +27,7 @@ from baybe.simulation import simulate_scenarios
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.plotting import create_plots
 
 ### Parameters for a full simulation loop
 
@@ -129,8 +128,12 @@ results = simulate_scenarios(
     n_mc_iterations=N_MC_ITERATIONS,
 )
 
-# The following lines plot the results and save the plot in run_analytical.png
+# We use the plotting utility to create plots.
 
-sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
-plt.gcf().set_size_inches(24, 8)
-plt.savefig("./run_analytical.png")
+create_plots(
+    data=results,
+    name="botorch_analytical",
+    x="Num_Experiments",
+    y="Target_CumBest",
+    hue="Scenario",
+)
