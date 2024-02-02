@@ -1,4 +1,4 @@
-### Example for using a mixture use case in a discrete searchspace
+## Example for using a mixture use case in a discrete searchspace
 
 # Example for imposing sum constraints for discrete parameters.
 # The constraints simulate a situation where we want to mix up to three solvents.
@@ -8,7 +8,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import math
 
@@ -28,7 +28,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Experiment setup
+### Experiment setup
 
 # This parameter denotes the tolerance with regard to the calculation of the sum.
 SUM_TOLERANCE = 1.0
@@ -55,7 +55,7 @@ fraction3 = NumericalDiscreteParameter(
 
 parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 
-#### Creating the constraint
+### Creating the constraint
 
 # Since the constraints are required for the creation of the searchspace, we create
 # them next.
@@ -90,7 +90,7 @@ no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
 
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
@@ -98,20 +98,20 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the campaign
+### Creating and printing the campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
-#### Manual verification of the constraint
+### Manual verification of the constraint
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
-    print(f"\n##### ITERATION {kIter+1} #####")
+    print(f"\n#### ITERATION {kIter+1} ####")
 
-    print("### ASSERTS ###")
+    print("## ASSERTS ##")
     print(
         "No. of searchspace entries where fractions do not sum to 100.0:      ",
         campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]]

@@ -1,4 +1,4 @@
-### Example for using the multi target mode for the objective
+## Example for using the multi target mode for the objective
 
 # Example for using the multi target mode for the objective.
 # It uses a desirability value to handle several targets.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 from baybe import Campaign
 from baybe.objective import Objective
@@ -15,7 +15,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Experiment setup and creating the searchspace
+### Experiment setup and creating the searchspace
 
 Categorical_1 = CategoricalParameter("Cat_1", values=["22", "33"], encoding="OHE")
 Categorical_2 = CategoricalParameter(
@@ -35,7 +35,7 @@ parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
 searchspace = SearchSpace.from_product(parameters=parameters)
 
 
-#### Defining the targets
+### Defining the targets
 
 # The multi target mode is handled when creating the objective object.
 # Thus we first need to define the different targets.
@@ -67,7 +67,7 @@ Target_3 = NumericalTarget(
 # the range around this target that is considered viable.
 
 
-#### Creating the objective
+### Creating the objective
 
 # Now to work with these three targets the objective object must be properly created.
 # The mode is set to `DESIRABILITY` and the targets are described in a list.
@@ -92,12 +92,12 @@ objective = Objective(
 
 print(objective)
 
-#### Creating and printing the campaign
+### Creating and printing the campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
-#### Performing some iterations
+### Performing some iterations
 
 # The following loop performs some recommendations and adds fake results.
 # It also prints what happens to internal data.
@@ -105,7 +105,7 @@ print(campaign)
 N_ITERATIONS = 3
 
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n##### ITERATION {kIter+1} #####")
+    print(f"\n\n#### ITERATION {kIter+1} ####")
 
     rec = campaign.recommend(batch_size=3)
     print("\nRecommended measurements:\n", rec)
@@ -119,7 +119,7 @@ for kIter in range(N_ITERATIONS):
     print(campaign._measurements_targets_comp)
 
 
-#### Addendum: Description of `transformation` functions
+### Addendum: Description of `transformation` functions
 
 # This function is used to transform target values to the interval `[0,1]` for `MAX`/`MIN` mode.
 # An ascending or decreasing `LINEAR` function is used per default.

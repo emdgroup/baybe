@@ -1,4 +1,4 @@
-### Example for linear constraints in a continuous searchspace
+## Example for linear constraints in a continuous searchspace
 
 # Example for optimizing a synthetic test functions in a continuous space with linear
 # constraints.
@@ -11,7 +11,7 @@
 # details on this aspect.
 
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 from botorch.test_functions import Rastrigin
@@ -27,7 +27,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
-#### Defining the test function
+### Defining the test function
 
 # See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
 
@@ -43,7 +43,7 @@ else:
 BOUNDS = TestFunction.bounds
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
 # We use that data of the test function to deduce bounds and number of parameters.
@@ -80,7 +80,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Construct the campaign and run some iterations
+### Construct the campaign and run some iterations
 
 campaign = Campaign(
     searchspace=searchspace,

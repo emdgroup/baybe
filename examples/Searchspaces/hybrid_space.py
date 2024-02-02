@@ -1,4 +1,4 @@
-### Example for using synthetic test functions in hybrid spaces
+## Example for using synthetic test functions in hybrid spaces
 
 # This examples shows how to optimize a custom test function in a hybrid searchspace.
 # It focuses on the searchspace-related aspects and not on the custom test function.
@@ -7,7 +7,7 @@
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # For details on using synthetic test functions, we refer to other examples in this directory.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 from botorch.test_functions import Rastrigin
@@ -21,7 +21,7 @@ from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
-#### Defining the test function and the hybrid dimensions
+### Defining the test function and the hybrid dimensions
 
 # See [`discrete_space`](./discrete_space.md) for details on the test function.
 
@@ -70,7 +70,7 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
 BOUNDS = TestFunction.bounds
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-#### Constructing the hybrid searchspace
+### Constructing the hybrid searchspace
 
 # The following parameter decides how many points each discrete dimension should have.
 POINTS_PER_DIM = 3
@@ -99,7 +99,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing hybrid recommenders
+### Constructing hybrid recommenders
 
 # Here, we explicitly create a strategy object to use the `NaiveHybridRecommender`.
 # The keywords `disc_recommender` and `cont_recommender` can be used to select different
@@ -110,7 +110,7 @@ hybrid_recommender = NaiveHybridRecommender()
 
 hybrid_strategy = TwoPhaseStrategy(recommender=hybrid_recommender)
 
-## Constructing the campaign and performing a recommendation
+### Constructing the campaign and performing a recommendation
 
 campaign = Campaign(
     searchspace=searchspace,

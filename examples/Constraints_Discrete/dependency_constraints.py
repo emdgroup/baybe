@@ -1,4 +1,4 @@
-### Example for using dependency constraints in discrete searchspaces
+## Example for using dependency constraints in discrete searchspaces
 
 # This example shows how a dependency constraint can be created for a discrete searchspace.
 # For instance, some parameters might only be relevant when another parameter has a certain value.
@@ -7,7 +7,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 
@@ -23,7 +23,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Experiment setup
+### Experiment setup
 
 dict_solvent = {
     "water": "O",
@@ -40,7 +40,7 @@ frame2 = CategoricalParameter(name="FrameB", values=["A", "B"])
 
 parameters = [solvent, switch1, switch2, fraction1, frame1, frame2]
 
-#### Creating the constraints
+### Creating the constraints
 
 # The constraints are handled when creating the searchspace object.
 # It is thus necessary to define it before the searchspace creation.
@@ -54,7 +54,7 @@ constraint = DiscreteDependenciesConstraint(
     affected_parameters=[["Solv", "Frac1"], ["FrameA", "FrameB"]],
 )
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
@@ -62,19 +62,19 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the campaign
+### Creating and printing the campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
-#### Manual verification of the constraints
+### Manual verification of the constraints
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
-    print(f"\n##### ITERATION {kIter+1} #####")
+    print(f"\n#### ITERATION {kIter+1} ####")
 
-    print("### ASSERTS ###")
+    print("## ASSERTS ##")
     print(
         f"Number entries with both switches on "
         f"(expected {7*len(dict_solvent)*2*2}): ",

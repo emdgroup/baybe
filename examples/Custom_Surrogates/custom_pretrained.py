@@ -1,4 +1,4 @@
-### Example for surrogate model with a custom pretrained model
+## Example for surrogate model with a custom pretrained model
 
 # This example shows how to pre-train a model and use it as a surrogate.
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports
+### Necessary imports
 
 import numpy as np
 import torch
@@ -25,7 +25,7 @@ from baybe.surrogates import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results, to_tensor
 
-#### Experiment Setup
+### Experiment Setup
 
 parameters = [
     NumericalDiscreteParameter(
@@ -40,7 +40,7 @@ parameters = [
 ]
 
 
-#### "Pre-training" stage
+### "Pre-training" stage
 
 # Note that this example trains with several helpers built-in to BayBE.
 # This can be done independently (and elsewhere).
@@ -63,7 +63,7 @@ model = BayesianRidge()
 model.fit(train_x, train_y)
 
 
-#### Convert model to onnx
+### Convert model to onnx
 
 # Need the option to return standard deviation
 options = {type(model): {"return_std": True}}
@@ -84,14 +84,14 @@ onnx_str = convert_sklearn(
 ).SerializeToString()  # serialize to string to save in file
 
 
-#### Create a surrogate model with a pretrained model
+### Create a surrogate model with a pretrained model
 
 surrogate_model = CustomONNXSurrogate(
     onnx_str=onnx_str,
     onnx_input_name=ONNX_INPUT_NAME,  # specify input name
 )
 
-#### Create campaign
+### Create campaign
 
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
@@ -104,7 +104,7 @@ campaign = Campaign(
     ),
 )
 
-#### Iterate with recommendations and measurements
+### Iterate with recommendations and measurements
 
 # Let's do a first round of recommendation
 recommendation = campaign.recommend(batch_size=2)
@@ -116,7 +116,7 @@ print(recommendation)
 add_fake_results(recommendation, campaign)
 campaign.add_measurements(recommendation)
 
-#### Model Outputs
+### Model Outputs
 
 # Do another round of recommendations
 recommendation = campaign.recommend(batch_size=2)
@@ -126,7 +126,7 @@ print("Recommendation from campaign:")
 print(recommendation)
 
 
-#### Using configuration instead
+### Using configuration instead
 
 # Note that this can be placed inside an overall baybe config
 # Refer to [`create_from_config`](./../Serialization/create_from_config.md) for an example
@@ -137,7 +137,7 @@ CONFIG = {
     "onnx_input_name": ONNX_INPUT_NAME,
 }
 
-#### Model creation from dict (or json if string)
+### Model creation from dict (or json if string)
 model_from_python = CustomONNXSurrogate(
     onnx_str=onnx_str, onnx_input_name=ONNX_INPUT_NAME
 )

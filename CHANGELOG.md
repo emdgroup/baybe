@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Copy button for code blocks in documentation
 - `mypy` for campaign, constraints and telemetry
+- Top-level example summaries
 
 ### Changed
 - Optional `chem` dependencies are lazily imported
@@ -25,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constructor is no longer supported. Instead, `Campaign.add_measurements` now
   takes an additional parameter to control the behavior.
 - `batch_quantity` replaced with `batch_size`
+
+### Removed
+- Detailed headings in table of contents of examples
 
 ## [0.7.2] - 2024-01-24
 ### Added

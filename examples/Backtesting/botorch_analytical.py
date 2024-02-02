@@ -1,4 +1,4 @@
-### Example for full simulation loop using a BoTorch test function
+## Example for full simulation loop using a BoTorch test function
 
 # This example shows a simulation loop for a single target with a BoTorch test function as lookup.
 # That is, we perform several Monte Carlo runs with several iterations.
@@ -11,7 +11,7 @@
 # 2. [`discrete_space`](./../Searchspaces/discrete_space.md) for details on using a
 # BoTorch test function.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,7 +28,7 @@ from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
-#### Parameters for a full simulation loop
+### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
@@ -36,7 +36,7 @@ from baybe.utils.botorch_wrapper import botorch_function_wrapper
 N_MC_ITERATIONS = 2
 N_DOE_ITERATIONS = 2
 
-#### Defining the test function
+### Defining the test function
 
 # See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
 
@@ -57,7 +57,7 @@ else:
 BOUNDS = TestFunction.bounds
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # The parameter `POINTS_PER_DIM` controls the number of points per dimension.
 # Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
@@ -83,7 +83,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing campaigns for the simulation loop
+### Constructing campaigns for the simulation loop
 
 # To simplify adjusting the example for other strategies, we construct some strategy objects.
 # For details on strategy objects, we refer to [`strategies`](./../Basics/strategies.md).
@@ -106,7 +106,7 @@ random_campaign = Campaign(
     objective=objective,
 )
 
-#### Performing the simulation loop
+### Performing the simulation loop
 
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.

@@ -1,4 +1,4 @@
-### Example for using exclusion constraints in discrete searchspaces
+## Example for using exclusion constraints in discrete searchspaces
 
 # This examples shows how an exclusion constraint can be created for a discrete searchspace.
 # This can be used if some parameter values are incompatible with values of another parameter.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 
@@ -26,7 +26,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Experiment setup
+### Experiment setup
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {
@@ -54,7 +54,7 @@ pressure = NumericalDiscreteParameter(
 
 parameters = [solvent, speed, temperature, pressure]
 
-#### Creating the constraint
+### Creating the constraint
 
 # This constraint simulates a situation where solvents `C2` and `C4` are not
 # compatible with temperatures larger than 151 and should thus be excluded.
@@ -90,7 +90,7 @@ constraint_3 = DiscreteExcludeConstraint(
     ],
 )
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # We now create the searchspace using the previously defined constraints.
 searchspace = SearchSpace.from_product(
@@ -101,19 +101,19 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the campaign
+### Creating and printing the campaign
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
 
-#### Manual verification of the constraints
+### Manual verification of the constraints
 
 # The following loop performs some iterations and manually verifies the given constraints.
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n##### ITERATION {kIter+1} #####")
+    print(f"\n\n#### ITERATION {kIter+1} ####")
 
-    print("### ASSERTS ###")
+    print("## ASSERTS ##")
     print(
         "Number of entries with either Solvents C2 or C4 and a temperature above 151: ",
         (
