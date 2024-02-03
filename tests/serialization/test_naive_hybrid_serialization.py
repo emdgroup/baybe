@@ -10,7 +10,7 @@ from baybe.recommenders.bayesian import (
     SequentialGreedyRecommender,
 )
 from baybe.searchspace import SearchSpaceType
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 
 valid_discrete_non_predictive_recommenders = [
     cls()

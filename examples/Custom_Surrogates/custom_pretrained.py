@@ -23,7 +23,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils import add_fake_results, to_tensor
+from baybe.utils.dataframe import add_fake_results, to_tensor
 
 ### Experiment Setup
 

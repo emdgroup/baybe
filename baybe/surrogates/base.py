@@ -12,7 +12,7 @@ from torch import Tensor
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 
 # Define constants
 _MIN_VARIANCE = 1e-6

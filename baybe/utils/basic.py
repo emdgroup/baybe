@@ -36,7 +36,7 @@ def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> L
     Returns:
         A list of subclasses for the given class.
     """
-    from baybe.utils import is_abstract
+    from baybe.utils.boolean import is_abstract
 
     subclasses = []
     for subclass in cls.__subclasses__():

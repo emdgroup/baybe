@@ -36,7 +36,8 @@ from baybe.searchspace import (
 )
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
-from baybe.utils import farthest_point_sampling, to_tensor
+from baybe.utils.dataframe import to_tensor
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 if _ONNX_INSTALLED:
     from baybe.surrogates import CustomONNXSurrogate

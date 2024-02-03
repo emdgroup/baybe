@@ -52,7 +52,8 @@ from baybe.telemetry import (
     VARNAME_TELEMETRY_HOSTNAME,
     VARNAME_TELEMETRY_USERNAME,
 )
-from baybe.utils import add_fake_results, add_parameter_noise, hilberts_factory
+from baybe.utils.basic import hilberts_factory
+from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
 try:
     import baybe.utils.chemistry  # noqa: F401  # Tests if chem deps are available

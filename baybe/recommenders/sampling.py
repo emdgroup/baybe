@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 
 from baybe.recommenders.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
-from baybe.utils import farthest_point_sampling
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):

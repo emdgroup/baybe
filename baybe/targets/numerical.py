@@ -17,7 +17,7 @@ from baybe.targets.transforms import (
     linear_transform,
     triangular_transform,
 )
-from baybe.utils import Interval, convert_bounds
+from baybe.utils.interval import Interval, convert_bounds
 
 _VALID_TRANSFORMATIONS: Dict[TargetMode, Sequence[TargetTransformation]] = {
     TargetMode.MAX: (TargetTransformation.LINEAR,),

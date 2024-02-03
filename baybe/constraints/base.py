@@ -17,9 +17,7 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
-from baybe.utils import (
-    DTypeFloatTorch,
-)
+from baybe.utils.numeric import DTypeFloatTorch
 
 
 @define

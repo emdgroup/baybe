@@ -27,7 +27,7 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import validate_custom_architecture_cls
-from baybe.utils import DTypeFloatONNX, DTypeFloatTorch
+from baybe.utils.numeric import DTypeFloatONNX, DTypeFloatTorch
 
 try:
     import onnxruntime as ort

@@ -11,7 +11,8 @@ from attrs.validators import min_len
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CustomEncoding
 from baybe.parameters.validation import validate_decorrelation
-from baybe.utils import df_uncorrelated_features, eq_dataframe
+from baybe.utils.boolean import eq_dataframe
+from baybe.utils.dataframe import df_uncorrelated_features
 
 
 @define(frozen=True, slots=False)
