@@ -30,6 +30,15 @@ def test_renamed_surrogate():
         from baybe.surrogate import GaussianProcessSurrogate  # noqa: F401
 
 
+def test_missing_strategy_type(config):
+    """Specifying a strategy without a corresponding type raises a warning."""
+    dict_ = json.loads(config)
+    dict_["strategy"].pop("type")
+    config_without_strategy_type = json.dumps(dict_)
+    with pytest.warns(DeprecationWarning):
+        Campaign.from_config(config_without_strategy_type)
+
+
 def test_deprecated_strategy_class():
     """Using the deprecated ``Strategy`` class raises a warning."""
     with pytest.warns(DeprecationWarning):

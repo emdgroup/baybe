@@ -21,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `botorch_function_wrapper` from `baybe.utils` namespace
-- Previously deprecated possibility to deserialize `Strategy` objects without `type` field
 
 ## [0.7.2] - 2024-01-24
 ### Added

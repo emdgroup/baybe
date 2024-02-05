@@ -8,7 +8,8 @@ from attrs import define
 
 from baybe.recommenders.base import Recommender, RecommenderProtocol
 from baybe.searchspace import SearchSpace
-from baybe.serialization import SerialMixin
+from baybe.serialization import SerialMixin, converter, unstructure_base
+from baybe.strategies.deprecation import structure_strategy
 
 
 @define
@@ -57,3 +58,8 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
     def allow_recommending_already_measured(self):
         """See :func:`baybe.recommenders.base.Recommender`."""
         return False
+
+
+# Register (un-)structure hooks
+converter.register_unstructure_hook(Strategy, unstructure_base)
+converter.register_structure_hook(Strategy, structure_strategy)
