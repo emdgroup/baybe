@@ -9,6 +9,8 @@ from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 
 _T = TypeVar("_T")
 
+# TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
+#   switch to the cattrs built-in subclass strategy.
 converter = cattrs.Converter()
 """The default converter for (de-)serializing BayBE-related objects."""
 
