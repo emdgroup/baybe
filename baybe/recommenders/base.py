@@ -3,6 +3,7 @@
 from abc import ABC
 from typing import Callable, ClassVar, Optional, Protocol
 
+import cattrs
 import pandas as pd
 from attrs import define, field
 
@@ -261,5 +262,15 @@ class NonPredictiveRecommender(Recommender, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(RecommenderProtocol, unstructure_base)
+converter.register_unstructure_hook(
+    RecommenderProtocol,
+    lambda x: unstructure_base(
+        x,
+        # TODO: Remove once deprecation got expired:
+        overrides=dict(
+            allow_repeated_recommendations=cattrs.override(omit=True),
+            allow_recommending_already_measured=cattrs.override(omit=True),
+        ),
+    ),
+)
 converter.register_structure_hook(RecommenderProtocol, structure_recommender_protocol)
