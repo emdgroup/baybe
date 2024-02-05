@@ -14,13 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Optional `chem` dependencies are lazily imported
 - Order of README sections
+- Imports from top level `baybe.utils` no longer possible
+- Renamed `utils.numeric` to `utils.numerical`
 
 ### Fixed
 - Several minor issues in documentation
 - Visibility and constructor exposure of `Campaign` attributes that should be private
 
 ### Removed
-- `botorch_function_wrapper` from `baybe.utils` namespace
 - Detailed headings in table of contents of examples
 
 ### Deprecations
