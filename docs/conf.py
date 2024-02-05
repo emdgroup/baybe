@@ -27,7 +27,7 @@ __location__ = os.path.dirname(__file__)
 
 project = "BayBE"
 copyright = "2022-2024 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
-author = "Martin Fitzner, Adrian Šošić, Alexander Hopp, Alex Lee"
+author = "Merck KGaA, Darmstadt, Germany"
 
 
 # -- Run sphinx-apidoc -------------------------------------------------------
