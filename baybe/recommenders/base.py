@@ -121,11 +121,11 @@ class Recommender(ABC, RecommenderProtocol):
     """Class variable describing the search space compatibility."""
 
     # Object variables
-    allow_repeated_recommendations: bool = field(default=False)
+    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
     """Allow to make recommendations that were already recommended earlier. This only
     has an influence in discrete search spaces."""
 
-    allow_recommending_already_measured: bool = field(default=True)
+    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
     """Allow to output recommendations that were measured previously. This only has an
     influence in discrete search spaces."""
 
