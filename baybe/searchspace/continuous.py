@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import torch
 from attr import define, field
-from botorch.utils.sampling import get_polytope_samples
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -153,6 +152,8 @@ class SubspaceContinuous(SerialMixin):
         """
         if not self.parameters:
             return pd.DataFrame()
+
+        from botorch.utils.sampling import get_polytope_samples
 
         points = get_polytope_samples(
             n=n_points,
