@@ -1,12 +1,13 @@
 """Different recommendation strategies that are based on Bayesian optimization."""
 
+import warnings
 from abc import ABC
 from functools import partial
 from typing import Any, Callable, ClassVar, Literal, Optional
 
 import numpy as np
 import pandas as pd
-from attrs import define, field, validators
+from attrs import define, evolve, field, fields, validators
 from botorch.acquisition import (
     AcquisitionFunction,
     ExpectedImprovement,
@@ -482,6 +483,36 @@ class NaiveHybridRecommender(Recommender):
     """The recommender used for the continuous subspace. Default:
     :class:`baybe.recommenders.bayesian.SequentialGreedyRecommender`"""
 
+    def __attrs_post_init__(self):
+        """Validate if flags are synchronized and overrides them otherwise."""
+        if (
+            flag := self.allow_recommending_already_measured
+        ) != self.disc_recommender.allow_recommending_already_measured:
+            warnings.warn(
+                f"The value of "
+                f"'{fields(self.__class__).allow_recommending_already_measured.name}' "
+                f"differs from what is specified in the discrete recommender. "
+                f"The value of the discrete recommender will be ignored."
+            )
+            self.disc_recommender = evolve(
+                self.disc_recommender,
+                allow_recommending_already_measured=flag,
+            )
+
+        if (
+            flag := self.allow_repeated_recommendations
+        ) != self.disc_recommender.allow_repeated_recommendations:
+            warnings.warn(
+                f"The value of "
+                f"'{fields(self.__class__).allow_repeated_recommendations.name}' "
+                f"differs from what is specified in the discrete recommender. "
+                f"The value of the discrete recommender will be ignored."
+            )
+            self.disc_recommender = evolve(
+                self.disc_recommender,
+                allow_repeated_recommendations=flag,
+            )
+
     def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
@@ -505,13 +536,6 @@ class NaiveHybridRecommender(Recommender):
         # the corresponding recommendation function in that case
         degenerate_recommender = None
         if searchspace.type == SearchSpaceType.DISCRETE:
-            # Override child attributes
-            self.disc_recommender.allow_repeated_recommendations = (
-                self.allow_repeated_recommendations
-            )
-            self.disc_recommender.allow_recommending_already_measured = (
-                self.allow_recommending_already_measured
-            )
             degenerate_recommender = self.disc_recommender
         elif searchspace.type == SearchSpaceType.CONTINUOUS:
             degenerate_recommender = self.cont_recommender
