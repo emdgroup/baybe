@@ -5,8 +5,10 @@ import json
 import pytest
 
 from baybe import BayBE, Campaign
+from baybe.exceptions import DeprecationError
 from baybe.searchspace import SearchSpace
 from baybe.strategies import Strategy
+from baybe.strategies.composite import TwoPhaseStrategy
 from baybe.targets import Objective
 from baybe.targets.base import Target
 from baybe.utils.interval import Interval
@@ -90,3 +92,12 @@ def test_deprecated_config():
     """Using the deprecated config format raises a warning."""
     with pytest.warns(UserWarning):
         Campaign.from_config(deprecated_config)
+
+
+@pytest.mark.parametrize("flag", (True, False))
+def test_deprecated_strategy_allow_flags(flag):
+    """Using the deprecated strategy "allow" flags raises an error."""
+    with pytest.raises(DeprecationError):
+        TwoPhaseStrategy(allow_recommending_already_measured=flag)
+    with pytest.raises(DeprecationError):
+        TwoPhaseStrategy(allow_recommending_already_measured=flag)
