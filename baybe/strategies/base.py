@@ -7,9 +7,9 @@ import pandas as pd
 from attrs import define
 
 from baybe.recommenders.base import Recommender, RecommenderProtocol
+from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
-from baybe.strategies.deprecation import structure_strategy
 
 
 @define
@@ -62,4 +62,4 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
 
 # Register (un-)structure hooks
 converter.register_unstructure_hook(Strategy, unstructure_base)
-converter.register_structure_hook(Strategy, structure_strategy)
+converter.register_structure_hook(Strategy, structure_recommender_protocol)

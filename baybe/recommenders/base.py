@@ -7,6 +7,7 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.exceptions import NotEnoughPointsLeftError
+from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.searchspace import (
     SearchSpace,
     SearchSpaceType,
@@ -15,7 +16,6 @@ from baybe.searchspace import (
 )
 from baybe.serialization import (
     converter,
-    get_base_structure_hook,
     unstructure_base,
 )
 
@@ -262,6 +262,4 @@ class NonPredictiveRecommender(Recommender, ABC):
 
 # Register (un-)structure hooks
 converter.register_unstructure_hook(RecommenderProtocol, unstructure_base)
-converter.register_structure_hook(
-    RecommenderProtocol, get_base_structure_hook(RecommenderProtocol)
-)
+converter.register_structure_hook(RecommenderProtocol, structure_recommender_protocol)
