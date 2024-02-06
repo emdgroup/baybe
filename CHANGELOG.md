@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Several minor issues in documentation
 - Visibility and constructor exposure of `Campaign` attributes that should be private
+- `TaskParameter`s no longer disappear from computational representation when the
+  search space contains only one task parameter value
 
 ### Removed
 - Detailed headings in table of contents of examples
@@ -318,7 +320,7 @@ or continuous parameters
 
 ### Changed
 - Parameter class hierarchy
-- SearchSpace has now a discrete and continuous subspace
+- `SearchSpace` has now a discrete and continuous subspace
 - Model fit now done upon requesting recommendations
 
 ### Fixed
@@ -326,7 +328,7 @@ or continuous parameters
 
 ## [0.2.2] - 2023-01-13
 ### Added
-- SearchSpace class
+- `SearchSpace` class
 - Code testing with pytest
 - Option to specify initial data for backtesting simulations
 - SequentialGreedyRecommender class
@@ -370,14 +372,14 @@ or continuous parameters
 - Azure pipeline for code formatting and linting
 - Single-task Gaussian process strategy
 - Streamlit dashboard for comparing single-task strategies
-- Input functionality to read measurements including automatic matching to searchspace
+- Input functionality to read measurements including automatic matching to search space
 - Integer encoding for categorical parameters
 - Parser for numerical discrete parameters
 - Single numerical target with Min and Max mode
 - Recommendation functionality
 - Parameter scaling depending on parameter types and user-chosen scalers
 - Noise and fake-measurement utilities
-- Internal metadata storing various info about datapoints in the searchspace
+- Internal metadata storing various info about datapoints in the search space
 - BayBE options controlling recommendation and data addition behavior
 - Config parsing and validation using pydantic
 - Global random seed control
