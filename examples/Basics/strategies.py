@@ -29,7 +29,7 @@ from baybe.surrogates import (
     RandomForestSurrogate,
 )
 from baybe.targets import NumericalTarget
-from baybe.utils import add_fake_results
+from baybe.utils.dataframe import add_fake_results
 
 ### Available initial strategies
 

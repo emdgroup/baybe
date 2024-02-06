@@ -10,11 +10,8 @@ from attrs.validators import and_, deep_mapping, instance_of, min_len
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
-from baybe.utils import (
-    df_drop_single_value_columns,
-    df_uncorrelated_features,
-    group_duplicate_values,
-)
+from baybe.utils.basic import group_duplicate_values
+from baybe.utils.dataframe import df_drop_single_value_columns, df_uncorrelated_features
 
 try:  # For python < 3.11, use the exceptiongroup backport
     ExceptionGroup

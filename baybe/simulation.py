@@ -53,13 +53,9 @@ from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
 from baybe.targets.enum import TargetMode
-from baybe.utils import (
-    add_fake_results,
-    add_parameter_noise,
-    closer_element,
-    closest_element,
-    set_random_seed,
-)
+from baybe.utils.basic import set_random_seed
+from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.numerical import closer_element, closest_element
 
 if TYPE_CHECKING:
     from baybe.targets import NumericalTarget

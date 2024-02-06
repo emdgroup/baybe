@@ -51,7 +51,7 @@ def get_base_structure_hook(
         The hook.
     """
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
-    from baybe.utils import get_subclasses
+    from baybe.utils.basic import get_subclasses
 
     def structure_base(val: dict, _: Type[_T]) -> _T:
         _type = val.pop("type")

@@ -11,7 +11,7 @@ import torch
 from torch import Tensor
 
 from baybe.targets.enum import TargetMode
-from baybe.utils.numeric import DTypeFloatNumpy, DTypeFloatTorch
+from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
     from baybe.campaign import Campaign

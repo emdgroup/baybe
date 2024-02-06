@@ -18,7 +18,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
-from baybe.utils import Dummy
+from baybe.utils.basic import Dummy
 
 
 @define

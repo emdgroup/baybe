@@ -85,7 +85,8 @@ import pandas as pd
 import requests
 
 from baybe.parameters.base import Parameter
-from baybe.utils import fuzzy_row_match, strtobool
+from baybe.utils.boolean import strtobool
+from baybe.utils.dataframe import fuzzy_row_match
 
 _logger = logging.getLogger(__name__)
 

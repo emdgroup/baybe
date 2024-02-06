@@ -26,7 +26,7 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
-from baybe.utils import eq_dataframe
+from baybe.utils.boolean import eq_dataframe
 
 # Converter for config validation
 _validation_converter = converter.copy()
