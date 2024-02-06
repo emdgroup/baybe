@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Copy button for code blocks in documentation
 - `mypy` for campaign, constraints and telemetry
 - Top-level example summaries
+- `RecommenderProtocol` as common interface for `Strategy` and `Recommender`
 
 ### Changed
 - Optional `chem` dependencies are lazily imported
@@ -20,15 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `botorch_function_wrapper` from `baybe.utils` namespace
+- Detailed headings in table of contents of examples
 
 ### Deprecations
 - Passing `numerical_measurements_must_be_within_tolerance` to the `Campaign` 
   constructor is no longer supported. Instead, `Campaign.add_measurements` now
   takes an additional parameter to control the behavior.
 - `batch_quantity` replaced with `batch_size`
-
-### Removed
-- Detailed headings in table of contents of examples
+- `allow_repeated_recommendations` and `allow_recommending_already_measured` are now 
+  attributes of `Recommender` and no longer attributes of `Strategy`
 
 ## [0.7.2] - 2024-01-24
 ### Added

@@ -13,13 +13,13 @@ from attrs import define, field
 from baybe.exceptions import DeprecationError
 from baybe.objective import Objective
 from baybe.parameters.base import Parameter
+from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace.core import (
     SearchSpace,
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
 from baybe.strategies import TwoPhaseStrategy
-from baybe.strategies.base import Strategy
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -57,7 +57,7 @@ class Campaign(SerialMixin):
     objective: Objective = field()
     """The optimization objective."""
 
-    strategy: Strategy = field(factory=TwoPhaseStrategy)
+    strategy: RecommenderProtocol = field(factory=TwoPhaseStrategy)
     """The employed strategy"""
 
     # Metadata

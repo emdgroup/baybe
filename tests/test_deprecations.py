@@ -8,6 +8,7 @@ from baybe import BayBE, Campaign
 from baybe.exceptions import DeprecationError
 from baybe.searchspace import SearchSpace
 from baybe.strategies import Strategy
+from baybe.strategies.composite import TwoPhaseStrategy
 from baybe.targets import Objective
 from baybe.targets.base import Target
 from baybe.utils.interval import Interval
@@ -104,3 +105,12 @@ def test_deprecated_batch_quantity_keyword(campaign):
     """Using the deprecated batch_quantity keyword raises an error."""
     with pytest.raises(DeprecationError):
         campaign.recommend(batch_quantity=5)  # noqa: E999
+
+
+@pytest.mark.parametrize("flag", (True, False))
+def test_deprecated_strategy_allow_flags(flag):
+    """Using the deprecated strategy "allow" flags raises an error."""
+    with pytest.raises(DeprecationError):
+        TwoPhaseStrategy(allow_recommending_already_measured=flag)
+    with pytest.raises(DeprecationError):
+        TwoPhaseStrategy(allow_recommending_already_measured=flag)

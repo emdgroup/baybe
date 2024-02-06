@@ -77,11 +77,11 @@ CONFIG = str(
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },
-            "acquisition_function_cls": "qEI"
+            "acquisition_function_cls": "qEI",
+            "allow_repeated_recommendations": false,
+            "allow_recommending_already_measured": false
         },
-        "switch_after": 1,
-        "allow_repeated_recommendations": false,
-        "allow_recommending_already_measured": false
+        "switch_after": 1
     }
 }
 """
@@ -148,10 +148,10 @@ INVALID_CONFIG = str(
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },
-            "acquisition_function_cls": "qEI"
-        },
-        "allow_repeated_recommendations": false,
-        "allow_recommending_already_measured": false
+            "acquisition_function_cls": "qEI",
+            "allow_repeated_recommendations": false,
+            "allow_recommending_already_measured": false
+        }
     }
 }
 """

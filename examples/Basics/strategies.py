@@ -110,10 +110,11 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 strategy = TwoPhaseStrategy(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=SequentialGreedyRecommender(
-        surrogate_model=SURROGATE_MODEL, acquisition_function_cls=ACQ_FUNCTION
+        surrogate_model=SURROGATE_MODEL,
+        acquisition_function_cls=ACQ_FUNCTION,
+        allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
+        allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,
     ),
-    allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
-    allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,
 )
 
 print(strategy)
