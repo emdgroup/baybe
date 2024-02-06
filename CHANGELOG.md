@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Several minor issues in documentation
 - Visibility and constructor exposure of `Campaign` attributes that should be private
+- tox `coretest` now uses correct environment and skips impossible tests
 
 ### Removed
 - `botorch_function_wrapper` from `baybe.utils` namespace
