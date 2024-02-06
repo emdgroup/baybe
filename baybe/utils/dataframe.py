@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy as np
@@ -321,7 +322,7 @@ def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
     parameters: List[Parameter],
-    numerical_measurements_must_be_within_tolerance: bool,
+    on_tolerance_violation: Literal["raise", "warn", "ignore"],
 ) -> pd.Index:
     """Match row of the right dataframe to the rows of the left dataframe.
 
@@ -337,10 +338,8 @@ def fuzzy_row_match(
             dataframe.
         parameters: List of baybe parameter objects that are needed to identify
             potential tolerances.
-        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
-            parameters are matched with the search space elements only if there is a
-            match within the parameter tolerance. If ``False``, the closest match is
-            considered, irrespective of the distance.
+        on_tolerance_violation: The mode determining what how to handle a missing
+            match due to parameter tolerance violation.
 
     Returns:
         The index of the matching rows in ``left_df``.
@@ -349,6 +348,13 @@ def fuzzy_row_match(
         ValueError: If some rows are present in the right but not in the left dataframe.
         ValueError: If the input data has invalid values.
     """
+    # Assert that the passed violation mode is valid
+    if on_tolerance_violation not in ["raise", "warn", "ignore"]:
+        raise ValueError(
+            """Argument passed to `on_tolerance_violation` must be one """
+            """of '["raise", "warn", "ignore"]'."""
+        )
+
     # Assert that all parameters appear in the given dataframe
     if not all(col in right_df.columns for col in left_df.columns):
         raise ValueError(
@@ -360,25 +366,31 @@ def fuzzy_row_match(
 
     # Iterate over all input rows
     for ind, row in right_df.iterrows():
-        # Check if the row represents a valid input
-        valid = True
+        # Check if all values of the row are in the respective parameter ranges
         for param in parameters:
-            if param.is_numeric:
-                if numerical_measurements_must_be_within_tolerance:
-                    valid &= param.is_in_range(row[param.name])
-            else:
-                valid &= param.is_in_range(row[param.name])
-            if not valid:
-                raise ValueError(
-                    f"Input data on row with the index {row.name} has invalid "
-                    f"values in parameter '{param.name}'. "
-                    f"For categorical parameters, values need to exactly match a "
-                    f"valid choice defined in your config. "
-                    f"For numerical parameters, a match is accepted only if "
-                    f"the input value is within the specified tolerance/range. Set "
-                    f"the flag 'numerical_measurements_must_be_within_tolerance' "
-                    f"to 'False' to disable this behavior."
-                )
+            if not param.is_in_range((val := row[param.name])):
+                if param.is_numeric and on_tolerance_violation == "ignore":
+                    break
+                if param.is_numeric and on_tolerance_violation == "warn":
+                    warnings.warn(
+                        f"The value '{val}' is outside the range of parameter "
+                        f"'{param.name}'. "
+                        f"If you expected a match between your input "
+                        f"and the parameter, consider increasing the parameter's "
+                        f"tolerance value or adding more parameter values. "
+                        f"You can silence this warning using the 'ignore' mode.",
+                        UserWarning,
+                    )
+                    break
+                else:
+                    raise ValueError(
+                        f"The value '{val}' is outside the range of parameter "
+                        f"'{param.name}'. "
+                        f"If you expected a match between your input "
+                        f"and the parameter, consider increasing the parameter's "
+                        f"tolerance value or adding more parameter values. "
+                        f"You can bypass this check using the 'ignore' or 'warn' mode."
+                    )
 
         # Differentiate category-like and discrete numerical parameters
         cat_cols = [p.name for p in parameters if not p.is_numeric]

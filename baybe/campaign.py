@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import List
+from typing import List, Literal
 
 import cattrs
 import numpy as np
@@ -159,7 +159,7 @@ class Campaign(SerialMixin):
     def add_measurements(
         self,
         data: pd.DataFrame,
-        numerical_measurements_must_be_within_tolerance: bool = True,
+        on_tolerance_violation: Literal["raise", "warn", "ignore"] = "raise",
     ) -> None:
         """Add results from a dataframe to the internal database.
 
@@ -172,8 +172,12 @@ class Campaign(SerialMixin):
         Args:
             data: The data to be added (with filled values for targets). Preferably
                 created via :func:`baybe.campaign.Campaign.recommend`.
-            numerical_measurements_must_be_within_tolerance: Flag indicating if
-                numerical parameters need to be within their tolerances.
+            on_tolerance_violation: The mode determining how to handle the attempt
+                of adding numerical data that violates parameter tolerances. Unless
+                set to ``raise``, the measurements will be added to the database
+                despite potential violations. However, note that values lying
+                significantly outside the convex hull of numerical parameters can
+                lead to scaling problems in model training.
 
         Raises:
             ValueError: If one of the targets has missing values or NaNs in the provided
@@ -211,9 +215,7 @@ class Campaign(SerialMixin):
 
         # Update meta data
         # TODO: refactor responsibilities
-        self.searchspace.discrete.mark_as_measured(
-            data, numerical_measurements_must_be_within_tolerance
-        )
+        self.searchspace.discrete.mark_as_measured(data, on_tolerance_violation)
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1
@@ -226,12 +228,13 @@ class Campaign(SerialMixin):
         )
 
         # Telemetry
+        # TODO: Code is inefficient because of unnecessary second fuzzy matching
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
             self._cached_recommendation,
             data,
             self.parameters,
-            numerical_measurements_must_be_within_tolerance,
+            on_tolerance_violation,
         )
 
     def recommend(

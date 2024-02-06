@@ -7,12 +7,11 @@ import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import min_len
+from attrs.validators import ge, min_len
 
-from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
-from baybe.utils import DTypeFloatNumpy, InfiniteIntervalError, Interval, convert_bounds
+from baybe.utils import InfiniteIntervalError, Interval, convert_bounds
 
 
 @define(frozen=True, slots=False)
@@ -24,7 +23,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    # NOTE: The parameter values are assumed to be sorted by the tolerance validator.
+    # NOTE: The values are assumed to be sorted by the tolerance default method.
     _values: Tuple[float, ...] = field(
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: sorted(cattrs.structure(x, Tuple[float, ...])),  # type: ignore
@@ -37,43 +36,16 @@ class NumericalDiscreteParameter(DiscreteParameter):
     )
     """The values the parameter can take."""
 
-    tolerance: float = field(default=0.0)
-    """The absolute tolerance used for deciding whether a value is in range. A tolerance
-        larger than half the minimum distance between parameter values is not allowed
-        because that could cause ambiguity when inputting data points later."""
+    tolerance: float = field(validator=ge(0.0))
+    """The absolute tolerance used for deciding whether a value is considered in range.
+        A value is considered in range if its distance to the closest parameter value
+        is smaller than the specified tolerance."""
 
-    @tolerance.validator
-    def _validate_tolerance(  # noqa: DOC101, DOC103
-        self, _: Any, tolerance: float
-    ) -> None:
-        """Validate that the given tolerance is safe.
-
-        The tolerance is the allowed experimental uncertainty when
-        reading in measured values. A tolerance larger than half the minimum
-        distance between parameter values is not allowed because that could cause
-        ambiguity when inputting data points later.
-
-        Raises:
-            ValueError: If the tolerance is not safe.
-        """
-        # For zero tolerance, the only left requirement is that all parameter values
-        # are distinct, which is already ensured by the corresponding validator.
-        if tolerance == 0.0:
-            return
-
-        min_dist = np.diff(self.values).min()
-        if min_dist == (eps := np.nextafter(0, 1, dtype=DTypeFloatNumpy)):
-            raise NumericalUnderflowError(
-                f"The distance between any two parameter values must be at least "
-                f"twice the size of the used floating point resolution of {eps}."
-            )
-
-        if tolerance >= (max_tol := min_dist / 2.0):
-            raise ValueError(
-                f"Parameter '{self.name}' is initialized with tolerance {tolerance} "
-                f"but due to the given parameter values {self.values}, the specified "
-                f"tolerance must be smaller than {max_tol} to avoid ambiguity."
-            )
+    @tolerance.default
+    def default_tolerance(self) -> float:
+        """Set the tolerance to fraction of the smallest value distance."""
+        fraction = 0.1
+        return fraction * np.diff(self.values).min().item()
 
     @property
     def values(self) -> tuple:  # noqa: D102

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, Iterable, List, Optional, Tuple, cast
+from typing import Any, Collection, Iterable, List, Literal, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -252,21 +252,20 @@ class SubspaceDiscrete(SerialMixin):
     def mark_as_measured(
         self,
         measurements: pd.DataFrame,
-        numerical_measurements_must_be_within_tolerance: bool,
+        on_tolerance_violation: Literal["raise", "warn", "ignore"],
     ) -> None:
         """Mark the given elements of the space as measured.
 
         Args:
             measurements: A dataframe containing parameter settings that should be
                 marked as measured.
-            numerical_measurements_must_be_within_tolerance: See
-                :func:`baybe.utils.dataframe.fuzzy_row_match`.
+            on_tolerance_violation: See :func:`baybe.utils.dataframe.fuzzy_row_match`.
         """
         inds_matched = fuzzy_row_match(
             self.exp_rep,
             measurements,
             self.parameters,
-            numerical_measurements_must_be_within_tolerance,
+            on_tolerance_violation,
         )
         self.metadata.loc[inds_matched, "was_measured"] = True
 
