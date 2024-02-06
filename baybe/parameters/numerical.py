@@ -4,6 +4,7 @@ from functools import cached_property
 from typing import Any, ClassVar, Tuple
 
 import cattrs
+import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import ge, min_len
@@ -22,7 +23,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    # NOTE: The parameter values are assumed to be sorted by the tolerance validator.
+    # NOTE: The values are assumed to be sorted by the tolerance default method.
     _values: Tuple[float, ...] = field(
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: sorted(cattrs.structure(x, Tuple[float, ...])),  # type: ignore
@@ -35,11 +36,16 @@ class NumericalDiscreteParameter(DiscreteParameter):
     )
     """The values the parameter can take."""
 
-    tolerance: float = field(default=0.0, validator=ge(0.0))
+    tolerance: float = field(validator=ge(0.0))
     """The absolute tolerance used for deciding whether a value is considered in range.
-        Everything inside the convex hull of the parameter values is automatically
-        considered in range. If non-zero, the tolerance expands the parameter range
-        at the boundary values."""
+        A value is considered in range if its distance to the closest parameter value
+        is smaller than the specified tolerance."""
+
+    @tolerance.default
+    def default_tolerance(self) -> float:
+        """Set the tolerance to fraction of the smallest value distance."""
+        fraction = 0.1
+        return fraction * np.diff(self.values).min().item()
 
     @property
     def values(self) -> tuple:  # noqa: D102
@@ -54,9 +60,10 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
     def is_in_range(self, item: float) -> bool:  # noqa: D102
         # See base class.
-        lower = min(self.values) - self.tolerance
-        upper = max(self.values) + self.tolerance
-        return lower <= item <= upper
+        differences_acceptable = [
+            np.abs(val - item) <= self.tolerance for val in self.values
+        ]
+        return any(differences_acceptable)
 
 
 @define(frozen=True, slots=False)
