@@ -17,7 +17,7 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
-from baybe.utils.numeric import DTypeFloatTorch
+from baybe.utils.numerical import DTypeFloatTorch
 
 
 @define

@@ -13,7 +13,7 @@ from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
 from baybe.utils.interval import InfiniteIntervalError, Interval, convert_bounds
-from baybe.utils.numeric import DTypeFloatNumpy
+from baybe.utils.numerical import DTypeFloatNumpy
 
 
 @define(frozen=True, slots=False)
