@@ -45,10 +45,10 @@ if _ONNX_INSTALLED:
     )
     def test_supported_parameter_types(campaign: Campaign, should_raise: bool):
         """Using an ONNX model with unsupported parameters should raise an exception."""
-        run_iterations(campaign, n_iterations=1, batch_quantity=1)
+        run_iterations(campaign, n_iterations=1, batch_size=1)
         context = pytest.raises(TypeError) if should_raise else nullcontext()
         with context:
-            campaign.recommend(batch_quantity=1)
+            campaign.recommend(batch_size=1)
 
 
 def test_validate_architectures():

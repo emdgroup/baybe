@@ -1,4 +1,4 @@
-### Example for full simulation loop using a table-based lookup mechanism
+## Example for full simulation loop using a table-based lookup mechanism
 
 # This example shows a simulation for a direct arylation where all combinations have been measured.
 # This allows us to access information about previously conducted experiments from .xlsx-files.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -21,7 +21,7 @@ from baybe.simulation import simulate_scenarios
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
-#### Parameters for a full simulation loop
+### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
@@ -29,7 +29,7 @@ from baybe.targets import NumericalTarget
 N_DOE_ITERATIONS = 5
 N_MC_ITERATIONS = 3
 
-#### Lookup functionality and data creation
+### Lookup functionality and data creation
 
 # We read the information about the conducted experiments from a .xlsx-file.
 # This data set was obtained from [Shields, B.J., Stevens et al. Nature 590, 89–96 (2021)](https://doi.org/10.1038/s41586-021-03213-y) and contains measurements of a reaction yield,
@@ -48,6 +48,7 @@ except FileNotFoundError:
 
 # As usual, we set up some experiment.
 # Note that we now need to ensure that the names fit the names in the provided .xlsx file!
+
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
     "Butyornitrile": r"CCCC#N",
@@ -77,7 +78,7 @@ dict_ligand = {
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # Here, we create the parameter objects, the searchspace and the objective.
 
@@ -98,7 +99,7 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Constructing campaigns for the simulation loop
+### Constructing campaigns for the simulation loop
 
 # In this example, we create two campaigns.
 # One uses the default recommender and the other one makes random recommendations.
@@ -113,17 +114,19 @@ campaign_rand = Campaign(
 # We can now use the `simulate_scenarios` function to simulate a full experiment.
 # Note that this function enables to run multiple scenarios by a single function call.
 # For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+
 scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 
 results = simulate_scenarios(
     scenarios,
     lookup,
-    batch_quantity=3,
+    batch_size=3,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )
 
 # The following lines plot the results and save the plot in run_full_lookup.png
+
 max_yield = lookup["yield"].max()
 sns.lineplot(
     data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"

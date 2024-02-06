@@ -1,4 +1,4 @@
-### Example for using a mixture use case in a discrete searchspace
+## Example for using a mixture use case in a discrete searchspace
 
 # Example for imposing sum constraints for discrete parameters.
 # The constraints simulate a situation where we want to mix up to three solvents.
@@ -8,7 +8,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import math
 
@@ -28,9 +28,10 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Experiment setup
+### Experiment setup
 
 # This parameter denotes the tolerance with regard to the calculation of the sum.
+
 SUM_TOLERANCE = 1.0
 
 dict_solvents = {
@@ -42,7 +43,9 @@ dict_solvents = {
 solvent1 = SubstanceParameter(name="Solv1", data=dict_solvents, encoding="MORDRED")
 solvent2 = SubstanceParameter(name="Solv2", data=dict_solvents, encoding="MORDRED")
 solvent3 = SubstanceParameter(name="Solv3", data=dict_solvents, encoding="MORDRED")
+
 # Parameters for representing the fraction.
+
 fraction1 = NumericalDiscreteParameter(
     name="Frac1", values=list(np.linspace(0, 100, 12)), tolerance=0.2
 )
@@ -55,7 +58,7 @@ fraction3 = NumericalDiscreteParameter(
 
 parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 
-#### Creating the constraint
+### Creating the constraint
 
 # Since the constraints are required for the creation of the searchspace, we create
 # them next.
@@ -63,6 +66,7 @@ parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
 # The reason is that constraints are normally applied in a specific order.
 # However, the fractions should be invariant under permutations.
 # We thus require an explicit constraint for this.
+
 perm_inv_constraint = DiscretePermutationInvarianceConstraint(
     parameters=["Solv1", "Solv2", "Solv3"],
     dependencies=DiscreteDependenciesConstraint(
@@ -77,6 +81,7 @@ perm_inv_constraint = DiscretePermutationInvarianceConstraint(
 )
 
 # This is now the actual sum constraint
+
 sum_constraint = DiscreteSumConstraint(
     parameters=["Frac1", "Frac2", "Frac3"],
     condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
@@ -84,13 +89,14 @@ sum_constraint = DiscreteSumConstraint(
 
 # The permutation invariance might create duplicate labels.
 # We thus include a constraint to remove them.
+
 no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
     parameters=["Solv1", "Solv2", "Solv3"]
 )
 
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
@@ -98,20 +104,20 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the campaign
+### Creating and printing the campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
-#### Manual verification of the constraint
+### Manual verification of the constraint
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
-    print(f"\n##### ITERATION {kIter+1} #####")
+    print(f"\n#### ITERATION {kIter+1} ####")
 
-    print("### ASSERTS ###")
+    print("## ASSERTS ##")
     print(
         "No. of searchspace entries where fractions do not sum to 100.0:      ",
         campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]]
@@ -164,6 +170,6 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
 
-    rec = campaign.recommend(batch_quantity=5)
+    rec = campaign.recommend(batch_size=5)
     add_fake_results(rec, campaign)
     campaign.add_measurements(rec)

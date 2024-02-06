@@ -24,7 +24,7 @@ from baybe.serialization import (
 def _select_candidates_and_recommend(
     searchspace: SearchSpace,
     recommend_discrete: Callable[[SubspaceDiscrete, pd.DataFrame, int], pd.Index],
-    batch_quantity: int = 1,
+    batch_size: int = 1,
     allow_repeated_recommendations: bool = False,
     allow_recommending_already_measured: bool = True,
 ) -> pd.DataFrame:
@@ -39,7 +39,7 @@ def _select_candidates_and_recommend(
         searchspace: The search space.
         recommend_discrete: The Callable representing the discrete recommendation
             function.
-        batch_quantity: The chosen batch quantity.
+        batch_size: The chosen batch size.
         allow_repeated_recommendations: Allow to make recommendations that were already
             recommended earlier.
         allow_recommending_already_measured: Allow to output recommendations that were
@@ -49,7 +49,7 @@ def _select_candidates_and_recommend(
         The recommendation in experimental representation.
 
     Raises:
-        NotEnoughPointsLeftError: If there are fewer than ``batch_quantity`` points
+        NotEnoughPointsLeftError: If there are fewer than ``batch_size`` points
             left for potential recommendation.
     """
     # IMPROVE: See if the there is a more elegant way to share this functionality
@@ -67,9 +67,9 @@ def _select_candidates_and_recommend(
 
     # Check if enough candidates are left
     # TODO [15917]: This check is not perfectly correct.
-    if len(candidates_comp) < batch_quantity:
+    if len(candidates_comp) < batch_size:
         raise NotEnoughPointsLeftError(
-            f"Using the current settings, there are fewer than {batch_quantity} "
+            f"Using the current settings, there are fewer than {batch_size} "
             "possible data points left to recommend. This can be "
             "either because all data points have been measured at some point "
             "(while 'allow_repeated_recommendations' or "
@@ -78,7 +78,7 @@ def _select_candidates_and_recommend(
         )
 
     # Get recommendations
-    idxs = recommend_discrete(searchspace.discrete, candidates_comp, batch_quantity)
+    idxs = recommend_discrete(searchspace.discrete, candidates_comp, batch_size)
     rec = searchspace.discrete.exp_rep.loc[idxs, :]
 
     # Update metadata
@@ -94,7 +94,7 @@ class RecommenderProtocol(Protocol):
     def recommend(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int,
+        batch_size: int,
         train_x: Optional[pd.DataFrame],
         train_y: Optional[pd.DataFrame],
     ) -> pd.DataFrame:
@@ -102,7 +102,7 @@ class RecommenderProtocol(Protocol):
 
         Args:
             searchspace: The search space in which experiments are being conducted.
-            batch_quantity: The number of points that should be recommended.
+            batch_size: The number of points that should be recommended.
             train_x: The training data used to train the model.
             train_y: The training labels used to train the model.
 
@@ -137,7 +137,7 @@ class NonPredictiveRecommender(Recommender, ABC):
     def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
@@ -147,24 +147,21 @@ class NonPredictiveRecommender(Recommender, ABC):
             return _select_candidates_and_recommend(
                 searchspace,
                 self._recommend_discrete,
-                batch_quantity,
+                batch_size,
                 self.allow_repeated_recommendations,
                 self.allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
-                subspace_continuous=searchspace.continuous,
-                batch_quantity=batch_quantity,
+                subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
-        return self._recommend_hybrid(
-            searchspace=searchspace, batch_quantity=batch_quantity
-        )
+        return self._recommend_hybrid(searchspace=searchspace, batch_size=batch_size)
 
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.Index:
         """Calculate recommendations in a discrete search space.
 
@@ -172,7 +169,7 @@ class NonPredictiveRecommender(Recommender, ABC):
             subspace_discrete: The discrete subspace in which the recommendations
                 should be made.
             candidates_comp: The computational representation of all possible candidates
-            batch_quantity: The size of the calculated batch.
+            batch_size: The size of the calculated batch.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -186,7 +183,7 @@ class NonPredictiveRecommender(Recommender, ABC):
                 searchspace=SearchSpace(
                     discrete=subspace_discrete, continuous=SubspaceContinuous.empty()
                 ),
-                batch_quantity=batch_quantity,
+                batch_size=batch_size,
                 candidates_comp=candidates_comp,
             ).index
         except NotImplementedError as exc:
@@ -199,14 +196,14 @@ class NonPredictiveRecommender(Recommender, ABC):
             ) from exc
 
     def _recommend_continuous(
-        self, subspace_continuous: SubspaceContinuous, batch_quantity: int
+        self, subspace_continuous: SubspaceContinuous, batch_size: int
     ) -> pd.DataFrame:
         """Calculate recommendations in a continuous search space.
 
         Args:
             subspace_continuous: The continuous subspace in which the recommendations
                 should be made.
-            batch_quantity: The size of the calculated batch.
+            batch_size: The size of the calculated batch.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -221,7 +218,7 @@ class NonPredictiveRecommender(Recommender, ABC):
                 searchspace=SearchSpace(
                     discrete=SubspaceDiscrete.empty(), continuous=subspace_continuous
                 ),
-                batch_quantity=batch_quantity,
+                batch_size=batch_size,
             )
         except NotImplementedError as exc:
             raise NotImplementedError(
@@ -235,7 +232,7 @@ class NonPredictiveRecommender(Recommender, ABC):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int,
+        batch_size: int,
         candidates_comp: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Calculate recommendations in a hybrid search space.
@@ -247,7 +244,7 @@ class NonPredictiveRecommender(Recommender, ABC):
         Args:
             searchspace: The hybrid search space in which the recommendations should
                 be made.
-            batch_quantity: The size of the calculated batch.
+            batch_size: The size of the calculated batch.
             candidates_comp: The computational representation of the candidates. This
                 is necessary for using this function as a fallback mechanism for
                 recommendations in discrete search spaces.

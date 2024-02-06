@@ -1,4 +1,4 @@
-### Example for using custom constraints in discrete searchspaces
+## Example for using custom constraints in discrete searchspaces
 
 # This examples shows how a custom constraint can be created for a discrete searchspace.
 # That is, it shows how the user can define a constraint restricting the searchspace.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Experiment setup
+### Experiment setup
 
 # We begin by setting up some parameters for our experiments.
 dict_solvent = {
@@ -49,7 +49,7 @@ concentration = NumericalDiscreteParameter(
 
 parameters = [solvent, speed, temperature, concentration]
 
-#### Creating the constraint
+### Creating the constraint
 
 # The constraints are handled when creating the searchspace object.
 # We thus need to define our constraint first as follows.
@@ -84,11 +84,12 @@ def custom_function(df: pd.DataFrame) -> pd.Series:
 
 
 # We now initialize the `CustomConstraint` with all parameters this function should have access to.
+
 constraint = DiscreteCustomConstraint(
     parameters=["Concentration", "Solvent", "Temperature"], validator=custom_function
 )
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
@@ -96,19 +97,20 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
-#### Creating and printing the campaign
+### Creating and printing the campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
-#### Manual verification of the constraint
+### Manual verification of the constraint
 
 # The following loop performs some recommendations and manually verifies the given constraints.
+
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n##### ITERATION {kIter+1} #####")
+    print(f"\n\n#### ITERATION {kIter+1} ####")
 
-    print("### ASSERTS ###")
+    print("## ASSERTS ##")
     print(
         "Number of entries with water, temp > 120 and concentration > 5:      ",
         (
@@ -146,6 +148,6 @@ for kIter in range(N_ITERATIONS):
         ).sum(),
     )
 
-    rec = campaign.recommend(batch_quantity=5)
+    rec = campaign.recommend(batch_size=5)
     add_fake_results(rec, campaign)
     campaign.add_measurements(rec)

@@ -1,4 +1,4 @@
-### Example for constraints in a hybrid searchspace
+## Example for constraints in a hybrid searchspace
 
 # Example for optimizing a synthetic test functions in a hybrid space with one
 # constraint in the discrete subspace and one constraint in the continuous subspace.
@@ -11,7 +11,7 @@
 # details on this aspect.
 
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 from botorch.test_functions import Rastrigin
@@ -28,7 +28,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
-#### Defining the test function
+### Defining the test function
 
 # See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
 
@@ -38,6 +38,7 @@ TestFunctionClass = Rastrigin
 # Specify a numerical stride for discrete parameters.
 # If you make it too small, it will make calculations expensive.
 # If you make it too large, constraints might not be satisfied anywhere.
+
 STRIDE = 1.0
 
 if not hasattr(TestFunctionClass, "dim"):
@@ -49,10 +50,11 @@ else:
 BOUNDS = TestFunction.bounds
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # Since the searchspace is continuous, we construct `NumericalContinuousParameter`.
 # We use the data of the test function to deduce bounds and number of parameters.
+
 parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k + 1}",
@@ -74,6 +76,7 @@ parameters = [
 # We model the following constraints:
 # `1.0*x_1 + 1.0*x_2 = 1.0`
 # `1.0*x_3 - 1.0*x_4 = 2.0`
+
 constraints = [
     DiscreteSumConstraint(
         parameters=["x_1", "x_2"],
@@ -91,18 +94,18 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Construct the campaign and run some iterations
+### Construct the campaign and run some iterations
 
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
 
-BATCH_QUANTITY = 5
+BATCH_SIZE = 5
 N_ITERATIONS = 2
 
 for k in range(N_ITERATIONS):
-    recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+    recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
     # target value are looked up via the botorch wrapper
     target_values = []
@@ -113,11 +116,12 @@ for k in range(N_ITERATIONS):
 
     campaign.add_measurements(recommendation)
 
-#### Verify the constraints
-measurements = campaign.measurements_exp
+### Verify the constraints
+measurements = campaign.measurements
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`
+
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
     np.allclose(
@@ -126,6 +130,7 @@ print(
 )
 
 # `1.0*x_3 - 1.0*x_4 = 2.0`
+
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",
     np.allclose(

@@ -73,7 +73,7 @@ def simulate_transfer_learning(
     lookup: pd.DataFrame,
     /,
     *,
-    batch_quantity: int = 1,
+    batch_size: int = 1,
     n_doe_iterations: Optional[int] = None,
     groupby: Optional[List[str]] = None,
     n_mc_iterations: int = 1,
@@ -96,7 +96,7 @@ def simulate_transfer_learning(
     Args:
         campaign: See :func:`baybe.simulation.simulate_experiment`.
         lookup: See :func:`baybe.simulation.simulate_scenarios`.
-        batch_quantity: See :func:`baybe.simulation.simulate_scenarios`.
+        batch_size: See :func:`baybe.simulation.simulate_scenarios`.
         n_doe_iterations: See :func:`baybe.simulation.simulate_scenarios`.
         groupby: See :func:`baybe.simulation.simulate_scenarios`.
         n_mc_iterations: See :func:`baybe.simulation.simulate_scenarios`.
@@ -148,7 +148,7 @@ def simulate_transfer_learning(
     return simulate_scenarios(
         scenarios,
         lookup,
-        batch_quantity=batch_quantity,
+        batch_size=batch_size,
         n_doe_iterations=n_doe_iterations,
         groupby=groupby,
         n_mc_iterations=n_mc_iterations,
@@ -161,7 +161,7 @@ def simulate_scenarios(
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
-    batch_quantity: int = 1,
+    batch_size: int = 1,
     n_doe_iterations: Optional[int] = None,
     initial_data: Optional[List[pd.DataFrame]] = None,
     groupby: Optional[List[str]] = None,
@@ -179,7 +179,7 @@ def simulate_scenarios(
     Args:
         scenarios: A dictionary mapping scenario identifiers to DOE specifications.
         lookup: See :func:`baybe.simulation.simulate_experiment`.
-        batch_quantity: See :func:`baybe.simulation.simulate_experiment`.
+        batch_size: See :func:`baybe.simulation.simulate_experiment`.
         n_doe_iterations: See :func:`baybe.simulation.simulate_experiment`.
         initial_data: A list of initial data sets for which the scenarios should be
             simulated.
@@ -231,7 +231,7 @@ def simulate_scenarios(
             _simulate_groupby(
                 scenarios[Scenario],
                 lookup,
-                batch_quantity=batch_quantity,
+                batch_size=batch_size,
                 n_doe_iterations=n_doe_iterations,
                 initial_data=data,
                 groupby=groupby,
@@ -276,7 +276,7 @@ def _simulate_groupby(
     lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
     /,
     *,
-    batch_quantity: int = 1,
+    batch_size: int = 1,
     n_doe_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
     groupby: Optional[List[str]] = None,
@@ -295,7 +295,7 @@ def _simulate_groupby(
     Args:
         campaign: See :func:`baybe.simulation.simulate_experiment`.
         lookup: See :func:`baybe.simulation.simulate_experiment`.
-        batch_quantity: See :func:`baybe.simulation.simulate_experiment`.
+        batch_size: See :func:`baybe.simulation.simulate_experiment`.
         n_doe_iterations: See :func:`baybe.simulation.simulate_experiment`.
         initial_data: See :func:`baybe.simulation.simulate_experiment`.
         groupby: See :func:`baybe.simulation.simulate_scenarios`.
@@ -347,7 +347,7 @@ def _simulate_groupby(
             df_group = simulate_experiment(
                 campaign_group,
                 lookup,
-                batch_quantity=batch_quantity,
+                batch_size=batch_size,
                 n_doe_iterations=n_doe_iterations,
                 initial_data=initial_data,
                 random_seed=random_seed,
@@ -378,8 +378,8 @@ def simulate_experiment(
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
-    batch_quantity: int = 1,
-    n_doe_iterations: int = None,
+    batch_size: int = 1,
+    n_doe_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
     random_seed: int = _DEFAULT_SEED,
     impute_mode: Literal[
@@ -403,7 +403,7 @@ def simulate_experiment(
             settings. can be chosen. The callable is assumed to return either a float
             or a tuple of floats and to accept an arbitrary number of floats as input.
             Finally,``None`` can be chosen, producing fake results.
-        batch_quantity: The number of recommendations to be queried per iteration.
+        batch_size: The number of recommendations to be queried per iteration.
         n_doe_iterations:  The number of iterations to run the design-of-experiments
             loop. If not specified, the simulation proceeds until there are no more
             testable configurations left.
@@ -493,7 +493,7 @@ def simulate_experiment(
     while k_iteration < limit:
         # Get the next recommendations and corresponding measurements
         try:
-            measured = campaign.recommend(batch_quantity=batch_quantity)
+            measured = campaign.recommend(batch_size=batch_size)
         except NotEnoughPointsLeftError:
             # TODO: There can be still N < batch_quantity points left in the search
             #   space. Once the recommender/strategy refactoring is completed,

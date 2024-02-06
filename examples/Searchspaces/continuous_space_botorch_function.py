@@ -1,4 +1,4 @@
-### Example for using a synthetic BoTorch test function in a continuous searchspace
+## Example for using a synthetic BoTorch test function in a continuous searchspace
 
 # Example for using the synthetic test functions in a continuous spaces.
 # All test functions that are available in BoTorch are also available here and wrapped
@@ -10,7 +10,7 @@
 # We thus refer to [`discrete_space`](./discrete_space.md) for details on this aspect.
 
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 from botorch.test_functions import Rastrigin
 
@@ -21,7 +21,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
-#### Defining the test function
+### Defining the test function
 
 # See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
 
@@ -47,10 +47,11 @@ else:
 BOUNDS = TestFunction.bounds
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
 # We use that data of the test function to deduce bounds and number of parameters.
+
 parameters = [
     NumericalContinuousParameter(
         name=f"x_{k+1}",
@@ -64,17 +65,17 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Constructing the campaign and performing a recommendation
+### Constructing the campaign and performing a recommendation
 
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
 
-# Get a recommendation for a fixed batched quantity.
+# Get a recommendation for a fixed batch size.
 
-BATCH_QUANTITY = 3
-recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+BATCH_SIZE = 3
+recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
 # Evaluate the test function.
 # Note that we need iterate through the rows of the recommendation.

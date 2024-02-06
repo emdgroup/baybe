@@ -1,16 +1,16 @@
-### Example for validation of a config file
+## Example for validation of a config file
 
 # This example shows how to load and validate a user defined configuration file.
 # We use the two configuration dictionaries.
 # The first one represents a valid configuration, the second does not.
 
-#### Necessary imports
+### Necessary imports
 
 from cattrs import ClassValidationError
 
 from baybe import Campaign
 
-#### Defining config dictionaries
+### Defining config dictionaries
 
 # Note that the following explicit call `str()` is not strictly necessary.
 # It is included since our method of converting this example to a markdown file does not
@@ -157,13 +157,15 @@ INVALID_CONFIG = str(
 """
 )
 
-#### Verification of the two dictionaries
+### Verification of the two dictionaries
 
-# The first validation should work
+# The first validation should work.
+
 Campaign.validate_config(CONFIG)
 print("The first config seems valid.")
 
 # This should fail.
+
 try:
     Campaign.validate_config(INVALID_CONFIG)
     campaign = Campaign.from_config(INVALID_CONFIG)

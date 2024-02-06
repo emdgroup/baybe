@@ -79,6 +79,7 @@ except Exception as e:
 # autodoc_typehints
 extensions = [
     "sphinx.ext.napoleon",  # Necessary for numpy/google docstrings to work
+    "sphinx.ext.autosectionlabel",  # Automatically create anchors for page sections
     "sphinx.ext.autodoc",  # Crucial for autodocumentation
     "sphinx.ext.autosummary",  # Autosummary
     "sphinx.ext.intersphinx",  # Links to other documentations like numpy, python,...
@@ -87,6 +88,7 @@ extensions = [
     "sphinx_copybutton",  # Copy button for code blocks
 ]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
+autosectionlabel_prefix_document = True  # Make sure autosectionlabels are unique
 
 
 # Tell sphinx where to find the templates
@@ -127,6 +129,10 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._T"),
     (r"py:class", "baybe.utils.basic._U"),
 ]
+
+
+# Ignore the warnings that are given by autosectionlabel
+suppress_warnings = ["autosectionlabel.*"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

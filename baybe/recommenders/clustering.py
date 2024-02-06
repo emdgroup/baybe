@@ -104,7 +104,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         self,
         subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.Index:
         # See base class.
 
@@ -117,7 +117,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
         # Set model parameters and perform fit
         model = self.model_class(
-            **{self.model_cluster_num_parameter_name: batch_quantity},
+            **{self.model_cluster_num_parameter_name: batch_size},
             **self.model_params,
         )
         model.fit(candidates_scaled)

@@ -94,6 +94,19 @@ def test_deprecated_config():
         Campaign.from_config(deprecated_config)
 
 
+@pytest.mark.parametrize("flag", [False, True])
+def test_deprecated_campaign_tolerance_flag(flag):
+    """Constructing a Campaign with the deprecated tolerance flag raises an error."""
+    with pytest.raises(DeprecationError):
+        Campaign(None, None, None, numerical_measurements_must_be_within_tolerance=flag)
+
+
+def test_deprecated_batch_quantity_keyword(campaign):
+    """Using the deprecated batch_quantity keyword raises an error."""
+    with pytest.raises(DeprecationError):
+        campaign.recommend(batch_quantity=5)  # noqa: E999
+
+
 @pytest.mark.parametrize("flag", (True, False))
 def test_deprecated_strategy_allow_flags(flag):
     """Using the deprecated strategy "allow" flags raises an error."""

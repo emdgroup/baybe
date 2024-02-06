@@ -45,7 +45,7 @@ class NumericalUnderflowError(Exception):
 
 
 class OptionalImportError(Exception):
-    """Attempted to import an optional but uninstalled dependency."""
+    """An attempt was made to import an optional but uninstalled dependency."""
 
 
 class DeprecationError(Exception):

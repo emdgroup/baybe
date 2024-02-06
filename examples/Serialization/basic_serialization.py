@@ -1,4 +1,4 @@
-### Example for the serialization of a campaign
+## Example for the serialization of a campaign
 
 # This example shows how to serialize and also de-serialize a campaign.
 # It demonstrates and shows that the "original" and "new" objects behave the same.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports
+### Necessary imports
 
 import numpy as np
 
@@ -22,7 +22,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
-#### Experiment setup
+### Experiment setup
 
 parameters = [
     CategoricalParameter(
@@ -51,7 +51,7 @@ parameters = [
     ),
 ]
 
-#### Creating the campaign
+### Creating the campaign
 
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
@@ -64,9 +64,10 @@ campaign = Campaign(
     ),
 )
 
-#### Serialization and de-serialization
+### Serialization and de-serialization
 
 # We begin by printing the original campaign
+
 print("Original object")
 print(campaign, end="\n" * 3)
 
@@ -74,10 +75,12 @@ print(campaign, end="\n" * 3)
 # This yields a JSON representation in string format.
 # Since it is rather complex, we do not print this string here.
 # Note: Dataframes are encoded via binary parquet and are hence not human-readable.
+
 string = campaign.to_json()
 
 
 # Deserialize the JSON string back to an object.
+
 print("Deserialized object")
 campaign_recreate = Campaign.from_json(string)
 print(campaign_recreate, end="\n" * 3)
@@ -86,13 +89,13 @@ print(campaign_recreate, end="\n" * 3)
 assert campaign == campaign_recreate
 print("Passed basic assertion check!")
 
-#### Comparing recommendations in both objects
+### Comparing recommendations in both objects
 
 # To further show how serialization affects working with campaigns, we will now
 # create and compare some recommendations in both campaigns.
 
-recommendation_orig = campaign.recommend(batch_quantity=2)
-recommendation_recreate = campaign_recreate.recommend(batch_quantity=2)
+recommendation_orig = campaign.recommend(batch_size=2)
+recommendation_recreate = campaign_recreate.recommend(batch_size=2)
 
 print("Recommendation from original object:")
 print(recommendation_orig)

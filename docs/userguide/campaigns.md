@@ -25,11 +25,10 @@ describe the underlying optimization problem at hand:
 | What should be optimized in the campaign?  | `Objective` ([class](baybe.objective.Objective) / [user guide](./objective))              |
 | Which experimental factors can be altered? | `SearchSpace` ([class](baybe.searchspace.core.SearchSpace) / [user guide](./searchspace)) |
 
-Apart from this basic configuration, it is possible to provide additional instructions, 
-such as the specific optimization 
+Apart from this basic configuration, it is possible to further define the specific
+optimization 
 `Strategy`&nbsp;([class](baybe.strategies.base.Strategy) 
-/ [user guide](./strategies)) to be used, as well as other aspects of the campaign 
-(see [here](#AM) for details on `numerical_measurements_must_be_within_tolerance`).
+/ [user guide](./strategies)) to be used.
 
 
 ~~~python
@@ -39,14 +38,8 @@ campaign = Campaign(
     searchspace=searchspace,  # Required
     objective=objective,  # Required
     strategy=strategy,  # Optional
-    numerical_measurements_must_be_within_tolerance=boolean,  # Optional
 )
 ~~~
-
-```{attention}
-Note that we currently also expose other fields via the constructor. 
-This is only temporary, and the corresponding fields should be ignored.
-```
 
 ### Creation from a JSON config
 Instead of using the default constructor, it is also possible to create a `Campaign` 
@@ -64,25 +57,17 @@ For more details and a full exemplary config, we refer to the corresponding
 
 ### Basics
 
-```{attention}
-Requesting recommendations via `recommend` and adding measurements via
-`add_measurements` is the only intended way to interact with a `Campaign` object.
-These methods update the necessary metadata that is crucial for the proper execution of
-a campaign. We recommend to rely on these methods to maintain the integrity and
-reliability of the object.
-```
-
 To obtain a recommendation for the next batch of experiments, we can query the 
 campaign via the [`recommend`](baybe.campaign.Campaign.recommend) method.
-It expects a parameter `batch_quantity` that specifies the desired number of 
+It expects a parameter `batch_size` that specifies the desired number of 
 experiments to be conducted.
 
 ~~~python
-rec = campaign.recommend(batch_quantity=3)
+rec = campaign.recommend(batch_size=3)
 print(rec.to_markdown())
 ~~~
 
-Calling the function returns a `DataFrame` with `batch_quantity` many rows, each
+Calling the function returns a `DataFrame` with `batch_size` many rows, each
 representing a particular parameter configuration from the campaign's search space.
 Thus, the following might be a `DataFrame` returned by `recommend` in a search space
 with the three parameters `Categorial_1`, `Categorical_2` and `Num_disc_1`:
@@ -152,9 +137,9 @@ this is most easily achieved by augmenting the  `DataFrame` returned from that c
 with the respective target columns.
 
 ~~~python
-rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_quantity of 3
+rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_size of 3
 campaign.add_measurements(rec)
-new_rec = campaign.recommend(batch_quantity=5)
+new_rec = campaign.recommend(batch_size=5)
 ~~~
 
 After adding the measurements, the corresponding `DataFrame` thus has the following 
@@ -171,8 +156,8 @@ form:
 For discrete parameters, the parameter values associated with the provided measurements
 are required to fall into a predefined tolerance interval by default, which is
 defined on the level of the individual parameters.
-This requirement can be disabled using the 
-`numerical_measurements_must_be_within_tolerance` flag of the campaign.
+This requirement can be disabled using the method's
+`numerical_measurements_must_be_within_tolerance` flag.
 ```
 
 

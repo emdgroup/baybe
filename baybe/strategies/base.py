@@ -50,7 +50,7 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
     def select_recommender(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> Recommender:
@@ -58,7 +58,7 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
 
         Args:
             searchspace: See :func:`baybe.strategies.base.Strategy.recommend`.
-            batch_quantity: See :func:`baybe.strategies.base.Strategy.recommend`.
+            batch_size: See :func:`baybe.strategies.base.Strategy.recommend`.
             train_x: See :func:`baybe.strategies.base.Strategy.recommend`.
             train_y: See :func:`baybe.strategies.base.Strategy.recommend`.
 
@@ -69,15 +69,13 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
     def recommend(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int = 1,
+        batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
-        recommender = self.select_recommender(
-            searchspace, batch_quantity, train_x, train_y
-        )
-        return recommender.recommend(searchspace, batch_quantity, train_x, train_y)
+        recommender = self.select_recommender(searchspace, batch_size, train_x, train_y)
+        return recommender.recommend(searchspace, batch_size, train_x, train_y)
 
 
 # Register (un-)structure hooks

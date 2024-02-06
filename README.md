@@ -181,7 +181,7 @@ In particular, available measurements can be submitted at any time and also seve
 times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_quantity=3)
+df = campaign.recommend(batch_size=3)
 print(df)
 ```
 

@@ -1,4 +1,4 @@
-### Example for linear constraints in a continuous searchspace
+## Example for linear constraints in a continuous searchspace
 
 # Example for optimizing a synthetic test functions in a continuous space with linear
 # constraints.
@@ -10,8 +10,7 @@
 # We thus refer to [`discrete_space`](./../Searchspaces/discrete_space.md) for
 # details on this aspect.
 
-
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 from botorch.test_functions import Rastrigin
@@ -27,7 +26,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
-#### Defining the test function
+### Defining the test function
 
 # See [`discrete_space`](./../Searchspaces/discrete_space.md) for details.
 
@@ -43,10 +42,11 @@ else:
 BOUNDS = TestFunction.bounds
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 # Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
 # We use that data of the test function to deduce bounds and number of parameters.
+
 parameters = [
     NumericalContinuousParameter(
         name=f"x_{k+1}",
@@ -60,6 +60,7 @@ parameters = [
 # `1.0*x_3 - 1.0*x_4 = 2.0`
 # `1.0*x_1 + 1.0*x_3 >= 1.0`
 # `2.0*x_2 + 3.0*x_4 <= 1.0` which is equivalent to `-2.0*x_2 - 3.0*x_4 >= -1.0`
+
 constraints = [
     ContinuousLinearEqualityConstraint(
         parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0
@@ -80,18 +81,18 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
 )
 
-#### Construct the campaign and run some iterations
+### Construct the campaign and run some iterations
 
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
 )
 
-BATCH_QUANTITY = 3
+BATCH_SIZE = 3
 N_ITERATIONS = 3
 
 for k in range(N_ITERATIONS):
-    recommendation = campaign.recommend(batch_quantity=BATCH_QUANTITY)
+    recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
     # target value are looked up via the botorch wrapper
     target_values = []
@@ -102,11 +103,13 @@ for k in range(N_ITERATIONS):
 
     campaign.add_measurements(recommendation)
 
-#### Verify the constraints
-measurements = campaign.measurements_exp
+### Verify the constraints
+
+measurements = campaign.measurements
 TOLERANCE = 0.01
 
 # `1.0*x_1 + 1.0*x_2 = 1.0`
+
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
     np.allclose(
@@ -115,6 +118,7 @@ print(
 )
 
 # `1.0*x_3 - 1.0*x_4 = 2.0`
+
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",
     np.allclose(
@@ -123,12 +127,14 @@ print(
 )
 
 # `1.0*x_1 + 1.0*x_3 >= 1.0`
+
 print(
     "1.0*x_1 + 1.0*x_3 >= 1.0 satisfied in all recommendations? ",
     (1.0 * measurements["x_1"] + 1.0 * measurements["x_3"]).ge(1.0 - TOLERANCE).all(),
 )
 
 # `2.0*x_2 + 3.0*x_4 <= 1.0`
+
 print(
     "2.0*x_2 + 3.0*x_4 <= 1.0 satisfied in all recommendations? ",
     (2.0 * measurements["x_2"] + 3.0 * measurements["x_4"]).le(1.0 + TOLERANCE).all(),

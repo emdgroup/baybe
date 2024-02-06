@@ -1,4 +1,4 @@
-### Example for surrogate model with a custom architecture using `sklearn`
+## Example for surrogate model with a custom architecture using `sklearn`
 
 # This example shows how to define a `sklearn` model architecture and use it as a surrogate.
 # Please note that the model is not designed to be useful but to demonstrate the workflow.
@@ -6,7 +6,7 @@
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports
+### Necessary imports
 
 from typing import Optional, Tuple
 
@@ -35,15 +35,16 @@ from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Surrogate Definition with BayBE Registration
+### Surrogate Definition with BayBE Registration
 
 # The final estimator class must follow the sklearn estimator interface.
 # More details [here](https://scikit-learn.org/stable/developers/develop.html).
 
 # The choice of using tensors in fit/predict is purely for BayBE, not a requirement.
 
-
 # Final estimator
+
+
 class MeanVarEstimator(BaseEstimator, RegressorMixin):
     """Stack final estimator for mean and variance."""
 
@@ -59,7 +60,10 @@ class MeanVarEstimator(BaseEstimator, RegressorMixin):
 
 
 # Registration
+
 # The class must include `_fit` and `_posterior` functions with the correct signatures.
+
+
 @register_custom_architecture(
     joint_posterior_attr=False, constant_target_catching=False, batchify_posterior=True
 )
@@ -91,7 +95,7 @@ class StackingRegressorSurrogate:
         self.model.fit(train_x, train_y.ravel())
 
 
-#### Experiment Setup
+### Experiment Setup
 
 parameters = [
     CategoricalParameter(
@@ -121,8 +125,9 @@ parameters = [
 ]
 
 
-#### Run DOE iterations with custom surrogate
+### Run DOE iterations with custom surrogate
 # Create campaign
+
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=Objective(
@@ -137,28 +142,31 @@ campaign = Campaign(
 )
 
 # Let's do a first round of recommendation
-recommendation = campaign.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_size=2)
 
 print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
+
 add_fake_results(recommendation, campaign)
 campaign.add_measurements(recommendation)
 
 # Do another round of recommendations
-recommendation = campaign.recommend(batch_quantity=2)
+recommendation = campaign.recommend(batch_size=2)
 
 # Print second round of recommendations
+
 print("Recommendation from campaign:")
 print(recommendation)
 
 print()
 
 
-#### Serialization
+### Serialization
 
 # Serialization of custom models is not supported
+
 try:
     campaign.to_json()
 except RuntimeError as e:

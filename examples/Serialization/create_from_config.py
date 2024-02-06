@@ -1,4 +1,4 @@
-### Example for creating campaigns from configs
+## Example for creating campaigns from configs
 
 # This example shows how to load a configuration file and use it to create a campaign.
 # In such a configuration file, the objects used to create a campaign are represented by
@@ -7,11 +7,11 @@
 # Note that the json format is required for the config file.
 # You can create such a config by providing a  dictionary with `"type":"name of the class"`.
 
-#### Necessary imports
+### Necessary imports
 
 from baybe import Campaign
 
-#### The configuration dictionary as a string
+### The configuration dictionary as a string
 
 # Note that the following explicit call `str()` is not strictly necessary.
 # It is included since our method of converting this example to a markdown file does not
@@ -88,12 +88,13 @@ CONFIG = str(
 """
 )
 
-#### Creating a campaign from the configuration file
+### Creating a campaign from the configuration file
 
 # Although we know in this case that the config represents a valid configuration for a
 # campaign. If the config is invalid an exception will be thrown.
+
 campaign = Campaign.from_config(CONFIG)
 
 # We now perform a recommendation as usual and print it.
-recommendation = campaign.recommend(batch_quantity=3)
+recommendation = campaign.recommend(batch_size=3)
 print(recommendation)

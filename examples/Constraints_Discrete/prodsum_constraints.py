@@ -1,11 +1,11 @@
-### Example for using exclusion constraints incorporating sums and products
+## Example for using exclusion constraints incorporating sums and products
 
 # This examples demonstrates an exclusion constraint using products and sums.
 
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-#### Necessary imports for this example
+### Necessary imports for this example
 
 import numpy as np
 
@@ -25,7 +25,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils import add_fake_results
 
-#### Experiment setup
+### Experiment setup
 
 dict_solvent = {
     "water": "O",
@@ -66,7 +66,7 @@ parameters = [
     num_parameter_6,
 ]
 
-#### Creating the constraints
+### Creating the constraints
 
 # Constraints are used when creating the searchspace object.
 # Thus, they need to be defined prior to the searchspace creation.
@@ -86,7 +86,7 @@ prod_constraint = DiscreteProductConstraint(
 
 constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 
-#### Creating the searchspace and the objective
+### Creating the searchspace and the objective
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
@@ -94,20 +94,20 @@ objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
 )
 
-#### Creating and printing the campaign
+### Creating and printing the campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 
-#### Manual verification of the constraints
+### Manual verification of the constraints
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 
 N_ITERATIONS = 5
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n##### ITERATION {kIter+1} #####")
+    print(f"\n\n#### ITERATION {kIter+1} ####")
 
-    print("### ASSERTS ###")
+    print("## ASSERTS ##")
     print(
         "Number of entries with 1,2-sum above 150:      ",
         (
@@ -136,6 +136,6 @@ for kIter in range(N_ITERATIONS):
         .sum(),
     )
 
-    rec = campaign.recommend(batch_quantity=5)
+    rec = campaign.recommend(batch_size=5)
     add_fake_results(rec, campaign)
     campaign.add_measurements(rec)

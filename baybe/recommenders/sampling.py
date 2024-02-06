@@ -21,7 +21,7 @@ class RandomRecommender(NonPredictiveRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        batch_quantity: int,
+        batch_size: int,
         candidates_comp: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class.
@@ -33,8 +33,8 @@ class RandomRecommender(NonPredictiveRecommender):
                     random recommender to a purely discrete space. Please ensure that
                     this dataframe is not None."""
                 )
-            return candidates_comp.sample(batch_quantity)
-        cont_random = searchspace.continuous.samples_random(n_points=batch_quantity)
+            return candidates_comp.sample(batch_size)
+        cont_random = searchspace.continuous.samples_random(n_points=batch_size)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return cont_random
         disc_candidates, _ = searchspace.discrete.get_candidates(True, True)
@@ -42,8 +42,8 @@ class RandomRecommender(NonPredictiveRecommender):
         # TODO decide mechanism if number of possible discrete candidates is smaller
         #  than batch size
         disc_random = disc_candidates.sample(
-            n=batch_quantity,
-            replace=len(disc_candidates) < batch_quantity,
+            n=batch_size,
+            replace=len(disc_candidates) < batch_size,
         )
 
         cont_random.reset_index(drop=True)
@@ -62,7 +62,7 @@ class FPSRecommender(NonPredictiveRecommender):
         self,
         subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
-        batch_quantity: int,
+        batch_size: int,
     ) -> pd.Index:
         # See base class.
 
@@ -71,5 +71,5 @@ class FPSRecommender(NonPredictiveRecommender):
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
-        ilocs = farthest_point_sampling(candidates_scaled, batch_quantity)
+        ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]
