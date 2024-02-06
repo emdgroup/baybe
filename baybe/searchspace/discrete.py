@@ -117,9 +117,13 @@ class SubspaceDiscrete(SerialMixin):
         comp_rep = self.transform(self.exp_rep)
 
         # Ignore all columns that do not carry any covariate information
-        # TODO[12758]: Should we always drop single value columns without informing the
-        #  user? Can have undesired/unexpected side-effects (see ***REMOVED*** project).
-        comp_rep = df_drop_single_value_columns(comp_rep)
+        # TODO[12758]: This logic needs to be refined, i.e. when should we drop columns
+        #   and when not (can have undesired/unexpected side-effects). Should this be
+        #   configurable at the parameter level? A hotfix was made to exclude task
+        #   parameters, but this needs to be revisited as well.
+        comp_rep = df_drop_single_value_columns(
+            comp_rep, [p.name for p in self.parameters if isinstance(p, TaskParameter)]
+        )
 
         return comp_rep
 
