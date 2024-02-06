@@ -14,11 +14,14 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
-from baybe.utils.chemistry import get_canonical_smiles
 from baybe.utils.numeric import DTypeFloatNumpy
 
+from ..conftest import _CHEM_INSTALLED
 from .utils import interval
+
+if _CHEM_INSTALLED:
+    from baybe.parameters import SubstanceEncoding, SubstanceParameter
+    from baybe.utils.chemistry import get_canonical_smiles
 
 decorrelation = st.one_of(
     st.booleans(),
@@ -42,21 +45,6 @@ def smiles(draw: st.DrawFn):
         next_atom = draw(st.sampled_from("CNO")) if string[-1] == "C" else "C"
         string += next_atom
     return string
-
-
-@st.composite
-def substance_data(draw: st.DrawFn):
-    """Generate data for :class:`baybe.parameters.substance.SubstanceParameter`."""
-    names = draw(st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True))
-    substances = draw(
-        st.lists(
-            smiles().map(get_canonical_smiles),
-            min_size=len(names),
-            max_size=len(names),
-            unique=True,
-        )
-    )
-    return dict(zip(names, substances))
 
 
 @st.composite
@@ -132,18 +120,6 @@ def task_parameter(draw: st.DrawFn):
 
 
 @st.composite
-def substance_parameter(draw: st.DrawFn):
-    """Generate :class:`baybe.parameters.substance.SubstanceParameter`."""
-    name = draw(parameter_name)
-    data = draw(substance_data())
-    decorrelate = draw(decorrelation)
-    encoding = draw(st.sampled_from(SubstanceEncoding))
-    return SubstanceParameter(
-        name=name, data=data, decorrelate=decorrelate, encoding=encoding
-    )
-
-
-@st.composite
 def custom_parameter(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.custom.CustomDiscreteParameter`."""
     name = draw(parameter_name)
@@ -152,14 +128,46 @@ def custom_parameter(draw: st.DrawFn):
     return CustomDiscreteParameter(name=name, data=data, decorrelate=decorrelate)
 
 
+if _CHEM_INSTALLED:
+
+    @st.composite
+    def substance_data(draw: st.DrawFn):
+        """Generate data for :class:`baybe.parameters.substance.SubstanceParameter`."""
+        names = draw(
+            st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True)
+        )
+        substances = draw(
+            st.lists(
+                smiles().map(get_canonical_smiles),
+                min_size=len(names),
+                max_size=len(names),
+                unique=True,
+            )
+        )
+        return dict(zip(names, substances))
+
+    @st.composite
+    def substance_parameter(draw: st.DrawFn):
+        """Generate :class:`baybe.parameters.substance.SubstanceParameter`."""
+        name = draw(parameter_name)
+        data = draw(substance_data())
+        decorrelate = draw(decorrelation)
+        encoding = draw(st.sampled_from(SubstanceEncoding))
+        return SubstanceParameter(
+            name=name, data=data, decorrelate=decorrelate, encoding=encoding
+        )
+
+
 parameter = st.one_of(
     [
         numerical_discrete_parameter(),
         numerical_continuous_parameter(),
         categorical_parameter(),
         task_parameter(),
-        substance_parameter(),
         custom_parameter(),
     ]
+    + [substance_parameter()]
+    if _CHEM_INSTALLED
+    else []
 )
 """A strategy that generates parameters."""
