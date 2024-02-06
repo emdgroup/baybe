@@ -22,6 +22,8 @@ from baybe.parameters.substance import SubstanceParameter
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.interval import InfiniteIntervalError
 
+from ..conftest import _CHEM_INSTALLED
+
 try:  # For python < 3.11, use the exceptiongroup backport
     ExceptionGroup
 except NameError:
@@ -124,6 +126,9 @@ def test_invalid_values_task_parameter(values, active_values, error):
         TaskParameter(name="invalid_values", values=values, active_values=active_values)
 
 
+@pytest.mark.skipif(
+    not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
 @pytest.mark.parametrize(
     ("data", "error"),
     [
@@ -144,6 +149,9 @@ def test_invalid_data_substance_parameter(data, error):
         SubstanceParameter(name="invalid_data", data=data)
 
 
+@pytest.mark.skipif(
+    not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
 def test_invalid_encoding_substance_parameter():
     """Providing an invalid encoding raises an exception."""
     with pytest.raises(ValueError):

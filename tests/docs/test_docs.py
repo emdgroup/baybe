@@ -9,6 +9,7 @@ import pytest
 from baybe.recommenders import RandomRecommender
 from baybe.strategies import TwoPhaseStrategy
 
+from ..conftest import _CHEM_INSTALLED
 from .utils import extract_code_blocks
 
 doc_files = ["README.md", *Path("docs/userguide/").rglob("*.md")]
@@ -17,6 +18,9 @@ doc_files_pseudocode = [Path("docs/userguide/campaigns.md")]
 """Files which contain pseudocode that needs to be checked using fixtures."""
 
 
+@pytest.mark.skipif(
+    not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
 @pytest.mark.parametrize("file", doc_files)
 def test_code_executability(file: Path):
     """The code blocks in the file become a valid python script when concatenated.
