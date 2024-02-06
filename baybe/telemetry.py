@@ -78,7 +78,7 @@ import hashlib
 import logging
 import os
 import socket
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Literal, Union
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -275,7 +275,7 @@ def telemetry_record_recommended_measurement_percentage(
     cached_recommendation: pd.DataFrame,
     measurements: pd.DataFrame,
     parameters: List[Parameter],
-    numerical_measurements_must_be_within_tolerance: bool,
+    on_tolerance_violation: Literal["raise", "warn", "ignore"] = "raise",
 ) -> None:
     """Submit the percentage of added measurements.
 
@@ -293,10 +293,7 @@ def telemetry_record_recommended_measurement_percentage(
         measurements: The measurements which are supposed to be checked against cached
             recommendations.
         parameters: The list of parameters spanning the entire search space.
-        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
-            parameter entries are matched with the reference elements only if there is
-            a match within the parameter tolerance. If ``False``, the closest match
-            is considered, irrespective of the distance.
+        on_tolerance_violation: See :func:`baybe.utils.dataframe.fuzzy_row_match`.
     """
     if is_enabled():
         if len(cached_recommendation) > 0:
@@ -306,7 +303,7 @@ def telemetry_record_recommended_measurement_percentage(
                         cached_recommendation,
                         measurements,
                         parameters,
-                        numerical_measurements_must_be_within_tolerance,
+                        on_tolerance_violation,
                     )
                 )
                 / len(cached_recommendation)
