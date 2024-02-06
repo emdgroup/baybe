@@ -87,7 +87,7 @@ class BayesianRecommender(Recommender, ABC):
         """Create the current acquisition function from provided training data.
 
         The acquisition function is stored in the private attribute
-        `_acquisition_function`.
+        ``_acquisition_function``.
 
         Args:
             searchspace: The search space in which the experiments are to be conducted.

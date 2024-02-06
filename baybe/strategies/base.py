@@ -27,8 +27,8 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
     :class:`baybe.recommenders.base.Recommender`."""
 
     @allow_repeated_recommendations.validator
-    def validate_allow_repeated_recommendations(self, _, value):
-        """Raise a DeprecationError if the flag is used."""
+    def _validate_allow_repeated_recommendations(self, _, value):
+        """Raise a ``DeprecationError`` if the flag is used."""
         if value is not None:
             raise DeprecationError(
                 f"Passing 'allow_repeated_recommendations' to "
@@ -37,8 +37,8 @@ class Strategy(SerialMixin, RecommenderProtocol, ABC):
             )
 
     @allow_recommending_already_measured.validator
-    def validate_allow_recommending_already_measured(self, _, value):
-        """Raise a DeprecationError if the flag is used."""
+    def _validate_allow_recommending_already_measured(self, _, value):
+        """Raise a ``DeprecationError`` if the flag is used."""
         if value is not None:
             raise DeprecationError(
                 f"Passing 'allow_recommending_already_measured' to "

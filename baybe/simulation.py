@@ -499,8 +499,8 @@ def simulate_experiment(
             #   space. Once the recommender/strategy refactoring is completed,
             #   find an elegant way to return those.
             warnings.warn(
-                "The simulation of the campaign ended because there were no more "
-                "candidates left to be recommended.",
+                "The simulation of the campaign ended because because not sufficiently "
+                "many points were left for recommendation",
                 UserWarning,
             )
             break
