@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from cattrs.gen import make_dict_structure_fn
 
 from baybe.serialization import converter
-from baybe.utils import get_subclasses
+from baybe.utils.basic import get_subclasses
 
 if TYPE_CHECKING:
     from baybe.recommenders.base import RecommenderProtocol
