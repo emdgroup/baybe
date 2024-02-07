@@ -253,7 +253,7 @@ class SubspaceDiscrete(SerialMixin):
         significantly faster construction.
 
         Args:
-            parameters: The parameter to be used for the simplex construction.
+            parameters: The parameters to be used for the simplex construction.
             total: The desired sum of the parameter values defining the simplex size.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
