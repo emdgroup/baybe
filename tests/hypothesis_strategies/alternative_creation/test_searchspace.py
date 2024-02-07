@@ -12,6 +12,7 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from tests.hypothesis_strategies.parameters import numerical_discrete_parameter
@@ -110,7 +111,7 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
         unique_by=lambda x: x.name,
     )
 )
-def tests_discrete_space_creation_from_simplex_inner(parameters):
+def test_discrete_space_creation_from_simplex_inner(parameters):
     """Candidates from a simplex space satisfy the simplex constraint."""
     total = 1.0
     tolerance = 1e-6
@@ -120,7 +121,7 @@ def tests_discrete_space_creation_from_simplex_inner(parameters):
     assert (subspace.exp_rep.sum(axis=1) <= total + tolerance).all()
 
 
-def tests_discrete_space_creation_from_simplex_boundary():
+def test_discrete_space_creation_from_simplex_boundary():
     """Candidates from a simplex boundary space satisfy the boundary constraint."""
     total = 1.0
     tolerance = 1e-6
@@ -132,3 +133,19 @@ def tests_discrete_space_creation_from_simplex_boundary():
         parameters, total=total, boundary_only=True, tolerance=tolerance
     )
     assert np.allclose(subspace.exp_rep.sum(axis=1), total, atol=tolerance)
+
+
+def test_discrete_space_creation_from_simplex_mixed():
+    """Additional non-simplex parameters enter in form of a Cartesian product."""
+    total = 1.0
+    parameters = [
+        NumericalDiscreteParameter(name="x1", values=[0.0, 0.5, 1.0]),
+        NumericalDiscreteParameter(name="x2", values=[0.0, 0.5, 1.0]),
+        TaskParameter(name="t1", values=["A", "B"]),
+        TaskParameter(name="t2", values=["A", "B"]),
+    ]
+    subspace = SubspaceDiscrete.from_simplex(
+        parameters, total=total, boundary_only=False
+    )
+    assert len(subspace.exp_rep) == 6 * 4  # <-- (# simplex part) x (# task part)
+    assert not any(subspace.exp_rep.duplicated())

@@ -234,7 +234,7 @@ class SubspaceDiscrete(SerialMixin):
     @classmethod
     def from_simplex(
         cls,
-        parameters: List[NumericalDiscreteParameter],
+        parameters: List[DiscreteParameter],
         total: float,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
@@ -253,7 +253,12 @@ class SubspaceDiscrete(SerialMixin):
         significantly faster construction.
 
         Args:
-            parameters: The parameters to be used for the simplex construction.
+            parameters: The parameters to be used for building the subspace.
+                Parameters of type
+                :class:`baybe.parameters.numerical.NumericalDiscreteParameter`
+                enter the simplex construction while other subclasses of
+                :class:`baybe.parameters.base.DiscreteParameter` enter in form
+                of a Cartesian product.
             total: The maximum sum of the parameter values defining the simplex size.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
@@ -271,15 +276,16 @@ class SubspaceDiscrete(SerialMixin):
             which the parameters are passed to this method, as the configuration space
             is built up incrementally from the parameter sequence.
         """
-        # Validate parameter types
-        if not (all(isinstance(p, NumericalDiscreteParameter) for p in parameters)):
-            raise ValueError(
-                f"All parameters passed to '{cls.from_simplex.__name__}' "
-                f"must be of type '{NumericalDiscreteParameter.__name__}'."
-            )
+        # Separate parameter into numerical and other
+        numerical_parameters = [
+            p for p in parameters if isinstance(p, NumericalDiscreteParameter)
+        ]
+        other_parameters = [
+            p for p in parameters if not isinstance(p, NumericalDiscreteParameter)
+        ]
 
         # Validate non-negativity
-        min_values = [min(p.values) for p in parameters]
+        min_values = [min(p.values) for p in numerical_parameters]
         if not (min(min_values) >= 0.0):
             raise ValueError(
                 f"All parameters passed to '{cls.from_simplex.__name__}' "
@@ -317,7 +323,7 @@ class SubspaceDiscrete(SerialMixin):
         # total value minus the minimum contribution to come from the yet to be added
         # parameters can be already discarded.
         for i, (param, min_to_go) in enumerate(
-            zip_longest(parameters, min_upcoming, fillvalue=0)
+            zip_longest(numerical_parameters, min_upcoming, fillvalue=0)
         ):
             if i == 0:
                 exp_rep = pd.DataFrame({param.name: param.values})
@@ -331,10 +337,15 @@ class SubspaceDiscrete(SerialMixin):
         if boundary_only:
             drop_invalid(exp_rep, total, boundary_only=True)
 
+        # Augment the Cartesian product created from all other parameter types
+        exp_rep = pd.merge(
+            exp_rep, parameter_cartesian_prod_to_df(other_parameters), how="cross"
+        )
+
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
 
-        return cls(parameters=parameters, exp_rep=exp_rep)
+        return cls(parameters=numerical_parameters, exp_rep=exp_rep)
 
     @property
     def is_empty(self) -> bool:
