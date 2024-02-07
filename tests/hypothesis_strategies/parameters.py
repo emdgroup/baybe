@@ -14,14 +14,10 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
 from baybe.utils.numeric import DTypeFloatNumpy
 
-from ..conftest import _CHEM_INSTALLED
 from .utils import interval
-
-if _CHEM_INSTALLED:
-    from baybe.parameters import SubstanceEncoding, SubstanceParameter
-    from baybe.utils.chemistry import get_canonical_smiles
 
 decorrelation = st.one_of(
     st.booleans(),
@@ -50,6 +46,8 @@ def smiles(draw: st.DrawFn):
 @st.composite
 def substance_data(draw: st.DrawFn):
     """Generate data for :class:`baybe.parameters.substance.SubstanceParameter`."""
+    from baybe.utils.chemistry import get_canonical_smiles
+
     names = draw(st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True))
     substances = draw(
         st.lists(
