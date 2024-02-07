@@ -265,6 +265,11 @@ class SubspaceDiscrete(SerialMixin):
 
         Returns:
             The created simplex subspace.
+
+        Note:
+            The achieved efficiency gains can vary depending on the particular order in
+            which the parameters are passed to this method, as the configuration space
+            is built up incrementally from the parameter sequence.
         """
         # Validate parameter types
         if not (all(isinstance(p, NumericalDiscreteParameter) for p in parameters)):
