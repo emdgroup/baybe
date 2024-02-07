@@ -11,13 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Top-level example summaries
 
 ### Changed
-- Optional `chem` dependencies are lazily imported
 - Order of README sections
 
 ### Fixed
 - Several minor issues in documentation
 - Visibility and constructor exposure of `Campaign` attributes that should be private
-- tox `coretest` now uses correct environment and skips impossible tests
+- Optional `chem` dependencies are lazily imported, which improves startup time and
+  fixes `baybe` import from environments containing core dependencies only
+- tox `coretest` now uses correct environment and skips unavailable tests
 
 ### Removed
 - `botorch_function_wrapper` from `baybe.utils` namespace
