@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple
 import numpy as np
 import pandas as pd
 import torch
+from tabulate import tabulate
 from torch import Tensor
 
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
@@ -418,3 +419,42 @@ def fuzzy_row_match(
             inds_matched.extend(inds_found)
 
     return pd.Index(inds_matched)
+
+
+def pretty_printing_dataFrame(df: pd.DataFrame) -> str:
+    """Return a pretyt/readable str Object.
+
+    Args:
+        df: The dataframe to be printed.
+
+    Returns:
+        The values to be printed as a str table.
+    """
+    # select the first 10 rows/values and store them in a str table
+    # TODO: remove hard coded numbers and allow user defined specifications
+
+    str_df = ""
+
+    # Handling with Empty dataFrame
+    if len(df) == 0:
+        return "This attribute is empty. "
+
+    # Extract extra columns
+    if len(df.columns) > 5:
+        df = df.T.head(5).T
+        str_df = (
+            "\n Your dataFrame has too many columns. "
+            + "For a better readable table only the first 5 columns will be printed. \n"
+        )
+
+    # Extract extra rows
+    if len(df) > 10:
+        df = df.head(10)
+        str_df = str_df + (
+            "\n Your dataFrame has too many rows. "
+            + "For a better readable table only the first 10 values will be printed. \n"
+        )
+
+    # Convert the dataFrame to a string table
+    str_df = str_df + tabulate(df, headers="keys", tablefmt="pretty")
+    return str_df
