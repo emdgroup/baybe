@@ -2,6 +2,7 @@
 
 import hypothesis.strategies as st
 import numpy as np
+from altair import Optional
 from hypothesis.extra.pandas import columns, data_frames
 
 from baybe.parameters.categorical import (
@@ -76,14 +77,20 @@ def custom_descriptors(draw: st.DrawFn):
 @st.composite
 def numerical_discrete_parameter(
     draw: st.DrawFn,
+    min_value: Optional[float] = None,
+    max_value: Optional[float] = None,
 ):
     """Generate :class:`baybe.parameters.numerical.NumericalDiscreteParameter`."""
     name = draw(parameter_name)
     values = draw(
         st.lists(
             st.one_of(
-                st.integers(),
-                st.floats(allow_infinity=False, allow_nan=False),
+                st.floats(
+                    allow_infinity=False,
+                    allow_nan=False,
+                    min_value=min_value,
+                    max_value=max_value,
+                ),
             ),
             min_size=2,
             unique=True,

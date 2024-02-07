@@ -1,7 +1,10 @@
 """Test alternative ways of creation not considered in the strategies."""
 
+import hypothesis.strategies as st
+import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import given
 from pytest import param
 
 from baybe.parameters import (
@@ -11,6 +14,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
+from tests.hypothesis_strategies.parameters import numerical_discrete_parameter
 
 # Discrete inputs for testing
 s_x = pd.Series([1, 2, 3], name="x")
@@ -97,3 +101,34 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
     else:
         with pytest.raises(expected):
             SearchSpace.from_dataframe(df, parameters)
+
+
+@given(
+    parameters=st.lists(
+        numerical_discrete_parameter(min_value=0.1, max_value=1.0),
+        min_size=1,
+        unique_by=lambda x: x.name,
+    )
+)
+def tests_discrete_space_creation_from_simplex_inner(parameters):
+    """Candidates from a simplex space satisfy the simplex constraint."""
+    total = 1.0
+    tolerance = 1e-6
+    subspace = SubspaceDiscrete.from_simplex(
+        parameters, total=total, boundary_only=False, tolerance=tolerance
+    )
+    assert (subspace.exp_rep.sum(axis=1) <= total + tolerance).all()
+
+
+def tests_discrete_space_creation_from_simplex_boundary():
+    """Candidates from a simplex boundary space satisfy the boundary constraint."""
+    total = 1.0
+    tolerance = 1e-6
+    parameters = [
+        NumericalDiscreteParameter(name=str(i), values=np.linspace(0.0, 1.0, 5))
+        for i in range(5)
+    ]
+    subspace = SubspaceDiscrete.from_simplex(
+        parameters, total=total, boundary_only=True, tolerance=tolerance
+    )
+    assert np.allclose(subspace.exp_rep.sum(axis=1), total, atol=tolerance)
