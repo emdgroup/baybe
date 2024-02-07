@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Subpackages for the available recommender types
+- Multi-style plotting capabilities for generated example plots
+- JSON file for plotting themes
+- Smoke testing in relevant tox environments
 
 ### Changed
 - `Recommender`s now share their core logic via their base class
