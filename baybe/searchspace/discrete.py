@@ -254,7 +254,7 @@ class SubspaceDiscrete(SerialMixin):
 
         Args:
             parameters: The parameters to be used for the simplex construction.
-            total: The desired sum of the parameter values defining the simplex size.
+            total: The maximum sum of the parameter values defining the simplex size.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
             tolerance: Numerical tolerance used to validate the simplex constraint.
@@ -286,10 +286,17 @@ class SubspaceDiscrete(SerialMixin):
                 f"must have non-negative values only."
             )
 
-        def drop_invalid(df: pd.DataFrame, total: float, equality: bool) -> None:
-            """Drop configuration that violate the simplex constraint."""
+        def drop_invalid(df: pd.DataFrame, total: float, boundary_only: bool) -> None:
+            """Drop rows that violate a specified simplex constraint.
+
+            Args:
+                df: The dataframe whose rows should satisfy the simplex constraint.
+                total: The maximum row sum defining the simplex size.
+                boundary_only: Flag to control if the points represented by the rows
+                    may lie inside the simplex or on its boundary only.
+            """
             row_sums = df.sum(axis=1)
-            if equality:
+            if boundary_only:
                 rows_to_drop = row_sums[
                     (row_sums < total - tolerance) | (row_sums > total + tolerance)
                 ].index
@@ -318,11 +325,11 @@ class SubspaceDiscrete(SerialMixin):
                 exp_rep = pd.merge(
                     exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
                 )
-            drop_invalid(exp_rep, total - min_to_go, equality=False)
+            drop_invalid(exp_rep, total - min_to_go, boundary_only=False)
 
         # If requested, keep only the boundary values
         if boundary_only:
-            drop_invalid(exp_rep, total, equality=True)
+            drop_invalid(exp_rep, total, boundary_only=True)
 
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
