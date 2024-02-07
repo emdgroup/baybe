@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `mypy` for campaign, constraints and telemetry
 - Top-level example summaries
 - `RecommenderProtocol` as common interface for `Strategy` and `Recommender`
+- `SubspaceDiscrete.from_simplex` convenience constructor
 
 ### Changed
 - Order of README sections
