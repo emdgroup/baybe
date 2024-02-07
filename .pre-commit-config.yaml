@@ -18,5 +18,6 @@ repos:
   rev: v1.16.23
   hooks:
     - id: typos
+      exclude_types: [svg]
       args: [] # empty args to avoid typos automatically correcting the typos
 
