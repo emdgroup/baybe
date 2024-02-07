@@ -230,6 +230,85 @@ class SubspaceDiscrete(SerialMixin):
 
         return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
 
+    @classmethod
+    def from_simplex(
+        cls,
+        parameters: List[NumericalDiscreteParameter],
+        total: float,
+        boundary_only: bool = False,
+        tolerance: float = 1e-6,
+    ) -> SubspaceDiscrete:
+        """Efficiently create discrete simplex subspaces.
+
+        The same result can be achieved using
+        :meth:`baybe.searchspace.discrete.from_product` in combination with appropriate
+        sum constraints. However, such an approach is inefficient because the Cartesian
+        product involved creates an exponentially large set of candidates, most of
+        which do not satisfy the simplex constraints and must be subsequently be
+        filtered out by the method.
+
+        By contrast, this method uses a shortcut that removes invalid candidates
+        already during the creation of parameter combinations, resulting in a
+        significantly faster construction.
+
+        Args:
+            parameters: The parameter to be used for the simplex construction.
+            total: The desired sum of the parameter values defining the simplex size.
+            boundary_only: Flag determining whether to keep only parameter
+                configurations on the simplex boundary.
+            tolerance: Numerical tolerance used to validate the simplex constraint.
+
+        Raises:
+            ValueError: If the passed parameters are not suitable for a simplex
+                construction.
+
+        Returns:
+            The created simplex subspace.
+        """
+        # Validate parameter types
+        if not (all(isinstance(p, NumericalDiscreteParameter) for p in parameters)):
+            raise ValueError(
+                f"All parameters passed to '{cls.from_simplex.__name__}' "
+                f"must be of type '{NumericalDiscreteParameter.__name__}'."
+            )
+
+        # Validate non-negativity
+        min_values = [min(p.values) for p in parameters]
+        if not (min(min_values) >= 0.0):
+            raise ValueError(
+                f"All parameters passed to '{cls.from_simplex.__name__}' "
+                f"must have non-negative values only."
+            )
+
+        def drop_invalid(df: pd.DataFrame, equality: bool) -> None:
+            """Drop configuration that violate the simplex constraint."""
+            row_sums = df.sum(axis=1)
+            if equality:
+                rows_to_drop = row_sums[
+                    (row_sums < total - tolerance) | (row_sums > total + tolerance)
+                ].index
+            else:
+                rows_to_drop = row_sums[row_sums > total + tolerance].index
+            df.drop(rows_to_drop, inplace=True)
+
+        # Incrementally build up the space, dropping invalid configuration along the way
+        exp_rep = pd.DataFrame({parameters[0].name: parameters[0].values})
+        drop_invalid(exp_rep, equality=False)
+        for param in parameters[1:]:
+            exp_rep = pd.merge(
+                exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
+            )
+            drop_invalid(exp_rep, equality=False)
+
+        # If requested, keep only the boundary values
+        if boundary_only:
+            drop_invalid(exp_rep, equality=True)
+
+        # Reset the index
+        exp_rep.reset_index(drop=True, inplace=True)
+
+        return cls(parameters=parameters, exp_rep=exp_rep)
+
     @property
     def is_empty(self) -> bool:
         """Return whether this subspace is empty."""
