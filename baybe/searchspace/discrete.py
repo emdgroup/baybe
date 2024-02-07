@@ -241,11 +241,11 @@ class SubspaceDiscrete(SerialMixin):
         """Efficiently create discrete simplex subspaces.
 
         The same result can be achieved using
-        :meth:`baybe.searchspace.discrete.from_product` in combination with appropriate
-        sum constraints. However, such an approach is inefficient because the Cartesian
-        product involved creates an exponentially large set of candidates, most of
-        which do not satisfy the simplex constraints and must be subsequently be
-        filtered out by the method.
+        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.from_product` in combination
+        with appropriate sum constraints. However, such an approach is inefficient
+        because the Cartesian product involved creates an exponentially large set of
+        candidates, most of which do not satisfy the simplex constraints and must be
+        subsequently be filtered out by the method.
 
         By contrast, this method uses a shortcut that removes invalid candidates
         already during the creation of parameter combinations, resulting in a
