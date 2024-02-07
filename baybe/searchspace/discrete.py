@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from itertools import zip_longest
 from typing import Any, Collection, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
@@ -280,7 +281,7 @@ class SubspaceDiscrete(SerialMixin):
                 f"must have non-negative values only."
             )
 
-        def drop_invalid(df: pd.DataFrame, equality: bool) -> None:
+        def drop_invalid(df: pd.DataFrame, total: float, equality: bool) -> None:
             """Drop configuration that violate the simplex constraint."""
             row_sums = df.sum(axis=1)
             if equality:
@@ -291,18 +292,32 @@ class SubspaceDiscrete(SerialMixin):
                 rows_to_drop = row_sums[row_sums > total + tolerance].index
             df.drop(rows_to_drop, inplace=True)
 
-        # Incrementally build up the space, dropping invalid configuration along the way
-        exp_rep = pd.DataFrame({parameters[0].name: parameters[0].values})
-        drop_invalid(exp_rep, equality=False)
-        for param in parameters[1:]:
-            exp_rep = pd.merge(
-                exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
-            )
-            drop_invalid(exp_rep, equality=False)
+        # Get the minimum sum contributions to come in the upcoming joins (the first
+        # item is the minimum possible sum of all parameters starting from the
+        # second parameter, the second item is the minimum possible sum starting from
+        # the third parameter, and so on ...)
+        min_upcoming = np.cumsum(min_values[:0:-1])[::-1]
+
+        # Incrementally build up the space, dropping invalid configuration along the
+        # way. More specifically: after having cross-joined a new parameter, there must
+        # be enough "room" left for the remaining parameters to fit. Hence,
+        # configurations of the current parameter subset that exceed the desired
+        # total value minus the minimum contribution to come from the yet to be added
+        # parameters can be already discarded.
+        for i, (param, min_to_go) in enumerate(
+            zip_longest(parameters, min_upcoming, fillvalue=0)
+        ):
+            if i == 0:
+                exp_rep = pd.DataFrame({param.name: param.values})
+            else:
+                exp_rep = pd.merge(
+                    exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
+                )
+            drop_invalid(exp_rep, total - min_to_go, equality=False)
 
         # If requested, keep only the boundary values
         if boundary_only:
-            drop_invalid(exp_rep, equality=True)
+            drop_invalid(exp_rep, total, equality=True)
 
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
