@@ -12,12 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Order of README sections
+- Optional `chem` dependencies are lazily imported, which improves startup time
 
 ### Fixed
 - Several minor issues in documentation
 - Visibility and constructor exposure of `Campaign` attributes that should be private
-- Optional `chem` dependencies are lazily imported, which improves startup time and
-  fixes `baybe` import from environments containing core dependencies only
+- Failing `baybe` import from environments containing only core dependencies caused by
+  eagerly loading `chem` dependencies
 - tox `coretest` now uses correct environment and skips unavailable tests
 
 ### Removed
