@@ -15,9 +15,11 @@ from baybe.constraints import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.searchspace.discrete import parameter_cartesian_prod_to_df
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.numerical import DTypeFloatTorch
+from baybe.utils.dataframe import pretty_printing_dataFrame
 
 
 @define
@@ -41,6 +43,34 @@ class SubspaceContinuous(SerialMixin):
         factory=list
     )
     """List of linear inequality constraints."""
+
+    def __repr__(self) -> str:
+        """Override the standard __repr__."""
+        # Convert the lists to dataFrames to be able to use pretty_printing
+        par_df = parameter_cartesian_prod_to_df(self.parameters)
+        const_lin_eq_df = parameter_cartesian_prod_to_df(self.constraints_lin_eq)
+        const_lin_ineq_df = parameter_cartesian_prod_to_df(self.constraints_lin_ineq)
+
+        # Put all attributes of the continuous class in one string
+        continuous_str = (
+            "\n\n \033[1m ***** The continuous Searchspace *****\n\n \033[0m"
+            + "\033[1m Continuous Parameters \033[0m"
+            + " \n"
+            + pretty_printing_dataFrame(par_df)
+            + "\n"
+            + "\n "
+            + "\033[1m List of linear equality constraints \033[0m"
+            + " \n"
+            + pretty_printing_dataFrame(const_lin_eq_df)
+            + "\n"
+            + "\n"
+            + "\033[1m List of linear inequality constraints \033[0m"
+            + " \n"
+            + pretty_printing_dataFrame(const_lin_ineq_df)
+            + "\n"
+        )
+
+        return continuous_str
 
     @classmethod
     def empty(cls) -> SubspaceContinuous:
