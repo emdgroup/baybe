@@ -65,6 +65,12 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
     """The (potentially empty) continuous subspace of the overall search space."""
 
+    def __repr__(self) -> str:
+        """Override the standard __repr__."""
+        print("\n\n \033[1m ***** SEARCH SPACE *****\n \033[0m")
+
+        return str(self.discrete) + str(self.continuous)
+
     def __attrs_post_init__(self):
         """Perform validation and record telemetry values."""
         validate_parameters(self.parameters)
