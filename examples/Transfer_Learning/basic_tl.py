@@ -1,10 +1,12 @@
-## Example for a basic example using the transfer learning capabilities
+## Transfer Learning
 
-# This example shows how to use BayBE's transfer learning capabilities.
-# We construct a campaign, give it access to data from a related, but different task
-# and show how this additional information boosts performance.
+# This example demonstrates BayBE's
+# {doc}`Transfer Learning </userguide/transfer_learning>` capabilities:
+# * We construct a campaign,
+# * give it access to data from a related but different task,
+# * and show how this additional information boosts optimization performance.
 
-### Necessary imports for this example
+### Imports
 
 import json
 import os
@@ -26,44 +28,51 @@ from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
-### Parameters for the example
+### Settings
 
-# These parameters are used to set up the simulation loop. They define the dimension of
-# the test problem, the number of Monte Carlo runs, the number of DoE iteration, the
-# batch quantity and the number of points per dimension.
-# Note that this example checks whether the environment variable `SMOKE_TEST` is set.
-# If this is the case, lower values are used for most of the parameters to significantly
-# accelerate the calculation.
-
+# The following settings are used to set up the problem:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-DIMENSION = 3
-BATCH_SIZE = 1
-N_MC_ITERATIONS = 5 if SMOKE_TEST else 75
-N_DOE_ITERATIONS = 5 if SMOKE_TEST else 10
-POINTS_PER_DIM = 5 if SMOKE_TEST else 5
+DIMENSION = 3  # input dimensionality of the test function
+BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
+N_MC_ITERATIONS = 5 if SMOKE_TEST else 75  # number of Monte Carlo runs
+N_DOE_ITERATIONS = 5 if SMOKE_TEST else 10  # number of DOE iterations
+POINTS_PER_DIM = 5 if SMOKE_TEST else 5  # number of grid points per input dimension
 
-### Defining the tasks
+### Defining the Tasks
 
-# We use the Hartmann test function from botorch.
-# In this example, we assume that we have data available from the negated version of
-# this function, while we use the original as the task that we want to optimize.
-# We define a dictionary mapping the names of the functions to the objects since this
-# will be useful later.
+# For our example, we consider the "Hartmann" test function.
+#
+# More specifically, to demonstrate the transfer learning mechanism, we consider the
+# problem of optimizing the function using training data from its negated version.
+# The used model is of course not aware of this relationship but needs to infer it
+# from the data gathered during the optimization process.
+
 test_functions = {
-    "Hartmann": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
-    "Negative_Hartmann": botorch_function_wrapper(Hartmann(dim=DIMENSION, negate=True)),
+    "Test_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
+    "Training_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION, negate=True)),
 }
 
-### Creating the searchspace and the objective
+### Creating the Optimization Objective
 
-# The bounds of the search space are defined by the test function.
+# Both test functions have a single output that is to be minimized.
+# The corresponding [Objective](baybe.objective.Objective)
+# is created as follows:
+
+objective = Objective(
+    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
+)
+
+### Creating the Searchspace
+
+# The bounds of the search space are dictated by the test function:
 
 BOUNDS = Hartmann(dim=DIMENSION).bounds
 
-# We define one numerical discrete parameters per dimension, as well as a `TaskParameter`.
-# This parameter contains the information about the different tasks that we have in this
-# transfer learning example.
+# First, we define one
+# [NumericalDiscreteParameter](baybe.parameters.numerical.NumericalDiscreteParameter)
+# per input dimension of the test function:
+
 discrete_params = [
     NumericalDiscreteParameter(
         name=f"x{d}",
@@ -72,29 +81,41 @@ discrete_params = [
     for d, (lower, upper) in enumerate(BOUNDS.T)
 ]
 
-# Since we have two different tasks but only want to optimize for one of them, we use
-# the `active_values` keyword to define the parameter for which we want to obtain
-# recommendations.
-# For more details on this keyword, we refer to the [userguide](./../../userguide/transfer_learning.md).
+# ```{note}
+# While we could also optimize the function using continuous parameters,
+# we use discrete parameters here so that the grid of candidate points is
+# aligned with the training data grid (see below).
+# This allows for an easy interpretation of the final plot,
+# as the percentages shown directly relate to the fraction of candidates
+# for which there was training data revealed.
+# ```
+
+# Next, we define a
+# [TaskParameter](baybe.parameters.discrete.TaskParameter) to encode the task context,
+# which allows the model to establish a relationship between the training data and
+# the data collected during the optimization process.
+# Because we want to obtain recommendations only for the test function, we explicitly
+# pass the `active_values` keyword.
 
 task_param = TaskParameter(
     name="Function",
-    values=("Hartmann", "Negative_Hartmann"),
-    active_values=["Hartmann"],
+    values=["Test_Function", "Training_Function"],
+    active_values=["Test_Function"],
 )
 
-# We now create the searchspace, objective and campaign.
+# With the parameters at hand, we can now create our search space.
 
 parameters = [*discrete_params, task_param]
 searchspace = SearchSpace.from_product(parameters=parameters)
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
 
+# (Lookup)=
+### Generating Lookup Tables
 
-### Generating lookup tables
-
-# We generate two lookup tables for the values of the two Hartmann functions.
+# We generate two lookup tables containing the target values of both test
+# functions at the given parameter grid.
+# Parts of one lookup serve as the training data for the model.
+# The other lookup is used as the loop-closing element, providing the target values of
+# the test functions on demand.
 
 grid = np.meshgrid(*[p.values for p in discrete_params])
 
@@ -104,13 +125,13 @@ for function_name, function in test_functions.items():
     lookup["Target"] = lookup.apply(function, axis=1)
     lookup["Function"] = function_name
     lookups[function_name] = lookup
-lookup_training_task = lookups["Negative_Hartmann"]
-lookup_test_task = lookups["Hartmann"]
+lookup_training_task = lookups["Training_Function"]
+lookup_test_task = lookups["Test_Function"]
 
-### Performing the simulation loop
+### Simulation Loop
 
-# We now perform the simulation for different percentages of available data.
-# The results are concatenated and then plotted.
+# We now simulate campaigns for different amounts of training data unveiled,
+# to show the impact of transfer learning on the optimization performance:
 
 results: List[pd.DataFrame] = []
 for p in (0.01, 0.02, 0.05, 0.08, 0.2):
@@ -125,7 +146,8 @@ for p in (0.01, 0.02, 0.05, 0.08, 0.2):
     )
     results.append(result_fraction)
 
-# For comparison, we also optimize the function without using any initial data.
+# For comparison, we also optimize the function without using any initial data:
+
 result_fraction = simulate_scenarios(
     {"0.0": Campaign(searchspace=searchspace, objective=objective)},
     lookup_test_task,
@@ -133,13 +155,9 @@ result_fraction = simulate_scenarios(
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )
-
 results = pd.concat([result_fraction, *results])
 
-# The following code creates up to 3 different plots for the results, called "light", "dark", and "check".
-# The "light" and "dark" plots are meant to be included in the documentation.
-# They are only saved if they do not already exist.
-# The "check" plot is always created and thus overrides an already existing corresponding plot.
+# All that remains is to visualize the results:
 
 themes = json.load(open("plotting_themes.json"))
 for theme in themes:
