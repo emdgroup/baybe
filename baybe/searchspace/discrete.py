@@ -23,7 +23,11 @@ from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import df_drop_single_value_columns, fuzzy_row_match, pretty_printing_dataFrame
+from baybe.utils.dataframe import (
+    df_drop_single_value_columns,
+    fuzzy_row_match,
+    pretty_printing_dataFrame,
+)
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
@@ -62,13 +66,15 @@ class SubspaceDiscrete(SerialMixin):
 
     def __repr__(self) -> str:
         """Override the standard __repr__."""
+        if self.is_empty:
+            return ""
         # Convert the lists to dataFrames to be able to use pretty_printing
         par_df = parameter_cartesian_prod_to_df(self.parameters)
         const_df = parameter_cartesian_prod_to_df(self.constraints)
 
         # Put all attributes of the discrete class in one string.
         discrete_str = (
-            "\n"
+            "\n\n \033[1m |--> The discrete search space \n\n \033[0m"
             + "\033[1m Discrete Parameters \033[0m"
             + " \n"
             + pretty_printing_dataFrame(par_df)
@@ -79,24 +85,24 @@ class SubspaceDiscrete(SerialMixin):
             + pretty_printing_dataFrame(self.exp_rep)
             + "\n"
             + "\n"
-            + "\033[1m  Metadata \033[0m"
+            + "\033[1m Metadata \033[0m"
             + " \n"
             + pretty_printing_dataFrame(self.metadata)
             + "\n"
             + "\n"
-            + "\033[1m  Empty Encoding Used: \033[0m"
+            + "\033[1m Empty Encoding Used: \033[0m"
             + str(self.empty_encoding)
             + "\n"
             + "\n"
-            + "\033[1m  Constraints \033[0m"
+            + "\033[1m Constraints \033[0m"
             + "  \n"
             + pretty_printing_dataFrame(const_df)
             + "\n"
             + "\n"
-            + "\033[1m  Computational representation of the space \033[0m"
+            + "\033[1m Computational representation of the space \033[0m"
             + " \n"
             + pretty_printing_dataFrame(self.comp_rep)
-            + "\n"
+            + "\n\n"
         )
 
         return discrete_str
