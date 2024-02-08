@@ -10,6 +10,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,6 +38,7 @@ from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 DIMENSION = 3
+BATCH_SIZE = 1
 N_MC_ITERATIONS = 5 if SMOKE_TEST else 75
 N_DOE_ITERATIONS = 5 if SMOKE_TEST else 10
 POINTS_PER_DIM = 5 if SMOKE_TEST else 5
@@ -46,31 +48,28 @@ POINTS_PER_DIM = 5 if SMOKE_TEST else 5
 # We use the Hartmann test function from botorch.
 # In this example, we assume that we have data available from the negated version of
 # this function, while we use the original as the task that we want to optimize.
-hartmann = botorch_function_wrapper(Hartmann(dim=DIMENSION))
-negative_hartmann = botorch_function_wrapper(Hartmann(dim=DIMENSION, negate=True))
-
 # We define a dictionary mapping the names of the functions to the objects since this
 # will be useful later.
 test_functions = {
-    "Hartmann": hartmann,
-    "Negative_Hartmann": negative_hartmann,
+    "Hartmann": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
+    "Negative_Hartmann": botorch_function_wrapper(Hartmann(dim=DIMENSION, negate=True)),
 }
 
 ### Creating the searchspace and the objective
 
 # The bounds of the search space are defined by the test function.
 
-BOUNDS = Hartmann().bounds
+BOUNDS = Hartmann(dim=DIMENSION).bounds
 
 # We define one numerical discrete parameters per dimension, as well as a `TaskParameter`.
 # This parameter contains the information about the different tasks that we have in this
 # transfer learning example.
-parameters = [
+discrete_params = [
     NumericalDiscreteParameter(
-        name=f"x{k}",
-        values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
+        name=f"x{d}",
+        values=np.linspace(lower, upper, POINTS_PER_DIM),
     )
-    for k in range(DIMENSION)
+    for d, (lower, upper) in enumerate(BOUNDS.T)
 ]
 
 # Since we have two different tasks but only want to optimize for one of them, we use
@@ -83,10 +82,10 @@ task_param = TaskParameter(
     values=("Hartmann", "Negative_Hartmann"),
     active_values=["Hartmann"],
 )
-parameters.append(task_param)
 
 # We now create the searchspace, objective and campaign.
 
+parameters = [*discrete_params, task_param]
 searchspace = SearchSpace.from_product(parameters=parameters)
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
@@ -97,46 +96,45 @@ objective = Objective(
 
 # We generate two lookup tables for the values of the two Hartmann functions.
 
-grid = np.meshgrid(*[parameters[k].values for k in range(DIMENSION)])
+grid = np.meshgrid(*[p.values for p in discrete_params])
 
-lookup_functions = {}
-
-for function in test_functions:
-    hartmann_function = test_functions[function]  # Get actual function
-    lookup_tmp = pd.DataFrame({f"x{k}": grid[k].flatten() for k in range(DIMENSION)})
-    lookup_tmp["Target"] = lookup_tmp.apply(hartmann_function, axis=1)
-    lookup_tmp["Function"] = function
-    lookup_functions[function] = lookup_tmp
+lookups: Dict[str, pd.DataFrame] = {}
+for function_name, function in test_functions.items():
+    lookup = pd.DataFrame({f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)})
+    lookup["Target"] = lookup.apply(function, axis=1)
+    lookup["Function"] = function_name
+    lookups[function_name] = lookup
+lookup_training_task = lookups["Negative_Hartmann"]
+lookup_test_task = lookups["Hartmann"]
 
 ### Performing the simulation loop
 
 # We now perform the simulation for different percentages of available data.
 # The results are concatenated and then plotted.
 
-results = []
-lookup_training = lookup_functions["Negative_Hartmann"]
+results: List[pd.DataFrame] = []
 for p in (0.01, 0.02, 0.05, 0.08, 0.2):
     campaign = Campaign(searchspace=searchspace, objective=objective)
-    initial_data = [lookup_training.sample(frac=p) for _ in range(N_MC_ITERATIONS)]
-    tmp_results = simulate_scenarios(
+    initial_data = [lookup_training_task.sample(frac=p) for _ in range(N_MC_ITERATIONS)]
+    result_fraction = simulate_scenarios(
         {f"{100*p}": campaign},
-        lookup_functions["Hartmann"],
+        lookup_test_task,
         initial_data=initial_data,
-        batch_size=1,
+        batch_size=BATCH_SIZE,
         n_doe_iterations=N_DOE_ITERATIONS,
     )
-    results.append(tmp_results)
+    results.append(result_fraction)
 
 # For comparison, we also optimize the function without using any initial data.
-tmp_results = simulate_scenarios(
-    {"0": Campaign(searchspace=searchspace, objective=objective)},
-    lookup_functions["Hartmann"],
-    batch_size=1,
+result_fraction = simulate_scenarios(
+    {"0.0": Campaign(searchspace=searchspace, objective=objective)},
+    lookup_test_task,
+    batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )
 
-results = pd.concat([tmp_results, *results])
+results = pd.concat([result_fraction, *results])
 
 # The following code creates up to 3 different plots for the results, called "light", "dark", and "check".
 # The "light" and "dark" plots are meant to be included in the documentation.
