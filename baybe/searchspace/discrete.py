@@ -284,6 +284,11 @@ class SubspaceDiscrete(SerialMixin):
             p for p in parameters if not isinstance(p, NumericalDiscreteParameter)
         ]
 
+        # Construct the product part of the space
+        product_space = parameter_cartesian_prod_to_df(other_parameters)
+        if not numerical_parameters:
+            return cls(parameters=other_parameters, exp_rep=product_space)
+
         # Validate non-negativity
         min_values = [min(p.values) for p in numerical_parameters]
         if not (min(min_values) >= 0.0):
@@ -339,9 +344,7 @@ class SubspaceDiscrete(SerialMixin):
 
         # Augment the Cartesian product created from all other parameter types
         if other_parameters:
-            exp_rep = pd.merge(
-                exp_rep, parameter_cartesian_prod_to_df(other_parameters), how="cross"
-            )
+            exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
