@@ -104,6 +104,7 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
             SearchSpace.from_dataframe(df, parameters)
 
 
+@pytest.mark.parametrize("boundary_only", (False, True))
 @given(
     parameters=st.lists(
         numerical_discrete_parameter(min_value=0.0, max_value=1.0),
@@ -112,30 +113,29 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
         unique_by=lambda x: x.name,
     )
 )
-def test_discrete_space_creation_from_simplex_inner(parameters):
+def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
     """Candidates from a simplex space satisfy the simplex constraint."""
+    tolerance = 1e-6
     max_possible = sum(max(p.values) for p in parameters)
     min_possible = sum(min(p.values) for p in parameters)
-    total = (max_possible + min_possible) / 2
-    tolerance = 1e-6
-    subspace = SubspaceDiscrete.from_simplex(
-        parameters, total=total, boundary_only=False, tolerance=tolerance
-    )
-    assert (subspace.exp_rep.sum(axis=1) <= total + tolerance).all()
 
+    if boundary_only:
+        # Ensure there exists configurations both inside and outside the simplex
+        total = (max_possible + min_possible) / 2
+    else:
+        # We use the maximum parameter sum because it can be exactly achieved (for other
+        # values, except for the minimum, it's not guaranteed there actually exists
+        # a parameter combination that can exactly hit it)
+        total = max_possible
 
-def test_discrete_space_creation_from_simplex_boundary():
-    """Candidates from a simplex boundary space satisfy the boundary constraint."""
-    total = 1.0
-    tolerance = 1e-6
-    parameters = [
-        NumericalDiscreteParameter(name=str(i), values=np.linspace(0.0, 1.0, 5))
-        for i in range(5)
-    ]
     subspace = SubspaceDiscrete.from_simplex(
-        parameters, total=total, boundary_only=True, tolerance=tolerance
+        parameters, total=total, boundary_only=boundary_only, tolerance=tolerance
     )
-    assert np.allclose(subspace.exp_rep.sum(axis=1), total, atol=tolerance)
+
+    if boundary_only:
+        assert np.allclose(subspace.exp_rep.sum(axis=1), total, atol=tolerance)
+    else:
+        assert (subspace.exp_rep.sum(axis=1) <= total + tolerance).all()
 
 
 def test_discrete_space_creation_from_simplex_mixed():
