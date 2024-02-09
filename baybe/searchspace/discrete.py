@@ -234,8 +234,9 @@ class SubspaceDiscrete(SerialMixin):
     @classmethod
     def from_simplex(
         cls,
-        parameters: List[DiscreteParameter],
         total: float,
+        simplex_parameters: List[NumericalDiscreteParameter],
+        product_parameters: Optional[List[DiscreteParameter]] = None,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
     ) -> SubspaceDiscrete:
@@ -253,13 +254,10 @@ class SubspaceDiscrete(SerialMixin):
         significantly faster construction.
 
         Args:
-            parameters: The parameters to be used for building the subspace.
-                Parameters of type
-                :class:`baybe.parameters.numerical.NumericalDiscreteParameter`
-                enter the simplex construction while other subclasses of
-                :class:`baybe.parameters.base.DiscreteParameter` enter in form
-                of a Cartesian product.
             total: The maximum sum of the parameter values defining the simplex size.
+            simplex_parameters: The parameters to be used for the simplex construction.
+            product_parameters: Optional parameters that enter in form of a Cartesian
+                product.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
             tolerance: Numerical tolerance used to validate the simplex constraint.
@@ -276,21 +274,30 @@ class SubspaceDiscrete(SerialMixin):
             which the parameters are passed to this method, as the configuration space
             is built up incrementally from the parameter sequence.
         """
-        # Separate parameter into numerical and other
-        numerical_parameters = [
-            p for p in parameters if isinstance(p, NumericalDiscreteParameter)
-        ]
-        other_parameters = [
-            p for p in parameters if not isinstance(p, NumericalDiscreteParameter)
-        ]
+        if product_parameters is None:
+            product_parameters = []
+
+        # Validate parameter types
+        if not (
+            all(isinstance(p, NumericalDiscreteParameter) for p in simplex_parameters)
+        ):
+            raise ValueError(
+                f"All parameters passed via 'simplex_parameters' "
+                f"must be of type '{NumericalDiscreteParameter.__name__}'."
+            )
+        if not (all(isinstance(p, DiscreteParameter) for p in product_parameters)):
+            raise ValueError(
+                f"All parameters passed via 'product_parameters' "
+                f"must be of subclasses of '{DiscreteParameter.__name__}'."
+            )
 
         # Construct the product part of the space
-        product_space = parameter_cartesian_prod_to_df(other_parameters)
-        if not numerical_parameters:
-            return cls(parameters=other_parameters, exp_rep=product_space)
+        product_space = parameter_cartesian_prod_to_df(product_parameters)
+        if not simplex_parameters:
+            return cls(parameters=product_parameters, exp_rep=product_space)
 
         # Validate non-negativity
-        min_values = [min(p.values) for p in numerical_parameters]
+        min_values = [min(p.values) for p in simplex_parameters]
         if not (min(min_values) >= 0.0):
             raise ValueError(
                 f"All parameters passed to '{cls.from_simplex.__name__}' "
@@ -328,7 +335,7 @@ class SubspaceDiscrete(SerialMixin):
         # total value minus the minimum contribution to come from the yet to be added
         # parameters can be already discarded.
         for i, (param, min_to_go) in enumerate(
-            zip_longest(numerical_parameters, min_upcoming, fillvalue=0)
+            zip_longest(simplex_parameters, min_upcoming, fillvalue=0)
         ):
             if i == 0:
                 exp_rep = pd.DataFrame({param.name: param.values})
@@ -343,13 +350,13 @@ class SubspaceDiscrete(SerialMixin):
             drop_invalid(exp_rep, total, boundary_only=True)
 
         # Augment the Cartesian product created from all other parameter types
-        if other_parameters:
+        if product_parameters:
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
 
-        return cls(parameters=numerical_parameters, exp_rep=exp_rep)
+        return cls(parameters=simplex_parameters, exp_rep=exp_rep)
 
     @property
     def is_empty(self) -> bool:

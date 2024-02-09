@@ -129,7 +129,7 @@ def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
         total = max_possible
 
     subspace = SubspaceDiscrete.from_simplex(
-        parameters, total=total, boundary_only=boundary_only, tolerance=tolerance
+        total, parameters, boundary_only=boundary_only, tolerance=tolerance
     )
 
     if boundary_only:
@@ -145,18 +145,20 @@ p_t2 = TaskParameter(name="t2", values=["A", "B"])
 
 
 @pytest.mark.parametrize(
-    ("parameters", "n_elements"),
+    ("simplex_parameters", "product_parameters", "n_elements"),
     [
-        param([p_d1, p_d2, p_t1, p_t2], 6 * 4, id="both"),
-        param([p_d1, p_d2], 6, id="simplex-only"),
-        param([p_t1, p_t2], 4, id="task_only"),
+        param([p_d1, p_d2], [p_t1, p_t2], 6 * 4, id="both"),
+        param([p_d1, p_d2], [], 6, id="simplex-only"),
+        param([], [p_t1, p_t2], 4, id="task_only"),
     ],
 )
-def test_discrete_space_creation_from_simplex_mixed(parameters, n_elements):
+def test_discrete_space_creation_from_simplex_mixed(
+    simplex_parameters, product_parameters, n_elements
+):
     """Additional non-simplex parameters enter in form of a Cartesian product."""
     total = 1.0
     subspace = SubspaceDiscrete.from_simplex(
-        parameters, total=total, boundary_only=False
+        total, simplex_parameters, product_parameters, boundary_only=False
     )
     assert len(subspace.exp_rep) == n_elements  # <-- (# simplex part) x (# task part)
     assert not any(subspace.exp_rep.duplicated())
