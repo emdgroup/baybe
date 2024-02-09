@@ -338,9 +338,10 @@ class SubspaceDiscrete(SerialMixin):
             drop_invalid(exp_rep, total, boundary_only=True)
 
         # Augment the Cartesian product created from all other parameter types
-        exp_rep = pd.merge(
-            exp_rep, parameter_cartesian_prod_to_df(other_parameters), how="cross"
-        )
+        if other_parameters:
+            exp_rep = pd.merge(
+                exp_rep, parameter_cartesian_prod_to_df(other_parameters), how="cross"
+            )
 
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
