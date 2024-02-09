@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import torch
 from attr import define, field
-from botorch.utils.sampling import get_polytope_samples
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -18,7 +17,7 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
-from baybe.utils import DTypeFloatTorch
+from baybe.utils.numerical import DTypeFloatTorch
 
 
 @define
@@ -153,6 +152,8 @@ class SubspaceContinuous(SerialMixin):
         """
         if not self.parameters:
             return pd.DataFrame()
+
+        from botorch.utils.sampling import get_polytope_samples
 
         points = get_polytope_samples(
             n=n_points,

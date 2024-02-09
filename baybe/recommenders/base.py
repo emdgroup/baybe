@@ -1,23 +1,29 @@
 """Base classes for all recommenders."""
 
-from abc import ABC, abstractmethod
-from typing import Callable, ClassVar, Optional
+from abc import ABC
+from typing import Callable, ClassVar, Optional, Protocol
 
+import cattrs
 import pandas as pd
-from attrs import define
+from attrs import define, field
 
 from baybe.exceptions import NotEnoughPointsLeftError
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.recommenders.deprecation import structure_recommender_protocol
+from baybe.searchspace import (
+    SearchSpace,
+    SearchSpaceType,
+    SubspaceContinuous,
+    SubspaceDiscrete,
+)
 from baybe.serialization import (
     converter,
-    get_base_structure_hook,
     unstructure_base,
 )
 
 
 def _select_candidates_and_recommend(
     searchspace: SearchSpace,
-    recommend: Callable[[SearchSpace, pd.DataFrame, int], pd.Index],
+    recommend_discrete: Callable[[SubspaceDiscrete, pd.DataFrame, int], pd.Index],
     batch_size: int = 1,
     allow_repeated_recommendations: bool = False,
     allow_recommending_already_measured: bool = True,
@@ -31,7 +37,8 @@ def _select_candidates_and_recommend(
 
     Args:
         searchspace: The search space.
-        recommend: The Callable representing the recommendation function.
+        recommend_discrete: The Callable representing the discrete recommendation
+            function.
         batch_size: The chosen batch size.
         allow_repeated_recommendations: Allow to make recommendations that were already
             recommended earlier.
@@ -71,7 +78,7 @@ def _select_candidates_and_recommend(
         )
 
     # Get recommendations
-    idxs = recommend(searchspace, candidates_comp, batch_size)
+    idxs = recommend_discrete(searchspace.discrete, candidates_comp, batch_size)
     rec = searchspace.discrete.exp_rep.loc[idxs, :]
 
     # Update metadata
@@ -81,23 +88,15 @@ def _select_candidates_and_recommend(
     return rec
 
 
-@define
-class Recommender(ABC):
-    """Abstract base class for all recommenders."""
+class RecommenderProtocol(Protocol):
+    """Type protocol specifying the interface recommenders need to implement."""
 
-    # Class variables
-    compatibility: ClassVar[SearchSpaceType]
-    """Class variable describing the search space compatibility."""
-
-    @abstractmethod
     def recommend(
         self,
         searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
+        batch_size: int,
+        train_x: Optional[pd.DataFrame],
+        train_y: Optional[pd.DataFrame],
     ) -> pd.DataFrame:
         """Recommend (a batch of) points in the search space.
 
@@ -106,16 +105,29 @@ class Recommender(ABC):
             batch_size: The number of points that should be recommended.
             train_x: The training data used to train the model.
             train_y: The training labels used to train the model.
-            allow_repeated_recommendations: Allow to make recommendations that were
-                already recommended earlier. This only has an influence in discrete
-                search spaces.
-            allow_recommending_already_measured: Allow to output recommendations that
-                were measured previously. This only has an influence in discrete
-                search spaces.
 
         Returns:
             A DataFrame containing the recommendations as individual rows.
         """
+        ...
+
+
+@define
+class Recommender(ABC, RecommenderProtocol):
+    """Abstract base class for all recommenders."""
+
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType]
+    """Class variable describing the search space compatibility."""
+
+    # Object variables
+    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
+    """Allow to make recommendations that were already recommended earlier. This only
+    has an influence in discrete search spaces."""
+
+    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
+    """Allow to output recommendations that were measured previously. This only has an
+    influence in discrete search spaces."""
 
 
 @define
@@ -128,8 +140,6 @@ class NonPredictiveRecommender(Recommender, ABC):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -138,26 +148,26 @@ class NonPredictiveRecommender(Recommender, ABC):
                 searchspace,
                 self._recommend_discrete,
                 batch_size,
-                allow_repeated_recommendations,
-                allow_recommending_already_measured,
+                self.allow_repeated_recommendations,
+                self.allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
-                searchspace=searchspace, batch_size=batch_size
+                subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
         return self._recommend_hybrid(searchspace=searchspace, batch_size=batch_size)
 
     def _recommend_discrete(
         self,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
         """Calculate recommendations in a discrete search space.
 
         Args:
-            searchspace: The discrete search space in which the recommendations should
-                be made.
+            subspace_discrete: The discrete subspace in which the recommendations
+                should be made.
             candidates_comp: The computational representation of all possible candidates
             batch_size: The size of the calculated batch.
 
@@ -170,7 +180,9 @@ class NonPredictiveRecommender(Recommender, ABC):
         """
         try:
             return self._recommend_hybrid(
-                searchspace=searchspace,
+                searchspace=SearchSpace(
+                    discrete=subspace_discrete, continuous=SubspaceContinuous.empty()
+                ),
                 batch_size=batch_size,
                 candidates_comp=candidates_comp,
             ).index
@@ -184,13 +196,13 @@ class NonPredictiveRecommender(Recommender, ABC):
             ) from exc
 
     def _recommend_continuous(
-        self, searchspace: SearchSpace, batch_size: int
+        self, subspace_continuous: SubspaceContinuous, batch_size: int
     ) -> pd.DataFrame:
         """Calculate recommendations in a continuous search space.
 
         Args:
-            searchspace: The continuous search space in which the recommendations should
-                be made.
+            subspace_continuous: The continuous subspace in which the recommendations
+                should be made.
             batch_size: The size of the calculated batch.
 
         Raises:
@@ -203,7 +215,10 @@ class NonPredictiveRecommender(Recommender, ABC):
         # _recommend_hybrid instead.
         try:
             return self._recommend_hybrid(
-                searchspace=searchspace, batch_size=batch_size
+                searchspace=SearchSpace(
+                    discrete=SubspaceDiscrete.empty(), continuous=subspace_continuous
+                ),
+                batch_size=batch_size,
             )
         except NotImplementedError as exc:
             raise NotImplementedError(
@@ -244,5 +259,15 @@ class NonPredictiveRecommender(Recommender, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(Recommender, unstructure_base)
-converter.register_structure_hook(Recommender, get_base_structure_hook(Recommender))
+converter.register_unstructure_hook(
+    RecommenderProtocol,
+    lambda x: unstructure_base(
+        x,
+        # TODO: Remove once deprecation got expired:
+        overrides=dict(
+            allow_repeated_recommendations=cattrs.override(omit=True),
+            allow_recommending_already_measured=cattrs.override(omit=True),
+        ),
+    ),
+)
+converter.register_structure_hook(RecommenderProtocol, structure_recommender_protocol)

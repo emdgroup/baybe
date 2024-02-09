@@ -9,7 +9,7 @@ import pandas as pd
 import torch
 from torch import Tensor
 
-from baybe.utils import to_tensor
+from baybe.utils.dataframe import to_tensor
 
 _ScaleFun = Callable[[Tensor], Tensor]
 

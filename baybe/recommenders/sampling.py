@@ -7,8 +7,8 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 from baybe.recommenders.base import NonPredictiveRecommender
-from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.utils import farthest_point_sampling
+from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -60,7 +60,7 @@ class FPSRecommender(NonPredictiveRecommender):
 
     def _recommend_discrete(
         self,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
@@ -69,7 +69,7 @@ class FPSRecommender(NonPredictiveRecommender):
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
-        scaler.fit(searchspace.discrete.comp_rep)
+        scaler.fit(subspace_discrete.comp_rep)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]

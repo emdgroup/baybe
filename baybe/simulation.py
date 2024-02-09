@@ -18,6 +18,7 @@ applied context:
 from __future__ import annotations
 
 import logging
+import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
@@ -52,13 +53,9 @@ from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
 from baybe.targets.enum import TargetMode
-from baybe.utils import (
-    add_fake_results,
-    add_parameter_noise,
-    closer_element,
-    closest_element,
-    set_random_seed,
-)
+from baybe.utils.basic import set_random_seed
+from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.numerical import closer_element, closest_element
 
 if TYPE_CHECKING:
     from baybe.targets import NumericalTarget
@@ -446,10 +443,11 @@ def simulate_experiment(
           The individual measurements obtained for the respective target and iteration
     """
     # TODO: Due to the "..." operator, sphinx does not render this properly. Might
-    # want to investigate in the future.
-    # TODO: In the markdown variant, bullet points with more levels are not rendered
-    # properly. We thus might want to refactor this when using html based documentation
-    # Validate the lookup mechanism
+    #   want to investigate in the future.
+    # TODO: Use a `will_terminate` campaign property to decide if the campaign will
+    #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
+
+    #   Validate the lookup mechanism
     if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
         raise TypeError(
             "The lookup can either be 'None', a pandas dataframe or a callable."
@@ -459,17 +457,6 @@ def simulate_experiment(
     if (impute_mode == "ignore") and (not isinstance(lookup, pd.DataFrame)):
         raise ValueError(
             "Impute mode 'ignore' is only available for dataframe lookups."
-        )
-
-    # Validate the number of experimental steps
-    # TODO: Probably, we should add this as a property to Campaign
-    will_terminate = (campaign.searchspace.type == SearchSpaceType.DISCRETE) and (
-        not campaign.strategy.allow_recommending_already_measured
-    )
-    if (n_doe_iterations is None) and (not will_terminate):
-        raise ValueError(
-            "For the specified setting, the experimentation loop can be continued "
-            "indefinitely. Hence, `n_doe_iterations` must be explicitly provided."
         )
 
     # Create a fresh campaign and set the corresponding random seed
@@ -504,23 +491,15 @@ def simulate_experiment(
         try:
             measured = campaign.recommend(batch_size=batch_size)
         except NotEnoughPointsLeftError:
-            # TODO: This except block requires a more elegant solution
-            strategy = campaign.strategy
-            allow_repeated = strategy.allow_repeated_recommendations
-            allow_measured = strategy.allow_recommending_already_measured
-
-            # Sanity check: if the variable was True, the except block should have
-            # been impossible to reach in the first place
-            # TODO: Currently, this is still possible due to bug [15917] though.
-            assert not allow_measured
-
-            measured, _ = campaign.searchspace.discrete.get_candidates(
-                allow_repeated_recommendations=allow_repeated,
-                allow_recommending_already_measured=allow_measured,
+            # TODO: There can be still N < batch_quantity points left in the search
+            #   space. Once the recommender/strategy refactoring is completed,
+            #   find an elegant way to return those.
+            warnings.warn(
+                "The simulation of the campaign ended because because not sufficiently "
+                "many points were left for recommendation",
+                UserWarning,
             )
-
-            if len(measured) == 0:
-                break
+            break
 
         n_experiments += len(measured)
         _look_up_target_values(measured, campaign, lookup, impute_mode)

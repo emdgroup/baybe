@@ -23,7 +23,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import NGBoostSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils import add_fake_results
+from baybe.utils.dataframe import add_fake_results
 
 ### Experiment Setup
 

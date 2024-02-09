@@ -31,6 +31,7 @@ def test_code_executability(file: Path):
     exec(userguide_code)
 
 
+# TODO: Needs a refactoring (files codeblocks should be auto-detected)
 @pytest.mark.parametrize("file", doc_files_pseudocode)
 @pytest.mark.parametrize(
     "strategy",

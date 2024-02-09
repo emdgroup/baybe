@@ -1,12 +1,13 @@
 """Different recommendation strategies that are based on Bayesian optimization."""
 
+import warnings
 from abc import ABC
 from functools import partial
 from typing import Any, Callable, ClassVar, Literal, Optional
 
 import numpy as np
 import pandas as pd
-from attrs import define, field, validators
+from attrs import define, evolve, field, fields, validators
 from botorch.acquisition import (
     AcquisitionFunction,
     ExpectedImprovement,
@@ -27,10 +28,16 @@ from baybe.recommenders.base import (
     Recommender,
     _select_candidates_and_recommend,
 )
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.searchspace import (
+    SearchSpace,
+    SearchSpaceType,
+    SubspaceContinuous,
+    SubspaceDiscrete,
+)
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
-from baybe.utils import farthest_point_sampling, to_tensor
+from baybe.utils.dataframe import to_tensor
+from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 if _ONNX_INSTALLED:
     from baybe.surrogates import CustomONNXSurrogate
@@ -47,6 +54,11 @@ class BayesianRecommender(Recommender, ABC):
         "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
     ] = field(default="qEI")
     """The used acquisition function class."""
+
+    _acquisition_function: Optional[AcquisitionFunction] = field(
+        default=None, init=False
+    )
+    """The current acquisition function."""
 
     def _get_acquisition_function_cls(
         self,
@@ -72,23 +84,22 @@ class BayesianRecommender(Recommender, ABC):
 
     def setup_acquisition_function(
         self, searchspace: SearchSpace, train_x: pd.DataFrame, train_y: pd.DataFrame
-    ) -> AcquisitionFunction:
+    ) -> None:
         """Create the current acquisition function from provided training data.
+
+        The acquisition function is stored in the private attribute
+        ``_acquisition_function``.
 
         Args:
             searchspace: The search space in which the experiments are to be conducted.
             train_x: The features of the conducted experiments.
             train_y: The corresponding response values.
-
-        Returns:
-            An acquisition function obtained by fitting the surrogate model of self to
-            the provided training data.
-
         """
         best_f = train_y.max()
         surrogate_model = self._fit(searchspace, train_x, train_y)
         acquisition_function_cls = self._get_acquisition_function_cls()
-        return acquisition_function_cls(surrogate_model, best_f)
+
+        self._acquisition_function = acquisition_function_cls(surrogate_model, best_f)
 
     def _fit(
         self,
@@ -123,42 +134,37 @@ class BayesianRecommender(Recommender, ABC):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         # See base class.
 
         if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
-        acqf = self.setup_acquisition_function(searchspace, train_x, train_y)
+        self.setup_acquisition_function(searchspace, train_x, train_y)
 
         if searchspace.type == SearchSpaceType.DISCRETE:
             return _select_candidates_and_recommend(
                 searchspace,
-                partial(self._recommend_discrete, acqf),
+                self._recommend_discrete,
                 batch_size,
-                allow_repeated_recommendations,
-                allow_recommending_already_measured,
+                self.allow_repeated_recommendations,
+                self.allow_recommending_already_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(acqf, searchspace, batch_size)
-        return self._recommend_hybrid(acqf, searchspace, batch_size)
+            return self._recommend_continuous(searchspace.continuous, batch_size)
+        return self._recommend_hybrid(searchspace, batch_size)
 
     def _recommend_discrete(
         self,
-        acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
         """Calculate recommendations in a discrete search space.
 
         Args:
-            acquisition_function: The acquisition function used for choosing the
-                recommendation.
-            searchspace: The discrete search space in which the recommendations should
-                be made.
+            subspace_discrete: The discrete subspace in which the recommendations
+                should be made.
             candidates_comp: The computational representation of all possible
                 candidates.
             batch_size: The size of the calculated batch.
@@ -174,17 +180,14 @@ class BayesianRecommender(Recommender, ABC):
 
     def _recommend_continuous(
         self,
-        acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_continuous: SubspaceContinuous,
         batch_size: int,
     ) -> pd.DataFrame:
         """Calculate recommendations in a continuous search space.
 
         Args:
-            acquisition_function: The acquisition function used for choosing the
-                recommendation.
-            searchspace: The continuous search space in which the recommendations should
-                be made.
+            subspace_continuous: The continuous subspace in which the recommendations
+                should be made.
             batch_size: The size of the calculated batch.
 
         Raises:
@@ -197,15 +200,12 @@ class BayesianRecommender(Recommender, ABC):
 
     def _recommend_hybrid(
         self,
-        acquisition_function: Callable,
         searchspace: SearchSpace,
         batch_size: int,
     ) -> pd.DataFrame:
         """Calculate recommendations in a hybrid search space.
 
         Args:
-            acquisition_function: The acquisition function used for choosing the
-                recommendation.
             searchspace: The hybrid search space in which the recommendations should
                 be made.
             batch_size: The size of the calculated batch.
@@ -264,8 +264,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
     def _recommend_discrete(
         self,
-        acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
@@ -275,7 +274,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         candidates_tensor = to_tensor(candidates_comp)
         try:
             points, _ = optimize_acqf_discrete(
-                acquisition_function, batch_size, candidates_tensor
+                self._acquisition_function, batch_size, candidates_tensor
             )
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(
@@ -301,27 +300,26 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
     def _recommend_continuous(
         self,
-        acquisition_function: Callable,
-        searchspace: SearchSpace,
+        subspace_continuous: SubspaceContinuous,
         batch_size: int,
     ) -> pd.DataFrame:
         # See base class.
 
         try:
             points, _ = optimize_acqf(
-                acq_function=acquisition_function,
-                bounds=searchspace.continuous.param_bounds_comp,
+                acq_function=self._acquisition_function,
+                bounds=subspace_continuous.param_bounds_comp,
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
                 equality_constraints=[
-                    c.to_botorch(searchspace.continuous.parameters)
-                    for c in searchspace.continuous.constraints_lin_eq
+                    c.to_botorch(subspace_continuous.parameters)
+                    for c in subspace_continuous.constraints_lin_eq
                 ]
                 or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
                 inequality_constraints=[
-                    c.to_botorch(searchspace.continuous.parameters)
-                    for c in searchspace.continuous.constraints_lin_ineq
+                    c.to_botorch(subspace_continuous.parameters)
+                    for c in subspace_continuous.constraints_lin_ineq
                 ]
                 or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             )
@@ -332,12 +330,11 @@ class SequentialGreedyRecommender(BayesianRecommender):
             ) from ex
 
         # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=searchspace.continuous.param_names)
+        rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
         return rec
 
     def _recommend_hybrid(
         self,
-        acquisition_function: Callable,
         searchspace: SearchSpace,
         batch_size: int,
     ) -> pd.DataFrame:
@@ -351,7 +348,6 @@ class SequentialGreedyRecommender(BayesianRecommender):
         each of them. It is thus computationally expensive.
 
         Args:
-            acquisition_function: The acquisition function to be optimized.
             searchspace: The search space in which the recommendations should be made.
             batch_size: The size of the calculated batch.
 
@@ -388,7 +384,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # Actual call of the BoTorch optimization routine
         try:
             points, _ = optimize_acqf_mixed(
-                acq_function=acquisition_function,
+                acq_function=self._acquisition_function,
                 bounds=searchspace.param_bounds_comp,
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
@@ -461,7 +457,7 @@ class NaiveHybridRecommender(Recommender):
 
     This recommender splits the hybrid search space in the discrete and continuous
     subspace. Each of the subspaces is optimized on its own, and the recommenders for
-    those subspaces can be chosen upon initilaization. If this recommender is used on
+    those subspaces can be chosen upon initialization. If this recommender is used on
     a non-hybrid space, it uses the corresponding recommender.
     """
 
@@ -488,18 +484,46 @@ class NaiveHybridRecommender(Recommender):
     """The recommender used for the continuous subspace. Default:
     :class:`baybe.recommenders.bayesian.SequentialGreedyRecommender`"""
 
+    def __attrs_post_init__(self):
+        """Validate if flags are synchronized and overrides them otherwise."""
+        if (
+            flag := self.allow_recommending_already_measured
+        ) != self.disc_recommender.allow_recommending_already_measured:
+            warnings.warn(
+                f"The value of "
+                f"'{fields(self.__class__).allow_recommending_already_measured.name}' "
+                f"differs from what is specified in the discrete recommender. "
+                f"The value of the discrete recommender will be ignored."
+            )
+            self.disc_recommender = evolve(
+                self.disc_recommender,
+                allow_recommending_already_measured=flag,
+            )
+
+        if (
+            flag := self.allow_repeated_recommendations
+        ) != self.disc_recommender.allow_repeated_recommendations:
+            warnings.warn(
+                f"The value of "
+                f"'{fields(self.__class__).allow_repeated_recommendations.name}' "
+                f"differs from what is specified in the discrete recommender. "
+                f"The value of the discrete recommender will be ignored."
+            )
+            self.disc_recommender = evolve(
+                self.disc_recommender,
+                allow_repeated_recommendations=flag,
+            )
+
     def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         # See base class.
 
-        # First check whether the disc_recommender is either bayesian or non predictive
+        # First check whether the disc_recommender is either bayesian or non-predictive
         is_bayesian_recommender = isinstance(self.disc_recommender, BayesianRecommender)
         is_np_recommender = isinstance(self.disc_recommender, NonPredictiveRecommender)
 
@@ -522,8 +546,6 @@ class NaiveHybridRecommender(Recommender):
                 batch_size=batch_size,
                 train_x=train_x,
                 train_y=train_y,
-                allow_repeated_recommendations=allow_repeated_recommendations,
-                allow_recommending_already_measured=allow_recommending_already_measured,
             )
 
         # We are in a hybrid setting now
@@ -543,29 +565,26 @@ class NaiveHybridRecommender(Recommender):
             allow_recommending_already_measured=True,
         )
 
-        # Due to different signatures depending on whether the discrete recommender is
-        # bayesian or non-predictive, we need to check what kind of recommender we have
-        # This is then used to potentially fill the dictionary containing the
-        # corresponding keyword and acquisition function.
-        acqf_func_dict = {}
         # We now check whether the discrete recommender is bayesian.
         if is_bayesian_recommender:
             # Get access to the recommenders acquisition function
-            disc_acqf = self.disc_recommender.setup_acquisition_function(
+            self.disc_recommender.setup_acquisition_function(
                 searchspace, train_x, train_y
             )
 
             # Construct the partial acquisition function that attaches cont_part
             # whenever evaluating the acquisition function
             disc_acqf_part = PartialAcquisitionFunction(
-                acqf=disc_acqf, pinned_part=cont_part, pin_discrete=False
+                acqf=self.disc_recommender._acquisition_function,
+                pinned_part=cont_part,
+                pin_discrete=False,
             )
-            acqf_func_dict = {"acquisition_function": disc_acqf_part}
+
+            self.disc_recommender._acquisition_function = disc_acqf_part
 
         # Call the private function of the discrete recommender and get the indices
         disc_rec_idx = self.disc_recommender._recommend_discrete(
-            **(acqf_func_dict),
-            searchspace=searchspace,
+            subspace_discrete=searchspace.discrete,
             candidates_comp=candidates_comp,
             batch_size=batch_size,
         )
@@ -576,17 +595,19 @@ class NaiveHybridRecommender(Recommender):
         disc_part = to_tensor(disc_part).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
-        cont_acqf = self.cont_recommender.setup_acquisition_function(
-            searchspace, train_x, train_y
-        )
+        self.cont_recommender.setup_acquisition_function(searchspace, train_x, train_y)
 
         # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(
-            acqf=cont_acqf, pinned_part=disc_part, pin_discrete=True
+            acqf=self.cont_recommender._acquisition_function,
+            pinned_part=disc_part,
+            pin_discrete=True,
         )
+        self.cont_recommender._acquisition_function = cont_acqf_part
+
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(
-            cont_acqf_part, searchspace, batch_size
+            searchspace.continuous, batch_size
         )
 
         # Glue the solutions together and return them

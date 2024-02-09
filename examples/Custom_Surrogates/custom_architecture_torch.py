@@ -26,7 +26,7 @@ from baybe.searchspace import SearchSpace
 from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
-from baybe.utils import add_fake_results
+from baybe.utils.dataframe import add_fake_results
 
 ### Architecture definition
 

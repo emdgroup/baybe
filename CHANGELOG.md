@@ -9,29 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Copy button for code blocks in documentation
 - `mypy` for campaign, constraints and telemetry
 - Top-level example summaries
+- `RecommenderProtocol` as common interface for `Strategy` and `Recommender`
 
 ### Changed
 - Order of README sections
+- Imports from top level `baybe.utils` no longer possible
+- Renamed `utils.numeric` to `utils.numerical`
 - Optional `chem` dependencies are lazily imported, which improves startup time
 
 ### Fixed
 - Several minor issues in documentation
 - Visibility and constructor exposure of `Campaign` attributes that should be private
+- `TaskParameter`s no longer disappear from computational representation when the
+  search space contains only one task parameter value
 - Failing `baybe` import from environments containing only core dependencies caused by
   eagerly loading `chem` dependencies
 - tox `coretest` now uses correct environment and skips unavailable tests
 
 ### Removed
-- `botorch_function_wrapper` from `baybe.utils` namespace
+- Detailed headings in table of contents of examples
 
 ### Deprecations
 - Passing `numerical_measurements_must_be_within_tolerance` to the `Campaign` 
   constructor is no longer supported. Instead, `Campaign.add_measurements` now
   takes an additional parameter to control the behavior.
 - `batch_quantity` replaced with `batch_size`
-
-### Removed
-- Detailed headings in table of contents of examples
+- `allow_repeated_recommendations` and `allow_recommending_already_measured` are now 
+  attributes of `Recommender` and no longer attributes of `Strategy`
 
 ## [0.7.2] - 2024-01-24
 ### Added
@@ -319,7 +323,7 @@ or continuous parameters
 
 ### Changed
 - Parameter class hierarchy
-- SearchSpace has now a discrete and continuous subspace
+- `SearchSpace` has now a discrete and continuous subspace
 - Model fit now done upon requesting recommendations
 
 ### Fixed
@@ -327,7 +331,7 @@ or continuous parameters
 
 ## [0.2.2] - 2023-01-13
 ### Added
-- SearchSpace class
+- `SearchSpace` class
 - Code testing with pytest
 - Option to specify initial data for backtesting simulations
 - SequentialGreedyRecommender class
@@ -371,14 +375,14 @@ or continuous parameters
 - Azure pipeline for code formatting and linting
 - Single-task Gaussian process strategy
 - Streamlit dashboard for comparing single-task strategies
-- Input functionality to read measurements including automatic matching to searchspace
+- Input functionality to read measurements including automatic matching to search space
 - Integer encoding for categorical parameters
 - Parser for numerical discrete parameters
 - Single numerical target with Min and Max mode
 - Recommendation functionality
 - Parameter scaling depending on parameter types and user-chosen scalers
 - Noise and fake-measurement utilities
-- Internal metadata storing various info about datapoints in the searchspace
+- Internal metadata storing various info about datapoints in the search space
 - BayBE options controlling recommendation and data addition behavior
 - Config parsing and validation using pydantic
 - Global random seed control

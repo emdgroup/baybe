@@ -15,7 +15,7 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
-from baybe.utils.numeric import DTypeFloatNumpy
+from baybe.utils.numerical import DTypeFloatNumpy
 
 from .utils import interval
 

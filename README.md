@@ -293,7 +293,7 @@ A list of know issues can be found [here](https://emdgroup.github.io/baybe/known
 
 ## License
 
-Copyright 2022-2023 Merck KGaA, Darmstadt, Germany
+Copyright 2022-2024 Merck KGaA, Darmstadt, Germany
 and/or its affiliates. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
