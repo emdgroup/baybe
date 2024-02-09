@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from itertools import zip_longest
 from typing import Any, Collection, Iterable, List, Optional, Tuple, cast
 
 import numpy as np
@@ -229,6 +230,133 @@ class SubspaceDiscrete(SerialMixin):
         )
 
         return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
+
+    @classmethod
+    def from_simplex(
+        cls,
+        max_sum: float,
+        simplex_parameters: List[NumericalDiscreteParameter],
+        product_parameters: Optional[List[DiscreteParameter]] = None,
+        boundary_only: bool = False,
+        tolerance: float = 1e-6,
+    ) -> SubspaceDiscrete:
+        """Efficiently create discrete simplex subspaces.
+
+        The same result can be achieved using
+        :meth:`baybe.searchspace.discrete.SubspaceDiscrete.from_product` in combination
+        with appropriate sum constraints. However, such an approach is inefficient
+        because the Cartesian product involved creates an exponentially large set of
+        candidates, most of which do not satisfy the simplex constraints and must be
+        subsequently be filtered out by the method.
+
+        By contrast, this method uses a shortcut that removes invalid candidates
+        already during the creation of parameter combinations, resulting in a
+        significantly faster construction.
+
+        Args:
+            max_sum: The maximum sum of the parameter values defining the simplex size.
+            simplex_parameters: The parameters to be used for the simplex construction.
+            product_parameters: Optional parameters that enter in form of a Cartesian
+                product.
+            boundary_only: Flag determining whether to keep only parameter
+                configurations on the simplex boundary.
+            tolerance: Numerical tolerance used to validate the simplex constraint.
+
+        Raises:
+            ValueError: If the passed parameters are not suitable for a simplex
+                construction.
+
+        Returns:
+            The created simplex subspace.
+
+        Note:
+            The achieved efficiency gains can vary depending on the particular order in
+            which the parameters are passed to this method, as the configuration space
+            is built up incrementally from the parameter sequence.
+        """
+        if product_parameters is None:
+            product_parameters = []
+
+        # Validate parameter types
+        if not (
+            all(isinstance(p, NumericalDiscreteParameter) for p in simplex_parameters)
+        ):
+            raise ValueError(
+                f"All parameters passed via 'simplex_parameters' "
+                f"must be of type '{NumericalDiscreteParameter.__name__}'."
+            )
+        if not (all(isinstance(p, DiscreteParameter) for p in product_parameters)):
+            raise ValueError(
+                f"All parameters passed via 'product_parameters' "
+                f"must be of subclasses of '{DiscreteParameter.__name__}'."
+            )
+
+        # Construct the product part of the space
+        product_space = parameter_cartesian_prod_to_df(product_parameters)
+        if not simplex_parameters:
+            return cls(parameters=product_parameters, exp_rep=product_space)
+
+        # Validate non-negativity
+        min_values = [min(p.values) for p in simplex_parameters]
+        if not (min(min_values) >= 0.0):
+            raise ValueError(
+                f"All parameters passed to '{cls.from_simplex.__name__}' "
+                f"must have non-negative values only."
+            )
+
+        def drop_invalid(df: pd.DataFrame, max_sum: float, boundary_only: bool) -> None:
+            """Drop rows that violate a specified simplex constraint.
+
+            Args:
+                df: The dataframe whose rows should satisfy the simplex constraint.
+                max_sum: The maximum row sum defining the simplex size.
+                boundary_only: Flag to control if the points represented by the rows
+                    may lie inside the simplex or on its boundary only.
+            """
+            row_sums = df.sum(axis=1)
+            if boundary_only:
+                locs_to_drop = row_sums[
+                    (row_sums < max_sum - tolerance) | (row_sums > max_sum + tolerance)
+                ].index
+            else:
+                locs_to_drop = row_sums[row_sums > max_sum + tolerance].index
+            df.drop(locs_to_drop, inplace=True)
+
+        # Get the minimum sum contributions to come in the upcoming joins (the first
+        # item is the minimum possible sum of all parameters starting from the
+        # second parameter, the second item is the minimum possible sum starting from
+        # the third parameter, and so on ...)
+        min_upcoming = np.cumsum(min_values[:0:-1])[::-1]
+
+        # Incrementally build up the space, dropping invalid configuration along the
+        # way. More specifically: after having cross-joined a new parameter, there must
+        # be enough "room" left for the remaining parameters to fit. Hence,
+        # configurations of the current parameter subset that exceed the desired
+        # total value minus the minimum contribution to come from the yet to be added
+        # parameters can be already discarded.
+        for i, (param, min_to_go) in enumerate(
+            zip_longest(simplex_parameters, min_upcoming, fillvalue=0)
+        ):
+            if i == 0:
+                exp_rep = pd.DataFrame({param.name: param.values})
+            else:
+                exp_rep = pd.merge(
+                    exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
+                )
+            drop_invalid(exp_rep, max_sum - min_to_go, boundary_only=False)
+
+        # If requested, keep only the boundary values
+        if boundary_only:
+            drop_invalid(exp_rep, max_sum, boundary_only=True)
+
+        # Augment the Cartesian product created from all other parameter types
+        if product_parameters:
+            exp_rep = pd.merge(exp_rep, product_space, how="cross")
+
+        # Reset the index
+        exp_rep.reset_index(drop=True, inplace=True)
+
+        return cls(parameters=simplex_parameters, exp_rep=exp_rep)
 
     @property
     def is_empty(self) -> bool:

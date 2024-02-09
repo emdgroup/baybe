@@ -1,7 +1,10 @@
 """Test alternative ways of creation not considered in the strategies."""
 
+import hypothesis.strategies as st
+import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import given
 from pytest import param
 
 from baybe.parameters import (
@@ -9,8 +12,10 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
+from tests.hypothesis_strategies.parameters import numerical_discrete_parameter
 
 # Discrete inputs for testing
 s_x = pd.Series([1, 2, 3], name="x")
@@ -97,3 +102,63 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
     else:
         with pytest.raises(expected):
             SearchSpace.from_dataframe(df, parameters)
+
+
+@pytest.mark.parametrize("boundary_only", (False, True))
+@given(
+    parameters=st.lists(
+        numerical_discrete_parameter(min_value=0.0, max_value=1.0),
+        min_size=1,
+        max_size=5,
+        unique_by=lambda x: x.name,
+    )
+)
+def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
+    """Candidates from a simplex space satisfy the simplex constraint."""
+    tolerance = 1e-6
+    max_possible = sum(max(p.values) for p in parameters)
+    min_possible = sum(min(p.values) for p in parameters)
+
+    if boundary_only:
+        # Ensure there exists configurations both inside and outside the simplex
+        max_sum = (max_possible + min_possible) / 2
+    else:
+        # We use the maximum parameter sum because it can be exactly achieved (for other
+        # values, except for the minimum, it's not guaranteed there actually exists
+        # a parameter combination that can exactly hit it)
+        max_sum = max_possible
+
+    subspace = SubspaceDiscrete.from_simplex(
+        max_sum, parameters, boundary_only=boundary_only, tolerance=tolerance
+    )
+
+    if boundary_only:
+        assert np.allclose(subspace.exp_rep.sum(axis=1), max_sum, atol=tolerance)
+    else:
+        assert (subspace.exp_rep.sum(axis=1) <= max_sum + tolerance).all()
+
+
+p_d1 = NumericalDiscreteParameter(name="d1", values=[0.0, 0.5, 1.0])
+p_d2 = NumericalDiscreteParameter(name="d2", values=[0.0, 0.5, 1.0])
+p_t1 = TaskParameter(name="t1", values=["A", "B"])
+p_t2 = TaskParameter(name="t2", values=["A", "B"])
+
+
+@pytest.mark.parametrize(
+    ("simplex_parameters", "product_parameters", "n_elements"),
+    [
+        param([p_d1, p_d2], [p_t1, p_t2], 6 * 4, id="both"),
+        param([p_d1, p_d2], [], 6, id="simplex-only"),
+        param([], [p_t1, p_t2], 4, id="task_only"),
+    ],
+)
+def test_discrete_space_creation_from_simplex_mixed(
+    simplex_parameters, product_parameters, n_elements
+):
+    """Additional non-simplex parameters enter in form of a Cartesian product."""
+    max_sum = 1.0
+    subspace = SubspaceDiscrete.from_simplex(
+        max_sum, simplex_parameters, product_parameters, boundary_only=False
+    )
+    assert len(subspace.exp_rep) == n_elements  # <-- (# simplex part) x (# task part)
+    assert not any(subspace.exp_rep.duplicated())
