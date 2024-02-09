@@ -15,7 +15,6 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
-from baybe.utils.chemistry import get_canonical_smiles
 from baybe.utils.numerical import DTypeFloatNumpy
 
 from .utils import interval
@@ -47,6 +46,8 @@ def smiles(draw: st.DrawFn):
 @st.composite
 def substance_data(draw: st.DrawFn):
     """Generate data for :class:`baybe.parameters.substance.SubstanceParameter`."""
+    from baybe.utils.chemistry import get_canonical_smiles
+
     names = draw(st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True))
     substances = draw(
         st.lists(

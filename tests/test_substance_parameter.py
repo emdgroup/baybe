@@ -8,7 +8,7 @@ from .conftest import _CHEM_INSTALLED, run_iterations
 
 
 @pytest.mark.skipif(
-    not _CHEM_INSTALLED, reason="Optional chemistry dependencies are not installed."
+    not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize(
     "parameter_names",

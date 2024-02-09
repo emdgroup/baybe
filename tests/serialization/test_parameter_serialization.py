@@ -7,6 +7,7 @@ from pytest import param
 
 from baybe.parameters.base import Parameter
 
+from ..conftest import _CHEM_INSTALLED
 from ..hypothesis_strategies.parameters import (
     categorical_parameter,
     custom_parameter,
@@ -24,8 +25,14 @@ from ..hypothesis_strategies.parameters import (
         param(numerical_continuous_parameter(), id="NumericalContinuousParameter"),
         param(categorical_parameter(), id="CategoricalParameter"),
         param(task_parameter(), id="TaskParameter"),
-        param(substance_parameter(), id="SubstanceParameter"),
         param(custom_parameter(), id="CustomParameter"),
+        param(
+            substance_parameter(),
+            id="SubstanceParameter",
+            marks=pytest.mark.skipif(
+                not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
+            ),
+        ),
     ],
 )
 @given(data=st.data())

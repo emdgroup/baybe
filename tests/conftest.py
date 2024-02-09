@@ -67,6 +67,14 @@ except OptionalImportError:
 if _ONNX_INSTALLED:
     from baybe.surrogates.custom import CustomONNXSurrogate
 
+try:
+    # Note: due to our streamlit folder we cannot use plain `import streamlit` here
+    from streamlit import info  # noqa: F401  # Tests if streamlit is available
+
+    _STREAMLIT_INSTALLED = True
+except ImportError:
+    _STREAMLIT_INSTALLED = False
+
 # All fixture functions have prefix 'fixture_' and explicitly declared name so they
 # can be reused by other fixtures, see
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
