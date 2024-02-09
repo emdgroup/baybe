@@ -15,7 +15,6 @@ from baybe.objective import Objective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
-    SubstanceParameter,
 )
 from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
 from baybe.searchspace import SearchSpace
@@ -38,16 +37,6 @@ parameters = [
     NumericalDiscreteParameter(
         name="Temperature[degree_C]",
         values=np.linspace(100, 200, 10),
-    ),
-    SubstanceParameter(
-        name="Solvent",
-        data={
-            "Solvent A": "COC",
-            "Solvent B": "CCC",
-            "Solvent C": "O",
-            "Solvent D": "CS(=O)C",
-        },
-        encoding="MORDRED",
     ),
 ]
 
