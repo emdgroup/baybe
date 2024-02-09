@@ -121,21 +121,21 @@ def test_discrete_space_creation_from_simplex_inner(parameters, boundary_only):
 
     if boundary_only:
         # Ensure there exists configurations both inside and outside the simplex
-        total = (max_possible + min_possible) / 2
+        max_sum = (max_possible + min_possible) / 2
     else:
         # We use the maximum parameter sum because it can be exactly achieved (for other
         # values, except for the minimum, it's not guaranteed there actually exists
         # a parameter combination that can exactly hit it)
-        total = max_possible
+        max_sum = max_possible
 
     subspace = SubspaceDiscrete.from_simplex(
-        total, parameters, boundary_only=boundary_only, tolerance=tolerance
+        max_sum, parameters, boundary_only=boundary_only, tolerance=tolerance
     )
 
     if boundary_only:
-        assert np.allclose(subspace.exp_rep.sum(axis=1), total, atol=tolerance)
+        assert np.allclose(subspace.exp_rep.sum(axis=1), max_sum, atol=tolerance)
     else:
-        assert (subspace.exp_rep.sum(axis=1) <= total + tolerance).all()
+        assert (subspace.exp_rep.sum(axis=1) <= max_sum + tolerance).all()
 
 
 p_d1 = NumericalDiscreteParameter(name="d1", values=[0.0, 0.5, 1.0])
@@ -156,9 +156,9 @@ def test_discrete_space_creation_from_simplex_mixed(
     simplex_parameters, product_parameters, n_elements
 ):
     """Additional non-simplex parameters enter in form of a Cartesian product."""
-    total = 1.0
+    max_sum = 1.0
     subspace = SubspaceDiscrete.from_simplex(
-        total, simplex_parameters, product_parameters, boundary_only=False
+        max_sum, simplex_parameters, product_parameters, boundary_only=False
     )
     assert len(subspace.exp_rep) == n_elements  # <-- (# simplex part) x (# task part)
     assert not any(subspace.exp_rep.duplicated())

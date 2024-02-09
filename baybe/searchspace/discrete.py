@@ -234,7 +234,7 @@ class SubspaceDiscrete(SerialMixin):
     @classmethod
     def from_simplex(
         cls,
-        total: float,
+        max_sum: float,
         simplex_parameters: List[NumericalDiscreteParameter],
         product_parameters: Optional[List[DiscreteParameter]] = None,
         boundary_only: bool = False,
@@ -254,7 +254,7 @@ class SubspaceDiscrete(SerialMixin):
         significantly faster construction.
 
         Args:
-            total: The maximum sum of the parameter values defining the simplex size.
+            max_sum: The maximum sum of the parameter values defining the simplex size.
             simplex_parameters: The parameters to be used for the simplex construction.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
@@ -304,22 +304,22 @@ class SubspaceDiscrete(SerialMixin):
                 f"must have non-negative values only."
             )
 
-        def drop_invalid(df: pd.DataFrame, total: float, boundary_only: bool) -> None:
+        def drop_invalid(df: pd.DataFrame, max_sum: float, boundary_only: bool) -> None:
             """Drop rows that violate a specified simplex constraint.
 
             Args:
                 df: The dataframe whose rows should satisfy the simplex constraint.
-                total: The maximum row sum defining the simplex size.
+                max_sum: The maximum row sum defining the simplex size.
                 boundary_only: Flag to control if the points represented by the rows
                     may lie inside the simplex or on its boundary only.
             """
             row_sums = df.sum(axis=1)
             if boundary_only:
                 rows_to_drop = row_sums[
-                    (row_sums < total - tolerance) | (row_sums > total + tolerance)
+                    (row_sums < max_sum - tolerance) | (row_sums > max_sum + tolerance)
                 ].index
             else:
-                rows_to_drop = row_sums[row_sums > total + tolerance].index
+                rows_to_drop = row_sums[row_sums > max_sum + tolerance].index
             df.drop(rows_to_drop, inplace=True)
 
         # Get the minimum sum contributions to come in the upcoming joins (the first
@@ -343,11 +343,11 @@ class SubspaceDiscrete(SerialMixin):
                 exp_rep = pd.merge(
                     exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
                 )
-            drop_invalid(exp_rep, total - min_to_go, boundary_only=False)
+            drop_invalid(exp_rep, max_sum - min_to_go, boundary_only=False)
 
         # If requested, keep only the boundary values
         if boundary_only:
-            drop_invalid(exp_rep, total, boundary_only=True)
+            drop_invalid(exp_rep, max_sum, boundary_only=True)
 
         # Augment the Cartesian product created from all other parameter types
         if product_parameters:
