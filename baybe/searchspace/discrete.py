@@ -315,12 +315,12 @@ class SubspaceDiscrete(SerialMixin):
             """
             row_sums = df.sum(axis=1)
             if boundary_only:
-                rows_to_drop = row_sums[
+                locs_to_drop = row_sums[
                     (row_sums < max_sum - tolerance) | (row_sums > max_sum + tolerance)
                 ].index
             else:
-                rows_to_drop = row_sums[row_sums > max_sum + tolerance].index
-            df.drop(rows_to_drop, inplace=True)
+                locs_to_drop = row_sums[row_sums > max_sum + tolerance].index
+            df.drop(locs_to_drop, inplace=True)
 
         # Get the minimum sum contributions to come in the upcoming joins (the first
         # item is the minimum possible sum of all parameters starting from the
