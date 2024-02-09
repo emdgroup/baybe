@@ -85,13 +85,11 @@ def numerical_discrete_parameter(
     name = draw(parameter_name)
     values = draw(
         st.lists(
-            st.one_of(
-                st.floats(
-                    allow_infinity=False,
-                    allow_nan=False,
-                    min_value=min_value,
-                    max_value=max_value,
-                ),
+            st.floats(
+                allow_infinity=False,
+                allow_nan=False,
+                min_value=min_value,
+                max_value=max_value,
             ),
             min_size=2,
             unique=True,
