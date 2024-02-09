@@ -24,7 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   search space contains only one task parameter value
 - Failing `baybe` import from environments containing only core dependencies caused by
   eagerly loading `chem` dependencies
-- tox `coretest` now uses correct environment and skips unavailable tests
+- `tox` `coretest` now uses correct environment and skips unavailable tests
+- Basic serialization example no longer requires optional `chem` dependencies
 
 ### Removed
 - Detailed headings in table of contents of examples
