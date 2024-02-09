@@ -106,14 +106,17 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
 
 @given(
     parameters=st.lists(
-        numerical_discrete_parameter(min_value=0.1, max_value=1.0),
+        numerical_discrete_parameter(min_value=0.0, max_value=1.0),
         min_size=1,
+        max_size=5,
         unique_by=lambda x: x.name,
     )
 )
 def test_discrete_space_creation_from_simplex_inner(parameters):
     """Candidates from a simplex space satisfy the simplex constraint."""
-    total = 1.0
+    max_possible = sum(max(p.values) for p in parameters)
+    min_possible = sum(min(p.values) for p in parameters)
+    total = (max_possible + min_possible) / 2
     tolerance = 1e-6
     subspace = SubspaceDiscrete.from_simplex(
         parameters, total=total, boundary_only=False, tolerance=tolerance
