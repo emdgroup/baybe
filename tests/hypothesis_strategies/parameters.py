@@ -1,8 +1,9 @@
 """Hypothesis strategies for parameters."""
 
+from typing import Optional
+
 import hypothesis.strategies as st
 import numpy as np
-from altair import Optional
 from hypothesis.extra.pandas import columns, data_frames
 
 from baybe.parameters.categorical import (
