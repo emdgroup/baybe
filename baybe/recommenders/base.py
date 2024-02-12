@@ -1,7 +1,7 @@
 """Base classes for all recommenders."""
 
 from abc import ABC
-from typing import Callable, ClassVar, Optional, Protocol
+from typing import ClassVar, Optional, Protocol
 
 import cattrs
 import pandas as pd
@@ -78,7 +78,6 @@ class Recommender(ABC, RecommenderProtocol):
             )
             return self._select_candidates_and_recommend(
                 searchspace.discrete,
-                self._recommend_discrete,
                 batch_size,
                 allow_repeated_recommendations=allow_repeated,
                 allow_recommending_already_measured=allow_measured,
@@ -196,7 +195,6 @@ class Recommender(ABC, RecommenderProtocol):
     def _select_candidates_and_recommend(
         self,
         subspace_discrete: SubspaceDiscrete,
-        recommend_discrete: Callable[[SubspaceDiscrete, pd.DataFrame, int], pd.Index],
         batch_size: int = 1,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = True,
@@ -210,8 +208,6 @@ class Recommender(ABC, RecommenderProtocol):
 
         Args:
             subspace_discrete: The discrete subspace.
-            recommend_discrete: The Callable representing the discrete recommendation
-                function.
             batch_size: The chosen batch size.
             allow_repeated_recommendations: Allow to make recommendations that were
                 already recommended earlier.
@@ -249,7 +245,7 @@ class Recommender(ABC, RecommenderProtocol):
             )
 
         # Get recommendations
-        idxs = recommend_discrete(subspace_discrete, candidates_comp, batch_size)
+        idxs = self._recommend_discrete(subspace_discrete, candidates_comp, batch_size)
         rec = subspace_discrete.exp_rep.loc[idxs, :]
 
         # Update metadata
