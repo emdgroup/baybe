@@ -18,7 +18,7 @@ from botorch.acquisition import (
 )
 
 from baybe.acquisition import debotorchize
-from baybe.recommenders.base import Recommender, _select_candidates_and_recommend
+from baybe.recommenders.base import Recommender
 from baybe.searchspace import (
     SearchSpace,
     SearchSpaceType,
@@ -136,7 +136,7 @@ class BayesianRecommender(Recommender, ABC):
         self.setup_acquisition_function(searchspace, train_x, train_y)
 
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return _select_candidates_and_recommend(
+            return self._select_candidates_and_recommend(
                 searchspace,
                 self._recommend_discrete,
                 batch_size,

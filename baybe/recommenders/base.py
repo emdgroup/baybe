@@ -61,8 +61,8 @@ class Recommender(ABC, RecommenderProtocol):
     """Allow to output recommendations that were measured previously. This only has an
     influence in discrete search spaces."""
 
-    @staticmethod
     def _select_candidates_and_recommend(
+        self,
         searchspace: SearchSpace,
         recommend_discrete: Callable[[SubspaceDiscrete, pd.DataFrame, int], pd.Index],
         batch_size: int = 1,

@@ -6,7 +6,7 @@ from typing import Optional
 import pandas as pd
 from attrs import define
 
-from baybe.recommenders.base import Recommender, _select_candidates_and_recommend
+from baybe.recommenders.base import Recommender
 from baybe.searchspace import (
     SearchSpace,
     SearchSpaceType,
@@ -29,7 +29,7 @@ class NonPredictiveRecommender(Recommender, ABC):
         # See base class.
 
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return _select_candidates_and_recommend(
+            return self._select_candidates_and_recommend(
                 searchspace,
                 self._recommend_discrete,
                 batch_size,
