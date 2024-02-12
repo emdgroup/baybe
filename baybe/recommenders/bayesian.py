@@ -1,32 +1,20 @@
 """Different recommendation strategies that are based on Bayesian optimization."""
 
 import warnings
-from abc import ABC
-from functools import partial
-from typing import Any, Callable, ClassVar, Literal, Optional
+from typing import Any, ClassVar, Optional
 
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field, fields, validators
-from botorch.acquisition import (
-    AcquisitionFunction,
-    ExpectedImprovement,
-    PosteriorMean,
-    ProbabilityOfImprovement,
-    UpperConfidenceBound,
-    qExpectedImprovement,
-    qProbabilityOfImprovement,
-    qUpperConfidenceBound,
-)
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
 from sklearn.metrics import pairwise_distances_argmin
 
-from baybe.acquisition import PartialAcquisitionFunction, debotorchize
+from baybe.acquisition import PartialAcquisitionFunction
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.recommenders.base import (
     Recommender,
-    _select_candidates_and_recommend,
 )
+from baybe.recommenders.bayesian.base import BayesianRecommender
 from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import (
     SearchSpace,
@@ -34,189 +22,8 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
-from baybe.surrogates.base import Surrogate
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.sampling_algorithms import farthest_point_sampling
-
-if _ONNX_INSTALLED:
-    from baybe.surrogates import CustomONNXSurrogate
-
-
-@define
-class BayesianRecommender(Recommender, ABC):
-    """An abstract class for Bayesian Recommenders."""
-
-    surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
-    """The used surrogate model."""
-
-    acquisition_function_cls: Literal[
-        "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
-    ] = field(default="qEI")
-    """The used acquisition function class."""
-
-    _acquisition_function: Optional[AcquisitionFunction] = field(
-        default=None, init=False
-    )
-    """The current acquisition function."""
-
-    def _get_acquisition_function_cls(
-        self,
-    ) -> Callable:
-        """Get the actual acquisition function class.
-
-        Returns:
-            The debotorchized acquisition function class.
-        """
-        mapping = {
-            "PM": PosteriorMean,
-            "PI": ProbabilityOfImprovement,
-            "EI": ExpectedImprovement,
-            "UCB": partial(UpperConfidenceBound, beta=1.0),
-            "qEI": qExpectedImprovement,
-            "qPI": qProbabilityOfImprovement,
-            "qUCB": partial(qUpperConfidenceBound, beta=1.0),
-            "VarUCB": partial(UpperConfidenceBound, beta=100.0),
-            "qVarUCB": partial(qUpperConfidenceBound, beta=100.0),
-        }
-        fun = debotorchize(mapping[self.acquisition_function_cls])
-        return fun
-
-    def setup_acquisition_function(
-        self, searchspace: SearchSpace, train_x: pd.DataFrame, train_y: pd.DataFrame
-    ) -> None:
-        """Create the current acquisition function from provided training data.
-
-        The acquisition function is stored in the private attribute
-        ``_acquisition_function``.
-
-        Args:
-            searchspace: The search space in which the experiments are to be conducted.
-            train_x: The features of the conducted experiments.
-            train_y: The corresponding response values.
-        """
-        best_f = train_y.max()
-        surrogate_model = self._fit(searchspace, train_x, train_y)
-        acquisition_function_cls = self._get_acquisition_function_cls()
-
-        self._acquisition_function = acquisition_function_cls(surrogate_model, best_f)
-
-    def _fit(
-        self,
-        searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
-    ) -> Surrogate:
-        """Train a fresh surrogate model instance for the DOE strategy.
-
-        Args:
-            searchspace: The search space.
-            train_x: The features of the conducted experiments.
-            train_y: The corresponding response values.
-
-        Returns:
-            A surrogate model fitted to the provided data.
-
-        Raises:
-            ValueError: If the training inputs and targets do not have the same index.
-        """
-        # validate input
-        if not train_x.index.equals(train_y.index):
-            raise ValueError("Training inputs and targets must have the same index.")
-
-        self.surrogate_model.fit(searchspace, *to_tensor(train_x, train_y))
-
-        return self.surrogate_model
-
-    def recommend(  # noqa: D102
-        self,
-        searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
-    ) -> pd.DataFrame:
-        # See base class.
-
-        if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
-            CustomONNXSurrogate.validate_compatibility(searchspace)
-
-        self.setup_acquisition_function(searchspace, train_x, train_y)
-
-        if searchspace.type == SearchSpaceType.DISCRETE:
-            return _select_candidates_and_recommend(
-                searchspace,
-                self._recommend_discrete,
-                batch_size,
-                self.allow_repeated_recommendations,
-                self.allow_recommending_already_measured,
-            )
-        if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(searchspace.continuous, batch_size)
-        return self._recommend_hybrid(searchspace, batch_size)
-
-    def _recommend_discrete(
-        self,
-        subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
-        batch_size: int,
-    ) -> pd.Index:
-        """Calculate recommendations in a discrete search space.
-
-        Args:
-            subspace_discrete: The discrete subspace in which the recommendations
-                should be made.
-            candidates_comp: The computational representation of all possible
-                candidates.
-            batch_size: The size of the calculated batch.
-
-        Raises:
-            NotImplementedError: If the function is not implemented by the child class.
-
-        Returns:
-            The indices of the recommended points with respect to the
-            computational representation.
-        """
-        raise NotImplementedError()
-
-    def _recommend_continuous(
-        self,
-        subspace_continuous: SubspaceContinuous,
-        batch_size: int,
-    ) -> pd.DataFrame:
-        """Calculate recommendations in a continuous search space.
-
-        Args:
-            subspace_continuous: The continuous subspace in which the recommendations
-                should be made.
-            batch_size: The size of the calculated batch.
-
-        Raises:
-            NotImplementedError: If the function is not implemented by the child class.
-
-        Returns:
-            The recommended points.
-        """
-        raise NotImplementedError()
-
-    def _recommend_hybrid(
-        self,
-        searchspace: SearchSpace,
-        batch_size: int,
-    ) -> pd.DataFrame:
-        """Calculate recommendations in a hybrid search space.
-
-        Args:
-            searchspace: The hybrid search space in which the recommendations should
-                be made.
-            batch_size: The size of the calculated batch.
-
-        Raises:
-            NotImplementedError: If the function is not implemented by the child class.
-
-        Returns:
-            The recommended points.
-        """
-        raise NotImplementedError()
 
 
 @define

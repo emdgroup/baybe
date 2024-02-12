@@ -7,10 +7,10 @@ import pytest
 
 from baybe.recommenders.base import Recommender
 from baybe.recommenders.bayesian import (
-    BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
+from baybe.recommenders.bayesian.base import BayesianRecommender
 from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.strategies.base import Strategy
