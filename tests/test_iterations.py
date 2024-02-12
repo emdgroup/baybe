@@ -1,15 +1,17 @@
 # TODO: This file needs to be refactored.
 """Tests various configurations for a small number of iterations."""
+
 from typing import get_args, get_type_hints
 
 import pytest
 
-from baybe.recommenders.base import NonPredictiveRecommender, Recommender
+from baybe.recommenders.base import Recommender
 from baybe.recommenders.bayesian import (
     BayesianRecommender,
     NaiveHybridRecommender,
     SequentialGreedyRecommender,
 )
+from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.strategies.base import Strategy
 from baybe.surrogates import get_available_surrogates

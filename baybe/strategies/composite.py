@@ -8,7 +8,8 @@ from attrs.validators import deep_iterable, in_, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
-from baybe.recommenders.base import NonPredictiveRecommender, Recommender
+from baybe.recommenders.base import Recommender
+from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
     block_deserialization_hook,

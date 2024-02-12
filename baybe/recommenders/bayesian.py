@@ -24,10 +24,10 @@ from sklearn.metrics import pairwise_distances_argmin
 from baybe.acquisition import PartialAcquisitionFunction, debotorchize
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.recommenders.base import (
-    NonPredictiveRecommender,
     Recommender,
     _select_candidates_and_recommend,
 )
+from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import (
     SearchSpace,
     SearchSpaceType,
