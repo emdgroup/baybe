@@ -82,12 +82,11 @@ discrete_params = [
 ]
 
 # ```{note}
-# While we could also optimize the function using continuous parameters,
-# we use discrete parameters here so that the grid of candidate points is
-# aligned with the training data grid (see below).
-# This allows for an easy interpretation of the final plot,
-# as the percentages shown directly relate to the fraction of candidates
-# for which there was training data revealed.
+# While we could optimize the function using
+# [NumericalContinuousParameters](baybe.parameters.numerical.NumericalContinuousParameter),
+# we use discrete parameters here because it lets us interpret the percentages shown in
+# the final plot directly as the proportion of candidates for which there were target
+# values revealed by the training function.
 # ```
 
 # Next, we define a
