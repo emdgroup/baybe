@@ -137,6 +137,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
+        candidates_comp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
@@ -150,6 +151,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
         Args:
             searchspace: The search space in which the recommendations should be made.
+            candidates_comp: The computational representation of the candidates
+                of the discrete subspace.
             batch_size: The size of the calculated batch.
 
         Returns:
@@ -159,12 +162,6 @@ class SequentialGreedyRecommender(BayesianRecommender):
             NoMCAcquisitionFunctionError: If a non Monte Carlo acquisition function
                 is chosen.
         """
-        # Get discrete candidates.
-        _, candidates_comp = searchspace.discrete.get_candidates(
-            allow_repeated_recommendations=True,
-            allow_recommending_already_measured=True,
-        )
-
         # Calculate the number of samples from the given percentage
         n_candidates = int(self.sampling_percentage * len(candidates_comp.index))
 

@@ -77,8 +77,14 @@ class Recommender(ABC, RecommenderProtocol):
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
         if searchspace.type == SearchSpaceType.HYBRID:
+            _, candidates_comp = searchspace.discrete.get_candidates(
+                allow_repeated_recommendations=True,
+                allow_recommending_already_measured=True,
+            )
             return self._recommend_hybrid(
-                searchspace=searchspace, batch_size=batch_size
+                searchspace=searchspace,
+                candidates_comp=candidates_comp,
+                batch_size=batch_size,
             )
         raise RuntimeError("This line should be impossible to reach.")
 
@@ -108,8 +114,8 @@ class Recommender(ABC, RecommenderProtocol):
                 searchspace=SearchSpace(
                     discrete=subspace_discrete, continuous=SubspaceContinuous.empty()
                 ),
-                batch_size=batch_size,
                 candidates_comp=candidates_comp,
+                batch_size=batch_size,
             ).index
         except NotImplementedError as exc:
             raise NotImplementedError(
@@ -121,7 +127,9 @@ class Recommender(ABC, RecommenderProtocol):
             ) from exc
 
     def _recommend_continuous(
-        self, subspace_continuous: SubspaceContinuous, batch_size: int
+        self,
+        subspace_continuous: SubspaceContinuous,
+        batch_size: int,
     ) -> pd.DataFrame:
         """Calculate recommendations in a continuous search space.
 
@@ -143,6 +151,7 @@ class Recommender(ABC, RecommenderProtocol):
                 searchspace=SearchSpace(
                     discrete=SubspaceDiscrete.empty(), continuous=subspace_continuous
                 ),
+                candidates_comp=pd.DataFrame(),
                 batch_size=batch_size,
             )
         except NotImplementedError as exc:
@@ -157,8 +166,8 @@ class Recommender(ABC, RecommenderProtocol):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
+        candidates_comp: pd.DataFrame,
         batch_size: int,
-        candidates_comp: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Calculate recommendations in a hybrid search space.
 
@@ -169,10 +178,9 @@ class Recommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The hybrid search space in which the recommendations should
                 be made.
+            candidates_comp: The computational representation of the candidates
+                of the discrete subspace.
             batch_size: The size of the calculated batch.
-            candidates_comp: The computational representation of the candidates. This
-                is necessary for using this function as a fallback mechanism for
-                recommendations in discrete search spaces.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
