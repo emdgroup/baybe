@@ -68,14 +68,20 @@ class Recommender(ABC, RecommenderProtocol):
         # See base class.
 
         if searchspace.type == SearchSpaceType.DISCRETE:
+            allow_repeated = (
+                self.allow_repeated_recommendations
+                or not searchspace.continuous.is_empty
+            )
+            allow_measured = (
+                self.allow_recommending_already_measured
+                or not searchspace.continuous.is_empty
+            )
             return self._select_candidates_and_recommend(
                 searchspace.discrete,
                 self._recommend_discrete,
                 batch_size,
-                allow_repeated_recommendations=self.allow_repeated_recommendations
-                or not searchspace.continuous.is_empty,
-                allow_recommending_already_measured=self.allow_recommending_already_measured
-                or not searchspace.continuous.is_empty,
+                allow_repeated_recommendations=allow_repeated,
+                allow_recommending_already_measured=allow_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
