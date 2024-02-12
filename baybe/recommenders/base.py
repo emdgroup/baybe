@@ -69,11 +69,13 @@ class Recommender(ABC, RecommenderProtocol):
 
         if searchspace.type == SearchSpaceType.DISCRETE:
             return self._select_candidates_and_recommend(
-                searchspace,
+                searchspace.discrete,
                 self._recommend_discrete,
                 batch_size,
-                self.allow_repeated_recommendations,
-                self.allow_recommending_already_measured,
+                allow_repeated_recommendations=self.allow_repeated_recommendations
+                or not searchspace.continuous.is_empty,
+                allow_recommending_already_measured=self.allow_recommending_already_measured
+                or not searchspace.continuous.is_empty,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
@@ -187,7 +189,7 @@ class Recommender(ABC, RecommenderProtocol):
 
     def _select_candidates_and_recommend(
         self,
-        searchspace: SearchSpace,
+        subspace_discrete: SubspaceDiscrete,
         recommend_discrete: Callable[[SubspaceDiscrete, pd.DataFrame, int], pd.Index],
         batch_size: int = 1,
         allow_repeated_recommendations: bool = False,
@@ -201,7 +203,7 @@ class Recommender(ABC, RecommenderProtocol):
         search spaces, ignoring the continuous part.
 
         Args:
-            searchspace: The search space.
+            subspace_discrete: The discrete subspace.
             recommend_discrete: The Callable representing the discrete recommendation
                 function.
             batch_size: The chosen batch size.
@@ -223,11 +225,9 @@ class Recommender(ABC, RecommenderProtocol):
 
         # Get discrete candidates. The metadata flags are ignored if the search space
         # has a continuous component.
-        _, candidates_comp = searchspace.discrete.get_candidates(
-            allow_repeated_recommendations=allow_repeated_recommendations
-            or not searchspace.continuous.is_empty,
-            allow_recommending_already_measured=allow_recommending_already_measured
-            or not searchspace.continuous.is_empty,
+        _, candidates_comp = subspace_discrete.get_candidates(
+            allow_repeated_recommendations=allow_repeated_recommendations,
+            allow_recommending_already_measured=allow_recommending_already_measured,
         )
 
         # Check if enough candidates are left
@@ -243,11 +243,11 @@ class Recommender(ABC, RecommenderProtocol):
             )
 
         # Get recommendations
-        idxs = recommend_discrete(searchspace.discrete, candidates_comp, batch_size)
-        rec = searchspace.discrete.exp_rep.loc[idxs, :]
+        idxs = recommend_discrete(subspace_discrete, candidates_comp, batch_size)
+        rec = subspace_discrete.exp_rep.loc[idxs, :]
 
         # Update metadata
-        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
+        subspace_discrete.metadata.loc[idxs, "was_recommended"] = True
 
         # Return recommendations
         return rec
