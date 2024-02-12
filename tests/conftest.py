@@ -37,7 +37,7 @@ from baybe.parameters import (
 )
 from baybe.recommenders.base import Recommender
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
-from baybe.recommenders.sampling import RandomRecommender
+from baybe.recommenders.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.strategies.base import Strategy
 from baybe.strategies.composite import (
