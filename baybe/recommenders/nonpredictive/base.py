@@ -9,4 +9,4 @@ from baybe.recommenders.base import Recommender
 
 @define
 class NonPredictiveRecommender(Recommender, ABC):
-    """Abstract base class for recommenders that are non-predictive."""
+    """Abstract base class for all nonpredictive recommenders."""
