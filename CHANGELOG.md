@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Subpackages for the available recommender types
 
+### Changed
+- `Recommender`s now share their core logic via their base class
+
 ## [0.7.3] - 2024-02-09
 ### Added
 - Copy button for code blocks in documentation
