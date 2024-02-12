@@ -19,15 +19,8 @@ from botorch.acquisition import (
 
 from baybe.acquisition import debotorchize
 from baybe.recommenders.base import Recommender
-from baybe.searchspace import (
-    SearchSpace,
-    SubspaceContinuous,
-    SubspaceDiscrete,
-)
-from baybe.surrogates import (
-    _ONNX_INSTALLED,
-    GaussianProcessSurrogate,
-)
+from baybe.searchspace import SearchSpace
+from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.utils.dataframe import to_tensor
 
@@ -135,67 +128,3 @@ class BayesianRecommender(Recommender, ABC):
         self.setup_acquisition_function(searchspace, train_x, train_y)
 
         return super().recommend(searchspace, batch_size, train_x, train_y)
-
-    def _recommend_discrete(
-        self,
-        subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
-        batch_size: int,
-    ) -> pd.Index:
-        """Calculate recommendations in a discrete search space.
-
-        Args:
-            subspace_discrete: The discrete subspace in which the recommendations
-                should be made.
-            candidates_comp: The computational representation of all possible
-                candidates.
-            batch_size: The size of the calculated batch.
-
-        Raises:
-            NotImplementedError: If the function is not implemented by the child class.
-
-        Returns:
-            The indices of the recommended points with respect to the
-            computational representation.
-        """
-        raise NotImplementedError()
-
-    def _recommend_continuous(
-        self,
-        subspace_continuous: SubspaceContinuous,
-        batch_size: int,
-    ) -> pd.DataFrame:
-        """Calculate recommendations in a continuous search space.
-
-        Args:
-            subspace_continuous: The continuous subspace in which the recommendations
-                should be made.
-            batch_size: The size of the calculated batch.
-
-        Raises:
-            NotImplementedError: If the function is not implemented by the child class.
-
-        Returns:
-            The recommended points.
-        """
-        raise NotImplementedError()
-
-    def _recommend_hybrid(
-        self,
-        searchspace: SearchSpace,
-        batch_size: int,
-    ) -> pd.DataFrame:
-        """Calculate recommendations in a hybrid search space.
-
-        Args:
-            searchspace: The hybrid search space in which the recommendations should
-                be made.
-            batch_size: The size of the calculated batch.
-
-        Raises:
-            NotImplementedError: If the function is not implemented by the child class.
-
-        Returns:
-            The recommended points.
-        """
-        raise NotImplementedError()
