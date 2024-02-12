@@ -42,11 +42,11 @@ class NaiveHybridRecommender(Recommender):
     # that might come up when implementing new subclasses of Recommender
     disc_recommender: Recommender = field(factory=SequentialGreedyRecommender)
     """The recommender used for the discrete subspace. Default:
-    :class:`baybe.recommenders.bayesian.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
 
     cont_recommender: BayesianRecommender = field(factory=SequentialGreedyRecommender)
     """The recommender used for the continuous subspace. Default:
-    :class:`baybe.recommenders.bayesian.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
 
     def __attrs_post_init__(self):
         """Validate if flags are synchronized and overrides them otherwise."""
