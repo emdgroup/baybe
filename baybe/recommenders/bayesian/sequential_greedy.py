@@ -162,22 +162,27 @@ class SequentialGreedyRecommender(BayesianRecommender):
             NoMCAcquisitionFunctionError: If a non Monte Carlo acquisition function
                 is chosen.
         """
-        # Calculate the number of samples from the given percentage
-        n_candidates = int(self.sampling_percentage * len(candidates_comp.index))
+        if len(candidates_comp) > 0:
+            # Calculate the number of samples from the given percentage
+            n_candidates = int(self.sampling_percentage * len(candidates_comp.index))
 
-        # Potential sampling of discrete candidates
-        if self.hybrid_sampler == "Farthest":
-            ilocs = farthest_point_sampling(candidates_comp.values, n_candidates)
-            candidates_comp = candidates_comp.iloc[ilocs]
-        elif self.hybrid_sampler == "Random":
-            candidates_comp = candidates_comp.sample(n_candidates)
+            # Potential sampling of discrete candidates
+            if self.hybrid_sampler == "Farthest":
+                ilocs = farthest_point_sampling(candidates_comp.values, n_candidates)
+                candidates_comp = candidates_comp.iloc[ilocs]
+            elif self.hybrid_sampler == "Random":
+                candidates_comp = candidates_comp.sample(n_candidates)
 
-        # Prepare all considered discrete configurations in the List[Dict[int, float]]
-        # format expected by BoTorch
-        # TODO: Currently assumes that discrete parameters are first and continuous
-        #   second. Once parameter redesign [11611] is completed, we might adjust this.
-        candidates_comp.columns = list(range(len(candidates_comp.columns)))
-        fixed_features_list = candidates_comp.to_dict("records")
+            # Prepare all considered discrete configurations in the
+            # List[Dict[int, float]] format expected by BoTorch.
+            # TODO: Currently assumes that discrete parameters are first and continuous
+            #   second. Once parameter redesign [11611] is completed, we might adjust
+            #   this.
+            candidates_comp.columns = list(range(len(candidates_comp.columns)))
+            fixed_features_list = candidates_comp.to_dict("records")
+
+        else:
+            fixed_features_list = None
 
         # Actual call of the BoTorch optimization routine
         try:
