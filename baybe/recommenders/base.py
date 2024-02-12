@@ -111,9 +111,7 @@ class Recommender(ABC, RecommenderProtocol):
         """
         try:
             return self._recommend_hybrid(
-                searchspace=SearchSpace(
-                    discrete=subspace_discrete, continuous=SubspaceContinuous.empty()
-                ),
+                searchspace=SearchSpace(discrete=subspace_discrete),
                 candidates_comp=candidates_comp,
                 batch_size=batch_size,
             ).index
@@ -148,9 +146,7 @@ class Recommender(ABC, RecommenderProtocol):
         # _recommend_hybrid instead.
         try:
             return self._recommend_hybrid(
-                searchspace=SearchSpace(
-                    discrete=SubspaceDiscrete.empty(), continuous=subspace_continuous
-                ),
+                searchspace=SearchSpace(continuous=subspace_continuous),
                 candidates_comp=pd.DataFrame(),
                 batch_size=batch_size,
             )
