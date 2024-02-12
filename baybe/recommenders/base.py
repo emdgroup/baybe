@@ -68,19 +68,9 @@ class Recommender(ABC, RecommenderProtocol):
         # See base class.
 
         if searchspace.type == SearchSpaceType.DISCRETE:
-            allow_repeated = (
-                self.allow_repeated_recommendations
-                or not searchspace.continuous.is_empty
-            )
-            allow_measured = (
-                self.allow_recommending_already_measured
-                or not searchspace.continuous.is_empty
-            )
             return self._select_candidates_and_recommend(
                 searchspace.discrete,
                 batch_size,
-                allow_repeated_recommendations=allow_repeated,
-                allow_recommending_already_measured=allow_measured,
             )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
@@ -196,8 +186,6 @@ class Recommender(ABC, RecommenderProtocol):
         self,
         subspace_discrete: SubspaceDiscrete,
         batch_size: int = 1,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = True,
     ) -> pd.DataFrame:
         """Select candidates in a discrete search space and recommend them.
 
@@ -209,10 +197,6 @@ class Recommender(ABC, RecommenderProtocol):
         Args:
             subspace_discrete: The discrete subspace.
             batch_size: The chosen batch size.
-            allow_repeated_recommendations: Allow to make recommendations that were
-                already recommended earlier.
-            allow_recommending_already_measured: Allow to output recommendations that
-                were measured previously.
 
         Returns:
             The recommendation in experimental representation.
@@ -225,11 +209,10 @@ class Recommender(ABC, RecommenderProtocol):
         #   among all purely discrete recommenders (without introducing complicates
         #   class hierarchies).
 
-        # Get discrete candidates. The metadata flags are ignored if the search space
-        # has a continuous component.
+        # Get discrete candidates
         _, candidates_comp = subspace_discrete.get_candidates(
-            allow_repeated_recommendations=allow_repeated_recommendations,
-            allow_recommending_already_measured=allow_recommending_already_measured,
+            allow_repeated_recommendations=self.allow_repeated_recommendations,
+            allow_recommending_already_measured=self.allow_recommending_already_measured,
         )
 
         # Check if enough candidates are left
