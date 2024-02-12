@@ -1,4 +1,4 @@
-"""Different recommendation strategies that are based on Bayesian optimization."""
+"""Naive hybrid recommender."""
 
 import warnings
 from typing import ClassVar, Optional
