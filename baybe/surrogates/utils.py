@@ -28,12 +28,7 @@ def _prepare_inputs(x: Tensor) -> Tensor:
 
     Returns:
         The prepared input.
-
-    Raises:
-        ValueError: If the model input is empty.
     """
-    if len(x) == 0:
-        raise ValueError("The model input must be non-empty.")
     return x.to(_DTYPE)
 
 
