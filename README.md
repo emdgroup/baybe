@@ -147,7 +147,8 @@ For our example, we combine two selection strategies:
 
 For more details on the different strategies, their underlying algorithmic
 details, and their configuration settings, see the
-[strategies section](https://emdgroup.github.io/baybe/userguide/strategy.html) of the user guide.
+[strategies section](https://emdgroup.github.io/baybe/userguide/strategies.html)
+of the user guide.
 
 ```python
 from baybe.strategies import TwoPhaseStrategy
