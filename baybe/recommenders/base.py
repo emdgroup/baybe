@@ -196,7 +196,7 @@ class Recommender(ABC, RecommenderProtocol):
     def _select_candidates_and_recommend(
         self,
         subspace_discrete: SubspaceDiscrete,
-        batch_size: int = 1,
+        batch_size: int,
     ) -> pd.DataFrame:
         """Get candidates in a discrete search space and generate recommendations.
 
