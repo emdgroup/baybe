@@ -61,6 +61,33 @@ class Recommender(ABC, RecommenderProtocol):
     """Allow to output recommendations that were measured previously. This only has an
     influence in discrete search spaces."""
 
+    def recommend(  # noqa: D102
+        self,
+        searchspace: SearchSpace,
+        batch_size: int = 1,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        # See base class.
+
+        if searchspace.type == SearchSpaceType.DISCRETE:
+            return self._select_candidates_and_recommend(
+                searchspace,
+                self._recommend_discrete,
+                batch_size,
+                self.allow_repeated_recommendations,
+                self.allow_recommending_already_measured,
+            )
+        if searchspace.type == SearchSpaceType.CONTINUOUS:
+            return self._recommend_continuous(
+                subspace_continuous=searchspace.continuous, batch_size=batch_size
+            )
+        if searchspace.type == SearchSpaceType.HYBRID:
+            return self._recommend_hybrid(
+                searchspace=searchspace, batch_size=batch_size
+            )
+        raise RuntimeError("This line should be impossible to reach.")
+
     def _select_candidates_and_recommend(
         self,
         searchspace: SearchSpace,

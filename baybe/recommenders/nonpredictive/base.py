@@ -9,7 +9,6 @@ from attrs import define
 from baybe.recommenders.base import Recommender
 from baybe.searchspace import (
     SearchSpace,
-    SearchSpaceType,
     SubspaceContinuous,
     SubspaceDiscrete,
 )
@@ -18,29 +17,6 @@ from baybe.searchspace import (
 @define
 class NonPredictiveRecommender(Recommender, ABC):
     """Abstract base class for recommenders that are non-predictive."""
-
-    def recommend(  # noqa: D102
-        self,
-        searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
-    ) -> pd.DataFrame:
-        # See base class.
-
-        if searchspace.type == SearchSpaceType.DISCRETE:
-            return self._select_candidates_and_recommend(
-                searchspace,
-                self._recommend_discrete,
-                batch_size,
-                self.allow_repeated_recommendations,
-                self.allow_recommending_already_measured,
-            )
-        if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(
-                subspace_continuous=searchspace.continuous, batch_size=batch_size
-            )
-        return self._recommend_hybrid(searchspace=searchspace, batch_size=batch_size)
 
     def _recommend_discrete(
         self,

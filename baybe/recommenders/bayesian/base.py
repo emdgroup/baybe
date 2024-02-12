@@ -21,7 +21,6 @@ from baybe.acquisition import debotorchize
 from baybe.recommenders.base import Recommender
 from baybe.searchspace import (
     SearchSpace,
-    SearchSpaceType,
     SubspaceContinuous,
     SubspaceDiscrete,
 )
@@ -135,17 +134,7 @@ class BayesianRecommender(Recommender, ABC):
 
         self.setup_acquisition_function(searchspace, train_x, train_y)
 
-        if searchspace.type == SearchSpaceType.DISCRETE:
-            return self._select_candidates_and_recommend(
-                searchspace,
-                self._recommend_discrete,
-                batch_size,
-                self.allow_repeated_recommendations,
-                self.allow_recommending_already_measured,
-            )
-        if searchspace.type == SearchSpaceType.CONTINUOUS:
-            return self._recommend_continuous(searchspace.continuous, batch_size)
-        return self._recommend_hybrid(searchspace, batch_size)
+        return super().recommend(searchspace, batch_size, train_x, train_y)
 
     def _recommend_discrete(
         self,
