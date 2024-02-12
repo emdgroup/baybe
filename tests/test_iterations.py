@@ -148,3 +148,9 @@ def test_iter_recommender_hybrid(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("strategy", valid_strategies, indirect=True)
 def test_strategies(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
+
+
+@pytest.mark.parametrize("parameter_names", [["Num_disc_1", "Conti_finite3"]])
+def test_without_data(campaign, batch_size):
+    campaign.strategy = SequentialGreedyRecommender()
+    campaign.recommend(batch_size)
