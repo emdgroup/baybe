@@ -14,6 +14,8 @@
 ### Necessary imports for this example
 
 import os
+import sys
+from pathlib import Path
 
 import numpy as np
 from botorch.test_functions import Rastrigin
@@ -130,9 +132,16 @@ results = simulate_scenarios(
 
 # We use the plotting utility to create plots.
 
+# ```{note}
+# We cannot use `__file__` here since we convert these examples to jupyter notebooks and
+# these do not have a `__file__` attribute.
+# ```
+
+path = Path(sys.path[0])
 create_plots(
     data=results,
-    name="botorch_analytical",
+    path=path,
+    base_name="botorch_analytical",
     x="Num_Experiments",
     y="Target_CumBest",
     hue="Scenario",

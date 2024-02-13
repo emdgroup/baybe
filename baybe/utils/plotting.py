@@ -2,7 +2,6 @@
 
 import json
 import os
-import sys
 import warnings
 from pathlib import Path
 
@@ -11,27 +10,25 @@ import pandas as pd
 import seaborn as sns
 
 
-def create_plots(data: pd.DataFrame, name: str, **kwargs) -> None:
+def create_plots(data: pd.DataFrame, path: Path, base_name: str, **kwargs) -> None:
     """Create plots from a given data frame and save them as a svg file.
 
-    The plots will be saved in the location in which the file that calls this function
-    is being located. This method is intended to be used for plotting the results of the
-    examples, but can also be used for other plots.
+    The plots will be saved in the location specified by ``path``.
+    The attribute ``base_name`` is used to define the name of the outputs.
 
     If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
     immediately returns.
 
     Using the ``BAYBE_MULTIVERSION_PLOTS`` environment variable, it is possible to
     create plots for the light and dark version of the documentation. If this variable
-    is not set, a single file named `{name}_check.svg` is created.
-
-    Note that it is necessary to provide keyword arguments for setting up the exact
-    plot.
+    is not set, a single file named ``{base_name}_check.svg`` is created.
 
     Args:
         data: The data frame containing the data to be plotted.
-        name: The name of the plot that should be created.
-        **kwargs: Keyword arguments. Used for specifying the plot.
+        path: The path to the directory in which the plots should be saved.
+        base_name: The base name that is used for naming the output files.
+        **kwargs: Keyword arguments. They are directly passed to ``sns.lineplot`` and
+            are used for specifying the plot.
     """
     # Check whether we immediately return due to just running a SMOKE_TEST
     if "SMOKE_TEST" in os.environ:
@@ -52,9 +49,9 @@ def create_plots(data: pd.DataFrame, name: str, **kwargs) -> None:
         # Only if kwargs are being provided, a plot is actually created
         if kwargs:
             sns.lineplot(data=data, **kwargs)
-            path = Path(sys.path[0], f"{name}_{theme_name}.svg")
+            output_path = Path(path, f"{base_name}_{theme_name}.svg")
             plt.savefig(
-                path,
+                output_path,
                 format="svg",
                 transparent=True,
             )
