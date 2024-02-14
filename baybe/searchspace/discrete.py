@@ -64,8 +64,7 @@ class SubspaceDiscrete(SerialMixin):
     and thereby speed up construction. If not provided, the default hook will derive it
     from ``exp_rep``."""
 
-    def __repr__(self) -> str:
-        """Override the standard __repr__."""
+    def __str__(self) -> str:
         if self.is_empty:
             return ""
         # Convert the lists to dataFrames to be able to use pretty_printing
