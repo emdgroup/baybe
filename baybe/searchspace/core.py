@@ -66,7 +66,9 @@ class SearchSpace(SerialMixin):
     """The (potentially empty) continuous subspace of the overall search space."""
 
     def __str__(self) -> str:
-        print("\n\n \033[1m ***** SEARCH SPACE *****\n \033[0m")
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+        print(f"\n\n{start_bold}***** SEARCH SPACE *****\n {end_bold}")
 
         return str(self.discrete) + str(self.continuous)
 

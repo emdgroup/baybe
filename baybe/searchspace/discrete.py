@@ -67,42 +67,25 @@ class SubspaceDiscrete(SerialMixin):
     def __str__(self) -> str:
         if self.is_empty:
             return ""
+
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+
         # Convert the lists to dataFrames to be able to use pretty_printing
-        par_df = parameter_cartesian_prod_to_df(self.parameters)
+        par_df = pd.DataFrame(self.parameters)
         const_df = parameter_cartesian_prod_to_df(self.constraints)
 
         # Put all attributes of the discrete class in one string.
-        discrete_str = (
-            "\n\n \033[1m |--> The discrete search space \n\n \033[0m"
-            + "\033[1m Discrete Parameters \033[0m"
-            + " \n"
-            + pretty_print_dataframe(par_df)
-            + "\n"
-            + "\n "
-            + "\033[1m Experimental Representation \033[0m"
-            + " \n"
-            + pretty_print_dataframe(self.exp_rep)
-            + "\n"
-            + "\n"
-            + "\033[1m Metadata \033[0m"
-            + " \n"
-            + pretty_print_dataframe(self.metadata)
-            + "\n"
-            + "\n"
-            + "\033[1m Empty Encoding Used: \033[0m"
-            + str(self.empty_encoding)
-            + "\n"
-            + "\n"
-            + "\033[1m Constraints \033[0m"
-            + "  \n"
-            + pretty_print_dataframe(const_df)
-            + "\n"
-            + "\n"
-            + "\033[1m Computational representation of the space \033[0m"
-            + " \n"
-            + pretty_print_dataframe(self.comp_rep)
-            + "\n\n"
-        )
+        discrete_str = f"""{start_bold}|--> The discrete search space
+            \n\nDiscrete Parameters
+            {end_bold} \n{pretty_print_dataframe(par_df)}
+            \n{start_bold}Experimental Representation {end_bold}
+            \n{pretty_print_dataframe(self.exp_rep)}
+            \n{start_bold}Metadata {end_bold} \n{pretty_print_dataframe(self.metadata)}
+            \n{start_bold}Empty Encoding Used: {end_bold}{str(self.empty_encoding)}
+            \n{start_bold}Constraints{end_bold}\n{pretty_print_dataframe(const_df)}
+            \n{start_bold}Computational representation of the space{end_bold}
+            \n{pretty_print_dataframe(self.comp_rep)}\n\n"""
 
         return discrete_str
 

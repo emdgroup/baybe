@@ -47,29 +47,23 @@ class SubspaceContinuous(SerialMixin):
     def __str__(self) -> str:
         if self.is_empty:
             return ""
+
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+
         # Convert the lists to dataFrames to be able to use pretty_printing
         par_df = parameter_cartesian_prod_to_df(self.parameters)
         const_lin_eq_df = parameter_cartesian_prod_to_df(self.constraints_lin_eq)
         const_lin_ineq_df = parameter_cartesian_prod_to_df(self.constraints_lin_ineq)
 
         # Put all attributes of the continuous class in one string
-        continuous_str = (
-            "\n\n \033[1m |--> The continuous search space \n\n \033[0m"
-            + "\033[1m Continuous Parameters \033[0m"
-            + " \n"
-            + pretty_print_dataframe(par_df)
-            + "\n"
-            + "\n "
-            + "\033[1m List of linear equality constraints \033[0m"
-            + " \n"
-            + pretty_print_dataframe(const_lin_eq_df)
-            + "\n"
-            + "\n"
-            + "\033[1m List of linear inequality constraints \033[0m"
-            + " \n"
-            + pretty_print_dataframe(const_lin_ineq_df)
-            + "\n\n"
-        )
+        continuous_str = f"""\n\n {start_bold} |--> The continuous search space
+            \n\nContinuous Parameters{end_bold} \n
+            {pretty_print_dataframe(par_df)}\n\n
+            {start_bold}List of linear equality constraints{end_bold}\n
+            {pretty_print_dataframe(const_lin_eq_df)}\n\n
+            {start_bold}List of linear inequality constraints
+            {end_bold} \n{pretty_print_dataframe(const_lin_ineq_df)}\n\n"""
 
         return continuous_str
 
