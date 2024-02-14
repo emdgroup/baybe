@@ -26,7 +26,7 @@ from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     fuzzy_row_match,
-    pretty_printing_dataFrame,
+    pretty_print_dataframe,
 )
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
@@ -76,17 +76,17 @@ class SubspaceDiscrete(SerialMixin):
             "\n\n \033[1m |--> The discrete search space \n\n \033[0m"
             + "\033[1m Discrete Parameters \033[0m"
             + " \n"
-            + pretty_printing_dataFrame(par_df)
+            + pretty_print_dataframe(par_df)
             + "\n"
             + "\n "
             + "\033[1m Experimental Representation \033[0m"
             + " \n"
-            + pretty_printing_dataFrame(self.exp_rep)
+            + pretty_print_dataframe(self.exp_rep)
             + "\n"
             + "\n"
             + "\033[1m Metadata \033[0m"
             + " \n"
-            + pretty_printing_dataFrame(self.metadata)
+            + pretty_print_dataframe(self.metadata)
             + "\n"
             + "\n"
             + "\033[1m Empty Encoding Used: \033[0m"
@@ -95,12 +95,12 @@ class SubspaceDiscrete(SerialMixin):
             + "\n"
             + "\033[1m Constraints \033[0m"
             + "  \n"
-            + pretty_printing_dataFrame(const_df)
+            + pretty_print_dataframe(const_df)
             + "\n"
             + "\n"
             + "\033[1m Computational representation of the space \033[0m"
             + " \n"
-            + pretty_printing_dataFrame(self.comp_rep)
+            + pretty_print_dataframe(self.comp_rep)
             + "\n\n"
         )
 

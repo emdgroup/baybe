@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple
 import numpy as np
 import pandas as pd
 import torch
-from tabulate import tabulate
 from torch import Tensor
 
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
@@ -421,8 +420,12 @@ def fuzzy_row_match(
     return pd.Index(inds_matched)
 
 
-def pretty_printing_dataFrame(df: pd.DataFrame) -> str:
-    """Return a pretyt/readable str Object.
+def pretty_print_dataframe(df: pd.DataFrame) -> str:
+    """Return a pretty/readable str object.
+
+    This function checks the size of the dataframe first. If the dataframe
+    has more than 10
+    rows or more than 5 columns, the extra values will be extracted.
 
     Args:
         df: The dataframe to be printed.
@@ -430,7 +433,6 @@ def pretty_printing_dataFrame(df: pd.DataFrame) -> str:
     Returns:
         The values to be printed as a str table.
     """
-    # select the first 10 rows/values and store them in a str table
     # TODO: remove hard coded numbers and allow user defined specifications
 
     str_df = ""
@@ -439,22 +441,22 @@ def pretty_printing_dataFrame(df: pd.DataFrame) -> str:
     if len(df) == 0:
         return "This attribute is empty. "
 
-    # Extract extra columns
-    if len(df.columns) > 5:
-        df = df.T.head(5).T
-        str_df = (
-            "\n Your dataFrame has too many columns. "
-            + "For a better readable table only the first 5 columns will be printed. \n"
-        )
-
-    # Extract extra rows
-    if len(df) > 10:
-        df = df.head(10)
+    # Extract extra rows and columns
+    """elif len(df) > 10 and len(df.columns) > 5:
         str_df = str_df + (
-            "\n Your dataFrame has too many rows. "
-            + "For a better readable table only the first 10 values will be printed. \n"
+            f"\nPrinting first 10/{len(df)} rows and 5/{len(df.columns)} columns\n"
         )
+        df = df.T.head(5).T
+        df = df.head(10)
+
+    elif len(df) > 10:
+        str_df = str_df + (f"\nPrinting first 10/{len(df)} rows\n")
+        df = df.head(10)"""
+    # Do not break the table in two lines and center table content
+    pd.set_option(
+        "display.max_rows", 10, "display.max_column", 6, "expand_frame_repr", False
+    )
 
     # Convert the dataFrame to a string table
-    str_df = str_df + tabulate(df, headers="keys", tablefmt="pretty")
+    str_df = f"\n{df} {str_df} "
     return str_df

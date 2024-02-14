@@ -18,7 +18,7 @@ from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.discrete import parameter_cartesian_prod_to_df
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
-from baybe.utils.dataframe import pretty_printing_dataFrame
+from baybe.utils.dataframe import pretty_print_dataframe
 from baybe.utils.numerical import DTypeFloatTorch
 
 
@@ -57,17 +57,17 @@ class SubspaceContinuous(SerialMixin):
             "\n\n \033[1m |--> The continuous search space \n\n \033[0m"
             + "\033[1m Continuous Parameters \033[0m"
             + " \n"
-            + pretty_printing_dataFrame(par_df)
+            + pretty_print_dataframe(par_df)
             + "\n"
             + "\n "
             + "\033[1m List of linear equality constraints \033[0m"
             + " \n"
-            + pretty_printing_dataFrame(const_lin_eq_df)
+            + pretty_print_dataframe(const_lin_eq_df)
             + "\n"
             + "\n"
             + "\033[1m List of linear inequality constraints \033[0m"
             + " \n"
-            + pretty_printing_dataFrame(const_lin_ineq_df)
+            + pretty_print_dataframe(const_lin_ineq_df)
             + "\n\n"
         )
 
