@@ -156,7 +156,9 @@ result_fraction = simulate_scenarios(
 )
 results = pd.concat([result_fraction, *results])
 
-# All that remains is to visualize the results:
+# All that remains is to visualize the results.
+# As the example shows, the optimization speed can be significantly increased by
+# using even small amounts of training data from related optimization tasks.
 
 themes = json.load(open("plotting_themes.json"))
 for theme in themes:
