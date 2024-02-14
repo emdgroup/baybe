@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 import warnings
 from pathlib import Path
 
@@ -34,8 +35,26 @@ def create_plots(data: pd.DataFrame, path: Path, base_name: str, **kwargs) -> No
     if "SMOKE_TEST" in os.environ:
         return
 
-    # File containing all the themes
-    themes = json.load(open(Path("plotting_themes.json")))
+    # First, we see if we happen to find the plotting themes in the current folder.
+    # This is e.g. the case if we convert the file to a jupyter notebook.
+    try:
+        themes = json.load(open("plotting_themes.json"))
+    except FileNotFoundError:
+        # Try to find the plotting themes by backtracking
+        # Get the absolute path of the current script
+        script_path = Path(sys.argv[0]).resolve()
+        # Backtrack until either the "baybe" folder is found or backtracking is no
+        # longer possible
+        while not script_path.name == "baybe" and script_path != script_path.parent:
+            script_path = script_path.parent
+        if script_path == script_path.parent:
+            warnings.warn("No themes for plotting found. A default theme is used.")
+            themes = {"check": {"font_scale": 1.75, "rc_params": {}}}
+        else:
+            # Open the file containing all the themes
+            # This currently still assumes that the file is in the repo folder
+            themes = json.load(open(script_path / "plotting_themes.json"))
+
     # Environment variables for checking whether we want to have multiversion plots
     BAYBE_MULTIVERSION_PLOTS = "BAYBE_MULTIVERSION_PLOTS" in os.environ
 
