@@ -1,7 +1,5 @@
-"""BayBE recommenders."""
+"""Nonpredictive recommenders."""
 
-from baybe.recommenders.bayesian.sequential_greedy import SequentialGreedyRecommender
-from baybe.recommenders.naive import NaiveHybridRecommender
 from baybe.recommenders.nonpredictive.clustering import (
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
@@ -14,7 +12,5 @@ __all__ = [
     "GaussianMixtureClusteringRecommender",
     "KMeansClusteringRecommender",
     "PAMClusteringRecommender",
-    "NaiveHybridRecommender",
     "RandomRecommender",
-    "SequentialGreedyRecommender",
 ]

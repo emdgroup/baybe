@@ -3,12 +3,10 @@
 import pytest
 
 from baybe.campaign import Campaign
-from baybe.recommenders.base import NonPredictiveRecommender
-from baybe.recommenders.bayesian import (
-    BayesianRecommender,
-    NaiveHybridRecommender,
-    SequentialGreedyRecommender,
-)
+from baybe.recommenders.bayesian import SequentialGreedyRecommender
+from baybe.recommenders.bayesian.base import BayesianRecommender
+from baybe.recommenders.naive import NaiveHybridRecommender
+from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.utils.basic import get_subclasses
 
