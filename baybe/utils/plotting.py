@@ -20,9 +20,9 @@ def create_plots(data: pd.DataFrame, path: Path, base_name: str, **kwargs) -> No
     If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
     immediately returns.
 
-    Using the ``BAYBE_MULTIVERSION_PLOTS`` environment variable, it is possible to
-    create plots for the light and dark version of the documentation. If this variable
-    is not set, a single file named ``{base_name}_check.svg`` is created.
+    The function attempts to read the predefined themes from ``plotting_themes.json``.
+    For each theme it finds, a file ``{base_name}_{theme}.svg`` is being created.
+    If the file cannot be found, a single fallback theme is used.
 
     Args:
         data: The data frame containing the data to be plotted.
@@ -55,12 +55,7 @@ def create_plots(data: pd.DataFrame, path: Path, base_name: str, **kwargs) -> No
             # This currently still assumes that the file is in the repo folder
             themes = json.load(open(script_path / "plotting_themes.json"))
 
-    # Environment variables for checking whether we want to have multiversion plots
-    BAYBE_MULTIVERSION_PLOTS = "BAYBE_MULTIVERSION_PLOTS" in os.environ
-
-    # Choose either all available or just the `check` theme.
-    chosen_themes = themes if BAYBE_MULTIVERSION_PLOTS else ["check"]
-    for theme_name in chosen_themes:
+    for theme_name in themes:
         # Extract and set the current theme
         theme = themes[theme_name]
         font_scale, rc_params = theme["font_scale"], theme["rc_params"]
