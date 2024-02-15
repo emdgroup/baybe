@@ -11,7 +11,9 @@ import pandas as pd
 import seaborn as sns
 
 
-def create_plots(data: pd.DataFrame, path: Path, base_name: str, **kwargs) -> None:
+def create_example_plots(
+    data: pd.DataFrame, path: Path, base_name: str, **kwargs
+) -> None:
     """Create plots from a given data frame and save them as a svg file.
 
     The plots will be saved in the location specified by ``path``.

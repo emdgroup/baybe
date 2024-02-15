@@ -26,7 +26,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
-from baybe.utils.plotting import create_plots
+from baybe.utils.plotting import create_example_plots
 
 ### Parameters for a full simulation loop
 
@@ -114,7 +114,7 @@ results = simulate_scenarios(
 # We use the plotting utility to create plots.
 
 path = Path(sys.path[0])
-create_plots(
+create_example_plots(
     data=results,
     path=path,
     base_name="botorch_analytical",
