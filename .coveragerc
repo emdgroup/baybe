@@ -1,0 +1,2 @@
+[run]
+omit = baybe/utils/plotting.py
