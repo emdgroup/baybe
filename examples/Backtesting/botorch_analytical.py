@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import seaborn as sns
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
@@ -114,11 +115,16 @@ results = simulate_scenarios(
 # We use the plotting utility to create plots.
 
 path = Path(sys.path[0])
-create_example_plots(
+ax = sns.lineplot(
     data=results,
-    path=path,
-    base_name="botorch_analytical",
+    marker="o",
+    markersize=10,
     x="Num_Experiments",
     y="Target_CumBest",
     hue="Scenario",
+)
+create_example_plots(
+    ax=ax,
+    path=path,
+    base_name="botorch_analytical",
 )
