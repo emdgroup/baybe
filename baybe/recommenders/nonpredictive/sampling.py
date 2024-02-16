@@ -1,6 +1,6 @@
 """Recommendation strategies based on sampling."""
 
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -21,22 +21,18 @@ class RandomRecommender(NonPredictiveRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
+        candidates_comp: pd.DataFrame,
         batch_size: int,
-        candidates_comp: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class.
 
         if searchspace.type == SearchSpaceType.DISCRETE:
-            if candidates_comp is None:
-                raise TypeError(
-                    """You did not provide a dataframe of candidates when applying the
-                    random recommender to a purely discrete space. Please ensure that
-                    this dataframe is not None."""
-                )
             return candidates_comp.sample(batch_size)
+
         cont_random = searchspace.continuous.samples_random(n_points=batch_size)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return cont_random
+
         disc_candidates, _ = searchspace.discrete.get_candidates(True, True)
 
         # TODO decide mechanism if number of possible discrete candidates is smaller
