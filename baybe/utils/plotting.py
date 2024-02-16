@@ -7,14 +7,15 @@ import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
+from matplotlib.axes import Axes
 
 
 def create_example_plots(
-    data: pd.DataFrame, path: Path, base_name: str, **kwargs
+    ax: Axes,
+    path: Path,
+    base_name: str,
 ) -> None:
-    """Create plots from a given data frame and save them as a svg file.
+    """Create plots from an Axes object and save them as a svg file.
 
     The plots will be saved in the location specified by ``path``.
     The attribute ``base_name`` is used to define the name of the outputs.
@@ -24,53 +25,100 @@ def create_example_plots(
 
     The function attempts to read the predefined themes from ``plotting_themes.json``.
     For each theme it finds, a file ``{base_name}_{theme}.svg`` is being created.
-    If the file cannot be found, a single fallback theme is used.
+    If the file cannot be found, if the JSON cannot be loaded or if the JSON is not well
+    configured, a fallback theme is used.
 
     Args:
-        data: The data frame containing the data to be plotted.
+        ax: The Axes object containing the figure that should be plotted.
         path: The path to the directory in which the plots should be saved.
         base_name: The base name that is used for naming the output files.
-        **kwargs: Keyword arguments. They are directly passed to ``sns.lineplot`` and
-            are used for specifying the plot.
     """
     # Check whether we immediately return due to just running a SMOKE_TEST
     if "SMOKE_TEST" in os.environ:
         return
 
-    # First, we see if we happen to find the plotting themes in the current folder.
-    # This is e.g. the case if we convert the file to a jupyter notebook.
-    try:
-        themes = json.load(open("plotting_themes.json"))
-    except FileNotFoundError:
-        # Try to find the plotting themes by backtracking
-        # Get the absolute path of the current script
-        script_path = Path(sys.argv[0]).resolve()
-        # Backtrack until either the "baybe" folder is found or backtracking is no
-        # longer possible
-        while not script_path.name == "baybe" and script_path != script_path.parent:
-            script_path = script_path.parent
-        if script_path == script_path.parent:
-            warnings.warn("No themes for plotting found. A default theme is used.")
-            themes = {"check": {"font_scale": 1.75, "rc_params": {}}}
-        else:
-            # Open the file containing all the themes
-            # This currently still assumes that the file is in the repo folder
+    # Define a fallback theme in case no configuration is found
+    fallback = {
+        "color": "black",
+        "figsize": (24, 8),
+        "fontsize": 22,
+        "framealpha": 0.3,
+    }
+
+    # Try to find the plotting themes by backtracking
+    # Get the absolute path of the current script
+    script_path = Path(sys.path[0]).resolve()
+    while (
+        not Path(script_path / "plotting_themes.json").is_file()
+        and script_path != script_path.parent
+    ):
+        script_path = script_path.parent
+    if script_path == script_path.parent:
+        warnings.warn("No themes for plotting found. A fallback theme is used.")
+        themes = {"fallback": fallback}
+    else:
+        # Open the file containing all the themes
+        # If we reach this point, we know that the file exists, so we try to load it.
+        # If the file is no proper json, the fallback theme is used.
+        try:
             themes = json.load(open(script_path / "plotting_themes.json"))
+        except json.JSONDecodeError:
+            warnings.warn(
+                "The JSON containing the themes could not be loaded."
+                "A fallback theme is used.",
+                UserWarning,
+            )
+            themes = {"fallback": fallback}
 
     for theme_name in themes:
-        # Extract and set the current theme
-        theme = themes[theme_name]
-        font_scale, rc_params = theme["font_scale"], theme["rc_params"]
-        sns.set_theme(style="ticks", font_scale=font_scale, rc=rc_params)
-        # Only if kwargs are being provided, a plot is actually created
-        if kwargs:
-            sns.lineplot(data=data, **kwargs)
-            output_path = Path(path, f"{base_name}_{theme_name}.svg")
-            plt.savefig(
-                output_path,
-                format="svg",
-                transparent=True,
+        # Get all of the values from the themes
+        # TODO This can probably be generalized and improved later on such that the
+        # keys fit the rc_params of matplotlib
+        # TODO We might want to add a generalization here
+        necessary_keys = ("color", "figsize", "fontsize", "framealpha")
+        if not all(key in themes[theme_name] for key in necessary_keys):
+            warnings.warn(
+                "Provided theme does not contain the necessary keys."
+                "Using a fallback theme instead.",
+                UserWarning,
             )
-            plt.clf()
+            current_theme = fallback
         else:
-            warnings.warn("No keyword arguments were provided when plotting.")
+            current_theme = themes[theme_name]
+        color = current_theme["color"]
+        figsize = current_theme["figsize"]
+        fontsize = current_theme["fontsize"]
+        framealpha = current_theme["framealpha"]
+
+        # Adjust the axes of the plot
+        for key in ax.spines.keys():
+            ax.spines[key].set_color(color)
+        ax.xaxis.label.set_color(color)
+        ax.xaxis.label.set_fontsize(fontsize)
+        ax.yaxis.label.set_color(color)
+        ax.yaxis.label.set_fontsize(fontsize)
+
+        # Adjust the size of the ax
+        ax.figure.set_size_inches(*figsize)
+
+        # Adjust the labels
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_color(color)
+            label.set_fontsize(fontsize)
+
+        # Adjust the legend
+        legend = ax.get_legend()
+        legend.get_frame().set_alpha(framealpha)
+        legend.get_title().set_color(color)
+        legend.get_title().set_fontsize(fontsize)
+        for text in legend.get_texts():
+            text.set_fontsize(fontsize)
+            text.set_color(color)
+
+        output_path = Path(path, f"{base_name}_{theme_name}.svg")
+        ax.figure.savefig(
+            output_path,
+            format="svg",
+            transparent=True,
+        )
+        plt.close()
