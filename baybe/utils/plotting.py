@@ -5,10 +5,11 @@ import os
 import sys
 import warnings
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 
 def create_example_plots(
@@ -39,7 +40,7 @@ def create_example_plots(
         return
 
     # Define a fallback theme in case no configuration is found
-    fallback = {
+    fallback: Dict[str, Any] = {
         "color": "black",
         "figsize": (24, 8),
         "fontsize": 22,
@@ -100,7 +101,11 @@ def create_example_plots(
         ax.yaxis.label.set_fontsize(fontsize)
 
         # Adjust the size of the ax
-        ax.figure.set_size_inches(*figsize)
+        # mypy thinks that ax.figure might become None, hence the explicit ignore
+        if isinstance(ax.figure, Figure):
+            ax.figure.set_size_inches(*figsize)
+        else:
+            warnings.warn("Could not adjust size of plot due to it not being a Figure.")
 
         # Adjust the labels
         for label in ax.get_xticklabels() + ax.get_yticklabels():
@@ -117,9 +122,13 @@ def create_example_plots(
             text.set_color(color)
 
         output_path = Path(path, f"{base_name}_{theme_name}.svg")
-        ax.figure.savefig(
-            output_path,
-            format="svg",
-            transparent=True,
-        )
+        # mypy thinks that ax.figure might become None, hence the explicit ignore
+        if isinstance(ax.figure, Figure):
+            ax.figure.savefig(
+                output_path,
+                format="svg",
+                transparent=True,
+            )
+        else:
+            warnings.warn("Plots could not be saved.")
         plt.close()
