@@ -5,6 +5,7 @@ import os
 import sys
 import warnings
 from pathlib import Path
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -85,10 +86,10 @@ def create_example_plots(
             current_theme = fallback
         else:
             current_theme = themes[theme_name]
-        color = current_theme["color"]
-        figsize = current_theme["figsize"]
-        fontsize = current_theme["fontsize"]
-        framealpha = current_theme["framealpha"]
+        color: str = current_theme["color"]
+        figsize: Tuple[int, int] = current_theme["figsize"]
+        fontsize: int = current_theme["fontsize"]
+        framealpha: float = current_theme["framealpha"]
 
         # Adjust the axes of the plot
         for key in ax.spines.keys():
