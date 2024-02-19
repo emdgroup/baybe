@@ -8,13 +8,11 @@
 
 ### Imports
 
-import json
 import os
 import sys
 from pathlib import Path
 from typing import Dict, List
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -27,6 +25,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.plotting import create_example_plots
 
 ### Settings
 
@@ -160,20 +159,17 @@ results = pd.concat([result_fraction, *results])
 # As the example shows, the optimization speed can be significantly increased by
 # using even small amounts of training data from related optimization tasks.
 
-themes = json.load(open("plotting_themes.json"))
-for theme in themes:
-    font_scale, rc_params = themes[theme]["font_scale"], themes[theme]["rc_params"]
-    sns.set_theme(style="ticks", font_scale=font_scale, rc=rc_params)
-    sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
-
-    if not (path := Path(sys.path[0], f"botorch_analytical_{theme}.svg")).exists() or (
-        theme == "check"
-    ):
-        plt.savefig(
-            path,
-            format="svg",
-            transparent=True,
-        )
-    if theme == "check":
-        plt.show()
-    plt.clf()
+path = Path(sys.path[0])
+ax = sns.lineplot(
+    data=results,
+    marker="o",
+    markersize=10,
+    x="Num_Experiments",
+    y="Target_CumBest",
+    hue="Scenario",
+)
+create_example_plots(
+    ax=ax,
+    path=path,
+    base_name="basic_tl",
+)
