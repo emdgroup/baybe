@@ -1,0 +1,20 @@
+{
+    "dark": {
+        "color": "white",
+        "figsize": [
+            24,
+            8
+        ],
+        "fontsize": 22,
+        "framealpha": 0.3
+    },
+    "light": {
+        "color": "black",
+        "figsize": [
+            24,
+            8
+        ],
+        "fontsize": 22,
+        "framealpha": 0.3
+    }
+}
