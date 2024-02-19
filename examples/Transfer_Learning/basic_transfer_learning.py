@@ -89,7 +89,7 @@ discrete_params = [
 # ```
 
 # Next, we define a
-# [TaskParameter](baybe.parameters.discrete.TaskParameter) to encode the task context,
+# [TaskParameter](baybe.parameters.categorical.TaskParameter) to encode the task context,
 # which allows the model to establish a relationship between the training data and
 # the data collected during the optimization process.
 # Because we want to obtain recommendations only for the test function, we explicitly
