@@ -171,5 +171,5 @@ ax = sns.lineplot(
 create_example_plots(
     ax=ax,
     path=path,
-    base_name="basic_tl",
+    base_name="basic_transfer_learning",
 )
