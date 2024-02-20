@@ -125,3 +125,13 @@ class NumericalContinuousParameter(ContinuousParameter):
         # See base class.
 
         return self.bounds.contains(item)
+
+    def summary(self) -> dict:  # noqa: D102
+        # See base class.
+        param_dict = dict(
+            Name=self.name,
+            Type=self.__class__.__name__,
+            Lower_Bound=self.bounds.lower,
+            Upper_Bound=self.bounds.upper,
+        )
+        return param_dict

@@ -15,7 +15,6 @@ from baybe.constraints import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
-from baybe.searchspace.discrete import parameter_cartesian_prod_to_df
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.dataframe import pretty_print_dataframe
@@ -52,18 +51,26 @@ class SubspaceContinuous(SerialMixin):
         end_bold = "\033[0m"
 
         # Convert the lists to dataFrames to be able to use pretty_printing
-        par_df = parameter_cartesian_prod_to_df(self.parameters)
-        const_lin_eq_df = parameter_cartesian_prod_to_df(self.constraints_lin_eq)
-        const_lin_ineq_df = parameter_cartesian_prod_to_df(self.constraints_lin_ineq)
+        param_dict = list()
+        for param in self.parameters:
+            param_dict.append(param.summary())
+        eq_constraints_dict = list()
+        for constr in self.constraints_lin_eq:
+            eq_constraints_dict.append(constr.summary())
+        ineq_constraints_dict = list()
+        for constr in self.constraints_lin_ineq:
+            ineq_constraints_dict.append(constr.summary())
+        param_df = pd.DataFrame(param_dict)
+        lin_eq_constr_df = pd.DataFrame(eq_constraints_dict)
+        lin_ineq_constr_df = pd.DataFrame(ineq_constraints_dict)
 
         # Put all attributes of the continuous class in one string
-        continuous_str = f"""\n\n {start_bold} |--> The continuous search space
-            \n\nContinuous Parameters{end_bold} \n
-            {pretty_print_dataframe(par_df)}\n\n
-            {start_bold}List of linear equality constraints{end_bold}\n
-            {pretty_print_dataframe(const_lin_eq_df)}\n\n
-            {start_bold}List of linear inequality constraints
-            {end_bold} \n{pretty_print_dataframe(const_lin_ineq_df)}\n\n"""
+        continuous_str = f"""\n\n{start_bold}|--> The continuous search space
+            \nContinuous Parameters{end_bold}\n{pretty_print_dataframe(param_df)}
+            \n{start_bold}List of linear equality constraints{end_bold}
+            \n{pretty_print_dataframe(lin_eq_constr_df)}
+            \n{start_bold}List of linear inequality constraints{end_bold}
+            \n{pretty_print_dataframe(lin_ineq_constr_df)}\n\n"""
 
         return continuous_str
 

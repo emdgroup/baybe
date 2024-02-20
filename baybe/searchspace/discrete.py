@@ -72,18 +72,22 @@ class SubspaceDiscrete(SerialMixin):
         end_bold = "\033[0m"
 
         # Convert the lists to dataFrames to be able to use pretty_printing
-        par_df = pd.DataFrame(self.parameters)
-        const_df = parameter_cartesian_prod_to_df(self.constraints)
+        param_dict = list()
+        for param in self.parameters:
+            param_dict.append(param.summary())
+        constraints_dict = list()
+        for constr in self.constraints:
+            constraints_dict.append(constr.summary())
+        param_df = pd.DataFrame(param_dict)
+        constraints_df = pd.DataFrame(constraints_dict)
 
         # Put all attributes of the discrete class in one string.
         discrete_str = f"""{start_bold}|--> The discrete search space
-            \n\nDiscrete Parameters
-            {end_bold} \n{pretty_print_dataframe(par_df)}
-            \n{start_bold}Experimental Representation {end_bold}
+            \nDiscrete Parameters{end_bold}\n{pretty_print_dataframe(param_df)}
+            \n{start_bold}Experimental Representation{end_bold}
             \n{pretty_print_dataframe(self.exp_rep)}
-            \n{start_bold}Metadata {end_bold} \n{pretty_print_dataframe(self.metadata)}
-            \n{start_bold}Empty Encoding Used: {end_bold}{str(self.empty_encoding)}
-            \n{start_bold}Constraints{end_bold}\n{pretty_print_dataframe(const_df)}
+            \n{start_bold}Metadata {end_bold}\n{pretty_print_dataframe(self.metadata)}
+            \n{start_bold}Constraints{end_bold}{pretty_print_dataframe(constraints_df)}
             \n{start_bold}Computational representation of the space{end_bold}
             \n{pretty_print_dataframe(self.comp_rep)}\n\n"""
 

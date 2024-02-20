@@ -55,6 +55,13 @@ class Constraint(ABC, SerialMixin):
                 f"but was: {params}."
             )
 
+    def summary(self) -> dict:
+        """Return a custom summarization of the constraint."""
+        constr_dict = dict(
+            Type=self.__class__.__name__, Affected_Parameters=self.parameters
+        )
+        return constr_dict
+
     @property
     def is_continuous(self) -> bool:
         """Boolean indicating if this is a constraint over continuous parameters."""
