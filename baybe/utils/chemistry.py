@@ -1,6 +1,7 @@
 """Chemistry tools."""
 import os
 import ssl
+import tempfile
 import urllib.request
 from functools import lru_cache
 from pathlib import Path
@@ -26,7 +27,9 @@ _mordred_calculator = Calculator(descriptors)
 
 
 # Caching
-_cachedir = os.environ.get("BAYBE_CACHE_DIR", str(Path.home() / ".baybe_cache"))
+_cachedir = os.environ.get(
+    "BAYBE_CACHE_DIR", str(Path(tempfile.gettempdir()) / ".baybe_cache")
+)
 
 
 def _dummy_wrapper(func):
