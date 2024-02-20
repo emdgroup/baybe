@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `Recommender`s now share their core logic via their base class
 
+### Fixed
+- Unhandled exception in telemetry when username could not be inferred on Windows
+
 ## [0.7.3] - 2024-02-09
 ### Added
 - Copy button for code blocks in documentation
