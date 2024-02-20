@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from itertools import zip_longest
-from typing import Any, Collection, Iterable, List, Optional, Tuple, cast
+from typing import Any, Collection, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -484,14 +484,14 @@ def parameter_cartesian_prod_to_df(
     Returns:
         A dataframe containing all possible discrete parameter value combinations.
     """
-    lst_of_values = [
-        cast(DiscreteParameter, p).values for p in parameters if p.is_discrete
-    ]
-    lst_of_names = [p.name for p in parameters if p.is_discrete]
-    if len(lst_of_names) < 1:
+    discrete_parameters = [p for p in parameters if isinstance(p, DiscreteParameter)]
+    if not discrete_parameters:
         return pd.DataFrame()
 
-    index = pd.MultiIndex.from_product(lst_of_values, names=lst_of_names)
+    index = pd.MultiIndex.from_product(
+        [p.values for p in discrete_parameters],
+        names=[p.name for p in discrete_parameters],
+    )
     ret = pd.DataFrame(index=index).reset_index()
 
     return ret

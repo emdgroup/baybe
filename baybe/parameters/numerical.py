@@ -10,7 +10,7 @@ from attrs import define, field
 from attrs.validators import min_len
 
 from baybe.exceptions import NumericalUnderflowError
-from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
 from baybe.utils.interval import InfiniteIntervalError, Interval, convert_bounds
 from baybe.utils.numerical import DTypeFloatNumpy
@@ -96,14 +96,11 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
 
 @define(frozen=True, slots=False)
-class NumericalContinuousParameter(Parameter):
+class NumericalContinuousParameter(ContinuousParameter):
     """Parameter class for continuous numerical parameters."""
 
     # class variables
     is_numeric: ClassVar[bool] = True
-    # See base class.
-
-    is_discrete: ClassVar[bool] = False
     # See base class.
 
     # object variables

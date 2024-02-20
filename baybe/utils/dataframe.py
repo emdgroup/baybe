@@ -10,6 +10,7 @@ import pandas as pd
 import torch
 from torch import Tensor
 
+from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
 
@@ -228,7 +229,7 @@ def add_parameter_noise(
             data[param.name] += np.random.uniform(-noise_level, noise_level, len(data))
 
         # Respect continuous intervals
-        if not param.is_discrete:
+        if isinstance(param, ContinuousParameter):
             data[param.name].clip(param.bounds.lower, param.bounds.upper, inplace=True)
 
 
@@ -382,7 +383,11 @@ def fuzzy_row_match(
 
         # Differentiate category-like and discrete numerical parameters
         cat_cols = [p.name for p in parameters if not p.is_numeric]
-        num_cols = [p.name for p in parameters if (p.is_numeric and p.is_discrete)]
+        num_cols = [
+            p.name
+            for p in parameters
+            if (p.is_numeric and isinstance(p, DiscreteParameter))
+        ]
 
         # Discrete parameters must match exactly
         match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)

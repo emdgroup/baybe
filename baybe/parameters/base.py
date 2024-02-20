@@ -33,9 +33,6 @@ class Parameter(ABC, SerialMixin):
     is_numeric: ClassVar[bool]
     """Class variable encoding whether this parameter is numeric."""
 
-    is_discrete: ClassVar[bool]
-    """Class variable encoding whether this parameter is discrete."""
-
     # object variables
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
@@ -59,9 +56,6 @@ class DiscreteParameter(Parameter, ABC):
     # TODO [15280]: needs to be refactored
 
     # class variables
-    is_discrete: ClassVar[bool] = True
-    # See base class.
-
     encoding: Optional[ParameterEncoding] = field(init=False, default=None)
     """An optional encoding strategy for the parameter."""
 
@@ -101,6 +95,11 @@ class DiscreteParameter(Parameter, ABC):
             transformed = data.to_frame()
 
         return transformed
+
+
+@define(frozen=True, slots=False)
+class ContinuousParameter(Parameter):
+    """Abstract class for continuous parameters."""
 
 
 # Register (un-)structure hooks
