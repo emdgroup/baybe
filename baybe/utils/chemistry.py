@@ -1,6 +1,7 @@
 """Chemistry tools."""
-
+import os
 import ssl
+import tempfile
 import urllib.request
 from functools import lru_cache
 from pathlib import Path
@@ -26,8 +27,16 @@ _mordred_calculator = Calculator(descriptors)
 
 
 # Caching
-_cachedir = Path.home() / ".baybe_cache"
-_memory_utils = Memory(_cachedir / "utils")
+_cachedir = os.environ.get(
+    "BAYBE_CACHE_DIR", str(Path(tempfile.gettempdir()) / ".baybe_cache")
+)
+
+
+def _dummy_wrapper(func):
+    return func
+
+
+_disk_cache = _dummy_wrapper if _cachedir == "" else Memory(Path(_cachedir)).cache
 
 
 def name_to_smiles(name: str) -> str:
@@ -65,7 +74,7 @@ def name_to_smiles(name: str) -> str:
 
 
 @lru_cache(maxsize=None)
-@_memory_utils.cache
+@_disk_cache
 def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
     """Memory- and disk-cached computation of Mordred descriptors.
 
