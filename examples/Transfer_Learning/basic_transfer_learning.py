@@ -159,6 +159,7 @@ results = pd.concat([result_fraction, *results])
 # As the example shows, the optimization speed can be significantly increased by
 # using even small amounts of training data from related optimization tasks.
 
+results.rename(columns={"Scenario": "% of data used"}, inplace=True)
 path = Path(sys.path[0])
 ax = sns.lineplot(
     data=results,
@@ -166,7 +167,7 @@ ax = sns.lineplot(
     markersize=10,
     x="Num_Experiments",
     y="Target_CumBest",
-    hue="Scenario",
+    hue="% of data used",
 )
 create_example_plots(
     ax=ax,
