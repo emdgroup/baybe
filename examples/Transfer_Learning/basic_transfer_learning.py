@@ -129,7 +129,9 @@ lookup_test_task = lookups["Test_Function"]
 ### Simulation Loop
 
 # We now simulate campaigns for different amounts of training data unveiled,
-# to show the impact of transfer learning on the optimization performance:
+# to show the impact of transfer learning on the optimization performance.
+# To average out and reduce statistical effects that might happen due to the random
+# sampling of the provided data, we perform several Monte Carlo runs.
 
 results: List[pd.DataFrame] = []
 for p in (0.01, 0.02, 0.05, 0.08, 0.2):
