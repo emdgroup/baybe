@@ -1,7 +1,8 @@
 ## Transfer Learning
 
 # This example demonstrates BayBE's
-# {doc}`Transfer Learning </userguide/transfer_learning>` capabilities:
+# {doc}`Transfer Learning </userguide/transfer_learning>` capabilities using the
+# Hartmann test function:
 # * We construct a campaign,
 # * give it access to data from a related but different task,
 # * and show how this additional information boosts optimization performance.
@@ -38,23 +39,10 @@ N_MC_ITERATIONS = 5 if SMOKE_TEST else 75  # number of Monte Carlo runs
 N_DOE_ITERATIONS = 5 if SMOKE_TEST else 10  # number of DOE iterations
 POINTS_PER_DIM = 5 if SMOKE_TEST else 5  # number of grid points per input dimension
 
-### Defining the Tasks
-
-# For our example, we consider the "Hartmann" test function.
-#
-# More specifically, to demonstrate the transfer learning mechanism, we consider the
-# problem of optimizing the function using training data from its negated version.
-# The used model is of course not aware of this relationship but needs to infer it
-# from the data gathered during the optimization process.
-
-test_functions = {
-    "Test_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
-    "Training_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION, negate=True)),
-}
 
 ### Creating the Optimization Objective
 
-# Both test functions have a single output that is to be minimized.
+# The test functions each have a single output that is to be minimized.
 # The corresponding [Objective](baybe.objective.Objective)
 # is created as follows:
 
@@ -105,6 +93,18 @@ task_param = TaskParameter(
 
 parameters = [*discrete_params, task_param]
 searchspace = SearchSpace.from_product(parameters=parameters)
+
+### Defining the Tasks
+
+# To demonstrate the transfer learning mechanism, we consider the problem of optimizing
+# the Hartmann function using training data from its negated version.
+# The used model is of course not aware of this relationship but needs to infer it
+# from the data gathered during the optimization process.
+
+test_functions = {
+    "Test_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
+    "Training_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION, negate=True)),
+}
 
 # (Lookup)=
 ### Generating Lookup Tables
