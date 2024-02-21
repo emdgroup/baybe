@@ -16,11 +16,10 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import Constraint, DiscreteConstraint
 from baybe.parameters import (
-    NumericalContinuousParameter,
     SubstanceEncoding,
     TaskParameter,
 )
-from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import validate_parameters
@@ -118,20 +117,14 @@ class SearchSpace(SerialMixin):
             constraints = []
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
-            parameters=[
-                cast(DiscreteParameter, p) for p in parameters if p.is_discrete
-            ],
+            parameters=[p for p in parameters if isinstance(p, DiscreteParameter)],
             constraints=[
                 cast(DiscreteConstraint, c) for c in constraints if c.is_discrete
             ],
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
-            parameters=[
-                cast(NumericalContinuousParameter, p)
-                for p in parameters
-                if not p.is_discrete
-            ],
+            parameters=[p for p in parameters if isinstance(p, ContinuousParameter)],
             constraints_lin_eq=[
                 cast(ContinuousLinearEqualityConstraint, c)
                 for c in constraints
@@ -177,8 +170,8 @@ class SearchSpace(SerialMixin):
                 "parameter names."
             )
 
-        disc_params = [p for p in parameters if p.is_discrete]
-        cont_params = [p for p in parameters if not p.is_discrete]
+        disc_params = [p for p in parameters if isinstance(p, DiscreteParameter)]
+        cont_params = [p for p in parameters if isinstance(p, ContinuousParameter)]
 
         return SearchSpace(
             discrete=SubspaceDiscrete.from_dataframe(

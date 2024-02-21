@@ -4,7 +4,7 @@ from typing import List
 
 from baybe.constraints.base import Constraint
 from baybe.constraints.discrete import DiscreteDependenciesConstraint
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 
 
 def validate_constraints(  # noqa: DOC101, DOC103
@@ -26,8 +26,12 @@ def validate_constraints(  # noqa: DOC101, DOC103
         )
 
     param_names_all = [p.name for p in parameters]
-    param_names_discrete = [p.name for p in parameters if p.is_discrete]
-    param_names_continuous = [p.name for p in parameters if not p.is_discrete]
+    param_names_discrete = [
+        p.name for p in parameters if isinstance(p, DiscreteParameter)
+    ]
+    param_names_continuous = [
+        p.name for p in parameters if isinstance(p, ContinuousParameter)
+    ]
     for constraint in constraints:
         if not all(p in param_names_all for p in constraint.parameters):
             raise ValueError(
