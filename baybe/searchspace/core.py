@@ -68,7 +68,10 @@ class SearchSpace(SerialMixin):
     def __str__(self) -> str:
         start_bold = "\033[1m"
         end_bold = "\033[0m"
-        print(f"\n\n{start_bold}***** SEARCH SPACE *****\n {end_bold}")
+        print(
+            f"""\n\n{start_bold}***** SEARCH SPACE *****
+        \nSearch space type: {end_bold}{self.type.name}\n"""
+        )
 
         return str(self.discrete) + str(self.continuous)
 

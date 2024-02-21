@@ -26,7 +26,7 @@ from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     fuzzy_row_match,
-    pretty_print_dataframe,
+    pretty_print_df,
 )
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
@@ -72,24 +72,28 @@ class SubspaceDiscrete(SerialMixin):
         end_bold = "\033[0m"
 
         # Convert the lists to dataFrames to be able to use pretty_printing
-        param_dict = list()
-        for param in self.parameters:
-            param_dict.append(param.summary())
-        constraints_dict = list()
-        for constr in self.constraints:
-            constraints_dict.append(constr.summary())
-        param_df = pd.DataFrame(param_dict)
-        constraints_df = pd.DataFrame(constraints_dict)
+        param_list = [param.summary() for param in self.parameters]
+        constraints_list = [constr.summary() for constr in self.constraints]
+        param_df = pd.DataFrame(param_list)
+        constraints_df = pd.DataFrame(constraints_list)
+
+        # Get summary information from metadata
+        was_recommended_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[0]]])
+        was_measured_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[1]]])
+        dont_recommend_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[2]]])
+        metadata_count = len(self.metadata)
 
         # Put all attributes of the discrete class in one string.
-        discrete_str = f"""{start_bold}|--> The discrete search space
-            \nDiscrete Parameters{end_bold}\n{pretty_print_dataframe(param_df)}
+        discrete_str = f"""{start_bold}|--> Discrete search space
+            \nDiscrete Parameters{end_bold}\n{pretty_print_df(param_df)}
             \n{start_bold}Experimental Representation{end_bold}
-            \n{pretty_print_dataframe(self.exp_rep)}
-            \n{start_bold}Metadata {end_bold}\n{pretty_print_dataframe(self.metadata)}
-            \n{start_bold}Constraints{end_bold}{pretty_print_dataframe(constraints_df)}
+            \n{pretty_print_df(self.exp_rep)}\n{start_bold}\nMetadata:{end_bold}
+            \r{_METADATA_COLUMNS[0]}: {was_recommended_count}/{metadata_count}
+            \r{_METADATA_COLUMNS[1]}: {was_measured_count}/{metadata_count}
+            \r{_METADATA_COLUMNS[2]}: {dont_recommend_count}/{metadata_count}
+            \n{start_bold}Constraints{end_bold}\n{pretty_print_df(constraints_df)}
             \n{start_bold}Computational representation of the space{end_bold}
-            \n{pretty_print_dataframe(self.comp_rep)}\n\n"""
+            \n{pretty_print_df(self.comp_rep)}\n\n"""
 
         return discrete_str
 

@@ -420,12 +420,11 @@ def fuzzy_row_match(
     return pd.Index(inds_matched)
 
 
-def pretty_print_dataframe(df: pd.DataFrame) -> str:
-    """Return a pretty/readable str object.
+def pretty_print_df(df: pd.DataFrame) -> str:
+    """Convert a dataframe into a pretty/readable str object.
 
-    This function checks the size of the dataframe first. If the dataframe
-    has more than 10
-    rows or more than 5 columns, the extra values will be extracted.
+    This function returns the first 10 rows and 7 columns from the dataframe.
+    In case the dataframe is empty, it returns a corresponding statement.
 
     Args:
         df: The dataframe to be printed.
@@ -433,30 +432,9 @@ def pretty_print_dataframe(df: pd.DataFrame) -> str:
     Returns:
         The values to be printed as a str table.
     """
-    # TODO: remove hard coded numbers and allow user defined specifications
-
-    str_df = ""
-
-    # Handling with Empty dataFrame
-    if len(df) == 0:
-        return "This attribute is empty. "
-
-    # Extract extra rows and columns
-    """elif len(df) > 10 and len(df.columns) > 5:
-        str_df = str_df + (
-            f"\nPrinting first 10/{len(df)} rows and 5/{len(df.columns)} columns\n"
-        )
-        df = df.T.head(5).T
-        df = df.head(10)
-
-    elif len(df) > 10:
-        str_df = str_df + (f"\nPrinting first 10/{len(df)} rows\n")
-        df = df.head(10)"""
-    # Do not break the table in two lines and center table content
-    pd.set_option(
-        "display.max_rows", 10, "display.max_column", 6, "expand_frame_repr", False
-    )
-
-    # Convert the dataFrame to a string table
-    str_df = f"\n{df} {str_df} "
+    # Get first 10 rows and 7 columns and do not break the table in two lines
+    with pd.option_context(
+        "display.max_rows", 10, "display.max_columns", 7, "expand_frame_repr", False
+    ):
+        str_df = str(df)
     return str_df
