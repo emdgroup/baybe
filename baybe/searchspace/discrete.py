@@ -237,6 +237,8 @@ class SubspaceDiscrete(SerialMixin):
         max_sum: float,
         simplex_parameters: List[NumericalDiscreteParameter],
         product_parameters: Optional[List[DiscreteParameter]] = None,
+        min_active: int = 0,
+        max_active: Optional[int] = None,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
     ) -> SubspaceDiscrete:
@@ -258,6 +260,10 @@ class SubspaceDiscrete(SerialMixin):
             simplex_parameters: The parameters to be used for the simplex construction.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
+            min_active: Optional minimum number of active parameters in the simplex
+                construction.
+            max_active: Optional maximum number of active parameters in the simplex
+                construction.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
             tolerance: Numerical tolerance used to validate the simplex constraint.
@@ -274,8 +280,11 @@ class SubspaceDiscrete(SerialMixin):
             which the parameters are passed to this method, as the configuration space
             is built up incrementally from the parameter sequence.
         """
+        # Resolve defaults
         if product_parameters is None:
             product_parameters = []
+        if max_active is None:
+            max_active = len(simplex_parameters)
 
         # Validate parameter types
         if not (
@@ -298,13 +307,20 @@ class SubspaceDiscrete(SerialMixin):
 
         # Validate non-negativity
         min_values = [min(p.values) for p in simplex_parameters]
+        max_values = [max(p.values) for p in simplex_parameters]
         if not (min(min_values) >= 0.0):
             raise ValueError(
                 f"All parameters passed to '{cls.from_simplex.__name__}' "
                 f"must have non-negative values only."
             )
 
-        def drop_invalid(df: pd.DataFrame, max_sum: float, boundary_only: bool) -> None:
+        def drop_invalid(
+            df: pd.DataFrame,
+            max_sum: float,
+            boundary_only: bool,
+            min_active: Optional[int] = None,
+            max_active: Optional[int] = None,
+        ) -> None:
             """Drop rows that violate a specified simplex constraint.
 
             Args:
@@ -312,30 +328,65 @@ class SubspaceDiscrete(SerialMixin):
                 max_sum: The maximum row sum defining the simplex size.
                 boundary_only: Flag to control if the points represented by the rows
                     may lie inside the simplex or on its boundary only.
+                min_active: Minimum number of active parameters allowed per row.
+                max_active: Maximum number of active parameters allowed per row.
             """
             row_sums = df.sum(axis=1)
             if boundary_only:
-                locs_to_drop = row_sums[
-                    (row_sums < max_sum - tolerance) | (row_sums > max_sum + tolerance)
-                ].index
+                simplex_violated = (row_sums < max_sum - tolerance) | (
+                    row_sums > max_sum + tolerance
+                )
             else:
-                locs_to_drop = row_sums[row_sums > max_sum + tolerance].index
+                simplex_violated = row_sums > max_sum + tolerance
+
+            violated = simplex_violated
+            n_active = (df != 0.0).sum(axis=1)
+            if min_active is not None:
+                min_active_violated = n_active < min_active
+                violated |= min_active_violated
+            if max_active is not None:
+                max_active_violated = n_active > max_active
+                violated |= max_active_violated
+            locs_to_drop = df[violated].index
             df.drop(locs_to_drop, inplace=True)
 
-        # Get the minimum sum contributions to come in the upcoming joins (the first
-        # item is the minimum possible sum of all parameters starting from the
+        # Get the minimum sum contributions to come in the upcoming joins (the
+        # first item is the minimum possible sum of all parameters starting from the
         # second parameter, the second item is the minimum possible sum starting from
         # the third parameter, and so on ...)
         min_upcoming = np.cumsum(min_values[:0:-1])[::-1]
 
+        # Get the minimum number of active values to come in the upcoming joins (the
+        # first item is the minimum number of active parameters starting from the
+        # second parameter, the second item is the minimum number starting from
+        # the third parameter, and so on ...)
+        min_active_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
+        max_active_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
+
         # Incrementally build up the space, dropping invalid configuration along the
-        # way. More specifically: after having cross-joined a new parameter, there must
-        # be enough "room" left for the remaining parameters to fit. Hence,
-        # configurations of the current parameter subset that exceed the desired
-        # total value minus the minimum contribution to come from the yet to be added
-        # parameters can be already discarded.
-        for i, (param, min_to_go) in enumerate(
-            zip_longest(simplex_parameters, min_upcoming, fillvalue=0)
+        # way. More specifically:
+        # * After having cross-joined a new parameter, there must
+        #   be enough "room" left for the remaining parameters to fit. That is,
+        #   configurations of the current parameter subset that exceed the desired
+        #   total value minus the minimum contribution to come from the yet to be added
+        #   parameters can be already discarded, because it is already clear that
+        #   the sum will be exceeded once all joins are completed.
+        # * Analogously, there must be enough "active slots" left for the yet to be
+        #   joined parameters, i.e. parameter subset configurations can be discarded
+        #   where the number of active parameters already exceeds the maximum number
+        #   of actives minus the number of actives to come, because it is already clear
+        #   that the maximum will be exceeded once all joins are completed.
+        # * Similarly, it can be verified for each parameter that there are still
+        #   enough active parameters to come to even reach the minimum
+        #   desired number of actives after all joins.
+        for i, (param, min_to_go, min_active_to_go, max_active_to_go) in enumerate(
+            zip_longest(
+                simplex_parameters,
+                min_upcoming,
+                min_active_upcoming,
+                max_active_upcoming,
+                fillvalue=0,
+            )
         ):
             if i == 0:
                 exp_rep = pd.DataFrame({param.name: param.values})
@@ -343,7 +394,13 @@ class SubspaceDiscrete(SerialMixin):
                 exp_rep = pd.merge(
                     exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
                 )
-            drop_invalid(exp_rep, max_sum - min_to_go, boundary_only=False)
+            drop_invalid(
+                exp_rep,
+                max_sum=max_sum - min_to_go,
+                min_active=min_active - min_active_to_go,
+                max_active=max_active - max_active_to_go,
+                boundary_only=False,
+            )
 
         # If requested, keep only the boundary values
         if boundary_only:

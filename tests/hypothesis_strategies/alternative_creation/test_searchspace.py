@@ -162,3 +162,21 @@ def test_discrete_space_creation_from_simplex_mixed(
     )
     assert len(subspace.exp_rep) == n_elements  # <-- (# simplex part) x (# task part)
     assert not any(subspace.exp_rep.duplicated())
+
+
+def test_discrete_space_creation_from_simplex_restricted():
+    """The number of active simplex parameters is controllable."""
+    params = [
+        NumericalDiscreteParameter(str(i), np.linspace(0, 1, 11)) for i in range(10)
+    ]
+    subspace = SubspaceDiscrete.from_simplex(
+        max_sum=1.0,
+        simplex_parameters=params,
+        min_active=2,
+        max_active=4,
+        boundary_only=True,
+    )
+    n_active = (subspace.exp_rep > 0.0).sum(axis=1)
+    assert np.allclose(subspace.exp_rep.sum(axis=1), 1.0)
+    assert n_active.min() == 2
+    assert n_active.max() == 4
