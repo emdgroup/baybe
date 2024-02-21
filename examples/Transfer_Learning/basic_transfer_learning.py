@@ -146,14 +146,14 @@ for p in (0.01, 0.02, 0.05, 0.08, 0.2):
 
 # For comparison, we also optimize the function without using any initial data:
 
-result_fraction = simulate_scenarios(
+result_baseline = simulate_scenarios(
     {"0.0": Campaign(searchspace=searchspace, objective=objective)},
     lookup_test_task,
     batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )
-results = pd.concat([result_fraction, *results])
+results = pd.concat([result_baseline, *results])
 
 # All that remains is to visualize the results.
 # As the example shows, the optimization speed can be significantly increased by
