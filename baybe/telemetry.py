@@ -105,9 +105,17 @@ DEFAULT_TELEMETRY_ENDPOINT = (
 )
 DEFAULT_TELEMETRY_VPN_CHECK = "true"
 DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT = "0.5"
-DEFAULT_TELEMETRY_USERNAME = (
-    hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
-)  # this hash is irreversible and cannot identify the user or their machine
+
+try:
+    DEFAULT_TELEMETRY_USERNAME = (
+        hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
+    )  # this hash is irreversible and cannot identify the user or their machine
+except ModuleNotFoundError:
+    # getpass.getuser() does not work on Windows if all the environment variables
+    # it checks are empty. Since then there is no way of inferring the username, we
+    # use UNKNOWN as fallback.
+    DEFAULT_TELEMETRY_USERNAME = "UNKNOWN"
+
 DEFAULT_TELEMETRY_HOSTNAME = (
     hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
 )  # this hash is irreversible and cannot identify the user or their machine
