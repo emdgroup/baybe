@@ -75,9 +75,9 @@ Python session.
 """
 import getpass
 import hashlib
-import logging
 import os
 import socket
+import warnings
 from typing import Dict, List, Union
 from urllib.parse import urlparse
 
@@ -87,8 +87,6 @@ import requests
 from baybe.parameters.base import Parameter
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import fuzzy_row_match
-
-_logger = logging.getLogger(__name__)
 
 # Telemetry environment variable names
 VARNAME_TELEMETRY_ENABLED = "BAYBE_TELEMETRY_ENABLED"
@@ -145,9 +143,9 @@ except ImportError:
     # Failed telemetry install/import should not fail baybe, so telemetry is being
     # disabled in that case
     if strtobool(os.environ.get(VARNAME_TELEMETRY_ENABLED, DEFAULT_TELEMETRY_ENABLED)):
-        _logger.warning(
-            "Opentelemetry could not be imported, potentially it is not "
-            "installed. Disabling baybe telemetry."
+        warnings.warn(
+            "Opentelemetry could not be imported, potentially it is not installed. "
+            "Disabling baybe telemetry."
         )
     os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
@@ -182,11 +180,10 @@ if is_enabled():
                 )
             )
         except (ValueError, TypeError):
-            _logger.warning(
-                "WARNING: Value passed for environment variable %s"
-                " is not a valid floating point number. Using default of %s.",
-                VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT,
-                DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT,
+            warnings.warn(
+                f"WARNING: Value passed for environment variable "
+                f"{VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT} is not a valid floating point "
+                f"number. Using default of {DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT}."
             )
             _TIMEOUT_S = float(DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT)
 
@@ -215,15 +212,15 @@ if is_enabled():
         _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
         set_meter_provider(_provider)
         _meter = get_meter("aws-otel", "1.0")
-    except Exception:
+    except Exception as ex:
         # Catching broad exception here and disabling telemetry in that case to avoid
         # any telemetry timeouts or interference for the user in case of unexpected
         # errors. Possible ones are for instance ``socket.gaierror`` in case the user
         # has no internet connection.
-        _logger.info(
-            "WARNING: BayBE Telemetry endpoint %s cannot be reached. "
-            "Disabling telemetry.",
-            _endpoint_url,
+        warnings.warn(
+            f"WARNING: BayBE Telemetry endpoint {_endpoint_url} cannot be reached. "
+            "Disabling telemetry. The exception encountered was: "
+            f"{type(ex).__name__}, {ex}",
         )
         os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
