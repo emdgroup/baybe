@@ -359,14 +359,14 @@ class SubspaceDiscrete(SerialMixin):
         # first item is the minimum possible sum of all parameters starting from the
         # second parameter, the second item is the minimum possible sum starting from
         # the third parameter, and so on ...)
-        min_upcoming = np.cumsum(min_values[:0:-1])[::-1]
+        min_sum_upcoming = np.cumsum(min_values[:0:-1])[::-1]
 
         # Get the min/max number of nonzero values to come in the upcoming joins (the
         # first item is the min/max number of nonzero parameters starting from the
         # second parameter, the second item is the min/max number starting from
         # the third parameter, and so on ...)
-        min_nonzero_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
-        max_nonzero_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
+        min_nonzero_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
+        max_nonzero_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
 
         # Incrementally build up the space, dropping invalid configuration along the
         # way. More specifically:
@@ -384,10 +384,15 @@ class SubspaceDiscrete(SerialMixin):
         # * Similarly, it can be verified for each parameter that there are still
         #   enough nonzero parameters to come to even reach the minimum
         #   desired number of nonzero after all joins.
-        for i, (param, min_to_go, min_nonzero_to_go, max_nonzero_to_go) in enumerate(
+        for i, (
+            param,
+            min_sum_to_go,
+            min_nonzero_to_go,
+            max_nonzero_to_go,
+        ) in enumerate(
             zip_longest(
                 simplex_parameters,
-                min_upcoming,
+                min_sum_upcoming,
                 min_nonzero_upcoming,
                 max_nonzero_upcoming,
                 fillvalue=0,
@@ -401,9 +406,13 @@ class SubspaceDiscrete(SerialMixin):
                 )
             drop_invalid(
                 exp_rep,
-                max_sum=max_sum - min_to_go,
-                min_nonzero=min_nonzero - min_nonzero_to_go,
-                max_nonzero=max_nonzero - max_nonzero_to_go,
+                max_sum=max_sum - min_sum_to_go,
+                # the maximum possible number of nonzeros to come dictates if we
+                # can achieve our minimum constraint in the end:
+                min_nonzero=min_nonzero - max_nonzero_to_go,
+                # the minimum possible number of nonzeros to come dictates if we
+                # can stay below the targeted maximum in the end:
+                max_nonzero=max_nonzero - min_nonzero_to_go,
                 boundary_only=False,
             )
 
