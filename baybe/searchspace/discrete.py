@@ -237,8 +237,8 @@ class SubspaceDiscrete(SerialMixin):
         max_sum: float,
         simplex_parameters: List[NumericalDiscreteParameter],
         product_parameters: Optional[List[DiscreteParameter]] = None,
-        min_active: int = 0,
-        max_active: Optional[int] = None,
+        min_nonzero: int = 0,
+        max_nonzero: Optional[int] = None,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
     ) -> SubspaceDiscrete:
@@ -260,9 +260,9 @@ class SubspaceDiscrete(SerialMixin):
             simplex_parameters: The parameters to be used for the simplex construction.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
-            min_active: Optional minimum number of active parameters in the simplex
+            min_nonzero: Optional minimum number of nonzero parameters in the simplex
                 construction.
-            max_active: Optional maximum number of active parameters in the simplex
+            max_nonzero: Optional maximum number of nonzero parameters in the simplex
                 construction.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
@@ -283,8 +283,8 @@ class SubspaceDiscrete(SerialMixin):
         # Resolve defaults
         if product_parameters is None:
             product_parameters = []
-        if max_active is None:
-            max_active = len(simplex_parameters)
+        if max_nonzero is None:
+            max_nonzero = len(simplex_parameters)
 
         # Validate parameter types
         if not (
@@ -318,8 +318,8 @@ class SubspaceDiscrete(SerialMixin):
             df: pd.DataFrame,
             max_sum: float,
             boundary_only: bool,
-            min_active: Optional[int] = None,
-            max_active: Optional[int] = None,
+            min_nonzero: Optional[int] = None,
+            max_nonzero: Optional[int] = None,
         ) -> None:
             """Drop rows that violate a specified simplex constraint.
 
@@ -328,8 +328,8 @@ class SubspaceDiscrete(SerialMixin):
                 max_sum: The maximum row sum defining the simplex size.
                 boundary_only: Flag to control if the points represented by the rows
                     may lie inside the simplex or on its boundary only.
-                min_active: Minimum number of active parameters allowed per row.
-                max_active: Maximum number of active parameters allowed per row.
+                min_nonzero: Minimum number of nonzero parameters allowed per row.
+                max_nonzero: Maximum number of nonzero parameters allowed per row.
             """
             row_sums = df.sum(axis=1)
             if boundary_only:
@@ -340,13 +340,13 @@ class SubspaceDiscrete(SerialMixin):
                 simplex_violated = row_sums > max_sum + tolerance
 
             violated = simplex_violated
-            n_active = (df != 0.0).sum(axis=1)
-            if min_active is not None:
-                min_active_violated = n_active < min_active
-                violated |= min_active_violated
-            if max_active is not None:
-                max_active_violated = n_active > max_active
-                violated |= max_active_violated
+            n_nonzero = (df != 0.0).sum(axis=1)
+            if min_nonzero is not None:
+                min_nonzero_violated = n_nonzero < min_nonzero
+                violated |= min_nonzero_violated
+            if max_nonzero is not None:
+                max_nonzero_violated = n_nonzero > max_nonzero
+                violated |= max_nonzero_violated
             locs_to_drop = df[violated].index
             df.drop(locs_to_drop, inplace=True)
 
@@ -356,12 +356,12 @@ class SubspaceDiscrete(SerialMixin):
         # the third parameter, and so on ...)
         min_upcoming = np.cumsum(min_values[:0:-1])[::-1]
 
-        # Get the minimum number of active values to come in the upcoming joins (the
-        # first item is the minimum number of active parameters starting from the
+        # Get the minimum number of nonzero values to come in the upcoming joins (the
+        # first item is the minimum number of nonzero parameters starting from the
         # second parameter, the second item is the minimum number starting from
         # the third parameter, and so on ...)
-        min_active_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
-        max_active_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
+        min_nonzero_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
+        max_nonzero_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
 
         # Incrementally build up the space, dropping invalid configuration along the
         # way. More specifically:
@@ -371,20 +371,20 @@ class SubspaceDiscrete(SerialMixin):
         #   total value minus the minimum contribution to come from the yet to be added
         #   parameters can be already discarded, because it is already clear that
         #   the sum will be exceeded once all joins are completed.
-        # * Analogously, there must be enough "active slots" left for the yet to be
+        # * Analogously, there must be enough "nonzero slots" left for the yet to be
         #   joined parameters, i.e. parameter subset configurations can be discarded
-        #   where the number of active parameters already exceeds the maximum number
-        #   of actives minus the number of actives to come, because it is already clear
-        #   that the maximum will be exceeded once all joins are completed.
+        #   where the number of nonzero parameters already exceeds the maximum number
+        #   of nonzeros minus the number of nonzeros to come, because it is already
+        #   clear that the maximum will be exceeded once all joins are completed.
         # * Similarly, it can be verified for each parameter that there are still
-        #   enough active parameters to come to even reach the minimum
-        #   desired number of actives after all joins.
-        for i, (param, min_to_go, min_active_to_go, max_active_to_go) in enumerate(
+        #   enough nonzero parameters to come to even reach the minimum
+        #   desired number of nonzero after all joins.
+        for i, (param, min_to_go, min_nonzero_to_go, max_nonzero_to_go) in enumerate(
             zip_longest(
                 simplex_parameters,
                 min_upcoming,
-                min_active_upcoming,
-                max_active_upcoming,
+                min_nonzero_upcoming,
+                max_nonzero_upcoming,
                 fillvalue=0,
             )
         ):
@@ -397,8 +397,8 @@ class SubspaceDiscrete(SerialMixin):
             drop_invalid(
                 exp_rep,
                 max_sum=max_sum - min_to_go,
-                min_active=min_active - min_active_to_go,
-                max_active=max_active - max_active_to_go,
+                min_nonzero=min_nonzero - min_nonzero_to_go,
+                max_nonzero=max_nonzero - max_nonzero_to_go,
                 boundary_only=False,
             )
 
