@@ -55,14 +55,14 @@ class Recommender(ABC, RecommenderProtocol):
     """Allow to make recommendations that were measured previously.
     This only has an influence in discrete search spaces."""
 
-    def recommend(
+    def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        """See base class."""
+        # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
@@ -178,13 +178,13 @@ class Recommender(ABC, RecommenderProtocol):
         searchspace: SearchSpace,
         batch_size: int,
     ) -> pd.DataFrame:
-        """Obtain recommendations in search spaces with discrete parts.
+        """Obtain recommendations in search spaces with a discrete part.
 
         Convenience helper which sequentially performs the following tasks: get discrete
         candidates, generate recommendations, update metadata.
 
         Args:
-            searchspace: The searchspace from which to generate recommendations.
+            searchspace: The search space from which to generate recommendations.
             batch_size: The size of the recommendation batch.
 
         Returns:
@@ -197,13 +197,12 @@ class Recommender(ABC, RecommenderProtocol):
         is_hybrid_space = searchspace.type is SearchSpaceType.HYBRID
 
         # Get discrete candidates
+        # Repeated recommendations are always allowed for hybrid spaces
         _, candidates_comp = searchspace.discrete.get_candidates(
-            allow_repeated_recommendations=True
-            if is_hybrid_space
-            else self.allow_repeated_recommendations,
-            allow_recommending_already_measured=True
-            if is_hybrid_space
-            else self.allow_recommending_already_measured,
+            allow_repeated_recommendations=is_hybrid_space
+            or self.allow_repeated_recommendations,
+            allow_recommending_already_measured=is_hybrid_space
+            or self.allow_recommending_already_measured,
         )
 
         # Check if enough candidates are left
