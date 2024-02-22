@@ -62,33 +62,13 @@ class Recommender(ABC, RecommenderProtocol):
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        # See base class.
-
-        if searchspace.type == SearchSpaceType.DISCRETE:
-            # Select, recommend, and mark discrete candidates in one atomic step
-            return self._select_candidates_and_recommend(
-                searchspace.discrete,
-                batch_size,
-            )
-
-        if searchspace.type == SearchSpaceType.CONTINUOUS:
+        # See base class
+        if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
-
-        if searchspace.type == SearchSpaceType.HYBRID:
-            # Ignore the flags in hybrid spaces
-            _, candidates_comp = searchspace.discrete.get_candidates(
-                allow_repeated_recommendations=True,
-                allow_recommending_already_measured=True,
-            )
-            return self._recommend_hybrid(
-                searchspace=searchspace,
-                candidates_comp=candidates_comp,
-                batch_size=batch_size,
-            )
-
-        raise RuntimeError("This line should be impossible to reach.")
+        else:
+            return self._recommend_with_discrete_parts(searchspace, batch_size)
 
     def _recommend_discrete(
         self,
@@ -193,16 +173,18 @@ class Recommender(ABC, RecommenderProtocol):
         """
         raise NotImplementedError("Hybrid recommendation is not implemented.")
 
-    def _select_candidates_and_recommend(
+    def _recommend_with_discrete_parts(
         self,
-        subspace_discrete: SubspaceDiscrete,
+        searchspace: SearchSpace,
         batch_size: int,
     ) -> pd.DataFrame:
-        """Get candidates in a discrete search space and generate recommendations.
+        """Obtain recommendations in search spaces with a discrete part.
+
+        Convenience helper which sequentially performs the following tasks: get discrete
+        candidates, generate recommendations, update metadata.
 
         Args:
-            subspace_discrete: The discrete subspace from which to generate
-                recommendations.
+            searchspace: The search space from which to generate recommendations.
             batch_size: The size of the recommendation batch.
 
         Returns:
@@ -212,15 +194,20 @@ class Recommender(ABC, RecommenderProtocol):
             NotEnoughPointsLeftError: If there are fewer points left for potential
                 recommendation than requested.
         """
+        is_hybrid_space = searchspace.type is SearchSpaceType.HYBRID
+
         # Get discrete candidates
-        _, candidates_comp = subspace_discrete.get_candidates(
-            allow_repeated_recommendations=self.allow_repeated_recommendations,
-            allow_recommending_already_measured=self.allow_recommending_already_measured,
+        # Repeated recommendations are always allowed for hybrid spaces
+        _, candidates_comp = searchspace.discrete.get_candidates(
+            allow_repeated_recommendations=is_hybrid_space
+            or self.allow_repeated_recommendations,
+            allow_recommending_already_measured=is_hybrid_space
+            or self.allow_recommending_already_measured,
         )
 
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
-        if len(candidates_comp) < batch_size:
+        if (not is_hybrid_space) and (len(candidates_comp) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
                 "possible data points left to recommend. This can be "
@@ -231,11 +218,17 @@ class Recommender(ABC, RecommenderProtocol):
             )
 
         # Get recommendations
-        idxs = self._recommend_discrete(subspace_discrete, candidates_comp, batch_size)
-        rec = subspace_discrete.exp_rep.loc[idxs, :]
+        if is_hybrid_space:
+            rec = self._recommend_hybrid(searchspace, candidates_comp, batch_size)
+            idxs = rec.index
+        else:
+            idxs = self._recommend_discrete(
+                searchspace.discrete, candidates_comp, batch_size
+            )
+            rec = searchspace.discrete.exp_rep.loc[idxs, :]
 
         # Update metadata
-        subspace_discrete.metadata.loc[idxs, "was_recommended"] = True
+        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
 
         # Return recommendations
         return rec
