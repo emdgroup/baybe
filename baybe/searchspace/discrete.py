@@ -332,22 +332,26 @@ class SubspaceDiscrete(SerialMixin):
                 min_nonzero: Minimum number of nonzero parameters allowed per row.
                 max_nonzero: Maximum number of nonzero parameters allowed per row.
             """
+            # Apply sum constraints
             row_sums = df.sum(axis=1)
             if boundary_only:
-                simplex_violated = (row_sums < max_sum - tolerance) | (
+                violated = (row_sums < max_sum - tolerance) | (
                     row_sums > max_sum + tolerance
                 )
             else:
-                simplex_violated = row_sums > max_sum + tolerance
+                violated = row_sums > max_sum + tolerance
 
-            violated = simplex_violated
-            n_nonzero = (df != 0.0).sum(axis=1)
-            if min_nonzero is not None:
-                min_nonzero_violated = n_nonzero < min_nonzero
-                violated |= min_nonzero_violated
-            if max_nonzero is not None:
-                max_nonzero_violated = n_nonzero > max_nonzero
-                violated |= max_nonzero_violated
+            # Apply optional nonzero constraints
+            if (min_nonzero is not None) or (max_nonzero is not None):
+                n_nonzero = (df != 0.0).sum(axis=1)
+                if min_nonzero is not None:
+                    min_nonzero_violated = n_nonzero < min_nonzero
+                    violated |= min_nonzero_violated
+                if max_nonzero is not None:
+                    max_nonzero_violated = n_nonzero > max_nonzero
+                    violated |= max_nonzero_violated
+
+            # Remove violating rows
             locs_to_drop = df[violated].index
             df.drop(locs_to_drop, inplace=True)
 
