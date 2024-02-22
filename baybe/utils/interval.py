@@ -146,7 +146,7 @@ class Interval(SerialMixin):
         return self.lower <= number <= self.upper
 
 
-def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
+def convert_bounds(bounds: Union[None, Iterable, Interval]) -> Interval:
     """Convert bounds given in another format to an interval.
 
     Args:
