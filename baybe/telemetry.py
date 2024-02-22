@@ -145,7 +145,8 @@ except ImportError:
     if strtobool(os.environ.get(VARNAME_TELEMETRY_ENABLED, DEFAULT_TELEMETRY_ENABLED)):
         warnings.warn(
             "Opentelemetry could not be imported, potentially it is not installed. "
-            "Disabling baybe telemetry."
+            "Disabling baybe telemetry.",
+            UserWarning,
         )
     os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
@@ -183,7 +184,8 @@ if is_enabled():
             warnings.warn(
                 f"WARNING: Value passed for environment variable "
                 f"{VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT} is not a valid floating point "
-                f"number. Using default of {DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT}."
+                f"number. Using default of {DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT}.",
+                UserWarning,
             )
             _TIMEOUT_S = float(DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT)
 
@@ -221,6 +223,7 @@ if is_enabled():
             f"WARNING: BayBE Telemetry endpoint {_endpoint_url} cannot be reached. "
             "Disabling telemetry. The exception encountered was: "
             f"{type(ex).__name__}, {ex}",
+            UserWarning,
         )
         os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
