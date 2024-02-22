@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, List, Optional
+from typing import Any, Collection, List, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -91,7 +91,7 @@ class SubspaceContinuous(SerialMixin):
 
         # Create the corresponding parameters and from them the search space
         parameters = [
-            NumericalContinuousParameter(name, bound)
+            NumericalContinuousParameter(cast(str, name), bound)
             for (name, bound) in bounds.items()
         ]
         return SubspaceContinuous(parameters)
