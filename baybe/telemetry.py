@@ -78,7 +78,7 @@ import hashlib
 import logging
 import os
 import socket
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import Dict, List, Union
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -137,13 +137,10 @@ try:
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
         OTLPMetricExporter,
     )
-    from opentelemetry.metrics import get_meter, set_meter_provider
+    from opentelemetry.metrics import Histogram, get_meter, set_meter_provider
     from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
     from opentelemetry.sdk.resources import Resource
-
-    if TYPE_CHECKING:
-        from opentelemetry.metrics import Histogram
 except ImportError:
     # Failed telemetry install/import should not fail baybe, so telemetry is being
     # disabled in that case
