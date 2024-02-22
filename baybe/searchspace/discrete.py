@@ -246,7 +246,7 @@ class SubspaceDiscrete(SerialMixin):
 
         The same result can be achieved using
         :meth:`baybe.searchspace.discrete.SubspaceDiscrete.from_product` in combination
-        with appropriate sum constraints. However, such an approach is inefficient
+        with appropriate constraints. However, such an approach is inefficient
         because the Cartesian product involved creates an exponentially large set of
         candidates, most of which do not satisfy the simplex constraints and must be
         subsequently be filtered out by the method.
@@ -260,17 +260,18 @@ class SubspaceDiscrete(SerialMixin):
             simplex_parameters: The parameters to be used for the simplex construction.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
-            min_nonzero: Optional minimum number of nonzero parameters in the simplex
-                construction.
-            max_nonzero: Optional maximum number of nonzero parameters in the simplex
-                construction.
+            min_nonzero: Optional restriction on the minimum number of nonzero
+                parameter values in the simplex construction.
+            max_nonzero: Optional restriction on the maximum number of nonzero
+                parameter values in the simplex construction.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
             tolerance: Numerical tolerance used to validate the simplex constraint.
 
         Raises:
-            ValueError: If the passed parameters are not suitable for a simplex
+            ValueError: If the passed simplex parameters are not suitable for a simplex
                 construction.
+            ValueError: If the passed product parameters are not discrete.
 
         Returns:
             The created simplex subspace.
@@ -294,7 +295,7 @@ class SubspaceDiscrete(SerialMixin):
                 f"All parameters passed via 'simplex_parameters' "
                 f"must be of type '{NumericalDiscreteParameter.__name__}'."
             )
-        if not (all(isinstance(p, DiscreteParameter) for p in product_parameters)):
+        if not all(isinstance(p, DiscreteParameter) for p in product_parameters):
             raise ValueError(
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
@@ -321,7 +322,7 @@ class SubspaceDiscrete(SerialMixin):
             min_nonzero: Optional[int] = None,
             max_nonzero: Optional[int] = None,
         ) -> None:
-            """Drop rows that violate a specified simplex constraint.
+            """Drop rows that violate the specified simplex constraint.
 
             Args:
                 df: The dataframe whose rows should satisfy the simplex constraint.
@@ -356,9 +357,9 @@ class SubspaceDiscrete(SerialMixin):
         # the third parameter, and so on ...)
         min_upcoming = np.cumsum(min_values[:0:-1])[::-1]
 
-        # Get the minimum number of nonzero values to come in the upcoming joins (the
-        # first item is the minimum number of nonzero parameters starting from the
-        # second parameter, the second item is the minimum number starting from
+        # Get the min/max number of nonzero values to come in the upcoming joins (the
+        # first item is the min/max number of nonzero parameters starting from the
+        # second parameter, the second item is the min/max number starting from
         # the third parameter, and so on ...)
         min_nonzero_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
         max_nonzero_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
@@ -368,9 +369,9 @@ class SubspaceDiscrete(SerialMixin):
         # * After having cross-joined a new parameter, there must
         #   be enough "room" left for the remaining parameters to fit. That is,
         #   configurations of the current parameter subset that exceed the desired
-        #   total value minus the minimum contribution to come from the yet to be added
+        #   total value minus the minimum contribution to come from the yet-to-be-added
         #   parameters can be already discarded, because it is already clear that
-        #   the sum will be exceeded once all joins are completed.
+        #   the total sum will be exceeded once all joins are completed.
         # * Analogously, there must be enough "nonzero slots" left for the yet to be
         #   joined parameters, i.e. parameter subset configurations can be discarded
         #   where the number of nonzero parameters already exceeds the maximum number
