@@ -206,6 +206,7 @@ class Recommender(ABC, RecommenderProtocol):
         )
 
         # Check if enough candidates are left
+        # TODO [15917]: This check is not perfectly correct.
         if (not is_hybrid_space) and (len(candidates_comp) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
