@@ -421,9 +421,10 @@ def fuzzy_row_match(
 
 
 def pretty_print_df(df: pd.DataFrame) -> str:
-    """Convert a dataframe into a pretty/readable str object.
+    """Convert a dataframe into a pretty/readable format.
 
-    This function returns the first 10 rows and 7 columns from the dataframe.
+    This function returns a string representation containing at most the
+    first 10 rows and 7 columns of the dataframe.
     In case the dataframe is empty, it returns a corresponding statement.
 
     Args:

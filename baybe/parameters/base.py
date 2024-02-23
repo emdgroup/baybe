@@ -50,7 +50,7 @@ class Parameter(ABC, SerialMixin):
 
     @abstractmethod
     def summary(self) -> dict:
-        """Return a custom summarization of the parameters."""
+        """Return a custom summarization of the parameter."""
 
 
 @define(frozen=True, slots=False)
