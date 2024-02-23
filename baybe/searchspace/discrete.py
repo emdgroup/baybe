@@ -237,6 +237,8 @@ class SubspaceDiscrete(SerialMixin):
         max_sum: float,
         simplex_parameters: List[NumericalDiscreteParameter],
         product_parameters: Optional[List[DiscreteParameter]] = None,
+        min_nonzero: int = 0,
+        max_nonzero: Optional[int] = None,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
     ) -> SubspaceDiscrete:
@@ -244,7 +246,7 @@ class SubspaceDiscrete(SerialMixin):
 
         The same result can be achieved using
         :meth:`baybe.searchspace.discrete.SubspaceDiscrete.from_product` in combination
-        with appropriate sum constraints. However, such an approach is inefficient
+        with appropriate constraints. However, such an approach is inefficient
         because the Cartesian product involved creates an exponentially large set of
         candidates, most of which do not satisfy the simplex constraints and must be
         subsequently be filtered out by the method.
@@ -258,13 +260,18 @@ class SubspaceDiscrete(SerialMixin):
             simplex_parameters: The parameters to be used for the simplex construction.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
+            min_nonzero: Optional restriction on the minimum number of nonzero
+                parameter values in the simplex construction.
+            max_nonzero: Optional restriction on the maximum number of nonzero
+                parameter values in the simplex construction.
             boundary_only: Flag determining whether to keep only parameter
                 configurations on the simplex boundary.
             tolerance: Numerical tolerance used to validate the simplex constraint.
 
         Raises:
-            ValueError: If the passed parameters are not suitable for a simplex
+            ValueError: If the passed simplex parameters are not suitable for a simplex
                 construction.
+            ValueError: If the passed product parameters are not discrete.
 
         Returns:
             The created simplex subspace.
@@ -274,8 +281,11 @@ class SubspaceDiscrete(SerialMixin):
             which the parameters are passed to this method, as the configuration space
             is built up incrementally from the parameter sequence.
         """
+        # Resolve defaults
         if product_parameters is None:
             product_parameters = []
+        if max_nonzero is None:
+            max_nonzero = len(simplex_parameters)
 
         # Validate parameter types
         if not (
@@ -285,7 +295,7 @@ class SubspaceDiscrete(SerialMixin):
                 f"All parameters passed via 'simplex_parameters' "
                 f"must be of type '{NumericalDiscreteParameter.__name__}'."
             )
-        if not (all(isinstance(p, DiscreteParameter) for p in product_parameters)):
+        if not all(isinstance(p, DiscreteParameter) for p in product_parameters):
             raise ValueError(
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
@@ -298,44 +308,90 @@ class SubspaceDiscrete(SerialMixin):
 
         # Validate non-negativity
         min_values = [min(p.values) for p in simplex_parameters]
+        max_values = [max(p.values) for p in simplex_parameters]
         if not (min(min_values) >= 0.0):
             raise ValueError(
                 f"All parameters passed to '{cls.from_simplex.__name__}' "
                 f"must have non-negative values only."
             )
 
-        def drop_invalid(df: pd.DataFrame, max_sum: float, boundary_only: bool) -> None:
-            """Drop rows that violate a specified simplex constraint.
+        def drop_invalid(
+            df: pd.DataFrame,
+            max_sum: float,
+            boundary_only: bool,
+            min_nonzero: Optional[int] = None,
+            max_nonzero: Optional[int] = None,
+        ) -> None:
+            """Drop rows that violate the specified simplex constraint.
 
             Args:
                 df: The dataframe whose rows should satisfy the simplex constraint.
                 max_sum: The maximum row sum defining the simplex size.
                 boundary_only: Flag to control if the points represented by the rows
                     may lie inside the simplex or on its boundary only.
+                min_nonzero: Minimum number of nonzero parameters required per row.
+                max_nonzero: Maximum number of nonzero parameters allowed per row.
             """
+            # Apply sum constraints
             row_sums = df.sum(axis=1)
+            mask_violated = row_sums > max_sum + tolerance
             if boundary_only:
-                locs_to_drop = row_sums[
-                    (row_sums < max_sum - tolerance) | (row_sums > max_sum + tolerance)
-                ].index
-            else:
-                locs_to_drop = row_sums[row_sums > max_sum + tolerance].index
-            df.drop(locs_to_drop, inplace=True)
+                mask_violated |= row_sums < max_sum - tolerance
 
-        # Get the minimum sum contributions to come in the upcoming joins (the first
-        # item is the minimum possible sum of all parameters starting from the
+            # Apply optional nonzero constraints
+            if (min_nonzero is not None) or (max_nonzero is not None):
+                n_nonzero = (df != 0.0).sum(axis=1)
+                if min_nonzero is not None:
+                    mask_violated |= n_nonzero < min_nonzero
+                if max_nonzero is not None:
+                    mask_violated |= n_nonzero > max_nonzero
+
+            # Remove violating rows
+            idxs_to_drop = df[mask_violated].index
+            df.drop(index=idxs_to_drop, inplace=True)
+
+        # Get the minimum sum contributions to come in the upcoming joins (the
+        # first item is the minimum possible sum of all parameters starting from the
         # second parameter, the second item is the minimum possible sum starting from
         # the third parameter, and so on ...)
-        min_upcoming = np.cumsum(min_values[:0:-1])[::-1]
+        min_sum_upcoming = np.cumsum(min_values[:0:-1])[::-1]
+
+        # Get the min/max number of nonzero values to come in the upcoming joins (the
+        # first item is the min/max number of nonzero parameters starting from the
+        # second parameter, the second item is the min/max number starting from
+        # the third parameter, and so on ...)
+        min_nonzero_upcoming = np.cumsum((np.asarray(min_values) > 0.0)[:0:-1])[::-1]
+        max_nonzero_upcoming = np.cumsum((np.asarray(max_values) > 0.0)[:0:-1])[::-1]
 
         # Incrementally build up the space, dropping invalid configuration along the
-        # way. More specifically: after having cross-joined a new parameter, there must
-        # be enough "room" left for the remaining parameters to fit. Hence,
-        # configurations of the current parameter subset that exceed the desired
-        # total value minus the minimum contribution to come from the yet to be added
-        # parameters can be already discarded.
-        for i, (param, min_to_go) in enumerate(
-            zip_longest(simplex_parameters, min_upcoming, fillvalue=0)
+        # way. More specifically:
+        # * After having cross-joined a new parameter, there must
+        #   be enough "room" left for the remaining parameters to fit. That is,
+        #   configurations of the current parameter subset that exceed the desired
+        #   total value minus the minimum contribution to come from the yet-to-be-added
+        #   parameters can be already discarded, because it is already clear that
+        #   the total sum will be exceeded once all joins are completed.
+        # * Analogously, there must be enough "nonzero slots" left for the yet to be
+        #   joined parameters, i.e. parameter subset configurations can be discarded
+        #   where the number of nonzero parameters already exceeds the maximum number
+        #   of nonzeros minus the number of nonzeros to come, because it is already
+        #   clear that the maximum will be exceeded once all joins are completed.
+        # * Similarly, it can be verified for each parameter that there are still
+        #   enough nonzero parameters to come to even reach the minimum
+        #   desired number of nonzero after all joins.
+        for i, (
+            param,
+            min_sum_to_go,
+            min_nonzero_to_go,
+            max_nonzero_to_go,
+        ) in enumerate(
+            zip_longest(
+                simplex_parameters,
+                min_sum_upcoming,
+                min_nonzero_upcoming,
+                max_nonzero_upcoming,
+                fillvalue=0,
+            )
         ):
             if i == 0:
                 exp_rep = pd.DataFrame({param.name: param.values})
@@ -343,7 +399,17 @@ class SubspaceDiscrete(SerialMixin):
                 exp_rep = pd.merge(
                     exp_rep, pd.DataFrame({param.name: param.values}), how="cross"
                 )
-            drop_invalid(exp_rep, max_sum - min_to_go, boundary_only=False)
+            drop_invalid(
+                exp_rep,
+                max_sum=max_sum - min_sum_to_go,
+                # the maximum possible number of nonzeros to come dictates if we
+                # can achieve our minimum constraint in the end:
+                min_nonzero=min_nonzero - max_nonzero_to_go,
+                # the minimum possible number of nonzeros to come dictates if we
+                # can stay below the targeted maximum in the end:
+                max_nonzero=max_nonzero - min_nonzero_to_go,
+                boundary_only=False,
+            )
 
         # If requested, keep only the boundary values
         if boundary_only:
@@ -356,7 +422,7 @@ class SubspaceDiscrete(SerialMixin):
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
 
-        return cls(parameters=simplex_parameters, exp_rep=exp_rep)
+        return cls(parameters=simplex_parameters + product_parameters, exp_rep=exp_rep)
 
     @property
     def is_empty(self) -> bool:
