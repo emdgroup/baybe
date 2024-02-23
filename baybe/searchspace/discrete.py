@@ -334,22 +334,17 @@ class SubspaceDiscrete(SerialMixin):
             """
             # Apply sum constraints
             row_sums = df.sum(axis=1)
+            violated = row_sums > max_sum + tolerance
             if boundary_only:
-                violated = (row_sums < max_sum - tolerance) | (
-                    row_sums > max_sum + tolerance
-                )
-            else:
-                violated = row_sums > max_sum + tolerance
+                violated |= row_sums < max_sum - tolerance
 
             # Apply optional nonzero constraints
             if (min_nonzero is not None) or (max_nonzero is not None):
                 n_nonzero = (df != 0.0).sum(axis=1)
                 if min_nonzero is not None:
-                    min_nonzero_violated = n_nonzero < min_nonzero
-                    violated |= min_nonzero_violated
+                    violated |= n_nonzero < min_nonzero
                 if max_nonzero is not None:
-                    max_nonzero_violated = n_nonzero > max_nonzero
-                    violated |= max_nonzero_violated
+                    violated |= n_nonzero > max_nonzero
 
             # Remove violating rows
             locs_to_drop = df[violated].index
