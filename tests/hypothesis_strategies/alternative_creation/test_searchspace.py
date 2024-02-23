@@ -158,16 +158,22 @@ def test_discrete_space_creation_from_simplex_mixed(
     """Additional non-simplex parameters enter in form of a Cartesian product."""
     max_sum = 1.0
     subspace = SubspaceDiscrete.from_simplex(
-        max_sum, simplex_parameters, product_parameters, boundary_only=False
+        max_sum,
+        simplex_parameters,
+        product_parameters=product_parameters,
+        boundary_only=False,
     )
     assert len(subspace.exp_rep) == n_elements  # <-- (# simplex part) x (# task part)
     assert not any(subspace.exp_rep.duplicated())
+    assert len(subspace.parameters) == len(subspace.exp_rep.columns)
+    assert all(p.name in subspace.exp_rep.columns for p in subspace.parameters)
 
 
-def test_discrete_space_creation_from_simplex_restricted():
+@pytest.mark.parametrize("boundary_only", (False, True))
+def test_discrete_space_creation_from_simplex_restricted(boundary_only):
     """The number of nonzero simplex parameters is controllable."""
     params = [
-        NumericalDiscreteParameter(str(i), np.linspace(0, 1, 11)) for i in range(10)
+        NumericalDiscreteParameter(f"p{i}", np.linspace(0, 1, 11)) for i in range(10)
     ]
     subspace = SubspaceDiscrete.from_simplex(
         max_sum=1.0,
@@ -177,6 +183,9 @@ def test_discrete_space_creation_from_simplex_restricted():
         boundary_only=True,
     )
     n_nonzero = (subspace.exp_rep > 0.0).sum(axis=1)
-    assert np.allclose(subspace.exp_rep.sum(axis=1), 1.0)
+    if boundary_only:
+        assert np.allclose(subspace.exp_rep.sum(axis=1), 1.0)
     assert n_nonzero.min() == 2
     assert n_nonzero.max() == 4
+    assert len(subspace.parameters) == len(subspace.exp_rep.columns)
+    assert all(p.name in subspace.exp_rep.columns for p in subspace.parameters)
