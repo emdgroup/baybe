@@ -35,7 +35,7 @@ from baybe.utils.plotting import create_example_plots
 SMOKE_TEST = "SMOKE_TEST" in os.environ  # reduce the problem complexity in CI pipelines
 DIMENSION = 3  # input dimensionality of the test function
 BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
-N_MC_ITERATIONS = 5 if SMOKE_TEST else 75  # number of Monte Carlo runs
+N_MC_ITERATIONS = 5 if SMOKE_TEST else 50  # number of Monte Carlo runs
 N_DOE_ITERATIONS = 5 if SMOKE_TEST else 10  # number of DOE iterations
 POINTS_PER_DIM = 5 if SMOKE_TEST else 5  # number of grid points per input dimension
 
