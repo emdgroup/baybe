@@ -329,7 +329,7 @@ class SubspaceDiscrete(SerialMixin):
                 max_sum: The maximum row sum defining the simplex size.
                 boundary_only: Flag to control if the points represented by the rows
                     may lie inside the simplex or on its boundary only.
-                min_nonzero: Minimum number of nonzero parameters allowed per row.
+                min_nonzero: Minimum number of nonzero parameters required per row.
                 max_nonzero: Maximum number of nonzero parameters allowed per row.
             """
             # Apply sum constraints
