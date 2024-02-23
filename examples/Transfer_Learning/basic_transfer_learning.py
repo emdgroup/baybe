@@ -97,13 +97,15 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 ### Defining the Tasks
 
 # To demonstrate the transfer learning mechanism, we consider the problem of optimizing
-# the Hartmann function using training data from its negated version.
-# The used model is of course not aware of this relationship but needs to infer it
-# from the data gathered during the optimization process.
+# the Hartmann function using training data from its negated version, including some
+# noise. The used model is of course not aware of this relationship but needs to infer
+# it from the data gathered during the optimization process.
 
 test_functions = {
     "Test_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
-    "Training_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION, negate=True)),
+    "Training_Function": botorch_function_wrapper(
+        Hartmann(dim=DIMENSION, negate=True, noise_std=0.15)
+    ),
 }
 
 # (Lookup)=
