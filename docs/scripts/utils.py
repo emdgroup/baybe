@@ -167,18 +167,18 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
                 content = markdown_file.read()
                 wrapped_lines = []
                 for line in content.splitlines():
+                    if "![svg]" in line or "![png]" in line or "<Figure size" in line:
+                        continue
                     if len(line) > 88 and "](" not in line:
                         wrapped = textwrap.wrap(line, width=88)
                         wrapped_lines.extend(wrapped)
                     else:
                         wrapped_lines.append(line)
 
-                lines = "\n".join(wrapped_lines)
+            # Add a manual new line to each of the lines
+            lines = [line + "\n" for line in wrapped_lines]
             # Delete lines we do not want to have in our documentation
-            lines = [line for line in lines if "![svg]" not in line]
-            lines = [line for line in lines if "![png]" not in line]
-            lines = [line for line in lines if "<Figure size" not in line]
-
+            # lines = [line for line in lines if "![svg]" not in line]
             # We check whether pre-built light and dark plots exist. If so, we append
             # corresponding lines to our markdown file for including them.
             light_figure = pathlib.Path(sub_directory / (file_name + "_light.svg"))
