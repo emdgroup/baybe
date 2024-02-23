@@ -427,7 +427,7 @@ class SubspaceDiscrete(SerialMixin):
         # Reset the index
         exp_rep.reset_index(drop=True, inplace=True)
 
-        return cls(parameters=simplex_parameters, exp_rep=exp_rep)
+        return cls(parameters=simplex_parameters + product_parameters, exp_rep=exp_rep)
 
     @property
     def is_empty(self) -> bool:
