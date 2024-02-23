@@ -2,6 +2,7 @@
 
 import pathlib
 import shutil
+import textwrap
 from subprocess import DEVNULL, STDOUT, check_call
 
 from tqdm import tqdm
@@ -158,11 +159,21 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
             )
 
             # CLEANUP
-            # Remove all lines that try to include a png file
             markdown_path = file.with_suffix(".md")
+            # We wrap lines which are too long as long as they do not contain a link.
+            # To discover whether a line contains a link, we check if the string "]("
+            # is contained.
             with open(markdown_path, "r", encoding="UTF-8") as markdown_file:
-                lines = markdown_file.readlines()
+                content = markdown_file.read()
+                wrapped_lines = []
+                for line in content.splitlines():
+                    if len(line) > 88 and "](" not in line:
+                        wrapped = textwrap.wrap(line, width=88)
+                        wrapped_lines.extend(wrapped)
+                    else:
+                        wrapped_lines.append(line)
 
+                lines = "\n".join(wrapped_lines)
             # Delete lines we do not want to have in our documentation
             lines = [line for line in lines if "![svg]" not in line]
             lines = [line for line in lines if "![png]" not in line]
