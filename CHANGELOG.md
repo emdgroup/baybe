@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Unhandled exception in telemetry when username could not be inferred on Windows
 - Metadata is now correctly updated for hybrid spaces
+- Unintended deactivation of telemetry due to import problem
 
 ## [0.7.3] - 2024-02-09
 ### Added
