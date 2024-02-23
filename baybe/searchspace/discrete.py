@@ -334,21 +334,21 @@ class SubspaceDiscrete(SerialMixin):
             """
             # Apply sum constraints
             row_sums = df.sum(axis=1)
-            violated = row_sums > max_sum + tolerance
+            mask_violated = row_sums > max_sum + tolerance
             if boundary_only:
-                violated |= row_sums < max_sum - tolerance
+                mask_violated |= row_sums < max_sum - tolerance
 
             # Apply optional nonzero constraints
             if (min_nonzero is not None) or (max_nonzero is not None):
                 n_nonzero = (df != 0.0).sum(axis=1)
                 if min_nonzero is not None:
-                    violated |= n_nonzero < min_nonzero
+                    mask_violated |= n_nonzero < min_nonzero
                 if max_nonzero is not None:
-                    violated |= n_nonzero > max_nonzero
+                    mask_violated |= n_nonzero > max_nonzero
 
             # Remove violating rows
-            locs_to_drop = df[violated].index
-            df.drop(locs_to_drop, inplace=True)
+            idxs_to_drop = df[mask_violated].index
+            df.drop(index=idxs_to_drop, inplace=True)
 
         # Get the minimum sum contributions to come in the upcoming joins (the
         # first item is the minimum possible sum of all parameters starting from the
