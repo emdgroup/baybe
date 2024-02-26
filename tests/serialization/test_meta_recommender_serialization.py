@@ -1,4 +1,4 @@
-"""Test serialization of strategies."""
+"""Test serialization of meta recommenders."""
 
 import pytest
 
@@ -30,8 +30,8 @@ def roundtrip(recommender: MetaRecommender) -> MetaRecommender:
         SequentialMetaRecommender(recommenders=[RandomRecommender()]),
     ],
 )
-def test_strategy_serialization(recommender):
-    """Roundtrip serialization of strategies."""
+def test_meta_recommender_serialization(recommender):
+    """Roundtrip serialization of meta recommenders."""
     assert recommender == roundtrip(recommender)
 
 
@@ -55,8 +55,8 @@ def test_unsupported_serialization():
         SequentialMetaRecommender(recommenders=RECOMMENDERS),
     ],
 )
-def test_strategy_state_serialization(recommender):
-    """Roundtrip-serialized strategies keep their internal states."""
+def test_meta_recommender_state_serialization(recommender):
+    """Roundtrip-serialized meta recommenders keep their internal states."""
     # Before serialization, identity must hold
     rec = select_recommender(recommender, 0)
     assert rec is RECOMMENDERS[0]
