@@ -44,6 +44,8 @@ jobs:
     runs-on: ubuntu-latest
     name: "Reminder"
     continue-on-error: true
+    permissions:
+      issues: write
     steps:
       - name: check reminders and notify
         uses: agrc/reminder-action@v1

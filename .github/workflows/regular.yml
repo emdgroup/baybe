@@ -24,10 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     name: "Reminder"
     continue-on-error: true
+    permissions:
+      issues: write
     steps:
       - name: check reminders and notify
-        uses:
-          agrc/reminder-action@v1
+        uses: agrc/reminder-action@v1
 
   # Warns about broken links in the docs. Especially useful for
   # those that point to our own github.io page (linkcheck is disabled in the
