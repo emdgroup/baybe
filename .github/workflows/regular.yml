@@ -20,6 +20,15 @@ concurrency:
 
 jobs:
 
+  reminder:
+    runs-on: ubuntu-latest
+    name: "Reminder"
+    continue-on-error: true
+    steps:
+      - name: check reminders and notify
+        uses:
+          agrc/reminder-action@v1
+
   # Warns about broken links in the docs. Especially useful for
   # those that point to our own github.io page (linkcheck is disabled in the
   # CI pipeline, because the respective pages are yet to be created at that time).
