@@ -37,14 +37,14 @@ from baybe.parameters import (
 )
 from baybe.recommenders.base import Recommender
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
+from baybe.recommenders.meta.base import MetaRecommender
+from baybe.recommenders.meta.sequential import (
+    SequentialMetaRecommender,
+    StreamingSequentialMetaRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.recommenders.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies.base import Strategy
-from baybe.strategies.composite import (
-    SequentialStrategy,
-    StreamingSequentialStrategy,
-    TwoPhaseStrategy,
-)
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.telemetry import (
@@ -212,22 +212,22 @@ def fixture_parameters(
     valid_parameters = [
         CategoricalParameter(
             name="Categorical_1",
-            values=["A", "B", "C"],
+            values=("A", "B", "C"),
             encoding="OHE",
         ),
         CategoricalParameter(
             name="Categorical_2",
-            values=["bad", "OK", "good"],
+            values=("bad", "OK", "good"),
             encoding="OHE",
         ),
         CategoricalParameter(
             name="Switch_1",
-            values=["on", "off"],
+            values=("on", "off"),
             encoding="OHE",
         ),
         CategoricalParameter(
             name="Switch_2",
-            values=["left", "right"],
+            values=("left", "right"),
             encoding="OHE",
         ),
         CategoricalParameter(
@@ -240,36 +240,36 @@ def fixture_parameters(
         ),
         CategoricalParameter(
             name="SomeSetting",
-            values=["slow", "normal", "fast"],
+            values=("slow", "normal", "fast"),
             encoding="INT",
         ),
         NumericalDiscreteParameter(
             name="Num_disc_1",
-            values=[1, 2, 7],
+            values=(1, 2, 7),
             tolerance=0.3,
         ),
         NumericalDiscreteParameter(
             name="Fraction_1",
-            values=list(np.linspace(0, 100, n_grid_points)),
+            values=tuple(np.linspace(0, 100, n_grid_points)),
             tolerance=0.2,
         ),
         NumericalDiscreteParameter(
             name="Fraction_2",
-            values=list(np.linspace(0, 100, n_grid_points)),
+            values=tuple(np.linspace(0, 100, n_grid_points)),
             tolerance=0.5,
         ),
         NumericalDiscreteParameter(
             name="Fraction_3",
-            values=list(np.linspace(0, 100, n_grid_points)),
+            values=tuple(np.linspace(0, 100, n_grid_points)),
             tolerance=0.5,
         ),
         NumericalDiscreteParameter(
             name="Temperature",
-            values=list(np.linspace(100, 200, n_grid_points)),
+            values=tuple(np.linspace(100, 200, n_grid_points)),
         ),
         NumericalDiscreteParameter(
             name="Pressure",
-            values=list(np.linspace(0, 6, n_grid_points)),
+            values=tuple(np.linspace(0, 6, n_grid_points)),
         ),
         NumericalContinuousParameter(
             name="Conti_finite1",
@@ -307,8 +307,8 @@ def fixture_parameters(
         ),
         TaskParameter(
             name="Task",
-            values=["A", "B", "C"],
-            active_values=["A", "B"],
+            values=("A", "B", "C"),
+            active_values=("A", "B"),
         ),
     ]
 
@@ -335,7 +335,7 @@ def fixture_parameters(
             *[
                 CategoricalParameter(
                     name=f"Solvent_{k+1}",
-                    values=list(mock_substances.keys()),
+                    values=tuple(mock_substances.keys()),
                 )
                 for k in range(3)
             ],
@@ -546,13 +546,13 @@ def fixture_default_constraint_selection():
 
 
 @pytest.fixture(name="campaign")
-def fixture_campaign(parameters, constraints, strategy, objective):
+def fixture_campaign(parameters, constraints, recommender, objective):
     """Returns a campaign."""
     return Campaign(
         searchspace=SearchSpace.from_product(
             parameters=parameters, constraints=constraints
         ),
-        recommender=strategy,
+        recommender=recommender,
         objective=objective,
     )
 
@@ -563,27 +563,27 @@ def fixture_searchspace(parameters, constraints):
     return SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
 
-@pytest.fixture(name="twophase_strategy")
-def fixture_default_twophase_strategy(recommender, initial_recommender):
-    """The default ```TwoPhaseStrategy``` to be used if not specified differently."""
-    return TwoPhaseStrategy(
+@pytest.fixture(name="twophase_meta_recommender")
+def fixture_default_twophase_meta_recommender(recommender, initial_recommender):
+    """The default ```TwoPhaseMetaRecommender```."""
+    return TwoPhaseMetaRecommender(
         recommender=recommender, initial_recommender=initial_recommender
     )
 
 
-@pytest.fixture(name="sequential_strategy")
-def fixture_default_sequential_strategy():
-    """The default ```SequentialStrategy``` to be used if not specified differently."""
-    return SequentialStrategy(
+@pytest.fixture(name="sequential_meta_recommender")
+def fixture_default_sequential_meta_recommender():
+    """The default ```SequentialMetaRecommender```."""
+    return SequentialMetaRecommender(
         recommenders=[RandomRecommender(), SequentialGreedyRecommender()],
         mode="reuse_last",
     )
 
 
-@pytest.fixture(name="streaming_sequential_strategy")
-def fixture_default_streaming_sequential_strategy():
-    """The default ```StreamingSequentialStrategy``` to be used."""
-    return StreamingSequentialStrategy(
+@pytest.fixture(name="streaming_sequential_meta_recommender")
+def fixture_default_streaming_sequential_meta_recommender():
+    """The default ```StreamingSequentialMetaRecommender```."""
+    return StreamingSequentialMetaRecommender(
         recommenders=chain(
             (RandomRecommender(),), hilberts_factory(SequentialGreedyRecommender)
         )
@@ -591,16 +591,19 @@ def fixture_default_streaming_sequential_strategy():
 
 
 @pytest.fixture(name="recommender")
-def fixture_select_strategy(
-    request, twophase_strategy, sequential_strategy, streaming_sequential_strategy
+def fixture_select_recommender(
+    request,
+    twophase_meta_recommender,
+    sequential_meta_recommender,
+    streaming_sequential_meta_recommender,
 ):
     """Returns the requested recommender."""
-    if not hasattr(request, "param") or (request.param == TwoPhaseStrategy):
-        return twophase_strategy
-    if request.param == SequentialStrategy:
-        return sequential_strategy
-    if request.param == StreamingSequentialStrategy:
-        return streaming_sequential_strategy
+    if not hasattr(request, "param") or (request.param == TwoPhaseMetaRecommender):
+        return twophase_meta_recommender
+    if request.param == SequentialMetaRecommender:
+        return sequential_meta_recommender
+    if request.param == StreamingSequentialMetaRecommender:
+        return streaming_sequential_meta_recommender
     raise NotImplementedError("unknown recommender type")
 
 
@@ -673,7 +676,7 @@ def fixture_default_config():
             ]
         },
         "recommender": {
-            "type": "TwoPhaseStrategy",
+            "type": "TwoPhaseMetaRecommender",
             "initial_recommender": {
                 "type": "RandomRecommender"
             },
@@ -785,8 +788,10 @@ def get_dummy_searchspace() -> SearchSpace:
     return SearchSpace.from_product(parameters)
 
 
-def select_recommender(strategy: Strategy, training_size: int) -> Recommender:
+def select_recommender(
+    meta_recommender: MetaRecommender, training_size: int
+) -> Recommender:
     """Select a recommender for given training dataset size."""
     searchspace = get_dummy_searchspace()
     df_x, df_y = get_dummy_training_data(training_size)
-    return strategy.select_recommender(searchspace, train_x=df_x, train_y=df_y)
+    return meta_recommender.select_recommender(searchspace, train_x=df_x, train_y=df_y)
