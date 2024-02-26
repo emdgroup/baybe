@@ -42,7 +42,7 @@ jobs:
 
   reminder:
     runs-on: ubuntu-latest
-    name: Reminder Tagging
+    name: "Reminder"
     continue-on-error: true
     steps:
       - name: check reminders and notify
