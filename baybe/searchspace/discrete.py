@@ -23,7 +23,11 @@ from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import df_drop_single_value_columns, fuzzy_row_match
+from baybe.utils.dataframe import (
+    df_drop_single_value_columns,
+    fuzzy_row_match,
+    pretty_print_df,
+)
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
@@ -59,6 +63,39 @@ class SubspaceDiscrete(SerialMixin):
     as an optional initializer argument to allow ingestion from e.g. serialized objects
     and thereby speed up construction. If not provided, the default hook will derive it
     from ``exp_rep``."""
+
+    def __str__(self) -> str:
+        if self.is_empty:
+            return ""
+
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+
+        # Convert the lists to dataFrames to be able to use pretty_printing
+        param_list = [param.summary() for param in self.parameters]
+        constraints_list = [constr.summary() for constr in self.constraints]
+        param_df = pd.DataFrame(param_list)
+        constraints_df = pd.DataFrame(constraints_list)
+
+        # Get summary information from metadata
+        was_recommended_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[0]]])
+        was_measured_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[1]]])
+        dont_recommend_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[2]]])
+        metadata_count = len(self.metadata)
+
+        # Put all attributes of the discrete class in one string.
+        discrete_str = f"""{start_bold}|--> Discrete search space
+            \nDiscrete Parameters{end_bold}\n{pretty_print_df(param_df)}
+            \n{start_bold}Experimental Representation{end_bold}
+            \n{pretty_print_df(self.exp_rep)}\n{start_bold}\nMetadata:{end_bold}
+            \r{_METADATA_COLUMNS[0]}: {was_recommended_count}/{metadata_count}
+            \r{_METADATA_COLUMNS[1]}: {was_measured_count}/{metadata_count}
+            \r{_METADATA_COLUMNS[2]}: {dont_recommend_count}/{metadata_count}
+            \n{start_bold}Constraints{end_bold}\n{pretty_print_df(constraints_df)}
+            \n{start_bold}Computational representation of the space{end_bold}
+            \n{pretty_print_df(self.comp_rep)}\n\n"""
+
+        return discrete_str
 
     @exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103

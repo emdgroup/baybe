@@ -48,6 +48,10 @@ class Parameter(ABC, SerialMixin):
             ``True`` if the item is within the parameter range, ``False`` otherwise.
         """
 
+    @abstractmethod
+    def summary(self) -> dict:
+        """Return a custom summarization of the parameter."""
+
 
 @define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):
@@ -95,6 +99,16 @@ class DiscreteParameter(Parameter, ABC):
             transformed = data.to_frame()
 
         return transformed
+
+    def summary(self) -> dict:  # noqa: D102
+        # See base class.
+        param_dict = dict(
+            Name=self.name,
+            Type=self.__class__.__name__,
+            Num_Values=len(self.values),
+            Encoding=self.encoding,
+        )
+        return param_dict
 
 
 @define(frozen=True, slots=False)

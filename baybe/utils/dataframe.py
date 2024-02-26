@@ -418,3 +418,30 @@ def fuzzy_row_match(
             inds_matched.extend(inds_found)
 
     return pd.Index(inds_matched)
+
+
+def pretty_print_df(df: pd.DataFrame, max_rows: int = 6, max_columns: int = 4) -> str:
+    """Convert a dataframe into a pretty/readable format.
+
+    This function returns a customized str representation of the dataframe.
+    In case the dataframe is empty, it returns a corresponding statement.
+
+    Args:
+        df: The dataframe to be printed.
+        max_rows: Maximum number of rows to display.
+        max_columns: Maximum number of columns to display.
+
+    Returns:
+        The values to be printed as a str table.
+    """
+    # Get custom str representation via pandas option_context
+    with pd.option_context(
+        "display.max_rows",
+        max_rows,
+        "display.max_columns",
+        max_columns,
+        "expand_frame_repr",
+        False,
+    ):
+        str_df = str(df)
+    return str_df

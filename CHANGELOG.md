@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or turn off disk caching entirely
 - Options to control the number of nonzero parameters in `SubspaceDiscrete.from_simplex`
 - Temporarily ignore ONNX vulnerabilities
+- Better human readable `__str__` representation of search spaces
+- `pretty_print_df` function for printing shortened versions of dataframes
 
 ### Changed
 - `Recommender`s now share their core logic via their base class
