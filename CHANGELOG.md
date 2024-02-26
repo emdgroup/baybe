@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New environment variable `BAYBE_CACHE_DIR` that can customize the disk cache directory
   or turn off disk caching entirely
 - Options to control the number of nonzero parameters in `SubspaceDiscrete.from_simplex`
+- Temporarily ignore ONNX vulnerabilities
 
 ### Changed
 - `Recommender`s now share their core logic via their base class
