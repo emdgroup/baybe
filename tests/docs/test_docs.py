@@ -6,8 +6,7 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from baybe.recommenders import RandomRecommender
-from baybe.strategies import TwoPhaseStrategy
+from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 
 from ..conftest import _CHEM_INSTALLED
 from .utils import extract_code_blocks
@@ -36,15 +35,12 @@ def test_code_executability(file: Path):
 @pytest.mark.parametrize(
     "recommender",
     [
-        TwoPhaseStrategy(
+        TwoPhaseMetaRecommender(
             initial_recommender=RandomRecommender(), recommender=RandomRecommender()
         )
     ],
 )
-@pytest.mark.parametrize("boolean", [True, False])
-def test_pseudocode_executability(
-    file: Path, searchspace, objective, strategy, boolean
-):
+def test_pseudocode_executability(file: Path, searchspace, objective, recommender):
     """The pseudocode blocks in the file are a valid python script when using fixtures.
 
     Blocks surrounded with "triple-backticks" are included.

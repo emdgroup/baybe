@@ -7,11 +7,9 @@ from baybe.recommenders import (
     FPSRecommender,
     RandomRecommender,
     SequentialGreedyRecommender,
-)
-from baybe.strategies.composite import (
-    SequentialStrategy,
-    StreamingSequentialStrategy,
-    TwoPhaseStrategy,
+    SequentialMetaRecommender,
+    StreamingSequentialMetaRecommender,
+    TwoPhaseMetaRecommender,
 )
 from tests.conftest import select_recommender
 
@@ -23,7 +21,7 @@ def test_twophase_strategy():
     initial_recommender = RandomRecommender()
     recommender = RandomRecommender()
     switch_after = 3
-    strategy = TwoPhaseStrategy(
+    strategy = TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=recommender,
         switch_after=switch_after,
@@ -38,7 +36,7 @@ def test_twophase_strategy():
 @pytest.mark.parametrize("recommenders", [RECOMMENDERS])
 def test_sequential_strategy(recommenders, mode):
     """The recommender provides its recommenders in the right order."""
-    strategy = SequentialStrategy(recommenders=recommenders, mode=mode)
+    strategy = SequentialMetaRecommender(recommenders=recommenders, mode=mode)
     training_size = 0
 
     # First iteration over provided recommender sequence
@@ -86,7 +84,7 @@ def test_sequential_strategy(recommenders, mode):
 )
 def test_streaming_sequential_strategy(recommenders):
     """The recommender provides its recommenders in the right order."""
-    strategy = StreamingSequentialStrategy(recommenders=recommenders)
+    strategy = StreamingSequentialMetaRecommender(recommenders=recommenders)
     training_size = 0
 
     for reference in RECOMMENDERS:

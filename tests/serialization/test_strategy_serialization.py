@@ -2,13 +2,14 @@
 
 import pytest
 
-from baybe.recommenders import FPSRecommender, RandomRecommender
-from baybe.strategies import (
-    SequentialStrategy,
-    StreamingSequentialStrategy,
-    TwoPhaseStrategy,
+from baybe.recommenders import (
+    FPSRecommender,
+    RandomRecommender,
+    SequentialMetaRecommender,
+    StreamingSequentialMetaRecommender,
+    TwoPhaseMetaRecommender,
 )
-from baybe.strategies.base import Strategy
+from baybe.recommenders.meta.base import MetaRecommender
 from tests.conftest import select_recommender
 
 # Create some recommenders of different class for better differentiation after roundtrip
@@ -16,50 +17,53 @@ RECOMMENDERS = [RandomRecommender(), FPSRecommender()]
 assert len(RECOMMENDERS) == len(set(rec.__class__.__name__ for rec in RECOMMENDERS))
 
 
-def roundtrip(strategy: Strategy) -> Strategy:
+def roundtrip(recommender: MetaRecommender) -> MetaRecommender:
     """Roundtrip serialization."""
-    string = strategy.to_json()
-    return Strategy.from_json(string)
-
-
-@pytest.mark.parametrize(
-    "recommender",
-    [TwoPhaseStrategy(), SequentialStrategy(recommenders=[RandomRecommender()])],
-)
-def test_strategy_serialization(strategy):
-    """Roundtrip serialization of strategies."""
-    assert strategy == roundtrip(strategy)
-
-
-def test_unsupported_serialization():
-    """Attempting to serialize an unserializable recommender should raise an error."""
-    strategy = StreamingSequentialStrategy(
-        recommenders=(rec for rec in [RandomRecommender()])
-    )
-    with pytest.raises(NotImplementedError):
-        strategy.to_json()
+    string = recommender.to_json()
+    return MetaRecommender.from_json(string)
 
 
 @pytest.mark.parametrize(
     "recommender",
     [
-        TwoPhaseStrategy(
+        TwoPhaseMetaRecommender(),
+        SequentialMetaRecommender(recommenders=[RandomRecommender()]),
+    ],
+)
+def test_strategy_serialization(recommender):
+    """Roundtrip serialization of strategies."""
+    assert recommender == roundtrip(recommender)
+
+
+def test_unsupported_serialization():
+    """Attempting to serialize an unserializable recommender should raise an error."""
+    recommender = StreamingSequentialMetaRecommender(
+        recommenders=(rec for rec in [RandomRecommender()])
+    )
+    with pytest.raises(NotImplementedError):
+        recommender.to_json()
+
+
+@pytest.mark.parametrize(
+    "recommender",
+    [
+        TwoPhaseMetaRecommender(
             initial_recommender=RECOMMENDERS[0],
             recommender=RECOMMENDERS[1],
             switch_after=1,
         ),
-        SequentialStrategy(recommenders=RECOMMENDERS),
+        SequentialMetaRecommender(recommenders=RECOMMENDERS),
     ],
 )
-def test_strategy_state_serialization(strategy):
+def test_strategy_state_serialization(recommender):
     """Roundtrip-serialized strategies keep their internal states."""
     # Before serialization, identity must hold
-    rec = select_recommender(strategy, 0)
+    rec = select_recommender(recommender, 0)
     assert rec is RECOMMENDERS[0]
-    rec = select_recommender(strategy, 1)
+    rec = select_recommender(recommender, 1)
     assert rec is RECOMMENDERS[1]
 
     # After serialization, identity no longer holds but equality does
-    strategy = roundtrip(strategy)
-    rec = select_recommender(strategy, 1)
+    recommender = roundtrip(recommender)
+    rec = select_recommender(recommender, 1)
     assert rec == RECOMMENDERS[1]

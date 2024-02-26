@@ -590,23 +590,6 @@ def fixture_default_streaming_sequential_meta_recommender():
     )
 
 
-@pytest.fixture(name="recommender")
-def fixture_select_recommender(
-    request,
-    twophase_meta_recommender,
-    sequential_meta_recommender,
-    streaming_sequential_meta_recommender,
-):
-    """Returns the requested recommender."""
-    if not hasattr(request, "param") or (request.param == TwoPhaseMetaRecommender):
-        return twophase_meta_recommender
-    if request.param == SequentialMetaRecommender:
-        return sequential_meta_recommender
-    if request.param == StreamingSequentialMetaRecommender:
-        return streaming_sequential_meta_recommender
-    raise NotImplementedError("unknown recommender type")
-
-
 @pytest.fixture(name="acquisition_function_cls")
 def fixture_default_acquisition_function():
     """The default acquisition function to be used if not specified differently."""
@@ -621,19 +604,39 @@ def fixture_default_surrogate_model(request, onnx_surrogate):
     return GaussianProcessSurrogate()
 
 
-@pytest.fixture(name="recommender")
-def fixture_recommender(surrogate_model, acquisition_function_cls):
-    """The default recommender to be used if not specified differently."""
-    return SequentialGreedyRecommender(
-        surrogate_model=surrogate_model,
-        acquisition_function_cls=acquisition_function_cls,
-    )
-
-
 @pytest.fixture(name="initial_recommender")
 def fixture_initial_recommender():
     """The default initial recommender to be used if not specified differently."""
     return RandomRecommender()
+
+
+@pytest.fixture(name="recommender")
+def fixture_recommender(initial_recommender, surrogate_model, acquisition_function_cls):
+    """The default recommender to be used if not specified differently."""
+    return TwoPhaseMetaRecommender(
+        initial_recommender=initial_recommender,
+        recommender=SequentialGreedyRecommender(
+            surrogate_model=surrogate_model,
+            acquisition_function_cls=acquisition_function_cls,
+        ),
+    )
+
+
+@pytest.fixture(name="meta_recommender")
+def fixture_meta_recommender(
+    request,
+    twophase_meta_recommender,
+    sequential_meta_recommender,
+    streaming_sequential_meta_recommender,
+):
+    """Returns the requested recommender."""
+    if not hasattr(request, "param") or (request.param == TwoPhaseMetaRecommender):
+        return twophase_meta_recommender
+    if request.param == SequentialMetaRecommender:
+        return sequential_meta_recommender
+    if request.param == StreamingSequentialMetaRecommender:
+        return streaming_sequential_meta_recommender
+    raise NotImplementedError("unknown recommender type")
 
 
 @pytest.fixture(name="objective")
@@ -784,7 +787,7 @@ def get_dummy_training_data(length: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
 def get_dummy_searchspace() -> SearchSpace:
     """Create a dummy searchspace whose actual content is irrelevant."""
-    parameters = [NumericalDiscreteParameter(name="test", values=[0, 1])]
+    parameters = [NumericalDiscreteParameter(name="test", values=(0, 1))]
     return SearchSpace.from_product(parameters)
 
 

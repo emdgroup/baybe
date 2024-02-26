@@ -5,6 +5,7 @@ import pytest
 from baybe.campaign import Campaign
 from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.bayesian.base import BayesianRecommender
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridRecommender
 from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
@@ -22,9 +23,13 @@ valid_discrete_bayesian_recommenders = [
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
+# TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
+#  allows no training data
 valid_naive_hybrid_recommenders = [
-    NaiveHybridRecommender(
-        disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
+    TwoPhaseMetaRecommender(
+        recommender=NaiveHybridRecommender(
+            disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
+        )
     )
     for disc in [
         *valid_discrete_non_predictive_recommenders,
