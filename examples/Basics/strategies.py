@@ -19,9 +19,12 @@
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
-from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
+from baybe.recommenders import (
+    RandomRecommender,
+    SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.searchspace import SearchSpace
-from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import (
     BayesianLinearSurrogate,
     GaussianProcessSurrogate,
@@ -107,7 +110,7 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 # Note that they all have default values.
 # Therefore one does not need to specify all of them to create a recommender object.
 
-strategy = TwoPhaseStrategy(
+strategy = TwoPhaseMetaRecommender(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=SequentialGreedyRecommender(
         surrogate_model=SURROGATE_MODEL,

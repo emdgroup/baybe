@@ -18,9 +18,12 @@ from sklearn.linear_model import BayesianRidge
 from baybe.campaign import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
-from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
+from baybe.recommenders import (
+    FPSRecommender,
+    SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.searchspace import SearchSpace
-from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_results, to_tensor
@@ -100,7 +103,7 @@ campaign = Campaign(
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
-    recommender=TwoPhaseStrategy(
+    recommender=TwoPhaseMetaRecommender(
         recommender=SequentialGreedyRecommender(surrogate_model=surrogate_model),
         initial_recommender=FPSRecommender(),
     ),

@@ -36,7 +36,7 @@ from baybe import Campaign
 campaign = Campaign(
     searchspace=searchspace,  # Required
     objective=objective,  # Required
-    recommender=strategy,  # Optional
+    recommender=recommender,  # Optional
 )
 ~~~
 

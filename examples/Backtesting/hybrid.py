@@ -20,10 +20,10 @@ from baybe.recommenders import (
     NaiveHybridRecommender,
     RandomRecommender,
     SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
 ### Parameters for a full simulation loop
@@ -124,13 +124,13 @@ objective = Objective(
 # Note that the recommender performs one optimization of the continuous subspace per sampled point.
 # We thus recommend to keep this parameter rather low.
 
-seq_greedy_strategy = TwoPhaseStrategy(
+seq_greedy_strategy = TwoPhaseMetaRecommender(
     recommender=SequentialGreedyRecommender(
         hybrid_sampler="Farthest", sampling_percentage=0.3
     ),
 )
-naive_hybrid_strategy = TwoPhaseStrategy(recommender=NaiveHybridRecommender())
-random_strategy = TwoPhaseStrategy(recommender=RandomRecommender())
+naive_hybrid_strategy = TwoPhaseMetaRecommender(recommender=NaiveHybridRecommender())
+random_strategy = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 
 # We now create one campaign per recommender.
 

@@ -69,7 +69,7 @@ CONFIG = str(
         ]
     },
     "recommender": {
-        "type": "TwoPhaseStrategy",
+        "type": "TwoPhaseMetaRecommender",
         "initial_recommender": {
             "type": "FPSRecommender"
         },
