@@ -20,9 +20,6 @@ concurrency:
 
 jobs:
 
-  # Warns about broken links in the docs. Especially useful for
-  # those that point to our own github.io page (linkcheck is disabled in the
-  # CI pipeline, because the respective pages are yet to be created at that time).
   reminder:
     runs-on: ubuntu-latest
     name: Reminder Tagging
@@ -32,6 +29,9 @@ jobs:
         uses:
           agrc/reminder-action@v1
 
+  # Warns about broken links in the docs. Especially useful for
+  # those that point to our own github.io page (linkcheck is disabled in the
+  # CI pipeline, because the respective pages are yet to be created at that time).
   docs:
     runs-on: ubuntu-latest
     permissions:
