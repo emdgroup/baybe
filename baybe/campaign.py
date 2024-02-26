@@ -14,12 +14,12 @@ from baybe.exceptions import DeprecationError
 from baybe.objective import Objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.searchspace.core import (
     SearchSpace,
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
-from baybe.strategies import TwoPhaseStrategy
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -57,7 +57,7 @@ class Campaign(SerialMixin):
     objective: Objective = field()
     """The optimization objective."""
 
-    recommender: RecommenderProtocol = field(factory=TwoPhaseStrategy)
+    recommender: RecommenderProtocol = field(factory=TwoPhaseMetaRecommender)
     """The employed recommender"""
 
     # Metadata
@@ -82,6 +82,9 @@ class Campaign(SerialMixin):
     numerical_measurements_must_be_within_tolerance: bool = field(default=None)
     """Deprecated! Raises an error when used."""
 
+    strategy: RecommenderProtocol = field(default=None)
+    """Deprecated! Raises an error when used."""
+
     @numerical_measurements_must_be_within_tolerance.validator
     def _validate_tolerance_flag(self, _, value) -> None:
         """Raise a DeprecationError if the tolerance flag is used."""
@@ -90,6 +93,15 @@ class Campaign(SerialMixin):
                 f"Passing 'numerical_measurements_must_be_within_tolerance' to "
                 f"the constructor is deprecated. The flag has become a parameter of "
                 f"{self.__class__.__name__}.{Campaign.add_measurements.__name__}."
+            )
+
+    @strategy.validator
+    def _validate_strategy(self, _, value) -> None:
+        """Raise a DeprecationError if the strategy attribute is used."""
+        if value is not None:
+            raise DeprecationError(
+                "Passing 'strategy' to the constructor is deprecated. The attribute"
+                " has been renamed to 'recommender'"
             )
 
     @property
@@ -306,6 +318,7 @@ unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     _cattrs_include_init_false=True,
     # TODO: Remove once deprecation got expired:
     numerical_measurements_must_be_within_tolerance=cattrs.override(omit=True),
+    strategy=cattrs.override(omit=True),
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
     Campaign, converter, _cattrs_include_init_false=True

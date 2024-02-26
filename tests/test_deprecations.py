@@ -114,3 +114,9 @@ def test_deprecated_strategy_allow_flags(flag):
         TwoPhaseStrategy(allow_recommending_already_measured=flag)
     with pytest.raises(DeprecationError):
         TwoPhaseStrategy(allow_recommending_already_measured=flag)
+
+
+def test_deprecated_strategy_campaign_flag(recommender):
+    """Using the deprecated strategy keyword raises an error."""
+    with pytest.raises(DeprecationError):
+        Campaign(None, None, None, strategy=recommender)  # noqa: E999
