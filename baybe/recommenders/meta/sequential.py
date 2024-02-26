@@ -7,10 +7,11 @@ from attrs import define, field
 from attrs.validators import deep_iterable, in_, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
-from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
 from baybe.recommenders.base import Recommender
+from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
     block_deserialization_hook,

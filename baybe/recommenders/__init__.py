@@ -1,6 +1,11 @@
 """BayBE recommenders."""
 
 from baybe.recommenders.bayesian.sequential_greedy import SequentialGreedyRecommender
+from baybe.recommenders.meta.sequential import (
+    SequentialMetaRecommender,
+    StreamingSequentialMetaRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.recommenders.naive import NaiveHybridRecommender
 from baybe.recommenders.nonpredictive.clustering import (
     GaussianMixtureClusteringRecommender,
@@ -16,5 +21,8 @@ __all__ = [
     "PAMClusteringRecommender",
     "NaiveHybridRecommender",
     "RandomRecommender",
+    "TwoPhaseMetaRecommender",
     "SequentialGreedyRecommender",
+    "SequentialMetaRecommender",
+    "StreamingSequentialMetaRecommender",
 ]
