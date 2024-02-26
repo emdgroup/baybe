@@ -92,7 +92,7 @@ seq_greedy_EI_campaign = Campaign(
 )
 random_campaign = Campaign(
     searchspace=searchspace,
-    strategy=RandomRecommender(),
+    recommender=RandomRecommender(),
     objective=objective,
 )
 

@@ -189,7 +189,7 @@ campaign = Campaign(
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
-    strategy=TwoPhaseStrategy(
+    recommender=TwoPhaseStrategy(
         recommender=SequentialGreedyRecommender(
             surrogate_model=NeuralNetDropoutSurrogate()
         ),

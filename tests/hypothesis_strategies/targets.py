@@ -8,7 +8,7 @@ from baybe.targets.numerical import _VALID_TRANSFORMATIONS, NumericalTarget
 from .utils import interval
 
 target_name = st.text(min_size=1)
-"""A strategy that generates target names."""
+"""A recommender that generates target names."""
 
 
 @st.composite
@@ -29,4 +29,4 @@ def numerical_target(draw: st.DrawFn):
 
 
 target = numerical_target()
-"""A strategy that generates targets."""
+"""A recommender that generates targets."""

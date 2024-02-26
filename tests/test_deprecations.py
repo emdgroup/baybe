@@ -33,9 +33,9 @@ def test_renamed_surrogate():
 
 
 def test_missing_strategy_type(config):
-    """Specifying a strategy without a corresponding type raises a warning."""
+    """Specifying a recommender without a corresponding type raises a warning."""
     dict_ = json.loads(config)
-    dict_["strategy"].pop("type")
+    dict_["recommender"].pop("type")
     config_without_strategy_type = json.dumps(dict_)
     with pytest.warns(DeprecationWarning):
         Campaign.from_config(config_without_strategy_type)
@@ -109,7 +109,7 @@ def test_deprecated_batch_quantity_keyword(campaign):
 
 @pytest.mark.parametrize("flag", (True, False))
 def test_deprecated_strategy_allow_flags(flag):
-    """Using the deprecated strategy "allow" flags raises an error."""
+    """Using the deprecated recommender "allow" flags raises an error."""
     with pytest.raises(DeprecationError):
         TwoPhaseStrategy(allow_recommending_already_measured=flag)
     with pytest.raises(DeprecationError):

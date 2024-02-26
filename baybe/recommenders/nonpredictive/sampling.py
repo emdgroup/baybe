@@ -48,7 +48,7 @@ class RandomRecommender(NonPredictiveRecommender):
 
 
 class FPSRecommender(NonPredictiveRecommender):
-    """An initial strategy that selects the candidates via Farthest Point Sampling."""
+    """An initial recommender that selects candidates via Farthest Point Sampling."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE

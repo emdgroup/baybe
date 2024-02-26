@@ -115,7 +115,7 @@ objective = Objective(
 
 # This example compares three different available hybrid recommenders:
 # The `SequentialGreedyRecommender`, the `NaiveHybridRecommedner` and the `RandomRecommender`.
-# For each of them, we initialize one strategy object.
+# For each of them, we initialize one recommender object.
 # Note that it is possible to further specify the behavior of the `SequentialGreedyRecommender`.
 # Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control
 # - how much of the discrete subspace should be explored
@@ -132,21 +132,21 @@ seq_greedy_strategy = TwoPhaseStrategy(
 naive_hybrid_strategy = TwoPhaseStrategy(recommender=NaiveHybridRecommender())
 random_strategy = TwoPhaseStrategy(recommender=RandomRecommender())
 
-# We now create one campaign per strategy.
+# We now create one campaign per recommender.
 
 seq_greedy_campaign = Campaign(
     searchspace=searchspace,
-    strategy=seq_greedy_strategy,
+    recommender=seq_greedy_strategy,
     objective=objective,
 )
 naive_hybrid_campaign = Campaign(
     searchspace=searchspace,
-    strategy=naive_hybrid_strategy,
+    recommender=naive_hybrid_strategy,
     objective=objective,
 )
 random_campaign = Campaign(
     searchspace=searchspace,
-    strategy=random_strategy,
+    recommender=random_strategy,
     objective=objective,
 )
 

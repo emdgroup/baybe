@@ -45,7 +45,7 @@ class Campaign(SerialMixin):
     In particular, a campaign:
         * Defines the objective of an experimentation process.
         * Defines the search space over which the experimental parameter may vary.
-        * Defines a strategy for traversing the search space.
+        * Defines a recommender for traversing the search space.
         * Records the measurement data collected during the process.
         * Records metadata about the progress of the experimentation process.
     """
@@ -57,8 +57,8 @@ class Campaign(SerialMixin):
     objective: Objective = field()
     """The optimization objective."""
 
-    strategy: RecommenderProtocol = field(factory=TwoPhaseStrategy)
-    """The employed strategy"""
+    recommender: RecommenderProtocol = field(factory=TwoPhaseStrategy)
+    """The employed recommender"""
 
     # Metadata
     n_batches_done: int = field(default=0, init=False)
@@ -275,7 +275,7 @@ class Campaign(SerialMixin):
             self._measurements_exp["FitNr"].fillna(self.n_fits_done, inplace=True)
 
         # Get the recommended search space entries
-        rec = self.strategy.recommend(
+        rec = self.recommender.recommend(
             self.searchspace,
             batch_size,
             self._measurements_parameters_comp,

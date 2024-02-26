@@ -134,7 +134,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
 @define
 class PAMClusteringRecommender(SKLearnClusteringRecommender):
-    """Partitioning Around Medoids (PAM) initial clustering strategy."""
+    """Partitioning Around Medoids (PAM) initial clustering recommender."""
 
     model_class: ClassVar[Type[_ScikitLearnModel]] = KMedoids
     # See base class.
@@ -177,7 +177,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
 
 @define
 class KMeansClusteringRecommender(SKLearnClusteringRecommender):
-    """K-means initial clustering strategy."""
+    """K-means initial clustering recommender."""
 
     # Class variables
     model_class: ClassVar[Type[_ScikitLearnModel]] = KMeans
@@ -229,7 +229,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 
 @define
 class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
-    """Gaussian mixture model (GMM) initial clustering strategy."""
+    """Gaussian mixture model (GMM) initial clustering recommender."""
 
     # Class variables
     model_class: ClassVar[Type[_ScikitLearnModel]] = GaussianMixture

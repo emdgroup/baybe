@@ -61,7 +61,7 @@ class DiscreteParameter(Parameter, ABC):
 
     # class variables
     encoding: Optional[ParameterEncoding] = field(init=False, default=None)
-    """An optional encoding strategy for the parameter."""
+    """An optional encoding recommender for the parameter."""
 
     @property
     @abstractmethod

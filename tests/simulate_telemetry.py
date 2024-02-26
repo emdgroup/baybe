@@ -68,7 +68,7 @@ config = {
     "objective": Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
-    "strategy": TwoPhaseStrategy(
+    "recommender": TwoPhaseStrategy(
         recommender=SequentialGreedyRecommender(
             allow_repeated_recommendations=False,
             allow_recommending_already_measured=False,

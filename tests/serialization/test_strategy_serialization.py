@@ -23,7 +23,7 @@ def roundtrip(strategy: Strategy) -> Strategy:
 
 
 @pytest.mark.parametrize(
-    "strategy",
+    "recommender",
     [TwoPhaseStrategy(), SequentialStrategy(recommenders=[RandomRecommender()])],
 )
 def test_strategy_serialization(strategy):
@@ -32,7 +32,7 @@ def test_strategy_serialization(strategy):
 
 
 def test_unsupported_serialization():
-    """Attempting to serialize an unserializable strategy should raise an error."""
+    """Attempting to serialize an unserializable recommender should raise an error."""
     strategy = StreamingSequentialStrategy(
         recommenders=(rec for rec in [RandomRecommender()])
     )
@@ -41,7 +41,7 @@ def test_unsupported_serialization():
 
 
 @pytest.mark.parametrize(
-    "strategy",
+    "recommender",
     [
         TwoPhaseStrategy(
             initial_recommender=RECOMMENDERS[0],

@@ -107,7 +107,7 @@ objective = Objective(
 
 ### Constructing hybrid recommenders
 
-# Here, we explicitly create a strategy object to use the `NaiveHybridRecommender`.
+# Here, we explicitly create a recommender object to use the `NaiveHybridRecommender`.
 # The keywords `disc_recommender` and `cont_recommender` can be used to select different
 # recommenders for the corresponding subspaces.
 # We use the default choices, which is the `SequentialGreedyRecommender`.
@@ -120,7 +120,7 @@ hybrid_strategy = TwoPhaseStrategy(recommender=hybrid_recommender)
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
-    strategy=hybrid_strategy,
+    recommender=hybrid_strategy,
 )
 
 # Get a recommendation for a fixed batch size.

@@ -552,7 +552,7 @@ def fixture_campaign(parameters, constraints, strategy, objective):
         searchspace=SearchSpace.from_product(
             parameters=parameters, constraints=constraints
         ),
-        strategy=strategy,
+        recommender=strategy,
         objective=objective,
     )
 
@@ -590,18 +590,18 @@ def fixture_default_streaming_sequential_strategy():
     )
 
 
-@pytest.fixture(name="strategy")
+@pytest.fixture(name="recommender")
 def fixture_select_strategy(
     request, twophase_strategy, sequential_strategy, streaming_sequential_strategy
 ):
-    """Returns the requested strategy."""
+    """Returns the requested recommender."""
     if not hasattr(request, "param") or (request.param == TwoPhaseStrategy):
         return twophase_strategy
     if request.param == SequentialStrategy:
         return sequential_strategy
     if request.param == StreamingSequentialStrategy:
         return streaming_sequential_strategy
-    raise NotImplementedError("unknown strategy type")
+    raise NotImplementedError("unknown recommender type")
 
 
 @pytest.fixture(name="acquisition_function_cls")
@@ -672,7 +672,7 @@ def fixture_default_config():
                 {"name": "Yield", "mode": "MAX"}
             ]
         },
-        "strategy": {
+        "recommender": {
             "type": "TwoPhaseStrategy",
             "initial_recommender": {
                 "type": "RandomRecommender"

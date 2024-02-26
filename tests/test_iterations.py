@@ -145,6 +145,6 @@ def test_iter_recommender_hybrid(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
-@pytest.mark.parametrize("strategy", valid_strategies, indirect=True)
+@pytest.mark.parametrize("recommender", valid_strategies, indirect=True)
 def test_strategies(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)

@@ -30,14 +30,13 @@ optimization
 `Strategy`&nbsp;([class](baybe.strategies.base.Strategy) 
 / [user guide](./strategies)) to be used.
 
-
 ~~~python
 from baybe import Campaign
 
 campaign = Campaign(
     searchspace=searchspace,  # Required
     objective=objective,  # Required
-    strategy=strategy,  # Optional
+    recommender=strategy,  # Optional
 )
 ~~~
 

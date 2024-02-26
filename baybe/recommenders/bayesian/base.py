@@ -92,7 +92,7 @@ class BayesianRecommender(Recommender, ABC):
         train_x: pd.DataFrame,
         train_y: pd.DataFrame,
     ) -> Surrogate:
-        """Train a fresh surrogate model instance for the DOE strategy.
+        """Train a fresh surrogate model instance for the DOE recommender.
 
         Args:
             searchspace: The search space.

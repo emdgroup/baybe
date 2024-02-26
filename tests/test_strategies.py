@@ -19,7 +19,7 @@ RECOMMENDERS = [RandomRecommender(), FPSRecommender(), SequentialGreedyRecommend
 
 
 def test_twophase_strategy():
-    """The strategy switches the recommender at the requested point."""
+    """The recommender switches the recommender at the requested point."""
     initial_recommender = RandomRecommender()
     recommender = RandomRecommender()
     switch_after = 3
@@ -37,7 +37,7 @@ def test_twophase_strategy():
 @pytest.mark.parametrize("mode", ["raise", "reuse_last", "cyclic"])
 @pytest.mark.parametrize("recommenders", [RECOMMENDERS])
 def test_sequential_strategy(recommenders, mode):
-    """The strategy provides its recommenders in the right order."""
+    """The recommender provides its recommenders in the right order."""
     strategy = SequentialStrategy(recommenders=recommenders, mode=mode)
     training_size = 0
 
@@ -85,7 +85,7 @@ def test_sequential_strategy(recommenders, mode):
     ],
 )
 def test_streaming_sequential_strategy(recommenders):
-    """The strategy provides its recommenders in the right order."""
+    """The recommender provides its recommenders in the right order."""
     strategy = StreamingSequentialStrategy(recommenders=recommenders)
     training_size = 0
 

@@ -68,7 +68,7 @@ CONFIG = str(
             }
         ]
     },
-    "strategy": {
+    "recommender": {
         "type": "TwoPhaseStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"

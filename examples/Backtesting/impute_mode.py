@@ -103,7 +103,7 @@ objective = Objective(
 campaign = Campaign(searchspace=searchspace, objective=objective)
 campaign_rand = Campaign(
     searchspace=searchspace,
-    strategy=TwoPhaseStrategy(recommender=RandomRecommender()),
+    recommender=TwoPhaseStrategy(recommender=RandomRecommender()),
     objective=objective,
 )
 

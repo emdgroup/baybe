@@ -67,7 +67,7 @@ CONFIG = str(
             }
         ]
     },
-    "strategy": {
+    "recommender": {
         "type": "TwoPhaseStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"
@@ -138,7 +138,7 @@ INVALID_CONFIG = str(
             }
         ]
     },
-    "strategy": {
+    "recommender": {
         "type": "TwoPhaseStrategy",
         "initial_recommender": {
             "type": "FPSRecommender"

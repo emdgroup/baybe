@@ -19,7 +19,7 @@ from ..hypothesis_strategies.parameters import (
 
 
 @pytest.mark.parametrize(
-    "strategy",
+    "recommender",
     [
         param(numerical_discrete_parameter(), id="NumericalDiscreteParameter"),
         param(numerical_continuous_parameter(), id="NumericalContinuousParameter"),
