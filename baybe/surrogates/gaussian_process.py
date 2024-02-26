@@ -147,8 +147,10 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module=covar_module,
             likelihood=likelihood,
         )
-        mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
-        # IMPROVE: The step_limit=100 stems from the former (deprecated)
-        #  `fit_gpytorch_torch` function, for which this was the default. Probably,
-        #   one should use a smarter logic here.
-        fit_gpytorch_mll_torch(mll, step_limit=100)
+
+        if train_x.numel() > 0:
+            mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
+            # IMPROVE: The step_limit=100 stems from the former (deprecated)
+            #  `fit_gpytorch_torch` function, for which this was the default. Probably,
+            #   one should use a smarter logic here.
+            fit_gpytorch_mll_torch(mll, step_limit=100)

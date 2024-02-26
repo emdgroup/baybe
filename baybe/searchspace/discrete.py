@@ -515,7 +515,7 @@ class SubspaceDiscrete(SerialMixin):
             A dataframe with the parameters in computational representation.
         """
         # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(data) < 1:
+        if self.empty_encoding:
             comp_rep = pd.DataFrame(index=data.index)
             return comp_rep
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import List
+from typing import List, Optional
 
 import cattrs
 import numpy as np
@@ -68,19 +68,24 @@ class Campaign(SerialMixin):
     """The number of fits already done."""
 
     # Private
-    _measurements_exp: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
-    )
+    _measurements_exp: pd.DataFrame = field(eq=eq_dataframe, init=False)
     """The experimental representation of the conducted experiments."""
 
-    _cached_recommendation: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    _cached_recommendation: Optional[pd.DataFrame] = field(
+        default=None, eq=eq_dataframe, init=False
     )
     """The cached recommendations."""
 
     # Deprecation
     numerical_measurements_must_be_within_tolerance: bool = field(default=None)
     """Deprecated! Raises an error when used."""
+
+    @_measurements_exp.default
+    def _default_measurements_exp(self):
+        """Provide an empty dataframe with the experimental columns as default."""
+        return pd.DataFrame(
+            columns=[p.name for p in self.parameters] + [t.name for t in self.targets]
+        )
 
     @numerical_measurements_must_be_within_tolerance.validator
     def _validate_tolerance_flag(self, _, value) -> None:
@@ -110,15 +115,11 @@ class Campaign(SerialMixin):
     @property
     def _measurements_parameters_comp(self) -> pd.DataFrame:
         """The computational representation of the measured parameters."""
-        if len(self._measurements_exp) < 1:
-            return pd.DataFrame()
         return self.searchspace.transform(self._measurements_exp)
 
     @property
     def _measurements_targets_comp(self) -> pd.DataFrame:
         """The computational representation of the measured targets."""
-        if len(self._measurements_exp) < 1:
-            return pd.DataFrame()
         return self.objective.transform(self._measurements_exp)
 
     @classmethod
@@ -181,7 +182,7 @@ class Campaign(SerialMixin):
             TypeError: If the target has non-numeric entries in the provided dataframe.
         """
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
-        self._cached_recommendation = pd.DataFrame()
+        self._cached_recommendation = None
 
         # Check if all targets have valid values
         for target in self.targets:
@@ -266,7 +267,10 @@ class Campaign(SerialMixin):
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
-        if len(self._cached_recommendation) == batch_size:
+        if (
+            self._cached_recommendation is not None
+            and len(self._cached_recommendation) == batch_size
+        ):
             return self._cached_recommendation
 
         # Update recommendation meta data
