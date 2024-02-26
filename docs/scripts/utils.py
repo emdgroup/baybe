@@ -166,8 +166,15 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
             with open(markdown_path, "r", encoding="UTF-8") as markdown_file:
                 content = markdown_file.read()
                 wrapped_lines = []
+                ignored_substrings = (
+                    "![svg]",
+                    "![png]",
+                    "<Figure size",
+                    "it/s",
+                    "s/it",
+                )
                 for line in content.splitlines():
-                    if "![svg]" in line or "![png]" in line or "<Figure size" in line:
+                    if any(substring in line for substring in ignored_substrings):
                         continue
                     if len(line) > 88 and "](" not in line:
                         wrapped = textwrap.wrap(line, width=88)
