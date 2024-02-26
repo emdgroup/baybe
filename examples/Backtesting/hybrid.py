@@ -17,7 +17,7 @@ from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import (
-    NaiveHybridRecommender,
+    NaiveHybridSpaceRecommender,
     RandomRecommender,
     SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
@@ -129,7 +129,9 @@ seq_greedy_strategy = TwoPhaseMetaRecommender(
         hybrid_sampler="Farthest", sampling_percentage=0.3
     ),
 )
-naive_hybrid_strategy = TwoPhaseMetaRecommender(recommender=NaiveHybridRecommender())
+naive_hybrid_strategy = TwoPhaseMetaRecommender(
+    recommender=NaiveHybridSpaceRecommender()
+)
 random_strategy = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 
 # We now create one campaign per recommender.

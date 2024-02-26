@@ -1,4 +1,4 @@
-"""Naive hybrid recommender."""
+"""Naive hybrid space recommender."""
 
 import warnings
 from typing import ClassVar, Optional
@@ -16,7 +16,7 @@ from baybe.utils.dataframe import to_tensor
 
 
 @define
-class NaiveHybridRecommender(Recommender):
+class NaiveHybridSpaceRecommender(Recommender):
     """Recommend points by independent optimization of subspaces.
 
     This recommender splits the hybrid search space in the discrete and continuous

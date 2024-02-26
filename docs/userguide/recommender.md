@@ -14,7 +14,7 @@ The [`SequentialGreedyRecommender`](baybe.recommenders.bayesian.sequential_greed
 
 It is important to note that this recommender performs a brute-force search when applied in hybrid search spaces, as it optimizes the continuous part of the space while exhaustively searching choices in the discrete subspace. You can customize this behavior to only sample a certain percentage of the discrete subspace via the ``sample_percentage`` attribute and to choose different sampling strategies via the ``hybrid_sampler`` attribute. An example on using this recommender in a hybrid space can be found [here](./../../examples/Backtesting/hybrid).
 
-The [`NaiveHybridRecommender`](baybe.recommenders.naive.NaiveHybridRecommender) can be applied to all search spaces, but is intended to be used in hybrid spaces. This recommender combines individual recommenders for the continuous and the discrete subspaces. It independently optimizes each subspace and consolidates the best results to generate a candidate for the original hybrid space. An example on using this recommender in a hybrid space can be found [here](./../../examples/Backtesting/hybrid).
+The [`NaiveHybridSpaceRecommender`](baybe.recommenders.naive.NaiveHybridRecommender) can be applied to all search spaces, but is intended to be used in hybrid spaces. This recommender combines individual recommenders for the continuous and the discrete subspaces. It independently optimizes each subspace and consolidates the best results to generate a candidate for the original hybrid space. An example on using this recommender in a hybrid space can be found [here](./../../examples/Backtesting/hybrid).
 
 ## Clustering recommenders
 

@@ -10,7 +10,7 @@ from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.bayesian.base import BayesianRecommender
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
-from baybe.recommenders.naive import NaiveHybridRecommender
+from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates import get_available_surrogates
@@ -88,7 +88,7 @@ valid_discrete_bayesian_recommenders = [
 #  allows no training data
 valid_naive_hybrid_recommenders = [
     TwoPhaseMetaRecommender(
-        recommender=NaiveHybridRecommender(
+        recommender=NaiveHybridSpaceRecommender(
             disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
         )
     )

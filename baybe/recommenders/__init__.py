@@ -6,7 +6,7 @@ from baybe.recommenders.meta.sequential import (
     StreamingSequentialMetaRecommender,
     TwoPhaseMetaRecommender,
 )
-from baybe.recommenders.naive import NaiveHybridRecommender
+from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.nonpredictive.clustering import (
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
@@ -19,7 +19,7 @@ __all__ = [
     "GaussianMixtureClusteringRecommender",
     "KMeansClusteringRecommender",
     "PAMClusteringRecommender",
-    "NaiveHybridRecommender",
+    "NaiveHybridSpaceRecommender",
     "RandomRecommender",
     "TwoPhaseMetaRecommender",
     "SequentialGreedyRecommender",
