@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temporarily ignore ONNX vulnerabilities
 - Better human readable `__str__` representation of search spaces
 - `pretty_print_df` function for printing shortened versions of dataframes
+- Basic Transfer Learning example
 
 ### Changed
 - `Recommender`s now share their core logic via their base class
