@@ -12,7 +12,7 @@ from baybe.utils.dataframe import to_tensor
 if TYPE_CHECKING:
     from torch import Tensor
 
-_ScaleFun = Callable[[Tensor], Tensor]
+    _ScaleFun = Callable[[Tensor], Tensor]
 
 
 class Scaler(ABC):
