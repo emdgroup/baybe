@@ -3,7 +3,7 @@
 The term "simulation" can have two slightly different interpretations, depending on the
 applied context:
 
-*   It can refer to "backtesting" a particular DOE recommender on a fixed (finite)
+*   It can refer to "backtesting" a particular DOE strategy on a fixed (finite)
     dataset. In this context, "simulation" means investigating what experimental
     trajectory we would have observed if we had applied the recommender in a certain
     defined context and restricted the possible parameter configurations to those
@@ -492,7 +492,7 @@ def simulate_experiment(
             measured = campaign.recommend(batch_size=batch_size)
         except NotEnoughPointsLeftError:
             # TODO: There can be still N < batch_quantity points left in the search
-            #   space. Once the recommender/recommender refactoring is completed,
+            #   space. Once the recommender/strategy refactoring is completed,
             #   find an elegant way to return those.
             warnings.warn(
                 "The simulation of the campaign ended because because not sufficiently "

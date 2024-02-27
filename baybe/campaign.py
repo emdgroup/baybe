@@ -45,7 +45,7 @@ class Campaign(SerialMixin):
     In particular, a campaign:
         * Defines the objective of an experimentation process.
         * Defines the search space over which the experimental parameter may vary.
-        * Defines a recommender for traversing the search space.
+        * Defines a recommender for exploring the search space.
         * Records the measurement data collected during the process.
         * Records metadata about the progress of the experimentation process.
     """
@@ -100,8 +100,8 @@ class Campaign(SerialMixin):
         """Raise a DeprecationError if the strategy attribute is used."""
         if value is not None:
             raise DeprecationError(
-                "Passing 'strategy' to the constructor is deprecated. The attribute"
-                " has been renamed to 'recommender'"
+                "Passing 'strategy' to the constructor is deprecated. The attribute "
+                "has been renamed to 'recommender'."
             )
 
     @property

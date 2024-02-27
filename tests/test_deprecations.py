@@ -41,7 +41,7 @@ def test_renamed_surrogate():
         from baybe.surrogate import GaussianProcessSurrogate  # noqa: F401
 
 
-def test_missing_strategy_type(config):
+def test_missing_recommender_type(config):
     """Specifying a recommender without a corresponding type raises a warning."""
     dict_ = json.loads(config)
     dict_["recommender"].pop("type")

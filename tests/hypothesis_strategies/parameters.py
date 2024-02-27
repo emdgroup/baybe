@@ -25,13 +25,13 @@ decorrelation = st.one_of(
     st.booleans(),
     st.floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
 )
-"""A recommender that generates decorrelation settings."""
+"""A strategy that generates decorrelation settings."""
 
 parameter_name = st.text(min_size=1)
-"""A recommender that generates parameter names."""
+"""A strategy that generates parameter names."""
 
 categories = st.lists(st.text(min_size=1), min_size=2, unique=True)
-"""A recommender that generates parameter categories."""
+"""A strategy that generates parameter categories."""
 
 
 @st.composite
@@ -169,4 +169,4 @@ parameter = st.one_of(
         custom_parameter(),
     ]
 )
-"""A recommender that generates parameters."""
+"""A strategy that generates parameters."""

@@ -111,7 +111,7 @@ class PartialAcquisitionFunction:
     pinned_part: Tensor
     """The values that will be attached whenever evaluating the acquisition function."""
 
-    pin_discrete: Tensor
+    pin_discrete: bool
     """A flag for denoting whether ``pinned_part`` corresponds to the discrete
     subspace."""
 
