@@ -1,7 +1,7 @@
 """Tests for the searchspace module."""
+import numpy as np
 import pandas as pd
 import pytest
-import torch
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -41,8 +41,8 @@ def test_bounds_order():
         NumericalContinuousParameter(name="B_cont", bounds=(10.0, 12.0)),
     ]
     searchspace = SearchSpace.from_product(parameters=parameters)
-    expected = torch.tensor([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]]).double()
-    assert torch.equal(
+    expected = np.array([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]])
+    assert np.array_equal(
         searchspace.param_bounds_comp,
         expected,
     )
@@ -56,9 +56,9 @@ def test_empty_parameter_bounds():
     parameters = []
     searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
     searchspace_continuous = SubspaceContinuous(parameters=parameters)
-    expected = torch.empty(2, 0)
-    assert torch.equal(searchspace_discrete.param_bounds_comp, expected)
-    assert torch.equal(searchspace_continuous.param_bounds_comp, expected)
+    expected = np.empty((2, 0))
+    assert np.array_equal(searchspace_discrete.param_bounds_comp, expected)
+    assert np.array_equal(searchspace_continuous.param_bounds_comp, expected)
 
 
 def test_discrete_searchspace_creation_from_dataframe():

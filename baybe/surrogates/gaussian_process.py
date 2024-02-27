@@ -56,7 +56,7 @@ class GaussianProcessSurrogate(Surrogate):
         numeric_idxs = [i for i in range(train_x.shape[1]) if i != task_idx]
 
         # get the input bounds from the search space in BoTorch Format
-        bounds = searchspace.param_bounds_comp
+        bounds = torch.from_numpy(searchspace.param_bounds_comp)
         # TODO: use target value bounds when explicitly provided
 
         # define the input and outcome transforms
