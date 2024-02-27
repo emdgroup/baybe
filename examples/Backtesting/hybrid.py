@@ -114,7 +114,7 @@ objective = Objective(
 ### Constructing campaigns for the simulation loop
 
 # This example compares three different available hybrid recommenders:
-# The `SequentialGreedyRecommender`, the `NaiveHybridRecommedner` and the `RandomRecommender`.
+# The `SequentialGreedyRecommender`, the `NaiveHybridSpaceRecommedner` and the `RandomRecommender`.
 # For each of them, we initialize one recommender object.
 # Note that it is possible to further specify the behavior of the `SequentialGreedyRecommender`.
 # Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control

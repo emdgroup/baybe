@@ -13,7 +13,8 @@ def Strategy(*args, **kwargs) -> TwoPhaseMetaRecommender:
     """A ``Strategy`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
     warnings.warn(
         f"Using 'Strategy' directly is deprecated and will be removed in a future "
-        f"version. Please use '{TwoPhaseMetaRecommender.__name__}' class instead.",
+        f"version. Please use 'recommenders.{TwoPhaseMetaRecommender.__name__}' class "
+        f"instead.",
         DeprecationWarning,
     )
 
@@ -24,7 +25,8 @@ def TwoPhaseStrategy(*args, **kwargs) -> TwoPhaseMetaRecommender:
     """A ``TwoPhaseStrategy`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
     warnings.warn(
         f"'TwoPhaseStrategy' is deprecated and will be removed in a future "
-        f"version. Please use '{TwoPhaseMetaRecommender.__name__}' class instead.",
+        f"version. Please use 'recommenders.{TwoPhaseMetaRecommender.__name__}' class "
+        f"instead.",
         DeprecationWarning,
     )
 
@@ -35,7 +37,8 @@ def SequentialStrategy(*args, **kwargs) -> SequentialMetaRecommender:
     """A ``SequentialStrategy`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
     warnings.warn(
         f"'SequentialStrategy' is deprecated and will be removed in a future version. "
-        f"Please use '{SequentialMetaRecommender.__name__}' class instead.",
+        f"Please use 'recommenders.{SequentialMetaRecommender.__name__}' class "
+        f"instead.",
         DeprecationWarning,
     )
 
@@ -46,8 +49,8 @@ def StreamingSequentialStrategy(*args, **kwargs) -> StreamingSequentialMetaRecom
     """A ``StreamingSequentialStrategy`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
     warnings.warn(
         f"'StreamingSequentialStrategy' is deprecated and will be removed in a future "
-        f"version. Please use '{StreamingSequentialMetaRecommender.__name__}' class "
-        f"instead.",
+        f"version. Please use "
+        f"'recommenders.{StreamingSequentialMetaRecommender.__name__}' class instead.",
         DeprecationWarning,
     )
 
