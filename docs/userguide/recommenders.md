@@ -16,6 +16,15 @@ While some pure recommenders are versatile and work across different types of se
 spaces, other are specifically designed for discrete or continuous spaces. The
 compatibility is indicated via the corresponding ``compatibility`` class variable.
 
+```{admonition} Additional Options for Discrete Search Spaces
+:class: note
+For discrete search spaces, BayBE provides additional control over pure recommenders.
+You can explicitly define whether a recommender is allowed to recommend previous 
+recommendations again via `allow_repeated_recommendations` and whether it can output
+recommendations that have already been measured via
+`allow_recommending_already_measured`. 
+```
+
 ### Bayesian Recommenders
 
 The Bayesian recommenders in BayBE are built on the foundation of the
@@ -68,15 +77,6 @@ BayBE provides two recommenders that recommend by sampling form the search space
   based on farthest point sampling. A practical application showcasing the usage of
   this recommender can be found
   [here](./../../examples/Custom_Surrogates/surrogate_params).
-
-```{admonition} Additional Options for Discrete Search Spaces
-:class: note
-For discrete search spaces, BayBE provides additional control over pure recommenders.
-You can explicitly define whether a recommender is allowed to recommend previous 
-recommendations again via `allow_repeated_recommendations` and whether it can output
-recommendations that have already been measured via
-`allow_recommending_already_measured`. 
-```
 
 ## Meta Recommenders
 
