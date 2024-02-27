@@ -255,7 +255,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         ):
             raise _unsupported_recommender_error
 
-        return self._last_recommender
+        return self._last_recommender  # type: ignore[return-value]
 
 
 # The recommender iterable cannot be serialized
