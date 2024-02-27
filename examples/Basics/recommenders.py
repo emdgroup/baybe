@@ -34,7 +34,7 @@ from baybe.surrogates import (
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_results
 
-### Available initial strategies
+### Available recommenders suitable for initial recommendation
 
 # For the first recommendation, the user can specify which recommender to use.
 # The following initial recommenders are available.
@@ -110,7 +110,7 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 # Note that they all have default values.
 # Therefore one does not need to specify all of them to create a recommender object.
 
-strategy = TwoPhaseMetaRecommender(
+recommender = TwoPhaseMetaRecommender(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=SequentialGreedyRecommender(
         surrogate_model=SURROGATE_MODEL,
@@ -120,7 +120,7 @@ strategy = TwoPhaseMetaRecommender(
     ),
 )
 
-print(strategy)
+print(recommender)
 
 # Note that there are the additional keywords `hybrid_sampler` and `sampling_percentag`.
 # Their meaning and how to use and define it are explained in the hybrid backtesting example.
@@ -177,7 +177,7 @@ objective = Objective(
 
 campaign = Campaign(
     searchspace=searchspace,
-    recommender=strategy,
+    recommender=recommender,
     objective=objective,
 )
 
