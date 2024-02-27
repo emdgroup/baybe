@@ -1,4 +1,7 @@
 """Meta recommenders that switch recommenders based on the experimentation progress."""
+# TODO After bayesian recommenders are enabled with no training data, a refactoring of
+#  this file will resolve type errors
+# mypy: disable-error-code="arg-type"
 
 from typing import Iterable, Iterator, List, Literal, Optional
 
@@ -21,7 +24,7 @@ from baybe.serialization import (
     converter,
 )
 
-# TODO: Make predictive recommenders handle empty training data
+# TODO: Make bayesian recommenders handle empty training data
 _unsupported_recommender_error = ValueError(
     f"For cases where no training is available, the selected recommender "
     f"must be a subclass of '{NonPredictiveRecommender.__name__}'."
@@ -62,7 +65,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     ) -> PureRecommender:
         # See base class.
 
-        # FIXME: enable predictive recommenders for empty training data
+        # TODO: enable bayesian recommenders for empty training data
         if (train_x is None or len(train_x) == 0) and not isinstance(
             self.initial_recommender, NonPredictiveRecommender
         ):
@@ -167,7 +170,7 @@ class SequentialMetaRecommender(MetaRecommender):
         # Remember the training dataset size for the next call
         self._n_last_measurements = len(train_x)
 
-        # FIXME: enable predictive recommenders for empty training data
+        # TODO: enable bayesian recommenders for empty training data
         if (train_x is None or len(train_x) == 0) and not isinstance(
             recommender, NonPredictiveRecommender
         ):
@@ -249,7 +252,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         # Remember the training dataset size for the next call
         self._n_last_measurements = len(train_x)
 
-        # FIXME: enable predictive recommenders for empty training data
+        # TODO: enable bayesian recommenders for empty training data
         if (train_x is None or len(train_x) == 0) and not isinstance(
             self._last_recommender, NonPredictiveRecommender
         ):
