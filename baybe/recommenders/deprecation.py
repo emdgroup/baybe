@@ -36,6 +36,6 @@ def structure_recommender_protocol(val: dict, _) -> RecommenderProtocol:
             f"a future version.",
             DeprecationWarning,
         )
-    fun = make_dict_structure_fn(cls, converter)
+    fun = make_dict_structure_fn(cls, converter)  # type: ignore
 
     return fun(val, cls)
