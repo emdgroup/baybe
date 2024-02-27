@@ -88,7 +88,7 @@ class BayesianRecommender(PureRecommender, ABC):
         """
         if train_x is None or train_y is None:
             raise NotImplementedError(
-                "Bayesian recommenders do not support empty training " "data yet."
+                "Bayesian recommenders do not support empty training data yet."
             )
 
         best_f = train_y.max()
