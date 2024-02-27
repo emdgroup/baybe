@@ -1,4 +1,4 @@
-"""Naive hybrid space recommender."""
+"""Naive recommender for hybrid spaces."""
 
 import warnings
 from typing import ClassVar, Optional

@@ -22,7 +22,7 @@ from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 @define
 class SequentialGreedyRecommender(BayesianRecommender):
-    """PureRecommender using sequential Greedy optimization.
+    """Pure recommender using sequential greedy optimization.
 
     This recommender implements the BoTorch functions ``optimize_acqf_discrete``,
     ``optimize_acqf`` and ``optimize_acqf_mixed`` for the optimization of discrete,

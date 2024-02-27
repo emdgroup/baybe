@@ -1,9 +1,4 @@
-"""Base classes for all meta recommenders.
-
-Meta recommenders, in analogy to meta studies, consist of one or several pure
-recommenders. According to their inner logic they choose which pure recommender to
-query.
-"""
+"""Base classes for all meta recommenders."""
 
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -60,7 +55,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
-        """Select a recommender for the given experimentation context.
+        """Select a pure recommender for the given experimentation context.
 
         Args:
             searchspace:

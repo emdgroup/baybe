@@ -1,8 +1,4 @@
-"""Base classes for all pure recommenders.
-
-Pure recommenders implement optimization strategies and can be queried for
-recommendations. They can be part of meta recommenders.
-"""
+"""Base classes for all pure recommenders."""
 
 from abc import ABC
 from typing import ClassVar, Optional
@@ -20,7 +16,7 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 
 @define
 class PureRecommender(ABC, RecommenderProtocol):
-    """Abstract base class for all recommenders."""
+    """Abstract base class for all pure recommenders."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType]
