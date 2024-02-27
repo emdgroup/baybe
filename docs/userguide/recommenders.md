@@ -117,7 +117,7 @@ error, re-use the last recommender or re-start at the beginning of the sequence.
 
 ### Streaming Sequential
 
-Similar to the [`SequentialStrategy`](baybe.recommenders.meta.sequential.SequentialStrategy),
+Similar to the [`SequentialMetaRecommender`](baybe.recommenders.meta.sequential.SequentialMetaRecommender),
 the
 [`StreamingSequentialMetaRecommender`](baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender)
 enables the utilization of *arbitrary* iterables to select recommender.

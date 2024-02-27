@@ -23,7 +23,7 @@ A discrete/continuous search space is a s searchspace that was constructed by on
 In addition to the ones noted above, a discrete subspace has the following attributes:
 * **The experimental representation:** A ``DataFrame`` representing the experimental representation of the subspace.
 * **The metadata:** A ``DataFrame`` keeping track of different metadata that is relevant for running a campaign.
-* **An "empty" encoding flag:** A flag denoting whether an "empty" encoding should be used. This is useful, for instance, in combination with random search strategies that do not read the actual parameter values.
+* **An "empty" encoding flag:** A flag denoting whether an "empty" encoding should be used. This is useful, for instance, in combination with random recommenders that do not read the actual parameter values.
 * **The computational representation:** The computational representation of the space. If not provided explicitly, it will be derived from the experimental representation.
 
 Although it is possible to directly create a discrete subspace via the ``__init__`` function, it is intended to create themvia the [`from_dataframe`](baybe.searchspace.discrete.SubspaceDiscrete.from_dataframe) or [`from_product`](baybe.searchspace.discrete.SubspaceDiscrete.from_product) methods. These methods either require a ``DataFrame`` containing the experimental representation of the parameters and the optional explicit list of parameters (``from_dataframe``) or a list of parameters and optional constraints (``from_product``).

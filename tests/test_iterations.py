@@ -53,7 +53,7 @@ valid_hybrid_recommenders = [
     for cls in get_subclasses(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
-# List of SequentialGreedy PureRecommender with different sampling strategies.
+# List of SequentialGreedy recommenders with different sampling strategies.
 sampling_strategies = [
     # Valid combinations
     ("None", 0.0),
@@ -103,7 +103,7 @@ valid_naive_hybrid_recommenders = [
 valid_hybrid_recommenders.extend(valid_naive_hybrid_recommenders)
 valid_hybrid_recommenders.extend(valid_hybrid_sequential_greedy_recommenders)
 
-valid_strategies = get_subclasses(MetaRecommender)
+valid_meta_recommenders = get_subclasses(MetaRecommender)
 
 test_targets = [
     ["Target_max"],
@@ -164,6 +164,6 @@ def test_iter_recommender_hybrid(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
-@pytest.mark.parametrize("recommender", valid_strategies, indirect=True)
-def test_strategies(campaign, n_iterations, batch_size):
+@pytest.mark.parametrize("recommender", valid_meta_recommenders, indirect=True)
+def test_meta_recommenders(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
