@@ -68,7 +68,10 @@ class BayesianRecommender(PureRecommender, ABC):
         return fun
 
     def setup_acquisition_function(
-        self, searchspace: SearchSpace, train_x: pd.DataFrame, train_y: pd.DataFrame
+        self,
+        searchspace: SearchSpace,
+        train_x: Optional[pd.DataFrame] = None,
+        train_y: Optional[pd.DataFrame] = None,
     ) -> None:
         """Create the current acquisition function from provided training data.
 
@@ -79,7 +82,15 @@ class BayesianRecommender(PureRecommender, ABC):
             searchspace: The search space in which the experiments are to be conducted.
             train_x: The features of the conducted experiments.
             train_y: The corresponding response values.
+
+        Raises:
+            NotImplementedError: If the setup is attempted from empty training data
         """
+        if train_x is None or train_y is None:
+            raise NotImplementedError(
+                "Bayesian recommenders do not support empty training " "data yet."
+            )
+
         best_f = train_y.max()
         surrogate_model = self._fit(searchspace, train_x, train_y)
         acquisition_function_cls = self._get_acquisition_function_cls()
