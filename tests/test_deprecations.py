@@ -128,7 +128,7 @@ def test_deprecated_campaign_tolerance_flag(flag):
 def test_deprecated_batch_quantity_keyword(campaign):
     """Using the deprecated batch_quantity keyword raises an error."""
     with pytest.raises(DeprecationError):
-        campaign.recommend(batch_quantity=5)  # noqa: E999
+        campaign.recommend(batch_quantity=5)
 
 
 @pytest.mark.parametrize("flag", (True, False))
@@ -137,10 +137,10 @@ def test_deprecated_strategy_allow_flags(flag):
     with pytest.raises(DeprecationError):
         TwoPhaseMetaRecommender(allow_recommending_already_measured=flag)
     with pytest.raises(DeprecationError):
-        TwoPhaseMetaRecommender(allow_recommending_already_measured=flag)
+        TwoPhaseMetaRecommender(allow_repeated_recommendations=flag)
 
 
 def test_deprecated_strategy_campaign_flag(recommender):
     """Using the deprecated strategy keyword raises an error."""
     with pytest.raises(DeprecationError):
-        Campaign(None, None, None, strategy=recommender)  # noqa: E999
+        Campaign(None, None, None, strategy=recommender)
