@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import torch
-from torch import Tensor
 
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
+    from torch import Tensor
+
     from baybe.campaign import Campaign
     from baybe.parameters import Parameter
 
@@ -38,6 +38,8 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     #  floats. As a simple fix (this seems to be the most reasonable place to take
     #  care of this) df.values has been changed to df.values.astype(float),
     #  even though this seems like double casting here.
+    import torch
+
     out = (
         torch.from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
         for df in dfs

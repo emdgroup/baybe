@@ -4,15 +4,17 @@ import sys
 import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import Any, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Type, Union
 
 import numpy as np
-import torch
 from attrs import define, field
 from packaging import version
 
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 # TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs
 #   are supported: https://bugs.python.org/issue41987
@@ -126,8 +128,10 @@ class Interval(SerialMixin):
         """Transform the interval to a :class:`numpy.ndarray`."""
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
-    def to_tensor(self) -> torch.Tensor:
+    def to_tensor(self) -> "Tensor":
         """Transform the interval to a :class:`torch.Tensor`."""
+        import torch
+
         return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
     def contains(self, number: float) -> bool:

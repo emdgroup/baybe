@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, Tuple, Type
+from typing import TYPE_CHECKING, Callable, Dict, Tuple, Type
 
 import pandas as pd
-import torch
-from torch import Tensor
 
 from baybe.utils.dataframe import to_tensor
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 _ScaleFun = Callable[[Tensor], Tensor]
 
@@ -99,6 +100,8 @@ class DefaultScaler(Scaler):
         self, x: Tensor, y: Tensor
     ) -> Tuple[Tensor, Tensor]:
         # See base class.
+
+        import torch
 
         # Get the searchspace boundaries
         searchspace = to_tensor(self.searchspace)
