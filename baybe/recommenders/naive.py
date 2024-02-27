@@ -7,16 +7,18 @@ import pandas as pd
 from attrs import define, evolve, field, fields
 
 from baybe.acquisition import PartialAcquisitionFunction
-from baybe.recommenders.base import Recommender
-from baybe.recommenders.bayesian.base import BayesianRecommender
-from baybe.recommenders.bayesian.sequential_greedy import SequentialGreedyRecommender
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.sequential_greedy import (
+    SequentialGreedyRecommender,
+)
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils.dataframe import to_tensor
 
 
 @define
-class NaiveHybridSpaceRecommender(Recommender):
+class NaiveHybridSpaceRecommender(PureRecommender):
     """Recommend points by independent optimization of subspaces.
 
     This recommender splits the hybrid search space in the discrete and continuous
@@ -25,28 +27,24 @@ class NaiveHybridSpaceRecommender(Recommender):
     a non-hybrid space, it uses the corresponding recommender.
     """
 
-    # TODO: This class (and potentially the recommender function signatures) need to
-    #   be refactored such that there is no more coupling to BayesianRecommender and it
-    #   can be moved to recommender.py
-
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
     # Object variables
     # TODO This used to be a Union of BayesianRecommender and NonPredictiveRecommender.
-    # Due to serialization issues, this was changed to Recommender in general.
-    # As we currently do not have other subclasses of Recommender, this solution works
-    # for now. Still, we manually check whether the disc_recommender belogns to one of
-    # these two subclasses such that we might be able to easily spot a potential problem
-    # that might come up when implementing new subclasses of Recommender
-    disc_recommender: Recommender = field(factory=SequentialGreedyRecommender)
+    # Due to serialization issues, this was changed to PureRecommender in general.
+    # As we currently do not have other subclasses of PureRecommender, this solution
+    # works for now. Still, we manually check whether the disc_recommender belongs to
+    # one of these two subclasses such that we might be able to easily spot a potential
+    # problem that might come up when implementing new subclasses of PureRecommender
+    disc_recommender: PureRecommender = field(factory=SequentialGreedyRecommender)
     """The recommender used for the discrete subspace. Default:
-    :class:`baybe.recommenders.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
 
     cont_recommender: BayesianRecommender = field(factory=SequentialGreedyRecommender)
     """The recommender used for the continuous subspace. Default:
-    :class:`baybe.recommenders.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
 
     def __attrs_post_init__(self):
         """Validate if flags are synchronized and overrides them otherwise."""

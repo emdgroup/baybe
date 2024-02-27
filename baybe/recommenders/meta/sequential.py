@@ -7,11 +7,13 @@ from attrs import define, field
 from attrs.validators import deep_iterable, in_, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
-from baybe.recommenders.base import Recommender
-from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.meta.base import MetaRecommender
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
-from baybe.recommenders.nonpredictive.sampling import RandomRecommender
+from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.sequential_greedy import (
+    SequentialGreedyRecommender,
+)
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
     block_deserialization_hook,
@@ -41,10 +43,10 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         required when using the meta recommender with stateful recommenders.
     """
 
-    initial_recommender: Recommender = field(factory=RandomRecommender)
+    initial_recommender: PureRecommender = field(factory=RandomRecommender)
     """The initial recommender used by the meta recommender."""
 
-    recommender: Recommender = field(factory=SequentialGreedyRecommender)
+    recommender: PureRecommender = field(factory=SequentialGreedyRecommender)
     """The recommender used by the meta recommender after the switch."""
 
     switch_after: int = field(default=1)
@@ -57,7 +59,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> Recommender:
+    ) -> PureRecommender:
         # See base class.
 
         # FIXME: enable predictive recommenders for empty training data
@@ -94,8 +96,8 @@ class SequentialMetaRecommender(MetaRecommender):
     """
 
     # Exposed
-    recommenders: List[Recommender] = field(
-        converter=list, validator=deep_iterable(instance_of(Recommender))
+    recommenders: List[PureRecommender] = field(
+        converter=list, validator=deep_iterable(instance_of(PureRecommender))
     )
     """A finite-length sequence of recommenders to be used. For infinite-length
     iterables, see
@@ -132,7 +134,7 @@ class SequentialMetaRecommender(MetaRecommender):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> Recommender:
+    ) -> PureRecommender:
         # See base class.
 
         # If the training dataset size has increased, move to the next recommender
@@ -189,7 +191,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
     """
 
     # Exposed
-    recommenders: Iterable[Recommender] = field()
+    recommenders: Iterable[PureRecommender] = field()
     """An iterable providing the recommenders to be used."""
 
     # Private
@@ -203,7 +205,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
     _iterator: Iterator = field(init=False)
     """The iterator used to traverse the recommenders."""
 
-    _last_recommender: Optional[Recommender] = field(init=False, default=None)
+    _last_recommender: Optional[PureRecommender] = field(init=False, default=None)
     """The recommender returned from the last call."""
 
     @_iterator.default
@@ -217,7 +219,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> Recommender:
+    ) -> PureRecommender:
         # See base class.
 
         use_last = True

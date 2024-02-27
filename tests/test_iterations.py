@@ -5,13 +5,15 @@ from typing import get_args, get_type_hints
 
 import pytest
 
-from baybe.recommenders.base import Recommender
-from baybe.recommenders.bayesian import SequentialGreedyRecommender
-from baybe.recommenders.bayesian.base import BayesianRecommender
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.sequential_greedy import (
+    SequentialGreedyRecommender,
+)
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates import get_available_surrogates
 from baybe.utils.basic import get_subclasses
@@ -30,7 +32,7 @@ valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecom
 #  allows no training data
 valid_discrete_recommenders = [
     TwoPhaseMetaRecommender(recommender=cls())
-    for cls in get_subclasses(Recommender)
+    for cls in get_subclasses(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
@@ -38,7 +40,7 @@ valid_discrete_recommenders = [
 #  allows no training data
 valid_continuous_recommenders = [
     TwoPhaseMetaRecommender(recommender=cls())
-    for cls in get_subclasses(Recommender)
+    for cls in get_subclasses(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
@@ -48,10 +50,10 @@ valid_continuous_recommenders = [
 #  allows no training data
 valid_hybrid_recommenders = [
     TwoPhaseMetaRecommender(recommender=cls())
-    for cls in get_subclasses(Recommender)
+    for cls in get_subclasses(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
-# List of SequentialGreedy Recommender with different sampling strategies.
+# List of SequentialGreedy PureRecommender with different sampling strategies.
 sampling_strategies = [
     # Valid combinations
     ("None", 0.0),

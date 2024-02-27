@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 

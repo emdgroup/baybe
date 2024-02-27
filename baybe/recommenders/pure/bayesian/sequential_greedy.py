@@ -9,7 +9,7 @@ from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_m
 from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.exceptions import NoMCAcquisitionFunctionError
-from baybe.recommenders.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
     SearchSpace,
     SearchSpaceType,
@@ -22,7 +22,7 @@ from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 @define
 class SequentialGreedyRecommender(BayesianRecommender):
-    """Recommender using sequential Greedy optimization.
+    """PureRecommender using sequential Greedy optimization.
 
     This recommender implements the BoTorch functions ``optimize_acqf_discrete``,
     ``optimize_acqf`` and ``optimize_acqf_mixed`` for the optimization of discrete,

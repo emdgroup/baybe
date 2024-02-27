@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from sklearn.datasets import make_blobs
 
 import streamlit as st
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SubspaceDiscrete
 from baybe.utils.basic import get_subclasses
 

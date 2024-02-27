@@ -18,7 +18,7 @@ from botorch.acquisition import (
 )
 
 from baybe.acquisition import debotorchize
-from baybe.recommenders.base import Recommender
+from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
@@ -29,7 +29,7 @@ if _ONNX_INSTALLED:
 
 
 @define
-class BayesianRecommender(Recommender, ABC):
+class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
     surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)

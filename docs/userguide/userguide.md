@@ -5,7 +5,7 @@ Campaigns <campaigns>
 Constraints <constraints>
 Objective <objective>
 Parameters <parameters>
-Recommender <recommender>
+PureRecommender <recommender>
 Search Spaces <searchspace>
 Simulation <simulation>
 Strategies <strategies>

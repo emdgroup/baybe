@@ -35,15 +35,17 @@ from baybe.parameters import (
     SubstanceEncoding,
     TaskParameter,
 )
-from baybe.recommenders.base import Recommender
-from baybe.recommenders.bayesian import SequentialGreedyRecommender
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import (
     SequentialMetaRecommender,
     StreamingSequentialMetaRecommender,
     TwoPhaseMetaRecommender,
 )
-from baybe.recommenders.nonpredictive.sampling import RandomRecommender
+from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.sequential_greedy import (
+    SequentialGreedyRecommender,
+)
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
@@ -793,7 +795,7 @@ def get_dummy_searchspace() -> SearchSpace:
 
 def select_recommender(
     meta_recommender: MetaRecommender, training_size: int
-) -> Recommender:
+) -> PureRecommender:
     """Select a recommender for given training dataset size."""
     searchspace = get_dummy_searchspace()
     df_x, df_y = get_dummy_training_data(training_size)

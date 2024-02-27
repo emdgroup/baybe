@@ -8,8 +8,9 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.exceptions import DeprecationError
-from baybe.recommenders.base import Recommender, RecommenderProtocol
+from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.deprecation import structure_recommender_protocol
+from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 
@@ -20,11 +21,11 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
 
     allow_repeated_recommendations: bool = field(default=None, kw_only=True)
     """Deprecated! The flag has become an attribute of
-    :class:`baybe.recommenders.base.Recommender`."""
+    :class:`baybe.recommenders.pure.base.PureRecommender`."""
 
     allow_recommending_already_measured: bool = field(default=None, kw_only=True)
     """Deprecated! The flag has become an attribute of
-    :class:`baybe.recommenders.base.Recommender`."""
+    :class:`baybe.recommenders.pure.base.PureRecommender`."""
 
     @allow_repeated_recommendations.validator
     def _validate_allow_repeated_recommendations(self, _, value):
@@ -33,7 +34,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             raise DeprecationError(
                 f"Passing 'allow_repeated_recommendations' to "
                 f"'{self.__class__.__name__}' is deprecated. The flag has become an "
-                f"attribute of the '{Recommender.__name__}' classes."
+                f"attribute of the '{PureRecommender.__name__}' classes."
             )
 
     @allow_recommending_already_measured.validator
@@ -43,7 +44,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             raise DeprecationError(
                 f"Passing 'allow_recommending_already_measured' to "
                 f"{self.__class__.__name__} is deprecated. The flag has become an "
-                f"attribute of {Recommender.__name__}."
+                f"attribute of {PureRecommender.__name__}."
             )
 
     @abstractmethod
@@ -53,7 +54,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> Recommender:
+    ) -> PureRecommender:
         """Select a recommender for the given experimentation context.
 
         Args:

@@ -7,7 +7,10 @@ import pytest
 from baybe import BayBE, Campaign
 from baybe.exceptions import DeprecationError
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
-from baybe.recommenders.nonpredictive.sampling import FPSRecommender, RandomRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import (
+    FPSRecommender,
+    RandomRecommender,
+)
 from baybe.searchspace import SearchSpace
 from baybe.strategies import (
     SequentialStrategy,
