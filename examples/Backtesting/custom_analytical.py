@@ -19,10 +19,13 @@ import seaborn as sns
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter
-from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
+from baybe.recommenders import (
+    RandomRecommender,
+    SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
 ### Parameters for a full simulation loop
@@ -74,24 +77,24 @@ objective = Objective(
 
 ### Constructing campaigns for the simulation loop
 
-# To simplify adjusting the example for other strategies, we construct some strategy objects.
-# For details on strategy objects, we refer to [`strategies`](./../Basics/strategies.md).
+# To simplify adjusting the example for other strategies, we construct some recommender objects.
+# For details on recommender objects, we refer to [`strategies`](./../Basics/strategies.md).
 
-seq_greedy_EI_strategy = TwoPhaseStrategy(
+seq_greedy_EI_strategy = TwoPhaseMetaRecommender(
     recommender=SequentialGreedyRecommender(acquisition_function_cls="qEI"),
 )
-random_strategy = TwoPhaseStrategy(recommender=RandomRecommender())
+random_strategy = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 
-# We now create one campaign per strategy.
+# We now create one campaign per recommender.
 
 seq_greedy_EI_campaign = Campaign(
     searchspace=searchspace,
-    strategy=seq_greedy_EI_strategy,
+    recommender=seq_greedy_EI_strategy,
     objective=objective,
 )
 random_campaign = Campaign(
     searchspace=searchspace,
-    strategy=random_strategy,
+    recommender=random_strategy,
     objective=objective,
 )
 

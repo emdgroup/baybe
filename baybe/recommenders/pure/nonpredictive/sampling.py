@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
@@ -48,7 +48,7 @@ class RandomRecommender(NonPredictiveRecommender):
 
 
 class FPSRecommender(NonPredictiveRecommender):
-    """An initial strategy that selects the candidates via Farthest Point Sampling."""
+    """An initial recommender that selects candidates via Farthest Point Sampling."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE

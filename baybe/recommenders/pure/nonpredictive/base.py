@@ -4,9 +4,9 @@ from abc import ABC
 
 from attrs import define
 
-from baybe.recommenders.base import Recommender
+from baybe.recommenders.pure.base import PureRecommender
 
 
 @define
-class NonPredictiveRecommender(Recommender, ABC):
+class NonPredictiveRecommender(PureRecommender, ABC):
     """Abstract base class for all nonpredictive recommenders."""

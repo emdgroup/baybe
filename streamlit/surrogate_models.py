@@ -132,7 +132,7 @@ def main():
     surrogate_model.fit(searchspace, train_x.unsqueeze(-1), train_y.unsqueeze(-1))
 
     # recommend next experiments
-    # TODO: use BayBE recommender and add widgets for strategy selection
+    # TODO: use BayBE recommender and add widgets for recommender selection
     best_f = train_y.max().item()
     acqf = debotorchize(qExpectedImprovement)(surrogate_model, best_f)
     recommendatations = optimize_acqf_discrete(

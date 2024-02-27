@@ -16,9 +16,12 @@ from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
 )
-from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
+from baybe.recommenders import (
+    FPSRecommender,
+    SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.searchspace import SearchSpace
-from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
 ### Experiment setup
@@ -47,7 +50,7 @@ campaign = Campaign(
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
-    strategy=TwoPhaseStrategy(
+    recommender=TwoPhaseMetaRecommender(
         recommender=SequentialGreedyRecommender(),
         initial_recommender=FPSRecommender(),
     ),

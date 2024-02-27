@@ -1,10 +1,10 @@
 ## Example for using different strategies
 
-# This example shows how to create and use strategy objects.
-# Such an object specifies the strategy adopted to make recommendations.
-# It has several parameters one can adjust, depending on the strategy the user wants to follow.
+# This example shows how to create and use recommender objects.
+# Such an object specifies the recommender adopted to make recommendations.
+# It has several parameters one can adjust, depending on the recommender the user wants to follow.
 
-# To apply the selected strategy, this object can be specified in the arguments of the campaign.
+# To apply the selected recommender, this object can be specified in the arguments of the campaign.
 # The different parameters the user can change are:
 # - The initial recommender
 # - The recommender with its surrogate model and its acquisition function
@@ -19,9 +19,12 @@
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
-from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
+from baybe.recommenders import (
+    RandomRecommender,
+    SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.searchspace import SearchSpace
-from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import (
     BayesianLinearSurrogate,
     GaussianProcessSurrogate,
@@ -33,7 +36,7 @@ from baybe.utils.dataframe import add_fake_results
 
 ### Available initial strategies
 
-# For the first recommendation, the user can specify which strategy to use.
+# For the first recommendation, the user can specify which recommender to use.
 # The following initial recommenders are available.
 # Note that it is necessary to make the corresponding import before using them.
 
@@ -93,7 +96,7 @@ ACQ_FUNCTION = "qEI"
 
 ### Other parameters
 
-# Two other boolean hyperparameters can be specified when creating a strategy object.
+# Two other boolean hyperparameters can be specified when creating a recommender object.
 # The first one allows the recommendation of points that were already recommended previously.
 # The second one allows the recommendation of points that have already been measured.
 # Per default, they are set to `True`.
@@ -101,13 +104,13 @@ ACQ_FUNCTION = "qEI"
 ALLOW_REPEATED_RECOMMENDATIONS = True
 ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 
-### Creating the strategy object
+### Creating the recommender object
 
-# To create the strategy object, each parameter described above can be specified as follows.
+# To create the recommender object, each parameter described above can be specified as follows.
 # Note that they all have default values.
-# Therefore one does not need to specify all of them to create a strategy object.
+# Therefore one does not need to specify all of them to create a recommender object.
 
-strategy = TwoPhaseStrategy(
+strategy = TwoPhaseMetaRecommender(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=SequentialGreedyRecommender(
         surrogate_model=SURROGATE_MODEL,
@@ -170,11 +173,11 @@ objective = Objective(
 
 ### Creating the campaign
 
-# The strategy object can now be used together with the searchspace and the objective as follows.
+# The recommender object can now be used together with the searchspace and the objective as follows.
 
 campaign = Campaign(
     searchspace=searchspace,
-    strategy=strategy,
+    recommender=strategy,
     objective=objective,
 )
 

@@ -5,7 +5,7 @@ applied context:
 
 *   It can refer to "backtesting" a particular DOE strategy on a fixed (finite)
     dataset. In this context, "simulation" means investigating what experimental
-    trajectory we would have observed if we had applied the strategy in a certain
+    trajectory we would have observed if we had applied the recommender in a certain
     defined context and restricted the possible parameter configurations to those
     contained in the dataset.
 

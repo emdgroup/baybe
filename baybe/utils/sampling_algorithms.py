@@ -31,7 +31,7 @@ def farthest_point_sampling(
         A list containing the positional indices of the selected points.
 
     Raises:
-        ValueError: If an unknown initialization strategy is used.
+        ValueError: If an unknown initialization recommender is used.
     """
     # Compute the pairwise distances between all points
     dist_matrix = pairwise_distances(points)
@@ -47,7 +47,7 @@ def farthest_point_sampling(
         if n_samples == 1:
             return np.random.choice(selected_point_indices, 1).tolist()
     else:
-        raise ValueError(f"unknown initialization strategy: '{initialization}'")
+        raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(len(points)))

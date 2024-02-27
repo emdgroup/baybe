@@ -1,4 +1,4 @@
-"""Strategies that switch recommenders depending on the experimentation progress."""
+"""Meta recommenders that switch recommenders based on the experimentation progress."""
 
 from typing import Iterable, Iterator, List, Literal, Optional
 
@@ -7,16 +7,19 @@ from attrs import define, field
 from attrs.validators import deep_iterable, in_, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
-from baybe.recommenders import RandomRecommender, SequentialGreedyRecommender
-from baybe.recommenders.base import Recommender
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.meta.base import MetaRecommender
+from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.sequential_greedy import (
+    SequentialGreedyRecommender,
+)
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
     block_deserialization_hook,
     block_serialization_hook,
     converter,
 )
-from baybe.strategies.base import Strategy
 
 # TODO: Make predictive recommenders handle empty training data
 _unsupported_recommender_error = ValueError(
@@ -26,25 +29,25 @@ _unsupported_recommender_error = ValueError(
 
 
 @define
-class TwoPhaseStrategy(Strategy):
-    """A two-phased strategy that switches the recommender at a certain specified point.
+class TwoPhaseMetaRecommender(MetaRecommender):
+    """A two-phased meta recommender that switches at a certain specified point.
 
     The recommender is switched when a new (batch) recommendation is requested and
     the training data set size (i.e., the total number of collected measurements
-    including those gathered before the strategy was active) is equal to or greater
-    than the number specified via the ``switch_after`` parameter.
+    including those gathered before the meta recommender was active) is equal to or
+    greater than the number specified via the ``switch_after`` parameter.
 
     Note:
-        Throughout each phase, the strategy reuses the **same** recommender object,
-        that is, no new instances are created. Therefore, special attention is required
-        when using the strategy with stateful recommenders.
+        Throughout each phase, the meta recommender reuses the **same** recommender
+        object, that is, no new instances are created. Therefore, special attention is
+        required when using the meta recommender with stateful recommenders.
     """
 
-    initial_recommender: Recommender = field(factory=RandomRecommender)
-    """The initial recommender used by the strategy."""
+    initial_recommender: PureRecommender = field(factory=RandomRecommender)
+    """The initial recommender used by the meta recommender."""
 
-    recommender: Recommender = field(factory=SequentialGreedyRecommender)
-    """The recommender used by the strategy after the switch."""
+    recommender: PureRecommender = field(factory=SequentialGreedyRecommender)
+    """The recommender used by the meta recommender after the switch."""
 
     switch_after: int = field(default=1)
     """The number of experiments after which the recommender is switched for the next
@@ -56,7 +59,7 @@ class TwoPhaseStrategy(Strategy):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> Recommender:
+    ) -> PureRecommender:
         # See base class.
 
         # FIXME: enable predictive recommenders for empty training data
@@ -73,8 +76,8 @@ class TwoPhaseStrategy(Strategy):
 
 
 @define
-class SequentialStrategy(Strategy):
-    """A strategy that uses a pre-defined sequence of recommenders.
+class SequentialMetaRecommender(MetaRecommender):
+    """A meta recommender that uses a pre-defined sequence of recommenders.
 
     A new recommender is taken from the sequence whenever at least one new measurement
     is available, until all recommenders are exhausted. More precisely, a recommender
@@ -84,7 +87,8 @@ class SequentialStrategy(Strategy):
     Note:
         The provided sequence of recommenders will be internally pre-collected into a
         list. If this is not acceptable, consider using
-        :class:`baybe.strategies.composite.StreamingSequentialStrategy` instead.
+        :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`
+        instead.
 
     Raises:
         NoRecommendersLeftError: If more recommenders are requested than there are
@@ -92,11 +96,12 @@ class SequentialStrategy(Strategy):
     """
 
     # Exposed
-    recommenders: List[Recommender] = field(
-        converter=list, validator=deep_iterable(instance_of(Recommender))
+    recommenders: List[PureRecommender] = field(
+        converter=list, validator=deep_iterable(instance_of(PureRecommender))
     )
     """A finite-length sequence of recommenders to be used. For infinite-length
-    iterables, see :class:`baybe.strategies.composite.StreamingSequentialStrategy`."""
+    iterables, see
+    :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`."""
 
     mode: Literal["raise", "reuse_last", "cyclic"] = field(
         default="raise",
@@ -129,7 +134,7 @@ class SequentialStrategy(Strategy):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> Recommender:
+    ) -> PureRecommender:
         # See base class.
 
         # If the training dataset size has increased, move to the next recommender
@@ -172,12 +177,13 @@ class SequentialStrategy(Strategy):
 
 
 @define
-class StreamingSequentialStrategy(Strategy):
-    """A strategy that switches between recommenders from an iterable.
+class StreamingSequentialMetaRecommender(MetaRecommender):
+    """A meta recommender that switches between recommenders from an iterable.
 
-    Similar to :class:`baybe.strategies.composite.SequentialStrategy` but without
-    explicit list conversion. Consequently, it supports arbitrary iterables, possibly
-    of infinite length. The downside is that serialization is not supported.
+    Similar to :class:`baybe.recommenders.meta.sequential.SequentialMetaRecommender`
+    but without explicit list conversion. Consequently, it supports arbitrary
+    iterables, possibly of infinite length. The downside is that serialization is not
+    supported.
 
     Raises:
         NoRecommendersLeftError: If more recommenders are requested than there are
@@ -185,11 +191,11 @@ class StreamingSequentialStrategy(Strategy):
     """
 
     # Exposed
-    recommenders: Iterable[Recommender] = field()
+    recommenders: Iterable[PureRecommender] = field()
     """An iterable providing the recommenders to be used."""
 
     # Private
-    # TODO: See :class:`baybe.strategies.composite.SequentialStrategy`
+    # TODO: See :class:`baybe.recommenders.meta.sequential.SequentialMetaRecommender`
     _step: int = field(init=False, default=-1)
     """Counts how often the recommender has already been switched."""
 
@@ -199,7 +205,7 @@ class StreamingSequentialStrategy(Strategy):
     _iterator: Iterator = field(init=False)
     """The iterator used to traverse the recommenders."""
 
-    _last_recommender: Optional[Recommender] = field(init=False, default=None)
+    _last_recommender: Optional[PureRecommender] = field(init=False, default=None)
     """The recommender returned from the last call."""
 
     @_iterator.default
@@ -213,7 +219,7 @@ class StreamingSequentialStrategy(Strategy):
         batch_size: int = 1,
         train_x: Optional[pd.DataFrame] = None,
         train_y: Optional[pd.DataFrame] = None,
-    ) -> Recommender:
+    ) -> PureRecommender:
         # See base class.
 
         use_last = True
@@ -254,8 +260,8 @@ class StreamingSequentialStrategy(Strategy):
 
 # The recommender iterable cannot be serialized
 converter.register_unstructure_hook(
-    StreamingSequentialStrategy, block_serialization_hook
+    StreamingSequentialMetaRecommender, block_serialization_hook
 )
 converter.register_structure_hook(
-    StreamingSequentialStrategy, block_deserialization_hook
+    StreamingSequentialMetaRecommender, block_deserialization_hook
 )

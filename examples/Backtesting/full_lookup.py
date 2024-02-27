@@ -15,10 +15,9 @@ import seaborn as sns
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
-from baybe.recommenders import RandomRecommender
+from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
 ### Parameters for a full simulation loop
@@ -107,7 +106,7 @@ objective = Objective(
 campaign = Campaign(searchspace=searchspace, objective=objective)
 campaign_rand = Campaign(
     searchspace=searchspace,
-    strategy=TwoPhaseStrategy(recommender=RandomRecommender()),
+    recommender=TwoPhaseMetaRecommender(recommender=RandomRecommender()),
     objective=objective,
 )
 

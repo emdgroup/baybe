@@ -5,13 +5,16 @@ from typing import get_args, get_type_hints
 
 import pytest
 
-from baybe.recommenders.base import Recommender
-from baybe.recommenders.bayesian import SequentialGreedyRecommender
-from baybe.recommenders.bayesian.base import BayesianRecommender
-from baybe.recommenders.naive import NaiveHybridRecommender
-from baybe.recommenders.nonpredictive.base import NonPredictiveRecommender
+from baybe.recommenders.meta.base import MetaRecommender
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.naive import NaiveHybridSpaceRecommender
+from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.sequential_greedy import (
+    SequentialGreedyRecommender,
+)
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
-from baybe.strategies.base import Strategy
 from baybe.surrogates import get_available_surrogates
 from baybe.utils.basic import get_subclasses
 
@@ -25,26 +28,32 @@ valid_acquisition_functions = get_args(
 )
 valid_surrogate_models = [cls() for cls in get_available_surrogates()]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
+# TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
+#  allows no training data
 valid_discrete_recommenders = [
-    cls()
-    for cls in get_subclasses(Recommender)
+    TwoPhaseMetaRecommender(recommender=cls())
+    for cls in get_subclasses(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
+# TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
+#  allows no training data
 valid_continuous_recommenders = [
-    cls()
-    for cls in get_subclasses(Recommender)
+    TwoPhaseMetaRecommender(recommender=cls())
+    for cls in get_subclasses(PureRecommender)
     if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybird recommenders like naive ones or recommenders not using default arguments
+# TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
+#  allows no training data
 valid_hybrid_recommenders = [
-    cls()
-    for cls in get_subclasses(Recommender)
+    TwoPhaseMetaRecommender(recommender=cls())
+    for cls in get_subclasses(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
-# List of SequentialGreedy Recommender with different sampling strategies.
+# List of SequentialGreedy PureRecommender with different sampling strategies.
 sampling_strategies = [
     # Valid combinations
     ("None", 0.0),
@@ -54,8 +63,14 @@ sampling_strategies = [
     ("Random", 0.2),
     ("Random", 0.5),
 ]
+# TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
+#  allows no training data
 valid_hybrid_sequential_greedy_recommenders = [
-    SequentialGreedyRecommender(hybrid_sampler=sampler, sampling_percentage=per)
+    TwoPhaseMetaRecommender(
+        recommender=SequentialGreedyRecommender(
+            hybrid_sampler=sampler, sampling_percentage=per
+        )
+    )
     for sampler, per in sampling_strategies
 ]
 
@@ -71,9 +86,13 @@ valid_discrete_bayesian_recommenders = [
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
+# TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
+#  allows no training data
 valid_naive_hybrid_recommenders = [
-    NaiveHybridRecommender(
-        disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
+    TwoPhaseMetaRecommender(
+        recommender=NaiveHybridSpaceRecommender(
+            disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
+        )
     )
     for disc in [
         *valid_discrete_non_predictive_recommenders,
@@ -84,7 +103,7 @@ valid_naive_hybrid_recommenders = [
 valid_hybrid_recommenders.extend(valid_naive_hybrid_recommenders)
 valid_hybrid_recommenders.extend(valid_hybrid_sequential_greedy_recommenders)
 
-valid_strategies = get_subclasses(Strategy)
+valid_strategies = get_subclasses(MetaRecommender)
 
 test_targets = [
     ["Target_max"],
@@ -111,7 +130,7 @@ def test_iter_surrogate_model(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("initial_recommender", valid_initial_recommenders)
+@pytest.mark.parametrize("recommender", valid_initial_recommenders)
 def test_iter_initial_recommender(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
@@ -145,6 +164,6 @@ def test_iter_recommender_hybrid(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
-@pytest.mark.parametrize("strategy", valid_strategies, indirect=True)
+@pytest.mark.parametrize("recommender", valid_strategies, indirect=True)
 def test_strategies(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)

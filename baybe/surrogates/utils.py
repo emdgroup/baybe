@@ -72,7 +72,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
     class SplitModel(*model_cls.__bases__):
         """The class that is used for wrapping.
 
-        It applies a separate strategy for cases where the training
+        It applies a separate recommender for cases where the training
         targets are all constant and no variance can be estimated.
 
         It stores an instance of the underlying model class.

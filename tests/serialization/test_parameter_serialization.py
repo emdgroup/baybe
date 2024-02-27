@@ -19,7 +19,7 @@ from ..hypothesis_strategies.parameters import (
 
 
 @pytest.mark.parametrize(
-    "strategy",
+    "parameter_strategy",
     [
         param(numerical_discrete_parameter(), id="NumericalDiscreteParameter"),
         param(numerical_continuous_parameter(), id="NumericalContinuousParameter"),
@@ -36,9 +36,9 @@ from ..hypothesis_strategies.parameters import (
     ],
 )
 @given(data=st.data())
-def test_parameter_roundtrip(strategy, data):
+def test_parameter_roundtrip(parameter_strategy, data):
     """A serialization roundtrip yields an equivalent object."""
-    parameter = data.draw(strategy)
+    parameter = data.draw(parameter_strategy)
     string = parameter.to_json()
     parameter2 = Parameter.from_json(string)
     assert parameter == parameter2, (parameter, parameter2)

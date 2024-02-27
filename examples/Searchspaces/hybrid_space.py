@@ -15,9 +15,8 @@ from botorch.test_functions import Rastrigin
 from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
-from baybe.recommenders import NaiveHybridRecommender
+from baybe.recommenders import NaiveHybridSpaceRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
-from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 
@@ -107,20 +106,20 @@ objective = Objective(
 
 ### Constructing hybrid recommenders
 
-# Here, we explicitly create a strategy object to use the `NaiveHybridRecommender`.
+# Here, we explicitly create a recommender object to use the `NaiveHybridSpaceRecommender`.
 # The keywords `disc_recommender` and `cont_recommender` can be used to select different
 # recommenders for the corresponding subspaces.
 # We use the default choices, which is the `SequentialGreedyRecommender`.
 
-hybrid_recommender = NaiveHybridRecommender()
-hybrid_strategy = TwoPhaseStrategy(recommender=hybrid_recommender)
+hybrid_recommender = NaiveHybridSpaceRecommender()
+hybrid_strategy = TwoPhaseMetaRecommender(recommender=hybrid_recommender)
 
 ### Constructing the campaign and performing a recommendation
 
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
-    strategy=hybrid_strategy,
+    recommender=hybrid_strategy,
 )
 
 # Get a recommendation for a fixed batch size.

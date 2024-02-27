@@ -6,9 +6,18 @@ import pytest
 
 from baybe import BayBE, Campaign
 from baybe.exceptions import DeprecationError
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import (
+    FPSRecommender,
+    RandomRecommender,
+)
 from baybe.searchspace import SearchSpace
-from baybe.strategies import Strategy
-from baybe.strategies.composite import TwoPhaseStrategy
+from baybe.strategies import (
+    SequentialStrategy,
+    Strategy,
+    StreamingSequentialStrategy,
+    TwoPhaseStrategy,
+)
 from baybe.targets import Objective
 from baybe.targets.base import Target
 from baybe.utils.interval import Interval
@@ -32,19 +41,34 @@ def test_renamed_surrogate():
         from baybe.surrogate import GaussianProcessSurrogate  # noqa: F401
 
 
-def test_missing_strategy_type(config):
-    """Specifying a strategy without a corresponding type raises a warning."""
+def test_missing_recommender_type(config):
+    """Specifying a recommender without a corresponding type raises a warning."""
     dict_ = json.loads(config)
-    dict_["strategy"].pop("type")
+    dict_["recommender"].pop("type")
     config_without_strategy_type = json.dumps(dict_)
     with pytest.warns(DeprecationWarning):
         Campaign.from_config(config_without_strategy_type)
 
 
-def test_deprecated_strategy_class():
-    """Using the deprecated ``Strategy`` class raises a warning."""
+# Create some recommenders of different class for better differentiation after roundtrip
+RECOMMENDERS = [RandomRecommender(), FPSRecommender()]
+assert len(RECOMMENDERS) == len(set(rec.__class__.__name__ for rec in RECOMMENDERS))
+
+
+@pytest.mark.parametrize(
+    "test_objects",
+    [
+        (Strategy, {}),
+        (TwoPhaseStrategy, {}),
+        (SequentialStrategy, {"recommenders": RECOMMENDERS}),
+        (StreamingSequentialStrategy, {"recommenders": RECOMMENDERS}),
+    ],
+)
+def test_deprecated_strategies(test_objects):
+    """Using the deprecated strategy classes raises a warning."""
+    strategy, arguments = test_objects
     with pytest.warns(DeprecationWarning):
-        Strategy()
+        strategy(**arguments)
 
 
 def test_deprecated_interval_is_finite():
@@ -104,13 +128,19 @@ def test_deprecated_campaign_tolerance_flag(flag):
 def test_deprecated_batch_quantity_keyword(campaign):
     """Using the deprecated batch_quantity keyword raises an error."""
     with pytest.raises(DeprecationError):
-        campaign.recommend(batch_quantity=5)  # noqa: E999
+        campaign.recommend(batch_quantity=5)
 
 
 @pytest.mark.parametrize("flag", (True, False))
 def test_deprecated_strategy_allow_flags(flag):
-    """Using the deprecated strategy "allow" flags raises an error."""
+    """Using the deprecated recommender "allow" flags raises an error."""
     with pytest.raises(DeprecationError):
-        TwoPhaseStrategy(allow_recommending_already_measured=flag)
+        TwoPhaseMetaRecommender(allow_recommending_already_measured=flag)
     with pytest.raises(DeprecationError):
-        TwoPhaseStrategy(allow_recommending_already_measured=flag)
+        TwoPhaseMetaRecommender(allow_repeated_recommendations=flag)
+
+
+def test_deprecated_strategy_campaign_flag(recommender):
+    """Using the deprecated strategy keyword raises an error."""
+    with pytest.raises(DeprecationError):
+        Campaign(None, None, None, strategy=recommender)

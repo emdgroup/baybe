@@ -151,10 +151,13 @@ details, and their configuration settings, see the
 of the user guide.
 
 ```python
-from baybe.strategies import TwoPhaseStrategy
-from baybe.recommenders import SequentialGreedyRecommender, FPSRecommender
+from baybe.recommenders import (
+    SequentialGreedyRecommender,
+    FPSRecommender,
+    TwoPhaseMetaRecommender,
+)
 
-strategy = TwoPhaseStrategy(
+strategy = TwoPhaseMetaRecommender(
     initial_recommender=FPSRecommender(),  # farthest point sampling
     recommender=SequentialGreedyRecommender(),  # Bayesian model-based optimization
 )

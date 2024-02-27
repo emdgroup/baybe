@@ -28,9 +28,12 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
     SubstanceParameter,
 )
-from baybe.recommenders import FPSRecommender, SequentialGreedyRecommender
+from baybe.recommenders import (
+    FPSRecommender,
+    SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
+)
 from baybe.searchspace import SearchSpace
-from baybe.strategies import TwoPhaseStrategy
 from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_results
@@ -133,7 +136,7 @@ campaign = Campaign(
     objective=Objective(
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
-    strategy=TwoPhaseStrategy(
+    recommender=TwoPhaseMetaRecommender(
         recommender=SequentialGreedyRecommender(
             surrogate_model=StackingRegressorSurrogate()
         ),

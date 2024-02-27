@@ -2,8 +2,8 @@
 
 Note that ONNX surrogate models cannot be retrained. However, having the surrogates
 raise a ``NotImplementedError`` would currently break the code since
-:class:`baybe.recommenders.bayesian.base.BayesianRecommender` assumes that surrogates
-can be trained and attempts to do so for each new DOE iteration.
+:class:`baybe.recommenders.pure.bayesian.base.BayesianRecommender` assumes that
+surrogates can be trained and attempts to do so for each new DOE iteration.
 
 It is planned to solve this issue in the future.
 """

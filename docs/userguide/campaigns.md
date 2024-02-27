@@ -27,9 +27,8 @@ describe the underlying optimization problem at hand:
 
 Apart from this basic configuration, it is possible to further define the specific
 optimization 
-`Strategy`&nbsp;([class](baybe.strategies.base.Strategy) 
-/ [user guide](./strategies)) to be used.
-
+`Recommender`&nbsp;([class](baybe.recommenders.pure.base.PureRecommender) 
+/ [user guide](./recommender)) to be used.
 
 ~~~python
 from baybe import Campaign
@@ -37,7 +36,7 @@ from baybe import Campaign
 campaign = Campaign(
     searchspace=searchspace,  # Required
     objective=objective,  # Required
-    strategy=strategy,  # Optional
+    recommender=recommender,  # Optional
 )
 ~~~
 
@@ -98,7 +97,7 @@ used is strongly discouraged.
 **Note:** While the above distinction is true in the general case, it may not be 
 relevant for all configured settings, for instance, when the used recommender 
 is not capable of joint optimization. Currently, the 
-[SequentialGreedyRecommender](baybe.recommenders.bayesian.sequential_greedy.SequentialGreedyRecommender)
+[SequentialGreedyRecommender](baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender)
 is the only recommender available that performs joint optimization.
 ```
 

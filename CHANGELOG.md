@@ -23,12 +23,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `Recommender`s now share their core logic via their base class
 - Remove progress bars in examples
+- Strategies are now called `MetaRecommender`'s and part of the `recommenders.meta`
+  module
+- `Recommender`'s are now called `PureRecommender`'s and part of the `recommenders.pure`
+  module
+- `strategy` keyword of `Campaign` renamed to `recommender`
+- `NaiveHybridRecommender` renamed to `NaiveHybridSpaceRecommender`
 
 ### Fixed
 - Unhandled exception in telemetry when username could not be inferred on Windows
 - Metadata is now correctly updated for hybrid spaces
 - Unintended deactivation of telemetry due to import problem
 - Line wrapping in examples
+
+### Deprecations
+- `TwoPhaseStrategy`
+- `SequentialStrategy`
+- `StreamingSequentialStrategy`
 
 ## [0.7.3] - 2024-02-09
 ### Added

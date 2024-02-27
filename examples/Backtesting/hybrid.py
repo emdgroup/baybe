@@ -17,13 +17,13 @@ from baybe import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import (
-    NaiveHybridRecommender,
+    NaiveHybridSpaceRecommender,
     RandomRecommender,
     SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.strategies import TwoPhaseStrategy
 from baybe.targets import NumericalTarget
 
 ### Parameters for a full simulation loop
@@ -114,8 +114,8 @@ objective = Objective(
 ### Constructing campaigns for the simulation loop
 
 # This example compares three different available hybrid recommenders:
-# The `SequentialGreedyRecommender`, the `NaiveHybridRecommedner` and the `RandomRecommender`.
-# For each of them, we initialize one strategy object.
+# The `SequentialGreedyRecommender`, the `NaiveHybridSpaceRecommedner` and the `RandomRecommender`.
+# For each of them, we initialize one recommender object.
 # Note that it is possible to further specify the behavior of the `SequentialGreedyRecommender`.
 # Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control
 # - how much of the discrete subspace should be explored
@@ -124,29 +124,31 @@ objective = Objective(
 # Note that the recommender performs one optimization of the continuous subspace per sampled point.
 # We thus recommend to keep this parameter rather low.
 
-seq_greedy_strategy = TwoPhaseStrategy(
+seq_greedy_strategy = TwoPhaseMetaRecommender(
     recommender=SequentialGreedyRecommender(
         hybrid_sampler="Farthest", sampling_percentage=0.3
     ),
 )
-naive_hybrid_strategy = TwoPhaseStrategy(recommender=NaiveHybridRecommender())
-random_strategy = TwoPhaseStrategy(recommender=RandomRecommender())
+naive_hybrid_strategy = TwoPhaseMetaRecommender(
+    recommender=NaiveHybridSpaceRecommender()
+)
+random_strategy = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 
-# We now create one campaign per strategy.
+# We now create one campaign per recommender.
 
 seq_greedy_campaign = Campaign(
     searchspace=searchspace,
-    strategy=seq_greedy_strategy,
+    recommender=seq_greedy_strategy,
     objective=objective,
 )
 naive_hybrid_campaign = Campaign(
     searchspace=searchspace,
-    strategy=naive_hybrid_strategy,
+    recommender=naive_hybrid_strategy,
     objective=objective,
 )
 random_campaign = Campaign(
     searchspace=searchspace,
-    strategy=random_strategy,
+    recommender=random_strategy,
     objective=objective,
 )
 
