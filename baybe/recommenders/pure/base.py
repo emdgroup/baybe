@@ -1,4 +1,8 @@
-"""Base classes for all recommenders."""
+"""Base classes for all pure recommenders.
+
+Pure recommenders implement optimization strategies and can be queried for
+recommendations. They can be part of meta recommenders.
+"""
 
 from abc import ABC
 from typing import ClassVar, Optional
