@@ -1,4 +1,4 @@
-"""Recommendation strategies based on sampling."""
+"""Recommenders based on sampling."""
 
 from typing import ClassVar
 

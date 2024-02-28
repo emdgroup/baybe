@@ -77,24 +77,24 @@ objective = Objective(
 
 ### Constructing campaigns for the simulation loop
 
-# To simplify adjusting the example for other strategies, we construct some recommender objects.
-# For details on recommender objects, we refer to [`strategies`](./../Basics/strategies.md).
+# To simplify adjusting the example for other recommenders, we construct some recommender objects.
+# For details on recommender objects, we refer to [`recommenders`](./../Basics/recommenders.md).
 
-seq_greedy_EI_strategy = TwoPhaseMetaRecommender(
+seq_greedy_EI_recommender = TwoPhaseMetaRecommender(
     recommender=SequentialGreedyRecommender(acquisition_function_cls="qEI"),
 )
-random_strategy = TwoPhaseMetaRecommender(recommender=RandomRecommender())
+random_recommender = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 
 # We now create one campaign per recommender.
 
 seq_greedy_EI_campaign = Campaign(
     searchspace=searchspace,
-    recommender=seq_greedy_EI_strategy,
+    recommender=seq_greedy_EI_recommender,
     objective=objective,
 )
 random_campaign = Campaign(
     searchspace=searchspace,
-    recommender=random_strategy,
+    recommender=random_recommender,
     objective=objective,
 )
 

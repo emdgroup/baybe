@@ -111,15 +111,14 @@ objective = Objective(
 # recommenders for the corresponding subspaces.
 # We use the default choices, which is the `SequentialGreedyRecommender`.
 
-hybrid_recommender = NaiveHybridSpaceRecommender()
-hybrid_strategy = TwoPhaseMetaRecommender(recommender=hybrid_recommender)
+hybrid_recommender = TwoPhaseMetaRecommender(recommender=NaiveHybridSpaceRecommender())
 
 ### Constructing the campaign and performing a recommendation
 
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
-    recommender=hybrid_strategy,
+    recommender=hybrid_recommender,
 )
 
 # Get a recommendation for a fixed batch size.

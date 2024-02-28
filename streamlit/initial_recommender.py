@@ -1,4 +1,4 @@
-"""This script allows comparing initial selection strategies on different data sets."""
+"""This script allows comparing selection recommenders on different data sets."""
 
 import numpy as np
 import pandas as pd
@@ -60,8 +60,8 @@ data_distributions = {
     "Gaussian Mixture Model": gaussian_mixture_model,
 }
 
-# collect all available strategies
-selection_strategies = {
+# collect all available recommenders
+selection_recommenders = {
     cls.__name__: cls for cls in get_subclasses(NonPredictiveRecommender)
 }
 
@@ -73,7 +73,9 @@ def main():
 
     # simulation parameters
     random_seed = int(st.sidebar.number_input("Random seed", value=42))
-    strategy_name = st.sidebar.selectbox("Strategy", list(selection_strategies.keys()))
+    recommender_name = st.sidebar.selectbox(
+        "Recommender", list(selection_recommenders.keys())
+    )
     n_points = st.sidebar.slider("Number of points to be generated", 10, 100, value=50)
     n_selected = st.sidebar.slider(
         "Number of points to be selected",
@@ -108,11 +110,11 @@ def main():
 
     # create the recommender and generate the recommendations
     # TODO: The acquisition function should become optional for model-free methods
-    strategy = selection_strategies[strategy_name]()
-    selection = strategy.recommend(searchspace=searchspace, batch_size=n_selected)
+    recommender = selection_recommenders[recommender_name]()
+    selection = recommender.recommend(searchspace=searchspace, batch_size=n_selected)
 
     # show the result
-    fig = plot_point_selection(points.values, selection.index.values, strategy_name)
+    fig = plot_point_selection(points.values, selection.index.values, recommender_name)
     st.plotly_chart(fig)
 
 

@@ -1,4 +1,4 @@
-"""Recommendation strategies based on clustering."""
+"""Recommenders based on clustering."""
 
 from abc import ABC
 from typing import ClassVar, List, Type, Union

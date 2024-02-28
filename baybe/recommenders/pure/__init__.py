@@ -1,6 +1,6 @@
 """Pure recommenders.
 
-Pure recommenders implement optimization strategies and can be queried for
+Pure recommenders implement selection algorithms and can be queried for providing
 recommendations. They can be part of meta recommenders.
 """
 

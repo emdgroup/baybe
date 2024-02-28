@@ -124,31 +124,31 @@ objective = Objective(
 # Note that the recommender performs one optimization of the continuous subspace per sampled point.
 # We thus recommend to keep this parameter rather low.
 
-seq_greedy_strategy = TwoPhaseMetaRecommender(
+seq_greedy_recommender = TwoPhaseMetaRecommender(
     recommender=SequentialGreedyRecommender(
         hybrid_sampler="Farthest", sampling_percentage=0.3
     ),
 )
-naive_hybrid_strategy = TwoPhaseMetaRecommender(
+naive_hybrid_recommender = TwoPhaseMetaRecommender(
     recommender=NaiveHybridSpaceRecommender()
 )
-random_strategy = TwoPhaseMetaRecommender(recommender=RandomRecommender())
+random_recommender = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 
 # We now create one campaign per recommender.
 
 seq_greedy_campaign = Campaign(
     searchspace=searchspace,
-    recommender=seq_greedy_strategy,
+    recommender=seq_greedy_recommender,
     objective=objective,
 )
 naive_hybrid_campaign = Campaign(
     searchspace=searchspace,
-    recommender=naive_hybrid_strategy,
+    recommender=naive_hybrid_recommender,
     objective=objective,
 )
 random_campaign = Campaign(
     searchspace=searchspace,
-    recommender=random_strategy,
+    recommender=random_recommender,
     objective=objective,
 )
 
