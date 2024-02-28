@@ -6,7 +6,7 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python =">=3.9,<3.12"
+requires-python =">=3.9,<3.13"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -16,6 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Typing :: Typed",
 ]
