@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README now contains an example on substance encoding results
 - Transfer learning user guide
 - `from_simplex` constructor now also takes and applies optional constraints
+- Support for Python 3.12
 
 ### Changed
 - Full lookup backtesting example now tests different substance encodings
