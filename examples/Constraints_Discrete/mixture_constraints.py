@@ -11,6 +11,7 @@
 ### Necessary imports for this example
 
 import math
+import os
 
 import numpy as np
 
@@ -34,6 +35,11 @@ from baybe.utils.dataframe import add_fake_results
 
 SUM_TOLERANCE = 1.0
 
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+# This parameter denotes the resolution of the discretization of the parameters
+RESOLUTION = 3 if SMOKE_TEST else 12
+
 dict_solvents = {
     "water": "O",
     "C1": "C",
@@ -47,13 +53,13 @@ solvent3 = SubstanceParameter(name="Solv3", data=dict_solvents, encoding="MORDRE
 # Parameters for representing the fraction.
 
 fraction1 = NumericalDiscreteParameter(
-    name="Frac1", values=list(np.linspace(0, 100, 12)), tolerance=0.2
+    name="Frac1", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
 )
 fraction2 = NumericalDiscreteParameter(
-    name="Frac2", values=list(np.linspace(0, 100, 12)), tolerance=0.2
+    name="Frac2", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
 )
 fraction3 = NumericalDiscreteParameter(
-    name="Frac3", values=list(np.linspace(0, 100, 12)), tolerance=0.2
+    name="Frac3", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
 )
 
 parameters = [solvent1, solvent2, solvent3, fraction1, fraction2, fraction3]
@@ -113,7 +119,7 @@ print(campaign)
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 
-N_ITERATIONS = 3
+N_ITERATIONS = 2 if SMOKE_TEST else 3
 for kIter in range(N_ITERATIONS):
     print(f"\n#### ITERATION {kIter+1} ####")
 

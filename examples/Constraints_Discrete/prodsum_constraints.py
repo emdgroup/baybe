@@ -7,6 +7,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import numpy as np
 
 from baybe import Campaign
@@ -27,6 +29,10 @@ from baybe.utils.dataframe import add_fake_results
 
 ### Experiment setup
 
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+RESOLUTION = 3 if SMOKE_TEST else 5
+
 dict_solvent = {
     "water": "O",
     "C1": "C",
@@ -37,22 +43,22 @@ speed = CategoricalParameter(
     name="Speed", values=["slow", "normal", "fast"], encoding="INT"
 )
 num_parameter_1 = NumericalDiscreteParameter(
-    name="NumParam1", values=list(np.linspace(0, 100, 5)), tolerance=0.5
+    name="NumParam1", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
 )
 num_parameter_2 = NumericalDiscreteParameter(
-    name="NumParam2", values=list(np.linspace(0, 100, 5)), tolerance=0.5
+    name="NumParam2", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
 )
 num_parameter_3 = NumericalDiscreteParameter(
-    name="NumParam3", values=list(np.linspace(0, 100, 5)), tolerance=0.5
+    name="NumParam3", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
 )
 num_parameter_4 = NumericalDiscreteParameter(
-    name="NumParam4", values=list(np.linspace(0, 100, 5)), tolerance=0.5
+    name="NumParam4", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
 )
 num_parameter_5 = NumericalDiscreteParameter(
-    name="NumParam5", values=list(np.linspace(0, 100, 5)), tolerance=0.5
+    name="NumParam5", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
 )
 num_parameter_6 = NumericalDiscreteParameter(
-    name="NumParam6", values=list(np.linspace(0, 100, 5)), tolerance=0.5
+    name="NumParam6", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
 )
 
 parameters = [
@@ -103,7 +109,7 @@ print(campaign)
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 
-N_ITERATIONS = 5
+N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
     print(f"\n\n#### ITERATION {kIter+1} ####")
 

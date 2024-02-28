@@ -9,6 +9,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -26,8 +28,11 @@ from baybe.targets import NumericalTarget
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
-N_MC_ITERATIONS = 2
-N_DOE_ITERATIONS = 5
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 5
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
+BATCH_SIZE = 1 if SMOKE_TEST else 3
 
 ### Lookup functionality and data creation
 
@@ -127,7 +132,7 @@ scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
 results = simulate_scenarios(
     scenarios,
     lookup,
-    batch_size=3,
+    batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
     impute_mode="best",

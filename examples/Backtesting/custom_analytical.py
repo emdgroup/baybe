@@ -12,6 +12,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -33,8 +35,16 @@ from baybe.targets import NumericalTarget
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
-N_MC_ITERATIONS = 2
-N_DOE_ITERATIONS = 2
+# The parameter `POINTS_PER_DIM` controls the number of points per dimension.
+# Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
+
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 5
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
+DIMENSION = 4
+BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
+POINTS_PER_DIM = 3 if SMOKE_TEST else 10
 
 ### Defining the test function
 
@@ -49,22 +59,15 @@ def sum_of_squares(*x: float) -> float:
     return res
 
 
-DIMENSION = 4
-BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
-
 ### Creating the searchspace and the objective
 
 # As we expect it to be the most common use case, we construct a purely discrete space here.
 # Details on how to adjust this for other spaces can be found in the searchspace examples.
 
-# The parameter `POINTS_PER_DIM` controls the number of points per dimension.
-# Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
-
-POINTS_PER_DIM = 10
 parameters = [
     NumericalDiscreteParameter(
         name=f"x_{k+1}",
-        values=list(np.linspace(*BOUNDS[k], 15)),
+        values=list(np.linspace(*BOUNDS[k], POINTS_PER_DIM)),
         tolerance=0.01,
     )
     for k in range(DIMENSION)

@@ -12,6 +12,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import numpy as np
 from botorch.test_functions import Rastrigin
 
@@ -88,8 +90,12 @@ campaign = Campaign(
     objective=objective,
 )
 
-BATCH_SIZE = 3
-N_ITERATIONS = 3
+# Improve running time for CI via SMOKE_TEST
+
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+BATCH_SIZE = 2 if SMOKE_TEST else 3
+N_ITERATIONS = 2 if SMOKE_TEST else 3
 
 for k in range(N_ITERATIONS):
     recommendation = campaign.recommend(batch_size=BATCH_SIZE)
