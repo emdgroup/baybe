@@ -139,15 +139,16 @@ searchspace = SearchSpace.from_product(parameters)
 As an optional step, we can specify details on how the optimization should be
 conducted. If omitted, BayBE will choose a default setting.
 
-For our example, we combine two selection strategies:
+For our example, we combine two recommenders via a so-called meta recommender named
+`TwoPhaseMetaRecommender`:
 
 1. In cases where no measurements have been made prior to the interaction with BayBE,
    a selection via `initial_recommender` is used.
 2. As soon as the first measurements are available, we switch to `recommender`.
 
-For more details on the different strategies, their underlying algorithmic
+For more details on the different recommenders, their underlying algorithmic
 details, and their configuration settings, see the
-[strategies section](https://emdgroup.github.io/baybe/userguide/strategies.html)
+[recommenders section](https://emdgroup.github.io/baybe/userguide/recommenders.html)
 of the user guide.
 
 ```python
@@ -157,7 +158,7 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 
-strategy = TwoPhaseMetaRecommender(
+recommender = TwoPhaseMetaRecommender(
     initial_recommender=FPSRecommender(),  # farthest point sampling
     recommender=SequentialGreedyRecommender(),  # Bayesian model-based optimization
 )
@@ -170,7 +171,7 @@ We can now construct a campaign object that brings all pieces of the puzzle toge
 ```python
 from baybe import Campaign
 
-campaign = Campaign(searchspace, objective, strategy)
+campaign = Campaign(searchspace, objective, recommender)
 ```
 
 With this object at hand, we can start our experimentation cycle.

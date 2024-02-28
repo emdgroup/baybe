@@ -2,11 +2,9 @@
 
 from typing import Any, ClassVar
 
-import numpy as np
 import pandas as pd
 from attrs import define, field, validators
 from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
-from sklearn.metrics import pairwise_distances_argmin
 
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
@@ -95,7 +93,6 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 on=list(candidates_comp),
             )["index"]
         )
-        assert len(points) == len(idxs)
 
         return idxs
 
@@ -178,9 +175,9 @@ class SequentialGreedyRecommender(BayesianRecommender):
             # TODO: Currently assumes that discrete parameters are first and continuous
             #   second. Once parameter redesign [11611] is completed, we might adjust
             #   this.
-            candidates_comp.columns = list(range(len(candidates_comp.columns)))  # type: ignore[assignment]
+            num_comp_columns = len(candidates_comp.columns)
+            candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
             fixed_features_list = candidates_comp.to_dict("records")
-
         else:
             fixed_features_list = None
 
@@ -204,7 +201,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 inequality_constraints=[
                     c.to_botorch(
                         searchspace.continuous.parameters,
-                        idx_offset=len(candidates_comp.columns),
+                        idx_offset=num_comp_columns,
                     )
                     for c in searchspace.continuous.constraints_lin_ineq
                 ]
@@ -216,39 +213,26 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 f"acquisition functions."
             ) from ex
 
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # TODO [14819]: The following code is necessary due to floating point
-        #   inaccuracies introduced by BoTorch (potentially due to some float32
-        #   conversion?). The current workaround is the match the recommendations back
-        #   to the closest candidate points.
+        disc_points = points[:, :num_comp_columns]
+        cont_points = points[:, num_comp_columns:]
 
-        # Split discrete and continuous parts
-        disc_points = points[:, : len(candidates_comp.columns)]
-        cont_points = points[:, len(candidates_comp.columns) :]
-
-        # Find the closest match with the discrete candidates
-        candidates_comp_np = candidates_comp.to_numpy()
-        disc_points_np = disc_points.numpy()
-        if not disc_points_np.flags["C_CONTIGUOUS"]:
-            disc_points_np = np.ascontiguousarray(disc_points_np)
-        if not candidates_comp_np.flags["C_CONTIGUOUS"]:
-            candidates_comp_np = np.ascontiguousarray(candidates_comp_np)
-        disc_idxs_iloc = pairwise_distances_argmin(
-            disc_points_np, candidates_comp_np, metric="manhattan"
+        # Get selected candidate indices
+        idxs = pd.Index(
+            pd.merge(
+                candidates_comp.reset_index(),
+                pd.DataFrame(disc_points, columns=candidates_comp.columns),
+                on=list(candidates_comp),
+            )["index"]
         )
 
-        # Get the actual search space dataframe indices
-        disc_idxs_loc = candidates_comp.iloc[disc_idxs_iloc].index
-
         # Get experimental representation of discrete and continuous parts
-        rec_disc_exp = searchspace.discrete.exp_rep.loc[disc_idxs_loc]
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[idxs]
         rec_cont_exp = pd.DataFrame(
             cont_points, columns=searchspace.continuous.param_names
         )
 
-        # Adjust the index of the continuous part and concatenate both
+        # Adjust the index of the continuous part and create overall recommendations
         rec_cont_exp.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
-        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         return rec_exp
