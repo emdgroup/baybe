@@ -284,7 +284,7 @@ class Campaign(SerialMixin):
         # Update recommendation meta data
         if len(self._measurements_exp) > 0:
             self.n_fits_done += 1
-            self._measurements_exp["FitNr"].fillna(self.n_fits_done, inplace=True)
+            self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
         # Get the recommended search space entries
         rec = self.recommender.recommend(
