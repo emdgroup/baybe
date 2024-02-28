@@ -6,14 +6,13 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python =">=3.8,<3.12"
+requires-python =">=3.9,<3.12"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -30,20 +29,20 @@ keywords = [
 dynamic = ['version']
 dependencies = [
     "attrs>=22.2.0",
-    "botorch>=0.8.1",
+    "botorch>=0.9.3",
     "cattrs>=23.2.0",
     "exceptiongroup",
     "funcy>=1.17",
     "gpytorch>=1.9.1",
     "ngboost>=0.3.12",
     "numpy>=1.24.1",
-    "pandas[parquet]>=1.4.2",
+    "pandas>=1.4.2",
     "protobuf<=3.20.3",
     "scikit-learn>=1.1.1",
     "scikit-learn-extra>=0.3.0",
     "scipy>=1.10.1",
     "setuptools-scm>=7.1.0",
-    "torch>=1.11.0",
+    "torch>=1.13.1",
     "baybe[telemetry]",
 ]
 
