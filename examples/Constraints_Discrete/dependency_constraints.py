@@ -9,6 +9,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import numpy as np
 
 from baybe import Campaign
@@ -25,6 +27,9 @@ from baybe.utils.dataframe import add_fake_results
 
 ### Experiment setup
 
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+FRAC_RESOLUTION = 3 if SMOKE_TEST else 7
+
 dict_solvent = {
     "water": "O",
     "C1": "C",
@@ -33,7 +38,7 @@ solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="MORDRED")
 switch1 = CategoricalParameter(name="Switch1", values=["on", "off"])
 switch2 = CategoricalParameter(name="Switch2", values=["left", "right"])
 fraction1 = NumericalDiscreteParameter(
-    name="Frac1", values=list(np.linspace(0, 100, 7)), tolerance=0.2
+    name="Frac1", values=list(np.linspace(0, 100, FRAC_RESOLUTION)), tolerance=0.2
 )
 frame1 = CategoricalParameter(name="FrameA", values=["A", "B"])
 frame2 = CategoricalParameter(name="FrameB", values=["A", "B"])
@@ -72,7 +77,7 @@ print(campaign)
 
 # The following loop performs some recommendations and manually verifies the given constraints.
 
-N_ITERATIONS = 5
+N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
     print(f"\n#### ITERATION {kIter+1} ####")
 

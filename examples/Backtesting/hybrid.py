@@ -9,6 +9,8 @@
 
 ### Necessary imports for this example
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -30,9 +32,14 @@ from baybe.targets import NumericalTarget
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
+# `POINTS_PER_DIM` denotes how many points each discrete dimension should contain.
 
-N_MC_ITERATIONS = 2
-N_DOE_ITERATIONS = 2
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 5
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
+POINTS_PER_DIM = 3 if SMOKE_TEST else 6
+
 
 ### Defining the test function.
 
@@ -72,13 +79,6 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
         "indices do not match."
     )
 
-# The following parameter decides how many points each discrete dimension should have.
-# Note that this example uses the `SequentialGreedyRecommender` (among others).
-# This recommender performs a brute-force optimization over the discrete subspace.
-# We thus heavily advise to keep the number of discrete parameters and points rather small here.
-
-POINTS_PER_DIM = 6
-
 
 # Construct the continuous parameters as NumericContinuous parameters.
 
@@ -114,7 +114,7 @@ objective = Objective(
 ### Constructing campaigns for the simulation loop
 
 # This example compares three different available hybrid recommenders:
-# The `SequentialGreedyRecommender`, the `NaiveHybridSpaceRecommedner` and the `RandomRecommender`.
+# The `SequentialGreedyRecommender`, the `NaiveHybridSpaceRecommender` and the `RandomRecommender`.
 # For each of them, we initialize one recommender object.
 # Note that it is possible to further specify the behavior of the `SequentialGreedyRecommender`.
 # Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control
