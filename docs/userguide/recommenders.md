@@ -102,9 +102,9 @@ recommender = TwoPhaseMetaRecommender(
 * The **[`SequentialMetaRecommender`](baybe.recommenders.meta.sequential.SequentialMetaRecommender)**
   introduces a simple yet versatile approach by utilizing a predefined list of
   recommenders. By specifying the desired behavior using the `mode` attribute, it is
-  possible to flexibly determine the strategy's response when it exhausts the available
-  recommenders. The possible choices are to either raise an error, re-use the last
-  recommender or re-start at the beginning of the sequence.
+  possible to flexibly determine the meta recommender's response when it exhausts the 
+  available recommenders. The possible choices are to either raise an error, re-use the
+  last recommender or re-start at the beginning of the sequence.
 
 * Similar to the `SequentialMetaRecommender`, the
   **[`StreamingSequentialMetaRecommender`](baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender)**
