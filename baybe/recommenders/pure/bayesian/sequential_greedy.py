@@ -178,7 +178,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
             # TODO: Currently assumes that discrete parameters are first and continuous
             #   second. Once parameter redesign [11611] is completed, we might adjust
             #   this.
-            candidates_comp.columns = list(range(len(candidates_comp.columns)))
+            candidates_comp.columns = list(range(len(candidates_comp.columns)))  # type: ignore[assignment]
             fixed_features_list = candidates_comp.to_dict("records")
 
         else:

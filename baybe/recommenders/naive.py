@@ -1,10 +1,11 @@
 """Naive recommender for hybrid spaces."""
 
 import warnings
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, cast
 
 import pandas as pd
 from attrs import define, evolve, field, fields
+from torch import Tensor
 
 from baybe.acquisition import PartialAcquisitionFunction
 from baybe.recommenders.pure.base import PureRecommender
@@ -85,11 +86,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     ) -> pd.DataFrame:
         # See base class.
 
-        # First check whether the disc_recommender is either bayesian or non-predictive
-        is_bayesian_recommender = isinstance(self.disc_recommender, BayesianRecommender)
-        is_np_recommender = isinstance(self.disc_recommender, NonPredictiveRecommender)
-
-        if (not is_bayesian_recommender) and (not is_np_recommender):
+        if (not isinstance(self.disc_recommender, BayesianRecommender)) and (
+            not isinstance(self.disc_recommender, NonPredictiveRecommender)
+        ):
             raise NotImplementedError(
                 """The discrete recommender should be either a Bayesian or a
                 NonPredictiveRecommender."""
@@ -117,7 +116,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # will then be attached to every discrete point when the acquisition function
         # is evaluated.
         cont_part = searchspace.continuous.samples_random(1)
-        cont_part = to_tensor(cont_part).unsqueeze(-2)
+        cont_part_tensor = cast(Tensor, to_tensor(cont_part)).unsqueeze(-2)
 
         # Get discrete candidates. The metadata flags are ignored since the search space
         # is hybrid
@@ -128,7 +127,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         )
 
         # We now check whether the discrete recommender is bayesian.
-        if is_bayesian_recommender:
+        if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender.setup_acquisition_function(
                 searchspace, train_x, train_y
@@ -138,7 +137,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             # whenever evaluating the acquisition function
             disc_acqf_part = PartialAcquisitionFunction(
                 acqf=self.disc_recommender._acquisition_function,
-                pinned_part=cont_part,
+                pinned_part=cont_part_tensor,
                 pin_discrete=False,
             )
 
@@ -154,7 +153,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # Get one random discrete point that will be attached when evaluating the
         # acquisition function in the discrete space.
         disc_part = searchspace.discrete.comp_rep.loc[disc_rec_idx].sample(1)
-        disc_part = to_tensor(disc_part).unsqueeze(-2)
+        disc_part_tensor = cast(Tensor, to_tensor(disc_part)).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
         self.cont_recommender.setup_acquisition_function(searchspace, train_x, train_y)
@@ -162,7 +161,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(
             acqf=self.cont_recommender._acquisition_function,
-            pinned_part=disc_part,
+            pinned_part=disc_part_tensor,
             pin_discrete=True,
         )
         self.cont_recommender._acquisition_function = cont_acqf_part

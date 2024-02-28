@@ -1,12 +1,13 @@
 """Recommendation strategies based on clustering."""
 
 from abc import ABC
-from typing import ClassVar, List, Type, TypeVar
+from typing import ClassVar, List, Type, Union
 
 import numpy as np
 import pandas as pd
 from attrs import define, field
 from scipy.stats import multivariate_normal
+from sklearn.base import ClusterMixin
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
 from sklearn.mixture import GaussianMixture
@@ -15,8 +16,6 @@ from sklearn_extra.cluster import KMedoids
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
-
-_ScikitLearnModel = TypeVar("_ScikitLearnModel")
 
 
 @define
@@ -41,7 +40,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     #   that checks if a custom mechanism is implemented and uses default otherwise
     #   (similar to what is done in the recommenders)
 
-    model_class: ClassVar[Type[_ScikitLearnModel]]
+    model_class: ClassVar[Type[ClusterMixin]]
     """Class variable describing the model class."""
 
     model_cluster_num_parameter_name: ClassVar[str]
@@ -57,8 +56,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     def _make_selection_default(
         self,
-        model: _ScikitLearnModel,
-        candidates_scaled: pd.DataFrame,
+        model: ClusterMixin,
+        candidates_scaled: Union[pd.DataFrame, np.ndarray],
     ) -> List[int]:
         """Select one candidate from each cluster uniformly at random.
 
@@ -80,8 +79,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     def _make_selection_custom(
         self,
-        model: _ScikitLearnModel,
-        candidates_scaled: pd.DataFrame,
+        model: ClusterMixin,
+        candidates_scaled: Union[pd.DataFrame, np.ndarray],
     ) -> List[int]:
         """Select candidates from the computed clustering.
 
@@ -136,7 +135,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 class PAMClusteringRecommender(SKLearnClusteringRecommender):
     """Partitioning Around Medoids (PAM) clustering recommender."""
 
-    model_class: ClassVar[Type[_ScikitLearnModel]] = KMedoids
+    model_class: ClassVar[Type[ClusterMixin]] = KMedoids
     # See base class.
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
@@ -156,8 +155,8 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
 
     def _make_selection_custom(
         self,
-        model: _ScikitLearnModel,
-        candidates_scaled: pd.DataFrame,
+        model: ClusterMixin,
+        candidates_scaled: Union[pd.DataFrame, np.ndarray],
     ) -> List[int]:
         """Select candidates from the computed clustering.
 
@@ -180,7 +179,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means clustering recommender."""
 
     # Class variables
-    model_class: ClassVar[Type[_ScikitLearnModel]] = KMeans
+    model_class: ClassVar[Type[ClusterMixin]] = KMeans
     # See base class.
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
@@ -200,8 +199,8 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 
     def _make_selection_custom(
         self,
-        model: _ScikitLearnModel,
-        candidates_scaled: pd.DataFrame,
+        model: ClusterMixin,
+        candidates_scaled: Union[pd.DataFrame, np.ndarray],
     ) -> List[int]:
         """Select candidates from the computed clustering.
 
@@ -232,7 +231,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) clustering recommender."""
 
     # Class variables
-    model_class: ClassVar[Type[_ScikitLearnModel]] = GaussianMixture
+    model_class: ClassVar[Type[ClusterMixin]] = GaussianMixture
     # See base class.
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
@@ -240,8 +239,8 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
 
     def _make_selection_custom(
         self,
-        model: _ScikitLearnModel,
-        candidates_scaled: pd.DataFrame,
+        model: ClusterMixin,
+        candidates_scaled: Union[pd.DataFrame, np.ndarray],
     ) -> List[int]:
         """Select candidates from the computed clustering.
 
