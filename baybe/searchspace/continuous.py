@@ -61,14 +61,14 @@ class SubspaceContinuous(SerialMixin):
         lin_ineq_constr_df = pd.DataFrame(ineq_constraints_list)
 
         # Put all attributes of the continuous class in one string
-        continuous_str = f"""\n\n{start_bold}|--> Continuous search space
-            \nContinuous Parameters{end_bold}\n{pretty_print_df(param_df)}
-            \n{start_bold}List of linear equality constraints{end_bold}
-            \n{pretty_print_df(lin_eq_constr_df)}
-            \n{start_bold}List of linear inequality constraints{end_bold}
-            \n{pretty_print_df(lin_ineq_constr_df)}\n\n"""
+        continuous_str = f"""{start_bold}Continuous Search Space{end_bold}
+            \n{start_bold}Continuous Parameters{end_bold}\n{pretty_print_df(param_df)}
+            \n{start_bold}List of Linear Equality Constraints{end_bold}
+            \r{pretty_print_df(lin_eq_constr_df)}
+            \n{start_bold}List of Linear Inequality Constraints{end_bold}
+            \r{pretty_print_df(lin_ineq_constr_df)}"""
 
-        return continuous_str
+        return continuous_str.replace("\n", "\n ").replace("\r", "\r ")
 
     @classmethod
     def empty(cls) -> SubspaceContinuous:

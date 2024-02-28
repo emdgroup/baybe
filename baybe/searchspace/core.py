@@ -68,12 +68,11 @@ class SearchSpace(SerialMixin):
     def __str__(self) -> str:
         start_bold = "\033[1m"
         end_bold = "\033[0m"
-        print(
-            f"""\n\n{start_bold}***** SEARCH SPACE *****
-        \nSearch space type: {end_bold}{self.type.name}\n"""
-        )
-
-        return str(self.discrete) + str(self.continuous)
+        searchspace_str = f"""{start_bold}Search Space{end_bold}
+        \n{start_bold}Search Space Type: {end_bold}{self.type.name}
+        \n{self.discrete}
+        \n{self.continuous}"""
+        return searchspace_str.replace("\n", "\n ").replace("\r", "\r ")
 
     def __attrs_post_init__(self):
         """Perform validation and record telemetry values."""

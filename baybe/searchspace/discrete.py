@@ -84,18 +84,18 @@ class SubspaceDiscrete(SerialMixin):
         metadata_count = len(self.metadata)
 
         # Put all attributes of the discrete class in one string.
-        discrete_str = f"""{start_bold}|--> Discrete search space
-            \nDiscrete Parameters{end_bold}\n{pretty_print_df(param_df)}
+        discrete_str = f"""{start_bold}Discrete Search Space{end_bold}
+            \n{start_bold}Discrete Parameters{end_bold}\n{pretty_print_df(param_df)}
             \n{start_bold}Experimental Representation{end_bold}
-            \n{pretty_print_df(self.exp_rep)}\n{start_bold}\nMetadata:{end_bold}
+            \r{pretty_print_df(self.exp_rep)}\n\n{start_bold}Metadata:{end_bold}
             \r{_METADATA_COLUMNS[0]}: {was_recommended_count}/{metadata_count}
             \r{_METADATA_COLUMNS[1]}: {was_measured_count}/{metadata_count}
             \r{_METADATA_COLUMNS[2]}: {dont_recommend_count}/{metadata_count}
             \n{start_bold}Constraints{end_bold}\n{pretty_print_df(constraints_df)}
-            \n{start_bold}Computational representation of the space{end_bold}
-            \n{pretty_print_df(self.comp_rep)}\n\n"""
+            \n{start_bold}Computational Representation{end_bold}
+            \r{pretty_print_df(self.comp_rep)}"""
 
-        return discrete_str
+        return discrete_str.replace("\n", "\n ").replace("\r", "\r ")
 
     @exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103
