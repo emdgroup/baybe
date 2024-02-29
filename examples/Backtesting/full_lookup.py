@@ -9,18 +9,24 @@
 ### Necessary imports for this example
 
 import os
+import sys
+from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
 from baybe import Campaign
 from baybe.objective import Objective
-from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
-from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
+from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.plotting import create_example_plots
 
 ### Parameters for a full simulation loop
 
@@ -29,9 +35,9 @@ from baybe.targets import NumericalTarget
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
-N_MC_ITERATIONS = 2 if SMOKE_TEST else 3
-BATCH_SIZE = 1 if SMOKE_TEST else 3
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 200
+BATCH_SIZE = 1 if SMOKE_TEST else 2
 
 ### Lookup functionality and data creation
 
@@ -82,44 +88,70 @@ dict_ligand = {
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
 
-### Creating the searchspace and the objective
+### Creating the Objective
 
-# Here, we create the parameter objects, the searchspace and the objective.
-
-solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED")
-base = SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED")
-ligand = SubstanceParameter(name="Ligand", data=dict_ligand, encoding="MORDRED")
-temperature = NumericalDiscreteParameter(
-    name="Temp_C", values=[90, 105, 120], tolerance=2
-)
-concentration = NumericalDiscreteParameter(
-    name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
-)
-
-parameters = [solvent, base, ligand, temperature, concentration]
-
-searchspace = SearchSpace.from_product(parameters=parameters)
 objective = Objective(
     mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
 )
 
 ### Constructing campaigns for the simulation loop
 
-# In this example, we create two campaigns.
-# One uses the default recommender and the other one makes random recommendations.
+# In this example, we create several campaigns.
+# First let us create three campaigns that each use a different chemical encoding to
+# treat substances
 
-campaign = Campaign(searchspace=searchspace, objective=objective)
-campaign_rand = Campaign(
-    searchspace=searchspace,
-    recommender=TwoPhaseMetaRecommender(recommender=RandomRecommender()),
+substance_encodings = ["MORDRED", "RDKIT", "MORGAN_FP"]
+scenarios = {
+    encoding: Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=[
+                SubstanceParameter(
+                    name="Solvent", data=dict_solvent, encoding=encoding
+                ),
+                SubstanceParameter(name="Base", data=dict_base, encoding=encoding),
+                SubstanceParameter(name="Ligand", data=dict_ligand, encoding=encoding),
+                NumericalDiscreteParameter(
+                    name="Temp_C", values=[90, 105, 120], tolerance=2
+                ),
+                NumericalDiscreteParameter(
+                    name="Concentration", values=[0.057, 0.1, 0.153]
+                ),
+            ]
+        ),
+        objective=objective,
+    )
+    for encoding in substance_encodings
+}
+
+# Now we create another campaign that treats the substances as simple one-hot encoded categories
+parameters = [
+    CategoricalParameter(name="Solvent", values=dict_solvent.keys(), encoding="OHE"),
+    CategoricalParameter(name="Base", values=dict_base.keys(), encoding="OHE"),
+    CategoricalParameter(name="Ligand", values=dict_ligand.keys(), encoding="OHE"),
+    NumericalDiscreteParameter(name="Temp_C", values=[90, 105, 120], tolerance=2),
+    NumericalDiscreteParameter(
+        name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
+    ),
+]
+campaign_ohe = Campaign(
+    searchspace=SearchSpace.from_product(parameters=parameters),
     objective=objective,
 )
 
-# We can now use the `simulate_scenarios` function to simulate a full experiment.
-# Note that this function enables to run multiple scenarios by a single function call.
-# For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+# Finally, as baseline, we specify a campaign which provides recommendations randomly
+campaign_rand = Campaign(
+    searchspace=SearchSpace.from_product(parameters=parameters),
+    recommender=RandomRecommender(),
+    objective=objective,
+)
 
-scenarios = {"Test_Scenario": campaign, "Random": campaign_rand}
+# Update the scenarios
+scenarios.update({"OneHot": campaign_ohe, "Random Baseline": campaign_rand})
+
+# We can now use the `simulate_scenarios` function to simulate a full optimization loop.
+# Note that this function enables to run multiple scenarios by a single function call.
+# For this, it is necessary to define the `scenarios` dictionary, mapping names to
+# campaigns.
 
 results = simulate_scenarios(
     scenarios,
@@ -129,13 +161,21 @@ results = simulate_scenarios(
     n_mc_iterations=N_MC_ITERATIONS,
 )
 
-# The following lines plot the results and save the plot in run_full_lookup.png
-
-max_yield = lookup["yield"].max()
-sns.lineplot(
-    data=results, x="Num_Experiments", y="yield_CumBest", hue="Scenario", marker="x"
+# Let's visualize the results. As you can see, the type of encoding has a tremendous
+# impact on the outcome, with chemical encodings performing much better than
+# traditional ones at almost no extra cost.
+results.rename(columns={"Scenario": "Substance Encoding"}, inplace=True)
+path = Path(sys.path[0])
+ax = sns.lineplot(
+    data=results,
+    marker="o",
+    markersize=10,
+    x="Num_Experiments",
+    y="yield_CumBest",
+    hue="Substance Encoding",
 )
-plt.plot([3, 3 * N_DOE_ITERATIONS], [max_yield, max_yield], "--r")
-plt.legend(loc="lower right")
-plt.gcf().set_size_inches(20, 8)
-plt.savefig("./run_full_lookup.png")
+create_example_plots(
+    ax=ax,
+    path=path,
+    base_name="full_lookup",
+)
