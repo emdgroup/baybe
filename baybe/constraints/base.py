@@ -1,13 +1,13 @@
 """Base classes for all constraints."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar, List, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar, List, Tuple
 
 import pandas as pd
-import torch
 from attr import define, field
 from attr.validators import min_len
-from torch import Tensor
 
 from baybe.constraints.conditions import Condition
 from baybe.parameters import NumericalContinuousParameter
@@ -18,6 +18,9 @@ from baybe.serialization import (
     unstructure_base,
 )
 from baybe.utils.numerical import DTypeFloatTorch
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define
@@ -159,6 +162,8 @@ class ContinuousConstraint(Constraint, ABC):
         Returns:
             The tuple required by botorch.
         """
+        import torch
+
         param_names = [p.name for p in parameters]
         param_indices = [
             param_names.index(p) + idx_offset
