@@ -55,3 +55,25 @@ screening same reaction conditions) or formulating mixtures for different cell l
 TaskParameter(name="Substrate", values=["3,5-dimethylisoxazole", "benzo[d]isoxazole", "5-methylisoxazole"], active_values=["3,5-dimethylisoxazole"])
 TaskParameter(name="Month", values=["Liver cell", "Heart cell", "Hamster brain cell"], active_values=["Liver cell"])
 ~~~
+
+## Seeing Transfer Learning in Action
+
+We provide full example demonstrating BayBE's transfer learning capabilities.
+We want to briefly discuss and highlight the results of this example in this user guide.
+The full example can be found [here](../../examples/Transfer_Learning/basic_transfer_learning).
+
+The example optimizes an analytical function, the so-called "Hartmann Function".
+We use transfer learning by providing additional data that was obtained by evaluating a
+negated noisy variant of the same function.
+
+The following plot demonstrates the effect that providing this additional data has:
+
+```{image} ../../examples/Transfer_Learning/basic_transfer_learning_light.svg
+:align: center
+:class: only-light
+```
+
+```{image} ../../examples/Transfer_Learning/basic_transfer_learning_dark.svg
+:align: center
+:class: only-dark
+```
