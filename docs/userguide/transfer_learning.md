@@ -8,8 +8,10 @@ Surrogate model and is implemented by the [`TaskParameter`](baybe.parameters.cat
 ```{admonition} Terminology
 :class: note
 The term "Transfer Learning" is used in a lot of different ways.
-The act of combining the data of several contexts can be done via multiple models,
-shared architectures, special kernels in a single model and whatnot.
+Within BayBE, "Transfer Learning" refers to combining data from multiple campaigns.
+Depending on the field, this might also be known as "contextual learning".
+Further, note that the act of combining the data of several contexts can be done via
+multiple models, shared architectures, special kernels in a single model, etc.
 We do not necessarily want to limit to any of these methods, even though BayBE currently
 offers only a single one.
 ```
