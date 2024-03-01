@@ -98,7 +98,7 @@ objective = Objective(
 
 # In this example, we create several campaigns.
 # First let us create three campaigns that each use a different chemical encoding to
-# treat substances
+# treat substances.
 
 substance_encodings = ["MORDRED", "RDKIT", "MORGAN_FP"]
 scenarios = {
@@ -123,7 +123,7 @@ scenarios = {
     for encoding in substance_encodings
 }
 
-# Now we create another campaign that treats the substances as simple one-hot encoded categories
+# Now we create another campaign that treats the substances as simple one-hot encoded categories.
 parameters = [
     CategoricalParameter(name="Solvent", values=dict_solvent.keys(), encoding="OHE"),
     CategoricalParameter(name="Base", values=dict_base.keys(), encoding="OHE"),
@@ -138,14 +138,14 @@ campaign_ohe = Campaign(
     objective=objective,
 )
 
-# Finally, as baseline, we specify a campaign which provides recommendations randomly
+# Finally, as baseline, we specify a campaign which provides recommendations randomly.
 campaign_rand = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters),
     recommender=RandomRecommender(),
     objective=objective,
 )
 
-# Update the scenarios
+# Update the scenarios:
 scenarios.update({"OneHot": campaign_ohe, "Random Baseline": campaign_rand})
 
 # We can now use the `simulate_scenarios` function to simulate a full optimization loop.
@@ -164,6 +164,7 @@ results = simulate_scenarios(
 # Let's visualize the results. As you can see, the type of encoding has a tremendous
 # impact on the outcome, with chemical encodings performing much better than
 # traditional ones at almost no extra cost.
+
 results.rename(columns={"Scenario": "Substance Encoding"}, inplace=True)
 path = Path(sys.path[0])
 ax = sns.lineplot(
