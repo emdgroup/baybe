@@ -49,4 +49,9 @@ TaskParameter(
 ```
 
 This can be abstracted easily to other scenarios such as changing substrates (while
-screening same reaction conditions) or formulating mixtures for different cell lines.
+screening same reaction conditions) or formulating mixtures for different cell lines:
+
+~~~python
+TaskParameter(name="Substrate", values=["3,5-dimethylisoxazole", "benzo[d]isoxazole", "5-methylisoxazole"], active_values=["3,5-dimethylisoxazole"])
+TaskParameter(name="Month", values=["Liver cell", "Heart cell", "Hamster brain cell"], active_values=["Liver cell"])
+~~~
