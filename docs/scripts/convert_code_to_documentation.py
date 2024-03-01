@@ -120,13 +120,6 @@ adjust_pictures(
     light_version="banner2",
     dark_version="banner1",
 )
-adjust_pictures(
-    "docs/build/misc/readme_link.html",
-    match="banner",
-    light_version="banner2",
-    dark_version="banner1",
-)
-
 # Adjust the chemical encoding example picture in the index and the README
 adjust_pictures(
     "docs/build/index.html",
@@ -134,12 +127,7 @@ adjust_pictures(
     light_version="full_lookup_light",
     dark_version="full_lookup_dark",
 )
-adjust_pictures(
-    "docs/build/misc/readme_link.html",
-    match="full_lookup",
-    light_version="full_lookup_light",
-    dark_version="full_lookup_dark",
-)
+
 
 # Clean the other files
 for directory in [sdk_dir, autosummary_dir]:
