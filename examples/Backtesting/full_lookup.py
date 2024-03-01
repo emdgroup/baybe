@@ -124,6 +124,7 @@ scenarios = {
 }
 
 # Now we create another campaign that treats the substances as simple one-hot encoded categories.
+
 parameters = [
     CategoricalParameter(name="Solvent", values=dict_solvent.keys(), encoding="OHE"),
     CategoricalParameter(name="Base", values=dict_base.keys(), encoding="OHE"),
@@ -139,6 +140,7 @@ campaign_ohe = Campaign(
 )
 
 # Finally, as baseline, we specify a campaign which provides recommendations randomly.
+
 campaign_rand = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters),
     recommender=RandomRecommender(),
@@ -146,6 +148,7 @@ campaign_rand = Campaign(
 )
 
 # Update the scenarios:
+
 scenarios.update({"OneHot": campaign_ohe, "Random Baseline": campaign_rand})
 
 # We can now use the `simulate_scenarios` function to simulate a full optimization loop.
