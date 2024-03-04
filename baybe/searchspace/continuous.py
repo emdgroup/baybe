@@ -182,6 +182,11 @@ class SubspaceContinuous(SerialMixin):
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
+        # TODO Revisit: torch and botorch here are actually only necessary if there
+        # are constraints. If there are none and the lists are empty we can just sample
+        # without the get_polytope_samples, which means torch and botorch
+        # wouldn't be needed.
+
         points = get_polytope_samples(
             n=n_points,
             bounds=torch.from_numpy(self.param_bounds_comp),

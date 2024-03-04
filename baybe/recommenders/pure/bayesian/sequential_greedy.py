@@ -186,7 +186,6 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
         # Actual call of the BoTorch optimization routine
         try:
-            # TODO Roya convert
             points, _ = optimize_acqf_mixed(
                 acq_function=self._acquisition_function,
                 bounds=torch.from_numpy(searchspace.param_bounds_comp),
