@@ -21,7 +21,10 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
-from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.searchspace.discrete import (
+    SubspaceDiscrete,
+    validate_simplex_subspace_from_config,
+)
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
@@ -300,7 +303,7 @@ class SearchSpace(SerialMixin):
 
 def validate_searchspace_from_config(specs: dict, _) -> None:
     """Validate the search space specifications while skipping costly creation steps."""
-    # For product spaces, only validate the inputs
+    # Validate product inputs without constructing it
     if specs.get("constructor", None) == "from_product":
         parameters = converter.structure(specs["parameters"], List[Parameter])
         validate_parameters(parameters)
@@ -310,9 +313,18 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
             constraints = converter.structure(specs["constraints"], List[Constraint])
             validate_constraints(constraints, parameters)
 
-    # For all other types, validate by construction
     else:
-        converter.structure(specs, SearchSpace)
+        discrete_subspace_specs = specs.get("discrete", {})
+        if discrete_subspace_specs.get("constructor", None) == "from_simplex":
+            # Validate discrete simplex subspace
+            _validation_converter = converter.copy()
+            _validation_converter.register_structure_hook(
+                SubspaceDiscrete, validate_simplex_subspace_from_config
+            )
+            _validation_converter.structure(discrete_subspace_specs, SubspaceDiscrete)
+        else:
+            # For all other types, validate by construction
+            converter.structure(specs, SearchSpace)
 
 
 # Register deserialization hook

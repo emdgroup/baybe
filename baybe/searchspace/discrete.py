@@ -19,7 +19,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe
-from baybe.searchspace.validation import validate_parameter_names
+from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
@@ -354,7 +354,7 @@ class SubspaceDiscrete(SerialMixin):
         max_values = [max(p.values) for p in simplex_parameters]
         if not (min(min_values) >= 0.0):
             raise ValueError(
-                f"All parameters passed to '{cls.from_simplex.__name__}' "
+                f"All simplex_parameters passed to '{cls.from_simplex.__name__}' "
                 f"must have non-negative values only."
             )
 
@@ -611,6 +611,53 @@ def parameter_cartesian_prod_to_df(
     ret = pd.DataFrame(index=index).reset_index()
 
     return ret
+
+
+def validate_simplex_subspace_from_config(specs: dict, _) -> None:
+    """Validate the discrete space while skipping costly creation steps."""
+    # Validate product inputs without constructing it
+    if specs.get("constructor", None) == "from_product":
+        parameters = converter.structure(specs["parameters"], List[DiscreteParameter])
+        validate_parameters(parameters)
+
+        constraints = specs.get("constraints", None)
+        if constraints:
+            constraints = converter.structure(
+                specs["constraints"], List[DiscreteConstraint]
+            )
+            validate_constraints(constraints, parameters)
+
+    # Validate simplex inputs without constructing it
+    elif specs.get("constructor", None) == "from_simplex":
+        simplex_parameters = converter.structure(
+            specs["simplex_parameters"], List[NumericalDiscreteParameter]
+        )
+
+        if not all(min(p.values) >= 0.0 for p in simplex_parameters):
+            raise ValueError(
+                f"All simplex_parameters passed to "
+                f"'{SubspaceDiscrete.from_simplex.__name__}' must have non-negative "
+                f"values only."
+            )
+
+        product_parameters = specs.get("product_parameters", None)
+        if product_parameters:
+            product_parameters = converter.structure(
+                specs["product_parameters"], List[DiscreteParameter]
+            )
+
+        validate_parameters(simplex_parameters + product_parameters)
+
+        constraints = specs.get("constraints", None)
+        if constraints:
+            constraints = converter.structure(
+                specs["constraints"], List[DiscreteConstraint]
+            )
+            validate_constraints(constraints, simplex_parameters + product_parameters)
+
+    # For all other types, validate by construction
+    else:
+        converter.structure(specs, SubspaceDiscrete)
 
 
 # Register deserialization hook
