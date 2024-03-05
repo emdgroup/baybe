@@ -4,7 +4,7 @@
 :caption: General
 :hidden:
 
-Readme <misc/readme_link>
+Readme <self>
 User Guide <userguide/userguide>
 Examples <examples/examples>
 Contribute <misc/contributing_link>

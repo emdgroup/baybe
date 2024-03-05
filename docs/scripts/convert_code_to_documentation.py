@@ -6,7 +6,7 @@ import pathlib
 import shutil
 from subprocess import check_call, run
 
-from utils import adjust_banner, create_example_documentation
+from utils import adjust_pictures, create_example_documentation
 
 from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 
@@ -114,10 +114,20 @@ else:
     check_call(building_call)
 
 # Adjust the banner in the index and the README
-adjust_banner("docs/build/index.html", light_banner="banner2", dark_banner="banner1")
-adjust_banner(
-    "docs/build/misc/readme_link.html", light_banner="banner2", dark_banner="banner1"
+adjust_pictures(
+    "docs/build/index.html",
+    match="banner",
+    light_version="banner2",
+    dark_version="banner1",
 )
+# Adjust the chemical encoding example picture in the index and the README
+adjust_pictures(
+    "docs/build/index.html",
+    match="full_lookup",
+    light_version="full_lookup_light",
+    dark_version="full_lookup_dark",
+)
+
 
 # Clean the other files
 for directory in [sdk_dir, autosummary_dir]:
