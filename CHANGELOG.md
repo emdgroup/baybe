@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced unmaintained `mordred` dependency by `mordredcommunity`
 - `SearchSpace`s now use `ndarray` instead of `Tensor` 
 
+### Fixed
+- `from_simplex` now efficiently validated in `Campaign.validate_config`
+
 ## [0.8.0] - 2024-02-29
 ### Changed
 - BoTorch dependency bumped to `>=0.9.3`
