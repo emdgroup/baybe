@@ -20,11 +20,21 @@ def test_campaign_serialization(campaign):
     assert campaign == campaign2
 
 
-def test_valid_config(config):
+def test_valid_product_config(config):
     Campaign.validate_config(config)
 
 
-def test_invalid_config(config):
+def test_invalid_product_config(config):
     config = config.replace("CategoricalParameter", "CatParam")
     with pytest.raises(ClassValidationError):
         Campaign.validate_config(config)
+
+
+def test_valid_simplex_config(simplex_config):
+    Campaign.validate_config(simplex_config)
+
+
+def test_invalid_simplex_config(simplex_config):
+    simplex_config = simplex_config.replace("0.0, ", "-1.0, 0.0, ")
+    with pytest.raises(ClassValidationError):
+        Campaign.validate_config(simplex_config)

@@ -655,30 +655,37 @@ def fixture_default_config():
     #   default campaign object instead of hardcoding it here. This avoids redundant
     #   code and automatically keeps them synced.
     cfg = """{
-        "parameters": [
-            {
-                "type": "NumericalDiscreteParameter",
-                "name": "Temp_C",
-                "values": [10, 20, 30, 40]
-            },
-            {
-                "type": "NumericalDiscreteParameter",
-                "name": "Concentration",
-                "values": [0.2, 0.3, 1.4]
-            },
-            __fillin__
-            {
-                "type": "CategoricalParameter",
-                "name": "Base",
-                "values": ["base1", "base2", "base3", "base4", "base5"]
-            }
-        ],
-        "constraints": [],
+        "searchspace": {
+            "constructor": "from_product",
+            "parameters": [
+                {
+                    "type": "NumericalDiscreteParameter",
+                    "name": "Temp_C",
+                    "values": [10, 20, 30, 40]
+                },
+                {
+                    "type": "NumericalDiscreteParameter",
+                    "name": "Concentration",
+                    "values": [0.2, 0.3, 1.4]
+                },
+                __fillin__
+                {
+                    "type": "CategoricalParameter",
+                    "name": "Base",
+                    "values": ["base1", "base2", "base3", "base4", "base5"]
+                }
+            ],
+            "constraints": []
+        },
         "objective": {
-            "mode": "SINGLE",
-            "targets": [
-                {"name": "Yield", "mode": "MAX"}
-            ]
+          "mode": "SINGLE",
+          "targets": [
+            {
+              "type": "NumericalTarget",
+              "name": "Yield",
+              "mode": "MAX"
+            }
+          ]
         },
         "recommender": {
             "type": "TwoPhaseMetaRecommender",
@@ -713,6 +720,51 @@ def fixture_default_config():
                 "encoding": "OHE"
             },""",
     )
+    return cfg
+
+
+@pytest.fixture(name="simplex_config")
+def fixture_default_simplex_config():
+    """The default simplex config to be used if not specified differently."""
+    cfg = """{
+        "searchspace": {
+          "discrete": {
+              "constructor": "from_simplex",
+              "simplex_parameters": [
+                {
+                  "type": "NumericalDiscreteParameter",
+                  "name": "simplex1",
+                  "values": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+                },
+                {
+                  "type": "NumericalDiscreteParameter",
+                  "name": "simplex2",
+                  "values": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+                }
+              ],
+              "product_parameters": [
+                {
+                  "type": "CategoricalParameter",
+                  "name": "Granularity",
+                  "values": ["coarse", "medium", "fine"]
+                }
+              ],
+              "max_sum": 1.0,
+              "boundary_only": true
+            }
+        },
+        "objective": {
+          "mode": "SINGLE",
+          "targets": [
+            {
+              "type": "NumericalTarget",
+              "name": "Yield",
+              "mode": "MAX"
+            }
+          ]
+        }
+    }"""
+
     return cfg
 
 
