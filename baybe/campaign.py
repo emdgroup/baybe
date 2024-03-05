@@ -82,6 +82,21 @@ class Campaign(SerialMixin):
     numerical_measurements_must_be_within_tolerance: bool = field(default=None)
     """Deprecated! Raises an error when used."""
 
+    def __str__(self) -> str:
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+
+        # Get str representation of campaign fields
+        fields_to_print = [self.searchspace, self.objective, self.recommender]
+        fields_str = "\n\n".join(str(x) for x in fields_to_print)
+
+        # Put all relevant attributes of the campaign in one string
+        campaign_str = f"""{start_bold}Campaign{end_bold}
+        \n{start_bold}Meta Data{end_bold}\nBatches Done: {self.n_batches_done}
+        \rFits Done: {self.n_fits_done}\n\n{fields_str}\n"""
+
+        return campaign_str.replace("\n", "\n ").replace("\r", "\r ")
+
     strategy: RecommenderProtocol = field(default=None)
     """Deprecated! Raises an error when used."""
 
