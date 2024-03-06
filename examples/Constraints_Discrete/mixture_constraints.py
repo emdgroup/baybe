@@ -38,7 +38,7 @@ SUM_TOLERANCE = 1.0
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 
 # This parameter denotes the resolution of the discretization of the parameters
-RESOLUTION = 3 if SMOKE_TEST else 12
+RESOLUTION = 5 if SMOKE_TEST else 12
 
 dict_solvents = {
     "water": "O",
@@ -161,7 +161,7 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         f"No. of unique 2-solvent entries (exp."
-        f" {math.comb(len(dict_solvents), 2)*(12-2)})",
+        f" {math.comb(len(dict_solvents), 2)*(RESOLUTION-2)})",
         (campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
         .sum(axis=1)
         .eq(1)
@@ -169,7 +169,7 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         f"No. of unique 3-solvent entries (exp."
-        f" {math.comb(len(dict_solvents), 3)*((12-3)*(12-2))//2})",
+        f" {math.comb(len(dict_solvents), 3)*((RESOLUTION-3)*(RESOLUTION-2))//2})",
         (campaign.searchspace.discrete.exp_rep[["Frac1", "Frac2", "Frac3"]] == 0.0)
         .sum(axis=1)
         .eq(0)

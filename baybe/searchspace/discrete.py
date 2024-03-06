@@ -11,7 +11,7 @@ import torch
 from attr import define, field
 from cattrs import IterableValidationError
 
-from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER
+from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import (
     CategoricalParameter,
@@ -213,8 +213,8 @@ class SubspaceDiscrete(SerialMixin):
 
         # Remove entries that violate parameter constraints:
         for constraint in (c for c in constraints if c.eval_during_creation):
-            inds = constraint.get_invalid(exp_rep)
-            exp_rep.drop(index=inds, inplace=True)
+            idxs = constraint.get_invalid(exp_rep)
+            exp_rep.drop(index=idxs, inplace=True)
         exp_rep.reset_index(inplace=True, drop=True)
 
         return SubspaceDiscrete(
@@ -274,6 +274,7 @@ class SubspaceDiscrete(SerialMixin):
         max_sum: float,
         simplex_parameters: List[NumericalDiscreteParameter],
         product_parameters: Optional[List[DiscreteParameter]] = None,
+        constraints: Optional[List[DiscreteConstraint]] = None,
         min_nonzero: int = 0,
         max_nonzero: Optional[int] = None,
         boundary_only: bool = False,
@@ -297,6 +298,7 @@ class SubspaceDiscrete(SerialMixin):
             simplex_parameters: The parameters to be used for the simplex construction.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
+            constraints: See :class:`baybe.searchspace.core.SearchSpace`.
             min_nonzero: Optional restriction on the minimum number of nonzero
                 parameter values in the simplex construction.
             max_nonzero: Optional restriction on the maximum number of nonzero
@@ -321,8 +323,13 @@ class SubspaceDiscrete(SerialMixin):
         # Resolve defaults
         if product_parameters is None:
             product_parameters = []
+        if constraints is None:
+            constraints = []
         if max_nonzero is None:
             max_nonzero = len(simplex_parameters)
+
+        # Validate constraints
+        validate_constraints(constraints, simplex_parameters + product_parameters)
 
         # Validate parameter types
         if not (
@@ -456,10 +463,17 @@ class SubspaceDiscrete(SerialMixin):
         if product_parameters:
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
-        # Reset the index
-        exp_rep.reset_index(drop=True, inplace=True)
+        # Remove entries that violate parameter constraints:
+        for constraint in (c for c in constraints if c.eval_during_creation):
+            idxs = constraint.get_invalid(exp_rep)
+            exp_rep.drop(index=idxs, inplace=True)
+        exp_rep.reset_index(inplace=True, drop=True)
 
-        return cls(parameters=simplex_parameters + product_parameters, exp_rep=exp_rep)
+        return cls(
+            parameters=simplex_parameters + product_parameters,
+            exp_rep=exp_rep,
+            constraints=constraints,
+        )
 
     @property
     def is_empty(self) -> bool:
@@ -498,13 +512,13 @@ class SubspaceDiscrete(SerialMixin):
             numerical_measurements_must_be_within_tolerance: See
                 :func:`baybe.utils.dataframe.fuzzy_row_match`.
         """
-        inds_matched = fuzzy_row_match(
+        idxs_matched = fuzzy_row_match(
             self.exp_rep,
             measurements,
             self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
-        self.metadata.loc[inds_matched, "was_measured"] = True
+        self.metadata.loc[idxs_matched, "was_measured"] = True
 
     def get_candidates(
         self,
