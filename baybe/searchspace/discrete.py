@@ -298,7 +298,7 @@ class SubspaceDiscrete(SerialMixin):
             simplex_parameters: The parameters to be used for the simplex construction.
             product_parameters: Optional parameters that enter in form of a Cartesian
                 product.
-            constraints: See :class:`baybe.searchspace.core.SearchSpace`
+            constraints: See :class:`baybe.searchspace.core.SearchSpace`.
             min_nonzero: Optional restriction on the minimum number of nonzero
                 parameter values in the simplex construction.
             max_nonzero: Optional restriction on the maximum number of nonzero
