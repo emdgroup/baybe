@@ -128,7 +128,8 @@ SubstanceParameter(
 ```
 
 The ``encoding`` option defines what kind of descriptors are calculated:
-* ``MORDRED``: 2D descriptors from the [Mordred package](https://mordred-descriptor.github.io/documentation/master/)
+* ``MORDRED``: 2D descriptors from the [Mordred package](https://mordred-descriptor.github.io/documentation/master/).
+  Since the original package is now unmaintained, baybe requires the community replacement [mordredcommunity](https://github.com/JacksonBurns/mordred-community)
 * ``RDKIT``: 2D descriptors from the [RDKit package](https://www.rdkit.org/)
 * ``MORGAN_FP``: Morgan fingerprints calculated with RDKit (1024 bits, radius 4)
 

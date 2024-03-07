@@ -23,6 +23,8 @@ except ImportError:
         """chemistry dependencies. Please run "pip install 'baybe[chem]'"."""
     )
 
+from baybe.utils.numerical import DTypeFloatNumpy
+
 _mordred_calculator = Calculator(descriptors)
 
 
@@ -86,10 +88,13 @@ def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
     """
     try:
         return np.asarray(
-            _mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing()
+            _mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing(),
+            dtype=DTypeFloatNumpy,
         )
     except Exception:
-        return np.full(len(_mordred_calculator.descriptors), np.NaN)
+        return np.full(
+            len(_mordred_calculator.descriptors), np.NaN, dtype=DTypeFloatNumpy
+        )
 
 
 def smiles_to_mordred_features(

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - [WIP] `torch` is loaded lazily
 - Full lookup backtesting example now tests different substance encodings
+- Replaced unmaintained `mordred` dependency by `mordredcommunity`
 
 ## [0.8.0] - 2024-02-29
 ### Changed
