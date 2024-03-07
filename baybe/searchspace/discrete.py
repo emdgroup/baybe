@@ -7,7 +7,6 @@ from typing import Any, Collection, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import torch
 from attr import define, field
 from cattrs import IterableValidationError
 
@@ -481,14 +480,14 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_bounds_comp(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> np.ndarray:
         """Return bounds as tensor.
 
         Take bounds from the parameter definitions, but discards bounds belonging to
         columns that were filtered out during the creation of the space.
         """
         if not self.parameters:
-            return torch.empty(2, 0)
+            return np.empty((2, 0))
         bounds = np.hstack(
             [
                 np.vstack([p.comp_df[col].min(), p.comp_df[col].max()])
@@ -497,7 +496,7 @@ class SubspaceDiscrete(SerialMixin):
                 if col in self.comp_rep.columns
             ]
         )
-        return torch.from_numpy(bounds)
+        return bounds
 
     def mark_as_measured(
         self,

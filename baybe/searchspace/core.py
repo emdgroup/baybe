@@ -5,8 +5,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import List, Optional, cast
 
+import numpy as np
 import pandas as pd
-import torch
 from attr import define, field
 
 from baybe.constraints import (
@@ -231,9 +231,9 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def param_bounds_comp(self) -> torch.Tensor:
+    def param_bounds_comp(self) -> np.ndarray:
         """Return bounds as tensor."""
-        return torch.hstack(
+        return np.hstack(
             [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
         )
 

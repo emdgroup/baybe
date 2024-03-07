@@ -102,11 +102,12 @@ class SequentialGreedyRecommender(BayesianRecommender):
         batch_size: int,
     ) -> pd.DataFrame:
         # See base class.
+        import torch
 
         try:
             points, _ = optimize_acqf(
                 acq_function=self._acquisition_function,
-                bounds=subspace_continuous.param_bounds_comp,
+                bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
@@ -159,6 +160,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
             NoMCAcquisitionFunctionError: If a non Monte Carlo acquisition function
                 is chosen.
         """
+        import torch
+
         if len(candidates_comp) > 0:
             # Calculate the number of samples from the given percentage
             n_candidates = int(self.sampling_percentage * len(candidates_comp.index))
@@ -185,7 +188,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         try:
             points, _ = optimize_acqf_mixed(
                 acq_function=self._acquisition_function,
-                bounds=searchspace.param_bounds_comp,
+                bounds=torch.from_numpy(searchspace.param_bounds_comp),
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples

@@ -6,7 +6,6 @@ from typing import Any, Collection, List, Optional
 
 import numpy as np
 import pandas as pd
-import torch
 from attr import define, field
 
 from baybe.constraints import (
@@ -18,7 +17,7 @@ from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.dataframe import pretty_print_df
-from baybe.utils.numerical import DTypeFloatTorch
+from baybe.utils.numerical import DTypeFloatNumpy
 
 
 @define
@@ -145,11 +144,11 @@ class SubspaceContinuous(SerialMixin):
         return [p.name for p in self.parameters]
 
     @property
-    def param_bounds_comp(self) -> torch.Tensor:
-        """Return bounds as tensor."""
+    def param_bounds_comp(self) -> np.ndarray:
+        """Return bounds as numpy array."""
         if not self.parameters:
-            return torch.empty(2, 0, dtype=DTypeFloatTorch)
-        return torch.stack([p.bounds.to_tensor() for p in self.parameters]).T
+            return np.empty((2, 0), dtype=DTypeFloatNumpy)
+        return np.stack([p.bounds.to_ndarray() for p in self.parameters]).T
 
     def transform(
         self,
@@ -180,12 +179,17 @@ class SubspaceContinuous(SerialMixin):
         """
         if not self.parameters:
             return pd.DataFrame()
-
+        import torch
         from botorch.utils.sampling import get_polytope_samples
+
+        # TODO Revisit: torch and botorch here are actually only necessary if there
+        # are constraints. If there are none and the lists are empty we can just sample
+        # without the get_polytope_samples, which means torch and botorch
+        # wouldn't be needed.
 
         points = get_polytope_samples(
             n=n_points,
-            bounds=self.param_bounds_comp,
+            bounds=torch.from_numpy(self.param_bounds_comp),
             equality_constraints=[
                 c.to_botorch(self.parameters) for c in self.constraints_lin_eq
             ],

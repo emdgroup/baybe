@@ -1,6 +1,6 @@
 """Test for continuous parameters."""
+import numpy as np
 import pytest
-import torch
 
 
 @pytest.mark.parametrize(
@@ -16,6 +16,6 @@ def test_valid_configs(campaign):
     print(campaign.searchspace.continuous.param_bounds_comp.flatten())
 
     assert all(
-        torch.is_floating_point(itm)
+        np.issubdtype(type(itm), np.floating)
         for itm in campaign.searchspace.continuous.param_bounds_comp.flatten()
     )

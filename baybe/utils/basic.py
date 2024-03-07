@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List, TypeVar
 
 import numpy as np
-import torch
 
 _C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
@@ -57,6 +56,8 @@ def set_random_seed(seed: int):
     Args:
         seed: The chosen global random seed.
     """
+    import torch
+
     torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
