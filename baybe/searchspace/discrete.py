@@ -197,24 +197,14 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Store the input
-        if constraints is None:
-            constraints = []
-        else:
-            # Reorder the constraints according to their execution order
-            constraints = sorted(
-                constraints,
-                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-            )
+        # Set defaults
+        constraints = constraints or []
 
         # Create a dataframe representing the experimental search space
         exp_rep = parameter_cartesian_prod_to_df(parameters)
 
-        # Remove entries that violate parameter constraints:
-        for constraint in (c for c in constraints if c.eval_during_creation):
-            idxs = constraint.get_invalid(exp_rep)
-            exp_rep.drop(index=idxs, inplace=True)
-        exp_rep.reset_index(inplace=True, drop=True)
+        # Remove entries that violate parameter constraints
+        _apply_constraint_filter(exp_rep, constraints)
 
         return SubspaceDiscrete(
             parameters=parameters,
@@ -463,10 +453,7 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Remove entries that violate parameter constraints:
-        for constraint in (c for c in constraints if c.eval_during_creation):
-            idxs = constraint.get_invalid(exp_rep)
-            exp_rep.drop(index=idxs, inplace=True)
-        exp_rep.reset_index(inplace=True, drop=True)
+        _apply_constraint_filter(exp_rep, constraints)
 
         return cls(
             parameters=simplex_parameters + product_parameters,
@@ -585,6 +572,27 @@ class SubspaceDiscrete(SerialMixin):
             pass
 
         return comp_rep
+
+
+def _apply_constraint_filter(df: pd.DataFrame, constraints: List[DiscreteConstraint]):
+    """Remove discrete search space entries inplace based on constraints.
+
+    Args:
+        df: The data in experimental representation to be modified inplace.
+        constraints: List of discrete constraints.
+
+    """
+    # Reorder the constraints according to their execution order
+    constraints = sorted(
+        constraints,
+        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+    )
+
+    # Remove entries that violate parameter constraints:
+    for constraint in (c for c in constraints if c.eval_during_creation):
+        idxs = constraint.get_invalid(df)
+        df.drop(index=idxs, inplace=True)
+    df.reset_index(inplace=True, drop=True)
 
 
 def parameter_cartesian_prod_to_df(
