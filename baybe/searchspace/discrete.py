@@ -19,7 +19,7 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe
-from baybe.searchspace.validation import validate_parameter_names
+from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
@@ -197,24 +197,14 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Store the input
-        if constraints is None:
-            constraints = []
-        else:
-            # Reorder the constraints according to their execution order
-            constraints = sorted(
-                constraints,
-                key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-            )
+        # Set defaults
+        constraints = constraints or []
 
         # Create a dataframe representing the experimental search space
         exp_rep = parameter_cartesian_prod_to_df(parameters)
 
-        # Remove entries that violate parameter constraints:
-        for constraint in (c for c in constraints if c.eval_during_creation):
-            idxs = constraint.get_invalid(exp_rep)
-            exp_rep.drop(index=idxs, inplace=True)
-        exp_rep.reset_index(inplace=True, drop=True)
+        # Remove entries that violate parameter constraints
+        _apply_constraint_filter(exp_rep, constraints)
 
         return SubspaceDiscrete(
             parameters=parameters,
@@ -354,7 +344,7 @@ class SubspaceDiscrete(SerialMixin):
         max_values = [max(p.values) for p in simplex_parameters]
         if not (min(min_values) >= 0.0):
             raise ValueError(
-                f"All parameters passed to '{cls.from_simplex.__name__}' "
+                f"All simplex_parameters passed to '{cls.from_simplex.__name__}' "
                 f"must have non-negative values only."
             )
 
@@ -463,10 +453,7 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Remove entries that violate parameter constraints:
-        for constraint in (c for c in constraints if c.eval_during_creation):
-            idxs = constraint.get_invalid(exp_rep)
-            exp_rep.drop(index=idxs, inplace=True)
-        exp_rep.reset_index(inplace=True, drop=True)
+        _apply_constraint_filter(exp_rep, constraints)
 
         return cls(
             parameters=simplex_parameters + product_parameters,
@@ -587,6 +574,27 @@ class SubspaceDiscrete(SerialMixin):
         return comp_rep
 
 
+def _apply_constraint_filter(df: pd.DataFrame, constraints: List[DiscreteConstraint]):
+    """Remove discrete search space entries inplace based on constraints.
+
+    Args:
+        df: The data in experimental representation to be modified inplace.
+        constraints: List of discrete constraints.
+
+    """
+    # Reorder the constraints according to their execution order
+    constraints = sorted(
+        constraints,
+        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+    )
+
+    # Remove entries that violate parameter constraints:
+    for constraint in (c for c in constraints if c.eval_during_creation):
+        idxs = constraint.get_invalid(df)
+        df.drop(index=idxs, inplace=True)
+    df.reset_index(inplace=True, drop=True)
+
+
 def parameter_cartesian_prod_to_df(
     parameters: Iterable[Parameter],
 ) -> pd.DataFrame:
@@ -611,6 +619,53 @@ def parameter_cartesian_prod_to_df(
     ret = pd.DataFrame(index=index).reset_index()
 
     return ret
+
+
+def validate_simplex_subspace_from_config(specs: dict, _) -> None:
+    """Validate the discrete space while skipping costly creation steps."""
+    # Validate product inputs without constructing it
+    if specs.get("constructor", None) == "from_product":
+        parameters = converter.structure(specs["parameters"], List[DiscreteParameter])
+        validate_parameters(parameters)
+
+        constraints = specs.get("constraints", None)
+        if constraints:
+            constraints = converter.structure(
+                specs["constraints"], List[DiscreteConstraint]
+            )
+            validate_constraints(constraints, parameters)
+
+    # Validate simplex inputs without constructing it
+    elif specs.get("constructor", None) == "from_simplex":
+        simplex_parameters = converter.structure(
+            specs["simplex_parameters"], List[NumericalDiscreteParameter]
+        )
+
+        if not all(min(p.values) >= 0.0 for p in simplex_parameters):
+            raise ValueError(
+                f"All simplex_parameters passed to "
+                f"'{SubspaceDiscrete.from_simplex.__name__}' must have non-negative "
+                f"values only."
+            )
+
+        product_parameters = specs.get("product_parameters", None)
+        if product_parameters:
+            product_parameters = converter.structure(
+                specs["product_parameters"], List[DiscreteParameter]
+            )
+
+        validate_parameters(simplex_parameters + product_parameters)
+
+        constraints = specs.get("constraints", None)
+        if constraints:
+            constraints = converter.structure(
+                specs["constraints"], List[DiscreteConstraint]
+            )
+            validate_constraints(constraints, simplex_parameters + product_parameters)
+
+    # For all other types, validate by construction
+    else:
+        converter.structure(specs, SubspaceDiscrete)
 
 
 # Register deserialization hook
