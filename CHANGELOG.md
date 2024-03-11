@@ -4,15 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.1] - 2024-03-11
 ### Added
 - Better human readable `__str__` representation of campaign
 - README now contains an example on substance encoding results
-- Transfer Learning User Guide
+- Transfer learning user guide
 - `from_simplex` constructor now also takes and applies optional constraints
 
 ### Changed
-- [WIP] `torch` is loaded lazily
 - Full lookup backtesting example now tests different substance encodings
 - Replaced unmaintained `mordred` dependency by `mordredcommunity`
 - `SearchSpace`s now use `ndarray` instead of `Tensor` 
