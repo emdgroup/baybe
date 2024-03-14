@@ -72,12 +72,18 @@ def _structure_dataframe_hook(obj: Union[str, dict], _) -> pd.DataFrame:
         pickled_df = base64.b64decode(obj.encode("utf-8"))
         return pickle.loads(pickled_df)
     elif isinstance(obj, dict):
-        if constructor := obj.pop("constructor"):
+        if constructor := obj.pop("constructor", None):
             return getattr(pd, constructor)(**obj)
         else:
             raise ValueError(
-                f"Invalid choice for constructor '{constructor}'",
+                "For deserializing a dataframe from a dictionary, the 'constructor' "
+                "keyword must be provided as key.",
             )
+    else:
+        raise ValueError(
+            "Unknown object type for deserializing a dataframe. Supported types are "
+            "strings and dictionaries.",
+        )
 
 
 def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
