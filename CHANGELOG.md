@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example for transfer learning backtest utility
 - `pyupgrade` pre-commit hook
 - Better human readable `__str__` representation of objective and targets
+- Alternative dataframe deserialization from pd.DataFrame constructors
 
 ### Changed
 - More detailed and sophisticated search space user guide
+- Support for Python 3.12
 - Upgraded syntax to Python 3.9
 
 ## [0.8.1] - 2024-03-11
@@ -21,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README now contains an example on substance encoding results
 - Transfer learning user guide
 - `from_simplex` constructor now also takes and applies optional constraints
-- Support for Python 3.12
 
 ### Changed
 - Full lookup backtesting example now tests different substance encodings
