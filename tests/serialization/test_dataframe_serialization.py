@@ -22,6 +22,20 @@ def test_dataframe_roundtrip(df: pd.DataFrame):
     [
         _unstructure_dataframe_hook(pd.DataFrame({"c1": [1, 2], "c2": [3, 4]})),
         {
+            "constructor": "from_records",
+            "data": [
+                {"col_1": 3, "col_2": "a"},
+                {"col_1": 2, "col_2": "b"},
+                {"col_1": 1, "col_2": "c"},
+                {"col_1": 0, "col_2": "d"},
+            ],
+        },
+        {
+            "constructor": "from_dict",
+            "data": {"row_1": [3, 2, 1, 0], "row_2": ["a", "b", "c", "d"]},
+            "orient": "index",
+        },
+        {
             "constructor": "read_json",
             "path_or_buf": '[{"c1":"a","c2":"b"},{"c1":"c","c2":"d"}]',
             "orient": "records",
