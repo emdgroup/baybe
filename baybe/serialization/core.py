@@ -1,7 +1,7 @@
 """Converter and hooks."""
 import base64
 import pickle
-from typing import Any, Callable, Optional, TypeVar, get_type_hints
+from typing import Any, Callable, Optional, TypeVar, Union, get_type_hints
 
 import cattrs
 import pandas as pd
@@ -66,10 +66,18 @@ def get_base_structure_hook(
     return structure_base
 
 
-def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
+def _structure_dataframe_hook(obj: Union[str, dict], _) -> pd.DataFrame:
     """Deserialize a DataFrame."""
-    pickled_df = base64.b64decode(string.encode("utf-8"))
-    return pickle.loads(pickled_df)
+    if isinstance(obj, str):
+        pickled_df = base64.b64decode(obj.encode("utf-8"))
+        return pickle.loads(pickled_df)
+    elif isinstance(obj, dict):
+        if constructor := obj.pop("constructor"):
+            return getattr(pd, constructor)(**obj)
+        else:
+            raise ValueError(
+                f"Invalid choice for constructor '{constructor}'",
+            )
 
 
 def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
