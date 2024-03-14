@@ -140,6 +140,10 @@ class SubspaceDiscrete(SerialMixin):
             ValueError: If the provided metadata allows testing parameter configurations
                 for inactive tasks.
         """
+        # We first check whether there are actually any parameters that need to be
+        # checked.
+        if self.is_empty:
+            return
         off_task_idxs = ~self._on_task_configurations()
         if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
             raise ValueError(
@@ -166,6 +170,8 @@ class SubspaceDiscrete(SerialMixin):
 
     def __attrs_post_init__(self) -> None:
         # TODO [16605]: Redesign metadata handling
+        if self.is_empty:
+            return
         off_task_idxs = ~self._on_task_configurations()
         self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True
 
