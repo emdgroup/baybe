@@ -71,10 +71,16 @@ class SearchSpace(SerialMixin):
     def __str__(self) -> str:
         start_bold = "\033[1m"
         end_bold = "\033[0m"
-        searchspace_str = f"""{start_bold}Search Space{end_bold}
-        \n{start_bold}Search Space Type: {end_bold}{self.type.name}
-        \n{self.discrete}
-        \n{self.continuous}"""
+        head_str = f"""{start_bold}Search Space{end_bold}
+        \n{start_bold}Search Space Type: {end_bold}{self.type.name}"""
+
+        # Check the sub space size to avoid adding unwanted break lines
+        # if the sub space is empty
+        discrete_str = f"\n\n{self.discrete}" if not self.discrete.is_empty else ""
+        continuous_str = (
+            f"\n\n{self.continuous}" if not self.continuous.is_empty else ""
+        )
+        searchspace_str = f"{head_str}{discrete_str}{continuous_str}"
         return searchspace_str.replace("\n", "\n ").replace("\r", "\r ")
 
     def __attrs_post_init__(self):
