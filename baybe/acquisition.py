@@ -1,17 +1,38 @@
 """Adapter for making BoTorch's acquisition functions work with other models."""
-
+from functools import partial
 from inspect import signature
 from typing import Any, Callable, List, Optional, Type
 
 import gpytorch.distributions
 from attr import define
-from botorch.acquisition import AcquisitionFunction
+from botorch.acquisition import (
+    AcquisitionFunction,
+    ExpectedImprovement,
+    PosteriorMean,
+    ProbabilityOfImprovement,
+    UpperConfidenceBound,
+    qExpectedImprovement,
+    qProbabilityOfImprovement,
+    qUpperConfidenceBound,
+)
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from torch import Tensor, cat, squeeze
+from torch import Tensor
 
 from baybe.surrogates.base import Surrogate
+
+acquisition_function_mapping = {
+    "PM": PosteriorMean,
+    "PI": ProbabilityOfImprovement,
+    "EI": ExpectedImprovement,
+    "UCB": partial(UpperConfidenceBound, beta=1.0),
+    "qEI": qExpectedImprovement,
+    "qPI": qProbabilityOfImprovement,
+    "qUCB": partial(qUpperConfidenceBound, beta=1.0),
+    "VarUCB": partial(UpperConfidenceBound, beta=100.0),
+    "qVarUCB": partial(qUpperConfidenceBound, beta=100.0),
+}
 
 
 def debotorchize(acqf_cls: Type[AcquisitionFunction]):
@@ -129,6 +150,8 @@ class PartialAcquisitionFunction:
         Returns:
             The full point in the hybrid space.
         """
+        import torch
+
         # Might be necessary to insert a dummy dimension
         if partial_part.ndim == 2:
             partial_part = partial_part.unsqueeze(-2)
@@ -144,7 +167,7 @@ class PartialAcquisitionFunction:
             disc_part = partial_part
             cont_part = pinned_part
         # Concat the parts and return the concatenated point
-        full_point = cat((disc_part, cont_part), -1)
+        full_point = torch.cat((disc_part, cont_part), -1)
         return full_point
 
     def __call__(self, variable_part: Tensor) -> Tensor:
@@ -173,8 +196,10 @@ class PartialAcquisitionFunction:
             X_pending: ``n x d`` Tensor with n d-dim design points that have been
                 submitted for evaluation but have not yet been evaluated.
         """
+        import torch
+
         if X_pending is not None:  # Lift point to hybrid space and add additional dim
             X_pending = self._lift_partial_part(X_pending)
-            X_pending = squeeze(X_pending, -2)
+            X_pending = torch.squeeze(X_pending, -2)
         # Now use the original set_X_pending function
         self.acqf.set_X_pending(X_pending)
