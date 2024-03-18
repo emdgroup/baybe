@@ -195,8 +195,6 @@ class PartialAcquisitionFunction:
             X_pending: ``n x d`` Tensor with n d-dim design points that have been
                 submitted for evaluation but have not yet been evaluated.
         """
-        import torch
-
         if X_pending is not None:  # Lift point to hybrid space and add additional dim
             X_pending = self._lift_partial_part(X_pending)
             X_pending = torch.squeeze(X_pending, -2)
