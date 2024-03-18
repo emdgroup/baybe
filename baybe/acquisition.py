@@ -4,6 +4,7 @@ from inspect import signature
 from typing import Any, Callable, List, Optional, Type
 
 import gpytorch.distributions
+import torch
 from attr import define
 from botorch.acquisition import (
     AcquisitionFunction,
@@ -150,8 +151,6 @@ class PartialAcquisitionFunction:
         Returns:
             The full point in the hybrid space.
         """
-        import torch
-
         # Might be necessary to insert a dummy dimension
         if partial_part.ndim == 2:
             partial_part = partial_part.unsqueeze(-2)
