@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- `surrogates.utils` uses `numerical` types
+- `baybe.utils.numerical` is loaded lazily in `surrogates`
 - More detailed and sophisticated search space user guide
 
 ### Added
@@ -22,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Full lookup backtesting example now tests different substance encodings
 - Replaced unmaintained `mordred` dependency by `mordredcommunity`
-- `SearchSpace`s now use `ndarray` instead of `Tensor` 
+- `SearchSpace`s now use `ndarray` instead of `Tensor`
 
 ### Fixed
 - `from_simplex` now efficiently validated in `Campaign.validate_config`
