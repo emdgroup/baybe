@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - More detailed and sophisticated search space user guide
 
+### Added
+- Simulation user guide
+- Example for transfer learning backtest utility
+
 ## [0.8.1] - 2024-03-11
 ### Added
 - Better human readable `__str__` representation of campaign
