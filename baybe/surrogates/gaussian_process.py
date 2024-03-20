@@ -1,6 +1,6 @@
 """Gaussian process surrogates."""
 
-from typing import Any, ClassVar, Dict, Optional, Tuple
+from typing import Any, ClassVar, Optional
 
 import torch
 from attr import define, field
@@ -31,7 +31,7 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    model_params: Dict[str, Any] = field(
+    model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=get_model_params_validator(SingleTaskGP.__init__),
@@ -41,7 +41,7 @@ class GaussianProcessSurrogate(Surrogate):
     _model: Optional[SingleTaskGP] = field(init=False, default=None)
     """The actual model."""
 
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
         posterior = self._model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix

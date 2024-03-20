@@ -1,6 +1,5 @@
 """Validation functionality for constraints."""
 
-from typing import List
 
 from baybe.constraints.base import Constraint
 from baybe.constraints.discrete import DiscreteDependenciesConstraint
@@ -8,7 +7,7 @@ from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parame
 
 
 def validate_constraints(  # noqa: DOC101, DOC103
-    constraints: List[Constraint], parameters: List[Parameter]
+    constraints: list[Constraint], parameters: list[Parameter]
 ) -> None:
     """Assert that a given collection of constraints is valid.
 

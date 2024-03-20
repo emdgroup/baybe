@@ -2,7 +2,7 @@
 
 import operator as ops
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,7 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
 
 
 # provide threshold operators
-_threshold_operators: Dict[str, Callable] = {
+_threshold_operators: dict[str, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
     "=": rpartial(np.isclose, rtol=0.0),
@@ -135,7 +135,7 @@ class SubSelectionCondition(Condition):
     """Class for defining valid parameter entries."""
 
     # object variables
-    selection: List[Any] = field()
+    selection: list[Any] = field()
     """The list of items which are considered valid."""
 
     def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102

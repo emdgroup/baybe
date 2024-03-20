@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, List, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attr import define, field
@@ -40,12 +40,12 @@ class Constraint(ABC, SerialMixin):
     """Class variable encoding whether the condition is evaluated during modeling."""
 
     # Object variables
-    parameters: List[str] = field(validator=min_len(1))
+    parameters: list[str] = field(validator=min_len(1))
     """The list of parameters used for the constraint."""
 
     @parameters.validator
     def _validate_params(  # noqa: DOC101, DOC103
-        self, _: Any, params: List[str]
+        self, _: Any, params: list[str]
     ) -> None:
         """Validate the parameter list.
 
@@ -120,7 +120,7 @@ class ContinuousConstraint(Constraint, ABC):
     # See base class.
 
     # object variables
-    coefficients: List[float] = field()
+    coefficients: list[float] = field()
     """In-/equality coefficient for each entry in ``parameters``."""
 
     rhs: float = field(default=0.0)
@@ -128,7 +128,7 @@ class ContinuousConstraint(Constraint, ABC):
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
-        self, _: Any, coefficients: List[float]
+        self, _: Any, coefficients: list[float]
     ) -> None:
         """Validate the coefficients.
 
@@ -148,8 +148,8 @@ class ContinuousConstraint(Constraint, ABC):
         return [1.0] * len(self.parameters)
 
     def to_botorch(
-        self, parameters: List[NumericalContinuousParameter], idx_offset: int = 0
-    ) -> Tuple[Tensor, Tensor, float]:
+        self, parameters: list[NumericalContinuousParameter], idx_offset: int = 0
+    ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
         Used in calling ``optimize_acqf_*`` functions, for details see

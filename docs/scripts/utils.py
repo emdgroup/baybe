@@ -21,7 +21,7 @@ def adjust_pictures(
         light_version: The name of the light mode picture version.
         dark_version: The name of the dark mode picture version.
     """
-    with open(file_path, "r") as file:
+    with open(file_path) as file:
         lines = file.readlines()
 
     line_index = None
@@ -166,7 +166,7 @@ def create_example_documentation(example_dest_dir: str, ignore_examples: bool):
             # We wrap lines which are too long as long as they do not contain a link.
             # To discover whether a line contains a link, we check if the string "]("
             # is contained.
-            with open(markdown_path, "r", encoding="UTF-8") as markdown_file:
+            with open(markdown_path, encoding="UTF-8") as markdown_file:
                 content = markdown_file.read()
                 wrapped_lines = []
                 ignored_substrings = (

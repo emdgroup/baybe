@@ -1,7 +1,7 @@
 """Converter and hooks."""
 import base64
 import pickle
-from typing import Any, Callable, Optional, Type, TypeVar, get_type_hints
+from typing import Any, Callable, Optional, TypeVar, get_type_hints
 
 import cattrs
 import pandas as pd
@@ -36,9 +36,9 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
 
 
 def get_base_structure_hook(
-    base: Type[_T],
+    base: type[_T],
     overrides: Optional[dict] = None,
-) -> Callable[[dict, Type[_T]], _T]:
+) -> Callable[[dict, type[_T]], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
     Provides the inverse operation to ``unstructure_base``.
@@ -53,7 +53,7 @@ def get_base_structure_hook(
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
     from baybe.utils.basic import get_subclasses
 
-    def structure_base(val: dict, _: Type[_T]) -> _T:
+    def structure_base(val: dict, _: type[_T]) -> _T:
         _type = val.pop("type")
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
@@ -100,7 +100,7 @@ def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC1
     )
 
 
-def select_constructor_hook(specs: dict, cls: Type[_T]) -> _T:
+def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     """Use the constructor specified in the 'constructor' field for deserialization."""
     # If a constructor is specified, use it
     specs = specs.copy()

@@ -12,7 +12,6 @@
 ### Necessary imports for this example
 
 import os
-from typing import Tuple
 
 import numpy as np
 
@@ -43,7 +42,7 @@ POINTS_PER_DIM = 3 if SMOKE_TEST else 10
 # See [`custom_analytical`](./custom_analytical.md) for details.
 
 
-def sum_of_squares(*x: float) -> Tuple[float, float]:
+def sum_of_squares(*x: float) -> tuple[float, float]:
     """Calculate the sum of squares."""
     res = 0
     for y in x:

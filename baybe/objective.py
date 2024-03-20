@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, List, Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import geom_mean
 
 
-def _normalize_weights(weights: List[float]) -> List[float]:
+def _normalize_weights(weights: list[float]) -> list[float]:
     """Normalize a collection of weights such that they sum to 100.
 
     Args:
@@ -39,10 +39,10 @@ class Objective(SerialMixin):
     mode: Literal["SINGLE", "DESIRABILITY"] = field()
     """The optimization mode."""
 
-    targets: List[Target] = field(validator=min_len(1))
+    targets: list[Target] = field(validator=min_len(1))
     """The list of targets used for the objective."""
 
-    weights: List[float] = field(converter=_normalize_weights)
+    weights: list[float] = field(converter=_normalize_weights)
     """The weights used to balance the different targets. By default, all
     weights are equally important."""
 
@@ -52,14 +52,14 @@ class Objective(SerialMixin):
     """The function used to combine the different targets."""
 
     @weights.default
-    def _default_weights(self) -> List[float]:
+    def _default_weights(self) -> list[float]:
         """Create the default weights."""
         # By default, all targets are equally important.
         return [1.0] * len(self.targets)
 
     @targets.validator
     def _validate_targets(  # noqa: DOC101, DOC103
-        self, _: Any, targets: List[NumericalTarget]
+        self, _: Any, targets: list[NumericalTarget]
     ) -> None:
         """Validate targets depending on the objective mode.
 
@@ -84,7 +84,7 @@ class Objective(SerialMixin):
 
     @weights.validator
     def _validate_weights(  # noqa: DOC101, DOC103
-        self, _: Any, weights: List[float]
+        self, _: Any, weights: list[float]
     ) -> None:
         """Validate target weights.
 

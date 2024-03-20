@@ -3,7 +3,8 @@
 #  this file will resolve type errors
 # mypy: disable-error-code="arg-type"
 
-from typing import Iterable, Iterator, List, Literal, Optional
+from collections.abc import Iterable, Iterator
+from typing import Literal, Optional
 
 import pandas as pd
 from attrs import define, field
@@ -99,7 +100,7 @@ class SequentialMetaRecommender(MetaRecommender):
     """
 
     # Exposed
-    recommenders: List[PureRecommender] = field(
+    recommenders: list[PureRecommender] = field(
         converter=list, validator=deep_iterable(instance_of(PureRecommender))
     )
     """A finite-length sequence of recommenders to be used. For infinite-length

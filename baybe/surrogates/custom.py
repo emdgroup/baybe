@@ -8,7 +8,7 @@ surrogates can be trained and attempts to do so for each new DOE iteration.
 It is planned to solve this issue in the future.
 """
 
-from typing import Callable, ClassVar, Tuple
+from typing import Callable, ClassVar
 
 import torch
 from attrs import define, field, validators
@@ -74,7 +74,7 @@ def register_custom_architecture(
             ) -> None:
                 return self.model._fit(searchspace, train_x, train_y)
 
-            def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+            def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
                 return self.model._posterior(candidates)
 
             def __get_attribute__(self, attr):
@@ -151,7 +151,7 @@ if _ONNX_INSTALLED:
                 raise ModelParamsNotSupportedError()
 
         @batchify
-        def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
             model_inputs = {
                 self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)
             }

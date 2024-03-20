@@ -12,7 +12,6 @@
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -119,7 +118,7 @@ test_functions = {
 
 grid = np.meshgrid(*[p.values for p in discrete_params])
 
-lookups: Dict[str, pd.DataFrame] = {}
+lookups: dict[str, pd.DataFrame] = {}
 for function_name, function in test_functions.items():
     lookup = pd.DataFrame({f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)})
     lookup["Target"] = lookup.apply(function, axis=1)
@@ -135,7 +134,7 @@ lookup_test_task = lookups["Test_Function"]
 # To average out and reduce statistical effects that might happen due to the random
 # sampling of the provided data, we perform several Monte Carlo runs.
 
-results: List[pd.DataFrame] = []
+results: list[pd.DataFrame] = []
 for p in (0.01, 0.02, 0.05, 0.08, 0.2):
     campaign = Campaign(searchspace=searchspace, objective=objective)
     initial_data = [lookup_training_task.sample(frac=p) for _ in range(N_MC_ITERATIONS)]

@@ -5,7 +5,7 @@ import os
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -40,7 +40,7 @@ def create_example_plots(
         return
 
     # Define a fallback theme in case no configuration is found
-    fallback: Dict[str, Any] = {
+    fallback: dict[str, Any] = {
         "color": "black",
         "figsize": (24, 8),
         "fontsize": 22,
@@ -88,7 +88,7 @@ def create_example_plots(
         else:
             current_theme = themes[theme_name]
         color: str = current_theme["color"]
-        figsize: Tuple[int, int] = current_theme["figsize"]
+        figsize: tuple[int, int] = current_theme["figsize"]
         fontsize: int = current_theme["fontsize"]
         framealpha: float = current_theme["framealpha"]
 

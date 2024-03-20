@@ -1,7 +1,7 @@
 """Serialization mixin class."""
 
 import json
-from typing import Type, TypeVar
+from typing import TypeVar
 
 from baybe.serialization.core import converter
 
@@ -20,7 +20,7 @@ class SerialMixin:
         return converter.unstructure(self)
 
     @classmethod
-    def from_dict(cls: Type[_T], dictionary: dict) -> _T:
+    def from_dict(cls: type[_T], dictionary: dict) -> _T:
         """Create an object from its dictionary representation.
 
         Args:
@@ -40,7 +40,7 @@ class SerialMixin:
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls: Type[_T], string: str) -> _T:
+    def from_json(cls: type[_T], string: str) -> _T:
         """Create an object from its JSON representation.
 
         Args:

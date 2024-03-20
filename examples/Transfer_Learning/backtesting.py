@@ -13,7 +13,6 @@
 import os
 import sys
 from pathlib import Path
-from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -118,7 +117,7 @@ test_functions = {
 
 grid = np.meshgrid(*[p.values for p in discrete_params])
 
-lookups: Dict[str, pd.DataFrame] = {}
+lookups: dict[str, pd.DataFrame] = {}
 for function_name, function in test_functions.items():
     lookup = pd.DataFrame({f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)})
     lookup["Target"] = tuple(lookup.apply(function, axis=1))

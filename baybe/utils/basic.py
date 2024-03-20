@@ -1,8 +1,9 @@
 """Collection of small basic utilities."""
 
 import random
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, TypeVar
+from typing import Callable, TypeVar
 
 import numpy as np
 
@@ -23,7 +24,7 @@ class Dummy:
         return "<dummy>"
 
 
-def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> List[_C]:
+def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> list[_C]:
     """Return a list of subclasses for the given class.
 
     Args:
@@ -69,7 +70,7 @@ def hilberts_factory(factory: Callable[..., _T]) -> Iterable[_T]:
         yield factory()
 
 
-def group_duplicate_values(dictionary: Dict[_T, _U]) -> Dict[_U, List[_T]]:
+def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:
     """Identify groups of keys that have the same value.
 
     Args:
@@ -83,7 +84,7 @@ def group_duplicate_values(dictionary: Dict[_T, _U]) -> Dict[_U, List[_T]]:
         >>> group_duplicate_values({"A": 1, "B": 2, "C": 1, "D": 3})
         {1: ['B', 'C']}
     """
-    group: Dict[_U, List[_T]] = {}
+    group: dict[_U, list[_T]] = {}
     for key, value in dictionary.items():
         group.setdefault(value, []).append(key)
     return {k: v for k, v in group.items() if len(v) > 1}

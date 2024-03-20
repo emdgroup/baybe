@@ -8,7 +8,7 @@
 
 ### Necessary imports
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import torch
@@ -55,7 +55,7 @@ class MeanVarEstimator(BaseEstimator, RegressorMixin):
         """No fit needed."""
         return
 
-    def predict(self, data: Tensor) -> Tuple[Tensor, Tensor]:
+    def predict(self, data: Tensor) -> tuple[Tensor, Tensor]:
         """Predict based on ensemble unweighted mean and variance."""
         mean = torch.tensor(data.mean(axis=1))
         var = torch.tensor(data.var(axis=1))
@@ -76,7 +76,7 @@ class StackingRegressorSurrogate:
     def __init__(self):
         self.model: Optional[StackingRegressor] = None
 
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """See :class:`baybe.surrogates.Surrogate`."""
         return self.model.predict(candidates)
 

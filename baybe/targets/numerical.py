@@ -1,8 +1,9 @@
 """Numerical targets."""
 
 import warnings
+from collections.abc import Sequence
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Sequence, cast
+from typing import Any, Callable, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ from baybe.targets.transforms import (
 )
 from baybe.utils.interval import Interval, convert_bounds
 
-_VALID_TRANSFORMATIONS: Dict[TargetMode, Sequence[TargetTransformation]] = {
+_VALID_TRANSFORMATIONS: dict[TargetMode, Sequence[TargetTransformation]] = {
     TargetMode.MAX: (TargetTransformation.LINEAR,),
     TargetMode.MIN: (TargetTransformation.LINEAR,),
     TargetMode.MATCH: (TargetTransformation.TRIANGULAR, TargetTransformation.BELL),

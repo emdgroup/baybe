@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from itertools import chain
-from typing import List, Tuple, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -202,7 +202,7 @@ def fixture_mock_categories():
 
 @pytest.fixture(name="parameters")
 def fixture_parameters(
-    parameter_names: List[str], mock_substances, mock_categories, n_grid_points
+    parameter_names: list[str], mock_substances, mock_categories, n_grid_points
 ):
     """Provides example parameters via specified names."""
     # FIXME: n_grid_points causes duplicate test cases if the argument is not used
@@ -347,7 +347,7 @@ def fixture_parameters(
 
 
 @pytest.fixture(name="targets")
-def fixture_targets(target_names: List[str]):
+def fixture_targets(target_names: list[str]):
     """Provides example targets via specified names."""
     # Required for the selection to work as intended (if the input was a single string,
     # the list comprehension would match substrings instead)
@@ -391,7 +391,7 @@ def fixture_targets(target_names: List[str]):
 
 
 @pytest.fixture(name="constraints")
-def fixture_constraints(constraint_names: List[str], mock_substances, n_grid_points):
+def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_points):
     """Provides example constraints via specified names."""
     # Required for the selection to work as intended (if the input was a single string,
     # the list comprehension would match substrings instead)
@@ -798,7 +798,7 @@ def fixture_default_onnx_str() -> Union[bytes, None]:
 
 
 @pytest.fixture(name="onnx_surrogate")
-def fixture_default_onnx_surrogate(onnx_str) -> Union["CustomONNXSurrogate", None]:
+def fixture_default_onnx_surrogate(onnx_str) -> Union[CustomONNXSurrogate, None]:
     """The default ONNX model to be used if not specified differently."""
     # TODO [19298]: There should be a cleaner way than returning None.
     if not _ONNX_INSTALLED:
@@ -833,7 +833,7 @@ def run_iterations(
         campaign.add_measurements(rec)
 
 
-def get_dummy_training_data(length: int) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_dummy_training_data(length: int) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Create column-less input and target dataframes of specified length."""
     df = pd.DataFrame(np.empty((length, 0)))
     return df, df

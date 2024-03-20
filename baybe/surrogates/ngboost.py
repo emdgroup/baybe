@@ -7,7 +7,7 @@ Since we plan to refactor the surrogates, this part of the documentation will be
 available in the future. Thus, please have a look in the source code directly.
 """
 
-from typing import Any, ClassVar, Dict, Optional, Tuple
+from typing import Any, ClassVar, Optional
 
 import torch
 from attr import define, field
@@ -37,7 +37,7 @@ class NGBoostSurrogate(Surrogate):
     """Class variable encoding the default model parameters."""
 
     # Object variables
-    model_params: Dict[str, Any] = field(
+    model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=get_model_params_validator(NGBRegressor.__init__),
@@ -51,7 +51,7 @@ class NGBoostSurrogate(Surrogate):
         self.model_params = {**self._default_model_params, **self.model_params}
 
     @batchify
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
         # Get predictions
         dists = self._model.pred_dist(candidates)
