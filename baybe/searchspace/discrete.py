@@ -20,6 +20,7 @@ from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
@@ -39,8 +40,8 @@ class SubspaceDiscrete(SerialMixin):
     parameter views.
     """
 
-    parameters: List[DiscreteParameter] = field(
-        validator=lambda _1, _2, x: validate_parameter_names(x)
+    parameters: Tuple[DiscreteParameter, ...] = field(
+        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
     )
     """The list of parameters of the subspace."""
 
@@ -53,7 +54,9 @@ class SubspaceDiscrete(SerialMixin):
     empty_encoding: bool = field(default=False)
     """Flag encoding whether an empty encoding is used."""
 
-    constraints: List[DiscreteConstraint] = field(factory=list)
+    constraints: Tuple[DiscreteConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
+    )
     """A list of constraints for restricting the space."""
 
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
