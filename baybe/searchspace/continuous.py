@@ -13,6 +13,7 @@ from baybe.constraints import (
     ContinuousLinearInequalityConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -103,7 +104,7 @@ class SubspaceContinuous(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[Sequence[NumericalContinuousParameter]] = None,
+        parameters: Optional[Sequence[ContinuousParameter]] = None,
     ) -> SubspaceContinuous:
         """Create a hyperrectangle-shaped continuous subspace from a dataframe.
 
@@ -121,10 +122,23 @@ class SubspaceContinuous(SerialMixin):
                 is created with default optional arguments. For more details, see
                 :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
 
+        Raises:
+            ValueError: If parameter types other than
+                :class:`baybe.parameters.numerical.NumericalContinuousParameter`
+                are provided.
+
         Returns:
             The created continuous subspace.
         """
         # TODO: Add option for convex hull once constraints are in place
+
+        if parameters and not all(
+            isinstance(p, NumericalContinuousParameter) for p in parameters
+        ):
+            raise ValueError(
+                "Currently, only parameters of type "
+                "'{NumericalContinuousParameter.__name__}' are supported."
+            )
 
         def continuous_parameter_factory(name: str, values: Collection[Any]):
             return NumericalContinuousParameter(name, (min(values), max(values)))
