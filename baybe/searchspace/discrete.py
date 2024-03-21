@@ -200,8 +200,8 @@ class SubspaceDiscrete(SerialMixin):
     @classmethod
     def from_product(
         cls,
-        parameters: List[DiscreteParameter],
-        constraints: Optional[List[DiscreteConstraint]] = None,
+        parameters: Sequence[DiscreteParameter],
+        constraints: Optional[Sequence[DiscreteConstraint]] = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
@@ -225,7 +225,7 @@ class SubspaceDiscrete(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[List[DiscreteParameter]] = None,
+        parameters: Optional[Sequence[DiscreteParameter]] = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
@@ -581,7 +581,9 @@ class SubspaceDiscrete(SerialMixin):
         return comp_rep
 
 
-def _apply_constraint_filter(df: pd.DataFrame, constraints: List[DiscreteConstraint]):
+def _apply_constraint_filter(
+    df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
+):
     """Remove discrete search space entries inplace based on constraints.
 
     Args:
