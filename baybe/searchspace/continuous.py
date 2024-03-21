@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, List, Optional, Tuple, cast
+from typing import Any, Collection, Optional, Sequence, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -103,7 +103,7 @@ class SubspaceContinuous(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[List[NumericalContinuousParameter]] = None,
+        parameters: Optional[Sequence[NumericalContinuousParameter]] = None,
     ) -> SubspaceContinuous:
         """Create a hyperrectangle-shaped continuous subspace from a dataframe.
 
@@ -142,9 +142,9 @@ class SubspaceContinuous(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_names(self) -> List[str]:
+    def param_names(self) -> Tuple[str, ...]:
         """Return list of parameter names."""
-        return [p.name for p in self.parameters]
+        return tuple(p.name for p in self.parameters)
 
     @property
     def param_bounds_comp(self) -> np.ndarray:

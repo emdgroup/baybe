@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, Sequence, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -93,8 +93,8 @@ class SearchSpace(SerialMixin):
     @classmethod
     def from_product(
         cls,
-        parameters: List[Parameter],
-        constraints: Optional[List[Constraint]] = None,
+        parameters: Sequence[Parameter],
+        constraints: Optional[Sequence[Constraint]] = None,
         empty_encoding: bool = False,
     ) -> SearchSpace:
         """Create a search space from a cartesian product.
@@ -155,7 +155,7 @@ class SearchSpace(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: List[Parameter],
+        parameters: Sequence[Parameter],
     ) -> SearchSpace:
         """Create a search space from a specified set of parameter configurations.
 
