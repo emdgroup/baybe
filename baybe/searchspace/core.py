@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional, cast
+from typing import List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -195,17 +195,17 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def parameters(self) -> List[Parameter]:
+    def parameters(self) -> Tuple[Parameter, ...]:
         """Return the list of parameters of the search space."""
-        return self.discrete.parameters + self.continuous.parameters
+        return (*self.discrete.parameters, *self.continuous.parameters)
 
     @property
-    def constraints(self) -> List[Constraint]:
+    def constraints(self) -> Tuple[Constraint, ...]:
         """Return the constraints of the search space."""
         return (
-            self.discrete.constraints
-            + self.continuous.constraints_lin_eq
-            + self.continuous.constraints_lin_ineq
+            *self.discrete.constraints,
+            *self.continuous.constraints_lin_eq,
+            *self.continuous.constraints_lin_ineq,
         )
 
     @property
