@@ -127,7 +127,7 @@ class SubspaceDiscrete(SerialMixin):
         # Exclude inactive tasks from search
         df = pd.DataFrame(False, columns=_METADATA_COLUMNS, index=self.exp_rep.index)
         off_task_idxs = ~self._on_task_configurations()
-        df.loc[off_task_idxs.values, "dont_recommend"] = True
+        df.loc[off_task_idxs.values, "dont_recommend"] = True  # type: ignore
         return df
 
     @metadata.validator
@@ -145,7 +145,7 @@ class SubspaceDiscrete(SerialMixin):
         if self.is_empty:
             return
         off_task_idxs = ~self._on_task_configurations()
-        if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
+        if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():  # type: ignore
             raise ValueError(
                 "Inconsistent instructions given: The provided metadata allows "
                 "testing parameter configurations for inactive tasks."
@@ -173,7 +173,7 @@ class SubspaceDiscrete(SerialMixin):
         if self.is_empty:
             return
         off_task_idxs = ~self._on_task_configurations()
-        self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True
+        self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True  # type: ignore
 
     def _on_task_configurations(self) -> pd.Series:
         """Retrieve the parameter configurations for the active tasks."""
