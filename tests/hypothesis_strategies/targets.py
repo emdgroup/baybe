@@ -5,19 +5,19 @@ import hypothesis.strategies as st
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS, NumericalTarget
 
-from .utils import interval
+from .utils import intervals
 
 target_name = st.text(min_size=1)
 """A strategy that generates target names."""
 
 
 @st.composite
-def numerical_target(draw: st.DrawFn):
+def numerical_targets(draw: st.DrawFn):
     """Generate :class:`baybe.targets.numerical.NumericalTarget`."""
     name = draw(target_name)
     mode = draw(st.sampled_from(TargetMode))
     bounds = draw(
-        interval(
+        intervals(
             exclude_half_bounded=True, exclude_fully_unbounded=mode is TargetMode.MATCH
         )
     )
@@ -28,5 +28,5 @@ def numerical_target(draw: st.DrawFn):
     )
 
 
-target = numerical_target()
+targets = numerical_targets()
 """A strategy that generates targets."""

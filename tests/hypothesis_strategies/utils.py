@@ -7,7 +7,7 @@ from baybe.utils.interval import Interval
 
 
 @st.composite
-def interval(
+def intervals(
     draw: st.DrawFn,
     *,
     exclude_bounded: bool = False,
