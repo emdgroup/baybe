@@ -250,13 +250,14 @@ class SearchSpace(SerialMixin):
             )
         except StopIteration:
             return None
-        # TODO[11611]: The current approach has two limitations:
+        # TODO[11611]: The current approach has three limitations:
         #   1.  It matches by column name and thus assumes that the parameter name
         #       is used as the column name.
         #   2.  It relies on the current implementation detail that discrete parameters
         #       appear first in the computational dataframe.
+        #   3.  It assumes there exists exactly one task parameter
         #   --> Fix this when refactoring the data
-        return self.discrete.comp_rep.columns.get_loc(task_param.name)
+        return cast(int, self.discrete.comp_rep.columns.get_loc(task_param.name))
 
     @property
     def n_tasks(self) -> int:
