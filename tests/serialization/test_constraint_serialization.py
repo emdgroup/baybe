@@ -1,16 +1,31 @@
 """Test serialization of constraints."""
 
+import hypothesis.strategies as st
 import pytest
 from hypothesis import given
+from pytest import param
 
 from baybe.constraints.base import Constraint
 
-from ..hypothesis_strategies.constraints import discrete_excludes_constraints
+from ..hypothesis_strategies.constraints import (
+    discrete_excludes_constraints,
+    discrete_product_constraints,
+    discrete_sum_constraints,
+)
 
 
-@given(discrete_excludes_constraints())
-def test_constraint_roundtrip(constraint):
+@pytest.mark.parametrize(
+    "constraint_strategy",
+    [
+        param(discrete_excludes_constraints(), id="DiscreteExcludeConstraint"),
+        param(discrete_sum_constraints(), id="DiscreteSumConstraint"),
+        param(discrete_product_constraints(), id="DiscreteProductConstraint"),
+    ],
+)
+@given(data=st.data())
+def test_constraint_roundtrip(constraint_strategy, data):
     """A serialization roundtrip yields an equivalent object."""
+    constraint = data.draw(constraint_strategy)
     string = constraint.to_json()
     constraint2 = Constraint.from_json(string)
     assert constraint == constraint2, (constraint, constraint2)

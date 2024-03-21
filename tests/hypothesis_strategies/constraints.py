@@ -9,11 +9,17 @@ from baybe.constraints.conditions import (
     ThresholdCondition,
     _valid_logic_combiners,
 )
-from baybe.constraints.discrete import DiscreteExcludeConstraint
+from baybe.constraints.discrete import (
+    DiscreteExcludeConstraint,
+    DiscreteProductConstraint,
+    DiscreteSumConstraint,
+)
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
 
 from .parameters import discrete_parameters
+
+_disc_params = st.lists(discrete_parameters, min_size=1, unique_by=lambda p: p.name)
 
 
 def sub_selection_conditions(p: DiscreteParameter):
@@ -35,9 +41,8 @@ def discrete_excludes_constraints(
 ):
     """Generate :class:`baybe.constraints.discrete.DiscreteExcludeConstraint`."""
     if parameters is None:
-        parameters = draw(
-            st.lists(discrete_parameters, min_size=1, unique_by=lambda p: p.name)
-        )
+        parameters = draw(_disc_params)
+
     parameter_names = [p.name for p in parameters]
 
     # Threshold conditions only make sense for numerical parameters
@@ -50,3 +55,29 @@ def discrete_excludes_constraints(
 
     combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
     return DiscreteExcludeConstraint(parameter_names, conditions, combiner)
+
+
+@st.composite
+def discrete_sum_constraints(
+    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+):
+    """Generate :class:`baybe.constraints.discrete.DiscreteSumConstraint`."""
+    if parameters is None:
+        parameters = draw(_disc_params)
+
+    parameter_names = [p.name for p in parameters]
+    conditions = draw(threshold_conditions)
+    return DiscreteSumConstraint(parameter_names, conditions)
+
+
+@st.composite
+def discrete_product_constraints(
+    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+):
+    """Generate :class:`baybe.constraints.discrete.DiscreteProductConstraint`."""
+    if parameters is None:
+        parameters = draw(_disc_params)
+
+    parameter_names = [p.name for p in parameters]
+    conditions = draw(threshold_conditions)
+    return DiscreteProductConstraint(parameter_names, conditions)
