@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, Iterable, List, Optional, Tuple
+from typing import Any, Collection, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -269,9 +269,9 @@ class SubspaceDiscrete(SerialMixin):
     def from_simplex(
         cls,
         max_sum: float,
-        simplex_parameters: List[NumericalDiscreteParameter],
-        product_parameters: Optional[List[DiscreteParameter]] = None,
-        constraints: Optional[List[DiscreteConstraint]] = None,
+        simplex_parameters: Sequence[NumericalDiscreteParameter],
+        product_parameters: Optional[Sequence[DiscreteParameter]] = None,
+        constraints: Optional[Sequence[DiscreteConstraint]] = None,
         min_nonzero: int = 0,
         max_nonzero: Optional[int] = None,
         boundary_only: bool = False,
@@ -326,7 +326,7 @@ class SubspaceDiscrete(SerialMixin):
             max_nonzero = len(simplex_parameters)
 
         # Validate constraints
-        validate_constraints(constraints, simplex_parameters + product_parameters)
+        validate_constraints(constraints, [*simplex_parameters, *product_parameters])
 
         # Validate parameter types
         if not (
@@ -463,7 +463,7 @@ class SubspaceDiscrete(SerialMixin):
         _apply_constraint_filter(exp_rep, constraints)
 
         return cls(
-            parameters=simplex_parameters + product_parameters,
+            parameters=[*simplex_parameters, *product_parameters],
             exp_rep=exp_rep,
             constraints=constraints,
         )
