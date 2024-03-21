@@ -1,6 +1,6 @@
 """Validation functionality for search spaces."""
 
-from typing import List
+from typing import Collection
 
 from baybe.exceptions import EmptySearchSpaceError
 from baybe.parameters import TaskParameter
@@ -8,7 +8,7 @@ from baybe.parameters.base import Parameter
 
 
 def validate_parameter_names(  # noqa: DOC101, DOC103
-    parameters: List[Parameter],
+    parameters: Collection[Parameter],
 ) -> None:
     """Validate the parameter names.
 
@@ -20,7 +20,7 @@ def validate_parameter_names(  # noqa: DOC101, DOC103
         raise ValueError("All parameters must have unique names.")
 
 
-def validate_parameters(parameters: List[Parameter]) -> None:  # noqa: DOC101, DOC103
+def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC101, DOC103
     """Validate the parameters.
 
     Raises:
