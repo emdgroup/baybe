@@ -130,20 +130,18 @@ class SearchSpace(SerialMixin):
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
             parameters=[p for p in parameters if isinstance(p, DiscreteParameter)],
-            constraints=[
-                cast(DiscreteConstraint, c) for c in constraints if c.is_discrete
-            ],
+            constraints=[c for c in constraints if isinstance(c, DiscreteConstraint)],
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
             parameters=[p for p in parameters if isinstance(p, ContinuousParameter)],
             constraints_lin_eq=[
-                cast(ContinuousLinearEqualityConstraint, c)
+                c
                 for c in constraints
                 if isinstance(c, ContinuousLinearEqualityConstraint)
             ],
             constraints_lin_ineq=[
-                cast(ContinuousLinearInequalityConstraint, c)
+                c
                 for c in constraints
                 if isinstance(c, ContinuousLinearInequalityConstraint)
             ],
