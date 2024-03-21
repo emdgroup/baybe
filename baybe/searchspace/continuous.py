@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, List, Optional, cast
+from typing import Any, Collection, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,7 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -29,16 +30,18 @@ class SubspaceContinuous(SerialMixin):
     parameter views.
     """
 
-    parameters: List[NumericalContinuousParameter] = field(
-        validator=lambda _1, _2, x: validate_parameter_names(x)
+    parameters: Tuple[NumericalContinuousParameter, ...] = field(
+        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
     )
     """The list of parameters of the subspace."""
 
-    constraints_lin_eq: List[ContinuousLinearEqualityConstraint] = field(factory=list)
+    constraints_lin_eq: Tuple[ContinuousLinearEqualityConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
+    )
     """List of linear equality constraints."""
 
-    constraints_lin_ineq: List[ContinuousLinearInequalityConstraint] = field(
-        factory=list
+    constraints_lin_ineq: Tuple[ContinuousLinearInequalityConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
     )
     """List of linear inequality constraints."""
 
