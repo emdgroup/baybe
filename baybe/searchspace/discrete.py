@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from itertools import zip_longest
 from typing import Any, Collection, Iterable, List, Optional, Tuple
 
 import numpy as np
@@ -424,12 +423,11 @@ class SubspaceDiscrete(SerialMixin):
             min_nonzero_to_go,
             max_nonzero_to_go,
         ) in enumerate(
-            zip_longest(
+            zip(
                 simplex_parameters,
-                min_sum_upcoming,
-                min_nonzero_upcoming,
-                max_nonzero_upcoming,
-                fillvalue=0,
+                np.append(min_sum_upcoming, 0),
+                np.append(min_nonzero_upcoming, 0),
+                np.append(max_nonzero_upcoming, 0),
             )
         ):
             if i == 0:
