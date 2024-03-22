@@ -37,10 +37,11 @@ def sub_selection_conditions(superset: Optional[List[Any]] = None):
     return st.builds(SubSelectionCondition, st.lists(element_strategy, unique=True))
 
 
-threshold_conditions = st.builds(
-    ThresholdCondition, threshold=st.floats(allow_infinity=False, allow_nan=False)
-)
-"""Generate :class:`baybe.constraints.conditions.ThresholdCondition`."""
+def threshold_conditions():
+    """Generate :class:`baybe.constraints.conditions.ThresholdCondition`."""
+    return st.builds(
+        ThresholdCondition, threshold=st.floats(allow_infinity=False, allow_nan=False)
+    )
 
 
 @st.composite
@@ -55,7 +56,7 @@ def discrete_excludes_constraints(
 
     # Threshold conditions only make sense for numerical parameters
     conditions = [
-        draw(st.one_of([sub_selection_conditions(p.values), threshold_conditions]))
+        draw(st.one_of([sub_selection_conditions(p.values), threshold_conditions()]))
         if isinstance(p, NumericalDiscreteParameter)
         else draw(sub_selection_conditions(p.values))
         for p in parameters
@@ -74,7 +75,7 @@ def discrete_sum_constraints(
         parameters = draw(_disc_params)
 
     parameter_names = [p.name for p in parameters]
-    conditions = draw(threshold_conditions)
+    conditions = draw(threshold_conditions())
     return DiscreteSumConstraint(parameter_names, conditions)
 
 
@@ -87,7 +88,7 @@ def discrete_product_constraints(
         parameters = draw(_disc_params)
 
     parameter_names = [p.name for p in parameters]
-    conditions = draw(threshold_conditions)
+    conditions = draw(threshold_conditions())
     return DiscreteProductConstraint(parameter_names, conditions)
 
 
