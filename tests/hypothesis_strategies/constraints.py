@@ -9,6 +9,10 @@ from baybe.constraints.conditions import (
     ThresholdCondition,
     _valid_logic_combiners,
 )
+from baybe.constraints.continuous import (
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
+)
 from baybe.constraints.discrete import (
     DiscreteExcludeConstraint,
     DiscreteLinkedParametersConstraint,
@@ -107,3 +111,43 @@ def discrete_linked_parameters_constraints(
 
     parameter_names = [p.name for p in parameters]
     return DiscreteLinkedParametersConstraint(parameter_names)
+
+
+@st.composite
+def continuous_linear_equality_constraints(
+    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+):
+    """Generate :class:`baybe.constraints.continuous.ContinuousLinearEqualityConstraint`."""  # noqa:E501
+    if parameters is None:
+        parameters = draw(_disc_params)
+
+    parameter_names = [p.name for p in parameters]
+    coefficients = draw(
+        st.lists(
+            st.floats(allow_nan=False),
+            min_size=len(parameter_names),
+            max_size=len(parameter_names),
+        )
+    )
+    rhs = draw(st.floats(allow_nan=False))
+    return ContinuousLinearEqualityConstraint(parameter_names, coefficients, rhs)
+
+
+@st.composite
+def continuous_linear_inequality_constraints(
+    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+):
+    """Generate :class:`baybe.constraints.continuous.ContinuousLinearInequalityConstraint`."""  # noqa:E501
+    if parameters is None:
+        parameters = draw(_disc_params)
+
+    parameter_names = [p.name for p in parameters]
+    coefficients = draw(
+        st.lists(
+            st.floats(allow_nan=False),
+            min_size=len(parameter_names),
+            max_size=len(parameter_names),
+        )
+    )
+    rhs = draw(st.floats(allow_nan=False))
+    return ContinuousLinearInequalityConstraint(parameter_names, coefficients, rhs)
