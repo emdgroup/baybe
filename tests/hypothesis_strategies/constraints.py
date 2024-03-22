@@ -108,14 +108,21 @@ discrete_linked_parameters_constraints = partial(
 
 
 @st.composite
-def continuous_linear_equality_constraints(
-    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+def _continuous_linear_constraints(
+    draw: st.DrawFn,
+    constraint_type: Union[
+        Type[ContinuousLinearEqualityConstraint],
+        Type[ContinuousLinearInequalityConstraint],
+    ],
+    parameter_names: Optional[List[str]] = None,
 ):
-    """Generate :class:`baybe.constraints.continuous.ContinuousLinearEqualityConstraint`."""  # noqa:E501
-    if parameters is None:
-        parameters = draw(_disc_params)
+    """Generate continuous linear constraints."""  # noqa:E501
+    if parameter_names is None:
+        parameter_names = draw(st.lists(st.text(), unique=True, min_size=1))
+    else:
+        assert len(parameter_names) > 0
+        assert len(parameter_names) == len(set(parameter_names))
 
-    parameter_names = [p.name for p in parameters]
     coefficients = draw(
         st.lists(
             st.floats(allow_nan=False),
@@ -124,24 +131,15 @@ def continuous_linear_equality_constraints(
         )
     )
     rhs = draw(st.floats(allow_nan=False))
-    return ContinuousLinearEqualityConstraint(parameter_names, coefficients, rhs)
+    return constraint_type(parameter_names, coefficients, rhs)
 
 
-@st.composite
-def continuous_linear_inequality_constraints(
-    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
-):
-    """Generate :class:`baybe.constraints.continuous.ContinuousLinearInequalityConstraint`."""  # noqa:E501
-    if parameters is None:
-        parameters = draw(_disc_params)
+continuous_linear_equality_constraints = partial(
+    _continuous_linear_constraints, ContinuousLinearEqualityConstraint
+)
+"""Generate :class:`baybe.constraints.continuous.ContinuousLinearEqualityConstraint`."""
 
-    parameter_names = [p.name for p in parameters]
-    coefficients = draw(
-        st.lists(
-            st.floats(allow_nan=False),
-            min_size=len(parameter_names),
-            max_size=len(parameter_names),
-        )
-    )
-    rhs = draw(st.floats(allow_nan=False))
-    return ContinuousLinearInequalityConstraint(parameter_names, coefficients, rhs)
+continuous_linear_inequality_constraints = partial(
+    _continuous_linear_constraints, ContinuousLinearInequalityConstraint
+)
+"""Generate :class:`baybe.constraints.continuous.ContinuousLinearInequalityConstraint`."""  # noqa:E501
