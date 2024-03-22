@@ -1,6 +1,7 @@
 """Hypothesis strategies for constraints."""
 
-from typing import Any, List, Optional
+from functools import partial
+from typing import Any, List, Optional, Type, Union
 
 import hypothesis.strategies as st
 
@@ -66,30 +67,31 @@ def discrete_excludes_constraints(
     return DiscreteExcludeConstraint(parameter_names, conditions, combiner)
 
 
-@st.composite
-def discrete_sum_constraints(
-    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+def _discrete_sum_or_product_constraints(
+    constraint_type: Union[
+        Type[DiscreteSumConstraint], Type[DiscreteProductConstraint]
+    ],
+    parameter_names: Optional[List[str]] = None,
 ):
-    """Generate :class:`baybe.constraints.discrete.DiscreteSumConstraint`."""
-    if parameters is None:
-        parameters = draw(_disc_params)
+    """Generate sum or product constraints."""
+    if parameter_names is None:
+        parameters = st.lists(st.text(), unique=True, min_size=1)
+    else:
+        assert len(parameter_names) > 0
+        assert len(parameter_names) == len(set(parameter_names))
+        parameters = st.just(parameter_names)
+    return st.builds(constraint_type, parameters, threshold_conditions())
 
-    parameter_names = [p.name for p in parameters]
-    conditions = draw(threshold_conditions())
-    return DiscreteSumConstraint(parameter_names, conditions)
 
+discrete_sum_constraints = partial(
+    _discrete_sum_or_product_constraints, DiscreteSumConstraint
+)
+"""Generate :class:`baybe.constraints.discrete.DiscreteSumConstraint`."""
 
-@st.composite
-def discrete_product_constraints(
-    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
-):
-    """Generate :class:`baybe.constraints.discrete.DiscreteProductConstraint`."""
-    if parameters is None:
-        parameters = draw(_disc_params)
-
-    parameter_names = [p.name for p in parameters]
-    conditions = draw(threshold_conditions())
-    return DiscreteProductConstraint(parameter_names, conditions)
+discrete_product_constraints = partial(
+    _discrete_sum_or_product_constraints, DiscreteProductConstraint
+)
+"""Generate :class:`baybe.constraints.discrete.DiscreteProductConstraint`."""
 
 
 @st.composite
