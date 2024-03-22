@@ -1,6 +1,6 @@
 """Hypothesis strategies for constraints."""
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import hypothesis.strategies as st
 
@@ -28,11 +28,13 @@ from .parameters import discrete_parameters
 _disc_params = st.lists(discrete_parameters, min_size=1, unique_by=lambda p: p.name)
 
 
-def sub_selection_conditions(p: DiscreteParameter):
+def sub_selection_conditions(superset: Optional[List[Any]] = None):
     """Generate :class:`baybe.constraints.conditions.SubSelectionCondition`."""
-    return st.builds(
-        SubSelectionCondition, st.lists(st.sampled_from(p.values), unique=True)
-    )
+    if superset is None:
+        element_strategy = st.text()
+    else:
+        element_strategy = st.sampled_from(superset)
+    return st.builds(SubSelectionCondition, st.lists(element_strategy, unique=True))
 
 
 threshold_conditions = st.builds(
@@ -53,9 +55,9 @@ def discrete_excludes_constraints(
 
     # Threshold conditions only make sense for numerical parameters
     conditions = [
-        draw(st.one_of([sub_selection_conditions(p), threshold_conditions]))
+        draw(st.one_of([sub_selection_conditions(p.values), threshold_conditions]))
         if isinstance(p, NumericalDiscreteParameter)
-        else draw(sub_selection_conditions(p))
+        else draw(sub_selection_conditions(p.values))
         for p in parameters
     ]
 
