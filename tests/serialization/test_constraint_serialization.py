@@ -9,6 +9,8 @@ from baybe.constraints.base import Constraint
 
 from ..hypothesis_strategies.constraints import (
     discrete_excludes_constraints,
+    discrete_linked_parameters_constraints,
+    discrete_no_label_duplicates_constraints,
     discrete_product_constraints,
     discrete_sum_constraints,
 )
@@ -20,6 +22,14 @@ from ..hypothesis_strategies.constraints import (
         param(discrete_excludes_constraints(), id="DiscreteExcludeConstraint"),
         param(discrete_sum_constraints(), id="DiscreteSumConstraint"),
         param(discrete_product_constraints(), id="DiscreteProductConstraint"),
+        param(
+            discrete_no_label_duplicates_constraints(),
+            id="DiscreteNoLabelDuplicatesConstraint",
+        ),
+        param(
+            discrete_linked_parameters_constraints(),
+            id="DiscreteLinkedParametersConstraint",
+        ),
     ],
 )
 @given(data=st.data())

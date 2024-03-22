@@ -11,6 +11,8 @@ from baybe.constraints.conditions import (
 )
 from baybe.constraints.discrete import (
     DiscreteExcludeConstraint,
+    DiscreteLinkedParametersConstraint,
+    DiscreteNoLabelDuplicatesConstraint,
     DiscreteProductConstraint,
     DiscreteSumConstraint,
 )
@@ -81,3 +83,27 @@ def discrete_product_constraints(
     parameter_names = [p.name for p in parameters]
     conditions = draw(threshold_conditions)
     return DiscreteProductConstraint(parameter_names, conditions)
+
+
+@st.composite
+def discrete_no_label_duplicates_constraints(
+    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+):
+    """Generate :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`."""  # noqa:E501
+    if parameters is None:
+        parameters = draw(_disc_params)
+
+    parameter_names = [p.name for p in parameters]
+    return DiscreteNoLabelDuplicatesConstraint(parameter_names)
+
+
+@st.composite
+def discrete_linked_parameters_constraints(
+    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
+):
+    """Generate :class:`baybe.constraints.discrete.DiscreteLinkedParametersConstraint`."""  # noqa:E501
+    if parameters is None:
+        parameters = draw(_disc_params)
+
+    parameter_names = [p.name for p in parameters]
+    return DiscreteLinkedParametersConstraint(parameter_names)
