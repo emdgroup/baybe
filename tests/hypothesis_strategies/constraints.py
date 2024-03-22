@@ -67,55 +67,44 @@ def discrete_excludes_constraints(
     return DiscreteExcludeConstraint(parameter_names, conditions, combiner)
 
 
-def _discrete_sum_or_product_constraints(
+def _discrete_constraints(
     constraint_type: Union[
-        Type[DiscreteSumConstraint], Type[DiscreteProductConstraint]
+        Type[DiscreteSumConstraint],
+        Type[DiscreteProductConstraint],
+        Type[DiscreteNoLabelDuplicatesConstraint],
+        Type[DiscreteLinkedParametersConstraint],
     ],
     parameter_names: Optional[List[str]] = None,
 ):
-    """Generate sum or product constraints."""
+    """Generate discrete constraints."""
     if parameter_names is None:
         parameters = st.lists(st.text(), unique=True, min_size=1)
     else:
         assert len(parameter_names) > 0
         assert len(parameter_names) == len(set(parameter_names))
         parameters = st.just(parameter_names)
-    return st.builds(constraint_type, parameters, threshold_conditions())
+
+    if constraint_type in [DiscreteSumConstraint, DiscreteProductConstraint]:
+        return st.builds(constraint_type, parameters, threshold_conditions())
+    else:
+        return st.builds(constraint_type, parameters)
 
 
-discrete_sum_constraints = partial(
-    _discrete_sum_or_product_constraints, DiscreteSumConstraint
-)
+discrete_sum_constraints = partial(_discrete_constraints, DiscreteSumConstraint)
 """Generate :class:`baybe.constraints.discrete.DiscreteSumConstraint`."""
 
-discrete_product_constraints = partial(
-    _discrete_sum_or_product_constraints, DiscreteProductConstraint
-)
+discrete_product_constraints = partial(_discrete_constraints, DiscreteProductConstraint)
 """Generate :class:`baybe.constraints.discrete.DiscreteProductConstraint`."""
 
+discrete_no_label_duplicates_constraints = partial(
+    _discrete_constraints, DiscreteNoLabelDuplicatesConstraint
+)
+"""Generate :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`."""
 
-@st.composite
-def discrete_no_label_duplicates_constraints(
-    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
-):
-    """Generate :class:`baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`."""  # noqa:E501
-    if parameters is None:
-        parameters = draw(_disc_params)
-
-    parameter_names = [p.name for p in parameters]
-    return DiscreteNoLabelDuplicatesConstraint(parameter_names)
-
-
-@st.composite
-def discrete_linked_parameters_constraints(
-    draw: st.DrawFn, parameters: Optional[List[DiscreteParameter]] = None
-):
-    """Generate :class:`baybe.constraints.discrete.DiscreteLinkedParametersConstraint`."""  # noqa:E501
-    if parameters is None:
-        parameters = draw(_disc_params)
-
-    parameter_names = [p.name for p in parameters]
-    return DiscreteLinkedParametersConstraint(parameter_names)
+discrete_linked_parameters_constraints = partial(
+    _discrete_constraints, DiscreteLinkedParametersConstraint
+)
+"""Generate :class:`baybe.constraints.discrete.DiscreteLinkedParametersConstraint`."""
 
 
 @st.composite
