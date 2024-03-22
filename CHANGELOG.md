@@ -5,12 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Changed
-- More detailed and sophisticated search space user guide
-
 ### Added
 - Simulation user guide
 - Example for transfer learning backtest utility
+- `hypothesis` strategies and roundtrip tests for constraints
+
+### Changed
+- More detailed and sophisticated search space user guide
 
 ## [0.8.1] - 2024-03-11
 ### Added
