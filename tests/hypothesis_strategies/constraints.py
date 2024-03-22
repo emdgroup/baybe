@@ -24,10 +24,6 @@ from baybe.constraints.discrete import (
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
 
-from .parameters import discrete_parameters
-
-_disc_params = st.lists(discrete_parameters, min_size=1, unique_by=lambda p: p.name)
-
 
 def sub_selection_conditions(superset: Optional[List[Any]] = None):
     """Generate :class:`baybe.constraints.conditions.SubSelectionCondition`."""
@@ -51,17 +47,25 @@ def discrete_excludes_constraints(
 ):
     """Generate :class:`baybe.constraints.discrete.DiscreteExcludeConstraint`."""
     if parameters is None:
-        parameters = draw(_disc_params)
+        parameter_names = draw(st.lists(st.text(), unique=True, min_size=1))
+        conditions = draw(
+            st.lists(
+                st.one_of(sub_selection_conditions(), threshold_conditions()),
+                min_size=len(parameter_names),
+                max_size=len(parameter_names),
+            )
+        )
 
-    parameter_names = [p.name for p in parameters]
+    else:
+        parameter_names = [p.name for p in parameters]
 
-    # Threshold conditions only make sense for numerical parameters
-    conditions = [
-        draw(st.one_of([sub_selection_conditions(p.values), threshold_conditions()]))
-        if isinstance(p, NumericalDiscreteParameter)
-        else draw(sub_selection_conditions(p.values))
-        for p in parameters
-    ]
+        # Threshold conditions only make sense for numerical parameters
+        conditions = [
+            draw(st.one_of(sub_selection_conditions(p.values), threshold_conditions()))
+            if isinstance(p, NumericalDiscreteParameter)
+            else draw(sub_selection_conditions(p.values))
+            for p in parameters
+        ]
 
     combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
     return DiscreteExcludeConstraint(parameter_names, conditions, combiner)
