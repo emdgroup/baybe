@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Clean
         run: |
           python -c 'import shutil; [shutil.rmtree(p, True) for p in ("build", "dist")]'
@@ -73,7 +73,7 @@ jobs:
       - uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Install test-package
         run: |
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ baybe==${{  github.ref_name }}

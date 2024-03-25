@@ -28,12 +28,6 @@ from baybe.telemetry import (
 )
 from baybe.utils.boolean import eq_dataframe
 
-# Converter for config validation
-_validation_converter = converter.copy()
-_validation_converter.register_structure_hook(
-    SearchSpace, validate_searchspace_from_config
-)
-
 
 @define
 class Campaign(SerialMixin):
@@ -342,3 +336,10 @@ converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
 )
 converter.register_structure_hook(Campaign, structure_hook)
+
+
+# Converter for config validation
+_validation_converter = converter.copy()
+_validation_converter.register_structure_hook(
+    SearchSpace, validate_searchspace_from_config
+)
