@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for Python 3.12
 - Upgraded syntax to Python 3.9
 
+### Removed
+- Optional `telemetry` dependency is no longer a group
+
 ## [0.8.1] - 2024-03-11
 ### Added
 - Better human readable `__str__` representation of campaign
