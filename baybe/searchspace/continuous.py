@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, List, Optional
+from typing import Any, Collection, Optional, Sequence, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -13,9 +13,11 @@ from baybe.constraints import (
     ContinuousLinearInequalityConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
+from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -29,16 +31,18 @@ class SubspaceContinuous(SerialMixin):
     parameter views.
     """
 
-    parameters: List[NumericalContinuousParameter] = field(
-        validator=lambda _1, _2, x: validate_parameter_names(x)
+    parameters: Tuple[NumericalContinuousParameter, ...] = field(
+        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
     )
     """The list of parameters of the subspace."""
 
-    constraints_lin_eq: List[ContinuousLinearEqualityConstraint] = field(factory=list)
+    constraints_lin_eq: Tuple[ContinuousLinearEqualityConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
+    )
     """List of linear equality constraints."""
 
-    constraints_lin_ineq: List[ContinuousLinearInequalityConstraint] = field(
-        factory=list
+    constraints_lin_ineq: Tuple[ContinuousLinearInequalityConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
     )
     """List of linear inequality constraints."""
 
@@ -91,7 +95,7 @@ class SubspaceContinuous(SerialMixin):
 
         # Create the corresponding parameters and from them the search space
         parameters = [
-            NumericalContinuousParameter(name, bound)
+            NumericalContinuousParameter(cast(str, name), bound)
             for (name, bound) in bounds.items()
         ]
         return SubspaceContinuous(parameters)
@@ -100,7 +104,7 @@ class SubspaceContinuous(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[List[NumericalContinuousParameter]] = None,
+        parameters: Optional[Sequence[ContinuousParameter]] = None,
     ) -> SubspaceContinuous:
         """Create a hyperrectangle-shaped continuous subspace from a dataframe.
 
@@ -118,10 +122,23 @@ class SubspaceContinuous(SerialMixin):
                 is created with default optional arguments. For more details, see
                 :func:`baybe.parameters.utils.get_parameters_from_dataframe`.
 
+        Raises:
+            ValueError: If parameter types other than
+                :class:`baybe.parameters.numerical.NumericalContinuousParameter`
+                are provided.
+
         Returns:
             The created continuous subspace.
         """
         # TODO: Add option for convex hull once constraints are in place
+
+        if parameters and not all(
+            isinstance(p, NumericalContinuousParameter) for p in parameters
+        ):
+            raise ValueError(
+                "Currently, only parameters of type "
+                "'{NumericalContinuousParameter.__name__}' are supported."
+            )
 
         def continuous_parameter_factory(name: str, values: Collection[Any]):
             return NumericalContinuousParameter(name, (min(values), max(values)))
@@ -139,9 +156,9 @@ class SubspaceContinuous(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_names(self) -> List[str]:
+    def param_names(self) -> Tuple[str, ...]:
         """Return list of parameter names."""
-        return [p.name for p in self.parameters]
+        return tuple(p.name for p in self.parameters)
 
     @property
     def param_bounds_comp(self) -> np.ndarray:

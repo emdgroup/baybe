@@ -1,4 +1,5 @@
 """Tests for the searchspace module."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -72,7 +73,7 @@ def test_discrete_searchspace_creation_from_dataframe():
         name="cat_unspecified", values=["d", "e", "f"]
     )
 
-    all_params = [num_specified, num_unspecified, cat_specified, cat_unspecified]
+    all_params = (num_specified, num_unspecified, cat_specified, cat_unspecified)
 
     df = pd.DataFrame({param.name: param.values for param in all_params})
     searchspace = SearchSpace(
@@ -86,10 +87,10 @@ def test_discrete_searchspace_creation_from_dataframe():
 
 def test_continuous_searchspace_creation_from_bounds():
     """A purely continuous search space is created from example bounds."""
-    parameters = [
+    parameters = (
         NumericalContinuousParameter("param1", (0, 1)),
         NumericalContinuousParameter("param2", (-1, 1)),
-    ]
+    )
     bounds = pd.DataFrame({p.name: p.bounds.to_tuple() for p in parameters})
     searchspace = SearchSpace(continuous=SubspaceContinuous.from_bounds(bounds))
 
@@ -110,10 +111,10 @@ def test_hyperrectangle_searchspace_creation():
     )
     searchspace = SearchSpace(continuous=SubspaceContinuous.from_dataframe(points))
 
-    parameters = [
+    parameters = (
         NumericalContinuousParameter("param1", (0, 2)),
         NumericalContinuousParameter("param2", (-1, 1)),
-    ]
+    )
 
     assert searchspace.type == SearchSpaceType.CONTINUOUS
     assert searchspace.parameters == parameters

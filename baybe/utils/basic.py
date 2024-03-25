@@ -2,7 +2,7 @@
 
 import random
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, TypeVar
+from typing import Callable, Dict, Iterable, List, Sequence, Tuple, TypeVar
 
 import numpy as np
 
@@ -87,3 +87,15 @@ def group_duplicate_values(dictionary: Dict[_T, _U]) -> Dict[_U, List[_T]]:
     for key, value in dictionary.items():
         group.setdefault(value, []).append(key)
     return {k: v for k, v in group.items() if len(v) > 1}
+
+
+def to_tuple(x: Sequence) -> Tuple:
+    """Convert any sequence into a tuple.
+
+    This wrapper is only used to avoid mypy warnings for attrs converters:
+    * https://github.com/python/mypy/issues/8417
+    * https://github.com/python/mypy/issues/8389
+    * https://github.com/python/mypy/issues/5313
+    """
+    # TODO: Remove wrapper once mypy support is there
+    return tuple(x)

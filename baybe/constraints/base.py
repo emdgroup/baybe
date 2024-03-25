@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, List, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar, List, Sequence, Tuple
 
 import pandas as pd
 from attr import define, field
@@ -148,7 +148,7 @@ class ContinuousConstraint(Constraint, ABC):
         return [1.0] * len(self.parameters)
 
     def to_botorch(
-        self, parameters: List[NumericalContinuousParameter], idx_offset: int = 0
+        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
     ) -> Tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional, cast
+from typing import List, Optional, Sequence, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -93,8 +93,8 @@ class SearchSpace(SerialMixin):
     @classmethod
     def from_product(
         cls,
-        parameters: List[Parameter],
-        constraints: Optional[List[Constraint]] = None,
+        parameters: Sequence[Parameter],
+        constraints: Optional[Sequence[Constraint]] = None,
         empty_encoding: bool = False,
     ) -> SearchSpace:
         """Create a search space from a cartesian product.
@@ -130,20 +130,18 @@ class SearchSpace(SerialMixin):
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
             parameters=[p for p in parameters if isinstance(p, DiscreteParameter)],
-            constraints=[
-                cast(DiscreteConstraint, c) for c in constraints if c.is_discrete
-            ],
+            constraints=[c for c in constraints if isinstance(c, DiscreteConstraint)],
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
             parameters=[p for p in parameters if isinstance(p, ContinuousParameter)],
             constraints_lin_eq=[
-                cast(ContinuousLinearEqualityConstraint, c)
+                c
                 for c in constraints
                 if isinstance(c, ContinuousLinearEqualityConstraint)
             ],
             constraints_lin_ineq=[
-                cast(ContinuousLinearInequalityConstraint, c)
+                c
                 for c in constraints
                 if isinstance(c, ContinuousLinearInequalityConstraint)
             ],
@@ -155,7 +153,7 @@ class SearchSpace(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: List[Parameter],
+        parameters: Sequence[Parameter],
     ) -> SearchSpace:
         """Create a search space from a specified set of parameter configurations.
 
@@ -195,17 +193,17 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def parameters(self) -> List[Parameter]:
+    def parameters(self) -> Tuple[Parameter, ...]:
         """Return the list of parameters of the search space."""
-        return self.discrete.parameters + self.continuous.parameters
+        return (*self.discrete.parameters, *self.continuous.parameters)
 
     @property
-    def constraints(self) -> List[Constraint]:
+    def constraints(self) -> Tuple[Constraint, ...]:
         """Return the constraints of the search space."""
         return (
-            self.discrete.constraints
-            + self.continuous.constraints_lin_eq
-            + self.continuous.constraints_lin_ineq
+            *self.discrete.constraints,
+            *self.continuous.constraints_lin_eq,
+            *self.continuous.constraints_lin_ineq,
         )
 
     @property
@@ -250,13 +248,14 @@ class SearchSpace(SerialMixin):
             )
         except StopIteration:
             return None
-        # TODO[11611]: The current approach has two limitations:
+        # TODO[11611]: The current approach has three limitations:
         #   1.  It matches by column name and thus assumes that the parameter name
         #       is used as the column name.
         #   2.  It relies on the current implementation detail that discrete parameters
         #       appear first in the computational dataframe.
+        #   3.  It assumes there exists exactly one task parameter
         #   --> Fix this when refactoring the data
-        return self.discrete.comp_rep.columns.get_loc(task_param.name)
+        return cast(int, self.discrete.comp_rep.columns.get_loc(task_param.name))
 
     @property
     def n_tasks(self) -> int:
