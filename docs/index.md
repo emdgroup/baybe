@@ -22,7 +22,7 @@ License <misc/license_link>
    :toctree: _autosummary
    :template: custom-module-template.rst
    :recursive:
-   :caption: Package documentation
+   :caption: Package
 
    baybe
 ```
