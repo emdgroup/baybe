@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simulation user guide
 - Example for transfer learning backtest utility
 - `pyupgrade` pre-commit hook
+- Better human readable `__str__` representation of objective and targets
 
 ### Changed
 - More detailed and sophisticated search space user guide
