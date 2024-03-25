@@ -5,12 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Changed
-- More detailed and sophisticated search space user guide
-
 ### Added
 - Simulation user guide
 - Example for transfer learning backtest utility
+- `pyupgrade` pre-commit hook
+
+### Changed
+- More detailed and sophisticated search space user guide
+- Upgraded syntax to Python 3.9
 
 ## [0.8.1] - 2024-03-11
 ### Added
@@ -271,7 +273,7 @@ or continuous parameters
 
 ## [0.4.2] - 2023-08-29
 ### Added
-- Test environments for multiple python versions via `tox`
+- Test environments for multiple Python versions via `tox`
 
 ### Changed
 - Removed `environment.yml`

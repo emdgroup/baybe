@@ -7,7 +7,7 @@ Since we plan to refactor the surrogates, this part of the documentation will be
 available in the future. Thus, please have a look in the source code directly.
 """
 
-from typing import Any, ClassVar, Dict, Optional, Tuple
+from typing import Any, ClassVar, Optional
 
 import numpy as np
 import torch
@@ -35,7 +35,7 @@ class RandomForestSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    model_params: Dict[str, Any] = field(
+    model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=get_model_params_validator(RandomForestRegressor.__init__),
@@ -46,7 +46,7 @@ class RandomForestSurrogate(Surrogate):
     """The actual model."""
 
     @batchify
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
 
         # Evaluate all trees

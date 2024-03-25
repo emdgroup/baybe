@@ -1,6 +1,7 @@
 """Validation functionality for parameters."""
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 from attrs.validators import gt, instance_of, lt

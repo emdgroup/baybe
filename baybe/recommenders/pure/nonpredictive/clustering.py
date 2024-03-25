@@ -1,7 +1,7 @@
 """Recommenders based on clustering."""
 
 from abc import ABC
-from typing import ClassVar, List, Type, Union
+from typing import ClassVar, Union
 
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     #   that checks if a custom mechanism is implemented and uses default otherwise
     #   (similar to what is done in the recommenders)
 
-    model_class: ClassVar[Type[ClusterMixin]]
+    model_class: ClassVar[type[ClusterMixin]]
     """Class variable describing the model class."""
 
     model_cluster_num_parameter_name: ClassVar[str]
@@ -58,7 +58,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         self,
         model: ClusterMixin,
         candidates_scaled: Union[pd.DataFrame, np.ndarray],
-    ) -> List[int]:
+    ) -> list[int]:
         """Select one candidate from each cluster uniformly at random.
 
         This function is model-agnostic and can be used by any child class.
@@ -81,7 +81,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         self,
         model: ClusterMixin,
         candidates_scaled: Union[pd.DataFrame, np.ndarray],
-    ) -> List[int]:
+    ) -> list[int]:
         """Select candidates from the computed clustering.
 
         This function is model-specific and may be implemented by the derived class.
@@ -135,7 +135,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 class PAMClusteringRecommender(SKLearnClusteringRecommender):
     """Partitioning Around Medoids (PAM) clustering recommender."""
 
-    model_class: ClassVar[Type[ClusterMixin]] = KMedoids
+    model_class: ClassVar[type[ClusterMixin]] = KMedoids
     # See base class.
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
@@ -157,7 +157,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
         self,
         model: ClusterMixin,
         candidates_scaled: Union[pd.DataFrame, np.ndarray],
-    ) -> List[int]:
+    ) -> list[int]:
         """Select candidates from the computed clustering.
 
         In PAM, cluster centers (medoids) correspond to actual data points,
@@ -179,7 +179,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means clustering recommender."""
 
     # Class variables
-    model_class: ClassVar[Type[ClusterMixin]] = KMeans
+    model_class: ClassVar[type[ClusterMixin]] = KMeans
     # See base class.
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
@@ -201,7 +201,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
         self,
         model: ClusterMixin,
         candidates_scaled: Union[pd.DataFrame, np.ndarray],
-    ) -> List[int]:
+    ) -> list[int]:
         """Select candidates from the computed clustering.
 
         For K-means, a reasonable choice is to pick the points closest to each
@@ -231,7 +231,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) clustering recommender."""
 
     # Class variables
-    model_class: ClassVar[Type[ClusterMixin]] = GaussianMixture
+    model_class: ClassVar[type[ClusterMixin]] = GaussianMixture
     # See base class.
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
@@ -241,7 +241,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
         self,
         model: ClusterMixin,
         candidates_scaled: Union[pd.DataFrame, np.ndarray],
-    ) -> List[int]:
+    ) -> list[int]:
         """Select candidates from the computed clustering.
 
         In a GMM, a reasonable choice is to pick the point with the highest

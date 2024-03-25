@@ -1,7 +1,7 @@
 """Categorical parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Tuple
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,7 @@ class CategoricalParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    _values: Tuple[str, ...] = field(
+    _values: tuple[str, ...] = field(
         converter=tuple,
         validator=(
             min_len(2),

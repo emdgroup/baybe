@@ -1,7 +1,7 @@
 """Substance parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Dict, Union
+from typing import Any, ClassVar, Union
 
 import pandas as pd
 from attrs import define, field
@@ -39,7 +39,7 @@ class SubstanceParameter(DiscreteParameter):
     # See base class.
 
     # object variables
-    data: Dict[str, Smiles] = field(
+    data: dict[str, Smiles] = field(
         validator=deep_mapping(
             mapping_validator=min_len(2),
             # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1206
@@ -66,7 +66,7 @@ class SubstanceParameter(DiscreteParameter):
 
     @data.validator
     def _validate_substance_data(  # noqa: DOC101, DOC103
-        self, _: Any, data: Dict[str, Smiles]
+        self, _: Any, data: dict[str, Smiles]
     ) -> None:
         """Validate that the substance data, provided as SMILES, is valid.
 

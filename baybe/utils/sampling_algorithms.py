@@ -1,6 +1,6 @@
 """A collection of point sampling algorithms."""
 
-from typing import List, Literal
+from typing import Literal
 
 import numpy as np
 from sklearn.metrics import pairwise_distances
@@ -10,7 +10,7 @@ def farthest_point_sampling(
     points: np.ndarray,
     n_samples: int = 1,
     initialization: Literal["farthest", "random"] = "farthest",
-) -> List[int]:
+) -> list[int]:
     """Sample points according to a farthest point heuristic.
 
     Creates a subset of a collection of points by successively adding points with the

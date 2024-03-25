@@ -1,7 +1,7 @@
 """Discrete constraints."""
 
 from functools import reduce
-from typing import Any, Callable, List, Optional, cast
+from typing import Any, Callable, Optional, cast
 
 import pandas as pd
 from attr import define, field
@@ -26,7 +26,7 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
     """Class for modelling exclusion constraints."""
 
     # object variables
-    conditions: List[Condition] = field(validator=min_len(1))
+    conditions: list[Condition] = field(validator=min_len(1))
     """List of individual conditions."""
 
     combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
@@ -125,10 +125,10 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     """
 
     # object variables
-    conditions: List[Condition] = field()
+    conditions: list[Condition] = field()
     """The list of individual conditions."""
 
-    affected_parameters: List[List[str]] = field()
+    affected_parameters: list[list[str]] = field()
     """The parameters affected by the individual conditions."""
 
     # for internal use only
@@ -138,7 +138,7 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
     @affected_parameters.validator
     def _validate_affected_parameters(  # noqa: DOC101, DOC103
-        self, _: Any, value: List[List[str]]
+        self, _: Any, value: list[list[str]]
     ) -> None:
         """Validate the affected parameters.
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -93,8 +93,8 @@ class SearchSpace(SerialMixin):
     @classmethod
     def from_product(
         cls,
-        parameters: List[Parameter],
-        constraints: Optional[List[Constraint]] = None,
+        parameters: list[Parameter],
+        constraints: Optional[list[Constraint]] = None,
         empty_encoding: bool = False,
     ) -> SearchSpace:
         """Create a search space from a cartesian product.
@@ -155,7 +155,7 @@ class SearchSpace(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: List[Parameter],
+        parameters: list[Parameter],
     ) -> SearchSpace:
         """Create a search space from a specified set of parameter configurations.
 
@@ -176,7 +176,7 @@ class SearchSpace(SerialMixin):
         Raises:
             ValueError: If the dataframe columns do not match with the parameters.
         """
-        if set(p.name for p in parameters) != set(df.columns.values):
+        if {p.name for p in parameters} != set(df.columns.values):
             raise ValueError(
                 "The provided dataframe columns must match exactly with the specified "
                 "parameter names."
@@ -195,12 +195,12 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def parameters(self) -> List[Parameter]:
+    def parameters(self) -> list[Parameter]:
         """Return the list of parameters of the search space."""
         return self.discrete.parameters + self.continuous.parameters
 
     @property
-    def constraints(self) -> List[Constraint]:
+    def constraints(self) -> list[Constraint]:
         """Return the constraints of the search space."""
         return (
             self.discrete.constraints
@@ -305,12 +305,12 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
     """Validate the search space specifications while skipping costly creation steps."""
     # Validate product inputs without constructing it
     if specs.get("constructor", None) == "from_product":
-        parameters = converter.structure(specs["parameters"], List[Parameter])
+        parameters = converter.structure(specs["parameters"], list[Parameter])
         validate_parameters(parameters)
 
         constraints = specs.get("constraints", None)
         if constraints:
-            constraints = converter.structure(specs["constraints"], List[Constraint])
+            constraints = converter.structure(specs["constraints"], list[Constraint])
             validate_constraints(constraints, parameters)
 
     else:

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from typing import List
 
 import cattrs
 import numpy as np
@@ -119,12 +118,12 @@ class Campaign(SerialMixin):
         return self._measurements_exp
 
     @property
-    def parameters(self) -> List[Parameter]:
+    def parameters(self) -> list[Parameter]:
         """The parameters of the underlying search space."""
         return self.searchspace.parameters
 
     @property
-    def targets(self) -> List[Target]:
+    def targets(self) -> list[Target]:
         """The targets of the underlying objective."""
         return self.objective.targets
 

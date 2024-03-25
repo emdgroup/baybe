@@ -1,7 +1,7 @@
 """Adapter for making BoTorch's acquisition functions work with other models."""
 
 from inspect import signature
-from typing import Any, Callable, List, Optional, Type
+from typing import Any, Callable, Optional
 
 import gpytorch.distributions
 from attr import define
@@ -14,7 +14,7 @@ from torch import Tensor, cat, squeeze
 from baybe.surrogates.base import Surrogate
 
 
-def debotorchize(acqf_cls: Type[AcquisitionFunction]):
+def debotorchize(acqf_cls: type[AcquisitionFunction]):
     """Wrap a given BoTorch acquisition function.
 
     This wrapped function becomes generally usable in combination with other non-BoTorch
@@ -84,7 +84,7 @@ class AdapterModel(Model):
     def posterior(  # noqa: D102
         self,
         X: Tensor,
-        output_indices: Optional[List[int]] = None,
+        output_indices: Optional[list[int]] = None,
         observation_noise: bool = False,
         posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
         **kwargs: Any,

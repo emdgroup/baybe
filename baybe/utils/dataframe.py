@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Optional, Tuple, Union
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -52,9 +53,9 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
 def add_fake_results(
     data: pd.DataFrame,
     campaign: Campaign,
-    good_reference_values: Optional[Dict[str, list]] = None,
-    good_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
-    bad_intervals: Optional[Dict[str, Tuple[float, float]]] = None,
+    good_reference_values: Optional[dict[str, list]] = None,
+    good_intervals: Optional[dict[str, tuple[float, float]]] = None,
+    bad_intervals: Optional[dict[str, tuple[float, float]]] = None,
 ) -> None:
     """Add fake results to a dataframe which was the result of a BayBE recommendation.
 
@@ -259,7 +260,7 @@ def df_drop_single_value_columns(
 
 
 def df_drop_string_columns(
-    df: pd.DataFrame, ignore_list: Optional[List[str]] = None
+    df: pd.DataFrame, ignore_list: Optional[list[str]] = None
 ) -> pd.DataFrame:
     """Drop dataframe columns with string values.
 
@@ -280,7 +281,7 @@ def df_drop_string_columns(
 
 
 def df_uncorrelated_features(
-    df: pd.DataFrame, exclude_list: Optional[List[str]] = None, threshold: float = 0.7
+    df: pd.DataFrame, exclude_list: Optional[list[str]] = None, threshold: float = 0.7
 ):
     """Return an uncorrelated set of features.
 
@@ -323,7 +324,7 @@ def df_uncorrelated_features(
 def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
-    parameters: List[Parameter],
+    parameters: list[Parameter],
     numerical_measurements_must_be_within_tolerance: bool,
 ) -> pd.Index:
     """Match row of the right dataframe to the rows of the left dataframe.

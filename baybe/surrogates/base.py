@@ -3,7 +3,7 @@
 import gc
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar, Dict, List, Tuple, Type
+from typing import Any, ClassVar
 
 import torch
 from attr import define, field
@@ -53,10 +53,10 @@ class Surrogate(ABC, SerialMixin):
     #   exposing the individual model parameters via the constructor, instead of
     #   expecting them in the form of an unstructured dictionary. This would also
     #   remove the need for the current `_get_model_params_validator` logic.
-    model_params: Dict[str, Any] = field(factory=dict)
+    model_params: dict[str, Any] = field(factory=dict)
     """Optional model parameters."""
 
-    def posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """Evaluate the surrogate model at the given candidate points.
 
         Args:
@@ -86,7 +86,7 @@ class Surrogate(ABC, SerialMixin):
         return mean, covar
 
     @abstractmethod
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """Perform the actual posterior evaluation logic.
 
         In contrast to its public counterpart
@@ -220,7 +220,7 @@ def _structure_surrogate(val, _):
     return converter.structure_attrs_fromdict(val, cls)
 
 
-def get_available_surrogates() -> List[Type[Surrogate]]:
+def get_available_surrogates() -> list[type[Surrogate]]:
     """List all available surrogate models.
 
     Returns:

@@ -2,12 +2,12 @@
 
 import re
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 
 def extract_code_blocks(
     path: Union[str, Path], include_tilde: bool = True
-) -> List[str]:
+) -> list[str]:
     """Extract all python code blocks from the specified file."""
     contents = Path(path).read_text()
     pattern = (
