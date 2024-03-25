@@ -27,29 +27,33 @@ def test_dataframe_roundtrip(df: pd.DataFrame):
                 {"col_1": 3, "col_2": "a"},
                 {"col_1": 2, "col_2": "b"},
                 {"col_1": 1, "col_2": "c"},
-                {"col_1": 0, "col_2": "d"},
             ],
         },
         {
+            "constructor": "from_records",
+            "data": [[1, "a"], [2, "b"], [3, "c"]],
+            "columns": ["number_col", "string_col"],
+        },
+        {
             "constructor": "from_dict",
-            "data": {"row_1": [3, 2, 1, 0], "row_2": ["a", "b", "c", "d"]},
+            "data": {"col_1": [3, 2, 1, 0], "col_2": ["a", "b", "c", "d"]},
+        },
+        {
+            "constructor": "from_dict",
+            "data": {"row_1": [0, "a", 1, "b"], "row_2": [2, "b", 3, "d"]},
             "orient": "index",
+            "columns": ["col_1", "col_2", "col_3", "col_4"],
         },
         {
-            "constructor": "read_json",
-            "path_or_buf": '[{"c1":"a","c2":"b"},{"c1":"c","c2":"d"}]',
-            "orient": "records",
-        },
-        {
-            "constructor": "read_json",
-            "path_or_buf": '{"r1":{"c1":"a","c2":"b"},"r2":{"c1":"c","c2":"d"}}',
-            "orient": "index",
-        },
-        {
-            "constructor": "read_json",
-            "path_or_buf": '{"columns":["c1","c2"],"index":["r1","r2"],'
-            '"data":[["a","b"],["c","d"]]}',
-            "orient": "split",
+            "constructor": "from_dict",
+            "data": {
+                "index": [("a", "b"), ("a", "c")],
+                "columns": [("x", 1), ("y", 2)],
+                "data": [[1, 3], [2, 4]],
+                "index_names": ["n1", "n2"],
+                "column_names": ["z1", "z2"],
+            },
+            "orient": "tight",
         },
     ],
 )
