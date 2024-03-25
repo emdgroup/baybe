@@ -73,12 +73,8 @@ def _structure_dataframe_hook(obj: Union[str, dict], _) -> pd.DataFrame:
         return pickle.loads(pickled_df)
     elif isinstance(obj, dict):
         if constructor := obj.pop("constructor", None):
-            try:
-                # try to get constructor from pandas.DataFrame
-                func = getattr(pd.DataFrame, constructor)
-            except AttributeError:
-                # try to get constructor from pandas
-                func = getattr(pd, constructor)
+            # try to get constructor from pandas.DataFrame
+            func = getattr(pd.DataFrame, constructor)
             return func(**obj)
         else:
             raise ValueError(
