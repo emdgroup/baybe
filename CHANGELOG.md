@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More detailed and sophisticated search space user guide
 - Support for Python 3.12
 - Upgraded syntax to Python 3.9
+- Bumped `onnx` version to fix vulnerability
 
 ### Fixed
 - `telemetry` dependency is no longer a group (enables Poetry installation)
