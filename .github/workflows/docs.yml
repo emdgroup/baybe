@@ -26,7 +26,7 @@ jobs:
         with: {python-version: "3.9"}
       - name: Build Docs
         run: |
-          pip install tox
+          pip install tox-uv
           tox -e docs-py39
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v1

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More detailed and sophisticated search space user guide
 - Support for Python 3.12
 - Upgraded syntax to Python 3.9
+- Use `tox-uv` in pipelines
 
 ## [0.8.1] - 2024-03-11
 ### Added

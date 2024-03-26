@@ -83,7 +83,7 @@ dev = [
     "baybe[telemetry]",
     "baybe[test]",
     "pip-audit>=2.5.5",
-    "tox>=4.10.0",
+    "tox-uv>=1.7.0",
 ]
 
 docs = [
