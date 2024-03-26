@@ -69,9 +69,9 @@ class GaussianProcessSurrogate(Surrogate):
         # ---------- GP prior selection ---------- #
         # TODO: temporary prior choices adapted from edbo, replace later on
 
-        mordred = searchspace.contains_mordred or searchspace.contains_rdkit
-        if mordred and train_x.shape[-1] < 50:
-            mordred = False
+        mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
+            train_x.shape[-1] >= 50
+        )
 
         # low D priors
         if train_x.shape[-1] < 5:
