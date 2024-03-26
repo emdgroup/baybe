@@ -74,7 +74,7 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
         # low D priors
-        if train_x.shape[-1] < 5:
+        if train_x.shape[-1] < 10:
             lengthscale_prior = [GammaPrior(1.2, 1.1), 0.2]
             outputscale_prior = [GammaPrior(5.0, 0.5), 8.0]
             noise_prior = [GammaPrior(1.05, 0.5), 0.1]
@@ -117,8 +117,12 @@ class GaussianProcessSurrogate(Surrogate):
             batch_shape=batch_shape,
             outputscale_prior=outputscale_prior[0],
         )
-        base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
-        base_covar_module.base_kernel.lengthscale = torch.tensor([lengthscale_prior[1]])
+        if outputscale_prior[1] is not None:
+            base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
+        if lengthscale_prior[1] is not None:
+            base_covar_module.base_kernel.lengthscale = torch.tensor(
+                [lengthscale_prior[1]]
+            )
 
         # create GP covariance
         if task_idx is None:
@@ -135,7 +139,8 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood = GaussianLikelihood(
             noise_prior=noise_prior[0], batch_shape=batch_shape
         )
-        likelihood.noise = torch.tensor([noise_prior[1]])
+        if noise_prior[1] is not None:
+            likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
         self._model = SingleTaskGP(
