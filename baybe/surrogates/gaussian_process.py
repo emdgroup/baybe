@@ -4,9 +4,9 @@ from typing import Any, ClassVar, Optional
 
 import torch
 from attr import define, field
+from botorch import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
-from botorch.optim.fit import fit_gpytorch_mll_torch
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
@@ -148,7 +148,4 @@ class GaussianProcessSurrogate(Surrogate):
             likelihood=likelihood,
         )
         mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
-        # IMPROVE: The step_limit=100 stems from the former (deprecated)
-        #  `fit_gpytorch_torch` function, for which this was the default. Probably,
-        #   one should use a smarter logic here.
-        fit_gpytorch_mll_torch(mll, step_limit=100)
+        fit_gpytorch_mll(mll)
