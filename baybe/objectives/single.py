@@ -1,39 +1,26 @@
-from __future__ import annotations
-
-from typing import Any
+"""Functionality for single-target objectives."""
 
 import pandas as pd
 from attr import define, field
-from attr.validators import min_len
+from attr.validators import instance_of
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
-from baybe.targets.numerical import NumericalTarget
 
 
 @define(frozen=True)
 class SingleTargetObjective(Objective):
-    # TODO: The class currently directly depends on `NumericalTarget`. Once this
-    #   direct dependence is replaced with a dependence on `Target`, the type
-    #   annotations should be changed.
+    """An objective focusing on a single target."""
 
-    targets: list[Target] = field(validator=min_len(1))
+    _target: Target = field(validator=instance_of(Target))
+    """The single target considered by the objective."""
 
-    @targets.validator
-    def _validate_targets(  # noqa: DOC101, DOC103
-        self, _: Any, targets: list[NumericalTarget]
-    ) -> None:
-        # Raises a ValueError if multiple targets are specified when using objective
-        # mode SINGLE.
-        if len(targets) != 1:
-            raise ValueError(
-                "For objective mode 'SINGLE', exactly one target must be specified."
-            )
+    @property
+    def targets(self) -> tuple[Target]:  # noqa: D102
+        # See base class.
+        return (self._target,)
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        # Perform transformations that are required independent of the mode
-        transformed = data[[t.name for t in self.targets]].copy()
-        for target in self.targets:
-            transformed[target.name] = target.transform(data[target.name])
-
-        return transformed
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+        # See base class.
+        target_data = data[[self._target.name]].copy()
+        return self._target.transform(target_data)
