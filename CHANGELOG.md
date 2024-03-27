@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.2] - 2024-03-27
 ### Added
 - Simulation user guide
-- Example for transfer learning backtest utility
+- Example for transfer learning backtesting utility
 - `pyupgrade` pre-commit hook
 - Better human readable `__str__` representation of objective and targets
-- Alternative dataframe deserialization from pd.DataFrame constructors
+- Alternative dataframe deserialization from `pd.DataFrame` constructors
 
 ### Changed
 - More detailed and sophisticated search space user guide
