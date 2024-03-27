@@ -44,7 +44,14 @@ dependencies = [
     "scipy>=1.10.1",
     "setuptools-scm>=7.1.0",
     "torch>=1.13.1",
-    "baybe[telemetry]",
+
+    # Telemetry:
+    "opentelemetry-sdk>=1.16.0",
+    "opentelemetry-propagator-aws-xray>=1.0.0",
+    "opentelemetry-exporter-otlp>=1.16.0",
+    "opentelemetry-sdk-extension-aws>=2.0.0",
+    "requests>=2.31.0", # see AUDIT NOTE
+    "urllib3>=2.0.7", # see AUDIT NOTE
 ]
 
 [project.urls]
@@ -80,7 +87,6 @@ dev = [
     "baybe[mypy]",
     "baybe[onnx]",
     "baybe[simulation]",
-    "baybe[telemetry]",
     "baybe[test]",
     "pip-audit>=2.5.5",
     "tox>=4.10.0",
@@ -128,15 +134,6 @@ mypy = [
 
 simulation = [
     "xyzpy>=1.2.1",
-]
-
-telemetry = [
-    "opentelemetry-sdk>=1.16.0",
-    "opentelemetry-propagator-aws-xray>=1.0.0",
-    "opentelemetry-exporter-otlp>=1.16.0",
-    "opentelemetry-sdk-extension-aws>=2.0.0",
-    "requests>=2.31.0", # see AUDIT NOTE
-    "urllib3>=2.0.7", # see AUDIT NOTE
 ]
 
 test = [
