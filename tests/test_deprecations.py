@@ -6,6 +6,7 @@ import pytest
 
 from baybe import BayBE, Campaign
 from baybe.exceptions import DeprecationError
+from baybe.objective import Objective
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
@@ -18,8 +19,9 @@ from baybe.strategies import (
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
-from baybe.targets import Objective
+from baybe.targets import Objective as ObjectiveFromTargets
 from baybe.targets.base import Target
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.interval import Interval
 
 
@@ -32,7 +34,7 @@ def test_deprecated_baybe_class(parameters, objective):
 def test_moved_objective(targets):
     """Importing ``Objective`` from ``baybe.targets`` raises a warning."""
     with pytest.warns(DeprecationWarning):
-        Objective(mode="SINGLE", targets=targets)
+        ObjectiveFromTargets(mode="SINGLE", targets=targets)
 
 
 def test_renamed_surrogate():
@@ -144,3 +146,9 @@ def test_deprecated_strategy_campaign_flag(recommender):
     """Using the deprecated strategy keyword raises an error."""
     with pytest.raises(DeprecationError):
         Campaign(None, None, None, strategy=recommender)
+
+
+def test_deprecated_objective_class():
+    """Using the deprecated objective class raises a warning."""
+    with pytest.warns(DeprecationWarning):
+        Objective(mode="SINGLE", targets=[NumericalTarget(name="a", mode="MAX")])
