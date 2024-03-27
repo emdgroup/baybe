@@ -8,7 +8,7 @@ import pandas as pd
 from attr import define, field
 from attr.validators import deep_iterable, in_, instance_of, min_len
 
-from baybe.serialization import SerialMixin
+from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import geom_mean
@@ -27,7 +27,7 @@ def _normalize_weights(weights: list[float]) -> list[float]:
 
 
 @define(frozen=True)
-class DesirabilityObjective(SerialMixin):
+class DesirabilityObjective(Objective):
     # TODO: The class currently directly depends on `NumericalTarget`. Once this
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
