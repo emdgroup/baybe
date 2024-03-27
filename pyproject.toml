@@ -44,12 +44,14 @@ dependencies = [
     "scipy>=1.10.1",
     "setuptools-scm>=7.1.0",
     "torch>=1.13.1",
-    "opentelemetry-sdk>=1.16.0", # Telemetry
-    "opentelemetry-propagator-aws-xray>=1.0.0", # Telemetry
-    "opentelemetry-exporter-otlp>=1.16.0", # Telemetry
-    "opentelemetry-sdk-extension-aws>=2.0.0", # Telemetry
-    "requests>=2.31.0", # see AUDIT NOTE # Telemetry
-    "urllib3>=2.0.7", # see AUDIT NOTE # Telemetry
+
+    # Telemetry:
+    "opentelemetry-sdk>=1.16.0",
+    "opentelemetry-propagator-aws-xray>=1.0.0",
+    "opentelemetry-exporter-otlp>=1.16.0",
+    "opentelemetry-sdk-extension-aws>=2.0.0",
+    "requests>=2.31.0", # see AUDIT NOTE
+    "urllib3>=2.0.7", # see AUDIT NOTE
 ]
 
 [project.urls]
@@ -65,10 +67,6 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 # AUDIT NOTE: The marked packages are secondary dependencies but their versions are
 # set explicitly because the otherwise installed default versions have been flagged
 # for vulnerabilities by pip-audit
-
-# TELEMETRY NOTE: Some of the packages are only necessary for telemetry reasons.
-# Since these cannot be put in an dependency group due to potential installation issues,
-# these are instead marked by a comment.
 
 [project.optional-dependencies]
 chem = [
