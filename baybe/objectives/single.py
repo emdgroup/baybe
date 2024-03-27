@@ -29,7 +29,7 @@ def _normalize_weights(weights: list[float]) -> list[float]:
 
 
 @define(frozen=True)
-class Objective(SerialMixin):
+class SingleTargetObjective(SerialMixin):
     """Class for managing optimization objectives."""
 
     # TODO: The class currently directly depends on `NumericalTarget`. Once this
