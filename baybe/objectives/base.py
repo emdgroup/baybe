@@ -5,9 +5,9 @@ from abc import ABC, abstractmethod
 import pandas as pd
 from attrs import define
 
+from baybe.objectives.deprecation import structure_objective
 from baybe.serialization.core import (
     converter,
-    get_base_structure_hook,
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -36,5 +36,5 @@ class Objective(ABC, SerialMixin):
         """
 
 
-converter.register_structure_hook(Objective, get_base_structure_hook(Objective))
+converter.register_structure_hook(Objective, structure_objective)
 converter.register_unstructure_hook(Objective, unstructure_base)
