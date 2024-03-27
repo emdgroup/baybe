@@ -6,13 +6,13 @@ import pandas as pd
 from attr import define, field
 from attr.validators import min_len
 
-from baybe.serialization import SerialMixin
+from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 
 
 @define(frozen=True)
-class SingleTargetObjective(SerialMixin):
+class SingleTargetObjective(Objective):
     # TODO: The class currently directly depends on `NumericalTarget`. Once this
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
