@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Literal
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from attr import define, field
-from attr.validators import deep_iterable, in_, instance_of, min_len
+from attr.validators import deep_iterable, instance_of, min_len
 
 from baybe.objectives.base import Objective
+from baybe.objectives.enum import CombineFunc
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import geom_mean
@@ -36,8 +37,8 @@ class DesirabilityObjective(Objective):
 
     weights: list[float] = field(converter=_normalize_weights)
 
-    combine_func: Literal["MEAN", "GEOM_MEAN"] = field(
-        default="GEOM_MEAN", validator=in_(["MEAN", "GEOM_MEAN"])
+    combine_func: CombineFunc = field(
+        default=CombineFunc.GEOM_MEAN, converter=CombineFunc
     )
 
     @weights.default
@@ -81,13 +82,14 @@ class DesirabilityObjective(Objective):
             transformed[target.name] = target.transform(data[target.name])
 
         # In desirability mode, the targets are additionally combined further into one
-        if self.combine_func == "GEOM_MEAN":
+        if self.combine_func is CombineFunc.GEOM_MEAN:
             func = geom_mean
-        elif self.combine_func == "MEAN":
+        elif self.combine_func is CombineFunc.MEAN:
             func = partial(np.average, axis=1)
         else:
             raise ValueError(
-                f"The specified averaging function {self.combine_func} is unknown."
+                f"The specified averaging function '{self.combine_func.name}' "
+                f"is unknown."
             )
 
         vals = func(transformed.values, weights=self.weights)
