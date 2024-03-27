@@ -10,7 +10,7 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.exceptions import DeprecationError
-from baybe.objective import Objective
+from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
