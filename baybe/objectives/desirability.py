@@ -32,8 +32,6 @@ class DesirabilityObjective(SerialMixin):
     #   direct dependence is replaced with a dependence on `Target`, the type
     #   annotations should be changed.
 
-    mode: Literal["SINGLE", "DESIRABILITY"] = field()
-
     targets: list[Target] = field(validator=min_len(1))
 
     weights: list[float] = field(converter=_normalize_weights)
@@ -51,20 +49,13 @@ class DesirabilityObjective(SerialMixin):
     def _validate_targets(  # noqa: DOC101, DOC103
         self, _: Any, targets: list[NumericalTarget]
     ) -> None:
-        # Raises a ValueError if multiple targets are specified when using objective
-        # mode SINGLE.
-        if (self.mode == "SINGLE") and (len(targets) != 1):
-            raise ValueError(
-                "For objective mode 'SINGLE', exactly one target must be specified."
-            )
         # Raises a ValueError if there are unbounded targets when using objective mode
         # DESIRABILITY.
-        if self.mode == "DESIRABILITY":
-            if any(not target.bounds.is_bounded for target in targets):
-                raise ValueError(
-                    "In 'DESIRABILITY' mode for multiple targets, each target must "
-                    "have bounds defined."
-                )
+        if any(not target.bounds.is_bounded for target in targets):
+            raise ValueError(
+                "In 'DESIRABILITY' mode for multiple targets, each target must "
+                "have bounds defined."
+            )
 
     @weights.validator
     def _validate_weights(  # noqa: DOC101, DOC103
@@ -90,17 +81,16 @@ class DesirabilityObjective(SerialMixin):
             transformed[target.name] = target.transform(data[target.name])
 
         # In desirability mode, the targets are additionally combined further into one
-        if self.mode == "DESIRABILITY":
-            if self.combine_func == "GEOM_MEAN":
-                func = geom_mean
-            elif self.combine_func == "MEAN":
-                func = partial(np.average, axis=1)
-            else:
-                raise ValueError(
-                    f"The specified averaging function {self.combine_func} is unknown."
-                )
+        if self.combine_func == "GEOM_MEAN":
+            func = geom_mean
+        elif self.combine_func == "MEAN":
+            func = partial(np.average, axis=1)
+        else:
+            raise ValueError(
+                f"The specified averaging function {self.combine_func} is unknown."
+            )
 
-            vals = func(transformed.values, weights=self.weights)
-            transformed = pd.DataFrame({"Comp_Target": vals}, index=transformed.index)
+        vals = func(transformed.values, weights=self.weights)
+        transformed = pd.DataFrame({"Comp_Target": vals}, index=transformed.index)
 
         return transformed
