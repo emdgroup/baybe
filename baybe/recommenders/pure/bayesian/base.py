@@ -91,7 +91,7 @@ class BayesianRecommender(PureRecommender, ABC):
                 "Bayesian recommenders do not support empty training data yet."
             )
 
-        best_f = train_y.max()
+        best_f = train_y.max().item()
         surrogate_model = self._fit(searchspace, train_x, train_y)
         acquisition_function_cls = self._get_acquisition_function_cls()
 
