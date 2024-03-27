@@ -51,21 +51,6 @@ class DesirabilityObjective(SerialMixin):
     )
     """The function used to combine the different targets."""
 
-    def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-
-        # Convert the targets list to a dataframe to have a tabular output
-        targets_list = [target.summary() for target in self.targets]
-        targets_df = pd.DataFrame(targets_list)
-        targets_df["Weight"] = self.weights
-
-        objective_str = f"""{start_bold}Objective{end_bold}
-        \n{start_bold}Mode: {end_bold}{self.mode}
-        \n{start_bold}Targets {end_bold}\n{targets_df}
-        \n{start_bold}Combine Function: {end_bold}{self.combine_func}"""
-        return objective_str.replace("\n", "\n ")
-
     @weights.default
     def _default_weights(self) -> list[float]:
         """Create the default weights."""
