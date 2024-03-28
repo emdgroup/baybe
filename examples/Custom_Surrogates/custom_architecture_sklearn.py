@@ -22,7 +22,7 @@ from sklearn.linear_model import LinearRegression, Ridge
 from torch import Tensor
 
 from baybe.campaign import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -133,9 +133,7 @@ parameters = [
 
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=Objective(
-        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
-    ),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
         recommender=SequentialGreedyRecommender(
             surrogate_model=StackingRegressorSurrogate()

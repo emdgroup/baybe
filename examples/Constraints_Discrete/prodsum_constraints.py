@@ -17,7 +17,7 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -96,9 +96,7 @@ constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))
 
 ### Creating and printing the campaign
 

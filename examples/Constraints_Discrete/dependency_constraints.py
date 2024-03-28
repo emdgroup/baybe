@@ -15,7 +15,7 @@ import numpy as np
 
 from baybe import Campaign
 from baybe.constraints import DiscreteDependenciesConstraint, SubSelectionCondition
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -64,9 +64,7 @@ constraint = DiscreteDependenciesConstraint(
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target_1", mode="MAX")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))
 
 ### Creating and printing the campaign
 

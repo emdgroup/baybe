@@ -26,7 +26,8 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.exceptions import OptionalImportError
-from baybe.objective import Objective
+from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters import (
     CategoricalParameter,
     CustomDiscreteParameter,
@@ -644,8 +645,11 @@ def fixture_meta_recommender(
 @pytest.fixture(name="objective")
 def fixture_default_objective(targets):
     """The default objective to be used if not specified differently."""
-    mode = "SINGLE" if len(targets) == 1 else "DESIRABILITY"
-    return Objective(mode=mode, targets=targets)
+    return (
+        SingleTargetObjective(targets[0])
+        if len(targets) == 1
+        else DesirabilityObjective(targets)
+    )
 
 
 @pytest.fixture(name="config")

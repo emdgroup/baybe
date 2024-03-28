@@ -7,7 +7,7 @@
 ### Necessary imports for this example
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -62,9 +62,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # In this example, we maximize the yield of a reaction and define a corresponding
 # objective.
 
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
 
 # We now finally create the campaign using the objects configure previously.
 

@@ -20,7 +20,7 @@ import seaborn as sns
 from botorch.test_functions.synthetic import Hartmann
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios, simulate_transfer_learning
@@ -46,9 +46,7 @@ POINTS_PER_DIM = 3 if SMOKE_TEST else 7  # number of grid points per input dimen
 # The corresponding [Objective](baybe.objective.Objective)
 # is created as follows:
 
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
 
 ### Creating the Search Space
 

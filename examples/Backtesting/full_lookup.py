@@ -16,7 +16,7 @@ import pandas as pd
 import seaborn as sns
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -90,9 +90,7 @@ dict_ligand = {
 
 ### Creating the Objective
 
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
 
 ### Constructing campaigns for the simulation loop
 

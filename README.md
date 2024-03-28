@@ -60,13 +60,13 @@ which we pass into an `Objective`.
 
 ```python
 from baybe.targets import NumericalTarget
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 
 target = NumericalTarget(
     name="Yield",
     mode="MAX",
 )
-objective = Objective(mode="SINGLE", targets=[target])
+objective = SingleTargetObjective(target=target)
 ```
 
 In cases where we need to consider multiple (potentially competing) targets, the

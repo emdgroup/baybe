@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 from cattrs import IterableValidationError
 
-from baybe.objective import Objective
-from baybe.objectives.desirability import scalarize
+from baybe.objectives.desirability import DesirabilityObjective, scalarize
 from baybe.objectives.enum import CombineFunc
+from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget
 
 
@@ -29,22 +29,15 @@ class TestInvalidObjectiveCreation:
 
     def test_empty_target_list(self):
         with pytest.raises(ValueError):
-            Objective(
-                mode="SINGLE",
-                targets=[],
-            )
+            DesirabilityObjective(targets=[])
 
     def test_wrong_target_type(self):
-        with pytest.raises(ValueError):
-            Objective(
-                mode="SINGLE",
-                targets={"A": 1, "B": 2},
-            )
+        with pytest.raises(TypeError):
+            SingleTargetObjective(target={"A": 1, "B": 2})
 
     def test_missing_bounds_for_desirability(self):
         with pytest.raises(ValueError):
-            Objective(
-                mode="DESIRABILITY",
+            DesirabilityObjective(
                 targets=[
                     NumericalTarget(
                         name="Target_1",
@@ -60,34 +53,30 @@ class TestInvalidObjectiveCreation:
 
     def test_invalid_combination_function(self):
         with pytest.raises(ValueError):
-            Objective(
-                mode="DESIRABILITY",
-                combine_func="FALSE_STUFF",
+            DesirabilityObjective(
                 targets=self.two_targets,
+                combine_func="FALSE_STUFF",
             )
 
     def test_wrong_number_of_weights(self):
         with pytest.raises(ValueError):
-            Objective(
-                mode="DESIRABILITY",
-                weights=[1, 2, 3],
+            DesirabilityObjective(
                 targets=self.two_targets,
+                weights=[1, 2, 3],
             )
 
     def test_non_numeric_weights(self):
         with pytest.raises(IterableValidationError):
-            Objective(
-                mode="DESIRABILITY",
-                weights=[1, "ABC"],
+            DesirabilityObjective(
                 targets=self.two_targets,
+                weights=[1, "ABC"],
             )
 
     def test_wrong_weights_type(self):
         with pytest.raises(IterableValidationError):
-            Objective(
-                mode="DESIRABILITY",
-                weights="ABC",
+            DesirabilityObjective(
                 targets=self.two_targets,
+                weights="ABC",
             )
 
 
