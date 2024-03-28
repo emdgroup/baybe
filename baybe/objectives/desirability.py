@@ -1,4 +1,4 @@
-from __future__ import annotations
+"""Functionality for desirability objectives."""
 
 from collections.abc import Sequence
 from functools import partial
@@ -45,20 +45,26 @@ def _is_all_numerical_targets(
 
 @define(frozen=True)
 class DesirabilityObjective(Objective):
+    """An objective scalarizing multiple targets using desirability values."""
+
     targets: tuple[Target, ...] = field(
         converter=tuple,
         validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],
     )
+    "The targets considered by the objective."
 
     weights: tuple[float, ...] = field(converter=_normalize_weights)
+    """The weights used to balance the different targets.
+    By default, all targets are considered equally important."""
 
     combine_func: CombineFunc = field(
         default=CombineFunc.GEOM_MEAN, converter=CombineFunc
     )
+    """The function used to combine the weighted desirability values of all targets."""
 
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
-        # By default, all targets are equally important.
+        """Create unit weights for all targets."""
         return tuple(1.0 for _ in range(len(self.targets)))
 
     @targets.validator
@@ -68,29 +74,26 @@ class DesirabilityObjective(Objective):
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
-        # Raises a ValueError if there are unbounded targets when using objective mode
-        # DESIRABILITY.
         if any(not target.bounds.is_bounded for target in targets):
-            raise ValueError(
-                "In 'DESIRABILITY' mode for multiple targets, each target must "
-                "have bounds defined."
-            )
+            raise ValueError("All targets must be bounded.")
 
     @weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
-        if len(weights) != len(self.targets):
+        if (lw := len(weights)) != (lt := len(self.targets)):
             raise ValueError(
-                f"Weights list for your objective has {len(weights)} values, but you "
-                f"defined {len(self.targets)} targets."
+                f"If custom weights are specified, there must be one for each target. "
+                f"Specified targets: {lt}. Specified weights: {lw}."
             )
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        # Perform transformations that are required independent of the mode
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+        # See base class.
+
+        # Transform all targets individually
         transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:
             transformed[target.name] = target.transform(data[target.name])
 
-        # In desirability mode, the targets are additionally combined further into one
+        # Create and apply the scalarizer
         if self.combine_func is CombineFunc.GEOM_MEAN:
             func = geom_mean
         elif self.combine_func is CombineFunc.MEAN:
@@ -100,8 +103,9 @@ class DesirabilityObjective(Objective):
                 f"The specified averaging function '{self.combine_func.name}' "
                 f"is unknown."
             )
-
         vals = func(transformed.values, weights=self.weights)
-        transformed = pd.DataFrame({"Comp_Target": vals}, index=transformed.index)
+
+        # Store the total desirability in a dataframe column
+        transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)
 
         return transformed
