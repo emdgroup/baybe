@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from functools import partial
-from typing import Any, Union
+from typing import Union
 
 import cattrs
 import numpy as np
@@ -18,7 +18,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import geom_mean
 
 
-def _normalize_weights(weights: Sequence[Union[float, int]]) -> list[float]:
+def _normalize_weights(weights: Sequence[Union[float, int]]) -> tuple[float, ...]:
     """Normalize a collection of weights such that they sum to 1.
 
     Args:
@@ -30,36 +30,36 @@ def _normalize_weights(weights: Sequence[Union[float, int]]) -> list[float]:
     Returns:
         The normalized weights.
     """
-    weights = np.asarray(cattrs.structure(weights, list[float]))
+    weights = np.asarray(cattrs.structure(weights, tuple[float, ...]))
     if not np.all(weights > 0.0):
         raise ValueError("All weights must be strictly positive.")
-    return (weights / weights.sum()).tolist()
+    return tuple(weights / weights.sum())
 
 
-def _is_all_numerical_targets(x: list[Target], /) -> TypeGuard[list[NumericalTarget]]:
+def _is_all_numerical_targets(
+    x: tuple[Target, ...], /
+) -> TypeGuard[tuple[NumericalTarget, ...]]:
     """Typeguard helper function."""
     return all(isinstance(y, NumericalTarget) for y in x)
 
 
 @define(frozen=True)
 class DesirabilityObjective(Objective):
-    targets: list[Target] = field(validator=min_len(1))
+    targets: tuple[Target, ...] = field(validator=min_len(1))
 
-    weights: list[float] = field(converter=_normalize_weights)
+    weights: tuple[float, ...] = field(converter=_normalize_weights)
 
     combine_func: CombineFunc = field(
         default=CombineFunc.GEOM_MEAN, converter=CombineFunc
     )
 
     @weights.default
-    def _default_weights(self) -> list[float]:
+    def _default_weights(self) -> tuple[float, ...]:
         # By default, all targets are equally important.
-        return [1.0] * len(self.targets)
+        return tuple(1.0 for _ in range(len(self.targets)))
 
     @targets.validator
-    def _validate_targets(  # noqa: DOC101, DOC103
-        self, _: Any, targets: list[Target]
-    ) -> None:
+    def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
         if not _is_all_numerical_targets(targets):
             raise ValueError(
                 f"'{self.__class__.__name__}' currently only supports targets "
@@ -74,9 +74,7 @@ class DesirabilityObjective(Objective):
             )
 
     @weights.validator
-    def _validate_weights(  # noqa: DOC101, DOC103
-        self, _: Any, weights: list[float]
-    ) -> None:
+    def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
         if len(weights) != len(self.targets):
             raise ValueError(
                 f"Weights list for your objective has {len(weights)} values, but you "
