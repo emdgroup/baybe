@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from cattrs import IterableValidationError
 
 from baybe.objective import Objective
 from baybe.objectives.desirability import scalarize
@@ -74,7 +75,7 @@ class TestInvalidObjectiveCreation:
             )
 
     def test_non_numeric_weights(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(IterableValidationError):
             Objective(
                 mode="DESIRABILITY",
                 weights=[1, "ABC"],
@@ -82,7 +83,7 @@ class TestInvalidObjectiveCreation:
             )
 
     def test_wrong_weights_type(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(IterableValidationError):
             Objective(
                 mode="DESIRABILITY",
                 weights="ABC",
