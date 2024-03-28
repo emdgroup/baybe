@@ -1,7 +1,7 @@
 """Temporary dispatching functionality for backward compatibility."""
 
 import warnings
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -27,7 +27,7 @@ def Objective(
         return SingleTargetObjective(targets[0])
 
     elif mode == "DESIRABILITY":
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if weights is not None:
             kwargs["weights"] = weights
         if combine_func is not None:

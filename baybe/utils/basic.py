@@ -1,7 +1,7 @@
 """Collection of small basic utilities."""
 
 import random
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Callable, TypeVar
 
@@ -88,3 +88,15 @@ def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:
     for key, value in dictionary.items():
         group.setdefault(value, []).append(key)
     return {k: v for k, v in group.items() if len(v) > 1}
+
+
+def to_tuple(x: Sequence) -> tuple:
+    """Convert any sequence into a tuple.
+
+    This wrapper is only used to avoid mypy warnings for attrs converters:
+    * https://github.com/python/mypy/issues/8417
+    * https://github.com/python/mypy/issues/8389
+    * https://github.com/python/mypy/issues/5313
+    """
+    # TODO: Remove wrapper once mypy support is there
+    return tuple(x)

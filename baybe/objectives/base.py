@@ -20,7 +20,7 @@ class Objective(ABC, SerialMixin):
 
     @property
     @abstractmethod
-    def targets(self) -> tuple[Target]:
+    def targets(self) -> tuple[Target, ...]:
         """The targets included in the objective."""
 
     @abstractmethod

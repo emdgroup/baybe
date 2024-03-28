@@ -15,6 +15,7 @@ from baybe.objectives.base import Objective
 from baybe.objectives.enum import CombineFunc
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
+from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import geom_mean
 
 
@@ -30,10 +31,10 @@ def _normalize_weights(weights: Sequence[Union[float, int]]) -> tuple[float, ...
     Returns:
         The normalized weights.
     """
-    weights = np.asarray(cattrs.structure(weights, tuple[float, ...]))
-    if not np.all(weights > 0.0):
+    array = np.asarray(cattrs.structure(weights, tuple[float, ...]))
+    if not np.all(array > 0.0):
         raise ValueError("All weights must be strictly positive.")
-    return tuple(weights / weights.sum())
+    return tuple(array / array.sum())
 
 
 def _is_all_numerical_targets(
@@ -48,8 +49,8 @@ class DesirabilityObjective(Objective):
     """An objective scalarizing multiple targets using desirability values."""
 
     targets: tuple[Target, ...] = field(
-        converter=tuple,
-        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],
+        converter=to_tuple,
+        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],  # type: ignore[type-abstract]
     )
     "The targets considered by the objective."
 
@@ -94,7 +95,7 @@ class DesirabilityObjective(Objective):
         # Transform all targets individually
         transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:
-            transformed[target.name] = target.transform(data[target.name])
+            transformed[target.name] = target.transform(data[[target.name]])
 
         # Create and apply the scalarizer
         if self.combine_func is CombineFunc.GEOM_MEAN:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from cattrs.gen import make_dict_structure_fn
 
@@ -20,15 +20,17 @@ def structure_objective(val: dict, _) -> Objective:
     from baybe.objectives.desirability import DesirabilityObjective
     from baybe.objectives.single import SingleTargetObjective
 
+    cls: Union[
+        type[Objective], type[SingleTargetObjective], type[DesirabilityObjective]
+    ]
+
     # Use the specified objective type
     try:
         _type = val["type"]
-        cls = next(
-            (cl for cl in get_subclasses(Objective) if cl.__name__ == _type),
-            None,
-        )
-        if cls is None:
-            raise ValueError(f"Unknown subclass '{_type}'.")
+        try:
+            cls = next(cl for cl in get_subclasses(Objective) if cl.__name__ == _type)
+        except StopIteration as ex:
+            raise ValueError(f"Unknown subclass '{_type}'.") from ex
 
     # If no type is provided, determine the type by the number of targets given
     except KeyError:

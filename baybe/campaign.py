@@ -123,7 +123,7 @@ class Campaign(SerialMixin):
         return self.searchspace.parameters
 
     @property
-    def targets(self) -> list[Target]:
+    def targets(self) -> tuple[Target, ...]:
         """The targets of the underlying objective."""
         return self.objective.targets
 
