@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from attr import define, field
 from attr.validators import deep_iterable, instance_of, min_len
+from typing_extensions import TypeGuard
 
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import CombineFunc
@@ -27,12 +28,13 @@ def _normalize_weights(weights: list[float]) -> list[float]:
     return (100 * np.asarray(weights) / np.sum(weights)).tolist()
 
 
+def _is_all_numerical_targets(x: list[Target], /) -> TypeGuard[list[NumericalTarget]]:
+    """Typeguard helper function."""
+    return all(isinstance(y, NumericalTarget) for y in x)
+
+
 @define(frozen=True)
 class DesirabilityObjective(Objective):
-    # TODO: The class currently directly depends on `NumericalTarget`. Once this
-    #   direct dependence is replaced with a dependence on `Target`, the type
-    #   annotations should be changed.
-
     targets: list[Target] = field(validator=min_len(1))
 
     weights: list[float] = field(converter=_normalize_weights)
@@ -48,8 +50,13 @@ class DesirabilityObjective(Objective):
 
     @targets.validator
     def _validate_targets(  # noqa: DOC101, DOC103
-        self, _: Any, targets: list[NumericalTarget]
+        self, _: Any, targets: list[Target]
     ) -> None:
+        if not _is_all_numerical_targets(targets):
+            raise ValueError(
+                f"'{self.__class__.__name__}' currently only supports targets "
+                f"of type '{NumericalTarget.__name__}'."
+            )
         # Raises a ValueError if there are unbounded targets when using objective mode
         # DESIRABILITY.
         if any(not target.bounds.is_bounded for target in targets):
