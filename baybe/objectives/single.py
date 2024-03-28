@@ -12,11 +12,11 @@ from baybe.targets.base import Target
 class SingleTargetObjective(Objective):
     """An objective focusing on a single target."""
 
-    _target: Target = field(validator=instance_of(Target))
+    _target: Target = field(validator=instance_of(Target))  # type: ignore[type-abstract]
     """The single target considered by the objective."""
 
     @property
-    def targets(self) -> tuple[Target]:  # noqa: D102
+    def targets(self) -> tuple[Target, ...]:  # noqa: D102
         # See base class.
         return (self._target,)
 
