@@ -1,8 +1,11 @@
 """Tests for the objective module."""
 
+import numpy as np
 import pytest
 
 from baybe.objective import Objective
+from baybe.objectives.desirability import scalarize
+from baybe.objectives.enum import CombineFunc
 from baybe.targets import NumericalTarget
 
 
@@ -85,3 +88,18 @@ class TestInvalidObjectiveCreation:
                 weights="ABC",
                 targets=self.two_targets,
             )
+
+
+@pytest.mark.parametrize(
+    ("values", "combine_func", "weights", "expected"),
+    [
+        ([[1, 2]], CombineFunc.MEAN, [1, 1], [1.5]),
+        ([[1, 2]], CombineFunc.MEAN, [1, 2], [5 / 3]),
+        ([[1, 2]], CombineFunc.GEOM_MEAN, [1, 1], [np.sqrt(2)]),
+        ([[1, 2]], CombineFunc.GEOM_MEAN, [1, 2], [np.power(4, 1 / 3)]),
+    ],
+)
+def test_desirability_scalarization(values, combine_func, weights, expected):
+    """The desirability scalarization yields the expected result."""
+    actual = scalarize(values, combine_func, weights)
+    assert np.array_equal(actual, expected), (expected, actual)
