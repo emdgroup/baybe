@@ -16,7 +16,7 @@ from skl2onnx.operator_converters.linear_regressor import convert_sklearn_bayesi
 from sklearn.linear_model import BayesianRidge
 
 from baybe.campaign import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
     FPSRecommender,
@@ -100,9 +100,7 @@ surrogate_model = CustomONNXSurrogate(
 
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=Objective(
-        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
-    ),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
         recommender=SequentialGreedyRecommender(surrogate_model=surrogate_model),
         initial_recommender=FPSRecommender(),

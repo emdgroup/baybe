@@ -9,7 +9,7 @@
 ### Necessary imports for this example
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import DesirabilityObjective
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -83,8 +83,7 @@ targets = [Target_1, Target_2, Target_3]
 # It is thus not necessary to handle normalization or scaling.
 
 
-objective = Objective(
-    mode="DESIRABILITY",
+objective = DesirabilityObjective(
     targets=targets,
     weights=[20, 20, 60],
     combine_func="MEAN",

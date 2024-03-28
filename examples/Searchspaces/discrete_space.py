@@ -9,7 +9,7 @@ import numpy as np
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -79,9 +79,7 @@ parameters = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
 
 ### Constructing the campaign and performing a recommendation
 

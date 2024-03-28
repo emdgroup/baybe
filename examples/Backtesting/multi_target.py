@@ -16,7 +16,7 @@ import os
 import numpy as np
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import DesirabilityObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -87,8 +87,7 @@ Target_2 = NumericalTarget(
 
 targets = [Target_1, Target_2]
 
-objective = Objective(
-    mode="DESIRABILITY",
+objective = DesirabilityObjective(
     targets=targets,
     weights=[20, 30],
     combine_func="MEAN",

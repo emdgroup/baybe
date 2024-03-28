@@ -17,7 +17,7 @@
 ### Necessary imports for this example
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
     RandomRecommender,
@@ -167,9 +167,7 @@ parameters = [solvent, base, ligand, temperature, concentration]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
 
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
 
 ### Creating the campaign
 

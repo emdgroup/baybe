@@ -24,10 +24,10 @@ Nearly [examples](../../examples/examples) use this objective mode.
 
 ```python
 from baybe.targets import NumericalTarget
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 
 target_1 = NumericalTarget(name="yield", mode="MIN", bounds=(0, 100))
-objective = Objective(mode="SINGLE", targets=[target_1])
+objective = SingleTargetObjective(target=target_1)
 ```
 
 ### DESIRABILITY
@@ -64,13 +64,12 @@ In the example below, we use three different targets (which all have a different
 and weigh the first target twice as important as each of the other targets:
 ```python
 from baybe.targets import NumericalTarget
-from baybe.objective import Objective
+from baybe.objectives import DesirabilityObjective
 
 target_1 = NumericalTarget(name="t_1", mode="MIN", bounds=(0, 100))
 target_2 = NumericalTarget(name="t_2", mode="MIN", bounds=(0, 100))
 target_3 = NumericalTarget(name="t_3", mode="MATCH", bounds=(40, 60))
-objective = Objective(
-    mode="DESIRABILITY",
+objective = DesirabilityObjective(
     targets=[target_1, target_2, target_3],
     weights=[2.0, 1.0, 1.0],  # optional, by default all weights are equal
     combine_func="GEOM_MEAN",  # optional, geometric mean is the default
