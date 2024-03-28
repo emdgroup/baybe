@@ -2,10 +2,11 @@
 
 from collections.abc import Sequence
 from functools import partial
-from typing import Union
+from typing import Callable, Union
 
 import cattrs
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, instance_of, min_len
@@ -42,6 +43,34 @@ def _is_all_numerical_targets(
 ) -> TypeGuard[tuple[NumericalTarget, ...]]:
     """Typeguard helper function."""
     return all(isinstance(y, NumericalTarget) for y in x)
+
+
+def scalarize(
+    values: npt.ArrayLike, combine_func: CombineFunc, weights: npt.ArrayLike
+) -> np.ndarray:
+    """Scalarize the rows of a 2-D array, producing a 1-D array.
+
+    Args:
+        values: The 2-D array whose rows are to be scalarized.
+        combine_func: The scalarization mechanism to be used.
+        weights: Weights for the columns of the input array.
+
+    Raises:
+        ValueError: If the requested scalarization mechanism is not implemented.
+
+    Returns:
+        np.ndarray: A 1-D array containing the scalarized values.
+    """
+    func: Callable
+    if combine_func is CombineFunc.GEOM_MEAN:
+        func = geom_mean
+    elif combine_func is CombineFunc.MEAN:
+        func = partial(np.average, axis=1)
+    else:
+        raise NotImplementedError(
+            f"No scalarization mechanism defined for '{combine_func.name}'."
+        )
+    return func(values, weights=weights)
 
 
 @define(frozen=True)
@@ -97,17 +126,8 @@ class DesirabilityObjective(Objective):
         for target in self.targets:
             transformed[target.name] = target.transform(data[[target.name]])
 
-        # Create and apply the scalarizer
-        if self.combine_func is CombineFunc.GEOM_MEAN:
-            func = geom_mean
-        elif self.combine_func is CombineFunc.MEAN:
-            func = partial(np.average, axis=1)
-        else:
-            raise ValueError(
-                f"The specified averaging function '{self.combine_func.name}' "
-                f"is unknown."
-            )
-        vals = func(transformed.values, weights=self.weights)
+        # Scalarize the transformed targets into desirability values
+        vals = scalarize(transformed.values, self.combine_func, self.weights)
 
         # Store the total desirability in a dataframe column
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)
