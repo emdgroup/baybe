@@ -17,7 +17,7 @@ from baybe.utils.numerical import geom_mean
 
 
 def _normalize_weights(weights: list[float]) -> list[float]:
-    """Normalize a collection of weights such that they sum to 100.
+    """Normalize a collection of weights such that they sum to 1.
 
     Args:
         weights: The un-normalized weights.
@@ -25,7 +25,7 @@ def _normalize_weights(weights: list[float]) -> list[float]:
     Returns:
         The normalized weights.
     """
-    return (100 * np.asarray(weights) / np.sum(weights)).tolist()
+    return (np.asarray(weights) / np.sum(weights)).tolist()
 
 
 def _is_all_numerical_targets(x: list[Target], /) -> TypeGuard[list[NumericalTarget]]:
