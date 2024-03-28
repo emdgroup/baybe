@@ -17,7 +17,6 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
-from baybe.utils.numerical import DTypeFloatTorch
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -163,6 +162,8 @@ class ContinuousConstraint(Constraint, ABC):
             The tuple required by botorch.
         """
         import torch
+
+        from baybe.utils.numerical import DTypeFloatTorch
 
         param_names = [p.name for p in parameters]
         param_indices = [

@@ -13,7 +13,6 @@ from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
 from baybe.utils.interval import InfiniteIntervalError, Interval, convert_bounds
-from baybe.utils.numerical import DTypeFloatNumpy
 
 
 @define(frozen=True, slots=False)
@@ -57,6 +56,8 @@ class NumericalDiscreteParameter(DiscreteParameter):
         Raises:
             ValueError: If the tolerance is not safe.
         """
+        from baybe.utils.numerical import DTypeFloatNumpy
+
         # For zero tolerance, the only left requirement is that all parameter values
         # are distinct, which is already ensured by the corresponding validator.
         if tolerance == 0.0:
