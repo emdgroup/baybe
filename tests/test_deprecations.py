@@ -1,6 +1,7 @@
 """Deprecation tests."""
 
 import json
+from unittest.mock import Mock
 
 import pytest
 
@@ -124,7 +125,9 @@ def test_deprecated_config():
 def test_deprecated_campaign_tolerance_flag(flag):
     """Constructing a Campaign with the deprecated tolerance flag raises an error."""
     with pytest.raises(DeprecationError):
-        Campaign(None, None, None, numerical_measurements_must_be_within_tolerance=flag)
+        Campaign(
+            Mock(), Mock(), Mock(), numerical_measurements_must_be_within_tolerance=flag
+        )
 
 
 def test_deprecated_batch_quantity_keyword(campaign):
@@ -145,7 +148,7 @@ def test_deprecated_strategy_allow_flags(flag):
 def test_deprecated_strategy_campaign_flag(recommender):
     """Using the deprecated strategy keyword raises an error."""
     with pytest.raises(DeprecationError):
-        Campaign(None, None, None, strategy=recommender)
+        Campaign(Mock(), Mock(), Mock(), strategy=recommender)
 
 
 def test_deprecated_objective_class():
