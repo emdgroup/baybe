@@ -11,7 +11,6 @@ import pandas as pd
 
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.targets.enum import TargetMode
-from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -40,6 +39,8 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     #  care of this) df.values has been changed to df.values.astype(float),
     #  even though this seems like double casting here.
     import torch
+
+    from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
 
     out = (
         torch.from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
