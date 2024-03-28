@@ -1,6 +1,6 @@
 """Test serialization of objectives."""
 
-from baybe.objective import Objective
+from baybe.objectives.base import Objective
 
 
 def test_objective_serialization(objective):
