@@ -1,6 +1,7 @@
 """Base classes for all objectives."""
 
 from abc import ABC, abstractmethod
+from typing import Union
 
 import pandas as pd
 from attrs import define
@@ -36,5 +37,11 @@ class Objective(ABC, SerialMixin):
         """
 
 
+def to_objective(x: Union[Target, Objective], /) -> Objective:
+    """Convert targets into a objectives with passthrough for objectives."""
+    return x if isinstance(x, Objective) else x.to_objective()
+
+
+# Register de-/serialization hooks
 converter.register_structure_hook(Objective, structure_objective)
 converter.register_unstructure_hook(Objective, unstructure_base)
