@@ -13,14 +13,13 @@ import os
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from botorch.test_functions.synthetic import Hartmann
 
 from baybe import Campaign
 from baybe.objective import Objective
-from baybe.parameters import NumericalDiscreteParameter, TaskParameter
+from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -34,8 +33,8 @@ from baybe.utils.plotting import create_example_plots
 SMOKE_TEST = "SMOKE_TEST" in os.environ  # reduce the problem complexity in CI pipelines
 DIMENSION = 3  # input dimensionality of the test function
 BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
-N_MC_ITERATIONS = 2 if SMOKE_TEST else 50  # number of Monte Carlo runs
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 10  # number of DOE iterations
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 5  # number of Monte Carlo runs
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20  # number of DOE iterations
 POINTS_PER_DIM = 3 if SMOKE_TEST else 5  # number of grid points per input dimension
 
 
@@ -59,10 +58,10 @@ BOUNDS = Hartmann(dim=DIMENSION).bounds
 # [NumericalDiscreteParameter](baybe.parameters.numerical.NumericalDiscreteParameter)
 # per input dimension of the test function:
 
-discrete_params = [
-    NumericalDiscreteParameter(
+params = [
+    NumericalContinuousParameter(
         name=f"x{d}",
-        values=np.linspace(lower, upper, POINTS_PER_DIM),
+        bounds=(lower, upper),
     )
     for d, (lower, upper) in enumerate(BOUNDS.T)
 ]
@@ -90,7 +89,7 @@ task_param = TaskParameter(
 
 # With the parameters at hand, we can now create our search space.
 
-parameters = [*discrete_params, task_param]
+parameters = [*params, task_param]
 searchspace = SearchSpace.from_product(parameters=parameters)
 
 ### Defining the Tasks
@@ -100,11 +99,16 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # noise. The used model is of course not aware of this relationship but needs to infer
 # it from the data gathered during the optimization process.
 
+
+def shifted_hartmann(*x: float) -> float:
+    """Calculate a shifted, scaled and noisy variant of the Hartman function."""
+    noised_hartmann = Hartmann(dim=DIMENSION)
+    return 2.5 * botorch_function_wrapper(noised_hartmann)(x) + 3.25
+
+
 test_functions = {
     "Test_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
-    "Training_Function": botorch_function_wrapper(
-        Hartmann(dim=DIMENSION, negate=True, noise_std=0.15)
-    ),
+    "Training_Function": shifted_hartmann,
 }
 
 # (Lookup)=
@@ -116,16 +120,6 @@ test_functions = {
 # The other lookup is used as the loop-closing element, providing the target values of
 # the test functions on demand.
 
-grid = np.meshgrid(*[p.values for p in discrete_params])
-
-lookups: dict[str, pd.DataFrame] = {}
-for function_name, function in test_functions.items():
-    lookup = pd.DataFrame({f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)})
-    lookup["Target"] = lookup.apply(function, axis=1)
-    lookup["Function"] = function_name
-    lookups[function_name] = lookup
-lookup_training_task = lookups["Training_Function"]
-lookup_test_task = lookups["Test_Function"]
 
 ### Simulation Loop
 
@@ -135,28 +129,25 @@ lookup_test_task = lookups["Test_Function"]
 # sampling of the provided data, we perform several Monte Carlo runs.
 
 results: list[pd.DataFrame] = []
-for p in (0.01, 0.02, 0.05, 0.08, 0.2):
+for n in (10, 100, 1000):
+    initial_data = []
+    for _ in range(N_MC_ITERATIONS):
+        data = searchspace.continuous.samples_random(n_points=n)
+        data["Target"] = data.apply(test_functions["Training_Function"], axis=1)
+        data["Function"] = "Training_Function"
+        initial_data.append(data)
+
     campaign = Campaign(searchspace=searchspace, objective=objective)
-    initial_data = [lookup_training_task.sample(frac=p) for _ in range(N_MC_ITERATIONS)]
     result_fraction = simulate_scenarios(
-        {f"{int(100*p)}": campaign},
-        lookup_test_task,
+        {f"{n}": campaign},
+        test_functions["Test_Function"],
         initial_data=initial_data,
         batch_size=BATCH_SIZE,
         n_doe_iterations=N_DOE_ITERATIONS,
     )
     results.append(result_fraction)
 
-# For comparison, we also optimize the function without using any initial data:
-
-result_baseline = simulate_scenarios(
-    {"0": Campaign(searchspace=searchspace, objective=objective)},
-    lookup_test_task,
-    batch_size=BATCH_SIZE,
-    n_doe_iterations=N_DOE_ITERATIONS,
-    n_mc_iterations=N_MC_ITERATIONS,
-)
-results = pd.concat([result_baseline, *results])
+results = pd.concat(*results)
 
 # All that remains is to visualize the results.
 # As the example shows, the optimization speed can be significantly increased by
