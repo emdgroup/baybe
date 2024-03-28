@@ -10,7 +10,7 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.exceptions import DeprecationError
-from baybe.objectives.base import Objective
+from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -47,8 +47,10 @@ class Campaign(SerialMixin):
     searchspace: SearchSpace = field()
     """The search space in which the experiments are conducted."""
 
-    objective: Objective = field()
-    """The optimization objective."""
+    objective: Objective = field(converter=to_objective)
+    """The optimization objective.
+    When passing a single :class:`baybe.targets.base.Target`, it gets automatically
+    wrapped into a :class:`baybe.objective.single.SingleTargetObjective`."""
 
     recommender: RecommenderProtocol = field(factory=TwoPhaseMetaRecommender)
     """The employed recommender"""
