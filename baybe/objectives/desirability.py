@@ -74,8 +74,11 @@ class DesirabilityObjective(Objective):
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
-        if any(not target.bounds.is_bounded for target in targets):
-            raise ValueError("All targets must be bounded.")
+        if not all(target.is_normalized for target in targets):
+            raise ValueError(
+                "All targets must be normalized, which requires setting appropriate "
+                "bounds and transformations."
+            )
 
     @weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
