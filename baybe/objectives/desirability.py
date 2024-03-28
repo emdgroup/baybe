@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from functools import partial
-from typing import Any
+from typing import Any, Union
 
+import cattrs
 import numpy as np
 import pandas as pd
-from attr import define, field
-from attr.validators import deep_iterable, instance_of, min_len
+from attrs import define, field
+from attrs.validators import min_len
 from typing_extensions import TypeGuard
 
 from baybe.objectives.base import Objective
@@ -16,16 +18,22 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import geom_mean
 
 
-def _normalize_weights(weights: list[float]) -> list[float]:
+def _normalize_weights(weights: Sequence[Union[float, int]]) -> list[float]:
     """Normalize a collection of weights such that they sum to 1.
 
     Args:
         weights: The un-normalized weights.
 
+    Raises:
+        ValueError: If any of the weights is non-positive.
+
     Returns:
         The normalized weights.
     """
-    return (np.asarray(weights) / np.sum(weights)).tolist()
+    weights = np.asarray(cattrs.structure(weights, list[float]))
+    if not np.all(weights > 0.0):
+        raise ValueError("All weights must be strictly positive.")
+    return (weights / weights.sum()).tolist()
 
 
 def _is_all_numerical_targets(x: list[Target], /) -> TypeGuard[list[NumericalTarget]]:
@@ -69,13 +77,6 @@ class DesirabilityObjective(Objective):
     def _validate_weights(  # noqa: DOC101, DOC103
         self, _: Any, weights: list[float]
     ) -> None:
-        if weights is None:
-            return
-
-        # Assert that weights is a list of numbers
-        validator = deep_iterable(instance_of(float), instance_of(list))
-        validator(self, _, weights)
-
         if len(weights) != len(self.targets):
             raise ValueError(
                 f"Weights list for your objective has {len(weights)} values, but you "
