@@ -8,7 +8,7 @@ import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import min_len
+from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import TypeGuard
 
 from baybe.objectives.base import Objective
@@ -45,7 +45,10 @@ def _is_all_numerical_targets(
 
 @define(frozen=True)
 class DesirabilityObjective(Objective):
-    targets: tuple[Target, ...] = field(validator=min_len(1))
+    targets: tuple[Target, ...] = field(
+        converter=tuple,
+        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],
+    )
 
     weights: tuple[float, ...] = field(converter=_normalize_weights)
 
