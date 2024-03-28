@@ -120,6 +120,11 @@ class NumericalTarget(Target, SerialMixin):
                 f"of {_VALID_TRANSFORMATIONS[self.mode]}."
             )
 
+    @property
+    def is_normalized(self) -> bool:
+        """Indicate if the computational representation lies in the unit interval."""
+        return self.bounds.is_bounded and self.transformation is not None
+
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.
 
