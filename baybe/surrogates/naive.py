@@ -1,14 +1,17 @@
 """Naive surrogates."""
 
-from typing import ClassVar, Optional
+from __future__ import annotations
 
-import torch
+from typing import TYPE_CHECKING, ClassVar, Optional
+
 from attr import define, field
-from torch import Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define
@@ -34,6 +37,8 @@ class MeanPredictionSurrogate(Surrogate):
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
         # TODO: use target value bounds for covariance scaling when explicitly provided
+        import torch
+
         mean = self.target_value * torch.ones([len(candidates)])
         var = torch.ones(len(candidates))
         return mean, var

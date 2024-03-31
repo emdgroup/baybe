@@ -6,18 +6,20 @@ in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750
 Since we plan to refactor the surrogates, this part of the documentation will be
 available in the future. Thus, please have a look in the source code directly.
 """
+from __future__ import annotations
 
-from typing import Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
-import torch
 from attr import define, field
 from sklearn.linear_model import ARDRegression
-from torch import Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets, scale_model
 from baybe.surrogates.validation import get_model_params_validator
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @catch_constant_targets
@@ -51,6 +53,8 @@ class BayesianLinearSurrogate(Surrogate):
         dists = self._model.predict(candidates.numpy(), return_std=True)
 
         # Split into posterior mean and variance
+        import torch
+
         mean = torch.from_numpy(dists[0])
         var = torch.from_numpy(dists[1]).pow(2)
 

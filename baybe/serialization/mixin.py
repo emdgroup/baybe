@@ -3,6 +3,8 @@
 import json
 from typing import TypeVar
 
+import attrs
+
 from baybe.serialization.core import converter
 
 _T = TypeVar("_T")
@@ -29,7 +31,9 @@ class SerialMixin:
         Returns:
             The reconstructed object.
         """
-        return converter.structure(dictionary, cls)
+        class_type = attrs.resolve_types(cls)
+
+        return converter.structure(dictionary, class_type)
 
     def to_json(self) -> str:
         """Create an object's JSON representation.

@@ -1,18 +1,21 @@
 """Base functionality for all BayBE surrogates."""
 
+from __future__ import annotations
+
 import gc
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
-import torch
 from attr import define, field
-from torch import Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
 from baybe.utils.basic import get_subclasses
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 # Define constants
 _MIN_VARIANCE = 1e-6
@@ -69,6 +72,8 @@ class Surrogate(ABC, SerialMixin):
             The posterior means and posterior covariance matrices of the t-batched
             candidate points.
         """
+        import torch
+
         # Prepare the input
         candidates = _prepare_inputs(candidates)
 

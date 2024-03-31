@@ -7,12 +7,11 @@ surrogates can be trained and attempts to do so for each new DOE iteration.
 
 It is planned to solve this issue in the future.
 """
+from __future__ import annotations
 
-from typing import Callable, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar
 
-import torch
 from attrs import define, field, validators
-from torch import Tensor
 
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
@@ -36,6 +35,9 @@ try:
     _ONNX_INSTALLED = True
 except ImportError:
     _ONNX_INSTALLED = False
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 def register_custom_architecture(
@@ -162,6 +164,8 @@ if _ONNX_INSTALLED:
             #   standard deviations. Currently, most available ONNX converters care
             #   about the mean only and it's not clear how this will be handled in the
             #   future. Once there are more choices available, this should be revisited.
+            import torch
+
             return (
                 torch.from_numpy(results[0]).to(DTypeFloatTorch),
                 torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
