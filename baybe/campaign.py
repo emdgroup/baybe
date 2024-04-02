@@ -50,7 +50,7 @@ class Campaign(SerialMixin):
     objective: Objective = field(converter=to_objective)
     """The optimization objective.
     When passing a single :class:`baybe.targets.base.Target`, it gets automatically
-    wrapped into a :class:`baybe.objective.single.SingleTargetObjective`."""
+    wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
 
     recommender: RecommenderProtocol = field(factory=TwoPhaseMetaRecommender)
     """The employed recommender"""
