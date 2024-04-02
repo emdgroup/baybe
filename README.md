@@ -31,7 +31,7 @@ of Experiments, focusing on additions that enable real-world experimental campai
 
 Besides functionality to perform a typical recommend-measure loop, BayBE's highlights are:
 - ✨ Custom parameter encodings: Improve your campaign with domain knowledge
-- ⚗️ Built-in chemical encodings: Improve your campaign with chemical knowledge
+- 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
 - 🔍 Single and multiple targets with min, max and match objectives
 - ⚙️ Custom surrogate models: For specialized problems or active learning
 - 🎭 Hybrid (mixed continuous and discrete) spaces
