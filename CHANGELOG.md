@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Changed
 - `torch` numeric types are now loaded lazily
+- Reorganized acquisition.py into `acquisition` subpackage
 
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
