@@ -20,7 +20,8 @@ def structure_recommender_protocol(val: dict, _) -> RecommenderProtocol:
     from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 
     try:
-        _type = val["type"]
+        val = val.copy()
+        _type = val.pop("type")
         cls = next(
             (cl for cl in get_subclasses(RecommenderProtocol) if cl.__name__ == _type),
             None,
@@ -36,6 +37,6 @@ def structure_recommender_protocol(val: dict, _) -> RecommenderProtocol:
             f"a future version.",
             DeprecationWarning,
         )
-    fun = make_dict_structure_fn(cls, converter)  # type: ignore
+    fun = make_dict_structure_fn(cls, converter, _cattrs_forbid_extra_keys=True)  # type: ignore
 
     return fun(val, cls)

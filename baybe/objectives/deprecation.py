@@ -24,9 +24,11 @@ def structure_objective(val: dict, _) -> Objective:
         type[Objective], type[SingleTargetObjective], type[DesirabilityObjective]
     ]
 
+    val = val.copy()
+
     # Use the specified objective type
     try:
-        _type = val["type"]
+        _type = val.pop("type")
         try:
             cls = next(cl for cl in get_subclasses(Objective) if cl.__name__ == _type)
         except StopIteration as ex:
@@ -34,7 +36,6 @@ def structure_objective(val: dict, _) -> Objective:
 
     # If no type is provided, determine the type by the number of targets given
     except KeyError:
-        val = val.copy()
         val.pop("mode")
         n_targets = len(val["targets"])
         if n_targets == 0:
@@ -52,6 +53,6 @@ def structure_objective(val: dict, _) -> Objective:
             f"a future version.",
             DeprecationWarning,
         )
-    fun = make_dict_structure_fn(cls, converter)  # type: ignore
+    fun = make_dict_structure_fn(cls, converter, _cattrs_forbid_extra_keys=True)  # type: ignore
 
     return fun(val, cls)
