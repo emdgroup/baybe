@@ -52,7 +52,7 @@ class GaussianProcessSurrogate(Surrogate):
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
         task_idx = searchspace.task_idx
-        n_task_params = 1 if task_idx not None else 0
+        n_task_params = 1 if task_idx is not None else 0
         numeric_idxs = [i for i in range(train_x.shape[1]) if i != task_idx]
 
         # get the input bounds from the search space in BoTorch Format
