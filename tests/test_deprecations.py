@@ -8,6 +8,8 @@ import pytest
 from baybe import BayBE, Campaign
 from baybe.exceptions import DeprecationError
 from baybe.objective import Objective
+from baybe.objectives.base import Objective as NewObjective
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
@@ -93,7 +95,7 @@ def test_missing_target_type():
         )
 
 
-deprecated_config = """
+old_style_config = """
 {
     "parameters": [
         {
@@ -118,7 +120,7 @@ deprecated_config = """
 def test_deprecated_config():
     """Using the deprecated config format raises a warning."""
     with pytest.warns(UserWarning):
-        Campaign.from_config(deprecated_config)
+        Campaign.from_config(old_style_config)
 
 
 @pytest.mark.parametrize("flag", [False, True])
@@ -155,3 +157,38 @@ def test_deprecated_objective_class():
     """Using the deprecated objective class raises a warning."""
     with pytest.warns(DeprecationWarning):
         Objective(mode="SINGLE", targets=[NumericalTarget(name="a", mode="MAX")])
+
+
+deprecated_objective_config = """
+{
+    "mode": "DESIRABILITY",
+    "targets": [
+        {
+            "name": "Yield",
+            "mode": "MAX",
+            "bounds": [0, 1]
+        },
+        {
+            "name": "Waste",
+            "mode": "MIN",
+            "bounds": [0, 1]
+        }
+    ],
+    "combine_func": "MEAN",
+    "weights": [1, 2]
+}
+"""
+
+
+def test_deprecated_objective_config_deserialization():
+    """The deprecated objective config format can still be parsed."""
+    expected = DesirabilityObjective(
+        targets=[
+            NumericalTarget("Yield", "MAX", bounds=(0, 1)),
+            NumericalTarget("Waste", "MIN", bounds=(0, 1)),
+        ],
+        scalarization="MEAN",
+        weights=[1, 2],
+    )
+    actual = NewObjective.from_json(deprecated_objective_config)
+    assert expected == actual, (expected, actual)
