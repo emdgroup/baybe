@@ -72,7 +72,7 @@ target_3 = NumericalTarget(name="t_3", mode="MATCH", bounds=(40, 60))
 objective = DesirabilityObjective(
     targets=[target_1, target_2, target_3],
     weights=[2.0, 1.0, 1.0],  # optional, by default all weights are equal
-    combine_func="GEOM_MEAN",  # optional, geometric mean is the default
+    scalarization="GEOM_MEAN",  # optional, geometric mean is the default
 )
 ```
 

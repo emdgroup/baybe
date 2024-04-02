@@ -13,7 +13,7 @@ from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import TypeGuard
 
 from baybe.objectives.base import Objective
-from baybe.objectives.enum import CombineFunc
+from baybe.objectives.enum import Scalarization
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
@@ -46,13 +46,13 @@ def _is_all_numerical_targets(
 
 
 def scalarize(
-    values: npt.ArrayLike, combine_func: CombineFunc, weights: npt.ArrayLike
+    values: npt.ArrayLike, scalarization: Scalarization, weights: npt.ArrayLike
 ) -> np.ndarray:
     """Scalarize the rows of a 2-D array, producing a 1-D array.
 
     Args:
         values: The 2-D array whose rows are to be scalarized.
-        combine_func: The scalarization mechanism to be used.
+        scalarization: The scalarization mechanism to be used.
         weights: Weights for the columns of the input array.
 
     Raises:
@@ -62,13 +62,13 @@ def scalarize(
         np.ndarray: A 1-D array containing the scalarized values.
     """
     func: Callable
-    if combine_func is CombineFunc.GEOM_MEAN:
+    if scalarization is Scalarization.GEOM_MEAN:
         func = geom_mean
-    elif combine_func is CombineFunc.MEAN:
+    elif scalarization is Scalarization.MEAN:
         func = partial(np.average, axis=1)
     else:
         raise NotImplementedError(
-            f"No scalarization mechanism defined for '{combine_func.name}'."
+            f"No scalarization mechanism defined for '{scalarization.name}'."
         )
     return func(values, weights=weights)
 
@@ -84,13 +84,13 @@ class DesirabilityObjective(Objective):
     "The targets considered by the objective."
 
     weights: tuple[float, ...] = field(converter=_normalize_weights)
-    """The weights used to balance the different targets.
+    """The weights to balance the different targets.
     By default, all targets are considered equally important."""
 
-    combine_func: CombineFunc = field(
-        default=CombineFunc.GEOM_MEAN, converter=CombineFunc
+    scalarization: Scalarization = field(
+        default=Scalarization.GEOM_MEAN, converter=Scalarization
     )
-    """The function used to combine the weighted desirability values of all targets."""
+    """The mechanism to scalarize the weighted desirability values of all targets."""
 
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
@@ -127,7 +127,7 @@ class DesirabilityObjective(Objective):
             transformed[target.name] = target.transform(data[[target.name]])
 
         # Scalarize the transformed targets into desirability values
-        vals = scalarize(transformed.values, self.combine_func, self.weights)
+        vals = scalarize(transformed.values, self.scalarization, self.weights)
 
         # Store the total desirability in a dataframe column
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)

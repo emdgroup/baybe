@@ -3,8 +3,8 @@
 from enum import Enum
 
 
-class CombineFunc(Enum):
-    """Available combine functions for desirability objectives."""
+class Scalarization(Enum):
+    """Available scalarization mechanisms for desirability objectives."""
 
     MEAN = "MEAN"
     """Arithmetic mean."""

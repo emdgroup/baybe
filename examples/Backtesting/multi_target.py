@@ -90,7 +90,7 @@ targets = [Target_1, Target_2]
 objective = DesirabilityObjective(
     targets=targets,
     weights=[20, 30],
-    combine_func="MEAN",
+    scalarization="MEAN",
 )
 
 

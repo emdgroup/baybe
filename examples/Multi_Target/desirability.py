@@ -75,7 +75,7 @@ Target_3 = NumericalTarget(
 targets = [Target_1, Target_2, Target_3]
 
 # As the recommender requires a single function, the different targets need to be combined.
-# Thus, a `combine_function` is used to create a single target out of the several targets given.
+# Thus, a `scalarization` is used to create a single target out of the several targets given.
 # The combine function can either be the mean `MEAN` or the geometric mean `GEOM_MEAN`.
 # Per default, `GEOM_MEAN` is used.
 # Weights for each target can also be specified as a list of floats in the arguments
@@ -86,7 +86,7 @@ targets = [Target_1, Target_2, Target_3]
 objective = DesirabilityObjective(
     targets=targets,
     weights=[20, 20, 60],
-    combine_func="MEAN",
+    scalarization="MEAN",
 )
 
 print(objective)
