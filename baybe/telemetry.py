@@ -84,7 +84,6 @@ from typing import Union
 from urllib.parse import urlparse
 
 import pandas as pd
-import requests
 
 from baybe.parameters.base import Parameter
 from baybe.utils.boolean import strtobool
@@ -134,6 +133,7 @@ TELEM_LABELS = {
 
 # Attempt telemetry import
 try:
+    import requests
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
         OTLPMetricExporter,
     )
