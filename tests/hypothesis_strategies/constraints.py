@@ -15,6 +15,7 @@ from baybe.constraints.continuous import (
     ContinuousLinearInequalityConstraint,
 )
 from baybe.constraints.discrete import (
+    DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
@@ -69,6 +70,74 @@ def discrete_excludes_constraints(
 
     combiner = draw(st.sampled_from(list(_valid_logic_combiners)))
     return DiscreteExcludeConstraint(parameter_names, conditions, combiner)
+
+
+@st.composite
+def discrete_dependencies_constraints(
+    draw: st.DrawFn,
+    all_parameters: Optional[List[DiscreteParameter]] = None,
+):
+    if all_parameters is None:
+        all_parameter_names = draw(st.lists(st.text(), unique=True, min_size=2))
+        selected_parameter_names = draw(
+            st.lists(
+                st.sampled_from(all_parameter_names),
+                min_size=1,
+                max_size=len(all_parameter_names) - 1,
+                unique=True,
+            )
+        )
+        conditions = draw(
+            st.lists(
+                st.one_of(sub_selection_conditions(), threshold_conditions()),
+                min_size=len(selected_parameter_names),
+                max_size=len(selected_parameter_names),
+            )
+        )
+    else:
+        assert (
+            len(all_parameters) > 1
+        )  # dependencies cannot exist if there is just one parameter
+        selected_parameters = draw(
+            st.lists(
+                st.sampled_from(all_parameters),
+                min_size=1,
+                max_size=len(all_parameters) - 1,
+                unique=True,
+            )
+        )
+
+        all_parameter_names = [p.name for p in all_parameters]
+        selected_parameter_names = [p.name for p in selected_parameters]
+
+        # Threshold conditions only make sense for numerical parameters
+        conditions = [
+            draw(st.one_of(sub_selection_conditions(p.values), threshold_conditions()))
+            if isinstance(p, NumericalDiscreteParameter)
+            else draw(sub_selection_conditions(p.values))
+            for p in selected_parameters
+        ]
+
+    potentially_affected_parameter_names = list(
+        set(all_parameter_names) - set(selected_parameter_names)
+    )
+
+    affected_parameter_names = draw(
+        st.lists(
+            st.lists(
+                st.sampled_from(potentially_affected_parameter_names),
+                min_size=1,
+                max_size=len(potentially_affected_parameter_names),
+                unique=True,
+            ),
+            min_size=len(selected_parameter_names),
+            max_size=len(selected_parameter_names),
+        )
+    )
+
+    return DiscreteDependenciesConstraint(
+        selected_parameter_names, conditions, affected_parameter_names
+    )
 
 
 def _discrete_constraints(
