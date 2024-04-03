@@ -1,25 +1,23 @@
 """Utilities for acquisition functions."""
 
-from functools import partial
+from typing import Literal, Union
 
-from botorch.acquisition import (
-    ExpectedImprovement,
-    PosteriorMean,
-    ProbabilityOfImprovement,
-    UpperConfidenceBound,
-    qExpectedImprovement,
-    qProbabilityOfImprovement,
-    qUpperConfidenceBound,
-)
+from baybe.acquisition.base import AcquisitionFunction
+from baybe.utils.basic import get_subclasses
 
-acquisition_function_mapping = {
-    "PM": PosteriorMean,
-    "PI": ProbabilityOfImprovement,
-    "EI": ExpectedImprovement,
-    "UCB": partial(UpperConfidenceBound, beta=1.0),
-    "qEI": qExpectedImprovement,
-    "qPI": qProbabilityOfImprovement,
-    "qUCB": partial(qUpperConfidenceBound, beta=1.0),
-    "VarUCB": partial(UpperConfidenceBound, beta=100.0),
-    "qVarUCB": partial(qUpperConfidenceBound, beta=100.0),
-}
+_ACQF_NAMES = Literal[
+    "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
+]
+
+
+def str_to_acqf(name: _ACQF_NAMES, /) -> AcquisitionFunction:
+    """Create an ACQF object from a given ACQF name."""
+    acqfs = get_subclasses(AcquisitionFunction)
+    return next(acqf for acqf in acqfs if acqf._abbreviation == name)()
+
+
+def convert_acqf(
+    acqf: Union[AcquisitionFunction, _ACQF_NAMES], /
+) -> AcquisitionFunction:
+    """Convert an ACQF name into an ACQF object (with ACQF object passthrough)."""
+    return acqf if isinstance(acqf, AcquisitionFunction) else str_to_acqf(acqf)
