@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `torch` numeric types are now loaded lazily
 
+### Fixed
+- `n_task_params` now evaluates to 1 if `task_idx == 0`
+
 ## [0.8.2] - 2024-03-27
 ### Added
 - Simulation user guide
