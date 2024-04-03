@@ -12,6 +12,7 @@ from attr.validators import deep_iterable, in_, instance_of, min_len
 
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
+from baybe.utils.numerical import geom_mean
 
 if TYPE_CHECKING:
     from baybe.targets.numerical import NumericalTarget
@@ -134,8 +135,6 @@ class Objective(SerialMixin):
         Raises:
             ValueError: If the specified averaging function is unknown.
         """
-        from baybe.utils.numerical import geom_mean
-
         # Perform transformations that are required independent of the mode
         transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:

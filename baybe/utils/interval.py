@@ -11,6 +11,7 @@ from attrs import define, field
 from packaging import version
 
 from baybe.serialization import SerialMixin, converter
+from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -125,8 +126,6 @@ class Interval(SerialMixin):
 
     def to_ndarray(self) -> np.ndarray:
         """Transform the interval to a :class:`numpy.ndarray`."""
-        from baybe.utils.numerical import DTypeFloatNumpy
-
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
     def to_tensor(self) -> "Tensor":
