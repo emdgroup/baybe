@@ -133,7 +133,7 @@ class Interval(SerialMixin):
         """Transform the interval to a :class:`torch.Tensor`."""
         import torch
 
-        from baybe.utils.numerical import DTypeFloatTorch
+        from baybe.utils.torch import DTypeFloatTorch
 
         return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 

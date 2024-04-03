@@ -163,7 +163,7 @@ class ContinuousConstraint(Constraint, ABC):
         """
         import torch
 
-        from baybe.utils.numerical import DTypeFloatTorch
+        from baybe.utils.torch import DTypeFloatTorch
 
         param_names = [p.name for p in parameters]
         param_indices = [
