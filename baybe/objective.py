@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -12,8 +12,10 @@ from attr.validators import deep_iterable, in_, instance_of, min_len
 
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import geom_mean
+
+if TYPE_CHECKING:
+    from baybe.targets.numerical import NumericalTarget
 
 
 def _normalize_weights(weights: list[float]) -> list[float]:
