@@ -4,14 +4,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
 ### Added
-- Simulation user guide
-- Example for transfer learning backtest utility
 - `mypy` for search space
 
 ### Changed
+- `torch` numeric types are now loaded lazily
+- Reorganized acquisition.py into `acquisition` subpackage
+
+### Fixed
+- `n_task_params` now evaluates to 1 if `task_idx == 0`
+
+## [0.8.2] - 2024-03-27
+### Added
+- Simulation user guide
+- Example for transfer learning backtesting utility
+- `pyupgrade` pre-commit hook
+- Better human readable `__str__` representation of objective and targets
+- Alternative dataframe deserialization from `pd.DataFrame` constructors
+
+### Changed
 - More detailed and sophisticated search space user guide
+- Support for Python 3.12
+- Upgraded syntax to Python 3.9
+- Bumped `onnx` version to fix vulnerability
+- Increased threshold for low-dimensional GP priors
+- Replaced `fit_gpytorch_mll_torch` with `fit_gpytorch_mll`
+
+### Fixed
+- `telemetry` dependency is no longer a group (enables Poetry installation)
 
 ## [0.8.1] - 2024-03-11
 ### Added
@@ -271,7 +292,7 @@ or continuous parameters
 
 ## [0.4.2] - 2023-08-29
 ### Added
-- Test environments for multiple python versions via `tox`
+- Test environments for multiple Python versions via `tox`
 
 ### Changed
 - Removed `environment.yml`

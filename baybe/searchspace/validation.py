@@ -1,6 +1,6 @@
 """Validation functionality for search spaces."""
 
-from typing import Collection
+from collections.abc import Collection
 
 from baybe.exceptions import EmptySearchSpaceError
 from baybe.parameters import TaskParameter

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, List, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -12,11 +12,13 @@ from attr.validators import deep_iterable, in_, instance_of, min_len
 
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import geom_mean
 
+if TYPE_CHECKING:
+    from baybe.targets.numerical import NumericalTarget
 
-def _normalize_weights(weights: List[float]) -> List[float]:
+
+def _normalize_weights(weights: list[float]) -> list[float]:
     """Normalize a collection of weights such that they sum to 100.
 
     Args:
@@ -39,10 +41,10 @@ class Objective(SerialMixin):
     mode: Literal["SINGLE", "DESIRABILITY"] = field()
     """The optimization mode."""
 
-    targets: List[Target] = field(validator=min_len(1))
+    targets: list[Target] = field(validator=min_len(1))
     """The list of targets used for the objective."""
 
-    weights: List[float] = field(converter=_normalize_weights)
+    weights: list[float] = field(converter=_normalize_weights)
     """The weights used to balance the different targets. By default, all
     weights are equally important."""
 
@@ -51,15 +53,30 @@ class Objective(SerialMixin):
     )
     """The function used to combine the different targets."""
 
+    def __str__(self) -> str:
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+
+        # Convert the targets list to a dataframe to have a tabular output
+        targets_list = [target.summary() for target in self.targets]
+        targets_df = pd.DataFrame(targets_list)
+        targets_df["Weight"] = self.weights
+
+        objective_str = f"""{start_bold}Objective{end_bold}
+        \n{start_bold}Mode: {end_bold}{self.mode}
+        \n{start_bold}Targets {end_bold}\n{targets_df}
+        \n{start_bold}Combine Function: {end_bold}{self.combine_func}"""
+        return objective_str.replace("\n", "\n ")
+
     @weights.default
-    def _default_weights(self) -> List[float]:
+    def _default_weights(self) -> list[float]:
         """Create the default weights."""
         # By default, all targets are equally important.
         return [1.0] * len(self.targets)
 
     @targets.validator
     def _validate_targets(  # noqa: DOC101, DOC103
-        self, _: Any, targets: List[NumericalTarget]
+        self, _: Any, targets: list[NumericalTarget]
     ) -> None:
         """Validate targets depending on the objective mode.
 
@@ -84,7 +101,7 @@ class Objective(SerialMixin):
 
     @weights.validator
     def _validate_weights(  # noqa: DOC101, DOC103
-        self, _: Any, weights: List[float]
+        self, _: Any, weights: list[float]
     ) -> None:
         """Validate target weights.
 

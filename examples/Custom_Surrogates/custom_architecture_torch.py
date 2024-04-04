@@ -8,7 +8,7 @@
 
 ### Necessary imports
 
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import torch
@@ -65,7 +65,7 @@ def _create_linear_block(in_features: int, out_features: int) -> list:
     return [nn.Linear(in_features, out_features), nn.Dropout(p=DROPOUT), nn.ReLU()]
 
 
-def _create_hidden_layers(num_neurons: List[int]) -> list:
+def _create_hidden_layers(num_neurons: list[int]) -> list:
     """Create all hidden layers comprised of linear blocks."""
     layers = []
     for in_features, out_features in zip(num_neurons, num_neurons[1:]):
@@ -116,7 +116,7 @@ class NeuralNetDropoutSurrogate:
     def __init__(self):
         self.model: Optional[nn.Module] = None
 
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """See :class:`baybe.surrogates.Surrogate`."""
         self.model = self.model.train()  # keep dropout
         # Convert input from double to float

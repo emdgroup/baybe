@@ -68,13 +68,13 @@ tox -e fulltest-py39
 ``` 
 will run pytest on baybe with all optional features in python 3.9, while 
 ```bash
-tox -e coretest-py311
+tox -e coretest-py312
 ```
-will run pytest on baybe without additional features in python 3.11.
+will run pytest on baybe without additional features in python 3.12.
 ```bash
-tox -e lint-py311
+tox -e lint-py312
 ```
-will run the linters with python 3.11.
+will run the linters with python 3.12.
 
 For a full overview of all available environments, type:
 ```

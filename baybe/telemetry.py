@@ -79,7 +79,8 @@ import hashlib
 import os
 import socket
 import warnings
-from typing import Dict, Sequence, Union
+from collections.abc import Sequence
+from typing import Union
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -202,7 +203,7 @@ if is_enabled():
                 raise requests.RequestException("Cannot reach telemetry network.")
 
         # User has connectivity to the telemetry endpoint, so we initialize
-        _instruments: Dict[str, Histogram] = {}
+        _instruments: dict[str, Histogram] = {}
         _resource = Resource.create(
             {"service.namespace": "BayBE", "service.name": "SDK"}
         )
@@ -229,7 +230,7 @@ if is_enabled():
         os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
 
-def get_user_details() -> Dict[str, str]:
+def get_user_details() -> dict[str, str]:
     """Generate user details.
 
     These are submitted as metadata with requested telemetry stats.

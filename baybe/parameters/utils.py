@@ -1,6 +1,7 @@
 """Parameter utilities."""
 
-from typing import Any, Callable, Collection, Dict, List, Optional, TypeVar
+from collections.abc import Collection
+from typing import Any, Callable, Optional, TypeVar
 
 import pandas as pd
 
@@ -13,7 +14,7 @@ def get_parameters_from_dataframe(
     df: pd.DataFrame,
     factory: Callable[[str, Collection[Any]], _TParameter],
     parameters: Optional[Collection[_TParameter]] = None,
-) -> List[_TParameter]:
+) -> list[_TParameter]:
     """Create a list of parameters from a dataframe.
 
     Returns one parameter for each column of the given dataframe. By default,
@@ -42,7 +43,7 @@ def get_parameters_from_dataframe(
         ValueError: If a parameter was specified for which no match was found.
     """
     # Turn the pre-specified parameters into a dict and check for duplicate names
-    specified_params: Dict[str, _TParameter] = {}
+    specified_params: dict[str, _TParameter] = {}
     if parameters is not None:
         for param in parameters:
             if param.name in specified_params:

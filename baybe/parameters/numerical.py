@@ -1,7 +1,7 @@
 """Numerical parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Tuple
+from typing import Any, ClassVar
 
 import cattrs
 import numpy as np
@@ -26,9 +26,9 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
     # object variables
     # NOTE: The parameter values are assumed to be sorted by the tolerance validator.
-    _values: Tuple[float, ...] = field(
+    _values: tuple[float, ...] = field(
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
-        converter=lambda x: sorted(cattrs.structure(x, Tuple[float, ...])),  # type: ignore
+        converter=lambda x: sorted(cattrs.structure(x, tuple[float, ...])),  # type: ignore
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),

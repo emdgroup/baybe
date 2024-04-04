@@ -37,6 +37,13 @@ class Target(ABC, SerialMixin):
             A dataframe containing the transformed data.
         """
 
+    @abstractmethod
+    def summary(self) -> dict:
+        """Return a custom summarization of the target."""
+
+    def __str__(self) -> str:
+        return str(self.summary())
+
 
 def _add_missing_type_hook(hook):
     """Adjust the structuring hook such that it auto-fills missing target types.

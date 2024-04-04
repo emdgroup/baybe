@@ -1,8 +1,9 @@
 """Converter and hooks."""
 import base64
 import pickle
-from typing import Any, Callable, Optional, Type, TypeVar, get_type_hints
+from typing import Any, Callable, Optional, TypeVar, Union, get_type_hints
 
+import attrs
 import cattrs
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
@@ -36,9 +37,9 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
 
 
 def get_base_structure_hook(
-    base: Type[_T],
+    base: type[_T],
     overrides: Optional[dict] = None,
-) -> Callable[[dict, Type[_T]], _T]:
+) -> Callable[[dict, type[_T]], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
     Provides the inverse operation to ``unstructure_base``.
@@ -53,7 +54,7 @@ def get_base_structure_hook(
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
     from baybe.utils.basic import get_subclasses
 
-    def structure_base(val: dict, _: Type[_T]) -> _T:
+    def structure_base(val: dict, _: type[_T]) -> _T:
         _type = val.pop("type")
         cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
         if cls is None:
@@ -66,10 +67,23 @@ def get_base_structure_hook(
     return structure_base
 
 
-def _structure_dataframe_hook(string: str, _) -> pd.DataFrame:
+def _structure_dataframe_hook(obj: Union[str, dict], _) -> pd.DataFrame:
     """Deserialize a DataFrame."""
-    pickled_df = base64.b64decode(string.encode("utf-8"))
-    return pickle.loads(pickled_df)
+    if isinstance(obj, str):
+        pickled_df = base64.b64decode(obj.encode("utf-8"))
+        return pickle.loads(pickled_df)
+    elif isinstance(obj, dict):
+        if "constructor" not in obj:
+            raise ValueError(
+                "For deserializing a dataframe from a dictionary, the 'constructor' "
+                "keyword must be provided as key.",
+            )
+        return select_constructor_hook(obj, pd.DataFrame)
+    else:
+        raise ValueError(
+            "Unknown object type for deserializing a dataframe. Supported types are "
+            "strings and dictionaries.",
+        )
 
 
 def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
@@ -100,12 +114,16 @@ def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC1
     )
 
 
-def select_constructor_hook(specs: dict, cls: Type[_T]) -> _T:
+def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     """Use the constructor specified in the 'constructor' field for deserialization."""
     # If a constructor is specified, use it
     specs = specs.copy()
     if constructor_name := specs.pop("constructor", None):
         constructor = getattr(cls, constructor_name)
+
+        # If given a non-attrs class, simply call the constructor
+        if not attrs.has(cls):
+            return constructor(**specs)
 
         # Extract the constructor parameter types and deserialize the arguments
         type_hints = get_type_hints(constructor)

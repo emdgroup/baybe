@@ -52,7 +52,7 @@ def test_missing_recommender_type(config):
 
 # Create some recommenders of different class for better differentiation after roundtrip
 RECOMMENDERS = [RandomRecommender(), FPSRecommender()]
-assert len(RECOMMENDERS) == len(set(rec.__class__.__name__ for rec in RECOMMENDERS))
+assert len(RECOMMENDERS) == len({rec.__class__.__name__ for rec in RECOMMENDERS})
 
 
 @pytest.mark.parametrize(

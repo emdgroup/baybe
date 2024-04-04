@@ -5,7 +5,7 @@ import tempfile
 import urllib.request
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Type, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -98,7 +98,7 @@ def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
 
 
 def smiles_to_mordred_features(
-    smiles_list: List[str],
+    smiles_list: list[str],
     prefix: str = "",
     dropna: bool = True,
 ) -> pd.DataFrame:
@@ -125,7 +125,7 @@ def smiles_to_mordred_features(
     return dataframe
 
 
-def smiles_to_molecules(smiles_list: List[str]) -> List[Chem.Mol]:
+def smiles_to_molecules(smiles_list: list[str]) -> list[Chem.Mol]:
     """Convert a given list of SMILES strings into corresponding Molecule objects.
 
     Args:
@@ -152,7 +152,7 @@ def smiles_to_molecules(smiles_list: List[str]) -> List[Chem.Mol]:
 
 
 def smiles_to_rdkit_features(
-    smiles_list: List[str], prefix: str = "", dropna: bool = True
+    smiles_list: list[str], prefix: str = "", dropna: bool = True
 ) -> pd.DataFrame:
     """Compute RDKit chemical descriptors for a list of SMILES strings.
 
@@ -182,9 +182,9 @@ def smiles_to_rdkit_features(
 
 
 def smiles_to_fp_features(
-    smiles_list: List[str],
+    smiles_list: list[str],
     prefix: str = "",
-    dtype: Union[Type[int], Type[float]] = int,
+    dtype: Union[type[int], type[float]] = int,
     radius: int = 4,
     n_bits: int = 1024,
 ) -> pd.DataFrame:

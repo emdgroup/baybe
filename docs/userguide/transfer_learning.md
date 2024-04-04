@@ -59,7 +59,7 @@ TaskParameter(
     active_values=["3,5-dimethylisoxazole"],
 )
 TaskParameter(
-    name="Month",
+    name="Cell_Line",
     values=["Liver cell", "Heart cell", "Hamster brain cell"],
     active_values=["Liver cell"],
 )

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, Iterable, List, Optional, Sequence, Tuple
+from collections.abc import Collection, Iterable, Sequence
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -40,7 +41,7 @@ class SubspaceDiscrete(SerialMixin):
     parameter views.
     """
 
-    parameters: Tuple[DiscreteParameter, ...] = field(
+    parameters: tuple[DiscreteParameter, ...] = field(
         converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
     )
     """The list of parameters of the subspace."""
@@ -54,7 +55,7 @@ class SubspaceDiscrete(SerialMixin):
     empty_encoding: bool = field(default=False)
     """Flag encoding whether an empty encoding is used."""
 
-    constraints: Tuple[DiscreteConstraint, ...] = field(
+    constraints: tuple[DiscreteConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """A list of constraints for restricting the space."""
@@ -517,7 +518,7 @@ class SubspaceDiscrete(SerialMixin):
         self,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = False,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.
 
         Args:
@@ -634,20 +635,20 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
     """Validate the discrete space while skipping costly creation steps."""
     # Validate product inputs without constructing it
     if specs.get("constructor", None) == "from_product":
-        parameters = converter.structure(specs["parameters"], List[DiscreteParameter])
+        parameters = converter.structure(specs["parameters"], list[DiscreteParameter])
         validate_parameters(parameters)
 
         constraints = specs.get("constraints", None)
         if constraints:
             constraints = converter.structure(
-                specs["constraints"], List[DiscreteConstraint]
+                specs["constraints"], list[DiscreteConstraint]
             )
             validate_constraints(constraints, parameters)
 
     # Validate simplex inputs without constructing it
     elif specs.get("constructor", None) == "from_simplex":
         simplex_parameters = converter.structure(
-            specs["simplex_parameters"], List[NumericalDiscreteParameter]
+            specs["simplex_parameters"], list[NumericalDiscreteParameter]
         )
 
         if not all(min(p.values) >= 0.0 for p in simplex_parameters):
@@ -660,7 +661,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
         product_parameters = specs.get("product_parameters", None)
         if product_parameters:
             product_parameters = converter.structure(
-                specs["product_parameters"], List[DiscreteParameter]
+                specs["product_parameters"], list[DiscreteParameter]
             )
 
         validate_parameters(simplex_parameters + product_parameters)
@@ -668,7 +669,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
         constraints = specs.get("constraints", None)
         if constraints:
             constraints = converter.structure(
-                specs["constraints"], List[DiscreteConstraint]
+                specs["constraints"], list[DiscreteConstraint]
             )
             validate_constraints(constraints, simplex_parameters + product_parameters)
 

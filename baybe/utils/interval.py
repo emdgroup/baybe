@@ -4,14 +4,14 @@ import sys
 import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import TYPE_CHECKING, Any, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import numpy as np
 from attrs import define, field
 from packaging import version
 
 from baybe.serialization import SerialMixin, converter
-from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
+from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -120,7 +120,7 @@ class Interval(SerialMixin):
         """Overloaded implementation for creating an interval of an iterable."""
         return Interval(*bounds)
 
-    def to_tuple(self) -> Tuple[float, float]:
+    def to_tuple(self) -> tuple[float, float]:
         """Transform the interval to a tuple."""
         return self.lower, self.upper
 
@@ -131,6 +131,8 @@ class Interval(SerialMixin):
     def to_tensor(self) -> "Tensor":
         """Transform the interval to a :class:`torch.Tensor`."""
         import torch
+
+        from baybe.utils.torch import DTypeFloatTorch
 
         return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
@@ -160,7 +162,7 @@ def convert_bounds(bounds: Union[None, Iterable, Interval]) -> Interval:
     return Interval.create(bounds)
 
 
-def use_fallback_constructor_hook(value: Any, cls: Type[Interval]) -> Interval:
+def use_fallback_constructor_hook(value: Any, cls: type[Interval]) -> Interval:
     """Use the singledispatch mechanism as fallback to parse arbitrary input."""
     if isinstance(value, dict):
         return converter.structure_attrs_fromdict(value, cls)

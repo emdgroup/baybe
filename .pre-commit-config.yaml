@@ -12,7 +12,6 @@ repos:
   rev: v0.1.6
   hooks:
   - id: ruff
-    name: "ruff"
   - id: ruff-format
 - repo: https://github.com/crate-ci/typos
   rev: v1.16.23
@@ -20,4 +19,9 @@ repos:
     - id: typos
       exclude_types: [svg]
       args: [] # empty args to avoid typos automatically correcting the typos
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.15.1
+  hooks:
+  - id: pyupgrade
+    args: [--py39-plus, --keep-runtime-typing]
 

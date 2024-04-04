@@ -26,11 +26,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    List,
     Literal,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -71,7 +68,7 @@ def simulate_transfer_learning(
     *,
     batch_size: int = 1,
     n_doe_iterations: Optional[int] = None,
-    groupby: Optional[List[str]] = None,
+    groupby: Optional[list[str]] = None,
     n_mc_iterations: int = 1,
 ) -> pd.DataFrame:
     """Simulate Bayesian optimization with transfer learning.
@@ -121,7 +118,7 @@ def simulate_transfer_learning(
     task_param = task_params[0]
 
     # Create simulation objects for all tasks
-    scenarios: Dict[Any, Campaign] = {}
+    scenarios: dict[Any, Campaign] = {}
     for task in task_param.values:
         # Create a campaign that focuses only on the current task by excluding
         # off-task configurations from the candidates list
@@ -153,14 +150,14 @@ def simulate_transfer_learning(
 
 
 def simulate_scenarios(
-    scenarios: Dict[Any, Campaign],
+    scenarios: dict[Any, Campaign],
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
     *,
     batch_size: int = 1,
     n_doe_iterations: Optional[int] = None,
-    initial_data: Optional[List[pd.DataFrame]] = None,
-    groupby: Optional[List[str]] = None,
+    initial_data: Optional[list[pd.DataFrame]] = None,
+    groupby: Optional[list[str]] = None,
     n_mc_iterations: int = 1,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -269,13 +266,13 @@ def simulate_scenarios(
 
 def _simulate_groupby(
     campaign: Campaign,
-    lookup: Optional[Union[pd.DataFrame, Callable[..., Tuple[float, ...]]]] = None,
+    lookup: Optional[Union[pd.DataFrame, Callable[..., tuple[float, ...]]]] = None,
     /,
     *,
     batch_size: int = 1,
     n_doe_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
-    groupby: Optional[List[str]] = None,
+    groupby: Optional[list[str]] = None,
     random_seed: int = _DEFAULT_SEED,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -676,7 +673,7 @@ def _look_up_target_values(
 def _impute_lookup(
     row: pd.Series,
     lookup: pd.DataFrame,
-    targets: List[NumericalTarget],
+    targets: list[NumericalTarget],
     mode: Literal["error", "best", "worst", "mean", "random"] = "error",
 ) -> np.ndarray:
     """Perform data imputation for missing lookup values.

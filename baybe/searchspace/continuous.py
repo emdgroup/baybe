@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, Optional, Sequence, Tuple, cast
+from collections.abc import Collection, Sequence
+from typing import Any, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -31,17 +32,17 @@ class SubspaceContinuous(SerialMixin):
     parameter views.
     """
 
-    parameters: Tuple[NumericalContinuousParameter, ...] = field(
+    parameters: tuple[NumericalContinuousParameter, ...] = field(
         converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
     )
     """The list of parameters of the subspace."""
 
-    constraints_lin_eq: Tuple[ContinuousLinearEqualityConstraint, ...] = field(
+    constraints_lin_eq: tuple[ContinuousLinearEqualityConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """List of linear equality constraints."""
 
-    constraints_lin_ineq: Tuple[ContinuousLinearInequalityConstraint, ...] = field(
+    constraints_lin_ineq: tuple[ContinuousLinearInequalityConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """List of linear inequality constraints."""
@@ -156,7 +157,7 @@ class SubspaceContinuous(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_names(self) -> Tuple[str, ...]:
+    def param_names(self) -> tuple[str, ...]:
         """Return list of parameter names."""
         return tuple(p.name for p in self.parameters)
 

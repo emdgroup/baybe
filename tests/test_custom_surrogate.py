@@ -67,7 +67,7 @@ def test_validate_architectures():
     """Test architecture class validation."""
     # Scenario: Empty Class
     with pytest.raises(ValueError):
-        register_custom_architecture()(type("EmptyArch"))
+        register_custom_architecture()(str)
 
     # Scenario: Class with just `_fit`
     with pytest.raises(ValueError):

@@ -52,6 +52,9 @@ class Parameter(ABC, SerialMixin):
     def summary(self) -> dict:
         """Return a custom summarization of the parameter."""
 
+    def __str__(self) -> str:
+        return str(self.summary())
+
 
 @define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):

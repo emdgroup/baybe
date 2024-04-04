@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, List, Sequence, Tuple
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attr import define, field
@@ -17,7 +18,6 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
-from baybe.utils.numerical import DTypeFloatTorch
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -40,12 +40,12 @@ class Constraint(ABC, SerialMixin):
     """Class variable encoding whether the condition is evaluated during modeling."""
 
     # Object variables
-    parameters: List[str] = field(validator=min_len(1))
+    parameters: list[str] = field(validator=min_len(1))
     """The list of parameters used for the constraint."""
 
     @parameters.validator
     def _validate_params(  # noqa: DOC101, DOC103
-        self, _: Any, params: List[str]
+        self, _: Any, params: list[str]
     ) -> None:
         """Validate the parameter list.
 
@@ -120,7 +120,7 @@ class ContinuousConstraint(Constraint, ABC):
     # See base class.
 
     # object variables
-    coefficients: List[float] = field()
+    coefficients: list[float] = field()
     """In-/equality coefficient for each entry in ``parameters``."""
 
     rhs: float = field(default=0.0)
@@ -128,7 +128,7 @@ class ContinuousConstraint(Constraint, ABC):
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
-        self, _: Any, coefficients: List[float]
+        self, _: Any, coefficients: list[float]
     ) -> None:
         """Validate the coefficients.
 
@@ -149,7 +149,7 @@ class ContinuousConstraint(Constraint, ABC):
 
     def to_botorch(
         self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
-    ) -> Tuple[Tensor, Tensor, float]:
+    ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
         Used in calling ``optimize_acqf_*`` functions, for details see
@@ -163,6 +163,8 @@ class ContinuousConstraint(Constraint, ABC):
             The tuple required by botorch.
         """
         import torch
+
+        from baybe.utils.torch import DTypeFloatTorch
 
         param_names = [p.name for p in parameters]
         param_indices = [

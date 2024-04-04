@@ -1,12 +1,12 @@
 """Gaussian process surrogates."""
 
-from typing import Any, ClassVar, Dict, Optional, Tuple
+from typing import Any, ClassVar, Optional
 
 import torch
 from attr import define, field
+from botorch import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
-from botorch.optim.fit import fit_gpytorch_mll_torch
 from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
@@ -31,7 +31,7 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    model_params: Dict[str, Any] = field(
+    model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,
         validator=get_model_params_validator(SingleTaskGP.__init__),
@@ -41,7 +41,7 @@ class GaussianProcessSurrogate(Surrogate):
     _model: Optional[SingleTaskGP] = field(init=False, default=None)
     """The actual model."""
 
-    def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
         posterior = self._model.posterior(candidates)
         return posterior.mvn.mean, posterior.mvn.covariance_matrix
@@ -52,7 +52,7 @@ class GaussianProcessSurrogate(Surrogate):
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
         task_idx = searchspace.task_idx
-        n_task_params = 1 if task_idx else 0
+        n_task_params = 1 if task_idx is not None else 0
         numeric_idxs = [i for i in range(train_x.shape[1]) if i != task_idx]
 
         # get the input bounds from the search space in BoTorch Format
@@ -69,12 +69,12 @@ class GaussianProcessSurrogate(Surrogate):
         # ---------- GP prior selection ---------- #
         # TODO: temporary prior choices adapted from edbo, replace later on
 
-        mordred = searchspace.contains_mordred or searchspace.contains_rdkit
-        if mordred and train_x.shape[-1] < 50:
-            mordred = False
+        mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
+            train_x.shape[-1] >= 50
+        )
 
         # low D priors
-        if train_x.shape[-1] < 5:
+        if train_x.shape[-1] < 10:
             lengthscale_prior = [GammaPrior(1.2, 1.1), 0.2]
             outputscale_prior = [GammaPrior(5.0, 0.5), 8.0]
             noise_prior = [GammaPrior(1.05, 0.5), 0.1]
@@ -117,8 +117,12 @@ class GaussianProcessSurrogate(Surrogate):
             batch_shape=batch_shape,
             outputscale_prior=outputscale_prior[0],
         )
-        base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
-        base_covar_module.base_kernel.lengthscale = torch.tensor([lengthscale_prior[1]])
+        if outputscale_prior[1] is not None:
+            base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
+        if lengthscale_prior[1] is not None:
+            base_covar_module.base_kernel.lengthscale = torch.tensor(
+                [lengthscale_prior[1]]
+            )
 
         # create GP covariance
         if task_idx is None:
@@ -135,7 +139,8 @@ class GaussianProcessSurrogate(Surrogate):
         likelihood = GaussianLikelihood(
             noise_prior=noise_prior[0], batch_shape=batch_shape
         )
-        likelihood.noise = torch.tensor([noise_prior[1]])
+        if noise_prior[1] is not None:
+            likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
         self._model = SingleTaskGP(
@@ -148,7 +153,4 @@ class GaussianProcessSurrogate(Surrogate):
             likelihood=likelihood,
         )
         mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
-        # IMPROVE: The step_limit=100 stems from the former (deprecated)
-        #  `fit_gpytorch_torch` function, for which this was the default. Probably,
-        #   one should use a smarter logic here.
-        fit_gpytorch_mll_torch(mll, step_limit=100)
+        fit_gpytorch_mll(mll)

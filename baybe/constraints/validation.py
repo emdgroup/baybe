@@ -1,6 +1,6 @@
 """Validation functionality for constraints."""
 
-from typing import Collection
+from collections.abc import Collection
 
 from baybe.constraints.base import Constraint
 from baybe.constraints.discrete import DiscreteDependenciesConstraint

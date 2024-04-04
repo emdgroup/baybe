@@ -5,16 +5,18 @@
 :hidden:
 
 Readme <self>
-User Guide <userguide/userguide>
-Examples <examples/examples>
 Contribute <misc/contributing_link>
+Known Issues <known_issues>
+Changelog <misc/changelog_link>
+Github <https://github.com/emdgroup/baybe/>
+Contributors <misc/contributors_link>
+License <misc/license_link>
 ```
 
 ```{include} ../README.md
 :relative-docs: docs/
 ```
 
-# Package documentation
 ```{eval-rst}
 .. autosummary::
    :toctree: _autosummary
@@ -26,16 +28,12 @@ Contribute <misc/contributing_link>
 ```
 
 ```{toctree}
-    :maxdepth: 2
-    :titlesonly:
-    :caption: Misc
-    :hidden:
+:maxdepth: 2
+:titlesonly:
+:hidden:
 
-    Known Issues <known_issues>
-    Changelog <misc/changelog_link>
-    Github <https://github.com/emdgroup/baybe/>
-    Contributors <misc/contributors_link>
-    License <misc/license_link>
+User Guide <userguide/userguide>
+Examples <examples/examples>
 ```
 
 # Indices and Tables

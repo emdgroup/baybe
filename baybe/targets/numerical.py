@@ -1,8 +1,9 @@
 """Numerical targets."""
 
 import warnings
+from collections.abc import Sequence
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Sequence, cast
+from typing import Any, Callable, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ from baybe.targets.transforms import (
 )
 from baybe.utils.interval import Interval, convert_bounds
 
-_VALID_TRANSFORMATIONS: Dict[TargetMode, Sequence[TargetTransformation]] = {
+_VALID_TRANSFORMATIONS: dict[TargetMode, Sequence[TargetTransformation]] = {
     TargetMode.MAX: (TargetTransformation.LINEAR,),
     TargetMode.MIN: (TargetTransformation.LINEAR,),
     TargetMode.MATCH: (TargetTransformation.TRIANGULAR, TargetTransformation.BELL),
@@ -145,3 +146,15 @@ class NumericalTarget(Target, SerialMixin):
             transformed = data.copy()
 
         return transformed
+
+    def summary(self) -> dict:  # noqa: D102
+        # See base class.
+        target_dict = dict(
+            Type=self.__class__.__name__,
+            Name=self.name,
+            Mode=self.mode.name,
+            Lower_Bound=self.bounds.lower,
+            Upper_Bound=self.bounds.upper,
+            Transformation=self.transformation.name if self.transformation else "None",
+        )
+        return target_dict

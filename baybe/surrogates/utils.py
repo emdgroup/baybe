@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, ClassVar, Tuple, Type
+from typing import TYPE_CHECKING, Callable, ClassVar
 
 import torch
 from torch import Tensor
@@ -57,7 +57,7 @@ def _prepare_targets(y: Tensor) -> Tensor:
     return y.to(_DTYPE)
 
 
-def catch_constant_targets(model_cls: Type[Surrogate]):
+def catch_constant_targets(model_cls: type[Surrogate]):
     """Wrap a ``Surrogate`` class that cannot handle constant training target values.
 
     In the wrapped class, these cases are handled by a separate model type.
@@ -88,7 +88,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
             self.__class__.__name__ = self.model.__class__.__name__
             self.model_params = self.model.model_params
 
-        def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
             """Call the posterior function of the internal model instance."""
             mean, var = self.model._posterior(candidates)
 
@@ -139,7 +139,7 @@ def catch_constant_targets(model_cls: Type[Surrogate]):
     return SplitModel
 
 
-def scale_model(model_cls: Type[Surrogate]):
+def scale_model(model_cls: type[Surrogate]):
     """Wrap a ``Surrogate`` class such that it operates with scaled representations.
 
     Args:
@@ -165,7 +165,7 @@ def scale_model(model_cls: Type[Surrogate]):
             self.model_params = self.model.model_params
             self.scaler = None
 
-        def _posterior(self, candidates: Tensor) -> Tuple[Tensor, Tensor]:
+        def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
             """Call the posterior function of the internal model instance.
 
             This call is made on a scaled version of the test data and rescales the
@@ -208,8 +208,8 @@ def scale_model(model_cls: Type[Surrogate]):
 
 
 def batchify(
-    posterior: Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]
-) -> Callable[[Surrogate, Tensor], Tuple[Tensor, Tensor]]:
+    posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]
+) -> Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]:
     """Wrap ``Surrogate`` posterior functions to enable proper batching.
 
     More precisely, this wraps model that are incompatible with t- and q-batching such

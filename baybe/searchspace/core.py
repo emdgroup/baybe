@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import Enum
-from typing import List, Optional, Sequence, Tuple, cast
+from typing import Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -71,10 +72,16 @@ class SearchSpace(SerialMixin):
     def __str__(self) -> str:
         start_bold = "\033[1m"
         end_bold = "\033[0m"
-        searchspace_str = f"""{start_bold}Search Space{end_bold}
-        \n{start_bold}Search Space Type: {end_bold}{self.type.name}
-        \n{self.discrete}
-        \n{self.continuous}"""
+        head_str = f"""{start_bold}Search Space{end_bold}
+        \n{start_bold}Search Space Type: {end_bold}{self.type.name}"""
+
+        # Check the sub space size to avoid adding unwanted break lines
+        # if the sub space is empty
+        discrete_str = f"\n\n{self.discrete}" if not self.discrete.is_empty else ""
+        continuous_str = (
+            f"\n\n{self.continuous}" if not self.continuous.is_empty else ""
+        )
+        searchspace_str = f"{head_str}{discrete_str}{continuous_str}"
         return searchspace_str.replace("\n", "\n ").replace("\r", "\r ")
 
     def __attrs_post_init__(self):
@@ -174,7 +181,7 @@ class SearchSpace(SerialMixin):
         Raises:
             ValueError: If the dataframe columns do not match with the parameters.
         """
-        if set(p.name for p in parameters) != set(df.columns.values):
+        if {p.name for p in parameters} != set(df.columns.values):
             raise ValueError(
                 "The provided dataframe columns must match exactly with the specified "
                 "parameter names."
@@ -193,12 +200,12 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def parameters(self) -> Tuple[Parameter, ...]:
+    def parameters(self) -> tuple[Parameter, ...]:
         """Return the list of parameters of the search space."""
         return (*self.discrete.parameters, *self.continuous.parameters)
 
     @property
-    def constraints(self) -> Tuple[Constraint, ...]:
+    def constraints(self) -> tuple[Constraint, ...]:
         """Return the constraints of the search space."""
         return (
             *self.discrete.constraints,
@@ -304,12 +311,12 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
     """Validate the search space specifications while skipping costly creation steps."""
     # Validate product inputs without constructing it
     if specs.get("constructor", None) == "from_product":
-        parameters = converter.structure(specs["parameters"], List[Parameter])
+        parameters = converter.structure(specs["parameters"], list[Parameter])
         validate_parameters(parameters)
 
         constraints = specs.get("constraints", None)
         if constraints:
-            constraints = converter.structure(specs["constraints"], List[Constraint])
+            constraints = converter.structure(specs["constraints"], list[Constraint])
             validate_constraints(constraints, parameters)
 
     else:
