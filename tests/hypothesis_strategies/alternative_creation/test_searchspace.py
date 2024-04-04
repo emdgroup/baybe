@@ -42,14 +42,14 @@ df = pd.concat([df_discrete, df_continuous], axis=1)
 @pytest.mark.parametrize(
     ("df", "parameters", "expected"),
     [
-        param(s_x.to_frame(), [p_x], (p_x,), id="num-match"),
-        param(s_x.to_frame(), [p_x_over], (p_x_over,), id="num_overparametrized"),
-        param(s_x.to_frame(), [p_x_under], ValueError, id="num_underparametrized"),
-        param(df_discrete, [p_x, p_x], ValueError, id="duplicate-name"),
-        param(s_x.to_frame(), [p_x, p_y], ValueError, id="no_match"),
-        param(s_y.to_frame(), [p_y], (p_y,), id="cat-match"),
-        param(df_discrete, [p_x, p_y], (p_x, p_y), id="both-match"),
-        param(df_discrete, [p_x], (p_x, p_y), id="one-unspecified"),
+        param(s_x.to_frame(), (p_x,), (p_x,), id="num-match"),
+        param(s_x.to_frame(), (p_x_over,), (p_x_over,), id="num_overparametrized"),
+        param(s_x.to_frame(), (p_x_under,), ValueError, id="num_underparametrized"),
+        param(df_discrete, (p_x, p_x), ValueError, id="duplicate-name"),
+        param(s_x.to_frame(), (p_x, p_y), ValueError, id="no_match"),
+        param(s_y.to_frame(), (p_y,), (p_y,), id="cat-match"),
+        param(df_discrete, (p_x, p_y), (p_x, p_y), id="both-match"),
+        param(df_discrete, (p_x,), (p_x, p_y), id="one-unspecified"),
     ],
 )
 def test_discrete_space_creation_from_dataframe(df, parameters, expected):
@@ -66,12 +66,12 @@ def test_discrete_space_creation_from_dataframe(df, parameters, expected):
 @pytest.mark.parametrize(
     ("df", "parameters", "expected"),
     [
-        param(s_a.to_frame(), [p_a], (p_a,), id="match"),
-        param(s_a.to_frame(), [p_a_over], (p_a_over,), id="overparametrized"),
+        param(s_a.to_frame(), (p_a,), (p_a,), id="match"),
+        param(s_a.to_frame(), (p_a_over,), (p_a_over,), id="overparametrized"),
         param(s_a.to_frame(), (p_a_under,), ValueError, id="underparametrized"),
         param(df_continuous, (p_a, p_a), ValueError, id="duplicate-name"),
         param(s_a.to_frame(), (p_a, p_b), ValueError, id="no_match"),
-        param(df_continuous, [p_a], (p_a, p_b), id="one-unspecified"),
+        param(df_continuous, (p_a,), (p_a, p_b), id="one-unspecified"),
     ],
 )
 def test_continuous_space_creation_from_dataframe(df, parameters, expected):
@@ -88,9 +88,9 @@ def test_continuous_space_creation_from_dataframe(df, parameters, expected):
 @pytest.mark.parametrize(
     ("df", "parameters", "expected"),
     [
-        param(df, [p_x, p_y, p_a, p_b], (p_x, p_y, p_a, p_b), id="match"),
-        param(df, [p_x, p_x, p_x, p_x], ValueError, id="duplicates"),
-        param(df, [p_x], ValueError, id="missing"),
+        param(df, (p_x, p_y, p_a, p_b), (p_x, p_y, p_a, p_b), id="match"),
+        param(df, (p_x, p_x, p_x, p_x), ValueError, id="duplicates"),
+        param(df, (p_x,), ValueError, id="missing"),
     ],
 )
 def test_searchspace_creation_from_dataframe(df, parameters, expected):
