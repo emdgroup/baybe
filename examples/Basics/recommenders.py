@@ -66,6 +66,7 @@ available_surrogate_models = [
 ]
 
 # Per default a Gaussian Process is used
+# You can change the used kernel by using the optional `kernel` keyword.
 
 SURROGATE_MODEL = GaussianProcessSurrogate()
 
