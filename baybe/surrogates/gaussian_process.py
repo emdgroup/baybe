@@ -9,11 +9,13 @@ from botorch import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
 from botorch.models.transforms import Normalize, Standardize
 from gpytorch import ExactMarginalLogLikelihood
-from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
+from gpytorch.kernels import IndexKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior
 
+from baybe.kernels import MaternKernel
+from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.validation import get_model_params_validator
@@ -40,6 +42,9 @@ class GaussianProcessSurrogate(Surrogate):
         validator=get_model_params_validator(SingleTaskGP.__init__),
     )
     # See base class.
+
+    kernel: Kernel = field(factory=MaternKernel)
+    """The kernel used by the Gaussian Process."""
 
     _model: Optional[SingleTaskGP] = field(init=False, default=None)
     """The actual model."""
@@ -111,14 +116,14 @@ class GaussianProcessSurrogate(Surrogate):
         mean_module = ConstantMean(batch_shape=batch_shape)
 
         # define the covariance module for the numeric dimensions
+        gpytorch_kernel = self.kernel.to_gpytorch(
+            ard_num_dims=train_x.shape[-1] - n_task_params,
+            active_dims=numeric_idxs,
+            batch_shape=batch_shape,
+            lengthscale_prior=lengthscale_prior[0],
+        )
         base_covar_module = ScaleKernel(
-            MaternKernel(
-                nu=2.5,
-                ard_num_dims=train_x.shape[-1] - n_task_params,
-                active_dims=numeric_idxs,
-                batch_shape=batch_shape,
-                lengthscale_prior=lengthscale_prior[0],
-            ),
+            gpytorch_kernel,
             batch_shape=batch_shape,
             outputscale_prior=outputscale_prior[0],
         )
