@@ -10,9 +10,11 @@ from baybe.constraints.base import Constraint
 from ..hypothesis_strategies.constraints import (
     continuous_linear_equality_constraints,
     continuous_linear_inequality_constraints,
+    discrete_dependencies_constraints,
     discrete_excludes_constraints,
     discrete_linked_parameters_constraints,
     discrete_no_label_duplicates_constraints,
+    discrete_permutation_invariance_constraints,
     discrete_product_constraints,
     discrete_sum_constraints,
 )
@@ -21,6 +23,11 @@ from ..hypothesis_strategies.constraints import (
 @pytest.mark.parametrize(
     "constraint_strategy",
     [
+        param(
+            discrete_permutation_invariance_constraints(),
+            id="DiscretePermutationInvarianceConstraint",
+        ),
+        param(discrete_dependencies_constraints(), id="DiscreteDependenciesConstraint"),
         param(discrete_excludes_constraints(), id="DiscreteExcludeConstraint"),
         param(discrete_sum_constraints(), id="DiscreteSumConstraint"),
         param(discrete_product_constraints(), id="DiscreteProductConstraint"),
