@@ -4,6 +4,7 @@ from functools import partial
 from typing import Any, List, Optional, Type, Union
 
 import hypothesis.strategies as st
+from hypothesis import assume
 
 from baybe.constraints.conditions import (
     SubSelectionCondition,
@@ -19,6 +20,7 @@ from baybe.constraints.discrete import (
     DiscreteExcludeConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
+    DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
     DiscreteSumConstraint,
 )
@@ -76,11 +78,32 @@ def discrete_excludes_constraints(
 def discrete_dependencies_constraints(
     draw: st.DrawFn,
     parameters: Optional[List[DiscreteParameter]] = None,
-    affected_parameters: Optional[List[List[DiscreteParameter]]] = None,
+    affected_parameter_names: Optional[List[List[str]]] = None,
 ):
     if parameters is None:
         # Draw random unique parameter names
-        parameter_names = draw(st.lists(st.text(), unique=True, min_size=1))
+        # If affected parameters are given the list length must be respected
+        parameter_names = draw(
+            st.lists(
+                st.text(),
+                unique=True,
+                min_size=1
+                if affected_parameter_names is None
+                else len(affected_parameter_names),
+                max_size=None
+                if affected_parameter_names is None
+                else len(affected_parameter_names),
+            )
+        )
+        if affected_parameter_names is not None:
+            # Avoid generating parameters that depend on themselves
+            assume(
+                all(
+                    p not in affected_parameter_names[k]
+                    for k, p in enumerate(parameter_names)
+                )
+            )
+
         conditions = draw(
             st.lists(
                 st.one_of(sub_selection_conditions(), threshold_conditions()),
@@ -99,13 +122,14 @@ def discrete_dependencies_constraints(
             for p in parameters
         ]
 
-    if affected_parameters is None:
+    if affected_parameter_names is None:
         # Draw random lists of dependent parameters, avoiding duplicates with the main
         # parameters
-        dependent_parameter_names = draw(
+        affected_parameter_names = draw(
             st.lists(
                 st.lists(
-                    st.text().filter(lambda x: x not in parameter_names), min_size=1
+                    st.text().filter(lambda x: x not in parameter_names),
+                    min_size=1,
                 ),
                 min_size=len(parameter_names),
                 max_size=len(parameter_names),
@@ -114,17 +138,40 @@ def discrete_dependencies_constraints(
     else:
         # Affected and dependent parameters cannot overlap
         assert all(
-            p not in [a.name for a in affected_parameters[k]]
-            for k, p in enumerate(parameter_names)
+            p not in affected_parameter_names[k] for k, p in enumerate(parameter_names)
         ), "Affected parameters cannot overlap with the parameters they depend on"
 
-        dependent_parameter_names = [
-            [p.name for p in entry] for entry in affected_parameters
-        ]
-
     return DiscreteDependenciesConstraint(
-        parameter_names, conditions, dependent_parameter_names
+        parameter_names, conditions, affected_parameter_names
     )
+
+
+@st.composite
+def discrete_permutation_invariance_constraints(
+    draw: st.DrawFn,
+    parameters: Optional[List[DiscreteParameter]] = None,
+    dependencies: Optional[DiscreteDependenciesConstraint] = None,
+):
+    if parameters is None:
+        # Draw random unique parameter names
+        parameter_names = draw(st.lists(st.text(), unique=True, min_size=1))
+    else:
+        parameter_names = [p.name for p in parameters]
+
+    if dependencies is None:
+        dependencies = draw(
+            st.one_of(
+                [
+                    st.none(),
+                    discrete_dependencies_constraints(
+                        parameters=None,
+                        affected_parameter_names=[[p] for p in parameter_names],
+                    ),
+                ]
+            )
+        )
+
+    return DiscretePermutationInvarianceConstraint(parameter_names, dependencies)
 
 
 def _discrete_constraints(
