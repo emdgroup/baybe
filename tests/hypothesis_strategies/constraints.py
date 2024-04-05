@@ -75,68 +75,55 @@ def discrete_excludes_constraints(
 @st.composite
 def discrete_dependencies_constraints(
     draw: st.DrawFn,
-    all_parameters: Optional[List[DiscreteParameter]] = None,
+    parameters: Optional[List[DiscreteParameter]] = None,
+    affected_parameters: Optional[List[List[DiscreteParameter]]] = None,
 ):
-    if all_parameters is None:
-        all_parameter_names = draw(st.lists(st.text(), unique=True, min_size=2))
-        selected_parameter_names = draw(
-            st.lists(
-                st.sampled_from(all_parameter_names),
-                min_size=1,
-                max_size=len(all_parameter_names) - 1,
-                unique=True,
-            )
-        )
+    if parameters is None:
+        # Draw random unique parameter names
+        parameter_names = draw(st.lists(st.text(), unique=True, min_size=1))
         conditions = draw(
             st.lists(
                 st.one_of(sub_selection_conditions(), threshold_conditions()),
-                min_size=len(selected_parameter_names),
-                max_size=len(selected_parameter_names),
+                min_size=len(parameter_names),
+                max_size=len(parameter_names),
             )
         )
     else:
-        assert (
-            len(all_parameters) > 1
-        )  # dependencies cannot exist if there is just one parameter
-        selected_parameters = draw(
-            st.lists(
-                st.sampled_from(all_parameters),
-                min_size=1,
-                max_size=len(all_parameters) - 1,
-                unique=True,
-            )
-        )
-
-        all_parameter_names = [p.name for p in all_parameters]
-        selected_parameter_names = [p.name for p in selected_parameters]
+        parameter_names = [p.name for p in parameters]
 
         # Threshold conditions only make sense for numerical parameters
         conditions = [
             draw(st.one_of(sub_selection_conditions(p.values), threshold_conditions()))
             if isinstance(p, NumericalDiscreteParameter)
             else draw(sub_selection_conditions(p.values))
-            for p in selected_parameters
+            for p in parameters
         ]
 
-    potentially_affected_parameter_names = list(
-        set(all_parameter_names) - set(selected_parameter_names)
-    )
-
-    affected_parameter_names = draw(
-        st.lists(
+    if affected_parameters is None:
+        # Draw random lists of dependent parameters, avoiding duplicates with the main
+        # parameters
+        dependent_parameter_names = draw(
             st.lists(
-                st.sampled_from(potentially_affected_parameter_names),
-                min_size=1,
-                max_size=len(potentially_affected_parameter_names),
-                unique=True,
-            ),
-            min_size=len(selected_parameter_names),
-            max_size=len(selected_parameter_names),
+                st.lists(
+                    st.text().filter(lambda x: x not in parameter_names), min_size=1
+                ),
+                min_size=len(parameter_names),
+                max_size=len(parameter_names),
+            )
         )
-    )
+    else:
+        # Affected and dependent parameters cannot overlap
+        assert all(
+            p not in [a.name for a in affected_parameters[k]]
+            for k, p in enumerate(parameter_names)
+        ), "Affected parameters cannot overlap with the parameters they depend on"
+
+        dependent_parameter_names = [
+            [p.name for p in entry] for entry in affected_parameters
+        ]
 
     return DiscreteDependenciesConstraint(
-        selected_parameter_names, conditions, affected_parameter_names
+        parameter_names, conditions, dependent_parameter_names
     )
 
 
