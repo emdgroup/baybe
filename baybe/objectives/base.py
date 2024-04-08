@@ -38,7 +38,7 @@ class Objective(ABC, SerialMixin):
 
 
 def to_objective(x: Union[Target, Objective], /) -> Objective:
-    """Convert targets into a objectives with passthrough for objectives."""
+    """Convert a target into an objective (with objective passthrough)."""
     return x if isinstance(x, Objective) else x.to_objective()
 
 
