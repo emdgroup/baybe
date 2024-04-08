@@ -155,6 +155,8 @@ if _ONNX_INSTALLED:
 
         @batchify
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+            import torch
+
             model_inputs = {
                 self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)
             }
@@ -164,8 +166,6 @@ if _ONNX_INSTALLED:
             #   standard deviations. Currently, most available ONNX converters care
             #   about the mean only and it's not clear how this will be handled in the
             #   future. Once there are more choices available, this should be revisited.
-            import torch
-
             return (
                 torch.from_numpy(results[0]).to(DTypeFloatTorch),
                 torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),

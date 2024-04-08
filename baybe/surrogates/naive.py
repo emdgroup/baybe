@@ -36,9 +36,10 @@ class MeanPredictionSurrogate(Surrogate):
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
-        # TODO: use target value bounds for covariance scaling when explicitly provided
+
         import torch
 
+        # TODO: use target value bounds for covariance scaling when explicitly provided
         mean = self.target_value * torch.ones([len(candidates)])
         var = torch.ones(len(candidates))
         return mean, var

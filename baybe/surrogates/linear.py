@@ -49,12 +49,13 @@ class BayesianLinearSurrogate(Surrogate):
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
+
+        import torch
+
         # Get predictions
         dists = self._model.predict(candidates.numpy(), return_std=True)
 
         # Split into posterior mean and variance
-        import torch
-
         mean = torch.from_numpy(dists[0])
         var = torch.from_numpy(dists[1]).pow(2)
 

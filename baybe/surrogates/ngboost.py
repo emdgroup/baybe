@@ -55,12 +55,13 @@ class NGBoostSurrogate(Surrogate):
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
+
+        import torch
+
         # Get predictions
         dists = self._model.pred_dist(candidates)
 
         # Split into posterior mean and variance
-        import torch
-
         mean = torch.from_numpy(dists.mean())
         var = torch.from_numpy(dists.var)
 

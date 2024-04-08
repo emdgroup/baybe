@@ -51,10 +51,11 @@ class GaussianProcessSurrogate(Surrogate):
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
-        # identify the indexes of the task and numeric dimensions
-        # TODO: generalize to multiple task parameters
+
         import torch
 
+        # identify the indexes of the task and numeric dimensions
+        # TODO: generalize to multiple task parameters
         task_idx = searchspace.task_idx
         n_task_params = 1 if task_idx is not None else 0
         numeric_idxs = [i for i in range(train_x.shape[1]) if i != task_idx]

@@ -51,12 +51,12 @@ class RandomForestSurrogate(Surrogate):
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
 
+        import torch
+
         # Evaluate all trees
         # NOTE: explicit conversion to ndarray is needed due to a pytorch issue:
         # https://github.com/pytorch/pytorch/pull/51731
         # https://github.com/pytorch/pytorch/issues/13918
-        import torch
-
         predictions = torch.from_numpy(
             np.asarray(
                 [
