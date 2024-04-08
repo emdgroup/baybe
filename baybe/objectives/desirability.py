@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from functools import partial
-from typing import Callable, Union
+from typing import Callable
 
 import cattrs
 import numpy as np
@@ -20,7 +20,7 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import geom_mean
 
 
-def _normalize_weights(weights: Sequence[Union[float, int]]) -> tuple[float, ...]:
+def _normalize_weights(weights: Sequence[float]) -> tuple[float, ...]:
     """Normalize a collection of weights such that they sum to 1.
 
     Args:
