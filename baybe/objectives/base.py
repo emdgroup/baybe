@@ -26,7 +26,7 @@ class Objective(ABC, SerialMixin):
 
     @abstractmethod
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Transform targets from experimental to computational representation.
+        """Transform target values from experimental to computational representation.
 
         Args:
             data: The data to be transformed. Must contain columns for all targets
