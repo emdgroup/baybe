@@ -56,12 +56,18 @@ def scalarize(
         weights: Weights for the columns of the input array.
 
     Raises:
-        ValueError: If the requested scalarization mechanism is not implemented.
+        ValueError: If the provided array is not two-dimensional.
+        NotImplementedError: If the requested scalarization mechanism is not
+            implemented.
 
     Returns:
         np.ndarray: A 1-D array containing the scalarized values.
     """
+    if np.ndim(values) != 2:
+        raise ValueError("The provided array must be two-dimensional.")
+
     func: Callable
+
     if scalarization is Scalarization.GEOM_MEAN:
         func = geom_mean
     elif scalarization is Scalarization.MEAN:
@@ -70,6 +76,7 @@ def scalarize(
         raise NotImplementedError(
             f"No scalarization mechanism defined for '{scalarization.name}'."
         )
+
     return func(values, weights=weights)
 
 
