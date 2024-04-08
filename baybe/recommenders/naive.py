@@ -129,9 +129,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
-            self.disc_recommender.setup_acquisition_function(
-                searchspace, train_x, train_y
-            )
+            self.disc_recommender.setup_acqf(searchspace, train_x, train_y)
 
             # Construct the partial acquisition function that attaches cont_part
             # whenever evaluating the acquisition function
@@ -156,7 +154,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         disc_part_tensor = cast(Tensor, to_tensor(disc_part)).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
-        self.cont_recommender.setup_acquisition_function(searchspace, train_x, train_y)
+        self.cont_recommender.setup_acqf(searchspace, train_x, train_y)
 
         # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(
