@@ -121,8 +121,6 @@ class GaussianProcessSurrogate(Surrogate):
             batch_shape=batch_shape,
             outputscale_prior=outputscale_prior[0],
         )
-        import torch
-
         if outputscale_prior[1] is not None:
             base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
         if lengthscale_prior[1] is not None:
