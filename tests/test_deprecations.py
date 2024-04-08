@@ -200,3 +200,9 @@ def test_deprecated_acqfs(acqf):
     """Using the deprecated acqf raises a warning."""
     with pytest.warns(DeprecationWarning):
         SequentialGreedyRecommender(acqf=acqf)
+
+
+def test_deprecated_acqf_keyword(acqf):
+    """Using the deprecated keyword raises an error."""
+    with pytest.raises(DeprecationError):
+        SequentialGreedyRecommender(acquisition_function_cls="qEI")

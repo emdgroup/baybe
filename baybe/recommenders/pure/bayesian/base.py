@@ -9,6 +9,7 @@ from attrs import define, field
 from baybe.acquisition.acqfs import qExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
+from baybe.exceptions import DeprecationError
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
@@ -33,6 +34,18 @@ class BayesianRecommender(PureRecommender, ABC):
 
     _botorch_acqf = field(default=None, init=False)
     """The current acquisition function."""
+
+    acquisition_function_cls: bool = field(default=None)
+    "Deprecated! Raises an error when used."
+
+    @acquisition_function_cls.validator
+    def _validate_deprecated_flag(self, _, value) -> None:
+        """Raise a DeprecationError if the tolerance flag is used."""
+        if value is not None:
+            raise DeprecationError(
+                "Passing 'acquisition_function_cls' to the constructor is deprecated. "
+                "The flag has been renamed to 'acqf'."
+            )
 
     def setup_acquisition_function(
         self,
