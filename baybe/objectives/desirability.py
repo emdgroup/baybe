@@ -115,7 +115,7 @@ class DesirabilityObjective(Objective):
         if (lw := len(weights)) != (lt := len(self.targets)):
             raise ValueError(
                 f"If custom weights are specified, there must be one for each target. "
-                f"Specified targets: {lt}. Specified weights: {lw}."
+                f"Specified number of targets: {lt}. Specified number of weights: {lw}."
             )
 
     def __str__(self) -> str:
