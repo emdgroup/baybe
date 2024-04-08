@@ -1,9 +1,10 @@
 """Collection of small basic utilities."""
 
 import random
-from collections.abc import Iterable, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Callable, TypeVar
+from inspect import signature
+from typing import Any, Callable, TypeVar
 
 import numpy as np
 
@@ -100,3 +101,30 @@ def to_tuple(x: Sequence) -> tuple:
     """
     # TODO: Remove wrapper once mypy support is there
     return tuple(x)
+
+
+def filter_attributes(
+    object: Any,
+    callable_: Callable,
+    ignore: Collection[str] = ("self", "kwargs", "args"),
+) -> dict[str, Any]:
+    """Find the attributes of an object that match with a given callable signature.
+
+    Parameters appearing in the callable signature that have no match with the given
+    object attributes are ignored.
+
+    Args:
+        object: The object whose attributes are to be returned.
+        callable_: The callable against whose signature the attributes are to be
+            matched.
+        ignore: A collection of parameter names to be ignored in the signature.
+
+    Returns:
+        A dictionary mapping the matched attribute names to their values.
+    """
+    params = signature(callable_).parameters
+    return {
+        p: getattr(object, p)
+        for p in params
+        if (p not in ignore) and hasattr(object, p)
+    }
