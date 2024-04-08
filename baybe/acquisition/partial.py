@@ -4,7 +4,7 @@ from typing import Optional
 
 import torch
 from attr import define
-from botorch.acquisition import AcquisitionFunction
+from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
 from torch import Tensor
 
 
@@ -18,7 +18,7 @@ class PartialAcquisitionFunction:
     defined for the full hybrid space.
     """
 
-    acqf: AcquisitionFunction
+    acqf: BotorchAcquisitionFunction
     """The acquisition function for the hybrid space."""
 
     pinned_part: Tensor
