@@ -136,12 +136,12 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             # Construct the partial acquisition function that attaches cont_part
             # whenever evaluating the acquisition function
             disc_acqf_part = PartialAcquisitionFunction(
-                acqf=self.disc_recommender._acquisition_function,
+                acqf=self.disc_recommender._botorch_acqf,
                 pinned_part=cont_part_tensor,
                 pin_discrete=False,
             )
 
-            self.disc_recommender._acquisition_function = disc_acqf_part
+            self.disc_recommender._botorch_acqf = disc_acqf_part
 
         # Call the private function of the discrete recommender and get the indices
         disc_rec_idx = self.disc_recommender._recommend_discrete(
@@ -160,11 +160,11 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(
-            acqf=self.cont_recommender._acquisition_function,
+            acqf=self.cont_recommender._botorch_acqf,
             pinned_part=disc_part_tensor,
             pin_discrete=True,
         )
-        self.cont_recommender._acquisition_function = cont_acqf_part
+        self.cont_recommender._botorch_acqf = cont_acqf_part
 
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(

@@ -31,7 +31,7 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The used acquisition function class."""
 
-    _acquisition_function = field(default=None, init=False)
+    _botorch_acqf = field(default=None, init=False)
     """The current acquisition function."""
 
     def setup_acquisition_function(
@@ -60,7 +60,7 @@ class BayesianRecommender(PureRecommender, ABC):
 
         best_f = train_y.max().item()
         surrogate_model = self._fit(searchspace, train_x, train_y)
-        self._acquisition_function = self.acquisition_function_cls.to_botorch(
+        self._botorch_acqf = self.acquisition_function_cls.to_botorch(
             surrogate_model, best_f
         )
 
