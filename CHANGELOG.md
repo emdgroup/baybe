@@ -11,8 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `torch` numeric types are now loaded lazily
 - Reorganized acquisition.py into `acquisition` subpackage
-- `surrogates.utils` uses `numerical` types
-- `baybe.utils.numerical` is loaded lazily in `surrogates`
+- `torch` is imported lazily in `surrogates`
 
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
