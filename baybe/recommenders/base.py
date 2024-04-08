@@ -43,6 +43,7 @@ converter.register_unstructure_hook(
         overrides=dict(
             allow_repeated_recommendations=cattrs.override(omit=True),
             allow_recommending_already_measured=cattrs.override(omit=True),
+            acquisition_function_cls=cattrs.override(omit=True),
         ),
     ),
 )

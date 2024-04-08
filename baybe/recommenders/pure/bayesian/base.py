@@ -28,7 +28,7 @@ class BayesianRecommender(PureRecommender, ABC):
     """The used surrogate model."""
 
     acqf: AcquisitionFunction = field(
-        converter=convert_acqf, factory=qExpectedImprovement
+        converter=convert_acqf, factory=qExpectedImprovement, kw_only=True
     )
     """The used acquisition function class."""
 
@@ -39,7 +39,7 @@ class BayesianRecommender(PureRecommender, ABC):
     "Deprecated! Raises an error when used."
 
     @acquisition_function_cls.validator
-    def _validate_deprecated_flag(self, _, value) -> None:
+    def _validate_deprecated_argument(self, _, value) -> None:
         """Raise a DeprecationError if the tolerance flag is used."""
         if value is not None:
             raise DeprecationError(

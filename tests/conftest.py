@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 import torch
 
+from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -596,7 +597,7 @@ def fixture_default_streaming_sequential_meta_recommender():
 @pytest.fixture(name="acqf")
 def fixture_default_acquisition_function():
     """The default acquisition function to be used if not specified differently."""
-    return "qEI"
+    return qExpectedImprovement()
 
 
 @pytest.fixture(name="surrogate_model")
