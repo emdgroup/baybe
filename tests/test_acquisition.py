@@ -19,4 +19,4 @@ acqfs += [  # by abbreviation
 @pytest.mark.parametrize("acqf", acqfs)
 def test_deprecated_acqfs2(acqf):
     """Using the deprecated strategy keyword raises an error."""
-    SequentialGreedyRecommender(acquisition_function_cls=acqf)
+    SequentialGreedyRecommender(acqf=acqf)

@@ -78,7 +78,7 @@ CONFIG = str(
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },
-            "acquisition_function_cls": "qEI",
+            "acqf": "qEI",
             "allow_repeated_recommendations": false,
             "allow_recommending_already_measured": false
         },

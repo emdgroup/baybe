@@ -26,7 +26,7 @@ class BayesianRecommender(PureRecommender, ABC):
     surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
     """The used surrogate model."""
 
-    acquisition_function_cls: AcquisitionFunction = field(
+    acqf: AcquisitionFunction = field(
         converter=convert_acqf, factory=qExpectedImprovement
     )
     """The used acquisition function class."""
@@ -60,9 +60,7 @@ class BayesianRecommender(PureRecommender, ABC):
 
         best_f = train_y.max().item()
         surrogate_model = self._fit(searchspace, train_x, train_y)
-        self._botorch_acqf = self.acquisition_function_cls.to_botorch(
-            surrogate_model, best_f
-        )
+        self._botorch_acqf = self.acqf.to_botorch(surrogate_model, best_f)
 
     def _fit(
         self,

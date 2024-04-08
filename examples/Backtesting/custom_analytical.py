@@ -82,7 +82,7 @@ objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MI
 # For details on recommender objects, we refer to [`recommenders`](./../Basics/recommenders.md).
 
 seq_greedy_EI_recommender = TwoPhaseMetaRecommender(
-    recommender=SequentialGreedyRecommender(acquisition_function_cls="qEI"),
+    recommender=SequentialGreedyRecommender(acqf="qEI"),
 )
 random_recommender = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 

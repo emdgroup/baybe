@@ -24,7 +24,7 @@ from .conftest import run_iterations
 # Settings of the individual components to be tested
 ########################################################################################
 valid_acquisition_functions = get_args(
-    get_type_hints(BayesianRecommender.__init__)["acquisition_function_cls"]
+    get_type_hints(BayesianRecommender.__init__)["acqf"]
 )
 valid_surrogate_models = [cls() for cls in get_available_surrogates()]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
@@ -118,7 +118,7 @@ test_targets = [
 #   recommender that can handle non-MC acquisition functions. Once the
 #   MarginalRecommender (or similar) is re-added, the acqf-tests can be reactivated.
 # @pytest.mark.slow
-# @pytest.mark.parametrize("acquisition_function_cls", valid_acquisition_functions)
+# @pytest.mark.parametrize("acqf", valid_acquisition_functions)
 # def test_iter_acquisition_function(campaign, n_iterations, batch_size):
 #     run_iterations(campaign, n_iterations, batch_size)
 

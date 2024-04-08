@@ -199,4 +199,4 @@ def test_deprecated_objective_config_deserialization():
 def test_deprecated_acqfs(acqf):
     """Using the deprecated acqf raises a warning."""
     with pytest.warns(DeprecationWarning):
-        SequentialGreedyRecommender(acquisition_function_cls=acqf)
+        SequentialGreedyRecommender(acqf=acqf)
