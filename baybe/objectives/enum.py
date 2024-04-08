@@ -3,7 +3,7 @@
 from enum import Enum
 
 
-class Scalarization(Enum):
+class Scalarizer(Enum):
     """Available scalarization mechanisms for desirability objectives."""
 
     MEAN = "MEAN"

@@ -31,7 +31,7 @@ def Objective(
         if weights is not None:
             kwargs["weights"] = weights
         if combine_func is not None:
-            kwargs["scalarization"] = combine_func
+            kwargs["scalarizer"] = combine_func
         return DesirabilityObjective(targets, **kwargs)
 
     else:

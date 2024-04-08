@@ -13,7 +13,7 @@ from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import TypeGuard
 
 from baybe.objectives.base import Objective
-from baybe.objectives.enum import Scalarization
+from baybe.objectives.enum import Scalarizer
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
@@ -46,19 +46,18 @@ def _is_all_numerical_targets(
 
 
 def scalarize(
-    values: npt.ArrayLike, scalarization: Scalarization, weights: npt.ArrayLike
+    values: npt.ArrayLike, scalarizer: Scalarizer, weights: npt.ArrayLike
 ) -> np.ndarray:
     """Scalarize the rows of a 2-D array, producing a 1-D array.
 
     Args:
         values: The 2-D array whose rows are to be scalarized.
-        scalarization: The scalarization mechanism to be used.
+        scalarizer: The scalarization mechanism to be used.
         weights: Weights for the columns of the input array.
 
     Raises:
         ValueError: If the provided array is not two-dimensional.
-        NotImplementedError: If the requested scalarization mechanism is not
-            implemented.
+        NotImplementedError: If the requested scalarizer is not implemented.
 
     Returns:
         np.ndarray: A 1-D array containing the scalarized values.
@@ -68,13 +67,13 @@ def scalarize(
 
     func: Callable
 
-    if scalarization is Scalarization.GEOM_MEAN:
+    if scalarizer is Scalarizer.GEOM_MEAN:
         func = geom_mean
-    elif scalarization is Scalarization.MEAN:
+    elif scalarizer is Scalarizer.MEAN:
         func = partial(np.average, axis=1)
     else:
         raise NotImplementedError(
-            f"No scalarization mechanism defined for '{scalarization.name}'."
+            f"No scalarization mechanism defined for '{scalarizer.name}'."
         )
 
     return func(values, weights=weights)
@@ -94,9 +93,7 @@ class DesirabilityObjective(Objective):
     """The weights to balance the different targets.
     By default, all targets are considered equally important."""
 
-    scalarization: Scalarization = field(
-        default=Scalarization.GEOM_MEAN, converter=Scalarization
-    )
+    scalarizer: Scalarizer = field(default=Scalarizer.GEOM_MEAN, converter=Scalarizer)
     """The mechanism to scalarize the weighted desirability values of all targets."""
 
     @weights.default
@@ -136,7 +133,7 @@ class DesirabilityObjective(Objective):
         objective_str = f"""{start_bold}Objective{end_bold}
         \n{start_bold}Type: {end_bold}{self.__class__.__name__}
         \n{start_bold}Targets {end_bold}\n{targets_df}
-        \n{start_bold}Scalarization: {end_bold}{self.scalarization.name}"""
+        \n{start_bold}Scalarizer: {end_bold}{self.scalarizer.name}"""
 
         return objective_str.replace("\n", "\n ")
 
@@ -149,7 +146,7 @@ class DesirabilityObjective(Objective):
             transformed[target.name] = target.transform(data[[target.name]])
 
         # Scalarize the transformed targets into desirability values
-        vals = scalarize(transformed.values, self.scalarization, self.weights)
+        vals = scalarize(transformed.values, self.scalarizer, self.weights)
 
         # Store the total desirability in a dataframe column
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)

@@ -5,7 +5,7 @@ import pytest
 from cattrs import IterableValidationError
 
 from baybe.objectives.desirability import DesirabilityObjective, scalarize
-from baybe.objectives.enum import Scalarization
+from baybe.objectives.enum import Scalarizer
 from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget
 
@@ -55,7 +55,7 @@ class TestInvalidObjectiveCreation:
         with pytest.raises(ValueError):
             DesirabilityObjective(
                 targets=self.two_targets,
-                scalarization="FALSE_STUFF",
+                scalarizer="FALSE_STUFF",
             )
 
     def test_wrong_number_of_weights(self):
@@ -81,15 +81,15 @@ class TestInvalidObjectiveCreation:
 
 
 @pytest.mark.parametrize(
-    ("values", "scalarization", "weights", "expected"),
+    ("values", "scalarizer", "weights", "expected"),
     [
-        ([[1, 2]], Scalarization.MEAN, [1, 1], [1.5]),
-        ([[1, 2]], Scalarization.MEAN, [1, 2], [5 / 3]),
-        ([[1, 2]], Scalarization.GEOM_MEAN, [1, 1], [np.sqrt(2)]),
-        ([[1, 2]], Scalarization.GEOM_MEAN, [1, 2], [np.power(4, 1 / 3)]),
+        ([[1, 2]], Scalarizer.MEAN, [1, 1], [1.5]),
+        ([[1, 2]], Scalarizer.MEAN, [1, 2], [5 / 3]),
+        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 1], [np.sqrt(2)]),
+        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 2], [np.power(4, 1 / 3)]),
     ],
 )
-def test_desirability_scalarization(values, scalarization, weights, expected):
+def test_desirability_scalarization(values, scalarizer, weights, expected):
     """The desirability scalarization yields the expected result."""
-    actual = scalarize(values, scalarization, weights)
+    actual = scalarize(values, scalarizer, weights)
     assert np.array_equal(actual, expected), (expected, actual)

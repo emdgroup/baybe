@@ -187,7 +187,7 @@ def test_deprecated_objective_config_deserialization():
             NumericalTarget("Yield", "MAX", bounds=(0, 1)),
             NumericalTarget("Waste", "MIN", bounds=(0, 1)),
         ],
-        scalarization="MEAN",
+        scalarizer="MEAN",
         weights=[1, 2],
     )
     actual = NewObjective.from_json(deprecated_objective_config)
