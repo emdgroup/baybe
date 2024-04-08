@@ -35,6 +35,7 @@ class AcquisitionFunction(ABC, SerialMixin):
 
 # Register de-/serialization hooks
 converter.register_structure_hook(
-    AcquisitionFunction, get_base_structure_hook(AcquisitionFunction)
+    AcquisitionFunction,
+    get_base_structure_hook(AcquisitionFunction),
 )
 converter.register_unstructure_hook(AcquisitionFunction, unstructure_base)

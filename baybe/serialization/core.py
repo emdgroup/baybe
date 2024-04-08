@@ -39,7 +39,7 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
 def get_base_structure_hook(
     base: type[_T],
     overrides: Optional[dict] = None,
-) -> Callable[[dict, type[_T]], _T]:
+) -> Callable[[Union[dict, str], type[_T]], _T]:
     """Return a hook for structuring a dictionary into an appropriate subclass.
 
     Provides the inverse operation to ``unstructure_base``.
@@ -54,9 +54,43 @@ def get_base_structure_hook(
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
     from baybe.utils.basic import get_subclasses
 
-    def structure_base(val: dict, _: type[_T]) -> _T:
+    def structure_base(val: Union[dict, str], _: type[_T]) -> _T:
+        if isinstance(val, str):
+            # When the object is provided as a string, try to find the corresponding
+            # class name and create a dummy dictionary for normal structuring.
+            cls_name = next(
+                (
+                    cl.__name__
+                    for cl in get_subclasses(base)
+                    if (
+                        hasattr(cl, "_abbreviation")
+                        and val
+                        in (cl._abbreviation, cl.__name__)  # allow name or abbreviation
+                    )
+                ),
+                None,
+            )
+            if cls_name is None:
+                raise ValueError(
+                    f"None of the subclasses of {base.__name__} have an abbreviation "
+                    f"or name called {val}."
+                )
+            val = {"type": cls_name}
+
         _type = val.pop("type")
-        cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
+        cls = next(
+            (
+                cl
+                for cl in get_subclasses(base)
+                if _type
+                in (
+                    (cl.__name__, cl._abbreviation)
+                    if hasattr(cl, "_abbreviation")
+                    else (cl.__name__,)
+                )
+            ),
+            None,
+        )
         if cls is None:
             raise ValueError(f"Unknown subclass '{_type}'.")
         fun = make_dict_structure_fn(

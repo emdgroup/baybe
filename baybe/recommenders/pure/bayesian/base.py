@@ -6,6 +6,7 @@ from typing import Optional
 import pandas as pd
 from attrs import define, field
 
+from baybe.acquisition.acqfs import qExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.recommenders.pure.base import PureRecommender
@@ -26,7 +27,7 @@ class BayesianRecommender(PureRecommender, ABC):
     """The used surrogate model."""
 
     acquisition_function_cls: AcquisitionFunction = field(
-        converter=convert_acqf, default="qEI"
+        converter=convert_acqf, factory=qExpectedImprovement
     )
     """The used acquisition function class."""
 
