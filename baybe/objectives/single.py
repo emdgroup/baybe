@@ -15,6 +15,19 @@ class SingleTargetObjective(Objective):
     _target: Target = field(validator=instance_of(Target))  # type: ignore[type-abstract]
     """The single target considered by the objective."""
 
+    def __str__(self) -> str:
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+
+        targets_list = [target.summary() for target in self.targets]
+        targets_df = pd.DataFrame(targets_list)
+
+        objective_str = f"""{start_bold}Objective{end_bold}
+        \n{start_bold}Type: {end_bold}{self.__class__.__name__}
+        \n{start_bold}Targets {end_bold}\n{targets_df}"""
+
+        return objective_str.replace("\n", "\n ")
+
     @property
     def targets(self) -> tuple[Target, ...]:  # noqa: D102
         # See base class.

@@ -118,6 +118,21 @@ class DesirabilityObjective(Objective):
                 f"Specified targets: {lt}. Specified weights: {lw}."
             )
 
+    def __str__(self) -> str:
+        start_bold = "\033[1m"
+        end_bold = "\033[0m"
+
+        targets_list = [target.summary() for target in self.targets]
+        targets_df = pd.DataFrame(targets_list)
+        targets_df["Weight"] = self.weights
+
+        objective_str = f"""{start_bold}Objective{end_bold}
+        \n{start_bold}Type: {end_bold}{self.__class__.__name__}
+        \n{start_bold}Targets {end_bold}\n{targets_df}
+        \n{start_bold}Scalarization: {end_bold}{self.scalarization.name}"""
+
+        return objective_str.replace("\n", "\n ")
+
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.
 
