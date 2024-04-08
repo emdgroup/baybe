@@ -100,7 +100,7 @@ class DesirabilityObjective(Objective):
     @targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
         if not _is_all_numerical_targets(targets):
-            raise ValueError(
+            raise TypeError(
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
