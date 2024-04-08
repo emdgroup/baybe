@@ -49,7 +49,7 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
     _abbreviation: ClassVar[str] = "qUCB"
 
-    beta: float = field(converter=float, validator=ge(0.0))
+    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.
 
     A value of zero makes the acquisition mechanism consider the posterior predictive
@@ -64,7 +64,7 @@ class UpperConfidenceBound(AcquisitionFunction):
 
     _abbreviation: ClassVar[str] = "UCB"
 
-    beta: float = field(converter=float, validator=ge(0.0))
+    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.
 
     A value of zero makes the acquisition mechanism consider the posterior predictive
