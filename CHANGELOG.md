@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `torch` numeric types are now loaded lazily
 - Reorganized acquisition.py into `acquisition` subpackage
+- `torch` is imported lazily in `surrogates`
 
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
@@ -44,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Full lookup backtesting example now tests different substance encodings
 - Replaced unmaintained `mordred` dependency by `mordredcommunity`
-- `SearchSpace`s now use `ndarray` instead of `Tensor` 
+- `SearchSpace`s now use `ndarray` instead of `Tensor`
 
 ### Fixed
 - `from_simplex` now efficiently validated in `Campaign.validate_config`

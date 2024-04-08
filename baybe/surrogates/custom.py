@@ -7,12 +7,11 @@ surrogates can be trained and attempts to do so for each new DOE iteration.
 
 It is planned to solve this issue in the future.
 """
+from __future__ import annotations
 
-from typing import Callable, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar
 
-import torch
-from attrs import define, field, validators
-from torch import Tensor
+from attrs import define, field, resolve_types, validators
 
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
@@ -36,6 +35,9 @@ try:
     _ONNX_INSTALLED = True
 except ImportError:
     _ONNX_INSTALLED = False
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 def register_custom_architecture(
@@ -153,6 +155,8 @@ if _ONNX_INSTALLED:
 
         @batchify
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+            import torch
+
             model_inputs = {
                 self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)
             }
@@ -211,3 +215,8 @@ if _ONNX_INSTALLED:
                     f"a one-dimensional computational representation or "
                     f"{CustomDiscreteParameter.__name__}."
                 )
+
+    # FIXME: This manual resolve should not be necessary if the classes are declared
+    #   properly. Potentially related to the conditional class definition, which should
+    #   vanish as well.
+    resolve_types(CustomONNXSurrogate)

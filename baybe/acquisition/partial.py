@@ -2,9 +2,10 @@
 
 from typing import Optional
 
+import torch
 from attr import define
 from botorch.acquisition import AcquisitionFunction
-from torch import Tensor, cat, squeeze
+from torch import Tensor
 
 
 @define
@@ -56,7 +57,7 @@ class PartialAcquisitionFunction:
             disc_part = partial_part
             cont_part = pinned_part
         # Concat the parts and return the concatenated point
-        full_point = cat((disc_part, cont_part), -1)
+        full_point = torch.cat((disc_part, cont_part), -1)
         return full_point
 
     def __call__(self, variable_part: Tensor) -> Tensor:
@@ -87,6 +88,6 @@ class PartialAcquisitionFunction:
         """
         if X_pending is not None:  # Lift point to hybrid space and add additional dim
             X_pending = self._lift_partial_part(X_pending)
-            X_pending = squeeze(X_pending, -2)
+            X_pending = torch.squeeze(X_pending, -2)
         # Now use the original set_X_pending function
         self.acqf.set_X_pending(X_pending)

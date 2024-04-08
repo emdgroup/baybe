@@ -6,19 +6,21 @@ in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750
 Since we plan to refactor the surrogates, this part of the documentation will be
 available in the future. Thus, please have a look in the source code directly.
 """
+from __future__ import annotations
 
-from typing import Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 import numpy as np
-import torch
 from attr import define, field
 from sklearn.ensemble import RandomForestRegressor
-from torch import Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets, scale_model
 from baybe.surrogates.validation import get_model_params_validator
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @catch_constant_targets
@@ -48,6 +50,8 @@ class RandomForestSurrogate(Surrogate):
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
+
+        import torch
 
         # Evaluate all trees
         # NOTE: explicit conversion to ndarray is needed due to a pytorch issue:
