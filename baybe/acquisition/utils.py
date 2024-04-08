@@ -1,23 +1,17 @@
 """Utilities for acquisition functions."""
 
-from typing import Literal, Union
+from typing import Union
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.utils.basic import get_subclasses
 
-_ACQF_NAMES = Literal[
-    "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
-]
 
-
-def str_to_acqf(name: _ACQF_NAMES, /) -> AcquisitionFunction:
+def str_to_acqf(name: str, /) -> AcquisitionFunction:
     """Create an ACQF object from a given ACQF name."""
     acqfs = get_subclasses(AcquisitionFunction)
-    return next(acqf for acqf in acqfs if acqf._abbreviation == name)()
+    return next(acqf for acqf in acqfs if name in (acqf.__name__, acqf._abbreviation))()
 
 
-def convert_acqf(
-    acqf: Union[AcquisitionFunction, _ACQF_NAMES], /
-) -> AcquisitionFunction:
+def convert_acqf(acqf: Union[AcquisitionFunction, str], /) -> AcquisitionFunction:
     """Convert an ACQF name into an ACQF object (with ACQF object passthrough)."""
     return acqf if isinstance(acqf, AcquisitionFunction) else str_to_acqf(acqf)
