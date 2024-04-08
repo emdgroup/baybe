@@ -6,14 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
-- `mypy` for search space
+- `mypy` for search space and objectives
 - Class hierarchy for objectives
-- `mypy` for objectives
+- Deserialization is now possible from optional abbreviations and class name strings
+- Hypothesis strategies for acquisition functions
 
 ### Changed
 - `torch` numeric types are now loaded lazily
 - Reorganized acquisition.py into `acquisition` subpackage
 - `torch` is imported lazily in `surrogates`
+- Acquisition functions are now their own objects
+- `acquisition_function_cls` renamed to `acqf`
 
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
@@ -21,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - The former `baybe.objective.Objective` class has been replaced with
   `SingleTargetObjective` and `DesirabilityObjective`
+- `acquisition_function_cls` keyword for the respective recommenders
+- `VarUCB` and `qVarUCB` acquisition functions
 
 ## [0.8.2] - 2024-03-27
 ### Added
