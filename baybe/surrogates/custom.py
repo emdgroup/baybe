@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, ClassVar
 
-from attrs import define, field, validators
+from attrs import define, field, resolve_types, validators
 
 from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
@@ -215,3 +215,8 @@ if _ONNX_INSTALLED:
                     f"a one-dimensional computational representation or "
                     f"{CustomDiscreteParameter.__name__}."
                 )
+
+    # FIXME: This manual resolve should not be necessary if the classes are declared
+    #   properly. Potentially related to the conditional class definition, which should
+    #   vanish as well.
+    resolve_types(CustomONNXSurrogate)
