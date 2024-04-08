@@ -7,7 +7,7 @@ import pytest
 
 from baybe import BayBE, Campaign
 from baybe.exceptions import DeprecationError
-from baybe.objective import Objective
+from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective as NewObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -156,7 +156,7 @@ def test_deprecated_strategy_campaign_flag(recommender):
 def test_deprecated_objective_class():
     """Using the deprecated objective class raises a warning."""
     with pytest.warns(DeprecationWarning):
-        Objective(mode="SINGLE", targets=[NumericalTarget(name="a", mode="MAX")])
+        OldObjective(mode="SINGLE", targets=[NumericalTarget(name="a", mode="MAX")])
 
 
 deprecated_objective_config = """

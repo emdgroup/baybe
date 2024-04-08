@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def structure_objective(val: dict, _) -> Objective:
     """A structure hook that automatically determines an objective fallback type."""  # noqa: D401 (imperative mood)
-    from baybe.objective import Objective as factory
+    from baybe.objective import Objective as OldObjective
     from baybe.objectives.base import Objective
     from baybe.objectives.desirability import DesirabilityObjective
     from baybe.objectives.single import SingleTargetObjective
@@ -56,4 +56,4 @@ def structure_objective(val: dict, _) -> Objective:
             DeprecationWarning,
         )
         val["targets"] = converter.structure(val["targets"], list[Target])
-        return factory(**val)
+        return OldObjective(**val)

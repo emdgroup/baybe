@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 def Objective(*args, **kwargs) -> NewObjective:
     """An ``Objective`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
-    from baybe.objective import Objective as factory
+    from baybe.objective import Objective as OldObjective
 
     warnings.warn(
         "The use of `baybe.targets.Objective` is deprecated and will be disabled in "
@@ -19,4 +19,4 @@ def Objective(*args, **kwargs) -> NewObjective:
         DeprecationWarning,
     )
 
-    return factory(*args, **kwargs)
+    return OldObjective(*args, **kwargs)
