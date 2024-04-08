@@ -11,7 +11,7 @@ from attrs import define, field
 from packaging import version
 
 from baybe.serialization import SerialMixin, converter
-from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
+from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -132,6 +132,8 @@ class Interval(SerialMixin):
         """Transform the interval to a :class:`torch.Tensor`."""
         import torch
 
+        from baybe.utils.torch import DTypeFloatTorch
+
         return torch.tensor([self.lower, self.upper], dtype=DTypeFloatTorch)
 
     def contains(self, number: float) -> bool:
@@ -146,7 +148,7 @@ class Interval(SerialMixin):
         return self.lower <= number <= self.upper
 
 
-def convert_bounds(bounds: Union[None, tuple, Interval]) -> Interval:
+def convert_bounds(bounds: Union[None, Iterable, Interval]) -> Interval:
     """Convert bounds given in another format to an interval.
 
     Args:

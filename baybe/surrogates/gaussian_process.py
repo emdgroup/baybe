@@ -1,8 +1,9 @@
 """Gaussian process surrogates."""
 
-from typing import Any, ClassVar, Optional
+from __future__ import annotations
 
-import torch
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
+
 from attr import define, field
 from botorch import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
@@ -12,11 +13,13 @@ from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior
-from torch import Tensor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.validation import get_model_params_validator
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define
@@ -49,10 +52,12 @@ class GaussianProcessSurrogate(Surrogate):
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
 
+        import torch
+
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
         task_idx = searchspace.task_idx
-        n_task_params = 1 if task_idx else 0
+        n_task_params = 1 if task_idx is not None else 0
         numeric_idxs = [i for i in range(train_x.shape[1]) if i != task_idx]
 
         # get the input bounds from the search space in BoTorch Format

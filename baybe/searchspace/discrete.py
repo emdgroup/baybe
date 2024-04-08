@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable
-from itertools import zip_longest
+from collections.abc import Collection, Iterable, Sequence
 from typing import Any, Optional
 
 import numpy as np
@@ -22,6 +21,7 @@ from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
@@ -41,8 +41,8 @@ class SubspaceDiscrete(SerialMixin):
     parameter views.
     """
 
-    parameters: list[DiscreteParameter] = field(
-        validator=lambda _1, _2, x: validate_parameter_names(x)
+    parameters: tuple[DiscreteParameter, ...] = field(
+        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
     )
     """The list of parameters of the subspace."""
 
@@ -55,7 +55,9 @@ class SubspaceDiscrete(SerialMixin):
     empty_encoding: bool = field(default=False)
     """Flag encoding whether an empty encoding is used."""
 
-    constraints: list[DiscreteConstraint] = field(factory=list)
+    constraints: tuple[DiscreteConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
+    )
     """A list of constraints for restricting the space."""
 
     comp_rep: pd.DataFrame = field(eq=eq_dataframe)
@@ -128,7 +130,7 @@ class SubspaceDiscrete(SerialMixin):
         # Exclude inactive tasks from search
         df = pd.DataFrame(False, columns=_METADATA_COLUMNS, index=self.exp_rep.index)
         off_task_idxs = ~self._on_task_configurations()
-        df.loc[off_task_idxs.values, "dont_recommend"] = True
+        df.loc[off_task_idxs.values, "dont_recommend"] = True  # type: ignore
         return df
 
     @metadata.validator
@@ -146,7 +148,7 @@ class SubspaceDiscrete(SerialMixin):
         if self.is_empty:
             return
         off_task_idxs = ~self._on_task_configurations()
-        if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():
+        if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():  # type: ignore
             raise ValueError(
                 "Inconsistent instructions given: The provided metadata allows "
                 "testing parameter configurations for inactive tasks."
@@ -174,7 +176,7 @@ class SubspaceDiscrete(SerialMixin):
         if self.is_empty:
             return
         off_task_idxs = ~self._on_task_configurations()
-        self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True
+        self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True  # type: ignore
 
     def _on_task_configurations(self) -> pd.Series:
         """Retrieve the parameter configurations for the active tasks."""
@@ -199,8 +201,8 @@ class SubspaceDiscrete(SerialMixin):
     @classmethod
     def from_product(
         cls,
-        parameters: list[DiscreteParameter],
-        constraints: Optional[list[DiscreteConstraint]] = None,
+        parameters: Sequence[DiscreteParameter],
+        constraints: Optional[Sequence[DiscreteConstraint]] = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
@@ -224,7 +226,7 @@ class SubspaceDiscrete(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[list[DiscreteParameter]] = None,
+        parameters: Optional[Sequence[DiscreteParameter]] = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
@@ -268,9 +270,9 @@ class SubspaceDiscrete(SerialMixin):
     def from_simplex(
         cls,
         max_sum: float,
-        simplex_parameters: list[NumericalDiscreteParameter],
-        product_parameters: Optional[list[DiscreteParameter]] = None,
-        constraints: Optional[list[DiscreteConstraint]] = None,
+        simplex_parameters: Sequence[NumericalDiscreteParameter],
+        product_parameters: Optional[Sequence[DiscreteParameter]] = None,
+        constraints: Optional[Sequence[DiscreteConstraint]] = None,
         min_nonzero: int = 0,
         max_nonzero: Optional[int] = None,
         boundary_only: bool = False,
@@ -325,7 +327,7 @@ class SubspaceDiscrete(SerialMixin):
             max_nonzero = len(simplex_parameters)
 
         # Validate constraints
-        validate_constraints(constraints, simplex_parameters + product_parameters)
+        validate_constraints(constraints, [*simplex_parameters, *product_parameters])
 
         # Validate parameter types
         if not (
@@ -425,12 +427,11 @@ class SubspaceDiscrete(SerialMixin):
             min_nonzero_to_go,
             max_nonzero_to_go,
         ) in enumerate(
-            zip_longest(
+            zip(
                 simplex_parameters,
-                min_sum_upcoming,
-                min_nonzero_upcoming,
-                max_nonzero_upcoming,
-                fillvalue=0,
+                np.append(min_sum_upcoming, 0),
+                np.append(min_nonzero_upcoming, 0),
+                np.append(max_nonzero_upcoming, 0),
             )
         ):
             if i == 0:
@@ -463,7 +464,7 @@ class SubspaceDiscrete(SerialMixin):
         _apply_constraint_filter(exp_rep, constraints)
 
         return cls(
-            parameters=simplex_parameters + product_parameters,
+            parameters=[*simplex_parameters, *product_parameters],
             exp_rep=exp_rep,
             constraints=constraints,
         )
@@ -581,7 +582,9 @@ class SubspaceDiscrete(SerialMixin):
         return comp_rep
 
 
-def _apply_constraint_filter(df: pd.DataFrame, constraints: list[DiscreteConstraint]):
+def _apply_constraint_filter(
+    df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
+):
     """Remove discrete search space entries inplace based on constraints.
 
     Args:

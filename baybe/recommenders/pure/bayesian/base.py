@@ -1,23 +1,14 @@
 """Base class for all Bayesian recommenders."""
 
 from abc import ABC
-from functools import partial
 from typing import Callable, Literal, Optional
 
 import pandas as pd
 from attrs import define, field
-from botorch.acquisition import (
-    AcquisitionFunction,
-    ExpectedImprovement,
-    PosteriorMean,
-    ProbabilityOfImprovement,
-    UpperConfidenceBound,
-    qExpectedImprovement,
-    qProbabilityOfImprovement,
-    qUpperConfidenceBound,
-)
+from botorch.acquisition import AcquisitionFunction
 
 from baybe.acquisition import debotorchize
+from baybe.acquisition.utils import acquisition_function_mapping
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
@@ -53,18 +44,7 @@ class BayesianRecommender(PureRecommender, ABC):
         Returns:
             The debotorchized acquisition function class.
         """
-        mapping = {
-            "PM": PosteriorMean,
-            "PI": ProbabilityOfImprovement,
-            "EI": ExpectedImprovement,
-            "UCB": partial(UpperConfidenceBound, beta=1.0),
-            "qEI": qExpectedImprovement,
-            "qPI": qProbabilityOfImprovement,
-            "qUCB": partial(qUpperConfidenceBound, beta=1.0),
-            "VarUCB": partial(UpperConfidenceBound, beta=100.0),
-            "qVarUCB": partial(qUpperConfidenceBound, beta=100.0),
-        }
-        fun = debotorchize(mapping[self.acquisition_function_cls])
+        fun = debotorchize(acquisition_function_mapping[self.acquisition_function_cls])
         return fun
 
     def setup_acquisition_function(

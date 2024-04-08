@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from collections.abc import Iterable, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Literal,
+    Optional,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
 
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.targets.enum import TargetMode
-from baybe.utils.numerical import DTypeFloatNumpy, DTypeFloatTorch
+from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -40,6 +45,8 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
     #  care of this) df.values has been changed to df.values.astype(float),
     #  even though this seems like double casting here.
     import torch
+
+    from baybe.utils.torch import DTypeFloatTorch
 
     out = (
         torch.from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
@@ -324,7 +331,7 @@ def df_uncorrelated_features(
 def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
-    parameters: list[Parameter],
+    parameters: Sequence[Parameter],
     numerical_measurements_must_be_within_tolerance: bool,
 ) -> pd.Index:
     """Match row of the right dataframe to the rows of the left dataframe.

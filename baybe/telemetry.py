@@ -73,11 +73,13 @@ or in Python:
 Note, however, that (un-)setting the variable in the shell will not affect the running
 Python session.
 """
+
 import getpass
 import hashlib
 import os
 import socket
 import warnings
+from collections.abc import Sequence
 from typing import Union
 from urllib.parse import urlparse
 
@@ -280,7 +282,7 @@ def _submit_scalar_value(instrument_name: str, value: Union[int, float]) -> None
 def telemetry_record_recommended_measurement_percentage(
     cached_recommendation: pd.DataFrame,
     measurements: pd.DataFrame,
-    parameters: list[Parameter],
+    parameters: Sequence[Parameter],
     numerical_measurements_must_be_within_tolerance: bool,
 ) -> None:
     """Submit the percentage of added measurements.

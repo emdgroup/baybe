@@ -120,7 +120,7 @@ class Campaign(SerialMixin):
         return self._measurements_exp
 
     @property
-    def parameters(self) -> list[Parameter]:
+    def parameters(self) -> tuple[Parameter, ...]:
         """The parameters of the underlying search space."""
         return self.searchspace.parameters
 

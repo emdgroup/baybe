@@ -3,13 +3,9 @@
 from collections.abc import Sequence
 
 import numpy as np
-import torch
 
 DTypeFloatNumpy = np.float64
 """Floating point data type used for numpy arrays."""
-
-DTypeFloatTorch = torch.float64
-"""Floating point data type used for torch tensors."""
 
 DTypeFloatONNX = np.float32
 """Floating point data type used for ONNX models.

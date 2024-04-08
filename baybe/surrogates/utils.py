@@ -14,9 +14,6 @@ from baybe.searchspace import SearchSpace
 if TYPE_CHECKING:
     from baybe.surrogates.base import Surrogate
 
-# Use float64 (which is recommended at least for BoTorch models)
-_DTYPE = torch.float64
-
 _MIN_TARGET_STD = 1e-6
 
 
@@ -32,9 +29,11 @@ def _prepare_inputs(x: Tensor) -> Tensor:
     Raises:
         ValueError: If the model input is empty.
     """
+    from baybe.utils.torch import DTypeFloatTorch
+
     if len(x) == 0:
         raise ValueError("The model input must be non-empty.")
-    return x.to(_DTYPE)
+    return x.to(DTypeFloatTorch)
 
 
 def _prepare_targets(y: Tensor) -> Tensor:
@@ -49,12 +48,14 @@ def _prepare_targets(y: Tensor) -> Tensor:
     Raises:
         NotImplementedError: If there is more than one target.
     """
+    from baybe.utils.torch import DTypeFloatTorch
+
     if y.shape[1] != 1:
         raise NotImplementedError(
             "The model currently supports only one target or multiple targets in "
             "DESIRABILITY mode."
         )
-    return y.to(_DTYPE)
+    return y.to(DTypeFloatTorch)
 
 
 def catch_constant_targets(model_cls: type[Surrogate]):

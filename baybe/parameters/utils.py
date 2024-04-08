@@ -13,7 +13,7 @@ _TParameter = TypeVar("_TParameter", bound=Parameter)
 def get_parameters_from_dataframe(
     df: pd.DataFrame,
     factory: Callable[[str, Collection[Any]], _TParameter],
-    parameters: Optional[list[_TParameter]] = None,
+    parameters: Optional[Collection[_TParameter]] = None,
 ) -> list[_TParameter]:
     """Create a list of parameters from a dataframe.
 
