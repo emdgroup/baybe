@@ -9,22 +9,18 @@ from baybe.utils.basic import get_subclasses
 
 def str_to_acqf(name: str, /) -> AcquisitionFunction:
     """Create an ACQF object from a given ACQF name."""
-    if name == "VarUCB":
+    UCB_DEPRECATIONS = {
+        "VarUCB": UpperConfidenceBound,
+        "qVarUCB": qUpperConfidenceBound,
+    }
+    if name in UCB_DEPRECATIONS:
         warnings.warn(
-            "The use of `VarUCB` is deprecated and will be disabled in a future "
-            "version. The get the same outcome, use the new UCB class instead with a "
-            "beta of 100.0.",
+            f"The use of `{name}` is deprecated and will be disabled in a "
+            f"future version. The get the same outcome, use the new "
+            f"{UCB_DEPRECATIONS[name].__name__} class instead with a beta of 100.0.",
             DeprecationWarning,
         )
-        return UpperConfidenceBound(beta=100.0)
-    elif name == "qVarUCB":
-        warnings.warn(
-            "The use of `qVarUCB` is deprecated and will be disabled in a future "
-            "version. The get the same outcome, use the new qUCB class instead with a "
-            "beta of 100.0.",
-            DeprecationWarning,
-        )
-        return qUpperConfidenceBound(beta=100.0)
+        return UCB_DEPRECATIONS[name](beta=100.0)
 
     acqfs = get_subclasses(AcquisitionFunction)
     acqf = next(
