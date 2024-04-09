@@ -19,7 +19,6 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
 )
 from baybe.strategies import (
     SequentialStrategy,
-    Strategy,
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
@@ -45,7 +44,6 @@ assert len(RECOMMENDERS) == len({rec.__class__.__name__ for rec in RECOMMENDERS}
 @pytest.mark.parametrize(
     "test_objects",
     [
-        (Strategy, {}),
         (TwoPhaseStrategy, {}),
         (SequentialStrategy, {"recommenders": RECOMMENDERS}),
         (StreamingSequentialStrategy, {"recommenders": RECOMMENDERS}),
