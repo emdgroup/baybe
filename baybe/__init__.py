@@ -3,7 +3,6 @@
 import warnings
 
 from baybe.campaign import Campaign
-from baybe.deprecation import BayBE
 
 # Show deprecation warnings
 warnings.filterwarnings("default", category=DeprecationWarning, module="baybe")
@@ -52,7 +51,6 @@ def infer_version() -> str:  # pragma: no cover
 __version__ = infer_version()
 __all__ = [
     "__version__",
-    "BayBE",
     "Campaign",
 ]
 
