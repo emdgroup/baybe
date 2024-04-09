@@ -19,7 +19,9 @@ def single_target_objectives():
 def desirability_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.desirability.DesirabilityObjective`."""
     intervals = st_intervals(exclude_fully_unbounded=True, exclude_half_bounded=True)
-    targets = draw(st.lists(numerical_targets(intervals), min_size=2))
+    targets = draw(
+        st.lists(numerical_targets(intervals), min_size=2, unique_by=lambda t: t.name)
+    )
     weights = draw(
         st.lists(
             st.floats(min_value=0.0, exclude_min=True),

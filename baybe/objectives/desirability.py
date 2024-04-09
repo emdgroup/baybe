@@ -93,6 +93,8 @@ class DesirabilityObjective(Objective):
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
+        if len({t.name for t in targets}) != len(targets):
+            raise ValueError("All target names must be unique.")
         if not all(target._is_transform_normalized for target in targets):
             raise ValueError(
                 "All targets must have normalized computational representations to "
