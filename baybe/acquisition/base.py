@@ -41,20 +41,20 @@ def _add_deprecation_hook(hook):
     Used for backward compatibility only and will be removed in future versions.
     """
 
-    def added_deprecation_hook(val: Union[dict, str], cls):
-        if isinstance(val, str):
-            UCB_DEPRECATIONS = {
-                "VarUCB": "UpperConfidenceBound",
-                "qVarUCB": "qUpperConfidenceBound",
-            }
-            if val in UCB_DEPRECATIONS:
-                warnings.warn(
-                    f"The use of `{val}` is deprecated and will be disabled in a "
-                    f"future version. The get the same outcome, use the new "
-                    f"{UCB_DEPRECATIONS[val]} class instead with a beta of 100.0.",
-                    DeprecationWarning,
-                )
-                return hook({"type": {UCB_DEPRECATIONS[val]}, "beta": 100.0}, cls)
+    def added_deprecation_hook(val: Union[dict, str], cls: type):
+        UCB_DEPRECATIONS = {
+            "VarUCB": "UpperConfidenceBound",
+            "qVarUCB": "qUpperConfidenceBound",
+        }
+        if (entry := val if isinstance(val, str) else val["type"]) in UCB_DEPRECATIONS:
+            warnings.warn(
+                f"The use of `{entry}` is deprecated and will be disabled in a "
+                f"future version. The get the same outcome, use the new "
+                f"{UCB_DEPRECATIONS[entry]} class instead with a beta of 100.0.",
+                DeprecationWarning,
+            )
+            val = {"type": UCB_DEPRECATIONS[entry], "beta": 100.0}
+
         return hook(val, cls)
 
     return added_deprecation_hook
