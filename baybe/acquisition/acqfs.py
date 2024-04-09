@@ -10,7 +10,7 @@ from baybe.acquisition.base import AcquisitionFunction
 
 @define(frozen=True)
 class PosteriorMean(AcquisitionFunction):
-    """Posterior Mean."""
+    """Posterior mean."""
 
     _abbreviation: ClassVar[str] = "PM"
 
