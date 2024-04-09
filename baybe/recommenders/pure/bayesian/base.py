@@ -47,7 +47,7 @@ class BayesianRecommender(PureRecommender, ABC):
                 "The flag has been renamed to 'acqf'."
             )
 
-    def setup_acqf(
+    def _setup_acqf(
         self,
         searchspace: SearchSpace,
         train_x: Optional[pd.DataFrame] = None,
@@ -114,6 +114,6 @@ class BayesianRecommender(PureRecommender, ABC):
         if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
-        self.setup_acqf(searchspace, train_x, train_y)
+        self._setup_acqf(searchspace, train_x, train_y)
 
         return super().recommend(searchspace, batch_size, train_x, train_y)
