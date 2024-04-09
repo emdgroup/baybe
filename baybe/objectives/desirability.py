@@ -83,9 +83,10 @@ def scalarize(
 class DesirabilityObjective(Objective):
     """An objective scalarizing multiple targets using desirability values."""
 
-    targets: tuple[Target, ...] = field(
+    _targets: tuple[Target, ...] = field(
         converter=to_tuple,
         validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],  # type: ignore[type-abstract]
+        alias="targets",
     )
     "The targets considered by the objective."
 
@@ -101,7 +102,7 @@ class DesirabilityObjective(Objective):
         """Create unit weights for all targets."""
         return tuple(1.0 for _ in range(len(self.targets)))
 
-    @targets.validator
+    @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
         if not _is_all_numerical_targets(targets):
             raise TypeError(
@@ -122,6 +123,11 @@ class DesirabilityObjective(Objective):
                 f"If custom weights are specified, there must be one for each target. "
                 f"Specified number of targets: {lt}. Specified number of weights: {lw}."
             )
+
+    @property
+    def targets(self) -> tuple[Target, ...]:  # noqa: D102
+        # See base class.
+        return self._targets
 
     def __str__(self) -> str:
         start_bold = "\033[1m"
