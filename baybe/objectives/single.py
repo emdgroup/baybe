@@ -8,7 +8,7 @@ from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class SingleTargetObjective(Objective):
     """An objective focusing on a single target."""
 

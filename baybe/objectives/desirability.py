@@ -1,7 +1,7 @@
 """Functionality for desirability objectives."""
 
 from collections.abc import Sequence
-from functools import partial
+from functools import cached_property, partial
 from typing import Callable
 
 import cattrs
@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from attrs.validators import deep_iterable, instance_of, min_len
+from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import TypeGuard
 
 from baybe.objectives.base import Objective
@@ -21,20 +21,15 @@ from baybe.utils.numerical import geom_mean
 
 
 def _normalize_weights(weights: Sequence[float]) -> tuple[float, ...]:
-    """Normalize a collection of weights such that they sum to 1.
+    """Normalize a collection of (non-negative) weights such that they sum to 1.
 
     Args:
         weights: The un-normalized weights.
 
-    Raises:
-        ValueError: If any of the weights is non-positive.
-
     Returns:
         The normalized weights.
     """
-    array = np.asarray(cattrs.structure(weights, tuple[float, ...]))
-    if not np.all(array > 0.0):
-        raise ValueError("All weights must be strictly positive.")
+    array = np.asarray(weights)
     return tuple(array / array.sum())
 
 
@@ -79,7 +74,7 @@ def scalarize(
     return func(values, weights=weights)
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class DesirabilityObjective(Objective):
     """An objective scalarizing multiple targets using desirability values."""
 
@@ -90,7 +85,10 @@ class DesirabilityObjective(Objective):
     )
     "The targets considered by the objective."
 
-    weights: tuple[float, ...] = field(converter=_normalize_weights)
+    weights: tuple[float, ...] = field(
+        converter=lambda w: cattrs.structure(w, tuple[float, ...]),
+        validator=deep_iterable(member_validator=gt(0.0)),
+    )
     """The weights to balance the different targets.
     By default, all targets are considered equally important."""
 
@@ -129,6 +127,11 @@ class DesirabilityObjective(Objective):
         # See base class.
         return self._targets
 
+    @cached_property
+    def _normalized_weights(self) -> tuple[float, ...]:
+        """The normalized target weights."""
+        return _normalize_weights(self._weights)
+
     def __str__(self) -> str:
         start_bold = "\033[1m"
         end_bold = "\033[0m"
@@ -153,7 +156,7 @@ class DesirabilityObjective(Objective):
             transformed[target.name] = target.transform(data[[target.name]])
 
         # Scalarize the transformed targets into desirability values
-        vals = scalarize(transformed.values, self.scalarizer, self.weights)
+        vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
 
         # Store the total desirability in a dataframe column
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)

@@ -14,8 +14,11 @@ from baybe.serialization.core import (
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 
+# TODO: Reactive slots in all classes once cached_property is supported:
+#   https://github.com/python-attrs/attrs/issues/164
 
-@define(frozen=True)
+
+@define(frozen=True, slots=False)
 class Objective(ABC, SerialMixin):
     """Abstract base class for all objectives."""
 
