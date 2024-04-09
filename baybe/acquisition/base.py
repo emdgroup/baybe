@@ -36,29 +36,25 @@ class AcquisitionFunction(ABC, SerialMixin):
 
 # Register de-/serialization hooks
 def _add_deprecation_hook(hook):
-    """Adjust the structuring hook such that it auto-fills missing target types.
+    """Add deprecation warnings to the default hook.
 
     Used for backward compatibility only and will be removed in future versions.
     """
 
     def added_deprecation_hook(val: Union[dict, str], cls):
         if isinstance(val, str):
-            if val == "VarUCB":
+            UCB_DEPRECATIONS = {
+                "VarUCB": "UpperConfidenceBound",
+                "qVarUCB": "qUpperConfidenceBound",
+            }
+            if val in UCB_DEPRECATIONS:
                 warnings.warn(
-                    "The use of `VarUCB` is deprecated and will be disabled in a "
-                    "future version. The get the same outcome, use the new UCB class "
-                    "instead with a beta of 100.0.",
+                    f"The use of `{val}` is deprecated and will be disabled in a "
+                    f"future version. The get the same outcome, use the new "
+                    f"{UCB_DEPRECATIONS[val]} class instead with a beta of 100.0.",
                     DeprecationWarning,
                 )
-                return hook({"type": "UpperConfidenceBound", "beta": 100.0}, cls)
-            elif val == "qVarUCB":
-                warnings.warn(
-                    "The use of `qVarUCB` is deprecated and will be disabled in a "
-                    "future version. The get the same outcome, use the new qUCB class "
-                    "instead with a beta of 100.0.",
-                    DeprecationWarning,
-                )
-                return hook({"type": "qUpperConfidenceBound", "beta": 100.0}, cls)
+                return hook({"type": {UCB_DEPRECATIONS[val]}, "beta": 100.0}, cls)
         return hook(val, cls)
 
     return added_deprecation_hook
