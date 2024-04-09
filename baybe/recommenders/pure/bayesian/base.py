@@ -40,7 +40,7 @@ class BayesianRecommender(PureRecommender, ABC):
 
     @acquisition_function_cls.validator
     def _validate_deprecated_argument(self, _, value) -> None:
-        """Raise a DeprecationError if the tolerance flag is used."""
+        """Raise DeprecationError if old acquisition_function_cls parameter is used."""
         if value is not None:
             raise DeprecationError(
                 "Passing 'acquisition_function_cls' to the constructor is deprecated. "
