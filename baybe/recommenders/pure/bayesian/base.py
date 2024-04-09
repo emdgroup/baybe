@@ -44,7 +44,7 @@ class BayesianRecommender(PureRecommender, ABC):
         if value is not None:
             raise DeprecationError(
                 "Passing 'acquisition_function_cls' to the constructor is deprecated. "
-                "The flag has been renamed to 'acqf'."
+                "The parameter has been renamed to 'acqf'."
             )
 
     def _setup_acqf(
