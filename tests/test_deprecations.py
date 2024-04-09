@@ -23,16 +23,9 @@ from baybe.strategies import (
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
-from baybe.targets import Objective as ObjectiveFromTargets
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.interval import Interval
-
-
-def test_moved_objective(targets):
-    """Importing ``Objective`` from ``baybe.targets`` raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        ObjectiveFromTargets(mode="SINGLE", targets=targets)
 
 
 def test_missing_recommender_type(config):
