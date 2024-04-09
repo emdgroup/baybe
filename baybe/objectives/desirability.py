@@ -1,6 +1,5 @@
 """Functionality for desirability objectives."""
 
-from collections.abc import Sequence
 from functools import cached_property, partial
 from typing import Callable
 
@@ -18,19 +17,6 @@ from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import geom_mean
-
-
-def _normalize_weights(weights: Sequence[float]) -> tuple[float, ...]:
-    """Normalize a collection of (non-negative) weights such that they sum to 1.
-
-    Args:
-        weights: The un-normalized weights.
-
-    Returns:
-        The normalized weights.
-    """
-    array = np.asarray(weights)
-    return tuple(array / array.sum())
 
 
 def _is_all_numerical_targets(
@@ -128,9 +114,9 @@ class DesirabilityObjective(Objective):
         return self._targets
 
     @cached_property
-    def _normalized_weights(self) -> tuple[float, ...]:
+    def _normalized_weights(self) -> np.ndarray:
         """The normalized target weights."""
-        return _normalize_weights(self._weights)
+        return np.asarray(self.weights) / np.sum(self.weights)
 
     def __str__(self) -> str:
         start_bold = "\033[1m"
