@@ -9,18 +9,6 @@ from baybe.recommenders.meta import (
 )
 
 
-def Strategy(*args, **kwargs) -> TwoPhaseMetaRecommender:
-    """A ``Strategy`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
-    warnings.warn(
-        f"Using 'Strategy' directly is deprecated and will be removed in a future "
-        f"version. Please use 'recommenders.{TwoPhaseMetaRecommender.__name__}' class "
-        f"instead.",
-        DeprecationWarning,
-    )
-
-    return TwoPhaseMetaRecommender(*args, **kwargs)
-
-
 def TwoPhaseStrategy(*args, **kwargs) -> TwoPhaseMetaRecommender:
     """A ``TwoPhaseStrategy`` alias for backward compatibility."""  # noqa: D401 (imperative mood)
     warnings.warn(
