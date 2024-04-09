@@ -59,6 +59,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `acquisition_function_cls` constructor parameter for `BayesianRecommender`
 - `VarUCB` and `qVarUCB` acquisition functions
 
+### Expired Deprecations (from 0.6.*)
+- `BayBE` class
+- `baybe.surrogate` module
+- `baybe.targets.Objective` class
+- `baybe.strategies.Strategy` class
+
 ## [0.8.2] - 2024-03-27
 ### Added
 - Simulation user guide
