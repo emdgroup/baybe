@@ -55,29 +55,7 @@ def get_base_structure_hook(
     from baybe.utils.basic import get_subclasses
 
     def structure_base(val: Union[dict, str], _: type[_T]) -> _T:
-        if isinstance(val, str):
-            # When the object is provided as a string, try to find the corresponding
-            # class name and create a dummy dictionary for normal structuring.
-            cls_name = next(
-                (
-                    cl.__name__
-                    for cl in get_subclasses(base)
-                    if (
-                        hasattr(cl, "_abbreviation")
-                        and val
-                        in (cl._abbreviation, cl.__name__)  # allow name or abbreviation
-                    )
-                ),
-                None,
-            )
-            if cls_name is None:
-                raise ValueError(
-                    f"None of the subclasses of {base.__name__} have an abbreviation "
-                    f"or name called {val}."
-                )
-            val = {"type": cls_name}
-
-        _type = val.pop("type")
+        _type = val if isinstance(val, str) else val.pop("type")
         cls = next(
             (
                 cl
@@ -92,11 +70,15 @@ def get_base_structure_hook(
             None,
         )
         if cls is None:
-            raise ValueError(f"Unknown subclass '{_type}'.")
-        fun = make_dict_structure_fn(
+            raise ValueError(
+                f"'{_type}' is neither a know subclass or subclass-abbreviation of "
+                f"{base.__name__}."
+            )
+
+        fn = make_dict_structure_fn(
             cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
         )
-        return fun(val, cls)
+        return fn({} if isinstance(val, str) else val, cls)
 
     return structure_base
 
