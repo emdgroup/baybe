@@ -14,8 +14,8 @@ from baybe.acquisition.partial import PartialAcquisitionFunction
 EI = ExpectedImprovement
 PI = ProbabilityOfImprovement
 UCB = UpperConfidenceBound
-aEI = qExpectedImprovement
-aPI = qProbabilityOfImprovement
+qEI = qExpectedImprovement
+qPI = qProbabilityOfImprovement
 qUCB = qUpperConfidenceBound
 
 __all__ = [
