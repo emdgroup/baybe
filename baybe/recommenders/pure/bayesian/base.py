@@ -47,7 +47,7 @@ class BayesianRecommender(PureRecommender, ABC):
                 "The parameter has been renamed to 'acquisition_function'."
             )
 
-    def _setup_acqf(
+    def _setup_botorch_acqf(
         self,
         searchspace: SearchSpace,
         train_x: Optional[pd.DataFrame] = None,
@@ -116,6 +116,6 @@ class BayesianRecommender(PureRecommender, ABC):
         if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
-        self._setup_acqf(searchspace, train_x, train_y)
+        self._setup_botorch_acqf(searchspace, train_x, train_y)
 
         return super().recommend(searchspace, batch_size, train_x, train_y)
