@@ -1,7 +1,6 @@
 # TODO: This file needs to be refactored.
 """Tests various configurations for a small number of iterations."""
 
-from typing import get_args, get_type_hints
 
 import pytest
 
@@ -23,9 +22,6 @@ from .conftest import run_iterations
 ########################################################################################
 # Settings of the individual components to be tested
 ########################################################################################
-valid_acquisition_functions = get_args(
-    get_type_hints(BayesianRecommender.__init__)["acquisition_function"]
-)
 valid_surrogate_models = [cls() for cls in get_available_surrogates()]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
