@@ -52,7 +52,7 @@ It runs a single execution of a DoE loop for either a specific number of iterati
 For using this function, it is necessary to provide a [`campaign`](baybe.campaign.Campaign). Although technically not necessary, we advise to also always provide a lookup mechanisms since fake results will be produced if none is provided. It is possible to specify several additional parameters like the batch size, initial data or the number of DoE iterations that should be performed
 
 ~~~python
-results = simulate_scenarios(
+results = simulate_experiment(
     # Necessary
     campaign=campaign,
     # Technically optional but should always be set
