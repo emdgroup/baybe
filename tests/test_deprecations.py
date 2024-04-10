@@ -1,11 +1,15 @@
 """Deprecation tests."""
 
 import json
+from unittest.mock import Mock
 
 import pytest
 
 from baybe import BayBE, Campaign
 from baybe.exceptions import DeprecationError
+from baybe.objective import Objective as OldObjective
+from baybe.objectives.base import Objective as NewObjective
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
@@ -18,8 +22,9 @@ from baybe.strategies import (
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
-from baybe.targets import Objective
+from baybe.targets import Objective as ObjectiveFromTargets
 from baybe.targets.base import Target
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.interval import Interval
 
 
@@ -32,7 +37,7 @@ def test_deprecated_baybe_class(parameters, objective):
 def test_moved_objective(targets):
     """Importing ``Objective`` from ``baybe.targets`` raises a warning."""
     with pytest.warns(DeprecationWarning):
-        Objective(mode="SINGLE", targets=targets)
+        ObjectiveFromTargets(mode="SINGLE", targets=targets)
 
 
 def test_renamed_surrogate():
@@ -90,7 +95,7 @@ def test_missing_target_type():
         )
 
 
-deprecated_config = """
+old_style_config = """
 {
     "parameters": [
         {
@@ -115,14 +120,16 @@ deprecated_config = """
 def test_deprecated_config():
     """Using the deprecated config format raises a warning."""
     with pytest.warns(UserWarning):
-        Campaign.from_config(deprecated_config)
+        Campaign.from_config(old_style_config)
 
 
 @pytest.mark.parametrize("flag", [False, True])
 def test_deprecated_campaign_tolerance_flag(flag):
     """Constructing a Campaign with the deprecated tolerance flag raises an error."""
     with pytest.raises(DeprecationError):
-        Campaign(None, None, None, numerical_measurements_must_be_within_tolerance=flag)
+        Campaign(
+            Mock(), Mock(), Mock(), numerical_measurements_must_be_within_tolerance=flag
+        )
 
 
 def test_deprecated_batch_quantity_keyword(campaign):
@@ -143,4 +150,45 @@ def test_deprecated_strategy_allow_flags(flag):
 def test_deprecated_strategy_campaign_flag(recommender):
     """Using the deprecated strategy keyword raises an error."""
     with pytest.raises(DeprecationError):
-        Campaign(None, None, None, strategy=recommender)
+        Campaign(Mock(), Mock(), Mock(), strategy=recommender)
+
+
+def test_deprecated_objective_class():
+    """Using the deprecated objective class raises a warning."""
+    with pytest.warns(DeprecationWarning):
+        OldObjective(mode="SINGLE", targets=[NumericalTarget(name="a", mode="MAX")])
+
+
+deprecated_objective_config = """
+{
+    "mode": "DESIRABILITY",
+    "targets": [
+        {
+            "name": "Yield",
+            "mode": "MAX",
+            "bounds": [0, 1]
+        },
+        {
+            "name": "Waste",
+            "mode": "MIN",
+            "bounds": [0, 1]
+        }
+    ],
+    "combine_func": "MEAN",
+    "weights": [1, 2]
+}
+"""
+
+
+def test_deprecated_objective_config_deserialization():
+    """The deprecated objective config format can still be parsed."""
+    expected = DesirabilityObjective(
+        targets=[
+            NumericalTarget("Yield", "MAX", bounds=(0, 1)),
+            NumericalTarget("Waste", "MIN", bounds=(0, 1)),
+        ],
+        scalarizer="MEAN",
+        weights=[1, 2],
+    )
+    actual = NewObjective.from_json(deprecated_objective_config)
+    assert expected == actual, (expected, actual)

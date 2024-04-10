@@ -16,7 +16,7 @@ import numpy as np
 import seaborn as sns
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import (
     NaiveHybridSpaceRecommender,
@@ -107,9 +107,7 @@ parameters = cont_parameters + disc_parameters
 
 # Construct searchspace and objective.
 searchspace = SearchSpace.from_product(parameters=parameters)
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="Target", mode="MIN")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
 
 ### Constructing campaigns for the simulation loop
 

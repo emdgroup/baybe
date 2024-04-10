@@ -120,11 +120,22 @@ class NumericalTarget(Target, SerialMixin):
                 f"of {_VALID_TRANSFORMATIONS[self.mode]}."
             )
 
+    @property
+    def _is_transform_normalized(self) -> bool:
+        """Indicate if the computational transformation maps to the unit interval."""
+        return (self.bounds.is_bounded) and (self.transformation is not None)
+
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.
 
-        # When bounds are given, apply the respective transformation
-        if self.bounds.is_bounded:
+        # TODO: The method (signature) needs to be refactored, potentially when
+        #   enabling multi-target settings. The current input type suggests that passing
+        #   dataframes is allowed, but the code was designed for single targets and
+        #   desirability objectives, where only one column is present.
+        assert data.shape[1] == 1
+
+        # When a transformation is specified, apply it
+        if self.transformation is not None:
             func = _get_target_transformation(
                 # TODO[typing]: For bounded targets (see if clause), the attrs default
                 #   ensures there is always a transformation specified.
@@ -136,7 +147,7 @@ class NumericalTarget(Target, SerialMixin):
                 func(data, *self.bounds.to_tuple()), index=data.index
             )
 
-        # If no bounds are given, simply negate all target values for ``MIN`` mode.
+        # Otherwise, simply negate all target values for ``MIN`` mode.
         # For ``MAX`` mode, nothing needs to be done.
         # For ``MATCH`` mode, the validators avoid a situation without specified bounds.
         elif self.mode is TargetMode.MIN:

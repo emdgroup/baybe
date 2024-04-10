@@ -10,7 +10,7 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.exceptions import DeprecationError
-from baybe.objective import Objective
+from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -47,8 +47,10 @@ class Campaign(SerialMixin):
     searchspace: SearchSpace = field()
     """The search space in which the experiments are conducted."""
 
-    objective: Objective = field()
-    """The optimization objective."""
+    objective: Objective = field(converter=to_objective)
+    """The optimization objective.
+    When passing a single :class:`baybe.targets.base.Target`, it gets automatically
+    wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
 
     recommender: RecommenderProtocol = field(factory=TwoPhaseMetaRecommender)
     """The employed recommender"""
@@ -123,7 +125,7 @@ class Campaign(SerialMixin):
         return self.searchspace.parameters
 
     @property
-    def targets(self) -> list[Target]:
+    def targets(self) -> tuple[Target, ...]:
         """The targets of the underlying objective."""
         return self.objective.targets
 
@@ -313,10 +315,16 @@ class Campaign(SerialMixin):
 
 
 def _add_version(dict_: dict) -> dict:
-    """Add the package version to the created dictionary."""
+    """Add the package version to the given dictionary."""
     from baybe import __version__
 
     return {**dict_, "version": __version__}
+
+
+def _drop_version(dict_: dict) -> dict:
+    """Drop the package version from the given dictionary."""
+    dict_.pop("version", None)
+    return dict_
 
 
 # Register de-/serialization hooks
@@ -329,12 +337,14 @@ unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     strategy=cattrs.override(omit=True),
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
-    Campaign, converter, _cattrs_include_init_false=True
+    Campaign, converter, _cattrs_include_init_false=True, _cattrs_forbid_extra_keys=True
 )
 converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
 )
-converter.register_structure_hook(Campaign, structure_hook)
+converter.register_structure_hook(
+    Campaign, lambda d, cl: structure_hook(_drop_version(d), cl)
+)
 
 
 # Converter for config validation

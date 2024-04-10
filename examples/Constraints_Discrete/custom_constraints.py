@@ -15,7 +15,7 @@ import pandas as pd
 
 from baybe import Campaign
 from baybe.constraints import DiscreteCustomConstraint
-from baybe.objective import Objective
+from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -102,9 +102,7 @@ constraint = DiscreteCustomConstraint(
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
-objective = Objective(
-    mode="SINGLE", targets=[NumericalTarget(name="yield", mode="MAX")]
-)
+objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
 
 ### Creating and printing the campaign
 

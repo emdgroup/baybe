@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - `mypy` for search space
+- Class hierarchy for objectives
+- `mypy` for objectives
 
 ### Changed
 - `torch` numeric types are now loaded lazily
@@ -15,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
+
+### Deprecations
+- The former `baybe.objective.Objective` class has been replaced with
+  `SingleTargetObjective` and `DesirabilityObjective`
 
 ## [0.8.2] - 2024-03-27
 ### Added
@@ -92,9 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Line wrapping in examples
 
 ### Deprecations
-- `TwoPhaseStrategy`
-- `SequentialStrategy`
-- `StreamingSequentialStrategy`
+- `TwoPhaseStrategy`, `SequentialStrategy` and `StreamingSequentialStrategy` have been
+  replaced with their new `MetaRecommender` versions
 
 ## [0.7.3] - 2024-02-09
 ### Added

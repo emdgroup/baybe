@@ -9,7 +9,7 @@
 ### Necessary imports for this example
 
 from baybe import Campaign
-from baybe.objective import Objective
+from baybe.objectives import DesirabilityObjective
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -75,7 +75,7 @@ Target_3 = NumericalTarget(
 targets = [Target_1, Target_2, Target_3]
 
 # As the recommender requires a single function, the different targets need to be combined.
-# Thus, a `combine_function` is used to create a single target out of the several targets given.
+# Thus, a `scalarizer` is used to create a single target out of the several targets given.
 # The combine function can either be the mean `MEAN` or the geometric mean `GEOM_MEAN`.
 # Per default, `GEOM_MEAN` is used.
 # Weights for each target can also be specified as a list of floats in the arguments
@@ -83,11 +83,10 @@ targets = [Target_1, Target_2, Target_3]
 # It is thus not necessary to handle normalization or scaling.
 
 
-objective = Objective(
-    mode="DESIRABILITY",
+objective = DesirabilityObjective(
     targets=targets,
     weights=[20, 20, 60],
-    combine_func="MEAN",
+    scalarizer="MEAN",
 )
 
 print(objective)
