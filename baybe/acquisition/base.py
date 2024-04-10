@@ -50,7 +50,7 @@ def _add_deprecation_hook(hook):
             warnings.warn(
                 f"The use of `{entry}` is deprecated and will be disabled in a "
                 f"future version. The get the same outcome, use the new "
-                f"{UCB_DEPRECATIONS[entry]} class instead with a beta of 100.0.",
+                f"`{UCB_DEPRECATIONS[entry]}` class instead with a beta of 100.0.",
                 DeprecationWarning,
             )
             val = {"type": UCB_DEPRECATIONS[entry], "beta": 100.0}
