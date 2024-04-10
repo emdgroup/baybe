@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `mypy` for search space
 - Class hierarchy for objectives
+- `mypy` for objectives
 
 ### Changed
 - `torch` numeric types are now loaded lazily
