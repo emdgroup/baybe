@@ -40,12 +40,12 @@ def get_base_structure_hook(
     base: type[_T],
     overrides: Optional[dict] = None,
 ) -> Callable[[Union[dict, str], type[_T]], _T]:
-    """Return a hook for structuring a dictionary into an appropriate subclass.
+    """Return a hook for structuring a specified subclass.
 
     Provides the inverse operation to ``unstructure_base``.
 
     Args:
-        base: The corresponding class
+        base: The corresponding class.
         overrides: An optional dictionary of cattrs-overrides for certain attributes.
 
     Returns:
@@ -56,6 +56,9 @@ def get_base_structure_hook(
 
     def structure_base(val: Union[dict, str], _: type[_T]) -> _T:
         _type = val if isinstance(val, str) else val.pop("type")
+
+        # Try to find a match with a class name (or name abbreviation, if available)
+        # in the class hierarchy
         cls = next(
             (
                 cl
@@ -69,10 +72,11 @@ def get_base_structure_hook(
             ),
             None,
         )
+
         if cls is None:
             raise ValueError(
-                f"'{_type}' is neither a know subclass or subclass-abbreviation of "
-                f"{base.__name__}."
+                f"'{_type}' is neither a known subclass or subclass-abbreviation of "
+                f"'{base.__name__}'."
             )
 
         fn = make_dict_structure_fn(
