@@ -108,10 +108,11 @@ class DesirabilityObjective(Objective):
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
-        if not all(target.is_normalized for target in targets):
+        if not all(target._is_transform_normalized for target in targets):
             raise ValueError(
-                "All targets must be normalized, which requires setting appropriate "
-                "bounds and transformations."
+                "All targets must have normalized computational representations to "
+                "enable the computation of desirability values. This requires having "
+                "appropriate target bounds and transformations in place."
             )
 
     @weights.validator
