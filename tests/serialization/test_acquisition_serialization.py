@@ -3,10 +3,10 @@
 from hypothesis import given
 
 from baybe.acquisition.base import AcquisitionFunction
-from tests.hypothesis_strategies.acquisition import random_acqfs
+from tests.hypothesis_strategies.acquisition import acquisition_functions
 
 
-@given(random_acqfs)
+@given(acquisition_functions)
 def test_acqf_roundtrip(acqf):
     """A serialization roundtrip yields an equivalent object."""
     string = acqf.to_json()

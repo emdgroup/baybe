@@ -11,7 +11,7 @@ from baybe.acquisition import (
     qUpperConfidenceBound,
 )
 
-random_acqfs = st.one_of(
+acquisition_functions = st.one_of(
     st.sampled_from(
         [
             ExpectedImprovement(),
