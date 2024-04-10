@@ -56,7 +56,7 @@ For more information on this step, see our
 ### Defining the Optimization Objective
 
 In BayBE's language, the `Yield` can be represented as a `NumericalTarget`,
-which we pass into an `Objective`.
+which we wrap into a `SingleTargetObjective`:
 
 ```python
 from baybe.targets import NumericalTarget
@@ -69,12 +69,20 @@ target = NumericalTarget(
 objective = SingleTargetObjective(target=target)
 ```
 
-In cases where we need to consider multiple (potentially competing) targets, the
-role of the `Objective` is to define additional settings, e.g. how these targets should
-be balanced.
-In `SINGLE` mode, however, there are no additional settings.
-For more details, see 
-[the objective section of the user guide](https://emdgroup.github.io/baybe/userguide/objective.html).
+In situations like the above, where **only one** `Target` is relevant, the role of the
+`Objective` is to merely signal the absence of other `Target`s in the optimization
+problem.  
+**Note:** 
+As this rather trivial conversion step does not require any additional user
+configuration, it can also be [conveniently triggered](convenience_constructor) directly
+from the target object.
+
+By contrast, in cases where we are confronted with multiple (potentially conflicting)
+targets, the `Objective` allows to define additional settings, e.g. how these targets
+should be balanced.
+For more details, see the
+[objective section](https://emdgroup.github.io/baybe/userguide/objective.html)
+of the user guide.
 
 ### Defining the Search Space
 
