@@ -27,7 +27,7 @@ class BayesianRecommender(PureRecommender, ABC):
     surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
     """The used surrogate model."""
 
-    acqf: AcquisitionFunction = field(
+    acquisition_function: AcquisitionFunction = field(
         converter=convert_acqf, factory=qExpectedImprovement, kw_only=True
     )
     """The used acquisition function class."""
@@ -44,7 +44,7 @@ class BayesianRecommender(PureRecommender, ABC):
         if value is not None:
             raise DeprecationError(
                 "Passing 'acquisition_function_cls' to the constructor is deprecated. "
-                "The parameter has been renamed to 'acqf'."
+                "The parameter has been renamed to 'acquisition_function'."
             )
 
     def _setup_acqf(
@@ -73,7 +73,9 @@ class BayesianRecommender(PureRecommender, ABC):
 
         best_f = train_y.max().item()
         surrogate_model = self._fit(searchspace, train_x, train_y)
-        self._botorch_acqf = self.acqf.to_botorch(surrogate_model, best_f)
+        self._botorch_acqf = self.acquisition_function.to_botorch(
+            surrogate_model, best_f
+        )
 
     def _fit(
         self,

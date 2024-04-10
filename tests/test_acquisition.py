@@ -10,4 +10,4 @@ from .hypothesis_strategies.acquisition import acquisition_functions
 @given(acquisition_functions)
 def test_acqfs(acqf):
     """Test all acquisition functions with sequential greedy recommender."""
-    SequentialGreedyRecommender(acqf=acqf)
+    SequentialGreedyRecommender(acquisition_function=acqf)

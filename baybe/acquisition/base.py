@@ -27,9 +27,9 @@ class AcquisitionFunction(ABC, SerialMixin):
 
     def to_botorch(self, surrogate: Surrogate, best_f: float):
         """Create the botorch-ready representation of the function."""
-        import botorch.acquisition as botorch_acqf
+        import botorch.acquisition as botorch_acquisition
 
-        acqf_cls = getattr(botorch_acqf, self.__class__.__name__)
+        acqf_cls = getattr(botorch_acquisition, self.__class__.__name__)
 
         return debotorchize(acqf_cls)(surrogate, best_f)
 

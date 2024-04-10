@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reorganized acquisition.py into `acquisition` subpackage
 - `torch` is imported lazily in `surrogates`
 - Acquisition functions are now their own objects
-- `acquisition_function_cls` constructor parameter renamed to `acqf`
+- `acquisition_function_cls` constructor parameter renamed to `acquisition_function`
 
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`

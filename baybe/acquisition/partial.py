@@ -18,7 +18,7 @@ class PartialAcquisitionFunction:
     defined for the full hybrid space.
     """
 
-    acqf: BotorchAcquisitionFunction
+    botorch_acqf: BotorchAcquisitionFunction
     """The acquisition function for the hybrid space."""
 
     pinned_part: Tensor
@@ -70,10 +70,10 @@ class PartialAcquisitionFunction:
             The evaluation of the lifted point in the full hybrid space.
         """
         full_point = self._lift_partial_part(variable_part)
-        return self.acqf(full_point)
+        return self.botorch_acqf(full_point)
 
     def __getattr__(self, item):
-        return getattr(self.acqf, item)
+        return getattr(self.botorch_acqf, item)
 
     def set_X_pending(self, X_pending: Optional[Tensor]):
         """Inform the acquisition function about pending design points.
@@ -90,4 +90,4 @@ class PartialAcquisitionFunction:
             X_pending = self._lift_partial_part(X_pending)
             X_pending = torch.squeeze(X_pending, -2)
         # Now use the original set_X_pending function
-        self.acqf.set_X_pending(X_pending)
+        self.botorch_acqf.set_X_pending(X_pending)

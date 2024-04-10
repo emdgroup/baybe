@@ -24,4 +24,4 @@ def test_creation_from_string(acqf):
 @pytest.mark.parametrize("acqf", abbreviation_list + fullname_list)
 def test_string_usage_in_recommender(acqf):
     """Tests the recommender initialization with acqfs as string."""
-    SequentialGreedyRecommender(acqf=acqf)
+    SequentialGreedyRecommender(acquisition_function=acqf)

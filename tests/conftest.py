@@ -621,7 +621,7 @@ def fixture_recommender(initial_recommender, surrogate_model, acqf):
         initial_recommender=initial_recommender,
         recommender=SequentialGreedyRecommender(
             surrogate_model=surrogate_model,
-            acqf=acqf,
+            acquisition_function=acqf,
         ),
     )
 
@@ -699,7 +699,7 @@ def fixture_default_config():
             },
             "recommender": {
                 "type": "SequentialGreedyRecommender",
-                "acqf": "qEI",
+                "acquisition_function": "qEI",
                 "allow_repeated_recommendations": false,
                 "allow_recommending_already_measured": false
             },
