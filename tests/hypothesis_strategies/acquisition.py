@@ -12,14 +12,10 @@ from baybe.acquisition import (
 )
 
 acquisition_functions = st.one_of(
-    st.sampled_from(
-        [
-            ExpectedImprovement(),
-            ProbabilityOfImprovement(),
-            qExpectedImprovement(),
-            qProbabilityOfImprovement(),
-        ]
-    ),
+    st.builds(ExpectedImprovement),
+    st.builds(ProbabilityOfImprovement),
+    st.builds(qExpectedImprovement),
+    st.builds(qProbabilityOfImprovement),
     st.builds(
         UpperConfidenceBound, beta=st.floats(min_value=0.0, allow_infinity=False)
     ),
