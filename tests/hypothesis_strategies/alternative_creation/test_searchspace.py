@@ -15,7 +15,7 @@ from baybe.parameters import (
 from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
-from tests.hypothesis_strategies.parameters import numerical_discrete_parameter
+from tests.hypothesis_strategies.parameters import numerical_discrete_parameters
 
 # Discrete inputs for testing
 s_x = pd.Series([1, 2, 3], name="x")
@@ -107,7 +107,7 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
 @pytest.mark.parametrize("boundary_only", (False, True))
 @given(
     parameters=st.lists(
-        numerical_discrete_parameter(min_value=0.0, max_value=1.0),
+        numerical_discrete_parameters(min_value=0.0, max_value=1.0),
         min_size=1,
         max_size=5,
         unique_by=lambda x: x.name,

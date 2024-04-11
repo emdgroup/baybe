@@ -4,10 +4,10 @@ from hypothesis import given
 
 from baybe.targets.base import Target
 
-from ..hypothesis_strategies.targets import target
+from ..hypothesis_strategies.targets import targets
 
 
-@given(target)
+@given(targets)
 def test_parameter_roundtrip(target: Target):
     """A serialization roundtrip yields an equivalent object."""
     string = target.to_json()

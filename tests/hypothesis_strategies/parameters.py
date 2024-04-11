@@ -19,15 +19,15 @@ from baybe.parameters.numerical import (
 from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
 from baybe.utils.numerical import DTypeFloatNumpy
 
-from .utils import interval
+from .utils import intervals
 
-decorrelation = st.one_of(
+decorrelations = st.one_of(
     st.booleans(),
     st.floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
 )
 """A strategy that generates decorrelation settings."""
 
-parameter_name = st.text(min_size=1)
+parameter_names = st.text(min_size=1)
 """A strategy that generates parameter names."""
 
 categories = st.lists(st.text(min_size=1), min_size=2, unique=True)
@@ -76,13 +76,13 @@ def custom_descriptors(draw: st.DrawFn):
 
 
 @st.composite
-def numerical_discrete_parameter(
+def numerical_discrete_parameters(
     draw: st.DrawFn,
     min_value: Optional[float] = None,
     max_value: Optional[float] = None,
 ):
     """Generate :class:`baybe.parameters.numerical.NumericalDiscreteParameter`."""
-    name = draw(parameter_name)
+    name = draw(parameter_names)
     values = draw(
         st.lists(
             st.floats(
@@ -111,26 +111,26 @@ def numerical_discrete_parameter(
 
 
 @st.composite
-def numerical_continuous_parameter(draw: st.DrawFn):
+def numerical_continuous_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.numerical.NumericalContinuousParameter`."""
-    name = draw(parameter_name)
-    bounds = draw(interval(exclude_half_bounded=True, exclude_fully_unbounded=True))
+    name = draw(parameter_names)
+    bounds = draw(intervals(exclude_half_bounded=True, exclude_fully_unbounded=True))
     return NumericalContinuousParameter(name=name, bounds=bounds)
 
 
 @st.composite
-def categorical_parameter(draw: st.DrawFn):
+def categorical_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.categorical.CategoricalParameter`."""
-    name = draw(parameter_name)
+    name = draw(parameter_names)
     values = draw(categories)
     encoding = draw(st.sampled_from(CategoricalEncoding))
     return CategoricalParameter(name=name, values=values, encoding=encoding)
 
 
 @st.composite
-def task_parameter(draw: st.DrawFn):
+def task_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.categorical.TaskParameter`."""
-    name = draw(parameter_name)
+    name = draw(parameter_names)
     values = draw(categories)
     active_values = draw(
         st.lists(st.sampled_from(values), min_size=1, max_size=len(values), unique=True)
@@ -139,11 +139,11 @@ def task_parameter(draw: st.DrawFn):
 
 
 @st.composite
-def substance_parameter(draw: st.DrawFn):
+def substance_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.substance.SubstanceParameter`."""
-    name = draw(parameter_name)
+    name = draw(parameter_names)
     data = draw(substance_data())
-    decorrelate = draw(decorrelation)
+    decorrelate = draw(decorrelations)
     encoding = draw(st.sampled_from(SubstanceEncoding))
     return SubstanceParameter(
         name=name, data=data, decorrelate=decorrelate, encoding=encoding
@@ -151,22 +151,22 @@ def substance_parameter(draw: st.DrawFn):
 
 
 @st.composite
-def custom_parameter(draw: st.DrawFn):
+def custom_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.custom.CustomDiscreteParameter`."""
-    name = draw(parameter_name)
+    name = draw(parameter_names)
     data = draw(custom_descriptors())
-    decorrelate = draw(decorrelation)
+    decorrelate = draw(decorrelations)
     return CustomDiscreteParameter(name=name, data=data, decorrelate=decorrelate)
 
 
-parameter = st.one_of(
+parameters = st.one_of(
     [
-        numerical_discrete_parameter(),
-        numerical_continuous_parameter(),
-        categorical_parameter(),
-        task_parameter(),
-        substance_parameter(),
-        custom_parameter(),
+        numerical_discrete_parameters(),
+        numerical_continuous_parameters(),
+        categorical_parameters(),
+        task_parameters(),
+        substance_parameters(),
+        custom_parameters(),
     ]
 )
 """A strategy that generates parameters."""
