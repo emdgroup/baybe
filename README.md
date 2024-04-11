@@ -81,7 +81,7 @@ By contrast, in cases where we are confronted with multiple (potentially conflic
 targets, the `Objective` allows to define additional settings, e.g. how these targets
 should be balanced.
 For more details, see the
-[objective section](https://emdgroup.github.io/baybe/userguide/objective.html)
+[objective section](https://emdgroup.github.io/baybe/userguide/objectives.html)
 of the user guide.
 
 ### Defining the Search Space
