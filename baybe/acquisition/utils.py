@@ -1,25 +1,14 @@
 """Utilities for acquisition functions."""
+from typing import Union
 
-from functools import partial
+from baybe.acquisition.base import AcquisitionFunction
 
-from botorch.acquisition import (
-    ExpectedImprovement,
-    PosteriorMean,
-    ProbabilityOfImprovement,
-    UpperConfidenceBound,
-    qExpectedImprovement,
-    qProbabilityOfImprovement,
-    qUpperConfidenceBound,
-)
 
-acquisition_function_mapping = {
-    "PM": PosteriorMean,
-    "PI": ProbabilityOfImprovement,
-    "EI": ExpectedImprovement,
-    "UCB": partial(UpperConfidenceBound, beta=1.0),
-    "qEI": qExpectedImprovement,
-    "qPI": qProbabilityOfImprovement,
-    "qUCB": partial(qUpperConfidenceBound, beta=1.0),
-    "VarUCB": partial(UpperConfidenceBound, beta=100.0),
-    "qVarUCB": partial(qUpperConfidenceBound, beta=100.0),
-}
+def str_to_acqf(name: str, /) -> AcquisitionFunction:
+    """Create an ACQF object from a given ACQF name."""
+    return AcquisitionFunction.from_dict({"type": name})
+
+
+def convert_acqf(acqf: Union[AcquisitionFunction, str], /) -> AcquisitionFunction:
+    """Convert an ACQF name into an ACQF object (with ACQF object passthrough)."""
+    return acqf if isinstance(acqf, AcquisitionFunction) else str_to_acqf(acqf)

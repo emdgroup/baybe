@@ -1,14 +1,15 @@
 """Base class for all Bayesian recommenders."""
 
 from abc import ABC
-from typing import Callable, Literal, Optional
+from typing import Optional
 
 import pandas as pd
 from attrs import define, field
-from botorch.acquisition import AcquisitionFunction
 
-from baybe.acquisition import debotorchize
-from baybe.acquisition.utils import acquisition_function_mapping
+from baybe.acquisition.acqfs import qExpectedImprovement
+from baybe.acquisition.base import AcquisitionFunction
+from baybe.acquisition.utils import convert_acqf
+from baybe.exceptions import DeprecationError
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
@@ -26,28 +27,27 @@ class BayesianRecommender(PureRecommender, ABC):
     surrogate_model: Surrogate = field(factory=GaussianProcessSurrogate)
     """The used surrogate model."""
 
-    acquisition_function_cls: Literal[
-        "PM", "PI", "EI", "UCB", "qPI", "qEI", "qUCB", "VarUCB", "qVarUCB"
-    ] = field(default="qEI")
+    acquisition_function: AcquisitionFunction = field(
+        converter=convert_acqf, factory=qExpectedImprovement, kw_only=True
+    )
     """The used acquisition function class."""
 
-    _acquisition_function: Optional[AcquisitionFunction] = field(
-        default=None, init=False
-    )
+    _botorch_acqf = field(default=None, init=False)
     """The current acquisition function."""
 
-    def _get_acquisition_function_cls(
-        self,
-    ) -> Callable:
-        """Get the actual acquisition function class.
+    acquisition_function_cls: bool = field(default=None)
+    "Deprecated! Raises an error when used."
 
-        Returns:
-            The debotorchized acquisition function class.
-        """
-        fun = debotorchize(acquisition_function_mapping[self.acquisition_function_cls])
-        return fun
+    @acquisition_function_cls.validator
+    def _validate_deprecated_argument(self, _, value) -> None:
+        """Raise DeprecationError if old acquisition_function_cls parameter is used."""
+        if value is not None:
+            raise DeprecationError(
+                "Passing 'acquisition_function_cls' to the constructor is deprecated. "
+                "The parameter has been renamed to 'acquisition_function'."
+            )
 
-    def setup_acquisition_function(
+    def _setup_botorch_acqf(
         self,
         searchspace: SearchSpace,
         train_x: Optional[pd.DataFrame] = None,
@@ -73,9 +73,9 @@ class BayesianRecommender(PureRecommender, ABC):
 
         best_f = train_y.max().item()
         surrogate_model = self._fit(searchspace, train_x, train_y)
-        acquisition_function_cls = self._get_acquisition_function_cls()
-
-        self._acquisition_function = acquisition_function_cls(surrogate_model, best_f)
+        self._botorch_acqf = self.acquisition_function.to_botorch(
+            surrogate_model, best_f
+        )
 
     def _fit(
         self,
@@ -116,6 +116,6 @@ class BayesianRecommender(PureRecommender, ABC):
         if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
-        self.setup_acquisition_function(searchspace, train_x, train_y)
+        self._setup_botorch_acqf(searchspace, train_x, train_y)
 
         return super().recommend(searchspace, batch_size, train_x, train_y)

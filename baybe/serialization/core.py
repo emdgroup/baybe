@@ -39,13 +39,13 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
 def get_base_structure_hook(
     base: type[_T],
     overrides: Optional[dict] = None,
-) -> Callable[[dict, type[_T]], _T]:
-    """Return a hook for structuring a dictionary into an appropriate subclass.
+) -> Callable[[Union[dict, str], type[_T]], _T]:
+    """Return a hook for structuring a specified subclass.
 
     Provides the inverse operation to ``unstructure_base``.
 
     Args:
-        base: The corresponding class
+        base: The corresponding class.
         overrides: An optional dictionary of cattrs-overrides for certain attributes.
 
     Returns:
@@ -54,15 +54,35 @@ def get_base_structure_hook(
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
     from baybe.utils.basic import get_subclasses
 
-    def structure_base(val: dict, _: type[_T]) -> _T:
-        _type = val.pop("type")
-        cls = next((cl for cl in get_subclasses(base) if cl.__name__ == _type), None)
+    def structure_base(val: Union[dict, str], _: type[_T]) -> _T:
+        _type = val if isinstance(val, str) else val.pop("type")
+
+        # Try to find a match with a class name (or name abbreviation, if available)
+        # in the class hierarchy
+        cls = next(
+            (
+                cl
+                for cl in get_subclasses(base)
+                if _type
+                in (
+                    (cl.__name__, cl._abbreviation)
+                    if hasattr(cl, "_abbreviation")
+                    else (cl.__name__,)
+                )
+            ),
+            None,
+        )
+
         if cls is None:
-            raise ValueError(f"Unknown subclass '{_type}'.")
-        fun = make_dict_structure_fn(
+            raise ValueError(
+                f"'{_type}' is neither a known subclass or subclass-abbreviation of "
+                f"'{base.__name__}'."
+            )
+
+        fn = make_dict_structure_fn(
             cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
         )
-        return fun(val, cls)
+        return fn({} if isinstance(val, str) else val, cls)
 
     return structure_base
 

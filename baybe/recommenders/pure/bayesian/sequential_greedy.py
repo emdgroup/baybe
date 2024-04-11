@@ -73,7 +73,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         candidates_tensor = to_tensor(candidates_comp)
         try:
             points, _ = optimize_acqf_discrete(
-                self._acquisition_function, batch_size, candidates_tensor
+                self._botorch_acqf, batch_size, candidates_tensor
             )
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(
@@ -106,7 +106,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
 
         try:
             points, _ = optimize_acqf(
-                acq_function=self._acquisition_function,
+                acq_function=self._botorch_acqf,
                 bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
@@ -187,7 +187,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         # Actual call of the BoTorch optimization routine
         try:
             points, _ = optimize_acqf_mixed(
-                acq_function=self._acquisition_function,
+                acq_function=self._botorch_acqf,
                 bounds=torch.from_numpy(searchspace.param_bounds_comp),
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts

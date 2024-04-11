@@ -4,7 +4,7 @@ from inspect import signature
 from typing import Any, Callable, Optional
 
 import gpytorch.distributions
-from botorch.acquisition import AcquisitionFunction
+from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
@@ -13,7 +13,7 @@ from torch import Tensor
 from baybe.surrogates.base import Surrogate
 
 
-def debotorchize(acqf_cls: type[AcquisitionFunction]):
+def debotorchize(acqf_cls: type[BotorchAcquisitionFunction]):
     """Wrap a given BoTorch acquisition function.
 
     This wrapped function becomes generally usable in combination with other non-BoTorch
@@ -49,13 +49,13 @@ def debotorchize(acqf_cls: type[AcquisitionFunction]):
                 for p, v in {"model": self.model, "best_f": self.best_f}.items()
                 if p in signature(acqf_cls).parameters
             }
-            self.acqf = acqf_cls(**required_params)
+            self.botorch_acqf = acqf_cls(**required_params)
 
         def __call__(self, candidates):
-            return self.acqf(candidates)
+            return self.botorch_acqf(candidates)
 
         def __getattr__(self, item):
-            return getattr(self.acqf, item)
+            return getattr(self.botorch_acqf, item)
 
     return Wrapper
 

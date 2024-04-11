@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 import torch
 
+from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -593,10 +594,10 @@ def fixture_default_streaming_sequential_meta_recommender():
     )
 
 
-@pytest.fixture(name="acquisition_function_cls")
+@pytest.fixture(name="acqf")
 def fixture_default_acquisition_function():
     """The default acquisition function to be used if not specified differently."""
-    return "qEI"
+    return qExpectedImprovement()
 
 
 @pytest.fixture(name="surrogate_model")
@@ -614,13 +615,13 @@ def fixture_initial_recommender():
 
 
 @pytest.fixture(name="recommender")
-def fixture_recommender(initial_recommender, surrogate_model, acquisition_function_cls):
+def fixture_recommender(initial_recommender, surrogate_model, acqf):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=SequentialGreedyRecommender(
             surrogate_model=surrogate_model,
-            acquisition_function_cls=acquisition_function_cls,
+            acquisition_function=acqf,
         ),
     )
 
@@ -698,7 +699,7 @@ def fixture_default_config():
             },
             "recommender": {
                 "type": "SequentialGreedyRecommender",
-                "acquisition_function_cls": "qEI",
+                "acquisition_function": "qEI",
                 "allow_repeated_recommendations": false,
                 "allow_recommending_already_measured": false
             },
