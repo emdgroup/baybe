@@ -22,7 +22,7 @@ describe the underlying optimization problem at hand:
 
 | Campaign Specification                     | BayBE Class                                                                               |
 |:-------------------------------------------|:------------------------------------------------------------------------------------------|
-| What should be optimized in the campaign?  | `Objective` ([class](baybe.objective.Objective) / [user guide](./objectives))              |
+| What should be optimized in the campaign?  | `Objective` ([class](baybe.objectives.base.Objective) / [user guide](./objectives))              |
 | Which experimental factors can be altered? | `SearchSpace` ([class](baybe.searchspace.core.SearchSpace) / [user guide](./searchspace)) |
 
 Apart from this basic configuration, it is possible to further define the specific
