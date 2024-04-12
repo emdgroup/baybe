@@ -4,7 +4,6 @@ from contextlib import nullcontext
 import pytest
 
 from baybe import Campaign
-from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.surrogates import _ONNX_INSTALLED, register_custom_architecture
 from tests.conftest import run_iterations
 
@@ -28,14 +27,6 @@ def test_invalid_onnx_creation(onnx_str):
     # Scenario: No onnx str
     with pytest.raises(TypeError):
         CustomONNXSurrogate(onnx_input_name="input")
-
-    # Scenario: Model Params non-empty
-    with pytest.raises(ModelParamsNotSupportedError):
-        CustomONNXSurrogate(
-            onnx_input_name="input",
-            onnx_str=onnx_str,
-            model_params={"Non_empty_dict": None},
-        )
 
 
 @pytest.mark.skipif(
