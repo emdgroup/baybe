@@ -1,63 +1,14 @@
 """Adapter for making BoTorch's acquisition functions work with BayBE models."""
 
-from inspect import signature
 from typing import Any, Callable, Optional
 
 import gpytorch.distributions
-from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from torch import Tensor
 
 from baybe.surrogates.base import Surrogate
-
-
-def debotorchize(acqf_cls: type[BotorchAcquisitionFunction]):
-    """Wrap a given BoTorch acquisition function.
-
-    This wrapped function becomes generally usable in combination with other non-BoTorch
-    surrogate models. This is required since BoTorch's acquisition functions expect a
-    ``botorch.model.Model`` to work with, hindering their general use with arbitrary
-    probabilistic models. The wrapper class returned by this function resolves this
-    issue by operating as an adapter that internally creates a helper BoTorch model,
-    which serves as a translation layer and is passed to the selected BoTorch
-    acquisition function, carrying the posterior information provided from any other
-    probabilistic model implementing BayBE's `Surrogate` interface.
-
-    Args:
-        acqf_cls: An arbitrary BoTorch acquisition function class.
-
-    Returns:
-        A wrapped version of the class that accepts non-BoTorch surrogate models.
-    """
-
-    class Wrapper:
-        """Adapter acquisition function that accepts BayBE surrogate models.
-
-        Args:
-            surrogate: The surrogate model that is being wrapped.
-            best_f: The best found objective function value found so far.
-        """
-
-        def __init__(self, surrogate: Surrogate, best_f: float):
-            self.model = AdapterModel(surrogate)
-            self.best_f = best_f
-
-            required_params = {
-                p: v
-                for p, v in {"model": self.model, "best_f": self.best_f}.items()
-                if p in signature(acqf_cls).parameters
-            }
-            self.botorch_acqf = acqf_cls(**required_params)
-
-        def __call__(self, candidates):
-            return self.botorch_acqf(candidates)
-
-        def __getattr__(self, item):
-            return getattr(self.botorch_acqf, item)
-
-    return Wrapper
 
 
 class AdapterModel(Model):

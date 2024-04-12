@@ -8,6 +8,8 @@ from baybe.acquisition.acqfs import (
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
 )
+from baybe.acquisition.adapter import AdapterModel
+from baybe.acquisition.partial import PartialAcquisitionFunction
 
 EI = ExpectedImprovement
 PI = ProbabilityOfImprovement
@@ -33,4 +35,8 @@ __all__ = [
     "qEI",
     "qPI",
     "qUCB",
+    # ---------------------------
+    # Helpers
+    "AdapterModel",
+    "PartialAcquisitionFunction",
 ]
