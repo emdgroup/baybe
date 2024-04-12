@@ -18,16 +18,22 @@ from baybe.objectives import SingleTargetObjective
 target = NumericalTarget(name="Yield", mode="MAX")
 objective = SingleTargetObjective(target)
 ```
-(convenience_constructor)=
+In fact, the role of the
+`SingleTargetObjective` is to merely signal the absence of other `Target`s in the
+optimization problem.
+Because this fairly trivial conversion step requires no additional user configuration,
+we provide a convenience constructor for it:
+
 ````{admonition} Convenience construction and implicit conversion
 :class: tip
-Since the conversion from a single [`Target`](baybe.targets.base.Target) to a
+* The conversion from a single [`Target`](baybe.targets.base.Target) to a
 [`SingleTargetObjective`](baybe.objectives.single.SingleTargetObjective) describes a
-one-to-one relationship, we provide a convenience constructor for direct transformation:
-```python
-objective = target.to_objective()
-```
-Also, other class constructors that expect an 
+one-to-one relationship and can be triggered directly from the corresponding target
+object:
+  ```python
+  objective = target.to_objective()
+  ```
+* Also, other class constructors that expect an 
 [`Objective`](baybe.objectives.base.Objective)
 object (such as [`Campaigns`](baybe.campaign.Campaign)) will happily swallow
 individual [`Targets`](baybe.targets.base.Target) instead and apply the necessary

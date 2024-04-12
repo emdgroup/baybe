@@ -68,18 +68,9 @@ target = NumericalTarget(
 )
 objective = SingleTargetObjective(target=target)
 ```
-
-In situations like the above, where **only one** `Target` is relevant, the role of the
-`Objective` is to merely signal the absence of other `Target`s in the optimization
-problem.  
-**Note:** 
-As this rather trivial conversion step does not require any additional user
-configuration, it can also be [conveniently triggered](convenience_constructor) directly
-from the target object.
-
-By contrast, in cases where we are confronted with multiple (potentially conflicting)
-targets, the `Objective` allows to define additional settings, e.g. how these targets
-should be balanced.
+In cases where we are confronted with multiple (potentially conflicting) targets,
+the `DesirabilityObjective` can be used instead. It allows to define additional
+settings, such as how these targets should be balanced.
 For more details, see the
 [objective section](https://emdgroup.github.io/baybe/userguide/objectives.html)
 of the user guide.
