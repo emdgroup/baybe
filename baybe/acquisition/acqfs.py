@@ -42,6 +42,13 @@ class qExpectedImprovement(AcquisitionFunction):
     _abbreviation: ClassVar[str] = "qEI"
 
 
+@define(frozen=True)
+class qNoisyExpectedImprovement(AcquisitionFunction):
+    """Monte Carlo based noisy expected improvement."""
+
+    _abbreviation: ClassVar[str] = "qNEI"
+
+
 ########################################################################################
 ### Probability of Improvement
 @define(frozen=True)

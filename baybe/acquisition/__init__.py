@@ -5,6 +5,7 @@ from baybe.acquisition.acqfs import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
     qExpectedImprovement,
+    qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
@@ -19,6 +20,7 @@ qEI = qExpectedImprovement
 qPI = qProbabilityOfImprovement
 qUCB = qUpperConfidenceBound
 qSR = qSimpleRegret
+qNEI = qNoisyExpectedImprovement
 
 __all__ = [
     # ---------------------------
@@ -30,6 +32,7 @@ __all__ = [
     "qProbabilityOfImprovement",
     "qUpperConfidenceBound",
     "qSimpleRegret",
+    "qNoisyExpectedImprovement",
     # ---------------------------
     # Abbreviations
     "EI",
@@ -39,6 +42,7 @@ __all__ = [
     "qPI",
     "qUCB",
     "qSR",
+    "qNEI",
     # ---------------------------
     # Helpers
     "AdapterModel",
