@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
+- Simulation no longer fails in `ignore` mode when lookup dataframe contains duplicate
+  parameter configurations
 
 ### Deprecations
 - The former `baybe.objective.Objective` class has been replaced with
