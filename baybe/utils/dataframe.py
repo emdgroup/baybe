@@ -251,7 +251,9 @@ def add_parameter_noise(
 
         # Respect continuous intervals
         if isinstance(param, ContinuousParameter):
-            data[param.name].clip(param.bounds.lower, param.bounds.upper, inplace=True)
+            data[param.name] = data[param.name].clip(
+                param.bounds.lower, param.bounds.upper
+            )
 
 
 def df_drop_single_value_columns(
