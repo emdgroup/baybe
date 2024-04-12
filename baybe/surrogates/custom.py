@@ -22,6 +22,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
+from baybe.serialization.core import block_serialization_hook, converter
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import validate_custom_architecture_cls
@@ -106,6 +107,11 @@ def register_custom_architecture(
         # batchify posterior if needed
         if batchify_posterior:
             cls._posterior = batchify(cls._posterior)
+
+        # Block serialization of custom architectures
+        converter.register_unstructure_hook(
+            CustomArchitectureSurrogate, block_serialization_hook
+        )
 
         return cls
 

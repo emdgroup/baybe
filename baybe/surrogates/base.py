@@ -169,16 +169,19 @@ def _decode_onnx_str(raw_unstructure_hook):
 
 def _block_serialize_custom_architecture(raw_unstructure_hook):
     """Raise error if attempt to serialize a custom architecture surrogate."""
-    # TODO: Should be replaced with `serialization.block_serialization_hook`.
-    #   However, the class definition of `CustomArchitectureSurrogate` is needs
-    #   to be fixed first, which is broken due to the handling of `model_params`.
-    #   To reproduce the problem, run for example `custom_architecture_torch` and
-    #   try to print the created surrogate model object.
+    # TODO: Ideally, this hook should be removed and unstructuring the Surrogate
+    #   base class should automatically invoke the blocking hook that is already
+    #   registered for the "CustomArchitectureSurrogate" subclass. However, it's
+    #   not clear how the base unstructuring hook needs to be modified to accomplish
+    #   this, and furthermore the problem will most likely become obsolete in the future
+    #   because the role of the subclass will probably be replaced with a surrogate
+    #   protocol.
 
     def wrapper(obj):
         if obj.__class__.__name__ == "CustomArchitectureSurrogate":
             raise NotImplementedError(
-                "Custom Architecture Surrogate Serialization is not supported"
+                "Serializing objects of type 'CustomArchitectureSurrogate' "
+                "is not supported."
             )
 
         return raw_unstructure_hook(obj)
