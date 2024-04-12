@@ -2,9 +2,12 @@
 
 from baybe.acquisition.acqfs import (
     ExpectedImprovement,
+    LogExpectedImprovement,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
     qExpectedImprovement,
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -14,36 +17,45 @@ from baybe.acquisition.adapter import AdapterModel
 from baybe.acquisition.partial import PartialAcquisitionFunction
 
 EI = ExpectedImprovement
-PI = ProbabilityOfImprovement
-UCB = UpperConfidenceBound
 qEI = qExpectedImprovement
+LogEI = LogExpectedImprovement
+qLogEI = qLogExpectedImprovement
+qNEI = qNoisyExpectedImprovement
+qLogNEI = qLogNoisyExpectedImprovement
+PI = ProbabilityOfImprovement
 qPI = qProbabilityOfImprovement
+UCB = UpperConfidenceBound
 qUCB = qUpperConfidenceBound
 qSR = qSimpleRegret
-qNEI = qNoisyExpectedImprovement
 
 __all__ = [
-    # ---------------------------
+    # -----------------------------
     # Acquisition functions
     "ExpectedImprovement",
-    "ProbabilityOfImprovement",
-    "UpperConfidenceBound",
     "qExpectedImprovement",
-    "qProbabilityOfImprovement",
-    "qUpperConfidenceBound",
-    "qSimpleRegret",
+    "LogExpectedImprovement",
+    "qLogExpectedImprovement",
     "qNoisyExpectedImprovement",
-    # ---------------------------
+    "qLogNoisyExpectedImprovement",
+    "UpperConfidenceBound",
+    "qUpperConfidenceBound",
+    "ProbabilityOfImprovement",
+    "qProbabilityOfImprovement",
+    "qSimpleRegret",
+    # -----------------------------
     # Abbreviations
     "EI",
-    "PI",
-    "UCB",
     "qEI",
-    "qPI",
-    "qUCB",
-    "qSR",
+    "LogEI",
+    "qLogEI",
     "qNEI",
-    # ---------------------------
+    "qLogNEI",
+    "UCB",
+    "qUCB",
+    "PI",
+    "qPI",
+    "qSR",
+    # -----------------------------
     # Helpers
     "AdapterModel",
     "PartialAcquisitionFunction",

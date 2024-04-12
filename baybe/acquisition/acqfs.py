@@ -49,6 +49,27 @@ class qNoisyExpectedImprovement(AcquisitionFunction):
     _abbreviation: ClassVar[str] = "qNEI"
 
 
+@define(frozen=True)
+class LogExpectedImprovement(AcquisitionFunction):
+    """Logarithmic analytical expected improvement."""
+
+    _abbreviation: ClassVar[str] = "LogEI"
+
+
+@define(frozen=True)
+class qLogExpectedImprovement(AcquisitionFunction):
+    """Logarithmic Monte Carlo based expected improvement."""
+
+    _abbreviation: ClassVar[str] = "qLogEI"
+
+
+@define(frozen=True)
+class qLogNoisyExpectedImprovement(AcquisitionFunction):
+    """Logarithmic Monte Carlo based noisy expected improvement."""
+
+    _abbreviation: ClassVar[str] = "qLogNEI"
+
+
 ########################################################################################
 ### Probability of Improvement
 @define(frozen=True)
