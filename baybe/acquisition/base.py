@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC
+from inspect import signature
 from typing import ClassVar, Union
 
+import pandas as pd
 from attrs import define
 
+from baybe.acquisition.adapter import AdapterModel
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
@@ -15,6 +18,8 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
+from baybe.utils.basic import filter_attributes
+from baybe.utils.dataframe import to_tensor
 
 
 @define(frozen=True)
@@ -24,15 +29,44 @@ class AcquisitionFunction(ABC, SerialMixin):
     _abbreviation: ClassVar[str]
     """An alternative name for type resolution."""
 
-    def to_botorch(self, surrogate: Surrogate, best_f: float):
+    @classmethod
+    @property
+    def is_mc(cls) -> bool:
+        """Flag indicating whether this is a Monte-Carlo acquisition function."""
+        return cls._abbreviation.startswith("q")
+
+    def to_botorch(
+        self,
+        surrogate: Surrogate,
+        train_x: pd.DataFrame,
+        train_y: pd.DataFrame,
+    ):
         """Create the botorch-ready representation of the function."""
-        import botorch.acquisition as botorch_acquisition
+        import botorch.acquisition as botorch_analytical_acqf
 
-        from baybe.acquisition.adapter import debotorchize
+        acqf_cls = getattr(botorch_analytical_acqf, self.__class__.__name__)
+        fields_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
-        acqf_cls = getattr(botorch_acquisition, self.__class__.__name__)
+        if not self.is_mc:
+            best_f = train_y.max().item()
 
-        return debotorchize(acqf_cls)(surrogate, best_f)
+            if "best_f" in signature(acqf_cls).parameters:
+                fields_dict.update({"best_f": best_f})
+
+            botorch_acqf = acqf_cls(AdapterModel(surrogate), **fields_dict)
+        else:
+            from botorch.acquisition.factory import get_acquisition_function
+            from botorch.acquisition.objective import IdentityMCObjective
+
+            botorch_acqf = get_acquisition_function(
+                acquisition_function_name=self._abbreviation,
+                model=AdapterModel(surrogate),
+                X_observed=to_tensor(train_x),
+                objective=IdentityMCObjective(),
+                **fields_dict,  # optional parameters like beta
+            )
+
+        return botorch_acqf
 
 
 # Register de-/serialization hooks
