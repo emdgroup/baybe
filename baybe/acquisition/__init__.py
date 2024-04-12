@@ -6,6 +6,7 @@ from baybe.acquisition.acqfs import (
     UpperConfidenceBound,
     qExpectedImprovement,
     qProbabilityOfImprovement,
+    qSimpleRegret,
     qUpperConfidenceBound,
 )
 from baybe.acquisition.adapter import AdapterModel
@@ -17,6 +18,7 @@ UCB = UpperConfidenceBound
 qEI = qExpectedImprovement
 qPI = qProbabilityOfImprovement
 qUCB = qUpperConfidenceBound
+qSR = qSimpleRegret
 
 __all__ = [
     # ---------------------------
@@ -27,6 +29,7 @@ __all__ = [
     "qExpectedImprovement",
     "qProbabilityOfImprovement",
     "qUpperConfidenceBound",
+    "qSimpleRegret",
     # ---------------------------
     # Abbreviations
     "EI",
@@ -35,6 +38,7 @@ __all__ = [
     "qEI",
     "qPI",
     "qUCB",
+    "qSR",
     # ---------------------------
     # Helpers
     "AdapterModel",

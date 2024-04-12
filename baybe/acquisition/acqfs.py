@@ -18,6 +18,15 @@ class PosteriorMean(AcquisitionFunction):
 
 
 ########################################################################################
+### Simple Regret
+@define(frozen=True)
+class qSimpleRegret(AcquisitionFunction):
+    """Monte Carlo based simple regret."""
+
+    _abbreviation: ClassVar[str] = "qSR"
+
+
+########################################################################################
 ### Expected Improvement
 @define(frozen=True)
 class ExpectedImprovement(AcquisitionFunction):
