@@ -79,7 +79,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
         except AttributeError as ex:
             raise NoMCAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
-                f"acquisition functions."
+                f"acquisition functions for batch sizes > 1."
             ) from ex
 
         # retrieve the index of the points from the input dataframe
