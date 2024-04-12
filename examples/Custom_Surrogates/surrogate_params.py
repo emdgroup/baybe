@@ -74,8 +74,6 @@ except ValueError as e:
 
 ### Links for documentation
 
-# Note that `GaussianProcessSurrogate` will support custom parameters in the future
-
 # [`RandomForestModel`](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html)
 # [`NGBoostModel`](https://stanfordmlgroup.github.io/ngboost/1-useage.html)
 # [`BayesianLinearModel`](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ARDRegression.html)

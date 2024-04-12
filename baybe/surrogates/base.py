@@ -5,9 +5,9 @@ from __future__ import annotations
 import gc
 import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from attr import define, field
+from attrs import define
 
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
@@ -50,14 +50,6 @@ class Surrogate(ABC, SerialMixin):
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
-
-    # Object variables
-    # TODO: In a next refactoring, the user friendliness could be improved by directly
-    #   exposing the individual model parameters via the constructor, instead of
-    #   expecting them in the form of an unstructured dictionary. This would also
-    #   remove the need for the current `_get_model_params_validator` logic.
-    model_params: dict[str, Any] = field(factory=dict)
-    """Optional model parameters."""
 
     def posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """Evaluate the surrogate model at the given candidate points.

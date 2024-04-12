@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 
 from attrs import define, field, resolve_types, validators
 
-from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -146,12 +145,6 @@ if _ONNX_INSTALLED:
                 return ort.InferenceSession(self.onnx_str)
             except Exception as exc:
                 raise ValueError("Invalid ONNX string") from exc
-
-        def __attrs_post_init__(self) -> None:
-            # TODO: This is a temporary workaround to avoid silent errors when users
-            #   provide model parameters to this class.
-            if self.model_params or not isinstance(self.model_params, dict):
-                raise ModelParamsNotSupportedError()
 
         @batchify
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:

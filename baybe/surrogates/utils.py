@@ -87,7 +87,6 @@ def catch_constant_targets(model_cls: type[Surrogate]):
             super().__init__()
             self.model = model_cls(*args, **kwargs)
             self.__class__.__name__ = self.model.__class__.__name__
-            self.model_params = self.model.model_params
 
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
             """Call the posterior function of the internal model instance."""
@@ -163,7 +162,6 @@ def scale_model(model_cls: type[Surrogate]):
         def __init__(self, *args, **kwargs):
             self.model = model_cls(*args, **kwargs)
             self.__class__.__name__ = self.model.__class__.__name__
-            self.model_params = self.model.model_params
             self.scaler = None
 
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
