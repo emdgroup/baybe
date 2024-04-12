@@ -8,11 +8,22 @@ from attrs.validators import ge
 from baybe.acquisition.base import AcquisitionFunction
 
 
+########################################################################################
+### Posterior Mean
 @define(frozen=True)
 class PosteriorMean(AcquisitionFunction):
     """Posterior mean."""
 
     _abbreviation: ClassVar[str] = "PM"
+
+
+########################################################################################
+### Expected Improvement
+@define(frozen=True)
+class ExpectedImprovement(AcquisitionFunction):
+    """Analytical expected improvement."""
+
+    _abbreviation: ClassVar[str] = "EI"
 
 
 @define(frozen=True)
@@ -22,11 +33,13 @@ class qExpectedImprovement(AcquisitionFunction):
     _abbreviation: ClassVar[str] = "qEI"
 
 
+########################################################################################
+### Probability of Improvement
 @define(frozen=True)
-class ExpectedImprovement(AcquisitionFunction):
-    """Analytical expected improvement."""
+class ProbabilityOfImprovement(AcquisitionFunction):
+    """Analytical probability of improvement."""
 
-    _abbreviation: ClassVar[str] = "EI"
+    _abbreviation: ClassVar[str] = "PI"
 
 
 @define(frozen=True)
@@ -36,18 +49,13 @@ class qProbabilityOfImprovement(AcquisitionFunction):
     _abbreviation: ClassVar[str] = "qPI"
 
 
+########################################################################################
+### Upper Confidence Bound
 @define(frozen=True)
-class ProbabilityOfImprovement(AcquisitionFunction):
-    """Analytical probability of improvement."""
+class UpperConfidenceBound(AcquisitionFunction):
+    """Analytical upper confidence bound."""
 
-    _abbreviation: ClassVar[str] = "PI"
-
-
-@define(frozen=True)
-class qUpperConfidenceBound(AcquisitionFunction):
-    """Monte Carlo based upper confidence bound."""
-
-    _abbreviation: ClassVar[str] = "qUCB"
+    _abbreviation: ClassVar[str] = "UCB"
 
     beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.
@@ -59,10 +67,10 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
 
 @define(frozen=True)
-class UpperConfidenceBound(AcquisitionFunction):
-    """Analytical upper confidence bound."""
+class qUpperConfidenceBound(AcquisitionFunction):
+    """Monte Carlo based upper confidence bound."""
 
-    _abbreviation: ClassVar[str] = "UCB"
+    _abbreviation: ClassVar[str] = "qUCB"
 
     beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.
