@@ -92,11 +92,3 @@ objective = DesirabilityObjective(
 ```
 
 For a complete example demonstrating desirability mode, see [here](./../../examples/Multi_Target/desirability).
-
-
-## MultiTargetObjective
-```{admonition} Not yet available
-:class: error
-A true multi-target (a.k.a. Pareto) optimization mechanism is not yet implemented
-but we are actively working on making this feature available in the near future.
-```
