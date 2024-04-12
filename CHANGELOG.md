@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `mypy` for search space and objectives
 - Class hierarchy for objectives
 - Deserialization is now also possible from optional class name abbreviations
-- Hypothesis strategies for acquisition functions
 - `Kernel` base class allowing to specify kernels
 - `MaternKernel` class can be chosen for GP surrogates
-- `hypothesis` strategies and roundtrip test for kernels, constraints and objectives
+- `hypothesis` strategies and roundtrip test for kernels, constraints, objectives and acquisition
+  functions
+- New acquisition functions: `qSR`, `qNEI`, `LogEI`, `qLogEI`, `qLogNEI`
 
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
