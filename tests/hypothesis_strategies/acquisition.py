@@ -7,15 +7,23 @@ from baybe.acquisition import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
     qExpectedImprovement,
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
+    qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
+    qSimpleRegret,
     qUpperConfidenceBound,
 )
 
 acquisition_functions = st.one_of(
     st.builds(ExpectedImprovement),
-    st.builds(ProbabilityOfImprovement),
     st.builds(qExpectedImprovement),
+    st.builds(qLogExpectedImprovement),
+    st.builds(qNoisyExpectedImprovement),
+    st.builds(qLogNoisyExpectedImprovement),
+    st.builds(ProbabilityOfImprovement),
     st.builds(qProbabilityOfImprovement),
+    st.builds(qSimpleRegret),
     st.builds(
         UpperConfidenceBound, beta=st.floats(min_value=0.0, allow_infinity=False)
     ),
