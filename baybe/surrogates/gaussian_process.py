@@ -5,14 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Optional
 
 from attr import define, field
-from botorch import fit_gpytorch_mll
-from botorch.models import SingleTaskGP
-from botorch.models.transforms import Normalize, Standardize
-from gpytorch import ExactMarginalLogLikelihood
-from gpytorch.kernels import IndexKernel, ScaleKernel
-from gpytorch.likelihoods import GaussianLikelihood
-from gpytorch.means import ConstantMean
-from gpytorch.priors import GammaPrior
 
 from baybe.kernels import MaternKernel
 from baybe.kernels.base import Kernel
@@ -20,6 +12,7 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 
 if TYPE_CHECKING:
+    from botorch.models import SingleTaskGP
     from torch import Tensor
 
 
@@ -49,7 +42,10 @@ class GaussianProcessSurrogate(Surrogate):
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
 
+        import botorch
+        import gpytorch
         import torch
+        from gpytorch.priors import GammaPrior
 
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
@@ -63,10 +59,10 @@ class GaussianProcessSurrogate(Surrogate):
 
         # define the input and outcome transforms
         # TODO [Scaling]: scaling should be handled by search space object
-        input_transform = Normalize(
+        input_transform = botorch.models.transforms.Normalize(
             train_x.shape[1], bounds=bounds, indices=numeric_idxs
         )
-        outcome_transform = Standardize(train_y.shape[1])
+        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[1])
 
         # ---------- GP prior selection ---------- #
         # TODO: temporary prior choices adapted from edbo, replace later on
@@ -105,7 +101,7 @@ class GaussianProcessSurrogate(Surrogate):
         batch_shape = train_x.shape[:-2]
 
         # create GP mean
-        mean_module = ConstantMean(batch_shape=batch_shape)
+        mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
         # define the covariance module for the numeric dimensions
         gpytorch_kernel = self.kernel.to_gpytorch(
@@ -114,7 +110,7 @@ class GaussianProcessSurrogate(Surrogate):
             batch_shape=batch_shape,
             lengthscale_prior=lengthscale_prior[0],
         )
-        base_covar_module = ScaleKernel(
+        base_covar_module = gpytorch.kernels.ScaleKernel(
             gpytorch_kernel,
             batch_shape=batch_shape,
             outputscale_prior=outputscale_prior[0],
@@ -130,7 +126,7 @@ class GaussianProcessSurrogate(Surrogate):
         if task_idx is None:
             covar_module = base_covar_module
         else:
-            task_covar_module = IndexKernel(
+            task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=searchspace.n_tasks,
                 active_dims=task_idx,
                 rank=searchspace.n_tasks,  # TODO: make controllable
@@ -138,14 +134,14 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module = base_covar_module * task_covar_module
 
         # create GP likelihood
-        likelihood = GaussianLikelihood(
+        likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0], batch_shape=batch_shape
         )
         if noise_prior[1] is not None:
             likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
-        self._model = SingleTaskGP(
+        self._model = botorch.models.SingleTaskGP(
             train_x,
             train_y,
             input_transform=input_transform,
@@ -154,5 +150,5 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module=covar_module,
             likelihood=likelihood,
         )
-        mll = ExactMarginalLogLikelihood(self._model.likelihood, self._model)
-        fit_gpytorch_mll(mll)
+        mll = gpytorch.ExactMarginalLogLikelihood(self._model.likelihood, self._model)
+        botorch.fit_gpytorch_mll(mll)
