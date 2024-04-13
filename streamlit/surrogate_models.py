@@ -15,7 +15,7 @@ from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
 
 import streamlit as st
-from baybe.acquisition import debotorchize
+from baybe.acquisition.adapter import debotorchize
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import get_available_surrogates
