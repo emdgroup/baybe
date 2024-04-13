@@ -27,7 +27,6 @@ from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import validate_custom_architecture_cls
 from baybe.utils.numerical import DTypeFloatONNX
-from baybe.utils.torch import DTypeFloatTorch
 
 try:
     import onnxruntime as ort
@@ -155,6 +154,8 @@ if _ONNX_INSTALLED:
         @batchify
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
             import torch
+
+            from baybe.utils.torch import DTypeFloatTorch
 
             model_inputs = {
                 self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)
