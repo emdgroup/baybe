@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, ClassVar, Optional, cast
 import pandas as pd
 from attrs import define, evolve, field, fields
 
-from baybe.acquisition import PartialAcquisitionFunction
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.sequential_greedy import (
@@ -87,6 +86,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class.
+
+        from baybe.acquisition.partial import PartialAcquisitionFunction
 
         if (not isinstance(self.disc_recommender, BayesianRecommender)) and (
             not isinstance(self.disc_recommender, NonPredictiveRecommender)
