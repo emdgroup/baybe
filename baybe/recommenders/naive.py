@@ -1,11 +1,10 @@
 """Naive recommender for hybrid spaces."""
 
 import warnings
-from typing import ClassVar, Optional, cast
+from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
 import pandas as pd
 from attrs import define, evolve, field, fields
-from torch import Tensor
 
 from baybe.acquisition import PartialAcquisitionFunction
 from baybe.recommenders.pure.base import PureRecommender
@@ -16,6 +15,9 @@ from baybe.recommenders.pure.bayesian.sequential_greedy import (
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils.dataframe import to_tensor
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define
