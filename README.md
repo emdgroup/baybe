@@ -72,7 +72,7 @@ In cases where we are confronted with multiple (potentially conflicting) targets
 the `DesirabilityObjective` can be used instead. It allows to define additional
 settings, such as how these targets should be balanced.
 For more details, see the
-[objective section](https://emdgroup.github.io/baybe/userguide/objectives.html)
+[objective section](https://emdgroup.github.io/baybe/userguide/objective.html)
 of the user guide.
 
 ### Defining the Search Space

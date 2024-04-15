@@ -3,7 +3,7 @@
 ```{toctree}
 Campaigns <campaigns>
 Constraints <constraints>
-Objectives <objectives>
+Objective <objective>
 Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
