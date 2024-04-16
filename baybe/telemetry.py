@@ -221,12 +221,15 @@ if is_enabled():
         # any telemetry timeouts or interference for the user in case of unexpected
         # errors. Possible ones are for instance ``socket.gaierror`` in case the user
         # has no internet connection.
-        warnings.warn(
-            f"WARNING: BayBE Telemetry endpoint {_endpoint_url} cannot be reached. "
-            "Disabling telemetry. The exception encountered was: "
-            f"{type(ex).__name__}, {ex}",
-            UserWarning,
-        )
+        if os.environ.get(VARNAME_TELEMETRY_USERNAME, "").startswith("DEV_"):
+            # This warning is only printed for developers to make them aware of
+            # potential issues
+            warnings.warn(
+                f"WARNING: BayBE Telemetry endpoint {_endpoint_url} cannot be reached. "
+                "Disabling telemetry. The exception encountered was: "
+                f"{type(ex).__name__}, {ex}",
+                UserWarning,
+            )
         os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
 
