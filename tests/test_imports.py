@@ -7,6 +7,7 @@ import sys
 from collections.abc import Sequence
 
 import pytest
+from pytest import param
 
 _EAGER_LOADING_EXIT_CODE = 42
 
@@ -49,19 +50,26 @@ def test_imports(module: str):
     importlib.import_module(module)
 
 
-WHITELIST = [
-    "baybe.acquisition.adapter",
-    "baybe.acquisition.partial",
-    "baybe.utils.botorch_wrapper",
-    "baybe.utils.torch",
-]
-"""List of modules that are allowed to import torch."""
+WHITELISTS = {
+    "torch": [
+        "baybe.acquisition.adapter",
+        "baybe.acquisition.partial",
+        "baybe.utils.botorch_wrapper",
+        "baybe.utils.torch",
+    ],
+}
+"""Modules (dict values) for which certain imports (dict keys) are permitted."""
 
 
-def test_torch_lazy_loading():
-    """Torch does not appear in the module list after loading BayBE modules."""
-    modules = [i for i in find_modules() if i not in WHITELIST]
-    code = make_import_check(modules, "torch")
+@pytest.mark.parametrize(
+    ("target", "whitelist"), [param(k, v, id=k) for k, v in WHITELISTS.items()]
+)
+def test_lazy_loading(target: str, whitelist: Sequence[str]):
+    """The target does not appear in the module list after loading BayBE modules."""
+    all_modules = find_modules()
+    assert (w in all_modules for w in whitelist)
+    modules = [i for i in all_modules if i not in whitelist]
+    code = make_import_check(modules, target)
     python_interpreter = sys.executable
     result = subprocess.call([python_interpreter, "-c", code])
     assert result == 0
