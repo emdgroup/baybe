@@ -73,3 +73,15 @@ def test_lazy_loading(target: str, whitelist: Sequence[str]):
     python_interpreter = sys.executable
     result = subprocess.call([python_interpreter, "-c", code])
     assert result == 0
+
+
+@pytest.mark.parametrize(
+    ("target", "module"),
+    [param(k, m, id=f"{k}-{m}") for k, v in WHITELISTS.items() for m in v],
+)
+def test_whitelist_modules_are_true_positives(target, module):
+    """The whitelisted modules actually import the target."""
+    code = make_import_check([module], target)
+    python_interpreter = sys.executable
+    result = subprocess.call([python_interpreter, "-c", code])
+    assert result == _EAGER_LOADING_EXIT_CODE
