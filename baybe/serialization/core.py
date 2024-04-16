@@ -116,7 +116,7 @@ def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
     """Prevent serialization of the passed object.
 
     Raises:
-         NotImplementedError: Always.
+        NotImplementedError: Always.
     """
     raise NotImplementedError(
         f"Serializing objects of type '{obj.__class__.__name__}' is not supported."
@@ -127,7 +127,7 @@ def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC1
     """Prevent deserialization into a specific type.
 
     Raises:
-         NotImplementedError: Always.
+        NotImplementedError: Always.
     """
     raise NotImplementedError(
         f"Deserialization into '{cls.__name__}' is not supported."
