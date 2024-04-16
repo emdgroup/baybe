@@ -170,3 +170,19 @@ parameters = st.one_of(
     ]
 )
 """A strategy that generates parameters."""
+
+
+discrete_parameters = st.one_of(
+    [
+        numerical_discrete_parameters(),
+        categorical_parameters(),
+        task_parameters(),
+        substance_parameters(),
+        custom_parameters(),
+    ]
+)
+"""A strategy that generates discrete parameters."""
+
+
+continuous_parameters = numerical_continuous_parameters
+"""A strategy that generates continuous parameters."""

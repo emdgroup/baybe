@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hypothesis strategies for acquisition functions
 - `Kernel` base class allowing to specify kernels
 - `MaternKernel` class can be chosen for GP surrogates
-- `hypothesis` strategies and roundtrip test for kernels and objectives
+- `hypothesis` strategies and roundtrip test for kernels, constraints and objectives
 
 ### Changed
 - `torch` numeric types are now loaded lazily
