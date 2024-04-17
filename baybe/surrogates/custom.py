@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 
 from attrs import define, field, resolve_types, validators
 
-from baybe.exceptions import ModelParamsNotSupportedError
 from baybe.parameters import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -23,6 +22,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
+from baybe.serialization.core import block_serialization_hook, converter
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import validate_custom_architecture_cls
@@ -108,6 +108,11 @@ def register_custom_architecture(
         if batchify_posterior:
             cls._posterior = batchify(cls._posterior)
 
+        # Block serialization of custom architectures
+        converter.register_unstructure_hook(
+            CustomArchitectureSurrogate, block_serialization_hook
+        )
+
         return cls
 
     return construct_custom_architecture
@@ -146,12 +151,6 @@ if _ONNX_INSTALLED:
                 return ort.InferenceSession(self.onnx_str)
             except Exception as exc:
                 raise ValueError("Invalid ONNX string") from exc
-
-        def __attrs_post_init__(self) -> None:
-            # TODO: This is a temporary workaround to avoid silent errors when users
-            #   provide model parameters to this class.
-            if self.model_params or not isinstance(self.model_params, dict):
-                raise ModelParamsNotSupportedError()
 
         @batchify
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:

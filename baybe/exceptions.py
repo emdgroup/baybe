@@ -30,12 +30,6 @@ class NothingToSimulateError(Exception):
     """There is nothing to simulate because there are no testable configurations."""
 
 
-# TODO: This exception class is needed only temporarily in `CustomONNXSurrogate` until
-#   the use of `model_params` has be refactored.
-class ModelParamsNotSupportedError(Exception):
-    """The class does not support any model parameters."""
-
-
 class NoRecommendersLeftError(Exception):
     """A recommender is requested by a meta recommender but there are no recommenders
     left.

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 from attr import define, field
 from botorch import fit_gpytorch_mll
@@ -18,7 +18,6 @@ from baybe.kernels import MaternKernel
 from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -36,13 +35,6 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    model_params: dict[str, Any] = field(
-        factory=dict,
-        converter=dict,
-        validator=get_model_params_validator(SingleTaskGP.__init__),
-    )
-    # See base class.
-
     kernel: Kernel = field(factory=MaternKernel)
     """The kernel used by the Gaussian Process."""
 
