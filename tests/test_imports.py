@@ -1,6 +1,7 @@
 """Import tests."""
 
 import importlib
+import os
 import pkgutil
 import subprocess
 import sys
@@ -8,6 +9,11 @@ from collections.abc import Sequence
 
 import pytest
 from pytest import param
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Only possible in FULLTEST environment.",
+)
 
 _EAGER_LOADING_EXIT_CODE = 42
 
