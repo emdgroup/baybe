@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import batchify, catch_constant_targets, scale_model
+from baybe.surrogates.utils import autoscale, batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 
 
 @catch_constant_targets
-@scale_model
-@define
+@autoscale
+@define(slots=False)
 class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
 

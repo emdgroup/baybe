@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, Callable
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
@@ -111,71 +111,45 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
     return cls
 
 
-def scale_model(model_cls: type[Surrogate]):
-    """Wrap a ``Surrogate`` class such that it operates with scaled representations.
+def autoscale(cls: type[Surrogate]):
+    """Make a ``Surrogate`` class automatically scale the domain it operates on.
+
+    More specifically, the modified class transforms its inputs before operation and
+    untransforms results before returning them.
 
     Args:
-        model_cls: A ``Surrogate`` model class that should be wrapped.
+        cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
 
     Returns:
-        A wrapped version of the class.
+        The modified class.
     """
+    # References to original methods
+    _fit_original = cls._fit
+    _posterior_original = cls._posterior
 
-    class ScaledModel(*model_cls.__bases__):
-        """Overrides the methods of the given model class such the use scaled data.
+    def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+        candidates = self._autoscaler.transform(candidates)
+        mean, covar = _posterior_original(self, candidates)
+        return self._autoscaler.untransform(mean, covar)
 
-        It stores an instance of the underlying model class and a scalar object.
-        """
+    def _fit_new(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> None:
+        try:
+            self._autoscaler = DefaultScaler(searchspace.discrete.comp_rep)
+        except AttributeError as ex:
+            raise TypeError(
+                f"'{autoscale.__name__}' is only applicable to non-slotted classes "
+                f"but '{cls.__name__}' is a slotted class."
+            ) from ex
+        train_x, train_y = self._autoscaler.fit_transform(train_x, train_y)
+        _fit_original(self, searchspace, train_x, train_y)
 
-        # The posterior mode is chosen to match that of the wrapped model class
-        joint_posterior: ClassVar[bool] = model_cls.joint_posterior
-        # See base class.
+    # Replace the methods
+    cls._posterior = _posterior_new
+    cls._fit = _fit_new
 
-        def __init__(self, *args, **kwargs):
-            self.model = model_cls(*args, **kwargs)
-            self.__class__.__name__ = self.model.__class__.__name__
-            self.scaler = None
-
-        def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-            """Call the posterior function of the internal model instance.
-
-            This call is made on a scaled version of the test data and rescales the
-            output accordingly.
-            """
-            candidates = self.scaler.transform(candidates)
-            mean, covar = self.model._posterior(candidates)
-            return self.scaler.untransform(mean, covar)
-
-        def _fit(
-            self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-        ) -> None:
-            """Fits the scaler and the model using the scaled training data."""
-            self.scaler = DefaultScaler(searchspace.discrete.comp_rep)
-            train_x, train_y = self.scaler.fit_transform(train_x, train_y)
-            self.model.fit(searchspace, train_x, train_y)
-
-        def __getattribute__(self, attr):
-            """Access the attributes of the class instance if available.
-
-            If the attributes are not available, it uses the attributes of the internal
-            model instance.
-            """
-            # Try to retrieve the attribute in the class
-            try:
-                val = super().__getattribute__(attr)
-            except AttributeError:
-                pass
-            else:
-                return val
-
-            # If the attribute has not been overwritten, use that of the internal model
-            return self.model.__getattribute__(attr)
-
-    # Wrapping a class using a decorator does not transfer the doc, resulting in the
-    # autodocumentation not showing the correct docstring. We thus need to manually
-    # assign the docstring of the class.
-    ScaledModel.__doc__ = model_cls.__doc__
-    return ScaledModel
+    return cls
 
 
 def batchify(
