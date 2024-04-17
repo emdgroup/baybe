@@ -18,12 +18,6 @@ if TYPE_CHECKING:
 
 # Define constants
 _MIN_VARIANCE = 1e-6
-_WRAPPER_MODELS = (
-    "SplitModel",
-    "ScaledModel",
-    "CustomArchitectureSurrogate",
-    "CustomONNXSurrogate",
-)
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
