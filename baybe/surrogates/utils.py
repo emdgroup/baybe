@@ -225,7 +225,9 @@ def batchify(
     """
 
     @wraps(posterior)
-    def sequential_posterior(model: Surrogate, candidates: Tensor) -> [Tensor, Tensor]:
+    def sequential_posterior(
+        model: Surrogate, candidates: Tensor
+    ) -> tuple[Tensor, Tensor]:
         """Replace the posterior function by one that processes batches sequentially.
 
         Args:
