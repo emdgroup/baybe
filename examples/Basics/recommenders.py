@@ -25,13 +25,10 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import (
-    BayesianLinearSurrogate,
-    GaussianProcessSurrogate,
-    NGBoostSurrogate,
-    RandomForestSurrogate,
-)
+from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
+from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_fake_results
 
 ### Available recommenders suitable for initial recommendation
@@ -55,15 +52,8 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # This model uses available data to model the objective function as well as the uncertainty.
 # The surrogate model is then used by the acquisition function to make recommendations.
 
-# The following are some available basic surrogates
-# Use `baybe.surrogates.get_available_surrogates()` for a complete list.
-
-available_surrogate_models = [
-    GaussianProcessSurrogate(),
-    RandomForestSurrogate(),
-    NGBoostSurrogate(),
-    BayesianLinearSurrogate(),
-]
+# The following are the available basic surrogates
+print(get_subclasses(Surrogate))
 
 # Per default a Gaussian Process is used
 # You can change the used kernel by using the optional `kernel` keyword.
