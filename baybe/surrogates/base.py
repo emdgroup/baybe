@@ -132,7 +132,7 @@ class Surrogate(ABC, SerialMixin):
         train_x = _prepare_inputs(train_x)
         train_y = _prepare_targets(train_y)
 
-        return self._fit(searchspace, train_x, train_y)
+        self._fit(searchspace, train_x, train_y)
 
     @abstractmethod
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
