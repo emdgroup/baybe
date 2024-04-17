@@ -12,7 +12,6 @@ from attrs import define
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
-from baybe.utils.basic import get_subclasses
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -218,32 +217,6 @@ def _structure_surrogate(val, _):
         val["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
 
     return converter.structure_attrs_fromdict(val, cls)
-
-
-def get_available_surrogates() -> list[type[Surrogate]]:
-    """List all available surrogate models.
-
-    Returns:
-        A list of available surrogate classes.
-    """
-    # List available names
-    available_names = {
-        cl.__name__
-        for cl in get_subclasses(Surrogate)
-        if cl.__name__ not in _WRAPPER_MODELS
-    }
-
-    # Convert them to classes
-    available_classes = [
-        getattr(sys.modules[__package__], mdl_name, None)
-        for mdl_name in available_names
-    ]
-
-    # TODO: The initialization of the classes is currently necessary for the renaming
-    #  to take place (see [15436] and NOTE in `structure_surrogate`).
-    [cl() for cl in available_classes if cl is not None]
-
-    return [cl for cl in available_classes if cl is not None]
 
 
 # Register (un-)structure hooks

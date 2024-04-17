@@ -15,7 +15,7 @@ from baybe.recommenders.pure.bayesian.sequential_greedy import (
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
-from baybe.surrogates import get_available_surrogates
+from baybe.surrogates.base import Surrogate
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations
@@ -23,7 +23,9 @@ from .conftest import run_iterations
 ########################################################################################
 # Settings of the individual components to be tested
 ########################################################################################
-valid_surrogate_models = [cls() for cls in get_available_surrogates()]
+valid_surrogate_models = [
+    cls() for cls in get_subclasses(Surrogate) if cls.__name__ != "CustomONNXSurrogate"
+]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
