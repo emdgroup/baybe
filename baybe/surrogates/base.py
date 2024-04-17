@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import gc
-import sys
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
@@ -11,6 +9,7 @@ from attrs import define
 
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
+from baybe.serialization.core import get_base_structure_hook
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
 
 if TYPE_CHECKING:
@@ -160,6 +159,19 @@ def _decode_onnx_str(raw_unstructure_hook):
     return wrapper
 
 
+def _encode_onnx_str(raw_structure_hook):
+    """Encode ONNX string for deserialization purposes."""
+
+    def wrapper(dict_, _):
+        if "onnx_str" in dict_:
+            dict_["onnx_str"] = dict_["onnx_str"].encode(_ONNX_ENCODING)
+        obj = raw_structure_hook(dict_, _)
+
+        return obj
+
+    return wrapper
+
+
 def _block_serialize_custom_architecture(raw_unstructure_hook):
     """Raise error if attempt to serialize a custom architecture surrogate."""
     # TODO: Ideally, this hook should be removed and unstructuring the Surrogate
@@ -182,45 +194,15 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
     return wrapper
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def _structure_surrogate(val, _):
-    """Structure a surrogate model."""
-    # TODO [15436]
-    # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
-
-    # NOTE:
-    # Due to above issue,
-    # it is difficult to find the wrapped class in the subclass structure.
-    # The renaming only happens in the init method of wrapper classes
-    # (classes that haven't been initialized won't have the overwritten name)
-    # Since any method revolving `cls()` will not work as expected,
-    # we rely temporarily on `getattr` to allow the wrappers to be called on demand.
-
-    _type = val["type"]
-
-    cls = getattr(sys.modules[__package__], _type, None)
-    # cls = getattr(baybe.surrogates, ...) if used in another module
-
-    if cls is None:
-        raise ValueError(f"Unknown subclass {_type}.")
-
-    # NOTE:
-    # This is a workaround for onnx str type being `str` or `bytes`
-    onnx_str = val.get("onnx_str", None)
-    if onnx_str and isinstance(onnx_str, str):
-        val["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
-
-    return converter.structure_attrs_fromdict(val, cls)
-
-
 # Register (un-)structure hooks
-# TODO: Needs to be refactored
+# IMPROVE: Ideally, the ONNX-specific hooks should simply be registered with the ONNX
+#   class, which would avoid the nested wrapping below. However, this requires
+#   adjusting the base class (un-)structure hooks such that they consistently apply
+#   existing hooks of the concrete subclasses.
 converter.register_unstructure_hook(
     Surrogate,
     _decode_onnx_str(_block_serialize_custom_architecture(unstructure_base)),
 )
-converter.register_structure_hook(Surrogate, _structure_surrogate)
-
-# Related to [15436]
-gc.collect()
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+converter.register_structure_hook(
+    Surrogate, _encode_onnx_str(get_base_structure_hook(Surrogate))
+)
