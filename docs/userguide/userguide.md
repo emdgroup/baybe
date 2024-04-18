@@ -4,7 +4,7 @@
 Campaigns <campaigns>
 Constraints <constraints>
 Environment Vars <envvars>
-Objective <objective>
+Objectives <objectives>
 Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
