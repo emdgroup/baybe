@@ -39,7 +39,7 @@ object:
   ```
 * Also, other class constructors that expect an 
 [`Objective`](baybe.objectives.base.Objective)
-object (such as [`Campaigns`](baybe.campaign.Campaign)) will happily swallow
+object (such as [`Campaigns`](baybe.campaign.Campaign)) will happily accept
 individual [`Targets`](baybe.targets.base.Target) instead and apply the necessary
 conversion behind the scenes.
 ````
