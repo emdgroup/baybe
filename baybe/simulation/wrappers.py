@@ -42,26 +42,26 @@ def simulate_scenarios(
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
-    A wrapper function around :func:`baybe.simulation.simulate_experiment` that
+    A wrapper function around :func:`baybe.simulation.core.simulate_experiment` that
     allows to specify multiple simulation settings at once.
 
     Args:
         scenarios: A dictionary mapping scenario identifiers to DOE specifications.
-        lookup: See :func:`baybe.simulation.simulate_experiment`.
-        batch_size: See :func:`baybe.simulation.simulate_experiment`.
-        n_doe_iterations: See :func:`baybe.simulation.simulate_experiment`.
+        lookup: See :func:`baybe.simulation.core.simulate_experiment`.
+        batch_size: See :func:`baybe.simulation.core.simulate_experiment`.
+        n_doe_iterations: See :func:`baybe.simulation.core.simulate_experiment`.
         initial_data: A list of initial data sets for which the scenarios should be
             simulated.
         groupby: The names of the parameters to be used to partition the search space.
             A separate simulation will be conducted for each partition, with the search
             restricted to that partition.
         n_mc_iterations: The number of Monte Carlo simulations to be used.
-        impute_mode: See :func:`baybe.simulation.simulate_experiment`.
-        noise_percent: See :func:`baybe.simulation.simulate_experiment`.
+        impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
+        noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
 
     Returns:
-        A dataframe like returned from :func:`baybe.simulation.simulate_experiment` but
-        with additional columns. See the ``Note`` for details.
+        A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
+        but with additional columns. See the ``Note`` for details.
 
     Note:
         The following additional columns are contained in the dataframe returned by this
@@ -157,25 +157,26 @@ def _simulate_groupby(
 ) -> pd.DataFrame:
     """Scenario simulation for different search space partitions.
 
-    A wrapper around :func:`baybe.simulation.simulate_experiment` that allows to
+    A wrapper around :func:`baybe.simulation.core.simulate_experiment` that allows to
     partition the search space into different groups and run separate simulations for
     all groups where the search is restricted to the corresponding partition.
 
     Args:
-        campaign: See :func:`baybe.simulation.simulate_experiment`.
-        lookup: See :func:`baybe.simulation.simulate_experiment`.
-        batch_size: See :func:`baybe.simulation.simulate_experiment`.
-        n_doe_iterations: See :func:`baybe.simulation.simulate_experiment`.
-        initial_data: See :func:`baybe.simulation.simulate_experiment`.
-        groupby: See :func:`baybe.simulation.simulate_scenarios`.
-        random_seed: See :func:`baybe.simulation.simulate_experiment`.
-        impute_mode: See :func:`baybe.simulation.simulate_experiment`.
-        noise_percent: See :func:`baybe.simulation.simulate_experiment`.
+        campaign: See :func:`baybe.simulation.core.simulate_experiment`.
+        lookup: See :func:`baybe.simulation.core.simulate_experiment`.
+        batch_size: See :func:`baybe.simulation.core.simulate_experiment`.
+        n_doe_iterations: See :func:`baybe.simulation.core.simulate_experiment`.
+        initial_data: See :func:`baybe.simulation.core.simulate_experiment`.
+        groupby: See :func:`baybe.simulation.wrappers.simulate_scenarios`.
+        random_seed: See :func:`baybe.simulation.core.simulate_experiment`.
+        impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
+        noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
 
     Returns:
-        A dataframe like returned from :func:`baybe.simulation.simulate_experiments`,
-        but with additional ``groupby columns`` (named according to the specified
-        groupby parameters) that subdivide the results into the different simulations.
+        A dataframe like returned from
+        :func:`baybe.simulation.core.simulate_experiments`, but with additional
+        ``groupby columns`` (named according to the specified groupby parameters) that
+        subdivide the results into the different simulations.
 
     Raises:
         NothingToSimulateError: If there is nothing to simulate.
