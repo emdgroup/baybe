@@ -37,7 +37,7 @@ def make_import_check(modules: Sequence[str], target: str) -> str:
         target: The target module whose presence is to be checked after the import.
 
     Returns:
-        str: Code that signals the presence of the target via a non-zero exit code.
+        Code that signals the presence of the target via a non-zero exit code.
     """
     imports = "\n".join([f"import {module}" for module in modules])
     return "\n".join(
