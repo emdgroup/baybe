@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
-- Parameter classes are now slotted due to `cached_property` attrs support
+- Parameter and objective classes are now slotted due to `cached_property` attrs support
 
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes

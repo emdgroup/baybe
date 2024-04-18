@@ -61,7 +61,7 @@ def scalarize(
     return func(values, weights=weights)
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class DesirabilityObjective(Objective):
     """An objective scalarizing multiple targets using desirability values."""
 
