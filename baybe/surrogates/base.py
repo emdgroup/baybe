@@ -163,8 +163,8 @@ def _encode_onnx_str(raw_structure_hook):
     """Encode ONNX string for deserialization purposes."""
 
     def wrapper(dict_, _):
-        if "onnx_str" in dict_:
-            dict_["onnx_str"] = dict_["onnx_str"].encode(_ONNX_ENCODING)
+        if (onnx_str := dict_.get("onnx_str")) and isinstance(onnx_str, str):
+            dict_["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
         obj = raw_structure_hook(dict_, _)
 
         return obj
