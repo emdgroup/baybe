@@ -69,15 +69,15 @@ def register_custom_architecture(
             supports_transfer_learning: ClassVar[bool] = False
 
             def __init__(self, *args, **kwargs):
-                self.model = model_cls(*args, **kwargs)
+                self._model = model_cls(*args, **kwargs)
 
             def _fit(
                 self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
             ) -> None:
-                return self.model._fit(searchspace, train_x, train_y)
+                return self._model._fit(searchspace, train_x, train_y)
 
             def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-                return self.model._posterior(candidates)
+                return self._model._posterior(candidates)
 
             def __get_attribute__(self, attr):
                 """Access the attributes of the class instance if available.
@@ -94,7 +94,7 @@ def register_custom_architecture(
                     return val
 
                 # If the attribute is not overwritten, use that of the internal model
-                return self.model.__getattribute__(attr)
+                return self._model.__getattribute__(attr)
 
         # Catch constant targets if needed
         cls = (
@@ -141,7 +141,7 @@ if _ONNX_INSTALLED:
         """The ONNX byte str representing the model."""
 
         _model: ort.InferenceSession = field(init=False, eq=False)
-        """The internal model."""
+        """The actual model."""
 
         @_model.default
         def default_model(self) -> ort.InferenceSession:

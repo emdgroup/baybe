@@ -30,8 +30,10 @@ class MeanPredictionSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    target_value: Optional[float] = field(init=False, default=None)
-    """The value of the posterior mean."""
+    _model: Optional[float] = field(init=False, default=None)
+    """The actual model.
+
+    Here, the "model" is just a numerical value, namely the constant posterior mean."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
@@ -40,10 +42,10 @@ class MeanPredictionSurrogate(Surrogate):
         import torch
 
         # TODO: use target value bounds for covariance scaling when explicitly provided
-        mean = self.target_value * torch.ones([len(candidates)])
+        mean = self._model * torch.ones([len(candidates)])
         var = torch.ones(len(candidates))
         return mean, var
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
-        self.target_value = train_y.mean().item()
+        self._model = train_y.mean().item()
