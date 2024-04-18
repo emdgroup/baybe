@@ -80,8 +80,6 @@ link_call = [
     "linkcheck",
     "docs",
     build_dir,
-    "-D",
-    f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
 ]
 # The actual call that will be made to build the documentation
 building_call = [
@@ -90,8 +88,6 @@ building_call = [
     "html",
     "docs",
     build_dir,
-    "-D",
-    f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
     "-n",  # Being nitpicky
     "-W",  # Fail when encountering an error or a warning
 ]
