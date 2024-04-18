@@ -15,11 +15,9 @@ applied context:
     optimization to provide target values.
 """
 
-from baybe.simulation.simulation import (
-    simulate_experiment,
-    simulate_scenarios,
-    simulate_transfer_learning,
-)
+from baybe.simulation.core import simulate_experiment
+from baybe.simulation.transfer_learning import simulate_transfer_learning
+from baybe.simulation.wrappers import simulate_scenarios
 
 __all__ = [
     "simulate_experiment",
