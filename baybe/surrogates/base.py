@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
+from cattrs import override
 
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
@@ -43,7 +44,11 @@ class Surrogate(ABC, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
-    _model: Any = field(init=False, default=None)
+    # NOTE: This attribute holds a subclass-specific object whose type and use
+    #   also depends on the particular surrogate at hand. Currently, the contained model
+    #   is assumed non-persistent and thus not considered for serialization and object
+    #   comparison via the equality operator.
+    _model: Any = field(init=False, default=None, eq=False)
     """The actual model."""
 
     def posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
@@ -210,7 +215,11 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
 #   existing hooks of the concrete subclasses.
 converter.register_unstructure_hook(
     Surrogate,
-    _decode_onnx_str(_block_serialize_custom_architecture(unstructure_base)),
+    _decode_onnx_str(
+        _block_serialize_custom_architecture(
+            lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
+        )
+    ),
 )
 converter.register_structure_hook(
     Surrogate, _encode_onnx_str(get_base_structure_hook(Surrogate))
