@@ -8,7 +8,7 @@ available in the future. Thus, please have a look in the source code directly.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 from attr import define, field
@@ -43,9 +43,6 @@ class RandomForestSurrogate(Surrogate):
         validator=get_model_params_validator(RandomForestRegressor.__init__),
     )
     # See base class.
-
-    _model: Optional[RandomForestRegressor] = field(init=False, default=None)
-    """The actual model."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:

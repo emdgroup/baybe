@@ -31,11 +31,6 @@ class GaussianProcessSurrogate(Surrogate):
     kernel: Optional[Kernel] = field(default=None)
     """The kernel used by the Gaussian Process."""
 
-    # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
-    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
-    _model = field(init=False, default=None)
-    """The actual model."""
-
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
         posterior = self._model.posterior(candidates)

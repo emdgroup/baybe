@@ -140,14 +140,10 @@ if _ONNX_INSTALLED:
         onnx_str: bytes = field(validator=validators.instance_of(bytes))
         """The ONNX byte str representing the model."""
 
-        _model: ort.InferenceSession = field(init=False, eq=False)
-        """The actual model."""
-
-        @_model.default
-        def default_model(self) -> ort.InferenceSession:
+        def __attrs_post_init__(self) -> None:
             """Instantiate the ONNX inference session."""
             try:
-                return ort.InferenceSession(self.onnx_str)
+                self._model = ort.InferenceSession(self.onnx_str)
             except Exception as exc:
                 raise ValueError("Invalid ONNX string") from exc
 

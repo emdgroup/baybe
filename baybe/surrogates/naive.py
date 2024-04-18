@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
-from attr import define, field
+from attr import define
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -28,12 +28,6 @@ class MeanPredictionSurrogate(Surrogate):
 
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
-
-    # Object variables
-    _model: Optional[float] = field(init=False, default=None)
-    """The actual model.
-
-    Here, the "model" is just a numerical value, namely the constant posterior mean."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
