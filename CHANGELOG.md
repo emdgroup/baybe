@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `torch` is imported lazily in `surrogates`
 - Acquisition functions are now their own objects
 - `acquisition_function_cls` constructor parameter renamed to `acquisition_function`
+- User guide now explains the new objective classes
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and
@@ -35,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - The former `baybe.objective.Objective` class has been replaced with
   `SingleTargetObjective` and `DesirabilityObjective`
-- `acquisition_function_cls` constructor parameter for  `BayesianRecommender`
+- `acquisition_function_cls` constructor parameter for `BayesianRecommender`
 - `VarUCB` and `qVarUCB` acquisition functions
 
 ## [0.8.2] - 2024-03-27

@@ -11,16 +11,22 @@ from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 from ..conftest import _CHEM_INSTALLED
 from .utils import extract_code_blocks
 
-doc_files = ["README.md", *Path("docs/userguide/").rglob("*.md")]
+doc_files = [Path("README.md"), *Path("docs/userguide/").rglob("*.md")]
 """Files whose code blocks are to be checked."""
+
 doc_files_pseudocode = [Path("docs/userguide/campaigns.md")]
-"""Files which contain pseudocode that needs to be checked using fixtures."""
+"""Files containing pseudocode that needs to be checked with injected fixtures."""
+
+
+def paths_to_params(*paths: Path):
+    """Turn paths into pytest params using the stem as id."""
+    return [pytest.param(path, id=path.stem) for path in paths]
 
 
 @pytest.mark.skipif(
     not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
-@pytest.mark.parametrize("file", doc_files)
+@pytest.mark.parametrize("file", paths_to_params(*doc_files))
 def test_code_executability(file: Path):
     """The code blocks in the file become a valid python script when concatenated.
 
@@ -31,7 +37,7 @@ def test_code_executability(file: Path):
 
 
 # TODO: Needs a refactoring (files codeblocks should be auto-detected)
-@pytest.mark.parametrize("file", doc_files_pseudocode)
+@pytest.mark.parametrize("file", paths_to_params(*doc_files_pseudocode))
 @pytest.mark.parametrize(
     "recommender",
     [
