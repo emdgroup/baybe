@@ -45,7 +45,7 @@ def closest_element(array: npt.ArrayLike, target: float) -> float:
         The closest element.
     """
     if np.ndim(array) == 0:
-        return float(array)
+        return np.asarray(array).item()
     array = np.ravel(array)
     return array[np.abs(array - target).argmin()]
 
