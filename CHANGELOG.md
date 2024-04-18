@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
 - Simulation no longer fails in `ignore` mode when lookup dataframe contains duplicate
   parameter configurations
+- Simulation no longer fails for targets in `MATCH` mode
+- `closest_element` now works for array-like input of all kinds
 
 ### Deprecations
 - The former `baybe.objective.Objective` class has been replaced with

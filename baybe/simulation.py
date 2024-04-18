@@ -549,7 +549,7 @@ def simulate_experiment(
             agg_fun = np.min
             cum_fun = np.minimum.accumulate
         elif target.mode is TargetMode.MATCH:
-            match_val = np.mean(target.bounds)
+            match_val = target.bounds.center
             agg_fun = partial(closest_element, target=match_val)
             cum_fun = lambda x: np.array(  # noqa: E731
                 np.frompyfunc(
