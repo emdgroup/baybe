@@ -1,4 +1,4 @@
-"""Import tests."""
+"""Tests for module imports."""
 
 import importlib
 import os
