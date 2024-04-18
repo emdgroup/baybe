@@ -55,10 +55,16 @@ class Surrogate(ABC, SerialMixin):
                 denotes the "q-batch" shape, and ``d`` is the input dimension. For
                 more details about batch shapes, see: https://botorch.org/docs/batching
 
+        Raises:
+            RuntimeError: When attempting to use the model before it has been fitted.
+
         Returns:
             The posterior means and posterior covariance matrices of the t-batched
             candidate points.
         """
+        if self._model is None:
+            raise RuntimeError("The surrogate model has not been fitted yet.")
+
         import torch
 
         # Prepare the input
