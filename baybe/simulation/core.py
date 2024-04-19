@@ -34,6 +34,7 @@ def simulate_experiment(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
+    _return_on_error: bool = False,
 ) -> pd.DataFrame:
     """Simulate a Bayesian optimization loop.
 
@@ -70,6 +71,11 @@ def simulate_experiment(
               so that unmeasured experiments will not be recommended.
         noise_percent: If not ``None``, relative noise in percent of
             ``noise_percent`` will be applied to the parameter measurements.
+        _return_on_error: If ``True``, an incomplete simulation result will be returned
+            in case a recommendation fails for unexpected reasons.
+            NOTE: This flag exists only temporarily and will be replaced with a proper
+                error handling mechanism in a future version. No backward compatibility
+                will be ensured.
 
     Returns:
         A dataframe ready for plotting, see the ``Note`` for details.
@@ -155,6 +161,12 @@ def simulate_experiment(
                 UserWarning,
             )
             break
+
+        # Temporary workaround to enable returning incomplete simulations
+        except Exception as ex:
+            if _return_on_error:
+                break
+            raise ex
 
         n_experiments += len(measured)
         _look_up_target_values(measured, campaign, lookup, impute_mode)
