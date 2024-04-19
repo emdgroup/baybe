@@ -1,2 +1,4 @@
 [run]
-omit = baybe/utils/plotting.py
+omit = 
+    baybe/utils/plotting.py
+    baybe/simulation/*
