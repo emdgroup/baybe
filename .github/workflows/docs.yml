@@ -30,8 +30,6 @@ jobs:
           tox -e docs-py39
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'build/docs'
 
   deploy:
     needs: build
