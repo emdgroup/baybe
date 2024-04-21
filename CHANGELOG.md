@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Acquisition functions are now their own objects
 - `acquisition_function_cls` constructor parameter renamed to `acquisition_function`
 - User guide now explains the new objective classes
+- Telemetry deactivation warning is only shown to developers
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and

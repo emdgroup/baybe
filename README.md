@@ -292,6 +292,18 @@ The available groups are:
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
+## Telemetry
+BayBE collects anonymous usage statistics **only** for employees of Merck KGaA, 
+Darmstadt, Germany and/or its affiliates. The recording of metrics is turned off for
+all other users and is impossible due to a VPN block. In any case, the usage statistics
+do **not** involve logging of recorded measurements, targets/parameters or their names
+or any project information that would allow for reconstruction of details. The user and
+host machine names are irreversibly anonymized.
+- You can verify the above statements by studying the open-source code in the
+  `telemetry` module.
+- You can always deactivate all telemetry by setting the environment variable 
+  `BAYBE_TELEMETRY_ENABLED` to `false` or `off`. For details please consult
+  [this page](https://emdgroup.github.io/baybe/_autosummary/baybe.telemetry.html).
 
 ## Authors
 
