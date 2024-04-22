@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped `onnx` version to fix vulnerability
 - Increased threshold for low-dimensional GP priors
 - Replaced `fit_gpytorch_mll_torch` with `fit_gpytorch_mll`
+- Use `tox-uv` in pipelines
 
 ### Fixed
 - `telemetry` dependency is no longer a group (enables Poetry installation)
