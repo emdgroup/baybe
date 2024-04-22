@@ -205,6 +205,7 @@ mirroring the flexibility of specifying subtypes to your configuration file:
 
 ```python
 from baybe.parameters.base import Parameter
+from baybe.parameters import CategoricalParameter, TaskParameter
 
 categorial_parameter = CategoricalParameter(name="setting", values=["low", "high"])
 categorical_parameter_str = """
