@@ -162,31 +162,32 @@ This requirement can be disabled using the method's
 
 ## Serialization
 
-Like most of the objects managed by BayBE, `Campaign` objects can be serialized and
-deserialized using the [`to_json`](baybe.serialization.mixin.SerialMixin.to_json) and
-[`from_json`](baybe.serialization.mixin.SerialMixin.from_json) methods, which 
-allow to convert between Python objects their corresponding representation in JSON 
-format. 
-These representations are fully equivalent, meaning that serializing and subsequently 
-deserializing a campaign yields an exact copy of the object:
-
+Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be de-/serialized 
+using their [`from_json`](baybe.serialization.mixin.SerialMixin.from_json)/
+[`to_json`](baybe.serialization.mixin.SerialMixin.to_json) methods, which 
+allow to convert between Python objects and their corresponding representation in JSON 
+format:
 ~~~python
 campaign_json = campaign.to_json()
-recreated_campaign = Campaign.from_json(campaign_json)
-assert campaign == recreated_campaign
+reconstructed = Campaign.from_json(campaign_json)
+assert campaign == reconstructed
 ~~~
 
-This provides an easy way to persist the current state of your campaign for long 
-term storage and continue the experimentation at a later point in time.
-For more information on serialization, we
-refer to the corresponding [examples](./../../examples/Serialization/Serialization).
+General information on this topic can be found in our 
+[serialization user guide](/userguide/serialization).
+For campaigns, however, this possibility is particularly noteworthy as it enables
+one of the most common workflows in this context –
+persisting the current state of a campaign for long-term storage and continuing the
+experimentation at a later point in time:
 
-```{admonition} Dataframe serialization
-:class: note
-Note that `DataFrame` objects associated with the `Campaign` object are converted to 
-a binary format during serialization, which has the consequence that their JSON 
-representation is not human-readable.
-```
+1. Get your campaign object
+    * When initiating the workflow, create a new campaign object
+    * When coming from the last step below, **deserialize** the existing campaign object
+2. Add the latest measurement results
+3. Get a recommendation
+4. **Serialize** the campaign and store it somewhere
+5. Run your (potentially lengthy) real-world experiments
+6. Repeat
 
 ## Further information
 
