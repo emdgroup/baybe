@@ -146,28 +146,28 @@ providing a few specific example may help to convey the concept:
 
 * Since {class}`Intervals <baybe.utils.interval.Interval>` can be created _implicitly_,
     it is enough the specify their bound values directly:
-    ```python
-    from baybe.targets import NumericalTarget
-    from baybe.utils.interval import Interval
+```python
+from baybe.targets import NumericalTarget
+from baybe.utils.interval import Interval
 
-    t1 = NumericalTarget(name="t", mode="MAX", bounds=Interval(0, 1))
-    t2 = NumericalTarget(name="t", mode="MAX", bounds=(0, 1))
-    t3 = NumericalTarget.from_json('{"name": "t", "mode": "MAX", "bounds": [0, 1]}')
+t1 = NumericalTarget(name="t", mode="MAX", bounds=Interval(0, 1))
+t2 = NumericalTarget(name="t", mode="MAX", bounds=(0, 1))
+t3 = NumericalTarget.from_json('{"name": "t", "mode": "MAX", "bounds": [0, 1]}')
 
-    assert t1 == t2 == t3
-    ```
+assert t1 == t2 == t3
+```
 
 * Conversion to enums happens automatically whenever needed;
     therefore, providing a raw string instead is sufficient:
-    ```python
-    from baybe.targets import NumericalTarget, TargetMode
+```python
+from baybe.targets import NumericalTarget, TargetMode
 
-    t1 = NumericalTarget(name="t", mode=TargetMode.MAX)
-    t2 = NumericalTarget(name="t", mode="MAX")
-    t3 = NumericalTarget.from_json('{"name": "t", "mode": "MAX"}')
+t1 = NumericalTarget(name="t", mode=TargetMode.MAX)
+t2 = NumericalTarget(name="t", mode="MAX")
+t3 = NumericalTarget.from_json('{"name": "t", "mode": "MAX"}')
 
-    assert t1 == t2 == t3
-    ```
+assert t1 == t2 == t3
+```
 
 ### Tagged subclasses
 Due to the leading design philosophy behind BayBE to provide its users easy access
