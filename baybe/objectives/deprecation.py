@@ -5,6 +5,7 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, Union
 
+from cattrs import override
 from cattrs.gen import make_dict_structure_fn
 
 from baybe.serialization import converter
@@ -35,7 +36,13 @@ def structure_objective(val: dict, _) -> Objective:
             cls = next(cl for cl in get_subclasses(Objective) if cl.__name__ == _type)
         except StopIteration as ex:
             raise ValueError(f"Unknown subclass '{_type}'.") from ex
-        fun = make_dict_structure_fn(cls, converter, _cattrs_forbid_extra_keys=True)  # type: ignore
+        fun = make_dict_structure_fn(
+            cls,
+            converter,
+            _cattrs_forbid_extra_keys=True,
+            _target=override(rename="target"),
+            _targets=override(rename="targets"),
+        )  # type: ignore
         return fun(val, cls)
 
     # If no type is provided, determine the type by the number of targets given

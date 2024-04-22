@@ -5,6 +5,7 @@ from typing import Union
 
 import pandas as pd
 from attrs import define
+from cattrs import override
 
 from baybe.objectives.deprecation import structure_objective
 from baybe.serialization.core import (
@@ -47,4 +48,13 @@ def to_objective(x: Union[Target, Objective], /) -> Objective:
 
 # Register de-/serialization hooks
 converter.register_structure_hook(Objective, structure_objective)
-converter.register_unstructure_hook(Objective, unstructure_base)
+converter.register_unstructure_hook(
+    Objective,
+    lambda x: unstructure_base(
+        x,
+        overrides=dict(
+            _target=override(rename="target"),
+            _targets=override(rename="targets"),
+        ),
+    ),
+)
