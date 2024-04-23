@@ -15,13 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hypothesis` strategies and roundtrip test for kernels, constraints and objectives
 
 ### Changed
-- `torch` numeric types are now loaded lazily
 - Reorganized acquisition.py into `acquisition` subpackage
-- `torch` is imported lazily in `surrogates`
 - Acquisition functions are now their own objects
 - `acquisition_function_cls` constructor parameter renamed to `acquisition_function`
 - User guide now explains the new objective classes
 - Telemetry deactivation warning is only shown to developers
+- `torch`, `gpytorch` and `botorch` are lazy-loaded for improved startup time
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and

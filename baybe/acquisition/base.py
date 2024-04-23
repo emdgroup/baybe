@@ -8,7 +8,6 @@ from typing import ClassVar, Union
 
 from attrs import define
 
-from baybe.acquisition.adapter import debotorchize
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
@@ -28,6 +27,8 @@ class AcquisitionFunction(ABC, SerialMixin):
     def to_botorch(self, surrogate: Surrogate, best_f: float):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_acquisition
+
+        from baybe.acquisition.adapter import debotorchize
 
         acqf_cls = getattr(botorch_acquisition, self.__class__.__name__)
 

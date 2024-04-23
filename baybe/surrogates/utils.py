@@ -5,13 +5,12 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING, Callable, ClassVar
 
-import torch
-from torch import Tensor
-
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
 
 if TYPE_CHECKING:
+    from torch import Tensor
+
     from baybe.surrogates.base import Surrogate
 
 _MIN_TARGET_STD = 1e-6
@@ -90,6 +89,8 @@ def catch_constant_targets(model_cls: type[Surrogate]):
 
         def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
             """Call the posterior function of the internal model instance."""
+            import torch
+
             mean, var = self.model._posterior(candidates)
 
             # If a joint posterior is expected but the model has been overridden by one
@@ -105,6 +106,8 @@ def catch_constant_targets(model_cls: type[Surrogate]):
             self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
         ) -> None:
             """Select a model based on the variance of the targets and fits it."""
+            import torch
+
             from baybe.surrogates.naive import MeanPredictionSurrogate
 
             # https://github.com/pytorch/pytorch/issues/29372
@@ -232,6 +235,8 @@ def batchify(
         Returns:
             The mean and the covariance.
         """
+        import torch
+
         # If no batch dimensions are given, call the model directly
         if candidates.ndim == 2:
             return posterior(model, candidates)

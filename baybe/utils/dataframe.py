@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from typing import (
     TYPE_CHECKING,
     Literal,
     Optional,
     Union,
+    overload,
 )
 
 import numpy as np
@@ -28,7 +29,17 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterable[Tensor]]:
+@overload
+def to_tensor(df: pd.DataFrame) -> Tensor:
+    ...
+
+
+@overload
+def to_tensor(*dfs: pd.DataFrame) -> Iterator[Tensor]:
+    ...
+
+
+def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterator[Tensor]]:
     """Convert a given set of dataframes into tensors (dropping all indices).
 
     Args:

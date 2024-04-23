@@ -1,13 +1,11 @@
 """Naive recommender for hybrid spaces."""
 
 import warnings
-from typing import ClassVar, Optional, cast
+from typing import ClassVar, Optional
 
 import pandas as pd
 from attrs import define, evolve, field, fields
-from torch import Tensor
 
-from baybe.acquisition import PartialAcquisitionFunction
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.sequential_greedy import (
@@ -86,6 +84,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     ) -> pd.DataFrame:
         # See base class.
 
+        from baybe.acquisition.partial import PartialAcquisitionFunction
+
         if (not isinstance(self.disc_recommender, BayesianRecommender)) and (
             not isinstance(self.disc_recommender, NonPredictiveRecommender)
         ):
@@ -116,7 +116,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # will then be attached to every discrete point when the acquisition function
         # is evaluated.
         cont_part = searchspace.continuous.samples_random(1)
-        cont_part_tensor = cast(Tensor, to_tensor(cont_part)).unsqueeze(-2)
+        cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
 
         # Get discrete candidates. The metadata flags are ignored since the search space
         # is hybrid
@@ -151,7 +151,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # Get one random discrete point that will be attached when evaluating the
         # acquisition function in the discrete space.
         disc_part = searchspace.discrete.comp_rep.loc[disc_rec_idx].sample(1)
-        disc_part_tensor = cast(Tensor, to_tensor(disc_part)).unsqueeze(-2)
+        disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
         self.cont_recommender._setup_botorch_acqf(searchspace, train_x, train_y)

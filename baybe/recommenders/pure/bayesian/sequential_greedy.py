@@ -4,7 +4,6 @@ from typing import Any, ClassVar
 
 import pandas as pd
 from attrs import define, field, validators
-from botorch.optim import optimize_acqf, optimize_acqf_discrete, optimize_acqf_mixed
 
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
@@ -69,6 +68,8 @@ class SequentialGreedyRecommender(BayesianRecommender):
     ) -> pd.Index:
         # See base class.
 
+        from botorch.optim import optimize_acqf_discrete
+
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
         try:
@@ -102,7 +103,9 @@ class SequentialGreedyRecommender(BayesianRecommender):
         batch_size: int,
     ) -> pd.DataFrame:
         # See base class.
+
         import torch
+        from botorch.optim import optimize_acqf
 
         try:
             points, _ = optimize_acqf(
@@ -161,6 +164,7 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 is chosen.
         """
         import torch
+        from botorch.optim import optimize_acqf_mixed
 
         if len(candidates_comp) > 0:
             # Calculate the number of samples from the given percentage
