@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from baybe import BayBE, Campaign
+from baybe import Campaign
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import DeprecationError
 from baybe.objective import Objective as OldObjective
@@ -17,35 +17,14 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
-from baybe.searchspace import SearchSpace
 from baybe.strategies import (
     SequentialStrategy,
-    Strategy,
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
-from baybe.targets import Objective as ObjectiveFromTargets
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.interval import Interval
-
-
-def test_deprecated_baybe_class(parameters, objective):
-    """Using the deprecated ``BayBE`` class raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        BayBE(SearchSpace.from_product(parameters), objective)
-
-
-def test_moved_objective(targets):
-    """Importing ``Objective`` from ``baybe.targets`` raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        ObjectiveFromTargets(mode="SINGLE", targets=targets)
-
-
-def test_renamed_surrogate():
-    """Importing from ``baybe.surrogate`` raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        from baybe.surrogate import GaussianProcessSurrogate  # noqa: F401
 
 
 def test_missing_recommender_type(config):
@@ -65,7 +44,6 @@ assert len(RECOMMENDERS) == len({rec.__class__.__name__ for rec in RECOMMENDERS}
 @pytest.mark.parametrize(
     "test_objects",
     [
-        (Strategy, {}),
         (TwoPhaseStrategy, {}),
         (SequentialStrategy, {"recommenders": RECOMMENDERS}),
         (StreamingSequentialStrategy, {"recommenders": RECOMMENDERS}),
