@@ -11,12 +11,13 @@ from cattrs.gen import make_dict_structure_fn
 from baybe.serialization import converter
 from baybe.targets.base import Target
 from baybe.utils.basic import get_subclasses
+from baybe.utils.boolean import is_abstract
 
 if TYPE_CHECKING:
     from baybe.objectives.base import Objective
 
 
-def structure_objective(val: dict, _) -> Objective:
+def structure_objective(val: dict, cls) -> Objective:
     """A structure hook that automatically determines an objective fallback type."""  # noqa: D401 (imperative mood)
     from baybe.objective import Objective as OldObjective
     from baybe.objectives.base import Objective
@@ -31,11 +32,14 @@ def structure_objective(val: dict, _) -> Objective:
 
     # Use the specified objective type
     try:
-        _type = val.pop("type")
-        try:
-            cls = next(cl for cl in get_subclasses(Objective) if cl.__name__ == _type)
-        except StopIteration as ex:
-            raise ValueError(f"Unknown subclass '{_type}'.") from ex
+        if is_abstract(cls):
+            _type = val.pop("type")
+            try:
+                cls = next(
+                    cl for cl in get_subclasses(Objective) if cl.__name__ == _type
+                )
+            except StopIteration as ex:
+                raise ValueError(f"Unknown subclass '{_type}'.") from ex
         fun = make_dict_structure_fn(
             cls,
             converter,
