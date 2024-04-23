@@ -1,7 +1,7 @@
 """Base classes for all pure recommenders."""
 
 from abc import ABC
-from typing import ClassVar, Optional
+from typing import Any, Callable, ClassVar, Optional
 
 import pandas as pd
 from attrs import define, field
@@ -31,6 +31,22 @@ class PureRecommender(ABC, RecommenderProtocol):
     """Allow to make recommendations that were measured previously.
     This only has an influence in discrete search spaces."""
 
+    user_callable: Optional[
+        Callable[
+            [
+                "PureRecommender",
+                SearchSpace,
+                int,
+                Optional[pd.DataFrame],
+                Optional[pd.DataFrame],
+            ],
+            Any,
+        ]
+    ] = field(default=None, kw_only=True)
+    """A user-defined callable to process the search space, the batch size, and the
+    DataFrames of the training data. This function is called in the recommend
+    method."""
+
     def recommend(  # noqa: D102
         self,
         searchspace: SearchSpace,
@@ -39,6 +55,9 @@ class PureRecommender(ABC, RecommenderProtocol):
         train_y: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class
+        if self.user_callable is not None:
+            self.user_callable(self, searchspace, batch_size, train_x, train_y)
+
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
