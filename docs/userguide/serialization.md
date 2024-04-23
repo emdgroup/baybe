@@ -192,8 +192,11 @@ parameter_str = """
 """
 ```
 Unless you are aware of the specific purpose for which the string was created,
-calling one of the classes' `__init__` methods directly is impossible because you 
+calling one of the classes' constructors directly is impossible because you 
 simply do not know which one to chose.
+A similar situation arises with [nested objects](#NESTED_OBJECTS) because resorting to
+an explicit constructor call of a hand-selected subclass is only possible at the
+highest level of the hierarchy, whereas the inner object types would remain unspecified.
 
 The problem can be easily circumvented using an explicit subclass resolution 
 mechanism, i.e., by tagging the respective subclass in an additional `type` field that
@@ -246,6 +249,7 @@ acqf2 = AcquisitionFunction.from_json('{"type": "UCB"}')
 assert acqf1 == acqf2
 ```
 
+(NESTED_OBJECTS)=
 ### Nesting objects
 BayBE objects typically appear as part of a larger object hierarchy.
 For instance, a
