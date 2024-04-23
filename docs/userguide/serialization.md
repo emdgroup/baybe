@@ -120,14 +120,12 @@ assert p1 == p2
 ```python
 p1_str = """
 {
-    "type": "CategoricalParameter",
     "name": "setting",
     "values": ["low", "high"]
 }
 """
 p2_str = """
 {
-    "type": "CategoricalParameter",
     "name": "setting",
     "values": ["low", "high"],
     "encoding": "OHE"
@@ -272,7 +270,6 @@ objective = DesirabilityObjective(
 
 objective_str = """
 {   
-    "type": "DesirabilityObjective", 
     "targets": [
         {
             "type": "NumericalTarget",
