@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from cattrs import override
 from cattrs.gen import make_dict_structure_fn
@@ -23,10 +23,6 @@ def structure_objective(val: dict, cls) -> Objective:
     from baybe.objectives.base import Objective
     from baybe.objectives.desirability import DesirabilityObjective
     from baybe.objectives.single import SingleTargetObjective
-
-    cls: Union[
-        type[Objective], type[SingleTargetObjective], type[DesirabilityObjective]
-    ]
 
     val = val.copy()
 
