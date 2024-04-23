@@ -112,12 +112,17 @@ assert from_json == via_init
 ### Using default values
 Just like default values can be omitted when working in Python ...
 ```python
+from baybe.parameters import CategoricalParameter
+
 p1 = CategoricalParameter(name="setting", values=["low", "high"])
 p2 = CategoricalParameter(name="setting", values=["low", "high"], encoding="OHE")
+
 assert p1 == p2
 ```
 ... they can be omitted from the corresponding serialization string.
 ```python
+from baybe.parameters import CategoricalParameter
+
 p1_str = """
 {
     "name": "setting",
@@ -131,6 +136,7 @@ p2_str = """
     "encoding": "OHE"
 }
 """
+
 assert CategoricalParameter.from_json(p1_str) == CategoricalParameter.from_json(p2_str)
 ```
 
