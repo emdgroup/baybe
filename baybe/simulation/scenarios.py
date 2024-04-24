@@ -167,7 +167,7 @@ def _simulate_groupby(
         batch_size: See :func:`baybe.simulation.core.simulate_experiment`.
         n_doe_iterations: See :func:`baybe.simulation.core.simulate_experiment`.
         initial_data: See :func:`baybe.simulation.core.simulate_experiment`.
-        groupby: See :func:`baybe.simulation.wrappers.simulate_scenarios`.
+        groupby: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
         random_seed: See :func:`baybe.simulation.core.simulate_experiment`.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.

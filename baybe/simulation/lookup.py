@@ -35,9 +35,9 @@ def _look_up_target_values(
         queries: A dataframe containing points to be queried.
         campaign: The campaign for which the experiments should be simulated.
         lookup: The lookup mechanism.
-            See :func:`baybe.simulation.wrappers.simulate_scenarios` for details.
+            See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.
         impute_mode: The used impute mode.
-            See :func:`baybe.simulation.wrappers.simulate_scenarios` for details.
+            See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.
 
     Raises:
         AssertionError: If an analytical function is used and an incorrect number of
@@ -137,7 +137,7 @@ def _impute_lookup(
         lookup: The lookup data frame.
         targets: The campaign targets, providing the required mode information.
         mode: The used impute mode.
-            See :func:`baybe.simulation.wrappers.simulate_scenarios` for details.
+            See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.
 
     Returns:
         The filled-in lookup results.

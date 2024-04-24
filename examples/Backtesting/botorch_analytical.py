@@ -96,7 +96,7 @@ random_campaign = Campaign(
 
 ### Performing the simulation loop
 
-# We use [simulate_scenarios](baybe.simulation.wrappers.simulate_scenarios) to simulate a full experiment.
+# We use [simulate_scenarios](baybe.simulation.scenarios.simulate_scenarios) to simulate a full experiment.
 
 scenarios = {
     "Sequential greedy EI": seq_greedy_EI_campaign,

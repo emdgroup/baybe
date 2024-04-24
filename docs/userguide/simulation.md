@@ -71,7 +71,7 @@ This function returns a dataframe that contains the results. For details on the 
 
 ## Simulating Multiple Scenarios
 
-The function [`simulate_scenarios`](baybe.simulation.wrappers.simulate_scenarios) allows to specify multiple simulation settings at once.
+The function [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) allows to specify multiple simulation settings at once.
 Instead of a single campaign, this function expects a dictionary of campaigns, mapping scenario identifiers to `Campaign` objects.
 In addition to the keyword arguments available for `simulate_experiment`, this function has two different keywords available:
 1. `n_mc_iterations`: This can be used to perform multiple Monte Carlo runs with a single call. Multiple Monte Carlo runs are always advised to average out the effect of random effects such as the initial starting data.

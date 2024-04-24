@@ -11,7 +11,7 @@ import pandas as pd
 from baybe.campaign import Campaign
 from baybe.parameters import TaskParameter
 from baybe.searchspace import SearchSpaceType
-from baybe.simulation.wrappers import simulate_scenarios
+from baybe.simulation.scenarios import simulate_scenarios
 
 
 def simulate_transfer_learning(
@@ -26,7 +26,7 @@ def simulate_transfer_learning(
 ) -> pd.DataFrame:
     """Simulate Bayesian optimization with transfer learning.
 
-    A wrapper around :func:`baybe.simulation.wrappers.simulate_scenarios` that
+    A wrapper around :func:`baybe.simulation.scenarios.simulate_scenarios` that
     partitions the search space into its tasks and simulates each task with the training
     data from the remaining tasks.
 
@@ -41,14 +41,14 @@ def simulate_transfer_learning(
 
     Args:
         campaign: See :func:`baybe.simulation.core.simulate_experiment`.
-        lookup: See :func:`baybe.simulation.wrappers.simulate_scenarios`.
-        batch_size: See :func:`baybe.simulation.wrappers.simulate_scenarios`.
-        n_doe_iterations: See :func:`baybe.simulation.wrappers.simulate_scenarios`.
-        groupby: See :func:`baybe.simulation.wrappers.simulate_scenarios`.
-        n_mc_iterations: See :func:`baybe.simulation.wrappers.simulate_scenarios`.
+        lookup: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
+        batch_size: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
+        n_doe_iterations: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
+        groupby: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
+        n_mc_iterations: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
 
     Returns:
-        A dataframe as returned by :func:`baybe.simulation.wrappers.simulate_scenarios`
+        A dataframe as returned by :func:`baybe.simulation.scenarios.simulate_scenarios`
         where the different tasks are represented in the ``Scenario`` column.
 
     Raises:
