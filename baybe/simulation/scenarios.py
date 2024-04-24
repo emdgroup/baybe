@@ -1,4 +1,4 @@
-"""Convenience wrappers for advanced simulations."""
+"""Batch simulation of multiple campaigns."""
 
 from __future__ import annotations
 
