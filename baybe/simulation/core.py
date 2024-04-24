@@ -14,14 +14,14 @@ from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.simulation.lookup import _look_up_target_values
 from baybe.targets.enum import TargetMode
-from baybe.utils.basic import set_random_seed
+from baybe.utils.basic import temporary_seed
 from baybe.utils.dataframe import add_parameter_noise
 from baybe.utils.numerical import closer_element, closest_element
 
 _DEFAULT_SEED = 1337
 
 
-def simulate_experiment(
+def simulate_experiment(  # noqa: DOC502
     campaign: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
@@ -96,6 +96,33 @@ def simulate_experiment(
     """
     # TODO: Due to the "..." operator, sphinx does not render this properly. Might
     #   want to investigate in the future.
+
+    with temporary_seed(random_seed):
+        return _simulate_experiment_given_seed(
+            campaign,
+            lookup,
+            batch_size=batch_size,
+            n_doe_iterations=n_doe_iterations,
+            initial_data=initial_data,
+            impute_mode=impute_mode,
+            noise_percent=noise_percent,
+        )
+
+
+def _simulate_experiment_given_seed(
+    campaign: Campaign,
+    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
+    /,
+    *,
+    batch_size: int = 1,
+    n_doe_iterations: Optional[int] = None,
+    initial_data: Optional[pd.DataFrame] = None,
+    impute_mode: Literal[
+        "error", "worst", "best", "mean", "random", "ignore"
+    ] = "error",
+    noise_percent: Optional[float] = None,
+) -> pd.DataFrame:
+    """Run :func:`simulate_experiment` with the context-given random seed."""
     # TODO: Use a `will_terminate` campaign property to decide if the campaign will
     #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
 
@@ -111,10 +138,9 @@ def simulate_experiment(
             "Impute mode 'ignore' is only available for dataframe lookups."
         )
 
-    # Create a fresh campaign and set the corresponding random seed
+    # Clone the campaign to avoid mutating the original object
     # TODO: Reconsider if deepcopies are required once [16605] is resolved
     campaign = deepcopy(campaign)
-    set_random_seed(random_seed)
 
     # Add the initial data
     if initial_data is not None:
