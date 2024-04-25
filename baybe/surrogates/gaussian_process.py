@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 from attr import define, field
 
 from baybe.kernels import MaternKernel
 from baybe.kernels.base import Kernel
+from baybe.kernels.priors import GammaPrior
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 
@@ -27,7 +28,7 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    kernel: Kernel = field(factory=MaternKernel)
+    kernel: Optional[Kernel] = field(default=None)
     """The kernel used by the Gaussian Process."""
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
@@ -46,7 +47,6 @@ class GaussianProcessSurrogate(Surrogate):
         import botorch
         import gpytorch
         import torch
-        from gpytorch.priors import GammaPrior
 
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
@@ -72,6 +72,8 @@ class GaussianProcessSurrogate(Surrogate):
             train_x.shape[-1] >= 50
         )
 
+        # TODO Until now, only the kernels use our custom priors, hence the explicit
+        # to_gpytorch() calls for all others
         # low D priors
         if train_x.shape[-1] < 10:
             lengthscale_prior = [GammaPrior(1.2, 1.1), 0.2]
@@ -104,17 +106,20 @@ class GaussianProcessSurrogate(Surrogate):
         # create GP mean
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
+        # If no kernel is provided, we construct one from our priors
+        if self.kernel is None:
+            self.kernel = MaternKernel(lengthscale_prior=lengthscale_prior[0])
+
         # define the covariance module for the numeric dimensions
         gpytorch_kernel = self.kernel.to_gpytorch(
             ard_num_dims=train_x.shape[-1] - n_task_params,
             active_dims=numeric_idxs,
             batch_shape=batch_shape,
-            lengthscale_prior=lengthscale_prior[0],
         )
         base_covar_module = gpytorch.kernels.ScaleKernel(
             gpytorch_kernel,
             batch_shape=batch_shape,
-            outputscale_prior=outputscale_prior[0],
+            outputscale_prior=outputscale_prior[0].to_gpytorch(),
         )
         if outputscale_prior[1] is not None:
             base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
@@ -136,7 +141,7 @@ class GaussianProcessSurrogate(Surrogate):
 
         # create GP likelihood
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
-            noise_prior=noise_prior[0], batch_shape=batch_shape
+            noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )
         if noise_prior[1] is not None:
             likelihood.noise = torch.tensor([noise_prior[1]])
