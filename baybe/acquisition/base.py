@@ -10,7 +10,6 @@ from typing import ClassVar, Union
 import pandas as pd
 from attrs import define
 
-from baybe.acquisition.adapter import AdapterModel
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
@@ -18,8 +17,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
-from baybe.utils.basic import filter_attributes
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.basic import classproperty, filter_attributes
 
 
 @define(frozen=True)
@@ -29,8 +27,7 @@ class AcquisitionFunction(ABC, SerialMixin):
     _abbreviation: ClassVar[str]
     """An alternative name for type resolution."""
 
-    @classmethod
-    @property
+    @classproperty
     def is_mc(cls) -> bool:
         """Flag indicating whether this is a Monte-Carlo acquisition function."""
         return cls._abbreviation.startswith("q")
@@ -43,6 +40,9 @@ class AcquisitionFunction(ABC, SerialMixin):
     ):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_analytical_acqf
+
+        from baybe.acquisition.adapter import AdapterModel
+        from baybe.utils.dataframe import to_tensor
 
         acqf_cls = getattr(botorch_analytical_acqf, self.__class__.__name__)
         fields_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)

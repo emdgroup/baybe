@@ -13,8 +13,6 @@ from baybe.acquisition.acqfs import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from baybe.acquisition.adapter import AdapterModel
-from baybe.acquisition.partial import PartialAcquisitionFunction
 
 EI = ExpectedImprovement
 qEI = qExpectedImprovement
@@ -55,8 +53,4 @@ __all__ = [
     "PI",
     "qPI",
     "qSR",
-    # -----------------------------
-    # Helpers
-    "AdapterModel",
-    "PartialAcquisitionFunction",
 ]
