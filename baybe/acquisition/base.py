@@ -18,6 +18,7 @@ from baybe.serialization.core import (
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
 from baybe.utils.basic import classproperty, filter_attributes
+from baybe.utils.dataframe import to_tensor
 
 
 @define(frozen=True)
@@ -42,31 +43,22 @@ class AcquisitionFunction(ABC, SerialMixin):
         import botorch.acquisition as botorch_analytical_acqf
 
         from baybe.acquisition.adapter import AdapterModel
-        from baybe.utils.dataframe import to_tensor
 
         acqf_cls = getattr(botorch_analytical_acqf, self.__class__.__name__)
-        fields_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
+        params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
-        if not self.is_mc:
-            best_f = train_y.max().item()
+        additional_params = {
+            p: v
+            for p, v in {
+                "model": AdapterModel(surrogate),
+                "best_f": train_y.max().item(),
+                "X_baseline": to_tensor(train_x),
+            }.items()
+            if p in signature(acqf_cls).parameters
+        }
+        params_dict.update(additional_params)
 
-            if "best_f" in signature(acqf_cls).parameters:
-                fields_dict.update({"best_f": best_f})
-
-            botorch_acqf = acqf_cls(AdapterModel(surrogate), **fields_dict)
-        else:
-            from botorch.acquisition.factory import get_acquisition_function
-            from botorch.acquisition.objective import IdentityMCObjective
-
-            botorch_acqf = get_acquisition_function(
-                acquisition_function_name=self._abbreviation,
-                model=AdapterModel(surrogate),
-                X_observed=to_tensor(train_x),
-                objective=IdentityMCObjective(),
-                **fields_dict,  # optional parameters like beta
-            )
-
-        return botorch_acqf
+        return acqf_cls(**params_dict)
 
 
 # Register de-/serialization hooks
