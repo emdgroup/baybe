@@ -46,7 +46,7 @@ The `Callable` needs to return the target values for any given parameter combina
 
 ## Simulating a Single Experiment
 
-The function [`simulate_experiment`](baybe.simulation.simulate_experiment) is the most basic form of simulation.
+The function [`simulate_experiment`](baybe.simulation.core.simulate_experiment) is the most basic form of simulation.
 It runs a single execution of a DoE loop for either a specific number of iteration or until the search space is fully observed.
 
 For using this function, it is necessary to provide a [`campaign`](baybe.campaign.Campaign). Although technically not necessary, we advise to also always provide a lookup mechanisms since fake results will be produced if none is provided. It is possible to specify several additional parameters like the batch size, initial data or the number of DoE iterations that should be performed
@@ -71,7 +71,7 @@ This function returns a dataframe that contains the results. For details on the 
 
 ## Simulating Multiple Scenarios
 
-The function [`simulate_scenarios`](baybe.simulation.simulate_scenarios) allows to specify multiple simulation settings at once.
+The function [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) allows to specify multiple simulation settings at once.
 Instead of a single campaign, this function expects a dictionary of campaigns, mapping scenario identifiers to `Campaign` objects.
 In addition to the keyword arguments available for `simulate_experiment`, this function has two different keywords available:
 1. `n_mc_iterations`: This can be used to perform multiple Monte Carlo runs with a single call. Multiple Monte Carlo runs are always advised to average out the effect of random effects such as the initial starting data.
@@ -96,10 +96,10 @@ results = simulate_scenarios(
 
 ## Simulating Transfer Learning
 
-The function [`simulate_transfer_learning`](baybe.simulation.simulate_transfer_learning) partitions the search space into its tasks and simulates each task with the training data from the remaining tasks.
+The function [`simulate_transfer_learning`](baybe.simulation.transfer_learning.simulate_transfer_learning) partitions the search space into its tasks and simulates each task with the training data from the remaining tasks.
 
 ```{note}
-Currently, this only supports discrete search spaces. See [`simulate_transfer_learning`](baybe.simulation.simulate_transfer_learning) for the reasons.
+Currently, this only supports discrete search spaces. See [`simulate_transfer_learning`](baybe.simulation.transfer_learning.simulate_transfer_learning) for the reasons.
 ```
 
 ~~~python

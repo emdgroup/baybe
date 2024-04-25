@@ -1,8 +1,8 @@
 ## Backtesting
 
 # This example demonstrates the use of the
-# [`simulate_transfer_learning`](baybe.simulation.simulate_transfer_learning) function
-# to learn across tasks:
+# [`simulate_transfer_learning`](baybe.simulation.transfer_learning.simulate_transfer_learning)
+# function to learn across tasks:
 # * We construct a campaign,
 # * define two related test functions,
 # * use the data from the first function to train the second,

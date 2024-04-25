@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
+- Reorganized simulation.py into `simulation` subpackage
 - Acquisition functions are now their own objects
 - `acquisition_function_cls` constructor parameter renamed to `acquisition_function`
 - User guide now explains the new objective classes
