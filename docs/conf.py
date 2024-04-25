@@ -111,7 +111,6 @@ nitpick_ignore_regex = [
     # Ignore errors that are from inherited classes we cannot control
     (r"py:.*", r".*DTypeFloatNumpy.*"),
     (r"py:.*", r".*DTypeFloatONNX.*"),
-    (r"py:.*", r".*AdapterModel.*"),
     # Ignore the functions that we manually delete from in child classes
     (r"py:.*", r".*from_dict.*"),
     (r"py:.*", r".*from_json.*"),

@@ -42,7 +42,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_analytical_acqf
 
-        from baybe.acquisition.adapter import AdapterModel
+        from baybe.acquisition._adapter import AdapterModel
 
         acqf_cls = getattr(botorch_analytical_acqf, self.__class__.__name__)
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
