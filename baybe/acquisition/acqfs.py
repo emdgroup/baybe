@@ -48,6 +48,9 @@ class qNoisyExpectedImprovement(AcquisitionFunction):
 
     _abbreviation: ClassVar[str] = "qNEI"
 
+    prune_baseline: bool = field(default=True)
+    """Auto-prune candidates that are unlikely to be the best."""
+
 
 @define(frozen=True)
 class LogExpectedImprovement(AcquisitionFunction):
@@ -68,6 +71,9 @@ class qLogNoisyExpectedImprovement(AcquisitionFunction):
     """Logarithmic Monte Carlo based noisy expected improvement."""
 
     _abbreviation: ClassVar[str] = "qLogNEI"
+
+    prune_baseline: bool = field(default=True)
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 ########################################################################################
