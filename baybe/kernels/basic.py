@@ -1,12 +1,13 @@
 """Collection of kernels."""
 
 from fractions import Fraction
-from typing import Union
+from typing import Optional, Union
 
 from attrs import define, field
 from attrs.validators import in_
 
 from baybe.kernels.base import Kernel
+from baybe.kernels.priors.base import Prior
 
 
 def _convert_fraction(value: Union[str, float, Fraction], /) -> float:
@@ -43,3 +44,14 @@ class MaternKernel(Kernel):
 
     Only takes the values 0.5, 1.5 or 2.5. Larger values yield smoother interpolations.
     """
+
+
+@define(frozen=True)
+class ScaleKernel(Kernel):
+    """A kernel for decorating existing kernels with an outputscale."""
+
+    base_kernel: Kernel = field(factory=MaternKernel)
+    """The base kernel that is being decorated."""
+
+    outputscale_prior: Optional[Prior] = field(default=None, kw_only=True)
+    """An optional outputscale prior that can be used."""
