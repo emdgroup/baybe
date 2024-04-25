@@ -32,7 +32,7 @@ def _convert_fraction(value: Union[str, float, Fraction], /) -> float:
     return float(value)
 
 
-@define
+@define(frozen=True)
 class MaternKernel(Kernel):
     """A Matern kernel using a smoothness parameter."""
 
