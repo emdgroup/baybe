@@ -2,7 +2,7 @@
 
 import hypothesis.strategies as st
 
-from baybe.kernels import MaternKernel
+from baybe.kernels import MaternKernel, ScaleKernel
 
 from ..hypothesis_strategies.priors import priors
 
@@ -12,3 +12,16 @@ matern_kernels = st.builds(
     lengthscale_prior=st.one_of(st.none(), priors),
 )
 """A strategy that generates Matern kernels."""
+
+base_kernels = st.one_of([matern_kernels])
+"""A strategy that generates base kernels to be used within more complex kernels."""
+
+scale_kernels = st.builds(
+    ScaleKernel,
+    base_kernel=base_kernels,
+    outputscale_prior=st.one_of(st.none(), priors),
+)
+"""A strategy that generates Scale kernels."""
+
+kernels = st.one_of([base_kernels, scale_kernels])
+"""A strategy that generates kernels."""
