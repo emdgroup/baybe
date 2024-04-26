@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
 from typing import Callable, Literal, Optional, Union
@@ -18,8 +19,6 @@ from baybe.utils.basic import temporary_seed
 from baybe.utils.dataframe import add_parameter_noise
 from baybe.utils.numerical import closer_element, closest_element
 
-_DEFAULT_SEED = 1337
-
 
 def simulate_experiment(  # noqa: DOC502
     campaign: Campaign,
@@ -29,7 +28,7 @@ def simulate_experiment(  # noqa: DOC502
     batch_size: int = 1,
     n_doe_iterations: Optional[int] = None,
     initial_data: Optional[pd.DataFrame] = None,
-    random_seed: int = _DEFAULT_SEED,
+    random_seed: Optional[int] = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -57,7 +56,7 @@ def simulate_experiment(  # noqa: DOC502
             testable configurations left.
         initial_data: The initial measurement data to be ingested before starting the
             loop.
-        random_seed: The random seed used for the simulation.
+        random_seed: An optional random seed to be used for the simulation.
         impute_mode: Specifies how a missing lookup will be handled.
             There are six different options available.
 
@@ -97,7 +96,8 @@ def simulate_experiment(  # noqa: DOC502
     # TODO: Due to the "..." operator, sphinx does not render this properly. Might
     #   want to investigate in the future.
 
-    with temporary_seed(random_seed):
+    context = temporary_seed(random_seed) if random_seed is not None else nullcontext()
+    with context:
         return _simulate_experiment_given_seed(
             campaign,
             lookup,

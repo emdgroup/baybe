@@ -22,7 +22,9 @@ except ImportError as ex:
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NothingToSimulateError
-from baybe.simulation.core import _DEFAULT_SEED, simulate_experiment
+from baybe.simulation.core import simulate_experiment
+
+_DEFAULT_SEED = 1337
 
 
 def simulate_scenarios(
