@@ -99,10 +99,10 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         if train_y.numel() == 1 or train_y.std() < std_threshold:
             self._model = MeanPredictionSurrogate()
             self._model._fit(searchspace, train_x, train_y)
-            return
 
         # Regular operation
-        _fit_original(self, searchspace, train_x, train_y)
+        else:
+            _fit_original(self, searchspace, train_x, train_y)
 
     # Replace the methods
     cls._posterior = _posterior_new
