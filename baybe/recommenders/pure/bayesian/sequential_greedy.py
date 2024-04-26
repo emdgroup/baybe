@@ -66,21 +66,37 @@ class SequentialGreedyRecommender(BayesianRecommender):
         candidates_comp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
-        # See base class.
+        """Generate recommendations from a discrete search space.
+
+        Args:
+            subspace_discrete: The discrete subspace from which to generate
+                recommendations.
+            candidates_comp: The computational representation of all discrete candidate
+                points to be considered.
+            batch_size: The size of the recommendation batch.
+
+        Raises:
+            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
+                used with a batch size > 1.
+
+        Returns:
+            The dataframe indices of the recommended points in the provided
+            computational representation.
+        """
+        # For batch size > 1, this optimizer needs a MC acquisition function
+        if batch_size > 1 and not self.acquisition_function.is_mc:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions for batch sizes > 1."
+            )
 
         from botorch.optim import optimize_acqf_discrete
 
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
-        try:
-            points, _ = optimize_acqf_discrete(
-                self._botorch_acqf, batch_size, candidates_tensor
-            )
-        except AttributeError as ex:
-            raise NoMCAcquisitionFunctionError(
-                f"The '{self.__class__.__name__}' only works with Monte Carlo "
-                f"acquisition functions for batch sizes > 1."
-            ) from ex
+        points, _ = optimize_acqf_discrete(
+            self._botorch_acqf, batch_size, candidates_tensor
+        )
 
         # retrieve the index of the points from the input dataframe
         # IMPROVE: The merging procedure is conceptually similar to what
