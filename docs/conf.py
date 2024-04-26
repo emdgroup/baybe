@@ -128,6 +128,8 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._C"),
     (r"py:class", "baybe.utils.basic._T"),
     (r"py:class", "baybe.utils.basic._U"),
+    # Ignore custom class properties
+    (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
 ]
 
 
