@@ -3,7 +3,7 @@
 from typing import ClassVar
 
 from attrs import define, field
-from attrs.validators import ge
+from attrs.validators import ge, instance_of
 
 from baybe.acquisition.base import AcquisitionFunction
 
@@ -48,7 +48,7 @@ class qNoisyExpectedImprovement(AcquisitionFunction):
 
     _abbreviation: ClassVar[str] = "qNEI"
 
-    prune_baseline: bool = field(default=True)
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
     """Auto-prune candidates that are unlikely to be the best."""
 
 
@@ -72,7 +72,7 @@ class qLogNoisyExpectedImprovement(AcquisitionFunction):
 
     _abbreviation: ClassVar[str] = "qLogNEI"
 
-    prune_baseline: bool = field(default=True)
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
     """Auto-prune candidates that are unlikely to be the best."""
 
 
