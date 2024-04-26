@@ -3,6 +3,7 @@
 from baybe.acquisition.acqfs import (
     ExpectedImprovement,
     LogExpectedImprovement,
+    PosteriorMean,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
     qExpectedImprovement,
@@ -14,6 +15,8 @@ from baybe.acquisition.acqfs import (
     qUpperConfidenceBound,
 )
 
+PM = PosteriorMean
+qSR = qSimpleRegret
 EI = ExpectedImprovement
 qEI = qExpectedImprovement
 LogEI = LogExpectedImprovement
@@ -24,33 +27,42 @@ PI = ProbabilityOfImprovement
 qPI = qProbabilityOfImprovement
 UCB = UpperConfidenceBound
 qUCB = qUpperConfidenceBound
-qSR = qSimpleRegret
 
 __all__ = [
-    # -----------------------------
-    # Acquisition functions
+    ######################### Acquisition functions
+    # Posterior Mean
+    "PosteriorMean",
+    # Simple Regret
+    "qSimpleRegret",
+    # Expected Improvement
     "ExpectedImprovement",
     "qExpectedImprovement",
     "LogExpectedImprovement",
     "qLogExpectedImprovement",
     "qNoisyExpectedImprovement",
     "qLogNoisyExpectedImprovement",
-    "UpperConfidenceBound",
-    "qUpperConfidenceBound",
+    # Probability of Improvement
     "ProbabilityOfImprovement",
     "qProbabilityOfImprovement",
-    "qSimpleRegret",
-    # -----------------------------
-    # Abbreviations
+    # Upper Confidence Bound
+    "UpperConfidenceBound",
+    "qUpperConfidenceBound",
+    ######################### Abbreviations
+    # Posterior Mean
+    "PM",
+    # Simple Regret
+    "qSR",
+    # Expected Improvement
     "EI",
     "qEI",
     "LogEI",
     "qLogEI",
     "qNEI",
     "qLogNEI",
-    "UCB",
-    "qUCB",
+    # Probability of Improvement
     "PI",
     "qPI",
-    "qSR",
+    # Upper Confidence Bound
+    "UCB",
+    "qUCB",
 ]

@@ -43,16 +43,6 @@ class qExpectedImprovement(AcquisitionFunction):
 
 
 @define(frozen=True)
-class qNoisyExpectedImprovement(AcquisitionFunction):
-    """Monte Carlo based noisy expected improvement."""
-
-    _abbreviation: ClassVar[str] = "qNEI"
-
-    prune_baseline: bool = field(default=True, validator=instance_of(bool))
-    """Auto-prune candidates that are unlikely to be the best."""
-
-
-@define(frozen=True)
 class LogExpectedImprovement(AcquisitionFunction):
     """Logarithmic analytical expected improvement."""
 
@@ -64,6 +54,16 @@ class qLogExpectedImprovement(AcquisitionFunction):
     """Logarithmic Monte Carlo based expected improvement."""
 
     _abbreviation: ClassVar[str] = "qLogEI"
+
+
+@define(frozen=True)
+class qNoisyExpectedImprovement(AcquisitionFunction):
+    """Monte Carlo based noisy expected improvement."""
+
+    _abbreviation: ClassVar[str] = "qNEI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 @define(frozen=True)
