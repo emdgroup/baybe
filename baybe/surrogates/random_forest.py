@@ -42,7 +42,7 @@ class RandomForestSurrogate(Surrogate):
         converter=dict,
         validator=get_model_params_validator(RandomForestRegressor.__init__),
     )
-    # See base class.
+    """Optional model parameter that will be passed to the surrogate constructor."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:

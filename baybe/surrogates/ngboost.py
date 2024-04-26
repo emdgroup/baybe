@@ -44,7 +44,7 @@ class NGBoostSurrogate(Surrogate):
         converter=dict,
         validator=get_model_params_validator(NGBRegressor.__init__),
     )
-    # See base class.
+    """Optional model parameter that will be passed to the surrogate constructor."""
 
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}

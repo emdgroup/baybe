@@ -51,8 +51,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     # Object variables
     model_params: dict = field(factory=dict)
-    """The parameters for the used model. This is initialized with reasonable default
-    values for the derived child classes."""
+    """Optional model parameter that will be passed to the surrogate constructor.
+    This is initialized with reasonable default values for the derived child classes."""
 
     def _make_selection_default(
         self,
