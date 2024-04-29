@@ -46,3 +46,7 @@ class OptionalImportError(Exception):
 
 class DeprecationError(Exception):
     """Signals the use of a deprecated mechanism to the user, interrupting execution."""
+
+
+class UnidentifiedSubclassError(Exception):
+    """A specified subclass cannot be found in the given class hierarchy."""

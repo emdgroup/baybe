@@ -8,6 +8,7 @@ import cattrs
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 
+from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import is_abstract
 
 _T = TypeVar("_T")
@@ -54,49 +55,29 @@ def get_base_structure_hook(
         The hook.
     """
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
-    from baybe.utils.basic import get_subclasses
 
     def structure_base(val: Union[dict, str], cls: type[_T]) -> _T:
-        # If the given class can be instantiated, simply use it ...
+        # If the given class can be instantiated, only ensure there is no conflict with
+        # a potentially specified type field
         if not is_abstract(cls):
-            # ... but ensure there is no conflict with a potentially set manual type
-            if ((type_ := val.pop("type", None)) is not None) and (
-                cls.__name__ != type_
-            ):
+            if (type_ := val.pop("type", None)) and not refers_to(cls, type_):
                 raise ValueError(
-                    f"The given target class is '{cls.__name__}', which does not "
-                    f"match with the specified type '{type_}'."
+                    f"The class '{cls.__name__}' specified for deserialization "
+                    f"does not match with the given type information '{type_}'."
                 )
+            concrete_cls = cls
 
+        # Otherwise, extract the type information from the given input and find
+        # the corresponding class in the hierarchy
         else:
             type_ = val if isinstance(val, str) else val.pop("type")
+            concrete_cls = find_subclass(base, type_)
 
-            # Try to find a match with a class name (or name abbreviation, if available)
-            # in the class hierarchy
-            cls = next(
-                (
-                    cl
-                    for cl in get_subclasses(base)
-                    if type_
-                    in (
-                        (cl.__name__, cl.abbreviation)
-                        if hasattr(cl, "abbreviation")
-                        else (cl.__name__,)
-                    )
-                ),
-                None,
-            )
-
-            if cls is None:
-                raise ValueError(
-                    f"'{type_}' is neither a known subclass or subclass-abbreviation "
-                    f"of '{base.__name__}'."
-                )
-
+        # Create the structuring function for the class and call it
         fn = make_dict_structure_fn(
-            cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
+            concrete_cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
         )
-        return fn({} if isinstance(val, str) else val, cls)
+        return fn({} if isinstance(val, str) else val, concrete_cls)
 
     return structure_base
 

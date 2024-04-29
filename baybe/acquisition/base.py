@@ -18,6 +18,7 @@ from baybe.serialization.core import (
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
 from baybe.utils.basic import classproperty, filter_attributes
+from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
 
 
@@ -69,18 +70,24 @@ def _add_deprecation_hook(hook):
     """
 
     def added_deprecation_hook(val: Union[dict, str], cls: type):
-        UCB_DEPRECATIONS = {
-            "VarUCB": "UpperConfidenceBound",
-            "qVarUCB": "qUpperConfidenceBound",
-        }
-        if (entry := val if isinstance(val, str) else val["type"]) in UCB_DEPRECATIONS:
-            warnings.warn(
-                f"The use of `{entry}` is deprecated and will be disabled in a "
-                f"future version. The get the same outcome, use the new "
-                f"`{UCB_DEPRECATIONS[entry]}` class instead with a beta of 100.0.",
-                DeprecationWarning,
-            )
-            val = {"type": UCB_DEPRECATIONS[entry], "beta": 100.0}
+        # Backwards-compatibility needs to be ensured only for deserialization from
+        # base class using string-based type specifiers as listed below,
+        # since the concrete classes were available only after the change.
+        if is_abstract(cls):
+            UCB_DEPRECATIONS = {
+                "VarUCB": "UpperConfidenceBound",
+                "qVarUCB": "qUpperConfidenceBound",
+            }
+            if (
+                entry := val if isinstance(val, str) else val["type"]
+            ) in UCB_DEPRECATIONS:
+                warnings.warn(
+                    f"The use of `{entry}` is deprecated and will be disabled in a "
+                    f"future version. The get the same outcome, use the new "
+                    f"`{UCB_DEPRECATIONS[entry]}` class instead with a beta of 100.0.",
+                    DeprecationWarning,
+                )
+                val = {"type": UCB_DEPRECATIONS[entry], "beta": 100.0}
 
         return hook(val, cls)
 
