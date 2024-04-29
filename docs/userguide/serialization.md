@@ -180,7 +180,7 @@ alternatives when building your objects.
 For example, when describing the degrees of freedom of your experimental campaign,
 you can chose from several different [parameter types](/userguide/parameters).
 
-While this is offers great flexibility, it comes with a challenge for deserialization
+While this offers great flexibility, it comes with a challenge for deserialization
 because you cannot know a priori which concrete object subclass is contained 
 in an incoming serialization string on the receiving end.
 Instead, you oftentimes need to be able to process the incoming string dynamically.
