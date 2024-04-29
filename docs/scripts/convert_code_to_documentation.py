@@ -45,15 +45,6 @@ if not INCLUDE_WARNINGS:
 os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 # Directories where Sphinx will always put the build, sdk and autosummary data
 build_dir = pathlib.Path("docs/build")
-sdk_dir = pathlib.Path("docs/sdk")
-autosummary_dir = pathlib.Path("docs/_autosummary")
-
-# Collect all of the directories and delete them if they still exist.
-directories = [sdk_dir, autosummary_dir, build_dir]
-
-for directory in directories:
-    if directory.is_dir():
-        shutil.rmtree(directory)
 
 # The call for checking external links.
 link_call = [
@@ -105,12 +96,6 @@ adjust_pictures(
     light_version="full_lookup_light",
     dark_version="full_lookup_dark",
 )
-
-
-# Clean the other files
-for directory in [sdk_dir, autosummary_dir]:
-    if directory.is_dir():
-        shutil.rmtree(directory)
 
 
 # Delete the created markdown files of the examples.
