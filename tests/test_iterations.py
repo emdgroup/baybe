@@ -124,7 +124,7 @@ test_targets = [
 @pytest.mark.parametrize(
     "acqf",
     valid_mc_acquisition_functions,
-    ids=[a._abbreviation for a in valid_mc_acquisition_functions],
+    ids=[a.abbreviation for a in valid_mc_acquisition_functions],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_iter_mc_acquisition_function(campaign, n_iterations, batch_size, acqf):
@@ -135,7 +135,7 @@ def test_iter_mc_acquisition_function(campaign, n_iterations, batch_size, acqf):
 @pytest.mark.parametrize(
     "acqf",
     valid_nonmc_acquisition_functions,
-    ids=[a._abbreviation for a in valid_nonmc_acquisition_functions],
+    ids=[a.abbreviation for a in valid_nonmc_acquisition_functions],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])

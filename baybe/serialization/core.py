@@ -79,8 +79,8 @@ def get_base_structure_hook(
                     for cl in get_subclasses(base)
                     if type_
                     in (
-                        (cl.__name__, cl._abbreviation)
-                        if hasattr(cl, "_abbreviation")
+                        (cl.__name__, cl.abbreviation)
+                        if hasattr(cl, "abbreviation")
                         else (cl.__name__,)
                     )
                 ),

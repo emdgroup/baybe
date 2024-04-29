@@ -25,13 +25,13 @@ from baybe.utils.dataframe import to_tensor
 class AcquisitionFunction(ABC, SerialMixin):
     """Abstract base class for all acquisition functions."""
 
-    _abbreviation: ClassVar[str]
+    abbreviation: ClassVar[str]
     """An alternative name for type resolution."""
 
     @classproperty
     def is_mc(cls) -> bool:
         """Flag indicating whether this is a Monte-Carlo acquisition function."""
-        return cls._abbreviation.startswith("q")
+        return cls.abbreviation.startswith("q")
 
     def to_botorch(
         self,

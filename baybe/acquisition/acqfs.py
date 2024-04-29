@@ -14,7 +14,7 @@ from baybe.acquisition.base import AcquisitionFunction
 class PosteriorMean(AcquisitionFunction):
     """Posterior mean."""
 
-    _abbreviation: ClassVar[str] = "PM"
+    abbreviation: ClassVar[str] = "PM"
 
 
 ########################################################################################
@@ -23,7 +23,7 @@ class PosteriorMean(AcquisitionFunction):
 class qSimpleRegret(AcquisitionFunction):
     """Monte Carlo based simple regret."""
 
-    _abbreviation: ClassVar[str] = "qSR"
+    abbreviation: ClassVar[str] = "qSR"
 
 
 ########################################################################################
@@ -32,35 +32,35 @@ class qSimpleRegret(AcquisitionFunction):
 class ExpectedImprovement(AcquisitionFunction):
     """Analytical expected improvement."""
 
-    _abbreviation: ClassVar[str] = "EI"
+    abbreviation: ClassVar[str] = "EI"
 
 
 @define(frozen=True)
 class qExpectedImprovement(AcquisitionFunction):
     """Monte Carlo based expected improvement."""
 
-    _abbreviation: ClassVar[str] = "qEI"
+    abbreviation: ClassVar[str] = "qEI"
 
 
 @define(frozen=True)
 class LogExpectedImprovement(AcquisitionFunction):
     """Logarithmic analytical expected improvement."""
 
-    _abbreviation: ClassVar[str] = "LogEI"
+    abbreviation: ClassVar[str] = "LogEI"
 
 
 @define(frozen=True)
 class qLogExpectedImprovement(AcquisitionFunction):
     """Logarithmic Monte Carlo based expected improvement."""
 
-    _abbreviation: ClassVar[str] = "qLogEI"
+    abbreviation: ClassVar[str] = "qLogEI"
 
 
 @define(frozen=True)
 class qNoisyExpectedImprovement(AcquisitionFunction):
     """Monte Carlo based noisy expected improvement."""
 
-    _abbreviation: ClassVar[str] = "qNEI"
+    abbreviation: ClassVar[str] = "qNEI"
 
     prune_baseline: bool = field(default=True, validator=instance_of(bool))
     """Auto-prune candidates that are unlikely to be the best."""
@@ -70,7 +70,7 @@ class qNoisyExpectedImprovement(AcquisitionFunction):
 class qLogNoisyExpectedImprovement(AcquisitionFunction):
     """Logarithmic Monte Carlo based noisy expected improvement."""
 
-    _abbreviation: ClassVar[str] = "qLogNEI"
+    abbreviation: ClassVar[str] = "qLogNEI"
 
     prune_baseline: bool = field(default=True, validator=instance_of(bool))
     """Auto-prune candidates that are unlikely to be the best."""
@@ -82,14 +82,14 @@ class qLogNoisyExpectedImprovement(AcquisitionFunction):
 class ProbabilityOfImprovement(AcquisitionFunction):
     """Analytical probability of improvement."""
 
-    _abbreviation: ClassVar[str] = "PI"
+    abbreviation: ClassVar[str] = "PI"
 
 
 @define(frozen=True)
 class qProbabilityOfImprovement(AcquisitionFunction):
     """Monte Carlo based probability of improvement."""
 
-    _abbreviation: ClassVar[str] = "qPI"
+    abbreviation: ClassVar[str] = "qPI"
 
 
 ########################################################################################
@@ -98,7 +98,7 @@ class qProbabilityOfImprovement(AcquisitionFunction):
 class UpperConfidenceBound(AcquisitionFunction):
     """Analytical upper confidence bound."""
 
-    _abbreviation: ClassVar[str] = "UCB"
+    abbreviation: ClassVar[str] = "UCB"
 
     beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.
@@ -113,7 +113,7 @@ class UpperConfidenceBound(AcquisitionFunction):
 class qUpperConfidenceBound(AcquisitionFunction):
     """Monte Carlo based upper confidence bound."""
 
-    _abbreviation: ClassVar[str] = "qUCB"
+    abbreviation: ClassVar[str] = "qUCB"
 
     beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.

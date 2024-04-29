@@ -244,7 +244,7 @@ at a later stage.
 ```
 
 ### Using abbreviations
-Classes that have an `_abbreviation` class variable defined can be conveniently
+Classes that have an `abbreviation` class variable defined can be conveniently
 deserialization using the corresponding abbreviation string:
 ```python
 from baybe.acquisition.base import AcquisitionFunction
