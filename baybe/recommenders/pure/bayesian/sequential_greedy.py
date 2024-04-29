@@ -66,21 +66,37 @@ class SequentialGreedyRecommender(BayesianRecommender):
         candidates_comp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
-        # See base class.
+        """Generate recommendations from a discrete search space.
+
+        Args:
+            subspace_discrete: The discrete subspace from which to generate
+                recommendations.
+            candidates_comp: The computational representation of all discrete candidate
+                points to be considered.
+            batch_size: The size of the recommendation batch.
+
+        Raises:
+            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
+                used with a batch size > 1.
+
+        Returns:
+            The dataframe indices of the recommended points in the provided
+            computational representation.
+        """
+        # For batch size > 1, this optimizer needs a MC acquisition function
+        if batch_size > 1 and not self.acquisition_function.is_mc:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions for batch sizes > 1."
+            )
 
         from botorch.optim import optimize_acqf_discrete
 
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
-        try:
-            points, _ = optimize_acqf_discrete(
-                self._botorch_acqf, batch_size, candidates_tensor
-            )
-        except AttributeError as ex:
-            raise NoMCAcquisitionFunctionError(
-                f"The '{self.__class__.__name__}' only works with Monte Carlo "
-                f"acquisition functions."
-            ) from ex
+        points, _ = optimize_acqf_discrete(
+            self._botorch_acqf, batch_size, candidates_tensor
+        )
 
         # retrieve the index of the points from the input dataframe
         # IMPROVE: The merging procedure is conceptually similar to what
@@ -102,34 +118,47 @@ class SequentialGreedyRecommender(BayesianRecommender):
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
     ) -> pd.DataFrame:
-        # See base class.
+        """Generate recommendations from a continuous search space.
+
+        Args:
+            subspace_continuous: The continuous subspace from which to generate
+                recommendations.
+            batch_size: The size of the recommendation batch.
+
+        Raises:
+            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
+                used with a batch size > 1.
+
+        Returns:
+            A dataframe containing the recommendations as individual rows.
+        """
+        # For batch size > 1, this optimizer needs a MC acquisition function
+        if batch_size > 1 and not self.acquisition_function.is_mc:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions for batch sizes > 1."
+            )
 
         import torch
         from botorch.optim import optimize_acqf
 
-        try:
-            points, _ = optimize_acqf(
-                acq_function=self._botorch_acqf,
-                bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
-                q=batch_size,
-                num_restarts=5,  # TODO make choice for num_restarts
-                raw_samples=10,  # TODO make choice for raw_samples
-                equality_constraints=[
-                    c.to_botorch(subspace_continuous.parameters)
-                    for c in subspace_continuous.constraints_lin_eq
-                ]
-                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-                inequality_constraints=[
-                    c.to_botorch(subspace_continuous.parameters)
-                    for c in subspace_continuous.constraints_lin_ineq
-                ]
-                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-            )
-        except AttributeError as ex:
-            raise NoMCAcquisitionFunctionError(
-                f"The '{self.__class__.__name__}' only works with Monte Carlo "
-                f"acquisition functions."
-            ) from ex
+        points, _ = optimize_acqf(
+            acq_function=self._botorch_acqf,
+            bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
+            q=batch_size,
+            num_restarts=5,  # TODO make choice for num_restarts
+            raw_samples=10,  # TODO make choice for raw_samples
+            equality_constraints=[
+                c.to_botorch(subspace_continuous.parameters)
+                for c in subspace_continuous.constraints_lin_eq
+            ]
+            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            inequality_constraints=[
+                c.to_botorch(subspace_continuous.parameters)
+                for c in subspace_continuous.constraints_lin_ineq
+            ]
+            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+        )
 
         # Return optimized points as dataframe
         rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
@@ -156,13 +185,20 @@ class SequentialGreedyRecommender(BayesianRecommender):
                 of the discrete subspace.
             batch_size: The size of the calculated batch.
 
+        Raises:
+            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
+                used with a batch size > 1.
+
         Returns:
             The recommended points.
-
-        Raises:
-            NoMCAcquisitionFunctionError: If a non Monte Carlo acquisition function
-                is chosen.
         """
+        # For batch size > 1, this optimizer needs a MC acquisition function
+        if batch_size > 1 and not self.acquisition_function.is_mc:
+            raise NoMCAcquisitionFunctionError(
+                f"The '{self.__class__.__name__}' only works with Monte Carlo "
+                f"acquisition functions for batch sizes > 1."
+            )
+
         import torch
         from botorch.optim import optimize_acqf_mixed
 
@@ -189,36 +225,30 @@ class SequentialGreedyRecommender(BayesianRecommender):
             fixed_features_list = None
 
         # Actual call of the BoTorch optimization routine
-        try:
-            points, _ = optimize_acqf_mixed(
-                acq_function=self._botorch_acqf,
-                bounds=torch.from_numpy(searchspace.param_bounds_comp),
-                q=batch_size,
-                num_restarts=5,  # TODO make choice for num_restarts
-                raw_samples=10,  # TODO make choice for raw_samples
-                fixed_features_list=fixed_features_list,
-                equality_constraints=[
-                    c.to_botorch(
-                        searchspace.continuous.parameters,
-                        idx_offset=len(candidates_comp.columns),
-                    )
-                    for c in searchspace.continuous.constraints_lin_eq
-                ]
-                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-                inequality_constraints=[
-                    c.to_botorch(
-                        searchspace.continuous.parameters,
-                        idx_offset=num_comp_columns,
-                    )
-                    for c in searchspace.continuous.constraints_lin_ineq
-                ]
-                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-            )
-        except AttributeError as ex:
-            raise NoMCAcquisitionFunctionError(
-                f"The '{self.__class__.__name__}' only works with Monte Carlo "
-                f"acquisition functions."
-            ) from ex
+        points, _ = optimize_acqf_mixed(
+            acq_function=self._botorch_acqf,
+            bounds=torch.from_numpy(searchspace.param_bounds_comp),
+            q=batch_size,
+            num_restarts=5,  # TODO make choice for num_restarts
+            raw_samples=10,  # TODO make choice for raw_samples
+            fixed_features_list=fixed_features_list,
+            equality_constraints=[
+                c.to_botorch(
+                    searchspace.continuous.parameters,
+                    idx_offset=len(candidates_comp.columns),
+                )
+                for c in searchspace.continuous.constraints_lin_eq
+            ]
+            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            inequality_constraints=[
+                c.to_botorch(
+                    searchspace.continuous.parameters,
+                    idx_offset=num_comp_columns,
+                )
+                for c in searchspace.continuous.constraints_lin_ineq
+            ]
+            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+        )
 
         disc_points = points[:, :num_comp_columns]
         cont_points = points[:, num_comp_columns:]

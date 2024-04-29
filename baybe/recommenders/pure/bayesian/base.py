@@ -71,10 +71,9 @@ class BayesianRecommender(PureRecommender, ABC):
                 "Bayesian recommenders do not support empty training data yet."
             )
 
-        best_f = train_y.max().item()
         surrogate_model = self._fit(searchspace, train_x, train_y)
         self._botorch_acqf = self.acquisition_function.to_botorch(
-            surrogate_model, best_f
+            surrogate_model, train_x, train_y
         )
 
     def _fit(

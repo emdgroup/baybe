@@ -9,13 +9,13 @@ when the input and output scales are changed.
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
-from botorch.acquisition import qExpectedImprovement
 from botorch.optim import optimize_acqf_discrete
 from funcy import rpartial
 
 import streamlit as st
-from baybe.acquisition.adapter import debotorchize
+from baybe.acquisition import qExpectedImprovement
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import get_available_surrogates
@@ -133,8 +133,9 @@ def main():
 
     # recommend next experiments
     # TODO: use BayBE recommender and add widgets for recommender selection
-    best_f = train_y.max().item()
-    acqf = debotorchize(qExpectedImprovement)(surrogate_model, best_f)
+    acqf = qExpectedImprovement().to_botorch(
+        surrogate_model, pd.DataFrame(train_x), pd.DataFrame(train_y)
+    )
     recommendatations = optimize_acqf_discrete(
         acqf, q=n_recommendations, choices=test_x.unsqueeze(-1)
     )[0]

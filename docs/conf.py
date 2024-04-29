@@ -111,7 +111,6 @@ nitpick_ignore_regex = [
     # Ignore errors that are from inherited classes we cannot control
     (r"py:.*", r".*DTypeFloatNumpy.*"),
     (r"py:.*", r".*DTypeFloatONNX.*"),
-    (r"py:.*", r".*AdapterModel.*"),
     # Ignore the functions that we manually delete from in child classes
     (r"py:.*", r".*from_dict.*"),
     (r"py:.*", r".*from_json.*"),
@@ -128,6 +127,8 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._C"),
     (r"py:class", "baybe.utils.basic._T"),
     (r"py:class", "baybe.utils.basic._U"),
+    # Ignore custom class properties
+    (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
 ]
 
 

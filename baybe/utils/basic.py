@@ -128,3 +128,19 @@ def filter_attributes(
         for p in params
         if (p not in ignore) and hasattr(object, p)
     }
+
+
+class classproperty:
+    """A decorator to make class properties.
+
+    A class property combines the characteristics of @property and @classmethod. The
+    simple chaining of these two existing decorators is deprecated
+    (https://docs.python.org/3.11/whatsnew/3.11.html#language-builtins) and causes mypy
+    issues.
+    """
+
+    def __init__(self, fn: Callable) -> None:
+        self.fn = fn
+
+    def __get__(self, _, cl: type):
+        return self.fn(cl)

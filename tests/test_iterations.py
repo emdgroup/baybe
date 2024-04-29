@@ -4,6 +4,7 @@
 
 import pytest
 
+from baybe.acquisition.base import AcquisitionFunction
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
@@ -40,6 +41,15 @@ valid_continuous_recommenders = [
     if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
+valid_mc_acquisition_functions = [
+    a() for a in get_subclasses(AcquisitionFunction) if a.is_mc
+]
+valid_nonmc_acquisition_functions = [
+    a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc
+]
+valid_acquisition_functions = (
+    valid_mc_acquisition_functions + valid_nonmc_acquisition_functions
+)
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybird recommenders like naive ones or recommenders not using default arguments
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
@@ -110,13 +120,27 @@ test_targets = [
 ]
 
 
-# TODO: The following tests are deactivated because there is currently no Bayesian
-#   recommender that can handle non-MC acquisition functions. Once the
-#   MarginalRecommender (or similar) is re-added, the acqf-tests can be reactivated.
-# @pytest.mark.slow
-# @pytest.mark.parametrize("acqf", valid_acquisition_functions)
-# def test_iter_acquisition_function(campaign, n_iterations, batch_size):
-#     run_iterations(campaign, n_iterations, batch_size)
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "acqf",
+    valid_mc_acquisition_functions,
+    ids=[a._abbreviation for a in valid_mc_acquisition_functions],
+)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+def test_iter_mc_acquisition_function(campaign, n_iterations, batch_size, acqf):
+    run_iterations(campaign, n_iterations, batch_size)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "acqf",
+    valid_nonmc_acquisition_functions,
+    ids=[a._abbreviation for a in valid_nonmc_acquisition_functions],
+)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
+def test_iter_nonmc_acquisition_function(campaign, n_iterations, batch_size):
+    run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
