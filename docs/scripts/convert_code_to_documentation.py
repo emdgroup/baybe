@@ -12,15 +12,6 @@ from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-t",
-    "--target_dir",
-    help="Destination directory in which the build will be saved (relative).\
-    Note that building the documentation actually happens within the doc folder.\
-    After building the documentation, it will be copied to this folder.\
-    Default is a subfolder 'docs' placed in `build`.",
-    default="./build/docs",
-)
-parser.add_argument(
     "-p",
     "--include_private",
     help="Include private methods in the documentation. Default is false.",
@@ -48,7 +39,6 @@ parser.add_argument(
 
 # Parse input arguments
 args = parser.parse_args()
-DESTINATION_DIR = args.target_dir
 INCLUDE_PRIVATE = args.include_private
 IGNORE_EXAMPLES = args.ignore_examples
 INCLUDE_WARNINGS = args.include_warnings
@@ -64,10 +54,9 @@ os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 build_dir = pathlib.Path("docs/build")
 sdk_dir = pathlib.Path("docs/sdk")
 autosummary_dir = pathlib.Path("docs/_autosummary")
-destination_dir = pathlib.Path(DESTINATION_DIR)
 
 # Collect all of the directories and delete them if they still exist.
-directories = [sdk_dir, autosummary_dir, build_dir, destination_dir]
+directories = [sdk_dir, autosummary_dir, build_dir]
 
 for directory in directories:
     if directory.is_dir():
@@ -79,7 +68,7 @@ link_call = [
     "-b",
     "linkcheck",
     "docs",
-    build_dir,
+    "docs/build",
     "-D",
     f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
 ]
@@ -89,7 +78,7 @@ building_call = [
     "-b",
     "html",
     "docs",
-    build_dir,
+    "docs/build",
     "-D",
     f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
     "-n",  # Being nitpicky
@@ -134,8 +123,6 @@ for directory in [sdk_dir, autosummary_dir]:
     if directory.is_dir():
         shutil.rmtree(directory)
 
-documentation = pathlib.Path(build_dir)
-shutil.move(documentation, destination_dir)
 
 # Delete the created markdown files of the examples.
 example_directory = pathlib.Path("docs/examples")
