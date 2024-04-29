@@ -34,8 +34,8 @@ of the corresponding class, which yields an "equivalent copy" of the original ob
 :class: important
 Roundtrip serialization is configured such that the obtained copy of an object
 is semantically equivalent to its original version and thus behaves identically.
-Note, however, that some objects contain ephemeral content (i.e., internal objects such
-as temporary data or cached computation results) that may be lost during a 
+Note, however, that some objects contain non-persistent content (i.e., internal objects
+such as temporary data or cached computation results) that may be lost during a 
 serialization roundtrip.
 Because this content will be automatically recreated on the fly when needed,
 it is ignored for comparison with the `==` operator, enabling a semantically correct
