@@ -31,9 +31,7 @@ class MeanPredictionSurrogate(Surrogate):
 
     # Object variables
     _model: Optional[float] = field(init=False, default=None)
-    """The actual model.
-
-    Here, the "model" is just a numerical value, namely the constant posterior mean."""
+    """The estimated posterior mean value of the training targets."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
