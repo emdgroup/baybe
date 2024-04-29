@@ -302,7 +302,7 @@ For instance, a search space is composed of two sub-components, a
 [discrete subspace](baybe.searchspace.discrete.SubspaceDiscrete)
 and a [continuous subspace](baybe.searchspace.continuous.SubspaceContinuous),
 which are accordingly expected by the 
-[`SearchSpace` constructor](baybe.searchspace.core.SearchSpace.__init__).
+[`SearchSpace`](baybe.searchspace.core.SearchSpace.__init__) constructor.
 However, instead of providing the two components directly, most users would more
 naturally invoke one of the alternative `classmethods` available, such as
 {meth}`SearchSpace.from_product <baybe.searchspace.core.SearchSpace.from_product>` or 
