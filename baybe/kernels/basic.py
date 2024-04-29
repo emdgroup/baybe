@@ -45,6 +45,16 @@ class MaternKernel(Kernel):
     Only takes the values 0.5, 1.5 or 2.5. Larger values yield smoother interpolations.
     """
 
+    lengthscale_prior: Optional[Prior] = field(default=None)
+    """An optional prior on the kernel lengthscale."""
+
+    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+        # See base class.
+        # Provide the transformed lengthscale as keyword argument.
+        return super().to_gpytorch(
+            lengthscale_prior=self.lengthscale_prior.to_gpytorch()
+        )
+
 
 @define(frozen=True)
 class ScaleKernel(Kernel):
