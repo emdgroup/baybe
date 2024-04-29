@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deserialization is now also possible from optional class name abbreviations
 - `Kernel` base class allowing to specify kernels
 - `MaternKernel` class can be chosen for GP surrogates
-- `hypothesis` strategies and roundtrip test for kernels, constraints, objectives and acquisition
-  functions
+- `hypothesis` strategies and roundtrip test for kernels, constraints, objectives, priors
+  and acquisition functions
 - New acquisition functions: `qSR`, `qNEI`, `LogEI`, `qLogEI`, `qLogNEI`
+- `GammaPrior` can now be chosen as lengthscale prior
 
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
