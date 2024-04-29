@@ -12,12 +12,6 @@ from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-p",
-    "--include_private",
-    help="Include private methods in the documentation. Default is false.",
-    action="store_true",
-)
-parser.add_argument(
     "-e",
     "--ignore_examples",
     help="Ignore the examples and do not include them into the documentation.",
@@ -39,7 +33,6 @@ parser.add_argument(
 
 # Parse input arguments
 args = parser.parse_args()
-INCLUDE_PRIVATE = args.include_private
 IGNORE_EXAMPLES = args.ignore_examples
 INCLUDE_WARNINGS = args.include_warnings
 FORCE = args.force
@@ -69,8 +62,6 @@ link_call = [
     "linkcheck",
     "docs",
     "docs/build",
-    "-D",
-    f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
 ]
 # The actual call that will be made to build the documentation
 building_call = [
@@ -79,8 +70,6 @@ building_call = [
     "html",
     "docs",
     "docs/build",
-    "-D",
-    f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
     "-n",  # Being nitpicky
     "-W",  # Fail when encountering an error or a warning
 ]

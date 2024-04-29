@@ -6,7 +6,6 @@ from __future__ import annotations
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 import os
 import shutil
-import sys
 
 # -- Path setup --------------------------------------------------------------
 
@@ -250,11 +249,6 @@ intersphinx_mapping = {
 # --- Options for autodoc typehints and autodoc -------------------------------
 # https://pypi.org/project/sphinx-autodoc-typehints/
 
-# For some reason, sphinx does not like it if we use the -D option to just tell it
-# that we want to include private members. We thus manually verify whether the option
-# was set.
-private_members = "True" in sys.argv[sys.argv.index("-D") + 1]
-
 # Represent typehints whenever possible.
 autodoc_typehints = "both"
 # Separate class names and init functions.
@@ -267,8 +261,6 @@ autodoc_preserve_defaults = False
 autodoc_default_options = {
     # Order by type (function, attribute...), required for proper inheritance
     "member-order": "groupwise",
-    # Include private members if this was requested
-    "private-members": private_members,
 }
 # Only show parameters that are documented.
 autodoc_typehints_description_target = "documented_params"
