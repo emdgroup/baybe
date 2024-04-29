@@ -23,7 +23,7 @@ i.e., reassembling the corresponding Python object from its serialized format.
 
 (JSON_SERIALIZATION)=
 ## JSON de-/serialization
-All BayBE objects can be conveniently serialized into an equivalent JSON 
+Most BayBE objects can be conveniently serialized into an equivalent JSON 
 representation by calling their
 {meth}`to_json <baybe.serialization.mixin.SerialMixin.to_json>` method.
 The obtained JSON string can then be deserialized via the 
