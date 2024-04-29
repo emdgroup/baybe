@@ -2,6 +2,7 @@
 
 import re
 from pathlib import Path
+from textwrap import dedent
 from typing import Union
 
 
@@ -11,10 +12,10 @@ def extract_code_blocks(
     """Extract all python code blocks from the specified file."""
     contents = Path(path).read_text()
     pattern = (
-        r"(?:```|~~~)python\s+(.*?)\s+(?:```|~~~)"
+        r"\s*(?:```|~~~)python\n*(.*?)\n*\s*(?:```|~~~)"
         if include_tilde
-        else r"```python\s+(.*?)\s+```"
+        else r"\s*```python\n*(.*?)\n*\s*```"
     )
-    code_blocks = re.findall(pattern, contents, flags=re.DOTALL)
+    code_blocks = [dedent(c) for c in re.findall(pattern, contents, flags=re.DOTALL)]
 
     return code_blocks
