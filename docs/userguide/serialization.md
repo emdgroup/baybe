@@ -100,26 +100,21 @@ assert from_json == via_init
 ```
 
 ### Using default values
-Just like default values can be omitted when working in Python ...
+Just like default values can be omitted when working in Python,
+they can be omitted from the corresponding serialization string:
 ```python
 from baybe.parameters import CategoricalParameter
 
 p1 = CategoricalParameter(name="setting", values=["low", "high"])
 p2 = CategoricalParameter(name="setting", values=["low", "high"], encoding="OHE")
 
-assert p1 == p2
-```
-... they can be omitted from the corresponding serialization string.
-```python
-from baybe.parameters import CategoricalParameter
-
-p1_str = """
+p1_json = """
 {
     "name": "setting",
     "values": ["low", "high"]
 }
 """
-p2_str = """
+p2_json = """
 {
     "name": "setting",
     "values": ["low", "high"],
@@ -127,7 +122,10 @@ p2_str = """
 }
 """
 
-assert CategoricalParameter.from_json(p1_str) == CategoricalParameter.from_json(p2_str)
+p1_from_json = CategoricalParameter.from_json(p1_json)
+p2_from_json = CategoricalParameter.from_json(p2_json)
+
+assert p1 == p1_from_json == p2 == p2_from_json 
 ```
 
 ### Automatic field conversion
