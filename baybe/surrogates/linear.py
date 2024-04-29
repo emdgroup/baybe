@@ -8,7 +8,7 @@ available in the future. Thus, please have a look in the source code directly.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from attr import define, field
 from sklearn.linear_model import ARDRegression
@@ -42,6 +42,9 @@ class BayesianLinearSurrogate(Surrogate):
         validator=get_model_params_validator(ARDRegression.__init__),
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
+
+    _model: Optional[ARDRegression] = field(init=False, default=None)
+    """The actual model."""
 
     @batchify
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:

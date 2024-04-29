@@ -8,7 +8,7 @@ available in the future. Thus, please have a look in the source code directly.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from attr import define, field
 from ngboost import NGBRegressor
@@ -45,6 +45,9 @@ class NGBoostSurrogate(Surrogate):
         validator=get_model_params_validator(NGBRegressor.__init__),
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
+
+    _model: Optional[NGBRegressor] = field(init=False, default=None)
+    """The actual model."""
 
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}

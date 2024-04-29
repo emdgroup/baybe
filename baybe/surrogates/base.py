@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define, field
+from attrs import define
 from cattrs import override
 from cattrs.dispatch import (
     StructuredValue,
@@ -50,13 +50,6 @@ class Surrogate(ABC, SerialMixin):
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
-
-    # NOTE: This attribute holds a subclass-specific object whose type and use
-    #   also depends on the particular surrogate at hand. Currently, the contained model
-    #   is assumed non-persistent and thus not considered for serialization and object
-    #   comparison via the equality operator.
-    _model: Any = field(init=False, default=None, eq=False)
-    """The actual model."""
 
     def posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """Evaluate the surrogate model at the given candidate points.
