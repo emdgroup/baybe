@@ -57,16 +57,6 @@ for long-term storage, but it also provides an easy way to "move" existing objec
 between Python sessions by executing the deserializing step in a different context
 than the serialization step.
 
-(DATAFRAME_BINARIZATION)=
-```{admonition} Dataframe serialization
-:class: attention
-Note that [`DataFrames`](pandas.DataFrame) are automatically converted to a 
-binary format before serialization to ensure type safety, which has the consequence
-that their JSON representation is not human-readable. 
-Information on how to bypass this conversion when using configuration strings can
-be found [below](DATAFRAME_DESERIALIZATION).
-```
-
 ## Deserialization from configuration strings
 The workflow described [above](#JSON_SERIALIZATION) most naturally applies to
 situations where we start inside the Python ecosystem and want to make an object
@@ -356,14 +346,25 @@ searchspace_str = """
 assert searchspace == SearchSpace.from_json(searchspace_str)
 ```
 
-(DATAFRAME_DESERIALIZATION)=
-#### Dataframe deserialization
-Note that invoking alternative construction routes also works for non-BayBE objects
-like [DataFrames](pandas.DataFrame).
-This is elegant because it allows us to resort to arbitrary constructors
+### Dataframe deserialization
+
+When serializing BayBE objects, contained [`DataFrames`](pandas.DataFrame) are 
+automatically converted to a binary format in order to
+1. ensure that the involved data types are exactly restored after completing the roundtrip and
+2. decrease the size of the serialization string through compression.
+
+From the user's perspective, this has the disadvantage that the resulting JSON
+representation is not human-readable, which can be a challenge when working
+with configuration strings.
+
+While you can manually work around this additional conversion step using our
+{func}`serialize_dataframe <baybe.serialization.utils.serialize_dataframe>` and
+{func}`deserialize_dataframe <baybe.serialization.utils.deserialize_dataframe>` helpers,
+a more elegant solution becomes apparent when noticing that invoking alternative 
+constructors also works for non-BayBE objects.
+In particular, this means you can resort to any dataframe constructor of your choice
 (such as [DataFrame.from_records](pandas.DataFrame.from_records))
-instead of having to work with 
-[human-unreadable representations](#DATAFRAME_BINARIZATION) in configuration strings: 
+when defining your configuration, instead of having to work with compressed formats:
 
 ```python
 import pandas as pd
