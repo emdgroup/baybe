@@ -15,9 +15,9 @@ Some of these workflows are demonstrated in the sections below.
 * With **serialization**, we refer to the process of breaking down structured objects
 (such as [Campaigns](baybe.campaign.Campaign)) into their fundamental building blocks
 and subsequently converting these blocks into a format usable outside the Python
-ecosystem.
+ecosystem (called a "serialization string").
 * With **deserialization**, we accordingly refer to the inverse operation,
-i.e., reassembling the corresponding Python object from its serialized format. 
+i.e., reassembling the corresponding Python object from its serialization string. 
 * With **roundtrip**, we refer to the successive execution of both steps.
 ```
 
