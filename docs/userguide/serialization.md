@@ -129,8 +129,8 @@ assert p1 == p1_from_json == p2 == p2_from_json
 ```
 
 ### Automatic field conversion
-You may have noticed that BayBE classes apply converters to their inputs so that
-simpler attribute representations can be passed.
+BayBE classes apply converters to their inputs so that simpler attribute
+representations can be passed.
 Of course, these shortcuts can be analogously used inside a configuration string.
 
 While the above holds generally true for all classes that have converters in place,
