@@ -4,9 +4,11 @@ import argparse
 import os
 import pathlib
 import shutil
-from subprocess import check_call, run
 
-from utils import adjust_pictures, create_example_documentation
+from build_documentation import build_documentation
+from build_examples import build_examples
+from check_links import check_links
+from utils import adjust_pictures
 
 from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 
@@ -14,7 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "-e",
     "--ignore_examples",
-    help="Ignore the examples and do not include them into the documentation.",
+    help="Ignore the examples by not executing them.",
     action="store_true",
 )
 parser.add_argument(
@@ -46,41 +48,13 @@ os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 # Directory where Sphinx builds the documentation
 build_dir = pathlib.Path("docs/build")
 
-# The call for checking external links.
-link_call = [
-    "sphinx-build",
-    "-b",
-    "linkcheck",
-    "docs",
-    build_dir,
-]
-# The actual call that will be made to build the documentation
-building_call = [
-    "sphinx-build",
-    "-b",
-    "html",
-    "docs",
-    build_dir,
-    "-n",  # Being nitpicky
-    "-W",  # Fail when encountering an error or a warning
-]
 
 # Process examples if required.
 # Note that ignoring of examples now happens by simply not executing them.
-create_example_documentation(
-    example_dest_dir="docs/examples", ignore_examples=IGNORE_EXAMPLES
-)
+build_examples(example_dest_dir="docs/examples", ignore_examples=IGNORE_EXAMPLES)
 
-
-if FORCE:
-    print("Force-building the documentation, ignoring errors and warnings.")
-    # In force mode, we do not want to fail, even if an error code is returned.
-    # Hence, we use run instead of check_call
-    run(link_call, check=False)
-    run(building_call + ["--keep-going"], check=False)
-else:
-    check_call(link_call)
-    check_call(building_call)
+check_links(force=FORCE)
+build_documentation(force=FORCE)
 
 # Adjust the banner in the index and the README
 adjust_pictures(
