@@ -63,16 +63,30 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         * There is only one target and the standard deviation cannot even be computed.
 
     The modified class handles the above cases separately from "regular operation"
-    by resorting to a :class:`baybe.surrogates.naive.MeanPredictionSurrogate`.
+    by resorting to a :class:`baybe.surrogates.naive.MeanPredictionSurrogate`,
+    which is stored as an additional temporary attribute in its objects.
 
     Args:
         cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
         std_threshold: The standard deviation threshold below which operation is
             switched to the alternative model.
 
+    Raises:
+        ValueError: If the class already contains an attribute with the same name
+            as the temporary attribute to be added.
+
     Returns:
         The modified class.
     """
+    # Name of the attribute added to store the alternative model
+    attr_name = "_constant_target_model"
+
+    if attr_name in (attr.name for attr in cls.__attrs_attrs__):
+        raise ValueError(
+            f"Cannot apply '{catch_constant_targets.__name__}' because "
+            f"'{cls.__name__}' already has an attribute '{attr_name}' defined."
+        )
+
     from baybe.surrogates.naive import MeanPredictionSurrogate
 
     # References to original methods
@@ -81,8 +95,8 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
     def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # Alternative model fallback
-        if isinstance(self._model, MeanPredictionSurrogate):
-            return self._model._posterior(candidates)
+        if hasattr(self, attr_name):
+            return getattr(self, attr_name)._posterior(candidates)
 
         # Regular operation
         return _posterior_original(self, candidates)
@@ -97,11 +111,20 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
         # Alternative model fallback
         if train_y.numel() == 1 or train_y.std() < std_threshold:
-            self._model = MeanPredictionSurrogate()
-            self._model._fit(searchspace, train_x, train_y)
+            model = MeanPredictionSurrogate()
+            model._fit(searchspace, train_x, train_y)
+            try:
+                setattr(self, attr_name, model)
+            except AttributeError as ex:
+                raise TypeError(
+                    f"'{catch_constant_targets.__name__}' is only applicable to "
+                    f"non-slotted classes but '{cls.__name__}' is a slotted class."
+                ) from ex
 
         # Regular operation
         else:
+            if hasattr(self, attr_name):
+                delattr(self, attr_name)
             _fit_original(self, searchspace, train_x, train_y)
 
     # Replace the methods
