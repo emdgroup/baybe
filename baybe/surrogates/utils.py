@@ -137,36 +137,52 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 def autoscale(cls: type[Surrogate]):
     """Make a ``Surrogate`` class automatically scale the domain it operates on.
 
-    More specifically, the modified class transforms its inputs before operation and
-    untransforms results before returning them.
+    More specifically, the modified class transforms its inputs before processing them
+    and untransforms the results before returning them. The fitted scaler used for these
+    transformations is stored in the class' objects as an additional temporary
+    attribute.
 
     Args:
         cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
 
+    Raises:
+        ValueError: If the class already contains an attribute with the same name
+            as the temporary attribute to be added.
+
     Returns:
         The modified class.
     """
+    # Name of the attribute added to store the scaler
+    attr_name = "_autoscaler"
+
+    if attr_name in (attr.name for attr in cls.__attrs_attrs__):
+        raise ValueError(
+            f"Cannot apply '{autoscale.__name__}' because "
+            f"'{cls.__name__}' already has an attribute '{attr_name}' defined."
+        )
+
     # References to original methods
     _fit_original = cls._fit
     _posterior_original = cls._posterior
 
     def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-        candidates = self._autoscaler.transform(candidates)
-        mean, covar = _posterior_original(self, candidates)
-        return self._autoscaler.untransform(mean, covar)
+        scaled = getattr(self, attr_name).transform(candidates)
+        mean, covar = _posterior_original(self, scaled)
+        return getattr(self, attr_name).untransform(mean, covar)
 
     def _fit_new(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> None:
+        scaler = DefaultScaler(searchspace.discrete.comp_rep)
+        scaled_x, scaled_y = scaler.fit_transform(train_x, train_y)
         try:
-            self._autoscaler = DefaultScaler(searchspace.discrete.comp_rep)
+            setattr(self, attr_name, scaler)
         except AttributeError as ex:
             raise TypeError(
-                f"'{autoscale.__name__}' is only applicable to non-slotted classes "
-                f"but '{cls.__name__}' is a slotted class."
+                f"'{autoscale.__name__}' is only applicable to "
+                f"non-slotted classes but '{cls.__name__}' is a slotted class."
             ) from ex
-        train_x, train_y = self._autoscaler.fit_transform(train_x, train_y)
-        _fit_original(self, searchspace, train_x, train_y)
+        _fit_original(self, searchspace, scaled_x, scaled_y)
 
     # Replace the methods
     cls._posterior = _posterior_new
