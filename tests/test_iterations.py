@@ -5,6 +5,14 @@
 import pytest
 
 from baybe.acquisition.base import AcquisitionFunction
+from baybe.kernels.priors import (
+    GammaPrior,
+    HalfCauchyPrior,
+    HalfNormalPrior,
+    LogNormalPrior,
+    NormalPrior,
+    SmoothedBoxPrior,
+)
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
@@ -113,6 +121,15 @@ valid_hybrid_recommenders.extend(valid_hybrid_sequential_greedy_recommenders)
 
 valid_meta_recommenders = get_subclasses(MetaRecommender)
 
+valid_priors = [
+    GammaPrior(3, 1),
+    HalfCauchyPrior(2),
+    HalfNormalPrior(2),
+    LogNormalPrior(1, 2),
+    NormalPrior(1, 2),
+    SmoothedBoxPrior(0, 3, 0.1),
+]
+
 test_targets = [
     ["Target_max"],
     ["Target_min"],
@@ -146,7 +163,20 @@ def test_iter_nonmc_acquisition_function(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("surrogate_model", valid_surrogate_models)
+@pytest.mark.parametrize(
+    "lengthscale_prior", valid_priors, ids=[c.__class__ for c in valid_priors]
+)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+def test_iter_prior(campaign, n_iterations, batch_size):
+    run_iterations(campaign, n_iterations, batch_size)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "surrogate_model",
+    valid_surrogate_models,
+    ids=[c.__class__ for c in valid_surrogate_models],
+)
 def test_iter_surrogate_model(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 

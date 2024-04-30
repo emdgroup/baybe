@@ -27,6 +27,8 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.exceptions import OptionalImportError
+from baybe.kernels import MaternKernel
+from baybe.kernels.priors import GammaPrior
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters import (
@@ -600,12 +602,24 @@ def fixture_default_acquisition_function():
     return qExpectedImprovement()
 
 
+@pytest.fixture(name="lengthscale_prior")
+def fixture_default_lengthscale_prior():
+    """The default lengthscale prior to be used if not specified differently."""
+    return GammaPrior(3, 1)
+
+
+@pytest.fixture(name="kernel")
+def fixture_default_kernel(lengthscale_prior):
+    """The default kernel to be used if not specified differently."""
+    return MaternKernel(nu=5 / 2, lengthscale_prior=lengthscale_prior)
+
+
 @pytest.fixture(name="surrogate_model")
-def fixture_default_surrogate_model(request, onnx_surrogate):
+def fixture_default_surrogate_model(request, onnx_surrogate, kernel):
     """The default surrogate model to be used if not specified differently."""
     if hasattr(request, "param") and request.param == "onnx":
         return onnx_surrogate
-    return GaussianProcessSurrogate()
+    return GaussianProcessSurrogate(kernel=kernel)
 
 
 @pytest.fixture(name="initial_recommender")
