@@ -66,7 +66,7 @@ rather specify a BayBE object **outside** Python for use in a later computation.
 Common examples are when we wish to interact with an API or simply want to persist 
 a certain BayBE component in the form of a "configuration" file.
 
-The following sections given an overview of the flexibilities that are offered for this
+The following sections give an overview of the flexibilities that are offered for this
 task. Of course, the underlying concepts can be mixed and matched arbitrarily.
 
 ### Basic string assembly
@@ -304,7 +304,7 @@ and a [continuous subspace](baybe.searchspace.continuous.SubspaceContinuous),
 which are accordingly expected by the 
 [`SearchSpace`](baybe.searchspace.core.SearchSpace.__init__) constructor.
 However, instead of providing the two components directly, most users would more
-naturally invoke one of the alternative `classmethods` available, such as
+naturally invoke one of the alternative class methods available, such as
 {meth}`SearchSpace.from_product <baybe.searchspace.core.SearchSpace.from_product>` or 
 {meth}`SearchSpace.from_dataframe <baybe.searchspace.core.SearchSpace.from_dataframe>`.
 
@@ -361,7 +361,7 @@ While you can manually work around this additional conversion step using our
 a more elegant solution becomes apparent when noticing that invoking alternative 
 constructors also works for non-BayBE objects.
 In particular, this means you can resort to any dataframe constructor of your choice
-(such as [DataFrame.from_records](pandas.DataFrame.from_records))
+(such as {meth}`DataFrame.from_records <pandas.DataFrame.from_records>`)
 when defining your configuration, instead of having to work with compressed formats:
 
 ```python

@@ -1,4 +1,11 @@
-"""Deserialization tests."""
+"""Deserialization tests.
+
+The purpose of these tests is to ensure that deserialization works for all possible ways
+in which type information can be provided.
+
+NOTE: The tests are based on `AcquisitionFunction` simply because the class provides the
+    `abbreviation` variable that is necessary for the tests.
+"""
 
 import pytest
 from pytest import param
