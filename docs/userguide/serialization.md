@@ -60,7 +60,7 @@ than the serialization step.
 ## Deserialization from configuration strings
 The workflow described [above](#JSON_SERIALIZATION) most naturally applies to
 situations where we start inside the Python ecosystem and want to make an object
-"leave" the running session. 
+leave the running session. 
 However, in many cases, we would like to kickstart the process from the other end and
 rather specify a BayBE object **outside** Python for use in a later computation.
 Common examples are when we wish to interact with an API or simply want to persist 
