@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from baybe.objectives.base import Objective
 
 
-def structure_objective(val: dict, cls) -> Objective:
+def structure_objective(val: dict, cls: type) -> Objective:
     """A structure hook that automatically determines an objective fallback type."""  # noqa: D401 (imperative mood)
     from baybe.objective import Objective as OldObjective
     from baybe.objectives.base import Objective
