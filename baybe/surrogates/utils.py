@@ -79,12 +79,13 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         The modified class.
     """
     # Name of the attribute added to store the alternative model
-    attr_name = "_constant_target_model"
+    injected_model_attr_name = "_constant_target_model"
 
-    if attr_name in (attr.name for attr in cls.__attrs_attrs__):
+    if injected_model_attr_name in (attr.name for attr in cls.__attrs_attrs__):
         raise ValueError(
             f"Cannot apply '{catch_constant_targets.__name__}' because "
-            f"'{cls.__name__}' already has an attribute '{attr_name}' defined."
+            f"'{cls.__name__}' already has an attribute '{injected_model_attr_name}' "
+            f"defined."
         )
 
     from baybe.surrogates.naive import MeanPredictionSurrogate
@@ -95,8 +96,8 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
     def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # Alternative model fallback
-        if hasattr(self, attr_name):
-            return getattr(self, attr_name)._posterior(candidates)
+        if hasattr(self, injected_model_attr_name):
+            return getattr(self, injected_model_attr_name)._posterior(candidates)
 
         # Regular operation
         return _posterior_original(self, candidates)
@@ -114,7 +115,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
             model = MeanPredictionSurrogate()
             model._fit(searchspace, train_x, train_y)
             try:
-                setattr(self, attr_name, model)
+                setattr(self, injected_model_attr_name, model)
             except AttributeError as ex:
                 raise TypeError(
                     f"'{catch_constant_targets.__name__}' is only applicable to "
@@ -123,8 +124,8 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
         # Regular operation
         else:
-            if hasattr(self, attr_name):
-                delattr(self, attr_name)
+            if hasattr(self, injected_model_attr_name):
+                delattr(self, injected_model_attr_name)
             _fit_original(self, searchspace, train_x, train_y)
 
     # Replace the methods
@@ -153,12 +154,13 @@ def autoscale(cls: type[Surrogate]):
         The modified class.
     """
     # Name of the attribute added to store the scaler
-    attr_name = "_autoscaler"
+    injected_scaler_attr_name = "_autoscaler"
 
-    if attr_name in (attr.name for attr in cls.__attrs_attrs__):
+    if injected_scaler_attr_name in (attr.name for attr in cls.__attrs_attrs__):
         raise ValueError(
             f"Cannot apply '{autoscale.__name__}' because "
-            f"'{cls.__name__}' already has an attribute '{attr_name}' defined."
+            f"'{cls.__name__}' already has an attribute '{injected_scaler_attr_name}' "
+            f"defined."
         )
 
     # References to original methods
@@ -166,9 +168,9 @@ def autoscale(cls: type[Surrogate]):
     _posterior_original = cls._posterior
 
     def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-        scaled = getattr(self, attr_name).transform(candidates)
+        scaled = getattr(self, injected_scaler_attr_name).transform(candidates)
         mean, covar = _posterior_original(self, scaled)
-        return getattr(self, attr_name).untransform(mean, covar)
+        return getattr(self, injected_scaler_attr_name).untransform(mean, covar)
 
     def _fit_new(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
@@ -176,7 +178,7 @@ def autoscale(cls: type[Surrogate]):
         scaler = DefaultScaler(searchspace.discrete.comp_rep)
         scaled_x, scaled_y = scaler.fit_transform(train_x, train_y)
         try:
-            setattr(self, attr_name, scaler)
+            setattr(self, injected_scaler_attr_name, scaler)
         except AttributeError as ex:
             raise TypeError(
                 f"'{autoscale.__name__}' is only applicable to "
