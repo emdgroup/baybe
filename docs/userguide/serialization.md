@@ -161,7 +161,7 @@ providing a few specific example may help to convey the concept:
     assert t1 == t2 == t3
     ```
 
-### The `type` field
+### The type field
 Due to the leading design philosophy behind BayBE to provide its users easy access
 to a broad range of tools, you typically have the choice between several modelling 
 alternatives when building your objects.
