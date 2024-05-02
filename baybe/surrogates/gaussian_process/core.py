@@ -2,18 +2,50 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
-from attr import define, field
+from attrs import define, field
+from attrs.validators import instance_of
 
 from baybe.kernels import MaternKernel, ScaleKernel
 from baybe.kernels.base import Kernel
 from baybe.priors import GammaPrior
 from baybe.searchspace import SearchSpace
+from baybe.serialization.core import (
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
+from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
 
 if TYPE_CHECKING:
     from torch import Tensor
+
+
+class KernelFactory(Protocol):
+    """A protocol defining the interface expected for kernel factories."""
+
+    def __call__(self, searchspace: SearchSpace) -> Kernel:
+        """Create a :class:`baybe.kernels.base.Kernel` for the given :class:`baybe.searchspace.core.SearchSpace`."""  # noqa: E501
+        ...
+
+
+# Register de-/serialization hooks
+converter.register_structure_hook(KernelFactory, get_base_structure_hook(KernelFactory))
+converter.register_unstructure_hook(KernelFactory, unstructure_base)
+
+
+@define(frozen=True)
+class PlainKernelFactory(KernelFactory, SerialMixin):
+    """A trivial factory that returns a fixed pre-defined kernel upon request."""
+
+    kernel: Kernel = field(validator=instance_of(Kernel))
+
+    def __call__(self, searchspace: SearchSpace) -> Kernel:  # noqa: D102
+        # See base class.
+
+        return self.kernel
 
 
 @define
@@ -28,8 +60,10 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    kernel: Optional[Kernel] = field(default=None)
-    """The kernel used by the Gaussian Process."""
+    kernel_factory: KernelFactory = field(
+        factory=lambda: PlainKernelFactory(ScaleKernel(MaternKernel()))
+    )
+    """The factory used to create the kernel of the Gaussian process."""
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
@@ -106,19 +140,8 @@ class GaussianProcessSurrogate(Surrogate):
         # create GP mean
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
-        # If no kernel is provided, we construct one from our priors
-        if self.kernel is None:
-            self.kernel = ScaleKernel(
-                base_kernel=MaternKernel(
-                    lengthscale_prior=lengthscale_prior[0],
-                    lengthscale_initial_value=lengthscale_prior[1],
-                ),
-                outputscale_prior=outputscale_prior[0],
-                outputscale_initial_value=outputscale_prior[1],
-            )
-
         # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel.to_gpytorch(
+        base_covar_module = self.kernel_factory(searchspace).to_gpytorch(
             ard_num_dims=train_x.shape[-1] - n_task_params,
             active_dims=numeric_idxs,
             batch_shape=batch_shape,
