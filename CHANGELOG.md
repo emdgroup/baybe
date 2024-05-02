@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `torch`, `gpytorch` and `botorch` are lazy-loaded for improved startup time
 - If an exception is encountered during simulation, incomplete results are returned 
   with a warning instead of passing through the uncaught exception
+- Environment variables `BAYBE_NUMPY_USE_SINGLE_PRECISION` and
+  `BAYBE_TORCH_USE_SINGLE_PRECISION` to enforce single point precision usage
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and
