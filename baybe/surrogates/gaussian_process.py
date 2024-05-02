@@ -33,7 +33,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
-    _model = field(init=False, default=None)
+    _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:

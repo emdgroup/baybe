@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, Callable
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
@@ -12,8 +12,6 @@ if TYPE_CHECKING:
     from torch import Tensor
 
     from baybe.surrogates.base import Surrogate
-
-_MIN_TARGET_STD = 1e-6
 
 
 def _prepare_inputs(x: Tensor) -> Tensor:
@@ -57,156 +55,142 @@ def _prepare_targets(y: Tensor) -> Tensor:
     return y.to(DTypeFloatTorch)
 
 
-def catch_constant_targets(model_cls: type[Surrogate]):
-    """Wrap a ``Surrogate`` class that cannot handle constant training target values.
+def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
+    """Make a ``Surrogate`` class robustly handle constant training targets.
 
-    In the wrapped class, these cases are handled by a separate model type.
+    More specifically, "constant training targets" can mean either of:
+        * The standard deviation of the training targets is below the given threshold.
+        * There is only one target and the standard deviation cannot even be computed.
 
-    Args:
-        model_cls: A ``Surrogate`` class that should be wrapped.
-
-    Returns:
-        A wrapped version of the class.
-    """
-
-    class SplitModel(*model_cls.__bases__):
-        """The class that is used for wrapping.
-
-        It applies a separate recommender for cases where the training
-        targets are all constant and no variance can be estimated.
-
-        It stores an instance of the underlying model class.
-        """
-
-        # The posterior mode is chosen to match that of the wrapped model class
-        joint_posterior: ClassVar[bool] = model_cls.joint_posterior
-        # See base class.
-
-        def __init__(self, *args, **kwargs):
-            super().__init__()
-            self.model = model_cls(*args, **kwargs)
-            self.__class__.__name__ = self.model.__class__.__name__
-
-        def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-            """Call the posterior function of the internal model instance."""
-            import torch
-
-            mean, var = self.model._posterior(candidates)
-
-            # If a joint posterior is expected but the model has been overridden by one
-            # that does not provide covariance information, construct a diagonal
-            # covariance matrix
-            if self.joint_posterior and not self.model.joint_posterior:
-                # Convert to tensor containing covariance matrices
-                var = torch.diag_embed(var)
-
-            return mean, var
-
-        def _fit(
-            self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-        ) -> None:
-            """Select a model based on the variance of the targets and fits it."""
-            import torch
-
-            from baybe.surrogates.naive import MeanPredictionSurrogate
-
-            # https://github.com/pytorch/pytorch/issues/29372
-            # Needs 'unbiased=False' (otherwise, the result will be NaN for scalars)
-            if torch.std(train_y.ravel(), unbiased=False) < _MIN_TARGET_STD:
-                self.model = MeanPredictionSurrogate()
-
-            # Fit the selected model with the training data
-            self.model.fit(searchspace, train_x, train_y)
-
-        def __getattribute__(self, attr):
-            """Access the attributes of the class instance if available.
-
-            If the attributes are not available, it uses the attributes of the internal
-            model instance.
-            """
-            # Try to retrieve the attribute in the class
-            try:
-                val = super().__getattribute__(attr)
-            except AttributeError:
-                pass
-            else:
-                return val
-
-            # If the attribute has not been overwritten, use that of the internal model
-            return self.model.__getattribute__(attr)
-
-    # Wrapping a class using a decorator does not transfer the doc, resulting in the
-    # autodocumentation not showing the correct docstring. We thus need to manually
-    # assign the docstring of the class.
-    SplitModel.__doc__ = model_cls.__doc__
-    return SplitModel
-
-
-def scale_model(model_cls: type[Surrogate]):
-    """Wrap a ``Surrogate`` class such that it operates with scaled representations.
+    The modified class handles the above cases separately from "regular operation"
+    by resorting to a :class:`baybe.surrogates.naive.MeanPredictionSurrogate`,
+    which is stored as an additional temporary attribute in its objects.
 
     Args:
-        model_cls: A ``Surrogate`` model class that should be wrapped.
+        cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
+        std_threshold: The standard deviation threshold below which operation is
+            switched to the alternative model.
+
+    Raises:
+        ValueError: If the class already contains an attribute with the same name
+            as the temporary attribute to be added.
 
     Returns:
-        A wrapped version of the class.
+        The modified class.
     """
+    # Name of the attribute added to store the alternative model
+    injected_model_attr_name = "_constant_target_model"
 
-    class ScaledModel(*model_cls.__bases__):
-        """Overrides the methods of the given model class such the use scaled data.
+    if injected_model_attr_name in (attr.name for attr in cls.__attrs_attrs__):
+        raise ValueError(
+            f"Cannot apply '{catch_constant_targets.__name__}' because "
+            f"'{cls.__name__}' already has an attribute '{injected_model_attr_name}' "
+            f"defined."
+        )
 
-        It stores an instance of the underlying model class and a scalar object.
-        """
+    from baybe.surrogates.naive import MeanPredictionSurrogate
 
-        # The posterior mode is chosen to match that of the wrapped model class
-        joint_posterior: ClassVar[bool] = model_cls.joint_posterior
-        # See base class.
+    # References to original methods
+    _fit_original = cls._fit
+    _posterior_original = cls._posterior
 
-        def __init__(self, *args, **kwargs):
-            self.model = model_cls(*args, **kwargs)
-            self.__class__.__name__ = self.model.__class__.__name__
-            self.scaler = None
+    def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+        # Alternative model fallback
+        if hasattr(self, injected_model_attr_name):
+            return getattr(self, injected_model_attr_name)._posterior(candidates)
 
-        def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-            """Call the posterior function of the internal model instance.
+        # Regular operation
+        return _posterior_original(self, candidates)
 
-            This call is made on a scaled version of the test data and rescales the
-            output accordingly.
-            """
-            candidates = self.scaler.transform(candidates)
-            mean, covar = self.model._posterior(candidates)
-            return self.scaler.untransform(mean, covar)
+    def _fit_new(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> None:
+        if not (train_y.ndim == 2 and train_y.shape[-1] == 1):
+            raise NotImplementedError(
+                "The current logic is only implemented for single-target surrogates."
+            )
 
-        def _fit(
-            self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-        ) -> None:
-            """Fits the scaler and the model using the scaled training data."""
-            self.scaler = DefaultScaler(searchspace.discrete.comp_rep)
-            train_x, train_y = self.scaler.fit_transform(train_x, train_y)
-            self.model.fit(searchspace, train_x, train_y)
-
-        def __getattribute__(self, attr):
-            """Access the attributes of the class instance if available.
-
-            If the attributes are not available, it uses the attributes of the internal
-            model instance.
-            """
-            # Try to retrieve the attribute in the class
+        # Alternative model fallback
+        if train_y.numel() == 1 or train_y.std() < std_threshold:
+            model = MeanPredictionSurrogate()
+            model._fit(searchspace, train_x, train_y)
             try:
-                val = super().__getattribute__(attr)
-            except AttributeError:
-                pass
-            else:
-                return val
+                setattr(self, injected_model_attr_name, model)
+            except AttributeError as ex:
+                raise TypeError(
+                    f"'{catch_constant_targets.__name__}' is only applicable to "
+                    f"non-slotted classes but '{cls.__name__}' is a slotted class."
+                ) from ex
 
-            # If the attribute has not been overwritten, use that of the internal model
-            return self.model.__getattribute__(attr)
+        # Regular operation
+        else:
+            if hasattr(self, injected_model_attr_name):
+                delattr(self, injected_model_attr_name)
+            _fit_original(self, searchspace, train_x, train_y)
 
-    # Wrapping a class using a decorator does not transfer the doc, resulting in the
-    # autodocumentation not showing the correct docstring. We thus need to manually
-    # assign the docstring of the class.
-    ScaledModel.__doc__ = model_cls.__doc__
-    return ScaledModel
+    # Replace the methods
+    cls._posterior = _posterior_new
+    cls._fit = _fit_new
+
+    return cls
+
+
+def autoscale(cls: type[Surrogate]):
+    """Make a ``Surrogate`` class automatically scale the domain it operates on.
+
+    More specifically, the modified class transforms its inputs before processing them
+    and untransforms the results before returning them. The fitted scaler used for these
+    transformations is stored in the class' objects as an additional temporary
+    attribute.
+
+    Args:
+        cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
+
+    Raises:
+        ValueError: If the class already contains an attribute with the same name
+            as the temporary attribute to be added.
+
+    Returns:
+        The modified class.
+    """
+    # Name of the attribute added to store the scaler
+    injected_scaler_attr_name = "_autoscaler"
+
+    if injected_scaler_attr_name in (attr.name for attr in cls.__attrs_attrs__):
+        raise ValueError(
+            f"Cannot apply '{autoscale.__name__}' because "
+            f"'{cls.__name__}' already has an attribute '{injected_scaler_attr_name}' "
+            f"defined."
+        )
+
+    # References to original methods
+    _fit_original = cls._fit
+    _posterior_original = cls._posterior
+
+    def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+        scaled = getattr(self, injected_scaler_attr_name).transform(candidates)
+        mean, covar = _posterior_original(self, scaled)
+        return getattr(self, injected_scaler_attr_name).untransform(mean, covar)
+
+    def _fit_new(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> None:
+        scaler = DefaultScaler(searchspace.discrete.comp_rep)
+        scaled_x, scaled_y = scaler.fit_transform(train_x, train_y)
+        try:
+            setattr(self, injected_scaler_attr_name, scaler)
+        except AttributeError as ex:
+            raise TypeError(
+                f"'{autoscale.__name__}' is only applicable to "
+                f"non-slotted classes but '{cls.__name__}' is a slotted class."
+            ) from ex
+        _fit_original(self, searchspace, scaled_x, scaled_y)
+
+    # Replace the methods
+    cls._posterior = _posterior_new
+    cls._fit = _fit_new
+
+    return cls
 
 
 def batchify(
@@ -225,7 +209,9 @@ def batchify(
     """
 
     @wraps(posterior)
-    def sequential_posterior(model: Surrogate, candidates: Tensor) -> [Tensor, Tensor]:
+    def sequential_posterior(
+        model: Surrogate, candidates: Tensor
+    ) -> tuple[Tensor, Tensor]:
         """Replace the posterior function by one that processes batches sequentially.
 
         Args:

@@ -2,29 +2,33 @@
 
 from __future__ import annotations
 
-import gc
-import sys
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define
+from cattrs import override
+from cattrs.dispatch import (
+    StructuredValue,
+    StructureHook,
+    TargetType,
+    UnstructuredValue,
+    UnstructureHook,
+)
 
 from baybe.searchspace import SearchSpace
-from baybe.serialization import SerialMixin, converter, unstructure_base
+from baybe.serialization.core import (
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
+from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
-from baybe.utils.basic import get_subclasses
 
 if TYPE_CHECKING:
     from torch import Tensor
 
 # Define constants
 _MIN_VARIANCE = 1e-6
-_WRAPPER_MODELS = (
-    "SplitModel",
-    "ScaledModel",
-    "CustomArchitectureSurrogate",
-    "CustomONNXSurrogate",
-)
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -140,7 +144,7 @@ class Surrogate(ABC, SerialMixin):
         train_x = _prepare_inputs(train_x)
         train_y = _prepare_targets(train_y)
 
-        return self._fit(searchspace, train_x, train_y)
+        self._fit(searchspace, train_x, train_y)
 
     @abstractmethod
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
@@ -154,20 +158,37 @@ class Surrogate(ABC, SerialMixin):
         """
 
 
-def _decode_onnx_str(raw_unstructure_hook):
-    """Decode ONNX string for serialization purposes."""
+def _make_hook_decode_onnx_str(
+    raw_unstructure_hook: UnstructureHook
+) -> UnstructureHook:
+    """Wrap an unstructuring hook to let it also decode the contained ONNX string."""
 
-    def wrapper(obj):
-        dict_ = raw_unstructure_hook(obj)
-        if "onnx_str" in dict_:
-            dict_["onnx_str"] = dict_["onnx_str"].decode(_ONNX_ENCODING)
+    def wrapper(obj: StructuredValue) -> UnstructuredValue:
+        dct = raw_unstructure_hook(obj)
+        if "onnx_str" in dct:
+            dct["onnx_str"] = dct["onnx_str"].decode(_ONNX_ENCODING)
 
-        return dict_
+        return dct
 
     return wrapper
 
 
-def _block_serialize_custom_architecture(raw_unstructure_hook):
+def _make_hook_encode_onnx_str(raw_structure_hook: StructureHook) -> StructureHook:
+    """Wrap a structuring hook to let it also encode the contained ONNX string."""
+
+    def wrapper(dct: UnstructuredValue, _: TargetType) -> StructuredValue:
+        if (onnx_str := dct.get("onnx_str")) and isinstance(onnx_str, str):
+            dct["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
+        obj = raw_structure_hook(dct, _)
+
+        return obj
+
+    return wrapper
+
+
+def _block_serialize_custom_architecture(
+    raw_unstructure_hook: UnstructureHook
+) -> UnstructureHook:
     """Raise error if attempt to serialize a custom architecture surrogate."""
     # TODO: Ideally, this hook should be removed and unstructuring the Surrogate
     #   base class should automatically invoke the blocking hook that is already
@@ -177,7 +198,7 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
     #   because the role of the subclass will probably be replaced with a surrogate
     #   protocol.
 
-    def wrapper(obj):
+    def wrapper(obj: StructuredValue) -> UnstructuredValue:
         if obj.__class__.__name__ == "CustomArchitectureSurrogate":
             raise NotImplementedError(
                 "Serializing objects of type 'CustomArchitectureSurrogate' "
@@ -189,71 +210,19 @@ def _block_serialize_custom_architecture(raw_unstructure_hook):
     return wrapper
 
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Temporary workaround >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def _structure_surrogate(val, _):
-    """Structure a surrogate model."""
-    # TODO [15436]
-    # https://***REMOVED***/_boards/board/t/SDK%20Devs/Features/?workitem=15436
-
-    # NOTE:
-    # Due to above issue,
-    # it is difficult to find the wrapped class in the subclass structure.
-    # The renaming only happens in the init method of wrapper classes
-    # (classes that haven't been initialized won't have the overwritten name)
-    # Since any method revolving `cls()` will not work as expected,
-    # we rely temporarily on `getattr` to allow the wrappers to be called on demand.
-
-    _type = val["type"]
-
-    cls = getattr(sys.modules[__package__], _type, None)
-    # cls = getattr(baybe.surrogates, ...) if used in another module
-
-    if cls is None:
-        raise ValueError(f"Unknown subclass {_type}.")
-
-    # NOTE:
-    # This is a workaround for onnx str type being `str` or `bytes`
-    onnx_str = val.get("onnx_str", None)
-    if onnx_str and isinstance(onnx_str, str):
-        val["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
-
-    return converter.structure_attrs_fromdict(val, cls)
-
-
-def get_available_surrogates() -> list[type[Surrogate]]:
-    """List all available surrogate models.
-
-    Returns:
-        A list of available surrogate classes.
-    """
-    # List available names
-    available_names = {
-        cl.__name__
-        for cl in get_subclasses(Surrogate)
-        if cl.__name__ not in _WRAPPER_MODELS
-    }
-
-    # Convert them to classes
-    available_classes = [
-        getattr(sys.modules[__package__], mdl_name, None)
-        for mdl_name in available_names
-    ]
-
-    # TODO: The initialization of the classes is currently necessary for the renaming
-    #  to take place (see [15436] and NOTE in `structure_surrogate`).
-    [cl() for cl in available_classes if cl is not None]
-
-    return [cl for cl in available_classes if cl is not None]
-
-
 # Register (un-)structure hooks
-# TODO: Needs to be refactored
+# IMPROVE: Ideally, the ONNX-specific hooks should simply be registered with the ONNX
+#   class, which would avoid the nested wrapping below. However, this requires
+#   adjusting the base class (un-)structure hooks such that they consistently apply
+#   existing hooks of the concrete subclasses.
 converter.register_unstructure_hook(
     Surrogate,
-    _decode_onnx_str(_block_serialize_custom_architecture(unstructure_base)),
+    _make_hook_decode_onnx_str(
+        _block_serialize_custom_architecture(
+            lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
+        )
+    ),
 )
-converter.register_structure_hook(Surrogate, _structure_surrogate)
-
-# Related to [15436]
-gc.collect()
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Temporary workaround <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+converter.register_structure_hook(
+    Surrogate, _make_hook_encode_onnx_str(get_base_structure_hook(Surrogate))
+)

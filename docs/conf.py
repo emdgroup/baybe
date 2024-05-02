@@ -8,10 +8,6 @@ import os
 import shutil
 import sys
 
-# We need to "trick" sphinx due to it thinking that decorated classes are just aliases
-# We thus need to import and later define some specific names
-from baybe.surrogates import get_available_surrogates
-
 # -- Path setup --------------------------------------------------------------
 
 __location__ = os.path.dirname(__file__)
@@ -284,10 +280,8 @@ typehints_use_signature = True
 
 
 # This function enables us to hook into the internal sphinx processes
-# These allow us to change docstrings (resp. how they are processed) which is currently
-# necessary for properly rendering the surrogates
+# These allow us to change docstrings (resp. how they are processed)
 def setup(app):  # noqa: D103
-    get_available_surrogates()
     app.connect("autodoc-process-docstring", autodoc_process_docstring)
 
 
