@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GammaPrior`, `HalfCauchyPrior`, `NormalPrior`, `HalfNormalPrior`, `LogNormalPrior`
   and `SmoothedBoxPrior` can now be chosen as lengthscale prior
 - Environment variables user guide
+- Utility for estimated search space memory consumption based on parameter lists
 
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
