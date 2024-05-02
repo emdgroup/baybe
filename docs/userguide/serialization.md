@@ -87,13 +87,13 @@ We specify these accordingly as separate fields in the JSON string:
 ```python
 from baybe.parameters import CategoricalParameter
 
-parameter_str = """
+parameter_json = """
 {
     "name": "Setting",
     "values": ["low", "high"]
 }
 """
-via_json = CategoricalParameter.from_json(parameter_str)
+via_json = CategoricalParameter.from_json(parameter_json)
 via_init = CategoricalParameter(name="Setting", values=["low", "high"])
 
 assert via_json == via_init
@@ -178,7 +178,7 @@ both
 {meth}`CategoricalParameter <baybe.parameters.categorical.CategoricalParameter.__init__>` and 
 {meth}`TaskParameter <baybe.parameters.categorical.TaskParameter.__init__>`:
 ```python
-parameter_str = """
+parameter_json = """
 {
     "name": "Setting",
     "values": ["low", "high"]
@@ -204,7 +204,7 @@ from baybe.parameters.base import Parameter
 from baybe.parameters import CategoricalParameter, TaskParameter
 
 categorical_parameter = CategoricalParameter(name="Setting", values=["low", "high"])
-categorical_parameter_str = """
+categorical_parameter_json = """
 {
     "type": "CategoricalParameter",
     "name": "Setting",
@@ -212,11 +212,11 @@ categorical_parameter_str = """
 }
 """
 # NOTE: we can use `Parameter.from_json` instead of `CategoricalParameter.from_json`:
-categorical_parameter_reconstructed = Parameter.from_json(categorical_parameter_str)
+categorical_parameter_reconstructed = Parameter.from_json(categorical_parameter_json)
 assert categorical_parameter == categorical_parameter_reconstructed
 
 task_parameter = TaskParameter(name="Setting", values=["low", "high"])
-task_parameter_str = """
+task_parameter_json = """
 {
     "type": "TaskParameter",
     "name": "Setting",
@@ -224,7 +224,7 @@ task_parameter_str = """
 }
 """
 # NOTE: we can use `Parameter.from_json` instead of `TaskParameter.from_json`:
-task_parameter_reconstructed = Parameter.from_json(task_parameter_str)
+task_parameter_reconstructed = Parameter.from_json(task_parameter_json)
 assert task_parameter == task_parameter_reconstructed
 ```
 
@@ -269,7 +269,7 @@ objective = DesirabilityObjective(
     scalarizer="MEAN",
 )
 
-objective_str = """
+objective_json = """
 {   
     "targets": [
         {
@@ -290,7 +290,7 @@ objective_str = """
 }
 """
 
-assert objective == DesirabilityObjective.from_json(objective_str)
+assert objective == DesirabilityObjective.from_json(objective_json)
 ```
 
 (ALTERNATIVE_CONSTRUCTORS)=
@@ -326,7 +326,7 @@ searchspace = SearchSpace.from_product(
     ]
 )
 
-searchspace_str = """
+searchspace_json = """
 {
     "constructor": "from_product",
     "parameters": [
@@ -344,7 +344,7 @@ searchspace_str = """
 }
 """
 
-assert searchspace == SearchSpace.from_json(searchspace_str)
+assert searchspace == SearchSpace.from_json(searchspace_json)
 ```
 
 ### Dataframe deserialization
@@ -377,7 +377,7 @@ subspace = SubspaceDiscrete.from_dataframe(
     )
 )
 
-subspace_string = """
+subspace_json = """
 {
     "constructor": "from_dataframe",
     "df": {
@@ -387,7 +387,7 @@ subspace_string = """
     }
 }
 """
-reconstructed = SubspaceDiscrete.from_json(subspace_string)
+reconstructed = SubspaceDiscrete.from_json(subspace_json)
 
 assert subspace == reconstructed
 ```
