@@ -202,7 +202,7 @@ mirroring the flexibility of specifying subtypes to your configuration file:
 from baybe.parameters.base import Parameter
 from baybe.parameters import CategoricalParameter, TaskParameter
 
-categorial_parameter = CategoricalParameter(name="Setting", values=["low", "high"])
+categorical_parameter = CategoricalParameter(name="Setting", values=["low", "high"])
 categorical_parameter_str = """
 {
     "type": "CategoricalParameter",
@@ -211,7 +211,7 @@ categorical_parameter_str = """
 }
 """
 categorical_parameter_reconstructed = Parameter.from_json(categorical_parameter_str)
-assert categorial_parameter == categorical_parameter_reconstructed
+assert categorical_parameter == categorical_parameter_reconstructed
 
 task_parameter = TaskParameter(name="Setting", values=["low", "high"])
 task_parameter_str = """
@@ -233,7 +233,7 @@ at a later stage.
 
 ### Using abbreviations
 Classes that have an `abbreviation` class variable defined can be conveniently
-deserialization using the corresponding abbreviation string:
+deserialized using the corresponding abbreviation string:
 ```python
 from baybe.acquisition.base import AcquisitionFunction
 
