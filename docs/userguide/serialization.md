@@ -195,7 +195,8 @@ highest level of the hierarchy, whereas the inner object types would remain unsp
 The problem can be easily circumvented using an explicit subclass resolution 
 mechanism, i.e., by tagging the respective subclass in an additional `type` field that
 holds the class' name.
-This allows to deserialize the object from the corresponding base class instead,
+This allows to deserialize the object from the corresponding base class instead 
+(i.e., {class}`Parameter <baybe.parameters.base.Parameter>` class in the example below),
 mirroring the flexibility of specifying subtypes to your configuration file:
 
 ```python
@@ -210,6 +211,7 @@ categorical_parameter_str = """
     "values": ["low", "high"]
 }
 """
+# NOTE: we can use `Parameter.from_json` instead of `CategoricalParameter.from_json`:
 categorical_parameter_reconstructed = Parameter.from_json(categorical_parameter_str)
 assert categorical_parameter == categorical_parameter_reconstructed
 
@@ -221,6 +223,7 @@ task_parameter_str = """
     "values": ["low", "high"]
 }
 """
+# NOTE: we can use `Parameter.from_json` instead of `TaskParameter.from_json`:
 task_parameter_reconstructed = Parameter.from_json(task_parameter_str)
 assert task_parameter == task_parameter_reconstructed
 ```
