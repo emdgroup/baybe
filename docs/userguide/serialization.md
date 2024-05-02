@@ -46,7 +46,7 @@ For example:
 ```python
 from baybe.parameters import CategoricalParameter
 
-parameter = CategoricalParameter(name="setting", values=["low", "high"])
+parameter = CategoricalParameter(name="Setting", values=["low", "high"])
 json_string = parameter.to_json()
 reconstructed = CategoricalParameter.from_json(json_string)
 assert parameter == reconstructed
@@ -89,12 +89,12 @@ from baybe.parameters import CategoricalParameter
 
 parameter_str = """
 {
-    "name": "setting",
+    "name": "Setting",
     "values": ["low", "high"]
 }
 """
 from_json = CategoricalParameter.from_json(parameter_str)
-via_init = CategoricalParameter(name="setting", values=["low", "high"])
+via_init = CategoricalParameter(name="Setting", values=["low", "high"])
 
 assert from_json == via_init
 ```
@@ -105,18 +105,18 @@ they can be omitted from the corresponding serialization string:
 ```python
 from baybe.parameters import CategoricalParameter
 
-p1 = CategoricalParameter(name="setting", values=["low", "high"])
-p2 = CategoricalParameter(name="setting", values=["low", "high"], encoding="OHE")
+p1 = CategoricalParameter(name="Setting", values=["low", "high"])
+p2 = CategoricalParameter(name="Setting", values=["low", "high"], encoding="OHE")
 
 p1_json = """
 {
-    "name": "setting",
+    "name": "Setting",
     "values": ["low", "high"]
 }
 """
 p2_json = """
 {
-    "name": "setting",
+    "name": "Setting",
     "values": ["low", "high"],
     "encoding": "OHE"
 }
@@ -142,9 +142,9 @@ providing a few specific example may help to convey the concept:
     from baybe.targets import NumericalTarget
     from baybe.utils.interval import Interval
 
-    t1 = NumericalTarget(name="t", mode="MAX", bounds=Interval(0, 1))
-    t2 = NumericalTarget(name="t", mode="MAX", bounds=(0, 1))
-    t3 = NumericalTarget.from_json('{"name": "t", "mode": "MAX", "bounds": [0, 1]}')
+    t1 = NumericalTarget(name="T", mode="MAX", bounds=Interval(0, 1))
+    t2 = NumericalTarget(name="T", mode="MAX", bounds=(0, 1))
+    t3 = NumericalTarget.from_json('{"name": "T", "mode": "MAX", "bounds": [0, 1]}')
 
     assert t1 == t2 == t3
     ```
@@ -154,9 +154,9 @@ providing a few specific example may help to convey the concept:
     ```python
     from baybe.targets import NumericalTarget, TargetMode
 
-    t1 = NumericalTarget(name="t", mode=TargetMode.MAX)
-    t2 = NumericalTarget(name="t", mode="MAX")
-    t3 = NumericalTarget.from_json('{"name": "t", "mode": "MAX"}')
+    t1 = NumericalTarget(name="T", mode=TargetMode.MAX)
+    t2 = NumericalTarget(name="T", mode="MAX")
+    t3 = NumericalTarget.from_json('{"name": "T", "mode": "MAX"}')
 
     assert t1 == t2 == t3
     ```
@@ -180,7 +180,7 @@ both
 ```python
 parameter_str = """
 {
-    "name": "setting",
+    "name": "Setting",
     "values": ["low", "high"]
 }
 """
@@ -202,22 +202,22 @@ mirroring the flexibility of specifying subtypes to your configuration file:
 from baybe.parameters.base import Parameter
 from baybe.parameters import CategoricalParameter, TaskParameter
 
-categorial_parameter = CategoricalParameter(name="setting", values=["low", "high"])
+categorial_parameter = CategoricalParameter(name="Setting", values=["low", "high"])
 categorical_parameter_str = """
 {
     "type": "CategoricalParameter",
-    "name": "setting",
+    "name": "Setting",
     "values": ["low", "high"]
 }
 """
 categorical_parameter_reconstructed = Parameter.from_json(categorical_parameter_str)
 assert categorial_parameter == categorical_parameter_reconstructed
 
-task_parameter = TaskParameter(name="setting", values=["low", "high"])
+task_parameter = TaskParameter(name="Setting", values=["low", "high"])
 task_parameter_str = """
 {
     "type": "TaskParameter",
-    "name": "setting",
+    "name": "Setting",
     "values": ["low", "high"]
 }
 """
@@ -259,8 +259,8 @@ from baybe.targets import NumericalTarget
 
 objective = DesirabilityObjective(
     targets=[
-        NumericalTarget(name="t1", mode="MAX", bounds=(-1, 1)),
-        NumericalTarget(name="t2", mode="MIN", bounds=(0, 1)),
+        NumericalTarget(name="T1", mode="MAX", bounds=(-1, 1)),
+        NumericalTarget(name="T2", mode="MIN", bounds=(0, 1)),
     ],
     weights=[0.1, 0.9],
     scalarizer="MEAN",
@@ -271,13 +271,13 @@ objective_str = """
     "targets": [
         {
             "type": "NumericalTarget",
-            "name": "t1",
+            "name": "T1",
             "mode": "MAX",
             "bounds": [-1.0, 1.0]
         }, 
         {
             "type": "NumericalTarget",
-            "name": "t2",
+            "name": "T2",
             "mode": "MIN",
             "bounds": [0.0, 1.0]
         }
@@ -370,7 +370,7 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 
 subspace = SubspaceDiscrete.from_dataframe(
     pd.DataFrame.from_records(
-        data=[[1, "a"], [2, "b"], [3, "c"]], columns=["numerical", "categorical"]
+        data=[[1, "a"], [2, "b"], [3, "c"]], columns=["Number", "Category"]
     )
 )
 
@@ -380,7 +380,7 @@ subspace_string = """
     "df": {
         "constructor": "from_records",
         "data": [[1, "a"], [2, "b"], [3, "c"]],
-        "columns": ["numerical", "categorical"]
+        "columns": ["Number", "Category"]
     }
 }
 """
