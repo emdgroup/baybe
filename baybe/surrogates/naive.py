@@ -30,7 +30,7 @@ class MeanPredictionSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    _model: Optional[float] = field(init=False, default=None)
+    _model: Optional[float] = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
 
     @batchify

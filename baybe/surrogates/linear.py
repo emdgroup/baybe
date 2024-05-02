@@ -43,7 +43,7 @@ class BayesianLinearSurrogate(Surrogate):
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
-    _model: Optional[ARDRegression] = field(init=False, default=None)
+    _model: Optional[ARDRegression] = field(init=False, default=None, eq=False)
     """The actual model."""
 
     @batchify

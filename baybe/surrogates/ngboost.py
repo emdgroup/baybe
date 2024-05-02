@@ -46,7 +46,7 @@ class NGBoostSurrogate(Surrogate):
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
-    _model: Optional[NGBRegressor] = field(init=False, default=None)
+    _model: Optional[NGBRegressor] = field(init=False, default=None, eq=False)
     """The actual model."""
 
     def __attrs_post_init__(self):

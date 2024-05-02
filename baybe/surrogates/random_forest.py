@@ -44,7 +44,7 @@ class RandomForestSurrogate(Surrogate):
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
-    _model: Optional[RandomForestRegressor] = field(init=False, default=None)
+    _model: Optional[RandomForestRegressor] = field(init=False, default=None, eq=False)
     """The actual model."""
 
     @batchify
