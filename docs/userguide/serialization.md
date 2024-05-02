@@ -93,10 +93,10 @@ parameter_str = """
     "values": ["low", "high"]
 }
 """
-from_json = CategoricalParameter.from_json(parameter_str)
+via_json = CategoricalParameter.from_json(parameter_str)
 via_init = CategoricalParameter(name="Setting", values=["low", "high"])
 
-assert from_json == via_init
+assert via_json == via_init
 ```
 
 ### Using default values
@@ -122,10 +122,10 @@ p2_json = """
 }
 """
 
-p1_from_json = CategoricalParameter.from_json(p1_json)
-p2_from_json = CategoricalParameter.from_json(p2_json)
+p1_via_json = CategoricalParameter.from_json(p1_json)
+p2_via_json = CategoricalParameter.from_json(p2_json)
 
-assert p1 == p1_from_json == p2 == p2_from_json 
+assert p1 == p1_via_json == p2 == p2_via_json 
 ```
 
 ### Automatic field conversion
