@@ -26,8 +26,10 @@ if TYPE_CHECKING:
 class KernelFactory(Protocol):
     """A protocol defining the interface expected for kernel factories."""
 
-    def __call__(self, searchspace: SearchSpace) -> Kernel:
-        """Create a :class:`baybe.kernels.base.Kernel` for the given :class:`baybe.searchspace.core.SearchSpace`."""  # noqa: E501
+    def __call__(
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> Kernel:
+        """Create a :class:`baybe.kernels.base.Kernel` for the given context."""
         ...
 
 
@@ -42,7 +44,9 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
 
     kernel: Kernel = field(validator=instance_of(Kernel))
 
-    def __call__(self, searchspace: SearchSpace) -> Kernel:  # noqa: D102
+    def __call__(  # noqa: D102
+        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
+    ) -> Kernel:
         # See base class.
 
         return self.kernel
@@ -141,7 +145,9 @@ class GaussianProcessSurrogate(Surrogate):
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
         # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(searchspace).to_gpytorch(
+        base_covar_module = self.kernel_factory(
+            searchspace, train_x, train_y
+        ).to_gpytorch(
             ard_num_dims=train_x.shape[-1] - n_task_params,
             active_dims=numeric_idxs,
             batch_shape=batch_shape,
