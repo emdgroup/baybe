@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and acquisition functions
 - New acquisition functions: `qSR`, `qNEI`, `LogEI`, `qLogEI`, `qLogNEI`
 - `GammaPrior` can now be chosen as lengthscale prior
+- Serialization user guide
+- Basic deserialization tests using different class type specifiers
 
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
@@ -35,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parameter configurations
 - Simulation no longer fails for targets in `MATCH` mode
 - `closest_element` now works for array-like input of all kinds
+- Structuring concrete subclasses no longer requires providing an explicit `type` field
+- `_target(s)` attributes of `Objectives` are now de-/serialized without leading
+  underscore to support user-friendly serialization strings
 
 ### Deprecations
 - The former `baybe.objective.Objective` class has been replaced with

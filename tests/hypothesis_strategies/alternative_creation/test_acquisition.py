@@ -7,9 +7,9 @@ from baybe.recommenders import SequentialGreedyRecommender
 from baybe.utils.basic import get_subclasses
 
 abbreviation_list = [
-    cl._abbreviation
+    cl.abbreviation
     for cl in get_subclasses(AcquisitionFunction)
-    if hasattr(cl, "_abbreviation")
+    if hasattr(cl, "abbreviation")
 ]
 
 fullname_list = [cl.__name__ for cl in get_subclasses(AcquisitionFunction)]

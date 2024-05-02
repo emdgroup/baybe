@@ -8,6 +8,8 @@ from typing import Any, Callable, TypeVar
 
 import numpy as np
 
+from baybe.exceptions import UnidentifiedSubclassError
+
 _C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
 _U = TypeVar("_U")
@@ -144,3 +146,23 @@ class classproperty:
 
     def __get__(self, _, cl: type):
         return self.fn(cl)
+
+
+def refers_to(cls: type, name_or_abbr: str, /) -> bool:
+    """Check if the given name or abbreviation refers to the specified class."""
+    return name_or_abbr in (
+        (cls.__name__, cls.abbreviation)
+        if hasattr(cls, "abbreviation")
+        else (cls.__name__,)
+    )
+
+
+def find_subclass(base: type, name_or_abbr: str, /):
+    """Retrieve a specific subclass of a base class via its name or abbreviation."""
+    try:
+        return next(cl for cl in get_subclasses(base) if refers_to(cl, name_or_abbr))
+    except StopIteration:
+        raise UnidentifiedSubclassError(
+            f"The class name or abbreviation '{name_or_abbr}' does not refer to any "
+            f"of the subclasses of '{base.__name__}'."
+        )

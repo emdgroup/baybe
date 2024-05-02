@@ -7,6 +7,7 @@ Objective <objective>
 Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
+Serialization <serialization>
 Simulation <simulation>
 Surrogates <surrogates>
 Targets <targets>
