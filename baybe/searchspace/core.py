@@ -15,12 +15,12 @@ from baybe.constraints import (
     ContinuousLinearInequalityConstraint,
     validate_constraints,
 )
-from baybe.constraints.base import Constraint, DiscreteConstraint
+from baybe.constraints.base import Constraint
 from baybe.parameters import (
     SubstanceEncoding,
     TaskParameter,
 )
-from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
+from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     SubspaceDiscrete,
@@ -136,18 +136,18 @@ class SearchSpace(SerialMixin):
             constraints = []
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
-            parameters=[p for p in parameters if isinstance(p, DiscreteParameter)],
-            constraints=[c for c in constraints if isinstance(c, DiscreteConstraint)],
+            parameters=[p for p in parameters if p.is_discrete],  # type:ignore[misc]
+            constraints=[c for c in constraints if c.is_discrete],  # type:ignore[misc]
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
-            parameters=[p for p in parameters if isinstance(p, ContinuousParameter)],
-            constraints_lin_eq=[
+            parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
+            constraints_lin_eq=[  # type:ignore[misc]
                 c
                 for c in constraints
                 if isinstance(c, ContinuousLinearEqualityConstraint)
             ],
-            constraints_lin_ineq=[
+            constraints_lin_ineq=[  # type:ignore[misc]
                 c
                 for c in constraints
                 if isinstance(c, ContinuousLinearInequalityConstraint)
@@ -187,15 +187,17 @@ class SearchSpace(SerialMixin):
                 "parameter names."
             )
 
-        disc_params = [p for p in parameters if isinstance(p, DiscreteParameter)]
-        cont_params = [p for p in parameters if isinstance(p, ContinuousParameter)]
+        disc_params = [p for p in parameters if p.is_discrete]
+        cont_params = [p for p in parameters if p.is_continuous]
 
         return SearchSpace(
             discrete=SubspaceDiscrete.from_dataframe(
-                df[[p.name for p in disc_params]], disc_params
+                df[[p.name for p in disc_params]],
+                disc_params,  # type:ignore[arg-type]
             ),
             continuous=SubspaceContinuous.from_dataframe(
-                df[[p.name for p in cont_params]], cont_params
+                df[[p.name for p in cont_params]],
+                cont_params,  # type:ignore[arg-type]
             ),
         )
 

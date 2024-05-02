@@ -55,6 +55,16 @@ class Parameter(ABC, SerialMixin):
     def __str__(self) -> str:
         return str(self.summary())
 
+    @property
+    def is_continuous(self) -> bool:
+        """Boolean indicating if this is a continuous parameter."""
+        return isinstance(self, ContinuousParameter)
+
+    @property
+    def is_discrete(self) -> bool:
+        """Boolean indicating if this is a discrete parameter."""
+        return isinstance(self, DiscreteParameter)
+
 
 @define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):

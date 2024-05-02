@@ -15,7 +15,6 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -250,7 +249,7 @@ def add_parameter_noise(
             data[param.name] += np.random.uniform(-noise_level, noise_level, len(data))
 
         # Respect continuous intervals
-        if isinstance(param, ContinuousParameter):
+        if param.is_continuous:
             data[param.name] = data[param.name].clip(
                 param.bounds.lower, param.bounds.upper
             )
@@ -406,11 +405,7 @@ def fuzzy_row_match(
 
         # Differentiate category-like and discrete numerical parameters
         cat_cols = [p.name for p in parameters if not p.is_numeric]
-        num_cols = [
-            p.name
-            for p in parameters
-            if (p.is_numeric and isinstance(p, DiscreteParameter))
-        ]
+        num_cols = [p.name for p in parameters if (p.is_numeric and p.is_discrete)]
 
         # Discrete parameters must match exactly
         match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)

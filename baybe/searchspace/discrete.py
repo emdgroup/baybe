@@ -337,7 +337,7 @@ class SubspaceDiscrete(SerialMixin):
                 f"All parameters passed via 'simplex_parameters' "
                 f"must be of type '{NumericalDiscreteParameter.__name__}'."
             )
-        if not all(isinstance(p, DiscreteParameter) for p in product_parameters):
+        if not all(p.is_discrete for p in product_parameters):
             raise ValueError(
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
@@ -618,12 +618,12 @@ def parameter_cartesian_prod_to_df(
     Returns:
         A dataframe containing all possible discrete parameter value combinations.
     """
-    discrete_parameters = [p for p in parameters if isinstance(p, DiscreteParameter)]
+    discrete_parameters = [p for p in parameters if p.is_discrete]
     if not discrete_parameters:
         return pd.DataFrame()
 
     index = pd.MultiIndex.from_product(
-        [p.values for p in discrete_parameters],
+        [p.values for p in discrete_parameters],  # type:ignore[attr-defined]
         names=[p.name for p in discrete_parameters],
     )
     ret = pd.DataFrame(index=index).reset_index()
