@@ -16,8 +16,12 @@ from cattrs.dispatch import (
 )
 
 from baybe.searchspace import SearchSpace
-from baybe.serialization import SerialMixin, converter, unstructure_base
-from baybe.serialization.core import get_base_structure_hook
+from baybe.serialization.core import (
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
+from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
 
 if TYPE_CHECKING:
