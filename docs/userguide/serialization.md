@@ -358,8 +358,8 @@ with configuration strings.
 While you can manually work around this additional conversion step using our
 {func}`serialize_dataframe <baybe.serialization.utils.serialize_dataframe>` and
 {func}`deserialize_dataframe <baybe.serialization.utils.deserialize_dataframe>` helpers,
-a more elegant solution becomes apparent when noticing that invoking alternative 
-constructors also works for non-BayBE objects.
+a more elegant solution becomes apparent when noticing that [invoking alternative 
+constructors](#ALTERNATIVE_CONSTRUCTORS) also works for non-BayBE objects.
 In particular, this means you can resort to any dataframe constructor of your choice
 (such as {meth}`DataFrame.from_records <pandas.DataFrame.from_records>`)
 when defining your configuration, instead of having to work with compressed formats:
