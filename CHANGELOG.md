@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic deserialization tests using different class type specifiers
 - `GammaPrior`, `HalfCauchyPrior`, `NormalPrior`, `HalfNormalPrior`, `LogNormalPrior`
   and `SmoothedBoxPrior` can now be chosen as lengthscale prior
+- Possibility to provide a user-defined callable for PureRecommender
+- End-to-End test `user_callable.py` to test the `user_callable`
 
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
