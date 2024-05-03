@@ -25,26 +25,20 @@ class Kernel(ABC, SerialMixin):
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
         fields_dict = filter_attributes(object=self, callable_=kernel_cls.__init__)
 
-        # If there are any priors in the attributes, we transform them using our
-        # to_gpytorch function. Passing of args and kwargs is not necessary here.
         prior_dict = {
             key: fields_dict[key].to_gpytorch()
             for key in fields_dict
             if isinstance(fields_dict[key], Prior)
         }
 
-        # If there are any kernels in the attributes, we transform them using our
-        # to_gpytorch function. It is necessary to pass the args and kwargs here.
         kernel_dict = {
             key: fields_dict[key].to_gpytorch(*args, **kwargs)
             for key in fields_dict
             if isinstance(fields_dict[key], Kernel)
         }
 
-        # Update fields_dict
         fields_dict.update(kernel_dict)
         fields_dict.update(prior_dict)
-        # Update kwargs to contain class-specific attributes
         kwargs.update(fields_dict)
 
         return kernel_cls(*args, **kwargs)
