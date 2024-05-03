@@ -13,7 +13,7 @@ matern_kernels = st.builds(
 )
 """A strategy that generates Matern kernels."""
 
-base_kernels = st.one_of([matern_kernels])
+base_kernels = matern_kernels
 """A strategy that generates base kernels to be used within more complex kernels."""
 
 scale_kernels = st.builds(
