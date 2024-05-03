@@ -63,5 +63,5 @@ class ScaleKernel(Kernel):
     base_kernel: Kernel = field()
     """The base kernel that is being decorated."""
 
-    outputscale_prior: Optional[Prior] = field(default=None, kw_only=True)
+    outputscale_prior: Optional[Prior] = field(default=None)
     """An optional prior on the output scale."""
