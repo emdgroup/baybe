@@ -1,11 +1,41 @@
 """Utility for creating the examples."""
 
+import argparse
+import os
 import pathlib
 import shutil
 import textwrap
 from subprocess import DEVNULL, STDOUT, check_call
 
 from tqdm import tqdm
+
+from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-e",
+    "--ignore_examples",
+    help="Ignore the examples by not executing them.",
+    action="store_true",
+)
+parser.add_argument(
+    "-w",
+    "--include_warnings",
+    help="Include warnings when processing the examples. The default is ignoring them.",
+    action="store_true",
+)
+parser.add_argument(
+    "-f",
+    "--force",
+    help="Force-build the documentation, even when there are warnings or errors.",
+    action="store_true",
+)
+
+# Parse input arguments
+args = parser.parse_args()
+IGNORE_EXAMPLES = args.ignore_examples
+INCLUDE_WARNINGS = args.include_warnings
+FORCE = args.force
 
 
 def build_examples(example_dest_dir: str, ignore_examples: bool):
@@ -200,3 +230,12 @@ def build_examples(example_dest_dir: str, ignore_examples: bool):
     for subdirectory in examples_directory.glob("*/*"):
         if subdirectory.is_dir() and not any(subdirectory.iterdir()):
             subdirectory.rmdir()
+
+
+if __name__ == "__main__":
+    if not INCLUDE_WARNINGS:
+        os.environ["PYTHONWARNINGS"] = "ignore"
+
+    os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
+
+    build_examples(example_dest_dir="docs/examples", ignore_examples=IGNORE_EXAMPLES)
