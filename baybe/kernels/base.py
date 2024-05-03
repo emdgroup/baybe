@@ -22,15 +22,30 @@ class Kernel(ABC, SerialMixin):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels
 
+        # Due to the weird way that gpytorch does the inheritance for kernels, it is not
+        # sufficient to just check for the fields of the actual class, but also for the
+        # ones of the basic "Kernel" class and combine them.
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
-        fields_dict = filter_attributes(object=self, callable_=kernel_cls.__init__)
+        base_cls = getattr(gpytorch.kernels, "Kernel")
+        kernel_fields_dict = filter_attributes(
+            object=self, callable_=kernel_cls.__init__
+        )
+        base_fields_dict = filter_attributes(object=self, callable_=base_cls.__init__)
+        fields_dict = kernel_fields_dict | base_fields_dict
 
+        # Since the args and kwargs passed in this function are kernel-specific, we do
+        # not need to pass them when converting the priors but when converting the
+        # kernels.
         prior_dict = {
             key: fields_dict[key].to_gpytorch()
             for key in fields_dict
             if isinstance(fields_dict[key], Prior)
         }
 
+        # NOTE: Our coretest actually behave the same if we do not pass *args and
+        # **kwargs here. This suggests that it might be the case that gyptorch itself
+        # already passes theses. It might be worthwhile investigating this in more
+        # detail later.
         kernel_dict = {
             key: fields_dict[key].to_gpytorch(*args, **kwargs)
             for key in fields_dict
