@@ -1,6 +1,36 @@
 """Utility for checking the links of the documentation."""
 
+import argparse
+import os
 from subprocess import check_call, run
+
+from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-e",
+    "--ignore_examples",
+    help="Ignore the examples by not executing them.",
+    action="store_true",
+)
+parser.add_argument(
+    "-w",
+    "--include_warnings",
+    help="Include warnings when processing the examples. The default is ignoring them.",
+    action="store_true",
+)
+parser.add_argument(
+    "-f",
+    "--force",
+    help="Force-build the documentation, even when there are warnings or errors.",
+    action="store_true",
+)
+
+# Parse input arguments
+args = parser.parse_args()
+IGNORE_EXAMPLES = args.ignore_examples
+INCLUDE_WARNINGS = args.include_warnings
+FORCE = args.force
 
 
 def check_links(force: bool = False) -> None:
@@ -25,3 +55,12 @@ def check_links(force: bool = False) -> None:
         run(link_call, check=False)
     else:
         check_call(link_call)
+
+
+if __name__ == "__main__":
+    if not INCLUDE_WARNINGS:
+        os.environ["PYTHONWARNINGS"] = "ignore"
+
+    os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
+
+    check_links(force=FORCE)
