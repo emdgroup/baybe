@@ -60,7 +60,7 @@ class MaternKernel(Kernel):
 class ScaleKernel(Kernel):
     """A kernel for decorating existing kernels with an outputscale."""
 
-    base_kernel: Kernel = field(factory=MaternKernel)
+    base_kernel: Kernel = field()
     """The base kernel that is being decorated."""
 
     outputscale_prior: Optional[Prior] = field(default=None, kw_only=True)
