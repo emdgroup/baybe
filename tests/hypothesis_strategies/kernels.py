@@ -21,7 +21,7 @@ scale_kernels = st.builds(
     base_kernel=base_kernels,
     outputscale_prior=st.one_of(st.none(), priors),
 )
-"""A strategy that generates Scale kernels."""
+"""A strategy that generates scale kernels."""
 
 kernels = st.one_of([base_kernels, scale_kernels])
 """A strategy that generates kernels."""
