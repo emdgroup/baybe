@@ -1,6 +1,8 @@
 """Utilities for memory usage."""
 from typing import cast
 
+import pandas as pd
+
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -32,25 +34,32 @@ def estimate_searchspace_size(parameters: list[Parameter]) -> dict:
     Returns:
         Dictionary with the results for exp_rep and comp_rep and unit indicator.
     """
-    values = 1
-    columns = 0
+    # Comp rep space is estimated as the size of float times the number of matrix
+    # elements in the comp rep. The latter is the total number of value combinations
+    # times the number of total columns.
+    n_combinations = 1
+    n_columns = 0
     for param in [p for p in parameters if p.is_discrete]:
         param = cast(DiscreteParameter, param)
-        values *= param.comp_df.shape[0]
-        columns += param.comp_df.shape[1]
+        n_combinations *= param.comp_df.shape[0]
+        n_columns += param.comp_df.shape[1]
 
+    comp_rep_size, comp_rep_unit = bytes_to_human_readable(
+        DTypeFloatNumpy(0).itemsize * n_combinations * n_columns
+    )
+
+    # The exp rep is estimated as the size of the exp rep dataframe times the number of
+    # times it will appear in the entire search space. The latter is the total number
+    # of value combination divided by the number of values for the respective parameter.
+    # Contributions of all parameters are summed up.
     exp_rep_bytes = 0
     for k, param in enumerate([p for p in parameters if p.is_discrete]):
         param = cast(DiscreteParameter, param)
         exp_rep_bytes += (
-            param.comp_df.memory_usage(index=True if k == 0 else False, deep=True).sum()
-            * values
+            pd.DataFrame(param.values).memory_usage(index=False, deep=True).sum()
+            * n_combinations
             / param.comp_df.shape[0]
         )
-
-    comp_rep_size, comp_rep_unit = bytes_to_human_readable(
-        DTypeFloatNumpy(0).itemsize * values * columns
-    )
 
     exp_rep_size, exp_rep_unit = bytes_to_human_readable(exp_rep_bytes)
 
