@@ -26,7 +26,7 @@ def bytes_to_human_readable(num: float) -> tuple[str, str]:
 def estimate_searchspace_size(parameters: list[Parameter]) -> dict:
     """Estimate upper bound for the search space size in memory.
 
-    For now, constraints are not considered. Since the size of
+    For now, constraints are not considered.
 
     Args:
         parameters: List of parameters.
