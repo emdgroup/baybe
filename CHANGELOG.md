@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User guide now explains the new objective classes
 - Telemetry deactivation warning is only shown to developers
 - `torch`, `gpytorch` and `botorch` are lazy-loaded for improved startup time
+- Failed `requests` package import now disables telemetry instead of causing an
+  exception. This enables using baybe after uninstalling all internet packages.
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and
