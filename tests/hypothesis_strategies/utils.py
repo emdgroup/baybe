@@ -7,6 +7,8 @@ import hypothesis.strategies as st
 
 from baybe.utils.interval import Interval
 
+from .basic import finite_floats
+
 
 class IntervalType(Enum):
     """The possible types of an interval on the real number line."""
@@ -38,9 +40,6 @@ def intervals(
     allowed_types = [t for t, b in type_gate.items() if b]
     interval_type = draw(st.sampled_from(allowed_types))
 
-    # A strategy producing finite floats
-    ffloats = st.floats(allow_infinity=False, allow_nan=False)
-
     # Draw the bounds depending on the interval type
     if interval_type is IntervalType.FULLY_UNBOUNDED:
         bounds = (None, None)
@@ -48,8 +47,8 @@ def intervals(
         bounds = draw(
             st.sampled_from(
                 [
-                    (None, draw(ffloats)),
-                    (draw(ffloats), None),
+                    (None, draw(finite_floats())),
+                    (draw(finite_floats()), None),
                 ]
             )
         )
@@ -58,7 +57,7 @@ def intervals(
             hnp.arrays(
                 dtype=float,
                 shape=(2,),
-                elements=ffloats,
+                elements=finite_floats(),
                 unique=True,
             ).map(sorted)
         )
