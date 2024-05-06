@@ -24,18 +24,30 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     n_arms: int = field(validator=[instance_of(int), ge(1)])
     """ Number of arms for the bandit """
 
-    prior_alpha_beta: np.ndarray[int] = field()
+    prior_alpha_beta: np.ndarray[float] = field(
+        converter=lambda x: np.asarray(x, float)
+    )
     """ Prior parameters for the bandit of shape (n_arms, 2) """
 
     _win_lose_counts: np.ndarray[int] = field(init=False)
     """ Storing win and lose counts for updating the prior"""
 
-    def __attrs_post_init__(self):
-        if self.prior_alpha_beta is None:
-            self.prior_alpha_beta = np.ones((self.n_arms, 2))
-        else:
-            assert self.prior_alpha_beta.shape == (self.n_arms, 2)
-        self._win_lose_counts = np.zeros_like(self.prior_alpha_beta)
+    @prior_alpha_beta.default
+    def _default_prior_alpha_beta(self) -> np.ndarray[float]:
+        return np.ones((self.n_arms, 2))
+
+    @prior_alpha_beta.validator
+    def _validate_prior_alpha_beta(self, attribute, value) -> None:
+        if value.shape != (self.n_arms, 2):
+            raise ValueError(
+                f"The shape of '{attribute.name}' must match with the number of bandit "
+                f"arms. The bandit was configured with {self.n_arms} arm(s), hence the "
+                f"expected shape is ({self.n_arms}, 2). Given: {value.shape}."
+            )
+        if not np.all(value > 0.0):
+            raise ValueError(
+                f"All values in '{attribute.name}' must be strictly positive."
+            )
 
     @property
     def _posterior_alpha_beta(self):
