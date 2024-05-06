@@ -54,16 +54,16 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         return np.zeros_like(self.prior_alpha_beta, dtype=int)
 
     @property
-    def _posterior_alpha_beta(self):
+    def _posterior_alpha_beta(self) -> np.ndarray[float]:
         return self._win_lose_counts + self.prior_alpha_beta
 
     @property
-    def means(self):
+    def means(self) -> np.ndarray[float]:
         """Posterior means."""
         return beta(*self._posterior_alpha_beta.T).stats(moments="m")
 
     @property
-    def variance(self):
+    def variance(self) -> np.ndarray[float]:
         """Posterior variance."""
         return beta(*self._posterior_alpha_beta.T).stats(moments="v")
 
