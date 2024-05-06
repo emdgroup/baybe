@@ -27,7 +27,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     prior_alpha_beta: np.ndarray[int] = field()
     """ Prior parameters for the bandit of shape (n_arms, 2) """
 
-    _win_lose_counts: np.ndarray[int] = field()
+    _win_lose_counts: np.ndarray[int] = field(init=False)
     """ Storing win and lose counts for updating the prior"""
 
     def __attrs_post_init__(self):
