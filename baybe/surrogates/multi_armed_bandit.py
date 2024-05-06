@@ -26,7 +26,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # see base class.
 
-    prior_alpha_beta: np.ndarray[float] = field(
+    prior: np.ndarray[float] = field(
         factory=lambda: np.ones(2), converter=lambda x: np.asarray(x, float)
     )
     """ Prior parameters for the bandit """
@@ -34,8 +34,8 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     _win_lose_counts: Optional[np.ndarray[int]] = field(init=False, default=None)
     """ Storing win and lose counts for updating the prior"""
 
-    @prior_alpha_beta.validator
-    def _validate_prior_alpha_beta(self, attribute, value) -> None:
+    @prior.validator
+    def _validate_prior(self, attribute, value) -> None:
         if value.shape != (2,):
             raise ValueError(f"The shape of '{attribute.name}' must be (2,).")
         if not np.all(value > 0.0):
@@ -44,18 +44,18 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
             )
 
     @property
-    def _posterior_alpha_beta(self) -> np.ndarray[float]:
-        return self._win_lose_counts + self.prior_alpha_beta
+    def _posterior_beta_parameters(self) -> np.ndarray[float]:
+        return self._win_lose_counts + self.prior
 
     @property
     def means(self) -> np.ndarray[float]:
         """Posterior means."""
-        return beta(*self._posterior_alpha_beta.T).mean()
+        return beta(*self._posterior_beta_parameters.T).mean()
 
     @property
     def variances(self) -> np.ndarray[float]:
         """Posterior variance."""
-        return beta(*self._posterior_alpha_beta.T).var()
+        return beta(*self._posterior_beta_parameters.T).var()
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         import torch
