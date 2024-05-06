@@ -54,6 +54,39 @@ def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> l
     return subclasses
 
 
+def get_parent_classes(
+    cls: _C, recursive: bool = True, abstract: bool = False, include_class: bool = True
+) -> list[_C]:
+    """Return a list of parent classes for the given class.
+
+    Args:
+        cls: The base class to retrieve parent classes for.
+        recursive: If ``True``, indirect parent classes (i.e., parent classes of parent
+            classes) are included.
+        abstract: If ``True``, abstract parent classes are included.
+        include_class: If ``True``, the class itself is included.
+
+    Returns:
+        A list of parent classes for the given class.
+    """
+    from baybe.utils.boolean import is_abstract
+
+    classes = [cls] if include_class else []
+
+    for base_class in cls.__bases__:
+        if abstract or not is_abstract(base_class):
+            classes.append(base_class)
+
+        if recursive:
+            classes.extend(
+                get_parent_classes(cls, abstract=is_abstract, include_class=False)
+                if base_class not in classes
+                else []
+            )
+
+    return classes
+
+
 def set_random_seed(seed: int):
     """Set the global random seed.
 
