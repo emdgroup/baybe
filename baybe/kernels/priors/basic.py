@@ -20,7 +20,7 @@ class GammaPrior(Prior):
 
 @define(frozen=True)
 class HalfCauchyPrior(Prior):
-    """A HalfCauchyPrior parameterized by a scale."""
+    """A Half-Cauchy prior parameterized by a scale."""
 
     scale: float = field(converter=float, validator=gt(0.0))
     """The scale."""
@@ -28,7 +28,7 @@ class HalfCauchyPrior(Prior):
 
 @define(frozen=True)
 class NormalPrior(Prior):
-    """A NormalPrior parameterized by location and scale."""
+    """A Normal prior parameterized by location and scale."""
 
     loc: float = field(converter=float)
     """The location (mu)."""
@@ -39,7 +39,7 @@ class NormalPrior(Prior):
 
 @define(frozen=True)
 class HalfNormalPrior(Prior):
-    """A HalfNormalPrior parameterized by a scale."""
+    """A Half-Normal prior parameterized by a scale."""
 
     scale: float = field(converter=float, validator=gt(0.0))
     """The scale (sigma)."""
@@ -47,7 +47,7 @@ class HalfNormalPrior(Prior):
 
 @define(frozen=True)
 class LogNormalPrior(Prior):
-    """A LogNormalPrior parameterized by location and scale."""
+    """A Log-Normal prior parameterized by location and scale."""
 
     loc: float = field(converter=float)
     """The location (mu)."""
@@ -58,7 +58,7 @@ class LogNormalPrior(Prior):
 
 @define(frozen=True)
 class SmoothedBoxPrior(Prior):
-    """A SmoothedBoxPrior parameterized by a, b and sigma."""
+    """A Smoothed-Box prior parameterized by a, b and sigma."""
 
     a: float = field(converter=float)
     """The left/lower bound."""
@@ -78,6 +78,6 @@ class SmoothedBoxPrior(Prior):
         """
         if b <= self.a:
             raise ValueError(
-                f"For SmoothedBoxPrior, the upper bound `b` (provided: {b}) must be"
-                f"larger than the lower bound `a` (provided: {self.a})."
+                f"For {self.__class__.__name__}, the upper bound `b` (provided: {b}) "
+                f"must be larger than the lower bound `a` (provided: {self.a})."
             )
