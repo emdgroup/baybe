@@ -109,8 +109,12 @@ class GaussianProcessSurrogate(Surrogate):
         # If no kernel is provided, we construct one from our priors
         if self.kernel is None:
             self.kernel = ScaleKernel(
-                base_kernel=MaternKernel(lengthscale_prior=lengthscale_prior[0]),
+                base_kernel=MaternKernel(
+                    lengthscale_prior=lengthscale_prior[0],
+                    lengthscale_prior_initial_value=lengthscale_prior[1],
+                ),
                 outputscale_prior=outputscale_prior[0],
+                outputscale_prior_initial_value=outputscale_prior[1],
             )
 
         # define the covariance module for the numeric dimensions
@@ -119,12 +123,6 @@ class GaussianProcessSurrogate(Surrogate):
             active_dims=numeric_idxs,
             batch_shape=batch_shape,
         )
-        if outputscale_prior[1] is not None:
-            base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
-        if lengthscale_prior[1] is not None:
-            base_covar_module.base_kernel.lengthscale = torch.tensor(
-                [lengthscale_prior[1]]
-            )
 
         # create GP covariance
         if task_idx is None:

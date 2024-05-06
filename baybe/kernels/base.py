@@ -21,6 +21,7 @@ class Kernel(ABC, SerialMixin):
     def to_gpytorch(self, *args, **kwargs):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels
+        from torch import Tensor
 
         # Due to the weird way that gpytorch does the inheritance for kernels, it is not
         # sufficient to just check for the fields of the actual class, but also for the
@@ -56,7 +57,20 @@ class Kernel(ABC, SerialMixin):
         fields_dict.update(prior_dict)
         kwargs.update(fields_dict)
 
-        return kernel_cls(*args, **kwargs)
+        gpytorch_kernel = kernel_cls(*args, **kwargs)
+
+        # Since the initial values for the priors can only be set after initialization
+        # and not using args or kwargs and since the naming is inconsistent, we need to
+        # do some hacky checking and setting here
+        if hasattr(self, "lengthscale_prior_initial_value"):
+            initial_value = self.lengthscale_prior_initial_value
+            if initial_value is not None:
+                gpytorch_kernel.lengthscale = Tensor([initial_value])
+        if hasattr(self, "outputscale_prior_initial_value"):
+            initial_value = self.outputscale_prior_initial_value
+            if initial_value is not None:
+                gpytorch_kernel.outputscale = Tensor([initial_value])
+        return gpytorch_kernel
 
 
 # Register de-/serialization hooks

@@ -4,6 +4,7 @@ from fractions import Fraction
 from typing import Optional, Union
 
 from attrs import define, field
+from attrs.converters import optional
 from attrs.validators import in_
 
 from baybe.kernels.base import Kernel
@@ -48,6 +49,11 @@ class MaternKernel(Kernel):
     lengthscale_prior: Optional[Prior] = field(default=None)
     """An optional prior on the kernel lengthscale."""
 
+    lengthscale_prior_initial_value: Optional[float] = field(
+        default=None, converter=optional(float)
+    )
+    """An optional starting value for the kernel lengthscale."""
+
 
 @define(frozen=True)
 class ScaleKernel(Kernel):
@@ -58,3 +64,8 @@ class ScaleKernel(Kernel):
 
     outputscale_prior: Optional[Prior] = field(default=None)
     """An optional prior on the output scale."""
+
+    outputscale_prior_initial_value: Optional[float] = field(
+        default=None, converter=optional(float)
+    )
+    """An optional initial value for the output scale"""
