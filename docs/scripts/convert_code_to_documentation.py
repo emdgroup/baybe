@@ -43,7 +43,7 @@ if not INCLUDE_WARNINGS:
 
 # Disable telemtetry
 os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
-# Directories where Sphinx will always put the build, sdk and autosummary data
+# Directory where Sphinx builds the documentation
 build_dir = pathlib.Path("docs/build")
 
 # The call for checking external links.
@@ -52,7 +52,7 @@ link_call = [
     "-b",
     "linkcheck",
     "docs",
-    "docs/build",
+    build_dir,
 ]
 # The actual call that will be made to build the documentation
 building_call = [
@@ -60,7 +60,7 @@ building_call = [
     "-b",
     "html",
     "docs",
-    "docs/build",
+    build_dir,
     "-n",  # Being nitpicky
     "-W",  # Fail when encountering an error or a warning
 ]
