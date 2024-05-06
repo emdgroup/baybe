@@ -67,7 +67,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         return beta(*self._posterior_alpha_beta.T).mean()
 
     @property
-    def variance(self) -> np.ndarray[float]:
+    def variances(self) -> np.ndarray[float]:
         """Posterior variance."""
         return beta(*self._posterior_alpha_beta.T).var()
 
@@ -76,7 +76,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
 
         candidate_arms = candidates.argmax(dim=-1)
         posterior_mean = self.means[candidate_arms]
-        posterior_variance = self.variance[candidate_arms]
+        posterior_variance = self.variances[candidate_arms]
         return (Tensor(posterior_mean), Tensor(posterior_variance))
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
