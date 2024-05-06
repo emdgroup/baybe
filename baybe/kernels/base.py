@@ -11,7 +11,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.basic import filter_attributes
+from baybe.utils.basic import filter_attributes, get_parent_classes
 
 
 @define(frozen=True)
@@ -26,12 +26,12 @@ class Kernel(ABC, SerialMixin):
         # sufficient to just check for the fields of the actual class, but also for the
         # ones of the basic "Kernel" class and combine them.
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
-        base_cls = getattr(gpytorch.kernels, "Kernel")
-        kernel_fields_dict = filter_attributes(
-            object=self, callable_=kernel_cls.__init__
-        )
-        base_fields_dict = filter_attributes(object=self, callable_=base_cls.__init__)
-        fields_dict = kernel_fields_dict | base_fields_dict
+        parent_classes = get_parent_classes(kernel_cls)
+        fields_dict = {}
+        for parent_class in parent_classes:
+            fields_dict.update(
+                filter_attributes(object=self, callable_=parent_class.__init__)
+            )
 
         # Since the args and kwargs passed in this function are kernel-specific, we do
         # not need to pass them when converting the priors but when converting the
