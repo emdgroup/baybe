@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Optional
 
+import cattrs
 import numpy as np
 from attrs import define, field
 from scipy.stats import beta
@@ -28,8 +29,8 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    prior: np.ndarray[float] = field(
-        factory=lambda: np.ones(2), converter=lambda x: np.asarray(x, float)
+    prior: tuple[float, float] = field(
+        default=(1, 1), converter=lambda x: cattrs.structure(x, tuple[float, float])
     )
     """Beta prior parameters. By default, configured to produce a uniform prior."""
 
@@ -40,9 +41,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
 
     @prior.validator
     def _validate_prior(self, attribute, value) -> None:
-        if value.shape != (2,):
-            raise ValueError(f"The shape of '{attribute.name}' must be (2,).")
-        if not np.all(value > 0.0):
+        if not all(v > 0.0 for v in value):
             raise ValueError(
                 f"Both values in '{attribute.name}' must be strictly positive."
             )
