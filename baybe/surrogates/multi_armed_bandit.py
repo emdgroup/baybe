@@ -1,16 +1,20 @@
 """Multi-armed bandit surrogate."""
 
-from typing import ClassVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from attrs import define, field
 from attrs.validators import ge, instance_of
 from scipy.stats import beta
-from torch import Tensor
 
 from baybe.parameters import CategoricalParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define
@@ -68,6 +72,8 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         return beta(*self._posterior_alpha_beta.T).stats(moments="v")
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+        from torch import Tensor
+
         candidate_arms = candidates.argmax(dim=-1)
         posterior_mean = self.means[candidate_arms]
         posterior_variance = self.variance[candidate_arms]
