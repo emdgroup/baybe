@@ -5,16 +5,17 @@ from attrs import define, field
 from attrs.validators import gt
 
 from baybe.kernels.priors.base import Prior
+from baybe.utils.validation import finite_float
 
 
 @define(frozen=True)
 class GammaPrior(Prior):
     """A Gamma prior parameterized by concentration and rate."""
 
-    concentration: float = field(converter=float, validator=gt(0.0))
+    concentration: float = field(converter=float, validator=[finite_float, gt(0.0)])
     """The concentration."""
 
-    rate: float = field(converter=float, validator=gt(0.0))
+    rate: float = field(converter=float, validator=[finite_float, gt(0.0)])
     """The rate."""
 
 
@@ -22,7 +23,7 @@ class GammaPrior(Prior):
 class HalfCauchyPrior(Prior):
     """A Half-Cauchy prior parameterized by a scale."""
 
-    scale: float = field(converter=float, validator=gt(0.0))
+    scale: float = field(converter=float, validator=[finite_float, gt(0.0)])
     """The scale."""
 
 
@@ -30,10 +31,10 @@ class HalfCauchyPrior(Prior):
 class NormalPrior(Prior):
     """A Normal prior parameterized by location and scale."""
 
-    loc: float = field(converter=float)
+    loc: float = field(converter=float, validator=finite_float)
     """The location (mu)."""
 
-    scale: float = field(converter=float, validator=gt(0.0))
+    scale: float = field(converter=float, validator=[finite_float, gt(0.0)])
     """The scale (sigma)."""
 
 
@@ -41,7 +42,7 @@ class NormalPrior(Prior):
 class HalfNormalPrior(Prior):
     """A Half-Normal prior parameterized by a scale."""
 
-    scale: float = field(converter=float, validator=gt(0.0))
+    scale: float = field(converter=float, validator=[finite_float, gt(0.0)])
     """The scale (sigma)."""
 
 
@@ -49,10 +50,10 @@ class HalfNormalPrior(Prior):
 class LogNormalPrior(Prior):
     """A Log-Normal prior parameterized by location and scale."""
 
-    loc: float = field(converter=float)
+    loc: float = field(converter=float, validator=finite_float)
     """The location (mu)."""
 
-    scale: float = field(converter=float, validator=gt(0.0))
+    scale: float = field(converter=float, validator=[finite_float, gt(0.0)])
     """The scale (sigma)."""
 
 
@@ -60,13 +61,15 @@ class LogNormalPrior(Prior):
 class SmoothedBoxPrior(Prior):
     """A Smoothed-Box prior parameterized by a, b and sigma."""
 
-    a: float = field(converter=float)
+    a: float = field(converter=float, validator=finite_float)
     """The left/lower bound."""
 
-    b: float = field(converter=float)
+    b: float = field(converter=float, validator=finite_float)
     """The right/upper bound."""
 
-    sigma: float = field(converter=float, default=0.01, validator=gt(0.0))
+    sigma: float = field(
+        converter=float, default=0.01, validator=[finite_float, gt(0.0)]
+    )
     """The scale."""
 
     @b.validator
