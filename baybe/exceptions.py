@@ -17,7 +17,7 @@ class NoMCAcquisitionFunctionError(Exception):
 
 class IncompatibleSearchSpaceError(Exception):
     """
-    A recommender is used with a search space that contains incompatible parts,
+    A BayBE component is used with a search space that contains incompatible parts,
     e.g. a discrete recommender is used with a hybrid or continuous search space.
     """
 

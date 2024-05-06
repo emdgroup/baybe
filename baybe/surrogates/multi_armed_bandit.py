@@ -9,7 +9,9 @@ from attrs import define, field
 from attrs.validators import ge, instance_of
 from scipy.stats import beta
 
+from baybe.exceptions import IncompatibleSearchSpaceError
 from baybe.parameters import CategoricalParameter
+from baybe.parameters.enum import CategoricalEncoding
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 
@@ -80,15 +82,14 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         return torch.tensor(posterior_mean), torch.tensor(posterior_variance)
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        if len(searchspace.parameters) != 1:
-            raise Exception(
-                "BernoulliMultiArmedBanditSurrogate only supports one"
-                " categorical parameter in the search space."
-            )
-        if not isinstance(searchspace.parameters[0], CategoricalParameter):
-            raise Exception(
-                "BernoulliMultiArmedBanditSurrogate only supports one"
-                " categorical parameter in the search space."
+        if not (
+            (len(searchspace.parameters) == 1)
+            and isinstance(p := searchspace.parameters[0], CategoricalParameter)
+            and p.encoding is CategoricalEncoding.OHE
+        ):
+            raise IncompatibleSearchSpaceError(
+                f"'{self.__class__.__name__}' currently only supports search spaces "
+                f"spanned by exactly one categorical parameter using one-hot encoding."
             )
 
         # win counts per arm
