@@ -12,21 +12,6 @@ from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-t",
-    "--target_dir",
-    help="Destination directory in which the build will be saved (relative).\
-    Note that building the documentation actually happens within the doc folder.\
-    After building the documentation, it will be copied to this folder.\
-    Default is a subfolder 'docs' placed in `build`.",
-    default="./build/docs",
-)
-parser.add_argument(
-    "-p",
-    "--include_private",
-    help="Include private methods in the documentation. Default is false.",
-    action="store_true",
-)
-parser.add_argument(
     "-e",
     "--ignore_examples",
     help="Ignore the examples and do not include them into the documentation.",
@@ -48,8 +33,6 @@ parser.add_argument(
 
 # Parse input arguments
 args = parser.parse_args()
-DESTINATION_DIR = args.target_dir
-INCLUDE_PRIVATE = args.include_private
 IGNORE_EXAMPLES = args.ignore_examples
 INCLUDE_WARNINGS = args.include_warnings
 FORCE = args.force
@@ -60,18 +43,8 @@ if not INCLUDE_WARNINGS:
 
 # Disable telemtetry
 os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
-# Directories where Sphinx will always put the build, sdk and autosummary data
+# Directory where Sphinx builds the documentation
 build_dir = pathlib.Path("docs/build")
-sdk_dir = pathlib.Path("docs/sdk")
-autosummary_dir = pathlib.Path("docs/_autosummary")
-destination_dir = pathlib.Path(DESTINATION_DIR)
-
-# Collect all of the directories and delete them if they still exist.
-directories = [sdk_dir, autosummary_dir, build_dir, destination_dir]
-
-for directory in directories:
-    if directory.is_dir():
-        shutil.rmtree(directory)
 
 # The call for checking external links.
 link_call = [
@@ -80,8 +53,6 @@ link_call = [
     "linkcheck",
     "docs",
     build_dir,
-    "-D",
-    f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
 ]
 # The actual call that will be made to build the documentation
 building_call = [
@@ -90,8 +61,6 @@ building_call = [
     "html",
     "docs",
     build_dir,
-    "-D",
-    f"autodoc_default_options.private_members={INCLUDE_PRIVATE}",
     "-n",  # Being nitpicky
     "-W",  # Fail when encountering an error or a warning
 ]
@@ -128,14 +97,6 @@ adjust_pictures(
     dark_version="full_lookup_dark",
 )
 
-
-# Clean the other files
-for directory in [sdk_dir, autosummary_dir]:
-    if directory.is_dir():
-        shutil.rmtree(directory)
-
-documentation = pathlib.Path(build_dir)
-shutil.move(documentation, destination_dir)
 
 # Delete the created markdown files of the examples.
 example_directory = pathlib.Path("docs/examples")
