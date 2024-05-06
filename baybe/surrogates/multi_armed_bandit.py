@@ -20,13 +20,13 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # see base class.
 
-    n_arms: int = field(default=2)
+    n_arms: int = field()
     """ Number of arms for the bandit """
 
-    prior_alpha_beta: np.ndarray[int] = None
+    prior_alpha_beta: np.ndarray[int] = field()
     """ Prior parameters for the bandit of shape (n_arms, 2) """
 
-    _win_lose_counts: np.ndarray[int] = None
+    _win_lose_counts: np.ndarray[int] = field()
     """ Storing win and lose counts for updating the prior"""
 
     @n_arms.validator
