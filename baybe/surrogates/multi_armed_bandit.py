@@ -72,12 +72,12 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         return beta(*self._posterior_alpha_beta.T).var()
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-        from torch import Tensor
+        import torch
 
         candidate_arms = candidates.argmax(dim=-1)
         posterior_mean = self.means[candidate_arms]
         posterior_variance = self.variances[candidate_arms]
-        return (Tensor(posterior_mean), Tensor(posterior_variance))
+        return torch.tensor(posterior_mean), torch.tensor(posterior_variance)
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
         if len(searchspace.parameters) != 1:
