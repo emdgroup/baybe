@@ -20,19 +20,21 @@ if TYPE_CHECKING:
 
 @define
 class BernoulliMultiArmedBanditSurrogate(Surrogate):
-    """A multi-armed bandit model with bernoulli likelihood and a beta prior."""
+    """A multi-armed bandit model with Bernoulli likelihood and beta prior."""
 
     joint_posterior: ClassVar[bool] = False
+    # See base class.
+
     supports_transfer_learning: ClassVar[bool] = False
-    # see base class.
+    # See base class.
 
     prior: np.ndarray[float] = field(
         factory=lambda: np.ones(2), converter=lambda x: np.asarray(x, float)
     )
-    """ Prior parameters for the bandit """
+    """Beta prior parameters. By default, configured to produce a uniform prior."""
 
     _win_lose_counts: Optional[np.ndarray[int]] = field(init=False, default=None)
-    """ Storing win and lose counts for updating the prior"""
+    """Sufficient statistics of the trained model (i.e., win and lose counts)."""
 
     @prior.validator
     def _validate_prior(self, attribute, value) -> None:
@@ -45,19 +47,22 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
 
     @property
     def _posterior_beta_parameters(self) -> np.ndarray[float]:
+        """The parameters of the posterior beta distribution."""
         return self._win_lose_counts + self.prior
 
     @property
     def means(self) -> np.ndarray[float]:
-        """Posterior means."""
+        """Posterior means of the bandit arms."""
         return beta(*self._posterior_beta_parameters.T).mean()
 
     @property
     def variances(self) -> np.ndarray[float]:
-        """Posterior variance."""
+        """Posterior variances of the bandit arms."""
         return beta(*self._posterior_beta_parameters.T).var()
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+        # See base class.
+
         import torch
 
         candidate_arms = candidates.argmax(dim=-1)
@@ -66,6 +71,8 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         return torch.tensor(posterior_mean), torch.tensor(posterior_variance)
 
     def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+        # See base class.
+
         if not (
             (len(searchspace.parameters) == 1)
             and isinstance(p := searchspace.parameters[0], CategoricalParameter)
