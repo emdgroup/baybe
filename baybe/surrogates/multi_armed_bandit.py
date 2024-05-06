@@ -33,7 +33,9 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     )
     """Beta prior parameters. By default, configured to produce a uniform prior."""
 
-    _win_lose_counts: Optional[np.ndarray[int]] = field(init=False, default=None)
+    _win_lose_counts: Optional[np.ndarray[int]] = field(
+        init=False, default=None, eq=False
+    )
     """Sufficient statistics of the trained model (i.e., win and lose counts)."""
 
     @prior.validator
