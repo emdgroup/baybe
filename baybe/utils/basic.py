@@ -55,8 +55,11 @@ def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> l
 
 
 def get_parent_classes(
-    cls: _C, recursive: bool = True, abstract: bool = False, include_class: bool = True
-) -> list[_C]:
+    cls: type,
+    recursive: bool = True,
+    abstract: bool = False,
+    include_class: bool = True,
+) -> list[type]:
     """Return a list of parent classes for the given class.
 
     Args:
@@ -79,7 +82,7 @@ def get_parent_classes(
 
         if recursive:
             classes.extend(
-                get_parent_classes(cls, abstract=is_abstract, include_class=False)
+                get_parent_classes(cls, abstract=abstract, include_class=False)
                 if base_class not in classes
                 else []
             )
