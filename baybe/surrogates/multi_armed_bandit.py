@@ -64,12 +64,12 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     @property
     def means(self) -> np.ndarray[float]:
         """Posterior means."""
-        return beta(*self._posterior_alpha_beta.T).stats(moments="m")
+        return beta(*self._posterior_alpha_beta.T).mean()
 
     @property
     def variance(self) -> np.ndarray[float]:
         """Posterior variance."""
-        return beta(*self._posterior_alpha_beta.T).stats(moments="v")
+        return beta(*self._posterior_alpha_beta.T).var()
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         from torch import Tensor
