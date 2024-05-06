@@ -72,6 +72,13 @@ or in Python:
 
 Note, however, that (un-)setting the variable in the shell will not affect the running
 Python session.
+
+Important:
+    If you do not trust the instructions above, you are free to uninstall all
+    internet-related packages such as `requests` or `opentelemetry*`. These are being
+    shipped in the default dependencies because there is no good way of creating opt-out
+    dependencies, but the baybe package will work without them.
+
 """
 
 import getpass

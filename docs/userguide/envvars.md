@@ -62,6 +62,14 @@ The following environment variables control the behavior of BayBE telemetry:
 - `BAYBE_TELEMETRY_HOSTNAME`: The name of the machine executing BayBE code. Defaults to
   an irreversible hash of the machine name.
 
+```{admonition} Uninstalling Internet Packages
+:class: important
+If you do not trust the instructions above, you are free to uninstall all
+internet-related packages such as `requests` or `opentelemetry*`. These are being
+shipped in the default dependencies because there is no good way of creating opt-out
+dependencies, but the baybe package will work without them.
+```
+
 ## Caching
 For some components, such as the
 [`SubstanceParameter`](baybe.parameters.substance.SubstanceParameter), some of the
