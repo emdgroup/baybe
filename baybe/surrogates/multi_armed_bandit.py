@@ -3,7 +3,8 @@
 from typing import ClassVar
 
 import numpy as np
-from attr import define, field
+from attrs import define, field
+from attrs.validators import ge, instance_of
 from scipy.stats import beta
 from torch import Tensor
 
@@ -20,7 +21,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # see base class.
 
-    n_arms: int = field()
+    n_arms: int = field(validator=[instance_of(int), ge(1)])
     """ Number of arms for the bandit """
 
     prior_alpha_beta: np.ndarray[int] = field()
@@ -28,13 +29,6 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
 
     _win_lose_counts: np.ndarray[int] = field()
     """ Storing win and lose counts for updating the prior"""
-
-    @n_arms.validator
-    def _positive_validator(instance, attribute, value):
-        if not isinstance(value, int):
-            raise ValueError(f"{attribute.name} must be a positive integer.")
-        if value <= 0:
-            raise ValueError(f"{attribute.name} must be positive and non-zero")
 
     def __attrs_post_init__(self):
         if self.prior_alpha_beta is None:
