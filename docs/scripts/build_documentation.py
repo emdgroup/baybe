@@ -42,13 +42,16 @@ def build_documentation(force: bool = False) -> None:
     Args:
         force: Force-build the documentation, ignoring any errors or warnings.
     """
+    # Directory where the documentation is build.
+    build_dir = pathlib.Path("docs/build")
+
     # The actual call that will be made to build the documentation
     building_call = [
         "sphinx-build",
         "-b",
         "html",
         "docs",
-        "docs/build",
+        build_dir,
         "-n",  # Being nitpicky
         "-W",  # Fail when encountering an error or a warning
     ]
