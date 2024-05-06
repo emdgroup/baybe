@@ -11,38 +11,39 @@ from baybe.kernels.priors import (
     SmoothedBoxPrior,
 )
 
+from .basic import finite_floats
 from .utils import intervals
 
 gamma_priors = st.builds(
     GammaPrior,
-    st.floats(min_value=0, exclude_min=True),
-    st.floats(min_value=0, exclude_min=True),
+    finite_floats(min_value=0.0, exclude_min=True),
+    finite_floats(min_value=0.0, exclude_min=True),
 )
 """A strategy that generates Gamma priors."""
 
 half_cauchy_priors = st.builds(
     HalfCauchyPrior,
-    st.floats(min_value=0, exclude_min=True),
+    finite_floats(min_value=0.0, exclude_min=True),
 )
 """A strategy that generates Half-Cauchy priors."""
 
 normal_priors = st.builds(
     NormalPrior,
-    st.floats(allow_nan=False, allow_infinity=False),
-    st.floats(min_value=0, exclude_min=True),
+    finite_floats(),
+    finite_floats(min_value=0.0, exclude_min=True),
 )
 """A strategy that generates Normal priors."""
 
 half_normal_priors = st.builds(
     HalfNormalPrior,
-    st.floats(min_value=0, exclude_min=True),
+    finite_floats(min_value=0.0, exclude_min=True),
 )
 """A strategy that generates Half-Normal priors."""
 
 log_normal_priors = st.builds(
     LogNormalPrior,
-    st.floats(allow_nan=False, allow_infinity=False),
-    st.floats(min_value=0, exclude_min=True),
+    finite_floats(),
+    finite_floats(min_value=0.0, exclude_min=True),
 )
 """A strategy that generates Log-Normal priors."""
 
@@ -52,7 +53,7 @@ def _smoothed_box_priors(draw: st.DrawFn):
     """A strategy that generates Smoothed-Box priors."""
     interval = draw(intervals(exclude_half_bounded=True, exclude_fully_unbounded=True))
     sigma = draw(
-        st.floats(min_value=0, exclude_min=True),
+        finite_floats(min_value=0.0, exclude_min=True),
     )
 
     return SmoothedBoxPrior(*interval.to_tuple(), sigma)
