@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 import numpy as np
 from attrs import define, field
-from attrs.validators import ge, instance_of
 from scipy.stats import beta
 
 from baybe.exceptions import IncompatibleSearchSpaceError
@@ -27,37 +26,22 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # see base class.
 
-    n_arms: int = field(validator=[instance_of(int), ge(1)])
-    """ Number of arms for the bandit """
-
     prior_alpha_beta: np.ndarray[float] = field(
-        converter=lambda x: np.asarray(x, float)
+        factory=lambda: np.ones(2), converter=lambda x: np.asarray(x, float)
     )
-    """ Prior parameters for the bandit of shape (n_arms, 2) """
+    """ Prior parameters for the bandit """
 
-    _win_lose_counts: np.ndarray[int] = field(init=False)
+    _win_lose_counts: Optional[np.ndarray[int]] = field(init=False, default=None)
     """ Storing win and lose counts for updating the prior"""
-
-    @prior_alpha_beta.default
-    def _default_prior_alpha_beta(self) -> np.ndarray[float]:
-        return np.ones((self.n_arms, 2))
 
     @prior_alpha_beta.validator
     def _validate_prior_alpha_beta(self, attribute, value) -> None:
-        if value.shape != (self.n_arms, 2):
-            raise ValueError(
-                f"The shape of '{attribute.name}' must match with the number of bandit "
-                f"arms. The bandit was configured with {self.n_arms} arm(s), hence the "
-                f"expected shape is ({self.n_arms}, 2). Given: {value.shape}."
-            )
+        if value.shape != (2,):
+            raise ValueError(f"The shape of '{attribute.name}' must be (2,).")
         if not np.all(value > 0.0):
             raise ValueError(
-                f"All values in '{attribute.name}' must be strictly positive."
+                f"Both values in '{attribute.name}' must be strictly positive."
             )
-
-    @_win_lose_counts.default
-    def _default_win_lose_counts(self) -> np.ndarray[int]:
-        return np.zeros_like(self.prior_alpha_beta, dtype=int)
 
     @property
     def _posterior_alpha_beta(self) -> np.ndarray[float]:
@@ -92,7 +76,6 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
                 f"spanned by exactly one categorical parameter using one-hot encoding."
             )
 
-        # win counts per arm
-        self._win_lose_counts[:, 0] = (train_x * train_y).sum(axis=0)
-        # lose counts per arm
-        self._win_lose_counts[:, 1] = (train_x * (1 - train_y)).sum(axis=0)
+        wins = (train_x * train_y).sum(axis=0)
+        losses = (train_x * (1 - train_y)).sum(axis=0)
+        self._win_lose_counts = np.vstack([wins, losses])
