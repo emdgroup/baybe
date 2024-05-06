@@ -49,6 +49,10 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
                 f"All values in '{attribute.name}' must be strictly positive."
             )
 
+    @_win_lose_counts.default
+    def _default_win_lose_counts(self) -> np.ndarray[int]:
+        return np.zeros_like(self.prior_alpha_beta, dtype=int)
+
     @property
     def _posterior_alpha_beta(self):
         return self._win_lose_counts + self.prior_alpha_beta
