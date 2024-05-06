@@ -304,6 +304,10 @@ host machine names are irreversibly anonymized.
 - You can always deactivate all telemetry by setting the environment variable 
   `BAYBE_TELEMETRY_ENABLED` to `false` or `off`. For details please consult
   [this page](https://emdgroup.github.io/baybe/_autosummary/baybe.telemetry.html).
+- If you want to be absolutely sure, you can uninstall internet related packages such
+  as `requests` or `opentelemetry*` from the environment. Due to the inability of
+  specifying opt-out dependencies, these are installed by default, but the package
+  works without them.
 
 ## Authors
 
