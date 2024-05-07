@@ -13,10 +13,12 @@ from baybe.surrogates.gaussian_process.kernel_factory import (
     to_kernel_factory,
 )
 from baybe.surrogates.gaussian_process.presets import (
-    DefaultKernelFactory,
     GaussianProcessPreset,
-    _default_noise_factory,
     make_gp_from_preset,
+)
+from baybe.surrogates.gaussian_process.presets.default import (
+    DefaultKernelFactory,
+    _default_noise_factory,
 )
 
 if TYPE_CHECKING:

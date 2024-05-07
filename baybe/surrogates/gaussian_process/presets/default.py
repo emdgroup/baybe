@@ -1,8 +1,7 @@
-"""Preset configurations for Gaussian process surrogates."""
+"""Default preset for Gaussian process surrogates."""
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import TYPE_CHECKING
 
 from attrs import define
@@ -16,24 +15,6 @@ if TYPE_CHECKING:
 
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
-    from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-
-
-class GaussianProcessPreset(Enum):
-    """Available Gaussian process surrogate presets."""
-
-    DEFAULT = "DEFAULT"
-    """Recreates the default settings of the Gaussian process surrogate class."""
-
-
-def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
-    """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset."""  # noqa: E501
-    if preset is GaussianProcessPreset.DEFAULT:
-        return GaussianProcessSurrogate()
-
-    raise ValueError(
-        f"Unknown '{GaussianProcessPreset.__name__}' with name '{preset.name}'."
-    )
 
 
 @define
