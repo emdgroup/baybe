@@ -2,59 +2,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Protocol, Union
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
-from attrs.validators import instance_of
 
 from baybe.kernels import MaternKernel, ScaleKernel
-from baybe.kernels.base import Kernel
 from baybe.priors import GammaPrior
 from baybe.searchspace import SearchSpace
-from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
-    unstructure_base,
-)
-from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.gaussian_process.kernel_factory import (
+    KernelFactory,
+    PlainKernelFactory,
+    to_kernel_factory,
+)
 
 if TYPE_CHECKING:
     from torch import Tensor
-
-
-class KernelFactory(Protocol):
-    """A protocol defining the interface expected for kernel factories."""
-
-    def __call__(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
-        """Create a :class:`baybe.kernels.base.Kernel` for the given context."""
-        ...
-
-
-# Register de-/serialization hooks
-converter.register_structure_hook(KernelFactory, get_base_structure_hook(KernelFactory))
-converter.register_unstructure_hook(KernelFactory, unstructure_base)
-
-
-@define(frozen=True)
-class PlainKernelFactory(KernelFactory, SerialMixin):
-    """A trivial factory that returns a fixed pre-defined kernel upon request."""
-
-    kernel: Kernel = field(validator=instance_of(Kernel))
-
-    def __call__(  # noqa: D102
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
-        # See base class.
-
-        return self.kernel
-
-
-def to_kernel_factory(x: Union[Kernel, KernelFactory], /) -> KernelFactory:
-    """Wrap a kernel into a plain kernel factory (with factory passthrough)."""
-    return PlainKernelFactory(x) if isinstance(x, Kernel) else x
 
 
 @define
