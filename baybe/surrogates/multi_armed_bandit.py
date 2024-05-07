@@ -51,12 +51,12 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     @property
     def means(self) -> np.ndarray[float]:
         """Posterior means of the bandit arms."""
-        return beta(*self._posterior_beta_parameters.T).mean()
+        return beta(*self._posterior_beta_parameters).mean()
 
     @property
     def variances(self) -> np.ndarray[float]:
         """Posterior variances of the bandit arms."""
-        return beta(*self._posterior_beta_parameters.T).var()
+        return beta(*self._posterior_beta_parameters).var()
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.

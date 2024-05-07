@@ -112,4 +112,4 @@ class BetaPrior(Prior):
 
     def numpy(self) -> np.ndarray:
         """Return alpha and beta as a numpy ndarray."""
-        return np.array([self.alpha, self.beta])
+        return np.array([self.alpha, self.beta]).reshape(-1, 1)
