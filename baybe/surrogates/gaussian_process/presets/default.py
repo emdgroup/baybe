@@ -21,20 +21,24 @@ if TYPE_CHECKING:
 class DefaultKernelFactory(KernelFactory):
     """A factory providing the default kernel for Gaussian process surrogates.
 
+    The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
+
+    References:
+    *   https://github.com/b-shields/edbo
+    *   https://doi.org/10.1038/s41586-021-03213-y
+    """
+
     def __call__(  # noqa: D102
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         # See base class.
 
-        # TODO: temporary prior choices adapted from edbo, replace later on
         mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
             train_x.shape[-1] >= 50
         )
 
-        # TODO Until now, only the kernels use our custom priors, hence the explicit
-        # to_gpytorch() calls for all others
         # low D priors
-        if train_x.shape[-1] < 10:
+        if train_x.shape[-1] < 10:  # <-- different condition compared to EDBO
             lengthscale_prior = GammaPrior(1.2, 1.1)
             lengthscale_initial_value = 0.2
             outputscale_prior = GammaPrior(5.0, 0.5)
@@ -61,8 +65,6 @@ class DefaultKernelFactory(KernelFactory):
             outputscale_prior = GammaPrior(5.0, 0.2)
             outputscale_initial_value = 20.0
 
-        # ---------- End: GP prior selection ---------- #
-
         return ScaleKernel(
             MaternKernel(
                 nu=2.5,
@@ -77,18 +79,22 @@ class DefaultKernelFactory(KernelFactory):
 def _default_noise_factory(
     searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
 ) -> tuple[GammaPrior, float]:
-    """Create the default noise settings for the Gaussian process surrogate."""
+    """Create the default noise settings for the Gaussian process surrogate.
+
+    The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
+
+    References:
+    *   https://github.com/b-shields/edbo
+    *   https://doi.org/10.1038/s41586-021-03213-y
+    """
     # TODO: Replace this function with a proper likelihood factory
 
-    # TODO: temporary prior choices adapted from edbo, replace later on
     mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
         train_x.shape[-1] >= 50
     )
 
-    # TODO Until now, only the kernels use our custom priors, hence the explicit
-    # to_gpytorch() calls for all others
     # low D priors
-    if train_x.shape[-1] < 10:
+    if train_x.shape[-1] < 10:  # <-- different condition compared to EDBO
         return [GammaPrior(1.05, 0.5), 0.1]
 
     # DFT optimized priors
