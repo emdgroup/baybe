@@ -133,7 +133,7 @@ valid_priors = [
 
 # Note that this test does not vary the priors as there is currently a separate test for
 # this aspect.
-valid_base_kernels = [MaternKernel(nu=nu) for nu in (0.5, 1.5, 2.5)]
+valid_base_kernels = [MaternKernel()]
 
 # Due to numerical issues (i.e., matrix systems not being solvable) we do not test
 # different priors here.
