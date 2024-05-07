@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Class hierarchy for objectives
 - Deserialization is now also possible from optional class name abbreviations
 - `Kernel`, `MaternKernel`, and `ScaleKernel`  classes for specifying kernels
+- `KernelFactory` protocol enabling context-dependent construction of kernels
+- Preset mechanism for `GaussianProcessSurrogate`
 - `hypothesis` strategies and roundtrip test for kernels, constraints, objectives,
   priors and acquisition functions
 - New acquisition functions: `qSR`, `qNEI`, `LogEI`, `qLogEI`, `qLogNEI`
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
 - Reorganized simulation.py into `simulation` subpackage
+- Reorganized gaussian_process.py into `gaussian_process` subpackage
 - Acquisition functions are now their own objects
 - `acquisition_function_cls` constructor parameter renamed to `acquisition_function`
 - User guide now explains the new objective classes
