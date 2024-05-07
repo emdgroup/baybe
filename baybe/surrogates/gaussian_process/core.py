@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Protocol
+from typing import TYPE_CHECKING, ClassVar, Protocol, Union
 
 from attrs import define, field
 from attrs.validators import instance_of
@@ -52,6 +52,11 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
         return self.kernel
 
 
+def to_kernel_factory(x: Union[Kernel, KernelFactory], /) -> KernelFactory:
+    """Wrap a kernel into a plain kernel factory (with factory passthrough)."""
+    return PlainKernelFactory(x) if isinstance(x, Kernel) else x
+
+
 @define
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
@@ -65,9 +70,12 @@ class GaussianProcessSurrogate(Surrogate):
 
     # Object variables
     kernel_factory: KernelFactory = field(
-        factory=lambda: PlainKernelFactory(ScaleKernel(MaternKernel()))
+        factory=lambda: PlainKernelFactory(ScaleKernel(MaternKernel())),
+        converter=to_kernel_factory,
     )
-    """The factory used to create the kernel of the Gaussian process."""
+    """The factory used to create the kernel of the Gaussian process.
+    When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
+    into a :class:`baybe.surrogates.gaussian_process.core.PlainKernelFactory`."""
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
