@@ -1,4 +1,4 @@
-"""Bernoulli target."""
+"""Binary target."""
 
 import pandas as pd
 from attrs import define
@@ -8,8 +8,10 @@ from baybe.targets.base import Target
 
 
 @define(frozen=True)
-class BernoulliTarget(Target, SerialMixin):
+class BinaryTarget(Target, SerialMixin):
     """Class for bernoulli targets."""
+
+    accepted_values = [0, 1]
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # see base class

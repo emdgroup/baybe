@@ -14,7 +14,7 @@ from baybe.recommenders import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import BernoulliMultiArmedBanditSurrogate
-from baybe.targets import BernoulliTarget
+from baybe.targets import BinaryTarget
 
 np.random.seed(0)
 
@@ -31,7 +31,7 @@ def run_experiment(n_arms, n_iter, log_each_n_steps):
         real_distributions=[bernoulli(np.random.rand()) for _ in range(n_arms)]
     )
     print("real means", mab.means)
-    target = BernoulliTarget(name="win_rate")
+    target = BinaryTarget(name="win_rate")
     objective = SingleTargetObjective(target=target)
     parameters = [
         CategoricalParameter(
@@ -40,7 +40,7 @@ def run_experiment(n_arms, n_iter, log_each_n_steps):
         )
     ]
     searchspace = SearchSpace.from_product(parameters)
-    mabs = BernoulliMultiArmedBanditSurrogate(n_arms=n_arms)
+    mabs = BernoulliMultiArmedBanditSurrogate()
     recommender = TwoPhaseMetaRecommender(
         initial_recommender=FPSRecommender(
             allow_repeated_recommendations=True,
