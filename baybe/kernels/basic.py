@@ -49,7 +49,7 @@ class MaternKernel(Kernel):
     lengthscale_prior: Optional[Prior] = field(default=None)
     """An optional prior on the kernel lengthscale."""
 
-    lengthscale_prior_initial_value: Optional[float] = field(
+    lengthscale_initial_value: Optional[float] = field(
         default=None, converter=optional(float)
     )
     """An optional starting value for the kernel lengthscale."""
@@ -65,7 +65,7 @@ class ScaleKernel(Kernel):
     outputscale_prior: Optional[Prior] = field(default=None)
     """An optional prior on the output scale."""
 
-    outputscale_prior_initial_value: Optional[float] = field(
+    outputscale_initial_value: Optional[float] = field(
         default=None, converter=optional(float)
     )
     """An optional initial value for the output scale"""

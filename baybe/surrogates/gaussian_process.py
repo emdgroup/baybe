@@ -111,10 +111,10 @@ class GaussianProcessSurrogate(Surrogate):
             self.kernel = ScaleKernel(
                 base_kernel=MaternKernel(
                     lengthscale_prior=lengthscale_prior[0],
-                    lengthscale_prior_initial_value=lengthscale_prior[1],
+                    lengthscale_initial_value=lengthscale_prior[1],
                 ),
                 outputscale_prior=outputscale_prior[0],
-                outputscale_prior_initial_value=outputscale_prior[1],
+                outputscale_initial_value=outputscale_prior[1],
             )
 
         # define the covariance module for the numeric dimensions

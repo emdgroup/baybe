@@ -62,12 +62,12 @@ class Kernel(ABC, SerialMixin):
         # Since the initial values for the priors can only be set after initialization
         # and not using args or kwargs and since the naming is inconsistent, we need to
         # do some hacky checking and setting here
-        if hasattr(self, "lengthscale_prior_initial_value"):
-            initial_value = self.lengthscale_prior_initial_value
+        if hasattr(self, "lengthscale_initial_value"):
+            initial_value = self.lengthscale_initial_value
             if initial_value is not None:
                 gpytorch_kernel.lengthscale = Tensor([initial_value])
-        if hasattr(self, "outputscale_prior_initial_value"):
-            initial_value = self.outputscale_prior_initial_value
+        if hasattr(self, "outputscale_initial_value"):
+            initial_value = self.outputscale_initial_value
             if initial_value is not None:
                 gpytorch_kernel.outputscale = Tensor([initial_value])
         return gpytorch_kernel
