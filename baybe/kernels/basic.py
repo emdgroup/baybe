@@ -54,6 +54,15 @@ class MaternKernel(Kernel):
     )
     """An optional starting value for the kernel lengthscale."""
 
+    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+        # See base class.
+        from torch import Tensor
+
+        gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
+        if self.lengthscale_initial_value is not None:
+            gpytorch_kernel.lengthscale = Tensor([self.lengthscale_initial_value])
+        return gpytorch_kernel
+
 
 @define(frozen=True)
 class ScaleKernel(Kernel):
@@ -69,3 +78,12 @@ class ScaleKernel(Kernel):
         default=None, converter=optional(float)
     )
     """An optional initial value for the output scale"""
+
+    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+        # See base class.
+        from torch import Tensor
+
+        gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
+        if self.outputscale_initial_value is not None:
+            gpytorch_kernel.outputscale = Tensor([self.outputscale_initial_value])
+        return gpytorch_kernel
