@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Optional
 
-import cattrs
 import numpy as np
 from attrs import define, field
 from scipy.stats import beta
 
-from baybe.exceptions import IncompatibleSearchSpaceError
+from baybe.exceptions import IncompatibleSearchSpaceError, NotFitError
+from baybe.kernels.priors import BetaPrior
 from baybe.parameters import CategoricalParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.searchspace.core import SearchSpace
@@ -29,10 +29,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # TODO: Introduce BetaPrior class
-    prior: tuple[float, float] = field(
-        default=(1, 1), converter=lambda x: cattrs.structure(x, tuple[float, float])
-    )
+    prior: BetaPrior = field(default=BetaPrior(1, 1))
     """Beta prior parameters. By default, configured to produce a uniform prior."""
 
     _win_lose_counts: Optional[np.ndarray[int]] = field(
@@ -40,17 +37,16 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     )
     """Sufficient statistics of the trained model (i.e., win and lose counts)."""
 
-    @prior.validator
-    def _validate_prior(self, attribute, value) -> None:
-        if not all(v > 0.0 for v in value):
-            raise ValueError(
-                f"Both values in '{attribute.name}' must be strictly positive."
-            )
-
     @property
     def _posterior_beta_parameters(self) -> np.ndarray[float]:
         """The parameters of the posterior beta distribution."""
-        return self._win_lose_counts + self.prior
+        if self._win_lose_counts is None:
+            raise NotFitError(
+                f"'{self.__class__.__name__}' must be "
+                "fitted to access likelihood information"
+            )
+            # TODO: this could be removed when the number of arms could be inferred
+        return self._win_lose_counts + self.prior.numpy()
 
     @property
     def means(self) -> np.ndarray[float]:

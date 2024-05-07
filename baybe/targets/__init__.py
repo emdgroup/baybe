@@ -1,6 +1,6 @@
 """BayBE targets."""
 
-from baybe.targets.bernoulli import BernoulliTarget
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.deprecation import Objective
 from baybe.targets.enum import TargetMode, TargetTransformation
 from baybe.targets.numerical import NumericalTarget
@@ -10,5 +10,5 @@ __all__ = [
     "Objective",
     "TargetMode",
     "TargetTransformation",
-    "BernoulliTarget",
+    "BinaryTarget",
 ]
