@@ -1,6 +1,9 @@
 """Base classes for all kernels."""
 
+from __future__ import annotations
+
 from abc import ABC
+from typing import TYPE_CHECKING, Optional
 
 from attrs import define
 
@@ -13,18 +16,28 @@ from baybe.serialization.core import (
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import filter_attributes, get_parent_classes
 
+if TYPE_CHECKING:
+    import torch
+
 
 @define(frozen=True)
 class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
-    def to_gpytorch(self, *args, **kwargs):
+    def to_gpytorch(
+        self,
+        *,
+        ard_num_dims: Optional[int] = None,
+        batch_shape: Optional[torch.Size] = None,
+        active_dims: Optional[tuple[int, ...]] = None,
+    ):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels
 
-        # Due to the weird way that gpytorch does the inheritance for kernels, it is not
-        # sufficient to just check for the fields of the actual class, but also for the
-        # ones of the basic "Kernel" class and combine them.
+        # Fetch the necessary gpytorch constructor parameters of the kernel.
+        # NOTE: In gpytorch, some attributes (like the kernel lengthscale) are handled
+        # via the `gpytorch.kernels.Kernel` base class. Hence, it is not sufficient to
+        # just check the fields of the actual class, but also those of the base class.
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
         parent_classes = get_parent_classes(kernel_cls)
         fields_dict = {}
@@ -33,30 +46,28 @@ class Kernel(ABC, SerialMixin):
                 filter_attributes(object=self, callable_=parent_class.__init__)
             )
 
-        # Since the args and kwargs passed in this function are kernel-specific, we do
-        # not need to pass them when converting the priors but when converting the
-        # kernels.
+        # Convert specified priors to gpytorch, if provided
         prior_dict = {
             key: value.to_gpytorch()
             for key, value in fields_dict.items()
             if isinstance(value, Prior)
         }
 
-        # NOTE: Our coretest actually behave the same if we do not pass *args and
-        # **kwargs here. This suggests that it might be the case that gyptorch itself
-        # already passes theses. It might be worthwhile investigating this in more
-        # detail later.
+        # Convert specified inner kernels to gpytorch, if provided
         kernel_dict = {
-            key: value.to_gpytorch(*args, **kwargs)
+            key: value.to_gpytorch(
+                ard_num_dims=ard_num_dims,
+                batch_shape=batch_shape,
+                active_dims=active_dims,
+            )
             for key, value in fields_dict.items()
             if isinstance(value, Kernel)
         }
 
+        # Create the kernel with all its inner gpytorch objects
         fields_dict.update(kernel_dict)
         fields_dict.update(prior_dict)
-        kwargs.update(fields_dict)
-
-        return kernel_cls(*args, **kwargs)
+        return kernel_cls(**fields_dict)
 
 
 # Register de-/serialization hooks
