@@ -619,7 +619,7 @@ def fixture_default_surrogate_model(request, onnx_surrogate, kernel):
     """The default surrogate model to be used if not specified differently."""
     if hasattr(request, "param") and request.param == "onnx":
         return onnx_surrogate
-    return GaussianProcessSurrogate(kernel=kernel)
+    return GaussianProcessSurrogate(kernel_factory=kernel)
 
 
 @pytest.fixture(name="initial_recommender")
