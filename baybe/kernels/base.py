@@ -37,9 +37,9 @@ class Kernel(ABC, SerialMixin):
         # not need to pass them when converting the priors but when converting the
         # kernels.
         prior_dict = {
-            key: fields_dict[key].to_gpytorch()
-            for key in fields_dict
-            if isinstance(fields_dict[key], Prior)
+            key: value.to_gpytorch()
+            for key, value in fields_dict.items()
+            if isinstance(value, Prior)
         }
 
         # NOTE: Our coretest actually behave the same if we do not pass *args and
@@ -47,9 +47,9 @@ class Kernel(ABC, SerialMixin):
         # already passes theses. It might be worthwhile investigating this in more
         # detail later.
         kernel_dict = {
-            key: fields_dict[key].to_gpytorch(*args, **kwargs)
-            for key in fields_dict
-            if isinstance(fields_dict[key], Kernel)
+            key: value.to_gpytorch(*args, **kwargs)
+            for key, value in fields_dict.items()
+            if isinstance(value, Kernel)
         }
 
         fields_dict.update(kernel_dict)
