@@ -4,6 +4,7 @@ from typing import Optional
 
 import hypothesis.strategies as st
 
+from baybe.targets import BinaryTarget
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS, NumericalTarget
 from baybe.utils.interval import Interval
@@ -41,5 +42,7 @@ def numerical_targets(
     )
 
 
-targets = numerical_targets()
+binary_targets = st.builds(BinaryTarget)
+
+targets = st.one_of([binary_targets, numerical_targets()])
 """A strategy that generates targets."""

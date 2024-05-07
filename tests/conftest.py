@@ -52,7 +52,7 @@ from baybe.recommenders.pure.bayesian.sequential_greedy import (
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
-from baybe.targets import NumericalTarget
+from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.telemetry import (
     VARNAME_TELEMETRY_ENABLED,
     VARNAME_TELEMETRY_HOSTNAME,
@@ -390,6 +390,7 @@ def fixture_targets(target_names: list[str]):
             bounds=(0, 100),
             transformation="TRIANGULAR",
         ),
+        BinaryTarget(name="Target_binary"),
     ]
     return [t for t in valid_targets if t.name in target_names]
 
@@ -628,14 +629,22 @@ def fixture_initial_recommender():
     return RandomRecommender()
 
 
+@pytest.fixture(name="allow_repeated_recommendations")
+def fixture_allow_repeated_recommendations():
+    return False
+
+
 @pytest.fixture(name="recommender")
-def fixture_recommender(initial_recommender, surrogate_model, acqf):
+def fixture_recommender(
+    initial_recommender, surrogate_model, acqf, allow_repeated_recommendations
+):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=SequentialGreedyRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
+            allow_repeated_recommendations=allow_repeated_recommendations,
         ),
     )
 

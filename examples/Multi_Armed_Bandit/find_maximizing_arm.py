@@ -23,7 +23,9 @@ from baybe.surrogates import BernoulliMultiArmedBanditSurrogate
 from baybe.targets import BinaryTarget
 
 ### Setup
+
 # We are using a 5-armed bandit in this example. The bandit has a random win rate for now.
+
 N_ARMS = 5
 N_ITERATIONS = 300
 np.random.seed(0)
@@ -53,7 +55,8 @@ print("real means", mab.means)
 
 
 ### Campaign
-# We are using the BinaryTarget as we are modeling a brnoulli reward.
+
+# We are using the BinaryTarget as we are modeling a bernoulli reward.
 # The searchspace has one categorical parameter to model the arms of the bandit.
 # The probability of improvement acquisition function is not perfect in this setting
 # as it assumes a normal distribution of the win rate.
@@ -84,6 +87,7 @@ campaign = Campaign(searchspace, objective, recommender)
 
 
 ### Optimization Loop
+
 total_reward = 0
 for i in range(N_ITERATIONS):
     df = campaign.recommend(batch_size=1)
