@@ -14,7 +14,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.basic import filter_attributes, get_parent_classes
+from baybe.utils.basic import filter_attributes, get_base_classes
 
 if TYPE_CHECKING:
     import torch
@@ -39,9 +39,9 @@ class Kernel(ABC, SerialMixin):
         # via the `gpytorch.kernels.Kernel` base class. Hence, it is not sufficient to
         # just check the fields of the actual class, but also those of the base class.
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
-        parent_classes = get_parent_classes(kernel_cls, include_class=True)
+        base_classes = get_base_classes(kernel_cls, include_class=True)
         fields_dict = {}
-        for parent_class in parent_classes:
+        for parent_class in base_classes:
             fields_dict.update(
                 filter_attributes(object=self, callable_=parent_class.__init__)
             )
