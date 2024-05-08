@@ -58,7 +58,7 @@ def get_base_classes(
     cls: type,
     recursive: bool = True,
     abstract: bool = False,
-    include_class: bool = True,
+    include_class: bool = False,
 ) -> list[type]:
     """Return a list of base classes for the given class.
 
@@ -66,7 +66,7 @@ def get_base_classes(
         cls: The class to retrieve base classes for.
         recursive: If ``True``, indirect base classes (i.e., parent classes of parent
             classes) are included.
-        abstract: If ``True``, abstract base classes are included.
+        abstract: If `True`, abstract base classes are included.
         include_class: If ``True``, the class itself is included.
 
     Returns:
