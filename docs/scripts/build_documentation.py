@@ -2,7 +2,6 @@
 import argparse
 import os
 import pathlib
-import shutil
 from subprocess import check_call, run
 
 from utils import adjust_pictures
@@ -88,8 +87,3 @@ if __name__ == "__main__":
         light_version="full_lookup_light",
         dark_version="full_lookup_dark",
     )
-
-    # Delete the created markdown files of the examples.
-    example_directory = pathlib.Path("docs/examples")
-    if example_directory.is_dir():
-        shutil.rmtree(example_directory)
