@@ -18,13 +18,23 @@ matern_kernels = st.builds(
 base_kernels = st.one_of([matern_kernels])
 """A strategy that generates base kernels to be used within more complex kernels."""
 
-scale_kernels = st.builds(
-    ScaleKernel,
-    base_kernel=base_kernels,
-    outputscale_prior=st.one_of(st.none(), priors),
-    outputscale_initial_value=st.floats(min_value=0, exclude_min=True),
-)
-"""A strategy that generates scale kernels."""
 
-kernels = st.one_of([base_kernels, scale_kernels])
+@st.composite
+def scale_kernels(draw: st.DrawFn):
+    """Generate :class:`baybe.kernels.basic.ScaleKernel`."""
+    base_kernel = draw(base_kernels)
+    outputscale_priors = draw(
+        st.one_of(st.none(), priors),
+    )
+    outputscale_initial_value = draw(
+        st.floats(min_value=0, exclude_min=True),
+    )
+    return ScaleKernel(
+        base_kernel=base_kernel,
+        outputscale_prior=outputscale_priors,
+        outputscale_initial_value=outputscale_initial_value,
+    )
+
+
+kernels = st.one_of([base_kernels, scale_kernels()])
 """A strategy that generates kernels."""
