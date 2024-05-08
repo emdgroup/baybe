@@ -39,7 +39,7 @@ class Kernel(ABC, SerialMixin):
         # via the `gpytorch.kernels.Kernel` base class. Hence, it is not sufficient to
         # just check the fields of the actual class, but also those of the base class.
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
-        parent_classes = get_parent_classes(kernel_cls)
+        parent_classes = get_parent_classes(kernel_cls, include_class=True)
         fields_dict = {}
         for parent_class in parent_classes:
             fields_dict.update(

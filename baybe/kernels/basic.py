@@ -56,11 +56,15 @@ class MaternKernel(Kernel):
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
-        from torch import Tensor
+        import torch
+
+        from baybe.utils.torch import DTypeFloatTorch
 
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if self.lengthscale_initial_value is not None:
-            gpytorch_kernel.lengthscale = Tensor([self.lengthscale_initial_value])
+            gpytorch_kernel.lengthscale = torch.tensor(
+                [self.lengthscale_initial_value], dtype=DTypeFloatTorch
+            )
         return gpytorch_kernel
 
 
@@ -81,9 +85,13 @@ class ScaleKernel(Kernel):
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
-        from torch import Tensor
+        import torch
+
+        from baybe.utils.torch import DTypeFloatTorch
 
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if self.outputscale_initial_value is not None:
-            gpytorch_kernel.outputscale = Tensor([self.outputscale_initial_value])
+            gpytorch_kernel.outputscale = torch.tensor(
+                [self.outputscale_initial_value], dtype=DTypeFloatTorch
+            )
         return gpytorch_kernel
