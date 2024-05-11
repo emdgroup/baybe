@@ -10,6 +10,10 @@ via `.bashrc` or similar.
 ENVAR_NAME="my_value"
 python do_baybe_work.py
 ```
+Or on Windows:
+```shell
+set ENVAR_NAME=my_value
+```
 Note that variables set in this manner are interpreted as text, but converted internally
 to the needed format, see for instance the [`strtobool`](baybe.utils.boolean.strtobool) 
 converter for values that can be set so BayBE can interpret them as booleans.
