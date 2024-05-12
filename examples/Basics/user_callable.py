@@ -1,7 +1,6 @@
 ## Example of a user-defined callable
 
-# This example is an extension of the recommender example.
-# It implements an end-to-end use case demonstrating how to utilize the user-defined callable in pure recommenders.
+# This example implements an end-to-end use case demonstrating how to utilize the user-defined callable in pure recommenders.
 
 # This examples assumes some basic familiarity with using BayBE.
 # We refer to [`campaign`](./campaign.md) for a more general and basic example.
@@ -10,12 +9,11 @@
 
 from typing import Optional
 
-import numpy as np
 from pandas import DataFrame
 
 from baybe import Campaign
 from baybe.objectives import SingleTargetObjective
-from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
+from baybe.parameters import CategoricalParameter
 from baybe.recommenders import (
     RandomRecommender,
     SequentialGreedyRecommender,
@@ -27,7 +25,7 @@ from baybe.utils.dataframe import add_fake_results
 
 ### Callable function
 
-# This function prints all given parameters and pickles the recommender object to test its serializability.
+# This function prints the training data
 
 
 def callable_test(
@@ -56,6 +54,8 @@ def callable_test(
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=RandomRecommender(),
     recommender=SequentialGreedyRecommender(
+        allow_recommending_already_measured=True,
+        allow_repeated_recommendations=True,
         user_callable=callable_test,
     ),
 )
@@ -67,16 +67,7 @@ parameters = [
         name="Granularity",
         values=["coarse", "medium", "fine"],
         encoding="OHE",
-    ),
-    NumericalDiscreteParameter(
-        name="Pressure[bar]",
-        values=[1, 5, 10],
-        tolerance=0.2,
-    ),
-    NumericalDiscreteParameter(
-        name="Temperature[degree_C]",
-        values=np.linspace(100, 200, 10),
-    ),
+    )
 ]
 
 # We create the searchspace and the objective.
