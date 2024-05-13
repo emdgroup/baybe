@@ -15,7 +15,7 @@ def test_campaign_serialization(campaign):
     campaign2 = roundtrip(campaign)
     assert campaign == campaign2
 
-    campaign.recommend()
+    campaign.recommend(batch_size=1)
     campaign2 = roundtrip(campaign)
     assert campaign == campaign2
 
