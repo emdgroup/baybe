@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Passing an `Objective` to `Campaign` is now optional
+
+### Breaking Changes
+- Providing an explicit `batch_size` is now mandatory when asking for recommendations
+
 ## [0.9.1] - 2024-06-04
 ### Changed
 - Discrete searchspace memory estimate is now natively represented in bytes 
@@ -51,6 +58,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a warning instead of passing through the uncaught exception
 - Environment variables `BAYBE_NUMPY_USE_SINGLE_PRECISION` and
   `BAYBE_TORCH_USE_SINGLE_PRECISION` to enforce single point precision usage
+
+### Breaking Changes
+- `RecommenderProtocol.recommend` now accepts an optional `Objective` 
+- `RecommenderProtocol.recommend` now expects training data to be provided as a single
+  dataframe in experimental representation instead of two separate dataframes in
+  computational representation
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and
