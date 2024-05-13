@@ -63,7 +63,7 @@ class MaternKernel(Kernel):
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if self.lengthscale_initial_value is not None:
             gpytorch_kernel.lengthscale = torch.tensor(
-                [self.lengthscale_initial_value], dtype=DTypeFloatTorch
+                self.lengthscale_initial_value, dtype=DTypeFloatTorch
             )
         return gpytorch_kernel
 
@@ -92,6 +92,6 @@ class ScaleKernel(Kernel):
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if self.outputscale_initial_value is not None:
             gpytorch_kernel.outputscale = torch.tensor(
-                [self.outputscale_initial_value], dtype=DTypeFloatTorch
+                self.outputscale_initial_value, dtype=DTypeFloatTorch
             )
         return gpytorch_kernel
