@@ -55,7 +55,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective] = None,
         measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         # See base class.
@@ -126,7 +126,7 @@ class SequentialMetaRecommender(MetaRecommender):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective] = None,
         measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         # See base class.
@@ -208,7 +208,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective] = None,
         measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         # See base class.

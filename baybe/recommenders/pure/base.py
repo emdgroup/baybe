@@ -36,7 +36,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective] = None,
         measurements: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class

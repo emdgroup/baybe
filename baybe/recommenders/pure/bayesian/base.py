@@ -83,13 +83,21 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective],
         measurements: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class.
+
+        if objective is None:
+            raise NotImplementedError(
+                f"Recommenders of type '{BayesianRecommender.__name__}' require "
+                f"that an objective is specified."
+            )
+
         if measurements is None:
             raise NotImplementedError(
-                "Bayesian recommenders do not support empty training data yet."
+                f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
+                f"empty training data."
             )
 
         if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
