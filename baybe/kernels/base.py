@@ -43,7 +43,7 @@ class Kernel(ABC, SerialMixin):
         fields_dict = {}
         for parent_class in base_classes:
             fields_dict.update(
-                filter_attributes(object=self, callable_=parent_class.__init__)
+                filter_attributes(object=self, callable_=parent_class.__init__)  # type: ignore[misc]
             )
 
         # Convert specified priors to gpytorch, if provided
