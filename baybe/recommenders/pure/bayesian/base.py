@@ -83,7 +83,7 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective],
+        objective: Optional[Objective] = None,
         measurements: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class.
