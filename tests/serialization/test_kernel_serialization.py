@@ -6,7 +6,7 @@ from baybe.kernels.base import Kernel
 from tests.hypothesis_strategies.kernels import kernels
 
 
-@given(kernels)
+@given(kernels())
 def test_kernel_roundtrip(kernel: Kernel):
     string = kernel.to_json()
     kernel2 = Kernel.from_json(string)
