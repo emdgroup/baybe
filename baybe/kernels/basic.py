@@ -52,7 +52,7 @@ class MaternKernel(Kernel):
     lengthscale_initial_value: Optional[float] = field(
         default=None, converter=optional(float)
     )
-    """An optional starting value for the kernel lengthscale."""
+    """An optional initial value for the kernel lengthscale."""
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
@@ -81,7 +81,7 @@ class ScaleKernel(Kernel):
     outputscale_initial_value: Optional[float] = field(
         default=None, converter=optional(float)
     )
-    """An optional initial value for the output scale"""
+    """An optional initial value for the output scale."""
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.

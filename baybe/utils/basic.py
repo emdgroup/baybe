@@ -64,13 +64,13 @@ def get_base_classes(
 
     Args:
         cls: The class to retrieve base classes for.
-        recursive: If ``True``, indirect base classes (i.e., parent classes of parent
+        recursive: If ``True``, indirect base classes (i.e., base classes of base
             classes) are included.
         abstract: If `True`, abstract base classes are included.
         include_class: If ``True``, the class itself is included.
 
     Returns:
-        A list of parent classes for the given class.
+        A list of base classes for the given class.
     """
     from baybe.utils.boolean import is_abstract
 
