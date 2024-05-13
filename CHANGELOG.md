@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Structuring concrete subclasses no longer requires providing an explicit `type` field
 - `_target(s)` attributes of `Objectives` are now de-/serialized without leading
   underscore to support user-friendly serialization strings
+- Telemetry does not execute any code if it was disabled
 
 ### Deprecations
 - The former `baybe.objective.Objective` class has been replaced with

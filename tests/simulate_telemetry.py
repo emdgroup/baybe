@@ -78,7 +78,6 @@ config = {
         ),
         initial_recommender=RandomRecommender(),
     ),
-    "numerical_measurements_must_be_within_tolerance": True,
 }
 
 # Actual User
