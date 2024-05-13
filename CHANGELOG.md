@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User guide now explains the new objective classes
 - Telemetry deactivation warning is only shown to developers
 - `torch`, `gpytorch` and `botorch` are lazy-loaded for improved startup time
+- If an exception is encountered during simulation, incomplete results are returned 
+  with a warning instead of passing through the uncaught exception
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and

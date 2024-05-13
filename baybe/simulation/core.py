@@ -156,6 +156,15 @@ def simulate_experiment(
             )
             break
 
+        # Temporary workaround to enable returning incomplete simulations
+        except Exception as ex:
+            warnings.warn(
+                f"An error has occurred during the simulation, "
+                f"therefore incomplete simulation results are returned. "
+                f"The error message was:\n{str(ex)}"
+            )
+            break
+
         n_experiments += len(measured)
         _look_up_target_values(measured, campaign, lookup, impute_mode)
 
