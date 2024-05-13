@@ -81,9 +81,9 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
         recommender = self.select_recommender(
-            searchspace, objective, batch_size, measurements
+            batch_size, searchspace, objective, measurements
         )
-        return recommender.recommend(searchspace, objective, batch_size, measurements)
+        return recommender.recommend(batch_size, searchspace, objective, measurements)
 
 
 # Register (un-)structure hooks
