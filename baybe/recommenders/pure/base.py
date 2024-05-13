@@ -7,6 +7,7 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.exceptions import NotEnoughPointsLeftError
+from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -33,10 +34,10 @@ class PureRecommender(ABC, RecommenderProtocol):
 
     def recommend(  # noqa: D102
         self,
+        batch_size: int,
         searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        objective: Objective,
+        measurements: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
