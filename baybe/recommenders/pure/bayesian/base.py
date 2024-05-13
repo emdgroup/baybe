@@ -52,21 +52,9 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         searchspace: SearchSpace,
         objective: Objective,
-        measurements: Optional[pd.DataFrame] = None,
+        measurements: pd.DataFrame,
     ) -> None:
-        """Create the acquisition function for the current training data.
-
-        The acquisition function is stored in the private attribute
-        ``_acquisition_function``.
-
-        Args:
-            searchspace:
-                See :meth:`baybe.recommenders.pure.bayesian.BayesianRecommender.recommend`.
-            objective:
-                See :meth:`baybe.recommenders.pure.bayesian.BayesianRecommender.recommend`.
-            measurements:
-                See :meth:`baybe.recommenders.pure.bayesian.BayesianRecommender.recommend`.
-        """  # noqa: E501
+        """Create the acquisition function for the current training data."""  # noqa: E501
         # TODO: Transition point from dataframe to tensor needs to be refactored.
         #   Currently, surrogate models operate with tensors, while acquisition
         #   functions with dataframes.
