@@ -23,7 +23,6 @@ def simulate_transfer_learning(
     n_doe_iterations: Optional[int] = None,
     groupby: Optional[list[str]] = None,
     n_mc_iterations: int = 1,
-    _return_on_error: bool = False,
 ) -> pd.DataFrame:
     """Simulate Bayesian optimization with transfer learning.
 
@@ -47,7 +46,6 @@ def simulate_transfer_learning(
         n_doe_iterations: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
         groupby: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
         n_mc_iterations: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
-        _return_on_error: See :func:`baybe.simulation.scenarios.simulate_scenarios`.
 
     Returns:
         A dataframe as returned by :func:`baybe.simulation.scenarios.simulate_scenarios`
@@ -101,5 +99,4 @@ def simulate_transfer_learning(
         groupby=groupby,
         n_mc_iterations=n_mc_iterations,
         impute_mode="ignore",
-        _return_on_error=_return_on_error,
     )

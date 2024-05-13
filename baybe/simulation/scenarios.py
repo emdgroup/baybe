@@ -39,7 +39,6 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
-    _return_on_error: bool = False,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -59,7 +58,6 @@ def simulate_scenarios(
         n_mc_iterations: The number of Monte Carlo simulations to be used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        _return_on_error: See :func:`baybe.simulation.core.simulate_experiment`.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
@@ -109,7 +107,6 @@ def simulate_scenarios(
                 random_seed=Random_Seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
-                _return_on_error=_return_on_error,
             )
         )
 
@@ -157,7 +154,6 @@ def _simulate_groupby(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: Optional[float] = None,
-    _return_on_error: bool = False,
 ) -> pd.DataFrame:
     """Scenario simulation for different search space partitions.
 
@@ -175,7 +171,6 @@ def _simulate_groupby(
         random_seed: See :func:`baybe.simulation.core.simulate_experiment`.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        _return_on_error: See :func:`baybe.simulation.core.simulate_experiment`.
 
     Returns:
         A dataframe like returned from
@@ -228,7 +223,6 @@ def _simulate_groupby(
                 random_seed=random_seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
-                _return_on_error=_return_on_error,
             )
         except NothingToSimulateError:
             continue
