@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `_target(s)` attributes of `Objectives` are now de-/serialized without leading
   underscore to support user-friendly serialization strings
 - Telemetry does not execute any code if it was disabled
+- Running simulations no longer alters the states of the global random number generators
 
 ### Deprecations
 - The former `baybe.objective.Objective` class has been replaced with
