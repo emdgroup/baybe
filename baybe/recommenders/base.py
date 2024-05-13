@@ -18,7 +18,7 @@ class RecommenderProtocol(Protocol):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective],
         measurements: Optional[pd.DataFrame],
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
@@ -26,7 +26,7 @@ class RecommenderProtocol(Protocol):
         Args:
             batch_size: The number of points to be recommended.
             searchspace: The search space from which to recommend the points.
-            objective: The objective to be optimized.
+            objective: An optional objective to be optimized.
             measurements: Optional experimentation data that can be used for model
                 training. The data is to be provided in "experimental representation":
                 It needs to contain one column for each parameter spanning the search

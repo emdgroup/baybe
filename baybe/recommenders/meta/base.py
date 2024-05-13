@@ -53,7 +53,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective] = None,
         measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         """Select a pure recommender for the given experimentation context.
@@ -76,7 +76,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective,
+        objective: Optional[Objective] = None,
         measurements: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
