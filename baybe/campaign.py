@@ -258,7 +258,7 @@ class Campaign(SerialMixin):
 
     def recommend(
         self,
-        batch_size: int = 5,
+        batch_size: int,
         batch_quantity: int = None,  # type: ignore[assignment]
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
