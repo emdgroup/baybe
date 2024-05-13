@@ -42,7 +42,7 @@ class GaussianProcessSurrogate(Surrogate):
     )
     """The factory used to create the kernel of the Gaussian process.
     When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
-    into a :class:`baybe.surrogates.gaussian_process.core.PlainKernelFactory`."""
+    into a :class:`.kernel_factory.PlainKernelFactory`."""
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
