@@ -1,10 +1,11 @@
-"""Priors that can be used for kernels."""
+"""A collection of common prior distributions."""
+
 from typing import Any
 
 from attrs import define, field
 from attrs.validators import gt
 
-from baybe.kernels.priors.base import Prior
+from baybe.priors.base import Prior
 from baybe.utils.validation import finite_float
 
 

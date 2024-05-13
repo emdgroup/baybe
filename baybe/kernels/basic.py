@@ -8,7 +8,7 @@ from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.priors.base import Prior
+from baybe.priors.base import Prior
 from baybe.utils.conversion import fraction_to_float
 from baybe.utils.validation import finite_float
 

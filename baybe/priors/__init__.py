@@ -1,6 +1,6 @@
-"""Available priors."""
+"""Prior distributions."""
 
-from baybe.kernels.priors.basic import (
+from baybe.priors.basic import (
     GammaPrior,
     HalfCauchyPrior,
     HalfNormalPrior,

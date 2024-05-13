@@ -28,7 +28,6 @@ from baybe.constraints import (
 )
 from baybe.exceptions import OptionalImportError
 from baybe.kernels import MaternKernel
-from baybe.kernels.priors import GammaPrior
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters import (
@@ -39,6 +38,7 @@ from baybe.parameters import (
     SubstanceEncoding,
     TaskParameter,
 )
+from baybe.priors import GammaPrior
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import (
     SequentialMetaRecommender,

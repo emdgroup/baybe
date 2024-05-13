@@ -8,7 +8,7 @@ from attr import define, field
 
 from baybe.kernels import MaternKernel, ScaleKernel
 from baybe.kernels.base import Kernel
-from baybe.kernels.priors import GammaPrior
+from baybe.priors import GammaPrior
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 
