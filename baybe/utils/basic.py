@@ -59,7 +59,7 @@ def get_base_classes(
     recursive: bool = True,
     abstract: bool = False,
     include_class: bool = False,
-) -> list[type]:
+) -> set[type]:
     """Return a list of base classes for the given class.
 
     Args:
@@ -67,10 +67,12 @@ def get_base_classes(
         recursive: If ``True``, indirect base classes (i.e., base classes of base
             classes) are included.
         abstract: If `True`, abstract base classes are included.
-        include_class: If ``True``, the class itself is included.
+        include_class: If ``True``, the class itself is included. Note that this will
+            include the class under any circumstances, that is, even if it is abstract
+            and ``abstract``was set to ``False``.
 
     Returns:
-        A list of base classes for the given class.
+        A set of base classes for the given class.
     """
     from baybe.utils.boolean import is_abstract
 
@@ -82,12 +84,10 @@ def get_base_classes(
 
         if recursive:
             classes.extend(
-                get_base_classes(cls, abstract=abstract, include_class=False)
-                if base_class not in classes
-                else []
+                get_base_classes(base_class, abstract=abstract, include_class=False)
             )
 
-    return classes
+    return set(classes)
 
 
 def set_random_seed(seed: int):
