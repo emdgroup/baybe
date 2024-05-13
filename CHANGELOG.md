@@ -27,7 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telemetry deactivation warning is only shown to developers
 - `torch`, `gpytorch` and `botorch` are lazy-loaded for improved startup time
 - If an exception is encountered during simulation, incomplete results are returned 
-  with a warning instead of passing through the uncaught exception
+- Passing an `Objective` to `Campaign` is now optional
+- Providing an explicit `batch_size` is now mandatory when asking for recommendations
+
+### Breaking Changes
+- `RecommenderProtocol.recommend` now accepts an optional `Objective` 
+- `RecommenderProtocol.recommend` now expects training data to be provided as a single
+  dataframe in experimental representation instead of two separate dataframes in
+  computational representation
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and
