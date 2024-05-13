@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from itertools import chain
 from typing import Union
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -859,22 +860,14 @@ def run_iterations(
         campaign.add_measurements(rec)
 
 
-def get_dummy_training_data(length: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Create column-less input and target dataframes of specified length."""
-    df = pd.DataFrame(np.empty((length, 0)))
-    return df, df
-
-
-def get_dummy_searchspace() -> SearchSpace:
-    """Create a dummy searchspace whose actual content is irrelevant."""
-    parameters = [NumericalDiscreteParameter(name="test", values=(0, 1))]
-    return SearchSpace.from_product(parameters)
-
-
 def select_recommender(
     meta_recommender: MetaRecommender, training_size: int
 ) -> PureRecommender:
-    """Select a recommender for given training dataset size."""
-    searchspace = get_dummy_searchspace()
-    df_x, df_y = get_dummy_training_data(training_size)
-    return meta_recommender.select_recommender(searchspace, train_x=df_x, train_y=df_y)
+    """Select a recommender for a given training dataset size."""
+    searchspace = Mock()
+    objective = Mock()
+    df = Mock()
+    df.__len__ = Mock(return_value=training_size)
+    return meta_recommender.select_recommender(
+        batch_size=1, searchspace=searchspace, objective=objective, measurements=df
+    )
