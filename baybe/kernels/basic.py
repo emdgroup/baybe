@@ -4,11 +4,13 @@ from fractions import Fraction
 from typing import Optional, Union
 
 from attrs import define, field
-from attrs.converters import optional
-from attrs.validators import in_
+from attrs.converters import optional as optional_c
+from attrs.validators import in_, instance_of
+from attrs.validators import optional as optional_v
 
 from baybe.kernels.base import Kernel
 from baybe.kernels.priors.base import Prior
+from baybe.utils.validation import finite_float
 
 
 def _convert_fraction(value: Union[str, float, Fraction], /) -> float:
@@ -46,11 +48,13 @@ class MaternKernel(Kernel):
     Only takes the values 0.5, 1.5 or 2.5. Larger values yield smoother interpolations.
     """
 
-    lengthscale_prior: Optional[Prior] = field(default=None)
+    lengthscale_prior: Optional[Prior] = field(
+        default=None, validator=optional_v(instance_of(Prior))
+    )
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: Optional[float] = field(
-        default=None, converter=optional(float)
+        default=None, converter=optional_c(float), validator=optional_v(finite_float)
     )
     """An optional initial value for the kernel lengthscale."""
 
@@ -72,14 +76,16 @@ class MaternKernel(Kernel):
 class ScaleKernel(Kernel):
     """A kernel for decorating existing kernels with an outputscale."""
 
-    base_kernel: Kernel = field()
+    base_kernel: Kernel = field(validator=instance_of(Kernel))
     """The base kernel that is being decorated."""
 
-    outputscale_prior: Optional[Prior] = field(default=None)
+    outputscale_prior: Optional[Prior] = field(
+        default=None, validator=optional_v(instance_of(Prior))
+    )
     """An optional prior on the output scale."""
 
     outputscale_initial_value: Optional[float] = field(
-        default=None, converter=optional(float)
+        default=None, converter=optional_c(float), validator=optional_v(finite_float)
     )
     """An optional initial value for the output scale."""
 
