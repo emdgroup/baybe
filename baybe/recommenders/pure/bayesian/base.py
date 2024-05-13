@@ -97,4 +97,4 @@ class BayesianRecommender(PureRecommender, ABC):
 
         self._setup_botorch_acqf(searchspace, objective, measurements)
 
-        return super().recommend(searchspace, objective, batch_size, measurements)
+        return super().recommend(batch_size, searchspace, objective, measurements)
