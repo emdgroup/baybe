@@ -137,7 +137,7 @@ def test_deprecated_campaign_tolerance_flag(flag):
 def test_deprecated_batch_quantity_keyword(campaign):
     """Using the deprecated batch_quantity keyword raises an error."""
     with pytest.raises(DeprecationError):
-        campaign.recommend(batch_quantity=5)
+        campaign.recommend(batch_size=5, batch_quantity=5)
 
 
 @pytest.mark.parametrize("flag", (True, False))
