@@ -8,6 +8,7 @@ import pandas as pd
 from attrs import define, field
 
 from baybe.exceptions import DeprecationError
+from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.recommenders.pure.base import PureRecommender
@@ -50,20 +51,22 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     @abstractmethod
     def select_recommender(
         self,
+        batch_size: int,
         searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        objective: Objective,
+        measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         """Select a pure recommender for the given experimentation context.
 
         Args:
-            searchspace:
-                See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
             batch_size:
                 See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
-            train_x: See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
-            train_y: See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
+            searchspace:
+                See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
+            objective:
+                See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
+            measurements:
+                See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
 
         Returns:
             The selected recommender.
@@ -71,14 +74,16 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
 
     def recommend(
         self,
+        batch_size: int,
         searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        objective: Objective,
+        measurements: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
-        recommender = self.select_recommender(searchspace, batch_size, train_x, train_y)
-        return recommender.recommend(searchspace, batch_size, train_x, train_y)
+        recommender = self.select_recommender(
+            searchspace, objective, batch_size, measurements
+        )
+        return recommender.recommend(searchspace, objective, batch_size, measurements)
 
 
 # Register (un-)structure hooks
