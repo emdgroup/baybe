@@ -1,5 +1,7 @@
 """Base classes for all pure recommenders."""
 
+from __future__ import annotations
+
 from abc import ABC
 from typing import Any, Callable, ClassVar, Optional
 
@@ -35,7 +37,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         list[
             Callable[
                 [
-                    "PureRecommender",
+                    PureRecommender,
                     SearchSpace,
                     int,
                     Optional[pd.DataFrame],
