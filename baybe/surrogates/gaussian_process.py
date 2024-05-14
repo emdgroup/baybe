@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar, Optional
 
 from attr import define, field
 
-from baybe.kernels import MaternKernel
+from baybe.kernels import MaternKernel, ScaleKernel
 from baybe.kernels.base import Kernel
 from baybe.kernels.priors import GammaPrior
 from baybe.searchspace import SearchSpace
@@ -108,25 +108,21 @@ class GaussianProcessSurrogate(Surrogate):
 
         # If no kernel is provided, we construct one from our priors
         if self.kernel is None:
-            self.kernel = MaternKernel(lengthscale_prior=lengthscale_prior[0])
+            self.kernel = ScaleKernel(
+                base_kernel=MaternKernel(
+                    lengthscale_prior=lengthscale_prior[0],
+                    lengthscale_initial_value=lengthscale_prior[1],
+                ),
+                outputscale_prior=outputscale_prior[0],
+                outputscale_initial_value=outputscale_prior[1],
+            )
 
         # define the covariance module for the numeric dimensions
-        gpytorch_kernel = self.kernel.to_gpytorch(
+        base_covar_module = self.kernel.to_gpytorch(
             ard_num_dims=train_x.shape[-1] - n_task_params,
             active_dims=numeric_idxs,
             batch_shape=batch_shape,
         )
-        base_covar_module = gpytorch.kernels.ScaleKernel(
-            gpytorch_kernel,
-            batch_shape=batch_shape,
-            outputscale_prior=outputscale_prior[0].to_gpytorch(),
-        )
-        if outputscale_prior[1] is not None:
-            base_covar_module.outputscale = torch.tensor([outputscale_prior[1]])
-        if lengthscale_prior[1] is not None:
-            base_covar_module.base_kernel.lengthscale = torch.tensor(
-                [lengthscale_prior[1]]
-            )
 
         # create GP covariance
         if task_idx is None:
