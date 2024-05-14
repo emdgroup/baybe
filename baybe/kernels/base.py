@@ -41,9 +41,9 @@ class Kernel(ABC, SerialMixin):
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
         base_classes = get_baseclasses(kernel_cls, abstract=True)
         fields_dict = {}
-        for parent_class in [kernel_cls, base_classes]:
+        for cls in [kernel_cls, *base_classes]:
             fields_dict.update(
-                filter_attributes(object=self, callable_=parent_class.__init__)  # type: ignore[misc]
+                filter_attributes(object=self, callable_=cls.__init__)  # type: ignore[misc]
             )
 
         # Convert specified priors to gpytorch, if provided
