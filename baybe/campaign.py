@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.converters import optional
 
 from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective, to_objective
@@ -49,9 +47,7 @@ class Campaign(SerialMixin):
     searchspace: SearchSpace = field()
     """The search space in which the experiments are conducted."""
 
-    objective: Optional[Objective] = field(
-        default=None, converter=optional(to_objective)
-    )
+    objective: Objective = field(converter=to_objective)
     """The optimization objective.
     When passing a single :class:`baybe.targets.base.Target`, it gets automatically
     wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
