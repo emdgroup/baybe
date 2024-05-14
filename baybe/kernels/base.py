@@ -42,9 +42,7 @@ class Kernel(ABC, SerialMixin):
         base_classes = get_baseclasses(kernel_cls, abstract=True)
         fields_dict = {}
         for cls in [kernel_cls, *base_classes]:
-            fields_dict.update(
-                filter_attributes(object=self, callable_=cls.__init__)  # type: ignore[misc]
-            )
+            fields_dict.update(filter_attributes(object=self, callable_=cls.__init__))
 
         # Convert specified priors to gpytorch, if provided
         prior_dict = {
