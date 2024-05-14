@@ -67,7 +67,25 @@ class Kernel(ABC, SerialMixin):
         # Create the kernel with all its inner gpytorch objects
         fields_dict.update(kernel_dict)
         fields_dict.update(prior_dict)
-        return kernel_cls(**fields_dict)
+        gpytorch_kernel = kernel_cls(**fields_dict)
+
+        # If the kernel has a lengthscale, set its initial value
+        if kernel_cls.has_lengthscale:
+            import torch
+
+            from baybe.utils.torch import DTypeFloatTorch
+
+            # We can ignore mypy here and simply assume that the corresponding BayBE
+            # kernel class has the necessary lengthscale attribute defined. This is
+            # safer than using a `hasattr` check in the above if-condition since for
+            # the latter the code would silently fail when forgetting to add the
+            # attribute to a new kernel class / misspelling it.
+            if (initial_value := self.lengthscale_initial_value) is not None:  # type: ignore[attr-defined]
+                gpytorch_kernel.lengthscale = torch.tensor(
+                    initial_value, dtype=DTypeFloatTorch
+                )
+
+        return gpytorch_kernel
 
 
 # Register de-/serialization hooks

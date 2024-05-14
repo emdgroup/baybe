@@ -35,19 +35,6 @@ class MaternKernel(Kernel):
     )
     """An optional initial value for the kernel lengthscale."""
 
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
-        import torch
-
-        from baybe.utils.torch import DTypeFloatTorch
-
-        gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
-        if self.lengthscale_initial_value is not None:
-            gpytorch_kernel.lengthscale = torch.tensor(
-                self.lengthscale_initial_value, dtype=DTypeFloatTorch
-            )
-        return gpytorch_kernel
-
 
 @define(frozen=True)
 class ScaleKernel(Kernel):
