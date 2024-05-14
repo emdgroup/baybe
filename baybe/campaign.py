@@ -133,20 +133,6 @@ class Campaign(SerialMixin):
         """The targets of the underlying objective."""
         return self.objective.targets if self.objective is not None else ()
 
-    @property
-    def _measurements_parameters_comp(self) -> pd.DataFrame:
-        """The computational representation of the measured parameters."""
-        if len(self._measurements_exp) < 1:
-            return pd.DataFrame()
-        return self.searchspace.transform(self._measurements_exp)
-
-    @property
-    def _measurements_targets_comp(self) -> pd.DataFrame:
-        """The computational representation of the measured targets."""
-        if len(self._measurements_exp) < 1:
-            return pd.DataFrame()
-        return self.objective.transform(self._measurements_exp)
-
     @classmethod
     def from_config(cls, config_json: str) -> Campaign:
         """Create a campaign from a configuration JSON.
