@@ -114,10 +114,6 @@ for kIter in range(N_ITERATIONS):
 
     campaign.add_measurements(rec)
 
-    print("\n\nInternal measurement dataframe computational representation Y:\n")
-    print(campaign._measurements_targets_comp)
-
-
 ### Addendum: Description of `transformation` functions
 
 # This function is used to transform target values to the interval `[0,1]` for `MAX`/`MIN` mode.
