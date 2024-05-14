@@ -60,8 +60,8 @@ class ScaleKernel(Kernel):
         from baybe.utils.torch import DTypeFloatTorch
 
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
-        if self.outputscale_initial_value is not None:
+        if (initial_value := self.outputscale_initial_value) is not None:
             gpytorch_kernel.outputscale = torch.tensor(
-                self.outputscale_initial_value, dtype=DTypeFloatTorch
+                initial_value, dtype=DTypeFloatTorch
             )
         return gpytorch_kernel
