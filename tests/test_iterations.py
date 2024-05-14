@@ -23,6 +23,7 @@ from baybe.recommenders.pure.bayesian.sequential_greedy import (
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
+from baybe.surrogates import BernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.utils.basic import get_subclasses
 
@@ -32,7 +33,10 @@ from .conftest import run_iterations
 # Settings of the individual components to be tested
 ########################################################################################
 valid_surrogate_models = [
-    cls() for cls in get_subclasses(Surrogate) if cls.__name__ != "CustomONNXSurrogate"
+    cls()
+    for cls in get_subclasses(Surrogate)
+    if cls.__name__
+    not in ["CustomONNXSurrogate", BernoulliMultiArmedBanditSurrogate.__name__]
 ]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
@@ -219,3 +223,15 @@ def test_iter_recommender_hybrid(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("recommender", valid_meta_recommenders, indirect=True)
 def test_meta_recommenders(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
+
+
+@pytest.mark.parametrize("surrogate_model", [BernoulliMultiArmedBanditSurrogate()])
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Categorical_1"], ["Categorical_2"], ["Switch_1"], ["Switch_2"]],
+)
+@pytest.mark.parametrize("batch_size", [1, 2])
+@pytest.mark.parametrize("target_names", [["Target_binary"]])
+@pytest.mark.parametrize("allow_repeated_recommendations", [True])
+def test_multi_arm_bandit(campaign, n_iterations, batch_size):
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)

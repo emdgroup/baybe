@@ -1,6 +1,7 @@
 """Available priors."""
 
 from baybe.kernels.priors.basic import (
+    BetaPrior,
     GammaPrior,
     HalfCauchyPrior,
     HalfNormalPrior,
@@ -16,4 +17,5 @@ __all__ = [
     "LogNormalPrior",
     "NormalPrior",
     "SmoothedBoxPrior",
+    "BetaPrior",
 ]

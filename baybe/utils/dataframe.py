@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
+from baybe.targets import BinaryTarget
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -129,6 +130,8 @@ def add_fake_results(
     if good_intervals is None:
         good_intervals = {}
         for target in campaign.targets:
+            if isinstance(target, BinaryTarget):
+                continue
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
                 ubound = (
@@ -158,6 +161,8 @@ def add_fake_results(
     if bad_intervals is None:
         bad_intervals = {}
         for target in campaign.targets:
+            if isinstance(target, BinaryTarget):
+                continue
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
@@ -186,6 +191,9 @@ def add_fake_results(
 
     # Add the fake data for each target
     for target in campaign.targets:
+        if isinstance(target, BinaryTarget):
+            data[target.name] = np.random.choice([0, 1])
+            continue
         # Add bad values
         data[target.name] = np.random.uniform(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)

@@ -17,7 +17,7 @@ class NoMCAcquisitionFunctionError(Exception):
 
 class IncompatibleSearchSpaceError(Exception):
     """
-    A recommender is used with a search space that contains incompatible parts,
+    A BayBE component is used with a search space that contains incompatible parts,
     e.g. a discrete recommender is used with a hybrid or continuous search space.
     """
 
@@ -50,3 +50,7 @@ class DeprecationError(Exception):
 
 class UnidentifiedSubclassError(Exception):
     """A specified subclass cannot be found in the given class hierarchy."""
+
+
+class NotFitError(Exception):
+    """A surrogate is not fit but accessed in an unsafe way."""

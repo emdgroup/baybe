@@ -19,6 +19,7 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
+from baybe.targets import BinaryTarget
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -217,6 +218,17 @@ class Campaign(SerialMixin):
                     f"The target '{target.name}' has non-numeric entries in the "
                     f"provided dataframe. Non-numeric target values are not supported."
                 )
+            if (
+                isinstance(target, BinaryTarget)
+                and not data[target.name].isin(BinaryTarget.accepted_values).all()
+            ):
+                raise ValueError(
+                    f"'{BinaryTarget.__name__}' only accepts "
+                    f"{BinaryTarget.accepted_values} as target values."
+                )
+                # TODO: check targets falling into bounds for other targets.
+                #       This should most likely be done in the recommender for
+                #       standalone use.
 
         # Check if all targets have valid values
         for param in self.parameters:
