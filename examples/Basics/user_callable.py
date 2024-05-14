@@ -56,7 +56,7 @@ recommender = TwoPhaseMetaRecommender(
     recommender=SequentialGreedyRecommender(
         allow_recommending_already_measured=True,
         allow_repeated_recommendations=True,
-        user_callable=callable_test,
+        user_callables=[callable_test],
     ),
 )
 
