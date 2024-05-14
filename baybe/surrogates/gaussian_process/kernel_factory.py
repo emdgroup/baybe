@@ -40,6 +40,7 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
     """A trivial factory that returns a fixed pre-defined kernel upon request."""
 
     kernel: Kernel = field(validator=instance_of(Kernel))
+    """The fixed kernel to be returned by the factory."""
 
     def __call__(  # noqa: D102
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
