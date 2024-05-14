@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 
 from attrs import define
 
-from baybe.kernels.priors.base import Prior
+from baybe.priors.base import Prior
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,

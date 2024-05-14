@@ -2,7 +2,7 @@
 
 from hypothesis import given
 
-from baybe.kernels.priors.base import Prior
+from baybe.priors.base import Prior
 from tests.hypothesis_strategies.priors import priors
 
 

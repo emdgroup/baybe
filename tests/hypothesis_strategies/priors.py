@@ -2,7 +2,7 @@
 
 import hypothesis.strategies as st
 
-from baybe.kernels.priors import (
+from baybe.priors import (
     GammaPrior,
     HalfCauchyPrior,
     HalfNormalPrior,
