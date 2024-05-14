@@ -24,7 +24,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     steps:
@@ -37,22 +37,35 @@ jobs:
         run: pip install tox-uv
       - name: Build Docs ${{ inputs.force == true && '(Force)' || '' }}
         run: tox -e docs-py39 ${{ inputs.force == true && '-- -f' || '' }}
-      - name: Upload docs artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'docs/build'
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+      - name: Prepare gh-pages branch with HTML output from Sphinx
+        run: |
+            git fetch origin gh-pages:gh-pages
+            git checkout gh-pages
+            if ${{ github.event_name == 'workflow_dispatch'}}; then
+              echo "Triggered by workflow_dispatch"
+              FOLDER='latest'
+            else
+              echo "Triggered by release"
+              FOLDER=${{github.event.release.tag_name}}
+            fi
+            echo "$FOLDER"
+            if [-d $FOLDER]; then
+              rm -rf ./$FOLDER
+            fi
+            mkdir ./$FOLDER
+            cp -rv docs/build/* ./$FOLDER
+      - name: Update gh-pages branch
+        run: |
+            if ${{ github.event_name == 'workflow_dispatch'}}; then
+              echo "Triggered by workflow_dispatch"
+              FOLDER='latest'
+            else
+              echo "Triggered by release"
+              FOLDER=${{github.event.release.tag_name}}
+            fi
+            git config --local user.email "sphinx-upload[bot]@users.noreply.github.com"
+            git config --local user.name "sphinx-upload[bot]"
+            git_hash=$(git rev-parse --short "$GITHUB_SHA")
+            git add -f $FOLDER
+            git commit --allow-empty -m "Sphinx documentation for ${git_hash}"
+            git push origin gh-pages
