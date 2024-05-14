@@ -97,6 +97,11 @@ def simulate_experiment(
     #   want to investigate in the future.
     # TODO: Use a `will_terminate` campaign property to decide if the campaign will
     #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
+    if campaign.objective is None:
+        raise ValueError(
+            "The given campaign has no objective defined, hence there are no targets "
+            "to be tracked."
+        )
 
     context = temporary_seed(random_seed) if random_seed is not None else nullcontext()
     with context:
