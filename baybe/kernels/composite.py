@@ -1,10 +1,11 @@
 """Composite kernels."""
 
+from operator import add, mul
 from typing import Optional
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import instance_of
+from attrs.validators import deep_iterable, instance_of
 from attrs.validators import optional as optional_v
 
 from baybe.kernels.base import Kernel
@@ -41,3 +42,33 @@ class ScaleKernel(Kernel):
                 initial_value, dtype=DTypeFloatTorch
             )
         return gpytorch_kernel
+
+
+@define(frozen=True)
+class AdditiveKernel(Kernel):
+    """A kernel representing the sum of a collection of base kernels."""
+
+    base_kernels: tuple[Kernel, ...] = field(
+        converter=tuple, validator=deep_iterable(member_validator=instance_of(Kernel))
+    )
+    """The individual kernels to be summed."""
+
+    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+        # See base class.
+
+        return add(*(k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
+
+
+@define(frozen=True)
+class ProductKernel(Kernel):
+    """A kernel representing the product of a collection of base kernels."""
+
+    base_kernels: tuple[Kernel, ...] = field(
+        converter=tuple, validator=deep_iterable(member_validator=instance_of(Kernel))
+    )
+    """The individual kernels to be multiplied."""
+
+    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+        # See base class.
+
+        return mul(*(k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
