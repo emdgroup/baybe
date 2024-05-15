@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from attrs import define
 
-from baybe.kernels.basic import MaternKernel, ScaleKernel
+from baybe.kernels.basic import MaternKernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 

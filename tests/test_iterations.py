@@ -5,7 +5,8 @@
 import pytest
 
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.kernels import MaternKernel, ScaleKernel
+from baybe.kernels.basic import MaternKernel
+from baybe.kernels.composite import ScaleKernel
 from baybe.priors import (
     GammaPrior,
     HalfCauchyPrior,

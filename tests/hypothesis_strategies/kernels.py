@@ -2,7 +2,8 @@
 
 import hypothesis.strategies as st
 
-from baybe.kernels import MaternKernel, ScaleKernel
+from baybe.kernels.basic import MaternKernel
+from baybe.kernels.composite import ScaleKernel
 
 from ..hypothesis_strategies.basic import finite_floats
 from ..hypothesis_strategies.priors import priors
