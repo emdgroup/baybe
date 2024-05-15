@@ -121,6 +121,16 @@ def build_examples(example_dest_dir: str, ignore_examples: bool):
                 formatted = formatted.replace("Prodsum", "Product/Sum")
             subdir_toctree += formatted + f"<{file_name}>\n"
 
+            # If we ignore the examples, we do not want to actually execute or convert
+            # anything. Still, due to existing links, it is necessary to construct a
+            # dummy file and then continue.
+            if ignore_examples:
+                markdown_path = file.with_suffix(".md")
+                # Rewrite the file
+                with open(markdown_path, "w", encoding="UTF-8") as markdown_file:
+                    markdown_file.writelines("# DUMMY FILE")
+                continue
+
             # Set description for progress bar
             inner_pbar.set_description(f"Progressing {folder_name}")
 
@@ -145,8 +155,7 @@ def build_examples(example_dest_dir: str, ignore_examples: bool):
                 "--inplace",
                 notebook_path,
             ]
-            if not ignore_examples:
-                convert_execute.append("--execute")
+            convert_execute.append("--execute")
 
             to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
