@@ -124,7 +124,7 @@ relationships between our parameters. Details can be found in the
 [constraints section](https://emdgroup.github.io/baybe/userguide/constraints.html) of the user guide.
 In this example, we assume no further constraints.
 
-With the parameter and constraint definitions at hand, we can now create our
+With the parameter definitions at hand, we can now create our
 `SearchSpace` based on the Cartesian product of all possible parameter values:
 
 ```python
