@@ -101,7 +101,10 @@ If you still want to use single precision, you can set the following boolean var
 - `BAYBE_NUMPY_USE_SINGLE_PRECISION`: Defaults to `False`
 - `BAYBE_TORCH_USE_SINGLE_PRECISION`: Defaults to `False`
 
-If you intend to use single precision, please be sure to provide all numerical values
-also as single point precision values. In particular, this holds for values you would
-normally simply pass as `rhs=0.3`. Since Python interprets these as double precision,
-they must be provided like `rhs=np.float32(0.3)`.
+```{admonition} Continuous Constraints in Single Precision
+:class: warning
+Currently, due to explicit casting in BoTorch, 
+[`ContinuousConstraint`](baybe.constraints.base.ContinuousConstraint)s do not support
+single precision and cannot be used if the corresponding environment variables are
+activated.
+```
