@@ -82,7 +82,7 @@ jobs:
       - name: Build Docs
         run: |
           pip install tox-uv
-          tox -e docs-py312 -- -e
+          tox -e docs-py312 -- -r
           
   typecheck:
     needs: [lint]
