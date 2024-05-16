@@ -8,7 +8,7 @@ from attrs import define, field
 
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process.kernel_factory import (
+from baybe.surrogates.gaussian_process.factories import (
     KernelFactory,
     to_kernel_factory,
 )

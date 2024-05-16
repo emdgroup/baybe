@@ -9,7 +9,7 @@ from attrs import define
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.priors.basic import GammaPrior
-from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
+from baybe.surrogates.gaussian_process.factories import KernelFactory
 
 if TYPE_CHECKING:
     from torch import Tensor
