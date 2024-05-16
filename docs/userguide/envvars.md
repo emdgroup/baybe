@@ -38,7 +38,7 @@ Darmstadt, Germany and/or its affiliates. The recording of metrics is turned off
 all other users and impossible due to a VPN block. In any case, the usage statistics
 do **not** involve logging of recorded measurements, targets or any project information
 that would allow for reconstruction of details. The user and host machine names are
-irreversibly anonymized.
+anonymized.
 ```
 
 Monitored quantities:
@@ -51,7 +51,7 @@ Monitored quantities:
 * How often initial measurements are added before recommendations were calculated
   ("naked initial measurements")
 * The fraction of measurements added that correspond to previous recommendations
-* Each measurement is associated with an irreversible hash of the user- and hostname
+* Each measurement is associated with a truncated hash of the user- and hostname
 
 The following environment variables control the behavior of BayBE telemetry:
 - `BAYBE_TELEMETRY_ENABLED`: Flag that can turn off telemetry entirely (default is
