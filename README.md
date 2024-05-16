@@ -133,6 +133,10 @@ from baybe.searchspace import SearchSpace
 searchspace = SearchSpace.from_product(parameters)
 ```
 
+See the [search spaces section](https://emdgroup.github.io/baybe/userguide/searchspace.html)
+of our user guide for more information on the structure of search spaces
+and alternative ways of construction. 
+
 ### Optional: Defining the Optimization Strategy
 
 As an optional step, we can specify details on how the optimization should be
