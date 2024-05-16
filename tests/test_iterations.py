@@ -1,12 +1,11 @@
 # TODO: This file needs to be refactored.
 """Tests various configurations for a small number of iterations."""
 
-
 import pytest
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.kernels.basic import MaternKernel
-from baybe.kernels.composite import ScaleKernel
+from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.priors import (
     GammaPrior,
     HalfCauchyPrior,
@@ -140,7 +139,12 @@ valid_scale_kernels = [
     for prior in valid_priors
 ]
 
-valid_kernels = valid_base_kernels + valid_scale_kernels
+valid_composite_kernels = [
+    AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+    ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+]
+
+valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kernels
 
 test_targets = [
     ["Target_max"],
