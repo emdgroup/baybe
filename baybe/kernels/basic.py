@@ -1,4 +1,4 @@
-"""Collection of kernels."""
+"""Collection of basic kernels."""
 
 from typing import Optional
 
@@ -34,34 +34,3 @@ class MaternKernel(Kernel):
         default=None, converter=optional_c(float), validator=optional_v(finite_float)
     )
     """An optional initial value for the kernel lengthscale."""
-
-
-@define(frozen=True)
-class ScaleKernel(Kernel):
-    """A kernel for decorating existing kernels with an outputscale."""
-
-    base_kernel: Kernel = field(validator=instance_of(Kernel))
-    """The base kernel that is being decorated."""
-
-    outputscale_prior: Optional[Prior] = field(
-        default=None, validator=optional_v(instance_of(Prior))
-    )
-    """An optional prior on the output scale."""
-
-    outputscale_initial_value: Optional[float] = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
-    )
-    """An optional initial value for the output scale."""
-
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
-        import torch
-
-        from baybe.utils.torch import DTypeFloatTorch
-
-        gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
-        if (initial_value := self.outputscale_initial_value) is not None:
-            gpytorch_kernel.outputscale = torch.tensor(
-                initial_value, dtype=DTypeFloatTorch
-            )
-        return gpytorch_kernel

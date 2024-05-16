@@ -1,11 +1,23 @@
 """Hypothesis strategies for kernels."""
 
+from enum import Enum
+
 import hypothesis.strategies as st
 
-from baybe.kernels import MaternKernel, ScaleKernel
+from baybe.kernels.basic import MaternKernel
+from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 
 from ..hypothesis_strategies.basic import finite_floats
 from ..hypothesis_strategies.priors import priors
+
+
+class KernelType(Enum):
+    """Taxonomy of kernel types."""
+
+    SINGLE = "SINGLE"
+    ADDITIVE = "ADDITIVE"
+    PRODUCT = "PRODUCT"
+
 
 matern_kernels = st.builds(
     MaternKernel,
@@ -21,8 +33,8 @@ base_kernels = st.one_of([matern_kernels])
 
 
 @st.composite
-def kernels(draw: st.DrawFn):
-    """Generate :class:`baybe.kernels.basic.Kernel`."""
+def single_kernels(draw: st.DrawFn):
+    """Generate single kernels (i.e., without kernel arithmetic, except scaling)."""
     base_kernel = draw(base_kernels)
     add_scale = draw(st.booleans())
     if add_scale:
@@ -35,3 +47,18 @@ def kernels(draw: st.DrawFn):
         )
     else:
         return base_kernel
+
+
+@st.composite
+def kernels(draw: st.DrawFn):
+    """Generate :class:`baybe.kernels.basic.Kernel`."""
+    kernel_type = draw(st.sampled_from(KernelType))
+
+    if kernel_type is KernelType.SINGLE:
+        return draw(single_kernels())
+
+    base_kernels = draw(st.lists(single_kernels()))
+    if kernel_type is KernelType.ADDITIVE:
+        return AdditiveKernel(base_kernels)
+    if kernel_type is KernelType.PRODUCT:
+        return ProductKernel(base_kernels)
