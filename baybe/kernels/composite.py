@@ -1,4 +1,4 @@
-"""Composite kernels."""
+"""Composite kernels (that is, kernels composed of other kernels)."""
 
 from operator import add, mul
 from typing import Optional
