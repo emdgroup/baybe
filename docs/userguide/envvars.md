@@ -74,14 +74,14 @@ shipped in the default dependencies because there is no good way of creating opt
 dependencies, but the baybe package will work without them.
 ```
 
-## Caching
+## Disk Caching
 For some components, such as the
 [`SubstanceParameter`](baybe.parameters.substance.SubstanceParameter), some of the
-computation results are cached both in memory and in local storage.
+computation results are cached in local storage.
 
-By default, BayBE determines the location of temporary files on your system and puts cached
-data into a subfolder `.baybe_cache` there. If you want to change the location of the
-disk cache, change:
+By default, BayBE determines the location of temporary files on your system and puts
+cached data into a subfolder `.baybe_cache` there. If you want to change the location of
+the disk cache, change:
 ```bash
 BAYBE_CACHE_DIR="/path/to/your/desired/cache/folder"
 ```
