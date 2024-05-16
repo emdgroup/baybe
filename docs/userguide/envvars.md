@@ -61,10 +61,10 @@ The following environment variables control the behavior of BayBE telemetry:
   on/off (default is `True`).
 - `BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT`: The timeout in seconds for the check whether the
   endpoint URL is reachable.
-- `BAYBE_TELEMETRY_USERNAME`: The name of the user executing BayBE code. Defaults to an
-  irreversible hash of the username according to the OS.
+- `BAYBE_TELEMETRY_USERNAME`: The name of the user executing BayBE code. Defaults to a
+  truncated hash of the username according to the OS.
 - `BAYBE_TELEMETRY_HOSTNAME`: The name of the machine executing BayBE code. Defaults to
-  an irreversible hash of the machine name.
+  a truncated hash of the machine name.
 
 ```{admonition} Uninstalling Internet Packages
 :class: important

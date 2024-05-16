@@ -81,7 +81,7 @@ if is_enabled():
     try:
         DEFAULT_TELEMETRY_USERNAME = (
             hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
-        )  # this hash is irreversible and cannot identify the user or their machine
+        )
     except ModuleNotFoundError:
         # getpass.getuser() does not work on Windows if all the environment variables
         # it checks are empty. Since then there is no way of inferring the username, we
@@ -90,7 +90,7 @@ if is_enabled():
 
     DEFAULT_TELEMETRY_HOSTNAME = (
         hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
-    )  # this hash is irreversible and cannot identify the user or their machine
+    )
 
     _endpoint_url = os.environ.get(
         VARNAME_TELEMETRY_ENDPOINT, DEFAULT_TELEMETRY_ENDPOINT
