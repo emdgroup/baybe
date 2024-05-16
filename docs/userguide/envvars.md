@@ -5,7 +5,7 @@ Several aspects of BayBE can be configured via environment variables.
 ## Basic Instructions
 Setting an environment variable with the name `ENVVAR_NAME` is best done before calling
 any Python code, and must also be done in the same session unless made persistent, e.g.
-via `.bashrc` or similar.
+via `.bashrc` or similar:
 ```bash
 ENVAR_NAME="my_value"
 python do_baybe_work.py
@@ -15,7 +15,7 @@ Or on Windows:
 set ENVAR_NAME=my_value
 ```
 Note that variables set in this manner are interpreted as text, but converted internally
-to the needed format, see for instance the [`strtobool`](baybe.utils.boolean.strtobool) 
+to the needed format. See for instance the [`strtobool`](baybe.utils.boolean.strtobool) 
 converter for values that can be set so BayBE can interpret them as booleans.
 
 It is also possible to set environment variables in Python:
@@ -24,9 +24,9 @@ import os
 
 os.environ["ENVAR_NAME"] = "my_value"
 
-# proceed with BayBE code...
+# proceed with BayBE code ...
 ```
-However, this needs to be done carefully at entry point of your script or session and
+However, this needs to be done carefully at the entry point of your script or session and
 will not persist between sessions.
 
 ## Telemetry
@@ -79,7 +79,7 @@ For some components, such as the
 [`SubstanceParameter`](baybe.parameters.substance.SubstanceParameter), some of the
 computation results are cached both in memory and in local storage.
 
-By default, BayBE determines the location of temp files on your system and puts cached
+By default, BayBE determines the location of temporary files on your system and puts cached
 data into a subfolder `.baybe_cache` there. If you want to change the location of the
 disk cache, change:
 ```bash
@@ -93,13 +93,13 @@ BAYBE_CACHE_DIR=""
 you can turn off disk caching entirely.
 
 ## Floating Point Precision
-In general, double precision is recommended as numerical stability during optimization
-can be bad when single precision is used. This impacts gradient based optimization,
+In general, double precision is recommended because numerical stability during optimization
+can be bad when single precision is used. This impacts gradient-based optimization,
 i.e. search spaces with continuous parameters, more than optimization without gradients.
 
 If you still want to use single precision, you can set the following boolean variables:
-- `BAYBE_NUMPY_USE_SINGLE_PRECISION`: Defaults to `False`
-- `BAYBE_TORCH_USE_SINGLE_PRECISION`: Defaults to `False`
+- `BAYBE_NUMPY_USE_SINGLE_PRECISION` (defaults to `False`)
+- `BAYBE_TORCH_USE_SINGLE_PRECISION` (defaults to `False`)
 
 ```{admonition} Continuous Constraints in Single Precision
 :class: warning
