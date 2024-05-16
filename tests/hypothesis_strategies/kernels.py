@@ -34,7 +34,7 @@ base_kernels = st.one_of([matern_kernels])
 
 @st.composite
 def single_kernels(draw: st.DrawFn):
-    """Generate simple kernels without kernel arithmetic (except scaling)."""
+    """Generate single kernels (i.e., without kernel arithmetic, except scaling)."""
     base_kernel = draw(base_kernels)
     add_scale = draw(st.booleans())
     if add_scale:
