@@ -69,9 +69,9 @@ The following environment variables control the behavior of BayBE telemetry:
 ```{admonition} Uninstalling Internet Packages
 :class: important
 If you do not trust the instructions above, you are free to uninstall all
-internet-related packages such as `requests` or `opentelemetry*`. These are being
-shipped in the default dependencies because there is no good way of creating opt-out
-dependencies, but the baybe package will work without them.
+internet-related packages such as `opentelemetry*` or its secondary dependencies. These
+are being shipped in the default dependencies because there is no good way of creating
+opt-out dependencies, but the baybe package will work without them.
 ```
 
 ## Disk Caching
