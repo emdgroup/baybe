@@ -52,4 +52,4 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
 
 def to_kernel_factory(x: Union[Kernel, KernelFactory], /) -> KernelFactory:
     """Wrap a kernel into a plain kernel factory (with factory passthrough)."""
-    return PlainKernelFactory(x) if isinstance(x, Kernel) else x
+    return x.to_factory() if isinstance(x, Kernel) else x
