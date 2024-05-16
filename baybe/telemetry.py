@@ -1,4 +1,7 @@
-"""Telemetry functionality for BayBE."""
+"""Telemetry functionality for BayBE.
+
+For more details, see https://emdgroup.github.io/baybe/userguide/envvars.html#telemetry
+"""
 
 import getpass
 import hashlib
