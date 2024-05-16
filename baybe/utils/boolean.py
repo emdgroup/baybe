@@ -1,9 +1,10 @@
 """Functions implementing boolean checks."""
 
 from abc import ABC
-from typing import Any, Protocol
+from typing import Any
 
-from attr import cmp_using
+from attrs import cmp_using
+from typing_extensions import is_protocol
 
 # Used for comparing pandas dataframes in attrs classes
 eq_dataframe = cmp_using(lambda x, y: x.equals(y))
@@ -26,7 +27,7 @@ def is_abstract(cls: Any) -> bool:
     Returns:
         ``True`` if the class is "abstract" (see definition above), ``False`` else.
     """
-    return (ABC in cls.__bases__) or (cls.__bases__ == (Protocol,))
+    return ABC in cls.__bases__ or is_protocol(cls)
 
 
 def strtobool(val: str) -> bool:
