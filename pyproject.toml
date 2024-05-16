@@ -44,6 +44,7 @@ dependencies = [
     "scipy>=1.10.1",
     "setuptools-scm>=7.1.0",
     "torch>=1.13.1",
+    "typing_extensions>=4.7.0",
 
     # Telemetry:
     "opentelemetry-sdk>=1.16.0",

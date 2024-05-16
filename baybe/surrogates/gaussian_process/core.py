@@ -2,15 +2,24 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
-from attr import define, field
+from attrs import define, field
 
-from baybe.kernels import MaternKernel, ScaleKernel
-from baybe.kernels.base import Kernel
-from baybe.priors import GammaPrior
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.gaussian_process.kernel_factory import (
+    KernelFactory,
+    to_kernel_factory,
+)
+from baybe.surrogates.gaussian_process.presets import (
+    GaussianProcessPreset,
+    make_gp_from_preset,
+)
+from baybe.surrogates.gaussian_process.presets.default import (
+    DefaultKernelFactory,
+    _default_noise_factory,
+)
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -28,13 +37,27 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    kernel: Optional[Kernel] = field(default=None)
-    """The kernel used by the Gaussian Process."""
+    kernel_factory: KernelFactory = field(
+        alias="kernel_or_factory",
+        factory=DefaultKernelFactory,
+        converter=to_kernel_factory,
+    )
+    """The factory used to create the kernel of the Gaussian process.
+
+    Accepts either a :class:`baybe.kernels.base.Kernel` or a
+    :class:`.kernel_factory.KernelFactory`.
+    When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
+    into a :class:`.kernel_factory.PlainKernelFactory`."""
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
+
+    @classmethod
+    def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
+        """Create a Gaussian process surrogate from one of the defined presets."""
+        return make_gp_from_preset(preset)
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
@@ -65,60 +88,16 @@ class GaussianProcessSurrogate(Surrogate):
         )
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[1])
 
-        # ---------- GP prior selection ---------- #
-        # TODO: temporary prior choices adapted from edbo, replace later on
-
-        mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
-            train_x.shape[-1] >= 50
-        )
-
-        # TODO Until now, only the kernels use our custom priors, hence the explicit
-        # to_gpytorch() calls for all others
-        # low D priors
-        if train_x.shape[-1] < 10:
-            lengthscale_prior = [GammaPrior(1.2, 1.1), 0.2]
-            outputscale_prior = [GammaPrior(5.0, 0.5), 8.0]
-            noise_prior = [GammaPrior(1.05, 0.5), 0.1]
-
-        # DFT optimized priors
-        elif mordred and train_x.shape[-1] < 100:
-            lengthscale_prior = [GammaPrior(2.0, 0.2), 5.0]
-            outputscale_prior = [GammaPrior(5.0, 0.5), 8.0]
-            noise_prior = [GammaPrior(1.5, 0.1), 5.0]
-
-        # Mordred optimized priors
-        elif mordred:
-            lengthscale_prior = [GammaPrior(2.0, 0.1), 10.0]
-            outputscale_prior = [GammaPrior(2.0, 0.1), 10.0]
-            noise_prior = [GammaPrior(1.5, 0.1), 5.0]
-
-        # OHE optimized priors
-        else:
-            lengthscale_prior = [GammaPrior(3.0, 1.0), 2.0]
-            outputscale_prior = [GammaPrior(5.0, 0.2), 20.0]
-            noise_prior = [GammaPrior(1.5, 0.1), 5.0]
-
-        # ---------- End: GP prior selection ---------- #
-
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
 
         # create GP mean
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
-        # If no kernel is provided, we construct one from our priors
-        if self.kernel is None:
-            self.kernel = ScaleKernel(
-                base_kernel=MaternKernel(
-                    lengthscale_prior=lengthscale_prior[0],
-                    lengthscale_initial_value=lengthscale_prior[1],
-                ),
-                outputscale_prior=outputscale_prior[0],
-                outputscale_initial_value=outputscale_prior[1],
-            )
-
         # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel.to_gpytorch(
+        base_covar_module = self.kernel_factory(
+            searchspace, train_x, train_y
+        ).to_gpytorch(
             ard_num_dims=train_x.shape[-1] - n_task_params,
             active_dims=numeric_idxs,
             batch_shape=batch_shape,
@@ -136,11 +115,11 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module = base_covar_module * task_covar_module
 
         # create GP likelihood
+        noise_prior = _default_noise_factory(searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )
-        if noise_prior[1] is not None:
-            likelihood.noise = torch.tensor([noise_prior[1]])
+        likelihood.noise = torch.tensor([noise_prior[1]])
 
         # construct and fit the Gaussian process
         self._model = botorch.models.SingleTaskGP(

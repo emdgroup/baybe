@@ -3,7 +3,8 @@
 from abc import ABC
 from typing import Any
 
-from attr import cmp_using
+from attrs import cmp_using
+from typing_extensions import is_protocol
 
 # Used for comparing pandas dataframes in attrs classes
 eq_dataframe = cmp_using(lambda x, y: x.equals(y))
@@ -16,7 +17,9 @@ def is_abstract(cls: Any) -> bool:
     if a class has abstract methods. The latter can be problematic when the class has
     no abstract methods but is nevertheless not directly usable, for example, because it
     has uninitialized members, which are only covered in its non-"abstract" subclasses.
-    By contrast, this method simply checks if the class derives from ``abc.ABC``.
+
+    By contrast, this method simply checks if the class derives from ``abc.ABC`` or
+    is a protocol class.
 
     Args:
         cls: The class to be inspected.
@@ -24,7 +27,7 @@ def is_abstract(cls: Any) -> bool:
     Returns:
         ``True`` if the class is "abstract" (see definition above), ``False`` else.
     """
-    return ABC in cls.__bases__
+    return ABC in cls.__bases__ or is_protocol(cls)
 
 
 def strtobool(val: str) -> bool:
