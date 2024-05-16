@@ -12,13 +12,13 @@ if TYPE_CHECKING:
 class GaussianProcessPreset(Enum):
     """Available Gaussian process surrogate presets."""
 
-    DEFAULT = "DEFAULT"
+    BAYBE = "BAYBE"
     """Recreates the default settings of the Gaussian process surrogate class."""
 
 
 def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
     """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset."""  # noqa: E501
-    if preset is GaussianProcessPreset.DEFAULT:
+    if preset is GaussianProcessPreset.BAYBE:
         return GaussianProcessSurrogate()
 
     raise ValueError(
