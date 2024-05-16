@@ -2,11 +2,11 @@
 
 from attr import define
 
-from baybe.constraints.base import ContinuousConstraint
+from baybe.constraints.base import ContinuousLinearConstraint
 
 
 @define
-class ContinuousLinearEqualityConstraint(ContinuousConstraint):
+class ContinuousLinearEqualityConstraint(ContinuousLinearConstraint):
     """Class for continuous equality constraints.
 
     The constraint is defined as ``sum_i[ x_i * c_i ] == rhs``, where x_i are the
@@ -19,7 +19,7 @@ class ContinuousLinearEqualityConstraint(ContinuousConstraint):
 
 
 @define
-class ContinuousLinearInequalityConstraint(ContinuousConstraint):
+class ContinuousLinearInequalityConstraint(ContinuousLinearConstraint):
     """Class for continuous inequality constraints.
 
     The constraint is defined as ``sum_i[ x_i * c_i ] >= rhs``, where x_i are the

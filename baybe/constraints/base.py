@@ -107,11 +107,7 @@ class DiscreteConstraint(Constraint, ABC):
 
 @define
 class ContinuousConstraint(Constraint, ABC):
-    """Abstract base class for continuous constraints.
-
-    Continuous constraints use parameter lists and coefficients to define in-/equality
-    constraints over a continuous parameter space.
-    """
+    """Abstract base class for continuous constraints."""
 
     # class variables
     eval_during_creation: ClassVar[bool] = False
@@ -119,6 +115,29 @@ class ContinuousConstraint(Constraint, ABC):
 
     eval_during_modeling: ClassVar[bool] = True
     # See base class.
+
+    @abstractmethod
+    def to_botorch(
+        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+    ):
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ``optimize_acqf_*`` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            idx_offset: Offset to the provided parameter indices.
+        """
+
+
+@define
+class ContinuousLinearConstraint(ContinuousConstraint):
+    """Abstract base class for continuous linear constraints.
+
+    Continuous linear constraints use parameter lists and coefficients to define
+    in-/equality constraints over a continuous parameter space.
+    """
 
     # object variables
     coefficients: list[float] = field()
@@ -148,21 +167,10 @@ class ContinuousConstraint(Constraint, ABC):
         """Return equal weight coefficients as default."""
         return [1.0] * len(self.parameters)
 
-    def to_botorch(
+    def to_botorch(  # noqa: D102
         self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
     ) -> tuple[Tensor, Tensor, float]:
-        """Cast the constraint in a format required by botorch.
-
-        Used in calling ``optimize_acqf_*`` functions, for details see
-        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
-
-        Args:
-            parameters: The parameter objects of the continuous space.
-            idx_offset: Offset to the provided parameter indices.
-
-        Returns:
-            The tuple required by botorch.
-        """
+        # See base class.
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
