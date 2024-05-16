@@ -38,9 +38,14 @@ class GaussianProcessSurrogate(Surrogate):
 
     # Object variables
     kernel_factory: KernelFactory = field(
-        factory=DefaultKernelFactory, converter=to_kernel_factory
+        alias="kernel_or_factory",
+        factory=DefaultKernelFactory,
+        converter=to_kernel_factory,
     )
     """The factory used to create the kernel of the Gaussian process.
+
+    Accepts either a :class:`baybe.kernels.base.Kernel` or a
+    :class:`.kernel_factory.KernelFactory`.
     When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
     into a :class:`.kernel_factory.PlainKernelFactory`."""
 
