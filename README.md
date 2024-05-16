@@ -215,7 +215,7 @@ With the newly arrived data, BayBE can produce a refined design for the next ite
 This loop would typically continue until a desired target value has been achieved in
 the experiment.
 
-### Advanced Example - Chemical Substances
+### Advanced Example: Chemical Substances
 BayBE has several modules to go beyond traditional approaches. One such example is the
 use of custom encodings for categorical parameters. Chemical encodings for substances
 are a special built-in case of this that comes with BayBE.
