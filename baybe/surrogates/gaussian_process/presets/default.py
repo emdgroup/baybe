@@ -89,20 +89,20 @@ def _default_noise_factory(
     """
     # TODO: Replace this function with a proper likelihood factory
 
-    mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
-        train_x.shape[-1] >= 50
-    )
+    uses_descriptors = (
+        searchspace.contains_mordred or searchspace.contains_rdkit
+    ) and (train_x.shape[-1] >= 50)
 
     # low D priors
     if train_x.shape[-1] < 10:  # <-- different condition compared to EDBO
         return [GammaPrior(1.05, 0.5), 0.1]
 
     # DFT optimized priors
-    elif mordred and train_x.shape[-1] < 100:
+    elif uses_descriptors and train_x.shape[-1] < 100:
         return [GammaPrior(1.5, 0.1), 5.0]
 
     # Mordred optimized priors
-    elif mordred:
+    elif uses_descriptors:
         return [GammaPrior(1.5, 0.1), 5.0]
 
     # OHE optimized priors
