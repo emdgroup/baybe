@@ -26,7 +26,7 @@ class KernelFactory(Protocol):
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        """Create a :class:`baybe.kernels.base.Kernel` for the given context."""
+        """Create a :class:`baybe.kernels.base.Kernel` for the given DOE context."""
         ...
 
 
