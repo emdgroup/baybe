@@ -173,6 +173,7 @@ class ContinuousConstraint(Constraint, ABC):
             if p in param_names
         ]
 
+        # TODO: Cast rhs to correct precision once BoTorch also supports single point.
         return (
             torch.tensor(param_indices),
             torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
