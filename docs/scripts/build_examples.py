@@ -1,32 +1,37 @@
 """Utility for creating the examples."""
 
-import pathlib
 import shutil
 import textwrap
+from pathlib import Path
 from subprocess import DEVNULL, STDOUT, check_call
 
 from tqdm import tqdm
 
+# TODO full rebuild option
 
-def build_examples(example_dest_dir: str, ignore_examples: bool):
+
+def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
     """Create the documentation version of the examples files.
 
     Note that this deletes the destination directory if it already exists.
 
     Args:
-        example_dest_dir: The destination directory.
-        ignore_examples: A flag denoting whether or not to ignore the examples. If set,
-            then the examples are constructed, but not executed.
-    """
-    # Folder where the .md files created are stored
-    examples_directory = pathlib.Path(example_dest_dir)
+        destination_directory: The destination directory.
+        dummy: Only build a dummy version of the files.
+        remove_dir: Remove the examples directory if it already exists.
 
+    Raises:
+        OSError: If the directory already exists but should not be removed.
+    """
     # if the destination directory already exists it is deleted
-    if examples_directory.is_dir():
-        shutil.rmtree(examples_directory)
+    if destination_directory.is_dir():
+        if remove_dir:
+            shutil.rmtree(destination_directory)
+        else:
+            raise OSError("Destination directory exists but should not be removed.")
 
     # Copy the examples folder in the destination directory
-    shutil.copytree("examples", examples_directory)
+    shutil.copytree("examples", destination_directory)
 
     # For the toctree of the top level example folder, we need to keep track of all
     # folders. We thus write the header here and populate it during the execution of the
@@ -34,7 +39,7 @@ def build_examples(example_dest_dir: str, ignore_examples: bool):
     ex_file = """# Examples\n\n```{toctree}\n:maxdepth: 2\n\n"""
 
     # List all directories in the examples folder
-    ex_directories = [d for d in examples_directory.iterdir() if d.is_dir()]
+    ex_directories = [d for d in destination_directory.iterdir() if d.is_dir()]
 
     # This list contains the order of the examples as we want to have them in the end.
     # The examples that should be the first ones are already included here and skipped
@@ -94,7 +99,7 @@ def build_examples(example_dest_dir: str, ignore_examples: bool):
             # If we ignore the examples, we do not want to actually execute or convert
             # anything. Still, due to existing links, it is necessary to construct a
             # dummy file and then continue.
-            if ignore_examples:
+            if dummy:
                 markdown_path = file.with_suffix(".md")
                 # Rewrite the file
                 with open(markdown_path, "w", encoding="UTF-8") as markdown_file:
@@ -166,8 +171,8 @@ def build_examples(example_dest_dir: str, ignore_examples: bool):
             # lines = [line for line in lines if "![svg]" not in line]
             # We check whether pre-built light and dark plots exist. If so, we append
             # corresponding lines to our markdown file for including them.
-            light_figure = pathlib.Path(sub_directory / (file_name + "_light.svg"))
-            dark_figure = pathlib.Path(sub_directory / (file_name + "_dark.svg"))
+            light_figure = Path(sub_directory / (file_name + "_light.svg"))
+            dark_figure = Path(sub_directory / (file_name + "_dark.svg"))
             if light_figure.is_file() and dark_figure.is_file():
                 lines.append(f"```{{image}} {file_name}_light.svg\n")
                 lines.append(":align: center\n")
@@ -194,18 +199,20 @@ def build_examples(example_dest_dir: str, ignore_examples: bool):
     # Write last line of top level toctree file and write the file
     ex_file += "```"
     with open(
-        examples_directory / f"{examples_directory.name}.md", "w", encoding="UTF-8"
+        destination_directory / f"{destination_directory.name}.md",
+        "w",
+        encoding="UTF-8",
     ) as f:
         f.write(ex_file)
 
     # Remove remaining files and subdirectories from the destination directory
     # Remove any not markdown files
-    for file in examples_directory.glob("**/*"):
+    for file in destination_directory.glob("**/*"):
         if file.is_file():
             if file.suffix not in (".md", ".svg") or "Header" in file.name:
                 file.unlink(file)
 
     # Remove any remaining empty subdirectories
-    for subdirectory in examples_directory.glob("*/*"):
+    for subdirectory in destination_directory.glob("*/*"):
         if subdirectory.is_dir() and not any(subdirectory.iterdir()):
             subdirectory.rmdir()

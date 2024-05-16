@@ -4,6 +4,8 @@ import os
 import pathlib
 from subprocess import check_call, run
 
+from build_examples import build_examples
+from check_links import check_links
 from utils import adjust_pictures
 
 from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
@@ -11,8 +13,20 @@ from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-e",
-    "--ignore_examples",
-    help="Ignore the examples by not executing them.",
+    "--calculate_examples",
+    help="Re-calculate the examples",
+    action="store_true",
+)
+parser.add_argument(
+    "-l",
+    "--linkcheck",
+    help="Check the links.",
+    action="store_true",
+)
+parser.add_argument(
+    "-r",
+    "--full_rebuild",
+    help="Perform a full rebuild, independent of `-e` and `-l` flags.",
     action="store_true",
 )
 parser.add_argument(
@@ -30,17 +44,64 @@ parser.add_argument(
 
 # Parse input arguments
 args = parser.parse_args()
-IGNORE_EXAMPLES = args.ignore_examples
+CALCULATE_EXAMPLES = args.calculate_examples
+LINKCHECK = args.linkcheck
+FULL_REBUILD = args.full_rebuild
 INCLUDE_WARNINGS = args.include_warnings
 FORCE = args.force
 
 
-def build_documentation(force: bool = False) -> None:
+def build_documentation(
+    calculate_examples: bool = False,
+    verify_links: bool = False,
+    full_rebuild: bool = False,
+    force: bool = False,
+) -> None:
     """Build the documentation.
 
+    A full build of the documentation consists of converting the examples into jupyter
+    notebooks, executing them, transforming them into markdown files, as well as
+    checking all links and performing the actual ``sphinx-build``. Such a full build can
+    be triggered using the ``full_rebuild`` flag.
+    If this flag is not set, this function tries to re-use as much of potentially
+    existing structures like already built examples as possible. This behavior can be
+    changed by using the other flags.
+
     Args:
-        force: Force-build the documentation, ignoring any errors or warnings.
+        calculate_examples: Fully recalculate the examples. If this is ``False`` and no
+            folder containing an already built set of examples is found, dummy files
+            replicating the structure of the examples are created.
+        verify_links: Check both internal and external links.
+        full_rebuild: Perform a full rebuild of the documentation, including a
+            recalculation of the examples and checking the links. Note that this option
+            ignores the choices for ``calculate_examples`` and ``check_links`` if set to
+            ``True.
+        force: Force-build the steps, ignoring any errors or warnings.
     """
+    examples_directory = pathlib.Path("docs/examples")
+    examples_exist = examples_directory.is_dir()
+
+    recalculate_examples = calculate_examples or full_rebuild
+    perform_linkcheck = verify_links or full_rebuild
+
+    if recalculate_examples:
+        build_examples(
+            destination_directory=examples_directory,
+            dummy=False,
+            remove_dir=examples_exist,
+        )
+    elif not examples_exist:
+        # Perform dummy-build of examples in the case that they should not be
+        # re-calculated and the folder does not exist.
+        build_examples(
+            destination_directory=examples_directory,
+            dummy=True,
+            remove_dir=examples_exist,
+        )
+
+    if perform_linkcheck:
+        check_links(force=force)
+
     # Directory where the documentation is build.
     build_dir = pathlib.Path("docs/build")
 
@@ -70,7 +131,12 @@ if __name__ == "__main__":
 
     os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
-    build_documentation(force=FORCE)
+    build_documentation(
+        calculate_examples=CALCULATE_EXAMPLES,
+        verify_links=LINKCHECK,
+        full_rebuild=FULL_REBUILD,
+        force=FORCE,
+    )
 
     # CLEANUP
     # Adjust the banner in the index and the README
