@@ -4,7 +4,17 @@
 import pytest
 
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.kernels.basic import MaternKernel
+from baybe.kernels.base import Kernel
+from baybe.kernels.basic import (
+    LinearKernel,
+    MaternKernel,
+    PeriodicKernel,
+    PiecewisePolynomialKernel,
+    PolynomialKernel,
+    RBFKernel,
+    RFFKernel,
+    RQKernel,
+)
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.priors import (
     GammaPrior,
@@ -131,16 +141,31 @@ valid_priors = [
     SmoothedBoxPrior(0, 3, 0.1),
 ]
 
-valid_base_kernels = [MaternKernel(lengthscale_prior=prior) for prior in valid_priors]
+valid_base_kernels: list[Kernel] = [
+    cls(**arg_dict)
+    for prior in valid_priors
+    for cls, arg_dict in [
+        (MaternKernel, {"lengthscale_prior": prior}),
+        (LinearKernel, {"variance_prior": prior}),
+        (PeriodicKernel, {"period_length_prior": prior}),
+        (PeriodicKernel, {"lengthscale_prior": prior}),
+        (PiecewisePolynomialKernel, {"lengthscale_prior": prior}),
+        (PolynomialKernel, {"offset_prior": prior, "power": 2}),
+        (RBFKernel, {"lengthscale_prior": prior}),
+        (RQKernel, {"lengthscale_prior": prior}),
+        (RFFKernel, {"lengthscale_prior": prior, "num_samples": 5}),
+    ]
+]
 
 valid_scale_kernels = [
-    ScaleKernel(base_kernel=base_kernel, outputscale_prior=prior)
+    ScaleKernel(base_kernel=base_kernel, outputscale_prior=HalfCauchyPrior(scale=1))
     for base_kernel in valid_base_kernels
-    for prior in valid_priors
 ]
 
 valid_composite_kernels = [
     AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+    AdditiveKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
+    AdditiveKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
     ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
 ]
 
