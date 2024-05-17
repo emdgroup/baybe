@@ -7,20 +7,20 @@ from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
-def bytes_to_human_readable(num: float) -> tuple[str, str]:
+def bytes_to_human_readable(num: float) -> tuple[float, str]:
     """Turn float number representing memory byte size into a human-readable format.
 
     Args:
         num: The number representing a memory size in bytes.
 
     Returns:
-        Tuple with the converted number string and its determined human-readable unit.
+        Tuple with the converted number and its determined human-readable unit.
     """
     for unit in ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"]:
         if abs(num) < 1024.0:
-            return f"{num:3.1f}", unit
+            return num, unit
         num /= 1024.0
-    return f"{num:.1f}", "YB"
+    return num, "YB"
 
 
 def estimate_searchspace_size(parameters: list[Parameter]) -> dict:

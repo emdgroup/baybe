@@ -45,13 +45,13 @@ def test_searchspace_memory_estimate(searchspace):
         searchspace.discrete.comp_rep.memory_usage(deep=True, index=False).sum()
     )
 
-    assert estimate_exp_unit == actual_exp_unit, "Exp units differ!"
-    assert estimate_comp_unit == actual_comp_unit, "Comp units differ!"
-    assert 0.95 <= float(estimate_exp) / float(actual_exp) <= 1.05, (
-        estimate_exp,
-        actual_exp,
-    )
-    assert 0.95 <= float(estimate_comp) / float(actual_comp) <= 1.05, (
-        estimate_comp,
-        actual_comp,
-    )
+    # These tests could fail in the unlikely case where the size is close to a
+    # transition from one unit to the other
+    assert (
+        estimate_exp_unit == actual_exp_unit
+    ), f"Exp units differ: {estimate_exp_unit}, {actual_exp_unit}"
+    assert (
+        estimate_comp_unit == actual_comp_unit
+    ), f"Comp units differ: {estimate_comp_unit}, {actual_comp_unit}"
+    assert 0.95 <= estimate_exp / actual_exp <= 1.05, (estimate_exp, actual_exp)
+    assert 0.95 <= estimate_comp / actual_comp <= 1.05, (estimate_comp, actual_comp)
