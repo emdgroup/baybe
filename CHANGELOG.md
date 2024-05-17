@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `mypy` for search space and objectives
 - Class hierarchy for objectives
 - Deserialization is now also possible from optional class name abbreviations
-- `Kernel`, `MaternKernel`, `AdditiveKernel`, `ProductKernel` and `ScaleKernel` 
-  classes for specifying kernels
+- `AdditiveKernel`, `LinearKernel`, `MaternKernel`, `PeriodicKernel`, 
+  `PiecewisePolynomialKernel`, `PolynomialKernel`, `ProductKernel`, `RBFKernel`, 
+  `RFFKernel`, `RQKernel`, `ScaleKernel` classes for specifying kernels
+- `GammaPrior`, `HalfCauchyPrior`, `NormalPrior`, `HalfNormalPrior`, `LogNormalPrior`
+  and `SmoothedBoxPrior` classes for specifying priors 
 - `KernelFactory` protocol enabling context-dependent construction of kernels
 - Preset mechanism for `GaussianProcessSurrogate`
 - `hypothesis` strategies and roundtrip test for kernels, constraints, objectives,
@@ -18,8 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New acquisition functions: `qSR`, `qNEI`, `LogEI`, `qLogEI`, `qLogNEI`
 - Serialization user guide
 - Basic deserialization tests using different class type specifiers
-- `GammaPrior`, `HalfCauchyPrior`, `NormalPrior`, `HalfNormalPrior`, `LogNormalPrior`
-  and `SmoothedBoxPrior` can now be chosen as lengthscale prior
 - Environment variables user guide
 - Utility for estimating memory requirements of discrete product search space
 
