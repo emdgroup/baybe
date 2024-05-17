@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar, Union, get_origin
 
 from attrs import define, field
 
@@ -31,11 +31,16 @@ class ComponentFactory(Protocol, Generic[_T]):
         ...
 
 
+def is_component_factory(type: Any) -> bool:
+    """Determine if a given type modulo its generics is a component factory."""
+    return type is ComponentFactory or get_origin(type) is ComponentFactory
+
+
 # Register de-/serialization hooks
 converter.register_structure_hook(
     ComponentFactory, get_base_structure_hook(ComponentFactory)
 )
-converter.register_unstructure_hook(ComponentFactory, unstructure_base)
+converter.register_unstructure_hook_func(is_component_factory, unstructure_base)
 
 
 @define(frozen=True)
