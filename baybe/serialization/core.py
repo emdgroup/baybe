@@ -1,7 +1,17 @@
 """Converter and hooks."""
+
 import base64
 import pickle
-from typing import Any, Callable, Optional, TypeVar, Union, get_type_hints
+from typing import (
+    Any,
+    Callable,
+    Optional,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 import attrs
 import cattrs
@@ -58,8 +68,10 @@ def get_base_structure_hook(
 
     def structure_base(val: Union[dict, str], cls: type[_T]) -> _T:
         # If the given class can be instantiated, only ensure there is no conflict with
-        # a potentially specified type field
-        if not is_abstract(cls):
+        # a potentially specified type field. When the class is generic, perform
+        # the check on its origin.
+        origin = get_origin(cls) if hasattr(cls, "__origin__") else cls
+        if not is_abstract(origin):
             if (type_ := val.pop("type", None)) and not refers_to(cls, type_):
                 raise ValueError(
                     f"The class '{cls.__name__}' specified for deserialization "
@@ -72,6 +84,17 @@ def get_base_structure_hook(
         else:
             type_ = val if isinstance(val, str) else val.pop("type")
             concrete_cls = find_subclass(base, type_)
+
+            # If both the the target type and the detected concrete subclass are
+            # generic, copy the type arguments
+            if args := get_args(cls):
+                origin_concrete = (
+                    get_origin(concrete_cls)
+                    if hasattr(concrete_cls, "__origin__")
+                    else concrete_cls
+                )
+                if origin_concrete.__parameters__:
+                    concrete_cls = concrete_cls[args]
 
         # Create the structuring function for the class and call it
         fn = make_dict_structure_fn(

@@ -37,8 +37,8 @@ def is_component_factory(type: Any) -> bool:
 
 
 # Register de-/serialization hooks
-converter.register_structure_hook(
-    ComponentFactory, get_base_structure_hook(ComponentFactory)
+converter.register_structure_hook_func(
+    is_component_factory, get_base_structure_hook(ComponentFactory)
 )
 converter.register_unstructure_hook_func(is_component_factory, unstructure_base)
 
