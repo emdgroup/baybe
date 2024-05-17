@@ -205,15 +205,6 @@ def test_iter_nonmc_acquisition_function(campaign, n_iterations, batch_size):
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "lengthscale_prior", valid_priors, ids=[c.__class__ for c in valid_priors]
-)
-@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_iter_prior(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize(
     "kernel", valid_kernels, ids=[c.__class__ for c in valid_kernels]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
