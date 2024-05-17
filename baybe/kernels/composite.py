@@ -1,5 +1,5 @@
 """Composite kernels (that is, kernels composed of other kernels)."""
-
+from functools import reduce
 from operator import add, mul
 from typing import Optional
 
@@ -56,7 +56,7 @@ class AdditiveKernel(Kernel):
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
 
-        return add(*(k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
+        return reduce(add, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
 
 @define(frozen=True)
@@ -71,4 +71,4 @@ class ProductKernel(Kernel):
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
 
-        return mul(*(k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
+        return reduce(mul, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
