@@ -6,20 +6,20 @@ from typing import TYPE_CHECKING
 
 from attrs import define
 
+from baybe.kernels.base import Kernel
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.priors.basic import GammaPrior
-from baybe.surrogates.gaussian_process.factories import KernelFactory
+from baybe.surrogates.gaussian_process.factories import ComponentFactory
 
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
 
 
 @define
-class DefaultKernelFactory(KernelFactory):
+class DefaultKernelFactory(ComponentFactory[Kernel]):
     """A factory providing the default kernel for Gaussian process surrogates.
 
     The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).

@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
 
+from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.factories import (
-    KernelFactory,
+    ComponentFactory,
     to_kernel_factory,
 )
 from baybe.surrogates.gaussian_process.presets import (
@@ -37,7 +38,7 @@ class GaussianProcessSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    kernel_factory: KernelFactory = field(
+    kernel_factory: ComponentFactory[Kernel] = field(
         alias="kernel_or_factory",
         factory=DefaultKernelFactory,
         converter=to_kernel_factory,

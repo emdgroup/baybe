@@ -1,11 +1,10 @@
-"""Kernel factories for the Gaussian process surrogate."""
+"""Component factories for the Gaussian process surrogate."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Union
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, Union
 
 from attrs import define, field
-from attrs.validators import instance_of
 
 from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
@@ -19,37 +18,43 @@ from baybe.serialization.mixin import SerialMixin
 if TYPE_CHECKING:
     from torch import Tensor
 
+_T = TypeVar("_T")
 
-class KernelFactory(Protocol):
-    """A protocol defining the interface expected for kernel factories."""
+
+class ComponentFactory(Protocol, Generic[_T]):
+    """The interface expected for Gaussian process component factories."""
 
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
-        """Create a :class:`baybe.kernels.base.Kernel` for the given DOE context."""
+    ) -> _T:
+        """Create a Gaussian process component for the given DOE context."""
         ...
 
 
 # Register de-/serialization hooks
-converter.register_structure_hook(KernelFactory, get_base_structure_hook(KernelFactory))
-converter.register_unstructure_hook(KernelFactory, unstructure_base)
+converter.register_structure_hook(
+    ComponentFactory, get_base_structure_hook(ComponentFactory)
+)
+converter.register_unstructure_hook(ComponentFactory, unstructure_base)
 
 
 @define(frozen=True)
-class PlainKernelFactory(KernelFactory, SerialMixin):
-    """A trivial factory that returns a fixed pre-defined kernel upon request."""
+class SingletonFactory(ComponentFactory, SerialMixin, Generic[_T]):
+    """A singleton factory that returns a fixed pre-defined object upon request."""
 
-    kernel: Kernel = field(validator=instance_of(Kernel))
-    """The fixed kernel to be returned by the factory."""
+    instance: _T = field()
+    """The fixed object to be returned by the factory."""
 
     def __call__(  # noqa: D102
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
+    ) -> _T:
         # See base class.
 
-        return self.kernel
+        return self.instance
 
 
-def to_kernel_factory(x: Union[Kernel, KernelFactory], /) -> KernelFactory:
-    """Wrap a kernel into a plain kernel factory (with factory passthrough)."""
+def to_kernel_factory(
+    x: Union[Kernel, ComponentFactory[Kernel]], /
+) -> ComponentFactory[Kernel]:
+    """Wrap a kernel into a singleton factory (with factory passthrough)."""
     return x.to_factory() if isinstance(x, Kernel) else x

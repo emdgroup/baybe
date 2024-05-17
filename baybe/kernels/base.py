@@ -19,18 +19,18 @@ from baybe.utils.basic import filter_attributes, get_baseclasses
 if TYPE_CHECKING:
     import torch
 
-    from baybe.surrogates.gaussian_process.factories import PlainKernelFactory
+    from baybe.surrogates.gaussian_process.factories import SingletonFactory
 
 
 @define(frozen=True)
 class Kernel(ABC, SerialMixin):
     """Abstract base class for all kernels."""
 
-    def to_factory(self) -> PlainKernelFactory:
+    def to_factory(self) -> SingletonFactory[Kernel]:
         """Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.kernel_factory.PlainKernelFactory`."""  # noqa: E501
-        from baybe.surrogates.gaussian_process.factories import PlainKernelFactory
+        from baybe.surrogates.gaussian_process.factories import SingletonFactory
 
-        return PlainKernelFactory(self)
+        return SingletonFactory[Kernel](self)
 
     def to_gpytorch(
         self,
