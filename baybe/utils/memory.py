@@ -1,6 +1,7 @@
 """Utilities for memory usage."""
 from typing import cast
 
+import numpy as np
 import pandas as pd
 
 from baybe.parameters.base import DiscreteParameter, Parameter
@@ -32,20 +33,28 @@ def estimate_searchspace_size(parameters: list[Parameter]) -> dict:
         parameters: List of parameters.
 
     Returns:
-        Dictionary with the results for exp_rep and comp_rep and unit indicator.
+        Dictionary with the searchspace estimation results and units:
+            - `Comp_Rep_Size`: Size of the computational representation.
+            - `Comp_Rep_Unit`: The unit of Comp_Rep_Size.
+            - `Comp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
+            - `Exp_Rep_Size`: Size of the experimental representation.
+            - `Exp_Rep_Unit`: The unit of Exp_Rep_Size.
+            - `Exp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
     """
     # Comp rep space is estimated as the size of float times the number of matrix
     # elements in the comp rep. The latter is the total number of value combinations
     # times the number of total columns.
     n_combinations = 1
-    n_columns = 0
+    n_comp_columns = 0
     for param in [p for p in parameters if p.is_discrete]:
         param = cast(DiscreteParameter, param)
         n_combinations *= param.comp_df.shape[0]
-        n_columns += param.comp_df.shape[1]
+        n_comp_columns += param.comp_df.shape[1]
 
     comp_rep_size, comp_rep_unit = bytes_to_human_readable(
-        DTypeFloatNumpy(0).itemsize * n_combinations * n_columns
+        np.array([0.0], dtype=DTypeFloatNumpy).itemsize
+        * n_combinations
+        * n_comp_columns
     )
 
     # The exp rep is estimated as the size of the exp rep dataframe times the number of
@@ -66,6 +75,8 @@ def estimate_searchspace_size(parameters: list[Parameter]) -> dict:
     return {
         "Comp_Rep_Size": comp_rep_size,
         "Comp_Rep_Unit": comp_rep_unit,
+        "Comp_Rep_Shape": (n_combinations, n_comp_columns),
         "Exp_Rep_Size": exp_rep_size,
         "Exp_Rep_Unit": exp_rep_unit,
+        "Exp_Rep_Shape": (n_combinations, len(parameters)),
     }
