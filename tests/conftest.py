@@ -84,7 +84,7 @@ except ImportError:
 # Hypothesis settings
 from hypothesis import settings
 
-settings.register_profile("ci", deadline=2000)
+settings.register_profile("ci", deadline=2000, max_examples=200)
 settings.load_profile("ci")
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name, so they
