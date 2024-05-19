@@ -81,7 +81,13 @@ try:
 except ImportError:
     _STREAMLIT_INSTALLED = False
 
-# All fixture functions have prefix 'fixture_' and explicitly declared name so they
+# Hypothesis settings
+from hypothesis import settings
+
+settings.register_profile("ci", deadline=2000)
+settings.load_profile("ci")
+
+# All fixture functions have prefix 'fixture_' and explicitly declared name, so they
 # can be reused by other fixtures, see
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
 
