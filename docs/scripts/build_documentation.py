@@ -100,7 +100,7 @@ def build_documentation(
         )
 
     if perform_linkcheck:
-        check_links(force=force)
+        check_links()
 
     # Directory where the documentation is build.
     build_dir = pathlib.Path("docs/build")
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     # Adjust the chemical encoding example picture in the index and the README
     adjust_pictures(
         "docs/build/index.html",
-        match="full_lookup",
-        light_version="full_lookup_light",
-        dark_version="full_lookup_dark",
+        match="_images/full_lookup_light",
+        light_version="_images/full_lookup_light",
+        dark_version="_images/full_lookup_dark",
     )
