@@ -60,6 +60,7 @@ from baybe.telemetry import (
     VARNAME_TELEMETRY_USERNAME,
 )
 from baybe.utils.basic import hilberts_factory
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
 try:
@@ -84,7 +85,8 @@ except ImportError:
 
 # Hypothesis settings
 settings.register_profile("ci", deadline=2000, max_examples=200)
-settings.load_profile("ci")
+if strtobool(os.getenv("CI", "false")):
+    settings.load_profile("ci")
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name, so they
 # can be reused by other fixtures, see
