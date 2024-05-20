@@ -84,7 +84,6 @@ from typing import Union
 from urllib.parse import urlparse
 
 import pandas as pd
-import requests
 
 from baybe.parameters.base import Parameter
 from baybe.utils.boolean import strtobool
@@ -198,11 +197,7 @@ if is_enabled():
         if strtobool(
             os.environ.get(VARNAME_TELEMETRY_VPN_CHECK, DEFAULT_TELEMETRY_VPN_CHECK)
         ):
-            response = requests.get(
-                "http://verkehrsnachrichten.merck.de/", timeout=_TIMEOUT_S
-            )
-            if response.status_code != 200:
-                raise requests.RequestException("Cannot reach telemetry network.")
+            socket.gethostbyname("verkehrsnachrichten.merck.de")
 
         # User has connectivity to the telemetry endpoint, so we initialize
         _instruments: dict[str, Histogram] = {}

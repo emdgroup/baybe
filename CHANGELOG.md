@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and
   `CustomONNXSurrogate`
+- Dependency on `requests` package
   
 ### Fixed
 - `n_task_params` now evaluates to 1 if `task_idx == 0`
