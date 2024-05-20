@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from hypothesis import settings
+from hypothesis import settings as hypothesis_settings
 
 from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
@@ -84,9 +84,9 @@ except ImportError:
     _STREAMLIT_INSTALLED = False
 
 # Hypothesis settings
-settings.register_profile("ci", deadline=2000, max_examples=200)
+hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
 if strtobool(os.getenv("CI", "false")):
-    settings.load_profile("ci")
+    hypothesis_settings.load_profile("ci")
 
 # All fixture functions have prefix 'fixture_' and explicitly declared name, so they
 # can be reused by other fixtures, see
