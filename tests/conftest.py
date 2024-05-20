@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from hypothesis import settings
 
 from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
@@ -82,8 +83,6 @@ except ImportError:
     _STREAMLIT_INSTALLED = False
 
 # Hypothesis settings
-from hypothesis import settings
-
 settings.register_profile("ci", deadline=2000, max_examples=200)
 settings.load_profile("ci")
 
