@@ -34,7 +34,7 @@ cosine_kernels = st.builds(
     period_length_prior=st.one_of(st.none(), priors),
     period_length_initial_value=st.one_of(st.none(), finite_floats()),
 )
-"""A strategy that generates Cosine kernels."""
+"""A strategy that generates cosine kernels."""
 
 linear_kernels = st.builds(
     LinearKernel,
@@ -89,7 +89,7 @@ rff_kernels = st.builds(
     lengthscale_prior=st.one_of(st.none(), priors),
     lengthscale_initial_value=st.one_of(st.none(), finite_floats()),
 )
-"""A strategy that generates radial basis function (RBF) kernels."""
+"""A strategy that generates random Fourier features (RFF) kernels."""
 
 rq_kernels = st.builds(
     RQKernel,

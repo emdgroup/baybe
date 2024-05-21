@@ -20,12 +20,12 @@ class CosineKernel(Kernel):
     period_length_prior: Optional[Prior] = field(
         default=None, validator=optional_v(instance_of(Prior))
     )
-    """An optional prior on the kernel periodic length."""
+    """An optional prior on the kernel period length."""
 
     period_length_initial_value: Optional[float] = field(
         default=None, converter=optional_c(float), validator=optional_v(finite_float)
     )
-    """An optional initial value for the kernel periodic length."""
+    """An optional initial value for the kernel period length."""
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
@@ -48,12 +48,12 @@ class LinearKernel(Kernel):
     variance_prior: Optional[Prior] = field(
         default=None, validator=optional_v(instance_of(Prior))
     )
-    """An optional prior on the variance parameter."""
+    """An optional prior on the kernel variance parameter."""
 
     variance_initial_value: Optional[float] = field(
         default=None, converter=optional_c(float), validator=optional_v(finite_float)
     )
-    """An optional initial value for the variance parameter."""
+    """An optional initial value for the kernel variance parameter."""
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
@@ -109,12 +109,12 @@ class PeriodicKernel(Kernel):
     period_length_prior: Optional[Prior] = field(
         default=None, validator=optional_v(instance_of(Prior))
     )
-    """An optional prior on the kernel periodic length."""
+    """An optional prior on the kernel period length."""
 
     period_length_initial_value: Optional[float] = field(
         default=None, converter=optional_c(float), validator=optional_v(finite_float)
     )
-    """An optional initial value for the kernel periodic length."""
+    """An optional initial value for the kernel period length."""
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         # See base class.
@@ -174,7 +174,6 @@ class PolynomialKernel(Kernel):
         from baybe.utils.torch import DTypeFloatTorch
 
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
-
         if (initial_value := self.offset_initial_value) is not None:
             gpytorch_kernel.offset = torch.tensor(initial_value, dtype=DTypeFloatTorch)
         return gpytorch_kernel
