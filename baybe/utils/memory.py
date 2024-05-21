@@ -1,4 +1,6 @@
 """Utilities for memory usage."""
+
+from collections.abc import Iterable
 from typing import cast
 
 import numpy as np
@@ -24,7 +26,7 @@ def bytes_to_human_readable(num: float, /) -> tuple[float, str]:
     return num, "YB"
 
 
-def estimate_searchspace_size(parameters: list[Parameter]) -> dict:
+def estimate_searchspace_size(parameters: Iterable[Parameter]) -> dict:
     """Estimate upper bound for the search space size in memory.
 
     For now, constraints are not considered.
