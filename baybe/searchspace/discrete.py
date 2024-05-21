@@ -557,10 +557,10 @@ class SubspaceDiscrete(SerialMixin):
         exp_rep_size, exp_rep_unit = bytes_to_human_readable(exp_rep_bytes)
 
         return MemorySize(
-            exp_rep_memory=exp_rep_size,
+            exp_rep_memory=np.round(exp_rep_size, 2),
             exp_rep_unit=exp_rep_unit,
             exp_rep_shape=(n_rows, n_cols_exp),
-            comp_rep_memory=comp_rep_size,
+            comp_rep_memory=np.round(comp_rep_size, 2),
             comp_rep_unit=comp_rep_unit,
             comp_rep_shape=(n_rows, n_cols_comp),
         )
