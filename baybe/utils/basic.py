@@ -1,12 +1,9 @@
 """Collection of small basic utilities."""
 
-import random
 from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from inspect import signature
 from typing import Any, Callable, TypeVar
-
-import numpy as np
 
 from baybe.exceptions import UnidentifiedSubclassError
 
@@ -83,19 +80,6 @@ def get_baseclasses(
                 classes.extend(get_baseclasses(baseclass, abstract=abstract))
 
     return classes
-
-
-def set_random_seed(seed: int):
-    """Set the global random seed.
-
-    Args:
-        seed: The chosen global random seed.
-    """
-    import torch
-
-    torch.manual_seed(seed)
-    random.seed(seed)
-    np.random.seed(seed)
 
 
 def hilberts_factory(factory: Callable[..., _T]) -> Iterable[_T]:
