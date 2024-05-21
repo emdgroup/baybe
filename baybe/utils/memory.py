@@ -8,7 +8,7 @@ from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
-def bytes_to_human_readable(num: float) -> tuple[float, str]:
+def bytes_to_human_readable(num: float, /) -> tuple[float, str]:
     """Turn float number representing memory byte size into a human-readable format.
 
     Args:
