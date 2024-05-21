@@ -15,9 +15,9 @@ from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.simulation.lookup import _look_up_target_values
 from baybe.targets.enum import TargetMode
-from baybe.utils.basic import temporary_seed
 from baybe.utils.dataframe import add_parameter_noise
 from baybe.utils.numerical import closer_element, closest_element
+from baybe.utils.random import temporary_seed
 
 
 def simulate_experiment(  # noqa: DOC502
