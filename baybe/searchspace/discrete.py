@@ -35,21 +35,27 @@ from baybe.utils.numerical import DTypeFloatNumpy
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
 
-# @dataclass(kw_only=True)
-# class MemorySize:
-#     # A dictionary with the searchspace estimation results and units:
-#     # - `Comp_Rep_Size`: Size of the computational representation.
-#     # - `Comp_Rep_Unit`: The unit of Comp_Rep_Size.
-#     # - `Comp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
-#     # - `Exp_Rep_Size`: Size of the experimental representation.
-#     # - `Exp_Rep_Unit`: The unit of Exp_Rep_Size.
-#     # - `Exp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
-#     comp_rep_size: float
-#     comp_rep_unit: str
-#     comp_rep_shape: tuple[int, int]
-#     exp_rep_size: float
-#     exp_rep_unit: str
-#     exp_rep_shape: tuple[int, int]
+@define(kw_only=True)
+class MemorySize:
+    """Estimated memory size of a :class:`SubspaceDiscrete`."""
+
+    exp_rep_memory: float
+    """The memory size of the experimental representation dataframe."""
+
+    exp_rep_unit: str
+    """The unit ``exp_rep_size``."""
+
+    exp_rep_shape: tuple[int, int]
+    """The shape of the experimental representation dataframe."""
+
+    comp_rep_memory: float
+    """The memory size of the computational representation dataframe."""
+
+    comp_rep_unit: str
+    """The unit ``comp_rep_size``."""
+
+    comp_rep_shape: tuple[int, int]
+    """The shape of the computational representation dataframe."""
 
 
 @define
@@ -514,7 +520,9 @@ class SubspaceDiscrete(SerialMixin):
         return bounds
 
     @staticmethod
-    def estimate_product_space_size(parameters: Iterable[DiscreteParameter]) -> dict:
+    def estimate_product_space_size(
+        parameters: Iterable[DiscreteParameter]
+    ) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.
 
         Args:
@@ -548,14 +556,14 @@ class SubspaceDiscrete(SerialMixin):
         )
         exp_rep_size, exp_rep_unit = bytes_to_human_readable(exp_rep_bytes)
 
-        return {
-            "Comp_Rep_Size": comp_rep_size,
-            "Comp_Rep_Unit": comp_rep_unit,
-            "Comp_Rep_Shape": (n_rows, n_cols_comp),
-            "Exp_Rep_Size": exp_rep_size,
-            "Exp_Rep_Unit": exp_rep_unit,
-            "Exp_Rep_Shape": (n_rows, n_cols_exp),
-        }
+        return MemorySize(
+            exp_rep_memory=exp_rep_size,
+            exp_rep_unit=exp_rep_unit,
+            exp_rep_shape=(n_rows, n_cols_exp),
+            comp_rep_memory=comp_rep_size,
+            comp_rep_unit=comp_rep_unit,
+            comp_rep_shape=(n_rows, n_cols_comp),
+        )
 
     def mark_as_measured(
         self,
