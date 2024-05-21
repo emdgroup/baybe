@@ -11,13 +11,13 @@ from baybe.utils.numerical import DTypeFloatNumpy
 
 
 def bytes_to_human_readable(num: float, /) -> tuple[float, str]:
-    """Turn float number representing memory byte size into a human-readable format.
+    """Turn a float number representing a memory byte size into a human-readable format.
 
     Args:
         num: The number representing a memory size in bytes.
 
     Returns:
-        Tuple with the converted number and its determined human-readable unit.
+        A tuple with the converted number and its determined human-readable unit.
     """
     for unit in ["bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"]:
         if abs(num) < 1024.0:
@@ -27,15 +27,13 @@ def bytes_to_human_readable(num: float, /) -> tuple[float, str]:
 
 
 def estimate_searchspace_size(parameters: Iterable[Parameter]) -> dict:
-    """Estimate upper bound for the search space size in memory.
-
-    For now, constraints are not considered.
+    """Estimate an upper bound for the search space memory size (ignoring constraints).
 
     Args:
-        parameters: List of parameters.
+        parameters: The parameters spanning the search space.
 
     Returns:
-        Dictionary with the searchspace estimation results and units:
+        A dictionary with the searchspace estimation results and units:
             - `Comp_Rep_Size`: Size of the computational representation.
             - `Comp_Rep_Unit`: The unit of Comp_Rep_Size.
             - `Comp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
@@ -45,7 +43,7 @@ def estimate_searchspace_size(parameters: Iterable[Parameter]) -> dict:
     """
     # Comp rep space is estimated as the size of float times the number of matrix
     # elements in the comp rep. The latter is the total number of value combinations
-    # times the number of total columns.
+    # times the total number of columns.
     n_combinations = 1
     n_comp_columns = 0
     for param in [p for p in parameters if p.is_discrete]:
@@ -59,12 +57,12 @@ def estimate_searchspace_size(parameters: Iterable[Parameter]) -> dict:
         * n_comp_columns
     )
 
-    # The exp rep is estimated as the size of the exp rep dataframe times the number of
-    # times it will appear in the entire search space. The latter is the total number
+    # Exp rep space is estimated as the size of the exp rep dataframe times the number
+    # of times it will appear in the entire search space. The latter is the total number
     # of value combination divided by the number of values for the respective parameter.
     # Contributions of all parameters are summed up.
     exp_rep_bytes = 0
-    for k, param in enumerate([p for p in parameters if p.is_discrete]):
+    for _, param in enumerate([p for p in parameters if p.is_discrete]):
         param = cast(DiscreteParameter, param)
         exp_rep_bytes += (
             pd.DataFrame(param.values).memory_usage(index=False, deep=True).sum()
