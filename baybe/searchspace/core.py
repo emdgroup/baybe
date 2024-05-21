@@ -298,7 +298,7 @@ class SearchSpace(SerialMixin):
             The estimated memory size.
         """
         discrete_parameters = [p for p in parameters if p.is_discrete]
-        return SubspaceDiscrete.estimate_product_space_size(discrete_parameters)
+        return SubspaceDiscrete.estimate_product_space_size(discrete_parameters)  # type: ignore[arg-type]
 
     def transform(
         self,

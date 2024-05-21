@@ -521,7 +521,7 @@ class SubspaceDiscrete(SerialMixin):
 
     @staticmethod
     def estimate_product_space_size(
-        parameters: Iterable[DiscreteParameter]
+        parameters: Sequence[DiscreteParameter]
     ) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.
 
