@@ -313,12 +313,11 @@ host machine names are anonymized with via truncated hashing.
   inability of specifying opt-out dependencies, these are installed by default, but the
   package works without them.
 
-## 👥 Authors
+## 👨🏻‍🔧 Maintainers
 
 - Martin Fitzner (Merck KGaA, Darmstadt, Germany), [Contact](mailto:martin.fitzner@merckgroup.com), [Github](https://github.com/Scienfitz)
 - Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany), [Contact](mailto:adrian.sosic@merckgroup.com), [Github](https://github.com/AdrianSosic)
 - Alexander Hopp (Merck KGaA, Darmstadt, Germany) [Contact](mailto:alexander.hopp@merckgroup.com), [Github](https://github.com/AVHopp)
-- Alex Lee (EMD Electronics, Tempe, Arizona, USA) [Contact](mailto:alex.lee@emdgroup.com), [Github](https://github.com/galaxee87)
 
 
 ## 🛠️ Known Issues
