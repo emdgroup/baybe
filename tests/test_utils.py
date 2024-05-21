@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pytest import param
 
-from baybe.utils.memory import bytes_to_human_readable, estimate_searchspace_size
+from baybe.utils.memory import bytes_to_human_readable, estimate_discrete_subspace_size
 from baybe.utils.numerical import closest_element
 
 _TARGET = 1337
@@ -32,7 +32,7 @@ def test_closest_element(as_ndarray, array):
 
 def test_searchspace_memory_estimate(searchspace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
-    estimate = estimate_searchspace_size(searchspace.parameters)
+    estimate = estimate_discrete_subspace_size(searchspace.discrete.parameters)
     estimate_exp = estimate["Exp_Rep_Size"]
     estimate_comp = estimate["Comp_Rep_Size"]
     estimate_exp_unit = estimate["Exp_Rep_Unit"]

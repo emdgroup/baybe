@@ -1,12 +1,11 @@
 """Utilities for memory usage."""
 
 from collections.abc import Iterable
-from typing import cast
 
 import numpy as np
 import pandas as pd
 
-from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.base import DiscreteParameter
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
@@ -26,7 +25,7 @@ def bytes_to_human_readable(num: float, /) -> tuple[float, str]:
     return num, "YB"
 
 
-def estimate_searchspace_size(parameters: Iterable[Parameter]) -> dict:
+def estimate_discrete_subspace_size(parameters: Iterable[DiscreteParameter]) -> dict:
     """Estimate an upper bound for the search space memory size (ignoring constraints).
 
     Args:
@@ -46,8 +45,7 @@ def estimate_searchspace_size(parameters: Iterable[Parameter]) -> dict:
     # times the total number of columns.
     n_combinations = 1
     n_comp_columns = 0
-    for param in [p for p in parameters if p.is_discrete]:
-        param = cast(DiscreteParameter, param)
+    for param in parameters:
         n_combinations *= param.comp_df.shape[0]
         n_comp_columns += param.comp_df.shape[1]
 
@@ -62,8 +60,7 @@ def estimate_searchspace_size(parameters: Iterable[Parameter]) -> dict:
     # of value combination divided by the number of values for the respective parameter.
     # Contributions of all parameters are summed up.
     exp_rep_bytes = 0
-    for _, param in enumerate([p for p in parameters if p.is_discrete]):
-        param = cast(DiscreteParameter, param)
+    for param in parameters:
         exp_rep_bytes += (
             pd.DataFrame(param.values).memory_usage(index=False, deep=True).sum()
             * n_combinations
