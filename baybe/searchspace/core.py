@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import Optional, cast
 
@@ -15,14 +15,15 @@ from baybe.constraints import (
     ContinuousLinearInequalityConstraint,
     validate_constraints,
 )
-from baybe.constraints.base import Constraint, DiscreteConstraint
+from baybe.constraints.base import Constraint
 from baybe.parameters import (
     SubstanceEncoding,
     TaskParameter,
 )
-from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
+from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
+    MemorySize,
     SubspaceDiscrete,
     validate_simplex_subspace_from_config,
 )
@@ -136,18 +137,18 @@ class SearchSpace(SerialMixin):
             constraints = []
 
         discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
-            parameters=[p for p in parameters if isinstance(p, DiscreteParameter)],
-            constraints=[c for c in constraints if isinstance(c, DiscreteConstraint)],
+            parameters=[p for p in parameters if p.is_discrete],  # type:ignore[misc]
+            constraints=[c for c in constraints if c.is_discrete],  # type:ignore[misc]
             empty_encoding=empty_encoding,
         )
         continuous: SubspaceContinuous = SubspaceContinuous(
-            parameters=[p for p in parameters if isinstance(p, ContinuousParameter)],
-            constraints_lin_eq=[
+            parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
+            constraints_lin_eq=[  # type:ignore[misc]
                 c
                 for c in constraints
                 if isinstance(c, ContinuousLinearEqualityConstraint)
             ],
-            constraints_lin_ineq=[
+            constraints_lin_ineq=[  # type:ignore[misc]
                 c
                 for c in constraints
                 if isinstance(c, ContinuousLinearInequalityConstraint)
@@ -187,15 +188,17 @@ class SearchSpace(SerialMixin):
                 "parameter names."
             )
 
-        disc_params = [p for p in parameters if isinstance(p, DiscreteParameter)]
-        cont_params = [p for p in parameters if isinstance(p, ContinuousParameter)]
+        disc_params = [p for p in parameters if p.is_discrete]
+        cont_params = [p for p in parameters if p.is_continuous]
 
         return SearchSpace(
             discrete=SubspaceDiscrete.from_dataframe(
-                df[[p.name for p in disc_params]], disc_params
+                df[[p.name for p in disc_params]],
+                disc_params,  # type:ignore[arg-type]
             ),
             continuous=SubspaceContinuous.from_dataframe(
-                df[[p.name for p in cont_params]], cont_params
+                df[[p.name for p in cont_params]],
+                cont_params,  # type:ignore[arg-type]
             ),
         )
 
@@ -280,6 +283,22 @@ class SearchSpace(SerialMixin):
         # When there are no task parameters, we effectively have a single task
         except StopIteration:
             return 1
+
+    @staticmethod
+    def estimate_product_space_size(parameters: Iterable[Parameter]) -> MemorySize:
+        """Estimate an upper bound for the memory size of a product space.
+
+        Continuous parameters are ignored because creating a continuous subspace has
+        no considerable memory footprint.
+
+        Args:
+            parameters: The parameters spanning the product space.
+
+        Returns:
+            The estimated memory size.
+        """
+        discrete_parameters = [p for p in parameters if p.is_discrete]
+        return SubspaceDiscrete.estimate_product_space_size(discrete_parameters)  # type: ignore[arg-type]
 
     def transform(
         self,

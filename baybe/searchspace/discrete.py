@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterable, Sequence
+from math import prod
 from typing import Any, Optional
 
 import numpy as np
@@ -28,8 +29,33 @@ from baybe.utils.dataframe import (
     fuzzy_row_match,
     pretty_print_df,
 )
+from baybe.utils.memory import bytes_to_human_readable
+from baybe.utils.numerical import DTypeFloatNumpy
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
+
+
+@define(kw_only=True)
+class MemorySize:
+    """Estimated memory size of a :class:`SubspaceDiscrete`."""
+
+    exp_rep_memory: float
+    """The memory size of the experimental representation dataframe."""
+
+    exp_rep_unit: str
+    """The unit ``exp_rep_size``."""
+
+    exp_rep_shape: tuple[int, int]
+    """The shape of the experimental representation dataframe."""
+
+    comp_rep_memory: float
+    """The memory size of the computational representation dataframe."""
+
+    comp_rep_unit: str
+    """The unit ``comp_rep_size``."""
+
+    comp_rep_shape: tuple[int, int]
+    """The shape of the computational representation dataframe."""
 
 
 @define
@@ -337,7 +363,7 @@ class SubspaceDiscrete(SerialMixin):
                 f"All parameters passed via 'simplex_parameters' "
                 f"must be of type '{NumericalDiscreteParameter.__name__}'."
             )
-        if not all(isinstance(p, DiscreteParameter) for p in product_parameters):
+        if not all(p.is_discrete for p in product_parameters):
             raise ValueError(
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
@@ -493,6 +519,52 @@ class SubspaceDiscrete(SerialMixin):
         )
         return bounds
 
+    @staticmethod
+    def estimate_product_space_size(
+        parameters: Sequence[DiscreteParameter]
+    ) -> MemorySize:
+        """Estimate an upper bound for the memory size of a product space.
+
+        Args:
+            parameters: The parameters spanning the product space.
+
+        Returns:
+            The estimated memory size.
+        """
+        # Compute the dataframe shapes
+        n_cols_exp = len(parameters)
+        n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
+        n_rows = prod(p.comp_df.shape[0] for p in parameters)
+
+        # Comp rep space is estimated as the size of float times the number of matrix
+        # elements in the comp rep. The latter is the total number of parameter
+        # configurations (= number of rows) times the total number of columns.
+        comp_rep_size, comp_rep_unit = bytes_to_human_readable(
+            np.array([0.0], dtype=DTypeFloatNumpy).itemsize * n_rows * n_cols_comp
+        )
+
+        # Exp rep space is estimated as the size of the per-parameter exp rep dataframe
+        # times the number of times it will appear in the entire search space. The
+        # latter is the total number of parameter configurations (= number of rows)
+        # divided by the number of values for the respective parameter. Contributions of
+        # all parameters are summed up.
+        exp_rep_bytes = sum(
+            pd.DataFrame(p.values).memory_usage(index=False, deep=True).sum()
+            * n_rows
+            / p.comp_df.shape[0]
+            for p in parameters
+        )
+        exp_rep_size, exp_rep_unit = bytes_to_human_readable(exp_rep_bytes)
+
+        return MemorySize(
+            exp_rep_memory=np.round(exp_rep_size, 2),
+            exp_rep_unit=exp_rep_unit,
+            exp_rep_shape=(n_rows, n_cols_exp),
+            comp_rep_memory=np.round(comp_rep_size, 2),
+            comp_rep_unit=comp_rep_unit,
+            comp_rep_shape=(n_rows, n_cols_comp),
+        )
+
     def mark_as_measured(
         self,
         measurements: pd.DataFrame,
@@ -618,12 +690,12 @@ def parameter_cartesian_prod_to_df(
     Returns:
         A dataframe containing all possible discrete parameter value combinations.
     """
-    discrete_parameters = [p for p in parameters if isinstance(p, DiscreteParameter)]
+    discrete_parameters = [p for p in parameters if p.is_discrete]
     if not discrete_parameters:
         return pd.DataFrame()
 
     index = pd.MultiIndex.from_product(
-        [p.values for p in discrete_parameters],
+        [p.values for p in discrete_parameters],  # type:ignore[attr-defined]
         names=[p.name for p in discrete_parameters],
     )
     ret = pd.DataFrame(index=index).reset_index()
