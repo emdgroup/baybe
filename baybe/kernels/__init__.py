@@ -5,7 +5,6 @@ arguments see https://docs.gpytorch.ai/en/stable/kernels.html.
 """
 
 from baybe.kernels.basic import (
-    CosineKernel,
     LinearKernel,
     MaternKernel,
     PeriodicKernel,
@@ -19,7 +18,6 @@ from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 
 __all__ = [
     "AdditiveKernel",
-    "CosineKernel",
     "LinearKernel",
     "MaternKernel",
     "PeriodicKernel",

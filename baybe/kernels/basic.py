@@ -14,34 +14,6 @@ from baybe.utils.validation import finite_float
 
 
 @define(frozen=True)
-class CosineKernel(Kernel):
-    """A cosine kernel."""
-
-    period_length_prior: Optional[Prior] = field(
-        default=None, validator=optional_v(instance_of(Prior))
-    )
-    """An optional prior on the kernel period length."""
-
-    period_length_initial_value: Optional[float] = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
-    )
-    """An optional initial value for the kernel period length."""
-
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
-        import torch
-
-        from baybe.utils.torch import DTypeFloatTorch
-
-        gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
-        if (initial_value := self.period_length_initial_value) is not None:
-            gpytorch_kernel.period_length = torch.tensor(
-                initial_value, dtype=DTypeFloatTorch
-            )
-        return gpytorch_kernel
-
-
-@define(frozen=True)
 class LinearKernel(Kernel):
     """A linear kernel."""
 

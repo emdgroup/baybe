@@ -5,7 +5,6 @@ from enum import Enum
 import hypothesis.strategies as st
 
 from baybe.kernels.basic import (
-    CosineKernel,
     LinearKernel,
     MaternKernel,
     PeriodicKernel,
@@ -28,13 +27,6 @@ class KernelType(Enum):
     ADDITIVE = "ADDITIVE"
     PRODUCT = "PRODUCT"
 
-
-cosine_kernels = st.builds(
-    CosineKernel,
-    period_length_prior=st.one_of(st.none(), priors),
-    period_length_initial_value=st.one_of(st.none(), finite_floats()),
-)
-"""A strategy that generates cosine kernels."""
 
 linear_kernels = st.builds(
     LinearKernel,
@@ -104,7 +96,6 @@ base_kernels = st.one_of(
         linear_kernels,
         rbf_kernels,
         rq_kernels,
-        cosine_kernels,
         rff_kernels,
         piecewise_polynomial_kernels,
         polynomial_kernels,
