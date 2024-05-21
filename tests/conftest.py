@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from hypothesis import settings as hypothesis_settings
 
 from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
@@ -59,6 +60,7 @@ from baybe.telemetry import (
     VARNAME_TELEMETRY_USERNAME,
 )
 from baybe.utils.basic import hilberts_factory
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
 try:
@@ -81,7 +83,12 @@ try:
 except ImportError:
     _STREAMLIT_INSTALLED = False
 
-# All fixture functions have prefix 'fixture_' and explicitly declared name so they
+# Hypothesis settings
+hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
+if strtobool(os.getenv("CI", "false")):
+    hypothesis_settings.load_profile("ci")
+
+# All fixture functions have prefix 'fixture_' and explicitly declared name, so they
 # can be reused by other fixtures, see
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
 
