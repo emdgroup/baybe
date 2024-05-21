@@ -1,4 +1,8 @@
-"""Kernels for Gaussian process surrogate models."""
+"""Kernels for Gaussian process surrogate models.
+
+The kernel classes mimic classes from GPyTorch. For details on specification and
+arguments see https://docs.gpytorch.ai/en/stable/kernels.html.
+"""
 
 from baybe.kernels.basic import (
     CosineKernel,
