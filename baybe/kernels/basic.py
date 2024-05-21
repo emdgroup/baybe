@@ -4,7 +4,7 @@ from typing import Optional
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import gt, in_, instance_of
+from attrs.validators import ge, in_, instance_of
 from attrs.validators import optional as optional_v
 
 from baybe.kernels.base import Kernel
@@ -136,7 +136,7 @@ class PeriodicKernel(Kernel):
 class PiecewisePolynomialKernel(Kernel):
     """A piecewise polynomial kernel."""
 
-    q: float = field(converter=int, validator=in_([0, 1, 2, 3]), default=2)
+    q: int = field(validator=in_([0, 1, 2, 3]), default=2)
     """A smoothness parameter."""
 
     lengthscale_prior: Optional[Prior] = field(
@@ -154,7 +154,7 @@ class PiecewisePolynomialKernel(Kernel):
 class PolynomialKernel(Kernel):
     """A polynomial kernel."""
 
-    power: int = field(converter=int)
+    power: int = field(validator=[instance_of(int), ge(0)])
     """The power of the polynomial term."""
 
     offset_prior: Optional[Prior] = field(
@@ -198,7 +198,7 @@ class RBFKernel(Kernel):
 class RFFKernel(Kernel):
     """A random Fourier features (RFF) kernel."""
 
-    num_samples: int = field(converter=int, validator=gt(0))
+    num_samples: int = field(validator=[instance_of(int), ge(1)])
     """The number of frequencies to draw."""
 
     lengthscale_prior: Optional[Prior] = field(

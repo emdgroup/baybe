@@ -70,7 +70,7 @@ piecewise_polynomial_kernels = st.builds(
 
 polynomial_kernels = st.builds(
     PolynomialKernel,
-    power=st.integers(),
+    power=st.integers(min_value=0),
     offset_prior=st.one_of(st.none(), priors),
     offset_initial_value=st.one_of(st.none(), finite_floats()),
 )
