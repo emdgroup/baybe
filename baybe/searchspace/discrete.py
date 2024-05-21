@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Iterable, Sequence
+from math import prod
 from typing import Any, Optional
 
 import numpy as np
@@ -32,6 +33,23 @@ from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
+
+
+# @dataclass(kw_only=True)
+# class MemorySize:
+#     # A dictionary with the searchspace estimation results and units:
+#     # - `Comp_Rep_Size`: Size of the computational representation.
+#     # - `Comp_Rep_Unit`: The unit of Comp_Rep_Size.
+#     # - `Comp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
+#     # - `Exp_Rep_Size`: Size of the experimental representation.
+#     # - `Exp_Rep_Unit`: The unit of Exp_Rep_Size.
+#     # - `Exp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
+#     comp_rep_size: float
+#     comp_rep_unit: str
+#     comp_rep_shape: tuple[int, int]
+#     exp_rep_size: float
+#     exp_rep_unit: str
+#     exp_rep_shape: tuple[int, int]
 
 
 @define
@@ -503,50 +521,40 @@ class SubspaceDiscrete(SerialMixin):
             parameters: The parameters spanning the product space.
 
         Returns:
-            A dictionary with the searchspace estimation results and units:
-                - `Comp_Rep_Size`: Size of the computational representation.
-                - `Comp_Rep_Unit`: The unit of Comp_Rep_Size.
-                - `Comp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
-                - `Exp_Rep_Size`: Size of the experimental representation.
-                - `Exp_Rep_Unit`: The unit of Exp_Rep_Size.
-                - `Exp_Rep_Shape`: Tuple expressing the shape as (n_rows, n_cols).
+            The estimated memory size.
         """
-        # Comp rep space is estimated as the size of float times the number of matrix
-        # elements in the comp rep. The latter is the total number of value combinations
-        # times the total number of columns.
-        n_combinations = 1
-        n_comp_columns = 0
-        for param in parameters:
-            n_combinations *= param.comp_df.shape[0]
-            n_comp_columns += param.comp_df.shape[1]
+        # Compute the dataframe shapes
+        n_cols_exp = len(parameters)
+        n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
+        n_rows = prod(p.comp_df.shape[0] for p in parameters)
 
+        # Comp rep space is estimated as the size of float times the number of matrix
+        # elements in the comp rep. The latter is the total number of parameter
+        # configurations (= number of rows) times the total number of columns.
         comp_rep_size, comp_rep_unit = bytes_to_human_readable(
-            np.array([0.0], dtype=DTypeFloatNumpy).itemsize
-            * n_combinations
-            * n_comp_columns
+            np.array([0.0], dtype=DTypeFloatNumpy).itemsize * n_rows * n_cols_comp
         )
 
-        # Exp rep space is estimated as the size of the exp rep dataframe times the
-        # number of times it will appear in the entire search space. The latter is the
-        # total number of value combination divided by the number of values for the
-        # respective parameter. Contributions of all parameters are summed up.
-        exp_rep_bytes = 0
-        for param in parameters:
-            exp_rep_bytes += (
-                pd.DataFrame(param.values).memory_usage(index=False, deep=True).sum()
-                * n_combinations
-                / param.comp_df.shape[0]
-            )
-
+        # Exp rep space is estimated as the size of the per-parameter exp rep dataframe
+        # times the number of times it will appear in the entire search space. The
+        # latter is the total number of parameter configurations (= number of rows)
+        # divided by the number of values for the respective parameter. Contributions of
+        # all parameters are summed up.
+        exp_rep_bytes = sum(
+            pd.DataFrame(p.values).memory_usage(index=False, deep=True).sum()
+            * n_rows
+            / p.comp_df.shape[0]
+            for p in parameters
+        )
         exp_rep_size, exp_rep_unit = bytes_to_human_readable(exp_rep_bytes)
 
         return {
             "Comp_Rep_Size": comp_rep_size,
             "Comp_Rep_Unit": comp_rep_unit,
-            "Comp_Rep_Shape": (n_combinations, n_comp_columns),
+            "Comp_Rep_Shape": (n_rows, n_cols_comp),
             "Exp_Rep_Size": exp_rep_size,
             "Exp_Rep_Unit": exp_rep_unit,
-            "Exp_Rep_Shape": (n_combinations, len(parameters)),
+            "Exp_Rep_Shape": (n_rows, n_cols_exp),
         }
 
     def mark_as_measured(
