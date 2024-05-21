@@ -8,18 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `mypy` for search space and objectives
 - Class hierarchy for objectives
-- Deserialization is now also possible from optional class name abbreviations
+- Possibility to deserialize classes from optional class name abbreviations
+- Basic deserialization tests using different class type specifiers
 - `Kernel`, `MaternKernel`, `AdditiveKernel`, `ProductKernel` and `ScaleKernel` 
-  classes for specifying kernels
+  classes
 - `KernelFactory` protocol enabling context-dependent construction of kernels
 - Preset mechanism for `GaussianProcessSurrogate`
 - `hypothesis` strategies and roundtrip test for kernels, constraints, objectives,
   priors and acquisition functions
 - New acquisition functions: `qSR`, `qNEI`, `LogEI`, `qLogEI`, `qLogNEI`
-- Serialization user guide
-- Basic deserialization tests using different class type specifiers
 - `GammaPrior`, `HalfCauchyPrior`, `NormalPrior`, `HalfNormalPrior`, `LogNormalPrior`
-  and `SmoothedBoxPrior` can now be chosen as lengthscale prior
+  and `SmoothedBoxPrior` classes
+- Serialization user guide
 - Environment variables user guide
 
 ### Changed
