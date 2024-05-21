@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import Optional, cast
 
@@ -23,6 +23,7 @@ from baybe.parameters import (
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
+    MemorySize,
     SubspaceDiscrete,
     validate_simplex_subspace_from_config,
 )
@@ -282,6 +283,22 @@ class SearchSpace(SerialMixin):
         # When there are no task parameters, we effectively have a single task
         except StopIteration:
             return 1
+
+    @staticmethod
+    def estimate_product_space_size(parameters: Iterable[Parameter]) -> MemorySize:
+        """Estimate an upper bound for the memory size of a product space.
+
+        Continuous parameters are ignored because creating a continuous subspace has
+        no considerable memory footprint.
+
+        Args:
+            parameters: The parameters spanning the product space.
+
+        Returns:
+            The estimated memory size.
+        """
+        discrete_parameters = [p for p in parameters if p.is_discrete]
+        return SubspaceDiscrete.estimate_product_space_size(discrete_parameters)
 
     def transform(
         self,

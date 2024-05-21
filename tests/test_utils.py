@@ -33,9 +33,7 @@ def test_closest_element(as_ndarray, array):
 
 def test_searchspace_memory_estimate(searchspace: SearchSpace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
-    estimate = searchspace.discrete.estimate_product_space_size(
-        searchspace.discrete.parameters
-    )
+    estimate = searchspace.estimate_product_space_size(searchspace.parameters)
     estimate_exp = estimate.exp_rep_memory
     estimate_comp = estimate.comp_rep_memory
     estimate_exp_unit = estimate.exp_rep_unit
