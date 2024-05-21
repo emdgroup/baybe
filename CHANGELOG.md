@@ -4,25 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.9.0] - 2024-05-21
 ### Added
-- `mypy` for search space and objectives
 - Class hierarchy for objectives
-- Deserialization is now also possible from optional class name abbreviations
 - `AdditiveKernel`, `LinearKernel`, `MaternKernel`, `PeriodicKernel`, 
   `PiecewisePolynomialKernel`, `PolynomialKernel`, `ProductKernel`, `RBFKernel`, 
-  `RFFKernel`, `RQKernel`, `ScaleKernel` classes for specifying kernels
-- `GammaPrior`, `HalfCauchyPrior`, `NormalPrior`, `HalfNormalPrior`, `LogNormalPrior`
-  and `SmoothedBoxPrior` classes for specifying priors 
+  `RFFKernel`, `RQKernel`, `ScaleKernel` classes
 - `KernelFactory` protocol enabling context-dependent construction of kernels
 - Preset mechanism for `GaussianProcessSurrogate`
 - `hypothesis` strategies and roundtrip test for kernels, constraints, objectives,
   priors and acquisition functions
 - New acquisition functions: `qSR`, `qNEI`, `LogEI`, `qLogEI`, `qLogNEI`
-- Serialization user guide
+- `GammaPrior`, `HalfCauchyPrior`, `NormalPrior`, `HalfNormalPrior`, `LogNormalPrior`
+  and `SmoothedBoxPrior` classes
+- Possibility to deserialize classes from optional class name abbreviations
 - Basic deserialization tests using different class type specifiers
+- Serialization user guide
 - Environment variables user guide
 - Utility for estimating memory requirements of discrete product search space
+- `mypy` for search space and objectives
 
 ### Changed
 - Reorganized acquisition.py into `acquisition` subpackage
@@ -60,6 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SingleTargetObjective` and `DesirabilityObjective`
 - `acquisition_function_cls` constructor parameter for `BayesianRecommender`
 - `VarUCB` and `qVarUCB` acquisition functions
+
+### Expired Deprecations (from 0.6.*)
+- `BayBE` class
+- `baybe.surrogate` module
+- `baybe.targets.Objective` class
+- `baybe.strategies.Strategy` class
 
 ## [0.8.2] - 2024-03-27
 ### Added

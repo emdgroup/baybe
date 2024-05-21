@@ -61,7 +61,7 @@
    :template: custom-module-template.rst
    :recursive:
 {% for item in modules %}
-{% if not item in ("baybe.deprecation", "baybe.surrogate", "baybe.strategies.deprecation", "baybe.targets.deprecation", "baybe.objectives.deprecation") %}
+{% if not item in ("baybe.deprecation", "baybe.strategies.deprecation", "baybe.objectives.deprecation") %}
    {{ item }}
 {%- endif %}
 {%- endfor %}

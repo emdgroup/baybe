@@ -72,7 +72,7 @@ In cases where we are confronted with multiple (potentially conflicting) targets
 the `DesirabilityObjective` can be used instead. It allows to define additional
 settings, such as how these targets should be balanced.
 For more details, see the
-[objectives section](https://emdgroup.github.io/baybe/userguide/objective.html)
+[objectives section](https://emdgroup.github.io/baybe/userguide/objectives.html)
 of the user guide.
 
 ### Defining the Search Space
@@ -307,7 +307,7 @@ host machine names are anonymized with via truncated hashing.
   `telemetry` module.
 - You can always deactivate all telemetry by setting the environment variable 
   `BAYBE_TELEMETRY_ENABLED` to `false` or `off`. For details please consult
-  [this page](https://emdgroup.github.io/baybe/_autosummary/baybe.telemetry.html).
+  [this page](https://emdgroup.github.io/baybe/userguide/envvars.html#telemetry).
 - If you want to be absolutely sure, you can uninstall internet related packages such
   as `opentelemetry*` or its secondary dependencies from the environment. Due to the
   inability of specifying opt-out dependencies, these are installed by default, but the
