@@ -26,7 +26,7 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-The Bayesian Back End (**BayBE**) provides a general-purpose toolbox for Bayesian Design
+The Bayesian Back End (**BayBE**) is a general-purpose toolbox for Bayesian Design
 of Experiments, focusing on additions that enable real-world experimental campaigns.
 
 Besides functionality to perform a typical recommend-measure loop, BayBE's highlights are:
@@ -41,7 +41,7 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - 🔄 All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
 
 
-## Quick Start
+## ⚡ Quick Start
 
 Let us consider a simple experiment where we control three parameters and want to
 maximize a single target called `Yield`.
@@ -72,7 +72,7 @@ In cases where we are confronted with multiple (potentially conflicting) targets
 the `DesirabilityObjective` can be used instead. It allows to define additional
 settings, such as how these targets should be balanced.
 For more details, see the
-[objective section](https://emdgroup.github.io/baybe/userguide/objective.html)
+[objectives section](https://emdgroup.github.io/baybe/userguide/objective.html)
 of the user guide.
 
 ### Defining the Search Space
@@ -124,7 +124,7 @@ relationships between our parameters. Details can be found in the
 [constraints section](https://emdgroup.github.io/baybe/userguide/constraints.html) of the user guide.
 In this example, we assume no further constraints.
 
-With the parameter and constraint definitions at hand, we can now create our
+With the parameter definitions at hand, we can now create our
 `SearchSpace` based on the Cartesian product of all possible parameter values:
 
 ```python
@@ -132,6 +132,10 @@ from baybe.searchspace import SearchSpace
 
 searchspace = SearchSpace.from_product(parameters)
 ```
+
+See the [search spaces section](https://emdgroup.github.io/baybe/userguide/searchspace.html)
+of our user guide for more information on the structure of search spaces
+and alternative ways of construction. 
 
 ### Optional: Defining the Optimization Strategy
 
@@ -211,7 +215,7 @@ With the newly arrived data, BayBE can produce a refined design for the next ite
 This loop would typically continue until a desired target value has been achieved in
 the experiment.
 
-### Advanced Example - Chemical Substances
+### Advanced Example: Chemical Substances
 BayBE has several modules to go beyond traditional approaches. One such example is the
 use of custom encodings for categorical parameters. Chemical encodings for substances
 are a special built-in case of this that comes with BayBE.
@@ -223,7 +227,7 @@ chemical encodings compared to one-hot and a random baseline:
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
 
 (installation)=
-## Installation
+## 💻 Installation
 ### From Package Index
 The easiest way to install BayBE is via PyPI:
 
@@ -292,7 +296,7 @@ The available groups are:
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
-## Telemetry
+## 📡 Telemetry
 BayBE collects anonymous usage statistics **only** for employees of Merck KGaA, 
 Darmstadt, Germany and/or its affiliates. The recording of metrics is turned off for
 all other users and is impossible due to a VPN block. In any case, the usage statistics
@@ -309,19 +313,18 @@ host machine names are anonymized with via truncated hashing.
   inability of specifying opt-out dependencies, these are installed by default, but the
   package works without them.
 
-## Authors
+## 👨🏻‍🔧 Maintainers
 
 - Martin Fitzner (Merck KGaA, Darmstadt, Germany), [Contact](mailto:martin.fitzner@merckgroup.com), [Github](https://github.com/Scienfitz)
 - Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany), [Contact](mailto:adrian.sosic@merckgroup.com), [Github](https://github.com/AdrianSosic)
 - Alexander Hopp (Merck KGaA, Darmstadt, Germany) [Contact](mailto:alexander.hopp@merckgroup.com), [Github](https://github.com/AVHopp)
-- Alex Lee (EMD Electronics, Tempe, Arizona, USA) [Contact](mailto:alex.lee@emdgroup.com), [Github](https://github.com/galaxee87)
 
 
-## Known Issues
+## 🛠️ Known Issues
 A list of know issues can be found [here](https://emdgroup.github.io/baybe/known_issues.html).
 
 
-## License
+## 📄 License
 
 Copyright 2022-2024 Merck KGaA, Darmstadt, Germany
 and/or its affiliates. All rights reserved.
