@@ -95,166 +95,144 @@ def simulate_experiment(  # noqa: DOC502
     """
     # TODO: Due to the "..." operator, sphinx does not render this properly. Might
     #   want to investigate in the future.
-
-    context = temporary_seed(random_seed) if random_seed is not None else nullcontext()
-    with context:
-        return _simulate_experiment_given_seed(
-            campaign,
-            lookup,
-            batch_size=batch_size,
-            n_doe_iterations=n_doe_iterations,
-            initial_data=initial_data,
-            impute_mode=impute_mode,
-            noise_percent=noise_percent,
-        )
-
-
-def _simulate_experiment_given_seed(
-    campaign: Campaign,
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
-    /,
-    *,
-    batch_size: int = 1,
-    n_doe_iterations: Optional[int] = None,
-    initial_data: Optional[pd.DataFrame] = None,
-    impute_mode: Literal[
-        "error", "worst", "best", "mean", "random", "ignore"
-    ] = "error",
-    noise_percent: Optional[float] = None,
-) -> pd.DataFrame:
-    """Run :func:`simulate_experiment` with the context-given random seed."""
     # TODO: Use a `will_terminate` campaign property to decide if the campaign will
     #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
 
-    #   Validate the lookup mechanism
-    if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
-        raise TypeError(
-            "The lookup can either be 'None', a pandas dataframe or a callable."
-        )
-
-    # Validate the data imputation mode
-    if (impute_mode == "ignore") and (not isinstance(lookup, pd.DataFrame)):
-        raise ValueError(
-            "Impute mode 'ignore' is only available for dataframe lookups."
-        )
-
-    # Clone the campaign to avoid mutating the original object
-    # TODO: Reconsider if deepcopies are required once [16605] is resolved
-    campaign = deepcopy(campaign)
-
-    # Add the initial data
-    if initial_data is not None:
-        campaign.add_measurements(initial_data)
-
-    # For impute_mode 'ignore', do not recommend space entries that are not
-    # available in the lookup
-    # TODO [16605]: Avoid direct manipulation of metadata
-    if impute_mode == "ignore":
-        exp_rep = campaign.searchspace.discrete.exp_rep
-        lookup_configurations = lookup[
-            [p.name for p in campaign.parameters]
-        ].drop_duplicates()
-        missing_inds = exp_rep.index[
-            exp_rep.merge(lookup_configurations, how="left", indicator=True)["_merge"]
-            == "left_only"
-        ]
-        campaign.searchspace.discrete.metadata.loc[
-            missing_inds, "dont_recommend"
-        ] = True
-
-    # Run the DOE loop
-    limit = n_doe_iterations or np.inf
-    k_iteration = 0
-    n_experiments = 0
-    dfs = []
-    while k_iteration < limit:
-        # Get the next recommendations and corresponding measurements
-        try:
-            measured = campaign.recommend(batch_size=batch_size)
-        except NotEnoughPointsLeftError:
-            # TODO: There can be still N < batch_quantity points left in the search
-            #   space. Once the recommender/strategy refactoring is completed,
-            #   find an elegant way to return those.
-            warnings.warn(
-                "The simulation of the campaign ended because because not sufficiently "
-                "many points were left for recommendation",
-                UserWarning,
+    context = temporary_seed(random_seed) if random_seed is not None else nullcontext()
+    with context:
+        #   Validate the lookup mechanism
+        if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
+            raise TypeError(
+                "The lookup can either be 'None', a pandas dataframe or a callable."
             )
-            break
 
-        # Temporary workaround to enable returning incomplete simulations
-        except Exception as ex:
-            warnings.warn(
-                f"An error has occurred during the simulation, "
-                f"therefore incomplete simulation results are returned. "
-                f"The error message was:\n{str(ex)}"
+        # Validate the data imputation mode
+        if (impute_mode == "ignore") and (not isinstance(lookup, pd.DataFrame)):
+            raise ValueError(
+                "Impute mode 'ignore' is only available for dataframe lookups."
             )
-            break
 
-        n_experiments += len(measured)
-        _look_up_target_values(measured, campaign, lookup, impute_mode)
+        # Clone the campaign to avoid mutating the original object
+        # TODO: Reconsider if deepcopies are required once [16605] is resolved
+        campaign = deepcopy(campaign)
 
-        # Create the summary for the current iteration and store it
-        result = pd.DataFrame(
-            [  # <-- this ensures that the internal lists to not get expanded
-                {
-                    "Iteration": k_iteration,
-                    "Num_Experiments": n_experiments,
-                    **{
-                        f"{target.name}_Measurements": measured[target.name].to_list()
-                        for target in campaign.targets
-                    },
-                }
+        # Add the initial data
+        if initial_data is not None:
+            campaign.add_measurements(initial_data)
+
+        # For impute_mode 'ignore', do not recommend space entries that are not
+        # available in the lookup
+        # TODO [16605]: Avoid direct manipulation of metadata
+        if impute_mode == "ignore":
+            exp_rep = campaign.searchspace.discrete.exp_rep
+            lookup_configurations = lookup[
+                [p.name for p in campaign.parameters]
+            ].drop_duplicates()
+            missing_inds = exp_rep.index[
+                exp_rep.merge(lookup_configurations, how="left", indicator=True)[
+                    "_merge"
+                ]
+                == "left_only"
             ]
-        )
-        dfs.append(result)
+            campaign.searchspace.discrete.metadata.loc[
+                missing_inds, "dont_recommend"
+            ] = True
 
-        # Apply optional noise to the parameter measurements
-        if noise_percent:
-            add_parameter_noise(
-                measured,
-                campaign.parameters,
-                noise_type="relative_percent",
-                noise_level=noise_percent,
+        # Run the DOE loop
+        limit = n_doe_iterations or np.inf
+        k_iteration = 0
+        n_experiments = 0
+        dfs = []
+        while k_iteration < limit:
+            # Get the next recommendations and corresponding measurements
+            try:
+                measured = campaign.recommend(batch_size=batch_size)
+            except NotEnoughPointsLeftError:
+                # TODO: There can be still N < batch_quantity points left in the search
+                #   space. Once the recommender/strategy refactoring is completed,
+                #   find an elegant way to return those.
+                warnings.warn(
+                    "The simulation of the campaign ended because because not "
+                    "sufficiently many points were left for recommendation",
+                    UserWarning,
+                )
+                break
+
+            # Temporary workaround to enable returning incomplete simulations
+            except Exception as ex:
+                warnings.warn(
+                    f"An error has occurred during the simulation, "
+                    f"therefore incomplete simulation results are returned. "
+                    f"The error message was:\n{str(ex)}"
+                )
+                break
+
+            n_experiments += len(measured)
+            _look_up_target_values(measured, campaign, lookup, impute_mode)
+
+            # Create the summary for the current iteration and store it
+            result = pd.DataFrame(
+                [  # <-- this ensures that the internal lists to not get expanded
+                    {
+                        "Iteration": k_iteration,
+                        "Num_Experiments": n_experiments,
+                        **{
+                            f"{target.name}_Measurements": measured[
+                                target.name
+                            ].to_list()
+                            for target in campaign.targets
+                        },
+                    }
+                ]
             )
+            dfs.append(result)
 
-        # Update the campaign
-        campaign.add_measurements(measured)
+            # Apply optional noise to the parameter measurements
+            if noise_percent:
+                add_parameter_noise(
+                    measured,
+                    campaign.parameters,
+                    noise_type="relative_percent",
+                    noise_level=noise_percent,
+                )
 
-        # Update the iteration counter
-        k_iteration += 1
+            # Update the campaign
+            campaign.add_measurements(measured)
 
-    # Collect the iteration results
-    if len(dfs) == 0:
-        raise NothingToSimulateError()
-    results = pd.concat(dfs, ignore_index=True)
+            # Update the iteration counter
+            k_iteration += 1
 
-    # Add the instantaneous and running best values for all targets
-    for target in campaign.targets:
-        # Define the summary functions for the current target
-        if target.mode is TargetMode.MAX:
-            agg_fun = np.max
-            cum_fun = np.maximum.accumulate
-        elif target.mode is TargetMode.MIN:
-            agg_fun = np.min
-            cum_fun = np.minimum.accumulate
-        elif target.mode is TargetMode.MATCH:
-            match_val = target.bounds.center
-            agg_fun = partial(closest_element, target=match_val)
-            cum_fun = lambda x: np.array(  # noqa: E731
-                np.frompyfunc(
-                    partial(closer_element, target=match_val),
-                    2,
-                    1,
-                ).accumulate(x),
-                dtype=float,
-            )
+        # Collect the iteration results
+        if len(dfs) == 0:
+            raise NothingToSimulateError()
+        results = pd.concat(dfs, ignore_index=True)
 
-        # Add the summary columns
-        measurement_col = f"{target.name}_Measurements"
-        iterbest_col = f"{target.name}_IterBest"
-        cumbest_cols = f"{target.name}_CumBest"
-        results[iterbest_col] = results[measurement_col].apply(agg_fun)
-        results[cumbest_cols] = cum_fun(results[iterbest_col])
+        # Add the instantaneous and running best values for all targets
+        for target in campaign.targets:
+            # Define the summary functions for the current target
+            if target.mode is TargetMode.MAX:
+                agg_fun = np.max
+                cum_fun = np.maximum.accumulate
+            elif target.mode is TargetMode.MIN:
+                agg_fun = np.min
+                cum_fun = np.minimum.accumulate
+            elif target.mode is TargetMode.MATCH:
+                match_val = target.bounds.center
+                agg_fun = partial(closest_element, target=match_val)
+                cum_fun = lambda x: np.array(  # noqa: E731
+                    np.frompyfunc(
+                        partial(closer_element, target=match_val),
+                        2,
+                        1,
+                    ).accumulate(x),
+                    dtype=float,
+                )
 
-    return results
+            # Add the summary columns
+            measurement_col = f"{target.name}_Measurements"
+            iterbest_col = f"{target.name}_IterBest"
+            cumbest_cols = f"{target.name}_CumBest"
+            results[iterbest_col] = results[measurement_col].apply(agg_fun)
+            results[cumbest_cols] = cum_fun(results[iterbest_col])
+
+        return results
