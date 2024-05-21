@@ -167,6 +167,14 @@ valid_composite_kernels = [
     AdditiveKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
     AdditiveKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
     ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+    ProductKernel([RBFKernel(), RQKernel(), PolynomialKernel(1)]),
+    ProductKernel([PolynomialKernel(1), PolynomialKernel(2), PolynomialKernel(3)]),
+    AdditiveKernel(
+        [
+            ProductKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+            AdditiveKernel([MaternKernel(1.5), MaternKernel(2.5)]),
+        ]
+    ),
 ]
 
 valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kernels
