@@ -20,7 +20,7 @@ from baybe.utils.numerical import closer_element, closest_element
 from baybe.utils.random import temporary_seed
 
 
-def simulate_experiment(  # noqa: DOC502
+def simulate_experiment(
     campaign: Campaign,
     lookup: Optional[Union[pd.DataFrame, Callable]] = None,
     /,
