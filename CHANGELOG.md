@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   convenience constructor
 - Validators for `Campaign` attributes
 _ `_optional` subpackage for managing optional dependencies
+- `register_hook` to give users the ability to register custom hooks for all methods of package objects
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
