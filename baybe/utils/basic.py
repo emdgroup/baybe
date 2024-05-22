@@ -1,8 +1,9 @@
 """Collection of small basic utilities."""
 
+import functools
+import inspect
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
-from inspect import signature
 from typing import Any, TypeVar
 
 from baybe.exceptions import UnidentifiedSubclassError
@@ -139,7 +140,7 @@ def filter_attributes(
     Returns:
         A dictionary mapping the matched attribute names to their values.
     """
-    params = signature(callable_).parameters
+    params = inspect.signature(callable_).parameters
     return {
         p: getattr(object, p)
         for p in params
@@ -181,3 +182,37 @@ def find_subclass(base: type, name_or_abbr: str, /):
             f"The class name or abbreviation '{name_or_abbr}' does not refer to any "
             f"of the subclasses of '{base.__name__}'."
         )
+
+
+def register_hook(target: Callable, hook: Callable) -> Callable:
+    """Register a hook for the given target callable.
+
+    Args:
+        target: The callable to which the hook is attached.
+        hook: The callable to be registered in the given callable.
+
+    Returns:
+        A wrapped callable that replaces the original target callable.
+
+    Raises:
+        TypeError: If the signature of the callable does not match the signature of the
+            target callable.
+    """
+    for p1, p2 in zip(
+        inspect.signature(target, eval_str=True).parameters.values(),
+        inspect.signature(hook, eval_str=True).parameters.values(),
+    ):
+        if p1.name != p2.name or p1.annotation != p2.annotation:
+            if p2.annotation is not inspect.Parameter.empty:
+                raise TypeError(
+                    f"The signature of '{hook.__name__}' does not match the "
+                    f"signature of '{target.__name__}'."
+                )
+
+    @functools.wraps(target)
+    def wraps(*args, **kwargs):
+        result = target(*args, **kwargs)
+        hook(*args, **kwargs)
+        return result
+
+    return wraps
