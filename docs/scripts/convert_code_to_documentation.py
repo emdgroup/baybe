@@ -92,9 +92,9 @@ adjust_pictures(
 # Adjust the chemical encoding example picture in the index and the README
 adjust_pictures(
     "docs/build/index.html",
-    match="full_lookup",
-    light_version="full_lookup_light",
-    dark_version="full_lookup_dark",
+    match="_images/full_lookup_light",
+    light_version="_images/full_lookup_light",
+    dark_version="_images/full_lookup_dark",
 )
 
 
