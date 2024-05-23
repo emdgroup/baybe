@@ -33,16 +33,17 @@ def adjust_pictures(
     if line_index is not None:
         line = lines[line_index]
         light_line = line
-        if "reference external" in line:  # for replacing the banner
-            light_line = line.replace(
-                "reference external", "reference external only-light"
-            )
-        if "_images/full_lookup_light.svg" in line:  # for the example in the README
-            light_line = line.replace("img ", 'img class="only-light align-center" ')
+        light_line = light_line.replace(  # For replacing the banner
+            '"reference external"', '"reference external only-light"'
+        )
+        light_line = light_line.replace(  # For replacing the example plot
+            'img alt="Substance Encoding Example" ',
+            'img alt="Substance Encoding Example" class="only-light align-center" ',
+        )
         lines[line_index] = light_line
         dark_line = light_line.replace("light", "dark")
         dark_line = dark_line.replace(light_version, dark_version)
-        lines[line_index + 1] = dark_line
+        lines.insert(line_index + 1, dark_line)
 
         with open(file_path, "w") as file:
             file.writelines(lines)
