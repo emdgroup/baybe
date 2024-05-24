@@ -42,26 +42,30 @@ class MemorySize:
     exp_rep_bytes: float
     """The memory size of the experimental representation dataframe in bytes."""
 
-    exp_rep_human_readable: float
-    """The memory size of the experimental representation dataframe human-readable."""
-
-    exp_rep_human_readable_unit: str
-    """The unit of ``exp_rep_human_readable``."""
-
     exp_rep_shape: tuple[int, int]
     """The shape of the experimental representation dataframe."""
 
     comp_rep_bytes: float
     """The memory size of the computational representation dataframe in bytes."""
 
-    comp_rep_human_readable: float
-    """The memory size of the computational representation dataframe human-readable."""
-
-    comp_rep_human_readable_unit: str
-    """The unit of ``comp_rep_human_readable``."""
-
     comp_rep_shape: tuple[int, int]
     """The shape of the computational representation dataframe."""
+
+    @property
+    def exp_rep_human_readable(self):
+        """The memory size of the experimental repr. dataframe human-readable.
+
+        Consists of a tuple (value: float, unit: str).
+        """
+        return bytes_to_human_readable(self.exp_rep_bytes)
+
+    @property
+    def comp_rep_human_readable(self):
+        """The memory size of the computational repr. dataframe human-readable.
+
+        Consists of a tuple (value: float, unit: str).
+        """
+        return bytes_to_human_readable(self.comp_rep_bytes)
 
 
 @define
@@ -548,7 +552,6 @@ class SubspaceDiscrete(SerialMixin):
         comp_rep_bytes = (
             np.array([0.0], dtype=DTypeFloatNumpy).itemsize * n_rows * n_cols_comp
         )
-        comp_rep_hr, comp_rep_hr_unit = bytes_to_human_readable(comp_rep_bytes)
 
         # Exp rep space is estimated as the size of the per-parameter exp rep dataframe
         # times the number of times it will appear in the entire search space. The
@@ -561,16 +564,11 @@ class SubspaceDiscrete(SerialMixin):
             / p.comp_df.shape[0]
             for p in parameters
         )
-        exp_rep_hr, exp_rep_hr_unit = bytes_to_human_readable(exp_rep_bytes)
 
         return MemorySize(
             exp_rep_bytes=exp_rep_bytes,
-            exp_rep_human_readable=np.round(exp_rep_hr, 2).item(),
-            exp_rep_human_readable_unit=exp_rep_hr_unit,
             exp_rep_shape=(n_rows, n_cols_exp),
             comp_rep_bytes=comp_rep_bytes,
-            comp_rep_human_readable=np.round(comp_rep_hr, 2).item(),
-            comp_rep_human_readable_unit=comp_rep_hr_unit,
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
