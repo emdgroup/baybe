@@ -39,20 +39,26 @@ _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 class MemorySize:
     """Estimated memory size of a :class:`SubspaceDiscrete`."""
 
-    exp_rep_memory: float
-    """The memory size of the experimental representation dataframe."""
+    exp_rep_bytes: float
+    """The memory size of the experimental representation dataframe in bytes."""
 
-    exp_rep_unit: str
-    """The unit ``exp_rep_size``."""
+    exp_rep_human_readable: float
+    """The memory size of the experimental representation dataframe human-readable."""
+
+    exp_rep_human_readable_unit: str
+    """The unit of ``exp_rep_human_readable``."""
 
     exp_rep_shape: tuple[int, int]
     """The shape of the experimental representation dataframe."""
 
-    comp_rep_memory: float
-    """The memory size of the computational representation dataframe."""
+    comp_rep_bytes: float
+    """The memory size of the computational representation dataframe in bytes."""
 
-    comp_rep_unit: str
-    """The unit ``comp_rep_size``."""
+    comp_rep_human_readable: float
+    """The memory size of the computational representation dataframe human-readable."""
+
+    comp_rep_human_readable_unit: str
+    """The unit of ``comp_rep_human_readable``."""
 
     comp_rep_shape: tuple[int, int]
     """The shape of the computational representation dataframe."""
@@ -539,9 +545,10 @@ class SubspaceDiscrete(SerialMixin):
         # Comp rep space is estimated as the size of float times the number of matrix
         # elements in the comp rep. The latter is the total number of parameter
         # configurations (= number of rows) times the total number of columns.
-        comp_rep_size, comp_rep_unit = bytes_to_human_readable(
+        comp_rep_bytes = (
             np.array([0.0], dtype=DTypeFloatNumpy).itemsize * n_rows * n_cols_comp
         )
+        comp_rep_hr, comp_rep_hr_unit = bytes_to_human_readable(comp_rep_bytes)
 
         # Exp rep space is estimated as the size of the per-parameter exp rep dataframe
         # times the number of times it will appear in the entire search space. The
@@ -554,14 +561,16 @@ class SubspaceDiscrete(SerialMixin):
             / p.comp_df.shape[0]
             for p in parameters
         )
-        exp_rep_size, exp_rep_unit = bytes_to_human_readable(exp_rep_bytes)
+        exp_rep_hr, exp_rep_hr_unit = bytes_to_human_readable(exp_rep_bytes)
 
         return MemorySize(
-            exp_rep_memory=np.round(exp_rep_size, 2),
-            exp_rep_unit=exp_rep_unit,
+            exp_rep_bytes=exp_rep_bytes,
+            exp_rep_human_readable=np.round(exp_rep_hr, 2).item(),
+            exp_rep_human_readable_unit=exp_rep_hr_unit,
             exp_rep_shape=(n_rows, n_cols_exp),
-            comp_rep_memory=np.round(comp_rep_size, 2),
-            comp_rep_unit=comp_rep_unit,
+            comp_rep_bytes=comp_rep_bytes,
+            comp_rep_human_readable=np.round(comp_rep_hr, 2).item(),
+            comp_rep_human_readable_unit=comp_rep_hr_unit,
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
