@@ -7,6 +7,7 @@ import pytest
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
+    ContinuousCardinalityConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -223,3 +224,32 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
         estimate_comp,
         actual_comp,
     )
+
+
+def test_invalid_continuous_cardinality_constraints_combos():
+    """Testing invalid combinations of cardinality constraints.
+
+    Any cardinality constraints share the same parameters.
+    """
+    parameters = [
+        NumericalContinuousParameter("c1", (0, 2)),
+        NumericalContinuousParameter("c2", (-1, 1)),
+        NumericalContinuousParameter("c3", (-1, 1)),
+        NumericalContinuousParameter("c4", (-1, 1)),
+    ]
+
+    # Attempting cardinality constraints sharing the same parameter
+    with pytest.raises(ValueError):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                ContinuousCardinalityConstraint(
+                    parameters=["c1", "c2", "c3"],
+                    cardinality_up=1,
+                ),
+                ContinuousCardinalityConstraint(
+                    parameters=["c3", "c4"],
+                    cardinality_up=1,
+                )
+            ]
+        )

@@ -20,6 +20,7 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
+from baybe.constraints.validation import validate_continuous_cardinality_constraints
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
@@ -54,8 +55,9 @@ class SubspaceContinuous(SerialMixin):
     """List of linear inequality constraints."""
 
     constraints_cardinality: tuple[ContinuousCardinalityConstraint, ...] = field(
-        converter=to_tuple, factory=tuple
-    )
+        converter=to_tuple, factory=tuple, validator=lambda _, __,
+                                                            x:
+        validate_continuous_cardinality_constraints(x))
     """List of cardinality constraints."""
 
     def __str__(self) -> str:
