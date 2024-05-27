@@ -3,6 +3,8 @@
 
 from attrs import define, field, validators
 from collections.abc import Sequence
+import math
+import numpy as np
 
 from baybe.constraints.base import ContinuousConstraint, ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
@@ -87,3 +89,42 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
     ) -> list[tuple[callable, bool]]:
         # See base class.
         pass
+
+    def sample_inactive_params(self, n_points: int = 1) -> list[list[str]]:
+        """Generate inactive parameters based on cardinality constraints.
+
+        Args:
+            n_points: Number of points that should be sampled.
+
+        Returns:
+            a list of samples with each sample being a collection of inactive
+            parameters names.
+        """
+        # combinatorial for each cardinality
+        n_comb_at_all_cardinality = [
+            math.comb(len(self.parameters), n)
+            for n in range(self.cardinality_low, self.cardinality_up + 1)
+        ]
+
+        # probability of each cardinality
+        p_at_all_cardinality = n_comb_at_all_cardinality / np.sum(
+            n_comb_at_all_cardinality
+        )
+
+        # randomly generate #(inactive parameters)
+        n_inactive_params_samples = (
+            len(self.parameters)
+            - np.random.choice(
+                np.arange(self.cardinality_low, self.cardinality_up + 1),
+                n_points,
+                p_at_all_cardinality.tolist(),
+            )
+        ).tolist()
+
+        # sample inactive parameters
+        inactive_params = [
+            np.random.choice(self.parameters, n_inactive, False).tolist()
+            for n_inactive in n_inactive_params_samples
+        ]
+
+        return inactive_params

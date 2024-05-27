@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import random
 from collections.abc import Collection, Sequence
 from typing import TYPE_CHECKING, Any, Optional, cast
 from typing_extensions import TypeAlias
@@ -10,6 +9,7 @@ from typing_extensions import TypeAlias
 import numpy as np
 import pandas as pd
 from attr import define, field
+import warnings
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -25,6 +25,7 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.exceptions import SamplingFailedError
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
@@ -49,15 +50,16 @@ class SubspaceContinuous(SerialMixin):
     )
     """List of linear equality constraints."""
 
-    constraints_lin_ineq: tuple[
-        ContinuousLinearInequalityConstraint, ...
-    ] = field(converter=to_tuple, factory=tuple)
+    constraints_lin_ineq: tuple[ContinuousLinearInequalityConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
+    )
     """List of linear inequality constraints."""
 
     constraints_cardinality: tuple[ContinuousCardinalityConstraint, ...] = field(
-        converter=to_tuple, factory=tuple, validator=lambda _, __,
-                                                            x:
-        validate_continuous_cardinality_constraints(x))
+        converter=to_tuple,
+        factory=tuple,
+        validator=lambda _, __, x: validate_continuous_cardinality_constraints(x),
+    )
     """List of cardinality constraints."""
 
     def __str__(self) -> str:
@@ -204,11 +206,16 @@ class SubspaceContinuous(SerialMixin):
 
         return comp_rep
 
-    def samples_random(self, n_points: int = 1) -> pd.DataFrame:
+    def samples_random(
+        self, n_points: int = 1, bounds: Optional[np.ndarray] = None
+    ) -> pd.DataFrame:
         """Get random point samples from the continuous space.
 
         Args:
             n_points: Number of points that should be sampled.
+            bounds: Parameter bounds. Note that the bounds here may differ from that
+                contained in self.parameters, e.g. bounds(inactive parameter) = [0, 0].
+
 
         Returns:
             A dataframe containing the points as rows with columns corresponding to the
@@ -216,30 +223,63 @@ class SubspaceContinuous(SerialMixin):
         """
         if not self.parameters:
             return pd.DataFrame()
+
+        if bounds is None:
+            bounds = self.param_bounds_comp
+
+        if (
+            len(self.constraints_lin_eq) == 0
+            and len(self.constraints_lin_ineq) == 0
+            and len(self.constraints_cardinality) == 0
+        ):
+            return self._sample_from_bounds(n_points, bounds)
+        elif len(self.constraints_cardinality) == 0:
+            return self._sample_from_polytope(n_points, bounds)
+        else:
+            return self._sample_with_cardinality_constraints(n_points)
+
+    def _sample_from_bounds(self, n_points: int, bounds: np.ndarray) -> pd.DataFrame:
+        """Get random samples over space without any constraints.
+
+        Args:
+            n_points: See samples_random()
+            bounds: See samples_random()
+
+        Returns:
+            See samples_random()
+        """
+        points = np.random.uniform(
+            low=bounds[0, :], high=bounds[1, :], size=(n_points, len(self.parameters))
+        )
+
+        return pd.DataFrame(points, columns=self.param_names)
+
+    def _sample_from_polytope(self, n_points: int, bounds: np.ndarray) -> pd.DataFrame:
+        """Get random samples over space with only linear constraints.
+
+        Args:
+            n_points: see samples_random()
+            bounds: see samples_random()
+
+        Returns:
+            see samples_random()
+        """
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
-        # TODO Revisit: torch and botorch here are actually only necessary if there
-        # are constraints. If there are none and the lists are empty we can just sample
-        # without the get_polytope_samples, which means torch and botorch
-        # wouldn't be needed.
+        points = get_polytope_samples(
+            n=n_points,
+            bounds=torch.from_numpy(bounds),
+            equality_constraints=[
+                c.to_botorch(self.parameters) for c in self.constraints_lin_eq
+            ],
+            inequality_constraints=[
+                c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
+            ],
+        )
+        return pd.DataFrame(points, columns=self.param_names)
 
-        if len(self.constraints_cardinality) != 0:
-            return self._sample_with_cardinality_constraints(n_points)
-        else:
-            points = get_polytope_samples(
-                n=n_points,
-                bounds=torch.from_numpy(self.param_bounds_comp),
-                equality_constraints=[
-                    c.to_botorch(self.parameters) for c in self.constraints_lin_eq
-                ],
-                inequality_constraints=[
-                    c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
-                ],
-            )
-            return pd.DataFrame(points, columns=self.param_names)
-
-    def _sample_with_cardinality_constraints(self, n_points: int = 1) -> pd.DataFrame:
+    def _sample_with_cardinality_constraints(self, n_points: int) -> pd.DataFrame:
         """Get random samples from the continuous space with cardinality constraints.
 
         Args:
@@ -248,62 +288,103 @@ class SubspaceContinuous(SerialMixin):
         Returns:
             see sample_random()
         """
-        import torch
-        from botorch.utils.sampling import get_polytope_samples
-        # TODO Revisit: torch and botorch here are actually only necessary if there
-        # are constraints. If there are none and the lists are empty we can just sample
-        # without the get_polytope_samples, which means torch and botorch
-        # wouldn't be needed. see samples_random().
+        assert (
+            len(self.constraints_cardinality) != 0
+        ), "No need to call this method if there is no cardinality constraint."
 
-        if len(self.constraints_cardinality) != 0:
-            # generate all possibilities of inactive parameters which are compatible
-            # to all cardinality constraints
-            _, inactive_params_full_list = get_combinations_from_cardinality_con(
-                list(self.constraints_cardinality)
-            )
+        points_all = pd.DataFrame(columns=[param.name for param in self.parameters])
+        i_ite, N_ITE_THRES = 0, 1e5  # limit of iteration
+        while points_all.shape[0] < n_points:
+            # sample inactive parameters
+            inactive_params_sample = self._sample_inactive_params(1)[0]
 
-            points_all = torch.Tensor()
-            i_ite = 0
-            n_ite_thres = 1e5
-            while len(points_all) < n_points:
-                # randomly choose one set of inactive parameters
-                inactive_params_sampled = random.choice(inactive_params_full_list)
-                bounds = self.param_bounds_comp
-
-                # set each inactive parameter to zero by changing bounds to [0, 0]
-                if len(inactive_params_sampled) != 0:
-                    for idx, param in enumerate(self.parameters):
-                        if param.name in inactive_params_sampled:
-                            bounds[:, idx] = [0, 0]
-                try:
-                    point = get_polytope_samples(
-                        n=1,
-                        bounds=torch.from_numpy(bounds),
-                        equality_constraints=[
-                            c.to_botorch(self.parameters)
-                            for c in self.constraints_lin_eq
-                        ],
-                        inequality_constraints=[
-                            c.to_botorch(self.parameters)
-                            for c in self.constraints_lin_ineq
-                        ],
-                    )
-
-                    points_all = torch.cat((points_all, point), 0)
-                except ValueError as ve:
-                    print(
-                        f"Caught a ValueError: with parameters"
-                        f" {inactive_params_sampled} being set to zeros, {ve}"
-                    )
-
-                # avoid infinite loop
-                i_ite += 1
-                assert i_ite < n_ite_thres, (
-                    "We are exceeding the Iteration limit "
-                    "when generating random samples."
+            # generate samples
+            if len(inactive_params_sample):
+                # subspace excluding the cardinality constraints
+                subspace_cardinality_cleaned = SubspaceContinuous(
+                    parameters=self.parameters,
+                    constraints_lin_eq=self.constraints_lin_eq,
+                    constraints_lin_ineq=self.constraints_lin_ineq,
                 )
 
-            return pd.DataFrame(points_all, columns=self.param_names)
+                # set each inactive parameter to zero by changing bounds to [0, 0]
+                bounds_cleaned = self._get_bounds_with_inactive_params(
+                    inactive_params_sample
+                )
+
+                # sample from the subspace, in which the cardinality constraints are
+                # excluded and bounds(inactive parameters) = (0, 0)
+                try:
+                    points_sample = subspace_cardinality_cleaned.samples_random(
+                        1, bounds_cleaned
+                    )
+                    points_all = pd.concat((points_all, points_sample), axis=0)
+                except SamplingFailedError:
+                    warnings.warn(
+                        f"No samples can be drawn when inactive parameters ="
+                        f" {inactive_params_sample}. Try other candidates of "
+                        f"inactive parameters."
+                    )
+            else:
+                sample = self.samples_random(1)
+                points_all = pd.concat((points_all, sample), axis=0)
+
+            # avoid infinite loop
+            i_ite += 1
+            assert i_ite < N_ITE_THRES, (
+                "We are exceeding the limit, yet we have not drawn enough samples. It "
+                "appears that the feasibility area is very small. Please review the "
+                "constraints."
+            )
+
+        return points_all
+
+    def _sample_inactive_params(self, n_points: int = 1) -> list[list[str]]:
+        """Sample inactive parameters randomly according to all cardinality constraints.
+
+        Args:
+            n_points: see sample_random()
+
+        Returns:
+            see sample_random()
+        """
+        inactive_params_samples = []
+        for _ in range(n_points):
+            inactive_params_samples.append(
+                list(
+                    set().union(
+                        *(
+                            con.sample_inactive_params(1)[0]
+                            for con in self.constraints_cardinality
+                        )
+                    )
+                )
+            )
+
+        return inactive_params_samples
+
+    def _get_bounds_with_inactive_params(
+        self, inactive_params: list[str]
+    ) -> np.ndarray:
+        """Get parameters bounds with bounds(inactive parameters) being zeros.
+
+        Args:
+            inactive_params: names of inactive parameters
+
+        Returns:
+            bounds of parameters
+        """
+        bounds_cleaned = self.param_bounds_comp
+
+        # identifying indices of inactive parameters
+        inactive_param_indices = [
+            idx
+            for idx, param in enumerate(self.parameters)
+            if param.name in inactive_params
+        ]
+
+        bounds_cleaned[:, inactive_param_indices] = 0
+        return bounds_cleaned
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
         """Get random point samples from the full factorial of the continuous space.
@@ -344,98 +425,6 @@ class SubspaceContinuous(SerialMixin):
 CombinationFromCardinalityConstratins: TypeAlias = tuple[
     list[list[str]], Optional[list[list[str]]]
 ]
-
-
-def get_combinations_from_cardinality_con(
-    cardinality_constraint_list: list[ContinuousCardinalityConstraint]
-) -> CombinationFromCardinalityConstratins:
-    """Get all possible combination of active/inactive features.
-
-    Here, we generate a list of all possibilities, with each possibility being active
-    parameters and inactive parameters, when all cardinality constraints are taken
-    into account.
-
-    Args:
-        cardinality_constraint_list: a list of continuous cardinality constraints
-
-    Returns:
-        a list of lists, each list being one possibility of active parameters
-        a list of lists, each list being one possibility of inactive parameters
-
-    """
-    import itertools
-
-    assert len(cardinality_constraint_list) != 0, "There is no cardinality constraints."
-
-    active_params_list_all = []
-
-    # loops through each NChooseK constraint
-    for con in cardinality_constraint_list:
-        assert isinstance(con, ContinuousCardinalityConstraint)
-        active_params_list = []
-        for n in range(con.cardinality_low, con.cardinality_up + 1):
-            active_params_list.extend(itertools.combinations(con.parameters, n))
-        active_params_list_all.append(active_params_list)
-
-    # product between NChooseK constraints
-    active_params_list_all = list(itertools.product(*active_params_list_all))
-
-    # format into a list of used features
-    active_params_list_formatted = []
-    for active_params_list in active_params_list_all:
-        active_params_list_flattened = [
-            item for sublist in active_params_list for item in sublist
-        ]
-        active_params_list_formatted.append(list(set(active_params_list_flattened)))
-
-    # sort lists
-    active_params_list_sorted = []
-    for active_params in active_params_list_formatted:
-        active_params_list_sorted.append(sorted(active_params))
-
-    # drop duplicates
-    active_params_list_no_dup = []
-    for active_params in active_params_list_sorted:
-        if active_params not in active_params_list_no_dup:
-            active_params_list_no_dup.append(active_params)
-
-    # remove combinations not fulfilling constraints
-    active_params_list_final = []
-    for combo in active_params_list_no_dup:
-        fulfill_constraints = []  # list of bools tracking if constraints are fulfilled
-        for con in cardinality_constraint_list:
-            assert isinstance(con, ContinuousCardinalityConstraint)
-            count = 0  # count of features in combo that are in con.features
-            for param in combo:
-                if param in con.parameters:
-                    count += 1
-            if con.cardinality_low <= count <= con.cardinality_up:
-                fulfill_constraints.append(True)
-            else:
-                fulfill_constraints.append(False)
-        if np.all(fulfill_constraints):
-            active_params_list_final.append(combo)
-
-    # generate the union of parameters that are present in cardinality constraints
-    params_in_cardinality_cons = []
-    for con in cardinality_constraint_list:
-        assert isinstance(con, ContinuousCardinalityConstraint)
-        params_in_cardinality_cons.extend(con.parameters)
-    params_in_cardinality_cons = list(set(params_in_cardinality_cons))
-    params_in_cardinality_cons.sort()
-
-    # inactive parameters
-    inactive_params_list = []
-    for active_params in active_params_list_final:
-        inactive_params_list.append(
-            [
-                f_key
-                for f_key in params_in_cardinality_cons
-                if f_key not in active_params
-            ]
-        )
-    return active_params_list_final, inactive_params_list
-
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
