@@ -27,6 +27,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     a non-hybrid space, it uses the corresponding recommender.
     """
 
+    # TODO: Cleanly implement naive recommender using fixed parameter class
+
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
