@@ -8,6 +8,8 @@
 
 ### Necessary imports for this example
 
+import pandas as pd
+
 from baybe import Campaign
 from baybe.objectives import DesirabilityObjective
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
@@ -104,15 +106,16 @@ print(campaign)
 N_ITERATIONS = 3
 
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n#### ITERATION {kIter+1} ####")
-
     rec = campaign.recommend(batch_size=3)
-    print("\nRecommended measurements:\n", rec)
-
     add_fake_results(rec, campaign)
-    print("\nRecommended measurements with fake measured results:\n", rec)
-
     campaign.add_measurements(rec)
+    desirability = campaign.objective.transform(campaign.measurements)
+
+    print(f"\n\n#### ITERATION {kIter+1} ####")
+    print("\nRecommended measurements with fake measured results:\n")
+    print(rec)
+    print("\nInternal measurement database with desirability values:\n")
+    print(pd.concat([campaign.measurements, desirability], axis=1))
 
 ### Addendum: Description of `transformation` functions
 
