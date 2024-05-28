@@ -185,3 +185,18 @@ def test_invalid_constraint_parameter_combos():
                 )
             ],
         )
+
+
+def test_searchspace_memory_estimate(searchspace: SearchSpace):
+    """The memory estimate doesn't differ by more than 5% from the actual memory."""
+    estimate = searchspace.estimate_product_space_size(searchspace.parameters)
+    estimate_exp = estimate.exp_rep_bytes
+    estimate_comp = estimate.comp_rep_bytes
+
+    actual_exp = searchspace.discrete.exp_rep.memory_usage(deep=True, index=False).sum()
+    actual_comp = searchspace.discrete.comp_rep.memory_usage(
+        deep=True, index=False
+    ).sum()
+
+    assert 0.95 <= estimate_exp / actual_exp <= 1.05, (estimate_exp, actual_exp)
+    assert 0.95 <= estimate_comp / actual_comp <= 1.05, (estimate_comp, actual_comp)
