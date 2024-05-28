@@ -52,7 +52,7 @@ class MemorySize:
     """The shape of the computational representation dataframe."""
 
     @property
-    def exp_rep_human_readable(self):
+    def exp_rep_human_readable(self) -> tuple[float, str]:
         """The memory size of the experimental repr. dataframe human-readable.
 
         Consists of a tuple (value: float, unit: str).
@@ -60,7 +60,7 @@ class MemorySize:
         return bytes_to_human_readable(self.exp_rep_bytes)
 
     @property
-    def comp_rep_human_readable(self):
+    def comp_rep_human_readable(self) -> tuple[float, str]:
         """The memory size of the computational repr. dataframe human-readable.
 
         Consists of a tuple (value: float, unit: str).
