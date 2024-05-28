@@ -39,4 +39,9 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 f"consider any objectives, meaning that the argument is ignored.",
                 UserWarning,
             )
-        return super().recommend(batch_size, searchspace, objective, measurements)
+        return super().recommend(
+            batch_size=batch_size,
+            searchspace=searchspace,
+            objective=objective,
+            measurements=measurements,
+        )
