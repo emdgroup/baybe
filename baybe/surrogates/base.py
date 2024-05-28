@@ -43,7 +43,7 @@ bytes to string and back, since the specification is a bijection between
 """
 
 
-@define
+@define(slots=False)
 class Surrogate(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
