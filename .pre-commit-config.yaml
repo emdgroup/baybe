@@ -23,5 +23,5 @@ repos:
   rev: v3.15.1
   hooks:
   - id: pyupgrade
-    args: [--py39-plus, --keep-runtime-typing]
+    args: [--py310-plus]
 
