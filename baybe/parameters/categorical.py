@@ -11,6 +11,7 @@ from attr.validators import deep_iterable, instance_of, min_len
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
+from baybe.utils.numerical import DTypeFloatNumpy
 
 
 @define(frozen=True, slots=False)
@@ -47,9 +48,13 @@ class CategoricalParameter(DiscreteParameter):
         # See base class.
         if self.encoding is CategoricalEncoding.OHE:
             cols = [f"{self.name}_{val}" for val in self.values]
-            comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
+            comp_df = pd.DataFrame(
+                np.eye(len(self.values), dtype=DTypeFloatNumpy), columns=cols
+            )
         elif self.encoding is CategoricalEncoding.INT:
-            comp_df = pd.DataFrame(range(len(self.values)), columns=[self.name])
+            comp_df = pd.DataFrame(
+                range(len(self.values)), dtype=DTypeFloatNumpy, columns=[self.name]
+            )
         comp_df.index = pd.Index(self.values)
 
         return comp_df
