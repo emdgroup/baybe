@@ -1,4 +1,4 @@
-"""Sequential greedy recommender."""
+"""Botorch recommender."""
 
 from typing import Any, ClassVar
 
@@ -19,16 +19,17 @@ from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 @define
 class BotorchRecommender(BayesianRecommender):
-    """Pure recommender using sequential greedy optimization.
+    """A pure recommender utilizing Botorch's optimization machinery.
 
-    This recommender implements the BoTorch functions ``optimize_acqf_discrete``,
-    ``optimize_acqf`` and ``optimize_acqf_mixed`` for the optimization of discrete,
-    continuous and hybrid search spaces. In particular, it can be applied in all
-    kinds of search spaces.
-    It is important to note that this algorithm performs a brute-force optimization in
-    hybrid search spaces which can be computationally expensive. Thus, the behavior of
-    the algorithm in hybrid search spaces can be controlled by two additional
-    parameters.
+    This recommender makes use of Botorch's ``optimize_acqf_discrete``,
+    ``optimize_acqf`` and ``optimize_acqf_mixed`` functions to optimize discrete,
+    continuous and hybrid search spaces, respectively. Accordingly, it can be applied to
+    all kinds of search spaces.
+
+    Note:
+        In hybrid search spaces, the used algorithm performs a brute-force optimization
+        that can be computationally expensive. Thus, the behavior of the algorithm in
+        hybrid search spaces can be controlled via two additional parameters.
     """
 
     # Class variables
