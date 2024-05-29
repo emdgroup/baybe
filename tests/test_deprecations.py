@@ -188,3 +188,9 @@ def test_deprecated_acqf_keyword(acqf):
     """Using the deprecated keyword raises an error."""
     with pytest.raises(DeprecationError):
         SequentialGreedyRecommender(acquisition_function_cls="qEI")
+
+
+def test_deprecated_sequentialgreedyrecommender_class():
+    """Using the deprecated `SequentialGreedyRecommender` class raises a warning."""
+    with pytest.warns(DeprecationWarning):
+        SequentialGreedyRecommender()
