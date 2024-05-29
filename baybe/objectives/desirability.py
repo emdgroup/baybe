@@ -17,6 +17,7 @@ from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import geom_mean
+from baybe.utils.validation import finite_float
 
 
 def _is_all_numerical_targets(
@@ -73,7 +74,7 @@ class DesirabilityObjective(Objective):
 
     weights: tuple[float, ...] = field(
         converter=lambda w: cattrs.structure(w, tuple[float, ...]),
-        validator=deep_iterable(member_validator=gt(0.0)),
+        validator=deep_iterable(member_validator=[finite_float, gt(0.0)]),
     )
     """The weights to balance the different targets.
     By default, all targets are considered equally important."""

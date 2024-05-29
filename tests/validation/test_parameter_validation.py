@@ -49,6 +49,8 @@ def test_invalid_parameter_name(name, error):
         param(1, TypeError, id="wrong_type"),
         param(1.0, ValueError, id="too_high"),
         param(0.0, ValueError, id="too_low"),
+        param(float("nan"), ValueError, id="nan"),
+        param(float("inf"), ValueError, id="inf"),
     ],
 )
 def test_invalid_decorrelation(decorrelation, error):
