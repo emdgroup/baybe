@@ -717,7 +717,7 @@ def fixture_default_config():
                 "type": "RandomRecommender"
             },
             "recommender": {
-                "type": "SequentialGreedyRecommender",
+                "type": "BotorchRecommender",
                 "acquisition_function": "qEI",
                 "allow_repeated_recommendations": false,
                 "allow_recommending_already_measured": false

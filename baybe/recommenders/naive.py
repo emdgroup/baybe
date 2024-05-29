@@ -40,11 +40,11 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     # problem that might come up when implementing new subclasses of PureRecommender
     disc_recommender: PureRecommender = field(factory=BotorchRecommender)
     """The recommender used for the discrete subspace. Default:
-    :class:`baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`"""
 
     cont_recommender: BayesianRecommender = field(factory=BotorchRecommender)
     """The recommender used for the continuous subspace. Default:
-    :class:`baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`"""
 
     def __attrs_post_init__(self):
         """Validate if flags are synchronized and overrides them otherwise."""

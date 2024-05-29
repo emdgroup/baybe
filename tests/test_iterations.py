@@ -80,7 +80,7 @@ valid_hybrid_recommenders = [
     for cls in get_subclasses(PureRecommender)
     if cls.compatibility == SearchSpaceType.HYBRID
 ]
-# List of SequentialGreedy recommenders with different sampling strategies.
+# List of BotorchRecommenders with different sampling strategies.
 sampling_strategies = [
     # Valid combinations
     ("None", 0.0),

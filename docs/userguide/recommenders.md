@@ -30,7 +30,7 @@ The Bayesian recommenders in BayBE are built on the foundation of the
 class, offering an array of possibilities with internal surrogate models and support
 for various acquisition functions.
 
-* The **[`SequentialGreedyRecommender`](baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender)**
+* The **[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)**
   is a powerful recommender that performs sequential Greedy optimization. It can be
   applied for discrete, continuous and hybrid search spaces. It is an implementation of
   the BoTorch optimization functions for discrete, continuous and mixed spaces.
@@ -89,13 +89,13 @@ logics. BayBE offers three distinct kinds of meta recommenders.
   to a Bayesian recommender as soon as measurements have been ingested:
 ```python
 from baybe.recommenders import (
+    BotorchRecommender,
     TwoPhaseMetaRecommender,
     RandomRecommender,
-    SequentialGreedyRecommender,
 )
 
 recommender = TwoPhaseMetaRecommender(
-    initial_recommender=RandomRecommender(), recommender=SequentialGreedyRecommender()
+    initial_recommender=RandomRecommender(), recommender=BotorchRecommender()
 )
 ```
 

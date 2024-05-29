@@ -112,9 +112,9 @@ objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MI
 ### Constructing campaigns for the simulation loop
 
 # This example compares three different available hybrid recommenders:
-# The `SequentialGreedyRecommender`, the `NaiveHybridSpaceRecommender` and the `RandomRecommender`.
+# The `BotorchRecommender`, the `NaiveHybridSpaceRecommender` and the `RandomRecommender`.
 # For each of them, we initialize one recommender object.
-# Note that it is possible to further specify the behavior of the `SequentialGreedyRecommender`.
+# Note that it is possible to further specify the behavior of the `BotorchRecommender`.
 # Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control
 # - how much of the discrete subspace should be explored
 # - how these points should be sampled.
