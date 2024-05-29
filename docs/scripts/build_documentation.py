@@ -13,7 +13,7 @@ from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-e",
-    "--calculate_examples",
+    "--run_examples",
     help="Re-calculate the examples",
     action="store_true",
 )
@@ -44,7 +44,7 @@ parser.add_argument(
 
 # Parse input arguments
 args = parser.parse_args()
-CALCULATE_EXAMPLES = args.calculate_examples
+RUN_EXAMPLES = args.run_examples
 LINKCHECK = args.linkcheck
 FULL_REBUILD = args.full_rebuild
 INCLUDE_WARNINGS = args.include_warnings
@@ -52,7 +52,7 @@ FORCE = args.force
 
 
 def build_documentation(
-    calculate_examples: bool = False,
+    run_examples: bool = False,
     verify_links: bool = False,
     full_rebuild: bool = False,
     force: bool = False,
@@ -68,23 +68,23 @@ def build_documentation(
     changed by using the other flags.
 
     Args:
-        calculate_examples: Fully recalculate the examples. If this is ``False`` and no
+        run_examples: Fully recalculate the examples. If this is ``False`` and no
             folder containing an already built set of examples is found, dummy files
             replicating the structure of the examples are created.
         verify_links: Check both internal and external links.
         full_rebuild: Perform a full rebuild of the documentation, including a
             recalculation of the examples and checking the links. Note that this option
-            ignores the choices for ``calculate_examples`` and ``check_links`` if set to
+            ignores the choices for ``run_examples`` and ``check_links`` if set to
             ``True.
         force: Force-build the steps, ignoring any errors or warnings.
     """
     examples_directory = pathlib.Path("docs/examples")
     examples_exist = examples_directory.is_dir()
 
-    recalculate_examples = calculate_examples or full_rebuild
+    rerun_examples = run_examples or full_rebuild
     perform_linkcheck = verify_links or full_rebuild
 
-    if recalculate_examples:
+    if rerun_examples:
         build_examples(
             destination_directory=examples_directory,
             dummy=False,
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
     build_documentation(
-        calculate_examples=CALCULATE_EXAMPLES,
+        run_examples=RUN_EXAMPLES,
         verify_links=LINKCHECK,
         full_rebuild=FULL_REBUILD,
         force=FORCE,
