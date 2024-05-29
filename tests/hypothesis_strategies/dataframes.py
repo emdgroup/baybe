@@ -3,11 +3,13 @@
 from hypothesis import strategies as st
 from hypothesis.extra.pandas import column, data_frames, indexes
 
+from ..hypothesis_strategies.basic import finite_floats
+
 
 @st.composite
 def random_dataframes(draw: st.DrawFn):
     """Generate pandas dataframes of random shape and content."""
-    index_elements = st.one_of(st.text(), st.integers(), st.floats())
+    index_elements = st.one_of(st.text(), st.integers(), finite_floats())
     cols = st.builds(
         column, name=index_elements, dtype=st.sampled_from([int, float, str])
     )
