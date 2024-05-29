@@ -12,7 +12,10 @@ from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective as NewObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
-from baybe.recommenders.pure.bayesian import SequentialGreedyRecommender
+from baybe.recommenders.pure.bayesian import (
+    BotorchRecommender,
+    SequentialGreedyRecommender,
+)
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
@@ -178,7 +181,7 @@ def test_deprecated_objective_config_deserialization():
 def test_deprecated_acqfs(acqf):
     """Using the deprecated acqf raises a warning."""
     with pytest.warns(DeprecationWarning):
-        SequentialGreedyRecommender(acquisition_function=acqf)
+        BotorchRecommender(acquisition_function=acqf)
 
     with pytest.warns(DeprecationWarning):
         AcquisitionFunction.from_dict({"type": acqf})
@@ -187,7 +190,7 @@ def test_deprecated_acqfs(acqf):
 def test_deprecated_acqf_keyword(acqf):
     """Using the deprecated keyword raises an error."""
     with pytest.raises(DeprecationError):
-        SequentialGreedyRecommender(acquisition_function_cls="qEI")
+        BotorchRecommender(acquisition_function_cls="qEI")
 
 
 def test_deprecated_sequentialgreedyrecommender_class():

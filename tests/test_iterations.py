@@ -29,8 +29,8 @@ from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
-from baybe.recommenders.pure.bayesian.sequential_greedy import (
-    SequentialGreedyRecommender,
+from baybe.recommenders.pure.bayesian.botorch import (
+    BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
@@ -94,9 +94,7 @@ sampling_strategies = [
 #  allows no training data
 valid_hybrid_sequential_greedy_recommenders = [
     TwoPhaseMetaRecommender(
-        recommender=SequentialGreedyRecommender(
-            hybrid_sampler=sampler, sampling_percentage=per
-        )
+        recommender=BotorchRecommender(hybrid_sampler=sampler, sampling_percentage=per)
     )
     for sampler, per in sampling_strategies
 ]
@@ -118,7 +116,7 @@ valid_discrete_bayesian_recommenders = [
 valid_naive_hybrid_recommenders = [
     TwoPhaseMetaRecommender(
         recommender=NaiveHybridSpaceRecommender(
-            disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
+            disc_recommender=disc, cont_recommender=BotorchRecommender()
         )
     )
     for disc in [

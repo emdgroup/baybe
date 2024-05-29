@@ -47,8 +47,8 @@ from baybe.recommenders.meta.sequential import (
     TwoPhaseMetaRecommender,
 )
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.recommenders.pure.bayesian.sequential_greedy import (
-    SequentialGreedyRecommender,
+from baybe.recommenders.pure.bayesian.botorch import (
+    BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
@@ -588,7 +588,7 @@ def fixture_default_twophase_meta_recommender(recommender, initial_recommender):
 def fixture_default_sequential_meta_recommender():
     """The default ```SequentialMetaRecommender```."""
     return SequentialMetaRecommender(
-        recommenders=[RandomRecommender(), SequentialGreedyRecommender()],
+        recommenders=[RandomRecommender(), BotorchRecommender()],
         mode="reuse_last",
     )
 
@@ -597,9 +597,7 @@ def fixture_default_sequential_meta_recommender():
 def fixture_default_streaming_sequential_meta_recommender():
     """The default ```StreamingSequentialMetaRecommender```."""
     return StreamingSequentialMetaRecommender(
-        recommenders=chain(
-            (RandomRecommender(),), hilberts_factory(SequentialGreedyRecommender)
-        )
+        recommenders=chain((RandomRecommender(),), hilberts_factory(BotorchRecommender))
     )
 
 
@@ -640,7 +638,7 @@ def fixture_recommender(initial_recommender, surrogate_model, acqf):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
-        recommender=SequentialGreedyRecommender(
+        recommender=BotorchRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
         ),

@@ -19,9 +19,9 @@ from baybe import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import (
+    BotorchRecommender,
     NaiveHybridSpaceRecommender,
     RandomRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -123,9 +123,7 @@ objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MI
 # We thus recommend to keep this parameter rather low.
 
 seq_greedy_recommender = TwoPhaseMetaRecommender(
-    recommender=SequentialGreedyRecommender(
-        hybrid_sampler="Farthest", sampling_percentage=0.3
-    ),
+    recommender=BotorchRecommender(hybrid_sampler="Farthest", sampling_percentage=0.3),
 )
 naive_hybrid_recommender = TwoPhaseMetaRecommender(
     recommender=NaiveHybridSpaceRecommender()

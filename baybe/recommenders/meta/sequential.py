@@ -14,9 +14,7 @@ from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.recommenders.pure.bayesian.sequential_greedy import (
-    SequentialGreedyRecommender,
-)
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
@@ -44,7 +42,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     initial_recommender: PureRecommender = field(factory=RandomRecommender)
     """The initial recommender used by the meta recommender."""
 
-    recommender: PureRecommender = field(factory=SequentialGreedyRecommender)
+    recommender: PureRecommender = field(factory=BotorchRecommender)
     """The recommender used by the meta recommender after the switch."""
 
     switch_after: int = field(default=1)

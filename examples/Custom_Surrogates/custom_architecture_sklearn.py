@@ -28,8 +28,8 @@ from baybe.parameters import (
     SubstanceParameter,
 )
 from baybe.recommenders import (
+    BotorchRecommender,
     FPSRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -134,9 +134,7 @@ campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
-        recommender=SequentialGreedyRecommender(
-            surrogate_model=StackingRegressorSurrogate()
-        ),
+        recommender=BotorchRecommender(surrogate_model=StackingRegressorSurrogate()),
         initial_recommender=FPSRecommender(),
     ),
 )

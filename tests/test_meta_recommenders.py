@@ -4,16 +4,16 @@ import pytest
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.recommenders import (
+    BotorchRecommender,
     FPSRecommender,
     RandomRecommender,
-    SequentialGreedyRecommender,
     SequentialMetaRecommender,
     StreamingSequentialMetaRecommender,
     TwoPhaseMetaRecommender,
 )
 from tests.conftest import select_recommender
 
-RECOMMENDERS = [RandomRecommender(), FPSRecommender(), SequentialGreedyRecommender()]
+RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BotorchRecommender()]
 
 
 def test_twophase_meta_recommender():
