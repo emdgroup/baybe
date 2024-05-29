@@ -14,4 +14,4 @@ def bytes_to_human_readable(num: float, /) -> tuple[float, str]:
         if abs(num) < 1024.0:
             return num, unit
         num /= 1024.0
-    return num, "YB"
+    return round(num, 2), "YB"
