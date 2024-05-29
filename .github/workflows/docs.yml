@@ -32,11 +32,11 @@ jobs:
         with:
           ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-python@v5
-        with: {python-version: "3.9"}
+        with: {python-version: "3.10"}
       - name: Install tox
         run: pip install tox-uv
       - name: Build Docs ${{ inputs.force == true && '(Force)' || '' }}
-        run: tox -e docs-py39 ${{ inputs.force == true && '-- -f -r' || '-- -r' }}
+        run: tox -e docs-py310 ${{ inputs.force == true && '-- -f -r' || '-- -r' }}
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v1
         with:
