@@ -223,10 +223,6 @@ html_theme_options = {
     "dark_logo": "logo1.svg",  # Logo for dark mode
 }
 
-# Ignored links for linkcheck
-if "BAYBE_DOCS_LINKCHECK_IGNORE" in os.environ:
-    linkcheck_ignore = ["https://emdgroup.github.io/baybe/"]
-
 autodoc_type_aliases = {"Smiles": "Smiles"}
 
 # Everything in the module has the prefix baybe
