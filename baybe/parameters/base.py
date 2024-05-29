@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from functools import cached_property, partial
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -73,7 +73,7 @@ class DiscreteParameter(Parameter, ABC):
     # TODO [15280]: needs to be refactored
 
     # class variables
-    encoding: Optional[ParameterEncoding] = field(init=False, default=None)
+    encoding: ParameterEncoding | None = field(init=False, default=None)
     """An optional encoding for the parameter."""
 
     @property

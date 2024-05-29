@@ -1,7 +1,6 @@
 """Base class for all Bayesian recommenders."""
 
 from abc import ABC
-from typing import Optional
 
 import pandas as pd
 from attrs import define, field
@@ -69,8 +68,8 @@ class BayesianRecommender(PureRecommender, ABC):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 

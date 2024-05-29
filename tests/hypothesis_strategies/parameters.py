@@ -1,6 +1,5 @@
 """Hypothesis strategies for parameters."""
 
-from typing import Optional
 
 import hypothesis.strategies as st
 import numpy as np
@@ -79,8 +78,8 @@ def custom_descriptors(draw: st.DrawFn):
 @st.composite
 def numerical_discrete_parameters(
     draw: st.DrawFn,
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None,
+    min_value: float | None = None,
+    max_value: float | None = None,
 ):
     """Generate :class:`baybe.parameters.numerical.NumericalDiscreteParameter`."""
     name = draw(parameter_names)

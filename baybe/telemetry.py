@@ -9,7 +9,6 @@ import os
 import socket
 import warnings
 from collections.abc import Sequence
-from typing import Union
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -182,7 +181,7 @@ def get_user_details() -> dict[str, str]:
     return {"host": hostname_hash, "user": username_hash, "version": __version__}
 
 
-def telemetry_record_value(instrument_name: str, value: Union[int, float]) -> None:
+def telemetry_record_value(instrument_name: str, value: int | float) -> None:
     """Transmit a given value under a given label to the telemetry backend.
 
     The values are recorded as histograms, i.e. the info about record time and sample
@@ -198,7 +197,7 @@ def telemetry_record_value(instrument_name: str, value: Union[int, float]) -> No
         _submit_scalar_value(instrument_name, value)
 
 
-def _submit_scalar_value(instrument_name: str, value: Union[int, float]) -> None:
+def _submit_scalar_value(instrument_name: str, value: int | float) -> None:
     """See :func:`baybe.telemetry.telemetry_record_value`."""
     if instrument_name in _instruments:
         histogram = _instruments[instrument_name]

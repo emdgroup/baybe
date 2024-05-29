@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -29,18 +30,18 @@ _DEFAULT_SEED = 1337
 
 def simulate_scenarios(
     scenarios: dict[Any, Campaign],
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
+    lookup: pd.DataFrame | Callable | None = None,
     /,
     *,
     batch_size: int = 1,
-    n_doe_iterations: Optional[int] = None,
-    initial_data: Optional[list[pd.DataFrame]] = None,
-    groupby: Optional[list[str]] = None,
+    n_doe_iterations: int | None = None,
+    initial_data: list[pd.DataFrame] | None = None,
+    groupby: list[str] | None = None,
     n_mc_iterations: int = 1,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
-    noise_percent: Optional[float] = None,
+    noise_percent: float | None = None,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -144,18 +145,18 @@ def simulate_scenarios(
 
 def _simulate_groupby(
     campaign: Campaign,
-    lookup: Optional[Union[pd.DataFrame, Callable[..., tuple[float, ...]]]] = None,
+    lookup: pd.DataFrame | Callable[..., tuple[float, ...]] | None = None,
     /,
     *,
     batch_size: int = 1,
-    n_doe_iterations: Optional[int] = None,
-    initial_data: Optional[pd.DataFrame] = None,
-    groupby: Optional[list[str]] = None,
+    n_doe_iterations: int | None = None,
+    initial_data: pd.DataFrame | None = None,
+    groupby: list[str] | None = None,
     random_seed: int = _DEFAULT_SEED,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
-    noise_percent: Optional[float] = None,
+    noise_percent: float | None = None,
 ) -> pd.DataFrame:
     """Scenario simulation for different search space partitions.
 

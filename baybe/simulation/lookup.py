@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, Literal, Optional, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -22,7 +23,7 @@ _logger = logging.getLogger(__name__)
 def _look_up_target_values(
     queries: pd.DataFrame,
     campaign: Campaign,
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
+    lookup: pd.DataFrame | Callable | None = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",

@@ -1,7 +1,7 @@
 """Temporary dispatching functionality for backward compatibility."""
 
 import warnings
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -11,8 +11,8 @@ from baybe.targets.base import Target
 def Objective(
     mode: Literal["SINGLE", "DESIRABILITY"],
     targets: list[Target],
-    weights: Optional[list[float]] = None,
-    combine_func: Optional[Literal["MEAN", "GEOM_MEAN"]] = None,
+    weights: list[float] | None = None,
+    combine_func: Literal["MEAN", "GEOM_MEAN"] | None = None,
 ):
     """Return the appropriate new-style class depending on the mode."""
     warnings.warn(

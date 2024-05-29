@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Sequence
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -105,7 +105,7 @@ class SubspaceContinuous(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[Sequence[ContinuousParameter]] = None,
+        parameters: Sequence[ContinuousParameter] | None = None,
     ) -> SubspaceContinuous:
         """Create a hyperrectangle-shaped continuous subspace from a dataframe.
 

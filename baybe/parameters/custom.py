@@ -1,7 +1,7 @@
 """Custom parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -32,9 +32,7 @@ class CustomDiscreteParameter(DiscreteParameter):
     data: pd.DataFrame = field(validator=min_len(2), eq=eq_dataframe)
     """A mapping that provides the encoding for all available parameter values."""
 
-    decorrelate: Union[bool, float] = field(
-        default=True, validator=validate_decorrelation
-    )
+    decorrelate: bool | float = field(default=True, validator=validate_decorrelation)
     """Specifies the used decorrelation mode for the parameter encoding.
 
         - ``False``: The encoding is used as is.

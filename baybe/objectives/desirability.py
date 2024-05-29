@@ -1,7 +1,8 @@
 """Functionality for desirability objectives."""
 
+from collections.abc import Callable
 from functools import cached_property, partial
-from typing import Callable
+from typing import TypeGuard
 
 import cattrs
 import numpy as np
@@ -9,7 +10,6 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, min_len
-from typing_extensions import TypeGuard
 
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer

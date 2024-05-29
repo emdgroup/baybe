@@ -1,6 +1,5 @@
 """Wrapper functionality for hybrid spaces."""
 
-from typing import Optional
 
 import torch
 from attr import define
@@ -75,7 +74,7 @@ class PartialAcquisitionFunction:
     def __getattr__(self, item):
         return getattr(self.botorch_acqf, item)
 
-    def set_X_pending(self, X_pending: Optional[Tensor]):
+    def set_X_pending(self, X_pending: Tensor | None):
         """Inform the acquisition function about pending design points.
 
         Enhances the original ``set_X_pending`` function from the full acquisition

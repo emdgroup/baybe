@@ -4,7 +4,7 @@
 # mypy: disable-error-code="arg-type"
 
 from collections.abc import Iterable, Iterator
-from typing import Literal, Optional
+from typing import Literal
 
 import pandas as pd
 from attrs import define, field
@@ -54,9 +54,9 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     def select_recommender(  # noqa: D102
         self,
         batch_size: int,
-        searchspace: Optional[SearchSpace] = None,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        searchspace: SearchSpace | None = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> PureRecommender:
         # See base class.
 
@@ -125,9 +125,9 @@ class SequentialMetaRecommender(MetaRecommender):
     def select_recommender(  # noqa: D102
         self,
         batch_size: int,
-        searchspace: Optional[SearchSpace] = None,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        searchspace: SearchSpace | None = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> PureRecommender:
         # See base class.
 
@@ -196,7 +196,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
     _iterator: Iterator = field(init=False)
     """The iterator used to traverse the recommenders."""
 
-    _last_recommender: Optional[PureRecommender] = field(init=False, default=None)
+    _last_recommender: PureRecommender | None = field(init=False, default=None)
     """The recommender returned from the last call."""
 
     @_iterator.default
@@ -207,9 +207,9 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
     def select_recommender(  # noqa: D102
         self,
         batch_size: int,
-        searchspace: Optional[SearchSpace] = None,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        searchspace: SearchSpace | None = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> PureRecommender:
         # See base class.
 

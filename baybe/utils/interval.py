@@ -3,7 +3,7 @@
 import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import define, field
@@ -81,7 +81,7 @@ class Interval(SerialMixin):
         return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
-    def center(self) -> Optional[float]:
+    def center(self) -> float | None:
         """The center of the interval, or ``None`` if the interval is unbounded."""
         if not self.is_bounded:
             return None
@@ -133,7 +133,7 @@ class Interval(SerialMixin):
         return self.lower <= number <= self.upper
 
 
-def convert_bounds(bounds: Union[None, Iterable, Interval]) -> Interval:
+def convert_bounds(bounds: None | Iterable | Interval) -> Interval:
     """Convert bounds given in another format to an interval.
 
     Args:

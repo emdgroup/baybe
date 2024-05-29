@@ -8,7 +8,6 @@
 
 ### Necessary imports
 
-from typing import Optional
 
 import numpy as np
 import torch
@@ -114,7 +113,7 @@ class NeuralNetDropoutSurrogate:
     """Surrogate that extracts posterior using monte carlo dropout simulations."""
 
     def __init__(self):
-        self.model: Optional[nn.Module] = None
+        self.model: nn.Module | None = None
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """See :class:`baybe.surrogates.Surrogate`."""

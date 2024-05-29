@@ -1,7 +1,6 @@
 """Base classes for all objectives."""
 
 from abc import ABC, abstractmethod
-from typing import Union
 
 import pandas as pd
 from attrs import define
@@ -41,7 +40,7 @@ class Objective(ABC, SerialMixin):
         """
 
 
-def to_objective(x: Union[Target, Objective], /) -> Objective:
+def to_objective(x: Target | Objective, /) -> Objective:
     """Convert a target into an objective (with objective passthrough)."""
     return x if isinstance(x, Objective) else x.to_objective()
 

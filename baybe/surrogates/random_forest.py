@@ -8,7 +8,7 @@ available in the future. Thus, please have a look in the source code directly.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 from attr import define, field
@@ -44,7 +44,7 @@ class RandomForestSurrogate(Surrogate):
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
-    _model: Optional[RandomForestRegressor] = field(init=False, default=None, eq=False)
+    _model: RandomForestRegressor | None = field(init=False, default=None, eq=False)
     """The actual model."""
 
     @batchify

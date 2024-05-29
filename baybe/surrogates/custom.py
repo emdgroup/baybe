@@ -9,7 +9,8 @@ It is planned to solve this issue in the future.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field, resolve_types, validators
 

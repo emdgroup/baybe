@@ -1,7 +1,7 @@
 """Base classes for all pure recommenders."""
 
 from abc import ABC
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -36,8 +36,8 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:

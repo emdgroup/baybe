@@ -7,8 +7,6 @@ from collections.abc import Iterable, Iterator, Sequence
 from typing import (
     TYPE_CHECKING,
     Literal,
-    Optional,
-    Union,
     overload,
 )
 
@@ -38,7 +36,7 @@ def to_tensor(*dfs: pd.DataFrame) -> Iterator[Tensor]:
     ...
 
 
-def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterator[Tensor]]:
+def to_tensor(*dfs: pd.DataFrame) -> Tensor | Iterator[Tensor]:
     """Convert a given set of dataframes into tensors (dropping all indices).
 
     Args:
@@ -70,9 +68,9 @@ def to_tensor(*dfs: pd.DataFrame) -> Union[Tensor, Iterator[Tensor]]:
 def add_fake_results(
     data: pd.DataFrame,
     campaign: Campaign,
-    good_reference_values: Optional[dict[str, list]] = None,
-    good_intervals: Optional[dict[str, tuple[float, float]]] = None,
-    bad_intervals: Optional[dict[str, tuple[float, float]]] = None,
+    good_reference_values: dict[str, list] | None = None,
+    good_intervals: dict[str, tuple[float, float]] | None = None,
+    bad_intervals: dict[str, tuple[float, float]] | None = None,
 ) -> None:
     """Add fake results to a dataframe which was the result of a BayBE recommendation.
 
@@ -279,7 +277,7 @@ def df_drop_single_value_columns(
 
 
 def df_drop_string_columns(
-    df: pd.DataFrame, ignore_list: Optional[list[str]] = None
+    df: pd.DataFrame, ignore_list: list[str] | None = None
 ) -> pd.DataFrame:
     """Drop dataframe columns with string values.
 
@@ -300,7 +298,7 @@ def df_drop_string_columns(
 
 
 def df_uncorrelated_features(
-    df: pd.DataFrame, exclude_list: Optional[list[str]] = None, threshold: float = 0.7
+    df: pd.DataFrame, exclude_list: list[str] | None = None, threshold: float = 0.7
 ):
     """Return an uncorrelated set of features.
 

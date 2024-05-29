@@ -8,7 +8,6 @@
 
 ### Necessary imports
 
-from typing import Optional
 
 import numpy as np
 import torch
@@ -74,7 +73,7 @@ class StackingRegressorSurrogate:
     """Surrogate that extracts posterior from a stack of different regressors."""
 
     def __init__(self):
-        self.model: Optional[StackingRegressor] = None
+        self.model: StackingRegressor | None = None
 
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """See :class:`baybe.surrogates.Surrogate`."""

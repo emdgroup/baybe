@@ -1,6 +1,6 @@
 """Base protocol for all recommenders."""
 
-from typing import Optional, Protocol
+from typing import Protocol
 
 import cattrs
 import pandas as pd
@@ -18,8 +18,8 @@ class RecommenderProtocol(Protocol):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective],
-        measurements: Optional[pd.DataFrame],
+        objective: Objective | None,
+        measurements: pd.DataFrame | None,
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
 

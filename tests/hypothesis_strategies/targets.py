@@ -1,6 +1,5 @@
 """Hypothesis strategies for targets."""
 
-from typing import Optional
 
 import hypothesis.strategies as st
 
@@ -16,7 +15,7 @@ target_name = st.text(min_size=1)
 
 @st.composite
 def numerical_targets(
-    draw: st.DrawFn, bounds_strategy: Optional[st.SearchStrategy[Interval]] = None
+    draw: st.DrawFn, bounds_strategy: st.SearchStrategy[Interval] | None = None
 ):
     """Generate :class:`baybe.targets.numerical.NumericalTarget`.
 

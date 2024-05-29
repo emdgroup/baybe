@@ -1,6 +1,7 @@
 """Adapter for making BoTorch's acquisition functions work with BayBE models."""
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import gpytorch.distributions
 from botorch.models.gpytorch import Model
@@ -34,9 +35,9 @@ class AdapterModel(Model):
     def posterior(  # noqa: D102
         self,
         X: Tensor,
-        output_indices: Optional[list[int]] = None,
+        output_indices: list[int] | None = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
+        posterior_transform: Callable[[Posterior], Posterior] | None = None,
         **kwargs: Any,
     ) -> Posterior:
         # See base class.
