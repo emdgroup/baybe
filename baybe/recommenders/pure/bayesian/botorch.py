@@ -37,6 +37,10 @@ class BotorchRecommender(BayesianRecommender):
     # See base class.
 
     # Object variables
+    sequential: bool = field(default=False)
+    """Flag defining whether to apply sequential greedy or batch optimization.
+    Only relevant for continuous search spaces."""
+
     hybrid_sampler: str = field(
         validator=validators.in_(["None", "Farthest", "Random"]), default="None"
     )
@@ -159,6 +163,7 @@ class BotorchRecommender(BayesianRecommender):
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            sequential=self.sequential,
         )
 
         # Return optimized points as dataframe
