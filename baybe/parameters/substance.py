@@ -108,8 +108,6 @@ class SubstanceParameter(DiscreteParameter):
     @property
     def values(self) -> tuple:
         """Returns the labels of the given set of molecules."""
-        # Since the order of dictionary keys is important here, this will only work
-        # for Python 3.7 or higher
         return tuple(self.data.keys())
 
     @cached_property
