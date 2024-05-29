@@ -79,12 +79,14 @@ class NumericalDiscreteParameter(DiscreteParameter):
     @property
     def values(self) -> tuple:  # noqa: D102
         # See base class.
-        return self._values
+        return tuple(DTypeFloatNumpy(itm) for itm in self._values)
 
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
         # See base class.
-        comp_df = pd.DataFrame({self.name: self.values}, index=self.values)
+        comp_df = pd.DataFrame(
+            {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
+        )
         return comp_df
 
     def is_in_range(self, item: float) -> bool:  # noqa: D102
