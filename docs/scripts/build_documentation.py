@@ -13,8 +13,8 @@ from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-e",
-    "--run_examples",
-    help="Re-calculate the examples",
+    "--run-examples",
+    help="Re-run the examples.",
     action="store_true",
 )
 parser.add_argument(
@@ -25,13 +25,13 @@ parser.add_argument(
 )
 parser.add_argument(
     "-r",
-    "--full_rebuild",
+    "--full-rebuild",
     help="Perform a full rebuild, independent of `-e` and `-l` flags.",
     action="store_true",
 )
 parser.add_argument(
     "-w",
-    "--include_warnings",
+    "--include-warnings",
     help="Include warnings when processing the examples. The default is ignoring them.",
     action="store_true",
 )
