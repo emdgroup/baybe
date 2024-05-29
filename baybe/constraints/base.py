@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import numpy as np
 import pandas as pd
 from attr import define, field
 from attr.validators import min_len
@@ -18,6 +19,7 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -173,11 +175,10 @@ class ContinuousConstraint(Constraint, ABC):
             if p in param_names
         ]
 
-        # TODO: Cast rhs to correct precision once BoTorch also supports single point.
         return (
             torch.tensor(param_indices),
             torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
-            self.rhs,
+            np.asarray(self.rhs, dtype=DTypeFloatNumpy).item(),
         )
 
 
