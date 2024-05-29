@@ -231,7 +231,7 @@ def fixture_parameters(
         CategoricalParameter(
             name="Categorical_2",
             values=("bad", "OK", "good"),
-            encoding="OHE",
+            encoding="INT",
         ),
         CategoricalParameter(
             name="Switch_1",
