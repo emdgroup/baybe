@@ -17,7 +17,7 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
-@define
+@define(kw_only=True)
 class BotorchRecommender(BayesianRecommender):
     """A pure recommender utilizing Botorch's optimization machinery.
 
