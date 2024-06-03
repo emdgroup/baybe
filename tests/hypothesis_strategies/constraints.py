@@ -36,7 +36,9 @@ def sub_selection_conditions(superset: Optional[list[Any]] = None):
         element_strategy = st.text()
     else:
         element_strategy = st.sampled_from(superset)
-    return st.builds(SubSelectionCondition, st.lists(element_strategy, unique=True))
+    return st.builds(
+        SubSelectionCondition, st.lists(element_strategy, unique=True, min_size=1)
+    )
 
 
 def threshold_conditions():

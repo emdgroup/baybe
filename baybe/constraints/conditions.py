@@ -2,16 +2,26 @@
 
 import operator as ops
 from abc import ABC, abstractmethod
+from functools import partial
 from typing import Any, Callable, Optional, Union
 
 import numpy as np
 import pandas as pd
 from attr import define, field
 from attr.validators import in_
+from attrs.validators import min_len
+from cattrs.gen import override
 from funcy import rpartial
 from numpy.typing import ArrayLike
 
-from baybe.serialization import SerialMixin
+from baybe.parameters.validation import validate_unique_values
+from baybe.serialization import (
+    SerialMixin,
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
+from baybe.utils.numerical import DTypeFloatNumpy
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
@@ -135,9 +145,38 @@ class SubSelectionCondition(Condition):
     """Class for defining valid parameter entries."""
 
     # object variables
-    selection: list[Any] = field()
-    """The list of items which are considered valid."""
+    _selection: tuple = field(
+        converter=tuple,
+        # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
+        validator=[
+            min_len(1),
+            validate_unique_values,  # type: ignore
+        ],
+    )
+    """The internal list of items which are considered valid."""
+
+    @property
+    def selection(self) -> tuple:  # noqa: D102
+        """The list of items which are considered valid."""
+        return tuple(
+            DTypeFloatNumpy(itm) if isinstance(itm, (float, int, bool)) else itm
+            for itm in self._selection
+        )
 
     def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
         # See base class.
         return data.isin(self.selection)
+
+
+# Register (un-)structure hooks
+_overrides = {
+    "_selection": override(rename="selection"),
+}
+# FIXME[typing]: https://github.com/python/mypy/issues/4717
+converter.register_structure_hook(
+    Condition,
+    get_base_structure_hook(Condition, overrides=_overrides),  # type: ignore
+)
+converter.register_unstructure_hook(
+    Condition, partial(unstructure_base, overrides=_overrides)
+)

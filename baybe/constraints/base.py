@@ -11,7 +11,6 @@ import pandas as pd
 from attr import define, field
 from attr.validators import min_len
 
-from baybe.constraints.conditions import Condition
 from baybe.parameters import NumericalContinuousParameter
 from baybe.serialization import (
     SerialMixin,
@@ -183,7 +182,5 @@ class ContinuousConstraint(Constraint, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(Condition, unstructure_base)
-converter.register_structure_hook(Condition, get_base_structure_hook(Condition))
 converter.register_unstructure_hook(Constraint, unstructure_base)
 converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
