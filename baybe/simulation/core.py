@@ -16,7 +16,7 @@ from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.simulation.lookup import _look_up_target_values
 from baybe.targets.enum import TargetMode
 from baybe.utils.dataframe import add_parameter_noise
-from baybe.utils.numerical import closer_element, closest_element
+from baybe.utils.numerical import DTypeFloatNumpy, closer_element, closest_element
 from baybe.utils.random import temporary_seed
 
 
@@ -111,6 +111,12 @@ def simulate_experiment(
             raise ValueError(
                 "Impute mode 'ignore' is only available for dataframe lookups."
             )
+
+        # Enforce correct float precision in lookup dataframes
+        if isinstance(lookup, pd.DataFrame):
+            lookup = lookup.copy()
+            float_cols = lookup.select_dtypes(include=["float"]).columns
+            lookup[float_cols] = lookup[float_cols].astype(DTypeFloatNumpy)
 
         # Clone the campaign to avoid mutating the original object
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
