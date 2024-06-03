@@ -62,8 +62,8 @@ class NumericalDiscreteParameter(DiscreteParameter):
         if tolerance == 0.0:
             return
 
-        min_dist = np.diff(self.values).min()
-        if min_dist == (eps := np.nextafter(0, 1, dtype=DTypeFloatNumpy)):
+        min_dist = np.diff(self._values).min()
+        if min_dist == (eps := np.nextafter(0, 1)):
             raise NumericalUnderflowError(
                 f"The distance between any two parameter values must be at least "
                 f"twice the size of the used floating point resolution of {eps}."
