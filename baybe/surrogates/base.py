@@ -25,6 +25,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
 
 if TYPE_CHECKING:
+    from botorch.models.model import Model
     from torch import Tensor
 
 # Define constants
@@ -54,6 +55,12 @@ class Surrogate(ABC, SerialMixin):
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
+
+    def to_botorch(self) -> Model:
+        """Create the botorch-ready representation of the model."""
+        from baybe.surrogates._adapter import AdapterModel
+
+        return AdapterModel(self)
 
     def posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """Evaluate the surrogate model at the given candidate points.

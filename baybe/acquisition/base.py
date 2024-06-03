@@ -43,15 +43,13 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_analytical_acqf
 
-        from baybe.acquisition._adapter import AdapterModel
-
         acqf_cls = getattr(botorch_analytical_acqf, self.__class__.__name__)
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
         additional_params = {
             p: v
             for p, v in {
-                "model": AdapterModel(surrogate),
+                "model": surrogate.to_botorch(),
                 "best_f": train_y.max().item(),
                 "X_baseline": to_tensor(train_x),
             }.items()
