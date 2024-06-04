@@ -1,7 +1,7 @@
 """Substance parameters."""
 
 from functools import cached_property
-from typing import Any, ClassVar, Union
+from typing import Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -49,9 +49,7 @@ class SubstanceParameter(DiscreteParameter):
     )
     """A mapping that provides the SMILES strings for all available parameter values."""
 
-    decorrelate: Union[bool, float] = field(
-        default=True, validator=validate_decorrelation
-    )
+    decorrelate: bool | float = field(default=True, validator=validate_decorrelation)
     """Specifies the used decorrelation mode for the parameter encoding.
 
         - ``False``: The encoding is used as is.

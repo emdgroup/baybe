@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -20,8 +20,8 @@ def simulate_transfer_learning(
     /,
     *,
     batch_size: int = 1,
-    n_doe_iterations: Optional[int] = None,
-    groupby: Optional[list[str]] = None,
+    n_doe_iterations: int | None = None,
+    groupby: list[str] | None = None,
     n_mc_iterations: int = 1,
 ) -> pd.DataFrame:
     """Simulate Bayesian optimization with transfer learning.

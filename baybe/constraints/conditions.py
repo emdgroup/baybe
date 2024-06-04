@@ -2,8 +2,9 @@
 
 import operator as ops
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from functools import partial
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -94,11 +95,11 @@ class ThresholdCondition(Condition):
     operator: str = field(validator=[in_(_threshold_operators)])
     """The operator used in the condition."""
 
-    tolerance: Optional[float] = field()
+    tolerance: float | None = field()
     """A numerical tolerance. Set to a reasonable default tolerance."""
 
     @tolerance.default
-    def _tolerance_default(self) -> Union[float, None]:
+    def _tolerance_default(self) -> float | None:
         """Create the default value for the tolerance."""
         # Default value for the tolerance.
         return 1e-8 if self.operator in _valid_tolerance_operators else None

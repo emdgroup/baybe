@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from enum import Enum
-from typing import Optional, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -102,7 +102,7 @@ class SearchSpace(SerialMixin):
     def from_product(
         cls,
         parameters: Sequence[Parameter],
-        constraints: Optional[Sequence[Constraint]] = None,
+        constraints: Sequence[Constraint] | None = None,
         empty_encoding: bool = False,
     ) -> SearchSpace:
         """Create a search space from a cartesian product.
@@ -249,7 +249,7 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def task_idx(self) -> Optional[int]:
+    def task_idx(self) -> int | None:
         """The column index of the task parameter in computational representation."""
         try:
             # TODO [16932]: Redesign metadata handling

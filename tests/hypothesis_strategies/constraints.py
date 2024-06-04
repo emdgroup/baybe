@@ -1,7 +1,7 @@
 """Hypothesis strategies for constraints."""
 
 from functools import partial
-from typing import Any, Optional, Union
+from typing import Any
 
 import hypothesis.strategies as st
 from hypothesis import assume
@@ -30,7 +30,7 @@ from baybe.parameters.numerical import NumericalDiscreteParameter
 from ..hypothesis_strategies.basic import finite_floats
 
 
-def sub_selection_conditions(superset: Optional[list[Any]] = None):
+def sub_selection_conditions(superset: list[Any] | None = None):
     """Generate :class:`baybe.constraints.conditions.SubSelectionCondition`."""
     if superset is None:
         element_strategy = st.text()
@@ -48,7 +48,7 @@ def threshold_conditions():
 
 @st.composite
 def discrete_excludes_constraints(
-    draw: st.DrawFn, parameters: Optional[list[DiscreteParameter]] = None
+    draw: st.DrawFn, parameters: list[DiscreteParameter] | None = None
 ):
     """Generate :class:`baybe.constraints.discrete.DiscreteExcludeConstraint`."""
     if parameters is None:
@@ -79,8 +79,8 @@ def discrete_excludes_constraints(
 @st.composite
 def discrete_dependencies_constraints(
     draw: st.DrawFn,
-    parameters: Optional[list[DiscreteParameter]] = None,
-    affected_parameter_names: Optional[list[list[str]]] = None,
+    parameters: list[DiscreteParameter] | None = None,
+    affected_parameter_names: list[list[str]] | None = None,
 ):
     if parameters is None:
         # Draw random unique parameter names
@@ -151,8 +151,8 @@ def discrete_dependencies_constraints(
 @st.composite
 def discrete_permutation_invariance_constraints(
     draw: st.DrawFn,
-    parameters: Optional[list[DiscreteParameter]] = None,
-    dependencies: Optional[DiscreteDependenciesConstraint] = None,
+    parameters: list[DiscreteParameter] | None = None,
+    dependencies: DiscreteDependenciesConstraint | None = None,
 ):
     if parameters is None:
         # Draw random unique parameter names
@@ -177,13 +177,13 @@ def discrete_permutation_invariance_constraints(
 
 
 def _discrete_constraints(
-    constraint_type: Union[
-        type[DiscreteSumConstraint],
-        type[DiscreteProductConstraint],
-        type[DiscreteNoLabelDuplicatesConstraint],
-        type[DiscreteLinkedParametersConstraint],
-    ],
-    parameter_names: Optional[list[str]] = None,
+    constraint_type: (
+        type[DiscreteSumConstraint]
+        | type[DiscreteProductConstraint]
+        | type[DiscreteNoLabelDuplicatesConstraint]
+        | type[DiscreteLinkedParametersConstraint]
+    ),
+    parameter_names: list[str] | None = None,
 ):
     """Generate discrete constraints."""
     if parameter_names is None:
@@ -219,11 +219,11 @@ discrete_linked_parameters_constraints = partial(
 @st.composite
 def _continuous_linear_constraints(
     draw: st.DrawFn,
-    constraint_type: Union[
-        type[ContinuousLinearEqualityConstraint],
-        type[ContinuousLinearInequalityConstraint],
-    ],
-    parameter_names: Optional[list[str]] = None,
+    constraint_type: (
+        type[ContinuousLinearEqualityConstraint]
+        | type[ContinuousLinearInequalityConstraint]
+    ),
+    parameter_names: list[str] | None = None,
 ):
     """Generate continuous linear constraints."""  # noqa:E501
     if parameter_names is None:

@@ -1,7 +1,7 @@
 """Naive recommender for hybrid spaces."""
 
 import warnings
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 import pandas as pd
 from attrs import define, evolve, field, fields
@@ -82,8 +82,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 

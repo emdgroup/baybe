@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Callable
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial
-from typing import Callable, Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -22,17 +23,17 @@ from baybe.utils.random import temporary_seed
 
 def simulate_experiment(
     campaign: Campaign,
-    lookup: Optional[Union[pd.DataFrame, Callable]] = None,
+    lookup: pd.DataFrame | Callable | None = None,
     /,
     *,
     batch_size: int = 1,
-    n_doe_iterations: Optional[int] = None,
-    initial_data: Optional[pd.DataFrame] = None,
-    random_seed: Optional[int] = None,
+    n_doe_iterations: int | None = None,
+    initial_data: pd.DataFrame | None = None,
+    random_seed: int | None = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
-    noise_percent: Optional[float] = None,
+    noise_percent: float | None = None,
 ) -> pd.DataFrame:
     """Simulate a Bayesian optimization loop.
 

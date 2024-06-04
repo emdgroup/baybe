@@ -1,9 +1,9 @@
 """Collection of small basic utilities."""
 
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
 from inspect import signature
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from baybe.exceptions import UnidentifiedSubclassError
 

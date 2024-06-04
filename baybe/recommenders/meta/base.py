@@ -1,7 +1,6 @@
 """Base classes for all meta recommenders."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import cattrs
 import pandas as pd
@@ -53,8 +52,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> PureRecommender:
         """Select a pure recommender for the given experimentation context.
 
@@ -76,8 +75,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
         recommender = self.select_recommender(

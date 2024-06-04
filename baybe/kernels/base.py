@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from attrs import define
 
@@ -35,9 +35,9 @@ class Kernel(ABC, SerialMixin):
     def to_gpytorch(
         self,
         *,
-        ard_num_dims: Optional[int] = None,
-        batch_shape: Optional[torch.Size] = None,
-        active_dims: Optional[tuple[int, ...]] = None,
+        ard_num_dims: int | None = None,
+        batch_shape: torch.Size | None = None,
+        active_dims: tuple[int, ...] | None = None,
     ):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels

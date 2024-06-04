@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 from attr import define, field
 
@@ -30,7 +30,7 @@ class MeanPredictionSurrogate(Surrogate):
     # See base class.
 
     # Object variables
-    _model: Optional[float] = field(init=False, default=None, eq=False)
+    _model: float | None = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
 
     @batchify

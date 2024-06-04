@@ -5,7 +5,7 @@ from __future__ import annotations
 import warnings
 from abc import ABC
 from inspect import signature
-from typing import ClassVar, Union
+from typing import ClassVar
 
 import pandas as pd
 from attrs import define
@@ -69,7 +69,7 @@ def _add_deprecation_hook(hook):
     Used for backward compatibility only and will be removed in future versions.
     """
 
-    def added_deprecation_hook(val: Union[dict, str], cls: type):
+    def added_deprecation_hook(val: dict | str, cls: type):
         # Backwards-compatibility needs to be ensured only for deserialization from
         # base class using string-based type specifiers as listed below,
         # since the concrete classes were available only after the change.

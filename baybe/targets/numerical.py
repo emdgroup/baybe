@@ -1,9 +1,9 @@
 """Numerical targets."""
 
 import warnings
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from functools import partial
-from typing import Any, Callable, Optional, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -65,13 +65,13 @@ class NumericalTarget(Target, SerialMixin):
     bounds: Interval = field(default=None, converter=convert_bounds)
     """Optional target bounds."""
 
-    transformation: Optional[TargetTransformation] = field(
+    transformation: TargetTransformation | None = field(
         converter=lambda x: None if x is None else TargetTransformation(x)
     )
     """An optional target transformation."""
 
     @transformation.default
-    def _default_transformation(self) -> Optional[TargetTransformation]:
+    def _default_transformation(self) -> TargetTransformation | None:
         """Provide the default transformation for bounded targets."""
         if self.bounds.is_bounded:
             fun = _VALID_TRANSFORMATIONS[self.mode][0]
@@ -105,7 +105,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @transformation.validator
     def _validate_transformation(  # noqa: DOC101, DOC103
-        self, _: Any, value: Optional[TargetTransformation]
+        self, _: Any, value: TargetTransformation | None
     ) -> None:
         """Validate that the given transformation is compatible with the specified mode.
 

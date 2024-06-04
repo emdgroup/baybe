@@ -1,7 +1,8 @@
 """Converter and hooks."""
 import base64
 import pickle
-from typing import Any, Callable, Optional, TypeVar, Union, get_type_hints
+from collections.abc import Callable
+from typing import Any, TypeVar, get_type_hints
 
 import attrs
 import cattrs
@@ -19,7 +20,7 @@ converter = cattrs.Converter()
 """The default converter for (de-)serializing BayBE-related objects."""
 
 
-def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
+def unstructure_base(base: Any, overrides: dict | None = None) -> dict:
     """Unstructure an object into a dictionary and adds an entry for the class name.
 
     Args:
@@ -41,8 +42,8 @@ def unstructure_base(base: Any, overrides: Optional[dict] = None) -> dict:
 
 def get_base_structure_hook(
     base: type[_T],
-    overrides: Optional[dict] = None,
-) -> Callable[[Union[dict, str], type[_T]], _T]:
+    overrides: dict | None = None,
+) -> Callable[[dict | str, type[_T]], _T]:
     """Return a hook for structuring a specified subclass.
 
     Provides the inverse operation to ``unstructure_base``.
@@ -56,7 +57,7 @@ def get_base_structure_hook(
     """
     # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
 
-    def structure_base(val: Union[dict, str], cls: type[_T]) -> _T:
+    def structure_base(val: dict | str, cls: type[_T]) -> _T:
         # If the given class can be instantiated, only ensure there is no conflict with
         # a potentially specified type field
         if not is_abstract(cls):
@@ -82,7 +83,7 @@ def get_base_structure_hook(
     return structure_base
 
 
-def _structure_dataframe_hook(obj: Union[str, dict], _) -> pd.DataFrame:
+def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:
     """Deserialize a DataFrame."""
     if isinstance(obj, str):
         pickled_df = base64.b64decode(obj.encode("utf-8"))

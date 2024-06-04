@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from baybe.surrogates.base import Surrogate
 
@@ -52,7 +53,7 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
         )
 
 
-def get_model_params_validator(model_init: Optional[Callable] = None) -> Callable:
+def get_model_params_validator(model_init: Callable | None = None) -> Callable:
     """Construct a validator based on the model class.
 
     Args:

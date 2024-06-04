@@ -1,7 +1,8 @@
 """Discrete constraints."""
 
+from collections.abc import Callable
 from functools import reduce
-from typing import Any, Callable, Optional, cast
+from typing import Any, cast
 
 import pandas as pd
 from attr import define, field
@@ -212,7 +213,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     """
 
     # object variables
-    dependencies: Optional[DiscreteDependenciesConstraint] = field(default=None)
+    dependencies: DiscreteDependenciesConstraint | None = field(default=None)
     """Dependencies connected with the invariant parameters."""
 
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102

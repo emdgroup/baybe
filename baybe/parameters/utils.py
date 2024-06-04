@@ -1,7 +1,7 @@
 """Parameter utilities."""
 
-from collections.abc import Collection
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable, Collection
+from typing import Any, TypeVar
 
 import pandas as pd
 
@@ -13,7 +13,7 @@ _TParameter = TypeVar("_TParameter", bound=Parameter)
 def get_parameters_from_dataframe(
     df: pd.DataFrame,
     factory: Callable[[str, Collection[Any]], _TParameter],
-    parameters: Optional[Collection[_TParameter]] = None,
+    parameters: Collection[_TParameter] | None = None,
 ) -> list[_TParameter]:
     """Create a list of parameters from a dataframe.
 

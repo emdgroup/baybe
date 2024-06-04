@@ -5,7 +5,6 @@ import tempfile
 import urllib.request
 from functools import lru_cache
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -181,7 +180,7 @@ def smiles_to_rdkit_features(
 def smiles_to_fp_features(
     smiles_list: list[str],
     prefix: str = "",
-    dtype: Union[type[int], type[float]] = int,
+    dtype: type[int] | type[float] = int,
     radius: int = 4,
     n_bits: int = 1024,
 ) -> pd.DataFrame:

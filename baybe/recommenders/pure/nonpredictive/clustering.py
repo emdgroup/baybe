@@ -1,7 +1,7 @@
 """Recommenders based on clustering."""
 
 from abc import ABC
-from typing import ClassVar, Union
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -57,7 +57,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     def _make_selection_default(
         self,
         model: ClusterMixin,
-        candidates_scaled: Union[pd.DataFrame, np.ndarray],
+        candidates_scaled: pd.DataFrame | np.ndarray,
     ) -> list[int]:
         """Select one candidate from each cluster uniformly at random.
 
@@ -80,7 +80,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     def _make_selection_custom(
         self,
         model: ClusterMixin,
-        candidates_scaled: Union[pd.DataFrame, np.ndarray],
+        candidates_scaled: pd.DataFrame | np.ndarray,
     ) -> list[int]:
         """Select candidates from the computed clustering.
 
@@ -156,7 +156,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
     def _make_selection_custom(
         self,
         model: ClusterMixin,
-        candidates_scaled: Union[pd.DataFrame, np.ndarray],
+        candidates_scaled: pd.DataFrame | np.ndarray,
     ) -> list[int]:
         """Select candidates from the computed clustering.
 
@@ -200,7 +200,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     def _make_selection_custom(
         self,
         model: ClusterMixin,
-        candidates_scaled: Union[pd.DataFrame, np.ndarray],
+        candidates_scaled: pd.DataFrame | np.ndarray,
     ) -> list[int]:
         """Select candidates from the computed clustering.
 
@@ -240,7 +240,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     def _make_selection_custom(
         self,
         model: ClusterMixin,
-        candidates_scaled: Union[pd.DataFrame, np.ndarray],
+        candidates_scaled: pd.DataFrame | np.ndarray,
     ) -> list[int]:
         """Select candidates from the computed clustering.
 

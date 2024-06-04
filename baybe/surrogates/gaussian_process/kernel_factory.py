@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Union
+from typing import TYPE_CHECKING, Protocol
 
 from attrs import define, field
 from attrs.validators import instance_of
@@ -50,6 +50,6 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
         return self.kernel
 
 
-def to_kernel_factory(x: Union[Kernel, KernelFactory], /) -> KernelFactory:
+def to_kernel_factory(x: Kernel | KernelFactory, /) -> KernelFactory:
     """Wrap a kernel into a plain kernel factory (with factory passthrough)."""
     return x.to_factory() if isinstance(x, Kernel) else x

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from itertools import chain
-from typing import Union
 from unittest.mock import Mock
 
 import numpy as np
@@ -796,7 +795,7 @@ def fixture_default_simplex_config():
 
 
 @pytest.fixture(name="onnx_str")
-def fixture_default_onnx_str() -> Union[bytes, None]:
+def fixture_default_onnx_str() -> bytes | None:
     """The default ONNX model string to be used if not specified differently."""
     # TODO [19298]: There should be a cleaner way than returning None.
     if not _ONNX_INSTALLED:
@@ -825,7 +824,7 @@ def fixture_default_onnx_str() -> Union[bytes, None]:
 
 
 @pytest.fixture(name="onnx_surrogate")
-def fixture_default_onnx_surrogate(onnx_str) -> Union[CustomONNXSurrogate, None]:
+def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate | None:
     """The default ONNX model to be used if not specified differently."""
     # TODO [19298]: There should be a cleaner way than returning None.
     if not _ONNX_INSTALLED:

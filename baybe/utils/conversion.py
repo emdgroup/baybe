@@ -1,10 +1,9 @@
 """Conversion utilities."""
 
 from fractions import Fraction
-from typing import Union
 
 
-def fraction_to_float(value: Union[str, float, Fraction], /) -> float:
+def fraction_to_float(value: str | float | Fraction, /) -> float:
     """Convert the provided input representing a fraction into a float.
 
     Args:

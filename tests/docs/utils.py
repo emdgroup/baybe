@@ -3,12 +3,9 @@
 import re
 from pathlib import Path
 from textwrap import dedent
-from typing import Union
 
 
-def extract_code_blocks(
-    path: Union[str, Path], include_tilde: bool = True
-) -> list[str]:
+def extract_code_blocks(path: str | Path, include_tilde: bool = True) -> list[str]:
     """Extract all python code blocks from the specified file."""
     contents = Path(path).read_text()
     pattern = (

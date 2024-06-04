@@ -1,7 +1,6 @@
 """Composite kernels (that is, kernels composed of other kernels)."""
 from functools import reduce
 from operator import add, mul
-from typing import Optional
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -20,12 +19,12 @@ class ScaleKernel(Kernel):
     base_kernel: Kernel = field(validator=instance_of(Kernel))
     """The base kernel that is being decorated."""
 
-    outputscale_prior: Optional[Prior] = field(
+    outputscale_prior: Prior | None = field(
         default=None, validator=optional_v(instance_of(Prior))
     )
     """An optional prior on the output scale."""
 
-    outputscale_initial_value: Optional[float] = field(
+    outputscale_initial_value: float | None = field(
         default=None, converter=optional_c(float), validator=optional_v(finite_float)
     )
     """An optional initial value for the output scale."""

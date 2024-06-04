@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Iterable, Sequence
 from math import prod
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -238,7 +238,7 @@ class SubspaceDiscrete(SerialMixin):
     def from_product(
         cls,
         parameters: Sequence[DiscreteParameter],
-        constraints: Optional[Sequence[DiscreteConstraint]] = None,
+        constraints: Sequence[DiscreteConstraint] | None = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
@@ -262,7 +262,7 @@ class SubspaceDiscrete(SerialMixin):
     def from_dataframe(
         cls,
         df: pd.DataFrame,
-        parameters: Optional[Sequence[DiscreteParameter]] = None,
+        parameters: Sequence[DiscreteParameter] | None = None,
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """Create a discrete subspace with a specified set of configurations.
@@ -307,10 +307,10 @@ class SubspaceDiscrete(SerialMixin):
         cls,
         max_sum: float,
         simplex_parameters: Sequence[NumericalDiscreteParameter],
-        product_parameters: Optional[Sequence[DiscreteParameter]] = None,
-        constraints: Optional[Sequence[DiscreteConstraint]] = None,
+        product_parameters: Sequence[DiscreteParameter] | None = None,
+        constraints: Sequence[DiscreteConstraint] | None = None,
         min_nonzero: int = 0,
-        max_nonzero: Optional[int] = None,
+        max_nonzero: int | None = None,
         boundary_only: bool = False,
         tolerance: float = 1e-6,
     ) -> SubspaceDiscrete:
@@ -397,8 +397,8 @@ class SubspaceDiscrete(SerialMixin):
             df: pd.DataFrame,
             max_sum: float,
             boundary_only: bool,
-            min_nonzero: Optional[int] = None,
-            max_nonzero: Optional[int] = None,
+            min_nonzero: int | None = None,
+            max_nonzero: int | None = None,
         ) -> None:
             """Drop rows that violate the specified simplex constraint.
 
