@@ -25,6 +25,7 @@ class CategoricalParameter(DiscreteParameter):
 
     # object variables
     _values: tuple[str, ...] = field(
+        alias="values",
         converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
         validator=(
             min_len(2),
