@@ -1,6 +1,6 @@
 # NOTES:
 # - The map syntax used for matrix is flagged red but actually works
-# - This runs everything in Python 3.9, 3.10, 3.11 and 3.12
+# - This runs everything in Python 3.10, 3.11 and 3.12
 # - No environments are cached due to space limit
 
 name: Regular Checks
@@ -40,18 +40,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.9"}
+        with: {python-version: "3.10"}
       - name: Build Docs
         run: |
           pip install tox-uv
-          tox -e docs-py39 -- -r
+          tox -e docs-py310 -- -r
 
   lint:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.9', tox: 'py39'},
-                      {semantic: '3.10', tox: 'py310'},
+        py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'} ]
     name: Lint ${{ matrix.py-version.semantic }}
@@ -72,8 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.9', tox: 'py39'},
-                      {semantic: '3.10', tox: 'py310'},
+        py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
@@ -94,8 +92,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.9', tox: 'py39'},
-                      {semantic: '3.10', tox: 'py310'},
+        py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'} ]
     name: Audit ${{ matrix.py-version.semantic }}
@@ -116,8 +113,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.9', tox: 'py39'},
-                      {semantic: '3.10', tox: 'py310'},
+        py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'} ]
     name: Core Tests ${{ matrix.py-version.semantic }}
@@ -142,8 +138,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        py-version: [ {semantic: '3.9', tox: 'py39'},
-                      {semantic: '3.10', tox: 'py310'},
+        py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}

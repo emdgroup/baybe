@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Datatype inconsistencies for various parameters' `values` and `comp_df` and 
   `SubSelectionCondition`'s `selection` related to floating point precision
 
+### Removed
+- Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
+  and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
+
 ## [0.9.0] - 2024-05-21
 ### Added
 - Class hierarchy for objectives

@@ -1,6 +1,5 @@
 """Utilities for handling intervals."""
 
-import sys
 import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
@@ -8,7 +7,6 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 import numpy as np
 from attrs import define, field
-from packaging import version
 
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.numerical import DTypeFloatNumpy
@@ -18,19 +16,6 @@ if TYPE_CHECKING:
 
 # TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs
 #   are supported: https://bugs.python.org/issue41987
-
-# TODO: Remove when upgrading python version
-if version.parse(sys.version.split()[0]) < version.parse("3.9.8"):
-    # Monkeypatching necessary due to functools bug fixed in 3.9.8
-    #   https://stackoverflow.com/questions/62696796/singledispatchmethod-and-
-    #       class-method-decorators-in-python-3-8
-    #   https://bugs.python.org/issue39679
-    def _register(self, cls, method=None):
-        if hasattr(cls, "__func__"):
-            setattr(cls, "__annotations__", cls.__func__.__annotations__)
-        return self.dispatcher.register(cls, func=method)
-
-    singledispatchmethod.register = _register  # type: ignore[method-assign]
 
 
 class InfiniteIntervalError(Exception):

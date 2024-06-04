@@ -58,15 +58,15 @@ possibility to test different python variants as well.
 
 ### Environments
 In `tox.ini`, we have configured several environments for running different actions 
-(`fulltest`, `coretest`, `lint`, `audit`) against different versions of python (e.g. `py39`, `py310`, .
+(`fulltest`, `coretest`, `lint`, `audit`) against different versions of python (e.g. `py310`, `py311`, .
 ..). 
 You can specify both in `tox` to call a certain combination. 
 
 For instance 
 ```bash
-tox -e fulltest-py39
+tox -e fulltest-py310
 ``` 
-will run pytest on baybe with all optional features in python 3.9, while 
+will run pytest on baybe with all optional features in python 3.10, while 
 ```bash
 tox -e coretest-py312
 ```
@@ -84,13 +84,13 @@ tox -l
 ### Shortcuts
 In case you want to run several combinations, you can specify them like
 ```bash
-tox -e audit-py39,audit-py311
+tox -e audit-py310,audit-py311
 ```
 
 If you omit the python version from the environment, `tox` will use the version 
 from the command-executing environment:
 ```bash
-tox -e coretest  # runs like '-e coretest-py39' if called from a python 3.9 environment
+tox -e coretest  # runs like '-e coretest-py310' if called from a python 3.10 environment
 ```
 
 If you simply want to run all combinations, you can use
