@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+from typing import Optional
 
 import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
+from attrs.converters import optional
 
 from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective, to_objective
@@ -47,7 +49,9 @@ class Campaign(SerialMixin):
     searchspace: SearchSpace = field()
     """The search space in which the experiments are conducted."""
 
-    objective: Objective = field(converter=to_objective)
+    objective: Optional[Objective] = field(
+        default=None, converter=optional(to_objective)
+    )
     """The optimization objective.
     When passing a single :class:`baybe.targets.base.Target`, it gets automatically
     wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
@@ -127,21 +131,7 @@ class Campaign(SerialMixin):
     @property
     def targets(self) -> tuple[Target, ...]:
         """The targets of the underlying objective."""
-        return self.objective.targets
-
-    @property
-    def _measurements_parameters_comp(self) -> pd.DataFrame:
-        """The computational representation of the measured parameters."""
-        if len(self._measurements_exp) < 1:
-            return pd.DataFrame()
-        return self.searchspace.transform(self._measurements_exp)
-
-    @property
-    def _measurements_targets_comp(self) -> pd.DataFrame:
-        """The computational representation of the measured targets."""
-        if len(self._measurements_exp) < 1:
-            return pd.DataFrame()
-        return self.objective.transform(self._measurements_exp)
+        return self.objective.targets if self.objective is not None else ()
 
     @classmethod
     def from_config(cls, config_json: str) -> Campaign:
@@ -258,7 +248,7 @@ class Campaign(SerialMixin):
 
     def recommend(
         self,
-        batch_size: int = 5,
+        batch_size: int,
         batch_quantity: int = None,  # type: ignore[assignment]
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
@@ -298,10 +288,10 @@ class Campaign(SerialMixin):
 
         # Get the recommended search space entries
         rec = self.recommender.recommend(
-            self.searchspace,
             batch_size,
-            self._measurements_parameters_comp,
-            self._measurements_targets_comp,
+            self.searchspace,
+            self.objective,
+            self._measurements_exp,
         )
 
         # Cache the recommendations

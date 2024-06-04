@@ -11,24 +11,18 @@ from attrs import define, field
 from attrs.validators import deep_iterable, in_, instance_of
 
 from baybe.exceptions import NoRecommendersLeftError
+from baybe.objectives.base import Objective
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.sequential_greedy import (
     SequentialGreedyRecommender,
 )
-from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import (
     block_deserialization_hook,
     block_serialization_hook,
     converter,
-)
-
-# TODO: Make bayesian recommenders handle empty training data
-_unsupported_recommender_error = ValueError(
-    f"For cases where no training is available, the selected recommender "
-    f"must be a subclass of '{NonPredictiveRecommender.__name__}'."
 )
 
 
@@ -59,22 +53,16 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 
     def select_recommender(  # noqa: D102
         self,
-        searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        batch_size: int,
+        searchspace: Optional[SearchSpace] = None,
+        objective: Optional[Objective] = None,
+        measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         # See base class.
 
-        # TODO: enable bayesian recommenders for empty training data
-        if (train_x is None or len(train_x) == 0) and not isinstance(
-            self.initial_recommender, NonPredictiveRecommender
-        ):
-            raise _unsupported_recommender_error
-
         return (
             self.recommender
-            if len(train_x) >= self.switch_after
+            if (measurements is not None) and (len(measurements) >= self.switch_after)
             else self.initial_recommender
         )
 
@@ -95,6 +83,8 @@ class SequentialMetaRecommender(MetaRecommender):
         instead.
 
     Raises:
+        RuntimeError: If the training dataset size decreased compared to the previous
+            call.
         NoRecommendersLeftError: If more recommenders are requested than there are
             recommenders available and ``mode="raise"``.
     """
@@ -134,21 +124,24 @@ class SequentialMetaRecommender(MetaRecommender):
 
     def select_recommender(  # noqa: D102
         self,
-        searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        batch_size: int,
+        searchspace: Optional[SearchSpace] = None,
+        objective: Optional[Objective] = None,
+        measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         # See base class.
 
+        n_data = len(measurements) if measurements is not None else 0
+
         # If the training dataset size has increased, move to the next recommender
-        if len(train_x) > self._n_last_measurements:
+        if n_data > self._n_last_measurements:
             self._step += 1
+
         # If the training dataset size has decreased, something went wrong
-        elif len(train_x) < self._n_last_measurements:
+        elif n_data < self._n_last_measurements:
             raise RuntimeError(
                 f"The training dataset size decreased from {self._n_last_measurements} "
-                f"to {len(train_x)} since the last function call, which indicates that "
+                f"to {n_data} since the last function call, which indicates that "
                 f"'{self.__class__.__name__}' was not used as intended."
             )
 
@@ -169,13 +162,7 @@ class SequentialMetaRecommender(MetaRecommender):
             ) from ex
 
         # Remember the training dataset size for the next call
-        self._n_last_measurements = len(train_x)
-
-        # TODO: enable bayesian recommenders for empty training data
-        if (train_x is None or len(train_x) == 0) and not isinstance(
-            recommender, NonPredictiveRecommender
-        ):
-            raise _unsupported_recommender_error
+        self._n_last_measurements = n_data
 
         return recommender
 
@@ -219,24 +206,26 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
 
     def select_recommender(  # noqa: D102
         self,
-        searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        batch_size: int,
+        searchspace: Optional[SearchSpace] = None,
+        objective: Optional[Objective] = None,
+        measurements: Optional[pd.DataFrame] = None,
     ) -> PureRecommender:
         # See base class.
 
         use_last = True
+        n_data = len(measurements) if measurements is not None else 0
 
         # If the training dataset size has increased, move to the next recommender
-        if len(train_x) > self._n_last_measurements:
+        if n_data > self._n_last_measurements:
             self._step += 1
             use_last = False
+
         # If the training dataset size has decreased, something went wrong
-        elif len(train_x) < self._n_last_measurements:
+        elif n_data < self._n_last_measurements:
             raise RuntimeError(
                 f"The training dataset size decreased from {self._n_last_measurements} "
-                f"to {len(train_x)} since the last function call, which indicates that "
+                f"to {n_data} since the last function call, which indicates that "
                 f"'{self.__class__.__name__}' was not used as intended."
             )
 
@@ -251,13 +240,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
             ) from ex
 
         # Remember the training dataset size for the next call
-        self._n_last_measurements = len(train_x)
-
-        # TODO: enable bayesian recommenders for empty training data
-        if (train_x is None or len(train_x) == 0) and not isinstance(
-            self._last_recommender, NonPredictiveRecommender
-        ):
-            raise _unsupported_recommender_error
+        self._n_last_measurements = n_data
 
         return self._last_recommender  # type: ignore[return-value]
 

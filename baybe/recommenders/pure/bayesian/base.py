@@ -10,6 +10,7 @@ from baybe.acquisition.acqfs import qExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import DeprecationError
+from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
@@ -50,71 +51,49 @@ class BayesianRecommender(PureRecommender, ABC):
     def _setup_botorch_acqf(
         self,
         searchspace: SearchSpace,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        objective: Objective,
+        measurements: pd.DataFrame,
     ) -> None:
-        """Create the current acquisition function from provided training data.
-
-        The acquisition function is stored in the private attribute
-        ``_acquisition_function``.
-
-        Args:
-            searchspace: The search space in which the experiments are to be conducted.
-            train_x: The features of the conducted experiments.
-            train_y: The corresponding response values.
-
-        Raises:
-            NotImplementedError: If the setup is attempted from empty training data
-        """
-        if train_x is None or train_y is None:
-            raise NotImplementedError(
-                "Bayesian recommenders do not support empty training data yet."
-            )
-
-        surrogate_model = self._fit(searchspace, train_x, train_y)
+        """Create the acquisition function for the current training data."""  # noqa: E501
+        # TODO: Transition point from dataframe to tensor needs to be refactored.
+        #   Currently, surrogate models operate with tensors, while acquisition
+        #   functions with dataframes.
+        train_x = searchspace.transform(measurements)
+        train_y = objective.transform(measurements)
+        self.surrogate_model._fit(searchspace, *to_tensor(train_x, train_y))
         self._botorch_acqf = self.acquisition_function.to_botorch(
-            surrogate_model, train_x, train_y
+            self.surrogate_model, train_x, train_y
         )
-
-    def _fit(
-        self,
-        searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
-    ) -> Surrogate:
-        """Train a fresh surrogate model instance.
-
-        Args:
-            searchspace: The search space.
-            train_x: The features of the conducted experiments.
-            train_y: The corresponding response values.
-
-        Returns:
-            A surrogate model fitted to the provided data.
-
-        Raises:
-            ValueError: If the training inputs and targets do not have the same index.
-        """
-        # validate input
-        if not train_x.index.equals(train_y.index):
-            raise ValueError("Training inputs and targets must have the same index.")
-
-        self.surrogate_model.fit(searchspace, *to_tensor(train_x, train_y))
-
-        return self.surrogate_model
 
     def recommend(  # noqa: D102
         self,
+        batch_size: int,
         searchspace: SearchSpace,
-        batch_size: int = 1,
-        train_x: Optional[pd.DataFrame] = None,
-        train_y: Optional[pd.DataFrame] = None,
+        objective: Optional[Objective] = None,
+        measurements: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         # See base class.
+
+        if objective is None:
+            raise NotImplementedError(
+                f"Recommenders of type '{BayesianRecommender.__name__}' require "
+                f"that an objective is specified."
+            )
+
+        if (measurements is None) or (len(measurements) == 0):
+            raise NotImplementedError(
+                f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
+                f"empty training data."
+            )
 
         if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
-        self._setup_botorch_acqf(searchspace, train_x, train_y)
+        self._setup_botorch_acqf(searchspace, objective, measurements)
 
-        return super().recommend(searchspace, batch_size, train_x, train_y)
+        return super().recommend(
+            batch_size=batch_size,
+            searchspace=searchspace,
+            objective=objective,
+            measurements=measurements,
+        )

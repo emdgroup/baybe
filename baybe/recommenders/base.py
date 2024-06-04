@@ -5,6 +5,7 @@ from typing import Optional, Protocol
 import cattrs
 import pandas as pd
 
+from baybe.objectives.base import Objective
 from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.searchspace import SearchSpace
 from baybe.serialization import converter, unstructure_base
@@ -15,21 +16,29 @@ class RecommenderProtocol(Protocol):
 
     def recommend(
         self,
-        searchspace: SearchSpace,
         batch_size: int,
-        train_x: Optional[pd.DataFrame],
-        train_y: Optional[pd.DataFrame],
+        searchspace: SearchSpace,
+        objective: Optional[Objective],
+        measurements: Optional[pd.DataFrame],
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
 
         Args:
-            searchspace: The search space from which to recommend the points.
             batch_size: The number of points to be recommended.
-            train_x: Optional training inputs for training a model.
-            train_y: Optional training labels for training a model.
+            searchspace: The search space from which to recommend the points.
+            objective: An optional objective to be optimized.
+            measurements: Optional experimentation data that can be used for model
+                training. The data is to be provided in "experimental representation":
+                It needs to contain one column for each parameter spanning the search
+                space (column name matching the parameter name) and one column for each
+                target tracked by the objective (column name matching the target name).
+                Each row corresponds to one conducted experiment, where the parameter
+                columns define the experimental setting and the target columns report
+                the measured outcomes.
 
         Returns:
-            A dataframe containing the recommendations as individual rows.
+            A dataframe containing the recommendations in experimental representation
+            as individual rows.
         """
         ...
 
