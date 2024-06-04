@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.1] - 2024-06-04
 ### Changed
-- Discrete searchspace memory estimate is additionally always provided in bytes
+- Discrete searchspace memory estimate is now natively represented in bytes 
 
 ### Fixed
-- Non-GP surrogates not working with `deepcopy` and the simulation module due to slotted
-  base class
+- Non-GP surrogates not working with `deepcopy` and the simulation package due to
+  slotted base class
 - Datatype inconsistencies for various parameters' `values` and `comp_df` and 
   `SubSelectionCondition`'s `selection` related to floating point precision
 
