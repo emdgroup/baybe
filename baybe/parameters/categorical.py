@@ -5,12 +5,13 @@ from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
-from attr import define, field
-from attr.validators import deep_iterable, instance_of, min_len
+from attrs import Converter, define, field
+from attrs.validators import deep_iterable, instance_of, min_len
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
+from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
@@ -24,7 +25,7 @@ class CategoricalParameter(DiscreteParameter):
 
     # object variables
     _values: tuple[str, ...] = field(
-        converter=tuple,
+        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
         validator=(
             min_len(2),
             validate_unique_values,
