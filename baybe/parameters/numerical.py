@@ -27,6 +27,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
     # object variables
     # NOTE: The parameter values are assumed to be sorted by the tolerance validator.
     _values: tuple[float, ...] = field(
+        alias="values",
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: sorted(cattrs.structure(x, tuple[float, ...])),  # type: ignore
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
