@@ -19,11 +19,12 @@ from baybe.parameters.numerical import (
 from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
 from baybe.utils.numerical import DTypeFloatNumpy
 
+from ..hypothesis_strategies.basic import finite_floats
 from .utils import intervals
 
 decorrelations = st.one_of(
     st.booleans(),
-    st.floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
+    finite_floats(min_value=0.0, max_value=1.0, exclude_min=True, exclude_max=True),
 )
 """A strategy that generates decorrelation settings."""
 
@@ -68,7 +69,7 @@ def custom_descriptors(draw: st.DrawFn):
     index = st.lists(st.text(min_size=1), min_size=2, max_size=10, unique=True)
     cols = columns(
         names_or_number=10,
-        elements=st.floats(allow_nan=False, allow_infinity=False),
+        elements=finite_floats(),
         unique=True,
         dtype=DTypeFloatNumpy,
     )
@@ -85,9 +86,7 @@ def numerical_discrete_parameters(
     name = draw(parameter_names)
     values = draw(
         st.lists(
-            st.floats(
-                allow_infinity=False,
-                allow_nan=False,
+            finite_floats(
                 min_value=min_value,
                 max_value=max_value,
             ),
@@ -96,14 +95,13 @@ def numerical_discrete_parameters(
         )
     )
     max_tolerance = np.diff(np.sort(values)).min() / 2
-    if max_tolerance == 0.0:
+    if (max_tolerance == 0.0) or (max_tolerance != DTypeFloatNumpy(max_tolerance)):
         tolerance = 0.0
     else:
         tolerance = draw(
-            st.floats(
+            finite_floats(
                 min_value=0.0,
                 max_value=max_tolerance,
-                allow_nan=False,
                 exclude_max=True,
             )
         )

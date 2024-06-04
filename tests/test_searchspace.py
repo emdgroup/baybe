@@ -187,6 +187,21 @@ def test_invalid_constraint_parameter_combos():
         )
 
 
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        [
+            "Categorical_1",
+            "Categorical_2",
+            "Frame_A",
+            "Some_Setting",
+            "Num_disc_1",
+            "Fraction_1",
+            "Solvent_1",
+            "Custom_1",
+        ]
+    ],
+)
 def test_searchspace_memory_estimate(searchspace: SearchSpace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
     estimate = searchspace.estimate_product_space_size(searchspace.parameters)
@@ -198,5 +213,13 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
         deep=True, index=False
     ).sum()
 
-    assert 0.95 <= estimate_exp / actual_exp <= 1.05, (estimate_exp, actual_exp)
-    assert 0.95 <= estimate_comp / actual_comp <= 1.05, (estimate_comp, actual_comp)
+    assert 0.95 <= estimate_exp / actual_exp <= 1.05, (
+        "Exp: ",
+        estimate_exp,
+        actual_exp,
+    )
+    assert 0.95 <= estimate_comp / actual_comp <= 1.05, (
+        "Comp: ",
+        estimate_comp,
+        actual_comp,
+    )

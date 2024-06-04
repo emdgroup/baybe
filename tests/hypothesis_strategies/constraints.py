@@ -27,6 +27,8 @@ from baybe.constraints.discrete import (
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
 
+from ..hypothesis_strategies.basic import finite_floats
+
 
 def sub_selection_conditions(superset: Optional[list[Any]] = None):
     """Generate :class:`baybe.constraints.conditions.SubSelectionCondition`."""
@@ -34,14 +36,14 @@ def sub_selection_conditions(superset: Optional[list[Any]] = None):
         element_strategy = st.text()
     else:
         element_strategy = st.sampled_from(superset)
-    return st.builds(SubSelectionCondition, st.lists(element_strategy, unique=True))
+    return st.builds(
+        SubSelectionCondition, st.lists(element_strategy, unique=True, min_size=1)
+    )
 
 
 def threshold_conditions():
     """Generate :class:`baybe.constraints.conditions.ThresholdCondition`."""
-    return st.builds(
-        ThresholdCondition, threshold=st.floats(allow_infinity=False, allow_nan=False)
-    )
+    return st.builds(ThresholdCondition, threshold=finite_floats())
 
 
 @st.composite
@@ -232,12 +234,12 @@ def _continuous_linear_constraints(
 
     coefficients = draw(
         st.lists(
-            st.floats(allow_nan=False),
+            finite_floats(),
             min_size=len(parameter_names),
             max_size=len(parameter_names),
         )
     )
-    rhs = draw(st.floats(allow_nan=False))
+    rhs = draw(finite_floats())
     return constraint_type(parameter_names, coefficients, rhs)
 
 

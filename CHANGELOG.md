@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Non-GP surrogates not working with `deepcopy` and the simulation module due to slotted
   base class
+- Datatype inconsistencies for various parameters' `values` and `comp_df` and 
+  `SubSelectionCondition`'s `selection` related to floating point precision
 
 ## [0.9.0] - 2024-05-21
 ### Added

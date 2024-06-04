@@ -55,6 +55,8 @@ def test_invalid_targets(targets, error):
         param([1.0, "abc"], IterableValidationError, id="wrong_type"),
         param([1.0, -1.0], ValueError, id="negative"),
         param([1.0, 0.0], ValueError, id="zero"),
+        param([1.0, float("inf")], ValueError, id="inf"),
+        param([1.0, float("nan")], ValueError, id="nan"),
         param([1.0], ValueError, id="wrong_length"),
     ],
 )

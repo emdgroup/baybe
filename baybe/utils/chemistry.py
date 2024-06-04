@@ -88,13 +88,10 @@ def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
     """
     try:
         return np.asarray(
-            _mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing(),
-            dtype=DTypeFloatNumpy,
+            _mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing()
         )
     except Exception:
-        return np.full(
-            len(_mordred_calculator.descriptors), np.NaN, dtype=DTypeFloatNumpy
-        )
+        return np.full(len(_mordred_calculator.descriptors), np.NaN)
 
 
 def smiles_to_mordred_features(
@@ -117,7 +114,7 @@ def smiles_to_mordred_features(
     features = [_smiles_to_mordred_features(smiles) for smiles in smiles_list]
     descriptor_names = list(_mordred_calculator.descriptors)
     columns = [prefix + "MORDRED_" + str(name) for name in descriptor_names]
-    dataframe = pd.DataFrame(data=features, columns=columns)
+    dataframe = pd.DataFrame(data=features, columns=columns, dtype=DTypeFloatNumpy)
 
     if dropna:
         dataframe = dataframe.dropna(axis=1)
@@ -169,7 +166,7 @@ def smiles_to_rdkit_features(
     res = []
     for mol in mols:
         desc = {
-            prefix + "RDKIT_" + dname: func(mol)
+            prefix + "RDKIT_" + dname: DTypeFloatNumpy(func(mol))
             for dname, func in Chem.Descriptors.descList
         }
         res.append(desc)

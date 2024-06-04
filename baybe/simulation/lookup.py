@@ -59,7 +59,7 @@ def _look_up_target_values(
         #   column ordering, which is not robust. Instead, the callable should return
         #   a dataframe with properly labeled columns.
 
-        # Since the return of a lookup function is a a tuple, the following code stores
+        # Since the return of a lookup function is a tuple, the following code stores
         # tuples of floats in a single column with label 0:
         measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
         # We transform this column to a DataFrame in which there is an individual
@@ -79,7 +79,7 @@ def _look_up_target_values(
             queries[target.name] = measured_targets.iloc[:, k_target]
 
     # Get results via dataframe lookup (works only for exact matches)
-    # IMPROVE: Although its not too important for a simulation, this
+    # IMPROVE: Although it's not too important for a simulation, this
     #  could also be implemented for approximate matches
     elif isinstance(lookup, pd.DataFrame):
         all_match_vals = []

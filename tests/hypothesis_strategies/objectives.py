@@ -6,6 +6,7 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.single import SingleTargetObjective
 
+from ..hypothesis_strategies.basic import finite_floats
 from ..hypothesis_strategies.targets import numerical_targets
 from ..hypothesis_strategies.utils import intervals as st_intervals
 
@@ -24,7 +25,7 @@ def desirability_objectives(draw: st.DrawFn):
     )
     weights = draw(
         st.lists(
-            st.floats(min_value=0.0, exclude_min=True),
+            finite_floats(min_value=0.0, exclude_min=True),
             min_size=len(targets),
             max_size=len(targets),
         )
