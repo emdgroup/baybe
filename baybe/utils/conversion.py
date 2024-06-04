@@ -1,6 +1,12 @@
 """Conversion utilities."""
 
+from collections.abc import Sequence
 from fractions import Fraction
+from typing import TypeVar
+
+from attrs import Attribute
+
+_T = TypeVar("_T")
 
 
 def fraction_to_float(value: str | float | Fraction, /) -> float:
@@ -24,3 +30,13 @@ def fraction_to_float(value: str | float | Fraction, /) -> float:
                 f"The provided input '{value}' could not be interpreted as a fraction."
             ) from err
     return float(value)
+
+
+def nonstring_to_tuple(x: Sequence[_T], self: type, field: Attribute) -> tuple[_T, ...]:
+    """Convert a sequence to tuple but raise an exception for string input."""
+    if isinstance(x, str):
+        raise ValueError(
+            f"Argument passed to '{field.alias}' of class '{self.__class__.__name__}' "
+            f"must be a sequence but cannot be a string."
+        )
+    return tuple(x)
