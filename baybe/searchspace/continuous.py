@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Container, Sequence
 from typing import TYPE_CHECKING, Any, Optional, cast
-from typing_extensions import TypeAlias
 
 import numpy as np
 import pandas as pd
@@ -211,6 +210,14 @@ class SubspaceContinuous(SerialMixin):
     ) -> pd.DataFrame:
         """Get random point samples from the continuous space.
 
+        Notes:
+            Instead of using self.param_bounds_comp, we use the input "bounds" to
+            indicate the parameter bounds. This is because we need to set the
+            bounds of an inactive parameter to [0, 0], which is however not allowed
+            by Interval.
+            TODO: if Interval allows lower==upper, no need to keep the additional
+            bounds.
+
         Args:
             n_points: Number of points that should be sampled.
             bounds: Parameter bounds. Note that the bounds here may differ from that
@@ -242,11 +249,11 @@ class SubspaceContinuous(SerialMixin):
         """Get random samples over space without any constraints.
 
         Args:
-            n_points: See samples_random()
-            bounds: See samples_random()
+            n_points: See samples_random().
+            bounds: See samples_random().
 
         Returns:
-            See samples_random()
+            See samples_random().
         """
         points = np.random.uniform(
             low=bounds[0, :], high=bounds[1, :], size=(n_points, len(self.parameters))
@@ -258,11 +265,11 @@ class SubspaceContinuous(SerialMixin):
         """Get random samples over space with only linear constraints.
 
         Args:
-            n_points: see samples_random()
-            bounds: see samples_random()
+            n_points: See samples_random().
+            bounds: See samples_random().
 
         Returns:
-            see samples_random()
+            See samples_random().
         """
         import torch
         from botorch.utils.sampling import get_polytope_samples
@@ -283,10 +290,10 @@ class SubspaceContinuous(SerialMixin):
         """Get random samples from the continuous space with cardinality constraints.
 
         Args:
-            n_points: see sample_random()
+            n_points: See sample_random().
 
         Returns:
-            see sample_random()
+            see Sample_random().
         """
         assert (
             len(self.constraints_cardinality) != 0
@@ -364,7 +371,7 @@ class SubspaceContinuous(SerialMixin):
         return inactive_params_samples
 
     def _get_bounds_with_inactive_params(
-        self, inactive_params: list[str]
+        self, inactive_params: Container[str]
     ) -> np.ndarray:
         """Get parameters bounds with bounds(inactive parameters) being zeros.
 
@@ -419,12 +426,6 @@ class SubspaceContinuous(SerialMixin):
 
         return pd.DataFrame(index=index).reset_index()
 
-
-# Among all possible active/inactive parameter setting, active parameters cannot be
-# empty; while inactive parameters can be empty!
-CombinationFromCardinalityConstratins: TypeAlias = tuple[
-    list[list[str]], Optional[list[list[str]]]
-]
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
