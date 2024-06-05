@@ -17,8 +17,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
     Raises:
         ValueError: If there is more than one
             :class:`baybe.constraints.discrete.DiscreteDependenciesConstraint` declared.
-        ValueError: If two continuous cardinality constraints share the continuous
-        parameter.
+        ValueError: If two continuous cardinality constraints share the same parameter.
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.
@@ -30,7 +29,9 @@ def validate_constraints(  # noqa: DOC101, DOC103
         )
 
     # Any cardinality constraints share the same parameter.
-    validate_continuous_cardinality_constraints(constraints)
+    validate_continuous_cardinality_constraints(
+        [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
+    )
 
     # Validate parameter/constraint combination.
     param_names_all = [p.name for p in parameters]
@@ -63,17 +64,32 @@ def validate_constraints(  # noqa: DOC101, DOC103
             )
 
 
-def validate_continuous_cardinality_constraints(constraints: Collection[Constraint]):
+def validate_continuous_cardinality_constraints(
+    constraints: Collection[ContinuousCardinalityConstraint]
+):
     """Validate continuous cardinality constraints.
+
+    Args:
+        constraints: A list of continuous cardinality constraints.
 
     Raises:
         ValueError: If two cardinality constraints share the same parameter.
     """
-    cardinality_constraints = [con for con in constraints
-                               if isinstance(con, ContinuousCardinalityConstraint)]
+    assert (
+        len(
+            [
+                con
+                for con in constraints
+                if not isinstance(con, ContinuousCardinalityConstraint)
+            ]
+        )
+        == 0
+    ), "All constraints must be cardinality constraint."
+
     param_all = []
-    for con in cardinality_constraints:
+    for con in constraints:
         if len(set(param_all).intersection(set(con.parameters))) != 0:
-            raise ValueError("Cardinality constraints cannot share the same "
-                             "parameter.")
+            raise ValueError(
+                "Cardinality constraints cannot share the same " "parameter."
+            )
         param_all.extend(con.parameters)
