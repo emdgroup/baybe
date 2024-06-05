@@ -8,8 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
 
+### Removed
+- Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
+  and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
+
 ### Breaking Changes
 - Providing an explicit `batch_size` is now mandatory when asking for recommendations
+- `RecommenderProtocol.recommend` now accepts an optional `Objective` 
+- `RecommenderProtocol.recommend` now expects training data to be provided as a single
+  dataframe in experimental representation instead of two separate dataframes in
+  computational representation
+
 
 ## [0.9.1] - 2024-06-04
 ### Changed
@@ -20,10 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   slotted base class
 - Datatype inconsistencies for various parameters' `values` and `comp_df` and 
   `SubSelectionCondition`'s `selection` related to floating point precision
-
-### Removed
-- Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
-  and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
 
 ## [0.9.0] - 2024-05-21
 ### Added
@@ -58,12 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a warning instead of passing through the uncaught exception
 - Environment variables `BAYBE_NUMPY_USE_SINGLE_PRECISION` and
   `BAYBE_TORCH_USE_SINGLE_PRECISION` to enforce single point precision usage
-
-### Breaking Changes
-- `RecommenderProtocol.recommend` now accepts an optional `Objective` 
-- `RecommenderProtocol.recommend` now expects training data to be provided as a single
-  dataframe in experimental representation instead of two separate dataframes in
-  computational representation
 
 ### Removed
 - `model_params` attribute from `Surrogate` base class, `GaussianProcessSurrogate` and
