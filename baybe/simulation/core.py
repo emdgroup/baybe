@@ -14,7 +14,7 @@ import pandas as pd
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
-from baybe.simulation.lookup import _look_up_target_values
+from baybe.simulation.lookup import look_up_targets
 from baybe.targets.enum import TargetMode
 from baybe.utils.dataframe import add_parameter_noise
 from baybe.utils.numerical import DTypeFloatNumpy, closer_element, closest_element
@@ -180,7 +180,7 @@ def simulate_experiment(
                 break
 
             n_experiments += len(measured)
-            _look_up_target_values(measured, campaign.targets, lookup, impute_mode)
+            look_up_targets(measured, campaign.targets, lookup, impute_mode)
 
             # Create the summary for the current iteration and store it
             result = pd.DataFrame(

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def _look_up_target_values(
+def look_up_targets(
     queries: pd.DataFrame,
     targets: Collection[Target],
     lookup: pd.DataFrame | Callable | None = None,
