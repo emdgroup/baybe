@@ -245,11 +245,11 @@ def test_invalid_continuous_cardinality_constraints_combos():
             constraints=[
                 ContinuousCardinalityConstraint(
                     parameters=["c1", "c2", "c3"],
-                    cardinality_up=1,
+                    max_cardinality=1,
                 ),
                 ContinuousCardinalityConstraint(
                     parameters=["c3", "c4"],
-                    cardinality_up=1,
+                    max_cardinality=1,
                 ),
             ],
         )

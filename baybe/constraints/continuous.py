@@ -43,43 +43,40 @@ class ContinuousLinearInequalityConstraint(ContinuousLinearConstraint):
 class ContinuousCardinalityConstraint(ContinuousConstraint):
     """Class for continuous cardinality constraints.
 
-    The constraint is defined as ``cardinality[..., x_i, ...] >= cardinality_low´´
-    and ``cardinality[..., x_i, ...] <= cardinality_up´´.
+    The constraint is defined as ``cardinality[..., x_i, ...] >= min_cardinality´´
+    and ``cardinality[..., x_i, ...] <= max_cardinality´´.
     """
 
-    cardinality_low: int = field(default=0, validator=validators.ge(0))
+    min_cardinality: int = field(default=0, validator=validators.ge(0))
     "The lower limit of cardinality"
 
-    cardinality_up: int = field()
+    max_cardinality: int = field()
     "The upper limit of cardinality"
 
-    @cardinality_up.default
-    def _set_cardinality_up_default(self):
-        """Set cardinality_up = len(parameter) by default."""
+    @max_cardinality.default
+    def _default_max_cardinality(self):
+        """Set max_cardinality = len(parameter) by default."""
         return len(self.parameters)
 
     def __attrs_post_init__(self):
         """Validate."""
-        # cardinality_low=cardinality_up implies a fixed cardinality.
-        if self.cardinality_low > self.cardinality_up:
+        if self.min_cardinality > self.max_cardinality:
             raise ValueError(
                 f"The lower bound of cardinality should not be larger "
                 f"than the upper bound, but was upper bound = "
-                f"{self.cardinality_up}, lower bound ="
-                f" {self.cardinality_low}."
+                f"{self.max_cardinality}, lower bound ="
+                f" {self.min_cardinality}."
             )
 
-        # cardinality_up should be <= len(parameters)
-        if self.cardinality_up > len(self.parameters):
+        if self.max_cardinality > len(self.parameters):
             raise ValueError(
                 f"The upper bound of cardinality should not exceed the "
                 f"number of parameters, but was upper bound ="
-                f" {self.cardinality_up}, and len(parameters) ="
+                f" {self.max_cardinality}, and len(parameters) ="
                 f" {len(self.parameters)}."
             )
 
-        # No cardinality constraints are required in this case
-        if self.cardinality_low == 0 and self.cardinality_up == len(self.parameters):
+        if self.min_cardinality == 0 and self.max_cardinality == len(self.parameters):
             raise ValueError(
                 "No cardinality constraint is required when "
                 "0<= cardinality <= len(parameters)."
@@ -104,7 +101,7 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
         # combinatorial for each cardinality
         n_comb_at_all_cardinality = [
             math.comb(len(self.parameters), n)
-            for n in range(self.cardinality_low, self.cardinality_up + 1)
+            for n in range(self.min_cardinality, self.max_cardinality + 1)
         ]
 
         # probability of each cardinality
@@ -116,7 +113,7 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
         n_inactive_params_samples = (
             len(self.parameters)
             - np.random.choice(
-                np.arange(self.cardinality_low, self.cardinality_up + 1),
+                np.arange(self.min_cardinality, self.max_cardinality + 1),
                 n_points,
                 p_at_all_cardinality.tolist(),
             )

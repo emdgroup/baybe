@@ -22,8 +22,8 @@ def get_searchspace(n_param: int, min_nonzeros: int, max_nonzeros: int) -> Searc
     constraints = [
         ContinuousCardinalityConstraint(
             parameters=[f"x_{i}" for i in range(n_param)],
-            cardinality_low=min_nonzeros,
-            cardinality_up=max_nonzeros,
+            min_cardinality=min_nonzeros,
+            max_cardinality=max_nonzeros,
         )
     ]
 
@@ -62,8 +62,8 @@ def test_samples_random():
         ),
         ContinuousCardinalityConstraint(
             parameters=["x_1", "x_2"],
-            cardinality_up=MAX_NONZERO,
-            cardinality_low=MIN_NONZERO,
+            max_cardinality=MAX_NONZERO,
+            min_cardinality=MIN_NONZERO,
         ),
     ]
 
