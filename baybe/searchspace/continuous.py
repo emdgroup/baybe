@@ -307,19 +307,20 @@ class SubspaceContinuous(SerialMixin):
 
         points_all = pd.DataFrame(columns=[param.name for param in self.parameters])
         i_ite, N_ITE_THRES = 0, 1e5  # limit of iteration
+
         while points_all.shape[0] < n_points:
             # sample inactive parameters
             inactive_params_sample = self._sample_inactive_params(1)[0]
 
+            # subspace excluding the cardinality constraints
+            subspace_cardinality_cleaned = SubspaceContinuous(
+                parameters=self.parameters,
+                constraints_lin_eq=self.constraints_lin_eq,
+                constraints_lin_ineq=self.constraints_lin_ineq,
+            )
+
             # generate samples
             if len(inactive_params_sample):
-                # subspace excluding the cardinality constraints
-                subspace_cardinality_cleaned = SubspaceContinuous(
-                    parameters=self.parameters,
-                    constraints_lin_eq=self.constraints_lin_eq,
-                    constraints_lin_ineq=self.constraints_lin_ineq,
-                )
-
                 # set each inactive parameter to zero by changing bounds to [0, 0]
                 bounds_cleaned = self._get_bounds_with_inactive_params(
                     inactive_params_sample
@@ -339,7 +340,7 @@ class SubspaceContinuous(SerialMixin):
                         f"inactive parameters."
                     )
             else:
-                sample = self.samples_random(1)
+                sample = subspace_cardinality_cleaned.samples_random(1)
                 points_all = pd.concat((points_all, sample), axis=0)
 
             # avoid infinite loop
