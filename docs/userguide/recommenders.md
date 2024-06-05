@@ -31,16 +31,15 @@ class, offering an array of possibilities with internal surrogate models and sup
 for various acquisition functions.
 
 * The **[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)**
-  is a powerful recommender that performs sequential Greedy optimization. It can be
-  applied for discrete, continuous and hybrid search spaces. It is an implementation of
-  the BoTorch optimization functions for discrete, continuous and mixed spaces.
-  It is important to note that this recommender performs a brute-force search when
-  applied in hybrid search spaces, as it optimizes the continuous part of the space
-  while exhaustively searching choices in the discrete subspace. You can customize
-  this behavior to only sample a certain percentage of the discrete subspace via the
-  `sample_percentage` attribute and to choose different sampling algorithms via the
-  `hybrid_sampler` attribute. An example on using this recommender in a hybrid space
-  can be found [here](./../../examples/Backtesting/hybrid).
+  is a powerful recommender based on BoTorch's optimization engine, which can be applied
+  to all kinds of search spaces. However, it is important to note that the recommender
+  performs a brute-force search when applied to hybrid search spaces, as it optimizes
+  the continuous part of the space while exhaustively searching choices in the discrete
+  subspace. You can customize this behavior to only sample a certain percentage of the
+  discrete subspace via the `sample_percentage` attribute and to choose different
+  sampling algorithms via the `hybrid_sampler` attribute. An example on using this
+  recommender in a hybrid space can be found
+  [here](./../../examples/Backtesting/hybrid).
 
 * The **[`NaiveHybridSpaceRecommender`](baybe.recommenders.naive.NaiveHybridSpaceRecommender)**
   can be applied to all search spaces, but is intended to be used in hybrid spaces.
