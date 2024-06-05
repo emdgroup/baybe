@@ -1,6 +1,5 @@
 """Target lookup mechanisms."""
 
-
 from __future__ import annotations
 
 import logging
@@ -30,17 +29,45 @@ def look_up_targets(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
 ) -> None:
-    """Fill the target values in the query dataframe using the lookup mechanism.
+    """Add/fill target values in a dataframe using a lookup mechanism.
 
-    Note that this does not create a new dataframe but modifies ``queries`` in-place.
+    Note:
+        This does not create a new dataframe but modifies ``queries`` in-place.
 
     Args:
-        lookup: The lookup mechanism.
-            See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.
-        queries: A dataframe containing points to be queried.
-        targets: The targets whose values to look up.
-        impute_mode: The used impute mode.
-            See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.
+        lookup: The lookup mechanism. Can be one of the following choices:
+
+            -   A dataframe mapping rows of ``queries`` to the corresponding target
+                values. That is, it must contain the same columns as ``queries`` plus
+                one additional column for each of the given target.
+            -   A callable, providing target values for each row of ``queries``.
+            -   ``None``. Produces fake values for all targets.
+        queries: The dataframe to be modified. Its content must be compatible with the
+            chosen lookup mechanism.
+        targets: The targets whose values are to be looked up.
+        impute_mode: Specifies how a missing lookup will be handled. Only relevant for
+            dataframe lookups. Can be one of the following choices:
+
+            - ``"error"``: An error will be thrown.
+            - ``"worst"``: Imputes the worst available value for each target.
+            - ``"best"``: Imputes the best available value for each target.
+            - ``"mean"``: Imputes the mean value for each target.
+            - ``"random"``: A random row will be used for the lookup.
+
+    Example:
+        >>> import pandas as pd
+        >>> from baybe.targets.numerical import NumericalTarget
+        >>> from baybe.simulation.lookup import look_up_targets
+        >>>
+        >>> targets = [NumericalTarget("target", "MAX")]
+        >>> df = pd.DataFrame({"x": [1, 2, 3]})
+        >>> lookup_df = pd.DataFrame({"x": [1, 2], "target": [10, 20]})
+        >>> look_up_targets(lookup_df, df, targets, impute_mode="mean")
+        >>> print(df)
+           x  target
+        0  1    10.0
+        1  2    20.0
+        2  3    15.0
     """
 
 
