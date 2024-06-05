@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Collection
+from functools import singledispatch
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -20,10 +21,11 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
+@singledispatch
 def look_up_targets(
+    lookup: pd.DataFrame | Callable | None,
     queries: pd.DataFrame,
     targets: Collection[Target],
-    lookup: pd.DataFrame | Callable | None = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -33,31 +35,30 @@ def look_up_targets(
     Note that this does not create a new dataframe but modifies ``queries`` in-place.
 
     Args:
-        queries: A dataframe containing points to be queried.
-        targets: The targets whose values to look up.
         lookup: The lookup mechanism.
             See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.
+        queries: A dataframe containing points to be queried.
+        targets: The targets whose values to look up.
         impute_mode: The used impute mode.
             See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.
     """
-    # If no lookup is provided, invent some fake results
-    if lookup is None:
-        add_fake_results(queries, targets)
-
-    # Compute the target values via a callable
-    elif isinstance(lookup, Callable):
-        _look_up_targets_from_callable(queries, targets, lookup)
-
-    # Get results via dataframe lookup (works only for exact matches)
-    # IMPROVE: Although it's not too important for a simulation, this
-    #  could also be implemented for approximate matches
-    elif isinstance(lookup, pd.DataFrame):
-        _look_up_targets_from_dataframe(queries, targets, lookup, impute_mode)
 
 
-def _look_up_targets_from_callable(
-    queries: pd.DataFrame, targets: Collection[Target], lookup: Callable
+@look_up_targets.register
+def _look_up_fake_targets(
+    _: None, queries: pd.DataFrame, targets: Collection[Target]
 ) -> None:
+    """Look up fake target values."""
+    add_fake_results(queries, targets)
+
+
+@look_up_targets.register
+def _look_up_targets_from_callable(
+    lookup: Callable,
+    queries: pd.DataFrame,
+    targets: Collection[Target],
+) -> None:
+    """Look up target values by querying a callable."""
     # TODO: Currently, the alignment of return values to targets is based on the
     #   column ordering, which is not robust. Instead, the callable should return
     #   a dataframe with properly labeled columns.
@@ -82,14 +83,19 @@ def _look_up_targets_from_callable(
         queries[target.name] = measured_targets.iloc[:, k_target]
 
 
+@look_up_targets.register
 def _look_up_targets_from_dataframe(
+    lookup: pd.DataFrame,
     queries: pd.DataFrame,
     targets: Collection[Target],
-    lookup: pd.DataFrame,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
 ) -> None:
+    """Look up target values from a dataframe."""
+    # # IMPROVE: Although it's not too important for a simulation, this
+    # #  could also be implemented for approximate matches"""
+
     target_names = [t.name for t in targets]
 
     all_match_vals = []
