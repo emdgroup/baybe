@@ -176,7 +176,7 @@ recommendation = campaign.recommend(batch_size=3)
 print("\n\nRecommended experiments: ")
 print(recommendation)
 
-add_fake_results(recommendation, campaign)
+add_fake_results(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 

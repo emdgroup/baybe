@@ -85,7 +85,7 @@ print(recommendation)
 # In this example, we use the `add_fake_results()` utility to create fake results.
 # We then update the campaign by adding the measurements.
 
-add_fake_results(recommendation, campaign)
+add_fake_results(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 
