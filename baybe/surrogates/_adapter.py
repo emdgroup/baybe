@@ -1,4 +1,4 @@
-"""Adapter for making BoTorch's acquisition functions work with BayBE models."""
+"""Adapter functionality for making BayBE surrogates BoTorch-ready."""
 
 from collections.abc import Callable
 from typing import Any
@@ -19,7 +19,7 @@ class AdapterModel(Model):
     surrogate model usable in conjunction with BoTorch acquisition functions.
 
     Args:
-        surrogate: The internal surrogate model
+        surrogate: The internal surrogate model.
     """
 
     def __init__(self, surrogate: Surrogate):

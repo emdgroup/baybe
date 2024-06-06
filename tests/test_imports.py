@@ -58,8 +58,8 @@ def test_imports(module: str):
 
 WHITELISTS = {
     "torch": [
-        "baybe.acquisition._adapter",
         "baybe.acquisition.partial",
+        "baybe.surrogates._adapter",
         "baybe.utils.botorch_wrapper",
         "baybe.utils.torch",
     ],
