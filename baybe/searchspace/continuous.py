@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Container, Sequence
+from collections.abc import Collection, Sequence
 from itertools import chain
 from typing import TYPE_CHECKING, Any, cast
 
@@ -20,6 +20,7 @@ from baybe.constraints.validation import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
+from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -216,24 +217,11 @@ class SubspaceContinuous(SerialMixin):
 
         return comp_rep
 
-    def sample(
-        self, batch_size: int = 1, _bounds: np.ndarray | None = None
-    ) -> pd.DataFrame:
+    def sample(self, batch_size: int = 1) -> pd.DataFrame:
         """Create random parameter configurations from the continuous space.
-
-        Notes:
-            Instead of using self.param_bounds_comp, we use the input "bounds" to
-            indicate the parameter bounds. This is because we need to set the
-            bounds of an inactive parameter to [0, 0], which is however not allowed
-            by Interval.
-            TODO: if Interval allows lower==upper, no need to keep the additional
-            bounds.
 
         Args:
             batch_size: Number of parameter configurations that should be sampled.
-            _bounds: Parameter bounds. Note that the bounds here may differ from that
-                contained in self.parameters, e.g. bounds(inactive parameter) = [0, 0].
-
 
         Returns:
             A dataframe containing the points as rows with columns corresponding to the
@@ -242,18 +230,15 @@ class SubspaceContinuous(SerialMixin):
         if not self.parameters:
             return pd.DataFrame()
 
-        if _bounds is None:
-            _bounds = self.param_bounds_comp
-
         if (
             len(self.constraints_lin_eq) == 0
             and len(self.constraints_lin_ineq) == 0
             and len(self.constraints_cardinality) == 0
         ):
-            return self._sample_from_bounds(batch_size, _bounds)
+            return self._sample_from_bounds(batch_size, self.param_bounds_comp)
 
         if len(self.constraints_cardinality) == 0:
-            return self._sample_from_polytope(batch_size, _bounds)
+            return self._sample_from_polytope(batch_size, self.param_bounds_comp)
 
         return self._sample_with_cardinality_constraints(batch_size)
 
@@ -300,30 +285,29 @@ class SubspaceContinuous(SerialMixin):
         # Counter for failed sampling attempts
         n_fails = 0
 
-        # Helper subspace to be used with explicitly inactivated parameters
-        subspace_without_cardinality_constraint = SubspaceContinuous(
-            parameters=self.parameters,
-            constraints_lin_eq=self.constraints_lin_eq,
-            constraints_lin_ineq=self.constraints_lin_ineq,
-        )
-
         while len(samples) < batch_size:
             # Randomly set some parameters inactive
             inactive_params_sample = self._sample_inactive_parameters(1)[0]
 
-            # Shrink the bounds to interval (0,0) for inactive parameters
-            if inactive_params_sample:
-                bounds = (
-                    self._get_bounds_with_inactive_params(inactive_params_sample)
-                    if inactive_params_sample
-                    else None
-                )
+            # Fix the inactive parameters to zero
+            parameters = [
+                p
+                if p.name not in inactive_params_sample
+                else _FixedNumericalContinuousParameter(name=p.name, value=0.0)
+                for p in self.parameters
+            ]
+            # Helper subspace to be used with explicitly inactivated parameters
+            subspace_without_cardinality_constraint = SubspaceContinuous(
+                parameters=parameters,
+                constraints_lin_eq=self.constraints_lin_eq,
+                constraints_lin_ineq=self.constraints_lin_ineq,
+            )
 
-                try:
-                    sample = subspace_without_cardinality_constraint.sample(1, bounds)
-                    samples.append(sample)
-                except Exception:
-                    n_fails += 1
+            try:
+                sample = subspace_without_cardinality_constraint.sample(1)
+                samples.append(sample)
+            except Exception:
+                n_fails += 1
 
             # Avoid infinite loop
             if n_fails >= _MAX_CARDINALITY_SAMPLING_ATTEMPTS:
@@ -343,29 +327,6 @@ class SubspaceContinuous(SerialMixin):
             for con in self.constraints_cardinality
         ]
         return [list(chain(*x)) for x in zip(*inactives_per_constraint)]
-
-    def _get_bounds_with_inactive_params(
-        self, inactive_params: Container[str]
-    ) -> np.ndarray:
-        """Get parameters bounds with bounds(inactive parameters) being zeros.
-
-        Args:
-            inactive_params: names of inactive parameters
-
-        Returns:
-            bounds of parameters
-        """
-        bounds_cleaned = self.param_bounds_comp
-
-        # identifying indices of inactive parameters
-        inactive_param_indices = [
-            idx
-            for idx, param in enumerate(self.parameters)
-            if param.name in inactive_params
-        ]
-
-        bounds_cleaned[:, inactive_param_indices] = 0
-        return bounds_cleaned
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
         """Get random point samples from the full factorial of the continuous space.
