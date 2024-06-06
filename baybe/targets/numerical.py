@@ -97,6 +97,10 @@ class NumericalTarget(Target, SerialMixin):
         #   for the desirability approach
         if bounds.is_half_bounded:
             raise ValueError("Targets on half-bounded intervals are not supported.")
+        if bounds.is_degenerate:
+            raise ValueError(
+                "The interval specified by the target bounds cannot be degenerate."
+            )
         if self.mode is TargetMode.MATCH and not bounds.is_bounded:
             raise ValueError(
                 f"Target '{self.name}' is in {TargetMode.MATCH.name} mode,"
