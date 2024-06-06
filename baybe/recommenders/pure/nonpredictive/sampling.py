@@ -29,7 +29,7 @@ class RandomRecommender(NonPredictiveRecommender):
         if searchspace.type == SearchSpaceType.DISCRETE:
             return candidates_comp.sample(batch_size)
 
-        cont_random = searchspace.continuous.samples_random(n_points=batch_size)
+        cont_random = searchspace.continuous.sample(batch_size=batch_size)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return cont_random
 

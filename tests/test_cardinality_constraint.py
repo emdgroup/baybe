@@ -70,7 +70,7 @@ def test_samples_random():
     searchspace = SearchSpace.from_product(parameters, constraints)
 
     # draw samples
-    samples = searchspace.continuous.samples_random(n_points=N_POINTS)
+    samples = searchspace.continuous.sample(N_POINTS)
 
     # Assert that cardinality constraint is fulfilled
     n_nonzero = np.sum(~np.isclose(samples[["x_1", "x_2"]], 0.0), axis=1)

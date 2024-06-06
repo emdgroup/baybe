@@ -215,10 +215,10 @@ class SubspaceContinuous(SerialMixin):
 
         return comp_rep
 
-    def samples_random(
-        self, n_points: int = 1, bounds: np.ndarray | None = None
+    def sample(
+        self, batch_size: int = 1, _bounds: np.ndarray | None = None
     ) -> pd.DataFrame:
-        """Get random point samples from the continuous space.
+        """Create random parameter configurations from the continuous space.
 
         Notes:
             Instead of using self.param_bounds_comp, we use the input "bounds" to
@@ -229,8 +229,8 @@ class SubspaceContinuous(SerialMixin):
             bounds.
 
         Args:
-            n_points: Number of points that should be sampled.
-            bounds: Parameter bounds. Note that the bounds here may differ from that
+            batch_size: Number of parameter configurations that should be sampled.
+            _bounds: Parameter bounds. Note that the bounds here may differ from that
                 contained in self.parameters, e.g. bounds(inactive parameter) = [0, 0].
 
 
@@ -241,51 +241,38 @@ class SubspaceContinuous(SerialMixin):
         if not self.parameters:
             return pd.DataFrame()
 
-        if bounds is None:
-            bounds = self.param_bounds_comp
+        if _bounds is None:
+            _bounds = self.param_bounds_comp
 
         if (
             len(self.constraints_lin_eq) == 0
             and len(self.constraints_lin_ineq) == 0
             and len(self.constraints_cardinality) == 0
         ):
-            return self._sample_from_bounds(n_points, bounds)
-        elif len(self.constraints_cardinality) == 0:
-            return self._sample_from_polytope(n_points, bounds)
-        else:
-            return self._sample_with_cardinality_constraints(n_points)
+            return self._sample_from_bounds(batch_size, _bounds)
 
-    def _sample_from_bounds(self, n_points: int, bounds: np.ndarray) -> pd.DataFrame:
-        """Get random samples over space without any constraints.
+        if len(self.constraints_cardinality) == 0:
+            return self._sample_from_polytope(batch_size, _bounds)
 
-        Args:
-            n_points: See samples_random().
-            bounds: See samples_random().
+        return self._sample_with_cardinality_constraints(batch_size)
 
-        Returns:
-            See samples_random().
-        """
+    def _sample_from_bounds(self, batch_size: int, bounds: np.ndarray) -> pd.DataFrame:
+        """Create uniform random samples over a hyperrectangle-shaped space."""
         points = np.random.uniform(
-            low=bounds[0, :], high=bounds[1, :], size=(n_points, len(self.parameters))
+            low=bounds[0, :], high=bounds[1, :], size=(batch_size, len(self.parameters))
         )
 
         return pd.DataFrame(points, columns=self.param_names)
 
-    def _sample_from_polytope(self, n_points: int, bounds: np.ndarray) -> pd.DataFrame:
-        """Get random samples over space with only linear constraints.
-
-        Args:
-            n_points: See samples_random().
-            bounds: See samples_random().
-
-        Returns:
-            See samples_random().
-        """
+    def _sample_from_polytope(
+        self, batch_size: int, bounds: np.ndarray
+    ) -> pd.DataFrame:
+        """Create uniform random samples from a polytope."""
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
         points = get_polytope_samples(
-            n=n_points,
+            n=batch_size,
             bounds=torch.from_numpy(bounds),
             equality_constraints=[
                 c.to_botorch(self.parameters) for c in self.constraints_lin_eq
@@ -296,15 +283,8 @@ class SubspaceContinuous(SerialMixin):
         )
         return pd.DataFrame(points, columns=self.param_names)
 
-    def _sample_with_cardinality_constraints(self, n_points: int) -> pd.DataFrame:
-        """Get random samples from the continuous space with cardinality constraints.
-
-        Args:
-            n_points: See sample_random().
-
-        Returns:
-            see Sample_random().
-        """
+    def _sample_with_cardinality_constraints(self, batch_size: int) -> pd.DataFrame:
+        """Create random samples from a polytope with cardinality constraints."""
         assert (
             len(self.constraints_cardinality) != 0
         ), "No need to call this method if there is no cardinality constraint."
@@ -312,7 +292,7 @@ class SubspaceContinuous(SerialMixin):
         points_all = pd.DataFrame(columns=[param.name for param in self.parameters])
         i_ite, N_ITE_THRES = 0, 1e5  # limit of iteration
 
-        while points_all.shape[0] < n_points:
+        while points_all.shape[0] < batch_size:
             # sample inactive parameters
             inactive_params_sample = self._sample_inactive_params(1)[0]
 
@@ -333,7 +313,7 @@ class SubspaceContinuous(SerialMixin):
                 # sample from the subspace, in which the cardinality constraints are
                 # excluded and bounds(inactive parameters) = (0, 0)
                 try:
-                    points_sample = subspace_cardinality_cleaned.samples_random(
+                    points_sample = subspace_cardinality_cleaned.sample(
                         1, bounds_cleaned
                     )
                     points_all = pd.concat((points_all, points_sample), axis=0)
@@ -344,7 +324,7 @@ class SubspaceContinuous(SerialMixin):
                         f"inactive parameters."
                     )
             else:
-                sample = subspace_cardinality_cleaned.samples_random(1)
+                sample = subspace_cardinality_cleaned.sample(1)
                 points_all = pd.concat((points_all, sample), axis=0)
 
             # avoid infinite loop
@@ -358,14 +338,7 @@ class SubspaceContinuous(SerialMixin):
         return points_all
 
     def _sample_inactive_params(self, n_points: int = 1) -> list[list[str]]:
-        """Sample inactive parameters randomly according to all cardinality constraints.
-
-        Args:
-            n_points: see sample_random()
-
-        Returns:
-            see sample_random()
-        """
+        """Sample inactive parameters according to the given cardinality constraints."""
         inactive_params_samples = []
         for _ in range(n_points):
             inactive_params_samples.append(
