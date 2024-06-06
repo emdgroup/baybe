@@ -4,7 +4,8 @@
 import math
 
 import numpy as np
-from attrs import define, field, validators
+from attrs import define, field
+from attrs.validators import ge, instance_of
 
 from baybe.constraints.base import ContinuousConstraint, ContinuousLinearConstraint
 
@@ -45,10 +46,10 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
     and ``cardinality[..., x_i, ...] <= max_cardinality´´.
     """
 
-    min_cardinality: int = field(default=0, validator=validators.ge(0))
+    min_cardinality: int = field(default=0, validator=[instance_of(int), ge(0)])
     "The lower limit of cardinality"
 
-    max_cardinality: int = field()
+    max_cardinality: int = field(validator=instance_of(int))
     "The upper limit of cardinality"
 
     @max_cardinality.default
