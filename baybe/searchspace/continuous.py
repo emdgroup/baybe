@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Collection, Sequence
 from itertools import chain
 from typing import TYPE_CHECKING, Any, cast
@@ -217,6 +218,16 @@ class SubspaceContinuous(SerialMixin):
 
         return comp_rep
 
+    def samples_random(self, n_points: int = 1) -> pd.DataFrame:
+        """Deprecated!"""  # noqa: D401
+        warnings.warn(
+            f"The method '{SubspaceContinuous.samples_random.__name__}' "
+            f"has been deprecated and will be removed in a future version. "
+            f"Use '{SubspaceContinuous.sample.__name__}' instead.",
+            DeprecationWarning,
+        )
+        return self.sample(n_points)
+
     def sample(self, batch_size: int = 1) -> pd.DataFrame:
         """Create random parameter configurations from the continuous space.
 
@@ -329,10 +340,20 @@ class SubspaceContinuous(SerialMixin):
         return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
+        """Deprecated!"""  # noqa: D401
+        warnings.warn(
+            f"The method '{SubspaceContinuous.samples_full_factorial.__name__}' "
+            f"has been deprecated and will be removed in a future version. "
+            f"Use '{SubspaceContinuous.sample_from_full_factorial.__name__}' instead.",
+            DeprecationWarning,
+        )
+        return self.sample_from_full_factorial(n_points)
+
+    def sample_from_full_factorial(self, batch_size: int = 1) -> pd.DataFrame:
         """Get random point samples from the full factorial of the continuous space.
 
         Args:
-            n_points: Number of points that should be sampled.
+            batch_size: Number of points that should be sampled.
 
         Returns:
             A dataframe containing the points as rows with columns corresponding to the
@@ -343,14 +364,14 @@ class SubspaceContinuous(SerialMixin):
         """
         full_factorial = self.full_factorial
 
-        if len(full_factorial) < n_points:
+        if len(full_factorial) < batch_size:
             raise ValueError(
-                f"You are trying to sample {n_points} points from the full factorial of"
-                f" the continuous space bounds, but it has only {len(full_factorial)} "
-                f"points."
+                f"You are trying to sample {batch_size} points from the full factorial "
+                f"of the continuous space bounds, but it has only "
+                f"{len(full_factorial)} points."
             )
 
-        return full_factorial.sample(n=n_points).reset_index(drop=True)
+        return full_factorial.sample(n=batch_size).reset_index(drop=True)
 
     @property
     def full_factorial(self) -> pd.DataFrame:

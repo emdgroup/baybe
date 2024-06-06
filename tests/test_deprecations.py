@@ -11,6 +11,7 @@ from baybe.exceptions import DeprecationError
 from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
+from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
@@ -21,6 +22,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
+from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpace
 from baybe.strategies import (
     SequentialStrategy,
@@ -207,3 +209,17 @@ def test_deprecated_sequentialgreedyrecommender_class():
     """Using the deprecated `SequentialGreedyRecommender` class raises a warning."""
     with pytest.warns(DeprecationWarning):
         SequentialGreedyRecommender()
+
+
+def test_deprecated_samples_random():
+    """Using the deprecated `samples_random` method raises a warning."""
+    with pytest.warns(DeprecationWarning):
+        parameters = [NumericalContinuousParameter("x", (0, 1))]
+        SubspaceContinuous(parameters).samples_random(n_points=1)
+
+
+def test_deprecated_samples_full_factorial():
+    """Using the deprecated `samples_full_factorial` method raises a warning."""
+    with pytest.warns(DeprecationWarning):
+        parameters = [NumericalContinuousParameter("x", (0, 1))]
+        SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
