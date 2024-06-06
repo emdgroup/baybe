@@ -22,3 +22,5 @@
   Documentation and general feedback
 - Rim Rihana (Merck KGaA, Darmstadt, Germany):
   Human readable output for search spaces
+- Di Jin (Merck Life Science KGaA, Darmstadt, Germany)
+  Cardinality constraints
