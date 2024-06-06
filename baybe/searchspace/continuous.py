@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Container, Sequence
+from itertools import chain
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -28,7 +29,7 @@ from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
-    
+
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
 
 
@@ -308,7 +309,7 @@ class SubspaceContinuous(SerialMixin):
 
         while len(samples) < batch_size:
             # Randomly set some parameters inactive
-            inactive_params_sample = self._sample_inactive_params(1)[0]
+            inactive_params_sample = self._sample_inactive_parameters(1)[0]
 
             # Shrink the bounds to interval (0,0) for inactive parameters
             if inactive_params_sample:
@@ -335,22 +336,13 @@ class SubspaceContinuous(SerialMixin):
 
         return pd.concat(samples)
 
-    def _sample_inactive_params(self, n_points: int = 1) -> list[list[str]]:
+    def _sample_inactive_parameters(self, batch_size: int = 1) -> list[list[str]]:
         """Sample inactive parameters according to the given cardinality constraints."""
-        inactive_params_samples = []
-        for _ in range(n_points):
-            inactive_params_samples.append(
-                list(
-                    set().union(
-                        *(
-                            con.sample_inactive_parameters(1)[0]
-                            for con in self.constraints_cardinality
-                        )
-                    )
-                )
-            )
-
-        return inactive_params_samples
+        inactives_per_constraint = [
+            con.sample_inactive_parameters(batch_size)
+            for con in self.constraints_cardinality
+        ]
+        return [list(chain(*x)) for x in zip(*inactives_per_constraint)]
 
     def _get_bounds_with_inactive_params(
         self, inactive_params: Container[str]
