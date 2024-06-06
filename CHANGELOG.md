@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validators for `Campaign` attributes
 _ `_optional` subpackage for managing optional dependencies
 - Acquisition function for active learning: `qNIPV`
+- `ContinuousCardinalityConstraint` class and corresponding uniform sampling mechanism
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
