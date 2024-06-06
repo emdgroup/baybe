@@ -24,6 +24,7 @@ __all__ = [
     "SubSelectionCondition",
     "ThresholdCondition",
     # --- Continuous constraints ---#
+    "ContinuousCardinalityConstraint",
     "ContinuousLinearEqualityConstraint",
     "ContinuousLinearInequalityConstraint",
     # --- Discrete constraints ---#
