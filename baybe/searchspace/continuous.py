@@ -28,6 +28,8 @@ from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
+    
+_MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
 
 
 @define
@@ -283,54 +285,55 @@ class SubspaceContinuous(SerialMixin):
 
     def _sample_with_cardinality_constraints(self, batch_size: int) -> pd.DataFrame:
         """Create random samples from a polytope with cardinality constraints."""
-        assert (
-            len(self.constraints_cardinality) != 0
-        ), "No need to call this method if there is no cardinality constraint."
+        if not self.constraints_cardinality:
+            raise RuntimeError(
+                f"This method should not be called without any constraints of type "
+                f"'{ContinuousCardinalityConstraint.__name__}' in place. "
+                f"Use '{SubspaceContinuous._sample_from_bounds.__name__}' "
+                f"or '{SubspaceContinuous._sample_from_polytope.__name__}' instead."
+            )
 
-        points_all = pd.DataFrame(columns=[param.name for param in self.parameters])
-        i_ite, N_ITE_THRES = 0, 1e5  # limit of iteration
+        # List to store the created samples
+        samples: list[pd.DataFrame] = []
 
-        while points_all.shape[0] < batch_size:
-            # sample inactive parameters
+        # Counter for failed sampling attempts
+        n_fails = 0
+
+        # Helper subspace to be used with explicitly inactivated parameters
+        subspace_without_cardinality_constraint = SubspaceContinuous(
+            parameters=self.parameters,
+            constraints_lin_eq=self.constraints_lin_eq,
+            constraints_lin_ineq=self.constraints_lin_ineq,
+        )
+
+        while len(samples) < batch_size:
+            # Randomly set some parameters inactive
             inactive_params_sample = self._sample_inactive_params(1)[0]
 
-            # subspace excluding the cardinality constraints
-            subspace_cardinality_cleaned = SubspaceContinuous(
-                parameters=self.parameters,
-                constraints_lin_eq=self.constraints_lin_eq,
-                constraints_lin_ineq=self.constraints_lin_ineq,
-            )
-
-            # generate samples
-            if len(inactive_params_sample):
-                # set each inactive parameter to zero by changing bounds to [0, 0]
-                bounds_cleaned = self._get_bounds_with_inactive_params(
-                    inactive_params_sample
+            # Shrink the bounds to interval (0,0) for inactive parameters
+            if inactive_params_sample:
+                bounds = (
+                    self._get_bounds_with_inactive_params(inactive_params_sample)
+                    if inactive_params_sample
+                    else None
                 )
 
-                # sample from the subspace, in which the cardinality constraints are
-                # excluded and bounds(inactive parameters) = (0, 0)
                 try:
-                    points_sample = subspace_cardinality_cleaned.sample(
-                        1, bounds_cleaned
-                    )
-                    points_all = pd.concat((points_all, points_sample), axis=0)
+                    sample = subspace_without_cardinality_constraint.sample(1, bounds)
+                    samples.append(sample)
                 except Exception:
-                    pass
+                    n_fails += 1
 
-            else:
-                sample = subspace_cardinality_cleaned.sample(1)
-                points_all = pd.concat((points_all, sample), axis=0)
+            # Avoid infinite loop
+            if n_fails >= _MAX_CARDINALITY_SAMPLING_ATTEMPTS:
+                raise RuntimeError(
+                    f"The number of failed sampling attempts has exceeded the limit "
+                    f"of {_MAX_CARDINALITY_SAMPLING_ATTEMPTS}. "
+                    f"It appears that the feasible region of the search space is very "
+                    f"small. Please review the search space constraints."
+                )
 
-            # avoid infinite loop
-            i_ite += 1
-            assert i_ite < N_ITE_THRES, (
-                "We are exceeding the limit, yet we have not drawn enough samples. It "
-                "appears that the feasibility area is very small. Please review the "
-                "constraints."
-            )
-
-        return points_all
+        return pd.concat(samples)
 
     def _sample_inactive_params(self, n_points: int = 1) -> list[list[str]]:
         """Sample inactive parameters according to the given cardinality constraints."""
