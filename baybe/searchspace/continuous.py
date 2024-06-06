@@ -368,7 +368,7 @@ class SubspaceContinuous(SerialMixin):
                 list(
                     set().union(
                         *(
-                            con.sample_inactive_params(1)[0]
+                            con.sample_inactive_parameters(1)[0]
                             for con in self.constraints_cardinality
                         )
                     )

@@ -80,41 +80,39 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
                 "0<= cardinality <= len(parameters)."
             )
 
-    def sample_inactive_params(self, n_points: int = 1) -> list[list[str]]:
+    def sample_inactive_parameters(self, batch_size: int = 1) -> list[list[str]]:
         """Generate inactive parameters based on cardinality constraints.
 
         Args:
-            n_points: Number of points that should be sampled.
+            batch_size: Number of parameter configurations that should be sampled.
 
         Returns:
             a list of samples with each sample being a collection of inactive
             parameters names.
         """
         # combinatorial for each cardinality
-        n_comb_at_all_cardinality = [
+        n_configurations_per_cardinality = [
             math.comb(len(self.parameters), n)
             for n in range(self.min_cardinality, self.max_cardinality + 1)
         ]
 
         # probability of each cardinality
-        p_at_all_cardinality = n_comb_at_all_cardinality / np.sum(
-            n_comb_at_all_cardinality
+        probabilities = n_configurations_per_cardinality / np.sum(
+            n_configurations_per_cardinality
         )
 
         # randomly generate #(inactive parameters)
-        n_inactive_params_samples = (
-            len(self.parameters)
-            - np.random.choice(
-                np.arange(self.min_cardinality, self.max_cardinality + 1),
-                n_points,
-                p=p_at_all_cardinality,
-            )
-        ).tolist()
+        n_active_params = np.random.choice(
+            np.arange(self.min_cardinality, self.max_cardinality + 1),
+            batch_size,
+            p=probabilities,
+        )
+        n_inactive_params = len(self.parameters) - n_active_params
 
         # sample inactive parameters
         inactive_params = [
-            np.random.choice(self.parameters, n_inactive, False).tolist()
-            for n_inactive in n_inactive_params_samples
+            np.random.choice(self.parameters, n_inactive, replace=False).tolist()
+            for n_inactive in n_inactive_params
         ]
 
         return inactive_params
