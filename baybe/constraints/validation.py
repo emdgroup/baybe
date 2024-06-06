@@ -1,6 +1,7 @@
 """Validation functionality for constraints."""
 
 from collections.abc import Collection
+from itertools import combinations
 
 from baybe.constraints.base import Constraint
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
@@ -28,7 +29,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
         )
 
     # Any cardinality constraints share the same parameter.
-    validate_continuous_cardinality_constraints(
+    validate_cardinality_constraints_are_nonoverlapping(
         [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
     )
 
@@ -63,9 +64,9 @@ def validate_constraints(  # noqa: DOC101, DOC103
             )
 
 
-def validate_continuous_cardinality_constraints(
+def validate_cardinality_constraints_are_nonoverlapping(
     constraints: Collection[ContinuousCardinalityConstraint]
-):
+) -> None:
     """Validate continuous cardinality constraints.
 
     Args:
@@ -74,21 +75,10 @@ def validate_continuous_cardinality_constraints(
     Raises:
         ValueError: If two cardinality constraints share the same parameter.
     """
-    assert (
-        len(
-            [
-                con
-                for con in constraints
-                if not isinstance(con, ContinuousCardinalityConstraint)
-            ]
-        )
-        == 0
-    ), "All constraints must be cardinality constraint."
-
-    param_all = []
-    for con in constraints:
-        if len(set(param_all).intersection(set(con.parameters))) != 0:
+    for c1, c2 in combinations(constraints, 2):
+        if (s1 := set(c1.parameters)).intersection(s2 := set(c2.parameters)):
             raise ValueError(
-                "Cardinality constraints cannot share the same parameters."
+                f"Constraints of type `{ContinuousCardinalityConstraint.__name__}` "
+                f"cannot share the same parameters. Found the following overlapping "
+                f"parameter sets: {s1}, {s2}."
             )
-        param_all.extend(con.parameters)

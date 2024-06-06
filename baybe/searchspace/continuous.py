@@ -15,7 +15,9 @@ from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
-from baybe.constraints.validation import validate_continuous_cardinality_constraints
+from baybe.constraints.validation import (
+    validate_cardinality_constraints_are_nonoverlapping,
+)
 from baybe.exceptions import SamplingFailedError
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
@@ -57,7 +59,9 @@ class SubspaceContinuous(SerialMixin):
     constraints_cardinality: tuple[ContinuousCardinalityConstraint, ...] = field(
         converter=to_tuple,
         factory=tuple,
-        validator=lambda _, __, x: validate_continuous_cardinality_constraints(x),
+        validator=lambda _, __, x: validate_cardinality_constraints_are_nonoverlapping(
+            x
+        ),
     )
     """List of cardinality constraints."""
 
