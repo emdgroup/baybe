@@ -107,7 +107,7 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
             - np.random.choice(
                 np.arange(self.min_cardinality, self.max_cardinality + 1),
                 n_points,
-                p_at_all_cardinality.tolist(),
+                p=p_at_all_cardinality,
             )
         ).tolist()
 
