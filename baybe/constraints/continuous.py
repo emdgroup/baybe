@@ -2,13 +2,11 @@
 
 
 import math
-from collections.abc import Sequence
 
 import numpy as np
 from attrs import define, field, validators
 
 from baybe.constraints.base import ContinuousConstraint, ContinuousLinearConstraint
-from baybe.parameters import NumericalContinuousParameter
 
 
 @define
@@ -81,12 +79,6 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
                 "No cardinality constraint is required when "
                 "0<= cardinality <= len(parameters)."
             )
-
-    def to_botorch(  # noqa: D102
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
-    ) -> list[tuple[callable, bool]]:
-        # See base class.
-        pass
 
     def sample_inactive_params(self, n_points: int = 1) -> list[list[str]]:
         """Generate inactive parameters based on cardinality constraints.

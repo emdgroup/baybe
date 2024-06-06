@@ -116,20 +116,6 @@ class ContinuousConstraint(Constraint, ABC):
     eval_during_modeling: ClassVar[bool] = True
     # See base class.
 
-    @abstractmethod
-    def to_botorch(
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
-    ):
-        """Cast the constraint in a format required by botorch.
-
-        Used in calling ``optimize_acqf_*`` functions, for details see
-        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
-
-        Args:
-            parameters: The parameter objects of the continuous space.
-            idx_offset: Offset to the provided parameter indices.
-        """
-
 
 @define
 class ContinuousLinearConstraint(ContinuousConstraint):
@@ -167,10 +153,21 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         """Return equal weight coefficients as default."""
         return [1.0] * len(self.parameters)
 
-    def to_botorch(  # noqa: D102
+    def to_botorch(
         self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
     ) -> tuple[Tensor, Tensor, float]:
-        # See base class.
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ``optimize_acqf_*`` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            idx_offset: Offset to the provided parameter indices.
+
+        Returns:
+            The tuple required by botorch.
+        """
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
