@@ -5,8 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `Surrogate` base class now exposes a `to_botorch` method
+
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
+- `GaussianProcessSurrogate` models are no longer wrapped when cast to BoTorch
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
