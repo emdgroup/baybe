@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Collection, Container, Sequence
 from typing import TYPE_CHECKING, Any, cast
 
@@ -18,7 +17,6 @@ from baybe.constraints import (
 from baybe.constraints.validation import (
     validate_cardinality_constraints_are_nonoverlapping,
 )
-from baybe.exceptions import SamplingFailedError
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
@@ -317,12 +315,9 @@ class SubspaceContinuous(SerialMixin):
                         1, bounds_cleaned
                     )
                     points_all = pd.concat((points_all, points_sample), axis=0)
-                except SamplingFailedError:
-                    warnings.warn(
-                        f"No samples can be drawn when inactive parameters ="
-                        f" {inactive_params_sample}. Try other candidates of "
-                        f"inactive parameters."
-                    )
+                except Exception:
+                    pass
+
             else:
                 sample = subspace_cardinality_cleaned.sample(1)
                 points_all = pd.concat((points_all, sample), axis=0)
