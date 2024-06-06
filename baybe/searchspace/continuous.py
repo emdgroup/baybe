@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Collection, Container, Sequence
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
@@ -212,7 +212,7 @@ class SubspaceContinuous(SerialMixin):
         return comp_rep
 
     def samples_random(
-        self, n_points: int = 1, bounds: Optional[np.ndarray] = None
+        self, n_points: int = 1, bounds: np.ndarray | None = None
     ) -> pd.DataFrame:
         """Get random point samples from the continuous space.
 
