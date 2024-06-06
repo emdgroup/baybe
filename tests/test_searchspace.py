@@ -226,29 +226,23 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
     )
 
 
-def test_invalid_continuous_cardinality_constraints_combos():
-    """Testing invalid combinations of cardinality constraints.
-
-    Any cardinality constraints share the same parameters.
-    """
+def test_cardinality_constraints_with_overlapping_parameters():
+    """Creating cardinality constraints with overlapping parameters raises an error."""
     parameters = [
-        NumericalContinuousParameter("c1", (0, 2)),
-        NumericalContinuousParameter("c2", (-1, 1)),
-        NumericalContinuousParameter("c3", (-1, 1)),
-        NumericalContinuousParameter("c4", (-1, 1)),
+        NumericalContinuousParameter("c1", (0, 1)),
+        NumericalContinuousParameter("c2", (0, 1)),
+        NumericalContinuousParameter("c3", (0, 1)),
     ]
-
-    # Attempting cardinality constraints sharing the same parameter
-    with pytest.raises(ValueError):
-        SearchSpace.from_product(
+    with pytest.raises(ValueError, match="cannot share the same parameters"):
+        SubspaceContinuous(
             parameters=parameters,
-            constraints=[
+            constraints_cardinality=[
                 ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2", "c3"],
+                    parameters=["c1", "c2"],
                     max_cardinality=1,
                 ),
                 ContinuousCardinalityConstraint(
-                    parameters=["c3", "c4"],
+                    parameters=["c2", "c3"],
                     max_cardinality=1,
                 ),
             ],

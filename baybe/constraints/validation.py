@@ -89,6 +89,6 @@ def validate_continuous_cardinality_constraints(
     for con in constraints:
         if len(set(param_all).intersection(set(con.parameters))) != 0:
             raise ValueError(
-                "Cardinality constraints cannot share the same " "parameter."
+                "Cardinality constraints cannot share the same parameters."
             )
         param_all.extend(con.parameters)
