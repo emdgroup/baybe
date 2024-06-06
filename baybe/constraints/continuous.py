@@ -80,7 +80,7 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
                 "0<= cardinality <= len(parameters)."
             )
 
-    def sample_inactive_parameters(self, batch_size: int = 1) -> list[list[str]]:
+    def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Generate inactive parameters based on cardinality constraints.
 
         Args:
@@ -111,7 +111,7 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
 
         # sample inactive parameters
         inactive_params = [
-            np.random.choice(self.parameters, n_inactive, replace=False).tolist()
+            set(np.random.choice(self.parameters, n_inactive, replace=False))
             for n_inactive in n_inactive_params
         ]
 

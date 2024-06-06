@@ -320,13 +320,13 @@ class SubspaceContinuous(SerialMixin):
 
         return pd.concat(samples)
 
-    def _sample_inactive_parameters(self, batch_size: int = 1) -> list[list[str]]:
+    def _sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample inactive parameters according to the given cardinality constraints."""
         inactives_per_constraint = [
             con.sample_inactive_parameters(batch_size)
             for con in self.constraints_cardinality
         ]
-        return [list(chain(*x)) for x in zip(*inactives_per_constraint)]
+        return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
         """Get random point samples from the full factorial of the continuous space.
