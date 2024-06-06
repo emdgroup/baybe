@@ -5,9 +5,9 @@ import pandas as pd
 import pytest
 
 from baybe.constraints import (
+    ContinuousCardinalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
-    ContinuousCardinalityConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -250,6 +250,6 @@ def test_invalid_continuous_cardinality_constraints_combos():
                 ContinuousCardinalityConstraint(
                     parameters=["c3", "c4"],
                     cardinality_up=1,
-                )
-            ]
+                ),
+            ],
         )

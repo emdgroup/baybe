@@ -1,10 +1,11 @@
 """Continuous constraints."""
 
 
-from attrs import define, field, validators
-from collections.abc import Sequence
 import math
+from collections.abc import Sequence
+
 import numpy as np
+from attrs import define, field, validators
 
 from baybe.constraints.base import ContinuousConstraint, ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter

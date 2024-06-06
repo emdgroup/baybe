@@ -3,9 +3,8 @@
 from collections.abc import Collection
 
 from baybe.constraints.base import Constraint
-from baybe.constraints.discrete import DiscreteDependenciesConstraint
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
-from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
+from baybe.constraints.discrete import DiscreteDependenciesConstraint
 from baybe.parameters.base import Parameter
 
 

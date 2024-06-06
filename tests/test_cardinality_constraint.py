@@ -2,14 +2,14 @@
 
 import numpy as np
 
-from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.searchspace.core import SearchSpace
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
+from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.core import SearchSpace
 
 
 def get_searchspace(n_param: int, min_nonzeros: int, max_nonzeros: int) -> SearchSpace:

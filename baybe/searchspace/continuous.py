@@ -2,29 +2,29 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Collection, Container, Sequence
 from typing import TYPE_CHECKING, Any, Optional, cast
 
 import numpy as np
 import pandas as pd
 from attr import define, field
-import warnings
 
 from baybe.constraints import (
+    ContinuousCardinalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
-    ContinuousCardinalityConstraint,
 )
+from baybe.constraints.validation import validate_continuous_cardinality_constraints
+from baybe.exceptions import SamplingFailedError
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
-from baybe.constraints.validation import validate_continuous_cardinality_constraints
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
-from baybe.exceptions import SamplingFailedError
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
