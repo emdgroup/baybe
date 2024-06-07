@@ -11,11 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   convenience constructor
 - Validators for `Campaign` attributes
 _ `_optional` subpackage for managing optional dependencies
+- Acquisition function for active learning: `qNIPV`
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
 - `GaussianProcessSurrogate` models are no longer wrapped when cast to BoTorch
 - Restrict upper versions of main dependencies, motivated by major `numpy` release
+- Sampling methods in `qNIPV` and `SequentialGreedyRecommender` are now specified via
+  enum `SamplingMethod
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
