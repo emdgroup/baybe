@@ -138,7 +138,7 @@ def main():
     # recommend next experiments
     # TODO: use BayBE recommender and add widgets for recommender selection
     acqf = qExpectedImprovement().to_botorch(
-        surrogate_model, pd.DataFrame(train_x), pd.DataFrame(train_y)
+        surrogate_model, searchspace, pd.DataFrame(train_x), pd.DataFrame(train_y)
     )
     recommendatations = optimize_acqf_discrete(
         acqf, q=n_recommendations, choices=test_x.unsqueeze(-1)

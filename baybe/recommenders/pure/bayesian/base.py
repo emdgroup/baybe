@@ -58,7 +58,7 @@ class BayesianRecommender(PureRecommender, ABC):
         train_y = objective.transform(measurements)
         self.surrogate_model._fit(searchspace, *to_tensor(train_x, train_y))
         self._botorch_acqf = self.acquisition_function.to_botorch(
-            self.surrogate_model, train_x, train_y
+            self.surrogate_model, searchspace, train_x, train_y
         )
 
     def recommend(  # noqa: D102

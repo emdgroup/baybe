@@ -3,6 +3,7 @@
 
 import pytest
 
+from baybe.acquisition import qNIPV
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import (
@@ -65,9 +66,17 @@ valid_continuous_recommenders = [
     if cls.compatibility
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
+
+valid_active_learning_acquisition_functions = [
+    qNIPV(sampling_fraction=0.2, sampling_method="Random"),
+    qNIPV(sampling_fraction=0.2, sampling_method="FPS"),
+    qNIPV(sampling_fraction=1.0, sampling_method="FPS"),
+    qNIPV(sampling_n_points=1, sampling_method="Random"),
+    qNIPV(sampling_n_points=1, sampling_method="FPS"),
+]
 valid_mc_acquisition_functions = [
     a() for a in get_subclasses(AcquisitionFunction) if a.is_mc
-]
+] + valid_active_learning_acquisition_functions
 valid_nonmc_acquisition_functions = [
     a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc
 ]
@@ -86,10 +95,10 @@ valid_hybrid_recommenders = [
 # List of BotorchRecommenders with different sampling strategies.
 sampling_strategies = [
     # Valid combinations
-    ("None", 0.0),
-    ("None", 1.0),
-    ("Farthest", 0.2),
-    ("Farthest", 0.5),
+    (None, 0.0),
+    (None, 1.0),
+    ("FPS", 0.2),
+    ("FPS", 0.5),
     ("Random", 0.2),
     ("Random", 0.5),
 ]
