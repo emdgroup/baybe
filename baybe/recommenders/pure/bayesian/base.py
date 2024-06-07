@@ -35,7 +35,7 @@ class BayesianRecommender(PureRecommender, ABC):
     _botorch_acqf = field(default=None, init=False)
     """The current acquisition function."""
 
-    acquisition_function_cls: bool = field(default=None, kw_only=True)
+    acquisition_function_cls: str | None = field(default=None, kw_only=True)
     "Deprecated! Raises an error when used."
 
     @acquisition_function_cls.validator
