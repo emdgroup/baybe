@@ -17,7 +17,7 @@ from baybe.acquisition import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from baybe.utils.sampling_algorithms import SamplingMethod
+from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
 from ..hypothesis_strategies.basic import finite_floats
 
@@ -37,7 +37,7 @@ acquisition_functions = st.one_of(
     st.builds(qLogNoisyExpectedImprovement),
     st.builds(
         qNegIntegratedPosteriorVariance,
-        sampling_method=st.sampled_from(SamplingMethod),
+        sampling_method=st.sampled_from(DiscreteSamplingMethod),
         sampling_fraction=finite_floats(min_value=0.0, max_value=1.0, exclude_min=True),
         sampling_n_points=st.one_of(st.none(), st.integers(min_value=1)),
     ),

@@ -1,8 +1,9 @@
 """A collection of point sampling algorithms."""
-
+from enum import Enum
 from typing import Literal
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import pairwise_distances
 
 
@@ -46,6 +47,11 @@ def farthest_point_sampling(
         )
         if n_samples == 1:
             return np.random.choice(selected_point_indices, 1).tolist()
+        elif n_samples < 1:
+            raise ValueError(
+                f"Farthest point sampling must be done with >= 1 samples, but "
+                f"n_samples={n_samples} was given."
+            )
     else:
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
@@ -70,3 +76,46 @@ def farthest_point_sampling(
         remaining_point_indices.remove(selected_point_index)
 
     return selected_point_indices
+
+
+class DiscreteSamplingMethod(Enum):
+    """Available discrete sampling methods."""
+
+    Random = "Random"
+    """Random Sampling."""
+
+    FPS = "FPS"
+    """Farthest point sampling."""
+
+
+def sample_numerical_df(
+    df: pd.DataFrame, n_points: int, method: DiscreteSamplingMethod
+) -> pd.DataFrame:
+    """Sample data points from a data frame.
+
+    Args:
+        df: Data frame with purely numerical entries.
+        n_points: Number of points to sample.
+        method: Sampling method.
+
+    Returns:
+        The sampled points.
+
+    Raises:
+        TypeError: If df has non-numerical content.
+        ValueError: When an invalid sampling method was provided.
+    """
+    if any(df[col].dtype.kind not in "iufb" for col in df.columns):
+        raise TypeError(
+            "'sample_numerical_df' only supports purely numerical data frames."
+        )
+
+    if method is DiscreteSamplingMethod.FPS:
+        ilocs = farthest_point_sampling(df.values, n_points)
+        sampled = df.iloc[ilocs]
+    elif method is DiscreteSamplingMethod.Random:
+        sampled = df.sample(n_points)
+    else:
+        raise ValueError(f"Unrecognized sampling method: '{method}'.")
+
+    return sampled

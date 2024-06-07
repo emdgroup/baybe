@@ -11,7 +11,7 @@ from attrs.validators import ge, gt, instance_of, le
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
 from baybe.utils.sampling_algorithms import (
-    SamplingMethod,
+    DiscreteSamplingMethod,
     sample_numerical_df,
 )
 
@@ -43,8 +43,8 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
     )
     """Number of data points that will be sampled for integrating the posterior."""
 
-    sampling_method: SamplingMethod = field(
-        converter=SamplingMethod, default=SamplingMethod.Random
+    sampling_method: DiscreteSamplingMethod = field(
+        converter=DiscreteSamplingMethod, default=DiscreteSamplingMethod.Random
     )
     """Strategy used for sampling data for integrating the posterior."""
 
