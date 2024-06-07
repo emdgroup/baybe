@@ -17,7 +17,8 @@ def validate_constraints(  # noqa: DOC101, DOC103
     Raises:
         ValueError: If there is more than one
             :class:`baybe.constraints.discrete.DiscreteDependenciesConstraint` declared.
-        ValueError: If two continuous cardinality constraints share the same parameter.
+        ValueError: If any two continuous cardinality constraints have an overlapping
+            parameter set.
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.
@@ -28,12 +29,10 @@ def validate_constraints(  # noqa: DOC101, DOC103
             f"Please specify all dependencies in one single constraint."
         )
 
-    # Any cardinality constraints share the same parameter.
     validate_cardinality_constraints_are_nonoverlapping(
         [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
     )
 
-    # Validate parameter/constraint combination.
     param_names_all = [p.name for p in parameters]
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
     param_names_continuous = [p.name for p in parameters if p.is_continuous]
@@ -67,13 +66,14 @@ def validate_constraints(  # noqa: DOC101, DOC103
 def validate_cardinality_constraints_are_nonoverlapping(
     constraints: Collection[ContinuousCardinalityConstraint]
 ) -> None:
-    """Validate continuous cardinality constraints.
+    """Validate that cardinality constraints are non-overlapping.
 
     Args:
-        constraints: A list of continuous cardinality constraints.
+        constraints: A collection of continuous cardinality constraints.
 
     Raises:
-        ValueError: If two cardinality constraints share the same parameter.
+        ValueError: If any two continuous cardinality constraints have an overlapping
+            parameter set.
     """
     for c1, c2 in combinations(constraints, 2):
         if (s1 := set(c1.parameters)).intersection(s2 := set(c2.parameters)):

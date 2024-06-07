@@ -247,14 +247,14 @@ class SubspaceContinuous(SerialMixin):
         return self.sample(n_points)
 
     def sample(self, batch_size: int = 1) -> pd.DataFrame:
-        """Create random parameter configurations from the continuous space.
+        """Draw random parameter configurations from the continuous space.
 
         Args:
-            batch_size: Number of parameter configurations that should be sampled.
+            batch_size: The number of parameter configurations to be sampled.
 
         Returns:
-            A dataframe containing the points as rows with columns corresponding to the
-            parameter names.
+            A dataframe containing the parameter configurations as rows with columns
+            corresponding to the parameter names.
         """
         if not self.parameters:
             return pd.DataFrame()
@@ -272,7 +272,7 @@ class SubspaceContinuous(SerialMixin):
         return self._sample_with_cardinality_constraints(batch_size)
 
     def _sample_from_bounds(self, batch_size: int, bounds: np.ndarray) -> pd.DataFrame:
-        """Create uniform random samples over a hyperrectangle-shaped space."""
+        """Draw uniform random samples over a hyperrectangle-shaped space."""
         points = np.random.uniform(
             low=bounds[0, :], high=bounds[1, :], size=(batch_size, len(self.parameters))
         )
@@ -282,7 +282,7 @@ class SubspaceContinuous(SerialMixin):
     def _sample_from_polytope(
         self, batch_size: int, bounds: np.ndarray
     ) -> pd.DataFrame:
-        """Create uniform random samples from a polytope."""
+        """Draw uniform random samples from a polytope."""
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
@@ -299,7 +299,7 @@ class SubspaceContinuous(SerialMixin):
         return pd.DataFrame(points, columns=self.param_names)
 
     def _sample_with_cardinality_constraints(self, batch_size: int) -> pd.DataFrame:
-        """Create random samples from a polytope with cardinality constraints."""
+        """Draw random samples from a polytope with cardinality constraints."""
         if not self.constraints_cardinality:
             raise RuntimeError(
                 f"This method should not be called without any constraints of type "
@@ -323,6 +323,7 @@ class SubspaceContinuous(SerialMixin):
                 inactive_params_sample
             )
 
+            # Sample from the reduced space
             try:
                 sample = subspace_without_cardinality_constraint.sample(1)
                 samples.append(sample)
@@ -338,6 +339,7 @@ class SubspaceContinuous(SerialMixin):
                     f"small. Please review the search space constraints."
                 )
 
+        # Combine the samples and fill in inactive parameters
         parameter_names = [p.name for p in self.parameters]
         return pd.concat(samples).reindex(columns=parameter_names).fillna(0.0)
 
@@ -360,14 +362,14 @@ class SubspaceContinuous(SerialMixin):
         return self.sample_from_full_factorial(n_points)
 
     def sample_from_full_factorial(self, batch_size: int = 1) -> pd.DataFrame:
-        """Get random point samples from the full factorial of the continuous space.
+        """Draw parameter configurations from the full factorial of the space.
 
         Args:
-            batch_size: Number of points that should be sampled.
+            batch_size: The number of parameter configurations to be sampled.
 
         Returns:
-            A dataframe containing the points as rows with columns corresponding to the
-            parameter names.
+            A dataframe containing the parameter configurations as rows with columns
+            corresponding to the parameter names.
 
         Raises:
             ValueError: If there are not enough points to sample from.
