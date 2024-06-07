@@ -141,26 +141,3 @@ class NumericalContinuousParameter(ContinuousParameter):
             Upper_Bound=self.bounds.upper,
         )
         return param_dict
-
-
-@define(frozen=True, slots=False)
-class _FixedNumericalContinuousParameter(ContinuousParameter):
-    """Parameter class for fixed numerical parameters."""
-
-    is_numeric: ClassVar[bool] = True
-    # See base class.
-
-    value: float = field(converter=float)
-    """The fixed value of the parameter."""
-
-    @property
-    def bounds(self) -> Interval:
-        """The value of the parameter as a degenerate interval."""
-        return Interval(self.value, self.value)
-
-    def is_in_range(self, item: float) -> bool:
-        # See base class.
-        return item == self.value
-
-    def summary(self) -> dict:
-        raise NotImplementedError()

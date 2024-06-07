@@ -21,7 +21,6 @@ from baybe.constraints.validation import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
-from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import validate_parameter_names
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -201,6 +200,25 @@ class SubspaceContinuous(SerialMixin):
             return np.empty((2, 0), dtype=DTypeFloatNumpy)
         return np.stack([p.bounds.to_ndarray() for p in self.parameters]).T
 
+    def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
+        """Create a copy of the subspace with certain parameters removed.
+
+        Args:
+            parameter_names: The names of the parameter to be removed.
+
+        Returns:
+            The reduced subspace.
+        """
+        return SubspaceContinuous(
+            parameters=[p for p in self.parameters if p.name not in parameter_names],
+            constraints_lin_eq=[
+                c._drop_parameters(parameter_names) for c in self.constraints_lin_eq
+            ],
+            constraints_lin_ineq=[
+                c._drop_parameters(parameter_names) for c in self.constraints_lin_ineq
+            ],
+        )
+
     def transform(
         self,
         data: pd.DataFrame,
@@ -300,18 +318,9 @@ class SubspaceContinuous(SerialMixin):
             # Randomly set some parameters inactive
             inactive_params_sample = self._sample_inactive_parameters(1)[0]
 
-            # Fix the inactive parameters to zero
-            parameters = [
-                p
-                if p.name not in inactive_params_sample
-                else _FixedNumericalContinuousParameter(name=p.name, value=0.0)
-                for p in self.parameters
-            ]
-            # Helper subspace to be used with explicitly inactivated parameters
-            subspace_without_cardinality_constraint = SubspaceContinuous(
-                parameters=parameters,
-                constraints_lin_eq=self.constraints_lin_eq,
-                constraints_lin_ineq=self.constraints_lin_ineq,
+            # Remove the inactive parameters from the search space
+            subspace_without_cardinality_constraint = self._drop_parameters(
+                inactive_params_sample
             )
 
             try:
@@ -329,7 +338,8 @@ class SubspaceContinuous(SerialMixin):
                     f"small. Please review the search space constraints."
                 )
 
-        return pd.concat(samples)
+        parameter_names = [p.name for p in self.parameters]
+        return pd.concat(samples).reindex(columns=parameter_names).fillna(0.0)
 
     def _sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample inactive parameters according to the given cardinality constraints."""

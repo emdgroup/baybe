@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
@@ -152,6 +152,25 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     def _default_coefficients(self):
         """Return equal weight coefficients as default."""
         return [1.0] * len(self.parameters)
+
+    def _drop_parameters(
+        self, parameter_names: Collection[str]
+    ) -> ContinuousLinearConstraint:
+        """Create a copy of the constraint with certain parameters removed.
+
+        Args:
+            parameter_names: The names of the parameter to be removed.
+
+        Returns:
+            The reduced constraint.
+        """
+        parameters = [p for p in self.parameters if p not in parameter_names]
+        coefficients = [
+            c
+            for p, c in zip(self.parameters, self.coefficients)
+            if p not in parameter_names
+        ]
+        return ContinuousLinearConstraint(parameters, coefficients, self.rhs)
 
     def to_botorch(
         self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
