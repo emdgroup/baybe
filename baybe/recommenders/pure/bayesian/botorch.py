@@ -1,5 +1,6 @@
 """Botorch recommender."""
 
+import warnings
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -37,9 +38,12 @@ class BotorchRecommender(BayesianRecommender):
     # See base class.
 
     # Object variables
-    sequential: bool = field(default=False)
+    sequential: bool | None = field(default=None)
     """Flag defining whether to apply sequential greedy or batch optimization.
-    Only relevant for continuous search spaces."""
+    Only relevant for continuous search spaces, where it defaults to ``False``.
+    In discrete/hybrid spaces, sequential greedy optimization is applied automatically,
+    meaning that the flag is ignored.
+    """
 
     hybrid_sampler: str = field(
         validator=validators.in_(["None", "Farthest", "Random"]), default="None"
@@ -88,6 +92,15 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             computational representation.
         """
+        if self.sequential is False:  # <-- explicit check against ``False`` required!
+            warnings.warn(
+                f"The 'sequential' flag has been set to `False`, but sequential "
+                f"greedy optimization automatically applied to search spaces "
+                f"of type '{subspace_discrete.to_searchspace().type}', hence the "
+                f"flag is ignored. To disable this warning, either use "
+                f"`sequential=True` or do not set any value."
+            )
+
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
             raise NoMCAcquisitionFunctionError(
@@ -163,7 +176,7 @@ class BotorchRecommender(BayesianRecommender):
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-            sequential=self.sequential,
+            sequential=self.sequential or False,
         )
 
         # Return optimized points as dataframe
@@ -198,6 +211,15 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
+        if self.sequential is False:  # <-- explicit check against ``False`` required!
+            warnings.warn(
+                f"The 'sequential' flag has been set to `False`, but sequential "
+                f"greedy optimization automatically applied to search spaces "
+                f"of type '{searchspace.type}', hence the "
+                f"flag is ignored. To disable this warning, either use "
+                f"`sequential=True` or do not set any value."
+            )
+
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
             raise NoMCAcquisitionFunctionError(
