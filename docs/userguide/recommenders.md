@@ -31,8 +31,11 @@ class, offering an array of possibilities with internal surrogate models and sup
 for various acquisition functions.
 
 * The **[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)**
-  is a powerful recommender based on BoTorch's optimization engine, which can be applied
-  to all kinds of search spaces. However, it is important to note that the recommender
+  is a powerful recommender based on BoTorch's optimization engine that can be applied
+  to all kinds of search spaces. In continuous spaces, its `sequential` flag allows to
+  chose between greedy sequential optimization and batch optimization as the underlying
+  point generation mode. In discrete/hybrid spaces, sequential greedy selection is the
+  only available mode and is thus activated automatically. Note that the recommender
   performs a brute-force search when applied to hybrid search spaces, as it optimizes
   the continuous part of the space while exhaustively searching choices in the discrete
   subspace. You can customize this behavior to only sample a certain percentage of the
