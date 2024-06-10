@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
+- `SubspaceDiscrete.to_searchspace` and `SubspaceContinuous.to_searchspace`
+  convenience constructor
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

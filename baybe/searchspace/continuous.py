@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Sequence
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
@@ -21,6 +21,9 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
 
 
 @define
@@ -73,6 +76,12 @@ class SubspaceContinuous(SerialMixin):
             \r{pretty_print_df(lin_ineq_constr_df)}"""
 
         return continuous_str.replace("\n", "\n ").replace("\r", "\r ")
+
+    def to_searchspace(self) -> SearchSpace:
+        """Turn the subspace into a search space with no discrete part."""
+        from baybe.searchspace.core import SearchSpace
+
+        return SearchSpace(continuous=self)
 
     @classmethod
     def empty(cls) -> SubspaceContinuous:
