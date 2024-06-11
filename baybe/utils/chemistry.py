@@ -10,18 +10,13 @@ import numpy as np
 import pandas as pd
 from joblib import Memory
 
-from baybe.exceptions import OptionalImportError
-
-try:
-    from mordred import Calculator, descriptors
-    from rdkit import Chem, RDLogger
-    from rdkit.Chem.rdMolDescriptors import GetMorganFingerprintAsBitVect
-except ImportError:
-    raise OptionalImportError(
-        """The requested functionality requires the installation of optional """
-        """chemistry dependencies. Please run "pip install 'baybe[chem]'"."""
-    )
-
+from baybe._optional.chemistry import (
+    Calculator,
+    Chem,
+    GetMorganFingerprintAsBitVect,
+    RDLogger,
+    descriptors,
+)
 from baybe.utils.numerical import DTypeFloatNumpy
 
 _mordred_calculator = Calculator(descriptors)
