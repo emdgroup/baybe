@@ -6,7 +6,7 @@ from typing import ClassVar
 import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import ge, gt, instance_of, le
 
 from baybe.acquisition.base import AcquisitionFunction
@@ -29,15 +29,6 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "qNIPV"
 
-    sampling_fraction: float | None = field(
-        converter=optional_c(float),
-        validator=optional_v([gt(0.0), le(1.0)]),
-        default=None,
-    )
-    """Fraction of data sampled for integrating the posterior.
-
-    Cannot be used if `sampling_n_points` is not `None`."""
-
     sampling_n_points: int | None = field(
         validator=optional_v([instance_of(int), gt(0)]),
         default=None,
@@ -46,27 +37,32 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 
     Cannot be used if `sampling_fraction` is not `None`."""
 
+    sampling_fraction: float | None = field(
+        converter=optional_c(float),
+        validator=optional_v([gt(0.0), le(1.0)]),
+    )
+    """Fraction of data sampled for integrating the posterior.
+
+    Cannot be used if `sampling_n_points` is not `None`."""
+
     sampling_method: DiscreteSamplingMethod = field(
         converter=DiscreteSamplingMethod, default=DiscreteSamplingMethod.Random
     )
     """Sampling strategy used for integrating the posterior."""
 
-    def __attrs_post_init__(self) -> None:
-        """Ensure correction combinations and defaults of sampling attributes.
+    @sampling_fraction.default
+    def _default_sampling_fraction(self) -> float | None:
+        """If no sampling quantities are provided, use all points by default."""
+        return 1.0 if self.sampling_n_points is None else None
 
-        Raises:
-            ValueError: If both `sampling_fraction` and `sampling_n_points` were
-                specified at the same time.
-        """
-        # If both are unspecified, use fraction=1.0
-        if (self.sampling_fraction is None) and (self.sampling_n_points is None):
-            object.__setattr__(self, "sampling_fraction", 1.0)
-
-        # If both are specified, raise an error
+    @sampling_fraction.validator
+    def _validate_sampling_fraction(self, attr, value) -> None:
+        """If both sampling quantities are specified, raise an error."""
         if None not in (self.sampling_fraction, self.sampling_n_points):
             raise ValueError(
-                f"For {self.__class__.__name__}, 'sampling_fraction' and "
-                f"`sampling_n_points` cannot be specified at the same time."
+                f"For '{self.__class__.__name__}', the attributes '{attr.name}' and "
+                f"'{fields(self.__class__).sampling_n_points.name}' cannot "
+                f"be specified at the same time."
             )
 
     def get_integration_points(self, searchspace: SearchSpace) -> pd.DataFrame:
