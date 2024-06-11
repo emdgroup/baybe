@@ -133,7 +133,9 @@ class CustomONNXSurrogate(Surrogate):
     onnx_str: bytes = field(validator=validators.instance_of(bytes))
     """The ONNX byte str representing the model."""
 
-    _model: ort.InferenceSession = field(init=False, eq=False)
+    # TODO: type should be `onnxruntime.InferenceSession` but is currently
+    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    _model = field(init=False, eq=False)
     """The actual model."""
 
     @_model.default
