@@ -39,7 +39,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
     Cannot be used if `sampling_n_points` is not `None`."""
 
     sampling_n_points: int | None = field(
-        validator=optional_v([gt(0), instance_of(int)]),
+        validator=optional_v([instance_of(int), gt(0)]),
         default=None,
     )
     """Number of data points sampled for integrating the posterior.
