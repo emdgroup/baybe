@@ -4,11 +4,11 @@ import subprocess
 
 import pytest
 
-from .conftest import _STREAMLIT_INSTALLED
+from baybe._optional.info import STREAMLIT_INSTALLED
 
 
 @pytest.mark.skipif(
-    not _STREAMLIT_INSTALLED, reason="Optional dependency streamlit not installed."
+    not STREAMLIT_INSTALLED, reason="Optional dependency streamlit not installed."
 )
 @pytest.mark.parametrize("script", glob.glob("streamlit/*.py"))
 def test_streamlit_scripts(script):

@@ -65,14 +65,6 @@ from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
-try:
-    # Note: due to our streamlit folder we cannot use plain `import streamlit` here
-    from streamlit import info  # noqa: F401  # Tests if streamlit is available
-
-    _STREAMLIT_INSTALLED = True
-except ImportError:
-    _STREAMLIT_INSTALLED = False
-
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
 if strtobool(os.getenv("CI", "false")):
