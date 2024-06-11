@@ -71,7 +71,6 @@ def simulate_scenarios(
           that specifies the search space partition considered for the respective
           simulation.
     """
-    _RESULT_VARIABLE = "simulation_result"
 
     @dataclass
     class SimulationResult:
@@ -83,7 +82,7 @@ def simulate_scenarios(
 
         result: pd.DataFrame
 
-    def make_xyzpy_callable() -> Callable:
+    def make_xyzpy_callable(result_variable: str) -> Callable:
         """Make a batch simulator that allows running campaigns in parallel."""
         try:
             import xyzpy as xyz
@@ -94,7 +93,7 @@ def simulate_scenarios(
                 "e.g. via `pip install baybe[simulation]`."
             ) from ex
 
-        @xyz.label(var_names=[_RESULT_VARIABLE])
+        @xyz.label(var_names=[result_variable])
         def simulate(
             Scenario: str,
             Random_Seed=None,
@@ -142,8 +141,9 @@ def simulate_scenarios(
         combos["Initial_Data"] = range(len(initial_data))
 
     # Simulate and unpack
-    batch_simulator = make_xyzpy_callable()
-    da_results = batch_simulator.run_combos(combos)[_RESULT_VARIABLE]
+    result_variable = "simulation_result"
+    batch_simulator = make_xyzpy_callable(result_variable)
+    da_results = batch_simulator.run_combos(combos)[result_variable]
     df_results = unpack_simulation_results(da_results)
 
     return df_results
