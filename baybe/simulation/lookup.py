@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Collection
-from functools import singledispatch
 from typing import Literal
 
 import numpy as np
@@ -17,11 +16,10 @@ from baybe.utils.dataframe import add_fake_results
 _logger = logging.getLogger(__name__)
 
 
-@singledispatch
 def look_up_targets(
-    lookup: pd.DataFrame | Callable | None,
     queries: pd.DataFrame,
     targets: Collection[Target],
+    lookup: pd.DataFrame | Callable | None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -32,6 +30,9 @@ def look_up_targets(
         This does not create a new dataframe but modifies ``queries`` in-place.
 
     Args:
+        queries: The dataframe to be modified. Its content must be compatible with the
+            chosen lookup mechanism.
+        targets: The targets whose values are to be looked up.
         lookup: The lookup mechanism. Can be one of the following choices:
 
             -   A dataframe mapping rows of ``queries`` to the corresponding target
@@ -39,9 +40,6 @@ def look_up_targets(
                 one additional column for each of the given target.
             -   A callable, providing target values for each row of ``queries``.
             -   ``None``. Produces fake values for all targets.
-        queries: The dataframe to be modified. Its content must be compatible with the
-            chosen lookup mechanism.
-        targets: The targets whose values are to be looked up.
         impute_mode: Specifies how a missing lookup will be handled. Only relevant for
             dataframe lookups. Can be one of the following choices:
 
@@ -51,6 +49,9 @@ def look_up_targets(
             - ``"mean"``: Imputes the mean value for each target.
             - ``"random"``: A random row will be used for the lookup.
 
+    Raises:
+        ValueError: If an invalid lookup mechanism is provided.
+
     Example:
         >>> import pandas as pd
         >>> from baybe.targets.numerical import NumericalTarget
@@ -59,28 +60,27 @@ def look_up_targets(
         >>> targets = [NumericalTarget("target", "MAX")]
         >>> df = pd.DataFrame({"x": [1, 2, 3]})
         >>> lookup_df = pd.DataFrame({"x": [1, 2], "target": [10, 20]})
-        >>> look_up_targets(lookup_df, df, targets, impute_mode="mean")
+        >>> look_up_targets(df, targets, lookup_df, impute_mode="mean")
         >>> print(df)
            x  target
         0  1    10.0
         1  2    20.0
         2  3    15.0
     """
+    if lookup is None:
+        add_fake_results(queries, targets)
+    elif isinstance(lookup, Callable):
+        _look_up_targets_from_callable(queries, targets, lookup)
+    elif isinstance(lookup, pd.DataFrame):
+        _look_up_targets_from_dataframe(queries, targets, lookup, impute_mode)
+    else:
+        raise ValueError("Invalid lookup mechanism.")
 
 
-@look_up_targets.register
-def _look_up_fake_targets(
-    _: None, queries: pd.DataFrame, targets: Collection[Target]
-) -> None:
-    """Look up fake target values."""
-    add_fake_results(queries, targets)
-
-
-@look_up_targets.register
 def _look_up_targets_from_callable(
-    lookup: Callable,
     queries: pd.DataFrame,
     targets: Collection[Target],
+    lookup: Callable,
 ) -> None:
     """Look up target values by querying a callable."""
     # TODO: Currently, the alignment of return values to targets is based on the
@@ -107,11 +107,10 @@ def _look_up_targets_from_callable(
         queries[target.name] = measured_targets.iloc[:, k_target]
 
 
-@look_up_targets.register
 def _look_up_targets_from_dataframe(
-    lookup: pd.DataFrame,
     queries: pd.DataFrame,
     targets: Collection[Target],
+    lookup: pd.DataFrame,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
