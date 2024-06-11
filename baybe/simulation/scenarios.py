@@ -84,16 +84,9 @@ def simulate_scenarios(
 
     def make_xyzpy_callable(result_variable: str) -> Callable:
         """Make a batch simulator that allows running campaigns in parallel."""
-        try:
-            import xyzpy as xyz
-        except ImportError as ex:
-            raise ModuleNotFoundError(
-                "Batch scenario simulation is unavailable because 'xyzpy' is not "
-                "installed. Consider installing BayBE with 'simulation' dependency, "
-                "e.g. via `pip install baybe[simulation]`."
-            ) from ex
+        from baybe._optional.xzypy import xyzpy
 
-        @xyz.label(var_names=[result_variable])
+        @xyzpy.label(var_names=[result_variable])
         def simulate(
             Scenario: str,
             Random_Seed=None,
