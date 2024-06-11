@@ -12,7 +12,7 @@ import pytest
 import torch
 from hypothesis import settings as hypothesis_settings
 
-from baybe._optional.info import CHEM_INSTALLED, ONNX_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
@@ -53,6 +53,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
+from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.telemetry import (
     VARNAME_TELEMETRY_ENABLED,
@@ -66,9 +67,6 @@ from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 if CHEM_INSTALLED:
     from baybe.parameters.substance import SubstanceParameter
 
-
-if ONNX_INSTALLED:
-    from baybe.surrogates.custom import CustomONNXSurrogate
 
 try:
     # Note: due to our streamlit folder we cannot use plain `import streamlit` here
@@ -788,12 +786,8 @@ def fixture_default_simplex_config():
 
 
 @pytest.fixture(name="onnx_str")
-def fixture_default_onnx_str() -> bytes | None:
+def fixture_default_onnx_str() -> bytes:
     """The default ONNX model string to be used if not specified differently."""
-    # TODO [19298]: There should be a cleaner way than returning None.
-    if not ONNX_INSTALLED:
-        return None
-
     from skl2onnx import convert_sklearn
     from skl2onnx.common.data_types import FloatTensorType
     from sklearn.linear_model import BayesianRidge
@@ -817,11 +811,8 @@ def fixture_default_onnx_str() -> bytes | None:
 
 
 @pytest.fixture(name="onnx_surrogate")
-def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate | None:
+def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
     """The default ONNX model to be used if not specified differently."""
-    # TODO [19298]: There should be a cleaner way than returning None.
-    if not ONNX_INSTALLED:
-        return None
     return CustomONNXSurrogate(onnx_input_name="input", onnx_str=onnx_str)
 
 

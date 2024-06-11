@@ -5,11 +5,8 @@ import pytest
 
 from baybe import Campaign
 from baybe._optional.info import ONNX_INSTALLED
-from baybe.surrogates import register_custom_architecture
+from baybe.surrogates import CustomONNXSurrogate, register_custom_architecture
 from tests.conftest import run_iterations
-
-if ONNX_INSTALLED:
-    from baybe.surrogates import CustomONNXSurrogate
 
 
 @pytest.mark.skipif(
