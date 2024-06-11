@@ -32,16 +32,16 @@ for various acquisition functions.
 
 * The **[`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)**
   is a powerful recommender based on BoTorch's optimization engine that can be applied
-  to all kinds of search spaces. In continuous spaces, its `sequential` flag allows to
-  chose between greedy sequential optimization and batch optimization as the underlying
-  point generation mode. In discrete/hybrid spaces, sequential greedy selection is the
-  only available mode and is thus activated automatically. Note that the recommender
-  performs a brute-force search when applied to hybrid search spaces, as it optimizes
-  the continuous part of the space while exhaustively searching choices in the discrete
-  subspace. You can customize this behavior to only sample a certain percentage of the
-  discrete subspace via the `sample_percentage` attribute and to choose different
-  sampling algorithms via the `hybrid_sampler` attribute. An example on using this
-  recommender in a hybrid space can be found
+  to all kinds of search spaces. In continuous spaces, its `sequential_continuous` flag
+  allows to chose between greedy sequential optimization and batch optimization as the
+  underlying point generation mode. In discrete/hybrid spaces, sequential greedy
+  selection is the only available mode and is thus activated automatically. Note that
+  the recommender performs a brute-force search when applied to hybrid search spaces, as
+  it optimizes the continuous part of the space while exhaustively searching choices in
+  the discrete subspace. You can customize this behavior to only sample a certain
+  percentage of the discrete subspace via the `sample_percentage` attribute and to
+  choose different sampling algorithms via the `hybrid_sampler` attribute. An example on
+  using this recommender in a hybrid space can be found
   [here](./../../examples/Backtesting/hybrid).
 
 * The **[`NaiveHybridSpaceRecommender`](baybe.recommenders.naive.NaiveHybridSpaceRecommender)**

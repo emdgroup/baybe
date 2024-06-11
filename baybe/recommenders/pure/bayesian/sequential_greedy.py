@@ -10,7 +10,8 @@ def SequentialGreedyRecommender(*args, **kwargs) -> BotorchRecommender:
     warnings.warn(
         f"The class `SequentialGreedyRecommender` has been deprecated and will be "
         f"removed in a future version. "
-        f"Please use `{BotorchRecommender.__name__}(sequential=True)` instead.",
+        f"Please use `{BotorchRecommender.__name__}(sequential_continuous=True)` "
+        f"instead.",
         DeprecationWarning,
     )
-    return BotorchRecommender(*args, **kwargs, sequential=True)
+    return BotorchRecommender(*args, **kwargs, sequential_continuous=True)
