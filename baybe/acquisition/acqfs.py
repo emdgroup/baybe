@@ -84,8 +84,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
         if not searchspace.continuous.is_empty:
             # If a discrete part has resulted in a particular choice for n_candidates,
             # take it. Otherwise, use the user specified number of points.
-            n_candidates = n_candidates or self.sampling_n_points
-            if n_candidates is None:
+            if (n_candidates := n_candidates or self.sampling_n_points) is None:
                 raise ValueError(
                     f"'sampling_n_points' must be provided for '{self.__class__}' when"
                     f"sampling purely continuous search spaces."
