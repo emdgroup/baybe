@@ -95,13 +95,13 @@ def sample_numerical_df(
     method: DiscreteSamplingMethod = DiscreteSamplingMethod.Random,
     replacement: bool = False,
 ) -> pd.DataFrame:
-    """Sample data points from a data frame.
+    """Sample data points from a dataframe.
 
     If the requested number points is larger than the number of available points,
     sampling is always done with replacement.
 
     Args:
-        df: Data frame with purely numerical entries.
+        df: Dataframe with purely numerical entries.
         n_points: Number of points to sample.
         method: Sampling method.
         replacement: If sampling is done with replacement or not (has no effect on FPS).
@@ -110,7 +110,7 @@ def sample_numerical_df(
         The sampled points.
 
     Raises:
-        TypeError: If df has non-numerical content.
+        TypeError: If the provided dataframe has non-numerical content.
         ValueError: When an invalid sampling method was provided.
     """
     if any(df[col].dtype.kind not in "iufb" for col in df.columns):

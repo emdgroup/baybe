@@ -41,7 +41,7 @@ def name_to_smiles(name: str) -> str:
 
     This script is useful to combine with ``df.apply`` from pandas, hence it does not
     throw exceptions for invalid molecules but instead returns an empty string for
-    easy subsequent postprocessing of the data frame.
+    easy subsequent postprocessing of the dataframe.
 
     Args:
         name: Name or nickname of compound.

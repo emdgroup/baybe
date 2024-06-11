@@ -201,7 +201,7 @@ class SubspaceContinuous(SerialMixin):
             n_points: Number of points that should be sampled.
 
         Returns:
-            A data frame containing the points as rows with columns corresponding to the
+            A dataframe containing the points as rows with columns corresponding to the
             parameter names.
         """
         if not self.parameters:
@@ -234,7 +234,7 @@ class SubspaceContinuous(SerialMixin):
             n_points: Number of points that should be sampled.
 
         Returns:
-            A data frame containing the points as rows with columns corresponding to the
+            A dataframe containing the points as rows with columns corresponding to the
             parameter names.
 
         Raises:

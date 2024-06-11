@@ -22,7 +22,7 @@ from baybe.utils.sampling_algorithms import (
 class qNegIntegratedPosteriorVariance(AcquisitionFunction):
     """Monte Carlo based negative integrated posterior variance.
 
-    This is particularly useful for active learning as it is a measure for global model
+    This is typically used for active learning as it is a measure for global model
     uncertainty.
     """
 
@@ -33,20 +33,20 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
         validator=[gt(0.0), le(1.0)],
         default=1.0,
     )
-    """Fraction of data that will be sampled for integrating the posterior.
+    """Fraction of data sampled for integrating the posterior.
 
-    The fraction will be ignored if 'sampling_n_points' is not None."""
+    The fraction is ignored if `sampling_n_points` is not None."""
 
     sampling_n_points: int | None = field(
         validator=optional_v([gt(0), instance_of(int)]),
         default=None,
     )
-    """Number of data points that will be sampled for integrating the posterior."""
+    """Number of data points sampled for integrating the posterior."""
 
     sampling_method: DiscreteSamplingMethod = field(
         converter=DiscreteSamplingMethod, default=DiscreteSamplingMethod.Random
     )
-    """Strategy used for sampling data for integrating the posterior."""
+    """Sampling strategy used for integrating the posterior."""
 
     def get_integration_points(self, searchspace: SearchSpace) -> pd.DataFrame:
         """Sample points from a search space for integration purposes.
@@ -61,8 +61,8 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             The sampled data points.
 
         Raises:
-            ValueError: If searchspace is purely continuous and 'sampling_n_points' was
-                not provided.
+            ValueError: If the search space is purely continuous and
+                'sampling_n_points' was not provided.
         """
         sampled_parts = []
         n_candidates = None
@@ -86,7 +86,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             # take it. Otherwise, use the user specified number of points.
             if (n_candidates := n_candidates or self.sampling_n_points) is None:
                 raise ValueError(
-                    f"'sampling_n_points' must be provided for '{self.__class__}' when"
+                    f"'sampling_n_points' must be provided for '{self.__class__}' when "
                     f"sampling purely continuous search spaces."
                 )
             sampled_conti = searchspace.continuous.samples_random(n_candidates)
