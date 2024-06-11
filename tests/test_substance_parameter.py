@@ -2,13 +2,14 @@
 
 import pytest
 
+from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.enum import SubstanceEncoding
 
-from .conftest import _CHEM_INSTALLED, run_iterations
+from .conftest import run_iterations
 
 
 @pytest.mark.skipif(
-    not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
+    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize(
     "parameter_names",

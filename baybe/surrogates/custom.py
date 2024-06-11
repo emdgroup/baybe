@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field, resolve_types, validators
 
+from baybe._optional.info import ONNX_INSTALLED
 from baybe.parameters import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -29,12 +30,8 @@ from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import validate_custom_architecture_cls
 from baybe.utils.numerical import DTypeFloatONNX
 
-try:
+if ONNX_INSTALLED:
     import onnxruntime as ort
-
-    _ONNX_INSTALLED = True
-except ImportError:
-    _ONNX_INSTALLED = False
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -118,7 +115,7 @@ def register_custom_architecture(
     return construct_custom_architecture
 
 
-if _ONNX_INSTALLED:
+if ONNX_INSTALLED:
 
     @define(kw_only=True)
     class CustomONNXSurrogate(Surrogate):

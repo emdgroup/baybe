@@ -6,9 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from baybe.surrogates import _ONNX_INSTALLED
-
-from ..conftest import _CHEM_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED, ONNX_INSTALLED
 
 # Run these tests in reduced settings
 _SMOKE_TEST_CACHE = os.environ.get("SMOKE_TEST", None)
@@ -20,7 +18,7 @@ paths = [str(x) for x in Path("examples/").rglob("*.py")]
 
 @pytest.mark.slow
 @pytest.mark.skipif(
-    not (_CHEM_INSTALLED and _ONNX_INSTALLED), reason="skipped for core tests"
+    not (CHEM_INSTALLED and ONNX_INSTALLED), reason="skipped for core tests"
 )
 @pytest.mark.parametrize("example", paths, ids=paths)
 def test_example(example: str):

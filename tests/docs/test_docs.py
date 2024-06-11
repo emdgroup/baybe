@@ -6,9 +6,9 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
+from baybe._optional.info import CHEM_INSTALLED
 from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 
-from ..conftest import _CHEM_INSTALLED
 from .utils import extract_code_blocks
 
 doc_files = list(map(str, [Path("README.md"), *Path("docs/userguide/").rglob("*.md")]))
@@ -19,7 +19,7 @@ doc_files_pseudocode = list(map(str, [Path("docs/userguide/campaigns.md")]))
 
 
 @pytest.mark.skipif(
-    not _CHEM_INSTALLED, reason="Optional chem dependency not installed."
+    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize("file", doc_files, ids=doc_files)
 def test_code_executability(file: Path):

@@ -12,6 +12,7 @@ import pytest
 import torch
 from hypothesis import settings as hypothesis_settings
 
+from baybe._optional.info import CHEM_INSTALLED, ONNX_INSTALLED
 from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
@@ -27,7 +28,6 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
-from baybe.exceptions import OptionalImportError
 from baybe.kernels import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -52,7 +52,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
+from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.telemetry import (
     VARNAME_TELEMETRY_ENABLED,
@@ -63,16 +63,11 @@ from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 
-try:
-    import baybe.utils.chemistry  # noqa: F401  # Tests if chem deps are available
+if CHEM_INSTALLED:
     from baybe.parameters.substance import SubstanceParameter
 
-    _CHEM_INSTALLED = True
-except OptionalImportError:
-    _CHEM_INSTALLED = False
 
-
-if _ONNX_INSTALLED:
+if ONNX_INSTALLED:
     from baybe.surrogates.custom import CustomONNXSurrogate
 
 try:
@@ -325,7 +320,7 @@ def fixture_parameters(
         ),
     ]
 
-    if _CHEM_INSTALLED:
+    if CHEM_INSTALLED:
         valid_parameters += [
             *[
                 SubstanceParameter(
@@ -735,7 +730,7 @@ def fixture_default_config():
                 "decorrelate": true,
                 "encoding": "MORDRED"
             },"""
-        if _CHEM_INSTALLED
+        if CHEM_INSTALLED
         else """
                 {
                 "type": "CategoricalParameter",
@@ -796,7 +791,7 @@ def fixture_default_simplex_config():
 def fixture_default_onnx_str() -> bytes | None:
     """The default ONNX model string to be used if not specified differently."""
     # TODO [19298]: There should be a cleaner way than returning None.
-    if not _ONNX_INSTALLED:
+    if not ONNX_INSTALLED:
         return None
 
     from skl2onnx import convert_sklearn
@@ -825,7 +820,7 @@ def fixture_default_onnx_str() -> bytes | None:
 def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate | None:
     """The default ONNX model to be used if not specified differently."""
     # TODO [19298]: There should be a cleaner way than returning None.
-    if not _ONNX_INSTALLED:
+    if not ONNX_INSTALLED:
         return None
     return CustomONNXSurrogate(onnx_input_name="input", onnx_str=onnx_str)
 

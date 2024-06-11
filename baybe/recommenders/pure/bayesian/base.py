@@ -5,6 +5,7 @@ from abc import ABC
 import pandas as pd
 from attrs import define, field
 
+from baybe._optional.info import ONNX_INSTALLED
 from baybe.acquisition.acqfs import qExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
@@ -12,11 +13,11 @@ from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
+from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.utils.dataframe import to_tensor
 
-if _ONNX_INSTALLED:
+if ONNX_INSTALLED:
     from baybe.surrogates import CustomONNXSurrogate
 
 
@@ -85,7 +86,7 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"empty training data."
             )
 
-        if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
+        if ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
         self._setup_botorch_acqf(searchspace, objective, measurements)
