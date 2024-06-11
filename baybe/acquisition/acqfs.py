@@ -68,7 +68,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
         n_candidates = None
 
         # Discrete part
-        if searchspace.discrete is not None:
+        if not searchspace.discrete.is_empty:
             candidates_discrete = searchspace.discrete.comp_rep
             n_candidates = self.sampling_n_points or math.ceil(
                 self.sampling_fraction * len(candidates_discrete)
@@ -81,7 +81,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             sampled_parts.append(sampled_disc)
 
         # Continuous part
-        if searchspace.continuous is not None:
+        if not searchspace.continuous.is_empty:
             # If a discrete part has resulted in a particular choice for n_candidates,
             # take it. Otherwise, use the user specified number of points.
             n_candidates = n_candidates or self.sampling_n_points
