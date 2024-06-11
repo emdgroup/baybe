@@ -89,14 +89,22 @@ class DiscreteSamplingMethod(Enum):
 
 
 def sample_numerical_df(
-    df: pd.DataFrame, n_points: int, method: DiscreteSamplingMethod
+    df: pd.DataFrame,
+    n_points: int,
+    *,
+    method: DiscreteSamplingMethod = DiscreteSamplingMethod.Random,
+    replacement: bool = False,
 ) -> pd.DataFrame:
     """Sample data points from a data frame.
+
+    If the requested number points is larger than the number of available points,
+    sampling is always done with replacement.
 
     Args:
         df: Data frame with purely numerical entries.
         n_points: Number of points to sample.
         method: Sampling method.
+        replacement: If sampling is done with replacement or not (has no effect on FPS).
 
     Returns:
         The sampled points.
@@ -111,10 +119,14 @@ def sample_numerical_df(
         )
 
     if method is DiscreteSamplingMethod.FPS:
-        ilocs = farthest_point_sampling(df.values, n_points)
+        if n_points >= len(df):
+            ilocs = list(range(len(df)))
+            ilocs += np.random.choice(ilocs, n_points - len(df)).tolist()
+        else:
+            ilocs = farthest_point_sampling(df.values, n_points)
         sampled = df.iloc[ilocs]
     elif method is DiscreteSamplingMethod.Random:
-        sampled = df.sample(n_points)
+        sampled = df.sample(n_points, replace=replacement or (n_points > len(df)))
     else:
         raise ValueError(f"Unrecognized sampling method: '{method}'.")
 
