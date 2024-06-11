@@ -4,6 +4,7 @@ import math
 from typing import ClassVar
 
 import pandas as pd
+from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import define, field
 from attrs.validators import ge, gt, instance_of, le
@@ -28,25 +29,45 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "qNIPV"
 
-    sampling_fraction: float = field(
-        converter=float,
-        validator=[gt(0.0), le(1.0)],
-        default=1.0,
+    sampling_fraction: float | None = field(
+        converter=optional_c(float),
+        validator=optional_v([gt(0.0), le(1.0)]),
+        default=None,
     )
     """Fraction of data sampled for integrating the posterior.
 
-    The fraction is ignored if `sampling_n_points` is not None."""
+    Cannot be used if `sampling_n_points` is not `None`."""
 
     sampling_n_points: int | None = field(
         validator=optional_v([gt(0), instance_of(int)]),
         default=None,
     )
-    """Number of data points sampled for integrating the posterior."""
+    """Number of data points sampled for integrating the posterior.
+
+    Cannot be used if `sampling_fraction` is not `None`."""
 
     sampling_method: DiscreteSamplingMethod = field(
         converter=DiscreteSamplingMethod, default=DiscreteSamplingMethod.Random
     )
     """Sampling strategy used for integrating the posterior."""
+
+    def __attrs_post_init__(self) -> None:
+        """Ensure correction combinations and defaults of sampling attributes.
+
+        Raises:
+            ValueError: If both `sampling_fraction` and `sampling_n_points` were
+                specified at the same time.
+        """
+        # If both are unspecified, use fraction=1.0
+        if (self.sampling_fraction is None) and (self.sampling_n_points is None):
+            object.__setattr__(self, "sampling_fraction", 1.0)
+
+        # If both are specified, raise an error
+        if None not in (self.sampling_fraction, self.sampling_n_points):
+            raise ValueError(
+                f"For {self.__class__.__name__}, 'sampling_fraction' and "
+                f"`sampling_n_points` cannot be specified at the same time."
+            )
 
     def get_integration_points(self, searchspace: SearchSpace) -> pd.DataFrame:
         """Sample points from a search space for integration purposes.
@@ -71,7 +92,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
         if not searchspace.discrete.is_empty:
             candidates_discrete = searchspace.discrete.comp_rep
             n_candidates = self.sampling_n_points or math.ceil(
-                self.sampling_fraction * len(candidates_discrete)
+                self.sampling_fraction * len(candidates_discrete)  # type: ignore[operator]
             )
 
             sampled_disc = sample_numerical_df(
