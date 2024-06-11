@@ -39,6 +39,7 @@ from baybe.parameters import (
     SubstanceEncoding,
     TaskParameter,
 )
+from baybe.parameters.substance import SubstanceParameter
 from baybe.priors import GammaPrior
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import (
@@ -63,10 +64,6 @@ from baybe.telemetry import (
 from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
-
-if CHEM_INSTALLED:
-    from baybe.parameters.substance import SubstanceParameter
-
 
 try:
     # Note: due to our streamlit folder we cannot use plain `import streamlit` here
@@ -316,36 +313,22 @@ def fixture_parameters(
             values=("A", "B", "C"),
             active_values=("A", "B"),
         ),
+        *[
+            SubstanceParameter(
+                name=f"Solvent_{k+1}",
+                data=mock_substances,
+            )
+            for k in range(3)
+        ],
+        *[
+            SubstanceParameter(
+                name=f"Substance_1_{encoding}",
+                data=mock_substances,
+                encoding=encoding,
+            )
+            for encoding in SubstanceEncoding
+        ],
     ]
-
-    if CHEM_INSTALLED:
-        valid_parameters += [
-            *[
-                SubstanceParameter(
-                    name=f"Solvent_{k+1}",
-                    data=mock_substances,
-                )
-                for k in range(3)
-            ],
-            *[
-                SubstanceParameter(
-                    name=f"Substance_1_{encoding}",
-                    data=mock_substances,
-                    encoding=encoding,
-                )
-                for encoding in SubstanceEncoding
-            ],
-        ]
-    else:
-        valid_parameters += [
-            *[
-                CategoricalParameter(
-                    name=f"Solvent_{k+1}",
-                    values=tuple(mock_substances.keys()),
-                )
-                for k in range(3)
-            ],
-        ]
 
     return [p for p in valid_parameters if p.name in parameter_names]
 
