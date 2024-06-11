@@ -3,9 +3,9 @@
 from baybe.exceptions import OptionalImportError
 
 try:
-    from mordred import Calculator, descriptors  # noqa: F401
-    from rdkit import Chem, RDLogger  # noqa: F401
-    from rdkit.Chem.rdMolDescriptors import GetMorganFingerprintAsBitVect  # noqa: F401
+    from mordred import Calculator, descriptors
+    from rdkit import Chem, RDLogger
+    from rdkit.Chem.rdMolDescriptors import GetMorganFingerprintAsBitVect
 except ModuleNotFoundError as ex:
     raise OptionalImportError(
         "Chemistry functionality is unavailable because the necessary optional "
@@ -13,3 +13,11 @@ except ModuleNotFoundError as ex:
         "Consider installing BayBE with 'chem' dependency, "
         "e.g. via `pip install baybe[chem]`."
     ) from ex
+
+__all__ = [
+    "descriptors",
+    "Calculator",
+    "Chem",
+    "GetMorganFingerprintAsBitVect",
+    "RDLogger",
+]
