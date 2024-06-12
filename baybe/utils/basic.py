@@ -189,18 +189,32 @@ def register_hooks(
     pre_hooks: Sequence[Callable] | None = None,
     post_hooks: Sequence[Callable] | None = None,
 ) -> Callable:
-    """Register a hook for the given target callable.
+    """Register custom hooks with a given target callable.
+
+    The provided hooks need to be "compatible" with the target in the sense that their
+    signatures are aligned, i.e., no problem arises when arguments intended for the
+    target are passed to the hook:
+
+    * Target and hook need to share the same number of parameters (basic requirement)
+    * Their parameters need to have the same names (required for keyword arguments)
+    * Annotations that **may** be present for the hook parameters must match their
+      target counterpart (safety mechanism to prevent unintended argument use)
+    * Parameters that come with defaults for the target also require defaults for the
+      hooks (required for calls with omitted arguments)
 
     Args:
-        target: The callable to which the hook is attached.
-        hook: The callable to be registered in the given callable.
+        target: The callable to which the hooks are to be attached.
+        pre_hooks: Hooks to be executed before calling the target.
+        post_hooks: Hooks to be executed after calling the target.
 
     Returns:
-        A wrapped callable that replaces the original target callable.
+        The wrapped callable with the hooks attached.
 
     Raises:
-        TypeError: If the signature of the callable does not match the signature of the
-            target callable.
+        TypeError: If the target and any hook expect different numbers of parameters.
+        TypeError: If the target and any hook have different parameter names.
+        TypeError: If any hook has a non-empty parameter annotation that does not
+            match with the corresponding annotation of the target.
     """
     pre_hooks = pre_hooks or []
     post_hooks = post_hooks or []
