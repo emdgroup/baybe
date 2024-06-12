@@ -1,93 +1,68 @@
-## E2E Test for using callables
+## Registering Custom Hooks
 
-# This example shows how to use the register_hook function to request internal data from different objects such as campaign, recommenders and objective.
-
-# To request internal data from the recommendation process this function can be used by giving it two arguments:
-# - The class method the hook should be attached to
-# - The callable function that will process the data
-# The function wraps the class method and calls the callable function
-
-# This examples assumes some basic familiarity with using BayBE.
-# We refer to [`campaign`](./campaign.md) for a more general and basic example.
-
-### Necessary imports for this example
+# This example demonstrates the basic mechanics of the
+# {func}`register_hook <baybe.utils.basic.register_hook>` utility,
+# which lets you hook into any callable of your choice:
+# * We define a hook that is compatible with the general
+#   {meth}`RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>`
+#   interface,
+# * attach it to a recommender,
+# * and watch it take action.
 
 
-import pandas as pd
+### Imports
 
-from baybe import Campaign
-from baybe.objectives import SingleTargetObjective
-from baybe.objectives.base import Objective
+
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hook
-from baybe.utils.dataframe import add_fake_results
 
-### Setup
+### Defining the Hook
 
-# Define three test functions to test the functionality of register_hook().
-# Note that the callable function needs to have the same signature as the function it is attached to.
+# We start by defining a hook that lets us inspect the names of the parameters involved
+# in the recommendation process.
+# For this purpose, we match its signature to that of
+# {meth}`RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>`:
+#
+
+# ```{admonition} Signature components
+# :class: important
+# Note that, if provided, annotations must match **exactly** those of the target signature.
+# However, annotations are completely optional
+# — only the names/order of the signature parameters and their defaults matter.
+#
+# For the sake of demonstration, we only provide the annotation for the
+# relevant `searchspace` parameter of the hook in the example below.
+# ```
 
 
-def recommend_hook(
+def print_parameter_names_hook(
     self,
-    batch_size: int,
+    batch_size,
     searchspace: SearchSpace,
-    objective: Objective | None = None,
-    measurements: pd.DataFrame | None = None,
+    objective=None,
+    measurements=None,
 ):
-    """Print the compatibility of the recommender, the searchspace and the batch size from the recommend call."""
-    print("start recommend_hook")
-    print(self.compatibility)
-    print(searchspace, batch_size)
-    print("End recommend_hook")
+    """Print the names of the parameters spanning the search space."""
+    print(f"Search space parameters: {[p.name for p in searchspace.parameters]}")
 
 
-### Example
+### Monkeypatching
 
-# We create a two phase meta recommender with default values.
+# Next, we create our recommender and monkeypatch its `recommend` method:
 
 recommender = RandomRecommender()
-
-# We overwrite the original recommend method of the sequential greedy recommender class.
-
-RandomRecommender.recommend = register_hook(RandomRecommender.recommend, recommend_hook)
-
-# We define all needen parameters for this example and collect them in a list.
-
-temperature = NumericalDiscreteParameter(
-    "Temperature", values=[90, 105, 120], tolerance=2
-)
-concentration = NumericalDiscreteParameter(
-    "Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
-)
-parameters = [temperature, concentration]
-
-# We create the searchspace and the objective.
-
-searchspace = SearchSpace.from_product(parameters=parameters)
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
-
-### Creating the campaign
-
-campaign = Campaign(
-    searchspace=searchspace,
-    recommender=recommender,
-    objective=objective,
+RandomRecommender.recommend = register_hook(
+    RandomRecommender.recommend, print_parameter_names_hook
 )
 
-# This campaign can now be used to get recommendations, add measurements and process the recommend_hook:
-# Note that a for loop is used to train the data of the second recommendation on the data from the first one.
+### Triggering the Hook
 
-for _ in range(2):
-    recommendation = campaign.recommend(batch_size=3)
-    print("\n\nRecommended experiments: ")
-    print(recommendation)
+# When we now apply the recommender in a specific context, we immediately see the
+# effect of the hook:
 
-    add_fake_results(recommendation, campaign)
-    print("\n\nRecommended experiments with fake measured values: ")
-    print(recommendation)
-
-    campaign.add_measurements(recommendation)
+temperature = NumericalDiscreteParameter("Temperature", values=[90, 105, 120])
+concentration = NumericalDiscreteParameter("Concentration", values=[0.057, 0.1, 0.153])
+searchspace = SearchSpace.from_product([temperature, concentration])
+recommendation = recommender.recommend(batch_size=3, searchspace=searchspace)
