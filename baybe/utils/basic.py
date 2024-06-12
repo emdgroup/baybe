@@ -198,10 +198,16 @@ def register_hook(target: Callable, hook: Callable) -> Callable:
         TypeError: If the signature of the callable does not match the signature of the
             target callable.
     """
-    for p1, p2 in zip(
-        inspect.signature(target, eval_str=True).parameters.values(),
-        inspect.signature(hook, eval_str=True).parameters.values(),
-    ):
+    target_params = inspect.signature(target, eval_str=True).parameters.values()
+    hook_params = inspect.signature(hook, eval_str=True).parameters.values()
+
+    if len(target_params) != len(hook_params):
+        raise TypeError(
+            f"'{target.__name__}' and '{hook.__name__}' have "
+            f"a different number of parameters."
+        )
+
+    for p1, p2 in zip(target_params, hook_params):
         if p1.name != p2.name or p1.annotation != p2.annotation:
             if p2.annotation is not inspect.Parameter.empty:
                 raise TypeError(
