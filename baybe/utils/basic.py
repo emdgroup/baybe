@@ -184,7 +184,11 @@ def find_subclass(base: type, name_or_abbr: str, /):
         )
 
 
-def register_hook(target: Callable, hook: Callable) -> Callable:
+def register_hooks(
+    target: Callable,
+    pre_hooks: Sequence[Callable] | None = None,
+    post_hooks: Sequence[Callable] | None = None,
+) -> Callable:
     """Register a hook for the given target callable.
 
     Args:
@@ -198,33 +202,41 @@ def register_hook(target: Callable, hook: Callable) -> Callable:
         TypeError: If the signature of the callable does not match the signature of the
             target callable.
     """
+    pre_hooks = pre_hooks or []
+    post_hooks = post_hooks or []
+
     target_params = inspect.signature(target, eval_str=True).parameters.values()
-    hook_params = inspect.signature(hook, eval_str=True).parameters.values()
 
-    if len(target_params) != len(hook_params):
-        raise TypeError(
-            f"'{target.__name__}' and '{hook.__name__}' have "
-            f"a different number of parameters."
-        )
+    for hook in [*pre_hooks, *post_hooks]:
+        hook_params = inspect.signature(hook, eval_str=True).parameters.values()
 
-    for p1, p2 in zip(target_params, hook_params):
-        if p1.name != p2.name:
+        if len(target_params) != len(hook_params):
             raise TypeError(
-                f"The parameter names of '{target.__name__}' "
-                f"and '{hook.__name__}' do not match."
+                f"'{target.__name__}' and '{hook.__name__}' have "
+                f"a different number of parameters."
             )
-        if (p1.annotation != p2.annotation) and (
-            p2.annotation is not inspect.Parameter.empty
-        ):
-            raise TypeError(
-                f"The type annotations of '{target.__name__}' "
-                f"and '{hook.__name__}' do not match."
-            )
+
+        for p1, p2 in zip(target_params, hook_params):
+            if p1.name != p2.name:
+                raise TypeError(
+                    f"The parameter names of '{target.__name__}' "
+                    f"and '{hook.__name__}' do not match."
+                )
+            if (p1.annotation != p2.annotation) and (
+                p2.annotation is not inspect.Parameter.empty
+            ):
+                raise TypeError(
+                    f"The type annotations of '{target.__name__}' "
+                    f"and '{hook.__name__}' do not match."
+                )
 
     @functools.wraps(target)
     def wraps(*args, **kwargs):
+        for hook in pre_hooks:
+            hook(*args, **kwargs)
         result = target(*args, **kwargs)
-        hook(*args, **kwargs)
+        for hook in post_hooks:
+            hook(*args, **kwargs)
         return result
 
     return wraps

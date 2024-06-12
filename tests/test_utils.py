@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from pytest import param
 
-from baybe.utils.basic import register_hook
+from baybe.utils.basic import register_hooks
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import closest_element
 
@@ -108,4 +108,4 @@ def test_memory_human_readable_conversion():
 def test_register_hook(target, hook, error):
     """Passing in-/consistent signatures to `register_hook` raises an/no error."""
     with pytest.raises(error) if error is not None else nullcontext():
-        register_hook(target, hook)
+        register_hooks(target, [hook])

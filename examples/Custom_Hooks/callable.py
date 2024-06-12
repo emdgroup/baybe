@@ -1,7 +1,7 @@
 ## Registering Custom Hooks
 
 # This example demonstrates the basic mechanics of the
-# {func}`register_hook <baybe.utils.basic.register_hook>` utility,
+# {func}`register_hooks <baybe.utils.basic.register_hooks>` utility,
 # which lets you hook into any callable of your choice:
 # * We define a hook that is compatible with the general
 #   {meth}`RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>`
@@ -16,7 +16,7 @@
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.utils.basic import register_hook
+from baybe.utils.basic import register_hooks
 
 ### Defining the Hook
 
@@ -53,8 +53,8 @@ def print_parameter_names_hook(
 # Next, we create our recommender and monkeypatch its `recommend` method:
 
 recommender = RandomRecommender()
-RandomRecommender.recommend = register_hook(
-    RandomRecommender.recommend, print_parameter_names_hook
+RandomRecommender.recommend = register_hooks(
+    RandomRecommender.recommend, pre_hooks=[print_parameter_names_hook]
 )
 
 ### Triggering the Hook
