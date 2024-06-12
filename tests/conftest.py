@@ -602,10 +602,10 @@ def fixture_default_kernel(lengthscale_prior):
 
 
 @pytest.fixture(name="surrogate_model")
-def fixture_default_surrogate_model(request, onnx_surrogate, kernel):
+def fixture_default_surrogate_model(request, kernel):
     """The default surrogate model to be used if not specified differently."""
     if hasattr(request, "param") and request.param == "onnx":
-        return onnx_surrogate
+        return request.getfixturevalue("onnx_surrogate")
     return GaussianProcessSurrogate(kernel_or_factory=kernel)
 
 
