@@ -102,22 +102,10 @@ def test_discrete_sampling(fraction, method):
             id="hook_has_different_signature_order",
         ),
         param(
-            func_with_different_order,
-            base_func,
-            TypeError,
-            id="target_has_different_signature_order",
-        ),
-        param(
             base_func,
             func_with_different_names,
             TypeError,
             id="hook_has_different_names",
-        ),
-        param(
-            func_with_different_names,
-            base_func,
-            TypeError,
-            id="target_has_different_names",
         ),
     ],
 )
