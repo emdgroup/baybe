@@ -305,22 +305,36 @@ def fixture_parameters(
             values=("A", "B", "C"),
             active_values=("A", "B"),
         ),
-        *[
-            SubstanceParameter(
-                name=f"Solvent_{k+1}",
-                data=mock_substances,
-            )
-            for k in range(3)
-        ],
-        *[
-            SubstanceParameter(
-                name=f"Substance_1_{encoding}",
-                data=mock_substances,
-                encoding=encoding,
-            )
-            for encoding in SubstanceEncoding
-        ],
     ]
+
+    if CHEM_INSTALLED:
+        valid_parameters += [
+            *[
+                SubstanceParameter(
+                    name=f"Solvent_{k+1}",
+                    data=mock_substances,
+                )
+                for k in range(3)
+            ],
+            *[
+                SubstanceParameter(
+                    name=f"Substance_1_{encoding}",
+                    data=mock_substances,
+                    encoding=encoding,
+                )
+                for encoding in SubstanceEncoding
+            ],
+        ]
+    else:
+        valid_parameters += [
+            *[
+                CategoricalParameter(
+                    name=f"Solvent_{k+1}",
+                    values=tuple(mock_substances.keys()),
+                )
+                for k in range(3)
+            ],
+        ]
 
     return [p for p in valid_parameters if p.name in parameter_names]
 
