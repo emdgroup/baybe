@@ -63,7 +63,6 @@ experiments to be conducted.
 
 ~~~python
 rec = campaign.recommend(batch_size=3)
-print(rec.to_markdown())
 ~~~
 
 Calling the function returns a `DataFrame` with `batch_size` many rows, each
