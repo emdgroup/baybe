@@ -18,6 +18,10 @@ def f_plain(arg1, arg2):
     pass
 
 
+def f_reduced_plain(arg1):
+    pass
+
+
 def f_annotated(arg1: str, arg2: int):
     pass
 
@@ -92,6 +96,12 @@ def test_memory_human_readable_conversion():
             f2_annotated,
             TypeError,
             id="different_names",
+        ),
+        param(
+            f_annotated,
+            f_reduced_plain,
+            TypeError,
+            id="hook_missing_arguments",
         ),
     ],
 )
