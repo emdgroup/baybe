@@ -34,7 +34,7 @@ def f_reversed_annotated(arg2: int, arg1: str):
     pass
 
 
-def f2_annotated(arg: int, arg3: str):
+def f2_plain(arg, arg3):
     pass
 
 
@@ -93,7 +93,7 @@ def test_memory_human_readable_conversion():
         ),
         param(
             f_annotated,
-            f2_annotated,
+            f2_plain,
             TypeError,
             id="different_names",
         ),
