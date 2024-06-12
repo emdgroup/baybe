@@ -156,14 +156,14 @@ of the user guide.
 
 ```python
 from baybe.recommenders import (
-    SequentialGreedyRecommender,
+    BotorchRecommender,
     FPSRecommender,
     TwoPhaseMetaRecommender,
 )
 
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=FPSRecommender(),  # farthest point sampling
-    recommender=SequentialGreedyRecommender(),  # Bayesian model-based optimization
+    recommender=BotorchRecommender(),  # Bayesian model-based optimization
 )
 ```
 

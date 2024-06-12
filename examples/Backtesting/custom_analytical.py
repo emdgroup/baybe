@@ -22,8 +22,8 @@ from baybe import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
+    BotorchRecommender,
     RandomRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -82,7 +82,7 @@ objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MI
 # For details on recommender objects, we refer to [`recommenders`](./../Basics/recommenders.md).
 
 seq_greedy_EI_recommender = TwoPhaseMetaRecommender(
-    recommender=SequentialGreedyRecommender(acquisition_function="qEI"),
+    recommender=BotorchRecommender(acquisition_function="qEI"),
 )
 random_recommender = TwoPhaseMetaRecommender(recommender=RandomRecommender())
 

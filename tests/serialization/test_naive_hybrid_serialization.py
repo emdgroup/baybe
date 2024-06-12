@@ -6,8 +6,8 @@ from baybe.campaign import Campaign
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
-from baybe.recommenders.pure.bayesian.sequential_greedy import (
-    SequentialGreedyRecommender,
+from baybe.recommenders.pure.bayesian.botorch import (
+    BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
@@ -30,7 +30,7 @@ valid_discrete_bayesian_recommenders = [
 valid_naive_hybrid_recommenders = [
     TwoPhaseMetaRecommender(
         recommender=NaiveHybridSpaceRecommender(
-            disc_recommender=disc, cont_recommender=SequentialGreedyRecommender()
+            disc_recommender=disc, cont_recommender=BotorchRecommender()
         )
     )
     for disc in [

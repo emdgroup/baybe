@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
+- `SubspaceDiscrete.to_searchspace` and `SubspaceContinuous.to_searchspace`
+  convenience constructor
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -15,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
   and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
+
+### Fixed
+- `sequential` flag of `SequentialGreedyRecommender` is now set to `True`
 
 ### Breaking Changes
 - Providing an explicit `batch_size` is now mandatory when asking for recommendations

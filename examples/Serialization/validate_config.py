@@ -73,7 +73,7 @@ CONFIG = str(
             "type": "FPSRecommender"
         },
         "recommender": {
-            "type": "SequentialGreedyRecommender",
+            "type": "BotorchRecommender",
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },
@@ -144,7 +144,7 @@ INVALID_CONFIG = str(
             "type": "FPSRecommender"
         },
         "recommender": {
-            "type": "SequentialGreedyRecommender",
+            "type": "BotorchRecommender",
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },

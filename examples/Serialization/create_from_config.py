@@ -74,7 +74,7 @@ CONFIG = str(
             "type": "FPSRecommender"
         },
         "recommender": {
-            "type": "SequentialGreedyRecommender",
+            "type": "BotorchRecommender",
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },

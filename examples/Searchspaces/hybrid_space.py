@@ -107,7 +107,7 @@ objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MI
 # Here, we explicitly create a recommender object to use the `NaiveHybridSpaceRecommender`.
 # The keywords `disc_recommender` and `cont_recommender` can be used to select different
 # recommenders for the corresponding subspaces.
-# We use the default choices, which is the `SequentialGreedyRecommender`.
+# We use the default choices, which is the `BotorchRecommender`.
 
 hybrid_recommender = TwoPhaseMetaRecommender(recommender=NaiveHybridSpaceRecommender())
 

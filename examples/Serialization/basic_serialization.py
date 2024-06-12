@@ -17,8 +17,8 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders import (
+    BotorchRecommender,
     FPSRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -49,7 +49,7 @@ campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
-        recommender=SequentialGreedyRecommender(),
+        recommender=BotorchRecommender(),
         initial_recommender=FPSRecommender(),
     ),
 )

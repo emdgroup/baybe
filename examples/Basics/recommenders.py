@@ -20,8 +20,8 @@ from baybe import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
+    BotorchRecommender,
     RandomRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -103,7 +103,7 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=INITIAL_RECOMMENDER,
-    recommender=SequentialGreedyRecommender(
+    recommender=BotorchRecommender(
         surrogate_model=SURROGATE_MODEL,
         acquisition_function=ACQ_FUNCTION,
         allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,

@@ -28,14 +28,14 @@ class BayesianRecommender(PureRecommender, ABC):
     """The used surrogate model."""
 
     acquisition_function: AcquisitionFunction = field(
-        converter=convert_acqf, factory=qExpectedImprovement, kw_only=True
+        converter=convert_acqf, factory=qExpectedImprovement
     )
     """The used acquisition function class."""
 
     _botorch_acqf = field(default=None, init=False)
     """The current acquisition function."""
 
-    acquisition_function_cls: bool = field(default=None)
+    acquisition_function_cls: str | None = field(default=None, kw_only=True)
     "Deprecated! Raises an error when used."
 
     @acquisition_function_cls.validator

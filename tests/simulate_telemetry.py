@@ -10,8 +10,8 @@ from baybe.campaign import Campaign
 from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
+    BotorchRecommender,
     RandomRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -72,7 +72,7 @@ config = {
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
     "recommender": TwoPhaseMetaRecommender(
-        recommender=SequentialGreedyRecommender(
+        recommender=BotorchRecommender(
             allow_repeated_recommendations=False,
             allow_recommending_already_measured=False,
         ),

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Iterable, Sequence
 from math import prod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -31,6 +31,9 @@ from baybe.utils.dataframe import (
 )
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
+
+if TYPE_CHECKING:
+    from baybe.searchspace.core import SearchSpace
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
@@ -213,6 +216,12 @@ class SubspaceDiscrete(SerialMixin):
             return
         off_task_idxs = ~self._on_task_configurations()
         self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True  # type: ignore
+
+    def to_searchspace(self) -> SearchSpace:
+        """Turn the subspace into a search space with no continuous part."""
+        from baybe.searchspace.core import SearchSpace
+
+        return SearchSpace(discrete=self)
 
     def _on_task_configurations(self) -> pd.Series:
         """Retrieve the parameter configurations for the active tasks."""

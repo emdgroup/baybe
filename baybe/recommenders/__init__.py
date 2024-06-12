@@ -6,6 +6,7 @@ from baybe.recommenders.meta.sequential import (
     TwoPhaseMetaRecommender,
 )
 from baybe.recommenders.naive import NaiveHybridSpaceRecommender
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.bayesian.sequential_greedy import (
     SequentialGreedyRecommender,
 )
@@ -20,6 +21,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
 )
 
 __all__ = [
+    "BotorchRecommender",
     "FPSRecommender",
     "GaussianMixtureClusteringRecommender",
     "KMeansClusteringRecommender",

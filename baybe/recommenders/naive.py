@@ -9,9 +9,7 @@ from attrs import define, evolve, field, fields
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
-from baybe.recommenders.pure.bayesian.sequential_greedy import (
-    SequentialGreedyRecommender,
-)
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils.dataframe import to_tensor
@@ -40,13 +38,13 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     # works for now. Still, we manually check whether the disc_recommender belongs to
     # one of these two subclasses such that we might be able to easily spot a potential
     # problem that might come up when implementing new subclasses of PureRecommender
-    disc_recommender: PureRecommender = field(factory=SequentialGreedyRecommender)
+    disc_recommender: PureRecommender = field(factory=BotorchRecommender)
     """The recommender used for the discrete subspace. Default:
-    :class:`baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`"""
 
-    cont_recommender: BayesianRecommender = field(factory=SequentialGreedyRecommender)
+    cont_recommender: BayesianRecommender = field(factory=BotorchRecommender)
     """The recommender used for the continuous subspace. Default:
-    :class:`baybe.recommenders.pure.bayesian.sequential_greedy.SequentialGreedyRecommender`"""
+    :class:`baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`"""
 
     def __attrs_post_init__(self):
         """Validate if flags are synchronized and overrides them otherwise."""
