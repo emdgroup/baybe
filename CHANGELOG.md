@@ -21,7 +21,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Acquisition function for active learning: `qNIPV`
 - Abstract `ContinuousNonlinearConstraint` class
 - `ContinuousCardinalityConstraint` class and corresponding uniform sampling mechanism
-- `register_hook` to give users the ability to register custom hooks for all methods of package objects
+- `register_hook` utility enabling user-defined augmentation of arbitrary callables
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
