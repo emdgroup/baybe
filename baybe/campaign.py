@@ -55,7 +55,8 @@ class Campaign(SerialMixin):
     wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
 
     recommender: RecommenderProtocol = field(
-        factory=TwoPhaseMetaRecommender, validator=instance_of(RecommenderProtocol)
+        factory=TwoPhaseMetaRecommender,
+        validator=instance_of(RecommenderProtocol),  # type: ignore[type-abstract]
     )
     """The employed recommender"""
 
