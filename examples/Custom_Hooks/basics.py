@@ -65,7 +65,7 @@ class ElapsedTimePrinter:
         instance,
         self,
         batch_size,
-        searchspace: SearchSpace,
+        searchspace,
         objective=None,
         measurements=None,
     ):
@@ -76,7 +76,7 @@ class ElapsedTimePrinter:
         instance,
         self,
         batch_size,
-        searchspace: SearchSpace,
+        searchspace,
         objective=None,
         measurements=None,
     ):
