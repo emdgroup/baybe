@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
-from attrs.setters import frozen
 from attrs.validators import instance_of
 
 from baybe.exceptions import DeprecationError
@@ -47,14 +46,10 @@ class Campaign(SerialMixin):
     """
 
     # DOE specifications
-    searchspace: SearchSpace = field(
-        validator=instance_of(SearchSpace), on_setattr=frozen
-    )
+    searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
     """The search space in which the experiments are conducted."""
 
-    objective: Objective | None = field(
-        default=None, converter=optional(to_objective), on_setattr=frozen
-    )
+    objective: Objective | None = field(default=None, converter=optional(to_objective))
     """The optimization objective.
     When passing a single :class:`baybe.targets.base.Target`, it gets automatically
     wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
