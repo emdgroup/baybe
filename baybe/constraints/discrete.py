@@ -6,7 +6,7 @@ from typing import Any, cast
 
 import pandas as pd
 from attr import define, field
-from attr.validators import in_, min_len
+from attr.validators import ge, in_, instance_of, min_len
 
 from baybe.constraints.base import DiscreteConstraint
 from baybe.constraints.conditions import (
@@ -278,6 +278,74 @@ class DiscreteCustomConstraint(DiscreteConstraint):
         return data.index[mask_bad]
 
 
+@define
+class DiscreteCardinalityConstraint(DiscreteConstraint):
+    """Class for discrete cardinality constraints.
+
+    TODO: delete the detailed explanation when PR of ContinuousCardinalityConstraint
+    is merged.
+    Places a constraint on the set of nonzero (i.e. "active") values among the
+    specified parameter, bounding it between the two given integers,
+        ``min_cardinality`` <= | {1(p_i != 0)}_i | <= ``max_cardinality``
+    where ``1`` is the Kronecker delta function and ``{p_i}`` are the parameters
+    specified for the constraint.
+
+    Note that this can be equivalently regarded a L0-constraint on the vector containing
+    the specified parameters.
+    """
+
+    min_cardinality: int = field(default=0, validator=[instance_of(int), ge(0)])
+    "The minimum required cardinality."
+
+    max_cardinality: int = field(validator=instance_of(int))
+    "The maximum allowed cardinality."
+
+    @max_cardinality.default
+    def _default_max_cardinality(self):
+        """Use the number of involved parameters as the upper limit by default."""
+        return len(self.parameters)
+
+    def __attrs_post_init__(self):
+        """Validate the cardinality bounds.
+
+        TODO: simplify the docstring when PR of ContinuousCardinalityConstraint is
+        merged.
+
+        Raises:
+            ValueError: When the minimum allowed cardinality is larger that the maximum
+                one.
+            ValueError: When the maximum allowed cardinality is larger than the
+                number of parameters.
+            ValueError: When no cardinality constraint is needed.
+        """
+        # TODO: remove the duplicate when PR of ContinuousCardinalityConstraint is
+        #  merged.
+        if self.min_cardinality > self.max_cardinality:
+            raise ValueError(
+                f"The lower cardinality bound cannot be larger than the upper bound. "
+                f"Provided values: {self.max_cardinality=}, {self.min_cardinality=}."
+            )
+
+        if self.max_cardinality > len(self.parameters):
+            raise ValueError(
+                f"The cardinality bound cannot exceed the number of parameters. "
+                f"Provided values: {self.max_cardinality=}, {len(self.parameters)=}."
+            )
+
+        if self.min_cardinality == 0 and self.max_cardinality == len(self.parameters):
+            raise ValueError(
+                f"No constraint of type `{self.__class__.__name__}' is required "
+                f"when 0 <= cardinality <= len(parameters)."
+            )
+
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
+        non_zeros = (data[self.parameters] != 0.0).sum(axis=1)
+        mask_bad = non_zeros > self.max_cardinality
+        mask_bad |= non_zeros < self.min_cardinality
+        return data.index[mask_bad]
+
+
 # the order in which the constraint types need to be applied during discrete subspace
 # filtering
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
@@ -287,6 +355,7 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteLinkedParametersConstraint,
     DiscreteSumConstraint,
     DiscreteProductConstraint,
+    DiscreteCardinalityConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteDependenciesConstraint,
 )
