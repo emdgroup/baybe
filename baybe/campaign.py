@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
+from attrs.validators import instance_of
 
 from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective, to_objective
@@ -45,7 +46,7 @@ class Campaign(SerialMixin):
     """
 
     # DOE specifications
-    searchspace: SearchSpace = field()
+    searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
     """The search space in which the experiments are conducted."""
 
     objective: Objective | None = field(default=None, converter=optional(to_objective))
@@ -53,7 +54,10 @@ class Campaign(SerialMixin):
     When passing a single :class:`baybe.targets.base.Target`, it gets automatically
     wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
 
-    recommender: RecommenderProtocol = field(factory=TwoPhaseMetaRecommender)
+    recommender: RecommenderProtocol = field(
+        factory=TwoPhaseMetaRecommender,
+        validator=instance_of(RecommenderProtocol),  # type: ignore[type-abstract]
+    )
     """The employed recommender"""
 
     # Metadata

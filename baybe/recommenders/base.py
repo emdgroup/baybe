@@ -1,6 +1,6 @@
 """Base protocol for all recommenders."""
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import cattrs
 import pandas as pd
@@ -11,6 +11,7 @@ from baybe.searchspace import SearchSpace
 from baybe.serialization import converter, unstructure_base
 
 
+@runtime_checkable
 class RecommenderProtocol(Protocol):
     """Type protocol specifying the interface recommenders need to implement."""
 

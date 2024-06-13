@@ -861,7 +861,7 @@ def select_recommender(
     meta_recommender: MetaRecommender, training_size: int
 ) -> PureRecommender:
     """Select a recommender for a given training dataset size."""
-    searchspace = Mock()
+    searchspace = Mock(spec=SearchSpace)
     df = Mock()
     df.__len__ = Mock(return_value=training_size)
     return meta_recommender.select_recommender(
