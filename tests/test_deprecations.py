@@ -9,8 +9,9 @@ from baybe import Campaign
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import DeprecationError
 from baybe.objective import Objective as OldObjective
-from baybe.objectives.base import Objective as NewObjective
+from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
+from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
@@ -20,6 +21,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
+from baybe.searchspace.core import SearchSpace
 from baybe.strategies import (
     SequentialStrategy,
     StreamingSequentialStrategy,
@@ -111,7 +113,10 @@ def test_deprecated_campaign_tolerance_flag(flag):
     """Constructing a Campaign with the deprecated tolerance flag raises an error."""
     with pytest.raises(DeprecationError):
         Campaign(
-            Mock(), Mock(), Mock(), numerical_measurements_must_be_within_tolerance=flag
+            Mock(spec=SearchSpace),
+            Mock(spec=Objective),
+            Mock(spec=RecommenderProtocol),
+            numerical_measurements_must_be_within_tolerance=flag,
         )
 
 
@@ -133,7 +138,12 @@ def test_deprecated_strategy_allow_flags(flag):
 def test_deprecated_strategy_campaign_flag(recommender):
     """Using the deprecated strategy keyword raises an error."""
     with pytest.raises(DeprecationError):
-        Campaign(Mock(), Mock(), Mock(), strategy=recommender)
+        Campaign(
+            Mock(spec=SearchSpace),
+            Mock(spec=Objective),
+            Mock(spec=RecommenderProtocol),
+            strategy=recommender,
+        )
 
 
 def test_deprecated_objective_class():
@@ -173,7 +183,7 @@ def test_deprecated_objective_config_deserialization():
         scalarizer="MEAN",
         weights=[1, 2],
     )
-    actual = NewObjective.from_json(deprecated_objective_config)
+    actual = Objective.from_json(deprecated_objective_config)
     assert expected == actual, (expected, actual)
 
 
