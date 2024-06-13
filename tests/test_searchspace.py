@@ -86,6 +86,31 @@ def test_discrete_searchspace_creation_from_dataframe():
     assert df.equals(searchspace.discrete.exp_rep)
 
 
+def test_invalid_discrete_searchspace_creation_from_simplex():
+    """A purely discrete search space is created from a simplex."""
+    N_params = 1
+    parameters = [
+        NumericalDiscreteParameter(name=f"x_{p}", values=(0, 1, 2))
+        for p in range(N_params)
+    ]
+
+    # Attempting a discrete subspace over simplex_parameters and product_parameters
+    # sharing the same parameter names.
+    with pytest.raises(
+        ValueError,
+        match="'simplex_parameters' and "
+        "'product_parameters' "
+        "cannot share the same parameter names.",
+    ):
+        SearchSpace(
+            SubspaceDiscrete.from_simplex(
+                max_sum=1.0,
+                simplex_parameters=parameters,
+                product_parameters=parameters,
+            )
+        )
+
+
 def test_continuous_searchspace_creation_from_bounds():
     """A purely continuous search space is created from example bounds."""
     parameters = (
