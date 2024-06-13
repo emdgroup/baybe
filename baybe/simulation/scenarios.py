@@ -84,7 +84,7 @@ def simulate_scenarios(
 
     def make_xyzpy_callable(result_variable: str) -> Callable:
         """Make a batch simulator that allows running campaigns in parallel."""
-        from baybe._optional.xzypy import xyzpy
+        from baybe._optional.simulation import xyzpy
 
         @xyzpy.label(var_names=[result_variable])
         def simulate(

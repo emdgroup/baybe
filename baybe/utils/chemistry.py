@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from joblib import Memory
 
-from baybe._optional.chemistry import (
+from baybe._optional.chem import (
     Calculator,
     Chem,
     GetMorganFingerprintAsBitVect,
