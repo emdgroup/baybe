@@ -35,6 +35,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.base import Surrogate
+from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations
@@ -43,7 +44,9 @@ from .conftest import run_iterations
 # Settings of the individual components to be tested
 ########################################################################################
 valid_surrogate_models = [
-    cls() for cls in get_subclasses(Surrogate) if cls.__name__ != "CustomONNXSurrogate"
+    cls()
+    for cls in get_subclasses(Surrogate)
+    if not issubclass(cls, CustomONNXSurrogate)
 ]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender

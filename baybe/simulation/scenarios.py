@@ -5,25 +5,17 @@ from __future__ import annotations
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
 
-try:
-    import xyzpy as xyz
-    from xarray import DataArray
-except ImportError as ex:
-    # This is just to augment the error message and provide a suggestion
-    raise ModuleNotFoundError(
-        "xyzpy is not installed, the simulation module is unavailable. Consider "
-        "installing baybe with `simulation` dependency, e.g.`pip install "
-        "baybe[simulation]`"
-    ) from ex
-
 from baybe.campaign import Campaign
 from baybe.exceptions import NothingToSimulateError
 from baybe.simulation.core import simulate_experiment
+
+if TYPE_CHECKING:
+    from xarray import DataArray
 
 _DEFAULT_SEED = 1337
 
@@ -79,7 +71,6 @@ def simulate_scenarios(
           that specifies the search space partition considered for the respective
           simulation.
     """
-    _RESULT_VARIABLE = "simulation_result"
 
     @dataclass
     class SimulationResult:
@@ -91,27 +82,33 @@ def simulate_scenarios(
 
         result: pd.DataFrame
 
-    @xyz.label(var_names=[_RESULT_VARIABLE])
-    def simulate(
-        Scenario: str,
-        Random_Seed=None,
-        Initial_Data=None,
-    ):
-        """Callable for xyzpy simulation."""
-        data = None if initial_data is None else initial_data[Initial_Data]
-        return SimulationResult(
-            _simulate_groupby(
-                scenarios[Scenario],
-                lookup,
-                batch_size=batch_size,
-                n_doe_iterations=n_doe_iterations,
-                initial_data=data,
-                groupby=groupby,
-                random_seed=Random_Seed,
-                impute_mode=impute_mode,
-                noise_percent=noise_percent,
+    def make_xyzpy_callable(result_variable: str) -> Callable:
+        """Make a batch simulator that allows running campaigns in parallel."""
+        from baybe._optional.simulation import xyzpy
+
+        @xyzpy.label(var_names=[result_variable])
+        def simulate(
+            Scenario: str,
+            Random_Seed=None,
+            Initial_Data=None,
+        ):
+            """Callable for xyzpy simulation."""
+            data = None if initial_data is None else initial_data[Initial_Data]
+            return SimulationResult(
+                _simulate_groupby(
+                    scenarios[Scenario],
+                    lookup,
+                    batch_size=batch_size,
+                    n_doe_iterations=n_doe_iterations,
+                    initial_data=data,
+                    groupby=groupby,
+                    random_seed=Random_Seed,
+                    impute_mode=impute_mode,
+                    noise_percent=noise_percent,
+                )
             )
-        )
+
+        return simulate
 
     def unpack_simulation_results(array: DataArray) -> pd.DataFrame:
         """Turn the xyzpy simulation results into a flat dataframe."""
@@ -137,7 +134,9 @@ def simulate_scenarios(
         combos["Initial_Data"] = range(len(initial_data))
 
     # Simulate and unpack
-    da_results = simulate.run_combos(combos)[_RESULT_VARIABLE]
+    result_variable = "simulation_result"
+    batch_simulator = make_xyzpy_callable(result_variable)
+    da_results = batch_simulator.run_combos(combos)[result_variable]
     df_results = unpack_simulation_results(da_results)
 
     return df_results

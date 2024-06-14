@@ -18,6 +18,7 @@ import streamlit as st
 from baybe.acquisition import qExpectedImprovement
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
+from baybe.surrogates import CustomONNXSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.utils.basic import get_subclasses
 
@@ -77,7 +78,7 @@ def main():
     surrogate_model_classes = {
         surr.__name__: surr
         for surr in get_subclasses(Surrogate)
-        if surr.__name__ != "CustomONNXSurrogate"
+        if not issubclass(surr, CustomONNXSurrogate)
     }
 
     # simulation parameters

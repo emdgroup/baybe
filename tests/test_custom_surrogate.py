@@ -4,15 +4,13 @@ from contextlib import nullcontext
 import pytest
 
 from baybe import Campaign
-from baybe.surrogates import _ONNX_INSTALLED, register_custom_architecture
+from baybe._optional.info import ONNX_INSTALLED
+from baybe.surrogates import CustomONNXSurrogate, register_custom_architecture
 from tests.conftest import run_iterations
-
-if _ONNX_INSTALLED:
-    from baybe.surrogates import CustomONNXSurrogate
 
 
 @pytest.mark.skipif(
-    not _ONNX_INSTALLED, reason="Optional onnx dependency not installed."
+    not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
 )
 def test_invalid_onnx_creation(onnx_str):
     """Invalid onnx model creation."""
@@ -30,7 +28,7 @@ def test_invalid_onnx_creation(onnx_str):
 
 
 @pytest.mark.skipif(
-    not _ONNX_INSTALLED, reason="Optional onnx dependency not installed."
+    not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
 )
 def test_invalid_onnx_str():
     """Invalid onnx string causes error."""
@@ -39,7 +37,7 @@ def test_invalid_onnx_str():
 
 
 @pytest.mark.skipif(
-    not _ONNX_INSTALLED, reason="Optional onnx dependency not installed."
+    not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
 )
 @pytest.mark.parametrize("surrogate_model", ["onnx"], indirect=True)
 @pytest.mark.parametrize(

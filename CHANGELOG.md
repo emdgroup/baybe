@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.to_searchspace` and `SubspaceContinuous.to_searchspace`
   convenience constructor
 - Validators for `Campaign` attributes
+_ `_optional` subpackage for managing optional dependencies
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

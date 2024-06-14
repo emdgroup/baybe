@@ -12,12 +12,9 @@ from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import _ONNX_INSTALLED, GaussianProcessSurrogate
+from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.utils.dataframe import to_tensor
-
-if _ONNX_INSTALLED:
-    from baybe.surrogates import CustomONNXSurrogate
 
 
 @define
@@ -85,7 +82,7 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"empty training data."
             )
 
-        if _ONNX_INSTALLED and isinstance(self.surrogate_model, CustomONNXSurrogate):
+        if isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
         self._setup_botorch_acqf(searchspace, objective, measurements)
