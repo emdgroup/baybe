@@ -192,15 +192,16 @@ def register_hooks(
     """Register custom hooks with a given target callable.
 
     The provided hooks need to be "compatible" with the target in the sense that their
-    signatures are aligned, i.e., no problem arises when arguments intended for the
-    target are passed to the hook:
+    signatures can be aligned:
 
-    * Target and hook need to share the same number of parameters (basic requirement)
-    * Their parameters need to have the same names (required for keyword arguments)
-    * Annotations that **may** be present for the hook parameters must match their
-      target counterpart (safety mechanism to prevent unintended argument use)
-    * Parameters that come with defaults for the target also require defaults for the
-      hooks (required for calls with omitted arguments)
+    * The hook signature may only contain parameters that also exist in the target
+      callable (<-- basic requirement).
+    * However, parameters that are not needed by the hook can be omitted from
+      its signature. This requires that the parameters of both signatures can be matched
+      via their names. For simplicity, it is thus assumed that the hook has no
+      positional-only arguments.
+    * If an annotation is provided for a hook parameter, it must match its
+      target counterpart (<-- safety mechanism to prevent unintended argument use).
 
     Args:
         target: The callable to which the hooks are to be attached.
@@ -211,46 +212,63 @@ def register_hooks(
         The wrapped callable with the hooks attached.
 
     Raises:
-        TypeError: If the target and any hook expect different numbers of parameters.
-        TypeError: If the target and any hook have different parameter names.
+        TypeError: If any hook has positional-only arguments.
+        TypeError: If any hook expects parameters that are not present in the target.
         TypeError: If any hook has a non-empty parameter annotation that does not
             match with the corresponding annotation of the target.
     """
+    # Defaults
     pre_hooks = pre_hooks or []
     post_hooks = post_hooks or []
 
-    target_params = inspect.signature(target, eval_str=True).parameters.values()
+    target_signature = inspect.signature(target, eval_str=True).parameters
 
+    # Validate hook signatures
     for hook in [*pre_hooks, *post_hooks]:
-        hook_params = inspect.signature(hook, eval_str=True).parameters.values()
+        hook_signature = inspect.signature(hook, eval_str=True).parameters
 
-        if len(target_params) != len(hook_params):
+        if any(
+            p.kind is inspect.Parameter.POSITIONAL_ONLY for p in hook_signature.values()
+        ):
+            raise TypeError("The provided hooks cannot have positional-only arguments.")
+
+        if unrecognized := (set(hook_signature) - set(target_signature)):
             raise TypeError(
-                f"'{target.__name__}' and '{hook.__name__}' have "
-                f"a different number of parameters."
+                f"The parameters expected by the hook '{hook.__name__}' must be a "
+                f"subset of the parameter of the target callable '{target.__name__}'. "
+                f"Unrecognized hook parameters: {unrecognized}."
             )
 
-        for p1, p2 in zip(target_params, hook_params):
-            if p1.name != p2.name:
+        for name, hook_param in hook_signature.items():
+            target_param = target_signature[name]
+            if (
+                (h_hint := hook_param.annotation) != (t_hint := target_param.annotation)
+            ) and (h_hint is not inspect.Parameter.empty):
                 raise TypeError(
-                    f"The parameter names of '{target.__name__}' "
-                    f"and '{hook.__name__}' do not match."
+                    f"The type annotation for '{name}' is not consistent between "
+                    f"the given hook '{hook.__name__}' and the target callable "
+                    f"'{target.__name__}'. Given: {h_hint}. Expected: {t_hint}."
                 )
-            if (p1.annotation != p2.annotation) and (
-                p2.annotation is not inspect.Parameter.empty
-            ):
-                raise TypeError(
-                    f"The type annotations of '{target.__name__}' "
-                    f"and '{hook.__name__}' do not match."
-                )
+
+    def pass_args(hook: Callable, *args, **kwargs) -> None:
+        """Call the hook with its requested subset of arguments."""
+        hook_signature = inspect.signature(hook, eval_str=True).parameters
+        matched_args = dict(zip(target_signature, args))
+        matched_kwargs = {
+            p: kwargs.get(p, target_signature[p].default)
+            for p in hook_signature
+            if p not in matched_args
+        }
+        passed_kwargs = {p: (matched_args | matched_kwargs)[p] for p in hook_signature}
+        hook(**passed_kwargs)
 
     @functools.wraps(target)
     def wraps(*args, **kwargs):
         for hook in pre_hooks:
-            hook(*args, **kwargs)
+            pass_args(hook, *args, **kwargs)
         result = target(*args, **kwargs)
         for hook in post_hooks:
-            hook(*args, **kwargs)
+            pass_args(hook, *args, **kwargs)
         return result
 
     return wraps

@@ -30,24 +30,17 @@ from baybe.utils.basic import register_hooks
 #
 
 # ```{admonition} Signature components
-# :class: important
-# Note that, if provided, annotations must match **exactly** those of the target signature.
-# However, annotations are completely optional
-# — only the names/order of the signature parameters and their defaults matter.
-#
-# For the sake of demonstration, we only provide the annotation for the
-# relevant `searchspace` parameter of the hook in the example below.
+# :class: note
+# Note that you are flexible in designing the signature of your hooks.
+# For instance, function parameters and type annotations that you do not need in the
+# hook body can simply be omitted.
+# The exact rules to follow are described {func}`here <baybe.utils.basic.register_hooks>`.
 # ```
 
 
-def print_parameter_names_hook(
-    self,
-    batch_size,
-    searchspace: SearchSpace,
-    objective=None,
-    measurements=None,
-):
+def print_parameter_names_hook(self, searchspace: SearchSpace):
     """Print the names of the parameters spanning the search space."""
+    print(f"Recommender type: {self.__class__.__name__}")
     print(f"Search space parameters: {[p.name for p in searchspace.parameters]}")
 
 
@@ -61,29 +54,15 @@ class ElapsedTimePrinter:
 
     last_call_time: float | None = None
 
-    def start(
-        instance,
-        self,
-        batch_size,
-        searchspace,
-        objective=None,
-        measurements=None,
-    ):
+    def start(self):
         """Start the timer."""
-        instance.last_call_time = perf_counter()
+        self.last_call_time = perf_counter()
 
-    def measure(
-        instance,
-        self,
-        batch_size,
-        searchspace,
-        objective=None,
-        measurements=None,
-    ):
+    def measure(self):
         """Measure the elapsed time."""
-        if instance.last_call_time is None:
+        if self.last_call_time is None:
             raise RuntimeError("Must call `start` first!")
-        print(f"Elapsed time: {perf_counter() - instance.last_call_time}")
+        print(f"Elapsed time: {perf_counter() - self.last_call_time}")
 
 
 ### Monkeypatching
