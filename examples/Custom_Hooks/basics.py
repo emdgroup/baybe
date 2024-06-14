@@ -55,15 +55,26 @@ class ElapsedTimePrinter:
 
     last_call_time: float | None = None
 
-    def start(self):
+    def start(printer_instance):
         """Start the timer."""
-        self.last_call_time = perf_counter()
+        printer_instance.last_call_time = perf_counter()
 
-    def measure(self):
+    def measure(printer_instance, self):
         """Measure the elapsed time."""
-        if self.last_call_time is None:
+        if printer_instance.last_call_time is None:
             raise RuntimeError("Must call `start` first!")
-        print(f"Elapsed time: {perf_counter() - self.last_call_time}")
+        elapsed = perf_counter() - printer_instance.last_call_time
+        print(f"Consumed time of {self.__class__.__name__}: {elapsed}")
+
+
+# ```{admonition} Hook instance vs. target instance
+# :class: important
+# Notice the difference between the object belonging to the hook-providing class
+# (named `printer_instance`) and the object whose method we intend to override
+# (named `self`). This distinction is necessary because of
+# {ref}`the particular way <BOUND_METHODS>` we attach the hook below, which binds `self`
+# to the object carrying the target callable as a method.
+# ```
 
 
 ### Monkeypatching
@@ -81,6 +92,7 @@ recommender.recommend = MethodType(
     recommender,
 )
 
+# (BOUND_METHODS)=
 # ```{admonition} Bound methods
 # :class: important
 # Note that the explicit binding via `MethodType` above is required because we
