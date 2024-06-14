@@ -5,7 +5,10 @@ from itertools import combinations
 
 from baybe.constraints.base import Constraint
 from baybe.constraints.continuous import ContinuousCardinalityConstraint
-from baybe.constraints.discrete import DiscreteDependenciesConstraint
+from baybe.constraints.discrete import (
+    DISCRETE_CONSTRAINTS_ONLY_FOR_NUMERIC_PARAMETER,
+    DiscreteDependenciesConstraint,
+)
 from baybe.parameters.base import Parameter
 
 
@@ -22,6 +25,8 @@ def validate_constraints(  # noqa: DOC101, DOC103
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.
+        ValueError: If any discrete constraint, which is valid only for numerical
+            discrete parameter, includes non-numerical discrete parameters.
     """
     if sum(isinstance(itm, DiscreteDependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
@@ -36,6 +41,10 @@ def validate_constraints(  # noqa: DOC101, DOC103
     param_names_all = [p.name for p in parameters]
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
     param_names_continuous = [p.name for p in parameters if p.is_continuous]
+    param_names_discrete_numerical = [
+        p.name for p in parameters if p.is_numeric and p.is_discrete
+    ]
+
     for constraint in constraints:
         if not all(p in param_names_all for p in constraint.parameters):
             raise ValueError(
@@ -60,6 +69,19 @@ def validate_constraints(  # noqa: DOC101, DOC103
                 f"You are trying to initialize a discrete constraint over a parameter "
                 f"that is continuous. Parameter list of the affected constraint: "
                 f"{constraint.parameters}"
+            )
+
+        if any(
+            isinstance(constraint, con_tmp)
+            for con_tmp in DISCRETE_CONSTRAINTS_ONLY_FOR_NUMERIC_PARAMETER
+        ) and any(
+            p not in param_names_discrete_numerical for p in constraint.parameters
+        ):
+            raise ValueError(
+                f"You are trying to initialize a {constraint.__class__.__name__} constraint which is valid "
+                f"only for numerical discrete parameters over a parameter that does "
+                f"not match. Parameter list of the affected constraint: "
+                f"{constraint.parameters}."
             )
 
 

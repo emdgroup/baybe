@@ -360,6 +360,20 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscreteDependenciesConstraint,
 )
 
+# Discrete constraints that are valid only for numeric parameters. It is needed for
+# the purpose of validation.
+# There are two options:
+# Option A: A list containing such discrete constraints is maintained. It does
+# not require any breaking change but requires some maintenance work. Whenever a
+# new discrete constraint, which is valid only for numerical parameters,
+# is introduced, it must be added to the list.
+# Option B: Add an attribute, e.g. numerical_parameter_only,
+# to the discrete constraints.
+DISCRETE_CONSTRAINTS_ONLY_FOR_NUMERIC_PARAMETER = [
+    DiscreteCardinalityConstraint,
+    DiscreteSumConstraint,
+    DiscreteProductConstraint,
+]
 
 # Prevent (de-)serialization of custom constraints
 converter.register_unstructure_hook(DiscreteCustomConstraint, block_serialization_hook)

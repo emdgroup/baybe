@@ -86,21 +86,17 @@ def test_discrete_searchspace_creation_from_dataframe():
     assert df.equals(searchspace.discrete.exp_rep)
 
 
-def test_invalid_discrete_searchspace_creation_from_simplex():
-    """A purely discrete search space is created from a simplex."""
-    N_params = 1
-    parameters = [
-        NumericalDiscreteParameter(name=f"x_{p}", values=(0, 1, 2))
-        for p in range(N_params)
-    ]
+def test_discrete_searchspace_creation_from_simplex_on_overlapping_parameters():
+    """Attempt creation of a discrete searchspace over simplex parameters and product
+    parameters sharing the same parameter names."""  # noqa
+    parameters = [NumericalDiscreteParameter(name="x_1", values=(0, 1, 2))]
 
     # Attempting a discrete subspace over simplex_parameters and product_parameters
     # sharing the same parameter names.
     with pytest.raises(
         ValueError,
-        match="'simplex_parameters' and "
-        "'product_parameters' "
-        "cannot share the same parameter names.",
+        match="'simplex_parameters' and 'product_parameters' cannot share the same "
+        "parameter names.",
     ):
         SearchSpace(
             SubspaceDiscrete.from_simplex(
@@ -149,6 +145,7 @@ def test_hyperrectangle_searchspace_creation():
 def test_invalid_constraint_parameter_combos():
     """Testing invalid constraint-parameter combinations."""
     parameters = [
+        CategoricalParameter("cat1", values=("c1", "c2")),
         NumericalDiscreteParameter("d1", values=[1, 2, 3]),
         NumericalDiscreteParameter("d2", values=[0, 1, 2]),
         NumericalContinuousParameter("c1", (0, 2)),
@@ -212,6 +209,21 @@ def test_invalid_constraint_parameter_combos():
             ],
         )
 
+    # Attempting constraints over parameter sets containing non-numerical discrete
+    # parameters.
+    with pytest.raises(
+        ValueError, match="valid only for numerical discrete parameters"
+    ):
+        SearchSpace.from_product(
+            parameters=parameters,
+            constraints=[
+                DiscreteSumConstraint(
+                    parameters=["cat1", "d1", "d2"],
+                    condition=ThresholdCondition(threshold=1.0, operator=">"),
+                )
+            ],
+        )
+
 
 @pytest.mark.parametrize(
     "parameter_names",
@@ -253,15 +265,15 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
 
 def test_cardinality_constraints_with_overlapping_parameters():
     """Creating cardinality constraints with overlapping parameters raises an error."""
-    parameters = [
+    parameters = (
         NumericalContinuousParameter("c1", (0, 1)),
         NumericalContinuousParameter("c2", (0, 1)),
         NumericalContinuousParameter("c3", (0, 1)),
-    ]
+    )
     with pytest.raises(ValueError, match="cannot share the same parameters"):
         SubspaceContinuous(
             parameters=parameters,
-            constraints_nonlin=[
+            constraints_nonlin=(
                 ContinuousCardinalityConstraint(
                     parameters=["c1", "c2"],
                     max_cardinality=1,
@@ -270,5 +282,5 @@ def test_cardinality_constraints_with_overlapping_parameters():
                     parameters=["c2", "c3"],
                     max_cardinality=1,
                 ),
-            ],
+            ),
         )
