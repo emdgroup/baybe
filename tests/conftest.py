@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
+    DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
@@ -493,6 +494,11 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         "Constraint_13": DiscreteCustomConstraint(
             parameters=["Pressure", "Solvent_1", "Temperature"],
             validator=custom_function,
+        ),
+        "Constraint_14": DiscreteCardinalityConstraint(
+            parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
+            min_cardinality=1,
+            max_cardinality=2,
         ),
         "ContiConstraint_1": ContinuousLinearEqualityConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
