@@ -15,6 +15,7 @@
 
 from dataclasses import dataclass
 from time import perf_counter
+from types import MethodType
 
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import RandomRecommender
@@ -71,11 +72,30 @@ class ElapsedTimePrinter:
 
 timer = ElapsedTimePrinter()
 recommender = RandomRecommender()
-RandomRecommender.recommend = register_hooks(
-    RandomRecommender.recommend,
-    pre_hooks=[print_parameter_names_hook, timer.start],
-    post_hooks=[timer.measure],
+recommender.recommend = MethodType(
+    register_hooks(
+        RandomRecommender.recommend,
+        pre_hooks=[print_parameter_names_hook, timer.start],
+        post_hooks=[timer.measure],
+    ),
+    recommender,
 )
+
+# ```{admonition} Bound methods
+# :class: important
+# Note that the explicit binding via `MethodType` above is required because we
+# decorate the (unbound) `RandomRecommender.recommend` **function** with our hooks
+# and attach it as an overridden **method** to the recommender instance.
+#
+# Alternatively, we could have ...
+# * ... overridden the class callable itself via
+#   `RandomRecommender.recommend = register_hooks(RandomRecommender.recommend, ...)`
+#   which, however, would affect all instances of `RandomRecommender` or
+# * ... used the bound method of the instance as reference via
+#   `recommender.recommend = register_hooks(recommender.recommend, ...)` but then
+#   the hooks would not have access to the recommender instance as it is not
+#   explicitly exposed in the method's signature.
+# ```
 
 ### Triggering the Hooks
 
