@@ -68,6 +68,7 @@ class ElapsedTimePrinter:
 ### Monkeypatching
 
 # Next, we create our recommender and monkeypatch its `recommend` method:
+
 timer = ElapsedTimePrinter()
 recommender = RandomRecommender()
 RandomRecommender.recommend = register_hooks(
