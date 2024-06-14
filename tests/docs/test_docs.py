@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from baybe._optional.info import CHEM_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED, LINT_INSTALLED
 from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 
 from .utils import extract_code_blocks
@@ -52,6 +52,9 @@ def test_pseudocode_executability(file: Path, searchspace, objective, recommende
     exec(userguide_pseudocode)
 
 
+@pytest.mark.skipif(
+    not LINT_INSTALLED, reason="Optional lint dependency not installed."
+)
 @pytest.mark.parametrize("file", doc_files, ids=doc_files)
 def test_code_format(file: Path):
     """The code blocks in the file are properly formatted.
