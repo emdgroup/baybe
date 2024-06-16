@@ -202,6 +202,11 @@ def register_hooks(
       positional-only arguments.
     * If an annotation is provided for a hook parameter, it must match its
       target counterpart (<-- safety mechanism to prevent unintended argument use).
+      An exception is when the target parameter has no annotation, in which case
+      the hook annotation is unrestricted. This is particularly useful when registering
+      hooks with methods, since it offers the possibility to annotate the "self"
+      parameter bound to the method-carrying object, which is typically not annotated
+      in the target callable.
 
     Args:
         target: The callable to which the hooks are to be attached.
@@ -241,9 +246,16 @@ def register_hooks(
 
         for name, hook_param in hook_signature.items():
             target_param = target_signature[name]
-            if (
-                (h_hint := hook_param.annotation) != (t_hint := target_param.annotation)
-            ) and (h_hint is not inspect.Parameter.empty):
+
+            # If target parameter is not annotated, the hook annotation is unrestricted
+            if (t_hint := target_param.annotation) is inspect.Parameter.empty:
+                continue
+
+            # If target parameter is annotated, the hook annotation must be compatible,
+            # i.e., be identical or empty
+            if ((h_hint := hook_param.annotation) != t_hint) and (
+                h_hint is not inspect.Parameter.empty
+            ):
                 raise TypeError(
                     f"The type annotation for '{name}' is not consistent between "
                     f"the given hook '{hook.__name__}' and the target callable "

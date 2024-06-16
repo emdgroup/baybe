@@ -39,7 +39,7 @@ from baybe.utils.basic import register_hooks
 # ```
 
 
-def print_parameter_names_hook(self, searchspace: SearchSpace):
+def print_parameter_names_hook(self: RandomRecommender, searchspace: SearchSpace):
     """Print the names of the parameters spanning the search space."""
     print(f"Recommender type: {self.__class__.__name__}")
     print(f"Search space parameters: {[p.name for p in searchspace.parameters]}")
@@ -59,7 +59,7 @@ class ElapsedTimePrinter:
         """Start the timer."""
         printer_instance.last_call_time = perf_counter()
 
-    def measure(printer_instance, self):
+    def measure(printer_instance, self: RandomRecommender):
         """Measure the elapsed time."""
         if printer_instance.last_call_time is None:
             raise RuntimeError("Must call `start` first!")
