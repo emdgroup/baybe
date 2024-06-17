@@ -118,7 +118,7 @@ class ContinuousConstraint(Constraint, ABC):
 
 
 @define
-class ContinuousLinearConstraint(ContinuousConstraint):
+class ContinuousLinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous linear constraints.
 
     Continuous linear constraints use parameter lists and coefficients to define
