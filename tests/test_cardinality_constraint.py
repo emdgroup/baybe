@@ -1,6 +1,6 @@
 """Tests for the continuous cardinality constraint."""
 
-from itertools import combinations
+from itertools import combinations_with_replacement
 
 import numpy as np
 import pytest
@@ -93,12 +93,12 @@ def test_sampling():
         .all()
     )
 
-    # Assert that samples are not identical
+    # Assert that we obtain as many (unique!) samples as requested
     assert len(samples.drop_duplicates()) == N_POINTS
 
 
 # Combinations of cardinalities to be tested
-_cardinalities = sorted(combinations(range(0, 10), 2))
+_cardinalities = sorted(combinations_with_replacement(range(0, 10), 2))
 
 
 @pytest.mark.parametrize(
@@ -115,11 +115,17 @@ def test_random_recommender_with_cardinality_constraint(cardinalities):
 
     searchspace = _get_searchspace(N_PARAMETERS, min_cardinality, max_cardinality)
     recommender = RandomRecommender()
-    rec = recommender.recommend(
+    recommendations = recommender.recommend(
         searchspace=searchspace,
         batch_size=BATCH_SIZE,
     )
 
     # Assert that cardinality constraint is fulfilled
-    n_nonzero = np.sum(~np.isclose(rec, 0.0), axis=1)
+    n_nonzero = np.sum(~np.isclose(recommendations, 0.0), axis=1)
     assert np.all(n_nonzero >= min_cardinality) and np.all(n_nonzero <= max_cardinality)
+
+    # Assert that we obtain as many samples as requested
+    assert len(recommendations) == BATCH_SIZE
+
+    # If there are duplicates, they must all come from the case cardinality = 0
+    assert np.all(recommendations[recommendations.duplicated()] == 0.0)
