@@ -1,4 +1,5 @@
 """Chemistry tools."""
+
 import os
 import ssl
 import tempfile
@@ -85,7 +86,7 @@ def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
             _mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing()
         )
     except Exception:
-        return np.full(len(_mordred_calculator.descriptors), np.NaN)
+        return np.full(len(_mordred_calculator.descriptors), np.nan)
 
 
 def smiles_to_mordred_features(
