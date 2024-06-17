@@ -81,8 +81,8 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             ValueError: If the search space is purely continuous and
                 'sampling_n_points' was not provided.
         """
-        sampled_parts = []
-        n_candidates = None
+        sampled_parts: list[pd.DataFrame] = []
+        n_candidates: int | None = None
 
         # Discrete part
         if not searchspace.discrete.is_empty:
