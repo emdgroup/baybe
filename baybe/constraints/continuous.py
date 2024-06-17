@@ -1,6 +1,5 @@
 """Continuous constraints."""
 
-
 import math
 
 import numpy as np
@@ -43,13 +42,12 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
     """Class for continuous cardinality constraints.
 
     Places a constraint on the set of nonzero (i.e. "active") values among the
-    specified parameter, bounding it between the two given integers,
-        ``min_cardinality`` <= |{1(p_i != 0)}| <= ``max_cardinality``
-    where ``1`` is the Kronecker delta function and ``{p_i}`` are the parameters
-    specified for the constraint.
+    specified parameters, bounding it between the two given integers,
+        ``min_cardinality`` <= |{p_i : p_i != 0}| <= ``max_cardinality``
+    where ``{p_i}`` are the parameters specified for the constraint.
 
-    Note that this can be equivalently regarded a L0-constraint on the vector containing
-    the specified parameters.
+    Note that this can be equivalently regarded as L0-constraint on the vector
+    containing the specified parameters.
     """
 
     min_cardinality: int = field(default=0, validator=[instance_of(int), ge(0)])
