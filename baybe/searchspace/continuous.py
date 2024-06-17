@@ -374,9 +374,7 @@ class SubspaceContinuous(SerialMixin):
         Raises:
             ValueError: If there are not enough points to sample from.
         """
-        full_factorial = self.full_factorial
-
-        if len(full_factorial) < batch_size:
+        if len(full_factorial := self.full_factorial) < batch_size:
             raise ValueError(
                 f"You are trying to sample {batch_size} points from the full factorial "
                 f"of the continuous space bounds, but it has only "
