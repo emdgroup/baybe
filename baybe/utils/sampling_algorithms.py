@@ -93,18 +93,17 @@ def sample_numerical_df(
     n_points: int,
     *,
     method: DiscreteSamplingMethod = DiscreteSamplingMethod.Random,
-    replacement: bool = False,
 ) -> pd.DataFrame:
-    """Sample data points from a dataframe.
+    """Sample data points from a numerical dataframe.
 
-    If the requested number points is larger than the number of available points,
-    sampling is always done with replacement.
+    If the requested amount of points is larger than the number of available points,
+    the entire dataframe will be returned as many times at it fits into the requested
+    number and the specified sampling method will only return the remainder of points.
 
     Args:
         df: Dataframe with purely numerical entries.
         n_points: Number of points to sample.
         method: Sampling method.
-        replacement: If sampling is done with replacement or not (has no effect on FPS).
 
     Returns:
         The sampled points.
@@ -118,16 +117,17 @@ def sample_numerical_df(
             "'sample_numerical_df' only supports purely numerical data frames."
         )
 
-    if method is DiscreteSamplingMethod.FPS:
-        if n_points >= len(df):
-            ilocs = list(range(len(df)))
-            ilocs += np.random.choice(ilocs, n_points - len(df)).tolist()
-        else:
-            ilocs = farthest_point_sampling(df.values, n_points)
-        sampled = df.iloc[ilocs]
-    elif method is DiscreteSamplingMethod.Random:
-        sampled = df.sample(n_points, replace=replacement or (n_points > len(df)))
-    else:
-        raise ValueError(f"Unrecognized sampling method: '{method}'.")
+    # Split points in trivial and sampled parts
+    n_trivial = n_points // len(df)
+    n_sampled = n_points - n_trivial * len(df)
 
-    return sampled
+    ilocs = list(range(len(df))) * n_trivial
+    if n_sampled > 0:
+        if method is DiscreteSamplingMethod.FPS:
+            ilocs += farthest_point_sampling(df.values, n_sampled)
+        elif method is DiscreteSamplingMethod.Random:
+            ilocs += df.sample(n_sampled).reset_index(drop=True).index.tolist()
+        else:
+            raise ValueError(f"Unrecognized sampling method: '{method}'.")
+
+    return df.iloc[ilocs]
