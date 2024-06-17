@@ -62,7 +62,12 @@ class ContinuousCardinalityConstraint(ContinuousConstraint):
         return len(self.parameters)
 
     def __attrs_post_init__(self):
-        """Validate the cardinality bounds."""
+        """Validate the cardinality bounds.
+
+        Raises:
+            ValueError: If the provided cardinality bounds are invalid.
+            ValueError: If the provided cardinality bounds impose no constraint.
+        """
         if self.min_cardinality > self.max_cardinality:
             raise ValueError(
                 f"The lower cardinality bound cannot be larger than the upper bound. "
