@@ -257,7 +257,7 @@ class SubspaceContinuous(SerialMixin):
             corresponding to the parameter names.
         """
         if not self.parameters:
-            return pd.DataFrame()
+            return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
         if (
             len(self.constraints_lin_eq) == 0
@@ -341,7 +341,11 @@ class SubspaceContinuous(SerialMixin):
 
         # Combine the samples and fill in inactive parameters
         parameter_names = [p.name for p in self.parameters]
-        return pd.concat(samples).reindex(columns=parameter_names).fillna(0.0)
+        return (
+            pd.concat(samples, ignore_index=True)
+            .reindex(columns=parameter_names)
+            .fillna(0.0)
+        )
 
     def _sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample inactive parameters according to the given cardinality constraints."""
