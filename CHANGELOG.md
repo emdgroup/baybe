@@ -15,6 +15,7 @@ _ `_optional` subpackage for managing optional dependencies
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
 - `GaussianProcessSurrogate` models are no longer wrapped when cast to BoTorch
+- Restrict upper versions of main dependencies, motivated by major `numpy` release
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
