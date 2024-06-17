@@ -73,7 +73,7 @@ def test_sampling():
     ]
     searchspace = SearchSpace.from_product(parameters, constraints)
 
-    samples = searchspace.continuous.sample(N_POINTS)
+    samples = searchspace.continuous.sample_uniform(N_POINTS)
 
     # Assert that cardinality constraint is fulfilled
     n_nonzero = np.sum(~np.isclose(samples[params_cardinality], 0.0), axis=1)

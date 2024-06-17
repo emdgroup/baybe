@@ -241,13 +241,13 @@ class SubspaceContinuous(SerialMixin):
         warnings.warn(
             f"The method '{SubspaceContinuous.samples_random.__name__}' "
             f"has been deprecated and will be removed in a future version. "
-            f"Use '{SubspaceContinuous.sample.__name__}' instead.",
+            f"Use '{SubspaceContinuous.sample_uniform.__name__}' instead.",
             DeprecationWarning,
         )
-        return self.sample(n_points)
+        return self.sample_uniform(n_points)
 
-    def sample(self, batch_size: int = 1) -> pd.DataFrame:
-        """Draw random parameter configurations from the continuous space.
+    def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
+        """Draw uniform random parameter configurations from the continuous space.
 
         Args:
             batch_size: The number of parameter configurations to be sampled.
@@ -325,7 +325,7 @@ class SubspaceContinuous(SerialMixin):
 
             # Sample from the reduced space
             try:
-                sample = subspace_without_cardinality_constraint.sample(1)
+                sample = subspace_without_cardinality_constraint.sample_uniform(1)
                 samples.append(sample)
             except Exception:
                 n_fails += 1

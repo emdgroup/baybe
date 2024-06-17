@@ -37,7 +37,8 @@ _ `_optional` subpackage for managing optional dependencies
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
-- `SubspaceContinuous.samples_random` has been replaced with `SubspaceContinuous.sample`
+- `SubspaceContinuous.samples_random` has been replaced with
+  `SubspaceContinuous.sample_uniform`
 - `SubspaceContinuous.samples_full_factorial` has been replaced with
   `SubspaceContinuous.sample_from_full_factorial`
 

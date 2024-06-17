@@ -116,7 +116,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # To make things simple, we sample a single point in the continuous space which
         # will then be attached to every discrete point when the acquisition function
         # is evaluated.
-        cont_part = searchspace.continuous.sample(1)
+        cont_part = searchspace.continuous.sample_uniform(1)
         cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
 
         # Get discrete candidates. The metadata flags are ignored since the search space
