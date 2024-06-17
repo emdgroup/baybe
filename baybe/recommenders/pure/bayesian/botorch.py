@@ -1,9 +1,10 @@
 """Botorch recommender."""
-
+import math
 from typing import Any, ClassVar
 
 import pandas as pd
-from attrs import define, field, validators
+from attr.converters import optional
+from attrs import define, field
 
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
@@ -14,7 +15,10 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.sampling_algorithms import farthest_point_sampling
+from baybe.utils.sampling_algorithms import (
+    DiscreteSamplingMethod,
+    sample_numerical_df,
+)
 
 
 @define(kw_only=True)
@@ -43,8 +47,8 @@ class BotorchRecommender(BayesianRecommender):
     optimization is applied automatically.)
     """
 
-    hybrid_sampler: str = field(
-        validator=validators.in_(["None", "Farthest", "Random"]), default="None"
+    hybrid_sampler: DiscreteSamplingMethod | None = field(
+        converter=optional(DiscreteSamplingMethod), default=None
     )
     """Strategy used for sampling the discrete subspace when performing hybrid search
     space optimization."""
@@ -212,14 +216,15 @@ class BotorchRecommender(BayesianRecommender):
 
         if len(candidates_comp) > 0:
             # Calculate the number of samples from the given percentage
-            n_candidates = int(self.sampling_percentage * len(candidates_comp.index))
+            n_candidates = math.ceil(
+                self.sampling_percentage * len(candidates_comp.index)
+            )
 
             # Potential sampling of discrete candidates
-            if self.hybrid_sampler == "Farthest":
-                ilocs = farthest_point_sampling(candidates_comp.values, n_candidates)
-                candidates_comp = candidates_comp.iloc[ilocs]
-            elif self.hybrid_sampler == "Random":
-                candidates_comp = candidates_comp.sample(n_candidates)
+            if self.hybrid_sampler is not None:
+                candidates_comp = sample_numerical_df(
+                    candidates_comp, n_candidates, method=self.hybrid_sampler
+                )
 
             # Prepare all considered discrete configurations in the
             # List[Dict[int, float]] format expected by BoTorch.
