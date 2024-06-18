@@ -50,7 +50,7 @@ def farthest_point_sampling(
         elif n_samples < 1:
             raise ValueError(
                 f"Farthest point sampling must be done with >= 1 samples, but "
-                f"n_samples={n_samples} was given."
+                f"{n_samples=} was given."
             )
     else:
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
@@ -114,7 +114,8 @@ def sample_numerical_df(
     """
     if any(df[col].dtype.kind not in "iufb" for col in df.columns):
         raise TypeError(
-            "'sample_numerical_df' only supports purely numerical data frames."
+            f"'{sample_numerical_df.__name__}' only supports purely numerical "
+            f"dataframes."
         )
 
     # Split points in trivial and sampled parts

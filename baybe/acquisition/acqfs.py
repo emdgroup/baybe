@@ -103,8 +103,9 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             # take it. Otherwise, use the user specified number of points.
             if (n_candidates := n_candidates or self.sampling_n_points) is None:
                 raise ValueError(
-                    f"'sampling_n_points' must be provided for '{self.__class__}' when "
-                    f"sampling purely continuous search spaces."
+                    f"'{fields(self.__class__).sampling_n_points.name}' must be "
+                    f"provided for '{self.__class__.__name__}' when sampling purely "
+                    f"continuous search spaces."
                 )
             sampled_conti = searchspace.continuous.samples_random(n_candidates)
 
