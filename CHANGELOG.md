@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking Changes
+- Providing an explicit `batch_size` is now mandatory when asking for recommendations
+- `RecommenderProtocol.recommend` now accepts an optional `Objective` 
+- `RecommenderProtocol.recommend` now expects training data to be provided as a single
+  dataframe in experimental representation instead of two separate dataframes in
+  computational representation
+
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
 - `SubspaceDiscrete.to_searchspace` and `SubspaceContinuous.to_searchspace`
@@ -17,7 +24,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Passing an `Objective` to `Campaign` is now optional
 - `GaussianProcessSurrogate` models are no longer wrapped when cast to BoTorch
 - Restrict upper versions of main dependencies, motivated by major `numpy` release
-- Sampling methods in `qNIPV` and `SequentialGreedyRecommender` are now specified via 
+- Sampling methods in `qNIPV` and `BotorchRecommender` are now specified via 
   `DiscreteSamplingMethod` enum
 
 ### Removed
@@ -27,12 +34,8 @@ _ `_optional` subpackage for managing optional dependencies
 ### Fixed
 - `sequential` flag of `SequentialGreedyRecommender` is now set to `True`
 
-### Breaking Changes
-- Providing an explicit `batch_size` is now mandatory when asking for recommendations
-- `RecommenderProtocol.recommend` now accepts an optional `Objective` 
-- `RecommenderProtocol.recommend` now expects training data to be provided as a single
-  dataframe in experimental representation instead of two separate dataframes in
-  computational representation
+### Deprecations
+- `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
 
 
 ## [0.9.1] - 2024-06-04
