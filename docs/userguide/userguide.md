@@ -1,6 +1,7 @@
 # User guide
 
 ```{toctree}
+Active Learning <active_learning>
 Campaigns <campaigns>
 Constraints <constraints>
 Environment Vars <envvars>
