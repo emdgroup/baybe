@@ -9,6 +9,7 @@ from baybe.acquisition.acqfs import (
     qExpectedImprovement,
     qLogExpectedImprovement,
     qLogNoisyExpectedImprovement,
+    qNegIntegratedPosteriorVariance,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -22,6 +23,7 @@ qEI = qExpectedImprovement
 LogEI = LogExpectedImprovement
 qLogEI = qLogExpectedImprovement
 qNEI = qNoisyExpectedImprovement
+qNIPV = qNegIntegratedPosteriorVariance
 qLogNEI = qLogNoisyExpectedImprovement
 PI = ProbabilityOfImprovement
 qPI = qProbabilityOfImprovement
@@ -40,6 +42,7 @@ __all__ = [
     "LogExpectedImprovement",
     "qLogExpectedImprovement",
     "qNoisyExpectedImprovement",
+    "qNegIntegratedPosteriorVariance",
     "qLogNoisyExpectedImprovement",
     # Probability of Improvement
     "ProbabilityOfImprovement",
@@ -58,6 +61,7 @@ __all__ = [
     "LogEI",
     "qLogEI",
     "qNEI",
+    "qNIPV",
     "qLogNEI",
     # Probability of Improvement
     "PI",

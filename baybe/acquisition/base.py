@@ -10,6 +10,7 @@ from typing import ClassVar
 import pandas as pd
 from attrs import define
 
+from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
@@ -37,24 +38,29 @@ class AcquisitionFunction(ABC, SerialMixin):
     def to_botorch(
         self,
         surrogate: Surrogate,
+        searchspace: SearchSpace,
         train_x: pd.DataFrame,
         train_y: pd.DataFrame,
     ):
         """Create the botorch-ready representation of the function."""
-        import botorch.acquisition as botorch_analytical_acqf
+        import botorch.acquisition as botorch_acqf_module
 
-        acqf_cls = getattr(botorch_analytical_acqf, self.__class__.__name__)
+        acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
-        additional_params = {
-            p: v
-            for p, v in {
-                "model": surrogate.to_botorch(),
-                "best_f": train_y.max().item(),
-                "X_baseline": to_tensor(train_x),
-            }.items()
-            if p in signature(acqf_cls).parameters
-        }
+        signature_params = signature(acqf_cls).parameters
+        additional_params = {}
+        if "model" in signature_params:
+            additional_params["model"] = surrogate.to_botorch()
+        if "best_f" in signature_params:
+            additional_params["best_f"] = train_y.max().item()
+        if "X_baseline" in signature_params:
+            additional_params["X_baseline"] = to_tensor(train_x)
+        if "mc_points" in signature_params:
+            additional_params["mc_points"] = to_tensor(
+                self.get_integration_points(searchspace)  # type: ignore[attr-defined]
+            )
+
         params_dict.update(additional_params)
 
         return acqf_cls(**params_dict)

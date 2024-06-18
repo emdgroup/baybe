@@ -134,8 +134,8 @@ def _impute_lookup(
     Depending on the chosen mode, this might raise errors instead.
 
     Args:
-        row: The data that should be matched with the lookup data frame.
-        lookup: The lookup data frame.
+        row: The data that should be matched with the lookup dataframe.
+        lookup: The lookup dataframe.
         targets: The campaign targets, providing the required mode information.
         mode: The used impute mode.
             See :func:`baybe.simulation.scenarios.simulate_scenarios` for details.

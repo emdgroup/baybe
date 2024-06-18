@@ -1,8 +1,9 @@
 """A collection of point sampling algorithms."""
-
+from enum import Enum
 from typing import Literal
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import pairwise_distances
 
 
@@ -46,6 +47,11 @@ def farthest_point_sampling(
         )
         if n_samples == 1:
             return np.random.choice(selected_point_indices, 1).tolist()
+        elif n_samples < 1:
+            raise ValueError(
+                f"Farthest point sampling must be done with >= 1 samples, but "
+                f"{n_samples=} was given."
+            )
     else:
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
@@ -70,3 +76,58 @@ def farthest_point_sampling(
         remaining_point_indices.remove(selected_point_index)
 
     return selected_point_indices
+
+
+class DiscreteSamplingMethod(Enum):
+    """Available discrete sampling methods."""
+
+    Random = "Random"
+    """Random Sampling."""
+
+    FPS = "FPS"
+    """Farthest point sampling."""
+
+
+def sample_numerical_df(
+    df: pd.DataFrame,
+    n_points: int,
+    *,
+    method: DiscreteSamplingMethod = DiscreteSamplingMethod.Random,
+) -> pd.DataFrame:
+    """Sample data points from a numerical dataframe.
+
+    If the requested amount of points is larger than the number of available points,
+    the entire dataframe will be returned as many times at it fits into the requested
+    number and the specified sampling method will only return the remainder of points.
+
+    Args:
+        df: Dataframe with purely numerical entries.
+        n_points: Number of points to sample.
+        method: Sampling method.
+
+    Returns:
+        The sampled points.
+
+    Raises:
+        TypeError: If the provided dataframe has non-numerical content.
+        ValueError: When an invalid sampling method was provided.
+    """
+    if any(df[col].dtype.kind not in "iufb" for col in df.columns):
+        raise TypeError(
+            f"'{sample_numerical_df.__name__}' only supports purely numerical "
+            f"dataframes."
+        )
+
+    # Split points in trivial and sampled parts
+    n_trivial, n_sampled = divmod(n_points, len(df))
+
+    ilocs = list(range(len(df))) * n_trivial
+    if n_sampled > 0:
+        if method is DiscreteSamplingMethod.FPS:
+            ilocs += farthest_point_sampling(df.values, n_sampled)
+        elif method is DiscreteSamplingMethod.Random:
+            ilocs += df.reset_index(drop=True).sample(n_sampled).index.tolist()
+        else:
+            raise ValueError(f"Unrecognized sampling method: '{method}'.")
+
+    return df.iloc[ilocs]
