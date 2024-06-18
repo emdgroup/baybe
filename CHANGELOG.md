@@ -21,8 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubspaceDiscrete.to_searchspace` and `SubspaceContinuous.to_searchspace`
   convenience constructor
 - Validators for `Campaign` attributes
-_ `_optional` subpackage for managing optional dependencies
-- Acquisition function for active learning: `qNIPV`
+- `_optional` subpackage for managing optional dependencies
+- New acquisition functions for active learning: `qNIPV` (negative integrated posterior
+  variance) and `PosteriorStandardDeviation`
 - Acquisition function: `qKG` (knowledge gradient)
 - Abstract `ContinuousNonlinearConstraint` class
 - Abstract `CardinalityConstraint` class and
@@ -42,6 +43,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Validation and translation tests for kernels
 - `BasicKernel` and `CompositeKernel` base classes
 - Activated `pre-commit.ci` with auto-update
+- User guide for active learning
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
