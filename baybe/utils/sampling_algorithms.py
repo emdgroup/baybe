@@ -125,7 +125,7 @@ def sample_numerical_df(
         if method is DiscreteSamplingMethod.FPS:
             ilocs += farthest_point_sampling(df.values, n_sampled)
         elif method is DiscreteSamplingMethod.Random:
-            ilocs += df.sample(n_sampled).reset_index(drop=True).index.tolist()
+            ilocs += df.reset_index(drop=True).sample(n_sampled).index.tolist()
         else:
             raise ValueError(f"Unrecognized sampling method: '{method}'.")
 
