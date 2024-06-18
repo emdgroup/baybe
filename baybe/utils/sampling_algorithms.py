@@ -118,8 +118,7 @@ def sample_numerical_df(
         )
 
     # Split points in trivial and sampled parts
-    n_trivial = n_points // len(df)
-    n_sampled = n_points - n_trivial * len(df)
+    n_trivial, n_sampled = divmod(n_points, len(df))
 
     ilocs = list(range(len(df))) * n_trivial
     if n_sampled > 0:
