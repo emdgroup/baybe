@@ -17,23 +17,23 @@ _TARGET = 1337
 _CLOSEST = _TARGET + 0.1
 
 
-def base_func(arg1: str, arg2: int):
+def f_plain(arg1, arg2):
     pass
 
 
-def func_with_default_values(arg1: str, arg2: int = 1):
+def f_annotated(arg1: str, arg2: int):
     pass
 
 
-def func_without_annotations(arg1, arg2):
+def f_annotated_one_default(arg1: str, arg2: int = 1):
     pass
 
 
-def func_with_different_order(arg2: int, arg1: str):
+def f_reversed_annotated(arg2: int, arg1: str):
     pass
 
 
-def func_with_different_names(arg: int, arg3: str):
+def f2_annotated(arg: int, arg3: str):
     pass
 
 
@@ -90,22 +90,35 @@ def test_discrete_sampling(fraction, method):
 @pytest.mark.parametrize(
     ("target, hook, error"),
     [
-        param(base_func, func_with_default_values, None, id="hook_with_default_values"),
         param(
-            func_with_default_values, base_func, None, id="target_with_default_values"
-        ),
-        param(base_func, func_without_annotations, None, id="hook_has_no_annotations"),
-        param(
-            base_func,
-            func_with_different_order,
-            TypeError,
-            id="hook_has_different_signature_order",
+            f_annotated,
+            f_annotated_one_default,
+            None,
+            id="hook_with_defaults",
         ),
         param(
-            base_func,
-            func_with_different_names,
+            f_annotated_one_default,
+            f_annotated,
+            None,
+            id="target_with_defaults",
+        ),
+        param(
+            f_annotated,
+            f_plain,
+            None,
+            id="hook_without_annotations",
+        ),
+        param(
+            f_annotated,
+            f_reversed_annotated,
             TypeError,
-            id="hook_has_different_names",
+            id="different_order",
+        ),
+        param(
+            f_annotated,
+            f2_annotated,
+            TypeError,
+            id="different_names",
         ),
     ],
 )
