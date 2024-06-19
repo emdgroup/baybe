@@ -205,6 +205,10 @@ class ContinuousLinearConstraint(ContinuousConstraint, ABC):
         )
 
 
+class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
+    """Abstract base class for nonlinear constraints."""
+
+
 # Register (un-)structure hooks
 converter.register_unstructure_hook(Constraint, unstructure_base)
 converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))

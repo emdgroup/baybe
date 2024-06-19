@@ -236,7 +236,7 @@ def test_cardinality_constraints_with_overlapping_parameters():
     with pytest.raises(ValueError, match="cannot share the same parameters"):
         SubspaceContinuous(
             parameters=parameters,
-            constraints_cardinality=[
+            constraints_nonlin=[
                 ContinuousCardinalityConstraint(
                     parameters=["c1", "c2"],
                     max_cardinality=1,

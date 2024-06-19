@@ -11,12 +11,11 @@ import pandas as pd
 from attr import define, field
 
 from baybe.constraints import (
-    ContinuousCardinalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
     validate_constraints,
 )
-from baybe.constraints.base import Constraint
+from baybe.constraints.base import Constraint, ContinuousNonlinearConstraint
 from baybe.parameters import SubstanceEncoding, TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -151,8 +150,8 @@ class SearchSpace(SerialMixin):
                 for c in constraints
                 if isinstance(c, ContinuousLinearInequalityConstraint)
             ],
-            constraints_cardinality=[
-                c for c in constraints if isinstance(c, ContinuousCardinalityConstraint)
+            constraints_nonlin=[
+                c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
             ],
         )
 
@@ -215,7 +214,7 @@ class SearchSpace(SerialMixin):
             *self.discrete.constraints,
             *self.continuous.constraints_lin_eq,
             *self.continuous.constraints_lin_ineq,
-            *self.continuous.constraints_cardinality,
+            *self.continuous.constraints_nonlin,
         )
 
     @property

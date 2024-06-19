@@ -16,6 +16,7 @@ from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
+from baybe.constraints.base import ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
     validate_cardinality_constraints_are_nonoverlapping,
 )
@@ -46,26 +47,22 @@ class SubspaceContinuous(SerialMixin):
     parameters: tuple[NumericalContinuousParameter, ...] = field(
         converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
     )
-    """The list of parameters of the subspace."""
+    """The parameters of the subspace."""
 
     constraints_lin_eq: tuple[ContinuousLinearEqualityConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
-    """List of linear equality constraints."""
+    """Linear equality constraints."""
 
     constraints_lin_ineq: tuple[ContinuousLinearInequalityConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
-    """List of linear inequality constraints."""
+    """Linear inequality constraints."""
 
-    constraints_cardinality: tuple[ContinuousCardinalityConstraint, ...] = field(
-        converter=to_tuple,
-        factory=tuple,
-        validator=lambda _, __, x: validate_cardinality_constraints_are_nonoverlapping(
-            x
-        ),
+    constraints_nonlin: tuple[ContinuousNonlinearConstraint, ...] = field(
+        converter=to_tuple, factory=tuple
     )
-    """List of cardinality constraints."""
+    """Nonlinear constraints."""
 
     def __str__(self) -> str:
         if self.is_empty:
@@ -80,13 +77,13 @@ class SubspaceContinuous(SerialMixin):
         ineq_constraints_list = [
             constr.summary() for constr in self.constraints_lin_ineq
         ]
-        cardinality_constraints_list = [
-            constr.summary() for constr in self.constraints_cardinality
+        nonlin_constraints_list = [
+            constr.summary() for constr in self.constraints_nonlin
         ]
         param_df = pd.DataFrame(param_list)
         lin_eq_constr_df = pd.DataFrame(eq_constraints_list)
         lin_ineq_constr_df = pd.DataFrame(ineq_constraints_list)
-        cardinality_constr_df = pd.DataFrame(cardinality_constraints_list)
+        cardinality_constr_df = pd.DataFrame(nonlin_constraints_list)
 
         # Put all attributes of the continuous class in one string
         continuous_str = f"""{start_bold}Continuous Search Space{end_bold}
@@ -99,6 +96,23 @@ class SubspaceContinuous(SerialMixin):
             \r{pretty_print_df(cardinality_constr_df)}"""
 
         return continuous_str.replace("\n", "\n ").replace("\r", "\r ")
+
+    @property
+    def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
+        """Cardinality constraints."""
+        return tuple(
+            c
+            for c in self.constraints_nonlin
+            if isinstance(c, ContinuousCardinalityConstraint)
+        )
+
+    @constraints_nonlin.validator
+    def _validate_constraints_nonlin(self, _, __) -> None:
+        """Validate nonlinear constraints."""
+        # Note: The passed constraints are accessed indirectly through the property
+        validate_cardinality_constraints_are_nonoverlapping(
+            self.constraints_cardinality
+        )
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
@@ -255,7 +269,19 @@ class SubspaceContinuous(SerialMixin):
         Returns:
             A dataframe containing the parameter configurations as rows with columns
             corresponding to the parameter names.
+
+        Raises:
+            ValueError: If the subspace contains unsupported nonlinear constraints.
         """
+        if not all(
+            isinstance(c, ContinuousCardinalityConstraint)
+            for c in self.constraints_nonlin
+        ):
+            raise ValueError(
+                f"Currently, only nonlinear constraints of type "
+                f"'{ContinuousCardinalityConstraint.__name__}' are supported."
+            )
+
         if not self.parameters:
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
@@ -269,7 +295,7 @@ class SubspaceContinuous(SerialMixin):
         if len(self.constraints_cardinality) == 0:
             return self._sample_from_polytope(batch_size, self.param_bounds_comp)
 
-        return self._sample_with_cardinality_constraints(batch_size)
+        return self._sample_from_polytope_with_cardinality_constraints(batch_size)
 
     def _sample_from_bounds(self, batch_size: int, bounds: np.ndarray) -> pd.DataFrame:
         """Draw uniform random samples over a hyperrectangle-shaped space."""
@@ -298,7 +324,9 @@ class SubspaceContinuous(SerialMixin):
         )
         return pd.DataFrame(points, columns=self.param_names)
 
-    def _sample_with_cardinality_constraints(self, batch_size: int) -> pd.DataFrame:
+    def _sample_from_polytope_with_cardinality_constraints(
+        self, batch_size: int
+    ) -> pd.DataFrame:
         """Draw random samples from a polytope with cardinality constraints."""
         if not self.constraints_cardinality:
             raise RuntimeError(

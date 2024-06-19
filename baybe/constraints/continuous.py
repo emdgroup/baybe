@@ -6,7 +6,10 @@ import numpy as np
 from attrs import define, field
 from attrs.validators import ge, instance_of
 
-from baybe.constraints.base import ContinuousConstraint, ContinuousLinearConstraint
+from baybe.constraints.base import (
+    ContinuousLinearConstraint,
+    ContinuousNonlinearConstraint,
+)
 
 
 @define
@@ -38,7 +41,7 @@ class ContinuousLinearInequalityConstraint(ContinuousLinearConstraint):
 
 
 @define
-class ContinuousCardinalityConstraint(ContinuousConstraint):
+class ContinuousCardinalityConstraint(ContinuousNonlinearConstraint):
     """Class for continuous cardinality constraints.
 
     Places a constraint on the set of nonzero (i.e. "active") values among the
