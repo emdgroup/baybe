@@ -122,6 +122,6 @@ def test_discrete_sampling(fraction, method):
     ],
 )
 def test_register_hook(target, hook, error):
-    """Test the behavior of the register_hook function with different scenarios."""
+    """Passing in-/consistent signatures to `register_hook` raises an/no error."""
     with pytest.raises(error) if error is not None else nullcontext():
         register_hook(target, hook)
