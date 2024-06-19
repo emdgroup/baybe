@@ -3,10 +3,10 @@
 import math
 
 import numpy as np
-from attrs import define, field
-from attrs.validators import ge, instance_of
+from attrs import define
 
 from baybe.constraints.base import (
+    CardinalityConstraint,
     ContinuousLinearConstraint,
     ContinuousNonlinearConstraint,
 )
@@ -41,53 +41,10 @@ class ContinuousLinearInequalityConstraint(ContinuousLinearConstraint):
 
 
 @define
-class ContinuousCardinalityConstraint(ContinuousNonlinearConstraint):
-    """Class for continuous cardinality constraints.
-
-    Places a constraint on the set of nonzero (i.e. "active") values among the
-    specified parameters, bounding it between the two given integers,
-        ``min_cardinality`` <= |{p_i : p_i != 0}| <= ``max_cardinality``
-    where ``{p_i}`` are the parameters specified for the constraint.
-
-    Note that this can be equivalently regarded as L0-constraint on the vector
-    containing the specified parameters.
-    """
-
-    min_cardinality: int = field(default=0, validator=[instance_of(int), ge(0)])
-    "The minimum required cardinality."
-
-    max_cardinality: int = field(validator=instance_of(int))
-    "The maximum allowed cardinality."
-
-    @max_cardinality.default
-    def _default_max_cardinality(self):
-        """Use the number of involved parameters as the upper limit by default."""
-        return len(self.parameters)
-
-    def __attrs_post_init__(self):
-        """Validate the cardinality bounds.
-
-        Raises:
-            ValueError: If the provided cardinality bounds are invalid.
-            ValueError: If the provided cardinality bounds impose no constraint.
-        """
-        if self.min_cardinality > self.max_cardinality:
-            raise ValueError(
-                f"The lower cardinality bound cannot be larger than the upper bound. "
-                f"Provided values: {self.max_cardinality=}, {self.min_cardinality=}."
-            )
-
-        if self.max_cardinality > len(self.parameters):
-            raise ValueError(
-                f"The cardinality bound cannot exceed the number of parameters. "
-                f"Provided values: {self.max_cardinality=}, {len(self.parameters)=}."
-            )
-
-        if self.min_cardinality == 0 and self.max_cardinality == len(self.parameters):
-            raise ValueError(
-                f"No constraint of type `{self.__class__.__name__}' is required "
-                f"when 0 <= cardinality <= len(parameters)."
-            )
+class ContinuousCardinalityConstraint(
+    CardinalityConstraint, ContinuousNonlinearConstraint
+):
+    """Class for continuous cardinality constraints."""
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.

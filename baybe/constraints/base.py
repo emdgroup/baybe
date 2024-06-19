@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import numpy as np
 import pandas as pd
 from attr import define, field
-from attr.validators import min_len
+from attr.validators import ge, instance_of, min_len
 
 from baybe.parameters import NumericalContinuousParameter
 from baybe.serialization import (
@@ -26,11 +26,7 @@ if TYPE_CHECKING:
 
 @define
 class Constraint(ABC, SerialMixin):
-    """Abstract base class for all constraints.
-
-    Constraints use conditions and chain them together to filter unwanted entries from
-    the search space.
-    """
+    """Abstract base class for all constraints."""
 
     # class variables
     # TODO: it might turn out these are not needed at a later development stage
@@ -115,6 +111,58 @@ class ContinuousConstraint(Constraint, ABC):
 
     eval_during_modeling: ClassVar[bool] = True
     # See base class.
+
+
+@define
+class CardinalityConstraint(Constraint, ABC):
+    """Abstract base class for cardinality constraints.
+
+    Places a constraint on the set of nonzero (i.e. "active") values among the
+    specified parameters, bounding it between the two given integers,
+        ``min_cardinality`` <= |{p_i : p_i != 0}| <= ``max_cardinality``
+    where ``{p_i}`` are the parameters specified for the constraint.
+
+    Note that this can be equivalently regarded as L0-constraint on the vector
+    containing the specified parameters.
+    """
+
+    min_cardinality: int = field(default=0, validator=[instance_of(int), ge(0)])
+    "The minimum required cardinality."
+
+    max_cardinality: int = field(validator=instance_of(int))
+    "The maximum allowed cardinality."
+
+    @max_cardinality.default
+    def _default_max_cardinality(self):
+        """Use the number of involved parameters as the upper limit by default."""
+        return len(self.parameters)
+
+    def __attrs_post_init__(self):
+        """Validate the cardinality bounds.
+
+        Raises:
+            ValueError: If the provided cardinality bounds are invalid.
+            ValueError: If the provided cardinality bounds impose no constraint.
+        """
+        if self.min_cardinality > self.max_cardinality:
+            raise ValueError(
+                f"The lower cardinality bound cannot be larger than the upper bound. "
+                f"Provided values: {self.max_cardinality=}, {self.min_cardinality=}."
+            )
+
+        if self.max_cardinality > len(self.parameters):
+            raise ValueError(
+                f"The cardinality bound cannot exceed the number of parameters. "
+                f"Provided values: {self.max_cardinality=}, {len(self.parameters)=}."
+            )
+
+        if self.min_cardinality == 0 and self.max_cardinality == len(self.parameters):
+            raise ValueError(
+                f"No constraint of type `{self.__class__.__name__}' is required "
+                f"when the lower cardinality bound is zero and the upper bound equals "
+                f"the number of parameters. Provided values: {self.min_cardinality=}, "
+                f"{self.max_cardinality=}, {len(self.parameters)=}"
+            )
 
 
 @define
@@ -206,7 +254,7 @@ class ContinuousLinearConstraint(ContinuousConstraint, ABC):
 
 
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
-    """Abstract base class for nonlinear constraints."""
+    """Abstract base class for continuous nonlinear constraints."""
 
 
 # Register (un-)structure hooks

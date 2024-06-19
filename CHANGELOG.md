@@ -23,6 +23,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Abstract `ContinuousNonlinearConstraint` class
 - `ContinuousCardinalityConstraint` class and corresponding uniform sampling mechanism
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
+- Abstract `CardinalityConstraint` class
 - `DiscreteCardinalityConstraint` class
 
 ### Changed
