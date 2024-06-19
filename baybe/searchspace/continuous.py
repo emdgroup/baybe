@@ -327,7 +327,7 @@ class SubspaceContinuous(SerialMixin):
             try:
                 sample = subspace_without_cardinality_constraint.sample_uniform(1)
                 samples.append(sample)
-            except Exception:
+            except ValueError:
                 n_fails += 1
 
             # Avoid infinite loop
