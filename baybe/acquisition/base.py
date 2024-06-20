@@ -39,14 +39,16 @@ class AcquisitionFunction(ABC, SerialMixin):
         self,
         surrogate: Surrogate,
         searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
+        measurements: pd.DataFrame,
     ):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_acqf_module
 
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
+
+        train_x = surrogate.transform_inputs(measurements)
+        train_y = surrogate.transform_targets(measurements)
 
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
@@ -55,7 +57,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         if "best_f" in signature_params:
             additional_params["best_f"] = train_y.max().item()
         if "X_baseline" in signature_params:
-            additional_params["X_baseline"] = to_tensor(train_x)
+            additional_params["X_baseline"] = train_x
         if "mc_points" in signature_params:
             additional_params["mc_points"] = to_tensor(
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
