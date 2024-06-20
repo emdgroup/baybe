@@ -22,7 +22,6 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -76,9 +75,6 @@ class Surrogate(ABC, SerialMixin):
             candidate points.
         """
         import torch
-
-        # Prepare the input
-        candidates = _prepare_inputs(candidates)
 
         # Evaluate the posterior distribution
         mean, covar = self._posterior(candidates)
@@ -146,10 +142,6 @@ class Surrogate(ABC, SerialMixin):
             raise NotImplementedError(
                 "Continuous search spaces are currently only supported by GPs."
             )
-
-        # Validate and prepare the training data
-        train_x = _prepare_inputs(train_x)
-        train_y = _prepare_targets(train_y)
 
         self._fit(searchspace, train_x, train_y)
 
