@@ -1,8 +1,9 @@
 """Collection of small basic utilities."""
 
+import functools
+import inspect
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
-from inspect import signature
 from typing import Any, TypeVar
 
 from baybe.exceptions import UnidentifiedSubclassError
@@ -139,7 +140,7 @@ def filter_attributes(
     Returns:
         A dictionary mapping the matched attribute names to their values.
     """
-    params = signature(callable_).parameters
+    params = inspect.signature(callable_).parameters
     return {
         p: getattr(object, p)
         for p in params
@@ -181,3 +182,49 @@ def find_subclass(base: type, name_or_abbr: str, /):
             f"The class name or abbreviation '{name_or_abbr}' does not refer to any "
             f"of the subclasses of '{base.__name__}'."
         )
+
+
+def register_hook(target: Callable, hook: Callable) -> Callable:
+    """Register a hook for the given target callable.
+
+    Args:
+        target: The callable to which the hook is attached.
+        hook: The callable to be registered in the given callable.
+
+    Returns:
+        A wrapped callable that replaces the original target callable.
+
+    Raises:
+        TypeError: If the signature of the callable does not match the signature of the
+            target callable.
+    """
+    target_params = inspect.signature(target, eval_str=True).parameters.values()
+    hook_params = inspect.signature(hook, eval_str=True).parameters.values()
+
+    if len(target_params) != len(hook_params):
+        raise TypeError(
+            f"'{target.__name__}' and '{hook.__name__}' have "
+            f"a different number of parameters."
+        )
+
+    for p1, p2 in zip(target_params, hook_params):
+        if p1.name != p2.name:
+            raise TypeError(
+                f"The parameter names of '{target.__name__}' "
+                f"and '{hook.__name__}' do not match."
+            )
+        if (p1.annotation != p2.annotation) and (
+            p2.annotation is not inspect.Parameter.empty
+        ):
+            raise TypeError(
+                f"The type annotations of '{target.__name__}' "
+                f"and '{hook.__name__}' do not match."
+            )
+
+    @functools.wraps(target)
+    def wraps(*args, **kwargs):
+        result = target(*args, **kwargs)
+        hook(*args, **kwargs)
+        return result
+
+    return wraps
