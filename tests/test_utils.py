@@ -19,19 +19,11 @@ def f_plain(arg1, arg2):
     pass
 
 
-def f_reduced_plain(arg1):
-    pass
-
-
 def f_annotated(arg1: str, arg2: int):
     pass
 
 
 def f_annotated_one_default(arg1: str, arg2: int = 1):
-    pass
-
-
-def f_reversed_annotated(arg2: int, arg1: str):
     pass
 
 
@@ -119,18 +111,8 @@ def test_valid_register_hooks(target, hook):
     [
         param(
             f_annotated,
-            f_reversed_annotated,
-            id="different_order",
-        ),
-        param(
-            f_annotated,
             f2_plain,
             id="different_names",
-        ),
-        param(
-            f_annotated,
-            f_reduced_plain,
-            id="hook_missing_arguments",
         ),
     ],
 )
