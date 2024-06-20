@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
@@ -107,11 +107,7 @@ class DiscreteConstraint(Constraint, ABC):
 
 @define
 class ContinuousConstraint(Constraint, ABC):
-    """Abstract base class for continuous constraints.
-
-    Continuous constraints use parameter lists and coefficients to define in-/equality
-    constraints over a continuous parameter space.
-    """
+    """Abstract base class for continuous constraints."""
 
     # class variables
     eval_during_creation: ClassVar[bool] = False
@@ -119,6 +115,15 @@ class ContinuousConstraint(Constraint, ABC):
 
     eval_during_modeling: ClassVar[bool] = True
     # See base class.
+
+
+@define
+class ContinuousLinearConstraint(ContinuousConstraint, ABC):
+    """Abstract base class for continuous linear constraints.
+
+    Continuous linear constraints use parameter lists and coefficients to define
+    in-/equality constraints over a continuous parameter space.
+    """
 
     # object variables
     coefficients: list[float] = field()
@@ -147,6 +152,25 @@ class ContinuousConstraint(Constraint, ABC):
     def _default_coefficients(self):
         """Return equal weight coefficients as default."""
         return [1.0] * len(self.parameters)
+
+    def _drop_parameters(
+        self, parameter_names: Collection[str]
+    ) -> ContinuousLinearConstraint:
+        """Create a copy of the constraint with certain parameters removed.
+
+        Args:
+            parameter_names: The names of the parameter to be removed.
+
+        Returns:
+            The reduced constraint.
+        """
+        parameters = [p for p in self.parameters if p not in parameter_names]
+        coefficients = [
+            c
+            for p, c in zip(self.parameters, self.coefficients)
+            if p not in parameter_names
+        ]
+        return ContinuousLinearConstraint(parameters, coefficients, self.rhs)
 
     def to_botorch(
         self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
@@ -179,6 +203,10 @@ class ContinuousConstraint(Constraint, ABC):
             torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
             np.asarray(self.rhs, dtype=DTypeFloatNumpy).item(),
         )
+
+
+class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
+    """Abstract base class for nonlinear constraints."""
 
 
 # Register (un-)structure hooks

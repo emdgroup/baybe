@@ -9,8 +9,7 @@ from baybe.utils.interval import Interval
 @pytest.mark.parametrize(
     "bounds",
     [
-        param((0.0, 0.0), id="single_element"),
-        param((1.0, 0.0), id="unsorted_bounds"),
+        param((1.0, 0.0), id="wrong_bounds_order"),
     ],
 )
 def test_invalid_range(bounds):

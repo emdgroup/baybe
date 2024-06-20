@@ -39,11 +39,16 @@ class Interval(SerialMixin):
         Raises:
             ValueError: If the upper end is not larger than the lower end.
         """
-        if upper <= self.lower:
+        if upper < self.lower:
             raise ValueError(
-                f"The upper interval bound (provided value: {upper}) must be larger "
+                f"The upper interval bound (provided value: {upper}) cannot be smaller "
                 f"than the lower bound (provided value: {self.lower})."
             )
+
+    @property
+    def is_degenerate(self) -> bool:
+        """Check if the interval is degenerate (i.e., contains only a single number)."""
+        return self.lower == self.upper
 
     @property
     def is_bounded(self) -> bool:

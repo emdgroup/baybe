@@ -11,6 +11,7 @@ from baybe.targets.numerical import NumericalTarget
     [
         param("MATCH", None, id="non_closed_match_mode"),
         param("MAX", (0, None), id="half_open"),
+        param("MAX", (0, 0), id="degenerate"),
     ],
 )
 def test_invalid_bounds_mode(mode, bounds):

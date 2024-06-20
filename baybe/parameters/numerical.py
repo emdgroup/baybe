@@ -122,6 +122,10 @@ class NumericalContinuousParameter(ContinuousParameter):
                 f"of {value.to_tuple()}. Infinite intervals for parameters are "
                 f"currently not supported."
             )
+        if value.is_degenerate:
+            raise ValueError(
+                "The interval specified by the parameter bounds cannot be degenerate."
+            )
 
     def is_in_range(self, item: float) -> bool:  # noqa: D102
         # See base class.

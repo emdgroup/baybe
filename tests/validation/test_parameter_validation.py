@@ -75,16 +75,17 @@ def test_invalid_values_numerical_discrete_parameter(values, error):
 
 
 @pytest.mark.parametrize(
-    "bounds",
+    ("bounds", "error"),
     [
-        param([-np.inf, np.inf], id="infinite"),
-        param([0, np.inf], id="open_right"),
-        param([-np.inf, 0], id="open_left"),
+        param([-np.inf, np.inf], InfiniteIntervalError, id="infinite"),
+        param([0, np.inf], InfiniteIntervalError, id="open_right"),
+        param([-np.inf, 0], InfiniteIntervalError, id="open_left"),
+        param([0, 0], ValueError, id="degenerate"),
     ],
 )
-def test_invalid_bounds_numerical_continuous_parameter(bounds):
+def test_invalid_bounds_numerical_continuous_parameter(bounds, error):
     """Creating an unbounded parameter raises an exception."""
-    with pytest.raises(InfiniteIntervalError):
+    with pytest.raises(error):
         NumericalContinuousParameter(name="invalid_values", bounds=bounds)
 
 

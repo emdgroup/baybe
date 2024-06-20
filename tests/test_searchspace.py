@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from baybe.constraints import (
+    ContinuousCardinalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
     DiscreteSumConstraint,
@@ -223,3 +224,26 @@ def test_searchspace_memory_estimate(searchspace: SearchSpace):
         estimate_comp,
         actual_comp,
     )
+
+
+def test_cardinality_constraints_with_overlapping_parameters():
+    """Creating cardinality constraints with overlapping parameters raises an error."""
+    parameters = [
+        NumericalContinuousParameter("c1", (0, 1)),
+        NumericalContinuousParameter("c2", (0, 1)),
+        NumericalContinuousParameter("c3", (0, 1)),
+    ]
+    with pytest.raises(ValueError, match="cannot share the same parameters"):
+        SubspaceContinuous(
+            parameters=parameters,
+            constraints_nonlin=[
+                ContinuousCardinalityConstraint(
+                    parameters=["c1", "c2"],
+                    max_cardinality=1,
+                ),
+                ContinuousCardinalityConstraint(
+                    parameters=["c2", "c3"],
+                    max_cardinality=1,
+                ),
+            ],
+        )

@@ -1,8 +1,10 @@
 """Validation functionality for constraints."""
 
 from collections.abc import Collection
+from itertools import combinations
 
 from baybe.constraints.base import Constraint
+from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import DiscreteDependenciesConstraint
 from baybe.parameters.base import Parameter
 
@@ -15,6 +17,8 @@ def validate_constraints(  # noqa: DOC101, DOC103
     Raises:
         ValueError: If there is more than one
             :class:`baybe.constraints.discrete.DiscreteDependenciesConstraint` declared.
+        ValueError: If any two continuous cardinality constraints have an overlapping
+            parameter set.
         ValueError: If any constraint contains an invalid parameter name.
         ValueError: If any continuous constraint includes a discrete parameter.
         ValueError: If any discrete constraint includes a continuous parameter.
@@ -24,6 +28,10 @@ def validate_constraints(  # noqa: DOC101, DOC103
             f"There is only one {DiscreteDependenciesConstraint.__name__} allowed. "
             f"Please specify all dependencies in one single constraint."
         )
+
+    validate_cardinality_constraints_are_nonoverlapping(
+        [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
+    )
 
     param_names_all = [p.name for p in parameters]
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
@@ -52,4 +60,25 @@ def validate_constraints(  # noqa: DOC101, DOC103
                 f"You are trying to initialize a discrete constraint over a parameter "
                 f"that is continuous. Parameter list of the affected constraint: "
                 f"{constraint.parameters}"
+            )
+
+
+def validate_cardinality_constraints_are_nonoverlapping(
+    constraints: Collection[ContinuousCardinalityConstraint]
+) -> None:
+    """Validate that cardinality constraints are non-overlapping.
+
+    Args:
+        constraints: A collection of continuous cardinality constraints.
+
+    Raises:
+        ValueError: If any two continuous cardinality constraints have an overlapping
+            parameter set.
+    """
+    for c1, c2 in combinations(constraints, 2):
+        if (s1 := set(c1.parameters)).intersection(s2 := set(c2.parameters)):
+            raise ValueError(
+                f"Constraints of type `{ContinuousCardinalityConstraint.__name__}` "
+                f"cannot share the same parameters. Found the following overlapping "
+                f"parameter sets: {s1}, {s2}."
             )
