@@ -20,7 +20,7 @@ from types import MethodType
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.utils.basic import register_hooks
+from baybe.utils import register_hooks
 
 ### Defining the Hooks
 
