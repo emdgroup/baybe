@@ -36,6 +36,10 @@ class Constraint(ABC, SerialMixin):
     eval_during_modeling: ClassVar[bool]
     """Class variable encoding whether the condition is evaluated during modeling."""
 
+    numerical_only: ClassVar[bool] = False
+    """Class variable encoding whether the constraint is valid only for numerical
+    parameters."""
+
     # Object variables
     parameters: list[str] = field(validator=min_len(1))
     """The list of parameters used for the constraint."""
@@ -112,6 +116,9 @@ class ContinuousConstraint(Constraint, ABC):
     eval_during_modeling: ClassVar[bool] = True
     # See base class.
 
+    numerical_only: ClassVar[bool] = True
+    # See base class.
+
 
 @define
 class CardinalityConstraint(Constraint, ABC):
@@ -126,6 +133,11 @@ class CardinalityConstraint(Constraint, ABC):
     containing the specified parameters.
     """
 
+    # class variable
+    numerical_only: ClassVar[bool] = True
+    # See base class.
+
+    # object variables
     min_cardinality: int = field(default=0, validator=[instance_of(int), ge(0)])
     "The minimum required cardinality."
 

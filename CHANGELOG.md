@@ -21,10 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 _ `_optional` subpackage for managing optional dependencies
 - Acquisition function for active learning: `qNIPV`
 - Abstract `ContinuousNonlinearConstraint` class
-- `ContinuousCardinalityConstraint` class and corresponding uniform sampling mechanism
+- Abstract `CardinalityConstraint` class and
+  `DiscreteCardinalityConstraint`/`ContinuousCardinalityConstraint` subclasses
+- Uniform sampling mechanism for continuous spaces with cardinality constraints
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
-- Abstract `CardinalityConstraint` class
-- `DiscreteCardinalityConstraint` class
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

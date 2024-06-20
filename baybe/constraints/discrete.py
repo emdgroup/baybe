@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from functools import reduce
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import pandas as pd
 from attr import define, field
@@ -49,6 +49,10 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
+    # class variables
+    numerical_only: ClassVar[bool] = True
+    # see base class.
+
     # object variables
     condition: ThresholdCondition = field()
     """The condition modeled by this constraint."""
@@ -66,6 +70,10 @@ class DiscreteProductConstraint(DiscreteConstraint):
     """Class for modelling product constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
+
+    # class variables
+    numerical_only: ClassVar[bool] = True
+    # see base class.
 
     # object variables
     condition: ThresholdCondition = field()
@@ -282,6 +290,10 @@ class DiscreteCustomConstraint(DiscreteConstraint):
 class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
     """Class for discrete cardinality constraints."""
 
+    # Class variables
+    numerical_only: ClassVar[bool] = True
+    # See base class.
+
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
         # See base class.
         non_zeros = (data[self.parameters] != 0.0).sum(axis=1)
@@ -303,21 +315,6 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
     DiscretePermutationInvarianceConstraint,
     DiscreteDependenciesConstraint,
 )
-
-# Discrete constraints that are valid only for numeric parameters. It is needed for
-# the purpose of validation.
-# There are two options:
-# Option A: A list containing such discrete constraints is maintained. It does
-# not require any breaking change but requires some maintenance work. Whenever a
-# new discrete constraint, which is valid only for numerical parameters,
-# is introduced, it must be added to the list.
-# Option B: Add an attribute, e.g. numerical_parameter_only,
-# to the discrete constraints.
-DISCRETE_CONSTRAINTS_ONLY_FOR_NUMERIC_PARAMETER = [
-    DiscreteCardinalityConstraint,
-    DiscreteSumConstraint,
-    DiscreteProductConstraint,
-]
 
 # Prevent (de-)serialization of custom constraints
 converter.register_unstructure_hook(DiscreteCustomConstraint, block_serialization_hook)
