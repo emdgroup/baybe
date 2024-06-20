@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validators for `Campaign` attributes
 _ `_optional` subpackage for managing optional dependencies
 - Acquisition function for active learning: `qNIPV`
+- Abstract `ContinuousNonlinearConstraint` class
 - `ContinuousCardinalityConstraint` class and corresponding uniform sampling mechanism
 
 ### Changed
@@ -27,6 +28,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Restrict upper versions of main dependencies, motivated by major `numpy` release
 - Sampling methods in `qNIPV` and `BotorchRecommender` are now specified via 
   `DiscreteSamplingMethod` enum
+- `Interval` class now supports degenerate intervals containing only one element
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
