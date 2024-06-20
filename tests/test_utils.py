@@ -1,8 +1,6 @@
 """Tests for utilities."""
 import math
 
-from contextlib import nullcontext
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -92,47 +90,51 @@ def test_discrete_sampling(fraction, method):
 
 
 @pytest.mark.parametrize(
-    ("target, hook, error"),
+    ("target", "hook"),
     [
         param(
             f_annotated,
             f_annotated_one_default,
-            None,
             id="hook_with_defaults",
         ),
         param(
             f_annotated_one_default,
             f_annotated,
-            None,
             id="target_with_defaults",
         ),
         param(
             f_annotated,
             f_plain,
-            None,
             id="hook_without_annotations",
         ),
+    ],
+)
+def test_valid_register_hooks(target, hook):
+    """Passing consistent signatures to `register_hooks` raises no error."""
+    register_hooks(target, [hook])
+
+
+@pytest.mark.parametrize(
+    ("target", "hook"),
+    [
         param(
             f_annotated,
             f_reversed_annotated,
-            TypeError,
             id="different_order",
         ),
         param(
             f_annotated,
             f2_plain,
-            TypeError,
             id="different_names",
         ),
         param(
             f_annotated,
             f_reduced_plain,
-            TypeError,
             id="hook_missing_arguments",
         ),
     ],
 )
-def test_register_hook(target, hook, error):
-    """Passing in-/consistent signatures to `register_hook` raises an/no error."""
-    with pytest.raises(error) if error is not None else nullcontext():
+def test_invalid_register_hooks(target, hook):
+    """Passing inconsistent signatures to `register_hooks` raises an error."""
+    with pytest.raises(TypeError):
         register_hooks(target, [hook])
