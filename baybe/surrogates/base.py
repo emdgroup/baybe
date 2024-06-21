@@ -59,18 +59,18 @@ class Surrogate(ABC, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
-    _input_transformd = field(init=False, default=None, eq=False)
+    _input_transform = field(init=False, default=None, eq=False)
     """Callable preparing surrogate inputs for training/prediction.
 
     Transforms a dataframe containing parameter configurations in experimental
-    representation to a tensor containing the same configurations in computational
+    representation to a corresponding dataframe containing their computational
     representation. Only available after the surrogate has been fitted."""
 
     _target_transform = field(init=False, default=None, eq=False)
     """Callable preparing surrogate targets for training.
 
     Transforms a dataframe containing target measurements in experimental
-    representation to a tensor containing the same measurements in computational
+    representation to a corresponding dataframe containing their computational
     representation. Only available after the surrogate has been fitted."""
 
     def to_botorch(self) -> Model:
@@ -79,13 +79,13 @@ class Surrogate(ABC, SerialMixin):
 
         return AdapterModel(self)
 
-    def transform_inputs(self, data: pd.DataFrame) -> Tensor:
+    def transform_inputs(self, data: pd.DataFrame) -> pd.DataFrame:
         """Transform an experimental parameter dataframe."""
         if self._input_transform is None:
             raise ModelNotTrainedError("The model must be trained first.")
         return self._input_transform(data)
 
-    def transform_targets(self, data: pd.DataFrame) -> Tensor:
+    def transform_targets(self, data: pd.DataFrame) -> pd.DataFrame:
         """Transform an experimental measurement dataframe."""
         if self._target_transform is None:
             raise ModelNotTrainedError("The model must be trained first.")
@@ -96,7 +96,7 @@ class Surrogate(ABC, SerialMixin):
         import torch
 
         # Evaluate the posterior distribution
-        mean, covar = self._posterior(self.transform_inputs(candidates))
+        mean, covar = self._posterior(to_tensor(self.transform_inputs(candidates)))
 
         # Apply covariance transformation for marginal posterior models
         if not self.joint_posterior:
@@ -168,11 +168,11 @@ class Surrogate(ABC, SerialMixin):
             )
 
         # Store context-specific transformations
-        self._input_transform = lambda x: to_tensor(searchspace.transform(x))
-        self._target_transform = lambda x: to_tensor(objective.transform(x))
+        self._input_transform = lambda x: searchspace.transform(x)
+        self._target_transform = lambda x: objective.transform(x)
 
         # Transform and fit
-        train_x, train_y = (
+        train_x, train_y = to_tensor(
             self.transform_inputs(measurements),
             self.transform_targets(measurements),
         )

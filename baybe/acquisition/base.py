@@ -57,7 +57,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         if "best_f" in signature_params:
             additional_params["best_f"] = train_y.max().item()
         if "X_baseline" in signature_params:
-            additional_params["X_baseline"] = train_x
+            additional_params["X_baseline"] = to_tensor(train_x)
         if "mc_points" in signature_params:
             additional_params["mc_points"] = to_tensor(
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
