@@ -63,6 +63,7 @@ WHITELISTS = {
         "baybe.utils.botorch_wrapper",
         "baybe.utils.torch",
         "baybe.utils.cardinality_constraint",
+        "baybe.utils.botorch_optimizer_settings",
     ],
 }
 """Modules (dict values) for which certain imports (dict keys) are permitted."""

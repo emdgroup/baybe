@@ -153,6 +153,15 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf
 
+        from baybe.utils.botorch_optimizer_settings import (
+            get_initial_condition_settings,
+        )
+
+        # settings related to initial conditions for optimize_acqf
+        ic_generator, ic_gen_kwargs = get_initial_condition_settings(
+            subspace_continuous
+        )
+
         points, _ = optimize_acqf(
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
@@ -170,6 +179,14 @@ class BotorchRecommender(BayesianRecommender):
             ]
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             sequential=self.sequential_continuous,
+            nonlinear_inequality_constraints=[
+                c
+                for c_tmp in subspace_continuous.constraints_cardinality
+                for c in c_tmp.to_botorch(subspace_continuous.parameters)
+            ]
+            or None,
+            ic_generator=ic_generator,
+            **ic_gen_kwargs,
         )
 
         # Return optimized points as dataframe
