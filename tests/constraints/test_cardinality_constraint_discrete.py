@@ -10,21 +10,25 @@ from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 
 # Combinations of cardinalities to be tested
-N_PARAMETERS = 5
-_cardinalities = sorted(combinations(range(0, N_PARAMETERS), 2))
+cardinality_bounds_combinations = sorted(combinations(range(0, 5), 2))
 
 
 @pytest.mark.parametrize(
-    "cardinalities", _cardinalities, ids=[str(x) for x in _cardinalities]
+    "cardinality_bounds",
+    cardinality_bounds_combinations,
+    ids=[str(x) for x in cardinality_bounds_combinations],
 )
-def test_cardinality_constraint_discrete(cardinalities, n_grid_points):
-    """Elements of a unit-tube subspace under a cardinality constraint have the
-    expected number of non-zeros.
-    """  # noqa
-    # cardinality numbers
-    min_cardinality, max_cardinality = cardinalities
+def test_cardinality_constraint_discrete(
+    cardinality_bounds: tuple[int, int], n_grid_points: int
+):
+    # Elements of a (discretized) unit-cube subspace under a cardinality constraint
+    # have the expected number of non-zeros.
 
-    # Parameters
+    N_PARAMETERS = 5
+
+    # cardinality numbers
+    min_cardinality, max_cardinality = cardinality_bounds
+
     parameters = [
         NumericalDiscreteParameter(
             name=f"x_{i}", values=tuple(np.linspace(0, 1, n_grid_points))
@@ -32,7 +36,6 @@ def test_cardinality_constraint_discrete(cardinalities, n_grid_points):
         for i in range(N_PARAMETERS)
     ]
 
-    # Constraint
     constraint = [
         DiscreteCardinalityConstraint(
             parameters=[f"x_{i}" for i in range(N_PARAMETERS)],
@@ -41,7 +44,6 @@ def test_cardinality_constraint_discrete(cardinalities, n_grid_points):
         )
     ]
 
-    # Searchspace
     searchspace = SearchSpace.from_product(parameters, constraint)
 
     # Assert that cardinality constraint is fulfilled

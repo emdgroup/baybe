@@ -3,6 +3,7 @@
 from itertools import combinations_with_replacement
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from baybe.constraints.continuous import (
@@ -10,39 +11,83 @@ from baybe.constraints.continuous import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import SearchSpace, SubspaceContinuous
 
 
-def _get_searchspace(
-    n_parameters: int, min_cardinality: int, max_cardinality: int
-) -> SearchSpace:
-    """Create a unit-cube searchspace with cardinality constraint on all parameters."""
-    parameters = [
+def _validate_samples(
+    samples: pd.DataFrame, max_cardinality: int, min_cardinality: int, batch_size: int
+):
+    """Validate whether samples fulfill certain conditions.
+
+    Conditions to check:
+    * cardinality condition
+    * have the right number of samples
+    * free of duplicates, except all zeros
+
+    Args:
+        samples: samples to check
+        max_cardinality: maximum cardinality
+        min_cardinality: minimum cardinality
+        batch_size: batch size of samples
+    """
+    # Assert that cardinality constraint is fulfilled
+    n_nonzero = np.sum(~np.isclose(samples, 0.0), axis=1)
+    assert np.all(n_nonzero >= min_cardinality) and np.all(n_nonzero <= max_cardinality)
+
+    # Assert that we obtain as many samples as requested
+    assert len(samples) == batch_size
+
+    # If there are duplicates, they must all come from the case cardinality = 0
+    assert np.all(samples[samples.duplicated()] == 0.0)
+
+
+# Combinations of cardinalities to be tested
+cardinality_bounds_combinations = sorted(combinations_with_replacement(range(0, 10), 2))
+
+
+@pytest.mark.parametrize(
+    "cardinality_bounds",
+    cardinality_bounds_combinations,
+    ids=[str(x) for x in cardinality_bounds_combinations],
+)
+def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
+    # Sampling on unit-cube with cardinality constraints respects all constraints and
+    # produces distinct samples.
+
+    N_PARAMETERS = 10
+    BATCH_SIZE = 10
+    min_cardinality, max_cardinality = cardinality_bounds
+
+    parameters = tuple(
         NumericalContinuousParameter(name=f"x_{i}", bounds=(0, 1))
-        for i in range(n_parameters)
-    ]
-    constraints = [
+        for i in range(N_PARAMETERS)
+    )
+
+    constraints = (
         ContinuousCardinalityConstraint(
-            parameters=[f"x_{i}" for i in range(n_parameters)],
+            parameters=[f"x_{i}" for i in range(N_PARAMETERS)],
             min_cardinality=min_cardinality,
             max_cardinality=max_cardinality,
-        )
-    ]
-    searchspace = SearchSpace.from_product(parameters, constraints)
-    return searchspace
+        ),
+    )
+
+    subspace = SubspaceContinuous(parameters=parameters, constraints_nonlin=constraints)
+    samples = subspace.sample_uniform(BATCH_SIZE)
+
+    # Assert that conditions listed in_validate_samples() are fulfilled
+    _validate_samples(samples, max_cardinality, min_cardinality, BATCH_SIZE)
 
 
-def test_sampling():
-    """
-    Polytope sampling with cardinality constraints respects all involved constraints
-    and produces distinct samples.
-    """  # noqa
+def test_polytope_sampling_with_cardinality_constraint():
+    # Polytope sampling with cardinality constraints respects all involved
+    # constraints and produces distinct samples.
+
     N_PARAMETERS = 6
-    MAX_NONZERO = 4
-    MIN_NONZERO = 2
-    N_POINTS = 20
+    MAX_CARDINALITY = 4
+    MIN_CARDINALITY = 2
+    BATCH_SIZE = 20
     TOLERANCE = 1e-3
 
     parameters = [
@@ -67,17 +112,18 @@ def test_sampling():
         ),
         ContinuousCardinalityConstraint(
             parameters=params_cardinality,
-            max_cardinality=MAX_NONZERO,
-            min_cardinality=MIN_NONZERO,
+            max_cardinality=MAX_CARDINALITY,
+            min_cardinality=MIN_CARDINALITY,
         ),
     ]
     searchspace = SearchSpace.from_product(parameters, constraints)
 
-    samples = searchspace.continuous.sample_uniform(N_POINTS)
+    samples = searchspace.continuous.sample_uniform(BATCH_SIZE)
 
-    # Assert that cardinality constraint is fulfilled
-    n_nonzero = np.sum(~np.isclose(samples[params_cardinality], 0.0), axis=1)
-    assert np.all(n_nonzero >= MIN_NONZERO) and np.all(n_nonzero <= MAX_NONZERO)
+    # Assert that conditions listed in_validate_samples() are fulfilled
+    _validate_samples(
+        samples[params_cardinality], MAX_CARDINALITY, MIN_CARDINALITY, BATCH_SIZE
+    )
 
     # Assert that linear equality constraint is fulfilled
     assert np.allclose(
@@ -93,39 +139,30 @@ def test_sampling():
         .all()
     )
 
-    # Assert that we obtain as many (unique!) samples as requested
-    assert len(samples.drop_duplicates()) == N_POINTS
-
-
-# Combinations of cardinalities to be tested
-_cardinalities = sorted(combinations_with_replacement(range(0, 10), 2))
-
 
 @pytest.mark.parametrize(
-    "cardinalities", _cardinalities, ids=[str(x) for x in _cardinalities]
+    "parameter_names", [["Conti_finite1", "Conti_finite2", "Conti_finite3"]]
 )
-def test_random_recommender_with_cardinality_constraint(cardinalities):
-    """
-    Recommendations generated by a `RandomRecommender` under a cardinality constraint
-    have the expected number of nonzero elements.
-    """  # noqa
-    N_PARAMETERS = 10
-    BATCH_SIZE = 10
-    min_cardinality, max_cardinality = cardinalities
+@pytest.mark.parametrize("constraint_names", [["ContiConstraint_5"]])
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_random_recommender_with_cardinality_constraint(
+    parameters: list[NumericalContinuousParameter],
+    constraints: list[ContinuousCardinalityConstraint],
+    batch_size: int,
+):
+    # Recommendations generated by a `RandomRecommender` under a cardinality constraint
+    # have the expected number of nonzero elements.
 
-    searchspace = _get_searchspace(N_PARAMETERS, min_cardinality, max_cardinality)
+    searchspace = SearchSpace.from_product(
+        parameters=parameters, constraints=constraints
+    )
     recommender = RandomRecommender()
     recommendations = recommender.recommend(
         searchspace=searchspace,
-        batch_size=BATCH_SIZE,
+        batch_size=batch_size,
     )
 
-    # Assert that cardinality constraint is fulfilled
-    n_nonzero = np.sum(~np.isclose(recommendations, 0.0), axis=1)
-    assert np.all(n_nonzero >= min_cardinality) and np.all(n_nonzero <= max_cardinality)
-
-    # Assert that we obtain as many samples as requested
-    assert len(recommendations) == BATCH_SIZE
-
-    # If there are duplicates, they must all come from the case cardinality = 0
-    assert np.all(recommendations[recommendations.duplicated()] == 0.0)
+    # Assert that conditions listed in_validate_samples() are fulfilled
+    _validate_samples(
+        recommendations, max_cardinality=2, min_cardinality=1, batch_size=batch_size
+    )
