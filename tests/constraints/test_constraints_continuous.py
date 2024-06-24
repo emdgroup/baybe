@@ -6,8 +6,7 @@ from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
-
-from .conftest import run_iterations
+from tests.conftest import run_iterations
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
