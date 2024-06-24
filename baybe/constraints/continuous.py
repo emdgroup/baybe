@@ -1,6 +1,11 @@
 """Continuous constraints."""
 
+from __future__ import annotations
+
 import math
+from collections.abc import Callable, Sequence
+from functools import partial
+from typing import TYPE_CHECKING, TypeAlias
 
 import numpy as np
 from attrs import define
@@ -10,6 +15,16 @@ from baybe.constraints.base import (
     ContinuousLinearConstraint,
     ContinuousNonlinearConstraint,
 )
+from baybe.parameters import NumericalContinuousParameter
+
+if TYPE_CHECKING:
+    from torch import Tensor
+
+    # nonlinear inequality constraint callable
+    FuncNonlinearInequality: TypeAlias = Callable[[Tensor], Tensor]
+
+# boolean variable indicating intra-/inter-point constraints used in botorch.
+INTRA_POINT = True
 
 
 @define
@@ -83,3 +98,64 @@ class ContinuousCardinalityConstraint(
         ]
 
         return inactive_params
+
+    def to_botorch(  # noqa: D102
+        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+    ) -> list[tuple[FuncNonlinearInequality, bool]]:
+        # See base class.
+
+        import torch
+
+        from baybe.utils.cardinality_constraint import (
+            max_cardinality_relaxed,
+            min_cardinality_relaxed,
+        )
+
+        def chain_callable_with_parameter_selection(
+            _func_cardinality_relaxed: FuncNonlinearInequality, _indices: Tensor
+        ) -> FuncNonlinearInequality:
+            """Add a parameter selection operation to the callable.
+
+            Args:
+                _func_cardinality_relaxed: a callable that evaluates the relaxed
+                    cardinality constraint.
+                _indices: indices of parameter to be selected.
+
+            Returns:
+                A callable that chains parameter selection to the input callable.
+            """
+
+            def callable_at_broader_parameters(x: Tensor) -> Tensor:
+                """Chaining parameter selection to a callable."""
+                return _func_cardinality_relaxed(x[..., _indices])
+
+            return callable_at_broader_parameters
+
+        # relaxed cardinality constraint callable over constraint parameters
+        func_relaxed_cardinality_on_constraint_params = []
+        if self.max_cardinality != len(self.parameters):
+            func_relaxed_cardinality_on_constraint_params.append(
+                partial(max_cardinality_relaxed, self.max_cardinality)
+            )
+        if self.min_cardinality != 0:
+            func_relaxed_cardinality_on_constraint_params.append(
+                partial(min_cardinality_relaxed, self.min_cardinality)
+            )
+
+        # get indices of constraint parameters in the whole searchspace
+        param_names = [p.name for p in parameters]
+        indices = torch.tensor(
+            [
+                param_names.index(key) + idx_offset
+                for key in self.parameters
+                if key in param_names
+            ]
+        )
+
+        #  relaxed cardinality constraint callable over searchspace parameters
+        func_relaxed_cardinality_on_searchspace = [
+            chain_callable_with_parameter_selection(func, indices)
+            for func in func_relaxed_cardinality_on_constraint_params
+        ]
+
+        return [(func, INTRA_POINT) for func in func_relaxed_cardinality_on_searchspace]
