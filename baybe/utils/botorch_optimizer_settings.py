@@ -16,7 +16,7 @@ def get_initial_condition_settings(
     """Get settings related to initial condition generator in botorch.
 
     Args:
-        subspace_continuous: the continuous subspace object.
+        subspace_continuous: The continuous subspace object.
 
     Returns:
         An initial condition generator.

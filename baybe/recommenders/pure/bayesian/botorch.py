@@ -157,7 +157,7 @@ class BotorchRecommender(BayesianRecommender):
             get_initial_condition_settings,
         )
 
-        # settings related to initial conditions for optimize_acqf
+        # Settings related to initial conditions for optimize_acqf
         ic_generator, ic_gen_kwargs = get_initial_condition_settings(
             subspace_continuous
         )

@@ -14,8 +14,8 @@ def count_nonzeros(x: Tensor, ell: float = SMALL_CONST) -> Tensor:
     ``delta(x) = {1 if x=0; 0 else}`` use a narrow Gaussian function.
 
     Args:
-        x: continuous parameters.
-        ell: a small number controlling the approximation. The smaller it is, the closer
+        x: Continuous parameters.
+        ell: A small number controlling the approximation. The smaller it is, the closer
             the narrow Gaussian function is to delta().
 
     Returns:
