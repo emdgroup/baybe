@@ -260,11 +260,15 @@ class SubspaceContinuous(SerialMixin):
         )
         return self.sample_uniform(n_points)
 
-    def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
+    def sample_uniform(
+        self, batch_size: int = 1, _tolerance: float = 0.0
+    ) -> pd.DataFrame:
         """Draw uniform random parameter configurations from the continuous space.
 
         Args:
             batch_size: The number of parameter configurations to be sampled.
+            _tolerance: The tolerance used for measuring whether a value is treated as
+                        zero.
 
         Returns:
             A dataframe containing the parameter configurations as rows with columns
@@ -295,7 +299,9 @@ class SubspaceContinuous(SerialMixin):
         if len(self.constraints_cardinality) == 0:
             return self._sample_from_polytope(batch_size, self.param_bounds_comp)
 
-        return self._sample_from_polytope_with_cardinality_constraints(batch_size)
+        return self._sample_from_polytope_with_cardinality_constraints(
+            batch_size, _tolerance
+        )
 
     def _sample_from_bounds(self, batch_size: int, bounds: np.ndarray) -> pd.DataFrame:
         """Draw uniform random samples over a hyperrectangle-shaped space."""
@@ -325,7 +331,7 @@ class SubspaceContinuous(SerialMixin):
         return pd.DataFrame(points, columns=self.param_names)
 
     def _sample_from_polytope_with_cardinality_constraints(
-        self, batch_size: int
+        self, batch_size: int, _tolerance: float
     ) -> pd.DataFrame:
         """Draw random samples from a polytope with cardinality constraints."""
         if not self.constraints_cardinality:
@@ -342,11 +348,31 @@ class SubspaceContinuous(SerialMixin):
         # Counter for failed sampling attempts
         n_fails = 0
 
+        # Parameter names associated with cardinality constraints
+
+        param_names_cardinality = tuple(
+            {
+                p_name
+                for con in self.constraints_cardinality
+                for p_name in con.parameters
+            }
+        )
+
         while len(samples) < batch_size:
-            # Randomly set some parameters inactive
+            # Randomly set some parameters inactive. Inactive parameters: They are
+            # present in cardinality constraints and must be zero.
             inactive_params_sample = self._sample_inactive_parameters(1)[0]
 
-            # Remove the inactive parameters from the search space
+            # Active parameters: They are present in cardinality constraints and must
+            # be non-zero.
+            active_params = [
+                p for p in param_names_cardinality if p not in inactive_params_sample
+            ]
+
+            # Remove the inactive parameters from the search space. The parameters in
+            # this new search space are either active parameters or free parameters.
+            # Both differ in that free parameters are not ruled by any cardinality
+            # constraints.
             subspace_without_cardinality_constraint = self._drop_parameters(
                 inactive_params_sample
             )
@@ -354,7 +380,15 @@ class SubspaceContinuous(SerialMixin):
             # Sample from the reduced space
             try:
                 sample = subspace_without_cardinality_constraint.sample_uniform(1)
-                samples.append(sample)
+
+                # Check whether active parameters (present in cardinality constraints)
+                # are non-zero.
+                if len(active_params) == 0:
+                    samples.append(sample)
+                elif sample[[active_params[0]]].abs().ge(_tolerance).all().all():
+                    samples.append(sample)
+                else:
+                    n_fails += 1
             except ValueError:
                 n_fails += 1
 

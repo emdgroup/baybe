@@ -34,6 +34,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Sampling methods in `qNIPV` and `BotorchRecommender` are now specified via 
   `DiscreteSamplingMethod` enum
 - `Interval` class now supports degenerate intervals containing only one element
+- `SubspaceContinuous.samples_uniform` has an additional optional parameter `tolerance`
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 

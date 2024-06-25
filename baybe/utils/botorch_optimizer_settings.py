@@ -7,6 +7,7 @@ from botorch.optim.initializers import gen_batch_initial_conditions
 from torch import Tensor
 
 from baybe.searchspace.continuous import SubspaceContinuous
+from baybe.utils.cardinality_constraint import SMALL_CONST
 
 
 def get_initial_condition_settings(
@@ -44,7 +45,10 @@ def get_initial_condition_settings(
                 """Generate initial condition for botorch optimizer."""
                 # see generator in gen_batch_initial_conditions
 
-                candidates = subspace_continuous.sample_uniform(n * q)
+                candidates = subspace_continuous.sample_uniform(
+                    n * q, _tolerance=SMALL_CONST
+                )
+
                 return (
                     torch.tensor(candidates.values)
                     .reshape(n, q, candidates.shape[-1])
