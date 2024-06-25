@@ -6,9 +6,13 @@
 name: Continuous Integration
 on:
   push:
-    branches: main
+    branches:
+      - main
+      - 'dev/**'
   pull_request:
-    branches: main
+    branches:
+      - main
+      - 'dev/**'
   workflow_dispatch:
 
 env:
