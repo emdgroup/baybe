@@ -133,10 +133,6 @@ jobs:
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@v4
-        with:
-          path: .tox/coretest-${{ matrix.py-version.tox }}
-          key: coretest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
       - name: Run core tests
         run: |
           pip install tox-uv
