@@ -390,15 +390,14 @@ class SubspaceDiscrete(SerialMixin):
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
             )
 
-        # no overlapping between simplex_parameters and product_parameters
+        # Validate no overlap between simplex parameters and product parameters
         simplex_parameters_names = {p.name for p in simplex_parameters}
         product_parameters_names = {p.name for p in product_parameters}
-        if simplex_parameters_names.intersection(product_parameters_names):
+        if overlap := simplex_parameters_names.intersection(product_parameters_names):
             raise ValueError(
-                f"All parameters passed via 'simplex_parameters' and "
-                f"'product_parameters' cannot share the same parameter names. They "
-                f"are sharing parameter names"
-                f" {simplex_parameters_names.intersection(product_parameters_names)}."
+                f"Parameter sets passed via 'simplex_parameters' and "
+                f"'product_parameters' must be disjoint but share the following "
+                f"parameters: {overlap}."
             )
 
         # Construct the product part of the space

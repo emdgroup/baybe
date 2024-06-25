@@ -95,8 +95,7 @@ def test_discrete_searchspace_creation_from_simplex_on_overlapping_parameters():
     # sharing the same parameter names.
     with pytest.raises(
         ValueError,
-        match="'simplex_parameters' and 'product_parameters' cannot share the same "
-        "parameter names.",
+        match="'simplex_parameters' and 'product_parameters' must be disjoint",
     ):
         SearchSpace(
             SubspaceDiscrete.from_simplex(

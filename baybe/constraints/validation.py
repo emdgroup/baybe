@@ -72,10 +72,10 @@ def validate_constraints(  # noqa: DOC101, DOC103
             p in param_names_non_numerical for p in constraint.parameters
         ):
             raise ValueError(
-                f"You are trying to initialize a {constraint.__class__.__name__} "
-                f"constraint which is valid only for numerical discrete parameters "
-                f"over a parameter that does not match. Parameter list of the affected "
-                f"constraint: {constraint.parameters}."
+                f"You are trying to initialize a constraint of type "
+                f"'{constraint.__class__.__name__}', which is valid only for numerical "
+                f"discrete parameters, over a non-numerical parameter. "
+                f"Parameter list of the affected constraint: {constraint.parameters}."
             )
 
 
