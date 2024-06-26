@@ -1,10 +1,17 @@
 # The following are options that are used for pydoclint
 # Note that we need to use pydoclint as a flake8 plugin as we cannot have the
 # in-line noqa exclusions otherwise
+
 [flake8]
 # Use google docstring style 
-style=google
-# We do not have the type hints in the docstrings
-arg-type-hints-in-docstring=False 
-# We do not have the return types in the docstrings
-check-return-types=False
+style=google  
+
+# We do not repeat parameter type hints in docstrings
+arg-type-hints-in-docstring=False
+
+# We do not repeat return types in the docstrings
+check-return-types=False 
+
+# As of 0.5.2, pydoclint breaks with attrs classes
+# https://github.com/jsh9/pydoclint/issues/140
+check-class-attributes=False  
