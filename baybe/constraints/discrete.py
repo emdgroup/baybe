@@ -51,20 +51,20 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         Returns:
             The Polars Expr object to pass as an argument to filter().
         """
-        satisfied: list[pl.Expr] = []
+        satisfied = []
         for k, cond in enumerate(self.conditions):
             # SubSelectionCondition requires parameter to generate an expression
             if isinstance(cond, SubSelectionCondition):
                 satisfied.append(cond.to_polars(self.parameters[k]))
             else:  # Assuming we have only two classes for condition
                 op = cond.to_polars(param=None)
-                satisfied.append(op(pl.col(self.parameters[k])))
+                satisfied.append(op(pl.col(self.parameters[k])))  # type: ignore[operator]
 
         # to prevent errors when we have empty condition list
         expr = reduce(_valid_logic_combiners[self.combiner], satisfied)
         # Negate the expression, because Polars' filter keeps the rows
         # the expression satisfies
-        expr = expr.not_()
+        expr = expr.not_()  # type: ignore[union-attr]
 
         return expr
 
@@ -94,7 +94,7 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
         """
         op = self.condition.to_polars()
-        return op(pl.sum_horizontal(self.parameters))
+        return op(pl.sum_horizontal(self.parameters))  # type: ignore[operator]
 
 
 @define
