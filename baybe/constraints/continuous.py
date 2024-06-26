@@ -107,7 +107,8 @@ class ContinuousCardinalityConstraint(
         import torch
 
         from baybe.utils.cardinality_constraint import (
-            cardinality_relaxed,
+            max_cardinality_relaxed,
+            min_cardinality_relaxed,
         )
 
         def chain_callable_with_parameter_selection(
@@ -134,11 +135,11 @@ class ContinuousCardinalityConstraint(
         func_relaxed_cardinality_on_constraint_params = []
         if self.max_cardinality != len(self.parameters):
             func_relaxed_cardinality_on_constraint_params.append(
-                partial(cardinality_relaxed, self.max_cardinality, "<=")
+                partial(max_cardinality_relaxed, self.max_cardinality)
             )
         if self.min_cardinality != 0:
             func_relaxed_cardinality_on_constraint_params.append(
-                partial(cardinality_relaxed, self.min_cardinality, ">=")
+                partial(min_cardinality_relaxed, self.min_cardinality)
             )
 
         # get indices of constraint parameters in the whole searchspace
