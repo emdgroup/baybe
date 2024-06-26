@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RecommenderProtocol.recommend` now expects training data to be provided as a single
   dataframe in experimental representation instead of two separate dataframes in
   computational representation
+- `Parameter.is_numeric` has been replaced with `Parameter.is_numerical`
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method

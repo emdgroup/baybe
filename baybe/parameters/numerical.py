@@ -21,7 +21,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
     """Parameter class for discrete numerical parameters (a.k.a. setpoints)."""
 
     # class variables
-    is_numeric: ClassVar[bool] = True
+    is_numerical: ClassVar[bool] = True
     # See base class.
 
     # object variables
@@ -102,7 +102,7 @@ class NumericalContinuousParameter(ContinuousParameter):
     """Parameter class for continuous numerical parameters."""
 
     # class variables
-    is_numeric: ClassVar[bool] = True
+    is_numerical: ClassVar[bool] = True
     # See base class.
 
     # object variables

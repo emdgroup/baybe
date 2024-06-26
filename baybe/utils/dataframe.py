@@ -237,7 +237,7 @@ def add_parameter_noise(
             "'absolute' or 'relative_percent'."
         )
 
-    for param in (p for p in parameters if p.is_numeric):
+    for param in (p for p in parameters if p.is_numerical):
         # Add selected noise type
         if noise_type == "relative_percent":
             data[param.name] *= np.random.uniform(
@@ -384,7 +384,7 @@ def fuzzy_row_match(
         # Check if the row represents a valid input
         valid = True
         for param in parameters:
-            if param.is_numeric:
+            if param.is_numerical:
                 if numerical_measurements_must_be_within_tolerance:
                     valid &= param.is_in_range(row[param.name])
             else:
@@ -402,8 +402,8 @@ def fuzzy_row_match(
                 )
 
         # Differentiate category-like and discrete numerical parameters
-        cat_cols = [p.name for p in parameters if not p.is_numeric]
-        num_cols = [p.name for p in parameters if (p.is_numeric and p.is_discrete)]
+        cat_cols = [p.name for p in parameters if not p.is_numerical]
+        num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
 
         # Discrete parameters must match exactly
         match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)

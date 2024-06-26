@@ -30,7 +30,7 @@ class Parameter(ABC, SerialMixin):
     """
 
     # class variables
-    is_numeric: ClassVar[bool]
+    is_numerical: ClassVar[bool]
     """Class variable encoding whether this parameter is numeric."""
 
     # object variables
