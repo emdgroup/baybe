@@ -23,6 +23,8 @@ _ `_optional` subpackage for managing optional dependencies
 - Abstract `ContinuousNonlinearConstraint` class
 - `ContinuousCardinalityConstraint` class and corresponding uniform sampling mechanism
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
+- Discrete search space Cartesian product is created lazily via Polars
+- Polars expression for `DiscreteSumConstraint`, `DiscreteProductConstraint` and `DiscreteExcludeConstraint`
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -46,7 +48,7 @@ _ `_optional` subpackage for managing optional dependencies
 - `SubspaceContinuous.samples_full_factorial` has been replaced with
   `SubspaceContinuous.sample_from_full_factorial`
 
-## [0.9.1] - 2024-06-04
+
 ### Changed
 - Discrete searchspace memory estimate is now natively represented in bytes 
 

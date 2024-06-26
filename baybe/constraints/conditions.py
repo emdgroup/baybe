@@ -8,6 +8,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from attr import define, field
 from attr.validators import in_
 from attrs.validators import min_len
@@ -41,15 +42,36 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
         given tolerances.
 
     """
-    return np.logical_not(np.isclose(x, y, rtol=rtol, atol=atol))
+    return np.logical_not(isclose(x, y, rtol=rtol, atol=atol))
+
+
+def isclose(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
+    """Return a boolean array indicating where ``x`` and ``y`` are close.
+
+    The equivalent to ``numpy.isclose``.
+    Using ``np.isclose`` alongside Polars dataframes results in this error:
+    ``TypeError: ufunc 'isfinite' not supported for the input types``.
+
+    Args:
+        x: First input array to compare.
+        y: Second input array to compare.
+        rtol: The relative tolerance parameter.
+        atol: The absolute tolerance parameter.
+
+    Returns:
+        Returns a boolean array of where ``x`` and ``y`` are equal within the
+        given tolerances.
+
+    """
+    return np.abs(np.subtract(x, y)) <= atol + rtol * np.abs(y)
 
 
 # provide threshold operators
 _threshold_operators: dict[str, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
-    "=": rpartial(np.isclose, rtol=0.0),
-    "==": rpartial(np.isclose, rtol=0.0),
+    "=": rpartial(isclose, rtol=0.0),
+    "==": rpartial(isclose, rtol=0.0),
     "!=": rpartial(_is_not_close, rtol=0.0),
     ">": ops.gt,
     ">=": ops.ge,
@@ -81,6 +103,17 @@ class Condition(ABC, SerialMixin):
 
         Returns:
             A boolean series indicating which elements satisfy the condition.
+        """
+
+    @abstractmethod
+    def to_polars(self, param: str | None) -> Callable | pl.Expr:
+        """Convert condition to a Polars expression.
+
+        Args:
+            param: Optional - The parameter for which this condition should be applied
+
+        Returns:
+            A expression that can be passed to filter rows that satisfy condition.
         """
 
 
@@ -126,6 +159,13 @@ class ThresholdCondition(Condition):
                     f"or <= 0.0, but was {value}."
                 )
 
+    def generate_operator_function(self):
+        """Generate a function using operators to filter out undesired rows."""
+        func = rpartial(_threshold_operators[self.operator], self.threshold)
+        if self.operator in _valid_tolerance_operators:
+            func = rpartial(func, atol=self.tolerance)
+        return func
+
     def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
         # See base class.
         if data.dtype.kind not in "iufb":
@@ -134,11 +174,12 @@ class ThresholdCondition(Condition):
                 "This operation is error-prone and not supported. Only use threshold "
                 "conditions with numerical parameters."
             )
-        func = rpartial(_threshold_operators[self.operator], self.threshold)
-        if self.operator in _valid_tolerance_operators:
-            func = rpartial(func, atol=self.tolerance)
-
+        func = self.generate_operator_function()
         return data.apply(func)
+
+    def to_polars(self, param=None) -> Callable | pl.Expr:
+        """Convert the condition to a callable for Polars."""
+        return self.generate_operator_function()
 
 
 @define
@@ -167,6 +208,12 @@ class SubSelectionCondition(Condition):
     def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
         # See base class.
         return data.isin(self.selection)
+
+    def to_polars(self, param: str | None) -> Callable | pl.Expr:
+        """Convert condition to a callable for Polars."""
+        if not param:
+            raise ValueError("You must provide a parameter for SubSelectionCondition.")
+        return pl.col(param).is_in(self.selection)
 
 
 # Register (un-)structure hooks
