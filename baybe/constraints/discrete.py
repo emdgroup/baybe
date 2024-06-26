@@ -302,16 +302,16 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
         return data.index[mask_bad]
 
 
-# the order in which the constraint types need to be applied during discrete subspace
-# filtering
+# Constraints are approximately ordered according to increasing computational effort
+# to minimize total time in their sequential application
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
-    DiscreteCustomConstraint,
     DiscreteExcludeConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteSumConstraint,
     DiscreteProductConstraint,
     DiscreteCardinalityConstraint,
+    DiscreteCustomConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteDependenciesConstraint,
 )
