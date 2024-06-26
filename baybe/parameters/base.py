@@ -1,5 +1,6 @@
 """Base classes for all parameters."""
 
+import warnings
 from abc import ABC, abstractmethod
 from functools import cached_property, partial
 from typing import Any, ClassVar
@@ -16,6 +17,7 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+from baybe.utils.basic import classproperty
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
@@ -30,12 +32,23 @@ class Parameter(ABC, SerialMixin):
     """
 
     # class variables
-    is_numeric: ClassVar[bool]
+    is_numerical: ClassVar[bool]
     """Class variable encoding whether this parameter is numeric."""
 
     # object variables
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
+
+    @classproperty
+    def is_numeric(cls) -> bool:
+        """Alias for `is_numerical`."""
+        assert "is_numerical" in cls.__dict__["__annotations__"]
+        warnings.warn(
+            "The class variable 'is_numeric' has been deprecated and will be removed "
+            "in a future version. Use 'is_numerical' instead.",
+            DeprecationWarning,
+        )
+        return cls.is_numerical
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:

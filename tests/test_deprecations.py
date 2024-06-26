@@ -223,3 +223,9 @@ def test_deprecated_samples_full_factorial():
     with pytest.warns(DeprecationWarning):
         parameters = [NumericalContinuousParameter("x", (0, 1))]
         SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
+
+
+def test_deprecated_is_numeric_class_attribute():
+    """Using the deprecated `is_numeric` class attribute raises a warning."""
+    with pytest.warns(DeprecationWarning):
+        NumericalContinuousParameter.is_numeric

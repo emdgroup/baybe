@@ -25,7 +25,7 @@ class CustomDiscreteParameter(DiscreteParameter):
     """
 
     # class variables
-    is_numeric: ClassVar[bool] = False
+    is_numerical: ClassVar[bool] = False
     # See base class.
 
     # object variables
