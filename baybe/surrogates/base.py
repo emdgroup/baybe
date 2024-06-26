@@ -168,7 +168,7 @@ class Surrogate(ABC, SerialMixin):
             )
 
         # Store context-specific transformations
-        self._input_transform = lambda x: searchspace.transform(x)
+        self._input_transform = lambda x: searchspace.transform(x, allow_missing=True)
         self._target_transform = lambda x: objective.transform(x)
 
         # Transform and fit
