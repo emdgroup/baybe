@@ -24,8 +24,9 @@ _ `_optional` subpackage for managing optional dependencies
 - Abstract `CardinalityConstraint` class and
   `DiscreteCardinalityConstraint`/`ContinuousCardinalityConstraint` subclasses
 - Uniform sampling mechanism for continuous spaces with cardinality constraints
-- `register_hooks` utility enabling user-defined augmentation of arbitrary callables
+- `to_botorch` becomes an abstract method of abstract `ContinuousConstraint`
 - Botorch recommenders supports `ContinuousCardinalityConstraint` via `to_botorch`
+- `register_hooks` utility enabling user-defined augmentation of arbitrary callables
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

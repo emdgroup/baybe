@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Sequence
-from typing import TYPE_CHECKING, Any, ClassVar
+from collections.abc import Callable, Collection, Sequence
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,15 @@ from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
+
+    # The tuple related to linear constraint required by botorch
+    BotorchLinearConstraint: TypeAlias = tuple[Tensor, Tensor, float]
+
+    # Callable of nonlinear inequality constraint
+    FuncNonlinearInequality: TypeAlias = Callable[[Tensor], Tensor]
+
+    # The tuple related to nonlinear constraint required by botorch
+    BotorchNonlinearConstraint: TypeAlias = tuple[FuncNonlinearInequality, bool]
 
 
 @define
@@ -118,6 +127,23 @@ class ContinuousConstraint(Constraint, ABC):
 
     numerical_only: ClassVar[bool] = True
     # See base class.
+
+    @abstractmethod
+    def to_botorch(
+        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+    ) -> BotorchLinearConstraint | list[BotorchNonlinearConstraint]:
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ``optimize_acqf_*`` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            idx_offset: Offset to the provided parameter indices.
+
+        Returns:
+            The tuple required by botorch.
+        """
 
 
 @define
@@ -232,21 +258,10 @@ class ContinuousLinearConstraint(ContinuousConstraint, ABC):
         ]
         return ContinuousLinearConstraint(parameters, coefficients, self.rhs)
 
-    def to_botorch(
+    def to_botorch(  # noqa: D102
         self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
-    ) -> tuple[Tensor, Tensor, float]:
-        """Cast the constraint in a format required by botorch.
-
-        Used in calling ``optimize_acqf_*`` functions, for details see
-        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
-
-        Args:
-            parameters: The parameter objects of the continuous space.
-            idx_offset: Offset to the provided parameter indices.
-
-        Returns:
-            The tuple required by botorch.
-        """
+    ) -> BotorchLinearConstraint:
+        # See base class.
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch

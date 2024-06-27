@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from functools import partial
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 import numpy as np
 from attrs import define
@@ -20,8 +20,7 @@ from baybe.parameters import NumericalContinuousParameter
 if TYPE_CHECKING:
     from torch import Tensor
 
-    # Callable of nonlinear inequality constraint
-    FuncNonlinearInequality: TypeAlias = Callable[[Tensor], Tensor]
+    from baybe.constraints.base import FuncNonlinearInequality
 
 # Boolean variable indicating intra-/inter-point constraints used in botorch.
 INTRA_POINT = True
