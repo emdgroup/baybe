@@ -13,9 +13,7 @@ distribution, and compute an acquisition function that represents the overall
 uncertainty about any given point in the searchspace.
 
 Below you find which acquisition functions in BayBE are suitable for this endeavor 
-including a few guidelines. Furthermore, BayBE offers you the ability to choose a 
-custom surrogate model. This means you can use the model you intend to measure points 
-for already during the data acquisition phase (more on this soon).
+including a few guidelines.
 
 ## Single-Point Uncertainty
 In BayBE, there are two acquisition functions that can be chosen to search for the 
