@@ -6,7 +6,10 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.utils.augmentation import df_apply_permutation_augmentation
+from baybe.utils.augmentation import (
+    df_apply_dependency_augmentation,
+    df_apply_permutation_augmentation,
+)
 from baybe.utils.basic import register_hooks
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import closest_element
@@ -197,6 +200,90 @@ def test_df_invariance_augmentation(data, columns, data_expected):
     # Create all needed dataframes
     df = pd.DataFrame(data)
     df_augmented = df_apply_permutation_augmentation(df, columns)
+    df_expected = pd.DataFrame(data_expected)
+
+    # Determine equality ignoring row order
+    are_equal = (
+        pd.merge(left=df_augmented, right=df_expected, how="outer", indicator=True)[
+            "_merge"
+        ]
+        .eq("both")
+        .all()
+    )
+
+    assert are_equal, (df, df_augmented, df_expected)
+
+
+@pytest.mark.parametrize(
+    ("data", "causing", "affected", "data_expected"),
+    [
+        param(  # 1 causing val, 1 col affected (with 3 values)
+            {
+                "A": [0, 1],
+                "B": [3, 4],
+                "C": ["x", "y"],
+            },
+            ("A", [0]),
+            [("B", [3, 4, 5])],
+            {
+                "A": [0, 1, 0, 0],
+                "B": [3, 4, 4, 5],
+                "C": ["x", "y", "x", "x"],
+            },
+            id="1causing_1affected",
+        ),
+        param(  # 1 causing val, 2 cols affected (with 2 values each)
+            {
+                "A": [0, 1],
+                "B": [3, 4],
+                "C": ["x", "y"],
+            },
+            ("A", [0]),
+            [("B", [3, 4]), ("C", ["x", "y"])],
+            {
+                "A": [0, 1, 0, 0, 0],
+                "B": [3, 4, 4, 3, 4],
+                "C": ["x", "y", "x", "y", "y"],
+            },
+            id="1causing_2affected",
+        ),
+        param(  # 2 causing vals, 1 col affected (with 3 values)
+            {
+                "A": [0, 1, 2],
+                "B": [3, 4, 3],
+                "C": ["x", "y", "z"],
+            },
+            ("A", [0, 1]),
+            [("B", [3, 4, 5])],
+            {
+                "A": [0, 1, 2, 0, 0, 1, 1],
+                "B": [3, 4, 3, 4, 5, 3, 5],
+                "C": ["x", "y", "z", "x", "x", "y", "y"],
+            },
+            id="2causing_1affected",
+        ),
+        param(  # 2 causing vals, 2 cols affected (with 2 values each)
+            {
+                "A": [0, 1, 2],
+                "B": [3, 4, 3],
+                "C": ["x", "y", "x"],
+            },
+            ("A", [0, 1]),
+            [("B", [3, 4]), ("C", ["x", "y"])],
+            {
+                "A": [0, 1, 2, 0, 0, 0, 1, 1, 1],
+                "B": [3, 4, 3, 4, 3, 4, 3, 3, 4],
+                "C": ["x", "y", "x", "x", "y", "y", "y", "x", "x"],
+            },
+            id="2causing_2affected",
+        ),
+    ],
+)
+def test_df_dependency_augmentation(data, causing, affected, data_expected):
+    """Test dependency data augmentation is done correctly."""
+    # Create all needed dataframes
+    df = pd.DataFrame(data)
+    df_augmented = df_apply_dependency_augmentation(df, causing, affected)
     df_expected = pd.DataFrame(data_expected)
 
     # Determine equality ignoring row order
