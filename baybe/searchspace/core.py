@@ -380,6 +380,11 @@ class SearchSpace(SerialMixin):
 
         return comp_rep
 
+    @property
+    def constraints_augmentable(self) -> tuple[Constraint, ...]:
+        """The searchspace constraints that can be considered during augmentation."""
+        return tuple(c for c in self.constraints if c.eval_during_augmentation)
+
 
 def validate_searchspace_from_config(specs: dict, _) -> None:
     """Validate the search space specifications while skipping costly creation steps."""
