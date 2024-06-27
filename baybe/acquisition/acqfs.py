@@ -164,7 +164,7 @@ class PosteriorStandardDeviation(AcquisitionFunction):
     abbreviation: ClassVar[str] = "PSTD"
 
     maximize: bool = field(default=True, validator=instance_of(bool))
-    """Consider the problem a maximization problem. If set to False, acqf value is
+    """Consider the problem a maximization problem. If set to `False`, acqf value is
     negated. As a consequence, optimize_* will return -1 * minimum of the posterior
     standard deviation."""
 
