@@ -21,12 +21,10 @@ cardinality_bounds_combinations = sorted(combinations(range(0, 5), 2))
 def test_cardinality_constraint_discrete(
     cardinality_bounds: tuple[int, int], n_grid_points: int
 ):
-    # Elements of a (discretized) unit-cube subspace under a cardinality constraint
-    # have the expected number of non-zeros.
+    """Elements of a (discretized) unit-cube subspace under a cardinality constraint
+    have the expected number of non-zeros."""  # noqa
 
     N_PARAMETERS = 5
-
-    # cardinality numbers
     min_cardinality, max_cardinality = cardinality_bounds
 
     parameters = [

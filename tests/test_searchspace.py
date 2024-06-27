@@ -86,13 +86,11 @@ def test_discrete_searchspace_creation_from_dataframe():
     assert df.equals(searchspace.discrete.exp_rep)
 
 
-def test_discrete_searchspace_creation_from_simplex_on_overlapping_parameters():
-    """Attempt creation of a discrete searchspace over simplex parameters and product
-    parameters sharing the same parameter names."""  # noqa
+def test_invalid_simplex_creating_with_overlapping_parameters():
+    """Creating a simplex searchspace with overlapping simplex and product parameters
+    raises an error."""  # noqa
     parameters = [NumericalDiscreteParameter(name="x_1", values=(0, 1, 2))]
 
-    # Attempting a discrete subspace over simplex_parameters and product_parameters
-    # sharing the same parameter names.
     with pytest.raises(
         ValueError,
         match="'simplex_parameters' and 'product_parameters' must be disjoint",
