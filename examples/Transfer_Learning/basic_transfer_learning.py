@@ -10,7 +10,6 @@
 ### Imports
 
 import os
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -161,7 +160,7 @@ results = pd.concat([result_baseline, *results])
 # using even small amounts of training data from related optimization tasks.
 
 results.rename(columns={"Scenario": "% of data used"}, inplace=True)
-path = Path(sys.path[0])
+path = Path(".")
 ax = sns.lineplot(
     data=results,
     marker="o",

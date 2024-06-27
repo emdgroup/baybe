@@ -11,7 +11,6 @@
 ### Imports
 
 import os
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -165,7 +164,7 @@ for func_name, function in test_functions.items():
 results.rename(columns={"Scenario": "Function"}, inplace=True)
 # Add column to enable different styles for non-TL examples
 results["Uses TL"] = results["Function"].apply(lambda val: "No_TL" not in val)
-path = Path(sys.path[0])
+path = Path(".")
 ax = sns.lineplot(
     data=results,
     markers=["o", "s"],

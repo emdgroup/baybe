@@ -12,7 +12,6 @@
 ### Imports
 
 import os
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -112,7 +111,7 @@ results = simulate_scenarios(
 
 # We use the plotting utility to create plots.
 
-path = Path(sys.path[0])
+path = Path(".")
 ax = sns.lineplot(
     data=results,
     marker="o",

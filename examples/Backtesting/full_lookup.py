@@ -9,7 +9,6 @@
 ### Necessary imports for this example
 
 import os
-import sys
 from pathlib import Path
 
 import pandas as pd
@@ -167,7 +166,7 @@ results = simulate_scenarios(
 # traditional ones at almost no extra cost.
 
 results.rename(columns={"Scenario": "Substance Encoding"}, inplace=True)
-path = Path(sys.path[0])
+path = Path(".")
 ax = sns.lineplot(
     data=results,
     marker="o",
