@@ -354,6 +354,8 @@ class SubspaceDiscrete(SerialMixin):
             ValueError: If the passed simplex parameters are not suitable for a simplex
                 construction.
             ValueError: If the passed product parameters are not discrete.
+            ValueError: If the passed simplex parameters and product parameters are
+                not disjoint.
 
         Returns:
             The created simplex subspace.
@@ -386,6 +388,16 @@ class SubspaceDiscrete(SerialMixin):
             raise ValueError(
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
+            )
+
+        # Validate no overlap between simplex parameters and product parameters
+        simplex_parameters_names = {p.name for p in simplex_parameters}
+        product_parameters_names = {p.name for p in product_parameters}
+        if overlap := simplex_parameters_names.intersection(product_parameters_names):
+            raise ValueError(
+                f"Parameter sets passed via 'simplex_parameters' and "
+                f"'product_parameters' must be disjoint but share the following "
+                f"parameters: {overlap}."
             )
 
         # Construct the product part of the space

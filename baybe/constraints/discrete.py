@@ -2,13 +2,13 @@
 
 from collections.abc import Callable
 from functools import reduce
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import pandas as pd
 from attr import define, field
 from attr.validators import in_, min_len
 
-from baybe.constraints.base import DiscreteConstraint
+from baybe.constraints.base import CardinalityConstraint, DiscreteConstraint
 from baybe.constraints.conditions import (
     Condition,
     ThresholdCondition,
@@ -49,6 +49,10 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
 
+    # class variables
+    numerical_only: ClassVar[bool] = True
+    # see base class.
+
     # object variables
     condition: ThresholdCondition = field()
     """The condition modeled by this constraint."""
@@ -66,6 +70,10 @@ class DiscreteProductConstraint(DiscreteConstraint):
     """Class for modelling product constraints."""
 
     # IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying
+
+    # class variables
+    numerical_only: ClassVar[bool] = True
+    # see base class.
 
     # object variables
     condition: ThresholdCondition = field()
@@ -278,19 +286,35 @@ class DiscreteCustomConstraint(DiscreteConstraint):
         return data.index[mask_bad]
 
 
-# the order in which the constraint types need to be applied during discrete subspace
-# filtering
+@define
+class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
+    """Class for discrete cardinality constraints."""
+
+    # Class variables
+    numerical_only: ClassVar[bool] = True
+    # See base class.
+
+    def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
+        # See base class.
+        non_zeros = (data[self.parameters] != 0.0).sum(axis=1)
+        mask_bad = non_zeros > self.max_cardinality
+        mask_bad |= non_zeros < self.min_cardinality
+        return data.index[mask_bad]
+
+
+# Constraints are approximately ordered according to increasing computational effort
+# to minimize total time in their sequential application
 DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
-    DiscreteCustomConstraint,
     DiscreteExcludeConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscreteLinkedParametersConstraint,
     DiscreteSumConstraint,
     DiscreteProductConstraint,
+    DiscreteCardinalityConstraint,
+    DiscreteCustomConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteDependenciesConstraint,
 )
-
 
 # Prevent (de-)serialization of custom constraints
 converter.register_unstructure_hook(DiscreteCustomConstraint, block_serialization_hook)

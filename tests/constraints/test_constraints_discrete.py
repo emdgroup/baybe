@@ -238,3 +238,24 @@ def test_custom(campaign):
         & campaign.searchspace.discrete.exp_rep["Solvent_1"].eq("C3")
     ).sum()
     assert num_entries == 0
+
+
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["SomeSetting", "Fraction_1", "Fraction_2", "Fraction_3"]],
+)
+@pytest.mark.parametrize("constraint_names", [["Constraint_14"]])
+def test_cardinality(campaign):
+    """Test discrete cardinality constraint."""
+    # Number of non-zeros
+    non_zeros = (
+        campaign.searchspace.discrete.exp_rep[
+            ["Fraction_1", "Fraction_2", "Fraction_3"]
+        ]
+        != 0.0
+    ).sum(axis=1)
+
+    # number of non-zeros fulfills cardinality
+    min_cardinality = 1
+    max_cardinality = 2
+    assert non_zeros.between(min_cardinality, max_cardinality).all()

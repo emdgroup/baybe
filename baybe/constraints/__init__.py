@@ -8,6 +8,7 @@ from baybe.constraints.continuous import (
 )
 from baybe.constraints.discrete import (
     DISCRETE_CONSTRAINTS_FILTERING_ORDER,
+    DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
@@ -28,6 +29,7 @@ __all__ = [
     "ContinuousLinearEqualityConstraint",
     "ContinuousLinearInequalityConstraint",
     # --- Discrete constraints ---#
+    "DiscreteCardinalityConstraint",
     "DiscreteCustomConstraint",
     "DiscreteDependenciesConstraint",
     "DiscreteExcludeConstraint",
