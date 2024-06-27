@@ -713,6 +713,19 @@ class SubspaceDiscrete(SerialMixin):
         except AttributeError:
             return comp_rep
 
+    def get_parameters_by_name(
+        self, names: Sequence[str]
+    ) -> tuple[DiscreteParameter, ...]:
+        """Return parameters with the specified names.
+
+        Args:
+            names: Sequence of names.
+
+        Returns:
+            The named parameters.
+        """
+        return tuple(p for p in self.parameters if p.name in names)
+
 
 def _apply_constraint_filter(
     df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
