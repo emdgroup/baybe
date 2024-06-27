@@ -35,8 +35,8 @@ from baybe.utils.plotting import create_example_plots
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 
-N_MC_ITERATIONS = 2 if SMOKE_TEST else 30
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 15
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 2
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 2
 BATCH_SIZE = 1 if SMOKE_TEST else 3
 POINTS_PER_DIM = 10
 
@@ -110,6 +110,9 @@ results = simulate_scenarios(
 )
 
 # We use the plotting utility to create plots.
+# Note that the path chosen here refers to the current working directory.
+# #This means that it represents the directory from which the Python script is being
+# executed which is not necessarily the folder in which this example is contained.
 
 path = Path(".")
 ax = sns.lineplot(

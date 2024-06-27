@@ -164,6 +164,10 @@ results = simulate_scenarios(
 # Let's visualize the results. As you can see, the type of encoding has a tremendous
 # impact on the outcome, with chemical encodings performing much better than
 # traditional ones at almost no extra cost.
+# Note that the path chosen here refers to the current working directory.
+# #This means that it represents the directory from which the Python script is being
+# executed which is not necessarily the folder in which this example is contained.
+
 
 results.rename(columns={"Scenario": "Substance Encoding"}, inplace=True)
 path = Path(".")

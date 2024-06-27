@@ -160,6 +160,10 @@ for func_name, function in test_functions.items():
 # All that remains is to visualize the results.
 # As the example shows, the optimization speed can be significantly increased by
 # using even small amounts of training data from related optimization tasks.
+# Note that the path chosen here refers to the current working directory.
+# #This means that it represents the directory from which the Python script is being
+# executed which is not necessarily the folder in which this example is contained.
+
 
 results.rename(columns={"Scenario": "Function"}, inplace=True)
 # Add column to enable different styles for non-TL examples
