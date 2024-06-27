@@ -495,6 +495,19 @@ class SubspaceContinuous(SerialMixin):
 
         return pd.DataFrame(index=index).reset_index()
 
+    def get_parameters_by_name(
+        self, names: Sequence[str]
+    ) -> tuple[NumericalContinuousParameter, ...]:
+        """Return parameters with the specified names.
+
+        Args:
+            names: Sequence of parameter names.
+
+        Returns:
+            The named parameters.
+        """
+        return tuple(p for p in self.parameters if p.name in names)
+
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)

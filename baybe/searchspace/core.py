@@ -383,6 +383,19 @@ class SearchSpace(SerialMixin):
         """The searchspace constraints that can be considered during augmentation."""
         return tuple(c for c in self.constraints if c.eval_during_augmentation)
 
+    def get_parameters_by_name(self, names: Sequence[str]) -> tuple[Parameter, ...]:
+        """Return parameters with the specified names.
+
+        Args:
+            names: Sequence of parameter names.
+
+        Returns:
+            The named parameters.
+        """
+        return self.discrete.get_parameters_by_name(
+            names
+        ) + self.continuous.get_parameters_by_name(names)
+
 
 def to_searchspace(
     x: Parameter | SubspaceDiscrete | SubspaceContinuous | SearchSpace, /
