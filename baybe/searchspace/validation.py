@@ -52,7 +52,7 @@ def get_transform_parameters(
     """Extract the parameters relevant for transforming a given dataframe."""
     parameter_names = [p.name for p in parameters]
 
-    if (not allow_missing) and (missing := set(parameter_names) - set(df)):
+    if (not allow_missing) and (missing := set(parameter_names) - set(df)):  # type: ignore[arg-type]
         raise ValueError(
             f"The search space parameter(s) {missing} cannot be matched against "
             f"the provided dataframe. If you want to transform a subset of "

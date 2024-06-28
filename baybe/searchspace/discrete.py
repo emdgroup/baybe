@@ -674,9 +674,12 @@ class SubspaceDiscrete(SerialMixin):
                 DeprecationWarning,
             )
 
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
+
         if allow_extra is None:
             allow_extra = True
-            if set(df) - {p.name for p in self.parameters}:
+            if set(df.columns) - {p.name for p in self.parameters}:
                 warnings.warn(
                     "For backward compatibility, the new `allow_extra` flag is set "
                     "to `True` when left unspecified. However, this behavior will be "

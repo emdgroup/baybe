@@ -261,6 +261,9 @@ class SubspaceContinuous(SerialMixin):
                 DeprecationWarning,
             )
 
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
+
         if allow_extra is None:
             allow_extra = True
             if set(df) - {p.name for p in self.parameters}:
