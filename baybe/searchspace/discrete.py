@@ -202,7 +202,7 @@ class SubspaceDiscrete(SerialMixin):
     def _default_comp_rep(self) -> pd.DataFrame:
         """Create the default computational representation."""
         # Create a dataframe containing the computational parameter representation
-        comp_rep = self.transform(self.exp_rep)
+        comp_rep = self.transform(self.exp_rep, allow_extra=False)
 
         # Ignore all columns that do not carry any covariate information
         # TODO[12758]: This logic needs to be refined, i.e. when should we drop columns

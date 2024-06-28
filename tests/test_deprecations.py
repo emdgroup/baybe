@@ -223,3 +223,20 @@ def test_deprecated_samples_full_factorial():
     with pytest.warns(DeprecationWarning):
         parameters = [NumericalContinuousParameter("x", (0, 1))]
         SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
+
+
+# TODO: When expiring the deprecation, the explicitly `allow_extra=False` arguments
+#   can be removed from the backend code, since the default should become `False`.
+
+
+def test_deprecated_transform_interface(searchspace):
+    """Using the deprecated transform interface raises a warning."""
+    # Not providing allow_extra
+    with pytest.warns(DeprecationWarning):
+        searchspace.discrete.transform(searchspace.discrete.exp_rep)
+
+    # Passing dataframe via `data`
+    with pytest.warns(DeprecationWarning):
+        searchspace.discrete.transform(
+            data=searchspace.discrete.exp_rep, allow_extra=True
+        )

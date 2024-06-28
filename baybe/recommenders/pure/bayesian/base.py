@@ -54,7 +54,7 @@ class BayesianRecommender(PureRecommender, ABC):
         # TODO: Transition point from dataframe to tensor needs to be refactored.
         #   Currently, surrogate models operate with tensors, while acquisition
         #   functions with dataframes.
-        train_x = searchspace.transform(measurements)
+        train_x = searchspace.transform(measurements, allow_extra=False)
         train_y = objective.transform(measurements)
         self.surrogate_model._fit(searchspace, *to_tensor(train_x, train_y))
         self._botorch_acqf = self.acquisition_function.to_botorch(
