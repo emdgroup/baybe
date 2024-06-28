@@ -245,14 +245,7 @@ class SubspaceContinuous(SerialMixin):
         allow_extra: bool | None = None,
         data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        """See :func:`baybe.searchspace.discrete.SubspaceDiscrete.transform`.
-
-        Args:
-            data: The data that should be transformed.
-
-        Returns:
-            The transformed data.
-        """
+        """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
         if allow_extra is None:
             allow_extra = True
             warnings.warn(

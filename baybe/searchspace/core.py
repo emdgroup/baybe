@@ -311,17 +311,24 @@ class SearchSpace(SerialMixin):
         allow_extra: bool | None = None,
         data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        """Transform data from experimental to computational representation.
-
-        This function can e.g. be used to transform data obtained from measurements.
-        Continuous parameters are not transformed but included.
+        """Transform parameters from experimental to computational representation.
 
         Args:
-            data: The data to be transformed. Must contain all specified parameters, can
-                contain more columns.
+            df: The dataframe to be transformed. The allowed columns of the dataframe
+                are dictated by the ``allow_missing`` and ``allow_extra`` flags.
+            allow_missing: If ``False``, each parameter of the space must have one
+                corresponding column in the given dataframe. If ``True``, the dataframe
+                may contain only a subset of parameter columns.
+            allow_extra: If ``False``, every column present in the dataframe must
+                correspond to one parameter of the space. If ``True``, the dataframe
+                may contain additional non-parameter-related columns.
+            data: Ignore! For backward compatibility only.
+
+        Raises:
+            ValueError: If dataframes are passed to both ``df`` and ``data``.
 
         Returns:
-            A dataframe with the parameters in computational representation.
+            A corresponding dataframe with parameters in computational representation.
         """
         if allow_extra is None:
             allow_extra = True
