@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
@@ -59,14 +60,18 @@ class Surrogate(ABC, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
-    _input_transform = field(init=False, default=None, eq=False)
+    _input_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
+        init=False, default=None, eq=False
+    )
     """Callable preparing surrogate inputs for training/prediction.
 
     Transforms a dataframe containing parameter configurations in experimental
     representation to a corresponding dataframe containing their computational
     representation. Only available after the surrogate has been fitted."""
 
-    _target_transform = field(init=False, default=None, eq=False)
+    _target_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
+        init=False, default=None, eq=False
+    )
     """Callable preparing surrogate targets for training.
 
     Transforms a dataframe containing target measurements in experimental
