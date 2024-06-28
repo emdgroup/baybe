@@ -1,6 +1,8 @@
 """Validation functionality for search spaces."""
 
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
+
+import pandas as pd
 
 from baybe.exceptions import EmptySearchSpaceError
 from baybe.parameters import TaskParameter
@@ -39,3 +41,29 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
 
     # Assert: unique names
     validate_parameter_names(parameters)
+
+
+def get_transform_parameters(
+    parameters: Sequence[Parameter],
+    df: pd.DataFrame,
+    allow_missing: bool,
+    allow_extra: bool,
+):
+    """Extract the parameters relevant for transforming a given dataframe."""
+    parameter_names = [p.name for p in parameters]
+
+    if (not allow_missing) and (missing := set(parameter_names) - set(df)):
+        raise ValueError(
+            f"The search space parameter(s) {missing} cannot be matched against "
+            f"the provided dataframe. If you want to transform a subset of "
+            f"parameter columns, explicitly set `allow_missing=True`."
+        )
+
+    if (not allow_extra) and (extra := set(df) - set(parameter_names)):
+        raise ValueError(
+            f"The provided dataframe column(s) {extra} cannot be matched against"
+            f"the search space parameters. If you want to transform a dataframe "
+            f"with additional columns, explicitly set `allow_extra=True'."
+        )
+
+    return [p for p in parameters if p.name in df] if allow_missing else parameters
