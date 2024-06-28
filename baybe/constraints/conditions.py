@@ -106,11 +106,11 @@ class Condition(ABC, SerialMixin):
         """
 
     @abstractmethod
-    def to_polars(self, param: str | None) -> Callable | pl.Expr:
-        """Convert condition to a Polars expression.
+    def to_polars(self, input: pl.Expr) -> pl.Expr:
+        """Apply the condition to a Polars expression.
 
         Args:
-            param: Optional - The parameter for which this condition should be applied
+            input: Input expression, for instance column selection etc.
 
         Returns:
             A expression that can be passed to filter rows that satisfy condition.
@@ -177,9 +177,10 @@ class ThresholdCondition(Condition):
         func = self.generate_operator_function()
         return data.apply(func)
 
-    def to_polars(self, param=None) -> Callable | pl.Expr:
-        """Convert the condition to a callable for Polars."""
-        return self.generate_operator_function()
+    def to_polars(self, input: pl.Expr) -> pl.Expr:
+        """Apply the condition to a Polars expression."""
+        op = self.generate_operator_function()
+        return op(input)
 
 
 @define
@@ -209,11 +210,9 @@ class SubSelectionCondition(Condition):
         # See base class.
         return data.isin(self.selection)
 
-    def to_polars(self, param: str | None) -> Callable | pl.Expr:
-        """Convert condition to a callable for Polars."""
-        if not param:
-            raise ValueError("You must provide a parameter for SubSelectionCondition.")
-        return pl.col(param).is_in(self.selection)
+    def to_polars(self, input: pl.Expr) -> pl.Expr:
+        """Apply the condition to a Polars expression."""
+        return input.is_in(self.selection)
 
 
 # Register (un-)structure hooks

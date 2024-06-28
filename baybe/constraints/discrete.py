@@ -12,7 +12,6 @@ from attr.validators import in_, min_len
 from baybe.constraints.base import DiscreteConstraint
 from baybe.constraints.conditions import (
     Condition,
-    SubSelectionCondition,
     ThresholdCondition,
     _threshold_operators,
     _valid_logic_combiners,
@@ -46,22 +45,17 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         return data.index[res]
 
     def to_polars(self) -> pl.Expr:
-        """Translate the conditions to polars expression for filtering.
+        """Translate the constraint to Polars expression for filtering.
 
         Returns:
             The Polars Expr object to pass as an argument to filter().
         """
         satisfied = []
         for k, cond in enumerate(self.conditions):
-            # SubSelectionCondition requires parameter to generate an expression
-            if isinstance(cond, SubSelectionCondition):
-                satisfied.append(cond.to_polars(self.parameters[k]))
-            else:  # Assuming we have only two classes for condition
-                op = cond.to_polars(param=None)
-                satisfied.append(op(pl.col(self.parameters[k])))  # type: ignore[operator]
+            satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
 
         # to prevent errors when we have empty condition list
-        expr = reduce(_valid_logic_combiners[self.combiner], satisfied)
+        expr = pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
         # Negate the expression, because Polars' filter keeps the rows
         # the expression satisfies
         expr = expr.not_()  # type: ignore[union-attr]
@@ -87,14 +81,13 @@ class DiscreteSumConstraint(DiscreteConstraint):
         return data.index[mask_bad]
 
     def to_polars(self) -> pl.Expr:
-        """Translate the conditions to polars expression for filtering.
+        """Translate the constraint to Polars expression for filtering.
 
         Returns:
             The Polars Expr object to pass as an argument to filter().
 
         """
-        op = self.condition.to_polars()
-        return op(pl.sum_horizontal(self.parameters))  # type: ignore[operator]
+        return self.condition.to_polars(pl.sum_horizontal(self.parameters))
 
 
 @define
@@ -115,7 +108,7 @@ class DiscreteProductConstraint(DiscreteConstraint):
         return data.index[mask_bad]
 
     def to_polars(self) -> pl.Expr:
-        """Translate the conditions to polars expression for filtering.
+        """Translate the constraint to Polars expression for filtering.
 
         Returns:
             The Polars Expr object to pass as an argument to filter().
