@@ -41,7 +41,11 @@ class AcquisitionFunction(ABC, SerialMixin):
         searchspace: SearchSpace,
         measurements: pd.DataFrame,
     ):
-        """Create the botorch-ready representation of the function."""
+        """Create the botorch-ready representation of the function.
+
+        The required structure of `measurements` is specified in
+        :meth:`babye.recommenders.base.RecommenderProtocol.recommend`.
+        """
         import botorch.acquisition as botorch_acqf_module
 
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
