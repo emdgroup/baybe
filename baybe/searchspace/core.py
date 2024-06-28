@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
@@ -303,7 +304,12 @@ class SearchSpace(SerialMixin):
 
     def transform(
         self,
-        data: pd.DataFrame,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Transform data from experimental to computational representation.
 
@@ -317,9 +323,37 @@ class SearchSpace(SerialMixin):
         Returns:
             A dataframe with the parameters in computational representation.
         """
+        if allow_extra is None:
+            allow_extra = True
+            warnings.warn(
+                "For backward compatibility, the new `allow_extra` flag is set "
+                "to `True` when left unspecified. However, this behavior will be "
+                "changed in a future version. If you want to invoke the old behavior, "
+                "please explicitly set `allow_extra=True`.",
+                DeprecationWarning,
+            )
+
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
+
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
+
         # Transform subspaces separately
-        df_discrete = self.discrete.transform(data)
-        df_continuous = self.continuous.transform(data)
+        df_discrete = self.discrete.transform(
+            df, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        df_continuous = self.continuous.transform(
+            df, allow_missing=allow_missing, allow_extra=allow_extra
+        )
 
         # Combine Subspaces
         comp_rep = pd.concat([df_discrete, df_continuous], axis=1)

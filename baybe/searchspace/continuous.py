@@ -23,7 +23,10 @@ from baybe.constraints.validation import (
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
-from baybe.searchspace.validation import validate_parameter_names
+from baybe.searchspace.validation import (
+    get_transform_parameters,
+    validate_parameter_names,
+)
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
@@ -235,7 +238,12 @@ class SubspaceContinuous(SerialMixin):
 
     def transform(
         self,
-        data: pd.DataFrame,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """See :func:`baybe.searchspace.discrete.SubspaceDiscrete.transform`.
 
@@ -245,10 +253,37 @@ class SubspaceContinuous(SerialMixin):
         Returns:
             The transformed data.
         """
-        # Transform continuous parameters
-        comp_rep = data[[p.name for p in self.parameters]]
+        if allow_extra is None:
+            allow_extra = True
+            warnings.warn(
+                "For backward compatibility, the new `allow_extra` flag is set "
+                "to `True` when left unspecified. However, this behavior will be "
+                "changed in a future version. If you want to invoke the old behavior, "
+                "please explicitly set `allow_extra=True`.",
+                DeprecationWarning,
+            )
 
-        return comp_rep
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
+
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Extract the parameters to be transformed
+        parameters = get_transform_parameters(
+            self.parameters, df, allow_missing, allow_extra
+        )
+
+        # Transform the parameters
+        return df[[p.name for p in parameters]]
 
     def samples_random(self, n_points: int = 1) -> pd.DataFrame:
         """Deprecated!"""  # noqa: D401
