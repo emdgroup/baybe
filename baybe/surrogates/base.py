@@ -157,6 +157,8 @@ class Surrogate(ABC, SerialMixin):
             NotImplementedError: When using a continuous search space and a non-GP
                 model.
         """
+        # TODO: consider adding a validation step for `measurements`
+
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
