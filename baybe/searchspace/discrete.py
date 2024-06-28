@@ -202,7 +202,7 @@ class SubspaceDiscrete(SerialMixin):
     def _default_comp_rep(self) -> pd.DataFrame:
         """Create the default computational representation."""
         # Create a dataframe containing the computational parameter representation
-        comp_rep = self.transform(self.exp_rep, allow_extra=False)
+        comp_rep = self.transform(self.exp_rep)
 
         # Ignore all columns that do not carry any covariate information
         # TODO[12758]: This logic needs to be refined, i.e. when should we drop columns
@@ -659,16 +659,7 @@ class SubspaceDiscrete(SerialMixin):
         data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
-        if allow_extra is None:
-            allow_extra = True
-            warnings.warn(
-                "For backward compatibility, the new `allow_extra` flag is set "
-                "to `True` when left unspecified. However, this behavior will be "
-                "changed in a future version. If you want to invoke the old behavior, "
-                "please explicitly set `allow_extra=True`.",
-                DeprecationWarning,
-            )
-
+        # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
                 "Provide the dataframe to be transformed as argument to `df`."
@@ -682,6 +673,18 @@ class SubspaceDiscrete(SerialMixin):
                 "as positional argument instead.",
                 DeprecationWarning,
             )
+
+        if allow_extra is None:
+            allow_extra = True
+            if set(df) - {p.name for p in self.parameters}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
         parameters = get_transform_parameters(

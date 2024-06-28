@@ -3,6 +3,7 @@
 import json
 from unittest.mock import Mock
 
+import pandas as pd
 import pytest
 
 from baybe import Campaign
@@ -225,15 +226,13 @@ def test_deprecated_samples_full_factorial():
         SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
 
 
-# TODO: When expiring the deprecation, the explicitly `allow_extra=False` arguments
-#   can be removed from the backend code, since the default should become `False`.
-
-
 def test_deprecated_transform_interface(searchspace):
     """Using the deprecated transform interface raises a warning."""
-    # Not providing allow_extra
+    # Not providing `allow_extra` when there are additional columns
     with pytest.warns(DeprecationWarning):
-        searchspace.discrete.transform(searchspace.discrete.exp_rep)
+        searchspace.discrete.transform(
+            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns])
+        )
 
     # Passing dataframe via `data`
     with pytest.warns(DeprecationWarning):

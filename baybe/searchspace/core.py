@@ -330,16 +330,7 @@ class SearchSpace(SerialMixin):
         Returns:
             A corresponding dataframe with parameters in computational representation.
         """
-        if allow_extra is None:
-            allow_extra = True
-            warnings.warn(
-                "For backward compatibility, the new `allow_extra` flag is set "
-                "to `True` when left unspecified. However, this behavior will be "
-                "changed in a future version. If you want to invoke the old behavior, "
-                "please explicitly set `allow_extra=True`.",
-                DeprecationWarning,
-            )
-
+        # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
                 "Provide the dataframe to be transformed as argument to `df`."
@@ -353,6 +344,18 @@ class SearchSpace(SerialMixin):
                 "as positional argument instead.",
                 DeprecationWarning,
             )
+
+        if allow_extra is None:
+            allow_extra = True
+            if set(df) - {p.name for p in self.parameters}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
 
         # Transform subspaces separately
         df_discrete = self.discrete.transform(
