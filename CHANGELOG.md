@@ -47,7 +47,7 @@ _ `_optional` subpackage for managing optional dependencies
 - `SubspaceContinuous.samples_full_factorial` has been replaced with
   `SubspaceContinuous.sample_from_full_factorial`
 
-
+## [0.9.1] - 2024-06-04
 ### Changed
 - Discrete searchspace memory estimate is now natively represented in bytes 
 

@@ -681,7 +681,7 @@ def _apply_polars_constraint_filter(
         constraints: List of discrete constraints.
 
     Returns:
-        A Pandas Dataframe
+        A Polars LazyFrame with undesired rows removed.
 
     """
     # Limit constraints to Polars ones
