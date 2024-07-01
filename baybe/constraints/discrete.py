@@ -115,10 +115,9 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
         """
         op = _threshold_operators[self.condition.operator]
-        # Identify columns present in both self.parameters and df.columns
 
-        # Get the product of columns using reduce function and with an alias "prod"
-        expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters)).alias("prod")
+        # Get the product of columns
+        expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
 
         # Apply the threshold operator on expr and the condition threshold
         return op(expr, self.condition.threshold)

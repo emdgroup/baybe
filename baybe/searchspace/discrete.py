@@ -678,7 +678,7 @@ def _apply_polars_constraint_filter(
 
     Args:
         ldf: The data in experimental representation to be modified inplace.
-        constraints: List of discrete constraints.
+        constraints: Collection of discrete constraints.
 
     Returns:
         A Polars LazyFrame with undesired rows removed.

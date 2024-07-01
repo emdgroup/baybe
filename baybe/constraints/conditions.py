@@ -38,18 +38,18 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
         atol: The absolute tolerance parameter.
 
     Returns:
-        Returns a boolean array of where ``x`` and ``y`` are not equal within the
+        A boolean array of where ``x`` and ``y`` are not equal within the
         given tolerances.
 
     """
-    return np.logical_not(isclose(x, y, rtol=rtol, atol=atol))
+    return np.logical_not(_is_close(x, y, rtol=rtol, atol=atol))
 
 
-def isclose(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
+def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
     """Return a boolean array indicating where ``x`` and ``y`` are close.
 
     The equivalent to ``numpy.isclose``.
-    Using ``np.isclose`` alongside Polars dataframes results in this error:
+    Using ``numpy.isclose`` alongside Polars dataframes results in this error:
     ``TypeError: ufunc 'isfinite' not supported for the input types``.
 
     Args:
@@ -59,7 +59,7 @@ def isclose(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
         atol: The absolute tolerance parameter.
 
     Returns:
-        Returns a boolean array of where ``x`` and ``y`` are equal within the
+        A boolean array of where ``x`` and ``y`` are equal within the
         given tolerances.
 
     """
@@ -70,8 +70,8 @@ def isclose(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
 _threshold_operators: dict[str, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
-    "=": rpartial(isclose, rtol=0.0),
-    "==": rpartial(isclose, rtol=0.0),
+    "=": rpartial(_is_close, rtol=0.0),
+    "==": rpartial(_is_close, rtol=0.0),
     "!=": rpartial(_is_not_close, rtol=0.0),
     ">": ops.gt,
     ">=": ops.ge,
@@ -113,7 +113,7 @@ class Condition(ABC, SerialMixin):
             expr: Input expression, for instance column selection etc.
 
         Returns:
-            A expression that can be passed to filter rows that satisfy condition.
+            An expression that can be used for filtering.
         """
 
 
@@ -159,7 +159,7 @@ class ThresholdCondition(Condition):
                     f"or <= 0.0, but was {value}."
                 )
 
-    def generate_operator_function(self):
+    def _make_operator_function(self):
         """Generate a function using operators to filter out undesired rows."""
         func = rpartial(_threshold_operators[self.operator], self.threshold)
         if self.operator in _valid_tolerance_operators:
@@ -174,12 +174,12 @@ class ThresholdCondition(Condition):
                 "This operation is error-prone and not supported. Only use threshold "
                 "conditions with numerical parameters."
             )
-        func = self.generate_operator_function()
+        func = self._make_operator_function()
         return data.apply(func)
 
     def to_polars(self, expr: pl.Expr) -> pl.Expr:  # noqa: D102
         # See base class.
-        op = self.generate_operator_function()
+        op = self._make_operator_function()
         return op(expr)
 
 

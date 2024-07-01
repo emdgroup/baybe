@@ -1,4 +1,4 @@
-"""Test Polars' implementations of constraints."""
+"""Test Polars implementations of constraints."""
 
 import polars as pl
 import pytest
@@ -25,7 +25,7 @@ def _lazyframe_from_product(parameters):
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_8"]])
 def test_polars_prodsum1(parameters, constraints):
-    """Tests Polars' implementation of sum constraint."""
+    """Tests Polars implementation of sum constraint."""
     ldf = _lazyframe_from_product(parameters)
 
     ldf = _apply_polars_constraint_filter(ldf, constraints)
@@ -61,7 +61,7 @@ def test_polars_prodsum2(parameters, constraints):
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_10"]])
 def test_polars_prodsum3(parameters, constraints):
-    """Tests Polars' implementation of exact sum constraint."""
+    """Tests Polars implementation of exact sum constraint."""
     ldf = _lazyframe_from_product(parameters)
 
     ldf = _apply_polars_constraint_filter(ldf, constraints)
@@ -83,7 +83,7 @@ def test_polars_prodsum3(parameters, constraints):
     "constraint_names", [["Constraint_4", "Constraint_5", "Constraint_6"]]
 )
 def test_polars_exclusion(mock_substances, parameters, constraints):
-    """Tests Polar's implementation of exclusion constraint."""
+    """Tests Polars implementation of exclusion constraint."""
     ldf = _lazyframe_from_product(parameters)
 
     ldf = _apply_polars_constraint_filter(ldf, constraints)
