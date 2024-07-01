@@ -1,6 +1,15 @@
-"""Custom exceptions."""
+"""Custom exceptions and warnings."""
 
 
+##### Warnings #####
+class NonPredictiveRecommenderWarning(UserWarning):
+    """
+    A non-predictive recommender was called with undesired arguments which indicates an
+    unintended user fault.
+    """
+
+
+##### Exceptions #####
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations
