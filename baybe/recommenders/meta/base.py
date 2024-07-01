@@ -11,6 +11,7 @@ from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 
@@ -85,11 +86,20 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             objective=objective,
             measurements=measurements,
         )
+
+        # Non-predictive recommenders should not be called with an objective or
+        # measurements
+        nonstandard_args = (
+            {}
+            if isinstance(recommender, NonPredictiveRecommender)
+            else {
+                "objective": objective,
+                "measurements": measurements,
+            }
+        )
+
         return recommender.recommend(
-            batch_size=batch_size,
-            searchspace=searchspace,
-            objective=objective,
-            measurements=measurements,
+            batch_size=batch_size, searchspace=searchspace, **nonstandard_args
         )
 
 
