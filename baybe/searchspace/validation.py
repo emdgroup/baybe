@@ -1,12 +1,15 @@
 """Validation functionality for search spaces."""
 
 from collections.abc import Collection, Sequence
+from typing import TypeVar
 
 import pandas as pd
 
 from baybe.exceptions import EmptySearchSpaceError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
+
+_T = TypeVar("_T", bound=Parameter)
 
 
 def validate_parameter_names(  # noqa: DOC101, DOC103
@@ -44,11 +47,11 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
 
 
 def get_transform_parameters(
-    parameters: Sequence[Parameter],
+    parameters: Sequence[_T],
     df: pd.DataFrame,
     allow_missing: bool,
     allow_extra: bool,
-) -> list[Parameter]:
+) -> list[_T]:
     """Extract the parameters relevant for transforming a given dataframe.
 
     Args:
@@ -81,4 +84,6 @@ def get_transform_parameters(
             f"with additional columns, explicitly set `allow_extra=True'."
         )
 
-    return [p for p in parameters if p.name in df] if allow_missing else parameters
+    return (
+        [p for p in parameters if p.name in df] if allow_missing else list(parameters)
+    )
