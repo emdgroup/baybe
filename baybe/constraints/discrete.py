@@ -44,12 +44,8 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
         return data.index[res]
 
-    def to_polars(self) -> pl.Expr:
-        """Translate the constraint to Polars expression for filtering.
-
-        Returns:
-            The Polars Expr object to pass as an argument to filter().
-        """
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
         satisfied = []
         for k, cond in enumerate(self.conditions):
             satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
@@ -80,13 +76,8 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
-    def to_polars(self) -> pl.Expr:
-        """Translate the constraint to Polars expression for filtering.
-
-        Returns:
-            The Polars Expr object to pass as an argument to filter().
-
-        """
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
         return self.condition.to_polars(pl.sum_horizontal(self.parameters))
 
 
@@ -107,13 +98,8 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
-    def to_polars(self) -> pl.Expr:
-        """Translate the constraint to Polars expression for filtering.
-
-        Returns:
-            The Polars Expr object to pass as an argument to filter().
-
-        """
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
         op = _threshold_operators[self.condition.operator]
 
         # Get the product of columns

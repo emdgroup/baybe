@@ -21,6 +21,7 @@ from baybe.serialization import (
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
+    import polars as pl
     from torch import Tensor
 
 
@@ -103,6 +104,21 @@ class DiscreteConstraint(Constraint, ABC):
         Returns:
             The dataframe indices of rows where the constraint is violated.
         """
+
+    def to_polars(self) -> pl.Expr:
+        """Translate the constraint to Polars expression for filtering.
+
+        Returns:
+            The Polars Expr object to pass as an argument to filter().
+
+        Raises:
+            NotImplementedError: If the constraint class does not have a Polars
+                implementation.
+        """
+        raise NotImplementedError(
+            f"The {self.__class__.__name__} constraint does not have a Polars "
+            f"implementation."
+        )
 
 
 @define

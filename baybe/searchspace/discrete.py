@@ -676,6 +676,9 @@ def _apply_polars_constraint_filter(
 ) -> pl.LazyFrame:
     """Remove discrete search space entries inplace based on constraints.
 
+    Note:
+        This will silently skip constraints that have no Polars implementation.
+
     Args:
         ldf: The data in experimental representation to be modified inplace.
         constraints: Collection of discrete constraints.
@@ -684,11 +687,12 @@ def _apply_polars_constraint_filter(
         A Polars LazyFrame with undesired rows removed.
 
     """
-    # Limit constraints to Polars ones
     for c in constraints:
-        if hasattr(c, "to_polars"):
+        try:
             pl_expr = c.to_polars()
             ldf = ldf.filter(pl_expr)
+        except NotImplementedError:
+            pass
 
     return ldf
 
