@@ -145,10 +145,6 @@ jobs:
         id: setup-python
         with:
           python-version: ${{ matrix.py-version.semantic }}
-      - uses: actions/cache@v4
-        with:
-          path: .tox/fulltest-${{ matrix.py-version.tox }}
-          key: fulltest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
       - name: Run full tests
         run: |
           pip install tox-uv
