@@ -9,6 +9,14 @@ class UnusedObjectWarning(UserWarning):
     """
 
 
+class NoSearchspaceMatchWarning(UserWarning):
+    """The provided input has no match in the searchspace."""
+
+
+class TooManySearchspaceMatchesWarning(UserWarning):
+    """The provided input has multiple matches in the searchspace."""
+
+
 ##### Exceptions #####
 class NotEnoughPointsLeftError(Exception):
     """

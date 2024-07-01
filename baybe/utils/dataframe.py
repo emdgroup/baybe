@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from collections.abc import Iterable, Iterator, Sequence
 from typing import (
     TYPE_CHECKING,
@@ -13,6 +14,7 @@ from typing import (
 import numpy as np
 import pandas as pd
 
+from baybe.exceptions import NoSearchspaceMatchWarning, TooManySearchspaceMatchesWarning
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -417,17 +419,17 @@ def fuzzy_row_match(
         # We expect exactly one match. If that's not the case, print a warning.
         inds_found = left_df.index[match].to_list()
         if len(inds_found) == 0 and len(num_cols) > 0:
-            _logger.warning(
-                "Input row with index %s could not be matched to the search space. "
+            warnings.warn(
+                f"Input row with index {ind} could not be matched to the search space. "
                 "This could indicate that something went wrong.",
-                ind,
+                NoSearchspaceMatchWarning,
             )
         elif len(inds_found) > 1:
-            _logger.warning(
-                "Input row with index %s has multiple matches with "
+            warnings.warn(
+                f"Input row with index {ind} has multiple matches with "
                 "the search space. This could indicate that something went wrong. "
                 "Matching only first occurrence.",
-                ind,
+                TooManySearchspaceMatchesWarning,
             )
             inds_matched.append(inds_found[0])
         else:
