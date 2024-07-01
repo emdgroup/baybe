@@ -48,8 +48,23 @@ def get_transform_parameters(
     df: pd.DataFrame,
     allow_missing: bool,
     allow_extra: bool,
-):
-    """Extract the parameters relevant for transforming a given dataframe."""
+) -> list[Parameter]:
+    """Extract the parameters relevant for transforming a given dataframe.
+
+    Args:
+        parameters: The parameters to be considered for transformation (provided
+            they have match in the given dataframe).
+        df: See :meth:`baybe.searchspace.core.SearchSpace.transform`.
+        allow_missing: See :meth:`baybe.searchspace.core.SearchSpace.transform`.
+        allow_extra: See :meth:`baybe.searchspace.core.SearchSpace.transform`.
+
+    Raises:
+        ValueError: If the given parameters and dataframe are not compatible
+            under the specified values for the Boolean flags.
+
+    Returns:
+        The (subset of) parameters that need to be considered for the transformation.
+    """
     parameter_names = [p.name for p in parameters]
 
     if (not allow_missing) and (missing := set(parameter_names) - set(df)):  # type: ignore[arg-type]
