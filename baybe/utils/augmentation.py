@@ -113,7 +113,7 @@ def df_apply_permutation_augmentation(
         # For each permutation, create a new row if it's not already in the dataframe
         for k, perm in enumerate(column_perms):
             # Create a new row dictionary with the permuted values
-            new_row = row.copy().to_frame().T
+            new_row = pd.DataFrame([row])
             new_row[columns] = perm
             if dependent_perms:
                 new_row[dependents] = dependent_perms[k]
@@ -211,7 +211,7 @@ def df_apply_dependency_augmentation(
         # changed to all possible values are added. If there is more than one affected
         # column, it is important to include the augmented rows stemming from the
         # preceding columns as well.
-        original_row = row.to_frame().T
+        original_row = pd.DataFrame([row])
 
         currently_added = original_row.copy()  # Start with the original row
         for col_affected, vals_invariant in affected:
@@ -223,7 +223,7 @@ def df_apply_dependency_augmentation(
                     new_row
                     for val in vals_invariant
                     if not _row_in_df(
-                        new_row := temp_row.to_frame().T.assign(
+                        new_row := temp_row.pipe(lambda x: pd.DataFrame([x])).assign(
                             **{col_affected: val}
                         ),  # this takes the current row and replaces the affected value
                         currently_added,
