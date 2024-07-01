@@ -40,6 +40,7 @@ _ `_optional` subpackage for managing optional dependencies
   `DiscreteSamplingMethod` enum
 - `Interval` class now supports degenerate intervals containing only one element
 - `add_fake_results` now directly processes `Target` objects instead of a `Campaign`
+- `path` argument in plotting utility is now optional and defaults to `Path(".")`
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
