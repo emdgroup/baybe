@@ -106,7 +106,7 @@ class Condition(ABC, SerialMixin):
         """
 
     @abstractmethod
-    def to_polars(self, expr: pl.Expr) -> pl.Expr:
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         """Apply the condition to a Polars expression.
 
         Args:
@@ -177,7 +177,7 @@ class ThresholdCondition(Condition):
         func = self._make_operator_function()
         return data.apply(func)
 
-    def to_polars(self, expr: pl.Expr) -> pl.Expr:  # noqa: D102
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
         # See base class.
         op = self._make_operator_function()
         return op(expr)
@@ -210,7 +210,7 @@ class SubSelectionCondition(Condition):
         # See base class.
         return data.isin(self.selection)
 
-    def to_polars(self, expr: pl.Expr) -> pl.Expr:  # noqa: D102
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
         # See base class.
         return expr.is_in(self.selection)
 
