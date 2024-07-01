@@ -90,26 +90,26 @@ class DiscreteParameter(Parameter, ABC):
         # See base class.
         return item in self.values
 
-    def transform_rep_exp2comp(self, data: pd.Series) -> pd.DataFrame:
-        """Transform data from experimental to computational representation.
+    def transform(self, series: pd.Series, /) -> pd.DataFrame:
+        """Transform parameter values from experimental to computational representation.
 
         Args:
-            data: Data to be transformed.
+            series: The parameter values to be transformed.
 
         Returns:
-            The transformed version of the data.
+            The transformed parameter values.
         """
         if self.encoding:
             # replace each label with the corresponding encoding
             transformed = pd.merge(
-                left=data.rename("Labels").to_frame(),
+                left=series.rename("Labels").to_frame(),
                 left_on="Labels",
                 right=self.comp_df,
                 right_index=True,
                 how="left",
             ).drop(columns="Labels")
         else:
-            transformed = data.to_frame()
+            transformed = series.to_frame()
 
         return transformed
 

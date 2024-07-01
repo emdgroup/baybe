@@ -701,7 +701,7 @@ class SubspaceDiscrete(SerialMixin):
         # Transform the parameters
         dfs = []
         for param in parameters:
-            comp_df = param.transform_rep_exp2comp(df[param.name])
+            comp_df = param.transform(df[param.name])
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
