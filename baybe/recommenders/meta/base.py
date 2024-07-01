@@ -1,6 +1,7 @@
 """Base classes for all meta recommenders."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import cattrs
 import pandas as pd
@@ -88,8 +89,9 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         )
 
         # Non-predictive recommenders should not be called with an objective or
-        # measurements
-        nonstandard_args = (
+        # measurements. Using dict value type Any here due to known mypy complication:
+        # https://github.com/python/mypy/issues/5382
+        optional_args: dict[str, Any] = (
             {}
             if isinstance(recommender, NonPredictiveRecommender)
             else {
@@ -99,7 +101,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         )
 
         return recommender.recommend(
-            batch_size=batch_size, searchspace=searchspace, **nonstandard_args
+            batch_size=batch_size, searchspace=searchspace, **optional_args
         )
 
 
