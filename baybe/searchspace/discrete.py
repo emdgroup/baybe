@@ -685,10 +685,10 @@ def _apply_polars_constraint_filter(
 
     """
     # Limit constraints to Polars ones
-    constraints = [c for c in constraints if hasattr(c, "to_polars")]
     for c in constraints:
-        pl_expr = c.to_polars()  # type: ignore[attr-defined]
-        ldf = ldf.filter(pl_expr)
+        if hasattr(c, "to_polars"):
+            pl_expr = c.to_polars()
+            ldf = ldf.filter(pl_expr)
 
     return ldf
 
