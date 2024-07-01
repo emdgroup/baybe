@@ -9,7 +9,6 @@
 ### Necessary imports for this example
 
 import os
-from pathlib import Path
 
 import pandas as pd
 import seaborn as sns
@@ -166,7 +165,6 @@ results = simulate_scenarios(
 # traditional ones at almost no extra cost.
 
 results.rename(columns={"Scenario": "Substance Encoding"}, inplace=True)
-path = Path(".")
 ax = sns.lineplot(
     data=results,
     marker="o",
@@ -175,8 +173,4 @@ ax = sns.lineplot(
     y="yield_CumBest",
     hue="Substance Encoding",
 )
-create_example_plots(
-    ax=ax,
-    path=path,
-    base_name="full_lookup",
-)
+create_example_plots(ax=ax, base_name="full_lookup")
