@@ -27,6 +27,7 @@ def _row_in_df(row: pd.Series | pd.DataFrame, df: pd.DataFrame) -> bool:
             )
         row = row.iloc[0]
 
+    row = row.reindex(df.columns)
     return (df == row).all(axis=1).any()
 
 
