@@ -158,15 +158,17 @@ class BotorchRecommender(BayesianRecommender):
         from torch import Tensor
 
         def _recommend_continuous_on_subspace(
-            _subspace_continuous: SubspaceContinuous
+            _subspace_continuous: SubspaceContinuous,
+            _fixed_parameters: dict[int, float] | None = None,
         ) -> tuple[Tensor, Tensor]:
-            """Define a helper function with only one parameter."""
+            """Define a helper function on a subset of parameters."""
             _points, _acqf_values = optimize_acqf(
                 acq_function=self._botorch_acqf,
                 bounds=torch.from_numpy(_subspace_continuous.param_bounds_comp),
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
+                fixed_features=_fixed_parameters,
                 equality_constraints=[
                     c.to_botorch(_subspace_continuous.parameters)
                     for c in _subspace_continuous.constraints_lin_eq
@@ -189,6 +191,19 @@ class BotorchRecommender(BayesianRecommender):
                 inactive_params_sample = (
                     subspace_continuous._sample_inactive_parameters(1)[0]
                 )
+
+                if len(inactive_params_sample):
+                    # Turn inactive parameters to fixed features (used as input in
+                    # optimize_acqf())
+                    indices_inactive_params = [
+                        subspace_continuous.param_names.index(key)
+                        for key in subspace_continuous.param_names
+                        if key in inactive_params_sample
+                    ]
+                    fixed_parameters = {ind: 0.0 for ind in indices_inactive_params}
+                else:
+                    fixed_parameters = None
+
                 # Create a new subspace
                 subspace_renewed = subspace_continuous._ensure_nonzero_parameters(
                     inactive_params_sample
@@ -199,6 +214,7 @@ class BotorchRecommender(BayesianRecommender):
                     acqf_values_i,
                 ) = _recommend_continuous_on_subspace(
                     subspace_renewed,
+                    fixed_parameters,
                 )
                 points_all.append(points_all_i.unsqueeze(0))
                 acqf_values_all.append(acqf_values_i.unsqueeze(0))

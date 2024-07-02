@@ -470,7 +470,6 @@ class SubspaceContinuous(SerialMixin):
     ) -> SubspaceContinuous:
         """Create a new subspace with following several actions.
 
-        * Ensure inactive parameter = 0.0.
         * Ensure active parameter != 0.0.
         * Remove cardinality constraint.
 
@@ -490,11 +489,11 @@ class SubspaceContinuous(SerialMixin):
         for active_param in active_params_sample:
             index = self.param_names.index(active_param)
 
+            # TODO: Ensure x != 0 when x in [..., 0, ...] is not done. Do we need it?
+            # TODO: To ensure the minimum cardinality constraints, shall we keep the x
+            #  != 0 operations or shall we instead skip the invalid results at the end
             # Ensure x != 0 when bounds = [..., 0]. This is needed, otherwise
             # the minimum cardinality constraint is easily violated
-            # TODO: Ensure x != 0 when x in [..., 0, ...] is not done
-            # TODO: To ensure the minimum cardinaltiy constraints, shall we keep the x
-            #  != 0 operations or shall we have instead skip the invalid results
             if self.parameters[index].bounds.upper == 0:
                 constraints_lin_ineq.append(
                     ContinuousLinearInequalityConstraint(
@@ -513,18 +512,9 @@ class SubspaceContinuous(SerialMixin):
                     ),
                 )
 
-        # Ensure inactive parameters must be 0
-        constraints_lin_eq = list(self.constraints_lin_eq)
-        for inactive_param in inactive_parameters:
-            constraints_lin_eq.append(
-                ContinuousLinearEqualityConstraint(
-                    parameters=[inactive_param], coefficients=[1.0], rhs=0.0
-                )
-            )
-
         return SubspaceContinuous(
             parameters=tuple(self.parameters),
-            constraints_lin_eq=tuple(constraints_lin_eq),
+            constraints_lin_eq=self.constraints_lin_eq,
             constraints_lin_ineq=tuple(constraints_lin_ineq),
         )
 
