@@ -17,13 +17,13 @@ def _row_in_df(row: pd.Series | pd.DataFrame, df: pd.DataFrame) -> bool:
         Boolean result.
 
     Raises:
-        ValueError: If `row` is a dataframe that contains more than one row.
+        ValueError: If ``row`` is a dataframe that contains more than one row.
     """
     if isinstance(row, pd.DataFrame):
         if len(row) != 1:
             raise ValueError(
                 f"{_row_in_df.__name__} can only be called with pd.Series or "
-                f"pd.DataFrame's that have exactly one row."
+                f"pd.DataFrames that have exactly one row."
             )
         row = row.iloc[0]
 
@@ -39,7 +39,7 @@ def df_apply_permutation_augmentation(
     """Augment a dataframe if permutation invariant columns are present.
 
     Indices are preserved so that each augmented row will have the same index as its
-    original. `dependent` columns are augmented in the same order as the `columns`.
+    original. ``dependent`` columns are augmented in the same order as the ``columns``.
 
     *   Original
 
@@ -82,14 +82,14 @@ def df_apply_permutation_augmentation(
     Args:
         df: The dataframe that should be augmented.
         columns: The permutation invariant columns.
-        dependents: Columns that are connected to `columns` and should be permuted in
+        dependents: Columns that are connected to ``columns`` and should be permuted in
             the same manner.
 
     Returns:
         The augmented dataframe containing the original one.
 
     Raises:
-        ValueError: If `dependents` has length incompatible with `columns`.
+        ValueError: If ``dependents`` has length incompatible with ``columns``.
     """
     dependents = dependents or []
     new_rows: list[pd.DataFrame] = []
@@ -163,7 +163,7 @@ def df_apply_dependency_augmentation(
         | 0 | 4 | 5 | y |
         +---+---+---+---+
 
-    *   Result with ``causing = ("A", [0, 1])`, `affected = [("B", [2,3])]``
+    *   Result with ``causing = ("A", [0, 1])``, ``affected = [("B", [2,3])]``
 
         +---+---+---+---+
         | A | B | C | D |
@@ -177,7 +177,8 @@ def df_apply_dependency_augmentation(
         | 1 | 2 | 5 | z |
         +---+---+---+---+
 
-    *   Result with ``causing = ("A", [0])`, `affected = [("B", [2,3]), ("C", [5, 6])]``
+    *   Result with ``causing = ("A", [0])``,
+        ``affected = [("B", [2,3]), ("C", [5, 6])]``
 
         +---+---+---+---+
         | A | B | C | D |
