@@ -1,7 +1,7 @@
 # NOTES:
 # - The map syntax used for matrix is flagged red but actually works
 # - This runs everything in Python 3.10, 3.11 and 3.12
-# - No environments are cached due to space limit
+# - Environments are **not** cached in order to perform a full end-to-end test
 
 name: Regular Checks
 on:
