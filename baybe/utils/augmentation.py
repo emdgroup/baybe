@@ -1,7 +1,7 @@
 """Utilities related to data augmentation."""
 
 from collections.abc import Sequence
-from itertools import permutations
+from itertools import permutations, product
 
 import pandas as pd
 
@@ -203,40 +203,19 @@ def df_apply_dependency_augmentation(
         The augmented dataframe containing the original one.
     """
     new_rows: list[pd.DataFrame] = []
-
-    # Iterate through all rows that have a causing value in the respective column.
     col_causing, vals_causing = causing
     df_filtered = df.loc[df[col_causing].isin(vals_causing), :]
-    for _, row in df_filtered.iterrows():
-        # Augment the  specific row by growing a dataframe iteratively going through
-        # the affected columns. In each iteration augmented rows with that column
-        # changed to all possible values are added. If there is more than one affected
-        # column, it is important to include the augmented rows stemming from the
-        # preceding columns as well.
-        original_row = pd.DataFrame([row])
+    affected_cols, affected_inv_vals = zip(*affected)
+    affected_inv_vals_combinations = list(product(*affected_inv_vals))
 
-        currently_added = original_row.copy()  # Start with the original row
-        for col_affected, vals_invariant in affected:
-            to_add = []
-
-            # Go through all previously added rows + the original row
-            for _, temp_row in currently_added.iterrows():
-                to_add += [
-                    new_row
-                    for val in vals_invariant
-                    if not _row_in_df(
-                        new_row := temp_row.pipe(lambda x: pd.DataFrame([x])).assign(
-                            **{col_affected: val}
-                        ),  # this takes the current row and replaces the affected value
-                        currently_added,
-                    )
-                ]
-            # Update the currently added rows
-            currently_added = pd.concat([currently_added] + to_add)
-
-        # Drop first entry because it's the original row and store added rows
-        currently_added = currently_added.iloc[1:, :]
-        new_rows.append(currently_added)
+    # Iterate through all rows that have a causing value in the respective column.
+    for _, r in df_filtered.iterrows():
+        to_add = [
+            pd.Series({**r.to_dict(), **dict(zip(affected_cols, values))})
+            for values in affected_inv_vals_combinations
+        ]
+        to_add = [r2 for r2 in to_add if not _row_in_df(r2, df_filtered)]
+        new_rows.append(pd.DataFrame(to_add))
 
     augmented_df = pd.concat([df] + new_rows)
 
