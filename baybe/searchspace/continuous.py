@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
+ZERO_THRESHOLD = 1e-5
 
 
 @define
@@ -248,6 +249,14 @@ class SubspaceContinuous(SerialMixin):
         return tuple(p.name for p in self.parameters)
 
     @property
+    def param_names_in_cardinality_constraint(self) -> tuple[str, ...]:
+        """Return list of parameter names involved in cardinality constraints."""
+        params_per_cardinatliy_constraint = [
+            c.parameters for c in self.constraints_cardinality
+        ]
+        return tuple(chain(*params_per_cardinatliy_constraint))
+
+    @property
     def param_bounds_comp(self) -> np.ndarray:
         """Return bounds as numpy array."""
         if not self.parameters:
@@ -453,6 +462,71 @@ class SubspaceContinuous(SerialMixin):
             for con in self.constraints_cardinality
         ]
         return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
+
+    def _ensure_nonzero_parameters(
+        self,
+        inactive_parameters: Collection[str],
+        zero_threshold: float = ZERO_THRESHOLD,
+    ) -> SubspaceContinuous:
+        """Create a new subspace with following several actions.
+
+        * Ensure inactive parameter = 0.0.
+        * Ensure active parameter != 0.0.
+        * Remove cardinality constraint.
+
+        Args:
+            inactive_parameters: A list of inactive parameters.
+            zero_threshold: Threshold for checking whether a value is zero.
+
+        Returns:
+            A new subspace object.
+        """
+        # Active parameters: parameters involved in cardinality constraints
+        active_params_sample = set(
+            self.param_names_in_cardinality_constraint
+        ).difference(set(inactive_parameters))
+
+        constraints_lin_ineq = list(self.constraints_lin_ineq)
+        for active_param in active_params_sample:
+            index = self.param_names.index(active_param)
+
+            # Ensure x != 0 when bounds = [..., 0]. This is needed, otherwise
+            # the minimum cardinality constraint is easily violated
+            # TODO: Ensure x != 0 when x in [..., 0, ...] is not done
+            # TODO: To ensure the minimum cardinaltiy constraints, shall we keep the x
+            #  != 0 operations or shall we have instead skip the invalid results
+            if self.parameters[index].bounds.upper == 0:
+                constraints_lin_ineq.append(
+                    ContinuousLinearInequalityConstraint(
+                        parameters=[active_param],
+                        coefficients=[-1.0],
+                        rhs=min(zero_threshold, -self.parameters[index].bounds.lower),
+                    )
+                )
+            # Ensure x != 0 when bounds = [0, ...]
+            elif self.parameters[index].bounds.lower == 0:
+                constraints_lin_ineq.append(
+                    ContinuousLinearInequalityConstraint(
+                        parameters=[active_param],
+                        coefficients=[1.0],
+                        rhs=min(zero_threshold, self.parameters[index].bounds.upper),
+                    ),
+                )
+
+        # Ensure inactive parameters must be 0
+        constraints_lin_eq = list(self.constraints_lin_eq)
+        for inactive_param in inactive_parameters:
+            constraints_lin_eq.append(
+                ContinuousLinearEqualityConstraint(
+                    parameters=[inactive_param], coefficients=[1.0], rhs=0.0
+                )
+            )
+
+        return SubspaceContinuous(
+            parameters=tuple(self.parameters),
+            constraints_lin_eq=tuple(constraints_lin_eq),
+            constraints_lin_ineq=tuple(constraints_lin_ineq),
+        )
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
         """Deprecated!"""  # noqa: D401

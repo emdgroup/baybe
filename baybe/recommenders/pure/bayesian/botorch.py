@@ -21,6 +21,8 @@ from baybe.utils.sampling_algorithms import (
     sample_numerical_df,
 )
 
+N_RESTART_CARDINALITY = 5
+
 
 @define(kw_only=True)
 class BotorchRecommender(BayesianRecommender):
@@ -153,25 +155,56 @@ class BotorchRecommender(BayesianRecommender):
 
         import torch
         from botorch.optim import optimize_acqf
+        from torch import Tensor
 
-        points, _ = optimize_acqf(
-            acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
-            q=batch_size,
-            num_restarts=5,  # TODO make choice for num_restarts
-            raw_samples=10,  # TODO make choice for raw_samples
-            equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
-                for c in subspace_continuous.constraints_lin_eq
-            ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-            inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
-                for c in subspace_continuous.constraints_lin_ineq
-            ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-            sequential=self.sequential_continuous,
-        )
+        def _recommend_continuous_on_subspace(
+            _subspace_continuous: SubspaceContinuous
+        ) -> tuple[Tensor, Tensor]:
+            """Define a helper function with only one parameter."""
+            _points, _acqf_values = optimize_acqf(
+                acq_function=self._botorch_acqf,
+                bounds=torch.from_numpy(_subspace_continuous.param_bounds_comp),
+                q=batch_size,
+                num_restarts=5,  # TODO make choice for num_restarts
+                raw_samples=10,  # TODO make choice for raw_samples
+                equality_constraints=[
+                    c.to_botorch(_subspace_continuous.parameters)
+                    for c in _subspace_continuous.constraints_lin_eq
+                ]
+                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+                inequality_constraints=[
+                    c.to_botorch(_subspace_continuous.parameters)
+                    for c in _subspace_continuous.constraints_lin_ineq
+                ]
+                or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+                sequential=self.sequential_continuous,
+            )
+            return _points, _acqf_values
+
+        if len(subspace_continuous.constraints_cardinality):
+            acqf_values_all: list[Tensor] = []
+            points_all: list[Tensor] = []
+            for _ in range(N_RESTART_CARDINALITY):
+                # Randomly set some parameters inactive
+                inactive_params_sample = (
+                    subspace_continuous._sample_inactive_parameters(1)[0]
+                )
+                # Create a new subspace
+                subspace_renewed = subspace_continuous._ensure_nonzero_parameters(
+                    inactive_params_sample
+                )
+
+                (
+                    points_all_i,
+                    acqf_values_i,
+                ) = _recommend_continuous_on_subspace(
+                    subspace_renewed,
+                )
+                points_all.append(points_all_i.unsqueeze(0))
+                acqf_values_all.append(acqf_values_i.unsqueeze(0))
+            points = torch.cat(points_all)[torch.argmax(torch.cat(acqf_values_all)), :]
+        else:
+            points, _ = _recommend_continuous_on_subspace(subspace_continuous)
 
         # Return optimized points as dataframe
         rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
