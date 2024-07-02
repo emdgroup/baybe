@@ -245,9 +245,10 @@ class GaussianMixtureClusteringRecommender(NonPredictiveRecommender, ABC):
 
     # Class variables
     model_class: ClassVar[type[ClusterMixin]] = GaussianMixture
-    # See base class.
+    """This is a dummy docstring."""
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
+    """This is a dummy docstring."""
     # See base class.
 
     _use_custom_selector: ClassVar[bool] = False
