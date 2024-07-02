@@ -2,9 +2,9 @@
 
 
 ##### Warnings #####
-class NonPredictiveRecommenderWarning(UserWarning):
+class UnusedObjectWarning(UserWarning):
     """
-    A non-predictive recommender was called with undesired arguments which indicates an
+    A method or function was called with undesired arguments which indicates an
     unintended user fault.
     """
 
