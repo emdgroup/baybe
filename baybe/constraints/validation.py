@@ -1,6 +1,6 @@
 """Validation functionality for constraints."""
 
-from collections.abc import Collection
+from collections.abc import Collection, Sequence
 from itertools import combinations
 
 from baybe.constraints.base import Constraint
@@ -8,6 +8,7 @@ from baybe.constraints.continuous import ContinuousCardinalityConstraint
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
 )
+from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import Parameter
 
 
@@ -26,6 +27,8 @@ def validate_constraints(  # noqa: DOC101, DOC103
         ValueError: If any discrete constraint includes a continuous parameter.
         ValueError: If any discrete constraint that is valid only for numerical
             discrete parameters includes non-numerical discrete parameters.
+        ValueError: If the bounds of any parameter in a cardinality constraint does
+            not cover zero.
     """
     if sum(isinstance(itm, DiscreteDependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
@@ -41,6 +44,9 @@ def validate_constraints(  # noqa: DOC101, DOC103
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
     param_names_continuous = [p.name for p in parameters if p.is_continuous]
     param_names_non_numerical = [p.name for p in parameters if not p.is_numerical]
+    params_continuous: list[NumericalContinuousParameter] = [
+        p for p in parameters if p.is_continuous
+    ]
 
     for constraint in constraints:
         if not all(p in param_names_all for p in constraint.parameters):
@@ -78,6 +84,11 @@ def validate_constraints(  # noqa: DOC101, DOC103
                 f"Parameter list of the affected constraint: {constraint.parameters}."
             )
 
+        if isinstance(constraint, ContinuousCardinalityConstraint):
+            validate_parameters_bounds_in_cardinality_constraint(
+                params_continuous, constraint
+            )
+
 
 def validate_cardinality_constraints_are_nonoverlapping(
     constraints: Collection[ContinuousCardinalityConstraint],
@@ -97,4 +108,36 @@ def validate_cardinality_constraints_are_nonoverlapping(
                 f"Constraints of type `{ContinuousCardinalityConstraint.__name__}` "
                 f"cannot share the same parameters. Found the following overlapping "
                 f"parameter sets: {s1}, {s2}."
+            )
+
+
+def validate_parameters_bounds_in_cardinality_constraint(
+    parameters: Sequence[NumericalContinuousParameter],
+    constraint: ContinuousCardinalityConstraint,
+) -> None:
+    """Validate that the bounds of all parameters in a cardinality constraint cover
+    zero.
+
+    Args:
+        parameters: A collection of continuous numerical parameters.
+        constraint: A continuous cardinality constraint.
+
+    Raises:
+        ValueError: If the bounds of any parameter of a constraint does not cover zero.
+    """  # noqa D205
+    param_names = [p.name for p in parameters]
+    for param_in_constraint in constraint.parameters:
+        # Note that this implementation checks implicitly that all constraint
+        # parameters must be included in the list of parameters. Otherwise Runtime
+        # error occurs.
+        if (
+            param := parameters[param_names.index(param_in_constraint)]
+        ) and not param.is_in_range(0.0):
+            raise ValueError(
+                f"The bounds of all parameters in a constraint of type "
+                f"`{ContinuousCardinalityConstraint.__name__}` must cover "
+                f"zero. Either correct the parameter ({param}) bounds:"
+                f" {param.bounds=} or remove the parameter {param} from the "
+                f"{constraint=} and update the minimum/maximum cardinality "
+                f"accordingly."
             )
