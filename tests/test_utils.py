@@ -127,7 +127,7 @@ def test_invalid_register_hooks(target, hook):
 
 
 @pytest.mark.parametrize(
-    ("data", "columns", "dependents", "data_expected"),
+    ("data", "columns", "data_expected"),
     [
         param(  # 2 invariant cols and 1 unaffected col
             {
@@ -135,8 +135,7 @@ def test_invalid_register_hooks(target, hook):
                 "B": [2, 2],
                 "C": ["x", "y"],
             },
-            ["A", "B"],
-            None,
+            [["A"], ["B"]],
             {
                 "A": [1, 2, 1, 2],
                 "B": [2, 1, 2, 1],
@@ -149,8 +148,7 @@ def test_invalid_register_hooks(target, hook):
                 "A": [1, 1],
                 "B": [2, 2],
             },
-            ["A", "B"],
-            None,
+            [["A"], ["B"]],
             {
                 "A": [1, 1, 2],
                 "B": [2, 2, 1],
@@ -163,8 +161,7 @@ def test_invalid_register_hooks(target, hook):
                 "B": [2, 2],
                 "T": ["x", "y"],
             },
-            ["A", "B"],
-            None,
+            [["A"], ["B"]],
             {
                 "A": [1, 1, 2, 2],
                 "B": [2, 2, 1, 1],
@@ -178,8 +175,7 @@ def test_invalid_register_hooks(target, hook):
                 "B": [2, 2],
                 "T": ["x", "x"],
             },
-            ["A", "B"],
-            None,
+            [["A"], ["B"]],
             {
                 "A": [1, 2],
                 "B": [2, 1],
@@ -192,25 +188,9 @@ def test_invalid_register_hooks(target, hook):
                 "A": [1, 1],
                 "B": [2, 4],
                 "C": [3, 5],
-            },
-            ["A", "B", "C"],
-            None,
-            {
-                "A": [1, 1, 2, 2, 3, 3, 1, 1, 4, 4, 5, 5],
-                "B": [2, 3, 1, 3, 2, 1, 4, 5, 1, 5, 1, 4],
-                "C": [3, 2, 3, 1, 1, 2, 5, 4, 5, 1, 4, 1],
-            },
-            id="3inv",
-        ),
-        param(  # 3 invariant cols
-            {
-                "A": [1, 1],
-                "B": [2, 4],
-                "C": [3, 5],
                 "D": ["x", "y"],
             },
-            ["A", "B", "C"],
-            None,
+            [["A"], ["B"], ["C"]],
             {
                 "A": [1, 1, 2, 2, 3, 3, 1, 1, 4, 4, 5, 5],
                 "B": [2, 3, 1, 3, 2, 1, 4, 5, 1, 5, 1, 4],
@@ -228,8 +208,7 @@ def test_invalid_register_hooks(target, hook):
                 "Other1": ["A", "B"],
                 "Other2": ["C", "D"],
             },
-            ["Slot1", "Slot2"],
-            [["Frac1"], ["Frac2"]],
+            [["Slot1", "Frac1"], ["Slot2", "Frac2"]],
             {
                 "Slot1": ["s1", "s2", "s2", "s4"],
                 "Slot2": ["s2", "s4", "s1", "s2"],
@@ -250,8 +229,7 @@ def test_invalid_register_hooks(target, hook):
                 "Temp2": [50, 60],
                 "Other": ["x", "y"],
             },
-            ["Slot1", "Slot2"],
-            [["Frac1", "Temp1"], ["Frac2", "Temp2"]],
+            [["Slot1", "Frac1", "Temp1"], ["Slot2", "Frac2", "Temp2"]],
             {
                 "Slot1": ["s1", "s2", "s2", "s4"],
                 "Slot2": ["s2", "s4", "s1", "s2"],
@@ -265,11 +243,11 @@ def test_invalid_register_hooks(target, hook):
         ),
     ],
 )
-def test_df_permutation_aug(data, columns, dependents, data_expected):
+def test_df_permutation_aug(data, columns, data_expected):
     """Test permutation invariance data augmentation is done correctly."""
     # Create all needed dataframes
     df = pd.DataFrame(data)
-    df_augmented = df_apply_permutation_augmentation(df, columns, dependents)
+    df_augmented = df_apply_permutation_augmentation(df, columns)
     df_expected = pd.DataFrame(data_expected)
 
     # Determine equality ignoring row order
@@ -287,18 +265,19 @@ def test_df_permutation_aug(data, columns, dependents, data_expected):
 
 
 @pytest.mark.parametrize(
-    ("columns", "dependents", "msg"),
+    ("columns", "msg"),
     [
-        param(["A"], [["B"], ["C"]], "exactly as many", id="too_manydependents"),
-        param(["A", "B"], [[], []], "same for all", id="dep_length_zero"),
-        param(["A", "B"], [["C"], []], "same for all", id="different_dep_lengths"),
+        param([], "at least two column sequences", id="no_seqs"),
+        param([["A"]], "at least two column sequences", id="just_one_seq"),
+        param([["A"], ["B", "C"]], "sequence is the same", id="different_lengths"),
+        param([[], []], "sequence is the same", id="empty_seqs"),
     ],
 )
-def test_df_permutation_aug_invalid(columns, dependents, msg):
+def test_df_permutation_aug_invalid(columns, msg):
     """Test correct errors for invalid permutation attempts."""
     df = pd.DataFrame({"A": [1, 1], "B": [2, 2], "C": ["x", "y"]})
     with pytest.raises(ValueError, match=msg):
-        df_apply_permutation_augmentation(df, columns, dependents)
+        df_apply_permutation_augmentation(df, columns)
 
 
 @pytest.mark.parametrize(

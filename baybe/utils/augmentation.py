@@ -33,58 +33,53 @@ def _row_in_df(row: pd.Series | pd.DataFrame, df: pd.DataFrame) -> bool:
 
 def df_apply_permutation_augmentation(
     df: pd.DataFrame,
-    columns: Sequence[str],
-    dependents: Sequence[Sequence[str]] | None = None,
+    columns: Sequence[Sequence[str]],
 ) -> pd.DataFrame:
     """Augment a dataframe if permutation invariant columns are present.
 
-    Indices are preserved so that each augmented row will have the same index as its
-    original. ``dependent`` columns are augmented in the same order as the ``columns``.
-
     *   Original
 
-        +---+---+---+---+
-        | A | B | C | D |
-        +===+===+===+===+
-        | a | b | x | y |
-        +---+---+---+---+
-        | b | a | x | z |
-        +---+---+---+---+
+        +----+----+----+----+
+        | A1 | A2 | B1 | B2 |
+        +====+====+====+====+
+        | a  | b  | x  | y  |
+        +----+----+----+----+
+        | b  | a  | x  | z  |
+        +----+----+----+----+
 
-    *   Result with ``columns = ["A", "B"]``
+    *   Result with ``columns = [["A1"], ["A2"]]``
 
-        +---+---+---+---+
-        | A | B | C | D |
-        +===+===+===+===+
-        | a | b | x | y |
-        +---+---+---+---+
-        | b | a | x | z |
-        +---+---+---+---+
-        | b | a | x | y |
-        +---+---+---+---+
-        | a | b | x | z |
-        +---+---+---+---+
+        +----+----+----+----+
+        | A1 | A2 | B1 | B2 |
+        +====+====+====+====+
+        | a  | b  | x  | y  |
+        +----+----+----+----+
+        | b  | a  | x  | z  |
+        +----+----+----+----+
+        | b  | a  | x  | y  |
+        +----+----+----+----+
+        | a  | b  | x  | z  |
+        +----+----+----+----+
 
-    *   Result with ``columns = ["A", "B"]``, ``dependents = [["C"], ["D"]]``
+    *   Result with ``columns = [["A1", "B1"], ["A2", "B2"]]``
 
-        +---+---+---+---+
-        | A | B | C | D |
-        +===+===+===+===+
-        | a | b | x | y |
-        +---+---+---+---+
-        | b | a | x | z |
-        +---+---+---+---+
-        | b | a | y | x |
-        +---+---+---+---+
-        | a | b | z | x |
-        +---+---+---+---+
+        +----+----+----+----+
+        | A1 | A2 | B1 | B2 |
+        +====+====+====+====+
+        | a  | b  | x  | y  |
+        +----+----+----+----+
+        | b  | a  | x  | z  |
+        +----+----+----+----+
+        | b  | a  | y  | x  |
+        +----+----+----+----+
+        | a  | b  | z  | x  |
+        +----+----+----+----+
 
     Args:
         df: The dataframe that should be augmented.
-        columns: The permutation invariant columns.
-        dependents: Columns that are connected to ``columns`` and should be permuted in
-            the same manner. Can be multiple per entry in ``affected`` but all must be
-            of same length.
+        columns: Sequences of permutation invariant columns. The n'th column in each
+            sequence will be permuted together with each n'th column in the other
+            sequences.
 
     Returns:
         The augmented dataframe containing the original one.
@@ -94,20 +89,16 @@ def df_apply_permutation_augmentation(
         ValueError: If entries in ``dependents`` are not of same length.
     """
     # Validation
-    dependents = dependents or []
-    if dependents:
-        if len(columns) != len(dependents):
-            raise ValueError(
-                "When augmenting permutation invariance with dependent columns, "
-                "'dependents' must have exactly as many entries as 'columns'."
-            )
-        if len({len(d) for d in dependents}) != 1 or len(dependents[0]) < 1:
-            raise ValueError(
-                "Augmentation with dependents can only work if the amount of dependent "
-                "columns provided as entries of 'dependents' is the same for all "
-                "affected columns. If there are no dependents, set 'dependents' to "
-                "None."
-            )
+    if len(columns) < 2:
+        raise ValueError(
+            "When augmenting permutation invariance, at least two column sequences "
+            "must be given."
+        )
+    if len({len(seq) for seq in columns}) != 1 or len(columns[0]) < 1:
+        raise ValueError(
+            "Permutation augmentation can only work if the amount of columns un each "
+            "sequence is the same and the sequences are not empty."
+        )
 
     # Augmentation Loop
     new_rows: list[pd.DataFrame] = []
@@ -118,10 +109,7 @@ def df_apply_permutation_augmentation(
             new_row = row.copy()
 
             # Permute columns
-            new_row[columns] = row[[columns[k] for k in perm]]
-
-            # Permute dependent columns
-            for deps in map(list, zip(*dependents)):
+            for deps in map(list, zip(*columns)):
                 new_row[deps] = row[[deps[k] for k in perm]]
 
             # Check whether the new row is an existing permutation
