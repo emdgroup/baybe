@@ -50,7 +50,7 @@ def look_up_targets(
             - ``"random"``: A random row will be used for the lookup.
 
     Raises:
-        ValueError: If an invalid lookup mechanism is provided.
+        ValueError: If an unsupported lookup mechanism is provided.
 
     Example:
         >>> import pandas as pd
@@ -74,7 +74,7 @@ def look_up_targets(
     elif isinstance(lookup, pd.DataFrame):
         _look_up_targets_from_dataframe(queries, targets, lookup, impute_mode)
     else:
-        raise ValueError("Invalid lookup mechanism.")
+        raise ValueError("Unsupported lookup mechanism.")
 
 
 def _look_up_targets_from_callable(
