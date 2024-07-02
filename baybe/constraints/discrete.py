@@ -50,11 +50,11 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         for k, cond in enumerate(self.conditions):
             satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
 
-        # to prevent errors when we have empty condition list
         expr = pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
+
         # Negate the expression, because Polars' filter keeps the rows
         # the expression satisfies
-        expr = expr.not_()  # type: ignore[union-attr]
+        expr = expr.not_()
 
         return expr
 
