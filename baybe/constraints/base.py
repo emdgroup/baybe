@@ -109,7 +109,7 @@ class DiscreteConstraint(Constraint, ABC):
         """Translate the constraint to Polars expression for filtering.
 
         Returns:
-            The Polars expression to pass to ``polars.LazyFrame.filter``.
+            The Polars expressions to pass to :meth:`polars.LazyFrame.filter`.
 
         Raises:
             NotImplementedError: If the constraint class does not have a Polars

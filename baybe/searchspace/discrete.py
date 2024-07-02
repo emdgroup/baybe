@@ -684,7 +684,7 @@ def _apply_polars_constraint_filter(
         constraints: Collection of discrete constraints.
 
     Returns:
-        A ``polars.LazyFrame`` with undesired rows removed.
+        A Polars lazyframe with undesired rows removed.
 
     """
     for c in constraints:

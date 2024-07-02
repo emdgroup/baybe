@@ -7,7 +7,7 @@ from baybe.searchspace.discrete import _apply_polars_constraint_filter
 
 
 def _lazyframe_from_product(parameters):
-    """Create a Polars Lazyframe from the product of given parameters and return it."""
+    """Create a Polars lazyframe from the product of given parameters and return it."""
     param_frames = [pl.LazyFrame({p.name: p.values}) for p in parameters]
 
     # Handling edge cases
@@ -41,7 +41,7 @@ def test_polars_prodsum1(parameters, constraints):
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_9"]])
 def test_polars_prodsum2(parameters, constraints):
-    """Tests Polars' implementation of product constrain."""
+    """Tests Polars implementation of product constrain."""
     ldf = _lazyframe_from_product(parameters)
 
     ldf = _apply_polars_constraint_filter(ldf, constraints)

@@ -48,7 +48,7 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
 def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
     """Return a boolean array indicating where ``x`` and ``y`` are close.
 
-    The equivalent to ``numpy.isclose``.
+    The equivalent to :func:``numpy.isclose``.
     Using ``numpy.isclose`` with Polars dataframes results in this error:
     ``TypeError: ufunc 'isfinite' not supported for the input types``.
 
