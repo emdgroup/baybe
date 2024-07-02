@@ -222,8 +222,8 @@ def test_invalid_register_hooks(target, hook):
         ),
     ],
 )
-def test_df_invariance_augmentation(data, columns, dependents, data_expected):
-    """Test invariance data augmentation is done correctly."""
+def test_df_permutation_augmentation(data, columns, dependents, data_expected):
+    """Test permutation invariance data augmentation is done correctly."""
     # Create all needed dataframes
     df = pd.DataFrame(data)
     df_augmented = df_apply_permutation_augmentation(df, columns, dependents)
@@ -238,7 +238,9 @@ def test_df_invariance_augmentation(data, columns, dependents, data_expected):
         .all()
     )
 
-    assert are_equal, (df, df_augmented, df_expected)
+    assert (
+        are_equal
+    ), f"\norig:\n{df}\n\naugmented:\n{df_augmented}\n\nexpected:\n{df_expected}"
 
 
 @pytest.mark.parametrize(
@@ -322,4 +324,6 @@ def test_df_dependency_augmentation(data, causing, affected, data_expected):
         .all()
     )
 
-    assert are_equal, (df, df_augmented, df_expected)
+    assert (
+        are_equal
+    ), f"\norig:\n{df}\n\naugmented:\n{df_augmented}\n\nexpected:\n{df_expected}"
