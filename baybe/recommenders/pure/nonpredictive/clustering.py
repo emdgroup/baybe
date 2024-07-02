@@ -227,8 +227,21 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 
 
 @define
-class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
+class GaussianMixtureClusteringRecommender(NonPredictiveRecommender, ABC):
     """Gaussian mixture model (GMM) clustering recommender."""
+
+    # Class variables
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
+    # See base class.
+    # TODO: "Type" should not appear in ClassVar. Both PyCharm and mypy complain, see
+    #   also note in the mypy docs:
+    #       https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
+    #   Figure out what is the right approach here. However, the issue might be
+    #   ultimately related to an overly restrictive PEP:
+    #       https://github.com/python/mypy/issues/5144
+    # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism
+    #   that checks if a custom mechanism is implemented and uses default otherwise
+    #   (similar to what is done in the recommenders)
 
     # Class variables
     model_class: ClassVar[type[ClusterMixin]] = GaussianMixture
@@ -236,6 +249,68 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
 
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
     # See base class.
+
+    _use_custom_selector: ClassVar[bool] = False
+    """Class variable flagging whether a custom selector is being used."""
+
+    # Object variables
+    model_params: dict = field(factory=dict)
+    """Optional model parameter that will be passed to the surrogate constructor.
+    This is initialized with reasonable default values for the derived child classes."""
+
+    def _make_selection_default(
+        self,
+        model: ClusterMixin,
+        candidates_scaled: pd.DataFrame | np.ndarray,
+    ) -> list[int]:
+        """Select one candidate from each cluster uniformly at random.
+
+        This function is model-agnostic and can be used by any child class.
+
+        Args:
+            model: The used model.
+            candidates_scaled: The already scaled candidates.
+
+        Returns:
+           A list with positional indices of the selected candidates.
+        """
+        assigned_clusters = model.predict(candidates_scaled)
+        selection = [
+            np.random.choice(np.argwhere(cluster == assigned_clusters).flatten())
+            for cluster in np.unique(assigned_clusters)
+        ]
+        return selection
+
+    def _recommend_discrete(
+        self,
+        subspace_discrete: SubspaceDiscrete,
+        candidates_comp: pd.DataFrame,
+        batch_size: int,
+    ) -> pd.Index:
+        # See base class.
+
+        # Fit scaler on entire search space
+        # TODO [Scaling]: scaling should be handled by search space object
+        scaler = StandardScaler()
+        scaler.fit(subspace_discrete.comp_rep)
+
+        candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
+
+        # Set model parameters and perform fit
+        model = self.model_class(
+            **{self.model_cluster_num_parameter_name: batch_size},
+            **self.model_params,
+        )
+        model.fit(candidates_scaled)
+
+        # Perform selection based on assigned clusters
+        if self._use_custom_selector:
+            selection = self._make_selection_custom(model, candidates_scaled)
+        else:
+            selection = self._make_selection_default(model, candidates_scaled)
+
+        # Convert positional indices into DataFrame indices and return result
+        return candidates_comp.index[selection]
 
     def _make_selection_custom(
         self,
