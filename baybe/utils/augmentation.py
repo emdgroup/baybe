@@ -34,7 +34,7 @@ def _row_in_df(row: pd.Series | pd.DataFrame, df: pd.DataFrame) -> bool:
 def df_apply_permutation_augmentation(
     df: pd.DataFrame,
     columns: Sequence[str],
-    dependents: Sequence[str] | None = None,
+    dependents: Sequence[Sequence[str]] | None = None,
 ) -> pd.DataFrame:
     """Augment a dataframe if permutation invariant columns are present.
 
@@ -65,7 +65,7 @@ def df_apply_permutation_augmentation(
         | a | b | x | z |
         +---+---+---+---+
 
-    *   Result with ``columns = ["A", "B"]``, ``dependents = ["C", "D"]``
+    *   Result with ``columns = ["A", "B"]``, ``dependents = [["C"], ["D"]]``
 
         +---+---+---+---+
         | A | B | C | D |
@@ -83,45 +83,52 @@ def df_apply_permutation_augmentation(
         df: The dataframe that should be augmented.
         columns: The permutation invariant columns.
         dependents: Columns that are connected to ``columns`` and should be permuted in
-            the same manner.
+            the same manner. Can be multiple per entry in ``affected`` but all must be
+            of same length.
 
     Returns:
         The augmented dataframe containing the original one.
 
     Raises:
         ValueError: If ``dependents`` has length incompatible with ``columns``.
+        ValueError: If entries in ``dependents`` are not of same length.
     """
+    # Validation
     dependents = dependents or []
+    if dependents:
+        if len(columns) != len(dependents):
+            raise ValueError(
+                "When augmenting permutation invariance with dependent columns, "
+                "'dependents' must have exactly as many entries as 'columns'."
+            )
+        if len({len(d) for d in dependents}) != 1 or len(dependents[0]) < 1:
+            raise ValueError(
+                "Augmentation with dependents can only work if the amount of dependent "
+                "columns provided as entries of 'dependents' is the same for all "
+                "affected columns. If there are no dependents, set 'dependents' to "
+                "None."
+            )
+
+    # Augmentation Loop
     new_rows: list[pd.DataFrame] = []
-
-    if dependents and len(columns) != len(dependents):
-        raise ValueError(
-            "When augmenting permutation invariance with dependent columns, there must "
-            "be exactly the same amount of 'dependents' as there are 'columns'."
-        )
-
+    idx_permutation = list(permutations(range(len(columns))))
     for _, row in df.iterrows():
-        # Extract the values from the specified columns
-        original_values = row[columns].tolist()  # type: ignore[call-overload]
-        dependent_values = row[dependents].tolist() if dependents else None  # type: ignore[call-overload]
+        to_add = []
+        for _, perm in enumerate(idx_permutation):
+            new_row = row.copy()
 
-        # Generate all permutations of these values
-        column_perms = list(permutations(original_values))
-        dependent_perms = (
-            list(permutations(dependent_values)) if dependent_values else None
-        )
+            # Permute columns
+            new_row[columns] = row[[columns[k] for k in perm]]
 
-        # For each permutation, create a new row if it's not already in the dataframe
-        for k, perm in enumerate(column_perms):
-            # Create a new row dictionary with the permuted values
-            new_row = pd.DataFrame([row])
-            new_row[columns] = perm
-            if dependent_perms:
-                new_row[dependents] = dependent_perms[k]
+            # Permute dependent columns
+            for deps in map(list, zip(*dependents)):
+                new_row[deps] = row[[deps[k] for k in perm]]
 
+            # Check whether the new row is an existing permutation
             if not _row_in_df(new_row, df):
-                new_rows.append(new_row)
+                to_add.append(new_row)
 
+        new_rows.append(pd.DataFrame(to_add))
     augmented_df = pd.concat([df] + new_rows)
 
     return augmented_df
@@ -210,10 +217,13 @@ def df_apply_dependency_augmentation(
 
     # Iterate through all rows that have a causing value in the respective column.
     for _, r in df_filtered.iterrows():
+        # Create augmented rows
         to_add = [
             pd.Series({**r.to_dict(), **dict(zip(affected_cols, values))})
             for values in affected_inv_vals_combinations
         ]
+
+        # Do not include rows that were present in the original
         to_add = [r2 for r2 in to_add if not _row_in_df(r2, df_filtered)]
         new_rows.append(pd.DataFrame(to_add))
 
