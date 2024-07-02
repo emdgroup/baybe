@@ -116,8 +116,7 @@ class DiscreteConstraint(Constraint, ABC):
                 implementation.
         """
         raise NotImplementedError(
-            f"The {self.__class__.__name__} constraint does not have a Polars "
-            f"implementation."
+            f"'{self.__class__.__name__}' does not have a Polars implementation."
         )
 
 
