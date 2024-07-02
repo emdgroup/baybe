@@ -86,7 +86,7 @@ jobs:
       - name: Build Docs
         run: |
           pip install tox-uv
-          tox -e docs-py312 -- -r
+          tox -r -e docs-py312 -- -r
           
   typecheck:
     needs: [lint]
@@ -104,7 +104,7 @@ jobs:
       - name: Run type check
         run: |
           pip install tox-uv
-          tox -e mypy-${{ matrix.py-version.tox }}
+          tox -r -e mypy-${{ matrix.py-version.tox }}
 
   audit:
     needs: [lint]
@@ -122,7 +122,7 @@ jobs:
       - name: Run pip-audit
         run: |
           pip install tox-uv
-          tox -e audit-${{ matrix.py-version.tox }}
+          tox -r -e audit-${{ matrix.py-version.tox }}
 
   coretest:
     needs: [typecheck, audit]
@@ -140,7 +140,7 @@ jobs:
       - name: Run core tests
         run: |
           pip install tox-uv
-          tox -e coretest-${{ matrix.py-version.tox }}
+          tox -r -e coretest-${{ matrix.py-version.tox }}
 
   fulltest:
     needs: [typecheck, audit]
@@ -162,7 +162,7 @@ jobs:
       - name: Run full tests
         run: |
           pip install tox-uv
-          tox -e fulltest-${{ matrix.py-version.tox }} -- --cov-report=xml
+          tox -r -e fulltest-${{ matrix.py-version.tox }} -- --cov-report=xml
       - name: "Assert Overall Coverage"
         run: |
           pip install coverage
