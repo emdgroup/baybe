@@ -51,7 +51,7 @@ def create_example_plots(
 
     # Try to find the plotting themes by backtracking
     # Get the absolute path of the current script
-    script_path = Path(sys.path[0]).resolve()
+    script_path = Path(sys.argv[0]).resolve()
     while (
         not Path(script_path / "plotting_themes.json").is_file()
         and script_path != script_path.parent
