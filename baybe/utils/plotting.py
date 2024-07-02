@@ -15,7 +15,6 @@ from matplotlib.figure import Figure
 def create_example_plots(
     ax: Axes,
     base_name: str,
-    *,
     path: Path = Path("."),
 ) -> None:
     """Create plots from an Axes object and save them as a svg file.
