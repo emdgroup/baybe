@@ -62,7 +62,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         assigned_clusters = model.predict(candidates_scaled)
         selection = [
@@ -85,7 +85,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
 
         Raises:
             NotImplementedError: If this function is not implemented. Should be
@@ -166,7 +166,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
             candidates_scaled: The already scaled candidates. Unused.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         selection = model.medoid_indices_.tolist()
         return selection
@@ -214,7 +214,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         distances = pairwise_distances(candidates_scaled, model.cluster_centers_)
         # Set the distances of points that were not assigned by the model to that
@@ -258,7 +258,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         predicted_clusters = model.predict(candidates_scaled)
         selection = []
