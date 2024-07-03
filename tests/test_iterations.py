@@ -5,6 +5,7 @@ import pytest
 
 from baybe.acquisition import qNIPV
 from baybe.acquisition.base import AcquisitionFunction
+from baybe.exceptions import UnusedObjectWarning
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import (
     LinearKernel,
@@ -243,7 +244,8 @@ def test_iter_surrogate_model(campaign, n_iterations, batch_size):
 @pytest.mark.slow
 @pytest.mark.parametrize("recommender", valid_initial_recommenders)
 def test_iter_initial_recommender(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+    with pytest.warns(UnusedObjectWarning):
+        run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
