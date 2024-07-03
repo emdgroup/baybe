@@ -130,7 +130,9 @@ class SubspaceContinuous(SerialMixin):
             return 0
 
     @property
-    def combinatorial_zero_parameters(self) -> Iterable[tuple[str, ...]]:
+    def combinatorial_zero_parameters(
+        self
+    ) -> Iterable[tuple[tuple[str, ...], ...]] | None:
         """Return a combinatorial list of all possible zero parameters on subspace."""
         # The comments on the difference in `combinatorial_counts_zero_parameters`
         # applies here as well.
@@ -141,6 +143,8 @@ class SubspaceContinuous(SerialMixin):
                     for con in self.constraints_cardinality
                 ]
             )
+        else:
+            return None
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:

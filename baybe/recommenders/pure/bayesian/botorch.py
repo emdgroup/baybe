@@ -1,6 +1,7 @@
 """Botorch recommender."""
 
 import math
+from collections.abc import Iterable
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -142,6 +143,7 @@ class BotorchRecommender(BayesianRecommender):
         Raises:
             NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
                 used with a batch size > 1.
+            RuntimeError: If the combinatorial list of inactive parameters is None.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
@@ -187,21 +189,41 @@ class BotorchRecommender(BayesianRecommender):
             acqf_values_all: list[Tensor] = []
             points_all: list[Tensor] = []
 
-            # When the size of the full list of inactive parameters is not too large,
-            # we can iterate through the full list; otherwise we randomly set some
-            # parameters inactive.
-            _iterator = (
-                subspace_continuous.combinatorial_zero_parameters
-                if (
-                    combinatorial_counts
-                    := subspace_continuous.combinatorial_counts_zero_parameters
+            # The key steps of handling cardinality constraint are
+            # * Determine several configurations of inactive parameters based on the
+            # cardinality constraints.
+            # * Optimize the acquisition function for different configurations and
+            # pick the best one.
+            # There are two mechanisms for inactive parameter configurations. The
+            # full list of different inactive parameter configurations is used,
+            # when its size is not too large; otherwise we randomly pick a
+            # fixed number of inactive parameter configurations.
+
+            # Create an iterable that either iterates through range() or iterates
+            # through the full list configuration.
+            if (
+                subspace_continuous.combinatorial_counts_zero_parameters
+                > N_ITER_THRESHOLD
+            ):
+                _iterator: Iterable[tuple[tuple[str, ...], ...]] | range = range(
+                    N_ITER_THRESHOLD
                 )
-                <= N_ITER_THRESHOLD
-                else range(N_ITER_THRESHOLD)
-            )
+            elif subspace_continuous.combinatorial_zero_parameters is not None:
+                _iterator = subspace_continuous.combinatorial_zero_parameters
+            else:
+                raise RuntimeError(
+                    f"The attribute"
+                    f"{SubspaceContinuous.combinatorial_zero_parameters.__name__}"
+                    f"should not be None."
+                )
 
             for inactive_params_generator in _iterator:
-                if combinatorial_counts <= N_ITER_THRESHOLD:
+                if isinstance(inactive_params_generator, int):
+                    # Randomly set some parameters inactive
+                    inactive_params_sample = (
+                        subspace_continuous._sample_inactive_parameters(1)[0]
+                    )
+                else:
                     # Iterate through the combinations of all possible inactive
                     # parameters.
                     inactive_params_sample = {
@@ -209,11 +231,6 @@ class BotorchRecommender(BayesianRecommender):
                         for sublist in inactive_params_generator
                         for param in sublist
                     }
-                else:
-                    # Randomly set some parameters inactive
-                    inactive_params_sample = (
-                        subspace_continuous._sample_inactive_parameters(1)[0]
-                    )
 
                 if len(inactive_params_sample):
                     # Turn inactive parameters to fixed features (used as input in
