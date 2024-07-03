@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Collection, Iterable, Sequence
 from math import prod
 from typing import TYPE_CHECKING, Any
@@ -20,7 +21,11 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe
-from baybe.searchspace.validation import validate_parameter_names, validate_parameters
+from baybe.searchspace.validation import (
+    get_transform_parameters,
+    validate_parameter_names,
+    validate_parameters,
+)
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe
@@ -646,28 +651,57 @@ class SubspaceDiscrete(SerialMixin):
 
     def transform(
         self,
-        data: pd.DataFrame,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        """Transform parameters from experimental to computational representation.
+        """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
 
-        Continuous parameters and additional columns are ignored.
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
 
-        Args:
-            data: The data to be transformed. Must contain all specified parameters, can
-                contain more columns.
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
 
-        Returns:
-            A dataframe with the parameters in computational representation.
-        """
+        if allow_extra is None:
+            allow_extra = True
+            if set(df.columns) - {p.name for p in self.parameters}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
+        # Extract the parameters to be transformed
+        parameters = get_transform_parameters(
+            self.parameters, df, allow_missing, allow_extra
+        )
+
         # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(data) < 1:
-            comp_rep = pd.DataFrame(index=data.index)
-            return comp_rep
+        if self.empty_encoding or len(df) < 1:
+            return pd.DataFrame(index=df.index)
 
         # Transform the parameters
         dfs = []
-        for param in self.parameters:
-            comp_df = param.transform_rep_exp2comp(data[param.name])
+        for param in parameters:
+            comp_df = param.transform(df[param.name])
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
@@ -675,11 +709,9 @@ class SubspaceDiscrete(SerialMixin):
         # removing some columns, e.g. due to decorrelation or dropping constant ones),
         # any subsequent transformation should yield the same columns.
         try:
-            comp_rep = comp_rep[self.comp_rep.columns]
+            return comp_rep[self.comp_rep.columns]
         except AttributeError:
-            pass
-
-        return comp_rep
+            return comp_rep
 
 
 def _apply_constraint_filter(

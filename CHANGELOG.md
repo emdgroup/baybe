@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dataframe in experimental representation instead of two separate dataframes in
   computational representation
 - `Parameter.is_numeric` has been replaced with `Parameter.is_numerical`
+- `DiscreteParameter.transform_rep_exp2comp` has been replaced with
+  `DiscreteParameter.transform` 
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
@@ -25,6 +27,8 @@ _ `_optional` subpackage for managing optional dependencies
   `DiscreteCardinalityConstraint`/`ContinuousCardinalityConstraint` subclasses
 - Uniform sampling mechanism for continuous spaces with cardinality constraints
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
+- `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
+  now take additional `allow_missing` and `allow_extra` keyword arguments
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -48,6 +52,9 @@ _ `_optional` subpackage for managing optional dependencies
   `SubspaceContinuous.sample_uniform`
 - `SubspaceContinuous.samples_full_factorial` has been replaced with
   `SubspaceContinuous.sample_from_full_factorial`
+- Passing a dataframe via the `data` argument to the `transform` methods of
+  `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
+  The dataframe must now be passed as positional argument.
 
 ## [0.9.1] - 2024-06-04
 ### Changed
