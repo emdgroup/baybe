@@ -1,6 +1,8 @@
 """Continuous constraints."""
 
 import math
+from itertools import combinations
+from math import comb
 
 import numpy as np
 from attrs import define
@@ -45,6 +47,28 @@ class ContinuousCardinalityConstraint(
     CardinalityConstraint, ContinuousNonlinearConstraint
 ):
     """Class for continuous cardinality constraints."""
+
+    @property
+    def combinatorial_counts_zero_parameters(self) -> int:
+        """Return the total number of all possible combinations of zero parameters."""
+        combinatorial_counts = 0
+        for i_zeros in range(
+            len(self.parameters) - self.max_cardinality,
+            len(self.parameters) - self.min_cardinality + 1,
+        ):
+            combinatorial_counts += comb(len(self.parameters), i_zeros)
+        return combinatorial_counts
+
+    @property
+    def combinatorial_zero_parameters(self) -> list[tuple[str, ...]]:
+        """Return a combinatorial list of all possible zero parameters."""
+        combinatorial_zeros = []
+        for i_zeros in range(
+            len(self.parameters) - self.max_cardinality,
+            len(self.parameters) - self.min_cardinality + 1,
+        ):
+            combinatorial_zeros.extend(combinations(self.parameters, i_zeros))
+        return combinatorial_zeros
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.

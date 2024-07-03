@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Collection, Sequence
-from itertools import chain
+from collections.abc import Collection, Iterable, Sequence
+from functools import reduce
+from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -110,6 +111,36 @@ class SubspaceContinuous(SerialMixin):
             for c in self.constraints_nonlin
             if isinstance(c, ContinuousCardinalityConstraint)
         )
+
+    @property
+    def combinatorial_counts_zero_parameters(self) -> int:
+        """Return the total number of all possible combinations of zero parameters."""
+        # Note that both continuous subspace and continuous cardinality constraint
+        # have this property. This property is the counts for the subspace
+        # parameters; while the latter one is the counts only for that constraint.
+        if self.constraints_cardinality:
+            return reduce(
+                lambda x, y: x * y,
+                [
+                    con.combinatorial_counts_zero_parameters
+                    for con in self.constraints_cardinality
+                ],
+            )
+        else:
+            return 0
+
+    @property
+    def combinatorial_zero_parameters(self) -> Iterable[tuple[str, ...]]:
+        """Return a combinatorial list of all possible zero parameters on subspace."""
+        # The comments on the difference in `combinatorial_counts_zero_parameters`
+        # applies here as well.
+        if self.constraints_cardinality:
+            return product(
+                *[
+                    con.combinatorial_zero_parameters
+                    for con in self.constraints_cardinality
+                ]
+            )
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
