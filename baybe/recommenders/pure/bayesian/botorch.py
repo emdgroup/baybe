@@ -21,7 +21,7 @@ from baybe.utils.sampling_algorithms import (
     sample_numerical_df,
 )
 
-N_RESTART_CARDINALITY = 5
+N_ITER_THRESHOLD = 10
 
 
 @define(kw_only=True)
@@ -186,11 +186,34 @@ class BotorchRecommender(BayesianRecommender):
         if len(subspace_continuous.constraints_cardinality):
             acqf_values_all: list[Tensor] = []
             points_all: list[Tensor] = []
-            for _ in range(N_RESTART_CARDINALITY):
-                # Randomly set some parameters inactive
-                inactive_params_sample = (
-                    subspace_continuous._sample_inactive_parameters(1)[0]
+
+            # When the size of the full list of inactive parameters is not too large,
+            # we can iterate through the full list; otherwise we randomly set some
+            # parameters inactive.
+            _iterator = (
+                subspace_continuous.combinatorial_zero_parameters
+                if (
+                    combinatorial_counts
+                    := subspace_continuous.combinatorial_counts_zero_parameters
                 )
+                <= N_ITER_THRESHOLD
+                else range(N_ITER_THRESHOLD)
+            )
+
+            for inactive_params_generator in _iterator:
+                if combinatorial_counts <= N_ITER_THRESHOLD:
+                    # Iterate through the combinations of all possible inactive
+                    # parameters.
+                    inactive_params_sample = {
+                        param
+                        for sublist in inactive_params_generator
+                        for param in sublist
+                    }
+                else:
+                    # Randomly set some parameters inactive
+                    inactive_params_sample = (
+                        subspace_continuous._sample_inactive_parameters(1)[0]
+                    )
 
                 if len(inactive_params_sample):
                     # Turn inactive parameters to fixed features (used as input in
