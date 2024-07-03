@@ -40,6 +40,7 @@ _ `_optional` subpackage for managing optional dependencies
 
 ### Fixed
 - `sequential` flag of `SequentialGreedyRecommender` is now set to `True`
+- Serialization bug related to class layout of `SKLearnClusteringRecommender`
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
