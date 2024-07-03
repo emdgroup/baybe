@@ -15,47 +15,6 @@ if TYPE_CHECKING:
     from baybe.surrogates.base import Surrogate
 
 
-def _prepare_inputs(x: Tensor) -> Tensor:
-    """Validate and prepare the model input.
-
-    Args:
-        x: The "raw" model input.
-
-    Returns:
-        The prepared input.
-
-    Raises:
-        ValueError: If the model input is empty.
-    """
-    from baybe.utils.torch import DTypeFloatTorch
-
-    if len(x) == 0:
-        raise ValueError("The model input must be non-empty.")
-    return x.to(DTypeFloatTorch)
-
-
-def _prepare_targets(y: Tensor) -> Tensor:
-    """Validate and prepare the model targets.
-
-    Args:
-        y: The "raw" model targets.
-
-    Returns:
-        The prepared targets.
-
-    Raises:
-        NotImplementedError: If there is more than one target.
-    """
-    from baybe.utils.torch import DTypeFloatTorch
-
-    if y.shape[1] != 1:
-        raise NotImplementedError(
-            "The model currently supports only one target or multiple targets in "
-            "DESIRABILITY mode."
-        )
-    return y.to(DTypeFloatTorch)
-
-
 def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
     """Make a ``Surrogate`` class robustly handle constant training targets.
 
@@ -195,7 +154,7 @@ def autoscale(cls: type[Surrogate]):
 
 
 def batchify(
-    posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]
+    posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]],
 ) -> Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]:
     """Wrap ``Surrogate`` posterior functions to enable proper batching.
 

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
-from attrs import define
+import pandas as pd
+from attrs import define, field
 from cattrs import override
 from cattrs.dispatch import (
     StructuredValue,
@@ -15,6 +17,8 @@ from cattrs.dispatch import (
     UnstructureHook,
 )
 
+from baybe.exceptions import ModelNotTrainedError
+from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
     converter,
@@ -22,7 +26,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.utils import _prepare_inputs, _prepare_targets
+from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -56,32 +60,48 @@ class Surrogate(ABC, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
+    _input_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
+        init=False, default=None, eq=False
+    )
+    """Callable preparing surrogate inputs for training/prediction.
+
+    Transforms a dataframe containing parameter configurations in experimental
+    representation to a corresponding dataframe containing their computational
+    representation. Only available after the surrogate has been fitted."""
+
+    _target_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
+        init=False, default=None, eq=False
+    )
+    """Callable preparing surrogate targets for training.
+
+    Transforms a dataframe containing target measurements in experimental
+    representation to a corresponding dataframe containing their computational
+    representation. Only available after the surrogate has been fitted."""
+
     def to_botorch(self) -> Model:
         """Create the botorch-ready representation of the model."""
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)
 
-    def posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-        """Evaluate the surrogate model at the given candidate points.
+    def transform_inputs(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Transform an experimental parameter dataframe."""
+        if self._input_transform is None:
+            raise ModelNotTrainedError("The model must be trained first.")
+        return self._input_transform(data)
 
-        Args:
-            candidates: The candidate points, represented as a tensor of shape
-                ``(*t, q, d)``, where ``t`` denotes the "t-batch" shape, ``q``
-                denotes the "q-batch" shape, and ``d`` is the input dimension. For
-                more details about batch shapes, see: https://botorch.org/docs/batching
+    def transform_targets(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Transform an experimental measurement dataframe."""
+        if self._target_transform is None:
+            raise ModelNotTrainedError("The model must be trained first.")
+        return self._target_transform(data)
 
-        Returns:
-            The posterior means and posterior covariance matrices of the t-batched
-            candidate points.
-        """
+    def posterior(self, candidates: pd.DataFrame) -> tuple[Tensor, Tensor]:
+        """Evaluate the surrogate model at the given candidate points."""
         import torch
 
-        # Prepare the input
-        candidates = _prepare_inputs(candidates)
-
         # Evaluate the posterior distribution
-        mean, covar = self._posterior(candidates)
+        mean, covar = self._posterior(to_tensor(self.transform_inputs(candidates)))
 
         # Apply covariance transformation for marginal posterior models
         if not self.joint_posterior:
@@ -118,13 +138,18 @@ class Surrogate(ABC, SerialMixin):
             See :func:`baybe.surrogates.Surrogate.posterior`.
         """
 
-    def fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
         """Train the surrogate model on the provided data.
 
         Args:
             searchspace: The search space in which experiments are conducted.
-            train_x: The training data points.
-            train_y: The training data labels.
+            objective: The objective to be optimized.
+            measurements: The training data in experimental representation.
 
         Raises:
             ValueError: If the search space contains task parameters but the selected
@@ -132,6 +157,8 @@ class Surrogate(ABC, SerialMixin):
             NotImplementedError: When using a continuous search space and a non-GP
                 model.
         """
+        # TODO: consider adding a validation step for `measurements`
+
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
@@ -147,10 +174,15 @@ class Surrogate(ABC, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
-        # Validate and prepare the training data
-        train_x = _prepare_inputs(train_x)
-        train_y = _prepare_targets(train_y)
+        # Store context-specific transformations
+        self._input_transform = lambda x: searchspace.transform(x, allow_missing=True)
+        self._target_transform = lambda x: objective.transform(x)
 
+        # Transform and fit
+        train_x, train_y = to_tensor(
+            self.transform_inputs(measurements),
+            self.transform_targets(measurements),
+        )
         self._fit(searchspace, train_x, train_y)
 
     @abstractmethod
