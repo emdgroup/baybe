@@ -45,7 +45,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
     param_names_continuous = [p.name for p in parameters if p.is_continuous]
     param_names_non_numerical = [p.name for p in parameters if not p.is_numerical]
     params_continuous: list[NumericalContinuousParameter] = [
-        p for p in parameters if p.is_continuous
+        p for p in parameters if isinstance(p, NumericalContinuousParameter)
     ]
 
     for constraint in constraints:

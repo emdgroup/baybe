@@ -62,7 +62,7 @@ class ContinuousCardinalityConstraint(
     @property
     def combinatorial_zero_parameters(self) -> list[tuple[str, ...]]:
         """Return a combinatorial list of all possible zero parameters."""
-        combinatorial_zeros = []
+        combinatorial_zeros: list[tuple[str, ...]] = []
         for i_zeros in range(
             len(self.parameters) - self.max_cardinality,
             len(self.parameters) - self.min_cardinality + 1,
