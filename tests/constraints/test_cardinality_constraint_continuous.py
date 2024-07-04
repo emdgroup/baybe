@@ -37,8 +37,13 @@ def _validate_samples(
         threshold: Threshold for checking whether a value is treated as zero.
     """
     # Assert that cardinality constraint is fulfilled
-    n_nonzero = np.sum(samples.abs().ge(threshold), axis=1)
-    # n_nonzero = np.sum(~np.isclose(samples, 0.0, rtol=threshold), axis=1)
+    if threshold == 0.0:
+        # When threshold is zero, abs(value) > threshold is treated as non-zero.
+        n_nonzero = len(samples.columns) - np.sum(samples.abs().le(threshold), axis=1)
+    else:
+        # When threshold is non-zero, abs(value) >= threshold is treated as non-zero.
+        n_nonzero = np.sum(samples.abs().ge(threshold), axis=1)
+
     assert np.all(n_nonzero >= min_cardinality) and np.all(n_nonzero <= max_cardinality)
 
     # Assert that we obtain as many samples as requested
