@@ -1,7 +1,6 @@
 """Botorch recommender."""
 
 import math
-from collections.abc import Iterable
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -159,18 +158,44 @@ class BotorchRecommender(BayesianRecommender):
         from botorch.optim import optimize_acqf
         from torch import Tensor
 
-        def _recommend_continuous_on_subspace(
+        def _recommend_continuous_with_inactive_parameters(
             _subspace_continuous: SubspaceContinuous,
-            _fixed_parameters: dict[int, float] | None = None,
+            inactive_parameters: tuple[str, ...] | None = None,
         ) -> tuple[Tensor, Tensor]:
-            """Define a helper function on a subset of parameters."""
+            """Define a helper function that can deal with inactive parameters."""
+            if _subspace_continuous.constraints_cardinality:
+                # When there are cardinality constraints present.
+                if inactive_parameters is None:
+                    # When no parameters are constrained to zeros
+                    inactive_parameters = ()
+                    fixed_parameters = None
+                else:
+                    # When certain parameters are constrained to zeros.
+
+                    # Cast the inactive parameters to the format of fixed features used
+                    # in optimize_acqf())
+                    indices_inactive_params = [
+                        _subspace_continuous.param_names.index(key)
+                        for key in _subspace_continuous.param_names
+                        if key in inactive_parameters
+                    ]
+                    fixed_parameters = {ind: 0.0 for ind in indices_inactive_params}
+
+                # Create a new subspace by ensuring all active parameters are non-zeros
+                _subspace_continuous = _subspace_continuous._ensure_nonzero_parameters(
+                    inactive_parameters
+                )
+            else:
+                # When there is no cardinality constraint
+                fixed_parameters = None
+
             _points, _acqf_values = optimize_acqf(
                 acq_function=self._botorch_acqf,
                 bounds=torch.from_numpy(_subspace_continuous.param_bounds_comp),
                 q=batch_size,
                 num_restarts=5,  # TODO make choice for num_restarts
                 raw_samples=10,  # TODO make choice for raw_samples
-                fixed_features=_fixed_parameters,
+                fixed_features=fixed_parameters,
                 equality_constraints=[
                     c.to_botorch(_subspace_continuous.parameters)
                     for c in _subspace_continuous.constraints_lin_eq
@@ -194,73 +219,69 @@ class BotorchRecommender(BayesianRecommender):
             # cardinality constraints.
             # * Optimize the acquisition function for different configurations and
             # pick the best one.
-            # There are two mechanisms for inactive parameter configurations. The
+            # There are two mechanisms for the inactive parameter configurations. The
             # full list of different inactive parameter configurations is used,
             # when its size is not too large; otherwise we randomly pick a
             # fixed number of inactive parameter configurations.
 
-            # Create an iterable that either iterates through range() or iterates
-            # through the full list configuration.
             if (
                 subspace_continuous.combinatorial_counts_zero_parameters
                 > N_ITER_THRESHOLD
             ):
-                _iterator: Iterable[tuple[tuple[str, ...], ...]] | range = range(
-                    N_ITER_THRESHOLD
-                )
-            elif subspace_continuous.combinatorial_zero_parameters is not None:
-                _iterator = subspace_continuous.combinatorial_zero_parameters
-            else:
-                raise RuntimeError(
-                    f"The attribute"
-                    f"{SubspaceContinuous.combinatorial_zero_parameters.__name__}"
-                    f"should not be None."
-                )
-
-            for inactive_params_generator in _iterator:
-                if isinstance(inactive_params_generator, int):
-                    # Randomly set some parameters inactive
+                # When the size of full list is too large, randomly set some
+                # parameters inactive.
+                for _ in range(N_ITER_THRESHOLD):
                     inactive_params_sample = (
                         subspace_continuous._sample_inactive_parameters(1)[0]
                     )
-                else:
-                    # Iterate through the combinations of all possible inactive
-                    # parameters.
+
+                    (
+                        points_i,
+                        acqf_values_i,
+                    ) = _recommend_continuous_with_inactive_parameters(
+                        subspace_continuous,
+                        tuple(inactive_params_sample),
+                    )
+
+                    points_all.append(points_i.unsqueeze(0))
+                    acqf_values_all.append(acqf_values_i.unsqueeze(0))
+
+            elif subspace_continuous.combinatorial_zero_parameters is not None:
+                # When the size of full list is not too large, iterate the combinations
+                # of all possible inactive parameters.
+                for (
+                    inactive_params_generator
+                ) in subspace_continuous.combinatorial_zero_parameters:
+                    # flatten inactive parameters
                     inactive_params_sample = {
                         param
                         for sublist in inactive_params_generator
                         for param in sublist
                     }
 
-                if len(inactive_params_sample):
-                    # Turn inactive parameters to fixed features (used as input in
-                    # optimize_acqf())
-                    indices_inactive_params = [
-                        subspace_continuous.param_names.index(key)
-                        for key in subspace_continuous.param_names
-                        if key in inactive_params_sample
-                    ]
-                    fixed_parameters = {ind: 0.0 for ind in indices_inactive_params}
-                else:
-                    fixed_parameters = None
+                    (
+                        points_i,
+                        acqf_values_i,
+                    ) = _recommend_continuous_with_inactive_parameters(
+                        subspace_continuous,
+                        tuple(inactive_params_sample),
+                    )
 
-                # Create a new subspace
-                subspace_renewed = subspace_continuous._ensure_nonzero_parameters(
-                    inactive_params_sample
+                    points_all.append(points_i.unsqueeze(0))
+                    acqf_values_all.append(acqf_values_i.unsqueeze(0))
+            else:
+                raise RuntimeError(
+                    f"The attribute"
+                    f"{SubspaceContinuous.combinatorial_zero_parameters.__name__}"
+                    f"should not be None."
                 )
-
-                (
-                    points_all_i,
-                    acqf_values_i,
-                ) = _recommend_continuous_on_subspace(
-                    subspace_renewed,
-                    fixed_parameters,
-                )
-                points_all.append(points_all_i.unsqueeze(0))
-                acqf_values_all.append(acqf_values_i.unsqueeze(0))
+            # Find the best option
             points = torch.cat(points_all)[torch.argmax(torch.cat(acqf_values_all)), :]
         else:
-            points, _ = _recommend_continuous_on_subspace(subspace_continuous)
+            # When there is no cardinality constraint
+            points, _ = _recommend_continuous_with_inactive_parameters(
+                subspace_continuous
+            )
 
         # Return optimized points as dataframe
         rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
