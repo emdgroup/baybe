@@ -29,6 +29,7 @@ _ `_optional` subpackage for managing optional dependencies
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
 - `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
   now take additional `allow_missing` and `allow_extra` keyword arguments
+- More details to the transfer learning user guide
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
