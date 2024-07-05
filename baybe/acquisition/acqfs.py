@@ -107,7 +107,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
                     f"provided for '{self.__class__.__name__}' when sampling purely "
                     f"continuous search spaces."
                 )
-            sampled_conti = searchspace.continuous.samples_random(n_candidates)
+            sampled_conti = searchspace.continuous.sample_uniform(n_candidates)
 
             # Align indices if discrete part is present
             if len(sampled_parts) > 0:
