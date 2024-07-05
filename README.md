@@ -43,6 +43,14 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 
 ## ⚡ Quick Start
 
+> [!IMPORTANT]
+> You are reading the documentation for the branch shown in GitHub's
+> **branch selector** at the top of the page.
+> Depending on the state of development of the project, the example below may use
+> new features/syntax that are not yet available in the latest release. 
+> If you encounter problems when trying to run the code,
+> consider switching to the docs for your installed version.
+
 Let us consider a simple experiment where we control three parameters and want to
 maximize a single target called `Yield`.
 
