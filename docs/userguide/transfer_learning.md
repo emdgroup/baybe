@@ -1,7 +1,7 @@
 # Transfer Learning
 
 BayBE offers the possibility to mix data from multiple, *similar but not identical*
-campaigns in order to accelerate optimization – a procedure called **transfer earning**. 
+campaigns in order to accelerate optimization – a procedure called **transfer learning**. 
 This feature is automatically enabled when using a
 [Gaussian process surrogate model](baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate)
 in combination with a [`TaskParameter`].
@@ -27,9 +27,9 @@ Examples where this is possible:
   Data obtained from a chemical reaction optimized at a certain temperature can be used 
   in a new campaign, where the same reaction needs to be optimized again at a different 
   temperature.
-* **Optimization of a simulation involving different particle size:**  
+* **Optimization of a simulation involving a particle size:**  
   Data obtained at a smaller particle size can be utilized when starting a new 
-  optimization for a larger particle size.
+  optimization for a larger particle size or vice versa.
 
 In these examples, the temperature and the particle size take the
 role of *aligning* the individual measurement campaigns along their corresponding
