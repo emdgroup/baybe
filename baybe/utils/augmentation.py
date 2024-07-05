@@ -72,7 +72,7 @@ def df_apply_permutation_augmentation(
         )
     if len({len(seq) for seq in columns}) != 1 or len(columns[0]) < 1:
         raise ValueError(
-            "Permutation augmentation can only work if the amount of columns un each "
+            "Permutation augmentation can only work if the amount of columns in each "
             "sequence is the same and the sequences are not empty."
         )
 
@@ -80,16 +80,19 @@ def df_apply_permutation_augmentation(
     new_rows: list[pd.DataFrame] = []
     idx_permutation = list(permutations(range(len(columns))))
     for _, row in df.iterrows():
+        # For each row in the original df, collect all its permutations
         to_add = []
-        for _, perm in enumerate(idx_permutation):
+        for perm in idx_permutation:
             new_row = row.copy()
 
-            # Permute columns
+            # Permute columns, this is done separately for each tuple of columns that
+            # belong together
             for deps in map(list, zip(*columns)):
                 new_row[deps] = row[[deps[k] for k in perm]]
 
             to_add.append(new_row)
 
+        # Store augmented rows, keeping the index of their original row
         new_rows.append(
             pd.DataFrame(to_add, columns=df.columns, index=[row.name] * len(to_add))
         )
@@ -181,17 +184,18 @@ def df_apply_dependency_augmentation(
     # Iterate through all rows that have a causing value in the respective column.
     for _, row in df.iterrows():
         to_add = []
-
-        # Just keep unaffected rows without augmentation
         if row[col_causing] not in vals_causing:
+            # Just keep unaffected rows without augmentation
             to_add.append(row)
         else:
-            # Create augmented rows
+            # Create augmented rows by assigning the affected columns all possible
+            # values
             to_add += [
                 pd.Series({**row.to_dict(), **dict(zip(affected_cols, values))})
                 for values in affected_inv_vals_combinations
             ]
 
+        # Store augmented rows, keeping the index of their original row
         new_rows.append(
             pd.DataFrame(to_add, columns=df.columns, index=[row.name] * len(to_add))
         )
