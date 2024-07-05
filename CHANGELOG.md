@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validators for `Campaign` attributes
 _ `_optional` subpackage for managing optional dependencies
 - Acquisition function for active learning: `qNIPV`
+- Acquisition function: `qKG` (knowledge gradient)
 - Abstract `ContinuousNonlinearConstraint` class
 - Abstract `CardinalityConstraint` class and
   `DiscreteCardinalityConstraint`/`ContinuousCardinalityConstraint` subclasses
