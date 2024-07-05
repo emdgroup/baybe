@@ -97,6 +97,18 @@ class SearchSpace(SerialMixin):
         )
 
     @classmethod
+    def from_parameter(cls, parameter: Parameter) -> SearchSpace:
+        """Create a search space from a single parameter.
+
+        Args:
+            parameter: The parameter to span the search space.
+
+        Returns:
+            The created search space.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
     def from_product(
         cls,
         parameters: Sequence[Parameter],

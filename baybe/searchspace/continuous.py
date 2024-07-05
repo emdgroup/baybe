@@ -129,6 +129,18 @@ class SubspaceContinuous(SerialMixin):
         return SubspaceContinuous([])
 
     @classmethod
+    def from_parameter(cls, parameter: ContinuousParameter) -> SubspaceContinuous:
+        """Create a subspace from a single parameter.
+
+        Args:
+            parameter: The parameter to span the subspace.
+
+        Returns:
+            The created subspace.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
     def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
         """Create a hyperrectangle-shaped continuous subspace with given bounds.
 

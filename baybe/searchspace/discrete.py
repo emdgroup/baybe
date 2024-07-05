@@ -249,6 +249,18 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @classmethod
+    def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
+        """Create a subspace from a single parameter.
+
+        Args:
+            parameter: The parameter to span the subspace.
+
+        Returns:
+            The created subspace.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
     def from_product(
         cls,
         parameters: Sequence[DiscreteParameter],
