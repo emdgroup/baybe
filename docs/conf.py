@@ -81,7 +81,9 @@ extensions = [
     "sphinx.ext.viewcode",  # Links to code
     "sphinx_autodoc_typehints",  # Proper typehints
     "sphinx_copybutton",  # Copy button for code blocks
+    "sphinxcontrib.bibtex",  # Bibtex support
 ]
+bibtex_bibfiles = ["references.bib"]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
 autosectionlabel_prefix_document = True  # Make sure autosectionlabels are unique
 
