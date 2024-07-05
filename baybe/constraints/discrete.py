@@ -5,6 +5,7 @@ from functools import reduce
 from typing import Any, cast
 
 import pandas as pd
+import polars as pl
 from attr import define, field
 from attr.validators import in_, min_len
 
@@ -12,6 +13,7 @@ from baybe.constraints.base import DiscreteConstraint
 from baybe.constraints.conditions import (
     Condition,
     ThresholdCondition,
+    _threshold_operators,
     _valid_logic_combiners,
 )
 from baybe.serialization import (
@@ -42,6 +44,20 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
         return data.index[res]
 
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        satisfied = []
+        for k, cond in enumerate(self.conditions):
+            satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
+
+        expr = pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
+
+        # Negate the expression, because Polars' filter keeps the rows
+        # the expression satisfies
+        expr = expr.not_()
+
+        return expr
+
 
 @define
 class DiscreteSumConstraint(DiscreteConstraint):
@@ -60,6 +76,10 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        return self.condition.to_polars(pl.sum_horizontal(self.parameters))
+
 
 @define
 class DiscreteProductConstraint(DiscreteConstraint):
@@ -77,6 +97,16 @@ class DiscreteProductConstraint(DiscreteConstraint):
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
         return data.index[mask_bad]
+
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        op = _threshold_operators[self.condition.operator]
+
+        # Get the product of columns
+        expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
+
+        # Apply the threshold operator on expr and the condition threshold
+        return op(expr, self.condition.threshold)
 
 
 class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):

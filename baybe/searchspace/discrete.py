@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from attr import define, field
 from cattrs import IterableValidationError
 
@@ -668,6 +669,32 @@ class SubspaceDiscrete(SerialMixin):
             pass
 
         return comp_rep
+
+
+def _apply_polars_constraint_filter(
+    ldf: pl.LazyFrame, constraints: Collection[DiscreteConstraint]
+) -> pl.LazyFrame:
+    """Remove discrete search space entries inplace based on constraints.
+
+    Note:
+        This will silently skip constraints that have no Polars implementation.
+
+    Args:
+        ldf: The data in experimental representation to be modified inplace.
+        constraints: Collection of discrete constraints.
+
+    Returns:
+        A Polars lazyframe with undesired rows removed.
+
+    """
+    for c in constraints:
+        try:
+            pl_expr = c.to_polars()
+            ldf = ldf.filter(pl_expr)
+        except NotImplementedError:
+            pass
+
+    return ldf
 
 
 def _apply_constraint_filter(
