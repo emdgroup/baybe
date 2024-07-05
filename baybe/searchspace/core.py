@@ -393,6 +393,13 @@ class SearchSpace(SerialMixin):
         return comp_rep
 
 
+def to_searchspace(
+    x: Parameter | SubspaceDiscrete | SubspaceContinuous | SearchSpace, /
+) -> SearchSpace:
+    """Convert a parameter/subspace into a search space (with search space passthrough)."""  # noqa: E501
+    return x if isinstance(x, SearchSpace) else x.to_searchspace()
+
+
 def validate_searchspace_from_config(specs: dict, _) -> None:
     """Validate the search space specifications while skipping costly creation steps."""
     # Validate product inputs without constructing it
