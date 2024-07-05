@@ -92,6 +92,15 @@ Overall, if correlated task data are provided, the optimization of new campaigns
 can experience a dramatic speedup.
 ```
 
+```{admonition} Adding Irrelevant Data
+:class: warning
+Because of the ability to learn the task relationships, it might be tempting to add
+arbitrary data to a transfer learning enabled campaigns. We caution against this, as
+uncorrelated data can actually decrease the performance of the optimization. Even a
+simple preliminary correlation filter to find suitable contexts can already increase
+robustness.
+```
+
 ## The Role of the TaskParameter
 
 The [`TaskParameter`] is used to "mark" the context of individual experiments and thus
