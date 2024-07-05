@@ -149,7 +149,7 @@ for example, using multiple models, shared architectures, special kernels in a s
 model, etc.
 Encoding the context information via a [TaskParameter] is not restricted to any of
 these methods, even though BayBE currently only implements a variant via kernels,
-specifically: the Intrinsic Coregionalization Model.
+specifically: the Intrinsic Coregionalization Model {cite:p}`NIPS2007_66368270`.
 ```
 
 ## Seeing Transfer Learning in Action
@@ -174,6 +174,9 @@ on the optimization:
 ```{image} ../../examples/Transfer_Learning/basic_transfer_learning_dark.svg
 :align: center
 :class: only-dark
+```
+
+```{bibliography}
 ```
 
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter

@@ -100,6 +100,7 @@ docs = [
     "sphinx>=7.1.1",
     "sphinx-autodoc-typehints>=1.24.0",
     "sphinx-copybutton==0.5.2",
+    "sphinxcontrib-bibtex>=2.6.2 ",
 ]
 
 examples = [
