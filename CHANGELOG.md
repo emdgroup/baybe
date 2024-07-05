@@ -25,6 +25,7 @@ _ `_optional` subpackage for managing optional dependencies
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
 - Polars expressions for `DiscreteSumConstraint`, `DiscreteProductConstraint` and 
   `DiscreteExcludeConstraint`
+- Polars expressions for `DiscreteLinkedParametersConstraint` and `DiscreteNoLabelDuplicatesConstraint`
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
