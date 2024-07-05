@@ -16,7 +16,7 @@ from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
-from baybe.constraints.base import ContinuousNonlinearConstraint
+from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
     validate_cardinality_constraints_are_nonoverlapping,
 )
@@ -139,6 +139,31 @@ class SubspaceContinuous(SerialMixin):
             The created subspace.
         """
         return cls.from_product([parameter])
+
+    @classmethod
+    def from_product(
+        cls,
+        parameters: Sequence[ContinuousParameter],
+        constraints: Sequence[ContinuousConstraint] | None = None,
+    ) -> SubspaceContinuous:
+        """See :class:`baybe.searchspace.core.SearchSpace`."""
+        constraints = constraints or []
+        return SubspaceContinuous(
+            parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
+            constraints_lin_eq=[  # type:ignore[misc]
+                c
+                for c in constraints
+                if isinstance(c, ContinuousLinearEqualityConstraint)
+            ],
+            constraints_lin_ineq=[  # type:ignore[misc]
+                c
+                for c in constraints
+                if isinstance(c, ContinuousLinearInequalityConstraint)
+            ],
+            constraints_nonlin=[
+                c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
+            ],
+        )
 
     @classmethod
     def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
