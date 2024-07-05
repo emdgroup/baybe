@@ -2,9 +2,13 @@
 
 import polars as pl
 import pytest
+from pandas.testing import assert_frame_equal
 
 from baybe.searchspace.discrete import (
+    _apply_pandas_constraint_filter,
     _apply_polars_constraint_filter,
+    parameter_cartesian_prod_polars,
+    parameter_cartesian_prod_to_df,
 )
 
 
@@ -149,3 +153,48 @@ def test_polars_linked_parameters(parameters, constraints):
 
     num_entries = len(df)
     assert num_entries == 0
+
+
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        [
+            "Temperature",
+            "Solvent_1",
+            "Solvent_2",
+            "Solvent_3",
+            "Fraction_1",
+            "Fraction_2",
+            "Fraction_3",
+        ]
+    ],
+)
+@pytest.mark.parametrize(
+    "constraint_names",
+    [
+        ["Constraint_4"],
+        ["Constraint_12"],
+        ["Constraint_14", "Constraint_8", "Constraint_9"],
+    ],
+)
+def test_polars_product(constraints, parameters):
+    """Test the result of parameter product and filtering."""
+    # Do Polars product
+    ldf = parameter_cartesian_prod_polars(parameters)
+    pol_df = ldf.collect()
+
+    # Do Pandas product
+    pd_df = parameter_cartesian_prod_to_df(parameters)
+
+    # Assert equality of lengths before filtering
+    assert len(pol_df.to_pandas()) == len(pd_df)
+
+    # Apply same constraints on Pandas dataframe
+    _apply_pandas_constraint_filter(pd_df, constraints)
+
+    # And then separately apply constraints using Polars
+    ldf = _apply_polars_constraint_filter(ldf, constraints)
+    pol_result = ldf.collect().to_pandas()
+
+    # Assert strict equality of two dataframes
+    assert_frame_equal(pol_result, pd_df)
