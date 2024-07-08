@@ -3,7 +3,7 @@
 
 import pytest
 
-from baybe.acquisition import qNIPV
+from baybe.acquisition import qKG, qNIPV
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import UnusedObjectWarning
 from baybe.kernels.base import Kernel
@@ -207,6 +207,9 @@ test_targets = [
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_iter_mc_acquisition_function(campaign, n_iterations, batch_size, acqf):
+    if isinstance(acqf, qKG):
+        pytest.skip(f"{acqf.__class__.__name__} only works with continuous spaces.")
+
     run_iterations(campaign, n_iterations, batch_size)
 
 
