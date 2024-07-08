@@ -14,7 +14,7 @@ import pandas as pd
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
-from baybe.simulation.lookup import _look_up_target_values
+from baybe.simulation.lookup import look_up_targets
 from baybe.targets.enum import TargetMode
 from baybe.utils.dataframe import add_parameter_noise
 from baybe.utils.numerical import DTypeFloatNumpy, closer_element, closest_element
@@ -43,14 +43,9 @@ def simulate_experiment(
 
     Args:
         campaign: The DOE setting to be simulated.
-        lookup: The lookup used to close the loop, provided in the form of a dataframe
-            or callable that define the targets for the queried parameter settings:
-            First, a dataframe containing experimental settings and their target
-            results can be chosen.
-            Second, A callable, providing target values for the given parameter
-            settings. can be chosen. The callable is assumed to return either a float
-            or a tuple of floats and to accept an arbitrary number of floats as input.
-            Finally,``None`` can be chosen, producing fake results.
+        lookup: The lookup used to close the loop, providing target values for the
+            queried parameter settings.
+            For details, see :func:`baybe.simulation.lookup.look_up_targets`.
         batch_size: The number of recommendations to be queried per iteration.
         n_doe_iterations:  The number of iterations to run the design-of-experiments
             loop. If not specified, the simulation proceeds until there are no more
@@ -59,15 +54,11 @@ def simulate_experiment(
             loop.
         random_seed: An optional random seed to be used for the simulation.
         impute_mode: Specifies how a missing lookup will be handled.
-            There are six different options available.
+            For details, see :func:`baybe.simulation.lookup.look_up_targets`.
+            In addition to the choices listed there, the following option is available:
 
-            - ``"error"``: An error will be thrown.
-            - ``"worst"``: Imputation uses the worst available value for each target.
-            - ``"best"``: Imputation uses the best available value for each target.
-            - ``"mean"``: Imputation uses the mean value for each target.
-            - ``"random"``: A random row will be used as lookup.
-            - ``"ignore"``: The search space is stripped before recommendations are made
-              so that unmeasured experiments will not be recommended.
+            -   ``"ignore"``: The search space is stripped before recommendations are
+                made so that unmeasured experiments will not be recommended.
         noise_percent: If not ``None``, relative noise in percent of
             ``noise_percent`` will be applied to the parameter measurements.
 
@@ -180,7 +171,7 @@ def simulate_experiment(
                 break
 
             n_experiments += len(measured)
-            _look_up_target_values(measured, campaign, lookup, impute_mode)
+            look_up_targets(measured, campaign.targets, lookup, impute_mode)
 
             # Create the summary for the current iteration and store it
             result = pd.DataFrame(

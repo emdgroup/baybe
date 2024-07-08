@@ -101,7 +101,7 @@ def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:
 
     Example:
         >>> group_duplicate_values({"A": 1, "B": 2, "C": 1, "D": 3})
-        {1: ['B', 'C']}
+        {1: ['A', 'C']}
     """
     group: dict[_U, list[_T]] = {}
     for key, value in dictionary.items():

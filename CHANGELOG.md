@@ -30,6 +30,7 @@ _ `_optional` subpackage for managing optional dependencies
 - `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
   now take additional `allow_missing` and `allow_extra` keyword arguments
 - More details to the transfer learning user guide
+- Activated doctests
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -38,6 +39,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Sampling methods in `qNIPV` and `BotorchRecommender` are now specified via 
   `DiscreteSamplingMethod` enum
 - `Interval` class now supports degenerate intervals containing only one element
+- `add_fake_results` now directly processes `Target` objects instead of a `Campaign`
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
