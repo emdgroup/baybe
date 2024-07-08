@@ -8,7 +8,7 @@ import pandas as pd
 
 def df_apply_permutation_augmentation(
     df: pd.DataFrame,
-    columns: Sequence[Sequence[str]],
+    column_groups: Sequence[Sequence[str]],
 ) -> pd.DataFrame:
     """Augment a dataframe if permutation invariant columns are present.
 
@@ -22,7 +22,7 @@ def df_apply_permutation_augmentation(
         | b  | a  | x  | z  |
         +----+----+----+----+
 
-    *   Result with ``columns = [["A1"], ["A2"]]``
+    *   Result with ``column_groups = [["A1"], ["A2"]]``
 
         +----+----+----+----+
         | A1 | A2 | B1 | B2 |
@@ -36,7 +36,7 @@ def df_apply_permutation_augmentation(
         | a  | b  | x  | z  |
         +----+----+----+----+
 
-    *   Result with ``columns = [["A1", "B1"], ["A2", "B2"]]``
+    *   Result with ``column_groups = [["A1", "B1"], ["A2", "B2"]]``
 
         +----+----+----+----+
         | A1 | A2 | B1 | B2 |
@@ -52,33 +52,40 @@ def df_apply_permutation_augmentation(
 
     Args:
         df: The dataframe that should be augmented.
-        columns: Sequences of permutation invariant columns. The n'th column in each
-            sequence will be permuted together with each n'th column in the other
-            sequences.
+        column_groups: Sequences of permutation invariant columns. The n'th column in
+            each group will be permuted together with each n'th column in the other
+            groups.
 
     Returns:
         The augmented dataframe containing the original one. Augmented row indices are
         identical with the index of their original row.
 
     Raises:
-        ValueError: If ``dependents`` has length incompatible with ``columns``.
-        ValueError: If entries in ``dependents`` are not of same length.
+        ValueError: If less than two column groups are given.
+        ValueError: If a column group is empty.
+        ValueError: If the column groups have differing amounts of entries.
     """
     # Validation
-    if len(columns) < 2:
+    if len(column_groups) < 2:
         raise ValueError(
             "When augmenting permutation invariance, at least two column sequences "
             "must be given."
         )
-    if len({len(seq) for seq in columns}) != 1 or len(columns[0]) < 1:
+
+    if len({len(seq) for seq in column_groups}) != 1:
         raise ValueError(
             "Permutation augmentation can only work if the amount of columns in each "
-            "sequence is the same and the sequences are not empty."
+            "sequence is the same."
+        )
+    elif len(column_groups[0]) < 1:
+        raise ValueError(
+            "Permutation augmentation can only work if each column group has at "
+            "least one entry."
         )
 
     # Augmentation Loop
     new_rows: list[pd.DataFrame] = []
-    idx_permutation = list(permutations(range(len(columns))))
+    idx_permutation = list(permutations(range(len(column_groups))))
     for _, row in df.iterrows():
         # For each row in the original df, collect all its permutations
         to_add = []
@@ -87,7 +94,7 @@ def df_apply_permutation_augmentation(
 
             # Permute columns, this is done separately for each tuple of columns that
             # belong together
-            for deps in map(list, zip(*columns)):
+            for deps in map(list, zip(*column_groups)):
                 new_row[deps] = row[[deps[k] for k in perm]]
 
             to_add.append(new_row)

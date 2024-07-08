@@ -12,7 +12,7 @@ from baybe.utils.augmentation import (
 
 
 @pytest.mark.parametrize(
-    ("data", "columns", "data_expected"),
+    ("data", "col_groups", "data_expected"),
     [
         param(  # 2 invariant cols and 1 unaffected col
             {
@@ -128,11 +128,11 @@ from baybe.utils.augmentation import (
         ),
     ],
 )
-def test_df_permutation_aug(data, columns, data_expected):
+def test_df_permutation_aug(data, col_groups, data_expected):
     """Test permutation invariance data augmentation is done correctly."""
     # Create all needed dataframes
     df = pd.DataFrame(data)
-    df_augmented = df_apply_permutation_augmentation(df, columns)
+    df_augmented = df_apply_permutation_augmentation(df, col_groups)
     df_expected = pd.DataFrame(data_expected)
 
     # Determine equality ignoring row order
@@ -150,19 +150,19 @@ def test_df_permutation_aug(data, columns, data_expected):
 
 
 @pytest.mark.parametrize(
-    ("columns", "msg"),
+    ("col_groups", "msg"),
     [
-        param([], "at least two column sequences", id="no_seqs"),
-        param([["A"]], "at least two column sequences", id="just_one_seq"),
-        param([["A"], ["B", "C"]], "sequence is the same", id="different_lengths"),
-        param([[], []], "sequence is the same", id="empty_seqs"),
+        param([], "at least two column sequences", id="no_groups"),
+        param([["A"]], "at least two column sequences", id="just_one_group"),
+        param([["A"], ["B", "C"]], "the amount of columns in", id="different_lengths"),
+        param([[], []], "each column group has", id="empty_group"),
     ],
 )
-def test_df_permutation_aug_invalid(columns, msg):
+def test_df_permutation_aug_invalid(col_groups, msg):
     """Test correct errors for invalid permutation attempts."""
     df = pd.DataFrame({"A": [1, 1], "B": [2, 2], "C": ["x", "y"]})
     with pytest.raises(ValueError, match=msg):
-        df_apply_permutation_augmentation(df, columns)
+        df_apply_permutation_augmentation(df, col_groups)
 
 
 @pytest.mark.parametrize(
