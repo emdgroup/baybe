@@ -122,9 +122,10 @@ def test_polars_label_duplicates(parameters, constraints):
     ldf = _apply_polars_constraint_filter(ldf, constraints)
 
     ldf = ldf.with_columns(
-        n_unique=pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
+        pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
         .list.eval(pl.element().n_unique())
         .explode()
+        .alias("n_unique")
     )
     df = ldf.filter(pl.col("n_unique") != len(parameters)).collect()
 
@@ -142,9 +143,10 @@ def test_polars_linked_parameters(parameters, constraints):
     ldf = _apply_polars_constraint_filter(ldf, constraints)
 
     ldf = ldf.with_columns(
-        n_unique=pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
+        pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
         .list.eval(pl.element().n_unique())
         .explode()
+        .alias("n_unique")
     )
     df = ldf.filter(pl.col("n_unique") != 1).collect()
 
