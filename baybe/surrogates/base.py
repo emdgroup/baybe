@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -30,10 +30,9 @@ from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.posteriors import Posterior
     from torch import Tensor
 
-# Define constants
-_MIN_VARIANCE = 1e-6
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -96,47 +95,22 @@ class Surrogate(ABC, SerialMixin):
             raise ModelNotTrainedError("The model must be trained first.")
         return self._target_transform(data)
 
-    def posterior(self, candidates: pd.DataFrame) -> tuple[Tensor, Tensor]:
+    def posterior(self, candidates: pd.DataFrame) -> Posterior:
         """Evaluate the surrogate model at the given candidate points."""
-        import torch
-
-        # Evaluate the posterior distribution
-        mean, covar = self._posterior(to_tensor(self.transform_inputs(candidates)))
-
-        # Apply covariance transformation for marginal posterior models
-        if not self.joint_posterior:
-            # Convert to tensor containing covariance matrices
-            covar = torch.diag_embed(covar)
-
-        # Add small diagonal variances for numerical stability
-        covar.add_(torch.eye(covar.shape[-1]) * _MIN_VARIANCE)
-
-        return mean, covar
+        return self._posterior(to_tensor(self.transform_inputs(candidates)))
 
     @abstractmethod
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-        """Perform the actual posterior evaluation logic.
+    def _posterior(self, candidates: Tensor) -> Posterior:
+        """Perform the actual posterior evaluation logic."""
 
-        In contrast to its public counterpart
-        :func:`baybe.surrogates.Surrogate.posterior`, no data
-        validation/transformation is carried out but only the raw posterior computation
-        is conducted.
+    @staticmethod
+    def _get_model_context(searchspace: SearchSpace, objective: Objective) -> Any:
+        """Get the surrogate-specific context for model fitting.
 
-        Note that the public ``posterior`` method *always* returns a full covariance
-        matrix. By contrast, this method may return either a covariance matrix or a
-        tensor of marginal variances, depending on the models ``joint_posterior``
-        flag. The optional conversion to a covariance matrix is handled by the public
-        method.
-
-        See :func:`baybe.surrogates.Surrogate.posterior` for details on the
-        parameters.
-
-        Args:
-            candidates: The candidates.
-
-        Returns:
-            See :func:`baybe.surrogates.Surrogate.posterior`.
+        By default, no context is created. If context is required, subclasses are
+        expected to override this method.
         """
+        return None
 
     def fit(
         self,
@@ -183,18 +157,11 @@ class Surrogate(ABC, SerialMixin):
             self.transform_inputs(measurements),
             self.transform_targets(measurements),
         )
-        self._fit(searchspace, train_x, train_y)
+        self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
     @abstractmethod
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
-        """Perform the actual fitting logic.
-
-        In contrast to its public counterpart :func:`baybe.surrogates.Surrogate.fit`,
-        no data validation/transformation is carried out but only the raw fitting
-        operation is conducted.
-
-        See :func:`baybe.surrogates.Surrogate.fit` for details on the parameters.
-        """
+    def _fit(self, train_x: Tensor, train_y: Tensor, context: Any = None) -> None:
+        """Perform the actual fitting logic."""
 
 
 def _make_hook_decode_onnx_str(
