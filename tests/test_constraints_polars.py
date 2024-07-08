@@ -118,7 +118,6 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
 def test_polars_label_duplicates(parameters, constraints):
     """Tests Polars implementation of no-label duplicates constraint."""
     ldf = _lazyframe_from_product(parameters)
-
     ldf = _apply_polars_constraint_filter(ldf, constraints)
 
     ldf = ldf.with_columns(
@@ -130,7 +129,6 @@ def test_polars_label_duplicates(parameters, constraints):
     df = ldf.filter(pl.col("n_unique") != len(parameters)).collect()
 
     num_entries = len(df)
-
     assert num_entries == 0
 
 
@@ -139,7 +137,6 @@ def test_polars_label_duplicates(parameters, constraints):
 def test_polars_linked_parameters(parameters, constraints):
     """Tests Polars implementation of linked parameters constraint."""
     ldf = _lazyframe_from_product(parameters)
-
     ldf = _apply_polars_constraint_filter(ldf, constraints)
 
     ldf = ldf.with_columns(
@@ -151,5 +148,4 @@ def test_polars_linked_parameters(parameters, constraints):
     df = ldf.filter(pl.col("n_unique") != 1).collect()
 
     num_entries = len(df)
-
     assert num_entries == 0
