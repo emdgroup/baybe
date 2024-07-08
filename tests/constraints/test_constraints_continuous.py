@@ -7,6 +7,7 @@ from baybe.constraints import (
     ContinuousLinearInequalityConstraint,
 )
 from tests.conftest import run_iterations
+from tests.constraints.test_cardinality_constraint_continuous import _validate_samples
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -55,6 +56,32 @@ def test_inequality2(campaign, n_iterations, batch_size):
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "parameter_names", [["Conti_finite1", "Conti_finite2", "Conti_finite3"]]
+)
+@pytest.mark.parametrize("constraint_names", [["ContiConstraint_5"]])
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_cardinality_constraint(campaign, n_iterations, batch_size):
+    """Test cardinality constraint for both random recommender and botorch
+    recommender."""  # noqa
+    TOLERANCE = 0.001
+    MIN_CARDINALITY = 1
+    MAX_CARDINALITY = 2
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    recommendations = campaign.measurements
+    print(recommendations)
+
+    # Assert that conditions listed in_validate_samples() are fulfilled
+    _validate_samples(
+        recommendations[["Conti_finite1", "Conti_finite2", "Conti_finite3"]],
+        max_cardinality=MAX_CARDINALITY,
+        min_cardinality=MIN_CARDINALITY,
+        batch_size=batch_size * 2,
+        tolerance=TOLERANCE,
+    )
 
 
 @pytest.mark.slow

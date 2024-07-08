@@ -26,6 +26,8 @@ _ `_optional` subpackage for managing optional dependencies
 - Abstract `CardinalityConstraint` class and
   `DiscreteCardinalityConstraint`/`ContinuousCardinalityConstraint` subclasses
 - Uniform sampling mechanism for continuous spaces with cardinality constraints
+- `to_botorch` becomes an abstract method of abstract `ContinuousConstraint`
+- Botorch recommenders supports `ContinuousCardinalityConstraint` via `to_botorch`
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
 - `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
   now take additional `allow_missing` and `allow_extra` keyword arguments
@@ -38,6 +40,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Sampling methods in `qNIPV` and `BotorchRecommender` are now specified via 
   `DiscreteSamplingMethod` enum
 - `Interval` class now supports degenerate intervals containing only one element
+- `SubspaceContinuous.samples_uniform` has an additional optional parameter `tolerance`
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
