@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
 
 if TYPE_CHECKING:
+    from botorch.posteriors import Posterior
     from torch import Tensor
 
     from baybe.surrogates.base import Surrogate
@@ -54,7 +55,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
     _fit_original = cls._fit
     _posterior_original = cls._posterior
 
-    def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _posterior_new(self, candidates: Tensor) -> Posterior:
         # Alternative model fallback
         if hasattr(self, injected_model_attr_name):
             return getattr(self, injected_model_attr_name)._posterior(candidates)
@@ -62,9 +63,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         # Regular operation
         return _posterior_original(self, candidates)
 
-    def _fit_new(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> None:
+    def _fit_new(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
         if not (train_y.ndim == 2 and train_y.shape[-1] == 1):
             raise NotImplementedError(
                 "The current logic is only implemented for single-target surrogates."
@@ -73,7 +72,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         # Alternative model fallback
         if train_y.numel() == 1 or train_y.std() < std_threshold:
             model = MeanPredictionSurrogate()
-            model._fit(searchspace, train_x, train_y)
+            model._fit(train_x, train_y, context)
             try:
                 setattr(self, injected_model_attr_name, model)
             except AttributeError as ex:
@@ -86,7 +85,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         else:
             if hasattr(self, injected_model_attr_name):
                 delattr(self, injected_model_attr_name)
-            _fit_original(self, searchspace, train_x, train_y)
+            _fit_original(self, train_x, train_y, context)
 
     # Replace the methods
     cls._posterior = _posterior_new
