@@ -39,4 +39,12 @@ class AdapterModel(Model):
         **kwargs: Any,
     ) -> Posterior:
         # See base class.
+        if (
+            (output_indices is not None)
+            or observation_noise
+            or (posterior_transform is not None)
+        ):
+            raise NotImplementedError(
+                "The optional model posterior arguments are not yet implemented."
+            )
         return self._surrogate._posterior(X)
