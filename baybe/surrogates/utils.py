@@ -6,9 +6,6 @@ from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Any
 
-from baybe.scaler import DefaultScaler
-from baybe.searchspace import SearchSpace
-
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
     from torch import Tensor
@@ -74,64 +71,6 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         else:
             _constant_target_model_store.pop(id(self), None)
             _fit_original(self, train_x, train_y, context)
-
-    # Replace the methods
-    cls._posterior = _posterior_new
-    cls._fit = _fit_new
-
-    return cls
-
-
-def autoscale(cls: type[Surrogate]):
-    """Make a ``Surrogate`` class automatically scale the domain it operates on.
-
-    More specifically, the modified class transforms its inputs before processing them
-    and untransforms the results before returning them. The fitted scaler used for these
-    transformations is stored in the class' objects as an additional temporary
-    attribute.
-
-    Args:
-        cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
-
-    Raises:
-        ValueError: If the class already contains an attribute with the same name
-            as the temporary attribute to be added.
-
-    Returns:
-        The modified class.
-    """
-    # Name of the attribute added to store the scaler
-    injected_scaler_attr_name = "_autoscaler"
-
-    if injected_scaler_attr_name in (attr.name for attr in cls.__attrs_attrs__):
-        raise ValueError(
-            f"Cannot apply '{autoscale.__name__}' because "
-            f"'{cls.__name__}' already has an attribute '{injected_scaler_attr_name}' "
-            f"defined."
-        )
-
-    # References to original methods
-    _fit_original = cls._fit
-    _posterior_original = cls._posterior
-
-    def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-        scaled = getattr(self, injected_scaler_attr_name).transform(candidates)
-        mean, covar = _posterior_original(self, scaled)
-        return getattr(self, injected_scaler_attr_name).untransform(mean, covar)
-
-    def _fit_new(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> None:
-        scaler = DefaultScaler(searchspace.discrete.comp_rep)
-        scaled_x, scaled_y = scaler.fit_transform(train_x, train_y)
-        try:
-            setattr(self, injected_scaler_attr_name, scaler)
-        except AttributeError as ex:
-            raise TypeError(
-                f"'{autoscale.__name__}' is only applicable to "
-                f"non-slotted classes but '{cls.__name__}' is a slotted class."
-            ) from ex
-        _fit_original(self, searchspace, scaled_x, scaled_y)
 
     # Replace the methods
     cls._posterior = _posterior_new
