@@ -10,7 +10,7 @@ It is planned to solve this issue in the future.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field, validators
 
@@ -24,7 +24,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import block_serialization_hook, converter
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import GaussianSurrogate, Surrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import validate_custom_architecture_cls
 from baybe.utils.numerical import DTypeFloatONNX
@@ -66,10 +66,8 @@ def register_custom_architecture(
             def __init__(self, *args, **kwargs):
                 self._model = model_cls(*args, **kwargs)
 
-            def _fit(
-                self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-            ) -> None:
-                return self._model._fit(searchspace, train_x, train_y)
+            def _fit(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
+                return self._model._fit(train_x, train_y, context)
 
             def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
                 return self._model._posterior(candidates)
@@ -113,7 +111,7 @@ def register_custom_architecture(
 
 
 @define(kw_only=True)
-class CustomONNXSurrogate(Surrogate):
+class CustomONNXSurrogate(GaussianSurrogate):
     """A wrapper class for custom pretrained surrogate models.
 
     Note that these surrogates cannot be retrained.
@@ -149,7 +147,7 @@ class CustomONNXSurrogate(Surrogate):
             raise ValueError("Invalid ONNX string") from exc
 
     @batchify
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch

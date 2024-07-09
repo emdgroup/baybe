@@ -3,10 +3,8 @@
 from collections.abc import Callable
 from typing import Any
 
-import gpytorch.distributions
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
-from botorch.posteriors.gpytorch import GPyTorchPosterior
 from torch import Tensor
 
 from baybe.surrogates.base import Surrogate
@@ -41,6 +39,4 @@ class AdapterModel(Model):
         **kwargs: Any,
     ) -> Posterior:
         # See base class.
-        mean, var = self._surrogate.posterior(X)
-        mvn = gpytorch.distributions.MultivariateNormal(mean, var)
-        return GPyTorchPosterior(mvn)
+        return self._surrogate._posterior(X)

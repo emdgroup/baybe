@@ -14,8 +14,7 @@ import numpy as np
 from attr import define, field
 from sklearn.ensemble import RandomForestRegressor
 
-from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import GaussianSurrogate
 from baybe.surrogates.utils import autoscale, batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
@@ -26,7 +25,7 @@ if TYPE_CHECKING:
 @catch_constant_targets
 @autoscale
 @define(slots=False)
-class RandomForestSurrogate(Surrogate):
+class RandomForestSurrogate(GaussianSurrogate):
     """A random forest surrogate model."""
 
     # Class variables
@@ -48,7 +47,7 @@ class RandomForestSurrogate(Surrogate):
     """The actual model."""
 
     @batchify
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         # See base class.
 
         import torch
@@ -72,7 +71,7 @@ class RandomForestSurrogate(Surrogate):
 
         return mean, var
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
         # See base class.
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())

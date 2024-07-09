@@ -30,7 +30,7 @@ from baybe.utils.dataframe import to_tensor
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
-    from botorch.posteriors import Posterior
+    from botorch.posteriors import GPyTorchPosterior, Posterior
     from torch import Tensor
 
 
@@ -162,6 +162,34 @@ class Surrogate(ABC, SerialMixin):
     @abstractmethod
     def _fit(self, train_x: Tensor, train_y: Tensor, context: Any = None) -> None:
         """Perform the actual fitting logic."""
+
+
+@define(slots=False)
+class GaussianSurrogate(Surrogate, ABC):
+    """A surrogate model providing Gaussian posterior estimates."""
+
+    def _posterior(self, candidates: Tensor) -> GPyTorchPosterior:
+        # See base class.
+
+        import torch
+        from botorch.posteriors import GPyTorchPosterior
+        from gpytorch.distributions import MultivariateNormal
+
+        # Construct the Gaussian posterior from the estimated first and second moment
+        mean, var = self._estimate_moments(candidates)
+        if not self.joint_posterior:
+            var = torch.diag_embed(var)
+        mvn = MultivariateNormal(mean, var)
+        return GPyTorchPosterior(mvn)
+
+    @abstractmethod
+    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+        """Estimate first and second moments of the Gaussian posterior.
+
+        The second moment may either be a 1-D tensor of marginal variances for the
+        candidates or a 2-D tensor representing a full covariance matrix over all
+        candidates, depending on the ``joint_posterior`` flag of the model.
+        """
 
 
 def _make_hook_decode_onnx_str(
