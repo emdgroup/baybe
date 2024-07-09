@@ -744,7 +744,7 @@ def parameter_cartesian_prod_polars(parameters: Iterable[Parameter]) -> pl.LazyF
         return pl.LazyFrame()
 
     # Convert each parameter to a lazy dataframe for cross-join operation
-    param_frames = [pl.LazyFrame({p.name: p.values}) for p in discrete_parameters]
+    param_frames = [pl.LazyFrame({p.name: p.values}) for p in discrete_parameters]  # type:ignore[attr-defined]
 
     # Handling edge cases
     if len(param_frames) == 1:
