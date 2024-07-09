@@ -124,15 +124,18 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 ### Knowledge Gradient
 @define(frozen=True)
 class qKnowledgeGradient(AcquisitionFunction):
-    """Monte Carlo based knowledge gradient."""
+    """Monte Carlo based knowledge gradient.
+
+    This acquisition function currently only supports purely continuous spaces.
+    """
 
     abbreviation: ClassVar[str] = "qKG"
 
     num_fantasies: int = field(validator=[instance_of(int), gt(0)], default=128)
     """Number of fantasies to draw for approximating the knowledge gradient.
 
-    More samples result in a better approximation, at the expense of both memory and
-    wall time."""
+    More samples result in a better approximation, at the expense of both increased
+    memory footprint and wall time."""
 
 
 ########################################################################################
