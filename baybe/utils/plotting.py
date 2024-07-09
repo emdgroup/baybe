@@ -19,10 +19,6 @@ def create_example_plots(
 ) -> None:
     """Create plots from an Axes object and save them as a svg file.
 
-    The attribute ``base_name`` is used to define the name of the outputs.
-    The optional argument ``path`` can be used to specify a specific location for
-    saving the outputs.
-
     If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
     immediately returns.
 
