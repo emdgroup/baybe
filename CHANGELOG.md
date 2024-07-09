@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DiscreteParameter.transform` 
 - `Surrogate` models now operate on dataframes in experimental representation instead of
   tensors in computational representation
+- `Surrogate.posterior` models now returns a `Posterior` object
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
@@ -31,6 +32,7 @@ _ `_optional` subpackage for managing optional dependencies
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
 - `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
   now take additional `allow_missing` and `allow_extra` keyword arguments
+- `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -39,10 +41,15 @@ _ `_optional` subpackage for managing optional dependencies
 - Sampling methods in `qNIPV` and `BotorchRecommender` are now specified via 
   `DiscreteSamplingMethod` enum
 - `Interval` class now supports degenerate intervals containing only one element
+- Context information required by `Surrogate` models is now cleanly encapsulated into
+  a `context` object passed to `Surrogate._fit`
+- Fallback models created by `catch_constant_targets` are stored outside of surrogate
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
   and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
+- `register_custom_architecture` decorator
+- `Scalar` and `DefaultScaler` classes
 
 ### Fixed
 - `sequential` flag of `SequentialGreedyRecommender` is now set to `True`
@@ -57,6 +64,8 @@ _ `_optional` subpackage for managing optional dependencies
 - Passing a dataframe via the `data` argument to the `transform` methods of
   `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
   The dataframe must now be passed as positional argument.
+- Role of `register_custom_architecture` has been taken over by
+  `baybe.surrogates.base.SurrogateProtocol`
 
 ## [0.9.1] - 2024-06-04
 ### Changed
