@@ -47,7 +47,7 @@ bytes to string and back, since the specification is a bijection between
 """
 
 
-@define(slots=False)
+@define
 class Surrogate(ABC, SerialMixin):
     """Abstract base class for all surrogate models."""
 
@@ -164,7 +164,7 @@ class Surrogate(ABC, SerialMixin):
         """Perform the actual fitting logic."""
 
 
-@define(slots=False)
+@define
 class GaussianSurrogate(Surrogate, ABC):
     """A surrogate model providing Gaussian posterior estimates."""
 

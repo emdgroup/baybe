@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 @catch_constant_targets
 @autoscale
-@define(slots=False)
+@define
 class BayesianLinearSurrogate(GaussianSurrogate):
     """A Bayesian linear regression surrogate model."""
 

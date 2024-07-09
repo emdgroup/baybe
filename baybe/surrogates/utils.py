@@ -14,6 +14,13 @@ if TYPE_CHECKING:
     from torch import Tensor
 
     from baybe.surrogates.base import Surrogate
+    from baybe.surrogates.naive import MeanPredictionSurrogate
+
+
+_constant_target_model_store: dict[int, MeanPredictionSurrogate] = {}
+"""Dictionary for storing constant target fallback models. Keys are the IDs of the
+surrogate models that temporarily have a fallback attached because they were
+trained on constant training targets. Values are the corresponding fallback models."""
 
 
 def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
@@ -25,30 +32,16 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
     The modified class handles the above cases separately from "regular operation"
     by resorting to a :class:`baybe.surrogates.naive.MeanPredictionSurrogate`,
-    which is stored as an additional temporary attribute in its objects.
+    which is stored outside the model in a dictionary maintained by this decorator.
 
     Args:
         cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
         std_threshold: The standard deviation threshold below which operation is
             switched to the alternative model.
 
-    Raises:
-        ValueError: If the class already contains an attribute with the same name
-            as the temporary attribute to be added.
-
     Returns:
         The modified class.
     """
-    # Name of the attribute added to store the alternative model
-    injected_model_attr_name = "_constant_target_model"
-
-    if injected_model_attr_name in (attr.name for attr in cls.__attrs_attrs__):
-        raise ValueError(
-            f"Cannot apply '{catch_constant_targets.__name__}' because "
-            f"'{cls.__name__}' already has an attribute '{injected_model_attr_name}' "
-            f"defined."
-        )
-
     from baybe.surrogates.naive import MeanPredictionSurrogate
 
     # References to original methods
@@ -57,8 +50,8 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
     def _posterior_new(self, candidates: Tensor) -> Posterior:
         # Alternative model fallback
-        if hasattr(self, injected_model_attr_name):
-            return getattr(self, injected_model_attr_name)._posterior(candidates)
+        if constant_target_model := _constant_target_model_store.get(id(self), None):
+            return constant_target_model._posterior(candidates)
 
         # Regular operation
         return _posterior_original(self, candidates)
@@ -73,18 +66,11 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         if train_y.numel() == 1 or train_y.std() < std_threshold:
             model = MeanPredictionSurrogate()
             model._fit(train_x, train_y, context)
-            try:
-                setattr(self, injected_model_attr_name, model)
-            except AttributeError as ex:
-                raise TypeError(
-                    f"'{catch_constant_targets.__name__}' is only applicable to "
-                    f"non-slotted classes but '{cls.__name__}' is a slotted class."
-                ) from ex
+            _constant_target_model_store[id(self)] = model
 
         # Regular operation
         else:
-            if hasattr(self, injected_model_attr_name):
-                delattr(self, injected_model_attr_name)
+            _constant_target_model_store.pop(id(self), None)
             _fit_original(self, train_x, train_y, context)
 
     # Replace the methods

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 @catch_constant_targets
 @autoscale
-@define(slots=False)
+@define
 class RandomForestSurrogate(GaussianSurrogate):
     """A random forest surrogate model."""
 
