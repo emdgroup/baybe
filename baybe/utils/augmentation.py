@@ -1,6 +1,6 @@
 """Utilities related to data augmentation."""
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from itertools import permutations, product
 
 import pandas as pd
@@ -110,7 +110,7 @@ def df_apply_permutation_augmentation(
 def df_apply_dependency_augmentation(
     df: pd.DataFrame,
     causing: tuple[str, Sequence],
-    affected: Sequence[tuple[str, Sequence]],
+    affected: Collection[tuple[str, Sequence]],
 ) -> pd.DataFrame:
     """Augment a dataframe if dependency invariant columns are present.
 
