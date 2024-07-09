@@ -12,11 +12,9 @@ import pandas as pd
 from attr import define, field
 
 from baybe.constraints import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
     validate_constraints,
 )
-from baybe.constraints.base import Constraint, ContinuousNonlinearConstraint
+from baybe.constraints.base import Constraint
 from baybe.parameters import SubstanceEncoding, TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -97,6 +95,18 @@ class SearchSpace(SerialMixin):
         )
 
     @classmethod
+    def from_parameter(cls, parameter: Parameter) -> SearchSpace:
+        """Create a search space from a single parameter.
+
+        Args:
+            parameter: The parameter to span the search space.
+
+        Returns:
+            The created search space.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
     def from_product(
         cls,
         parameters: Sequence[Parameter],
@@ -134,26 +144,14 @@ class SearchSpace(SerialMixin):
         else:
             constraints = []
 
-        discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
+        discrete = SubspaceDiscrete.from_product(
             parameters=[p for p in parameters if p.is_discrete],  # type:ignore[misc]
             constraints=[c for c in constraints if c.is_discrete],  # type:ignore[misc]
             empty_encoding=empty_encoding,
         )
-        continuous: SubspaceContinuous = SubspaceContinuous(
+        continuous = SubspaceContinuous.from_product(
             parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
-            constraints_lin_eq=[  # type:ignore[misc]
-                c
-                for c in constraints
-                if isinstance(c, ContinuousLinearEqualityConstraint)
-            ],
-            constraints_lin_ineq=[  # type:ignore[misc]
-                c
-                for c in constraints
-                if isinstance(c, ContinuousLinearInequalityConstraint)
-            ],
-            constraints_nonlin=[
-                c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
-            ],
+            constraints=[c for c in constraints if c.is_continuous],  # type:ignore[misc]
         )
 
         return SearchSpace(discrete=discrete, continuous=continuous)
@@ -379,6 +377,13 @@ class SearchSpace(SerialMixin):
         comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
 
         return comp_rep
+
+
+def to_searchspace(
+    x: Parameter | SubspaceDiscrete | SubspaceContinuous | SearchSpace, /
+) -> SearchSpace:
+    """Convert a parameter/subspace into a search space (with search space passthrough)."""  # noqa: E501
+    return x if isinstance(x, SearchSpace) else x.to_searchspace()
 
 
 def validate_searchspace_from_config(specs: dict, _) -> None:

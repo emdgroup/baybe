@@ -31,6 +31,11 @@ _ `_optional` subpackage for managing optional dependencies
   now take additional `allow_missing` and `allow_extra` keyword arguments
 - More details to the transfer learning user guide
 - Activated doctests
+- `SubspaceDiscrete.from_parameter`, `SubspaceContinuous.from_parameter`,
+  `SubspaceContinuous.from_product` and `SearchSpace.from_parameter`
+   convenience constructors
+- `DiscreteParameter.to_subspace`, `ContinuousParameter.to_subspace` and
+  `Parameter.to_searchspace` convenience constructors
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
