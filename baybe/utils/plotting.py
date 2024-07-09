@@ -14,13 +14,10 @@ from matplotlib.figure import Figure
 
 def create_example_plots(
     ax: Axes,
-    path: Path,
     base_name: str,
+    path: Path = Path("."),
 ) -> None:
     """Create plots from an Axes object and save them as a svg file.
-
-    The plots will be saved in the location specified by ``path``.
-    The attribute ``base_name`` is used to define the name of the outputs.
 
     If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
     immediately returns.
@@ -32,8 +29,8 @@ def create_example_plots(
 
     Args:
         ax: The Axes object containing the figure that should be plotted.
-        path: The path to the directory in which the plots should be saved.
         base_name: The base name that is used for naming the output files.
+        path: Optional path to the directory in which the plots should be saved.
     """
     # Check whether we immediately return due to just running a SMOKE_TEST
     if "SMOKE_TEST" in os.environ:
@@ -49,7 +46,7 @@ def create_example_plots(
 
     # Try to find the plotting themes by backtracking
     # Get the absolute path of the current script
-    script_path = Path(sys.path[0]).resolve()
+    script_path = Path(sys.argv[0]).resolve()
     while (
         not Path(script_path / "plotting_themes.json").is_file()
         and script_path != script_path.parent
