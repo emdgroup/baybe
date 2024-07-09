@@ -398,7 +398,7 @@ class SubspaceDiscrete(SerialMixin):
             )
 
         # Construct the product part of the space
-        product_space = parameter_cartesian_prod_to_df(product_parameters)
+        product_space = parameter_cartesian_prod_pandas(product_parameters)
         if not simplex_parameters:
             return cls(parameters=product_parameters, exp_rep=product_space)
 
@@ -739,7 +739,7 @@ def parameter_cartesian_prod_polars(parameters: Iterable[Parameter]) -> pl.LazyF
     Returns:
         A lazy dataframe containing all possible discrete parameter value combinations.
     """
-    discrete_parameters = [p for p in parameters if isinstance(p, DiscreteParameter)]
+    discrete_parameters = [p for p in parameters if p.is_discrete]
     if not discrete_parameters:
         return pl.LazyFrame()
 
@@ -758,10 +758,10 @@ def parameter_cartesian_prod_polars(parameters: Iterable[Parameter]) -> pl.LazyF
     return res
 
 
-def parameter_cartesian_prod_to_df(
+def parameter_cartesian_prod_pandas(
     parameters: Iterable[Parameter],
 ) -> pd.DataFrame:
-    """Create the Cartesian product of all parameter values.
+    """Create the Cartesian product of all parameter values using Pandas.
 
     Ignores continuous parameters.
 

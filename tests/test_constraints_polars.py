@@ -7,8 +7,8 @@ from pandas.testing import assert_frame_equal
 from baybe.searchspace.discrete import (
     _apply_pandas_constraint_filter,
     _apply_polars_constraint_filter,
+    parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
-    parameter_cartesian_prod_to_df,
 )
 
 
@@ -184,10 +184,12 @@ def test_polars_product(constraints, parameters):
     pol_df = ldf.collect()
 
     # Do Pandas product
-    pd_df = parameter_cartesian_prod_to_df(parameters)
+    pd_df = parameter_cartesian_prod_pandas(parameters)
 
     # Assert equality of lengths before filtering
-    assert len(pol_df.to_pandas()) == len(pd_df)
+    assert len(pol_df.to_pandas()) == len(
+        pd_df
+    ), "Polars and Pandas dataframes have different length."
 
     # Apply same constraints on Pandas dataframe
     _apply_pandas_constraint_filter(pd_df, constraints)
