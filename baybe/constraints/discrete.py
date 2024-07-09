@@ -129,6 +129,16 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        expr = (
+            pl.concat_list(pl.col(self.parameters))
+            .list.eval(pl.element().n_unique())
+            .explode()
+        ) == len(self.parameters)
+
+        return expr
+
 
 class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     """Constraint class for linking the values of parameters.
@@ -144,6 +154,16 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
         mask_bad = data[self.parameters].nunique(axis=1) != 1
 
         return data.index[mask_bad]
+
+    def to_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        expr = (
+            pl.concat_list(pl.col(self.parameters))
+            .list.eval(pl.element().n_unique())
+            .explode()
+        ) == 1
+
+        return expr
 
 
 @define

@@ -3,7 +3,9 @@
 import polars as pl
 import pytest
 
-from baybe.searchspace.discrete import _apply_polars_constraint_filter
+from baybe.searchspace.discrete import (
+    _apply_polars_constraint_filter,
+)
 
 
 def _lazyframe_from_product(parameters):
@@ -107,5 +109,43 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
 
     # Number of entries with pressure below 3 and temperature above 120
     df = ldf.filter((pl.col("Pressure") < 3) & (pl.col("Temperature") > 120)).collect()
+    num_entries = len(df)
+    assert num_entries == 0
+
+
+@pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
+@pytest.mark.parametrize("constraint_names", [["Constraint_7"]])
+def test_polars_label_duplicates(parameters, constraints):
+    """Tests Polars implementation of no-label duplicates constraint."""
+    ldf = _lazyframe_from_product(parameters)
+    ldf = _apply_polars_constraint_filter(ldf, constraints)
+
+    ldf = ldf.with_columns(
+        pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
+        .list.eval(pl.element().n_unique())
+        .explode()
+        .alias("n_unique")
+    )
+    df = ldf.filter(pl.col("n_unique") != len(parameters)).collect()
+
+    num_entries = len(df)
+    assert num_entries == 0
+
+
+@pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
+@pytest.mark.parametrize("constraint_names", [["Constraint_14"]])
+def test_polars_linked_parameters(parameters, constraints):
+    """Tests Polars implementation of linked parameters constraint."""
+    ldf = _lazyframe_from_product(parameters)
+    ldf = _apply_polars_constraint_filter(ldf, constraints)
+
+    ldf = ldf.with_columns(
+        pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
+        .list.eval(pl.element().n_unique())
+        .explode()
+        .alias("n_unique")
+    )
+    df = ldf.filter(pl.col("n_unique") != 1).collect()
+
     num_entries = len(df)
     assert num_entries == 0
