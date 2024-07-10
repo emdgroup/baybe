@@ -9,6 +9,7 @@ from baybe.acquisition import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
     qExpectedImprovement,
+    qKnowledgeGradient,
     qLogExpectedImprovement,
     qLogNoisyExpectedImprovement,
     qNegIntegratedPosteriorVariance,
@@ -54,6 +55,9 @@ acquisition_functions = st.one_of(
     st.builds(qUpperConfidenceBound, beta=finite_floats(min_value=0.0)),
     st.builds(qSimpleRegret),
     st.builds(qLogExpectedImprovement),
+    st.builds(
+        qKnowledgeGradient, num_fantasies=st.integers(min_value=1, max_value=512)
+    ),
     st.builds(qNoisyExpectedImprovement),
     st.builds(qLogNoisyExpectedImprovement),
     _qNIPV_strategy(),
