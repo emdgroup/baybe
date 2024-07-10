@@ -12,44 +12,6 @@ def df_apply_permutation_augmentation(
 ) -> pd.DataFrame:
     """Augment a dataframe if permutation invariant columns are present.
 
-    *   Original
-
-        +----+----+----+----+
-        | A1 | A2 | B1 | B2 |
-        +====+====+====+====+
-        | a  | b  | x  | y  |
-        +----+----+----+----+
-        | b  | a  | x  | z  |
-        +----+----+----+----+
-
-    *   Result with ``column_groups = [["A1"], ["A2"]]``
-
-        +----+----+----+----+
-        | A1 | A2 | B1 | B2 |
-        +====+====+====+====+
-        | a  | b  | x  | y  |
-        +----+----+----+----+
-        | b  | a  | x  | z  |
-        +----+----+----+----+
-        | b  | a  | x  | y  |
-        +----+----+----+----+
-        | a  | b  | x  | z  |
-        +----+----+----+----+
-
-    *   Result with ``column_groups = [["A1", "B1"], ["A2", "B2"]]``
-
-        +----+----+----+----+
-        | A1 | A2 | B1 | B2 |
-        +====+====+====+====+
-        | a  | b  | x  | y  |
-        +----+----+----+----+
-        | b  | a  | x  | z  |
-        +----+----+----+----+
-        | b  | a  | y  | x  |
-        +----+----+----+----+
-        | a  | b  | z  | x  |
-        +----+----+----+----+
-
     Args:
         df: The dataframe that should be augmented.
         column_groups: Sequences of permutation invariant columns. The n'th column in
@@ -64,6 +26,31 @@ def df_apply_permutation_augmentation(
         ValueError: If less than two column groups are given.
         ValueError: If a column group is empty.
         ValueError: If the column groups have differing amounts of entries.
+
+    Examples:
+        >>> df = pd.DataFrame({'A1':[1,2],'A2':[3,4], 'B1': [5, 6], 'B2': [7, 8]})
+        >>> df
+           A1  A2  B1  B2
+        0   1   3   5   7
+        1   2   4   6   8
+
+        >>> column_groups = [['A1'], ['A2']]
+        >>> dfa = df_apply_permutation_augmentation(df, column_groups)
+        >>> dfa
+           A1  A2  B1  B2
+        0   1   3   5   7
+        0   3   1   5   7
+        1   2   4   6   8
+        1   4   2   6   8
+
+        >>> column_groups = [['A1', 'B1'], ['A2', 'B2']]
+        >>> dfa = df_apply_permutation_augmentation(df, column_groups)
+        >>> dfa
+           A1  A2  B1  B2
+        0   1   3   5   7
+        0   3   1   7   5
+        1   2   4   6   8
+        1   4   2   8   6
     """
     # Validation
     if len(column_groups) < 2:
@@ -119,61 +106,6 @@ def df_apply_dependency_augmentation(
     will trigger an augmentation on the affected columns. The latter are augmented by
     going through all their invariant values and adding respective new rows.
 
-    *   Original
-
-        +---+---+---+---+
-        | A | B | C | D |
-        +===+===+===+===+
-        | 0 | 2 | 5 | y |
-        +---+---+---+---+
-        | 1 | 3 | 5 | z |
-        +---+---+---+---+
-
-    *   Result with ``causing = ("A", [0])``, ``affected = [("B", [2,3,4])]``
-
-        +---+---+---+---+
-        | A | B | C | D |
-        +===+===+===+===+
-        | 0 | 2 | 5 | y |
-        +---+---+---+---+
-        | 1 | 3 | 5 | z |
-        +---+---+---+---+
-        | 0 | 3 | 5 | y |
-        +---+---+---+---+
-        | 0 | 4 | 5 | y |
-        +---+---+---+---+
-
-    *   Result with ``causing = ("A", [0, 1])``, ``affected = [("B", [2,3])]``
-
-        +---+---+---+---+
-        | A | B | C | D |
-        +===+===+===+===+
-        | 0 | 2 | 5 | y |
-        +---+---+---+---+
-        | 1 | 3 | 5 | z |
-        +---+---+---+---+
-        | 0 | 3 | 5 | y |
-        +---+---+---+---+
-        | 1 | 2 | 5 | z |
-        +---+---+---+---+
-
-    *   Result with ``causing = ("A", [0])``,
-        ``affected = [("B", [2,3]), ("C", [5, 6])]``
-
-        +---+---+---+---+
-        | A | B | C | D |
-        +===+===+===+===+
-        | 0 | 2 | 5 | y |
-        +---+---+---+---+
-        | 1 | 3 | 5 | z |
-        +---+---+---+---+
-        | 0 | 3 | 5 | y |
-        +---+---+---+---+
-        | 0 | 2 | 6 | y |
-        +---+---+---+---+
-        | 0 | 3 | 6 | y |
-        +---+---+---+---+
-
     Args:
         df: The dataframe that should be augmented.
         causing: Causing column name and its causing values.
@@ -182,6 +114,54 @@ def df_apply_dependency_augmentation(
     Returns:
         The augmented dataframe containing the original one. Augmented row indices are
         identical with the index of their original row.
+
+    Examples:
+        >>> df = pd.DataFrame({'A':[0,1],'B':[2,3], 'C': [5, 5], 'D': [6, 7]})
+        >>> df
+           A  B  C  D
+        0  0  2  5  6
+        1  1  3  5  7
+
+        >>> causing = ('A', [0])
+        >>> affected = [('B', [2,3,4])]
+        >>> dfa = df_apply_dependency_augmentation(df, causing, affected)
+        >>> dfa
+           A  B  C  D
+        0  0  2  5  6
+        0  0  3  5  6
+        0  0  4  5  6
+        1  1  3  5  7
+
+        >>> causing = ('A', [0])
+        >>> affected = [('B', [2,3,4])]
+        >>> dfa = df_apply_dependency_augmentation(df, causing, affected)
+        >>> dfa
+           A  B  C  D
+        0  0  2  5  6
+        0  0  3  5  6
+        0  0  4  5  6
+        1  1  3  5  7
+
+        >>> causing = ('A', [0, 1])
+        >>> affected = [('B', [2,3])]
+        >>> dfa = df_apply_dependency_augmentation(df, causing, affected)
+        >>> dfa
+           A  B  C  D
+        0  0  2  5  6
+        0  0  3  5  6
+        1  1  2  5  7
+        1  1  3  5  7
+
+        >>> causing = ('A', [0])
+        >>> affected = [('B', [2,3]), ('C', [5, 6])]
+        >>> dfa = df_apply_dependency_augmentation(df, causing, affected)
+        >>> dfa
+           A  B  C  D
+        0  0  2  5  6
+        0  0  2  6  6
+        0  0  3  5  6
+        0  0  3  6  6
+        1  1  3  5  7
     """
     new_rows: list[pd.DataFrame] = []
     col_causing, vals_causing = causing
