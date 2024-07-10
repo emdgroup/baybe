@@ -1,0 +1,11 @@
+# Python
+__pycache__
+
+# Package files
+*.egg-info
+
+# Testing
+.tox
+
+# The docs folder that is still present
+docs
