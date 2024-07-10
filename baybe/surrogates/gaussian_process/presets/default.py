@@ -94,19 +94,25 @@ class EDBOKernelFactory(KernelFactory):
     ) -> Kernel:
         # See base class.
 
+        # Calculate effective dimensions, ignoring task parameters
+        n_task_parameters = len(
+            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        )
+        effective_dims = train_x.shape[-1] - n_task_parameters
+
         mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
-            train_x.shape[-1] >= 50
+            effective_dims >= 50
         )
 
         # low D priors
-        if train_x.shape[-1] < 5:
+        if effective_dims < 5:
             lengthscale_prior = GammaPrior(1.2, 1.1)
             lengthscale_initial_value = 0.2
             outputscale_prior = GammaPrior(5.0, 0.5)
             outputscale_initial_value = 8.0
 
         # DFT optimized priors
-        elif mordred and train_x.shape[-1] < 100:
+        elif mordred and effective_dims < 100:
             lengthscale_prior = GammaPrior(2.0, 0.2)
             lengthscale_initial_value = 5.0
             outputscale_prior = GammaPrior(5.0, 0.5)
@@ -187,16 +193,22 @@ def _edbo_noise_factory(
     """
     # TODO: Replace this function with a proper likelihood factory
 
+    # Calculate effective dimensions, ignoring task parameters
+    n_task_parameters = len(
+        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+    )
+    effective_dims = train_x.shape[-1] - n_task_parameters
+
     uses_descriptors = (
         searchspace.contains_mordred or searchspace.contains_rdkit
-    ) and (train_x.shape[-1] >= 50)
+    ) and (effective_dims >= 50)
 
     # low D priors
-    if train_x.shape[-1] < 10:  # <-- different condition compared to EDBO
+    if effective_dims < 10:  # <-- different condition compared to EDBO
         return [GammaPrior(1.05, 0.5), 0.1]
 
     # DFT optimized priors
-    elif uses_descriptors and train_x.shape[-1] < 100:
+    elif uses_descriptors and effective_dims < 100:
         return [GammaPrior(1.5, 0.1), 5.0]
 
     # Mordred optimized priors
