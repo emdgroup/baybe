@@ -73,7 +73,12 @@ class Kernel(ABC, SerialMixin):
         # Create the kernel with all its inner gpytorch objects
         fields_dict.update(kernel_dict)
         fields_dict.update(prior_dict)
-        gpytorch_kernel = kernel_cls(**fields_dict)
+        gpytorch_kernel = kernel_cls(
+            **fields_dict,
+            ard_num_dims=ard_num_dims,
+            batch_shape=batch_shape,
+            active_dims=active_dims,
+        )
 
         # If the kernel has a lengthscale, set its initial value
         if kernel_cls.has_lengthscale:

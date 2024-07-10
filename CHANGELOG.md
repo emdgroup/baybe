@@ -58,6 +58,8 @@ _ `_optional` subpackage for managing optional dependencies
 - Serialization bug related to class layout of `SKLearnClusteringRecommender`
 - `MetaRecommender`s no longer trigger warnings about non-empty objectives or
   measurements when calling a `NonPredictiveRecommender`
+- Bug introduced in 0.9.0 (PR #221, commit 3078f3), where arguments to `to_gpytorch` 
+  are not passed on to the GPyTorch kernels
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
