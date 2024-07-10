@@ -85,7 +85,7 @@ class EDBOKernelFactory(KernelFactory):
     The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
 
     References:
-        * https://github.com/b-shields/edbo
+        * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
         * https://doi.org/10.1038/s41586-021-03213-y
     """
 
@@ -188,7 +188,7 @@ def _edbo_noise_factory(
     The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
 
     References:
-        * https://github.com/b-shields/edbo
+        * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
         * https://doi.org/10.1038/s41586-021-03213-y
     """
     # TODO: Replace this function with a proper likelihood factory
@@ -204,7 +204,7 @@ def _edbo_noise_factory(
     ) and (effective_dims >= 50)
 
     # low D priors
-    if effective_dims < 10:  # <-- different condition compared to EDBO
+    if effective_dims < 5:
         return [GammaPrior(1.05, 0.5), 0.1]
 
     # DFT optimized priors
