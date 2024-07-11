@@ -49,26 +49,26 @@ class ContinuousCardinalityConstraint(
     """Class for continuous cardinality constraints."""
 
     @property
-    def combinatorial_counts_zero_parameters(self) -> int:
-        """Return the total number of all possible combinations of zero parameters."""
-        combinatorial_counts = 0
+    def n_combinatorial_inactive_parameters(self) -> int:
+        """Counts of elements in the combinatorial list of inactive parameters."""
+        n_combinatorial_inactive_params = 0
         for i_zeros in range(
             len(self.parameters) - self.max_cardinality,
             len(self.parameters) - self.min_cardinality + 1,
         ):
-            combinatorial_counts += comb(len(self.parameters), i_zeros)
-        return combinatorial_counts
+            n_combinatorial_inactive_params += comb(len(self.parameters), i_zeros)
+        return n_combinatorial_inactive_params
 
     @property
-    def combinatorial_zero_parameters(self) -> list[tuple[str, ...]]:
-        """Return a combinatorial list of all possible zero parameters."""
-        combinatorial_zeros: list[tuple[str, ...]] = []
+    def combinatorial_inactive_parameters(self) -> list[tuple[str, ...]]:
+        """Combinatorial list of inactive parameters."""
+        combinatorial_inactive_params: list[tuple[str, ...]] = []
         for i_zeros in range(
             len(self.parameters) - self.max_cardinality,
             len(self.parameters) - self.min_cardinality + 1,
         ):
-            combinatorial_zeros.extend(combinations(self.parameters, i_zeros))
-        return combinatorial_zeros
+            combinatorial_inactive_params.extend(combinations(self.parameters, i_zeros))
+        return combinatorial_inactive_params
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.

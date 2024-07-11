@@ -113,16 +113,17 @@ class SubspaceContinuous(SerialMixin):
         )
 
     @property
-    def combinatorial_counts_zero_parameters(self) -> int:
-        """Return the total number of all possible combinations of zero parameters."""
+    def n_combinatorial_inactive_parameters(self) -> int:
+        """Counts of elements in the combinatorial list of inactive parameters."""
         # Note that both continuous subspace and continuous cardinality constraint
-        # have this property. This property is the counts for the subspace
-        # parameters; while the latter one is the counts only for that constraint.
+        # have this property. Both differs in that the former one refers to the
+        # parameters in the subspace while the latter one refers only to the
+        # constraint parameters.
         if self.constraints_cardinality:
             return reduce(
                 lambda x, y: x * y,
                 [
-                    con.combinatorial_counts_zero_parameters
+                    con.n_combinatorial_inactive_parameters
                     for con in self.constraints_cardinality
                 ],
             )
@@ -130,16 +131,16 @@ class SubspaceContinuous(SerialMixin):
             return 0
 
     @property
-    def combinatorial_zero_parameters(
+    def combinatorial_inactive_parameters(
         self
     ) -> Iterable[tuple[tuple[str, ...], ...]] | None:
-        """Return a combinatorial list of all possible zero parameters on subspace."""
-        # The comments on the difference in `combinatorial_counts_zero_parameters`
+        """Combinatorial list of inactive parameters on subspace."""
+        # The comments on the difference in `n_combinatorial_inactive_parameters`
         # applies here as well.
         if self.constraints_cardinality:
             return product(
                 *[
-                    con.combinatorial_zero_parameters
+                    con.combinatorial_inactive_parameters
                     for con in self.constraints_cardinality
                 ]
             )

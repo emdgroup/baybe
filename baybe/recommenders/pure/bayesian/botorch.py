@@ -225,7 +225,7 @@ class BotorchRecommender(BayesianRecommender):
             # fixed number of inactive parameter configurations.
 
             if (
-                subspace_continuous.combinatorial_counts_zero_parameters
+                subspace_continuous.n_combinatorial_inactive_parameters
                 > N_ITER_THRESHOLD
             ):
                 # When the size of full list is too large, randomly set some
@@ -246,12 +246,12 @@ class BotorchRecommender(BayesianRecommender):
                     points_all.append(points_i.unsqueeze(0))
                     acqf_values_all.append(acqf_values_i.unsqueeze(0))
 
-            elif subspace_continuous.combinatorial_zero_parameters is not None:
+            elif subspace_continuous.combinatorial_inactive_parameters is not None:
                 # When the size of full list is not too large, iterate the combinations
                 # of all possible inactive parameters.
                 for (
                     inactive_params_generator
-                ) in subspace_continuous.combinatorial_zero_parameters:
+                ) in subspace_continuous.combinatorial_inactive_parameters:
                     # flatten inactive parameters
                     inactive_params_sample = {
                         param
@@ -272,7 +272,7 @@ class BotorchRecommender(BayesianRecommender):
             else:
                 raise RuntimeError(
                     f"The attribute"
-                    f"{SubspaceContinuous.combinatorial_zero_parameters.__name__}"
+                    f"{SubspaceContinuous.combinatorial_inactive_parameters.__name__}"
                     f"should not be None."
                 )
             # Find the best option
