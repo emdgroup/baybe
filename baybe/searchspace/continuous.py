@@ -119,16 +119,16 @@ class SubspaceContinuous(SerialMixin):
         # have this property. Both differs in that the former one refers to the
         # parameters in the subspace while the latter one refers only to the
         # constraint parameters.
-        if self.constraints_cardinality:
-            return reduce(
-                lambda x, y: x * y,
-                [
-                    con.n_combinatorial_inactive_parameters
-                    for con in self.constraints_cardinality
-                ],
-            )
-        else:
+        if not self.constraints_cardinality:
             return 0
+
+        return reduce(
+            lambda x, y: x * y,
+            [
+                con.n_combinatorial_inactive_parameters
+                for con in self.constraints_cardinality
+            ],
+        )
 
     @property
     def combinatorial_inactive_parameters(
@@ -137,15 +137,15 @@ class SubspaceContinuous(SerialMixin):
         """Combinatorial list of inactive parameters on subspace."""
         # The comments on the difference in `n_combinatorial_inactive_parameters`
         # applies here as well.
-        if self.constraints_cardinality:
-            return product(
-                *[
-                    con.combinatorial_inactive_parameters
-                    for con in self.constraints_cardinality
-                ]
-            )
-        else:
+        if not self.constraints_cardinality:
             return None
+
+        return product(
+            *[
+                con.combinatorial_inactive_parameters
+                for con in self.constraints_cardinality
+            ]
+        )
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
