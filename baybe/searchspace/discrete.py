@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Sequence
 from math import prod
 from typing import TYPE_CHECKING, Any
 
@@ -260,8 +260,8 @@ class SubspaceDiscrete(SerialMixin):
         lazy_df = _apply_polars_constraint_filter(lazy_df, constraints)
         pl_df = lazy_df.collect(streaming=True)
 
-        # Check if df is empty to prevent Polar's error
-        if pl_df.shape[0] == 0:
+        # Check if dataframe is empty to prevent Polar's error
+        if len(pl_df) == 0:
             df = pd.DataFrame()
         else:
             df = pl_df.to_pandas()
@@ -728,8 +728,8 @@ def _apply_polars_constraint_filter(
     return ldf
 
 
-def parameter_cartesian_prod_polars(parameters: Iterable[Parameter]) -> pl.LazyFrame:
-    """Create the Cartesian product of all parameter values.
+def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyFrame:
+    """Create the Cartesian product of all parameter values using Polars.
 
     Ignores continuous parameters.
 
@@ -759,7 +759,7 @@ def parameter_cartesian_prod_polars(parameters: Iterable[Parameter]) -> pl.LazyF
 
 
 def parameter_cartesian_prod_pandas(
-    parameters: Iterable[Parameter],
+    parameters: Sequence[Parameter],
 ) -> pd.DataFrame:
     """Create the Cartesian product of all parameter values using Pandas.
 

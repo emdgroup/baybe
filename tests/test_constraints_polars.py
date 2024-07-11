@@ -190,6 +190,7 @@ def test_polars_product(constraints, parameters):
     assert len(pol_df.to_pandas()) == len(
         pd_df
     ), "Polars and Pandas dataframes have different length."
+    assert_frame_equal(pol_df.to_pandas(), pd_df)
 
     # Apply same constraints on Pandas dataframe
     _apply_pandas_constraint_filter(pd_df, constraints)
