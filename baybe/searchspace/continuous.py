@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import math
 import warnings
 from collections.abc import Collection, Iterable, Sequence
-from functools import reduce
 from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
@@ -122,13 +122,11 @@ class SubspaceContinuous(SerialMixin):
         if not self.constraints_cardinality:
             return 0
 
-        return reduce(
-            lambda x, y: x * y,
-            [
-                con.n_combinatorial_inactive_parameters
-                for con in self.constraints_cardinality
-            ],
-        )
+        n_combinatorial_inactive_params = [
+            con.n_combinatorial_inactive_parameters
+            for con in self.constraints_cardinality
+        ]
+        return math.prod(n_combinatorial_inactive_params)
 
     @property
     def combinatorial_inactive_parameters(
