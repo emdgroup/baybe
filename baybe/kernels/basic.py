@@ -3,7 +3,7 @@
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import ge, in_, instance_of
+from attrs.validators import ge, gt, in_, instance_of
 from attrs.validators import optional as optional_v
 
 from baybe.kernels.base import Kernel
@@ -22,7 +22,9 @@ class LinearKernel(Kernel):
     """An optional prior on the kernel variance parameter."""
 
     variance_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel variance parameter."""
 
@@ -58,7 +60,9 @@ class MaternKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
@@ -73,7 +77,9 @@ class PeriodicKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
@@ -83,7 +89,9 @@ class PeriodicKernel(Kernel):
     """An optional prior on the kernel period length."""
 
     period_length_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel period length."""
 
@@ -116,7 +124,9 @@ class PiecewisePolynomialKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
@@ -134,7 +144,9 @@ class PolynomialKernel(Kernel):
     """An optional prior on the kernel offset."""
 
     offset_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel offset."""
 
@@ -160,7 +172,9 @@ class RBFKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
@@ -178,7 +192,9 @@ class RFFKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
@@ -193,6 +209,8 @@ class RQKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
