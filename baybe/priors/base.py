@@ -10,7 +10,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.basic import match_attributes
+from baybe.utils.basic import match_attributes, set_default_torch_dtype
 
 
 @define(frozen=True)
@@ -20,6 +20,8 @@ class Prior(ABC, SerialMixin):
     def to_gpytorch(self, *args, **kwargs):
         """Create the gpytorch representation of the prior."""
         import gpytorch.priors
+
+        set_default_torch_dtype()
 
         prior_cls = getattr(gpytorch.priors, self.__class__.__name__)
         fields_dict = match_attributes(self, prior_cls.__init__)[0]
