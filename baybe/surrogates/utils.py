@@ -49,6 +49,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
     _posterior_original = cls._posterior
 
     def _posterior_new(self, candidates: Tensor) -> Posterior:
+        """Use fallback model if it exists, otherwise call original posterior."""
         # Alternative model fallback
         if constant_target_model := _constant_target_model_store.get(id(self), None):
             return constant_target_model._posterior(candidates)
@@ -57,6 +58,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         return _posterior_original(self, candidates)
 
     def _fit_new(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
+        """Original fit but with fallback model creation for constant targets."""
         if not (train_y.ndim == 2 and train_y.shape[-1] == 1):
             raise NotImplementedError(
                 "The current logic is only implemented for single-target surrogates."
