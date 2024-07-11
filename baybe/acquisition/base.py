@@ -18,7 +18,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
-from baybe.utils.basic import classproperty, filter_attributes
+from baybe.utils.basic import classproperty, match_attributes
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
 
@@ -46,7 +46,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         import botorch.acquisition as botorch_acqf_module
 
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
-        params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
+        params_dict = match_attributes(self, acqf_cls.__init__)[0]
 
         signature_params = signature(acqf_cls).parameters
         additional_params = {}

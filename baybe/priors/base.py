@@ -10,7 +10,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.basic import filter_attributes
+from baybe.utils.basic import match_attributes
 
 
 @define(frozen=True)
@@ -22,7 +22,7 @@ class Prior(ABC, SerialMixin):
         import gpytorch.priors
 
         prior_cls = getattr(gpytorch.priors, self.__class__.__name__)
-        fields_dict = filter_attributes(object=self, callable_=prior_cls.__init__)
+        fields_dict = match_attributes(self, prior_cls.__init__)[0]
 
         # Update kwargs to contain class-specific attributes
         kwargs.update(fields_dict)

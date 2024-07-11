@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Parameter.is_numeric` has been replaced with `Parameter.is_numerical`
 - `DiscreteParameter.transform_rep_exp2comp` has been replaced with
   `DiscreteParameter.transform` 
+- `filter_attributes` has been replaced with `match_attributes`
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
