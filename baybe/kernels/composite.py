@@ -4,7 +4,7 @@ from operator import add, mul
 
 from attrs import define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_iterable, instance_of
+from attrs.validators import deep_iterable, gt, instance_of, min_len
 from attrs.validators import optional as optional_v
 
 from baybe.kernels.base import Kernel
@@ -25,7 +25,9 @@ class ScaleKernel(Kernel):
     """An optional prior on the output scale."""
 
     outputscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the output scale."""
 
@@ -48,7 +50,10 @@ class AdditiveKernel(Kernel):
     """A kernel representing the sum of a collection of base kernels."""
 
     base_kernels: tuple[Kernel, ...] = field(
-        converter=tuple, validator=deep_iterable(member_validator=instance_of(Kernel))
+        converter=tuple,
+        validator=deep_iterable(
+            member_validator=instance_of(Kernel), iterable_validator=min_len(2)
+        ),
     )
     """The individual kernels to be summed."""
 
@@ -63,7 +68,10 @@ class ProductKernel(Kernel):
     """A kernel representing the product of a collection of base kernels."""
 
     base_kernels: tuple[Kernel, ...] = field(
-        converter=tuple, validator=deep_iterable(member_validator=instance_of(Kernel))
+        converter=tuple,
+        validator=deep_iterable(
+            member_validator=instance_of(Kernel), iterable_validator=min_len(2)
+        ),
     )
     """The individual kernels to be multiplied."""
 
