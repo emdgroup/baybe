@@ -39,6 +39,7 @@ _ `_optional` subpackage for managing optional dependencies
 - `DiscreteParameter.to_subspace`, `ContinuousParameter.to_subspace` and
   `Parameter.to_searchspace` convenience constructors
 - Utilities for permutation and dependency data augmentation
+- Validation and translation tests for kernels
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -61,6 +62,8 @@ _ `_optional` subpackage for managing optional dependencies
   measurements when calling a `NonPredictiveRecommender`
 - Bug introduced in 0.9.0 (PR #221, commit 3078f3), where arguments to `to_gpytorch` 
   are not passed on to the GPyTorch kernels
+- Positive-valued kernel attributes are now correctly handled by validators
+  and hypothesis strategies
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
