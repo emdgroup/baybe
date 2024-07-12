@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import pandas as pd
 from attr.converters import optional
 from attrs import define, field
+from attrs.validators import ge, instance_of
 
 from baybe.constraints import ContinuousCardinalityConstraint
 from baybe.exceptions import NoMCAcquisitionFunctionError
@@ -26,12 +27,6 @@ from baybe.utils.sampling_algorithms import (
 
 if TYPE_CHECKING:
     from torch import Tensor
-
-N_THRESHOLD_INACTIVE_PARAMETERS_GENERATOR: int = 10
-"""This threshold controls which inactive parameters generator is chosen. There are
-two mechanisms:
-* Iterating the combinatorial list of all possible inactive parameters,
-* Iterate a fixed number of randomly generated inactive parameter configurations."""
 
 
 @define(kw_only=True)
@@ -69,6 +64,16 @@ class BotorchRecommender(BayesianRecommender):
     sampling_percentage: float = field(default=1.0)
     """Percentage of discrete search space that is sampled when performing hybrid search
     space optimization. Ignored when ``hybrid_sampler="None"``."""
+
+    n_threshold_inactive_parameters_generator: int = field(
+        default=10, validator=[instance_of(int), ge(1)]
+    )
+    """Threshold used for checking which inactive parameters generator is used when
+    cardinality constraints are present. When the size of the combinatorial list of
+    all possible inactive parameters is larger than the threshold, a fixed number of
+    randomly generated inactive parameter configurations are used and the best
+    optimum among them is recommended; Otherwise, we find the best one by iterating the
+    combinatorial list of all possible inactive parameters """
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -240,11 +245,11 @@ class BotorchRecommender(BayesianRecommender):
         # Below we start recommendation
         if (
             subspace_continuous.n_combinatorial_inactive_parameters
-            > N_THRESHOLD_INACTIVE_PARAMETERS_GENERATOR
+            > self.n_threshold_inactive_parameters_generator
         ):
             # When the combinatorial list is too large, randomly set some parameters
             # inactive.
-            for _ in range(N_THRESHOLD_INACTIVE_PARAMETERS_GENERATOR):
+            for _ in range(self.n_threshold_inactive_parameters_generator):
                 inactive_params_sample = tuple(
                     subspace_continuous._sample_inactive_parameters(1)[0]
                 )
