@@ -131,12 +131,10 @@ class SubspaceContinuous(SerialMixin):
     @property
     def combinatorial_inactive_parameters(
         self
-    ) -> Iterable[tuple[tuple[str, ...], ...]] | None:
+    ) -> Iterable[tuple[tuple[str, ...], ...]]:
         """Combinatorial list of inactive parameters on subspace."""
         # The comments on the difference in `n_combinatorial_inactive_parameters`
         # applies here as well.
-        if not self.constraints_cardinality:
-            return None
 
         return product(
             *[
