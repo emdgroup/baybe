@@ -51,10 +51,10 @@ class DefaultKernelFactory(KernelFactory):
             outputscale_initial_value = 8.0
         elif effective_dims > HIGH_D_LIM:
             # High D priors
-            lengthscale_prior = GammaPrior(3.0, 1.0)
-            lengthscale_initial_value = 2.0
-            outputscale_prior = GammaPrior(5.0, 0.2)
-            outputscale_initial_value = 20.0
+            lengthscale_prior = GammaPrior(2.5, 0.55)
+            lengthscale_initial_value = 6.0
+            outputscale_prior = GammaPrior(3.5, 0.15)
+            outputscale_initial_value = 15.0
         else:
             # Interpolate prior moments linearly between low D and high D regime
             interp_factor = (effective_dims - LOW_D_LIM) / (HIGH_D_LIM - LOW_D_LIM)
@@ -62,10 +62,10 @@ class DefaultKernelFactory(KernelFactory):
             def _interp(a, b):
                 return a + (b - a) * interp_factor
 
-            lengthscale_prior = GammaPrior(_interp(1.2, 3.0), _interp(1.1, 1.0))
-            lengthscale_initial_value = _interp(0.2, 2.0)
-            outputscale_prior = GammaPrior(5.0, _interp(0.5, 0.2))
-            outputscale_initial_value = _interp(8.0, 20)
+            lengthscale_prior = GammaPrior(_interp(1.2, 2.5), _interp(1.1, 0.55))
+            lengthscale_initial_value = _interp(0.2, 6.0)
+            outputscale_prior = GammaPrior(_interp(5.0, 3.5), _interp(0.5, 0.15))
+            outputscale_initial_value = _interp(8.0, 15.0)
 
         return ScaleKernel(
             MaternKernel(
