@@ -37,6 +37,7 @@ _ `_optional` subpackage for managing optional dependencies
    convenience constructors
 - `DiscreteParameter.to_subspace`, `ContinuousParameter.to_subspace` and
   `Parameter.to_searchspace` convenience constructors
+- Utilities for permutation and dependency data augmentation
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
