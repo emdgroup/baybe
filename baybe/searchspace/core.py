@@ -242,6 +242,14 @@ class SearchSpace(SerialMixin):
         )
 
     @property
+    def n_effective_default_kernel_dimensions(self) -> int:
+        """Return the number of effective dimensions for the default kernel."""
+        return (
+            self.discrete.n_effective_default_kernel_dimensions
+            + self.continuous.n_effective_default_kernel_dimensions
+        )
+
+    @property
     def param_bounds_comp(self) -> np.ndarray:
         """Return bounds as tensor."""
         return np.hstack(

@@ -8,7 +8,6 @@ from attrs import define
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
-from baybe.parameters import TaskParameter
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 
@@ -32,12 +31,7 @@ class DefaultKernelFactory(KernelFactory):
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         # See base class.
-
-        # Calculate effective dimensions, ignoring task parameters
-        n_task_parameters = len(
-            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-        )
-        effective_dims = train_x.shape[-1] - n_task_parameters
+        effective_dims = searchspace.n_effective_default_kernel_dimensions
 
         # Fix dimensionality limits
         LOW_D_LIM, HIGH_D_LIM = 8, 100
@@ -93,12 +87,7 @@ class EDBOKernelFactory(KernelFactory):
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         # See base class.
-
-        # Calculate effective dimensions, ignoring task parameters
-        n_task_parameters = len(
-            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-        )
-        effective_dims = train_x.shape[-1] - n_task_parameters
+        effective_dims = searchspace.n_effective_default_kernel_dimensions
 
         mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
             effective_dims >= 50
@@ -153,12 +142,7 @@ def _default_noise_factory(
     and interpolates the prior moments linearly between them.
     """
     # TODO: Replace this function with a proper likelihood factory
-
-    # Calculate effective dimensions, ignoring task parameters
-    n_task_parameters = len(
-        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-    )
-    effective_dims = train_x.shape[-1] - n_task_parameters
+    effective_dims = searchspace.n_effective_default_kernel_dimensions
 
     # Fix dimensionality limits
     LOW_D_LIM, HIGH_D_LIM = 8, 100
@@ -192,12 +176,7 @@ def _edbo_noise_factory(
         * https://doi.org/10.1038/s41586-021-03213-y
     """
     # TODO: Replace this function with a proper likelihood factory
-
-    # Calculate effective dimensions, ignoring task parameters
-    n_task_parameters = len(
-        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
-    )
-    effective_dims = train_x.shape[-1] - n_task_parameters
+    effective_dims = searchspace.n_effective_default_kernel_dimensions
 
     uses_descriptors = (
         searchspace.contains_mordred or searchspace.contains_rdkit
