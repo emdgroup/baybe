@@ -150,7 +150,7 @@ def match_attributes(
         * A dictionary mapping the matched attribute names to their values.
         * A dictionary mapping the unmatched attribute names to their values.
     """
-    if not has(object):
+    if not has(object.__class__):
         raise ValueError(
             f"'{match_attributes.__name__}' only works with attrs objects."
         )
@@ -167,10 +167,10 @@ def match_attributes(
         )
 
     # Collect attributes for both sets
-    in_signature = {p: getattr(object, p) for p in in_signature}
-    not_in_signature = {p: getattr(object, p) for p in not_in_signature}
+    attrs_in_signature = {p: getattr(object, p) for p in in_signature}
+    attrs_not_in_signature = {p: getattr(object, p) for p in not_in_signature}
 
-    return in_signature, not_in_signature
+    return attrs_in_signature, attrs_not_in_signature
 
 
 class classproperty:

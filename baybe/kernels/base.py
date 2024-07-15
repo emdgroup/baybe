@@ -47,7 +47,7 @@ class Kernel(ABC, SerialMixin):
         # makes use of kwargs, i.e. differentiates if certain keywords are explicitly
         # passed or not. For instance, `ard_num_dims = kwargs.get("ard_num_dims", 1)`
         # fails if we explicitly pass `ard_num_dims=None`.
-        kw = dict(
+        kw: dict[str, Any] = dict(
             ard_num_dims=ard_num_dims, batch_shape=batch_shape, active_dims=active_dims
         )
         kw = {k: v for k, v in kw.items() if v is not None}
