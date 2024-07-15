@@ -12,55 +12,64 @@ optimization. In practice, we can leverage the fact that we have a posterior
 distribution, and compute an acquisition function that represents the overall 
 uncertainty about any given point in the searchspace.
 
-Below you find which acquisition functions in BayBE are suitable for this endeavor 
+Below you find which acquisition functions in BayBE are suitable for this endeavor, 
 including a few guidelines.
 
-## Single-Point Uncertainty
-In BayBE, there are two acquisition functions that can be chosen to search for the 
-points with the highest predicted model uncertainty:
-- [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation)
-- [`UpperConfidenceBound`](baybe.acquisition.acqfs.UpperConfidenceBound) / 
-  [`qUpperConfidenceBound`](baybe.acquisition.acqfs.qUpperConfidenceBound) with high 
-  `beta`: A high `beta` will effectively cause that the mean part of the acquisition 
-  function becomes irrelevant, and it only searches for points with the highest 
-  posterior variability. We recommend values `beta > 10.0`.
+## Local Uncertainty Reduction
+In BayBE, there are two types of acquisition function that can be chosen to search for
+the points with the highest predicted model uncertainty:
+- [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation) (`PSTD`)
+- [`UpperConfidenceBound`](baybe.acquisition.acqfs.UpperConfidenceBound) (`UCB`) / 
+  [`qUpperConfidenceBound`](baybe.acquisition.acqfs.qUpperConfidenceBound) (`qUCB`)
+  with high `beta`:  
+  Increasing values of `beta` effectively eliminate the effect of the posterior mean on
+  the acquisition value, yielding a selection of points driven primarily by the
+  posterior variance. However, we generally recommend to use this acquisition function
+  only if a small exploratory component is desired – otherwise, the
+  [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation) 
+  acquisition function is what you are looking for.
 
-## Integrated Uncertainty
+## Global Uncertainty Reduction
 BayBE also offers the 
 [`qNegIntegratedPosteriorVariance`](baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance) 
-(short [`qNIPV`](baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance)). It integrates 
-the posterior variance on the entire searchspace. If your campaign selects points based 
-on this acquisition function, it thus chooses the ones which contribute most to the 
-current global model uncertainty and recommends them for measurement. This approach is 
-often superior to using a single point uncertainty estimate as acquisition function.
+(`qNIPV`), which integrates 
+the posterior variance over the entire search space.
+Choosing candidates based on this acquisition function is tantamount to selecting the
+set of points resulting in the largest reduction of global uncertainty when added to
+the already existing experimental design.
 
-Due to the computational complexity, it can be prohibitive to integrate over the entire 
-searchspace. For this reason we offer the ability to sub-sample parts of it, configured 
-in `qNIPV`:
+Because of its ability to quantify uncertainty on a global scale, this approach is often superior to using a point-based uncertainty criterion as acquisition function. 
+However, due to its computational complexity, it can be prohibitive to integrate over
+the entire search space. For this reason, we offer the option to sub-sample parts of it,
+configurable via the constructor:
 
 ```python
 from baybe.acquisition import qNIPV
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
 
-# Will integrate over the entire searchspace
+# Will integrate over the entire search space
 qNIPV()
 
-# Will integrate over 50% of the searchspace, randomly sampled
+# Will integrate over 50% of the search space, randomly sampled
 qNIPV(sampling_fraction=0.5)
 
-# Will integrate over 100 points, chosen by farthest point sampling
+# Will integrate over 250 points, chosen by farthest point sampling
 # Both lines are equivalent
-qNIPV(sampling_n_points=100, sampling_method="FPS")
-qNIPV(sampling_n_points=100, sampling_method=DiscreteSamplingMethod.FPS)
+qNIPV(sampling_n_points=250, sampling_method="FPS")
+qNIPV(sampling_n_points=250, sampling_method=DiscreteSamplingMethod.FPS)
 ```
 
-**Sampling of the continuous part of the searchspace will always be random**, while 
+```{admonition} Sub-Sampling Method
+:class: note
+Sampling of the continuous part of the search space will always be random, while 
 sampling of the discrete part can be controlled by providing a corresponding 
 [`DiscreteSamplingMethod`](baybe.utils.sampling_algorithms.DiscreteSamplingMethod) for 
 `sampling_method`.
+```
 
-```{admonition} Purely Continuous SearchSpaces
+```{admonition} Purely Continuous Search Spaces
 :class: important
-Please be aware that in case of a purely continuous searchspace, the number of points 
-to sample for integration must be specified via `sampling_n_points`.
+Please be aware that in case of a purely continuous search space, the number of points 
+to sample for integration must be specified via `sampling_n_points` (since providing
+a fraction becomes meaningless).
 ```
