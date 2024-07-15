@@ -2,7 +2,7 @@
 
 import functools
 import inspect
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
@@ -128,6 +128,7 @@ def match_attributes(
     callable_: Callable,
     /,
     strict: bool = True,
+    ignore: Collection[str] = (),
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Find the attributes of an object that match with a given callable signature.
 
@@ -139,8 +140,9 @@ def match_attributes(
         callable_: The callable against whose signature the attributes are to be
             matched.
         strict: If ``True``, an error is raised when the object has attributes that
-            are not found in the callable signature. If ``False``, these attributes are
-            returned separately.
+            are not found in the callable signature (see also ``ignore``).
+            If ``False``, these attributes are returned separately.
+        ignore: A collection of attributes names that are to be ignored during matching.
 
     Raises:
         ValueError: If applied to a non-attrs object.
@@ -155,7 +157,7 @@ def match_attributes(
             f"'{match_attributes.__name__}' only works with attrs objects."
         )
     # Get attribute/parameter sets
-    set_object = set(asdict(object))
+    set_object = set(asdict(object)) - set(ignore)
     set_callable = set(inspect.signature(callable_).parameters)
 
     # Match

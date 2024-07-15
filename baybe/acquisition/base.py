@@ -8,7 +8,7 @@ from inspect import signature
 from typing import ClassVar
 
 import pandas as pd
-from attrs import define
+from attrs import define, fields
 
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
@@ -45,9 +45,25 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_acqf_module
 
-        acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
-        params_dict = match_attributes(self, acqf_cls.__init__)[0]
+        from baybe.acquisition.acqfs import qNegIntegratedPosteriorVariance
 
+        # Retrieve corresponding botorch class
+        acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
+
+        # Match relevant attributes
+        flds = fields(qNegIntegratedPosteriorVariance)
+        ignore = (
+            (
+                flds.sampling_n_points.name,
+                flds.sampling_method.name,
+                flds.sampling_fraction.name,
+            )
+            if isinstance(self, qNegIntegratedPosteriorVariance)
+            else ()
+        )
+        params_dict = match_attributes(self, acqf_cls.__init__, ignore=ignore)[0]
+
+        # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
         if "model" in signature_params:
