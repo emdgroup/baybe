@@ -19,8 +19,8 @@ _RENAME_DICT: dict[str, str] = {
 """Dictionary for resolving name differences between BayBE and GPyTorch attributes."""
 
 
-def validate_kernel_components(obj: Any, mapped: Any, **kwargs) -> None:
-    """Validate that all kernel components are translated correctly.
+def validate_gpytorch_kernel_components(obj: Any, mapped: Any, **kwargs) -> None:
+    """Validate that all kernel components are correctly translated to GPyTorch.
 
     Args:
         obj: An object occurring as part of a BayBE kernel.
@@ -60,12 +60,12 @@ def validate_kernel_components(obj: Any, mapped: Any, **kwargs) -> None:
 
         # If the component is itself another attrs object, recurse
         elif has(component):
-            validate_kernel_components(component, mapped_component, **kwargs)
+            validate_gpytorch_kernel_components(component, mapped_component, **kwargs)
 
         # Same for collections of BayBE objects (coming from composite kernels)
         elif isinstance(component, tuple) and all(has(c) for c in component):
             for c, m in zip(component, mapped_component):
-                validate_kernel_components(c, m, **kwargs)
+                validate_gpytorch_kernel_components(c, m, **kwargs)
 
         # On the lowest component level, simply check for equality
         else:
@@ -86,4 +86,4 @@ def test_kernel_assembly(kernel: Kernel):
     )
 
     k = kernel.to_gpytorch(**kwargs)
-    validate_kernel_components(kernel, k, **kwargs)
+    validate_gpytorch_kernel_components(kernel, k, **kwargs)
