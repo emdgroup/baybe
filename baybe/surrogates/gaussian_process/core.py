@@ -5,8 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
+from attrs.validators import instance_of
 
-from baybe.searchspace import SearchSpace
+from baybe.objective import Objective
+from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
     KernelFactory,
@@ -23,7 +25,48 @@ from baybe.surrogates.gaussian_process.presets.default import (
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.posteriors import Posterior
     from torch import Tensor
+
+
+@define
+class _ModelContext:
+    """Model context for :class:`GaussianProcessSurrogate`."""
+
+    searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
+    """The search space the model is trained on."""
+
+    @property
+    def task_idx(self) -> int | None:
+        """The computational column index of the task parameter, if available."""
+        return self.searchspace.task_idx
+
+    @property
+    def is_multitask(self) -> bool:
+        """Indicates if model is to be operated in a multi-task context."""
+        return self.n_task_dimensions > 0
+
+    @property
+    def n_task_dimensions(self) -> int:
+        """The number of task dimensions."""
+        # TODO: Generalize to multiple task parameters
+        return 1 if self.task_idx is not None else 0
+
+    @property
+    def n_tasks(self) -> int:
+        """The number of tasks."""
+        return self.searchspace.n_tasks
+
+    @property
+    def parameter_bounds(self) -> Tensor:
+        """Get the search space parameter bounds in BoTorch Format."""
+        import torch
+
+        return torch.from_numpy(self.searchspace.param_bounds_comp)
+
+    def get_numerical_indices(self, n_inputs: int) -> list[int]:
+        """Get the indices of the regular numerical model inputs."""
+        return [i for i in range(n_inputs) if i != self.task_idx]
 
 
 @define
@@ -65,33 +108,32 @@ class GaussianProcessSurrogate(Surrogate):
 
         return self._model
 
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    @staticmethod
+    def _get_model_context(
+        searchspace: SearchSpace, objective: Objective
+    ) -> _ModelContext:
         # See base class.
-        posterior = self._model.posterior(candidates)
-        return posterior.mvn.mean, posterior.mvn.covariance_matrix
+        return _ModelContext(searchspace=searchspace)
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def _posterior(self, candidates: Tensor) -> Posterior:
+        # See base class.
+        return self._model.posterior(candidates)
+
+    def _fit(self, train_x: Tensor, train_y: Tensor, context: _ModelContext) -> None:
         # See base class.
 
         import botorch
         import gpytorch
         import torch
 
-        # identify the indexes of the task and numeric dimensions
-        # TODO: generalize to multiple task parameters
-        task_idx = searchspace.task_idx
-        n_task_params = 1 if task_idx is not None else 0
-        numeric_idxs = [i for i in range(train_x.shape[1]) if i != task_idx]
-
-        # get the input bounds from the search space in BoTorch Format
-        bounds = torch.from_numpy(searchspace.param_bounds_comp)
-        # TODO: use target value bounds when explicitly provided
+        numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
 
         # define the input and outcome transforms
         # TODO [Scaling]: scaling should be handled by search space object
         input_transform = botorch.models.transforms.Normalize(
-            train_x.shape[1], bounds=bounds, indices=numeric_idxs
+            train_x.shape[1], bounds=context.parameter_bounds, indices=numerical_idxs
         )
+        # TODO: use target value bounds when explicitly provided
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[1])
 
         # extract the batch shape of the training data
@@ -102,26 +144,26 @@ class GaussianProcessSurrogate(Surrogate):
 
         # define the covariance module for the numeric dimensions
         base_covar_module = self.kernel_factory(
-            searchspace, train_x, train_y
+            context.searchspace, train_x, train_y
         ).to_gpytorch(
-            ard_num_dims=train_x.shape[-1] - n_task_params,
-            active_dims=numeric_idxs,
+            ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
+            active_dims=numerical_idxs,
             batch_shape=batch_shape,
         )
 
         # create GP covariance
-        if task_idx is None:
+        if not context.is_multitask:
             covar_module = base_covar_module
         else:
             task_covar_module = gpytorch.kernels.IndexKernel(
-                num_tasks=searchspace.n_tasks,
-                active_dims=task_idx,
-                rank=searchspace.n_tasks,  # TODO: make controllable
+                num_tasks=context.n_tasks,
+                active_dims=context.task_idx,
+                rank=context.n_tasks,  # TODO: make controllable
             )
             covar_module = base_covar_module * task_covar_module
 
         # create GP likelihood
-        noise_prior = _default_noise_factory(searchspace, train_x, train_y)
+        noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )

@@ -4,15 +4,23 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from baybe.scaler import DefaultScaler
 from baybe.searchspace import SearchSpace
 
 if TYPE_CHECKING:
+    from botorch.posteriors import Posterior
     from torch import Tensor
 
     from baybe.surrogates.base import Surrogate
+    from baybe.surrogates.naive import MeanPredictionSurrogate
+
+
+_constant_target_model_store: dict[int, MeanPredictionSurrogate] = {}
+"""Dictionary for storing constant target fallback models. Keys are the IDs of the
+surrogate models that temporarily have a fallback attached because they were
+trained on constant training targets. Values are the corresponding fallback models."""
 
 
 def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
@@ -24,47 +32,33 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
     The modified class handles the above cases separately from "regular operation"
     by resorting to a :class:`baybe.surrogates.naive.MeanPredictionSurrogate`,
-    which is stored as an additional temporary attribute in its objects.
+    which is stored outside the model in a dictionary maintained by this decorator.
 
     Args:
         cls: The :class:`baybe.surrogates.base.Surrogate` to be augmented.
         std_threshold: The standard deviation threshold below which operation is
             switched to the alternative model.
 
-    Raises:
-        ValueError: If the class already contains an attribute with the same name
-            as the temporary attribute to be added.
-
     Returns:
         The modified class.
     """
-    # Name of the attribute added to store the alternative model
-    injected_model_attr_name = "_constant_target_model"
-
-    if injected_model_attr_name in (attr.name for attr in cls.__attrs_attrs__):
-        raise ValueError(
-            f"Cannot apply '{catch_constant_targets.__name__}' because "
-            f"'{cls.__name__}' already has an attribute '{injected_model_attr_name}' "
-            f"defined."
-        )
-
     from baybe.surrogates.naive import MeanPredictionSurrogate
 
     # References to original methods
     _fit_original = cls._fit
     _posterior_original = cls._posterior
 
-    def _posterior_new(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _posterior_new(self, candidates: Tensor) -> Posterior:
+        """Use fallback model if it exists, otherwise call original posterior."""
         # Alternative model fallback
-        if hasattr(self, injected_model_attr_name):
-            return getattr(self, injected_model_attr_name)._posterior(candidates)
+        if constant_target_model := _constant_target_model_store.get(id(self), None):
+            return constant_target_model._posterior(candidates)
 
         # Regular operation
         return _posterior_original(self, candidates)
 
-    def _fit_new(
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> None:
+    def _fit_new(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
+        """Original fit but with fallback model creation for constant targets."""
         if not (train_y.ndim == 2 and train_y.shape[-1] == 1):
             raise NotImplementedError(
                 "The current logic is only implemented for single-target surrogates."
@@ -73,20 +67,13 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         # Alternative model fallback
         if train_y.numel() == 1 or train_y.std() < std_threshold:
             model = MeanPredictionSurrogate()
-            model._fit(searchspace, train_x, train_y)
-            try:
-                setattr(self, injected_model_attr_name, model)
-            except AttributeError as ex:
-                raise TypeError(
-                    f"'{catch_constant_targets.__name__}' is only applicable to "
-                    f"non-slotted classes but '{cls.__name__}' is a slotted class."
-                ) from ex
+            model._fit(train_x, train_y, context)
+            _constant_target_model_store[id(self)] = model
 
         # Regular operation
         else:
-            if hasattr(self, injected_model_attr_name):
-                delattr(self, injected_model_attr_name)
-            _fit_original(self, searchspace, train_x, train_y)
+            _constant_target_model_store.pop(id(self), None)
+            _fit_original(self, train_x, train_y, context)
 
     # Replace the methods
     cls._posterior = _posterior_new
