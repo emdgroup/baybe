@@ -8,7 +8,7 @@ from inspect import signature
 from typing import ClassVar
 
 import pandas as pd
-from attrs import define, fields
+from attrs import define
 
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
@@ -35,6 +35,11 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Flag indicating whether this is a Monte-Carlo acquisition function."""
         return cls.abbreviation.startswith("q")
 
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        """Names of attributes that are not passed to the BoTorch constructor."""
+        return ()
+
     def to_botorch(
         self,
         surrogate: Surrogate,
@@ -45,23 +50,13 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_acqf_module
 
-        from baybe.acquisition.acqfs import qNegIntegratedPosteriorVariance
-
         # Retrieve corresponding botorch class
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
 
         # Match relevant attributes
-        flds = fields(qNegIntegratedPosteriorVariance)
-        ignore = (
-            (
-                flds.sampling_n_points.name,
-                flds.sampling_method.name,
-                flds.sampling_fraction.name,
-            )
-            if isinstance(self, qNegIntegratedPosteriorVariance)
-            else ()
-        )
-        params_dict = match_attributes(self, acqf_cls.__init__, ignore=ignore)[0]
+        params_dict = match_attributes(
+            self, acqf_cls.__init__, ignore=self._non_botorch_attrs
+        )[0]
 
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
