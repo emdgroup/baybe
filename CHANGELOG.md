@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Surrogate` models now operate on dataframes in experimental representation instead of
   tensors in computational representation
 - `Surrogate.posterior` models now returns a `Posterior` object
+- `param_bounds_comp` of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` has
+  been replaced with `comp_rep_bounds`, which returns a dataframe
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method

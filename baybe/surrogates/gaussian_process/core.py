@@ -62,7 +62,7 @@ class _ModelContext:
         """Get the search space parameter bounds in BoTorch Format."""
         import torch
 
-        return torch.from_numpy(self.searchspace.param_bounds_comp)
+        return torch.from_numpy(self.searchspace.comp_rep_bounds.values)
 
     def get_numerical_indices(self, n_inputs: int) -> list[int]:
         """Get the indices of the regular numerical model inputs."""

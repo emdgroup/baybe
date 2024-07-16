@@ -45,7 +45,7 @@ def test_bounds_order():
     searchspace = SearchSpace.from_product(parameters=parameters)
     expected = np.array([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]])
     assert np.array_equal(
-        searchspace.param_bounds_comp,
+        searchspace.comp_rep_bounds.values,
         expected,
     )
 
@@ -59,8 +59,8 @@ def test_empty_parameter_bounds():
     searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
     searchspace_continuous = SubspaceContinuous(parameters=parameters)
     expected = np.empty((2, 0))
-    assert np.array_equal(searchspace_discrete.param_bounds_comp, expected)
-    assert np.array_equal(searchspace_continuous.param_bounds_comp, expected)
+    assert np.array_equal(searchspace_discrete.comp_rep_bounds.values, expected)
+    assert np.array_equal(searchspace_continuous.comp_rep_bounds.values, expected)
 
 
 def test_discrete_searchspace_creation_from_dataframe():

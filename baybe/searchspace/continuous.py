@@ -30,7 +30,6 @@ from baybe.searchspace.validation import (
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
-from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
@@ -211,11 +210,12 @@ class SubspaceContinuous(SerialMixin):
         return tuple(p.name for p in self.parameters)
 
     @property
-    def param_bounds_comp(self) -> np.ndarray:
-        """Return bounds as numpy array."""
-        if not self.parameters:
-            return np.empty((2, 0), dtype=DTypeFloatNumpy)
-        return np.stack([p.bounds.to_ndarray() for p in self.parameters]).T
+    def comp_rep_bounds(self) -> pd.DataFrame:
+        """The minimum and maximum values of the computational representation."""
+        return pd.DataFrame(
+            {p.name: p.bounds.to_tuple() for p in self.parameters},
+            index=["min", "max"],
+        )
 
     def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
         """Create a copy of the subspace with certain parameters removed.
@@ -324,10 +324,10 @@ class SubspaceContinuous(SerialMixin):
             and len(self.constraints_lin_ineq) == 0
             and len(self.constraints_cardinality) == 0
         ):
-            return self._sample_from_bounds(batch_size, self.param_bounds_comp)
+            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
         if len(self.constraints_cardinality) == 0:
-            return self._sample_from_polytope(batch_size, self.param_bounds_comp)
+            return self._sample_from_polytope(batch_size, self.comp_rep_bounds.values)
 
         return self._sample_from_polytope_with_cardinality_constraints(batch_size)
 
@@ -453,7 +453,7 @@ class SubspaceContinuous(SerialMixin):
     def full_factorial(self) -> pd.DataFrame:
         """Get the full factorial of the continuous space."""
         index = pd.MultiIndex.from_product(
-            self.param_bounds_comp.T.tolist(), names=self.param_names
+            self.comp_rep_bounds.values.T.tolist(), names=self.param_names
         )
 
         return pd.DataFrame(index=index).reset_index()

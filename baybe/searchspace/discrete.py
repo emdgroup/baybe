@@ -537,23 +537,9 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_bounds_comp(self) -> np.ndarray:
-        """Return bounds as tensor.
-
-        Take bounds from the parameter definitions, but discards bounds belonging to
-        columns that were filtered out during the creation of the space.
-        """
-        if not self.parameters:
-            return np.empty((2, 0))
-        bounds = np.hstack(
-            [
-                np.vstack([p.comp_df[col].min(), p.comp_df[col].max()])
-                for p in self.parameters
-                for col in p.comp_df
-                if col in self.comp_rep.columns
-            ]
-        )
-        return bounds
+    def comp_rep_bounds(self) -> pd.DataFrame:
+        """The minimum and maximum values of the computational representation."""
+        return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T
 
     @staticmethod
     def estimate_product_space_size(
