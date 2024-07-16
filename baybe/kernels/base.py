@@ -114,6 +114,16 @@ class Kernel(ABC, SerialMixin):
         return gpytorch_kernel
 
 
+@define(frozen=True)
+class BasicKernel(Kernel, ABC):
+    """Abstract base class for all basic kernels."""
+
+
+@define(frozen=True)
+class CompositeKernel(Kernel, ABC):
+    """Abstract base class for all composite kernels."""
+
+
 # Register de-/serialization hooks
 converter.register_structure_hook(Kernel, get_base_structure_hook(Kernel))
 converter.register_unstructure_hook(Kernel, unstructure_base)

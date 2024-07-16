@@ -7,8 +7,7 @@ import torch
 from attrs import asdict, has
 from hypothesis import given
 
-from baybe.kernels.base import Kernel
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.base import BasicKernel, Kernel
 
 from .hypothesis_strategies.kernels import kernels
 
@@ -28,11 +27,7 @@ def validate_gpytorch_kernel_components(obj: Any, mapped: Any, **kwargs) -> None
         **kwargs: Optional kernel arguments that were passed to the GPyTorch kernel.
     """
     # Assert that the kernel kwargs are correctly mapped
-    # TODO: Consider introducing intermediate kernel classes or class variables
-    #   to differentiate basic kernels from composite ones
-    if isinstance(obj, Kernel) and not isinstance(
-        obj, (ScaleKernel, AdditiveKernel, ProductKernel)
-    ):
+    if isinstance(obj, BasicKernel):
         for k, v in kwargs.items():
             assert torch.tensor(getattr(mapped, k)).equal(torch.tensor(v))
 

@@ -40,6 +40,7 @@ _ `_optional` subpackage for managing optional dependencies
   `Parameter.to_searchspace` convenience constructors
 - Utilities for permutation and dependency data augmentation
 - Validation and translation tests for kernels
+- `BasicKernel` and `CompositeKernel` base classes
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

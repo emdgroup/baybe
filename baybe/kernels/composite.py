@@ -7,13 +7,13 @@ from attrs.converters import optional as optional_c
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from attrs.validators import optional as optional_v
 
-from baybe.kernels.base import Kernel
+from baybe.kernels.base import CompositeKernel, Kernel
 from baybe.priors.base import Prior
 from baybe.utils.validation import finite_float
 
 
 @define(frozen=True)
-class ScaleKernel(Kernel):
+class ScaleKernel(CompositeKernel):
     """A kernel for decorating existing kernels with an outputscale."""
 
     base_kernel: Kernel = field(validator=instance_of(Kernel))
@@ -46,7 +46,7 @@ class ScaleKernel(Kernel):
 
 
 @define(frozen=True)
-class AdditiveKernel(Kernel):
+class AdditiveKernel(CompositeKernel):
     """A kernel representing the sum of a collection of base kernels."""
 
     base_kernels: tuple[Kernel, ...] = field(
@@ -64,7 +64,7 @@ class AdditiveKernel(Kernel):
 
 
 @define(frozen=True)
-class ProductKernel(Kernel):
+class ProductKernel(CompositeKernel):
     """A kernel representing the product of a collection of base kernels."""
 
     base_kernels: tuple[Kernel, ...] = field(
