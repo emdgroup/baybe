@@ -1,9 +1,9 @@
 # Active Learning
-When labeling unmeasured data points, e.g. for a data acquisition campaign to gather 
-data for a machine learning model, it can be beneficial to follow a guided approach 
-rather than randomly measuring data. If this is done via iteratively measuring points 
-according to a criterion reflecting the current model's uncertainty, the 
-method is called **active learning**.
+When deciding which experiments to perform next, e.g. for a data acquisition campaign
+to gather data for a machine learning model, it can be beneficial to follow a guided
+approach rather than selecting experiments randomly. If this is done via iteratively
+measuring points according to a criterion reflecting the current model's uncertainty,
+the method is called **active learning**.
 
 Active learning can be seen as a special case of Bayesian optimization. If we have the 
 above-mentioned criterion and set up a Bayesian optimization campaign to recommend 
@@ -25,7 +25,7 @@ the points with the highest predicted model uncertainty:
   Increasing values of `beta` effectively eliminate the effect of the posterior mean on
   the acquisition value, yielding a selection of points driven primarily by the
   posterior variance. However, we generally recommend to use this acquisition function
-  only if a small exploratory component is desired – otherwise, the
+  only if a small exploratory component is desired - otherwise, the
   [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation) 
   acquisition function is what you are looking for.
 
@@ -38,7 +38,8 @@ Choosing candidates based on this acquisition function is tantamount to selectin
 set of points resulting in the largest reduction of global uncertainty when added to
 the already existing experimental design.
 
-Because of its ability to quantify uncertainty on a global scale, this approach is often superior to using a point-based uncertainty criterion as acquisition function. 
+Because of its ability to quantify uncertainty on a global scale, this approach is often
+superior to using a point-based uncertainty criterion as acquisition function. 
 However, due to its computational complexity, it can be prohibitive to integrate over
 the entire search space. For this reason, we offer the option to sub-sample parts of it,
 configurable via the constructor:
