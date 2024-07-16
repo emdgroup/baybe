@@ -181,23 +181,17 @@ def test_polars_product(constraints, parameters):
     """Test the result of parameter product and filtering."""
     # Do Polars product
     ldf = parameter_cartesian_prod_polars(parameters)
-    pol_df = ldf.collect()
+    df_pl = ldf.collect()
 
     # Do Pandas product
-    pd_df = parameter_cartesian_prod_pandas(parameters)
+    df_pd = parameter_cartesian_prod_pandas(parameters)
 
     # Assert equality of lengths before filtering
-    assert len(pol_df.to_pandas()) == len(
-        pd_df
-    ), "Polars and Pandas dataframes have different length."
-    assert_frame_equal(pol_df.to_pandas(), pd_df)
+    assert_frame_equal(df_pl.to_pandas(), df_pd)
 
-    # Apply same constraints on Pandas dataframe
-    _apply_pandas_constraint_filter(pd_df, constraints)
-
-    # And then separately apply constraints using Polars
-    ldf = _apply_polars_constraint_filter(ldf, constraints)
-    pol_result = ldf.collect().to_pandas()
+    # Apply constraints
+    _apply_pandas_constraint_filter(df_pd, constraints)
+    df_pl_res = _apply_polars_constraint_filter(ldf, constraints).collect().to_pandas()
 
     # Assert strict equality of two dataframes
-    assert_frame_equal(pol_result, pd_df)
+    assert_frame_equal(df_pl_res, df_pd)
