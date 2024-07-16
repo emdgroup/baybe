@@ -12,7 +12,7 @@
 
 ### Imports
 
-
+import os
 import sys
 import warnings
 from pathlib import Path
@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
+from botorch.test_functions.synthetic import Hartmann
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from scipy.stats import gaussian_kde
@@ -30,7 +31,7 @@ from baybe.acquisition import ProbabilityOfImprovement
 from baybe.campaign import Campaign
 from baybe.objectives.base import Objective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
     BotorchRecommender,
     RandomRecommender,
@@ -40,7 +41,18 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
-from baybe.utils.dataframe import add_fake_results, to_tensor
+from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.dataframe import to_tensor
+
+### Parameters for a full simulation loop
+
+# For the full simulation, we need to define some additional parameters. These are the number of experiments to be conducted per run, the batch size, the dimension and the points per dimension.
+
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 7
+BATCH_SIZE = 1 if SMOKE_TEST else 3
+DIMENSION = 3
+POINTS_PER_DIM = 3 if SMOKE_TEST else 4
 
 ### Setup
 
@@ -156,56 +168,34 @@ my_recommender.recommender.recommend = MethodType(
 
 # We setup the other objects to trigger the hook:
 
-dict_solvent = {
-    "DMAc": r"CC(N(C)C)=O",
-    "Butyornitrile": r"CCCC#N",
-    "Butyl Ester": r"CCCCOC(C)=O",
-    "p-Xylene": r"CC1=CC=C(C)C=C1",
-}
-dict_base = {
-    "Potassium acetate": r"O=C([O-])C.[K+]",
-    "Potassium pivalate": r"O=C([O-])C(C)(C)C.[K+]",
-    "Cesium acetate": r"O=C([O-])C.[Cs+]",
-    "Cesium pivalate": r"O=C([O-])C(C)(C)C.[Cs+]",
-}
-dict_ligand = {
-    "BrettPhos": r"CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC4)C(OC)="
-    "CC=C2OC",
-    "Di-tert-butylphenylphosphine": r"CC(C)(C)P(C1=CC=CC=C1)C(C)(C)C",
-    "(t-Bu)PhCPhos": r"CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3",
-    "Tricyclohexylphosphine": r"P(C1CCCCC1)(C2CCCCC2)C3CCCCC3",
-    "PPh3": r"P(C1=CC=CC=C1)(C2=CC=CC=C2)C3=CC=CC=C3",
-    "XPhos": r"CC(C1=C(C2=CC=CC=C2P(C3CCCCC3)C4CCCCC4)C(C(C)C)=CC(C(C)C)=C1)C",
-    "P(2-furyl)3": r"P(C1=CC=CO1)(C2=CC=CO2)C3=CC=CO3",
-    "Methyldiphenylphosphine": r"CP(C1=CC=CC=C1)C2=CC=CC=C2",
-    "1268824-69-6": r"CC(OC1=C(P(C2CCCCC2)C3CCCCC3)C(OC(C)C)=CC=C1)C",
-    "JackiePhos": r"FC(F)(F)C1=CC(P(C2=C(C3=C(C(C)C)C=C(C(C)C)C=C3C(C)C)C(OC)=CC=C2OC)"
-    r"C4=CC(C(F)(F)F)=CC(C(F)(F)F)=C4)=CC(C(F)(F)F)=C1",
-    "SCHEMBL15068049": r"C[C@]1(O2)O[C@](C[C@]2(C)P3C4=CC=CC=C4)(C)O[C@]3(C)C1",
-    "Me2PPh": r"CP(C)C1=CC=CC=C1",
-}
-parameters = [
-    CategoricalParameter(name="Solvent", values=dict_solvent.keys(), encoding="OHE"),
-    CategoricalParameter(name="Base", values=dict_base.keys(), encoding="OHE"),
-    CategoricalParameter(name="Ligand", values=dict_ligand.keys(), encoding="OHE"),
-    NumericalDiscreteParameter(name="Temp_C", values=[90, 105, 120], tolerance=2),
+test_function = Hartmann(dim=DIMENSION)
+
+WRAPPED_FUNCTION = botorch_function_wrapper(test_function=test_function)
+
+BOUNDS = test_function.bounds
+
+discrete_params = [
     NumericalDiscreteParameter(
-        name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005
-    ),
+        name=f"x{d}",
+        values=np.linspace(lower, upper, POINTS_PER_DIM),
+    )
+    for d, (lower, upper) in enumerate(BOUNDS.T)
 ]
-searchspace = SearchSpace.from_product(parameters=parameters)
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+
+searchspace = SearchSpace.from_product(parameters=discrete_params)
+objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
 campaign = Campaign(
     searchspace=searchspace,
     recommender=my_recommender,
     objective=objective,
 )
 
-# Now we perform 5 recommendations:
+# Now we perform 7 recommendations:
 
-for i in range(7):
-    recommendation = campaign.recommend(batch_size=3)
-    add_fake_results(recommendation, campaign)
+for i in range(N_DOE_ITERATIONS):
+    recommendation = campaign.recommend(BATCH_SIZE)
+    target_values = recommendation.apply(WRAPPED_FUNCTION, axis=1)
+    recommendation["Target"] = target_values
     campaign.add_measurements(recommendation)
 
 # Lastly, we plot the PI from the previous iterations to be able to analyse them:
