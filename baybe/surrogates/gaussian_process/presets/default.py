@@ -72,66 +72,6 @@ class DefaultKernelFactory(KernelFactory):
         )
 
 
-@define
-class EDBOKernelFactory(KernelFactory):
-    """A factory providing the kernel for Gaussian process surrogates.
-
-    The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
-
-    References:
-        * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
-        * https://doi.org/10.1038/s41586-021-03213-y
-    """
-
-    def __call__(  # noqa: D102
-        self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-    ) -> Kernel:
-        # See base class.
-        effective_dims = searchspace.n_effective_default_kernel_dimensions
-
-        mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
-            effective_dims >= 50
-        )
-
-        # low D priors
-        if effective_dims < 5:
-            lengthscale_prior = GammaPrior(1.2, 1.1)
-            lengthscale_initial_value = 0.2
-            outputscale_prior = GammaPrior(5.0, 0.5)
-            outputscale_initial_value = 8.0
-
-        # DFT optimized priors
-        elif mordred and effective_dims < 100:
-            lengthscale_prior = GammaPrior(2.0, 0.2)
-            lengthscale_initial_value = 5.0
-            outputscale_prior = GammaPrior(5.0, 0.5)
-            outputscale_initial_value = 8.0
-
-        # Mordred optimized priors
-        elif mordred:
-            lengthscale_prior = GammaPrior(2.0, 0.1)
-            lengthscale_initial_value = 10.0
-            outputscale_prior = GammaPrior(2.0, 0.1)
-            outputscale_initial_value = 10.0
-
-        # OHE optimized priors
-        else:
-            lengthscale_prior = GammaPrior(3.0, 1.0)
-            lengthscale_initial_value = 2.0
-            outputscale_prior = GammaPrior(5.0, 0.2)
-            outputscale_initial_value = 20.0
-
-        return ScaleKernel(
-            MaternKernel(
-                nu=2.5,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_initial_value=lengthscale_initial_value,
-            ),
-            outputscale_prior=outputscale_prior,
-            outputscale_initial_value=outputscale_initial_value,
-        )
-
-
 def _default_noise_factory(
     searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
 ) -> tuple[GammaPrior, float]:
@@ -162,38 +102,3 @@ def _default_noise_factory(
             return a + (b - a) * interp_factor
 
         return [GammaPrior(_interp(1.05, 1.5), _interp(0.5, 0.1)), _interp(0.1, 5.0)]
-
-
-def _edbo_noise_factory(
-    searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-) -> tuple[GammaPrior, float]:
-    """Create the default noise settings for the Gaussian process surrogate.
-
-    The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
-
-    References:
-        * https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
-        * https://doi.org/10.1038/s41586-021-03213-y
-    """
-    # TODO: Replace this function with a proper likelihood factory
-    effective_dims = searchspace.n_effective_default_kernel_dimensions
-
-    uses_descriptors = (
-        searchspace.contains_mordred or searchspace.contains_rdkit
-    ) and (effective_dims >= 50)
-
-    # low D priors
-    if effective_dims < 5:
-        return [GammaPrior(1.05, 0.5), 0.1]
-
-    # DFT optimized priors
-    elif uses_descriptors and effective_dims < 100:
-        return [GammaPrior(1.5, 0.1), 5.0]
-
-    # Mordred optimized priors
-    elif uses_descriptors:
-        return [GammaPrior(1.5, 0.1), 5.0]
-
-    # OHE optimized priors
-    else:
-        return [GammaPrior(1.5, 0.1), 5.0]

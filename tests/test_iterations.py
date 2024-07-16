@@ -39,7 +39,7 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
-from baybe.surrogates.gaussian_process.presets.default import (
+from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
@@ -240,7 +240,6 @@ def test_kernels(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("kernel", valid_kernel_factories)
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_kernel_factories(campaign, n_iterations, batch_size):
-    print(campaign.recommender)
     run_iterations(campaign, n_iterations, batch_size)
 
 
