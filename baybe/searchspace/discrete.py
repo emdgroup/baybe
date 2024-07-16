@@ -260,11 +260,8 @@ class SubspaceDiscrete(SerialMixin):
         lazy_df = _apply_polars_constraint_filter(lazy_df, constraints)
         pl_df = lazy_df.collect(streaming=True)
 
-        # Check if dataframe is empty to prevent Polar's error
-        if len(pl_df) == 0:
-            df = pd.DataFrame()
-        else:
-            df = pl_df.to_pandas()
+        # Conversion to Pandas dataframe
+        df = pl_df.to_pandas()
 
         # Remove entries that violate any remaining parameter constraints
         _apply_pandas_constraint_filter(df, constraints)
