@@ -2,7 +2,7 @@
 When labeling unmeasured data points, e.g. for a data acquisition campaign to gather 
 data for a machine learning model, it can be beneficial to follow a guided approach 
 rather than randomly measuring data. If this is done via iteratively measuring points 
-according to a criterion proportional to the current model's uncertainty, the 
+according to a criterion reflecting the current model's uncertainty, the 
 method is called **active learning**.
 
 Active learning can be seen as a special case of Bayesian optimization. If we have the 

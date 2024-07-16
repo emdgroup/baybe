@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validators for `Campaign` attributes
 - `_optional` subpackage for managing optional dependencies
 - New acquisition functions for active learning: `qNIPV` (negative integrated posterior
-  variance) and `PosteriorStandardDeviation`
+  variance) and `PSTD` (posterior standard deviation)
 - Acquisition function: `qKG` (knowledge gradient)
 - Abstract `ContinuousNonlinearConstraint` class
 - Abstract `CardinalityConstraint` class and
