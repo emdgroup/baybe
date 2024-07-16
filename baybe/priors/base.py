@@ -10,7 +10,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.basic import match_attributes, set_default_torch_dtype
+from baybe.utils.basic import match_attributes
 
 
 @define(frozen=True)
@@ -20,8 +20,14 @@ class Prior(ABC, SerialMixin):
     def to_gpytorch(self, *args, **kwargs):
         """Create the gpytorch representation of the prior."""
         import gpytorch.priors
+        import torch
 
-        set_default_torch_dtype()
+        from baybe.utils.torch import DTypeFloatTorch
+
+        # TODO: This is only a temporary workaround. A proper solution requires
+        #   modifying the torch import procedure using the built-in tools of importlib
+        #   so that the dtype is set whenever torch is lazily loaded.
+        torch.set_default_dtype(DTypeFloatTorch)
 
         prior_cls = getattr(gpytorch.priors, self.__class__.__name__)
         fields_dict = match_attributes(self, prior_cls.__init__)[0]

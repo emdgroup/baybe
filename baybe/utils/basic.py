@@ -311,14 +311,3 @@ def register_hooks(
         return result
 
     return wraps
-
-
-def set_default_torch_dtype():
-    """Lazily set the torch default dtype."""
-    # TODO: This is only a temporary workaround. A proper solution requires
-    #   modifying the torch import procedure using the built-in tools of importlib.
-    import torch
-
-    from baybe.utils.torch import DTypeFloatTorch
-
-    torch.set_default_dtype(DTypeFloatTorch)
