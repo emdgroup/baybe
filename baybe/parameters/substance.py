@@ -134,9 +134,8 @@ class SubstanceParameter(DiscreteParameter):
         comp_df = df_drop_single_value_columns(comp_df)
 
         # If there are bool columns, convert them to int (possible for Mordred)
-        comp_df.loc[:, comp_df.dtypes == bool] = comp_df.loc[
-            :, comp_df.dtypes == bool
-        ].astype(int)
+        bool_cols = comp_df.select_dtypes(bool).columns
+        comp_df[bool_cols] = comp_df[bool_cols].astype(int)
 
         # Label the rows with the molecule names
         comp_df.index = pd.Index(self.values)
