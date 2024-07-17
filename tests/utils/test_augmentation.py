@@ -1,6 +1,5 @@
 """Tests for augmentation utilities."""
 
-
 import pandas as pd
 import pytest
 from pytest import param

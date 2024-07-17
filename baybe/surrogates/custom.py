@@ -7,6 +7,7 @@ surrogates can be trained and attempts to do so for each new DOE iteration.
 
 It is planned to solve this issue in the future.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable

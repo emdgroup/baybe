@@ -1,4 +1,5 @@
 """Tests for numerical utilities."""
+
 import numpy as np
 import pytest
 from pytest import param

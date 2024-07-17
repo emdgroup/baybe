@@ -1,4 +1,5 @@
 """Tests for basic input-output and iterative loop."""
+
 import numpy as np
 import pytest
 

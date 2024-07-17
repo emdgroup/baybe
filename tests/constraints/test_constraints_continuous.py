@@ -1,4 +1,5 @@
 """Test for imposing continuous constraints."""
+
 import numpy as np
 import pytest
 
