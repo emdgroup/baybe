@@ -13,7 +13,6 @@
 ### Imports
 
 import os
-import sys
 import warnings
 from pathlib import Path
 from types import MethodType
@@ -23,6 +22,7 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.test_functions.synthetic import Hartmann
+from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from scipy.stats import gaussian_kde
@@ -88,10 +88,13 @@ def check_probability_of_improvement(
 # Additionally, we define a function that plots the `poi_list` after all recommend  iterations:
 
 
-def plot_poi(poi_list: list[torch.Tensor]) -> None:
+def plot_poi(
+    poi_list: list[torch.Tensor],
+    ax: Axes,
+    base_name: str,
+    path: Path = Path("."),
+) -> None:
     """Plot the probability of improvement in 3D."""
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
     cmap = plt.get_cmap("viridis")
 
     # Plot each PI tensor separately
@@ -126,7 +129,7 @@ def plot_poi(poi_list: list[torch.Tensor]) -> None:
     ax.set_zlabel("Density")
     ax.set_title("Investigate the PI")
 
-    output_path = Path(Path(sys.path[0]), "POI_Plot.svg")
+    output_path = Path(path, base_name)
     # mypy thinks that ax.figure might become None, hence the explicit ignore
     if isinstance(ax.figure, Figure):
         ax.figure.savefig(
@@ -200,4 +203,6 @@ for i in range(N_DOE_ITERATIONS):
 
 # Lastly, we plot the PI from the previous iterations to be able to analyse them:
 
-plot_poi(poi_list)
+fig = plt.figure()
+ax = fig.add_subplot(projection="3d")
+plot_poi(poi_list, ax=ax, base_name="POI_Plot.svg")
