@@ -50,7 +50,7 @@ from baybe.utils.dataframe import to_tensor
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 7
-BATCH_SIZE = 1 if SMOKE_TEST else 3
+BATCH_SIZE = 1
 DIMENSION = 3
 POINTS_PER_DIM = 3 if SMOKE_TEST else 4
 
@@ -69,8 +69,12 @@ def check_probability_of_improvement(
     searchspace: SearchSpace,
     objective: Objective | None = None,
     measurements: pd.DataFrame | None = None,
-):
-    """Calculate and store the probability of improvement in poi_list."""
+) -> list[torch.Tensor]:
+    """Calculate and store the probability of improvement in poi_list.
+
+    For reasons of numerical stability, the function adds some noise to the calculated
+    probabilities.
+    """
     if searchspace.type != SearchSpaceType.DISCRETE:
         raise TypeError(
             f"{searchspace.type} search spaces are not supported yet. "
@@ -82,6 +86,7 @@ def check_probability_of_improvement(
     botorch_acqf = acqf.to_botorch(self.surrogate_model, searchspace, train_x, train_y)
     comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
     poi = botorch_acqf(comp_rep_tensor)
+    poi = poi + 1e-10 * torch.randn(poi.shape)
     poi_list.append(poi)
 
 
