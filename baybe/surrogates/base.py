@@ -19,6 +19,7 @@ from cattrs.dispatch import (
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
+from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
     converter,
@@ -27,12 +28,13 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.scaling import ScalingMethod, make_scaler
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
     from botorch.posteriors import GPyTorchPosterior, Posterior
+    from sklearn.compose import ColumnTransformer
     from torch import Tensor
-
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -82,6 +84,32 @@ class Surrogate(ABC, SerialMixin):
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)
+
+    @staticmethod
+    def _get_parameter_scaling(parameter: Parameter) -> ScalingMethod:
+        """Return the scaling method to be used for the given parameter."""
+        return ScalingMethod.MINMAX
+
+    def _make_input_scaler(
+        self, searchspace: SearchSpace, measurements: pd.DataFrame
+    ) -> ColumnTransformer:
+        """Make a scaler to be used for transforming computational dataframes."""
+        from sklearn.compose import make_column_transformer
+
+        # Create the composite scaler from the parameter-wise scaler objects
+        # TODO: Filter down to columns that actually remain in the comp rep of the
+        #   searchspace, since the transformer can break down otherwise.
+        transformers = [
+            (make_scaler(self._get_parameter_scaling(p)), p.comp_df.columns)
+            for p in searchspace.parameters
+        ]
+        scaler = make_column_transformer(*transformers)
+
+        # TODO: Decide whether scaler is to be fit to parameter bounds and/or
+        #   extreme points in the given measurement data
+        scaler.fit(searchspace.comp_rep_bounds)
+
+        return scaler
 
     def transform_inputs(self, data: pd.DataFrame) -> pd.DataFrame:
         """Transform an experimental parameter dataframe."""
@@ -148,8 +176,12 @@ class Surrogate(ABC, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
+        input_scaler = self._make_input_scaler(searchspace, measurements)
+
         # Store context-specific transformations
-        self._input_transform = lambda x: searchspace.transform(x, allow_missing=True)
+        self._input_transform = lambda x: input_scaler.transform(
+            searchspace.transform(x, allow_missing=True)
+        )
         self._target_transform = lambda x: objective.transform(x)
 
         # Transform and fit

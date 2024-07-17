@@ -8,6 +8,7 @@ from attrs import define, field
 from attrs.validators import instance_of
 
 from baybe.objective import Objective
+from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -22,6 +23,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
+from baybe.utils.scaling import ScalingMethod
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -107,6 +109,13 @@ class GaussianProcessSurrogate(Surrogate):
         # See base class.
 
         return self._model
+
+    @staticmethod
+    def _get_parameter_scaling(parameter: Parameter) -> ScalingMethod:
+        # See base class.
+
+        # For GPs, we use botorch's built-in machinery for scaling
+        return ScalingMethod.IDENTITY
 
     @staticmethod
     def _get_model_context(
