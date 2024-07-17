@@ -122,7 +122,6 @@ lint = [
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
     "pyupgrade==3.16.0", # see DEV TOOLS NOTE
     "ruff==0.5.2", # see DEV TOOLS NOTE
-    "typos==1.23.2" # see DEV TOOLS NOTE
 ]
 
 mypy = [

@@ -55,6 +55,7 @@ _ `_optional` subpackage for managing optional dependencies
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
   and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
+- Linter `typos` for spellchecking
 
 ### Fixed
 - `sequential` flag of `SequentialGreedyRecommender` is now set to `True`

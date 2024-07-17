@@ -26,7 +26,7 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-The Bayesian Back End (**BayBE**) is a general-purpose toolbox for Bayesian Design
+The **Bay**esian **B**ack **E**nd (**BayBE**) is a general-purpose toolbox for Bayesian Design
 of Experiments, focusing on additions that enable real-world experimental campaigns.
 
 Besides functionality to perform a typical recommend-measure loop, BayBE's highlights are:
