@@ -1,5 +1,5 @@
 """Test Polars implementations of constraints."""
-
+import pandas as pd
 import polars as pl
 import pytest
 from pandas.testing import assert_frame_equal

@@ -678,13 +678,17 @@ class SubspaceDiscrete(SerialMixin):
 
 def _apply_pandas_constraint_filter(
     df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
-):
-    """Remove discrete search space entries inplace based on constraints.
+) -> pd.DataFrame:
+    """Remove discrete search space entries based on constraints.
+
+    The filtering is done inplace, but the modified object is still returned.
 
     Args:
         df: The data in experimental representation to be modified inplace.
         constraints: List of discrete constraints.
 
+    Returns:
+        The filtered dataframe.
     """
     # Reorder the constraints according to their execution order
     constraints = sorted(
@@ -697,6 +701,8 @@ def _apply_pandas_constraint_filter(
         idxs = constraint.get_invalid(df)
         df.drop(index=idxs, inplace=True)
     df.reset_index(inplace=True, drop=True)
+
+    return df
 
 
 def _apply_polars_constraint_filter(
