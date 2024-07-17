@@ -1,20 +1,14 @@
 name: Documentation
 
 on:
+  push:
+    branches:
+      - main
   release:
     types:
       - published
-  workflow_dispatch:
-    inputs:
-      force:
-        description: 'Force'
-        default: false
-        required: false
-        type: boolean
-      tag:
-        description: 'Specify tag (empty builds branch HEAD)'
-        required: false
-        default: ''
+  workflow_dispatch:  # Allow manually triggering the workflow
+
 
 concurrency:
   group: ${{ github.workflow }}
@@ -24,35 +18,71 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ github.ref }}
       - uses: actions/setup-python@v5
         with: {python-version: "3.10"}
       - name: Install tox
         run: pip install tox-uv
-      - name: Build Docs ${{ inputs.force == true && '(Force)' || '' }}
-        run: tox -e docs-py310 ${{ inputs.force == true && '-- -f -r' || '-- -r' }}
-      - name: Upload docs artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'docs/build'
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+      - name: Build Docs
+        run: tox -e docs-py310 -- -r
+      - name: Configure sphinx bot for pushing and fetch branches
+        run: |
+            git config --local user.email "sphinx-upload[bot]@users.noreply.github.com"
+            git config --local user.name "sphinx-upload[bot]"
+      - name: Copy latest folder to gh-pages branch
+        run: |
+            git fetch origin gh-pages:gh-pages
+            git checkout gh-pages
+            if [ -d "latest" ]; then
+              rm -rf latest
+            fi
+            mkdir ./latest
+            cp -r docs/build/* ./latest
+            echo "Successfully copied into latest"
+      - if: ${{ github.event_name == 'release' }}
+        name: Copy stable folder to gh-pages branch when releasing
+        run: |
+            FOLDER=${{github.event.release.tag_name}}
+            mkdir ./$FOLDER
+            cp -r docs/build/* ./$FOLDER
+            echo "Copying files into stable folder"
+            if [ -d "stable" ]; then
+              echo "Deleting old stable folder."
+              rm -rf stable
+            fi
+            mkdir ./stable
+            cp -rv docs/build/* ./stable
+            echo "Successfully copied into stable folder"
+      - name: Update gh-pages branch for latest
+        run: |
+            git_hash=$(git rev-parse --short "$GITHUB_SHA")
+            git fetch origin main:main
+            git show main:docs/scripts/add_version.py > add_version.py
+            python add_version.py html latest
+            git add -f latest
+            git commit -m "Sphinx documentation for ${git_hash} (latest)"
+      - if: ${{ github.event_name == 'release' }}
+        name: Add new stable and numbered version to gh-pages branch
+        run: |
+            FOLDER=${{github.event.release.tag_name}}
+            echo "Adding numbered folder"
+            git add -f $FOLDER
+            git commit -m "Sphinx documentation for ${git_hash} (${FOLDER})"
+            echo "Adding stable as a separate folder"
+            git add -f stable
+            git commit -m "Sphinx documentation for ${git_hash} (stable)"
+            echo "Inserting announcement banner to documentation and add link for selector"
+            python add_version.py selector_page $FOLDER
+            python add_version.py html $FOLDER
+            python add_version.py html stable
+            rm add_version.py
+            git add .
+            git commit -m "Add link to version to selector page and add banner"
+      - name: Push changes to gh-pages branch
+        run: git push origin gh-pages
