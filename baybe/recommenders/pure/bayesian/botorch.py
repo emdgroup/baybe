@@ -1,11 +1,16 @@
 """Botorch recommender."""
+
+from __future__ import annotations
+
 import math
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attr.converters import optional
 from attrs import define, field
+from attrs.validators import ge, instance_of
 
+from baybe.constraints import ContinuousCardinalityConstraint
 from baybe.exceptions import NoMCAcquisitionFunctionError
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
@@ -19,6 +24,9 @@ from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
 )
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define(kw_only=True)
@@ -56,6 +64,16 @@ class BotorchRecommender(BayesianRecommender):
     sampling_percentage: float = field(default=1.0)
     """Percentage of discrete search space that is sampled when performing hybrid search
     space optimization. Ignored when ``hybrid_sampler="None"``."""
+
+    n_threshold_inactive_parameters_generator: int = field(
+        default=10, validator=[instance_of(int), ge(1)]
+    )
+    """Threshold used for checking which inactive parameters generator is used when
+    cardinality constraints are present. When the size of the combinatorial list of
+    all possible inactive parameters is larger than the threshold, a fixed number of
+    randomly generated inactive parameter configurations are used and the best
+    optimum among them is recommended; Otherwise, we find the best one by iterating the
+    combinatorial list of all possible inactive parameters """
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -150,31 +168,184 @@ class BotorchRecommender(BayesianRecommender):
                 f"acquisition functions for batch sizes > 1."
             )
 
+        if len(subspace_continuous.constraints_cardinality):
+            points, _ = self._recommend_continuous_with_cardinality_constraints(
+                subspace_continuous,
+                batch_size,
+            )
+        else:
+            points, _ = self._recommend_continuous_without_cardinality_constraints(
+                subspace_continuous,
+                batch_size,
+            )
+
+        # Return optimized points as dataframe
+        rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
+        return rec
+
+    def _recommend_continuous_with_cardinality_constraints(
+        self,
+        subspace_continuous: SubspaceContinuous,
+        batch_size: int,
+    ) -> tuple[Tensor, Tensor]:
+        """Recommend from a continuous search space with cardinality constraints.
+
+        Args:
+            subspace_continuous: The continuous subspace from which to generate
+                recommendations.
+            batch_size: The size of the recommendation batch.
+
+        Returns:
+            The recommendations.
+            The acquisition values.
+
+        Raises:
+            RuntimeError: If the continuous search space has no cardinality constraint.
+        """
+        import torch
+
+        if not subspace_continuous.constraints_cardinality:
+            raise RuntimeError(
+                f"This method expects a subspace object with constraints of type "
+                f"{ContinuousCardinalityConstraint.__name__}. For a subspace object "
+                f"without constraints of type"
+                f" {ContinuousCardinalityConstraint.__name__}, "
+                f"{self._recommend_continuous_without_cardinality_constraints.__name__}."  # noqa
+            )
+
+        acqf_values_all: list[Tensor] = []
+        points_all: list[Tensor] = []
+
+        def append_recommendation_for_inactive_parameters_setting(
+            inactive_parameters: tuple[str, ...],
+        ):
+            """Append the recommendation for each inactive parameter configuration.
+
+            Args:
+                inactive_parameters: A list of inactive parameters.
+            """
+            # Create a new subspace by ensuring all active parameters being
+            # non-zeros.
+            subspace_continuous_with_active_params = (
+                subspace_continuous._ensure_nonzero_parameters(inactive_parameters)
+            )
+            # Optimize the acquisition function
+            (
+                points_i,
+                acqf_values_i,
+            ) = self._recommend_continuous_without_cardinality_constraints(
+                subspace_continuous_with_active_params,
+                batch_size,
+                inactive_parameters,
+            )
+            # Append recommendation list and acquisition function values
+            points_all.append(points_i.unsqueeze(0))
+            acqf_values_all.append(acqf_values_i.unsqueeze(0))
+
+        # Below we start recommendation
+        if (
+            subspace_continuous.n_combinatorial_inactive_parameters
+            > self.n_threshold_inactive_parameters_generator
+        ):
+            # When the combinatorial list is too large, randomly set some parameters
+            # inactive.
+            for _ in range(self.n_threshold_inactive_parameters_generator):
+                inactive_params_sample = tuple(
+                    subspace_continuous._sample_inactive_parameters(1)[0]
+                )
+                append_recommendation_for_inactive_parameters_setting(
+                    inactive_params_sample
+                )
+        else:
+            # When the combinatorial list is not too large, iterate the combinatorial
+            # list of all possible inactive parameters.
+            for (
+                inactive_params_generator
+            ) in subspace_continuous.combinatorial_inactive_parameters:
+                # Flatten inactive parameter generator
+                inactive_params_sample = tuple(
+                    {
+                        param
+                        for sublist in inactive_params_generator
+                        for param in sublist
+                    }
+                )
+                append_recommendation_for_inactive_parameters_setting(
+                    inactive_params_sample
+                )
+
+        # Find the best option
+        points = torch.cat(points_all)[torch.argmax(torch.cat(acqf_values_all)), :]
+        acqf_values = torch.max(torch.cat(acqf_values_all))
+        return points, acqf_values
+
+    def _recommend_continuous_without_cardinality_constraints(
+        self,
+        subspace_continuous: SubspaceContinuous,
+        batch_size: int,
+        inactive_parameters: tuple[str, ...] | None = None,
+    ) -> tuple[Tensor, Tensor]:
+        """Recommend from a continuous search space without cardinality constraints.
+
+        Args:
+            subspace_continuous: The continuous subspace from which to generate
+                recommendations.
+            batch_size: The size of the recommendation batch.
+            inactive_parameters: A list of inactive parameters.
+
+        Returns:
+            The recommendations.
+            The acquisition values.
+
+        Raises:
+            RuntimeError: If the continuous search space has any cardinality
+                constraints.
+        """
         import torch
         from botorch.optim import optimize_acqf
 
-        points, _ = optimize_acqf(
+        if subspace_continuous.constraints_cardinality:
+            raise RuntimeError(
+                f"This method expects only subspace object without constraints of type "
+                f"{ContinuousCardinalityConstraint.__name__}. For a subspace object "
+                f"with constraints of type {ContinuousCardinalityConstraint.__name__}, "
+                f"try method {self._recommend_continuous.__name__}."
+            )
+
+        if not inactive_parameters:
+            fixed_parameters = None
+        else:
+            # Cast the inactive parameters to the format of fixed features used
+            # in optimize_acqf())
+            indices_inactive_params = [
+                subspace_continuous.param_names.index(key)
+                for key in subspace_continuous.param_names
+                if key in inactive_parameters
+            ]
+            fixed_parameters = {ind: 0.0 for ind in indices_inactive_params}
+
+        points, acqf_values = optimize_acqf(
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
             q=batch_size,
             num_restarts=5,  # TODO make choice for num_restarts
             raw_samples=10,  # TODO make choice for raw_samples
+            fixed_features=fixed_parameters,
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
             ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            or None,
+            # TODO: https://github.com/pytorch/botorch/issues/2042
             inequality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_ineq
             ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            or None,
+            # TODO: https://github.com/pytorch/botorch/issues/2042
             sequential=self.sequential_continuous,
         )
-
-        # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
-        return rec
+        return points, acqf_values
 
     def _recommend_hybrid(
         self,

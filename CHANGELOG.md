@@ -28,6 +28,11 @@ _ `_optional` subpackage for managing optional dependencies
 - Abstract `CardinalityConstraint` class and
   `DiscreteCardinalityConstraint`/`ContinuousCardinalityConstraint` subclasses
 - Uniform sampling mechanism for continuous spaces with cardinality constraints
+- Enable `ContinuousCardinalityConstraint` in `BotorchRecommender`
+- Attribute `n_threshold_inactive_parameters_generator` added to `BotorchRecommender`  
+- Properties `combinatorial_zero_parameters` and 
+  `combinatorial_counts_zero_parameters` in both `ContinuousCardinalityConstraint`and 
+  `SubspaceContinuous`
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
 - `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
   now take additional `allow_missing` and `allow_extra` keyword arguments

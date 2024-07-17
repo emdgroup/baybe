@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import math
 import warnings
-from collections.abc import Collection, Sequence
-from itertools import chain
+from collections.abc import Collection, Iterable, Sequence
+from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -19,6 +20,7 @@ from baybe.constraints import (
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
     validate_cardinality_constraints_are_nonoverlapping,
+    validate_parameters_bounds_in_cardinality_constraint,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
@@ -36,6 +38,7 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
+ZERO_THRESHOLD = 1e-5
 
 
 @define
@@ -109,6 +112,37 @@ class SubspaceContinuous(SerialMixin):
             if isinstance(c, ContinuousCardinalityConstraint)
         )
 
+    @property
+    def n_combinatorial_inactive_parameters(self) -> int:
+        """Counts of elements in the combinatorial list of inactive parameters."""
+        # Note that both continuous subspace and continuous cardinality constraint
+        # have this property. Both differs in that the former one refers to the
+        # parameters in the subspace while the latter one refers only to the
+        # constraint parameters.
+        if not self.constraints_cardinality:
+            return 0
+
+        n_combinatorial_inactive_params = [
+            con.n_combinatorial_inactive_parameters
+            for con in self.constraints_cardinality
+        ]
+        return math.prod(n_combinatorial_inactive_params)
+
+    @property
+    def combinatorial_inactive_parameters(
+        self
+    ) -> Iterable[tuple[tuple[str, ...], ...]]:
+        """Combinatorial list of inactive parameters on subspace."""
+        # The comments on the difference in `n_combinatorial_inactive_parameters`
+        # applies here as well.
+
+        return product(
+            *[
+                con.combinatorial_inactive_parameters
+                for con in self.constraints_cardinality
+            ]
+        )
+
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
         """Validate nonlinear constraints."""
@@ -116,6 +150,9 @@ class SubspaceContinuous(SerialMixin):
         validate_cardinality_constraints_are_nonoverlapping(
             self.constraints_cardinality
         )
+
+        for con in self.constraints_cardinality:
+            validate_parameters_bounds_in_cardinality_constraint(self.parameters, con)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
@@ -246,6 +283,14 @@ class SubspaceContinuous(SerialMixin):
     def param_names(self) -> tuple[str, ...]:
         """Return list of parameter names."""
         return tuple(p.name for p in self.parameters)
+
+    @property
+    def param_names_in_cardinality_constraint(self) -> tuple[str, ...]:
+        """Return list of parameter names involved in cardinality constraints."""
+        params_per_cardinatliy_constraint = [
+            c.parameters for c in self.constraints_cardinality
+        ]
+        return tuple(chain(*params_per_cardinatliy_constraint))
 
     @property
     def param_bounds_comp(self) -> np.ndarray:
@@ -453,6 +498,61 @@ class SubspaceContinuous(SerialMixin):
             for con in self.constraints_cardinality
         ]
         return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
+
+    def _ensure_nonzero_parameters(
+        self,
+        inactive_parameters: Collection[str],
+        zero_threshold: float = ZERO_THRESHOLD,
+    ) -> SubspaceContinuous:
+        """Create a new subspace with following several actions.
+
+        * Ensure active parameter != 0.0.
+        * Remove cardinality constraint.
+
+        Args:
+            inactive_parameters: A list of inactive parameters.
+            zero_threshold: Threshold for checking whether a value is zero.
+
+        Returns:
+            A new subspace object.
+        """
+        # Active parameters: parameters involved in cardinality constraints
+        active_params_sample = set(
+            self.param_names_in_cardinality_constraint
+        ).difference(set(inactive_parameters))
+
+        constraints_lin_ineq = list(self.constraints_lin_ineq)
+        for active_param in active_params_sample:
+            index = self.param_names.index(active_param)
+
+            # TODO: Ensure x != 0 when x in [..., 0, ...] is not done. Do we need it?
+            # TODO: To ensure the minimum cardinality constraints, shall we keep the x
+            #  != 0 operations or shall we instead skip the invalid results at the end
+            # Ensure x != 0 when bounds = [..., 0]. This is needed, otherwise
+            # the minimum cardinality constraint is easily violated
+            if self.parameters[index].bounds.upper == 0:
+                constraints_lin_ineq.append(
+                    ContinuousLinearInequalityConstraint(
+                        parameters=[active_param],
+                        coefficients=[-1.0],
+                        rhs=min(zero_threshold, -self.parameters[index].bounds.lower),
+                    )
+                )
+            # Ensure x != 0 when bounds = [0, ...]
+            elif self.parameters[index].bounds.lower == 0:
+                constraints_lin_ineq.append(
+                    ContinuousLinearInequalityConstraint(
+                        parameters=[active_param],
+                        coefficients=[1.0],
+                        rhs=min(zero_threshold, self.parameters[index].bounds.upper),
+                    ),
+                )
+
+        return SubspaceContinuous(
+            parameters=tuple(self.parameters),
+            constraints_lin_eq=self.constraints_lin_eq,
+            constraints_lin_ineq=tuple(constraints_lin_ineq),
+        )
 
     def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
         """Deprecated!"""  # noqa: D401
