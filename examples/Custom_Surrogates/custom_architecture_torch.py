@@ -30,6 +30,8 @@ from baybe.surrogates import register_custom_architecture
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_results
 
+torch.set_default_dtype(torch.float64)
+
 ### Architecture definition
 
 # Note that the following is an example `PyTorch` Neural Network.
@@ -118,8 +120,6 @@ class NeuralNetDropoutSurrogate:
     def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
         """See :class:`baybe.surrogates.Surrogate`."""
         self.model = self.model.train()  # keep dropout
-        # Convert input from double to float
-        candidates = candidates.float()
         # Run mc experiments through the NN with dropout
         predictions = torch.cat(
             [self.model(candidates).unsqueeze(dim=0) for _ in range(MC)]
@@ -139,10 +139,6 @@ class NeuralNetDropoutSurrogate:
         # Training hyperparameters
         opt = HYPERPARAMS["optimizer"](self.model.parameters(), lr=HYPERPARAMS["lr"])
         criterion = HYPERPARAMS["criterion"]()
-
-        # Convert input from double to float
-        train_x = train_x.float()
-        train_y = train_y.float()
 
         # Training loop
         for _ in range(HYPERPARAMS["epochs"]):

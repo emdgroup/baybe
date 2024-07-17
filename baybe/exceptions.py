@@ -59,3 +59,7 @@ class DeprecationError(Exception):
 
 class UnidentifiedSubclassError(Exception):
     """A specified subclass cannot be found in the given class hierarchy."""
+
+
+class UnmatchedAttributeError(Exception):
+    """An attribute cannot be matched against a certain callable signature."""

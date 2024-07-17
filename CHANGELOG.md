@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Parameter.is_numeric` has been replaced with `Parameter.is_numerical`
 - `DiscreteParameter.transform_rep_exp2comp` has been replaced with
   `DiscreteParameter.transform` 
+- `filter_attributes` has been replaced with `match_attributes`
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
@@ -38,6 +39,8 @@ _ `_optional` subpackage for managing optional dependencies
 - `DiscreteParameter.to_subspace`, `ContinuousParameter.to_subspace` and
   `Parameter.to_searchspace` convenience constructors
 - Utilities for permutation and dependency data augmentation
+- Validation and translation tests for kernels
+- `BasicKernel` and `CompositeKernel` base classes
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -58,6 +61,10 @@ _ `_optional` subpackage for managing optional dependencies
 - Serialization bug related to class layout of `SKLearnClusteringRecommender`
 - `MetaRecommender`s no longer trigger warnings about non-empty objectives or
   measurements when calling a `NonPredictiveRecommender`
+- Bug introduced in 0.9.0 (PR #221, commit 3078f3), where arguments to `to_gpytorch` 
+  are not passed on to the GPyTorch kernels
+- Positive-valued kernel attributes are now correctly handled by validators
+  and hypothesis strategies
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
