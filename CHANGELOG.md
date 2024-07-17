@@ -41,6 +41,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Utilities for permutation and dependency data augmentation
 - Validation and translation tests for kernels
 - `BasicKernel` and `CompositeKernel` base classes
+- Activated `pre-commit.ci` with auto-update
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

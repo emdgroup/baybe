@@ -1,6 +1,9 @@
 # FORMATTER NOTE: The versions of ufmt, black and usort should be consistent everywhere
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
+ci:
+  autoupdate_schedule: quarterly
+
 repos:
 - repo: https://github.com/pycqa/flake8
   rev: 7.1.0
