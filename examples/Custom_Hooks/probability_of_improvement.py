@@ -49,10 +49,10 @@ from baybe.utils.dataframe import to_tensor
 # For the full simulation, we need to define some additional parameters. These are the number of experiments to be conducted per run, the batch size, the dimension and the points per dimension.
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 7
-BATCH_SIZE = 1
+N_DOE_ITERATIONS = 3 if SMOKE_TEST else 7
+BATCH_SIZE = 2
 DIMENSION = 3
-POINTS_PER_DIM = 3 if SMOKE_TEST else 4
+POINTS_PER_DIM = 4
 
 ### Setup
 
@@ -128,6 +128,10 @@ def plot_poi(
     # Set the y-axis limit based on the maximal PI
     y_max = max([p.max().item() for p in poi_list])
     ax.set_ylim(0, y_max)
+
+    # Set x-axis ticks to have the correct iteration number
+    ax.set_xticks(np.arange(0, len(poi_list), 1))
+    ax.set_xticklabels([i for i in range(1, len(poi_list) + 1)])
 
     ax.set_ylabel("PI")
     ax.set_xlabel("Iteration")
