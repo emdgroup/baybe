@@ -17,7 +17,6 @@ t3 = NumericalTarget("unnormalized", mode="MAX")
 t_mock = Mock(spec=Target)
 
 
-#
 @pytest.mark.parametrize(
     "target",
     [
