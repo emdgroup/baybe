@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-import polars as pl
 from attr import define, field
 from cattrs import IterableValidationError
 
@@ -34,6 +33,8 @@ from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
+    import polars as pl
+
     from baybe.searchspace.core import SearchSpace
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
@@ -741,6 +742,8 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
     Returns:
         A lazy dataframe containing all possible discrete parameter value combinations.
     """
+    import polars as pl
+
     discrete_parameters = [p for p in parameters if p.is_discrete]
     if not discrete_parameters:
         return pl.LazyFrame()

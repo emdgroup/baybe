@@ -1,11 +1,13 @@
 """Discrete constraints."""
 
+
+from __future__ import annotations
+
 from collections.abc import Callable
 from functools import reduce
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
-import polars as pl
 from attr import define, field
 from attr.validators import in_, min_len
 
@@ -22,6 +24,9 @@ from baybe.serialization import (
     converter,
 )
 from baybe.utils.basic import Dummy
+
+if TYPE_CHECKING:
+    import polars as pl
 
 
 @define
@@ -46,6 +51,8 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
 
     def to_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
+        import polars as pl
+
         satisfied = []
         for k, cond in enumerate(self.conditions):
             satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
@@ -78,6 +85,8 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     def to_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
+        import polars as pl
+
         return self.condition.to_polars(pl.sum_horizontal(self.parameters))
 
 
@@ -100,6 +109,8 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
     def to_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
+        import polars as pl
+
         op = _threshold_operators[self.condition.operator]
 
         # Get the product of columns
@@ -131,6 +142,8 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
 
     def to_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
+        import polars as pl
+
         expr = (
             pl.concat_list(pl.col(self.parameters))
             .list.eval(pl.element().n_unique())
@@ -157,6 +170,8 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
 
     def to_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
+        import polars as pl
+
         expr = (
             pl.concat_list(pl.col(self.parameters))
             .list.eval(pl.element().n_unique())
