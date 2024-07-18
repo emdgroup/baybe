@@ -37,7 +37,6 @@ dependencies = [
     "ngboost>=0.3.12,<1",
     "numpy>=1.24.1,<2",
     "pandas>=1.4.2",
-    "polars[pyarrow]>=0.19.19",
     "protobuf<=3.20.3,<4",
     "scikit-learn>=1.1.1,<2",
     "scikit-learn-extra>=0.3.0,<1",
@@ -86,6 +85,7 @@ dev = [
     "baybe[lint]",
     "baybe[mypy]",
     "baybe[onnx]",
+    "baybe[polars]",
     "baybe[simulation]",
     "baybe[test]",
     "pip-audit>=2.5.5",
@@ -129,6 +129,10 @@ mypy = [
     "pandas-stubs>=2.0.3.230814",
     "funcy-stubs>=0.1.1",
     "types-seaborn>=0.12.2"
+]
+
+polars = [
+    "polars[pyarrow]>=0.19.19,<2",
 ]
 
 simulation = [
