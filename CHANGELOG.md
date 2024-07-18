@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   discrete search spaces
 - `get_surrogate` and `posterior` methods to `Campaign`
 - `tenacity` test dependency
+- Multi-version documentation
 
 ### Changed
 - The transition from experimental to computational representation no longer happens
