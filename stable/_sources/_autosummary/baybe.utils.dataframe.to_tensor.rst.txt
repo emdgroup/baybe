@@ -1,0 +1,6 @@
+baybe.utils.dataframe.to\_tensor
+================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: to_tensor

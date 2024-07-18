@@ -1,0 +1,132 @@
+# Example for creating campaigns from configs
+
+This example shows how to load a configuration file and use it to create a campaign.
+In such a configuration file, the objects used to create a campaign are represented by
+strings. We use the following configuration dictionaries, representing a valid campaign.
+
+Note that the json format is required for the config file.
+You can create such a config by providing a  dictionary with `"type":"name of the
+class"`.
+
+## Necessary imports
+
+
+```python
+from baybe import Campaign
+```
+
+## The configuration dictionary as a string
+
+Note that the following explicit call `str()` is not strictly necessary.
+It is included since our method of converting this example to a markdown file does not
+interpret this part of the code as `python` code if we do not include this call.
+
+
+```python
+CONFIG = str(
+    """
+{
+    "searchspace": {
+        "constructor": "from_product",
+        "parameters": [
+            {
+                "type": "CategoricalParameter",
+                "name": "Granularity",
+                "values": [
+                    "coarse",
+                    "fine",
+                    "ultra-fine"
+                ],
+                "encoding": "OHE"
+            },
+            {
+                "type": "NumericalDiscreteParameter",
+                "name": "Pressure[bar]",
+                "values": [
+                    1,
+                    5,
+                    10
+                ],
+                "tolerance": 0.2
+            },
+            {
+                "type": "SubstanceParameter",
+                "name": "Solvent",
+                "data": {
+                    "Solvent A": "COC",
+                    "Solvent B": "CCCCC",
+                    "Solvent C": "COCOC",
+                    "Solvent D": "CCOCCOCCN"
+                },
+                "decorrelate": true,
+                "encoding": "MORDRED"
+            }
+        ],
+        "constraints": []
+    },
+    "objective": {
+        "mode": "SINGLE",
+        "targets": [
+            {
+                "type": "NumericalTarget",
+                "name": "Yield",
+                "mode": "MAX"
+            }
+        ]
+    },
+    "recommender": {
+        "type": "TwoPhaseMetaRecommender",
+        "initial_recommender": {
+            "type": "FPSRecommender"
+        },
+        "recommender": {
+            "type": "SequentialGreedyRecommender",
+            "surrogate_model": {
+                "type": "GaussianProcessSurrogate"
+            },
+            "acquisition_function": "qEI",
+            "allow_repeated_recommendations": false,
+            "allow_recommending_already_measured": false
+        },
+        "switch_after": 1
+    }
+}
+"""
+)
+```
+
+## Creating a campaign from the configuration file
+
+Although we know in this case that the config represents a valid configuration for a
+campaign. If the config is invalid an exception will be thrown.
+
+
+```python
+campaign = Campaign.from_config(CONFIG)
+```
+
+    /Users/M290244/Programming/baybe_dev/.tox/docs-py310/lib/python3.10/site-
+packages/baybe/objectives/deprecation.py:57: DeprecationWarning: An objective has been
+specified without a corresponding type. Since 1 target(s) have been provided,
+'SingleTargetObjective' is used as a fallback. However, this behavior is deprecated and
+will be disabled in a future version.
+      warnings.warn(
+    /Users/M290244/Programming/baybe_dev/.tox/docs-py310/lib/python3.10/site-
+packages/baybe/objective.py:18: DeprecationWarning: The use of `baybe.objective` is
+deprecated and will be disabled in a future version. Use the classes defined in
+`baybe.objectives` instead.
+      warnings.warn(
+
+
+
+```python
+# We now perform a recommendation as usual and print it.
+recommendation = campaign.recommend(batch_size=3)
+print(recommendation)
+```
+
+       Granularity  Pressure[bar]    Solvent
+    0       coarse            1.0  Solvent A
+    21        fine           10.0  Solvent B
+    31  ultra-fine            5.0  Solvent D
+

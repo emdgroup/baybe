@@ -1,0 +1,32 @@
+baybe.surrogates.utils
+======================
+
+.. automodule:: baybe.surrogates.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      autoscale
+      batchify
+      catch_constant_targets
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

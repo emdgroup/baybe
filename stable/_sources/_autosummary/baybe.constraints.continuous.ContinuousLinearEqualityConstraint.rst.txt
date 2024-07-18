@@ -1,0 +1,41 @@
+ContinuousLinearEqualityConstraint
+==================================
+
+.. currentmodule:: baybe.constraints.continuous
+
+.. autoclass:: ContinuousLinearEqualityConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ContinuousLinearEqualityConstraint.__init__
+      ~ContinuousLinearEqualityConstraint.from_dict
+      ~ContinuousLinearEqualityConstraint.from_json
+      ~ContinuousLinearEqualityConstraint.summary
+      ~ContinuousLinearEqualityConstraint.to_botorch
+      ~ContinuousLinearEqualityConstraint.to_dict
+      ~ContinuousLinearEqualityConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ContinuousLinearEqualityConstraint.coefficients
+      ~ContinuousLinearEqualityConstraint.eval_during_creation
+      ~ContinuousLinearEqualityConstraint.eval_during_modeling
+      ~ContinuousLinearEqualityConstraint.is_continuous
+      ~ContinuousLinearEqualityConstraint.is_discrete
+      ~ContinuousLinearEqualityConstraint.parameters
+      ~ContinuousLinearEqualityConstraint.rhs
+   
+   

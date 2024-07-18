@@ -1,0 +1,6 @@
+baybe.deprecation.compatibilize\_config
+=======================================
+
+.. currentmodule:: baybe.deprecation
+
+.. autofunction:: compatibilize_config

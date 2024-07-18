@@ -1,0 +1,6 @@
+baybe.strategies.deprecation.SequentialStrategy
+===============================================
+
+.. currentmodule:: baybe.strategies.deprecation
+
+.. autofunction:: SequentialStrategy

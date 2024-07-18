@@ -1,0 +1,30 @@
+baybe.recommenders.deprecation
+==============================
+
+.. automodule:: baybe.recommenders.deprecation
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      structure_recommender_protocol
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

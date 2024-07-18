@@ -1,0 +1,36 @@
+baybe.priors.basic
+==================
+
+.. automodule:: baybe.priors.basic
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      GammaPrior
+      HalfCauchyPrior
+      HalfNormalPrior
+      LogNormalPrior
+      NormalPrior
+      SmoothedBoxPrior
+   
+   
+
+   
+   
+   
+
+
+

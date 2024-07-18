@@ -1,0 +1,6 @@
+baybe.surrogates.utils.autoscale
+================================
+
+.. currentmodule:: baybe.surrogates.utils
+
+.. autofunction:: autoscale

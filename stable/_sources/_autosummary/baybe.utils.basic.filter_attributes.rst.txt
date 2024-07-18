@@ -1,0 +1,6 @@
+baybe.utils.basic.filter\_attributes
+====================================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: filter_attributes

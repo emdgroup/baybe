@@ -1,0 +1,38 @@
+SequentialMetaRecommender
+=========================
+
+.. currentmodule:: baybe.recommenders.meta.sequential
+
+.. autoclass:: SequentialMetaRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SequentialMetaRecommender.__init__
+      ~SequentialMetaRecommender.from_dict
+      ~SequentialMetaRecommender.from_json
+      ~SequentialMetaRecommender.recommend
+      ~SequentialMetaRecommender.select_recommender
+      ~SequentialMetaRecommender.to_dict
+      ~SequentialMetaRecommender.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SequentialMetaRecommender.recommenders
+      ~SequentialMetaRecommender.mode
+      ~SequentialMetaRecommender.allow_recommending_already_measured
+      ~SequentialMetaRecommender.allow_repeated_recommendations
+   
+   

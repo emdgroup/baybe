@@ -1,0 +1,6 @@
+baybe.strategies.deprecation.TwoPhaseStrategy
+=============================================
+
+.. currentmodule:: baybe.strategies.deprecation
+
+.. autofunction:: TwoPhaseStrategy

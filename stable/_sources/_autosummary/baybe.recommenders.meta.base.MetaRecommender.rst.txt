@@ -1,0 +1,36 @@
+MetaRecommender
+===============
+
+.. currentmodule:: baybe.recommenders.meta.base
+
+.. autoclass:: MetaRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MetaRecommender.__init__
+      ~MetaRecommender.from_dict
+      ~MetaRecommender.from_json
+      ~MetaRecommender.recommend
+      ~MetaRecommender.select_recommender
+      ~MetaRecommender.to_dict
+      ~MetaRecommender.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MetaRecommender.allow_repeated_recommendations
+      ~MetaRecommender.allow_recommending_already_measured
+   
+   

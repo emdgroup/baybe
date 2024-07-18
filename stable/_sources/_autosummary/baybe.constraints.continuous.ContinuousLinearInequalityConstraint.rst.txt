@@ -1,0 +1,41 @@
+ContinuousLinearInequalityConstraint
+====================================
+
+.. currentmodule:: baybe.constraints.continuous
+
+.. autoclass:: ContinuousLinearInequalityConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ContinuousLinearInequalityConstraint.__init__
+      ~ContinuousLinearInequalityConstraint.from_dict
+      ~ContinuousLinearInequalityConstraint.from_json
+      ~ContinuousLinearInequalityConstraint.summary
+      ~ContinuousLinearInequalityConstraint.to_botorch
+      ~ContinuousLinearInequalityConstraint.to_dict
+      ~ContinuousLinearInequalityConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ContinuousLinearInequalityConstraint.coefficients
+      ~ContinuousLinearInequalityConstraint.eval_during_creation
+      ~ContinuousLinearInequalityConstraint.eval_during_modeling
+      ~ContinuousLinearInequalityConstraint.is_continuous
+      ~ContinuousLinearInequalityConstraint.is_discrete
+      ~ContinuousLinearInequalityConstraint.parameters
+      ~ContinuousLinearInequalityConstraint.rhs
+   
+   

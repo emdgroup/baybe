@@ -1,0 +1,371 @@
+# Example for using the multi target mode for the objective
+
+Example for using the multi target mode for the objective.
+It uses a desirability value to handle several targets.
+
+This example assumes some basic familiarity with using BayBE.
+We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
+
+## Necessary imports for this example
+
+
+```python
+from baybe import Campaign
+from baybe.objectives import DesirabilityObjective
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import add_fake_results
+```
+
+## Experiment setup and creating the searchspace
+
+
+```python
+Categorical_1 = CategoricalParameter("Cat_1", values=["22", "33"], encoding="OHE")
+Categorical_2 = CategoricalParameter(
+    "Cat_2",
+    values=["very bad", "bad", "OK", "good", "very good"],
+    encoding="INT",
+)
+Num_disc_1 = NumericalDiscreteParameter(
+    "Num_disc_1", values=[1, 2, 3, 4, 6, 8, 10], tolerance=0.3
+)
+Num_disc_2 = NumericalDiscreteParameter(
+    "Num_disc_2", values=[-1, -3, -6, -9], tolerance=0.3
+)
+```
+
+
+```python
+parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
+```
+
+
+```python
+searchspace = SearchSpace.from_product(parameters=parameters)
+```
+
+## Defining the targets
+
+The multi target mode is handled when creating the objective object.
+Thus we first need to define the different targets.
+
+This examples has different targets with different modes.
+The first target is maximized and while the second one is minimized.
+Note that in this multi target mode, the user must specify bounds for each target.
+
+
+```python
+Target_1 = NumericalTarget(
+    name="Target_1", mode="MAX", bounds=(0, 100), transformation="LINEAR"
+)
+Target_2 = NumericalTarget(
+    name="Target_2", mode="MIN", bounds=(0, 100), transformation="LINEAR"
+)
+```
+
+For each target it is also possible to specify a `target_transform` function.
+A detailed discussion of this functionality can be found at the end of this example.
+
+In this example, define a third target working with the mode `MATCH`.
+We furthermore use `target_transform="BELL"`.
+
+
+```python
+Target_3 = NumericalTarget(
+    name="Target_3", mode="MATCH", bounds=(45, 55), transformation="BELL"
+)
+```
+
+Note that the `MATCH` mode seeks to have the target at the mean between the two bounds.
+For example, choosing 95 and 105 will lead the algorithm seeking 100 as the optimal
+value.
+Thus, using the bounds, it is possible to control both the match target and
+the range around this target that is considered viable.
+
+## Creating the objective
+
+Now to work with these three targets the objective object must be properly created.
+The mode is set to `DESIRABILITY` and the targets are described in a list.
+
+
+```python
+targets = [Target_1, Target_2, Target_3]
+```
+
+As the recommender requires a single function, the different targets need to be
+combined.
+Thus, a `scalarizer` is used to create a single target out of the several targets given.
+The combine function can either be the mean `MEAN` or the geometric mean `GEOM_MEAN`.
+Per default, `GEOM_MEAN` is used.
+Weights for each target can also be specified as a list of floats in the arguments
+Per default, weights are equally distributed between all targets and are normalized
+internally.
+It is thus not necessary to handle normalization or scaling.
+
+
+```python
+objective = DesirabilityObjective(
+    targets=targets,
+    weights=[20, 20, 60],
+    scalarizer="MEAN",
+)
+```
+
+
+```python
+print(objective)
+```
+
+    [1mObjective[0m
+             
+     [1mType: [0mDesirabilityObjective
+             
+     [1mTargets [0m
+                   Type      Name   Mode  Lower_Bound  Upper_Bound Transformation  \
+     0  NumericalTarget  Target_1    MAX          0.0        100.0         LINEAR   
+     1  NumericalTarget  Target_2    MIN          0.0        100.0         LINEAR   
+     2  NumericalTarget  Target_3  MATCH         45.0         55.0           BELL   
+     
+        Weight  
+     0    20.0  
+     1    20.0  
+     2    60.0  
+             
+     [1mScalarizer: [0mMEAN
+
+
+## Creating and printing the campaign
+
+
+```python
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
+```
+
+    [1mCampaign[0m
+             
+     [1mMeta Data[0m
+     Batches Done: 0
+             
+ Fits Done: 0
+     
+     [1mSearch Space[0m
+              
+      [1mSearch Space Type: [0mDISCRETE
+      
+      [1mDiscrete Search Space[0m
+                   
+       [1mDiscrete Parameters[0m
+                Name                        Type  Num_Values                 Encoding
+       0       Cat_1        CategoricalParameter           2  CategoricalEncoding.OHE
+       1       Cat_2        CategoricalParameter           5  CategoricalEncoding.INT
+       2  Num_disc_1  NumericalDiscreteParameter           7                     None
+       3  Num_disc_2  NumericalDiscreteParameter           4                     None
+                   
+       [1mExperimental Representation[0m
+                   
+       Cat_1      Cat_2  Num_disc_1  Num_disc_2
+       0      22   very bad         1.0        -9.0
+       1      22   very bad         1.0        -6.0
+       2      22   very bad         1.0        -3.0
+       ..    ...        ...         ...         ...
+       277    33  very good        10.0        -6.0
+       278    33  very good        10.0        -3.0
+       279    33  very good        10.0        -1.0
+       
+       [280 rows x 4 columns]
+       
+       [1mMetadata:[0m
+                   
+   was_recommended: 0/280
+                   
+   was_measured: 0/280
+                   
+   dont_recommend: 0/280
+                   
+       [1mConstraints[0m
+       Empty DataFrame
+       Columns: []
+       Index: []
+                   
+       [1mComputational Representation[0m
+                   
+        Cat_1_22  Cat_1_33  ...  Num_disc_1  Num_disc_2
+       0         1.0       0.0  ...         1.0        -9.0
+       1         1.0       0.0  ...         1.0        -6.0
+       2         1.0       0.0  ...         1.0        -3.0
+       ..        ...       ...  ...         ...         ...
+       277       0.0       1.0  ...        10.0        -6.0
+       278       0.0       1.0  ...        10.0        -3.0
+       279       0.0       1.0  ...        10.0        -1.0
+       
+       [280 rows x 5 columns]
+     
+     [1mObjective[0m
+              
+      [1mType: [0mDesirabilityObjective
+              
+      [1mTargets [0m
+                    Type      Name   Mode  Lower_Bound  Upper_Bound Transformation  \
+      0  NumericalTarget  Target_1    MAX          0.0        100.0         LINEAR   
+      1  NumericalTarget  Target_2    MIN          0.0        100.0         LINEAR   
+      2  NumericalTarget  Target_3  MATCH         45.0         55.0           BELL   
+      
+         Weight  
+      0    20.0  
+      1    20.0  
+      2    60.0  
+              
+      [1mScalarizer: [0mMEAN
+     
+     TwoPhaseMetaRecommender(allow_repeated_recommendations=None,
+allow_recommending_already_measured=None,
+initial_recommender=RandomRecommender(allow_repeated_recommendations=False,
+allow_recommending_already_measured=True),
+recommender=SequentialGreedyRecommender(allow_repeated_recommendations=False,
+allow_recommending_already_measured=True,
+surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
+_model=None), acquisition_function=qExpectedImprovement(), _botorch_acqf=None,
+acquisition_function_cls=None, hybrid_sampler='None', sampling_percentage=1.0),
+switch_after=1)
+     
+
+
+## Performing some iterations
+
+The following loop performs some recommendations and adds fake results.
+It also prints what happens to internal data.
+
+
+```python
+N_ITERATIONS = 3
+```
+
+
+```python
+for kIter in range(N_ITERATIONS):
+    print(f"\n\n#### ITERATION {kIter+1} ####")
+
+    rec = campaign.recommend(batch_size=3)
+    print("\nRecommended measurements:\n", rec)
+
+    add_fake_results(rec, campaign)
+    print("\nRecommended measurements with fake measured results:\n", rec)
+
+    campaign.add_measurements(rec)
+
+    print("\n\nInternal measurement dataframe computational representation Y:\n")
+    print(campaign._measurements_targets_comp)
+```
+
+    
+    
+    #### ITERATION 1 ####
+    
+    Recommended measurements:
+         Cat_1 Cat_2  Num_disc_1  Num_disc_2
+    199    33    OK         1.0        -1.0
+    57     22    OK         1.0        -6.0
+    43     22   bad         4.0        -1.0
+    
+    Recommended measurements with fake measured results:
+         Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    199    33    OK         1.0        -1.0  81.708916  89.822662  52.613267
+    57     22    OK         1.0        -6.0  29.383613  84.732983  56.822865
+    43     22   bad         4.0        -1.0  35.678604  61.175268  56.208466
+    
+    
+    Internal measurement dataframe computational representation Y:
+    
+       Desirability
+    0      0.707173
+    1      0.325790
+    2      0.426564
+    
+    
+    #### ITERATION 2 ####
+
+
+    
+    Recommended measurements:
+           Cat_1 Cat_2  Num_disc_1  Num_disc_2
+    index                                    
+    171      33   bad         1.0        -1.0
+    207      33    OK         3.0        -1.0
+    227      33  good         1.0        -1.0
+    
+    Recommended measurements with fake measured results:
+           Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    index                                                                     
+    171      33   bad         1.0        -1.0  10.626523  99.114276  56.891405
+    207      33    OK         3.0        -1.0  29.006364  75.564656  53.371658
+    227      33  good         1.0        -1.0  34.086036  59.602904  53.642317
+    
+    
+    Internal measurement dataframe computational representation Y:
+    
+       Desirability
+    0      0.707173
+    1      0.325790
+    2      0.426564
+    3      0.255109
+    4      0.584863
+    5      0.609138
+    
+    
+    #### ITERATION 3 ####
+    
+    Recommended measurements:
+           Cat_1      Cat_2  Num_disc_1  Num_disc_2
+    index                                         
+    27       22   very bad        10.0        -1.0
+    198      33         OK         1.0        -3.0
+    271      33  very good         6.0        -1.0
+    
+    Recommended measurements with fake measured results:
+           Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
+    index                                                                  
+    27       22   very bad        10.0        -1.0  78.766479  91.049987   
+    198      33         OK         1.0        -3.0  65.518211  57.337644   
+    271      33  very good         6.0        -1.0  50.028294  50.220086   
+    
+            Target_3  
+    index             
+    27     52.546025  
+    198    52.136110  
+    271    51.095909  
+    
+    
+    Internal measurement dataframe computational representation Y:
+    
+       Desirability
+    0      0.707173
+    1      0.325790
+    2      0.426564
+    3      0.255109
+    4      0.584863
+    5      0.609138
+    6      0.702477
+    7      0.764030
+    8      0.785376
+
+
+## Addendum: Description of `transformation` functions
+
+This function is used to transform target values to the interval `[0,1]` for `MAX`/`MIN`
+mode.
+An ascending or decreasing `LINEAR` function is used per default.
+This function maps input values in a specified interval [lower, upper] to the interval
+`[0,1]`.
+Outside the specified interval, the function remains constant, that is, 0 or 1.
+
+For the match mode, two functions are available `TRIANGULAR` and `BELL`.
+The `TRIANGULAR` function is 0 outside a specified interval and linearly increases to 1
+from both
+interval ends, reaching the value 1 at the center of the interval.
+This function is used per default for MATCH mode.
+The `BELL` function is a Gaussian bell curve, specified through the boundary values of
+the sigma
+interval, reaching the maximum value of 1 at the interval center.

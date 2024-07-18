@@ -1,0 +1,231 @@
+# Example for surrogate model with a custom architecture using `sklearn`
+
+This example shows how to define a `sklearn` model architecture and use it as a
+surrogate.
+Please note that the model is not designed to be useful but to demonstrate the workflow.
+
+This example assumes some basic familiarity with using BayBE.
+We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
+
+## Necessary imports
+
+
+```python
+from typing import Optional
+```
+
+
+```python
+import numpy as np
+import torch
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    RandomForestRegressor,
+    StackingRegressor,
+)
+from sklearn.linear_model import LinearRegression, Ridge
+from torch import Tensor
+```
+
+
+```python
+from baybe.campaign import Campaign
+from baybe.objectives import SingleTargetObjective
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
+from baybe.recommenders import (
+    FPSRecommender,
+    SequentialGreedyRecommender,
+    TwoPhaseMetaRecommender,
+)
+from baybe.searchspace import SearchSpace
+from baybe.surrogates import register_custom_architecture
+from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import add_fake_results
+```
+
+## Surrogate Definition with BayBE Registration
+
+The final estimator class must follow the sklearn estimator interface.
+More details [here](https://scikit-learn.org/stable/developers/develop.html).
+
+The choice of using tensors in fit/predict is purely for BayBE, not a requirement.
+
+Final estimator
+
+
+```python
+class MeanVarEstimator(BaseEstimator, RegressorMixin):
+    """Stack final estimator for mean and variance."""
+
+    def fit(self, data: Tensor, targets: Tensor) -> None:
+        """No fit needed."""
+        return
+
+    def predict(self, data: Tensor) -> tuple[Tensor, Tensor]:
+        """Predict based on ensemble unweighted mean and variance."""
+        mean = torch.tensor(data.mean(axis=1))
+        var = torch.tensor(data.var(axis=1))
+        return mean, var
+```
+
+Registration
+
+The class must include `_fit` and `_posterior` functions with the correct signatures.
+
+
+```python
+@register_custom_architecture(
+    joint_posterior_attr=False, constant_target_catching=False, batchify_posterior=True
+)
+class StackingRegressorSurrogate:
+    """Surrogate that extracts posterior from a stack of different regressors."""
+
+    def __init__(self):
+        self.model: Optional[StackingRegressor] = None
+
+    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+        """See :class:`baybe.surrogates.Surrogate`."""
+        return self.model.predict(candidates)
+
+    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+        """See :class:`baybe.surrogates.Surrogate`."""
+        estimators = [
+            ("rf", RandomForestRegressor()),
+            ("gb", GradientBoostingRegressor()),
+            ("lr", LinearRegression()),
+            ("rr", Ridge()),
+        ]
+
+        self.model = StackingRegressor(
+            estimators=estimators,
+            final_estimator=MeanVarEstimator(),
+            cv=2,
+        )
+
+        self.model.fit(train_x, train_y.ravel())
+```
+
+## Experiment Setup
+
+
+```python
+parameters = [
+    CategoricalParameter(
+        name="Granularity",
+        values=["coarse", "medium", "fine"],
+        encoding="OHE",
+    ),
+    NumericalDiscreteParameter(
+        name="Pressure[bar]",
+        values=[1, 5, 10],
+        tolerance=0.2,
+    ),
+    NumericalDiscreteParameter(
+        name="Temperature[degree_C]",
+        values=np.linspace(100, 200, 10),
+    ),
+    SubstanceParameter(
+        name="Solvent",
+        data={
+            "Solvent A": "COC",
+            "Solvent B": "CCC",
+            "Solvent C": "O",
+            "Solvent D": "CS(=O)C",
+        },
+        encoding="MORDRED",
+    ),
+]
+```
+
+## Run DOE iterations with custom surrogate
+Create campaign
+
+
+```python
+campaign = Campaign(
+    searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
+    recommender=TwoPhaseMetaRecommender(
+        recommender=SequentialGreedyRecommender(
+            surrogate_model=StackingRegressorSurrogate()
+        ),
+        initial_recommender=FPSRecommender(),
+    ),
+)
+```
+
+
+```python
+# Let's do a first round of recommendation
+recommendation = campaign.recommend(batch_size=2)
+```
+
+
+```python
+print("Recommendation from campaign:")
+print(recommendation)
+```
+
+    Recommendation from campaign:
+        Granularity  Pressure[bar]  Temperature[degree_C]    Solvent
+    2        coarse            1.0                  100.0  Solvent C
+    239      medium           10.0                  200.0  Solvent D
+
+
+Add some fake results
+
+
+```python
+add_fake_results(recommendation, campaign)
+campaign.add_measurements(recommendation)
+```
+
+
+```python
+# Do another round of recommendations
+recommendation = campaign.recommend(batch_size=2)
+```
+
+Print second round of recommendations
+
+
+```python
+print("Recommendation from campaign:")
+print(recommendation)
+```
+
+    Recommendation from campaign:
+          Granularity  Pressure[bar]  Temperature[degree_C]    Solvent
+    index                                                             
+    123        medium            1.0                  100.0  Solvent D
+    203        medium           10.0                  100.0  Solvent D
+
+
+
+```python
+print()
+```
+
+    
+
+
+## Serialization
+
+Serialization of custom models is not supported
+
+
+```python
+try:
+    campaign.to_json()
+except RuntimeError as e:
+    print(f"Serialization Error Message: {e}")
+```
+
+    Serialization Error Message: Serializing objects of type
+'CustomArchitectureSurrogate' is not supported.
+

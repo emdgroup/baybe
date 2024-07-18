@@ -1,0 +1,6 @@
+baybe.strategies.deprecation.StreamingSequentialStrategy
+========================================================
+
+.. currentmodule:: baybe.strategies.deprecation
+
+.. autofunction:: StreamingSequentialStrategy

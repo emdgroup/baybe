@@ -1,0 +1,40 @@
+DiscreteSumConstraint
+=====================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteSumConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteSumConstraint.__init__
+      ~DiscreteSumConstraint.from_dict
+      ~DiscreteSumConstraint.from_json
+      ~DiscreteSumConstraint.get_invalid
+      ~DiscreteSumConstraint.summary
+      ~DiscreteSumConstraint.to_dict
+      ~DiscreteSumConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteSumConstraint.condition
+      ~DiscreteSumConstraint.eval_during_creation
+      ~DiscreteSumConstraint.eval_during_modeling
+      ~DiscreteSumConstraint.is_continuous
+      ~DiscreteSumConstraint.is_discrete
+      ~DiscreteSumConstraint.parameters
+   
+   

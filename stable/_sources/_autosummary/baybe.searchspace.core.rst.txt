@@ -1,0 +1,39 @@
+baybe.searchspace.core
+======================
+
+.. automodule:: baybe.searchspace.core
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      validate_searchspace_from_config
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      SearchSpace
+      SearchSpaceType
+   
+   
+
+   
+   
+   
+
+
+

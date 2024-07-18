@@ -1,0 +1,71 @@
+﻿baybe
+=====
+
+.. automodule:: baybe
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   acquisition
+
+   campaign
+
+   constraints
+
+   deprecation
+
+   exceptions
+
+   kernels
+
+   objective
+
+   objectives
+
+   parameters
+
+   priors
+
+   recommenders
+
+   scaler
+
+   searchspace
+
+   serialization
+
+   simulation
+
+   strategies
+
+   surrogates
+
+   targets
+
+   telemetry
+
+   utils
+

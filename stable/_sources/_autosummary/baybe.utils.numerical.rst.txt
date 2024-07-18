@@ -1,0 +1,42 @@
+baybe.utils.numerical
+=====================
+
+.. automodule:: baybe.utils.numerical
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      VARNAME_NUMPY_USE_SINGLE_PRECISION
+      DTypeFloatNumpy
+      DTypeFloatONNX
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      closer_element
+      closest_element
+      geom_mean
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

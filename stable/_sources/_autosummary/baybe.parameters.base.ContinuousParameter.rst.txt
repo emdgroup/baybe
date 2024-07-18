@@ -1,0 +1,38 @@
+ContinuousParameter
+===================
+
+.. currentmodule:: baybe.parameters.base
+
+.. autoclass:: ContinuousParameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ContinuousParameter.__init__
+      ~ContinuousParameter.from_dict
+      ~ContinuousParameter.from_json
+      ~ContinuousParameter.is_in_range
+      ~ContinuousParameter.summary
+      ~ContinuousParameter.to_dict
+      ~ContinuousParameter.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ContinuousParameter.is_continuous
+      ~ContinuousParameter.is_discrete
+      ~ContinuousParameter.is_numeric
+      ~ContinuousParameter.name
+   
+   

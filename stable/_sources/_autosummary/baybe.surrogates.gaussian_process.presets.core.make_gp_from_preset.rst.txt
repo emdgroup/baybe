@@ -1,0 +1,6 @@
+baybe.surrogates.gaussian\_process.presets.core.make\_gp\_from\_preset
+======================================================================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.core
+
+.. autofunction:: make_gp_from_preset

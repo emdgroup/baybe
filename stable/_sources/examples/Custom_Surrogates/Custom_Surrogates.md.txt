@@ -1,0 +1,11 @@
+# Custom Surrogates
+
+These examples demonstrate how to use custom {doc}`Surrogate </userguide/surrogates>` architectures and pre-trained [ONNX](https://onnx.ai) models.
+```{toctree}
+:maxdepth: 1
+
+Custom Pretrained<custom_pretrained>
+Custom Architecture Torch<custom_architecture_torch>
+Custom Architecture Sklearn<custom_architecture_sklearn>
+Surrogate Params<surrogate_params>
+```

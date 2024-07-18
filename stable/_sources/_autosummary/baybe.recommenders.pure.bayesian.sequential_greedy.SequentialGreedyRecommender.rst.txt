@@ -1,0 +1,37 @@
+SequentialGreedyRecommender
+===========================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.sequential_greedy
+
+.. autoclass:: SequentialGreedyRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SequentialGreedyRecommender.__init__
+      ~SequentialGreedyRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SequentialGreedyRecommender.hybrid_sampler
+      ~SequentialGreedyRecommender.sampling_percentage
+      ~SequentialGreedyRecommender.acquisition_function
+      ~SequentialGreedyRecommender.acquisition_function_cls
+      ~SequentialGreedyRecommender.allow_recommending_already_measured
+      ~SequentialGreedyRecommender.allow_repeated_recommendations
+      ~SequentialGreedyRecommender.compatibility
+      ~SequentialGreedyRecommender.surrogate_model
+   
+   

@@ -1,0 +1,40 @@
+DiscreteCustomConstraint
+========================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteCustomConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteCustomConstraint.__init__
+      ~DiscreteCustomConstraint.from_dict
+      ~DiscreteCustomConstraint.from_json
+      ~DiscreteCustomConstraint.get_invalid
+      ~DiscreteCustomConstraint.summary
+      ~DiscreteCustomConstraint.to_dict
+      ~DiscreteCustomConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteCustomConstraint.validator
+      ~DiscreteCustomConstraint.eval_during_creation
+      ~DiscreteCustomConstraint.eval_during_modeling
+      ~DiscreteCustomConstraint.is_continuous
+      ~DiscreteCustomConstraint.is_discrete
+      ~DiscreteCustomConstraint.parameters
+   
+   

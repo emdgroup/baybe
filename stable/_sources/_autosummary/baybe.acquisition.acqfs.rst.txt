@@ -1,0 +1,42 @@
+baybe.acquisition.acqfs
+=======================
+
+.. automodule:: baybe.acquisition.acqfs
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      ExpectedImprovement
+      LogExpectedImprovement
+      PosteriorMean
+      ProbabilityOfImprovement
+      UpperConfidenceBound
+      qExpectedImprovement
+      qLogExpectedImprovement
+      qLogNoisyExpectedImprovement
+      qNoisyExpectedImprovement
+      qProbabilityOfImprovement
+      qSimpleRegret
+      qUpperConfidenceBound
+   
+   
+
+   
+   
+   
+
+
+

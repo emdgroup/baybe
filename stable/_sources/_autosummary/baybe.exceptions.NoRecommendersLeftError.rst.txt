@@ -1,0 +1,6 @@
+baybe.exceptions.NoRecommendersLeftError
+========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NoRecommendersLeftError

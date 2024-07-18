@@ -1,0 +1,33 @@
+DefaultScaler
+=============
+
+.. currentmodule:: baybe.scaler
+
+.. autoclass:: DefaultScaler
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DefaultScaler.__init__
+      ~DefaultScaler.fit_transform
+      ~DefaultScaler.transform
+      ~DefaultScaler.untransform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DefaultScaler.SUBCLASSES
+      ~DefaultScaler.type
+   
+   

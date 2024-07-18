@@ -1,0 +1,306 @@
+# Example for using exclusion constraints incorporating sums and products
+
+This examples demonstrates an exclusion constraint using products and sums.
+
+This example assumes some basic familiarity with using BayBE.
+We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
+
+## Necessary imports for this example
+
+
+```python
+import os
+```
+
+
+```python
+import numpy as np
+```
+
+
+```python
+from baybe import Campaign
+from baybe.constraints import (
+    DiscreteProductConstraint,
+    DiscreteSumConstraint,
+    ThresholdCondition,
+)
+from baybe.objectives import SingleTargetObjective
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+)
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import add_fake_results
+```
+
+## Experiment setup
+
+
+```python
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+```
+
+
+```python
+RESOLUTION = 3 if SMOKE_TEST else 5
+```
+
+
+```python
+dict_solvent = {
+    "water": "O",
+    "C1": "C",
+    "C2": "CC",
+}
+solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="RDKIT")
+speed = CategoricalParameter(
+    name="Speed", values=["slow", "normal", "fast"], encoding="INT"
+)
+num_parameter_1 = NumericalDiscreteParameter(
+    name="NumParam1", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
+)
+num_parameter_2 = NumericalDiscreteParameter(
+    name="NumParam2", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
+)
+num_parameter_3 = NumericalDiscreteParameter(
+    name="NumParam3", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
+)
+num_parameter_4 = NumericalDiscreteParameter(
+    name="NumParam4", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
+)
+num_parameter_5 = NumericalDiscreteParameter(
+    name="NumParam5", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
+)
+num_parameter_6 = NumericalDiscreteParameter(
+    name="NumParam6", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.5
+)
+```
+
+
+```python
+parameters = [
+    solvent,
+    speed,
+    num_parameter_1,
+    num_parameter_2,
+    num_parameter_3,
+    num_parameter_4,
+    num_parameter_5,
+    num_parameter_6,
+]
+```
+
+## Creating the constraints
+
+Constraints are used when creating the searchspace object.
+Thus, they need to be defined prior to the searchspace creation.
+
+
+```python
+sum_constraint_1 = DiscreteSumConstraint(
+    parameters=["NumParam1", "NumParam2"],
+    condition=ThresholdCondition(threshold=150.0, operator="<="),
+)
+sum_constraint_2 = DiscreteSumConstraint(
+    parameters=["NumParam5", "NumParam6"],
+    condition=ThresholdCondition(threshold=100, operator="=", tolerance=1.0),
+)
+prod_constraint = DiscreteProductConstraint(
+    parameters=["NumParam3", "NumParam4"],
+    condition=ThresholdCondition(threshold=30, operator=">="),
+)
+```
+
+
+```python
+constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
+```
+
+## Creating the searchspace and the objective
+
+
+```python
+searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
+```
+
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+    [14:59:53] DEPRECATION WARNING: please use MorganGenerator
+
+
+
+```python
+objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))
+```
+
+## Creating and printing the campaign
+
+
+```python
+campaign = Campaign(searchspace=searchspace, objective=objective)
+print(campaign)
+```
+
+    [1mCampaign[0m
+             
+     [1mMeta Data[0m
+     Batches Done: 0
+             
+ Fits Done: 0
+     
+     [1mSearch Space[0m
+              
+      [1mSearch Space Type: [0mDISCRETE
+      
+      [1mDiscrete Search Space[0m
+                   
+       [1mDiscrete Parameters[0m
+                Name                        Type  Num_Values                 Encoding
+       0     Solvent          SubstanceParameter           3  SubstanceEncoding.RDKIT
+       1       Speed        CategoricalParameter           3  CategoricalEncoding.INT
+       2   NumParam1  NumericalDiscreteParameter           3                     None
+       ..        ...                         ...         ...                      ...
+       5   NumParam4  NumericalDiscreteParameter           3                     None
+       6   NumParam5  NumericalDiscreteParameter           3                     None
+       7   NumParam6  NumericalDiscreteParameter           3                     None
+       
+       [8 rows x 4 columns]
+                   
+       [1mExperimental Representation[0m
+                   
+       Solvent Speed  ...  NumParam5  NumParam6
+       0     water  slow  ...        0.0      100.0
+       1     water  slow  ...       50.0       50.0
+       2     water  slow  ...      100.0        0.0
+       ..      ...   ...  ...        ...        ...
+       861      C2  fast  ...        0.0      100.0
+       862      C2  fast  ...       50.0       50.0
+       863      C2  fast  ...      100.0        0.0
+       
+       [864 rows x 8 columns]
+       
+       [1mMetadata:[0m
+                   
+   was_recommended: 0/864
+                   
+   was_measured: 0/864
+                   
+   dont_recommend: 0/864
+                   
+       [1mConstraints[0m
+                               Type     Affected_Parameters
+       0      DiscreteSumConstraint  [NumParam1, NumParam2]
+       1      DiscreteSumConstraint  [NumParam5, NumParam6]
+       2  DiscreteProductConstraint  [NumParam3, NumParam4]
+                   
+       [1mComputational Representation[0m
+                   
+        Solvent_RDKIT_MaxAbsEStateIndex  Solvent_RDKIT_MaxPartialCharge  ...  NumParam5
+NumParam6
+       0                                0.0                       -0.411510  ...
+0.0      100.0
+       1                                0.0                       -0.411510  ...
+50.0       50.0
+       2                                0.0                       -0.411510  ...
+100.0        0.0
+       ..                               ...                             ...  ...
+...        ...
+       861                              2.0                       -0.068262  ...
+0.0      100.0
+       862                              2.0                       -0.068262  ...
+50.0       50.0
+       863                              2.0                       -0.068262  ...
+100.0        0.0
+       
+       [864 rows x 9 columns]
+     
+     [1mObjective[0m
+              
+      [1mType: [0mSingleTargetObjective
+              
+      [1mTargets [0m
+                    Type      Name Mode  Lower_Bound  Upper_Bound Transformation
+      0  NumericalTarget  Target_1  MAX         -inf          inf           None
+     
+     TwoPhaseMetaRecommender(allow_repeated_recommendations=None,
+allow_recommending_already_measured=None,
+initial_recommender=RandomRecommender(allow_repeated_recommendations=False,
+allow_recommending_already_measured=True),
+recommender=SequentialGreedyRecommender(allow_repeated_recommendations=False,
+allow_recommending_already_measured=True,
+surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
+_model=None), acquisition_function=qExpectedImprovement(), _botorch_acqf=None,
+acquisition_function_cls=None, hybrid_sampler='None', sampling_percentage=1.0),
+switch_after=1)
+     
+
+
+## Manual verification of the constraints
+
+The following loop performs some recommendations and manually verifies the given
+constraints.
+
+
+```python
+N_ITERATIONS = 2 if SMOKE_TEST else 5
+for kIter in range(N_ITERATIONS):
+    print(f"\n\n#### ITERATION {kIter+1} ####")
+
+    print("## ASSERTS ##")
+    print(
+        "Number of entries with 1,2-sum above 150:      ",
+        (
+            campaign.searchspace.discrete.exp_rep[["NumParam1", "NumParam2"]].sum(
+                axis=1
+            )
+            > 150.0
+        ).sum(),
+    )
+    print(
+        "Number of entries with 3,4-product under 30:   ",
+        (
+            campaign.searchspace.discrete.exp_rep[["NumParam3", "NumParam4"]].prod(
+                axis=1
+            )
+            < 30
+        ).sum(),
+    )
+    print(
+        "Number of entries with 5,6-sum unequal to 100: ",
+        campaign.searchspace.discrete.exp_rep[["NumParam5", "NumParam6"]]
+        .sum(axis=1)
+        .apply(lambda x: x - 100.0)
+        .abs()
+        .gt(0.01)
+        .sum(),
+    )
+
+    rec = campaign.recommend(batch_size=5)
+    add_fake_results(rec, campaign)
+    campaign.add_measurements(rec)
+```
+
+    
+    
+    #### ITERATION 1 ####
+    ## ASSERTS ##
+    Number of entries with 1,2-sum above 150:       0
+    Number of entries with 3,4-product under 30:    0
+    Number of entries with 5,6-sum unequal to 100:  0
+    
+    
+    #### ITERATION 2 ####
+    ## ASSERTS ##
+    Number of entries with 1,2-sum above 150:       0
+    Number of entries with 3,4-product under 30:    0
+    Number of entries with 5,6-sum unequal to 100:  0
+

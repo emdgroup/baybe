@@ -1,0 +1,42 @@
+CategoricalParameter
+====================
+
+.. currentmodule:: baybe.parameters.categorical
+
+.. autoclass:: CategoricalParameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~CategoricalParameter.__init__
+      ~CategoricalParameter.from_dict
+      ~CategoricalParameter.from_json
+      ~CategoricalParameter.is_in_range
+      ~CategoricalParameter.summary
+      ~CategoricalParameter.to_dict
+      ~CategoricalParameter.to_json
+      ~CategoricalParameter.transform_rep_exp2comp
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CategoricalParameter.comp_df
+      ~CategoricalParameter.is_continuous
+      ~CategoricalParameter.is_discrete
+      ~CategoricalParameter.is_numeric
+      ~CategoricalParameter.values
+      ~CategoricalParameter.encoding
+      ~CategoricalParameter.name
+   
+   
