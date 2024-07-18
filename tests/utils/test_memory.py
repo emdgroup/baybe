@@ -1,6 +1,5 @@
 """Tests for memory utilities."""
 
-
 from baybe.utils.memory import bytes_to_human_readable
 
 

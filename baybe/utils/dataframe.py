@@ -27,13 +27,11 @@ _logger = logging.getLogger(__name__)
 
 
 @overload
-def to_tensor(df: pd.DataFrame) -> Tensor:
-    ...
+def to_tensor(df: pd.DataFrame) -> Tensor: ...
 
 
 @overload
-def to_tensor(*dfs: pd.DataFrame) -> Iterator[Tensor]:
-    ...
+def to_tensor(*dfs: pd.DataFrame) -> Iterator[Tensor]: ...
 
 
 def to_tensor(*dfs: pd.DataFrame) -> Tensor | Iterator[Tensor]:

@@ -1,6 +1,5 @@
 """Validation tests for basic kernels."""
 
-
 import pytest
 from pytest import param
 

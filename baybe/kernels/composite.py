@@ -1,4 +1,5 @@
 """Composite kernels (that is, kernels composed of other kernels)."""
+
 from functools import reduce
 from operator import add, mul
 

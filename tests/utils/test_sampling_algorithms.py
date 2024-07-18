@@ -1,4 +1,5 @@
 """Tests for sampling algorithm utilities."""
+
 import math
 
 import numpy as np

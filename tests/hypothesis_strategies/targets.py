@@ -1,6 +1,5 @@
 """Hypothesis strategies for targets."""
 
-
 import hypothesis.strategies as st
 
 from baybe.targets.enum import TargetMode

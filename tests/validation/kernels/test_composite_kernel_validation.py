@@ -1,6 +1,5 @@
 """Validation tests for composite kernels."""
 
-
 import pytest
 from pytest import param
 

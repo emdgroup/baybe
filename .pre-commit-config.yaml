@@ -1,26 +1,24 @@
 # FORMATTER NOTE: The versions of ufmt, black and usort should be consistent everywhere
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
+ci:
+  autoupdate_schedule: quarterly
+
 repos:
 - repo: https://github.com/pycqa/flake8
-  rev: 7.0.0
+  rev: 7.1.0
   hooks:
     - id: flake8
-      additional_dependencies: [pydoclint==0.5.1]  
+      additional_dependencies: [pydoclint==0.5.5]  
       args: [--select=DOC, --config=pydoclint.toml]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.6
+  rev: v0.5.2
   hooks:
   - id: ruff
+    args: [--fix, --exit-non-zero-on-fix]
   - id: ruff-format
-- repo: https://github.com/crate-ci/typos
-  rev: v1.16.23
-  hooks:
-    - id: typos
-      exclude_types: [svg]
-      args: [] # empty args to avoid typos automatically correcting the typos
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.15.1
+  rev: v3.16.0
   hooks:
   - id: pyupgrade
     args: [--py310-plus]

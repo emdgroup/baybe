@@ -80,7 +80,7 @@ def validate_constraints(  # noqa: DOC101, DOC103
 
 
 def validate_cardinality_constraints_are_nonoverlapping(
-    constraints: Collection[ContinuousCardinalityConstraint]
+    constraints: Collection[ContinuousCardinalityConstraint],
 ) -> None:
     """Validate that cardinality constraints are non-overlapping.
 

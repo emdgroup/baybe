@@ -1,6 +1,5 @@
 """Collection of basic kernels."""
 
-
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, in_, instance_of
