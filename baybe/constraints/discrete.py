@@ -49,7 +49,7 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
         return data.index[res]
 
-    def to_polars(self) -> pl.Expr:  # noqa: D102
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
         import polars as pl
 
@@ -58,10 +58,6 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
             satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
 
         expr = pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
-
-        # Negate the expression, because Polars' filter keeps the rows
-        # the expression satisfies
-        expr = expr.not_()
 
         return expr
 
@@ -83,11 +79,11 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
-    def to_polars(self) -> pl.Expr:  # noqa: D102
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
         import polars as pl
 
-        return self.condition.to_polars(pl.sum_horizontal(self.parameters))
+        return self.condition.to_polars(pl.sum_horizontal(self.parameters)).not_()
 
 
 @define
@@ -107,7 +103,7 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
-    def to_polars(self) -> pl.Expr:  # noqa: D102
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
         import polars as pl
 
@@ -117,7 +113,7 @@ class DiscreteProductConstraint(DiscreteConstraint):
         expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
 
         # Apply the threshold operator on expr and the condition threshold
-        return op(expr, self.condition.threshold)
+        return op(expr, self.condition.threshold).not_()
 
 
 class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
@@ -140,7 +136,7 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
-    def to_polars(self) -> pl.Expr:  # noqa: D102
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
         import polars as pl
 
@@ -148,7 +144,7 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
             pl.concat_list(pl.col(self.parameters))
             .list.eval(pl.element().n_unique())
             .explode()
-        ) == len(self.parameters)
+        ) != len(self.parameters)
 
         return expr
 
@@ -168,7 +164,7 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
-    def to_polars(self) -> pl.Expr:  # noqa: D102
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
         import polars as pl
 
@@ -176,7 +172,7 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
             pl.concat_list(pl.col(self.parameters))
             .list.eval(pl.element().n_unique())
             .explode()
-        ) == 1
+        ) != 1
 
         return expr
 

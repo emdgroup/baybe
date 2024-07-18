@@ -723,8 +723,8 @@ def _apply_polars_constraint_filter(
     """
     for c in constraints:
         try:
-            pl_expr = c.to_polars()
-            ldf = ldf.filter(pl_expr)
+            to_keep = c.get_invalid_polars().not_()
+            ldf = ldf.filter(to_keep)
         except NotImplementedError:
             pass
 

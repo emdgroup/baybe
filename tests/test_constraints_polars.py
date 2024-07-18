@@ -105,11 +105,9 @@ def test_polars_prodsum3(parameters, constraints):
 def test_polars_exclusion(mock_substances, parameters, constraints):
     """Tests Polars implementation of exclusion constraint."""
     ldf = _lazyframe_from_product(parameters)
-
     ldf = _apply_polars_constraint_filter(ldf, constraints)
 
     # Number of entries with either first/second substance and a temperature above 151
-
     df = ldf.filter(
         (pl.col("Temperature") > 151)
         & (pl.col("Solvent_1").is_in(list(mock_substances)[:2]))
