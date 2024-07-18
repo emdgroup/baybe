@@ -1,14 +1,17 @@
 """Test Polars implementations of constraints."""
-import polars as pl
 import pytest
 from pandas.testing import assert_frame_equal
 
+from baybe._optional.info import POLARS_INSTALLED
 from baybe.searchspace.discrete import (
     _apply_pandas_constraint_filter,
     _apply_polars_constraint_filter,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
+
+if POLARS_INSTALLED:
+    import polars as pl
 
 
 def _lazyframe_from_product(parameters):
@@ -27,6 +30,9 @@ def _lazyframe_from_product(parameters):
     return res
 
 
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_8"]])
 def test_polars_prodsum1(parameters, constraints):
@@ -43,6 +49,9 @@ def test_polars_prodsum1(parameters, constraints):
     assert num_entries == 0
 
 
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_9"]])
 def test_polars_prodsum2(parameters, constraints):
@@ -63,6 +72,9 @@ def test_polars_prodsum2(parameters, constraints):
     assert num_entries == 0
 
 
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
 @pytest.mark.parametrize("parameter_names", [["Fraction_1", "Fraction_2"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_10"]])
 def test_polars_prodsum3(parameters, constraints):
@@ -80,6 +92,9 @@ def test_polars_prodsum3(parameters, constraints):
     assert num_entries == 0
 
 
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
 @pytest.mark.parametrize(
     "parameter_names",
     [["Solvent_1", "SomeSetting", "Temperature", "Pressure"]],
@@ -116,6 +131,9 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
     assert num_entries == 0
 
 
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
 @pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_7"]])
 def test_polars_label_duplicates(parameters, constraints):
@@ -135,6 +153,9 @@ def test_polars_label_duplicates(parameters, constraints):
     assert num_entries == 0
 
 
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
 @pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_14"]])
 def test_polars_linked_parameters(parameters, constraints):
@@ -154,6 +175,9 @@ def test_polars_linked_parameters(parameters, constraints):
     assert num_entries == 0
 
 
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
 @pytest.mark.parametrize(
     "parameter_names",
     [
