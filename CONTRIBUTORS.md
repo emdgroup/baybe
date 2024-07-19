@@ -17,7 +17,7 @@
 - Julie Fang (Merck Life Science KGaA, Darmstadt, Germany):  
   Farthest point sampling
 - Roya Javadi (Vector Institute, Toronto, Canada):
-  Import optimization
+  Import optimization, Polars implementations
 - Sterling Baird (Acceleration Consortium, Toronto, Canada):
   Documentation and general feedback
 - Rim Rihana (Merck KGaA, Darmstadt, Germany):

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Sequence
 from math import prod
 from typing import TYPE_CHECKING, Any
 
@@ -255,16 +255,20 @@ class SubspaceDiscrete(SerialMixin):
         # Set defaults
         constraints = constraints or []
 
-        # Create a dataframe representing the experimental search space
-        exp_rep = parameter_cartesian_prod_to_df(parameters)
+        # Use Polars for Cartesian product of parameters and apply constraint
+        lazy_df = parameter_cartesian_prod_polars(parameters)
+        lazy_df = _apply_polars_constraint_filter(lazy_df, constraints)
 
-        # Remove entries that violate parameter constraints
-        _apply_constraint_filter(exp_rep, constraints)
+        # Conversion to Pandas dataframe
+        df = lazy_df.collect(streaming=True).to_pandas()
+
+        # Remove entries that violate any remaining parameter constraints
+        _apply_pandas_constraint_filter(df, constraints)
 
         return SubspaceDiscrete(
             parameters=parameters,
             constraints=constraints,
-            exp_rep=exp_rep,
+            exp_rep=df,
             empty_encoding=empty_encoding,
         )
 
@@ -390,7 +394,7 @@ class SubspaceDiscrete(SerialMixin):
             )
 
         # Construct the product part of the space
-        product_space = parameter_cartesian_prod_to_df(product_parameters)
+        product_space = parameter_cartesian_prod_pandas(product_parameters)
         if not simplex_parameters:
             return cls(parameters=product_parameters, exp_rep=product_space)
 
@@ -507,7 +511,7 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Remove entries that violate parameter constraints:
-        _apply_constraint_filter(exp_rep, constraints)
+        _apply_pandas_constraint_filter(exp_rep, constraints)
 
         return cls(
             parameters=[*simplex_parameters, *product_parameters],
@@ -671,6 +675,35 @@ class SubspaceDiscrete(SerialMixin):
         return comp_rep
 
 
+def _apply_pandas_constraint_filter(
+    df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
+) -> pd.DataFrame:
+    """Remove discrete search space entries based on constraints.
+
+    The filtering is done inplace, but the modified object is still returned.
+
+    Args:
+        df: The data in experimental representation to be modified inplace.
+        constraints: List of discrete constraints.
+
+    Returns:
+        The filtered dataframe.
+    """
+    # Reorder the constraints according to their execution order
+    constraints = sorted(
+        constraints,
+        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+    )
+
+    # Remove entries that violate parameter constraints:
+    for constraint in (c for c in constraints if c.eval_during_creation):
+        idxs = constraint.get_invalid(df)
+        df.drop(index=idxs, inplace=True)
+    df.reset_index(inplace=True, drop=True)
+
+    return df
+
+
 def _apply_polars_constraint_filter(
     ldf: pl.LazyFrame, constraints: Collection[DiscreteConstraint]
 ) -> pl.LazyFrame:
@@ -697,33 +730,40 @@ def _apply_polars_constraint_filter(
     return ldf
 
 
-def _apply_constraint_filter(
-    df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
-):
-    """Remove discrete search space entries inplace based on constraints.
+def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyFrame:
+    """Create the Cartesian product of all parameter values using Polars.
+
+    Ignores continuous parameters.
 
     Args:
-        df: The data in experimental representation to be modified inplace.
-        constraints: List of discrete constraints.
+        parameters: List of parameter objects.
 
+    Returns:
+        A lazy dataframe containing all possible discrete parameter value combinations.
     """
-    # Reorder the constraints according to their execution order
-    constraints = sorted(
-        constraints,
-        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-    )
+    discrete_parameters = [p for p in parameters if p.is_discrete]
+    if not discrete_parameters:
+        return pl.LazyFrame()
 
-    # Remove entries that violate parameter constraints:
-    for constraint in (c for c in constraints if c.eval_during_creation):
-        idxs = constraint.get_invalid(df)
-        df.drop(index=idxs, inplace=True)
-    df.reset_index(inplace=True, drop=True)
+    # Convert each parameter to a lazy dataframe for cross-join operation
+    param_frames = [pl.LazyFrame({p.name: p.values}) for p in discrete_parameters]  # type:ignore[attr-defined]
+
+    # Handling edge cases
+    if len(param_frames) == 1:
+        return param_frames[0]
+
+    # Cross-join parameters
+    res = param_frames[0]
+    for frame in param_frames[1:]:
+        res = res.join(frame, how="cross", force_parallel=True)
+
+    return res
 
 
-def parameter_cartesian_prod_to_df(
-    parameters: Iterable[Parameter],
+def parameter_cartesian_prod_pandas(
+    parameters: Sequence[Parameter],
 ) -> pd.DataFrame:
-    """Create the Cartesian product of all parameter values.
+    """Create the Cartesian product of all parameter values using Pandas.
 
     Ignores continuous parameters.
 
