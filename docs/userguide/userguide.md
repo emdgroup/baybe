@@ -2,6 +2,7 @@
 
 ```{toctree}
 Campaigns <campaigns>
+Active Learning <active_learning>
 Constraints <constraints>
 Environment Vars <envvars>
 Objectives <objectives>

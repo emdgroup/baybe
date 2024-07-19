@@ -149,12 +149,24 @@ class qKnowledgeGradient(AcquisitionFunction):
 
 
 ########################################################################################
-### Posterior Mean
+### Posterior Statistics
 @define(frozen=True)
 class PosteriorMean(AcquisitionFunction):
     """Posterior mean."""
 
     abbreviation: ClassVar[str] = "PM"
+
+
+@define(frozen=True)
+class PosteriorStandardDeviation(AcquisitionFunction):
+    """Posterior standard deviation."""
+
+    abbreviation: ClassVar[str] = "PSTD"
+
+    maximize: bool = field(default=True, validator=instance_of(bool))
+    """If ``True``, points with maximum posterior standard deviation are selected.
+    If ``False``, the acquisition function value is negated, yielding a selection
+    with minimal posterior standard deviation."""
 
 
 ########################################################################################
