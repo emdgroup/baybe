@@ -106,7 +106,7 @@ class Surrogate(ABC, SerialMixin):
             (self._get_parameter_scaler(p), p.comp_df.columns)
             for p in searchspace.parameters
         ]
-        scaler = make_column_transformer(*transformers)
+        scaler = make_column_transformer(*transformers, verbose_feature_names_out=False)
 
         # TODO: Decide whether scaler is to be fit to parameter bounds and/or
         #   extreme points in the given measurement data
@@ -181,10 +181,15 @@ class Surrogate(ABC, SerialMixin):
 
         input_scaler = self._make_input_scaler(searchspace, measurements)
 
+        def transform_inputs(df: pd.DataFrame, /) -> pd.DataFrame:
+            """Fitted input transformation pipeline."""
+            out = input_scaler.transform(searchspace.transform(df, allow_missing=True))
+            return pd.DataFrame(
+                out, index=df.index, columns=input_scaler.get_feature_names_out()
+            )
+
         # Store context-specific transformations
-        self._input_transform = lambda x: input_scaler.transform(
-            searchspace.transform(x, allow_missing=True)
-        )
+        self._input_transform = transform_inputs
         self._target_transform = lambda x: objective.transform(x)
 
         # Transform and fit
