@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DiscreteExcludeConstraint`, `DiscreteLinkedParametersConstraint` and 
   `DiscreteNoLabelDuplicatesConstraint`
 - Discrete search space Cartesian product can be created lazily via Polars
+- `recommend` now accepts the `pending_measurements` argument, informing the algorithm
+  that these points were already selected for evaluation
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
