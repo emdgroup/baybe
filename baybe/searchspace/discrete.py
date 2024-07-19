@@ -11,6 +11,7 @@ import pandas as pd
 from attr import define, field
 from cattrs import IterableValidationError
 
+from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.parameters import (
@@ -253,18 +254,28 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Set defaults
+        # Set defaults and order constraints
         constraints = constraints or []
+        constraints = sorted(
+            constraints,
+            key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+        )
 
-        # Use Polars for Cartesian product of parameters and apply constraint
-        lazy_df = parameter_cartesian_prod_polars(parameters)
-        lazy_df = _apply_polars_constraint_filter(lazy_df, constraints)
+        if POLARS_INSTALLED:
+            # Apply polars product and filtering
+            lazy_df = parameter_cartesian_prod_polars(parameters)
+            mask: list[bool] = []
+            lazy_df = _apply_constraint_filter_polars(lazy_df, constraints, mask)
+            df_records = lazy_df.collect(streaming=True).to_dicts()
+            df = pd.DataFrame.from_records(df_records)
+        else:
+            # Apply pandas product
+            df = parameter_cartesian_prod_pandas(parameters)
+            mask = [False] * len(constraints)
 
-        # Conversion to Pandas dataframe
-        df = lazy_df.collect(streaming=True).to_pandas()
-
-        # Remove entries that violate any remaining parameter constraints
-        _apply_pandas_constraint_filter(df, constraints)
+        # Gather and use constraints not yet applied
+        constraints_ = tuple(c for c, applied in zip(constraints, mask) if not applied)
+        _apply_constraint_filter_pandas(df, constraints_)
 
         return SubspaceDiscrete(
             parameters=parameters,
@@ -512,7 +523,7 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Remove entries that violate parameter constraints:
-        _apply_pandas_constraint_filter(exp_rep, constraints)
+        _apply_constraint_filter_pandas(exp_rep, constraints)
 
         return cls(
             parameters=[*simplex_parameters, *product_parameters],
@@ -676,7 +687,7 @@ class SubspaceDiscrete(SerialMixin):
         return comp_rep
 
 
-def _apply_pandas_constraint_filter(
+def _apply_constraint_filter_pandas(
     df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
 ) -> pd.DataFrame:
     """Remove discrete search space entries based on constraints.
@@ -690,12 +701,6 @@ def _apply_pandas_constraint_filter(
     Returns:
         The filtered dataframe.
     """
-    # Reorder the constraints according to their execution order
-    constraints = sorted(
-        constraints,
-        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-    )
-
     # Remove entries that violate parameter constraints:
     for constraint in (c for c in constraints if c.eval_during_creation):
         idxs = constraint.get_invalid(df)
@@ -705,8 +710,10 @@ def _apply_pandas_constraint_filter(
     return df
 
 
-def _apply_polars_constraint_filter(
-    ldf: pl.LazyFrame, constraints: Collection[DiscreteConstraint]
+def _apply_constraint_filter_polars(
+    ldf: pl.LazyFrame,
+    constraints: Collection[DiscreteConstraint],
+    mask_applied: list | None = None,
 ) -> pl.LazyFrame:
     """Remove discrete search space entries inplace based on constraints.
 
@@ -716,17 +723,27 @@ def _apply_polars_constraint_filter(
     Args:
         ldf: The data in experimental representation to be modified inplace.
         constraints: Collection of discrete constraints.
+        mask_applied: (Optional) empty list which will be filled inplace with booleans
+            indicating which constraints have been applied.
 
     Returns:
         A Polars lazyframe with undesired rows removed.
 
+    Raises:
+        ValueError: If a non-empty ``mask_applied`` was provided.
     """
+    if mask_applied is None:
+        mask_applied = []
+    if len(mask_applied) != 0:
+        raise ValueError("The provided mask must be empty or None.")
+
     for c in constraints:
         try:
             to_keep = c.get_invalid_polars().not_()
             ldf = ldf.filter(to_keep)
+            mask_applied.append(True)
         except NotImplementedError:
-            pass
+            mask_applied.append(False)
 
     return ldf
 
