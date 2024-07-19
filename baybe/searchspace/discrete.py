@@ -574,6 +574,11 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
+    def param_names(self) -> tuple[str, ...]:
+        """Return list of parameter names."""
+        return tuple(p.name for p in self.parameters)
+
+    @property
     def param_bounds_comp(self) -> np.ndarray:
         """Return bounds as tensor.
 

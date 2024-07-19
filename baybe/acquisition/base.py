@@ -10,6 +10,7 @@ from typing import ClassVar
 import pandas as pd
 from attrs import define
 
+from baybe.exceptions import IncompatibleAcquisitionFunctionError
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
     converter,
@@ -46,6 +47,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         searchspace: SearchSpace,
         train_x: pd.DataFrame,
         train_y: pd.DataFrame,
+        pending_x: pd.DataFrame | None = None,
     ):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_acqf_module
@@ -71,6 +73,15 @@ class AcquisitionFunction(ABC, SerialMixin):
             additional_params["mc_points"] = to_tensor(
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
             )
+        if pending_x is not None:
+            if "X_pending" in signature_params:
+                additional_params["X_pending"] = to_tensor(pending_x)
+            else:
+                raise IncompatibleAcquisitionFunctionError(
+                    f"Non-empty pending measurements were provided, but the "
+                    f"chosen acquisition function {self.__class__.__name__} does not "
+                    f"support this."
+                )
 
         params_dict.update(additional_params)
 

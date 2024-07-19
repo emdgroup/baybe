@@ -17,18 +17,15 @@ class NotEnoughPointsLeftError(Exception):
     """
 
 
-class NoMCAcquisitionFunctionError(Exception):
-    """
-    A Monte Carlo acquisition function is required but an analytical acquisition
-    function has been selected by the user.
-    """
-
-
 class IncompatibleSearchSpaceError(Exception):
     """
     A recommender is used with a search space that contains incompatible parts,
     e.g. a discrete recommender is used with a hybrid or continuous search space.
     """
+
+
+class IncompatibleAcquisitionFunctionError(Exception):
+    """An incompatible acquisition function was selected."""
 
 
 class EmptySearchSpaceError(Exception):

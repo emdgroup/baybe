@@ -82,6 +82,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -108,6 +109,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 searchspace=searchspace,
                 objective=objective,
                 measurements=measurements,
+                pending_measurements=pending_measurements,
             )
 
         # We are in a hybrid setting now
@@ -127,11 +129,20 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             allow_recommending_already_measured=True,
         )
 
+        # Transform pending measurements
+        if pending_measurements is None:
+            pending_comp_discrete = None
+            pending_comp_continuous = None
+        else:
+            pending_comp = searchspace.transform(pending_measurements)
+            pending_comp_discrete = pending_comp[candidates_comp.columns]
+            pending_comp_continuous = pending_comp[searchspace.continuous.param_names]
+
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements
+                searchspace, objective, measurements, pending_measurements
             )
 
             # Construct the partial acquisition function that attaches cont_part
@@ -149,6 +160,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             subspace_discrete=searchspace.discrete,
             candidates_comp=candidates_comp,
             batch_size=batch_size,
+            pending_comp=pending_comp_discrete,
         )
 
         # Get one random discrete point that will be attached when evaluating the
@@ -157,7 +169,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
-        self.cont_recommender._setup_botorch_acqf(searchspace, objective, measurements)
+        self.cont_recommender._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_measurements
+        )
 
         # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(
@@ -169,7 +183,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(
-            searchspace.continuous, batch_size
+            searchspace.continuous, batch_size, pending_comp_continuous
         )
 
         # Glue the solutions together and return them

@@ -285,7 +285,7 @@ class Campaign(SerialMixin):
                 f"{batch_size=}."
             )
 
-        # Invalidate cached recommendation in case pending measurements are provided
+        # Invalidate cached recommendation if pending measurements are provided
         if (pending_measurements is not None) and (len(pending_measurements) > 0):
             self._cached_recommendation = pd.DataFrame()
 
