@@ -173,7 +173,6 @@ class Surrogate(ABC, SerialMixin):
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
             )
-        # TODO: Adjust scale_model decorator to support other model types as well.
         if (not searchspace.continuous.is_empty) and (
             "GaussianProcess" not in self.__class__.__name__
         ):
