@@ -74,7 +74,7 @@ class AcquisitionFunction(ABC, SerialMixin):
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
             )
         if pending_x is not None:
-            if "X_pending" in signature_params:
+            if self.is_mc:
                 additional_params["X_pending"] = to_tensor(pending_x)
             else:
                 raise IncompatibleAcquisitionFunctionError(
