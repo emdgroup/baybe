@@ -1,9 +1,12 @@
 """Tests pending points mechanism."""
 
+import warnings
+
 import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.exceptions import UnusedObjectWarning
 from baybe.recommenders import (
     BotorchRecommender,
     FPSRecommender,
@@ -49,6 +52,8 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
 )
 def test_pending_points(campaign, batch_size):
     """Test there is no recommendation overlap if pending points are specified."""
+    warnings.filterwarnings("ignore", category=UnusedObjectWarning)
+
     # Perform a fake first iteration
     rec = campaign.recommend(batch_size)
     add_fake_results(rec, campaign.targets)
@@ -56,6 +61,7 @@ def test_pending_points(campaign, batch_size):
 
     # Get recommendations, set them as pending and get another set of recommendations
     rec1 = campaign.recommend(batch_size)
+    campaign._cached_recommendation = pd.DataFrame()  # ensure no recommendation cache
     rec2 = campaign.recommend(batch_size=batch_size, pending_measurements=rec1)
 
     # Assert they have no overlap
