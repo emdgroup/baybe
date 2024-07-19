@@ -258,10 +258,9 @@ class SubspaceDiscrete(SerialMixin):
         # Use Polars for Cartesian product of parameters and apply constraint
         lazy_df = parameter_cartesian_prod_polars(parameters)
         lazy_df = _apply_polars_constraint_filter(lazy_df, constraints)
-        pl_df = lazy_df.collect(streaming=True)
 
         # Conversion to Pandas dataframe
-        df = pl_df.to_pandas()
+        df = lazy_df.collect(streaming=True).to_pandas()
 
         # Remove entries that violate any remaining parameter constraints
         _apply_pandas_constraint_filter(df, constraints)

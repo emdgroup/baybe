@@ -1,5 +1,4 @@
 """Test Polars implementations of constraints."""
-import pandas as pd
 import polars as pl
 import pytest
 from pandas.testing import assert_frame_equal
@@ -190,8 +189,10 @@ def test_polars_product(constraints, parameters):
     assert_frame_equal(df_pl.to_pandas(), df_pd)
 
     # Apply constraints
-    _apply_pandas_constraint_filter(df_pd, constraints)
-    df_pl_res = _apply_polars_constraint_filter(ldf, constraints).collect().to_pandas()
+    df_pd_filtered = _apply_pandas_constraint_filter(df_pd, constraints)
+    df_pl_filtered = (
+        _apply_polars_constraint_filter(ldf, constraints).collect().to_pandas()
+    )
 
     # Assert strict equality of two dataframes
-    assert_frame_equal(df_pl_res, df_pd)
+    assert_frame_equal(df_pl_filtered, df_pd_filtered)
