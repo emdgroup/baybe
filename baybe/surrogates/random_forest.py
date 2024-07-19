@@ -49,7 +49,7 @@ class RandomForestSurrogate(GaussianSurrogate):
     """The actual model."""
 
     @staticmethod
-    def _get_parameter_scaler(
+    def _make_parameter_scaler(
         parameter: Parameter,
     ) -> ScalerProtocol | Literal["passthrough"]:
         # See base class.

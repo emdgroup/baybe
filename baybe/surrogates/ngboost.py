@@ -54,7 +54,7 @@ class NGBoostSurrogate(GaussianSurrogate):
         self.model_params = {**self._default_model_params, **self.model_params}
 
     @staticmethod
-    def _get_parameter_scaler(
+    def _make_parameter_scaler(
         parameter: Parameter,
     ) -> ScalerProtocol | Literal["passthrough"]:
         # See base class.

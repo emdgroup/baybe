@@ -87,7 +87,7 @@ class Surrogate(ABC, SerialMixin):
         return AdapterModel(self)
 
     @staticmethod
-    def _get_parameter_scaler(
+    def _make_parameter_scaler(
         parameter: Parameter,
     ) -> ScalerProtocol | Literal["passthrough"]:
         """Return the scaler to be used for the given parameter."""
@@ -102,7 +102,7 @@ class Surrogate(ABC, SerialMixin):
         # Create the composite scaler from the parameter-wise scaler objects
         transformers = [
             (
-                self._get_parameter_scaler(p),
+                self._make_parameter_scaler(p),
                 [c for c in p.comp_rep_columns if c in searchspace.comp_rep_columns],
             )
             for p in searchspace.parameters
