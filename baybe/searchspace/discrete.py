@@ -537,6 +537,11 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        return tuple(self.comp_rep.columns)
+
+    @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
         return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T

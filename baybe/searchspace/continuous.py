@@ -210,6 +210,11 @@ class SubspaceContinuous(SerialMixin):
         return tuple(p.name for p in self.parameters)
 
     @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        return self.param_names
+
+    @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
         return pd.DataFrame(

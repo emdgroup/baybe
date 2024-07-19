@@ -35,6 +35,8 @@ _ `_optional` subpackage for managing optional dependencies
 - `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
   now take additional `allow_missing` and `allow_extra` keyword arguments
 - `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
+- `comp_rep_columns` property for `SearchSpace`, `SubspaceDiscrete`
+  and `SubspaceContinuous`
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

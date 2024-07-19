@@ -243,6 +243,11 @@ class SearchSpace(SerialMixin):
         )
 
     @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        return self.discrete.comp_rep_columns + self.continuous.comp_rep_columns
+
+    @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
         return pd.concat(
