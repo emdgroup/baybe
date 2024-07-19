@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import pandas as pd
 from attrs import define, field
@@ -16,6 +16,7 @@ from cattrs.dispatch import (
     UnstructuredValue,
     UnstructureHook,
 )
+from sklearn.preprocessing import MinMaxScaler
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -28,7 +29,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.scaling import ScalingMethod, make_scaler
+from baybe.utils.scaling import ScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -86,9 +87,11 @@ class Surrogate(ABC, SerialMixin):
         return AdapterModel(self)
 
     @staticmethod
-    def _get_parameter_scaling(parameter: Parameter) -> ScalingMethod:
-        """Return the scaling method to be used for the given parameter."""
-        return ScalingMethod.MINMAX
+    def _get_parameter_scaler(
+        parameter: Parameter,
+    ) -> ScalerProtocol | Literal["passthrough"]:
+        """Return the scaler to be used for the given parameter."""
+        return MinMaxScaler()
 
     def _make_input_scaler(
         self, searchspace: SearchSpace, measurements: pd.DataFrame
@@ -100,7 +103,7 @@ class Surrogate(ABC, SerialMixin):
         # TODO: Filter down to columns that actually remain in the comp rep of the
         #   searchspace, since the transformer can break down otherwise.
         transformers = [
-            (make_scaler(self._get_parameter_scaling(p)), p.comp_df.columns)
+            (self._get_parameter_scaler(p), p.comp_df.columns)
             for p in searchspace.parameters
         ]
         scaler = make_column_transformer(*transformers)
@@ -225,7 +228,7 @@ class GaussianSurrogate(Surrogate, ABC):
 
 
 def _make_hook_decode_onnx_str(
-    raw_unstructure_hook: UnstructureHook
+    raw_unstructure_hook: UnstructureHook,
 ) -> UnstructureHook:
     """Wrap an unstructuring hook to let it also decode the contained ONNX string."""
 
@@ -253,7 +256,7 @@ def _make_hook_encode_onnx_str(raw_structure_hook: StructureHook) -> StructureHo
 
 
 def _block_serialize_custom_architecture(
-    raw_unstructure_hook: UnstructureHook
+    raw_unstructure_hook: UnstructureHook,
 ) -> UnstructureHook:
     """Raise error if attempt to serialize a custom architecture surrogate."""
     # TODO: Ideally, this hook should be removed and unstructuring the Surrogate

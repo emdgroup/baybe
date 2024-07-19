@@ -9,7 +9,7 @@ available in the future. Thus, please have a look in the source code directly.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from attr import define, field
 from ngboost import NGBRegressor
@@ -18,7 +18,7 @@ from baybe.parameters.base import Parameter
 from baybe.surrogates.base import GaussianSurrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
-from baybe.utils.scaling import ScalingMethod
+from baybe.utils.scaling import ScalerProtocol
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -54,11 +54,13 @@ class NGBoostSurrogate(GaussianSurrogate):
         self.model_params = {**self._default_model_params, **self.model_params}
 
     @staticmethod
-    def _get_parameter_scaling(parameter: Parameter) -> ScalingMethod:
+    def _get_parameter_scaler(
+        parameter: Parameter,
+    ) -> ScalerProtocol | Literal["passthrough"]:
         # See base class.
 
         # Tree-like models do not require any input scaling
-        return ScalingMethod.IDENTITY
+        return "passthrough"
 
     @batchify
     def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:

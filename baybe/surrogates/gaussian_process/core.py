@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 from attrs import define, field
 from attrs.validators import instance_of
@@ -23,7 +23,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
-from baybe.utils.scaling import ScalingMethod
+from baybe.utils.scaling import ScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -111,11 +111,13 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model
 
     @staticmethod
-    def _get_parameter_scaling(parameter: Parameter) -> ScalingMethod:
+    def _get_parameter_scaler(
+        parameter: Parameter,
+    ) -> ScalerProtocol | Literal["passthrough"]:
         # See base class.
 
         # For GPs, we use botorch's built-in machinery for scaling
-        return ScalingMethod.IDENTITY
+        return "passthrough"
 
     @staticmethod
     def _get_model_context(
