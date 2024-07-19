@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Collection, Sequence
 from math import prod
 from typing import TYPE_CHECKING, Any
@@ -261,7 +262,7 @@ class SubspaceDiscrete(SerialMixin):
             key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
         )
 
-        if POLARS_INSTALLED:
+        if POLARS_INSTALLED and not os.environ.get("BAYBE_DEACTIVATE_POLARS"):
             # Apply polars product and filtering
             lazy_df = parameter_cartesian_prod_polars(parameters)
             mask: list[bool] = []
