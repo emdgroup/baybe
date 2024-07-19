@@ -100,11 +100,10 @@ class Surrogate(ABC, SerialMixin):
         from sklearn.compose import make_column_transformer
 
         # Create the composite scaler from the parameter-wise scaler objects
-        # TODO: Fix the parameter comp rep column access for continuous parameters
         transformers = [
             (
                 self._get_parameter_scaler(p),
-                [c for c in p.comp_df.columns if c in searchspace.comp_rep_columns],
+                [c for c in p.comp_rep_columns if c in searchspace.comp_rep_columns],
             )
             for p in searchspace.parameters
         ]

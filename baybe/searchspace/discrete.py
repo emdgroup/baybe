@@ -539,6 +539,9 @@ class SubspaceDiscrete(SerialMixin):
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""
+        # We go via `comp_rep` here instead of using the columns of the individual
+        # parameters because the search space potentially uses only a subset of the
+        # columns due to decorrelation
         return tuple(self.comp_rep.columns)
 
     @property
@@ -548,7 +551,7 @@ class SubspaceDiscrete(SerialMixin):
 
     @staticmethod
     def estimate_product_space_size(
-        parameters: Sequence[DiscreteParameter]
+        parameters: Sequence[DiscreteParameter],
     ) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.
 

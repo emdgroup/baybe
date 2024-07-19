@@ -212,7 +212,7 @@ class SubspaceContinuous(SerialMixin):
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""
-        return self.param_names
+        return tuple(chain.from_iterable(p.comp_rep_columns for p in self.parameters))
 
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
