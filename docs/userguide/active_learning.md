@@ -25,7 +25,7 @@ the points with the highest predicted model uncertainty:
   Increasing values of `beta` effectively eliminate the effect of the posterior mean on
   the acquisition value, yielding a selection of points driven primarily by the
   posterior variance. However, we generally recommend to use this acquisition function
-  only if a small exploratory component is desired - otherwise, the
+  only if a small exploratory component is desired – otherwise, the
   [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation) 
   acquisition function is what you are looking for.
 
