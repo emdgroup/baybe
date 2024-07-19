@@ -10,7 +10,7 @@ above-mentioned criterion and set up a Bayesian optimization campaign to recomme
 points with the highest uncertainty, we achieve active learning via Bayesian
 optimization. In practice, this is procedure is implemented by setting up a
 probabilistic model of our measurement process that allows us to quantify uncertainty
-in the form of a posterior posterior distribution, from which we can then construct an
+in the form of a posterior distribution, from which we can then construct an
 uncertainty-based acquisition function to guide the exploration process.
 
 Below you find which acquisition functions in BayBE are suitable for this endeavor, 
