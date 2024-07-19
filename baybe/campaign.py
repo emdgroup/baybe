@@ -255,12 +255,15 @@ class Campaign(SerialMixin):
     def recommend(
         self,
         batch_size: int,
+        pending_measurements: pd.DataFrame | None = None,
         batch_quantity: int = None,  # type: ignore[assignment]
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
             batch_size: Number of requested recommendations.
+            pending_measurements: Data in experimental representation representing
+                measurements that are currently pending.
             batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
@@ -282,6 +285,10 @@ class Campaign(SerialMixin):
                 f"{batch_size=}."
             )
 
+        # Invalidate cached recommendation in case pending measurements are provided
+        if (pending_measurements is not None) and (len(pending_measurements) > 0):
+            self._cached_recommendation = pd.DataFrame()
+
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
         if len(self._cached_recommendation) == batch_size:
@@ -298,6 +305,7 @@ class Campaign(SerialMixin):
             self.searchspace,
             self.objective,
             self._measurements_exp,
+            pending_measurements,
         )
 
         # Cache the recommendations

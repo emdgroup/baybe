@@ -98,6 +98,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
+        pending_comp: pd.DataFrame | None = None,
     ) -> pd.Index:
         # See base class.
 
@@ -106,6 +107,15 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
 
+        # Ignore exact pending point matches in the candidates
+        if pending_comp is not None:
+            candidates_comp = (
+                candidates_comp.merge(pending_comp, indicator=True, how="outer")
+                .query('_merge == "left_only"')
+                .drop(columns=["_merge"])
+            )
+
+        # Scale candidates
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         # Set model parameters and perform fit

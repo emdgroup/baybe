@@ -22,6 +22,7 @@ class NonPredictiveRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
