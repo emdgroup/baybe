@@ -98,7 +98,7 @@ def plot_poi(
     ax: Axes,
     base_name: str,
     path: Path = Path("."),
-) -> None:
+) -> Figure:
     """Plot the probability of improvement in 3D."""
     cmap = plt.get_cmap("viridis")
 
@@ -149,6 +149,7 @@ def plot_poi(
     else:
         warnings.warn("Plots could not be saved.")
     plt.close()
+    return ax.get_figure()
 
 
 ### Monkeypatching
