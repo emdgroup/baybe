@@ -1,8 +1,9 @@
-# User guide
+# User Guide
 
 ```{toctree}
 Campaigns <campaigns>
 Active Learning <active_learning>
+Async Workflow<async>
 Constraints <constraints>
 Environment Vars <envvars>
 Objectives <objectives>
