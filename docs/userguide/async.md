@@ -56,7 +56,7 @@ Akin to `measurements` or `recommendations`, `pending_measurements` is a datafra
 experimental representation. In the following example, we get a set of recommendations,
 add results for half of them, and start the next recommendation, marking the
 other half pending:
-~~~python
+```python
 # Get a set of 10 recommendation
 rec = campaign.recommend(batch_size=10)
 
@@ -71,4 +71,4 @@ campaign.add_measurements(rec_finished)
 # Get the next set of recommendations, incorporating the still unfinished ones
 # These will not include the pending recommendations again
 rec_next = campaign.recommend(10, pending_measurements=rec_pending)
-~~~
+```
