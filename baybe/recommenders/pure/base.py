@@ -42,17 +42,8 @@ class PureRecommender(ABC, RecommenderProtocol):
     ) -> pd.DataFrame:
         # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
-            # Transform pending measurements
-            pending_comp = (
-                None
-                if pending_measurements is None
-                else searchspace.transform(pending_measurements)
-            )
-
             return self._recommend_continuous(
-                subspace_continuous=searchspace.continuous,
-                batch_size=batch_size,
-                pending_comp=pending_comp,
+                subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
         else:
             return self._recommend_with_discrete_parts(
@@ -66,7 +57,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
-        pending_comp: pd.DataFrame | None,
     ) -> pd.Index:
         """Generate recommendations from a discrete search space.
 
@@ -76,7 +66,6 @@ class PureRecommender(ABC, RecommenderProtocol):
             candidates_comp: The computational representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
-            pending_comp: Computational representation of pending measurements.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -92,7 +81,6 @@ class PureRecommender(ABC, RecommenderProtocol):
                 searchspace=SearchSpace(discrete=subspace_discrete),
                 candidates_comp=candidates_comp,
                 batch_size=batch_size,
-                pending_comp=pending_comp,
             ).index
         except NotImplementedError as exc:
             raise NotImplementedError(
@@ -108,7 +96,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-        pending_comp: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Generate recommendations from a continuous search space.
 
@@ -116,7 +103,6 @@ class PureRecommender(ABC, RecommenderProtocol):
             subspace_continuous: The continuous subspace from which to generate
                 recommendations.
             batch_size: The size of the recommendation batch.
-            pending_comp: Pending points in computational representation.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -131,7 +117,6 @@ class PureRecommender(ABC, RecommenderProtocol):
                 searchspace=SearchSpace(continuous=subspace_continuous),
                 candidates_comp=pd.DataFrame(),
                 batch_size=batch_size,
-                pending_comp=pending_comp,
             )
         except NotImplementedError as exc:
             raise NotImplementedError(
@@ -148,7 +133,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         searchspace: SearchSpace,
         candidates_comp: pd.DataFrame,
         batch_size: int,
-        pending_comp: pd.DataFrame | None,
     ) -> pd.DataFrame:
         """Generate recommendations from a hybrid search space.
 
@@ -162,8 +146,6 @@ class PureRecommender(ABC, RecommenderProtocol):
             candidates_comp: The computational representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
-            pending_comp: Pending points in computational representation.
-
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -177,7 +159,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_measurements: pd.DataFrame | None,
     ) -> pd.DataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
@@ -200,18 +182,13 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get discrete candidates
         # Repeated recommendations are always allowed for hybrid spaces
+        # Pending points are excluded for discrete spaces
         _, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=is_hybrid_space
             or self.allow_repeated_recommendations,
             allow_recommending_already_measured=is_hybrid_space
             or self.allow_recommending_already_measured,
-        )
-
-        # Transform pending measurements
-        pending_comp = (
-            None
-            if pending_measurements is None
-            else searchspace.transform(pending_measurements)
+            exclude=None if is_hybrid_space else pending_measurements,
         )
 
         # Check if enough candidates are left
@@ -228,13 +205,11 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get recommendations
         if is_hybrid_space:
-            rec = self._recommend_hybrid(
-                searchspace, candidates_comp, batch_size, pending_comp
-            )
+            rec = self._recommend_hybrid(searchspace, candidates_comp, batch_size)
             idxs = rec.index
         else:
             idxs = self._recommend_discrete(
-                searchspace.discrete, candidates_comp, batch_size, pending_comp
+                searchspace.discrete, candidates_comp, batch_size
             )
             rec = searchspace.discrete.exp_rep.loc[idxs, :]
 

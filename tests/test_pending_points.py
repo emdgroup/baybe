@@ -13,45 +13,72 @@ from baybe.recommenders import (
     FPSRecommender,
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
+    NaiveHybridSpaceRecommender,
     PAMClusteringRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.random import temporary_seed
 
 _discrete_params = ["Categorical_1", "Switch_1", "Num_disc_1"]
 _continuous_params = ["Conti_finite1", "Conti_finite2", "Conti_finite3"]
 _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2"]
 
+# Repeated recommendations explicitly need to be allowed or the potential overlap will
+# be avoided trivially
+_flags = dict(
+    allow_repeated_recommendations=True, allow_recommending_already_measured=True
+)
+
 
 @pytest.mark.parametrize(
     "parameter_names, recommender",
     [
-        param(_discrete_params, FPSRecommender(), id="fps_discrete"),
-        param(_discrete_params, PAMClusteringRecommender(), id="pam_discrete"),
-        param(_discrete_params, KMeansClusteringRecommender(), id="kmeans_discrete"),
+        param(_discrete_params, FPSRecommender(**_flags), id="fps_discrete"),
+        param(_discrete_params, PAMClusteringRecommender(**_flags), id="pam_discrete"),
         param(
             _discrete_params,
-            GaussianMixtureClusteringRecommender(),
+            KMeansClusteringRecommender(**_flags),
+            id="kmeans_discrete",
+        ),
+        param(
+            _discrete_params,
+            GaussianMixtureClusteringRecommender(**_flags),
             id="gm_discrete",
         ),
         param(
             _discrete_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender(**_flags)),
             id="botorch_discrete",
         ),
         param(
             _continuous_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender(**_flags)),
             id="botorch_continuous",
         ),
         param(
             _hybrid_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender(**_flags)),
             id="botorch_hybrid",
+        ),
+        param(
+            _discrete_params,
+            NaiveHybridSpaceRecommender(
+                disc_recommender=FPSRecommender(**_flags), **_flags
+            ),
+            id="naive1_discrete",
+        ),
+        param(
+            _discrete_params,
+            NaiveHybridSpaceRecommender(
+                disc_recommender=KMeansClusteringRecommender(**_flags), **_flags
+            ),
+            id="naive2_discrete",
         ),
     ],
 )
+@pytest.mark.parametrize("n_grid_points", [8], ids=["grid8"])
 def test_pending_points(campaign, batch_size):
     """Test there is no recommendation overlap if pending points are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)
@@ -62,9 +89,13 @@ def test_pending_points(campaign, batch_size):
     campaign.add_measurements(rec)
 
     # Get recommendations and set them as pending while getting another set
-    rec1 = campaign.recommend(batch_size)
+    # Fix the random seed for each recommend call to limit influence of randomness in
+    # some recommenders which could also trivially avoid overlap
+    with temporary_seed(1337):
+        rec1 = campaign.recommend(batch_size)
     campaign._cached_recommendation = pd.DataFrame()  # ensure no recommendation cache
-    rec2 = campaign.recommend(batch_size=batch_size, pending_measurements=rec1)
+    with temporary_seed(1337):
+        rec2 = campaign.recommend(batch_size=batch_size, pending_measurements=rec1)
 
     # Assert they have no overlap, round to avoid numerical fluctuation
     overlap = pd.merge(rec1.round(3), rec2.round(3), how="inner")

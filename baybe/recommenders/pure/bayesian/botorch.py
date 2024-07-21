@@ -77,7 +77,6 @@ class BotorchRecommender(BayesianRecommender):
         subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
-        pending_comp: pd.DataFrame | None = None,
     ) -> pd.Index:
         """Generate recommendations from a discrete search space.
 
@@ -87,7 +86,6 @@ class BotorchRecommender(BayesianRecommender):
             candidates_comp: The computational representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
-            pending_comp: Computational representation of pending measurements.
 
         Raises:
             IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
@@ -131,7 +129,6 @@ class BotorchRecommender(BayesianRecommender):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-        pending_comp: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Generate recommendations from a continuous search space.
 
@@ -139,7 +136,6 @@ class BotorchRecommender(BayesianRecommender):
             subspace_continuous: The continuous subspace from which to generate
                 recommendations.
             batch_size: The size of the recommendation batch.
-            pending_comp: Computational representation of pending measurements.
 
         Raises:
             IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
@@ -186,7 +182,6 @@ class BotorchRecommender(BayesianRecommender):
         searchspace: SearchSpace,
         candidates_comp: pd.DataFrame,
         batch_size: int,
-        pending_comp: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
 
@@ -202,7 +197,6 @@ class BotorchRecommender(BayesianRecommender):
             candidates_comp: The computational representation of the candidates
                 of the discrete subspace.
             batch_size: The size of the calculated batch.
-            pending_comp: Computational representation of pending measurements.
 
         Raises:
             IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition

@@ -1,13 +1,11 @@
 """Recommenders based on sampling."""
 
-import warnings
 from typing import ClassVar
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from baybe.exceptions import UnusedObjectWarning
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.sampling_algorithms import farthest_point_sampling
@@ -25,18 +23,8 @@ class RandomRecommender(NonPredictiveRecommender):
         searchspace: SearchSpace,
         candidates_comp: pd.DataFrame,
         batch_size: int,
-        pending_comp: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
-
-        if (pending_comp is not None) and (len(pending_comp) != 0):
-            warnings.warn(
-                f"'{self.recommend.__name__}' was called with a non-empty "
-                f"set of pending measurements but '{self.__class__.__name__}' does not "
-                f"utilize this information, meaning that the argument is ignored.",
-                UnusedObjectWarning,
-            )
-
         if searchspace.type == SearchSpaceType.DISCRETE:
             return candidates_comp.sample(batch_size)
 
@@ -69,7 +57,6 @@ class FPSRecommender(NonPredictiveRecommender):
         subspace_discrete: SubspaceDiscrete,
         candidates_comp: pd.DataFrame,
         batch_size: int,
-        pending_comp: pd.DataFrame | None = None,
     ) -> pd.Index:
         # See base class.
 
@@ -77,14 +64,6 @@ class FPSRecommender(NonPredictiveRecommender):
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
-
-        # Ignore exact pending point matches in the candidates
-        if pending_comp is not None:
-            candidates_comp = (
-                candidates_comp.merge(pending_comp, indicator=True, how="outer")
-                .query('_merge == "left_only"')
-                .drop(columns=["_merge"])
-            )
 
         # Scale and sample
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))

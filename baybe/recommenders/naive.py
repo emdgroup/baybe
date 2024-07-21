@@ -6,6 +6,7 @@ from typing import ClassVar
 import pandas as pd
 from attrs import define, evolve, field, fields
 
+from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
@@ -113,6 +114,13 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             )
 
         # We are in a hybrid setting now
+        if pending_measurements is not None:
+            raise UnusedObjectWarning(
+                f"A non-empty set of pending measurements was provided, but the "
+                f"selected recommender {self.__class__.__name__} with discrete "
+                f"sub-recommender {self.disc_recommender.__class__.__name__} only "
+                f"utilizes this information for purely discrete spaces."
+            )
 
         # We will attach continuous parts to discrete parts and the other way round.
         # To make things simple, we sample a single point in the continuous space which
@@ -123,20 +131,10 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Get discrete candidates. The metadata flags are ignored since the search space
         # is hybrid
-        # TODO Slight BOILERPLATE CODE, see recommender.py, ll. 47+
         _, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
         )
-
-        # Transform pending measurements
-        if pending_measurements is None:
-            pending_comp_discrete = None
-            pending_comp_continuous = None
-        else:
-            pending_comp = searchspace.transform(pending_measurements)
-            pending_comp_discrete = pending_comp[candidates_comp.columns]
-            pending_comp_continuous = pending_comp[searchspace.continuous.param_names]
 
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
@@ -160,7 +158,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             subspace_discrete=searchspace.discrete,
             candidates_comp=candidates_comp,
             batch_size=batch_size,
-            pending_comp=pending_comp_discrete,
         )
 
         # Get one random discrete point that will be attached when evaluating the
@@ -183,7 +180,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(
-            searchspace.continuous, batch_size, pending_comp_continuous
+            searchspace.continuous, batch_size
         )
 
         # Glue the solutions together and return them

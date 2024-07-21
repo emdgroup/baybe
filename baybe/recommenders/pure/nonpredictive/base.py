@@ -9,7 +9,7 @@ from attrs import define
 from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.core import SearchSpace, SearchSpaceType
 
 
 @define
@@ -40,9 +40,19 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 f"consider any objectives, meaning that the argument is ignored.",
                 UnusedObjectWarning,
             )
+        if (
+            pending_measurements is not None
+            and searchspace.type is not SearchSpaceType.DISCRETE
+        ):
+            raise UnusedObjectWarning(
+                f"A non-empty set of pending measurements was provided, but the "
+                f"selected recommender {self.__class__.__name__} only utilizes this "
+                f"information for purely discrete spaces."
+            )
         return super().recommend(
             batch_size=batch_size,
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
+            pending_measurements=pending_measurements,
         )
