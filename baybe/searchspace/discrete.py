@@ -239,15 +239,6 @@ class SubspaceDiscrete(SerialMixin):
             return pd.Series(True, index=self.exp_rep.index)
         return self.exp_rep[task_param.name].isin(task_param.active_values)
 
-    @property
-    def n_effective_default_kernel_dimensions(self) -> int:
-        """Return the number of effective dimensions for the default kernel."""
-        # Exclude task parameters as they are always treated with a different kernel
-        n_task_parameters = len(
-            [p for p in self.parameters if isinstance(p, TaskParameter)]
-        )
-        return self.comp_rep.shape[1] - n_task_parameters
-
     @classmethod
     def empty(cls) -> SubspaceDiscrete:
         """Create an empty discrete subspace."""

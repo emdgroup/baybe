@@ -9,6 +9,7 @@ from attrs import define
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
+from baybe.parameters import TaskParameter
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 
@@ -35,7 +36,9 @@ class DefaultKernelFactory(KernelFactory):
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         # See base class.
-        effective_dims = searchspace.n_effective_default_kernel_dimensions
+        effective_dims = train_x.shape[-1] - len(
+            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        )
 
         # Interpolate prior moments linearly between low D and high D regime
         # Values outside the dimension limits will get the border value assigned
@@ -72,7 +75,9 @@ def _default_noise_factory(
     """
     # TODO: Replace this function with a proper likelihood factory
 
-    effective_dims = searchspace.n_effective_default_kernel_dimensions
+    effective_dims = train_x.shape[-1] - len(
+        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+    )
     return (
         GammaPrior(
             np.interp(effective_dims, _DIM_LIMITS, [1.05, 1.5]),

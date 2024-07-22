@@ -487,11 +487,6 @@ class SubspaceContinuous(SerialMixin):
         return full_factorial.sample(n=batch_size).reset_index(drop=True)
 
     @property
-    def n_effective_default_kernel_dimensions(self) -> int:
-        """Return the number of effective dimensions for the default kernel."""
-        return len(self.parameters)
-
-    @property
     def full_factorial(self) -> pd.DataFrame:
         """Get the full factorial of the continuous space."""
         index = pd.MultiIndex.from_product(

@@ -8,6 +8,7 @@ from attrs import define
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
+from baybe.parameters import TaskParameter
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 
@@ -31,7 +32,9 @@ class EDBOKernelFactory(KernelFactory):
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         # See base class.
-        effective_dims = searchspace.n_effective_default_kernel_dimensions
+        effective_dims = train_x.shape[-1] - len(
+            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        )
 
         mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
             effective_dims >= 50
@@ -88,7 +91,9 @@ def _edbo_noise_factory(
         * https://doi.org/10.1038/s41586-021-03213-y
     """
     # TODO: Replace this function with a proper likelihood factory
-    effective_dims = searchspace.n_effective_default_kernel_dimensions
+    effective_dims = train_x.shape[-1] - len(
+        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+    )
 
     uses_descriptors = (
         searchspace.contains_mordred or searchspace.contains_rdkit
