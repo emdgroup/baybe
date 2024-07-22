@@ -41,6 +41,7 @@ class DefaultKernelFactory(KernelFactory):
         )
 
         # Interpolate prior moments linearly between low D and high D regime
+        # The high D regime itself is the average of the EDBO OHE and Mordred regime
         # Values outside the dimension limits will get the border value assigned
         lengthscale_prior = GammaPrior(
             np.interp(effective_dims, _DIM_LIMITS, [1.2, 2.5]),
@@ -75,6 +76,9 @@ def _default_noise_factory(
     """
     # TODO: Replace this function with a proper likelihood factory
 
+    # Interpolate prior moments linearly between low D and high D regime
+    # The high D regime itself is the average of the EDBO OHE and Mordred regime
+    # Values outside the dimension limits will get the border value assigned
     effective_dims = train_x.shape[-1] - len(
         [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
     )
