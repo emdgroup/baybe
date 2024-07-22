@@ -63,7 +63,7 @@ class NGBoostSurrogate(GaussianSurrogate):
         return "passthrough"
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         # See base class.
 
         import torch

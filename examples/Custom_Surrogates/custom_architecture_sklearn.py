@@ -75,7 +75,7 @@ class StackingRegressorSurrogate:
     def __init__(self):
         self.model: StackingRegressor | None = None
 
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         """See :class:`baybe.surrogates.Surrogate`."""
         return self.model.predict(candidates)
 

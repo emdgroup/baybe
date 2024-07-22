@@ -45,7 +45,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
     _fit_original = cls._fit
     _posterior_original = cls._posterior
 
-    def _posterior_new(self, candidates: Tensor) -> Posterior:
+    def _posterior_new(self, candidates: Tensor, /) -> Posterior:
         """Use fallback model if it exists, otherwise call original posterior."""
         # Alternative model fallback
         if constant_target_model := _constant_target_model_store.get(id(self), None):

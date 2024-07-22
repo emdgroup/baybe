@@ -7,6 +7,7 @@ surrogates can be trained and attempts to do so for each new DOE iteration.
 
 It is planned to solve this issue in the future.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -69,7 +70,7 @@ def register_custom_architecture(
             def _fit(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
                 return self._model._fit(train_x, train_y, context)
 
-            def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+            def _posterior(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
                 return self._model._posterior(candidates)
 
             def __get_attribute__(self, attr):
@@ -147,7 +148,7 @@ class CustomONNXSurrogate(GaussianSurrogate):
             raise ValueError("Invalid ONNX string") from exc
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch

@@ -33,7 +33,7 @@ class MeanPredictionSurrogate(GaussianSurrogate):
     """The estimated posterior mean value of the training targets."""
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         # See base class.
 
         import torch

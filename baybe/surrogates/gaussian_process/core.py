@@ -126,7 +126,7 @@ class GaussianProcessSurrogate(Surrogate):
         # See base class.
         return _ModelContext(searchspace=searchspace)
 
-    def _posterior(self, candidates: Tensor) -> Posterior:
+    def _posterior(self, candidates: Tensor, /) -> Posterior:
         # See base class.
         return self._model.posterior(candidates)
 

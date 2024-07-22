@@ -115,7 +115,7 @@ class NeuralNetDropoutSurrogate:
     def __init__(self):
         self.model: nn.Module | None = None
 
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _posterior(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         """See :class:`baybe.surrogates.Surrogate`."""
         self.model = self.model.train()  # keep dropout
         # Convert input from double to float

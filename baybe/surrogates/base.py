@@ -161,19 +161,19 @@ class Surrogate(ABC, SerialMixin):
 
         return scaler
 
-    def transform_inputs(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform_inputs(self, df: pd.DataFrame, /) -> pd.DataFrame:
         """Transform an experimental parameter dataframe."""
         if self._input_transform is None:
             raise ModelNotTrainedError("The model must be trained first.")
-        return self._input_transform(data)
+        return self._input_transform(df)
 
-    def transform_targets(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform_targets(self, df: pd.DataFrame, /) -> pd.DataFrame:
         """Transform an experimental measurement dataframe."""
         if self._target_transform is None:
             raise ModelNotTrainedError("The model must be trained first.")
-        return self._target_transform(data)
+        return self._target_transform(df)
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame, /) -> Posterior:
         """Evaluate the surrogate model at the given candidate points."""
         p = self._posterior(to_tensor(self.transform_inputs(candidates)))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
@@ -181,7 +181,7 @@ class Surrogate(ABC, SerialMixin):
         return p
 
     @abstractmethod
-    def _posterior(self, candidates: Tensor) -> Posterior:
+    def _posterior(self, candidates: Tensor, /) -> Posterior:
         """Perform the actual posterior evaluation logic."""
 
     @staticmethod
@@ -274,7 +274,7 @@ class Surrogate(ABC, SerialMixin):
 class GaussianSurrogate(Surrogate, ABC):
     """A surrogate model providing Gaussian posterior estimates."""
 
-    def _posterior(self, candidates: Tensor) -> GPyTorchPosterior:
+    def _posterior(self, candidates: Tensor, /) -> GPyTorchPosterior:
         # See base class.
 
         import torch
@@ -289,7 +289,7 @@ class GaussianSurrogate(Surrogate, ABC):
         return GPyTorchPosterior(mvn)
 
     @abstractmethod
-    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         """Estimate first and second moments of the Gaussian posterior.
 
         The second moment may either be a 1-D tensor of marginal variances for the
