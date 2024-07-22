@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import pandas as pd
@@ -33,6 +34,7 @@ from baybe.utils.scaling import ScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import GPyTorchPosterior, Posterior
     from sklearn.compose import ColumnTransformer
     from torch import Tensor
@@ -48,6 +50,16 @@ The use of latin-1 ensures there are no loss from the conversion of
 bytes to string and back, since the specification is a bijection between
 0-255 and the character set.
 """
+
+
+class _NoTransform(Enum):
+    """Sentinel class."""
+
+    IDENTITY_TRANSFORM = auto()
+
+
+_IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
+"""Sentinel to indicate the absence of a transform where `None` is ambiguous."""
 
 
 @define
@@ -80,6 +92,15 @@ class Surrogate(ABC, SerialMixin):
     representation to a corresponding dataframe containing their computational
     representation. Only available after the surrogate has been fitted."""
 
+    # TODO: type should be `Standardize | _NoTransform`` but is currently
+    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    _output_scaler = field(init=False, default=None, eq=False)
+    """Optional callable for scaling target values.
+
+    Scales a tensor containing target measurements in computational representation
+    to make them ready for processing by the surrogate. Only available after the
+    surrogate has been fitted."""
+
     def to_botorch(self) -> Model:
         """Create the botorch-ready representation of the model."""
         from baybe.surrogates._adapter import AdapterModel
@@ -93,10 +114,18 @@ class Surrogate(ABC, SerialMixin):
         """Return the scaler to be used for the given parameter."""
         return MinMaxScaler()
 
+    @staticmethod
+    def _make_target_scaler() -> OutcomeTransform | None:
+        """Return the scaler to be used for target scaling."""
+        from botorch.models.transforms.outcome import Standardize
+
+        # TODO: Multi-target extension
+        return Standardize(1)
+
     def _make_input_scaler(
         self, searchspace: SearchSpace, measurements: pd.DataFrame
     ) -> ColumnTransformer:
-        """Make a scaler to be used for transforming computational dataframes."""
+        """Make the input scaler for transforming computational dataframes."""
         from sklearn.compose import make_column_transformer
 
         # Create the composite scaler from the parameter-wise scaler objects
@@ -115,6 +144,23 @@ class Surrogate(ABC, SerialMixin):
 
         return scaler
 
+    def _make_output_scaler(
+        self, objective: Objective, measurements: pd.DataFrame
+    ) -> OutcomeTransform | _NoTransform:
+        """Make the output scaler for transforming computational dataframes."""
+        import torch
+
+        scaler = self._make_target_scaler()
+        if scaler is None:
+            return _IDENTITY_TRANSFORM
+
+        # TODO: Decide whether scaler is to be fit to target bounds and/or
+        #   extreme points in the given measurement data
+        scaler(torch.from_numpy(objective.transform(measurements).values))
+        scaler.eval()
+
+        return scaler
+
     def transform_inputs(self, data: pd.DataFrame) -> pd.DataFrame:
         """Transform an experimental parameter dataframe."""
         if self._input_transform is None:
@@ -129,7 +175,10 @@ class Surrogate(ABC, SerialMixin):
 
     def posterior(self, candidates: pd.DataFrame) -> Posterior:
         """Evaluate the surrogate model at the given candidate points."""
-        return self._posterior(to_tensor(self.transform_inputs(candidates)))
+        p = self._posterior(to_tensor(self.transform_inputs(candidates)))
+        if self._output_scaler is not _IDENTITY_TRANSFORM:
+            p = self._output_scaler.untransform_posterior(p)
+        return p
 
     @abstractmethod
     def _posterior(self, candidates: Tensor) -> Posterior:
@@ -179,7 +228,10 @@ class Surrogate(ABC, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
+        # Create scaler objects
         input_scaler = self._make_input_scaler(searchspace, measurements)
+        output_scaler = self._make_output_scaler(objective, measurements)
+        self._output_scaler = output_scaler
 
         def transform_inputs(df: pd.DataFrame, /) -> pd.DataFrame:
             """Fitted input transformation pipeline."""
@@ -188,9 +240,21 @@ class Surrogate(ABC, SerialMixin):
                 out, index=df.index, columns=input_scaler.get_feature_names_out()
             )
 
+        def transform_outputs(df: pd.DataFrame, /) -> pd.DataFrame:
+            """Fitted output transformation pipeline."""
+            import torch
+
+            dft = objective.transform(df)
+
+            if self._output_scaler is _IDENTITY_TRANSFORM:
+                return dft
+
+            out = output_scaler(torch.from_numpy(dft.values))[0]
+            return pd.DataFrame(out.numpy(), index=df.index, columns=dft.columns)
+
         # Store context-specific transformations
         self._input_transform = transform_inputs
-        self._target_transform = lambda x: objective.transform(x)
+        self._target_transform = transform_outputs
 
         # Transform and fit
         train_x, train_y = to_tensor(
