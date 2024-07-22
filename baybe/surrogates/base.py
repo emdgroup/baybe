@@ -122,9 +122,7 @@ class Surrogate(ABC, SerialMixin):
         # TODO: Multi-target extension
         return Standardize(1)
 
-    def _make_input_scaler(
-        self, searchspace: SearchSpace, measurements: pd.DataFrame
-    ) -> ColumnTransformer:
+    def _make_input_scaler(self, searchspace: SearchSpace) -> ColumnTransformer:
         """Make the input scaler for transforming computational dataframes."""
         from sklearn.compose import make_column_transformer
 
@@ -138,8 +136,6 @@ class Surrogate(ABC, SerialMixin):
         ]
         scaler = make_column_transformer(*transformers, verbose_feature_names_out=False)
 
-        # TODO: Decide whether scaler is to be fit to parameter bounds and/or
-        #   extreme points in the given measurement data
         scaler.fit(searchspace.comp_rep_bounds)
 
         return scaler
@@ -154,8 +150,7 @@ class Surrogate(ABC, SerialMixin):
         if scaler is None:
             return _IDENTITY_TRANSFORM
 
-        # TODO: Decide whether scaler is to be fit to target bounds and/or
-        #   extreme points in the given measurement data
+        # TODO: Consider taking into account target boundaries when available
         scaler(torch.from_numpy(objective.transform(measurements).values))
         scaler.eval()
 
@@ -229,7 +224,7 @@ class Surrogate(ABC, SerialMixin):
             )
 
         # Create scaler objects
-        input_scaler = self._make_input_scaler(searchspace, measurements)
+        input_scaler = self._make_input_scaler(searchspace)
         output_scaler = self._make_output_scaler(objective, measurements)
         self._output_scaler = output_scaler
 
