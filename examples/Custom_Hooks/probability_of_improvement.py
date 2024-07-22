@@ -102,10 +102,12 @@ def plot_poi(
     """Plot the probability of improvement in 3D."""
     cmap = plt.get_cmap("viridis")
 
+    pi_max = max([torch.max(p).item() for p in poi_list])
+
     # Plot each PI tensor separately
     for i, p in enumerate(poi_list):
         poi_np = p.detach().numpy() if p.requires_grad else p.numpy()
-        x = np.unique(poi_np)
+        x = np.linspace(0, pi_max, 500)
         kde = gaussian_kde(poi_np)
         y = kde(x)
         z = np.full_like(y, i)
@@ -123,11 +125,10 @@ def plot_poi(
     ax.view_init(elev=20, azim=30)
 
     # Reduce space between the iterations
-    ax.set_box_aspect([0.5, 1, 1])
+    ax.set_box_aspect([0.7, 1, 1])
 
     # Set the y-axis limit based on the maximal PI
-    y_max = max([p.max().item() for p in poi_list])
-    ax.set_ylim(0, y_max)
+    ax.set_ylim(0, pi_max)
 
     # Set x-axis ticks to have the correct iteration number
     ax.set_xticks(np.arange(0, len(poi_list), 1))
