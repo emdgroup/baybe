@@ -52,7 +52,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
         train_x = surrogate.transform_inputs(measurements)
-        train_y = surrogate.transform_targets(measurements)
+        train_y = surrogate.transform_outputs(measurements)
 
         signature_params = signature(acqf_cls).parameters
         additional_params = {}

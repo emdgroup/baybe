@@ -83,10 +83,10 @@ class Surrogate(ABC, SerialMixin):
     representation to a corresponding dataframe containing their computational
     representation. Only available after the surrogate has been fitted."""
 
-    _target_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
+    _output_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
         init=False, default=None, eq=False
     )
-    """Callable preparing surrogate targets for training.
+    """Callable preparing surrogate outputs for training.
 
     Transforms a dataframe containing target measurements in experimental
     representation to a corresponding dataframe containing their computational
@@ -95,7 +95,7 @@ class Surrogate(ABC, SerialMixin):
     # TODO: type should be `Standardize | _NoTransform`` but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _output_scaler = field(init=False, default=None, eq=False)
-    """Optional callable for scaling target values.
+    """Optional callable for scaling output values.
 
     Scales a tensor containing target measurements in computational representation
     to make them ready for processing by the surrogate. Only available after the
@@ -167,11 +167,11 @@ class Surrogate(ABC, SerialMixin):
             raise ModelNotTrainedError("The model must be trained first.")
         return self._input_transform(df)
 
-    def transform_targets(self, df: pd.DataFrame, /) -> pd.DataFrame:
+    def transform_outputs(self, df: pd.DataFrame, /) -> pd.DataFrame:
         """Transform an experimental measurement dataframe."""
-        if self._target_transform is None:
+        if self._output_transform is None:
             raise ModelNotTrainedError("The model must be trained first.")
-        return self._target_transform(df)
+        return self._output_transform(df)
 
     def posterior(self, candidates: pd.DataFrame, /) -> Posterior:
         """Evaluate the surrogate model at the given candidate points."""
@@ -256,12 +256,12 @@ class Surrogate(ABC, SerialMixin):
 
         # Store context-specific transformations
         self._input_transform = transform_inputs
-        self._target_transform = transform_outputs
+        self._output_transform = transform_outputs
 
         # Transform and fit
         train_x, train_y = to_tensor(
             self.transform_inputs(measurements),
-            self.transform_targets(measurements),
+            self.transform_outputs(measurements),
         )
         self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
