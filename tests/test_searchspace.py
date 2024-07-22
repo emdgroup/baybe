@@ -58,9 +58,9 @@ def test_empty_parameter_bounds():
     parameters = []
     searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
     searchspace_continuous = SubspaceContinuous(parameters=parameters)
-    expected = np.empty((2, 0))
-    assert np.array_equal(searchspace_discrete.comp_rep_bounds.values, expected)
-    assert np.array_equal(searchspace_continuous.comp_rep_bounds.values, expected)
+    expected = pd.DataFrame(np.empty((2, 0)), index=["min", "max"])
+    pd.testing.assert_frame_equal(searchspace_discrete.comp_rep_bounds, expected)
+    pd.testing.assert_frame_equal(searchspace_continuous.comp_rep_bounds, expected)
 
 
 def test_discrete_searchspace_creation_from_dataframe():
