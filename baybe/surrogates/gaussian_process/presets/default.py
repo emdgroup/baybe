@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 from attrs import define
 
 from baybe.kernels.basic import MaternKernel
@@ -16,6 +17,9 @@ if TYPE_CHECKING:
 
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
+
+# Boundaries for low and high dimension limits
+_DIM_LIMITS = (8, 75)
 
 
 @define
@@ -33,33 +37,18 @@ class DefaultKernelFactory(KernelFactory):
         # See base class.
         effective_dims = searchspace.n_effective_default_kernel_dimensions
 
-        # Fix dimensionality limits
-        LOW_D_LIM, HIGH_D_LIM = 8, 100
-
-        # Apply prior logic
-        if effective_dims < LOW_D_LIM:
-            # Low D priors
-            lengthscale_prior = GammaPrior(1.2, 1.1)
-            lengthscale_initial_value = 0.2
-            outputscale_prior = GammaPrior(5.0, 0.5)
-            outputscale_initial_value = 8.0
-        elif effective_dims > HIGH_D_LIM:
-            # High D priors
-            lengthscale_prior = GammaPrior(2.5, 0.55)
-            lengthscale_initial_value = 6.0
-            outputscale_prior = GammaPrior(3.5, 0.15)
-            outputscale_initial_value = 15.0
-        else:
-            # Interpolate prior moments linearly between low D and high D regime
-            interp_factor = (effective_dims - LOW_D_LIM) / (HIGH_D_LIM - LOW_D_LIM)
-
-            def _interp(a, b):
-                return a + (b - a) * interp_factor
-
-            lengthscale_prior = GammaPrior(_interp(1.2, 2.5), _interp(1.1, 0.55))
-            lengthscale_initial_value = _interp(0.2, 6.0)
-            outputscale_prior = GammaPrior(_interp(5.0, 3.5), _interp(0.5, 0.15))
-            outputscale_initial_value = _interp(8.0, 15.0)
+        # Interpolate prior moments linearly between low D and high D regime
+        # Values outside the dimension limits will get the border value assigned
+        lengthscale_prior = GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [1.2, 2.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [1.1, 0.55]),
+        )
+        lengthscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [0.2, 6.0])
+        outputscale_prior = GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [5.0, 3.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.15]),
+        )
+        outputscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [8.0, 15.0])
 
         return ScaleKernel(
             MaternKernel(
@@ -82,23 +71,12 @@ def _default_noise_factory(
     and interpolates the prior moments linearly between them.
     """
     # TODO: Replace this function with a proper likelihood factory
+
     effective_dims = searchspace.n_effective_default_kernel_dimensions
-
-    # Fix dimensionality limits
-    LOW_D_LIM, HIGH_D_LIM = 8, 100
-
-    # Apply prior logic
-    if effective_dims < LOW_D_LIM:
-        # Low D prior
-        return [GammaPrior(1.05, 0.5), 0.1]
-    elif effective_dims > HIGH_D_LIM:
-        # High D prior
-        return [GammaPrior(1.5, 0.1), 5.0]
-    else:
-        # Interpolate prior moments linearly between low D and high D regime
-        interp_factor = (effective_dims - LOW_D_LIM) / (HIGH_D_LIM - LOW_D_LIM)
-
-        def _interp(a, b):
-            return a + (b - a) * interp_factor
-
-        return [GammaPrior(_interp(1.05, 1.5), _interp(0.5, 0.1)), _interp(0.1, 5.0)]
+    return (
+        GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [1.05, 1.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.1]),
+        ),
+        np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]),
+    )
