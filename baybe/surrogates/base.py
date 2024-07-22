@@ -80,8 +80,8 @@ class Surrogate(ABC, SerialMixin):
     """Callable preparing surrogate inputs for training/prediction.
 
     Transforms a dataframe containing parameter configurations in experimental
-    representation to a corresponding dataframe containing their computational
-    representation. Only available after the surrogate has been fitted."""
+    representation to a corresponding dataframe containing their **scaled**
+    computational representation. Only available after the surrogate has been fitted."""
 
     _output_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
         init=False, default=None, eq=False
@@ -89,8 +89,8 @@ class Surrogate(ABC, SerialMixin):
     """Callable preparing surrogate outputs for training.
 
     Transforms a dataframe containing target measurements in experimental
-    representation to a corresponding dataframe containing their computational
-    representation. Only available after the surrogate has been fitted."""
+    representation to a corresponding dataframe containing their **scaled**
+    computational representation. Only available after the surrogate has been fitted."""
 
     # TODO: type should be `Standardize | _NoTransform`` but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531

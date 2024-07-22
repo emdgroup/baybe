@@ -16,7 +16,7 @@ class ScalerProtocol(Protocol):
     """
 
     def fit(self, df: pd.DataFrame, /) -> None:
-        """Fit the scaler to a given data set."""
+        """Fit the scaler to a given dataframe."""
 
     def transform(self, df: pd.DataFrame, /) -> pd.DataFrame:
-        """Transform a data using the fitted scaling logic."""
+        """Transform a dataframe using the fitted scaling logic."""
