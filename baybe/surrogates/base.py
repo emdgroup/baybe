@@ -235,7 +235,9 @@ class Surrogate(ABC, SerialMixin):
 
         def transform_inputs(df: pd.DataFrame, /) -> pd.DataFrame:
             """Fitted input transformation pipeline."""
-            out = input_scaler.transform(searchspace.transform(df, allow_missing=True))
+            out = input_scaler.transform(
+                searchspace.transform(df, allow_extra=True, allow_missing=True)
+            )
             return pd.DataFrame(
                 out, index=df.index, columns=input_scaler.get_feature_names_out()
             )
