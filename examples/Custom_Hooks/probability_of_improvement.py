@@ -58,7 +58,7 @@ POINTS_PER_DIM = 4
 
 # We start by initializing the global `poi_list` where we will store the PI from each recommend iteration:
 
-poi_list: list[torch.Tensor] = []
+pi_list: list[torch.Tensor] = []
 
 
 # Then, we define the hook that calculates the PI based on the given recommender, search space and measurements:
@@ -85,16 +85,16 @@ def check_probability_of_improvement(
     acqf = ProbabilityOfImprovement()
     botorch_acqf = acqf.to_botorch(self.surrogate_model, searchspace, train_x, train_y)
     comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
-    poi = botorch_acqf(comp_rep_tensor)
-    poi = poi + 1e-10 * torch.randn(poi.shape)
-    poi_list.append(poi)
+    pi = botorch_acqf(comp_rep_tensor)
+    pi = pi + 1e-10 * torch.randn(pi.shape)
+    pi_list.append(pi)
 
 
 # Additionally, we define a function that plots the `poi_list` after all recommend  iterations:
 
 
-def plot_poi(
-    poi_list: list[torch.Tensor],
+def plot_pi(
+    pi_list: list[torch.Tensor],
     ax: Axes,
     base_name: str,
     path: Path = Path("."),
@@ -102,20 +102,20 @@ def plot_poi(
     """Plot the probability of improvement in 3D."""
     cmap = plt.get_cmap("viridis")
 
-    pi_max = max([torch.max(p).item() for p in poi_list])
+    pi_max = max([torch.max(p).item() for p in pi_list])
 
     # Plot each PI tensor separately
-    for i, p in enumerate(poi_list):
-        poi_np = p.detach().numpy() if p.requires_grad else p.numpy()
+    for i, p in enumerate(pi_list):
+        pi_np = p.detach().numpy() if p.requires_grad else p.numpy()
         x = np.linspace(0, pi_max, 500)
-        kde = gaussian_kde(poi_np)
+        kde = gaussian_kde(pi_np)
         y = kde(x)
         z = np.full_like(y, i)
 
         # Fill under the curve
         verts = []
         verts.append([(x[i], 0.0), *zip(x, y), (x[-1], 0.0)])
-        color = cmap(float(i) / len(poi_list))
+        color = cmap(float(i) / len(pi_list))
         poly = PolyCollection(verts, color=color, alpha=0.9)
         ax.add_collection3d(poly, zs=i, zdir="x")
 
@@ -131,8 +131,8 @@ def plot_poi(
     ax.set_ylim(0, pi_max)
 
     # Set x-axis ticks to have the correct iteration number
-    ax.set_xticks(np.arange(0, len(poi_list), 1))
-    ax.set_xticklabels([i for i in range(1, len(poi_list) + 1)])
+    ax.set_xticks(np.arange(0, len(pi_list), 1))
+    ax.set_xticklabels([i for i in range(1, len(pi_list) + 1)])
 
     ax.set_ylabel("PI")
     ax.set_xlabel("Iteration")
@@ -216,4 +216,4 @@ for i in range(N_DOE_ITERATIONS):
 
 fig = plt.figure()
 ax = fig.add_subplot(projection="3d")
-plot_poi(poi_list, ax=ax, base_name="POI_Plot.svg")
+plot_pi(pi_list, ax=ax, base_name="PI_Plot.svg")
