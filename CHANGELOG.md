@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Interval` class now supports degenerate intervals containing only one element
 - `add_fake_results` now directly processes `Target` objects instead of a `Campaign`
 - `path` argument in plotting utility is now optional and defaults to `Path(".")`
+- `UnusedObjectWarning` by non-predictive recommenders is now ignored during simulations
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
