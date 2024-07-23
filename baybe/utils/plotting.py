@@ -10,13 +10,14 @@ from typing import Any
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def create_example_plots(
-    ax: Axes,
+    ax: Axes | Axes3D,
     base_name: str,
     path: Path = Path("."),
-) -> None:
+) -> Figure | Any | None:
     """Create plots from an Axes object and save them as a svg file.
 
     If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
@@ -31,6 +32,9 @@ def create_example_plots(
         ax: The Axes object containing the figure that should be plotted.
         base_name: The base name that is used for naming the output files.
         path: Optional path to the directory in which the plots should be saved.
+
+    Returns:
+        The ``Figure`` containing ``ax``
     """
     # Check whether we immediately return due to just running a SMOKE_TEST
     if "SMOKE_TEST" in os.environ:
@@ -96,6 +100,9 @@ def create_example_plots(
         ax.xaxis.label.set_fontsize(fontsize)
         ax.yaxis.label.set_color(color)
         ax.yaxis.label.set_fontsize(fontsize)
+        if isinstance(ax, Axes3D):
+            ax.zaxis.label.set_color(color)
+            ax.zaxis.label.set_fontsize(fontsize)
 
         # Adjust the size of the ax
         # mypy thinks that ax.figure might become None, hence the explicit ignore
@@ -105,18 +112,22 @@ def create_example_plots(
             warnings.warn("Could not adjust size of plot due to it not being a Figure.")
 
         # Adjust the labels
-        for label in ax.get_xticklabels() + ax.get_yticklabels():
+        ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
+        if isinstance(ax, Axes3D):
+            ticklabels += ax.get_zticklabels()
+        for label in ticklabels:
             label.set_color(color)
             label.set_fontsize(fontsize)
 
-        # Adjust the legend
+        # Adjust the legend if it exists
         legend = ax.get_legend()
-        legend.get_frame().set_alpha(framealpha)
-        legend.get_title().set_color(color)
-        legend.get_title().set_fontsize(fontsize)
-        for text in legend.get_texts():
-            text.set_fontsize(fontsize)
-            text.set_color(color)
+        if legend:
+            legend.get_frame().set_alpha(framealpha)
+            legend.get_title().set_color(color)
+            legend.get_title().set_fontsize(fontsize)
+            for text in legend.get_texts():
+                text.set_fontsize(fontsize)
+                text.set_color(color)
 
         output_path = Path(path, f"{base_name}_{theme_name}.svg")
         # mypy thinks that ax.figure might become None, hence the explicit ignore
@@ -128,4 +139,5 @@ def create_example_plots(
             )
         else:
             warnings.warn("Plots could not be saved.")
-        plt.close()
+    plt.close()
+    return ax.get_figure()
