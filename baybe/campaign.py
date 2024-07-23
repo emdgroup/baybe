@@ -309,36 +309,35 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def get_feature_importance(self) -> pd.DataFrame:
+    def get_shap_feature_importance(self) -> pd.DataFrame:
         """Calculate and return the SHAP values for the conducted experiments."""
         import shap
         import torch
 
-        model = self.recommender.recommender.surrogate_model.to_botorch()
-        if model is None:
+        surrogate_model = self.recommender.recommender.surrogate_model
+
+        if surrogate_model is None:
             raise ValueError("No surrogate model found.")
+
+        # Wrapper function to predict the mean of the model using a tensor input.
+        # This is needed as the SHAP explainer requires a numpy array as input.
+        def surrogate_model_predict(measurements):
+            data_tensor = torch.from_numpy(measurements).float()
+            mean_predictions, covar = surrogate_model.posterior(data_tensor)
+            return mean_predictions.detach().numpy()
 
         measurements = self.measurements.iloc[:, : len(self.parameters)]
 
-        def model_predict(data):
-            data_tensor = torch.from_numpy(data).float()
-            model = self.recommender.recommender.surrogate_model.to_botorch()
-            model.eval()
-            with torch.no_grad():
-                predictions = model(data_tensor)
-                # Extract mean predictions (assuming Gaussian process model)
-                mean_predictions = predictions.mean.detach().numpy()
-            return mean_predictions
-
-        explainer = shap.KernelExplainer(model_predict, measurements)
+        with torch.no_grad():
+            explainer = shap.KernelExplainer(surrogate_model_predict, measurements)
         shap_values = explainer.shap_values(measurements)
         return shap_values
 
-    def plot_feature_importance(self, max_display=10) -> None:
+    def plot_shap_feature_importance(self, max_display=10) -> None:
         """Plot the SHAP values for the conducted experiments."""
         import shap
 
-        shap_values = self.get_feature_importance()
+        shap_values = self.get_shap_feature_importance()
         measurements = self.measurements.iloc[:, : len(self.parameters)]
         shap.summary_plot(shap_values, measurements, max_display=max_display)
 
