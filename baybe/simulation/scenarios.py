@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from baybe.campaign import Campaign
-from baybe.exceptions import NothingToSimulateError
+from baybe.exceptions import NothingToSimulateError, UnusedObjectWarning
 from baybe.simulation.core import simulate_experiment
 
 if TYPE_CHECKING:
@@ -136,7 +137,15 @@ def simulate_scenarios(
     # Simulate and unpack
     result_variable = "simulation_result"
     batch_simulator = make_xyzpy_callable(result_variable)
-    da_results = batch_simulator.run_combos(combos)[result_variable]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=UnusedObjectWarning,
+            module="baybe.recommenders.pure.nonpredictive.base",
+        )
+        da_results = batch_simulator.run_combos(combos)[result_variable]
+
     df_results = unpack_simulation_results(da_results)
 
     return df_results
