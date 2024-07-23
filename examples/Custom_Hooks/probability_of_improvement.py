@@ -43,6 +43,7 @@ from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.random import set_random_seed
 
 ### Parameters for a full simulation loop
 
@@ -53,6 +54,9 @@ N_DOE_ITERATIONS = 3 if SMOKE_TEST else 7
 BATCH_SIZE = 2
 DIMENSION = 3
 POINTS_PER_DIM = 4
+
+# We define the random seed to avoid having different plots.
+set_random_seed(1282)
 
 ### Setup
 
