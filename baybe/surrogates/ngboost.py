@@ -9,7 +9,7 @@ available in the future. Thus, please have a look in the source code directly.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from attr import define, field
 from ngboost import NGBRegressor
@@ -56,11 +56,11 @@ class NGBoostSurrogate(GaussianSurrogate):
     @staticmethod
     def _make_parameter_scaler(
         parameter: Parameter,
-    ) -> ParameterScalerProtocol | Literal["passthrough"]:
+    ) -> ParameterScalerProtocol | None:
         # See base class.
 
         # Tree-like models do not require any input scaling
-        return "passthrough"
+        return
 
     @batchify
     def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:

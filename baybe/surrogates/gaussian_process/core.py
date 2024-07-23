@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
 from attrs.validators import instance_of
@@ -115,12 +115,12 @@ class GaussianProcessSurrogate(Surrogate):
     @staticmethod
     def _make_parameter_scaler(
         parameter: Parameter,
-    ) -> ParameterScalerProtocol | Literal["passthrough"]:
+    ) -> ParameterScalerProtocol | None:
         # See base class.
 
         # Task parameters are handled separately through an index kernel
         if isinstance(parameter, TaskParameter):
-            return "passthrough"
+            return
 
         return MinMaxScaler()
 

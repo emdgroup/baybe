@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -110,7 +110,7 @@ class Surrogate(ABC, SerialMixin):
     @staticmethod
     def _make_parameter_scaler(
         parameter: Parameter,
-    ) -> ParameterScalerProtocol | Literal["passthrough"]:
+    ) -> ParameterScalerProtocol | None:
         """Return the scaler to be used for the given parameter."""
         return MinMaxScaler()
 
@@ -129,7 +129,7 @@ class Surrogate(ABC, SerialMixin):
         # Create the composite scaler from the parameter-wise scaler objects
         transformers = [
             (
-                self._make_parameter_scaler(p),
+                "passthrough" if (s := self._make_parameter_scaler(p)) is None else s,
                 [c for c in p.comp_rep_columns if c in searchspace.comp_rep_columns],
             )
             for p in searchspace.parameters
