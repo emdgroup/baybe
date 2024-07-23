@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Activated `pre-commit.ci` with auto-update
 - User guide for active learning
 - Example for monitoring the probability of improvement using `register_hooks`
+- Example for dynamic campaign stopping based on custom hooks
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
