@@ -309,6 +309,39 @@ class Campaign(SerialMixin):
 
         return rec
 
+    def get_feature_importance(self) -> pd.DataFrame:
+        """Calculate and return the SHAP values for the conducted experiments."""
+        import shap
+        import torch
+
+        model = self.recommender.recommender.surrogate_model.to_botorch()
+        if model is None:
+            raise ValueError("No surrogate model found.")
+
+        measurements = self.measurements.iloc[:, : len(self.parameters)]
+
+        def model_predict(data):
+            data_tensor = torch.from_numpy(data).float()
+            model = self.recommender.recommender.surrogate_model.to_botorch()
+            model.eval()
+            with torch.no_grad():
+                predictions = model(data_tensor)
+                # Extract mean predictions (assuming Gaussian process model)
+                mean_predictions = predictions.mean.detach().numpy()
+            return mean_predictions
+
+        explainer = shap.KernelExplainer(model_predict, measurements)
+        shap_values = explainer.shap_values(measurements)
+        return shap_values
+
+    def plot_feature_importance(self, max_display=10) -> None:
+        """Plot the SHAP values for the conducted experiments."""
+        import shap
+
+        shap_values = self.get_feature_importance()
+        measurements = self.measurements.iloc[:, : len(self.parameters)]
+        shap.summary_plot(shap_values, measurements, max_display=max_display)
+
 
 def _add_version(dict_: dict) -> dict:
     """Add the package version to the given dictionary."""
