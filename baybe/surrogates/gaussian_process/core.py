@@ -25,7 +25,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
-from baybe.utils.scaling import ScalerProtocol
+from baybe.utils.scaling import ParameterScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -115,7 +115,7 @@ class GaussianProcessSurrogate(Surrogate):
     @staticmethod
     def _make_parameter_scaler(
         parameter: Parameter,
-    ) -> ScalerProtocol | Literal["passthrough"]:
+    ) -> ParameterScalerProtocol | Literal["passthrough"]:
         # See base class.
 
         # Task parameters are handled separately through an index kernel

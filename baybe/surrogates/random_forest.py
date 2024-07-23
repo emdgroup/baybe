@@ -19,7 +19,7 @@ from baybe.parameters.base import Parameter
 from baybe.surrogates.base import GaussianSurrogate
 from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
-from baybe.utils.scaling import ScalerProtocol
+from baybe.utils.scaling import ParameterScalerProtocol
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -51,7 +51,7 @@ class RandomForestSurrogate(GaussianSurrogate):
     @staticmethod
     def _make_parameter_scaler(
         parameter: Parameter,
-    ) -> ScalerProtocol | Literal["passthrough"]:
+    ) -> ParameterScalerProtocol | Literal["passthrough"]:
         # See base class.
 
         # Tree-like models do not require any input scaling

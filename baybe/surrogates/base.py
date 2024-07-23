@@ -30,7 +30,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.scaling import ScalerProtocol
+from baybe.utils.scaling import ParameterScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -110,7 +110,7 @@ class Surrogate(ABC, SerialMixin):
     @staticmethod
     def _make_parameter_scaler(
         parameter: Parameter,
-    ) -> ScalerProtocol | Literal["passthrough"]:
+    ) -> ParameterScalerProtocol | Literal["passthrough"]:
         """Return the scaler to be used for the given parameter."""
         return MinMaxScaler()
 
