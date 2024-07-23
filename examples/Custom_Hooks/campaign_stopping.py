@@ -59,8 +59,9 @@ set_random_seed(1337)
 ### Lookup Functionality and Parameter Data
 
 # This loads the dataframe used for looking up measurements in the simulation.
+
 try:
-    lookup = pd.read_excel("./lookup.xlsx")
+    lookup = pd.read_excel("./../Backtesting/lookup.xlsx")
 except FileNotFoundError:
     try:
         lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
