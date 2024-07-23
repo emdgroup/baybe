@@ -1,13 +1,9 @@
 ## Example for calculating and plotting the Probability of Improvement
 
-# This example demonstrates how to use the
-# {func}`register_hooks <baybe.utils.basic.register_hooks>` utility
-# to calculate and analyse the probability of improvement (PI) evolving during iterations:
-# * We define a hook that is compatible with the general
-#   {meth}`RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>`
-#   interface,
-# * attach it to a recommender,
-# * and watch it take action.
+# This example demonstrates how the {func}`register_hooks <baybe.utils.basic.register_hooks>` utility could be used to extract the probability of improvement (PI) from a running campaign:
+# * We define a hook that is compatible with the {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.BotorchRecommender.recommend>` interface and let's us extract the PI achieved after each experimental iteration,
+# * attach the hook to the recommender driving our campaign,
+# * and plot the evolving PI values after campaign completion.
 
 
 ### Imports
@@ -47,42 +43,39 @@ from baybe.utils.random import set_random_seed
 
 ### Parameters for a full simulation loop
 
-# For the full simulation, we need to define some additional parameters. These are the number of experiments to be conducted per run, the batch size, the dimension and the points per dimension.
+# For the full simulation, we need to define some parameters.
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 N_DOE_ITERATIONS = 3 if SMOKE_TEST else 7
 BATCH_SIZE = 2
 DIMENSION = 3
-POINTS_PER_DIM = 4
+POINTS_PER_DIM = 2 if SMOKE_TEST else 4
 
-# We define the random seed to avoid having different plots.
+# We also define the random seed to avoid having different plots.
+
 set_random_seed(1282)
 
 ### Setup
 
-# We start by initializing the global `poi_list` where we will store the PI from each recommend iteration:
+# We initialize a container for storing the PI from each recommend iteration:
 
 pi_list: list[torch.Tensor] = []
 
+# Then, we define the hook that calculates the PI from each iteration.
+# To attach the hook we need to match its signature to that of {meth}RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>.
 
-# Then, we define the hook that calculates the PI based on the given recommender, search space and measurements:
 
-
-def check_probability_of_improvement(
+def extract_pi(
     self: BotorchRecommender,
     searchspace: SearchSpace,
     objective: Objective | None = None,
     measurements: pd.DataFrame | None = None,
-) -> list[torch.Tensor]:
-    """Calculate and store the probability of improvement in poi_list.
-
-    For reasons of numerical stability, the function adds some noise to the calculated
-    probabilities.
-    """
-    if searchspace.type != SearchSpaceType.DISCRETE:
+) -> None:
+    """Calculate and store the probability of improvement."""
+    if searchspace.type is not SearchSpaceType.DISCRETE:
         raise TypeError(
-            f"{searchspace.type} search spaces are not supported yet. "
-            f"Currently only DISCRETE search spaces are accepted."
+            f"Search spaces of type '{searchspace.type}' are not supported. "
+            f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are accepted."
         )
     train_x = searchspace.transform(measurements)
     train_y = objective.transform(measurements)
@@ -90,11 +83,10 @@ def check_probability_of_improvement(
     botorch_acqf = acqf.to_botorch(self.surrogate_model, searchspace, train_x, train_y)
     comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
     pi = botorch_acqf(comp_rep_tensor)
-    pi = pi + 1e-10 * torch.randn(pi.shape)
     pi_list.append(pi)
 
 
-# Additionally, we define a function that plots the `poi_list` after all recommend  iterations:
+# Additionally, we define a function that plots the PI after all recommend iterations:
 
 
 def plot_pi(
@@ -105,7 +97,6 @@ def plot_pi(
 ) -> Figure:
     """Plot the probability of improvement in 3D."""
     cmap = plt.get_cmap("viridis")
-
     pi_max = max([torch.max(p).item() for p in pi_list])
 
     # Plot each PI tensor separately
@@ -141,10 +132,8 @@ def plot_pi(
     ax.set_ylabel("PI")
     ax.set_xlabel("Iteration")
     ax.set_zlabel("Density")
-    ax.set_title("Investigate the PI")
 
     output_path = Path(path, base_name)
-    # mypy thinks that ax.figure might become None, hence the explicit ignore
     if isinstance(ax.figure, Figure):
         ax.figure.savefig(
             output_path,
@@ -172,12 +161,12 @@ my_recommender = TwoPhaseMetaRecommender(
 my_recommender.recommender.recommend = MethodType(
     register_hooks(
         BotorchRecommender.recommend,
-        post_hooks=[check_probability_of_improvement],
+        post_hooks=[extract_pi],
     ),
     my_recommender.recommender,
 )
 
-# In this example we use `MethodType` to bind the `RandomRecommender.recommend`
+# In this example we use `MethodType` to bind the `BotorchRecommender.recommend`
 # **function** with our hook.
 # For more information, we refer to the [`basics example`](./basics.md).
 
@@ -187,9 +176,7 @@ my_recommender.recommender.recommend = MethodType(
 # We setup the other objects to trigger the hook:
 
 test_function = Hartmann(dim=DIMENSION)
-
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=test_function)
-
 BOUNDS = test_function.bounds
 
 discrete_params = [
@@ -208,7 +195,7 @@ campaign = Campaign(
     objective=objective,
 )
 
-# Now we perform 7 recommendations:
+# Now we perform a couple of recommendations:
 
 for i in range(N_DOE_ITERATIONS):
     recommendation = campaign.recommend(BATCH_SIZE)
@@ -216,7 +203,7 @@ for i in range(N_DOE_ITERATIONS):
     recommendation["Target"] = target_values
     campaign.add_measurements(recommendation)
 
-# Lastly, we plot the PI from the previous iterations to be able to analyse them:
+# Lastly, we plot the PI from the previous iterations:
 
 fig = plt.figure()
 ax = fig.add_subplot(projection="3d")
