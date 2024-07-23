@@ -9,8 +9,6 @@
 ### Imports
 
 import os
-import warnings
-from pathlib import Path
 from types import MethodType
 
 import matplotlib.pyplot as plt
@@ -18,9 +16,8 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.test_functions.synthetic import Hartmann
-from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
-from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import gaussian_kde
 
 from baybe.acquisition import ProbabilityOfImprovement
@@ -39,6 +36,7 @@ from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
 from baybe.utils.botorch_wrapper import botorch_function_wrapper
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.plotting import create_example_plots
 from baybe.utils.random import set_random_seed
 
 ### Parameters for a full simulation loop
@@ -90,13 +88,12 @@ def extract_pi(
 # Additionally, we define a function that plots the PI after all recommend iterations:
 
 
-def plot_pi(
+def create_pi_plot(
     pi_per_iteration: list[np.ndarray],
-    ax: Axes,
-    base_name: str,
-    path: Path = Path("."),
-) -> Figure:
+) -> Axes3D:
     """Plot the probability of improvement in 3D."""
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
     cmap = plt.get_cmap("viridis")
     pi_max = max([np.max(p) for p in pi_per_iteration])
 
@@ -129,21 +126,10 @@ def plot_pi(
     ax.set_xticks(np.arange(0, len(pi_per_iteration), 1))
     ax.set_xticklabels([i for i in range(1, len(pi_per_iteration) + 1)])
 
-    ax.set_ylabel("PI")
-    ax.set_xlabel("Iteration")
-    ax.set_zlabel("Density")
-
-    output_path = Path(path, base_name)
-    if isinstance(ax.figure, Figure):
-        ax.figure.savefig(
-            output_path,
-            format="svg",
-            transparent=True,
-        )
-    else:
-        warnings.warn("Plots could not be saved.")
-    plt.close()
-    return ax.get_figure()
+    ax.set_ylabel("PI", labelpad=20)
+    ax.set_xlabel("Iteration", labelpad=20)
+    ax.set_zlabel("Density", labelpad=20)
+    return ax
 
 
 ### Monkeypatching
@@ -205,6 +191,5 @@ for i in range(N_DOE_ITERATIONS):
 
 # Lastly, we plot the PI from the previous iterations:
 
-fig = plt.figure()
-ax = fig.add_subplot(projection="3d")
-plot_pi(pi_per_iteration, ax=ax, base_name="PI_Plot.svg")
+ax = create_pi_plot(pi_per_iteration)
+create_example_plots(ax=ax, base_name="probability_of_improvement")

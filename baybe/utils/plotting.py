@@ -17,7 +17,7 @@ def create_example_plots(
     ax: Axes | Axes3D,
     base_name: str,
     path: Path = Path("."),
-) -> Figure | Any | None:
+) -> None:
     """Create plots from an Axes object and save them as a svg file.
 
     If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
@@ -140,4 +140,3 @@ def create_example_plots(
         else:
             warnings.warn("Plots could not be saved.")
     plt.close()
-    return ax.get_figure()
