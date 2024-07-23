@@ -36,3 +36,5 @@ htmlcov
 docs/_autosummary
 docs/examples
 docs/sdk
+
+pk3.py
