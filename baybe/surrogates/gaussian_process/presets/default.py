@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 from attrs import define
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
+from baybe.parameters import TaskParameter
 from baybe.priors.basic import GammaPrior
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 
@@ -17,54 +19,40 @@ if TYPE_CHECKING:
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
 
+# Boundaries for low and high dimension limits
+_DIM_LIMITS = (8, 75)
+
 
 @define
 class DefaultKernelFactory(KernelFactory):
     """A factory providing the default kernel for Gaussian process surrogates.
 
-    The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
-
-    References:
-    *   https://github.com/b-shields/edbo
-    *   https://doi.org/10.1038/s41586-021-03213-y
+    This is taking the low and high dimensional limits of
+    :class:`baybe.surrogates.gaussian_process.presets.default.EDBOKernelFactory`
+    and interpolates the prior moments linearly between them.
     """
 
     def __call__(  # noqa: D102
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         # See base class.
-
-        mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
-            train_x.shape[-1] >= 50
+        effective_dims = train_x.shape[-1] - len(
+            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )
 
-        # low D priors
-        if train_x.shape[-1] < 10:  # <-- different condition compared to EDBO
-            lengthscale_prior = GammaPrior(1.2, 1.1)
-            lengthscale_initial_value = 0.2
-            outputscale_prior = GammaPrior(5.0, 0.5)
-            outputscale_initial_value = 8.0
-
-        # DFT optimized priors
-        elif mordred and train_x.shape[-1] < 100:
-            lengthscale_prior = GammaPrior(2.0, 0.2)
-            lengthscale_initial_value = 5.0
-            outputscale_prior = GammaPrior(5.0, 0.5)
-            outputscale_initial_value = 8.0
-
-        # Mordred optimized priors
-        elif mordred:
-            lengthscale_prior = GammaPrior(2.0, 0.1)
-            lengthscale_initial_value = 10.0
-            outputscale_prior = GammaPrior(2.0, 0.1)
-            outputscale_initial_value = 10.0
-
-        # OHE optimized priors
-        else:
-            lengthscale_prior = GammaPrior(3.0, 1.0)
-            lengthscale_initial_value = 2.0
-            outputscale_prior = GammaPrior(5.0, 0.2)
-            outputscale_initial_value = 20.0
+        # Interpolate prior moments linearly between low D and high D regime
+        # The high D regime itself is the average of the EDBO OHE and Mordred regime
+        # Values outside the dimension limits will get the border value assigned
+        lengthscale_prior = GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [1.2, 2.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [1.1, 0.55]),
+        )
+        lengthscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [0.2, 6.0])
+        outputscale_prior = GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [5.0, 3.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.15]),
+        )
+        outputscale_initial_value = np.interp(effective_dims, _DIM_LIMITS, [8.0, 15.0])
 
         return ScaleKernel(
             MaternKernel(
@@ -82,30 +70,22 @@ def _default_noise_factory(
 ) -> tuple[GammaPrior, float]:
     """Create the default noise settings for the Gaussian process surrogate.
 
-    The logic is adapted from EDBO (Experimental Design via Bayesian Optimization).
-
-    References:
-    *   https://github.com/b-shields/edbo
-    *   https://doi.org/10.1038/s41586-021-03213-y
+    This is taking the low and high dimensional limits of
+    :func:`baybe.surrogates.gaussian_process.presets.default._edbo_noise_factory`
+    and interpolates the prior moments linearly between them.
     """
     # TODO: Replace this function with a proper likelihood factory
 
-    uses_descriptors = (
-        searchspace.contains_mordred or searchspace.contains_rdkit
-    ) and (train_x.shape[-1] >= 50)
-
-    # low D priors
-    if train_x.shape[-1] < 10:  # <-- different condition compared to EDBO
-        return [GammaPrior(1.05, 0.5), 0.1]
-
-    # DFT optimized priors
-    elif uses_descriptors and train_x.shape[-1] < 100:
-        return [GammaPrior(1.5, 0.1), 5.0]
-
-    # Mordred optimized priors
-    elif uses_descriptors:
-        return [GammaPrior(1.5, 0.1), 5.0]
-
-    # OHE optimized priors
-    else:
-        return [GammaPrior(1.5, 0.1), 5.0]
+    # Interpolate prior moments linearly between low D and high D regime
+    # The high D regime itself is the average of the EDBO OHE and Mordred regime
+    # Values outside the dimension limits will get the border value assigned
+    effective_dims = train_x.shape[-1] - len(
+        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+    )
+    return (
+        GammaPrior(
+            np.interp(effective_dims, _DIM_LIMITS, [1.05, 1.5]),
+            np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.1]),
+        ),
+        np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]),
+    )

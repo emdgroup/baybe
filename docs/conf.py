@@ -128,6 +128,9 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
 ]
 
+# Ignore the following links when checking inks for viability
+linkcheck_ignore = [r"https://github.com/b-shields/edbo/blob/master/edbo/bro.py*"]
+
 
 # Ignore the warnings that are given by autosectionlabel
 suppress_warnings = ["autosectionlabel.*"]
