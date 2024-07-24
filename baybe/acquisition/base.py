@@ -44,7 +44,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Create the botorch-ready representation of the function.
 
         The required structure of `measurements` is specified in
-        :meth:`babye.recommenders.base.RecommenderProtocol.recommend`.
+        :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
         """
         import botorch.acquisition as botorch_acqf_module
 
