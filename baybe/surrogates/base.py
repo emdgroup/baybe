@@ -230,12 +230,41 @@ class Surrogate(ABC, SerialMixin):
 
         def transform_inputs(df: pd.DataFrame, /) -> pd.DataFrame:
             """Fitted input transformation pipeline."""
+            # IMPROVE: This method currently relies on two workarounds required
+            #   due the working mechanism of sklearn's ColumnTransformer:
+            #   * Unfortunately, the transformer returns a raw array, meaning that
+            #       column names need to be manually attached afterward.
+            #   * In certain cases (e.g. in hybrid spaces), the method needs
+            #       to transform only a subset of columns. Unfortunately, it is not
+            #       possible to use a subset of columns once the transformer is set up,
+            #       which is a side-effect of the first point. As a workaround,
+            #       we thus fill the missing columns with NaN and subselect afterward.
+
+            # For the workaround, collect all comp rep columns of the parameters
+            # that are actually present in the given dataframe. At the end,
+            # we'll filter the transformed augmented dataframe down to these columns.
+            exp_rep_cols = [p.name for p in searchspace.parameters]
+            comp_rep_cols = []
+            for col in [c for c in df.columns if c in exp_rep_cols]:
+                parameter = next(p for p in searchspace.parameters if p.name == col)
+                comp_rep_cols.extend(parameter.comp_rep_columns)
+
+            # Actual workaround: augment the dataframe with NaN for missing parameters
+            df_augmented = df.reindex(columns=exp_rep_cols)
+
+            # The actual transformation step
             out = input_scaler.transform(
-                searchspace.transform(df, allow_extra=True, allow_missing=True)
+                searchspace.transform(df_augmented, allow_extra=True)
             )
-            return pd.DataFrame(
+            out = pd.DataFrame(
                 out, index=df.index, columns=input_scaler.get_feature_names_out()
             )
+
+            # Undo the augmentation, taking into account that not all comp rep
+            # parameter columns may actually be part of the search space due
+            # to other preprocessing steps.
+            comp_rep_cols = list(set(comp_rep_cols).intersection(out.columns))
+            return out[comp_rep_cols]
 
         def transform_outputs(df: pd.DataFrame, /) -> pd.DataFrame:
             """Fitted output transformation pipeline."""
