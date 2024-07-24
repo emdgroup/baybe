@@ -104,7 +104,7 @@ class BotorchRecommender(BayesianRecommender):
         from botorch.optim import optimize_acqf_discrete
 
         # determine the next set of points to be tested
-        candidates_comp = self.surrogate_model.transform_inputs(candidates_exp)
+        candidates_comp = subspace_discrete.transform(candidates_exp)
         points, _ = optimize_acqf_discrete(
             self._botorch_acqf, batch_size, to_tensor(candidates_comp)
         )
@@ -216,7 +216,7 @@ class BotorchRecommender(BayesianRecommender):
         from botorch.optim import optimize_acqf_mixed
 
         # Transform discrete candidates
-        candidates_comp = self.surrogate_model.transform_inputs(candidates_exp)
+        candidates_comp = searchspace.transform(candidates_exp)
 
         if len(candidates_comp) > 0:
             # Calculate the number of samples from the given percentage
