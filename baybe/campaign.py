@@ -331,20 +331,21 @@ class Campaign(SerialMixin):
         # Transform the measurements to the campaign search space.
         measurements = self.searchspace.transform(measurements, allow_extra=True)
 
+        print("Size of measurement data ")
         print(measurements.shape)
 
         # Wrapper function to predict the mean of the model using a tensor input.
         # This is needed as the SHAP explainer requires a numpy array as input.
         def surrogate_model_predict(measurements):
             data_tensor = torch.from_numpy(measurements).float()
+            print("Size of tensor")
             print(data_tensor.shape)
-            breakpoint()
             mean_predictions, covar = surrogate_model.posterior(data_tensor)
             return mean_predictions.detach().numpy()
 
         with torch.no_grad():
             explainer = shap.KernelExplainer(surrogate_model_predict, measurements)
-        shap_values = explainer.shap_values(measurements)
+        shap_values = explainer.shap_values(measurements, nsamples=200)
         return shap_values
 
     def plot_shap_feature_importance(self, max_display: int = 10) -> None:
@@ -355,6 +356,9 @@ class Campaign(SerialMixin):
         """
         shap_values = self.get_shap_feature_importance()
         measurements = self.measurements.iloc[:, : len(self.parameters)]
+
+        # Transform the measurements to the campaign search space.
+        measurements = self.searchspace.transform(measurements, allow_extra=True)
         shap.summary_plot(shap_values, measurements, max_display=max_display)
 
 
