@@ -56,6 +56,7 @@ _ `_optional` subpackage for managing optional dependencies
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
   and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
+- `register_custom_architecture` decorator
 - `Scalar` and `DefaultScaler` classes
 
 ### Fixed
@@ -71,6 +72,7 @@ _ `_optional` subpackage for managing optional dependencies
 - Passing a dataframe via the `data` argument to the `transform` methods of
   `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
   The dataframe must now be passed as positional argument.
+- A deprecation error is thrown when attempting to use `register_custom_architecture`
 
 ## [0.9.1] - 2024-06-04
 ### Changed
