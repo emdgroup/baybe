@@ -9,6 +9,7 @@ from copy import deepcopy
 from functools import partial
 from typing import Literal
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -34,6 +35,7 @@ def simulate_experiment(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
+    plot_shap_feature_importance: bool = False,
 ) -> pd.DataFrame:
     """Simulate a Bayesian optimization loop.
 
@@ -61,6 +63,8 @@ def simulate_experiment(
                 made so that unmeasured experiments will not be recommended.
         noise_percent: If not ``None``, relative noise in percent of
             ``noise_percent`` will be applied to the parameter measurements.
+        plot_shap_feature_importance: If ``True``, the SHAP feature importance will be
+            plotted after the simulation.
 
     Returns:
         A dataframe ready for plotting, see the ``Note`` for details.
@@ -237,5 +241,10 @@ def simulate_experiment(
             cumbest_cols = f"{target.name}_CumBest"
             results[iterbest_col] = results[measurement_col].apply(agg_fun)
             results[cumbest_cols] = cum_fun(results[iterbest_col])
+
+        if plot_shap_feature_importance:
+            campaign.plot_shap_feature_importance()
+            plt.title(f"SHAP Feature Importance for Campaign {campaign.name}")
+            plt.show
 
         return results
