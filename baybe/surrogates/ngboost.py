@@ -6,6 +6,7 @@ in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750
 Since we plan to refactor the surrogates, this part of the documentation will be
 available in the future. Thus, please have a look in the source code directly.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -13,16 +14,17 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from attr import define, field
 from ngboost import NGBRegressor
 
+from baybe.parameters.base import Parameter
 from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import autoscale, batchify, catch_constant_targets
+from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
+from baybe.utils.scaling import ParameterScalerProtocol
 
 if TYPE_CHECKING:
     from torch import Tensor
 
 
 @catch_constant_targets
-@autoscale
 @define
 class NGBoostSurrogate(GaussianSurrogate):
     """A natural-gradient-boosting surrogate model."""
@@ -51,8 +53,17 @@ class NGBoostSurrogate(GaussianSurrogate):
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}
 
+    @staticmethod
+    def _make_parameter_scaler(
+        parameter: Parameter,
+    ) -> ParameterScalerProtocol | None:
+        # See base class.
+
+        # Tree-like models do not require any input scaling
+        return
+
     @batchify
-    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         # See base class.
 
         import torch

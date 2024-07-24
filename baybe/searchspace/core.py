@@ -7,7 +7,6 @@ from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
 
-import numpy as np
 import pandas as pd
 from attr import define, field
 
@@ -244,10 +243,15 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def param_bounds_comp(self) -> np.ndarray:
-        """Return bounds as tensor."""
-        return np.hstack(
-            [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        return self.discrete.comp_rep_columns + self.continuous.comp_rep_columns
+
+    @property
+    def comp_rep_bounds(self) -> pd.DataFrame:
+        """The minimum and maximum values of the computational representation."""
+        return pd.concat(
+            [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds], axis=1
         )
 
     @property

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
@@ -16,9 +17,11 @@ from cattrs.dispatch import (
     UnstructuredValue,
     UnstructureHook,
 )
+from sklearn.preprocessing import MinMaxScaler
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
+from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
     converter,
@@ -27,12 +30,14 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.scaling import ParameterScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import GPyTorchPosterior, Posterior
+    from sklearn.compose import ColumnTransformer
     from torch import Tensor
-
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -45,6 +50,16 @@ The use of latin-1 ensures there are no loss from the conversion of
 bytes to string and back, since the specification is a bijection between
 0-255 and the character set.
 """
+
+
+class _NoTransform(Enum):
+    """Sentinel class."""
+
+    IDENTITY_TRANSFORM = auto()
+
+
+_IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
+"""Sentinel to indicate the absence of a transform where `None` is ambiguous."""
 
 
 @define
@@ -65,17 +80,26 @@ class Surrogate(ABC, SerialMixin):
     """Callable preparing surrogate inputs for training/prediction.
 
     Transforms a dataframe containing parameter configurations in experimental
-    representation to a corresponding dataframe containing their computational
-    representation. Only available after the surrogate has been fitted."""
+    representation to a corresponding dataframe containing their **scaled**
+    computational representation. Only available after the surrogate has been fitted."""
 
-    _target_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
+    _output_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
         init=False, default=None, eq=False
     )
-    """Callable preparing surrogate targets for training.
+    """Callable preparing surrogate outputs for training.
 
     Transforms a dataframe containing target measurements in experimental
-    representation to a corresponding dataframe containing their computational
-    representation. Only available after the surrogate has been fitted."""
+    representation to a corresponding dataframe containing their **scaled**
+    computational representation. Only available after the surrogate has been fitted."""
+
+    # TODO: type should be `Standardize | _NoTransform`` but is currently
+    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    _output_scaler = field(init=False, default=None, eq=False)
+    """Optional callable for scaling output values.
+
+    Scales a tensor containing target measurements in computational representation
+    to make them ready for processing by the surrogate. Only available after the
+    surrogate has been fitted."""
 
     def to_botorch(self) -> Model:
         """Create the botorch-ready representation of the model."""
@@ -83,24 +107,76 @@ class Surrogate(ABC, SerialMixin):
 
         return AdapterModel(self)
 
-    def transform_inputs(self, data: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def _make_parameter_scaler(
+        parameter: Parameter,
+    ) -> ParameterScalerProtocol | None:
+        """Return the scaler to be used for the given parameter."""
+        return MinMaxScaler()
+
+    @staticmethod
+    def _make_target_scaler() -> OutcomeTransform | None:
+        """Return the scaler to be used for target scaling."""
+        from botorch.models.transforms.outcome import Standardize
+
+        # TODO: Multi-target extension
+        return Standardize(1)
+
+    def _make_input_scaler(self, searchspace: SearchSpace) -> ColumnTransformer:
+        """Make the input scaler for transforming computational dataframes."""
+        from sklearn.compose import make_column_transformer
+
+        # Create the composite scaler from the parameter-wise scaler objects
+        transformers = [
+            (
+                "passthrough" if (s := self._make_parameter_scaler(p)) is None else s,
+                [c for c in p.comp_rep_columns if c in searchspace.comp_rep_columns],
+            )
+            for p in searchspace.parameters
+        ]
+        scaler = make_column_transformer(*transformers, verbose_feature_names_out=False)
+
+        scaler.fit(searchspace.comp_rep_bounds)
+
+        return scaler
+
+    def _make_output_scaler(
+        self, objective: Objective, measurements: pd.DataFrame
+    ) -> OutcomeTransform | _NoTransform:
+        """Make the output scaler for transforming computational dataframes."""
+        import torch
+
+        scaler = self._make_target_scaler()
+        if scaler is None:
+            return _IDENTITY_TRANSFORM
+
+        # TODO: Consider taking into account target boundaries when available
+        scaler(torch.from_numpy(objective.transform(measurements).values))
+        scaler.eval()
+
+        return scaler
+
+    def transform_inputs(self, df: pd.DataFrame, /) -> pd.DataFrame:
         """Transform an experimental parameter dataframe."""
         if self._input_transform is None:
             raise ModelNotTrainedError("The model must be trained first.")
-        return self._input_transform(data)
+        return self._input_transform(df)
 
-    def transform_targets(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform_outputs(self, df: pd.DataFrame, /) -> pd.DataFrame:
         """Transform an experimental measurement dataframe."""
-        if self._target_transform is None:
+        if self._output_transform is None:
             raise ModelNotTrainedError("The model must be trained first.")
-        return self._target_transform(data)
+        return self._output_transform(df)
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame, /) -> Posterior:
         """Evaluate the surrogate model at the given candidate points."""
-        return self._posterior(to_tensor(self.transform_inputs(candidates)))
+        p = self._posterior(to_tensor(self.transform_inputs(candidates)))
+        if self._output_scaler is not _IDENTITY_TRANSFORM:
+            p = self._output_scaler.untransform_posterior(p)
+        return p
 
     @abstractmethod
-    def _posterior(self, candidates: Tensor) -> Posterior:
+    def _posterior(self, candidates: Tensor, /) -> Posterior:
         """Perform the actual posterior evaluation logic."""
 
     @staticmethod
@@ -140,7 +216,6 @@ class Surrogate(ABC, SerialMixin):
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
             )
-        # TODO: Adjust scale_model decorator to support other model types as well.
         if (not searchspace.continuous.is_empty) and (
             "GaussianProcess" not in self.__class__.__name__
         ):
@@ -148,14 +223,69 @@ class Surrogate(ABC, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
+        # Create scaler objects
+        input_scaler = self._make_input_scaler(searchspace)
+        output_scaler = self._make_output_scaler(objective, measurements)
+
+        def transform_inputs(df: pd.DataFrame, /) -> pd.DataFrame:
+            """Fitted input transformation pipeline."""
+            # IMPROVE: This method currently relies on two workarounds required
+            #   due the working mechanism of sklearn's ColumnTransformer:
+            #   * Unfortunately, the transformer returns a raw array, meaning that
+            #       column names need to be manually attached afterward.
+            #   * In certain cases (e.g. in hybrid spaces), the method needs
+            #       to transform only a subset of columns. Unfortunately, it is not
+            #       possible to use a subset of columns once the transformer is set up,
+            #       which is a side-effect of the first point. As a workaround,
+            #       we thus fill the missing columns with NaN and subselect afterward.
+
+            # For the workaround, collect all comp rep columns of the parameters
+            # that are actually present in the given dataframe. At the end,
+            # we'll filter the transformed augmented dataframe down to these columns.
+            exp_rep_cols = [p.name for p in searchspace.parameters]
+            comp_rep_cols = []
+            for col in [c for c in df.columns if c in exp_rep_cols]:
+                parameter = next(p for p in searchspace.parameters if p.name == col)
+                comp_rep_cols.extend(parameter.comp_rep_columns)
+
+            # Actual workaround: augment the dataframe with NaN for missing parameters
+            df_augmented = df.reindex(columns=exp_rep_cols)
+
+            # The actual transformation step
+            out = input_scaler.transform(
+                searchspace.transform(df_augmented, allow_extra=True)
+            )
+            out = pd.DataFrame(
+                out, index=df.index, columns=input_scaler.get_feature_names_out()
+            )
+
+            # Undo the augmentation, taking into account that not all comp rep
+            # parameter columns may actually be part of the search space due
+            # to other preprocessing steps.
+            comp_rep_cols = list(set(comp_rep_cols).intersection(out.columns))
+            return out[comp_rep_cols]
+
+        def transform_outputs(df: pd.DataFrame, /) -> pd.DataFrame:
+            """Fitted output transformation pipeline."""
+            import torch
+
+            dft = objective.transform(df)
+
+            if output_scaler is _IDENTITY_TRANSFORM:
+                return dft
+
+            out = output_scaler(torch.from_numpy(dft.values))[0]
+            return pd.DataFrame(out.numpy(), index=df.index, columns=dft.columns)
+
         # Store context-specific transformations
-        self._input_transform = lambda x: searchspace.transform(x, allow_missing=True)
-        self._target_transform = lambda x: objective.transform(x)
+        self._input_transform = transform_inputs
+        self._output_transform = transform_outputs
+        self._output_scaler = output_scaler
 
         # Transform and fit
         train_x, train_y = to_tensor(
             self.transform_inputs(measurements),
-            self.transform_targets(measurements),
+            self.transform_outputs(measurements),
         )
         self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
@@ -168,7 +298,7 @@ class Surrogate(ABC, SerialMixin):
 class GaussianSurrogate(Surrogate, ABC):
     """A surrogate model providing Gaussian posterior estimates."""
 
-    def _posterior(self, candidates: Tensor) -> GPyTorchPosterior:
+    def _posterior(self, candidates: Tensor, /) -> GPyTorchPosterior:
         # See base class.
 
         import torch
@@ -183,7 +313,7 @@ class GaussianSurrogate(Surrogate, ABC):
         return GPyTorchPosterior(mvn)
 
     @abstractmethod
-    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         """Estimate first and second moments of the Gaussian posterior.
 
         The second moment may either be a 1-D tensor of marginal variances for the
@@ -193,7 +323,7 @@ class GaussianSurrogate(Surrogate, ABC):
 
 
 def _make_hook_decode_onnx_str(
-    raw_unstructure_hook: UnstructureHook
+    raw_unstructure_hook: UnstructureHook,
 ) -> UnstructureHook:
     """Wrap an unstructuring hook to let it also decode the contained ONNX string."""
 
@@ -221,7 +351,7 @@ def _make_hook_encode_onnx_str(raw_structure_hook: StructureHook) -> StructureHo
 
 
 def _block_serialize_custom_architecture(
-    raw_unstructure_hook: UnstructureHook
+    raw_unstructure_hook: UnstructureHook,
 ) -> UnstructureHook:
     """Raise error if attempt to serialize a custom architecture surrogate."""
     # TODO: Ideally, this hook should be removed and unstructuring the Surrogate

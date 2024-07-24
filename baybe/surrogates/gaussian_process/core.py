@@ -6,8 +6,11 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
 from attrs.validators import instance_of
+from sklearn.preprocessing import MinMaxScaler
 
 from baybe.objective import Objective
+from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -22,6 +25,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
+from baybe.utils.scaling import ParameterScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -62,7 +66,7 @@ class _ModelContext:
         """Get the search space parameter bounds in BoTorch Format."""
         import torch
 
-        return torch.from_numpy(self.searchspace.param_bounds_comp)
+        return torch.from_numpy(self.searchspace.comp_rep_bounds.values)
 
     def get_numerical_indices(self, n_inputs: int) -> list[int]:
         """Get the indices of the regular numerical model inputs."""
@@ -109,13 +113,25 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model
 
     @staticmethod
+    def _make_parameter_scaler(
+        parameter: Parameter,
+    ) -> ParameterScalerProtocol | None:
+        # See base class.
+
+        # Task parameters are handled separately through an index kernel
+        if isinstance(parameter, TaskParameter):
+            return
+
+        return MinMaxScaler()
+
+    @staticmethod
     def _get_model_context(
         searchspace: SearchSpace, objective: Objective
     ) -> _ModelContext:
         # See base class.
         return _ModelContext(searchspace=searchspace)
 
-    def _posterior(self, candidates: Tensor) -> Posterior:
+    def _posterior(self, candidates: Tensor, /) -> Posterior:
         # See base class.
         return self._model.posterior(candidates)
 
@@ -127,14 +143,6 @@ class GaussianProcessSurrogate(Surrogate):
         import torch
 
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
-
-        # define the input and outcome transforms
-        # TODO [Scaling]: scaling should be handled by search space object
-        input_transform = botorch.models.transforms.Normalize(
-            train_x.shape[1], bounds=context.parameter_bounds, indices=numerical_idxs
-        )
-        # TODO: use target value bounds when explicitly provided
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[1])
 
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
@@ -173,8 +181,6 @@ class GaussianProcessSurrogate(Surrogate):
         self._model = botorch.models.SingleTaskGP(
             train_x,
             train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
             mean_module=mean_module,
             covar_module=covar_module,
             likelihood=likelihood,

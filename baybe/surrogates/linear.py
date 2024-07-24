@@ -6,6 +6,7 @@ in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750
 Since we plan to refactor the surrogates, this part of the documentation will be
 available in the future. Thus, please have a look in the source code directly.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -14,7 +15,7 @@ from attr import define, field
 from sklearn.linear_model import ARDRegression
 
 from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import autoscale, batchify, catch_constant_targets
+from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
@@ -22,7 +23,6 @@ if TYPE_CHECKING:
 
 
 @catch_constant_targets
-@autoscale
 @define
 class BayesianLinearSurrogate(GaussianSurrogate):
     """A Bayesian linear regression surrogate model."""
@@ -46,7 +46,7 @@ class BayesianLinearSurrogate(GaussianSurrogate):
     """The actual model."""
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         # See base class.
 
         import torch

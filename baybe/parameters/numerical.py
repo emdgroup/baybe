@@ -132,6 +132,11 @@ class NumericalContinuousParameter(ContinuousParameter):
 
         return self.bounds.contains(item)
 
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
+        # See base class.
+        return (self.name,)
+
     def summary(self) -> dict:  # noqa: D102
         # See base class.
         param_dict = dict(

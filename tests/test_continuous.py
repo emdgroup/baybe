@@ -13,9 +13,9 @@ import pytest
 )
 def test_valid_configs(campaign):
     """Test whether the given settings work without error."""
-    print(campaign.searchspace.continuous.param_bounds_comp.flatten())
+    print(campaign.searchspace.continuous.comp_rep_bounds.values.flatten())
 
     assert all(
         np.issubdtype(type(itm), np.floating)
-        for itm in campaign.searchspace.continuous.param_bounds_comp.flatten()
+        for itm in campaign.searchspace.continuous.comp_rep_bounds.values.flatten()
     )
