@@ -59,7 +59,7 @@ set_random_seed(1282)
 
 # We initialize a container for storing the PI from each recommend iteration:
 
-pi_list: list[torch.Tensor] = []
+pi_per_iteration: list[np.ndarray] = []
 
 # Then, we define the hook that calculates the PI from each iteration.
 # To attach the hook we need to match its signature to that of {meth}RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>.
@@ -82,35 +82,35 @@ def extract_pi(
     acqf = ProbabilityOfImprovement()
     botorch_acqf = acqf.to_botorch(self.surrogate_model, searchspace, train_x, train_y)
     comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
-    pi = botorch_acqf(comp_rep_tensor)
-    pi_list.append(pi)
+    with torch.no_grad():
+        pi = botorch_acqf(comp_rep_tensor)
+    pi_per_iteration.append(pi.numpy())
 
 
 # Additionally, we define a function that plots the PI after all recommend iterations:
 
 
 def plot_pi(
-    pi_list: list[torch.Tensor],
+    pi_per_iteration: list[np.ndarray],
     ax: Axes,
     base_name: str,
     path: Path = Path("."),
 ) -> Figure:
     """Plot the probability of improvement in 3D."""
     cmap = plt.get_cmap("viridis")
-    pi_max = max([torch.max(p).item() for p in pi_list])
+    pi_max = max([np.max(p) for p in pi_per_iteration])
 
     # Plot each PI tensor separately
-    for i, p in enumerate(pi_list):
-        pi_np = p.detach().numpy() if p.requires_grad else p.numpy()
+    for i, p in enumerate(pi_per_iteration):
         x = np.linspace(0, pi_max, 500)
-        kde = gaussian_kde(pi_np)
+        kde = gaussian_kde(p)
         y = kde(x)
         z = np.full_like(y, i)
 
         # Fill under the curve
         verts = []
         verts.append([(x[i], 0.0), *zip(x, y), (x[-1], 0.0)])
-        color = cmap(float(i) / len(pi_list))
+        color = cmap(float(i) / len(pi_per_iteration))
         poly = PolyCollection(verts, color=color, alpha=0.9)
         ax.add_collection3d(poly, zs=i, zdir="x")
 
@@ -126,8 +126,8 @@ def plot_pi(
     ax.set_ylim(0, pi_max)
 
     # Set x-axis ticks to have the correct iteration number
-    ax.set_xticks(np.arange(0, len(pi_list), 1))
-    ax.set_xticklabels([i for i in range(1, len(pi_list) + 1)])
+    ax.set_xticks(np.arange(0, len(pi_per_iteration), 1))
+    ax.set_xticklabels([i for i in range(1, len(pi_per_iteration) + 1)])
 
     ax.set_ylabel("PI")
     ax.set_xlabel("Iteration")
@@ -207,4 +207,4 @@ for i in range(N_DOE_ITERATIONS):
 
 fig = plt.figure()
 ax = fig.add_subplot(projection="3d")
-plot_pi(pi_list, ax=ax, base_name="PI_Plot.svg")
+plot_pi(pi_per_iteration, ax=ax, base_name="PI_Plot.svg")
