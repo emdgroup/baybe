@@ -17,7 +17,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty, filter_attributes
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
@@ -37,7 +37,7 @@ class AcquisitionFunction(ABC, SerialMixin):
 
     def to_botorch(
         self,
-        surrogate: Surrogate,
+        surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
         measurements: pd.DataFrame,
     ):

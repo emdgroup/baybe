@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import pandas as pd
 from attrs import define, field
@@ -62,8 +62,27 @@ _IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
 """Sentinel to indicate the absence of a transform where `None` is ambiguous."""
 
 
+class SurrogateProtocol(Protocol):
+    """Type protocol specifying the interface surrogate models need to implement."""
+
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        """Fit the surrogate to training data in a given modelling context.
+
+        For details on the expected method arguments, see
+        :meth:`baybe.recommenders.base.RecommenderProtocol`.
+        """
+
+    def to_botorch(self) -> Model:
+        """Create the botorch-ready representation of the fitted model."""
+
+
 @define
-class Surrogate(ABC, SerialMixin):
+class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     # Class variables
@@ -101,8 +120,8 @@ class Surrogate(ABC, SerialMixin):
     to make them ready for processing by the surrogate. Only available after the
     surrogate has been fitted."""
 
-    def to_botorch(self) -> Model:
-        """Create the botorch-ready representation of the model."""
+    def to_botorch(self) -> Model:  # noqa: D102
+        # See base class.
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)

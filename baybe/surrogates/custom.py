@@ -37,7 +37,8 @@ def register_custom_architecture(*args, **kwargs) -> NoReturn:
     """Deprecated! Raises an error when used."""  # noqa: D401
     raise DeprecationError(
         "The 'register_custom_architecture' decorator is no longer available. "
-        "There will be a replacement based on Python's `typing.Protocol` soon."
+        "Use :class:`baybe.surrogates.base.SurrogateProtocol` instead to define "
+        "your custom architectures."
     )
 
 
