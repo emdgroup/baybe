@@ -226,7 +226,6 @@ class Surrogate(ABC, SerialMixin):
         # Create scaler objects
         input_scaler = self._make_input_scaler(searchspace)
         output_scaler = self._make_output_scaler(objective, measurements)
-        self._output_scaler = output_scaler
 
         def transform_inputs(df: pd.DataFrame, /) -> pd.DataFrame:
             """Fitted input transformation pipeline."""
@@ -272,7 +271,7 @@ class Surrogate(ABC, SerialMixin):
 
             dft = objective.transform(df)
 
-            if self._output_scaler is _IDENTITY_TRANSFORM:
+            if output_scaler is _IDENTITY_TRANSFORM:
                 return dft
 
             out = output_scaler(torch.from_numpy(dft.values))[0]
@@ -281,6 +280,7 @@ class Surrogate(ABC, SerialMixin):
         # Store context-specific transformations
         self._input_transform = transform_inputs
         self._output_transform = transform_outputs
+        self._output_scaler = output_scaler
 
         # Transform and fit
         train_x, train_y = to_tensor(
