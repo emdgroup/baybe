@@ -52,7 +52,7 @@ class BayesianRecommender(PureRecommender, ABC):
         """Create the acquisition function for the current training data."""  # noqa: E501
         self.surrogate_model.fit(searchspace, objective, measurements)
         self._botorch_acqf = self.acquisition_function.to_botorch(
-            self.surrogate_model, searchspace, measurements
+            self.surrogate_model, searchspace, objective, measurements
         )
 
     def recommend(  # noqa: D102

@@ -10,7 +10,8 @@ from typing import ClassVar
 import pandas as pd
 from attrs import define
 
-from baybe.searchspace import SearchSpace
+from baybe.objectives.base import Objective
+from baybe.searchspace.core import SearchSpace
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
@@ -39,6 +40,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         self,
         surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
+        objective: Objective,
         measurements: pd.DataFrame,
     ):
         """Create the botorch-ready representation of the function.
@@ -51,8 +53,8 @@ class AcquisitionFunction(ABC, SerialMixin):
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
-        train_x = surrogate.transform_inputs(measurements)
-        train_y = surrogate.transform_outputs(measurements)
+        train_x = searchspace.transform(measurements)
+        train_y = objective.transform(measurements)
 
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
