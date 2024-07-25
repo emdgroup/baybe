@@ -28,7 +28,7 @@ class DefaultKernelFactory(KernelFactory):
     """A factory providing the default kernel for Gaussian process surrogates.
 
     This is taking the low and high dimensional limits of
-    :class:`baybe.surrogates.gaussian_process.presets.default.EDBOKernelFactory`
+    :class:`baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory`
     and interpolates the prior moments linearly between them.
     """
 
@@ -71,7 +71,7 @@ def _default_noise_factory(
     """Create the default noise settings for the Gaussian process surrogate.
 
     This is taking the low and high dimensional limits of
-    :func:`baybe.surrogates.gaussian_process.presets.default._edbo_noise_factory`
+    :func:`baybe.surrogates.gaussian_process.presets.edbo._edbo_noise_factory`
     and interpolates the prior moments linearly between them.
     """
     # TODO: Replace this function with a proper likelihood factory
