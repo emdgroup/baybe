@@ -3,28 +3,11 @@
 from __future__ import annotations
 
 import itertools
-from typing import Protocol
 
-import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, deep_mapping, instance_of
 from botorch.models.transforms.input import InputTransform
 from torch import Tensor
-
-
-class ParameterScalerProtocol(Protocol):
-    """Type protocol specifying the interface parameter scalers need to implement.
-
-    The protocol is compatible with sklearn scalers such as
-    :class:`sklearn.preprocessing.MinMaxScaler` or
-    :class:`sklearn.preprocessing.MaxAbsScaler`.
-    """
-
-    def fit(self, df: pd.DataFrame, /) -> None:
-        """Fit the scaler to a given dataframe containing parameter configurations."""
-
-    def transform(self, df: pd.DataFrame, /) -> pd.DataFrame:
-        """Transform a parameter dataframe using the fitted scaling logic."""
 
 
 @define

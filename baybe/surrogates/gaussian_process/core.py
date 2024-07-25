@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
 from attrs.validators import instance_of
-from sklearn.preprocessing import MinMaxScaler
 
 from baybe.objective import Objective
 from baybe.parameters.base import Parameter
@@ -25,10 +24,10 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
-from baybe.utils.scaling import ParameterScalerProtocol
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.models.transforms.input import InputTransform
     from botorch.posteriors import Posterior
     from torch import Tensor
 
@@ -113,16 +112,18 @@ class GaussianProcessSurrogate(Surrogate):
         return self._model
 
     @staticmethod
-    def _make_parameter_scaler(
+    def _make_parameter_scaler_factory(
         parameter: Parameter,
-    ) -> ParameterScalerProtocol | None:
+    ) -> type[InputTransform] | None:
         # See base class.
 
         # Task parameters are handled separately through an index kernel
         if isinstance(parameter, TaskParameter):
             return
 
-        return MinMaxScaler()
+        from botorch.models.transforms.input import Normalize
+
+        return Normalize
 
     @staticmethod
     def _get_model_context(

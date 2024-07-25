@@ -290,6 +290,15 @@ class SearchSpace(SerialMixin):
         except StopIteration:
             return 1
 
+    def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
+        """Find a parameter's column indices in the computational representation."""
+        # TODO: The "startswith" approach is not ideal since it relies on the implicit
+        #   assumption that the substrings match. A more robust approach would
+        #   be to generate this mapping while building the comp rep.
+        return tuple(
+            i for i, col in enumerate(self.comp_rep_columns) if col.startswith(name)
+        )
+
     @staticmethod
     def estimate_product_space_size(parameters: Iterable[Parameter]) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.

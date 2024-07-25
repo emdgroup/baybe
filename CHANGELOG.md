@@ -38,7 +38,6 @@ _ `_optional` subpackage for managing optional dependencies
 - `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
   and `SubspaceContinuous` classes
 - Reworked mechanisms for surrogate input/output scaling configurable per class
-- `ParameterScalerProtocol` class for enabling user-defined input scaling mechanisms
 - `SurrogateProtocol` as an interface for user-defined surrogate architectures 
 
 ### Changed
