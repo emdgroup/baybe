@@ -12,9 +12,9 @@ import pandas as pd
 from attr import define, field
 from cattrs import IterableValidationError
 
-from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
+from baybe.exceptions import OptionalImportError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -262,14 +262,20 @@ class SubspaceDiscrete(SerialMixin):
             key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
         )
 
-        if POLARS_INSTALLED and not os.environ.get("BAYBE_DEACTIVATE_POLARS"):
+        try:
+            # Check for manual deactivation of polars
+            if os.environ.get("BAYBE_DEACTIVATE_POLARS", None) is not None:
+                raise OptionalImportError(
+                    "Polars was deactivated manually via environment variable."
+                )
+
             # Apply polars product and filtering
             lazy_df = parameter_cartesian_prod_polars(parameters)
             mask: list[bool] = []
             lazy_df = _apply_constraint_filter_polars(lazy_df, constraints, mask)
             df_records = lazy_df.collect(streaming=True).to_dicts()
             df = pd.DataFrame.from_records(df_records)
-        else:
+        except OptionalImportError:
             # Apply pandas product
             df = parameter_cartesian_prod_pandas(parameters)
             mask = [False] * len(constraints)
@@ -760,7 +766,7 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
     Returns:
         A lazy dataframe containing all possible discrete parameter value combinations.
     """
-    import polars as pl
+    from baybe._optional.polars import polars as pl
 
     discrete_parameters = [p for p in parameters if p.is_discrete]
     if not discrete_parameters:

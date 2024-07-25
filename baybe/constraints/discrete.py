@@ -51,7 +51,7 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
 
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
-        import polars as pl
+        from baybe._optional.polars import polars as pl
 
         satisfied = []
         for k, cond in enumerate(self.conditions):
@@ -81,7 +81,7 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
-        import polars as pl
+        from baybe._optional.polars import polars as pl
 
         return self.condition.to_polars(pl.sum_horizontal(self.parameters)).not_()
 
@@ -105,7 +105,7 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
-        import polars as pl
+        from baybe._optional.polars import polars as pl
 
         op = _threshold_operators[self.condition.operator]
 
@@ -138,7 +138,7 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
 
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
-        import polars as pl
+        from baybe._optional.polars import polars as pl
 
         expr = (
             pl.concat_list(pl.col(self.parameters))
@@ -166,7 +166,7 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
 
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
         # See base class.
-        import polars as pl
+        from baybe._optional.polars import polars as pl
 
         expr = (
             pl.concat_list(pl.col(self.parameters))
