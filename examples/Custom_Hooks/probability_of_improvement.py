@@ -1,7 +1,7 @@
-## Example for calculating and plotting the Probability of Improvement
+## Monitoring the Probability of Improvement
 
-# This example demonstrates how the {func}`register_hooks <baybe.utils.basic.register_hooks>` utility could be used to extract the probability of improvement (PI) from a running campaign:
-# * We define a hook that is compatible with the {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.BotorchRecommender.recommend>` interface and let's us extract the PI achieved after each experimental iteration,
+# This example demonstrates how the {func}`register_hooks <baybe.utils.basic.register_hooks>` utility can be used to extract the probability of improvement (PI) from a running campaign:
+# * We define a hook that is compatible with the {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.BotorchRecommender.recommend>` interface and lets us extract the PI achieved after each experimental iteration,
 # * attach the hook to the recommender driving our campaign,
 # * and plot the evolving PI values after campaign completion.
 
@@ -39,9 +39,10 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import create_example_plots
 from baybe.utils.random import set_random_seed
 
-### Parameters for a full simulation loop
+### Settings for a full simulation loop
 
-# For the full simulation, we need to define some parameters.
+# For the simulation, we need to define some basic settings like the number of
+# iterations or the batch size:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 N_DOE_ITERATIONS = 3 if SMOKE_TEST else 7
@@ -49,18 +50,18 @@ BATCH_SIZE = 2
 DIMENSION = 3
 POINTS_PER_DIM = 2 if SMOKE_TEST else 4
 
-# We also define the random seed to avoid having different plots.
+# We also fix the random seed to create a consistent plot:
 
 set_random_seed(1282)
 
 ### Setup
 
-# We initialize a container for storing the PI from each recommend iteration:
+# We initialize a container for storing the PI from each iteration:
 
 pi_per_iteration: list[np.ndarray] = []
 
-# Then, we define the hook that calculates the PI from each iteration.
-# To attach the hook we need to match its signature to that of {meth}RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>.
+# Then, we define the hook that calculates the PI.
+# To attach the hook, we need to match its signature to that of {meth}`RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>`.
 
 
 def extract_pi(
@@ -85,26 +86,26 @@ def extract_pi(
     pi_per_iteration.append(pi.numpy())
 
 
-# Additionally, we define a function that plots the PI after all recommend iterations:
+# Additionally, we define a function that plots the collected PI values:
 
 
 def create_pi_plot(
     pi_per_iteration: list[np.ndarray],
 ) -> Axes3D:
-    """Plot the probability of improvement in 3D."""
+    """Create the plot of the probability of improvement in 3D."""
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
     cmap = plt.get_cmap("viridis")
     pi_max = max([np.max(p) for p in pi_per_iteration])
 
-    # Plot each PI tensor separately
+    # Plot each PI array separately
     for i, p in enumerate(pi_per_iteration):
         x = np.linspace(0, pi_max, 500)
         kde = gaussian_kde(p)
         y = kde(x)
         z = np.full_like(y, i)
 
-        # Fill under the curve
+        # Fill the area under the curve
         verts = []
         verts.append([(x[i], 0.0), *zip(x, y), (x[-1], 0.0)])
         color = cmap(float(i) / len(pi_per_iteration))
@@ -119,16 +120,16 @@ def create_pi_plot(
     # Reduce space between the iterations
     ax.set_box_aspect([0.7, 1, 1])
 
-    # Set the y-axis limit based on the maximal PI
+    # Set the axis limit based on the maximal PI
     ax.set_ylim(0, pi_max)
 
-    # Set x-axis ticks to have the correct iteration number
+    # Set axis ticks to have the correct iteration number
     ax.set_xticks(np.arange(0, len(pi_per_iteration), 1))
     ax.set_xticklabels([i for i in range(1, len(pi_per_iteration) + 1)])
-
     ax.set_ylabel("PI", labelpad=20)
     ax.set_xlabel("Iteration", labelpad=20)
     ax.set_zlabel("Density", labelpad=20)
+
     return ax
 
 
@@ -152,14 +153,14 @@ my_recommender.recommender.recommend = MethodType(
     my_recommender.recommender,
 )
 
-# In this example we use `MethodType` to bind the `BotorchRecommender.recommend`
+# In this example, we use `MethodType` to bind the `BotorchRecommender.recommend`
 # **function** with our hook.
-# For more information, we refer to the [`basics example`](./basics.md).
+# For more information, we refer to the [`basic hook example`](./basics.md).
 
 
 ### Triggering the Hook
 
-# We setup the other objects to trigger the hook:
+# We set up the campaign:
 
 test_function = Hartmann(dim=DIMENSION)
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=test_function)
@@ -181,7 +182,7 @@ campaign = Campaign(
     objective=objective,
 )
 
-# Now we perform a couple of recommendations:
+# Now, we perform a couple of iterations:
 
 for i in range(N_DOE_ITERATIONS):
     recommendation = campaign.recommend(BATCH_SIZE)
