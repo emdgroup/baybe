@@ -137,21 +137,21 @@ def create_pi_plot(
 
 # Next, we create our recommender and monkeypatch its `recommend` method:
 
-my_recommender = TwoPhaseMetaRecommender(
-    initial_recommender=RandomRecommender(),
-    recommender=BotorchRecommender(
-        surrogate_model=GaussianProcessSurrogate(),
-        allow_repeated_recommendations=True,
-        allow_recommending_already_measured=True,
-    ),
+bayesian_recommender = BotorchRecommender(
+    surrogate_model=GaussianProcessSurrogate(),
 )
-my_recommender.recommender.recommend = MethodType(
+bayesian_recommender.recommend = MethodType(
     register_hooks(
         BotorchRecommender.recommend,
         post_hooks=[extract_pi],
     ),
-    my_recommender.recommender,
+    bayesian_recommender,
 )
+recommender = TwoPhaseMetaRecommender(
+    initial_recommender=RandomRecommender(),
+    recommender=bayesian_recommender,
+)
+
 
 # In this example, we use `MethodType` to bind the `BotorchRecommender.recommend`
 # **function** with our hook.
@@ -178,7 +178,7 @@ searchspace = SearchSpace.from_product(parameters=discrete_params)
 objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
 campaign = Campaign(
     searchspace=searchspace,
-    recommender=my_recommender,
+    recommender=recommender,
     objective=objective,
 )
 
