@@ -256,7 +256,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         # Transform and fit
         train_x_comp_rep, train_y_comp_rep = to_tensor(
-            searchspace.transform(measurements),
+            searchspace.transform(measurements, allow_extra=True),
             objective.transform(measurements),
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)

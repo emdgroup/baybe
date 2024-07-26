@@ -53,7 +53,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
-        train_x = searchspace.transform(measurements)
+        train_x = searchspace.transform(measurements, allow_extra=True)
         train_y = objective.transform(measurements)
 
         signature_params = signature(acqf_cls).parameters

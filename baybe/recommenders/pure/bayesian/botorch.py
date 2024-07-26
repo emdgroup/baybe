@@ -216,7 +216,7 @@ class BotorchRecommender(BayesianRecommender):
         from botorch.optim import optimize_acqf_mixed
 
         # Transform discrete candidates
-        candidates_comp = searchspace.transform(candidates_exp)
+        candidates_comp = searchspace.transform(candidates_exp, allow_missing=True)
 
         if len(candidates_comp) > 0:
             # Calculate the number of samples from the given percentage
