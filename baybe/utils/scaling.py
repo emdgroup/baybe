@@ -3,30 +3,39 @@
 from __future__ import annotations
 
 import itertools
+from typing import TYPE_CHECKING
 
 from attrs import define, field
 from attrs.validators import deep_iterable, deep_mapping, instance_of
-from botorch.models.transforms.input import InputTransform
-from torch import Tensor
+
+if TYPE_CHECKING:
+    from botorch.models.transforms.input import InputTransform
+    from torch import Tensor
 
 
 @define
 class ColumnTransformer:
     """Class for applying transforms to individual columns of tensors."""
 
-    mapping: dict[tuple[int, ...], InputTransform] = field(
-        validator=deep_mapping(
+    mapping: dict[tuple[int, ...], InputTransform] = field()
+    """A mapping defining what transform to apply to which columns."""
+
+    @mapping.validator
+    def _validate_mapping_types_lazily(self, attr, value):
+        """Perform transform isinstance check using lazy import."""
+        from botorch.models.transforms.input import InputTransform
+
+        validator = deep_mapping(
             mapping_validator=instance_of(dict),
             key_validator=deep_iterable(
                 member_validator=instance_of(int), iterable_validator=instance_of(tuple)
             ),
             value_validator=instance_of(InputTransform),
         )
-    )
-    """A mapping defining what transform to apply to which columns."""
+        validator(self, attr, value)
 
     @mapping.validator
-    def _validate_mapping(self, _, value: dict):
+    def _validate_mapping_is_disjoint(self, _, value: dict):
         """Validate that the each column is assigned to at most one transformer."""
         for x, y in itertools.combinations(value.keys(), 2):
             if not set(x).isdisjoint(y):
