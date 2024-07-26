@@ -353,14 +353,17 @@ def _block_serialize_custom_architecture(
 #   class, which would avoid the nested wrapping below. However, this requires
 #   adjusting the base class (un-)structure hooks such that they consistently apply
 #   existing hooks of the concrete subclasses.
-converter.register_unstructure_hook(
-    Surrogate,
-    _make_hook_decode_onnx_str(
-        _block_serialize_custom_architecture(
-            lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
-        )
-    ),
+_unstructure_hook = _make_hook_decode_onnx_str(
+    _block_serialize_custom_architecture(
+        lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
+    )
 )
+converter.register_unstructure_hook(Surrogate, _unstructure_hook)
 converter.register_structure_hook(
     Surrogate, _make_hook_encode_onnx_str(get_base_structure_hook(Surrogate))
+)
+converter.register_unstructure_hook(SurrogateProtocol, _unstructure_hook)
+converter.register_structure_hook(
+    SurrogateProtocol,
+    _make_hook_encode_onnx_str(get_base_structure_hook(SurrogateProtocol)),
 )
