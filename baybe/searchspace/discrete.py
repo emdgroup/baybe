@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Collection, Sequence
+from itertools import compress
 from math import prod
 from typing import TYPE_CHECKING, Any
 
@@ -161,7 +162,7 @@ class SubspaceDiscrete(SerialMixin):
     def _default_metadata(self) -> pd.DataFrame:
         """Create the default metadata."""
         # If the discrete search space is empty, explicitly return an empty dataframe
-        # instead of simply using a zero-length index. Otherwise, the boolean dtype
+        # instead of simply using a zero-length index. Otherwise, the Boolean dtype
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
@@ -271,18 +272,18 @@ class SubspaceDiscrete(SerialMixin):
 
             # Apply polars product and filtering
             lazy_df = parameter_cartesian_prod_polars(parameters)
-            mask: list[bool] = []
-            lazy_df = _apply_constraint_filter_polars(lazy_df, constraints, mask)
+            lazy_df, mask_missing = _apply_constraint_filter_polars(
+                lazy_df, constraints
+            )
             df_records = lazy_df.collect(streaming=True).to_dicts()
             df = pd.DataFrame.from_records(df_records)
         except OptionalImportError:
             # Apply pandas product
             df = parameter_cartesian_prod_pandas(parameters)
-            mask = [False] * len(constraints)
+            mask_missing = [True] * len(constraints)
 
         # Gather and use constraints not yet applied
-        constraints_ = tuple(c for c, applied in zip(constraints, mask) if not applied)
-        _apply_constraint_filter_pandas(df, constraints_)
+        _apply_constraint_filter_pandas(df, list(compress(constraints, mask_missing)))
 
         return SubspaceDiscrete(
             parameters=parameters,
@@ -719,40 +720,33 @@ def _apply_constraint_filter_pandas(
 
 def _apply_constraint_filter_polars(
     ldf: pl.LazyFrame,
-    constraints: Collection[DiscreteConstraint],
-    mask_applied: list | None = None,
-) -> pl.LazyFrame:
-    """Remove discrete search space entries inplace based on constraints.
+    constraints: Sequence[DiscreteConstraint],
+) -> tuple[pl.LazyFrame, list[bool]]:
+    """Remove discrete search space entries based on constraints.
 
     Note:
         This will silently skip constraints that have no Polars implementation.
 
     Args:
-        ldf: The data in experimental representation to be modified inplace.
+        ldf: The data in experimental representation to be filtered.
         constraints: Collection of discrete constraints.
-        mask_applied: (Optional) empty list which will be filled inplace with booleans
-            indicating which constraints have been applied.
 
     Returns:
-        A Polars lazyframe with undesired rows removed.
-
-    Raises:
-        ValueError: If a non-empty ``mask_applied`` was provided.
+        A tuple containing
+            * The Polars lazyframe with undesired rows removed
+            * A Boolean mask indicating which constraints have **not** been applied
     """
-    if mask_applied is None:
-        mask_applied = []
-    if len(mask_applied) != 0:
-        raise ValueError("The provided mask must be empty or None.")
+    mask_missing = []
 
     for c in constraints:
         try:
             to_keep = c.get_invalid_polars().not_()
             ldf = ldf.filter(to_keep)
-            mask_applied.append(True)
+            mask_missing.append(False)
         except NotImplementedError:
-            mask_applied.append(False)
+            mask_missing.append(True)
 
-    return ldf
+    return ldf, mask_missing
 
 
 def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyFrame:
