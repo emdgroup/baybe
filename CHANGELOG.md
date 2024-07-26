@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   two fixed low and high dimensional prior regimes
 - The previous default kernel factory has been renamed to `EDBOKernelFactory` and now
   fully reflects the original logic
+- Regular "EI" acquisition functions are mapped to their "log" versions for improved
+  numerical stability
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
