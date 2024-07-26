@@ -75,7 +75,13 @@ class SurrogateProtocol(Protocol):
         """
 
     def to_botorch(self) -> Model:
-        """Create the botorch-ready representation of the fitted model."""
+        """Create the botorch-ready representation of the fitted model.
+
+        The :class:`botorch.models.model.Model` created by this method needs to be
+        configured such that it can be called with candidate points in **computational
+        representation**, that is, input of the form as obtained via
+        :meth:`baybe.searchspace.core.SearchSpace.transform`.
+        """
 
 
 @define
