@@ -35,54 +35,60 @@ jobs:
         run: |
             git config --local user.email "sphinx-upload[bot]@users.noreply.github.com"
             git config --local user.name "sphinx-upload[bot]"
-      - name: Copy latest folder to gh-pages branch
-        run: |
             git fetch origin gh-pages:gh-pages
             git checkout gh-pages
+            git fetch origin main:main
+            git show main:docs/scripts/utils.py > utils.py
+      - name: Check for Hotfix
+        id: hotfix
+        run: |
+          pip install packaging
+          git fetch --tags
+          tags=$(git tag -l)
+          if ${{ github.event_name == 'release' }}; then
+            HOTFIX_VERSION=$(python utils.py hotfix "${{github.event.release.tag_name}}" "$tags")
+          else
+            HOTFIX_VERSION="False"
+          fi
+          echo "$HOTFIX_VERSION"
+          echo "hotfix=$HOTFIX_VERSION" >> "$GITHUB_OUTPUT"
+      - name: Verify setting of hotfix
+        run: |
+          echo "The value of hotfix is ${{ steps.hotfix.outputs.hotfix }}"       
+      - if: ${{ steps.hotfix.outputs.hotfix == 'False'}}
+        name: Copy latest folder to gh-pages branch and update branch
+        run: |
             if [ -d "latest" ]; then
               rm -rf latest
             fi
             mkdir ./latest
             cp -r docs/build/* ./latest
             echo "Successfully copied into latest"
+            python utils.py html latest
+            git add -f latest
       - if: ${{ github.event_name == 'release' }}
-        name: Copy stable folder to gh-pages branch when releasing
+        name: Create numbered version
         run: |
             FOLDER=${{github.event.release.tag_name}}
             mkdir ./$FOLDER
             cp -r docs/build/* ./$FOLDER
-            echo "Copying files into stable folder"
+            python utils.py selector_page $FOLDER
+            python utils.py html $FOLDER
+            git add -f $FOLDER
+            git add -f versions.html
+      - if: ${{ (github.event_name == 'release') && (steps.hotfix.outputs.hotfix == 'False') }}
+        name: Copy stable folder to gh-pages branch when releasing
+        run: |
             if [ -d "stable" ]; then
-              echo "Deleting old stable folder."
               rm -rf stable
             fi
             mkdir ./stable
             cp -rv docs/build/* ./stable
-            echo "Successfully copied into stable folder"
-      - name: Update gh-pages branch for latest
-        run: |
-            git_hash=$(git rev-parse --short "$GITHUB_SHA")
-            git fetch origin main:main
-            git show main:docs/scripts/add_version.py > add_version.py
-            python add_version.py html latest
-            git add -f latest
-            git commit -m "Sphinx documentation for ${git_hash} (latest)"
-      - if: ${{ github.event_name == 'release' }}
-        name: Add new stable and numbered version to gh-pages branch
-        run: |
-            FOLDER=${{github.event.release.tag_name}}
-            echo "Adding numbered folder"
-            git add -f $FOLDER
-            git commit -m "Sphinx documentation for ${git_hash} (${FOLDER})"
-            echo "Adding stable as a separate folder"
+            python utils.py html stable
             git add -f stable
-            git commit -m "Sphinx documentation for ${git_hash} (stable)"
-            echo "Inserting announcement banner to documentation and add link for selector"
-            python add_version.py selector_page $FOLDER
-            python add_version.py html $FOLDER
-            python add_version.py html stable
-            rm add_version.py
-            git add .
-            git commit -m "Add link to version to selector page and add banner"
+      - name: Create git commit
+        run: | 
+            git_hash=$(git rev-parse --short "$GITHUB_SHA")
+            git commit -m "Sphinx documentation for ${git_hash}"
       - name: Push changes to gh-pages branch
         run: git push origin gh-pages
