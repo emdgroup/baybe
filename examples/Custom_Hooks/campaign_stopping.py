@@ -1,8 +1,11 @@
 ## Campaign Stopping
 
-# This example demonstrates how to use custom hook mechanics to stop unpromising
-# campaigns based on a simple Probability of Improvement (PI) criterion.
-# This is based on the "full lookup" example [here](../Backtesting/full_lookup.md).
+# Here, we demonstrate how to use the custom hook mechanics to stop campaigns based on a
+# simple Probability of Improvement (PI) criterion.
+# This could for instance be desired to terminate a campaign automatically if the
+# results are sufficiently good or if the campaign seems unpromising and should rather
+# be terminated to refine the search space.
+# The use case is based on the "full lookup" example [here](../Backtesting/full_lookup.md).
 
 ### Imports
 
@@ -68,8 +71,7 @@ except FileNotFoundError:
     except FileNotFoundError as e:
         print(e)
 
-# Then we define the substance categories and SMILES representing their molecular structure.
-# Note that we need to ensure that the names fit the names in the provided .xlsx file!
+# For more details on the search space, see the [full lookup example](../Backtesting/full_lookup.md).
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
@@ -102,7 +104,7 @@ dict_ligand = {
 
 ### Run the Scenario for the Unstopped Campaign
 
-# We will run this campaign unstopped and several times to get a feeling for the
+# We will run this campaign uninterrupted and several times to get a feeling for the
 # average trajectory.
 
 objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
@@ -115,7 +117,7 @@ parameters = [
     NumericalDiscreteParameter(name="Concentration", values=[0.057, 0.1, 0.153]),
 ]
 scenarios = {
-    "Average Non-Stopped": Campaign(
+    "Average uninterrupted": Campaign(
         searchspace=SearchSpace.from_product(parameters=parameters), objective=objective
     )
 }
@@ -133,6 +135,8 @@ results = simulate_scenarios(
 
 
 # First, we define a custom exception to identify stopping
+
+
 class CampaignStoppedException(Exception):
     """The campaign should be stopped."""
 
@@ -181,7 +185,7 @@ def stop_on_PI(
         )
 
 
-# Now we attach the hook to the ``.recommend`` function of the ``BotorchRecommender``
+# Now we attach the hook to the ``recommend`` function of the ``BotorchRecommender``
 # we intend to use. This will attach the hook to all future instances of that class,
 # which is OK in this example as we do not plan on creating more afterwards. It is also
 # possible to attach the hook to a specific instance via ``MethodType``
@@ -219,7 +223,7 @@ for k in range(N_STOPPED_CAMPAIGNS):
 
     # Contrary to ``simulate_scenarios``, ``simulate_experiment`` runs on single
     # iteration, and we have to add the Scenario information ourselves here.
-    result["Scenario"] = f"PI stopped, run {k+1}"
+    result["Scenario"] = f"PI-stopped, run {k+1}"
     stopped_results.append(result)
 
 ### Combine the results and plot them
