@@ -9,7 +9,6 @@ from copy import deepcopy
 from functools import partial
 from typing import Literal
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -35,7 +34,7 @@ def simulate_experiment(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
-    plot_shap_feature_importance: bool = False,
+    get_shap_feature_importance: bool = False,
 ) -> pd.DataFrame:
     """Simulate a Bayesian optimization loop.
 
@@ -63,8 +62,8 @@ def simulate_experiment(
                 made so that unmeasured experiments will not be recommended.
         noise_percent: If not ``None``, relative noise in percent of
             ``noise_percent`` will be applied to the parameter measurements.
-        plot_shap_feature_importance: If ``True``, the SHAP feature importance will be
-            plotted after the simulation.
+        get_shap_feature_importance: If ``True``, the SHAP feature importance
+            will be included in the output.
 
     Returns:
         A dataframe ready for plotting, see the ``Note`` for details.
@@ -242,9 +241,13 @@ def simulate_experiment(
             results[iterbest_col] = results[measurement_col].apply(agg_fun)
             results[cumbest_cols] = cum_fun(results[iterbest_col])
 
-        if plot_shap_feature_importance:
-            campaign.plot_shap_feature_importance()
-            plt.title(f"SHAP Feature Importance for Campaign {campaign.name}")
-            plt.show
+            # Get SHAP feature importance results and add them to the
+            # final row as a list object if requested
+            if get_shap_feature_importance:
+                shap_values = campaign.get_shap_feature_importance()
+                shap_col = f"{target.name}_SHAP"
+                results[shap_col] = np.nan
+                results[shap_col] = results[shap_col].astype(object)
+                results.at[results.index[-1], shap_col] = shap_values.tolist()
 
         return results

@@ -35,7 +35,7 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
-    plot_shap_feature_importance: bool = False,
+    get_shap_feature_importance: bool = False,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -55,8 +55,8 @@ def simulate_scenarios(
         n_mc_iterations: The number of Monte Carlo simulations to be used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        plot_shap_feature_importance: If ``True``, the SHAP feature importance
-            will be plotted after the simulation.
+        get_shap_feature_importance: If ``True``, the SHAP feature importance
+            will be included in the output.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
@@ -109,7 +109,7 @@ def simulate_scenarios(
                     random_seed=Random_Seed,
                     impute_mode=impute_mode,
                     noise_percent=noise_percent,
-                    plot_shap_feature_importance=plot_shap_feature_importance,
+                    get_shap_feature_importance=get_shap_feature_importance,
                 )
             )
 
@@ -169,7 +169,7 @@ def _simulate_groupby(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
-    plot_shap_feature_importance: bool = False,
+    get_shap_feature_importance: bool = False,
 ) -> pd.DataFrame:
     """Scenario simulation for different search space partitions.
 
@@ -187,7 +187,7 @@ def _simulate_groupby(
         random_seed: See :func:`baybe.simulation.core.simulate_experiment`.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        plot_shap_feature_importance: See
+        get_shap_feature_importance: See
             :func:`baybe.simulation.core.simulate_experiment`.
 
     Returns:
@@ -241,7 +241,7 @@ def _simulate_groupby(
                 random_seed=random_seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
-                plot_shap_feature_importance=plot_shap_feature_importance,
+                get_shap_feature_importance=get_shap_feature_importance,
             )
         except NothingToSimulateError:
             continue
