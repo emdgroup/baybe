@@ -1,7 +1,7 @@
 ## Monitoring the Probability of Improvement
 
 # This example demonstrates how the {func}`register_hooks <baybe.utils.basic.register_hooks>` utility can be used to extract the probability of improvement (PI) from a running campaign:
-# * We define a hook that is compatible with the {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.BotorchRecommender.recommend>` interface and lets us extract the PI achieved after each experimental iteration,
+# * We define a hook that is compatible with the {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.recommend>` interface and lets us extract the PI achieved after each experimental iteration,
 # * attach the hook to the recommender driving our campaign,
 # * and plot the evolving PI values after campaign completion.
 
