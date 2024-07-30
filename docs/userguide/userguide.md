@@ -3,7 +3,7 @@
 ```{toctree}
 Campaigns <campaigns>
 Active Learning <active_learning>
-Async Workflow<async>
+Asynchronous Workflows <async>
 Constraints <constraints>
 Environment Vars <envvars>
 Objectives <objectives>
