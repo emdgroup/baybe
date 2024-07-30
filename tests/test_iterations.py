@@ -2,6 +2,7 @@
 """Tests various configurations for a small number of iterations."""
 
 import pytest
+from pytest import param
 
 from baybe.acquisition import qKG, qNIPV
 from baybe.acquisition.base import AcquisitionFunction
@@ -38,6 +39,10 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
+from baybe.surrogates.gaussian_process.presets import (
+    DefaultKernelFactory,
+    EDBOKernelFactory,
+)
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations
@@ -68,22 +73,18 @@ valid_continuous_recommenders = [
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 
-valid_active_learning_acquisition_functions = [
+valid_active_learning_acqfs = [
     qNIPV(sampling_fraction=0.2, sampling_method="Random"),
     qNIPV(sampling_fraction=0.2, sampling_method="FPS"),
     qNIPV(sampling_fraction=1.0, sampling_method="FPS"),
     qNIPV(sampling_n_points=1, sampling_method="Random"),
     qNIPV(sampling_n_points=1, sampling_method="FPS"),
 ]
-valid_mc_acquisition_functions = [
+valid_mc_acqfs = [
     a() for a in get_subclasses(AcquisitionFunction) if a.is_mc
-] + valid_active_learning_acquisition_functions
-valid_nonmc_acquisition_functions = [
-    a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc
-]
-valid_acquisition_functions = (
-    valid_mc_acquisition_functions + valid_nonmc_acquisition_functions
-)
+] + valid_active_learning_acqfs
+valid_nonmc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc]
+
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybird recommenders like naive ones or recommenders not using default arguments
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
@@ -190,6 +191,12 @@ valid_composite_kernels = [
 
 valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kernels
 
+
+valid_kernel_factories = [
+    param(DefaultKernelFactory(), id="Default"),
+    param(EDBOKernelFactory(), id="EDBO"),
+]
+
 test_targets = [
     ["Target_max"],
     ["Target_min"],
@@ -201,12 +208,10 @@ test_targets = [
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf",
-    valid_mc_acquisition_functions,
-    ids=[a.abbreviation for a in valid_mc_acquisition_functions],
+    "acqf", valid_mc_acqfs, ids=[a.abbreviation for a in valid_mc_acqfs]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_iter_mc_acquisition_function(campaign, n_iterations, batch_size, acqf):
+def test_mc_acqfs(campaign, n_iterations, batch_size, acqf):
     if isinstance(acqf, qKG):
         pytest.skip(f"{acqf.__class__.__name__} only works with continuous spaces.")
 
@@ -215,13 +220,11 @@ def test_iter_mc_acquisition_function(campaign, n_iterations, batch_size, acqf):
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf",
-    valid_nonmc_acquisition_functions,
-    ids=[a.abbreviation for a in valid_nonmc_acquisition_functions],
+    "acqf", valid_nonmc_acqfs, ids=[a.abbreviation for a in valid_nonmc_acqfs]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
-def test_iter_nonmc_acquisition_function(campaign, n_iterations, batch_size):
+def test_nonmc_acqfs(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
@@ -230,7 +233,13 @@ def test_iter_nonmc_acquisition_function(campaign, n_iterations, batch_size):
     "kernel", valid_kernels, ids=[c.__class__ for c in valid_kernels]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_iter_kernel(campaign, n_iterations, batch_size):
+def test_kernels(campaign, n_iterations, batch_size):
+    run_iterations(campaign, n_iterations, batch_size)
+
+
+@pytest.mark.parametrize("kernel", valid_kernel_factories)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+def test_kernel_factories(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
@@ -240,33 +249,33 @@ def test_iter_kernel(campaign, n_iterations, batch_size):
     valid_surrogate_models,
     ids=[c.__class__ for c in valid_surrogate_models],
 )
-def test_iter_surrogate_model(campaign, n_iterations, batch_size):
+def test_surrogate_models(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("recommender", valid_initial_recommenders)
-def test_iter_initial_recommender(campaign, n_iterations, batch_size):
+def test_initial_recommenders(campaign, n_iterations, batch_size):
     with pytest.warns(UnusedObjectWarning):
         run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("target_names", test_targets)
-def test_iter_targets(campaign, n_iterations, batch_size):
+def test_targets(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("recommender", valid_discrete_recommenders)
-def test_iter_recommender_discrete(campaign, n_iterations, batch_size):
+def test_recommenders_discrete(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("recommender", valid_continuous_recommenders)
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-def test_iter_recommender_continuous(campaign, n_iterations, batch_size):
+def test_recommenders_continuous(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
@@ -276,7 +285,7 @@ def test_iter_recommender_continuous(campaign, n_iterations, batch_size):
     "parameter_names",
     [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
 )
-def test_iter_recommender_hybrid(campaign, n_iterations, batch_size):
+def test_recommenders_hybrid(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
