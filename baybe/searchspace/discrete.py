@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Collection, Sequence
+from itertools import compress
 from math import prod
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-import polars as pl
 from attr import define, field
 from cattrs import IterableValidationError
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
+from baybe.exceptions import OptionalImportError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -34,6 +36,8 @@ from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
+    import polars as pl
+
     from baybe.searchspace.core import SearchSpace
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
@@ -158,7 +162,7 @@ class SubspaceDiscrete(SerialMixin):
     def _default_metadata(self) -> pd.DataFrame:
         """Create the default metadata."""
         # If the discrete search space is empty, explicitly return an empty dataframe
-        # instead of simply using a zero-length index. Otherwise, the boolean dtype
+        # instead of simply using a zero-length index. Otherwise, the Boolean dtype
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
@@ -252,18 +256,34 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Set defaults
+        # Set defaults and order constraints
         constraints = constraints or []
+        constraints = sorted(
+            constraints,
+            key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+        )
 
-        # Use Polars for Cartesian product of parameters and apply constraint
-        lazy_df = parameter_cartesian_prod_polars(parameters)
-        lazy_df = _apply_polars_constraint_filter(lazy_df, constraints)
+        try:
+            # Check for manual deactivation of polars
+            if os.environ.get("BAYBE_DEACTIVATE_POLARS", None) is not None:
+                raise OptionalImportError(
+                    "Polars was deactivated manually via environment variable."
+                )
 
-        # Conversion to Pandas dataframe
-        df = lazy_df.collect(streaming=True).to_pandas()
+            # Apply polars product and filtering
+            lazy_df = parameter_cartesian_prod_polars(parameters)
+            lazy_df, mask_missing = _apply_constraint_filter_polars(
+                lazy_df, constraints
+            )
+            df_records = lazy_df.collect(streaming=True).to_dicts()
+            df = pd.DataFrame.from_records(df_records)
+        except OptionalImportError:
+            # Apply pandas product
+            df = parameter_cartesian_prod_pandas(parameters)
+            mask_missing = [True] * len(constraints)
 
-        # Remove entries that violate any remaining parameter constraints
-        _apply_pandas_constraint_filter(df, constraints)
+        # Gather and use constraints not yet applied
+        _apply_constraint_filter_pandas(df, list(compress(constraints, mask_missing)))
 
         return SubspaceDiscrete(
             parameters=parameters,
@@ -511,7 +531,7 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Remove entries that violate parameter constraints:
-        _apply_pandas_constraint_filter(exp_rep, constraints)
+        _apply_constraint_filter_pandas(exp_rep, constraints)
 
         return cls(
             parameters=[*simplex_parameters, *product_parameters],
@@ -675,7 +695,7 @@ class SubspaceDiscrete(SerialMixin):
         return comp_rep
 
 
-def _apply_pandas_constraint_filter(
+def _apply_constraint_filter_pandas(
     df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
 ) -> pd.DataFrame:
     """Remove discrete search space entries based on constraints.
@@ -689,12 +709,6 @@ def _apply_pandas_constraint_filter(
     Returns:
         The filtered dataframe.
     """
-    # Reorder the constraints according to their execution order
-    constraints = sorted(
-        constraints,
-        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-    )
-
     # Remove entries that violate parameter constraints:
     for constraint in (c for c in constraints if c.eval_during_creation):
         idxs = constraint.get_invalid(df)
@@ -704,30 +718,35 @@ def _apply_pandas_constraint_filter(
     return df
 
 
-def _apply_polars_constraint_filter(
-    ldf: pl.LazyFrame, constraints: Collection[DiscreteConstraint]
-) -> pl.LazyFrame:
-    """Remove discrete search space entries inplace based on constraints.
+def _apply_constraint_filter_polars(
+    ldf: pl.LazyFrame,
+    constraints: Sequence[DiscreteConstraint],
+) -> tuple[pl.LazyFrame, list[bool]]:
+    """Remove discrete search space entries based on constraints.
 
     Note:
         This will silently skip constraints that have no Polars implementation.
 
     Args:
-        ldf: The data in experimental representation to be modified inplace.
+        ldf: The data in experimental representation to be filtered.
         constraints: Collection of discrete constraints.
 
     Returns:
-        A Polars lazyframe with undesired rows removed.
-
+        A tuple containing
+            * The Polars lazyframe with undesired rows removed
+            * A Boolean mask indicating which constraints have **not** been applied
     """
+    mask_missing = []
+
     for c in constraints:
         try:
-            pl_expr = c.to_polars()
-            ldf = ldf.filter(pl_expr)
+            to_keep = c.get_invalid_polars().not_()
+            ldf = ldf.filter(to_keep)
+            mask_missing.append(False)
         except NotImplementedError:
-            pass
+            mask_missing.append(True)
 
-    return ldf
+    return ldf, mask_missing
 
 
 def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyFrame:
@@ -741,6 +760,8 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
     Returns:
         A lazy dataframe containing all possible discrete parameter value combinations.
     """
+    from baybe._optional.polars import polars as pl
+
     discrete_parameters = [p for p in parameters if p.is_discrete]
     if not discrete_parameters:
         return pl.LazyFrame()

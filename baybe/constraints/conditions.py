@@ -1,14 +1,16 @@
 """Functionality for constraint conditions."""
 
+
+from __future__ import annotations
+
 import operator as ops
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import partial
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-import polars as pl
 from attr import define, field
 from attr.validators import in_
 from attrs.validators import min_len
@@ -24,6 +26,9 @@ from baybe.serialization import (
     unstructure_base,
 )
 from baybe.utils.numerical import DTypeFloatNumpy
+
+if TYPE_CHECKING:
+    import polars as pl
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:

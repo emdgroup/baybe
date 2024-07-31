@@ -105,8 +105,8 @@ class DiscreteConstraint(Constraint, ABC):
             The dataframe indices of rows where the constraint is violated.
         """
 
-    def to_polars(self) -> pl.Expr:
-        """Translate the constraint to Polars expression for filtering.
+    def get_invalid_polars(self) -> pl.Expr:
+        """Translate the constraint to Polars expression identifying undesired rows.
 
         Returns:
             The Polars expressions to pass to :meth:`polars.LazyFrame.filter`.

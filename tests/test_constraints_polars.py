@@ -1,14 +1,22 @@
 """Test Polars implementations of constraints."""
-import polars as pl
 import pytest
 from pandas.testing import assert_frame_equal
 
+from baybe._optional.info import POLARS_INSTALLED
 from baybe.searchspace.discrete import (
-    _apply_pandas_constraint_filter,
-    _apply_polars_constraint_filter,
+    _apply_constraint_filter_pandas,
+    _apply_constraint_filter_polars,
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
+
+pytestmark = pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
+
+
+if POLARS_INSTALLED:
+    import polars as pl
 
 
 def _lazyframe_from_product(parameters):
@@ -32,8 +40,7 @@ def _lazyframe_from_product(parameters):
 def test_polars_prodsum1(parameters, constraints):
     """Tests Polars implementation of sum constraint."""
     ldf = _lazyframe_from_product(parameters)
-
-    ldf = _apply_polars_constraint_filter(ldf, constraints)
+    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with 1,2-sum above 150
     ldf = ldf.with_columns(sum=pl.sum_horizontal(["Fraction_1", "Fraction_2"]))
@@ -48,8 +55,7 @@ def test_polars_prodsum1(parameters, constraints):
 def test_polars_prodsum2(parameters, constraints):
     """Tests Polars implementation of product constrain."""
     ldf = _lazyframe_from_product(parameters)
-
-    ldf = _apply_polars_constraint_filter(ldf, constraints)
+    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with product under 30
     df = ldf.filter(
@@ -68,8 +74,7 @@ def test_polars_prodsum2(parameters, constraints):
 def test_polars_prodsum3(parameters, constraints):
     """Tests Polars implementation of exact sum constraint."""
     ldf = _lazyframe_from_product(parameters)
-
-    ldf = _apply_polars_constraint_filter(ldf, constraints)
+    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with sum unequal to 100
     ldf = ldf.with_columns(sum=pl.sum_horizontal(["Fraction_1", "Fraction_2"]))
@@ -90,11 +95,9 @@ def test_polars_prodsum3(parameters, constraints):
 def test_polars_exclusion(mock_substances, parameters, constraints):
     """Tests Polars implementation of exclusion constraint."""
     ldf = _lazyframe_from_product(parameters)
-
-    ldf = _apply_polars_constraint_filter(ldf, constraints)
+    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
 
     # Number of entries with either first/second substance and a temperature above 151
-
     df = ldf.filter(
         (pl.col("Temperature") > 151)
         & (pl.col("Solvent_1").is_in(list(mock_substances)[:2]))
@@ -121,7 +124,7 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
 def test_polars_label_duplicates(parameters, constraints):
     """Tests Polars implementation of no-label duplicates constraint."""
     ldf = _lazyframe_from_product(parameters)
-    ldf = _apply_polars_constraint_filter(ldf, constraints)
+    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
 
     ldf = ldf.with_columns(
         pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
@@ -140,7 +143,7 @@ def test_polars_label_duplicates(parameters, constraints):
 def test_polars_linked_parameters(parameters, constraints):
     """Tests Polars implementation of linked parameters constraint."""
     ldf = _lazyframe_from_product(parameters)
-    ldf = _apply_polars_constraint_filter(ldf, constraints)
+    ldf, _ = _apply_constraint_filter_polars(ldf, constraints)
 
     ldf = ldf.with_columns(
         pl.concat_list(pl.col(["Solvent_1", "Solvent_2", "Solvent_3"]))
@@ -189,9 +192,9 @@ def test_polars_product(constraints, parameters):
     assert_frame_equal(df_pl.to_pandas(), df_pd)
 
     # Apply constraints
-    df_pd_filtered = _apply_pandas_constraint_filter(df_pd, constraints)
+    df_pd_filtered = _apply_constraint_filter_pandas(df_pd, constraints)
     df_pl_filtered = (
-        _apply_polars_constraint_filter(ldf, constraints).collect().to_pandas()
+        _apply_constraint_filter_polars(ldf, constraints)[0].collect().to_pandas()
     )
 
     # Assert strict equality of two dataframes
