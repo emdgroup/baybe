@@ -137,10 +137,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         # Create a composite scaler from parameter-wise scaler objects
         mapping: dict[tuple[int, ...], InputTransform] = {}
         for p in searchspace.parameters:
-            idxs = searchspace.get_comp_rep_parameter_indices(p.name)
-            factory = self._make_parameter_scaler_factory(p)
-            if factory is None:
+            if (factory := self._make_parameter_scaler_factory(p)) is None:
                 continue
+            idxs = searchspace.get_comp_rep_parameter_indices(p.name)
             transformer = factory(len(idxs))
             mapping[idxs] = transformer
         scaler = ColumnTransformer(mapping)
