@@ -1,6 +1,6 @@
 """Recommenders based on clustering."""
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import ClassVar
 
 import numpy as np
@@ -8,11 +8,8 @@ import pandas as pd
 from attrs import define, field
 from scipy.stats import multivariate_normal
 from sklearn.base import ClusterMixin
-from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
-from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
-from sklearn_extra.cluster import KMedoids
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
@@ -30,18 +27,10 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
-    # TODO: "Type" should not appear in ClassVar. Both PyCharm and mypy complain, see
-    #   also note in the mypy docs:
-    #       https://peps.python.org/pep-0526/#class-and-instance-variable-annotations
-    #   Figure out what is the right approach here. However, the issue might be
-    #   ultimately related to an overly restrictive PEP:
-    #       https://github.com/python/mypy/issues/5144
+
     # TODO: `use_custom_selector` can probably be replaced with a fallback mechanism
     #   that checks if a custom mechanism is implemented and uses default otherwise
     #   (similar to what is done in the recommenders)
-
-    model_class: ClassVar[type[ClusterMixin]]
-    """Class variable describing the model class."""
 
     model_cluster_num_parameter_name: ClassVar[str]
     """Class variable describing the name of the clustering parameter."""
@@ -53,6 +42,11 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
     model_params: dict = field(factory=dict)
     """Optional model parameter that will be passed to the surrogate constructor.
     This is initialized with reasonable default values for the derived child classes."""
+
+    @staticmethod
+    @abstractmethod
+    def _get_model_cls() -> type[ClusterMixin]:
+        """Return the surrogate model class."""
 
     def _make_selection_default(
         self,
@@ -68,7 +62,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         assigned_clusters = model.predict(candidates_scaled)
         selection = [
@@ -91,7 +85,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
 
         Raises:
             NotImplementedError: If this function is not implemented. Should be
@@ -115,7 +109,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         # Set model parameters and perform fit
-        model = self.model_class(
+        model = self._get_model_cls()(
             **{self.model_cluster_num_parameter_name: batch_size},
             **self.model_params,
         )
@@ -135,9 +129,6 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 class PAMClusteringRecommender(SKLearnClusteringRecommender):
     """Partitioning Around Medoids (PAM) clustering recommender."""
 
-    model_class: ClassVar[type[ClusterMixin]] = KMedoids
-    # See base class.
-
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
     # See base class.
 
@@ -152,6 +143,13 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
     def _default_model_params(self) -> dict:
         """Create the default model parameters."""
         return {"max_iter": 100, "init": "k-medoids++"}
+
+    @staticmethod
+    def _get_model_cls() -> type[ClusterMixin]:
+        # See base class.
+        from sklearn_extra.cluster import KMedoids
+
+        return KMedoids
 
     def _make_selection_custom(
         self,
@@ -168,7 +166,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
             candidates_scaled: The already scaled candidates. Unused.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         selection = model.medoid_indices_.tolist()
         return selection
@@ -179,9 +177,6 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     """K-means clustering recommender."""
 
     # Class variables
-    model_class: ClassVar[type[ClusterMixin]] = KMeans
-    # See base class.
-
     model_cluster_num_parameter_name: ClassVar[str] = "n_clusters"
     # See base class.
 
@@ -196,6 +191,13 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
     def _default_model_params(self) -> dict:
         """Create the default model parameters."""
         return {"max_iter": 1000, "n_init": 50}
+
+    @staticmethod
+    def _get_model_cls() -> type[ClusterMixin]:
+        # See base class.
+        from sklearn.cluster import KMeans
+
+        return KMeans
 
     def _make_selection_custom(
         self,
@@ -212,7 +214,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         distances = pairwise_distances(candidates_scaled, model.cluster_centers_)
         # Set the distances of points that were not assigned by the model to that
@@ -231,11 +233,15 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     """Gaussian mixture model (GMM) clustering recommender."""
 
     # Class variables
-    model_class: ClassVar[type[ClusterMixin]] = GaussianMixture
-    # See base class.
-
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
     # See base class.
+
+    @staticmethod
+    def _get_model_cls() -> type[ClusterMixin]:
+        # See base class.
+        from sklearn.mixture import GaussianMixture
+
+        return GaussianMixture
 
     def _make_selection_custom(
         self,
@@ -252,7 +258,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
             candidates_scaled: The already scaled candidates.
 
         Returns:
-           A list with positional indices of the selected candidates.
+            A list with positional indices of the selected candidates.
         """
         predicted_clusters = model.predict(candidates_scaled)
         selection = []

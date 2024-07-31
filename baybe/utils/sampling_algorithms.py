@@ -1,4 +1,5 @@
 """A collection of point sampling algorithms."""
+
 from enum import Enum
 from typing import Literal
 

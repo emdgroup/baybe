@@ -12,8 +12,6 @@
 ### Imports
 
 import os
-import sys
-from pathlib import Path
 
 import numpy as np
 import seaborn as sns
@@ -112,7 +110,6 @@ results = simulate_scenarios(
 
 # We use the plotting utility to create plots.
 
-path = Path(sys.path[0])
 ax = sns.lineplot(
     data=results,
     marker="o",
@@ -121,8 +118,4 @@ ax = sns.lineplot(
     y="Target_CumBest",
     hue="Scenario",
 )
-create_example_plots(
-    ax=ax,
-    path=path,
-    base_name="botorch_analytical",
-)
+create_example_plots(ax=ax, base_name="botorch_analytical")

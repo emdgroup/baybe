@@ -1,6 +1,7 @@
 """Base classes for all meta recommenders."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import cattrs
 import pandas as pd
@@ -11,6 +12,7 @@ from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 
@@ -85,11 +87,21 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             objective=objective,
             measurements=measurements,
         )
+
+        # Non-predictive recommenders should not be called with an objective or
+        # measurements. Using dict value type Any here due to known mypy complication:
+        # https://github.com/python/mypy/issues/5382
+        optional_args: dict[str, Any] = (
+            {}
+            if isinstance(recommender, NonPredictiveRecommender)
+            else {
+                "objective": objective,
+                "measurements": measurements,
+            }
+        )
+
         return recommender.recommend(
-            batch_size=batch_size,
-            searchspace=searchspace,
-            objective=objective,
-            measurements=measurements,
+            batch_size=batch_size, searchspace=searchspace, **optional_args
         )
 
 

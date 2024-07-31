@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
@@ -11,11 +12,9 @@ import pandas as pd
 from attr import define, field
 
 from baybe.constraints import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
     validate_constraints,
 )
-from baybe.constraints.base import Constraint, ContinuousNonlinearConstraint
+from baybe.constraints.base import Constraint
 from baybe.parameters import SubstanceEncoding, TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -96,6 +95,18 @@ class SearchSpace(SerialMixin):
         )
 
     @classmethod
+    def from_parameter(cls, parameter: Parameter) -> SearchSpace:
+        """Create a search space from a single parameter.
+
+        Args:
+            parameter: The parameter to span the search space.
+
+        Returns:
+            The created search space.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
     def from_product(
         cls,
         parameters: Sequence[Parameter],
@@ -133,26 +144,14 @@ class SearchSpace(SerialMixin):
         else:
             constraints = []
 
-        discrete: SubspaceDiscrete = SubspaceDiscrete.from_product(
+        discrete = SubspaceDiscrete.from_product(
             parameters=[p for p in parameters if p.is_discrete],  # type:ignore[misc]
             constraints=[c for c in constraints if c.is_discrete],  # type:ignore[misc]
             empty_encoding=empty_encoding,
         )
-        continuous: SubspaceContinuous = SubspaceContinuous(
+        continuous = SubspaceContinuous.from_product(
             parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
-            constraints_lin_eq=[  # type:ignore[misc]
-                c
-                for c in constraints
-                if isinstance(c, ContinuousLinearEqualityConstraint)
-            ],
-            constraints_lin_ineq=[  # type:ignore[misc]
-                c
-                for c in constraints
-                if isinstance(c, ContinuousLinearInequalityConstraint)
-            ],
-            constraints_nonlin=[
-                c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
-            ],
+            constraints=[c for c in constraints if c.is_continuous],  # type:ignore[misc]
         )
 
         return SearchSpace(discrete=discrete, continuous=continuous)
@@ -303,28 +302,106 @@ class SearchSpace(SerialMixin):
 
     def transform(
         self,
-        data: pd.DataFrame,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        """Transform data from experimental to computational representation.
-
-        This function can e.g. be used to transform data obtained from measurements.
-        Continuous parameters are not transformed but included.
+        """Transform parameters from experimental to computational representation.
 
         Args:
-            data: The data to be transformed. Must contain all specified parameters, can
-                contain more columns.
+            df: The dataframe to be transformed. The allowed columns of the dataframe
+                are dictated by the ``allow_missing`` and ``allow_extra`` flags.
+                The ``None`` default value is for temporary backward compatibility only
+                and will be removed in a future version.
+            allow_missing: If ``False``, each parameter of the space must have
+                (exactly) one corresponding column in the given dataframe. If ``True``,
+                the dataframe may contain only a subset of parameter columns.
+            allow_extra: If ``False``, every column present in the dataframe must
+                correspond to (exactly) one parameter of the space. If ``True``, the
+                dataframe may contain additional non-parameter-related columns, which
+                will be ignored.
+                The ``None`` default value is for temporary backward compatibility only
+                and will be removed in a future version.
+            data: Ignore! For backward compatibility only.
+
+        Raises:
+            ValueError: If dataframes are passed to both ``df`` and ``data``.
 
         Returns:
-            A dataframe with the parameters in computational representation.
+            A corresponding dataframe with parameters in computational representation.
         """
+        # TODO: Remove deprecation-related explanation of `None` default values
+        #   from docstring once deprecation expires
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
+
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
+
+        if allow_extra is None:
+            allow_extra = True
+            if set(df) - {p.name for p in self.parameters}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
         # Transform subspaces separately
-        df_discrete = self.discrete.transform(data)
-        df_continuous = self.continuous.transform(data)
+        df_discrete = self.discrete.transform(
+            df, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        df_continuous = self.continuous.transform(
+            df, allow_missing=allow_missing, allow_extra=allow_extra
+        )
 
         # Combine Subspaces
         comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
 
         return comp_rep
+
+    @property
+    def constraints_augmentable(self) -> tuple[Constraint, ...]:
+        """The searchspace constraints that can be considered during augmentation."""
+        return tuple(c for c in self.constraints if c.eval_during_augmentation)
+
+    def get_parameters_by_name(self, names: Sequence[str]) -> tuple[Parameter, ...]:
+        """Return parameters with the specified names.
+
+        Args:
+            names: Sequence of parameter names.
+
+        Returns:
+            The named parameters.
+        """
+        return self.discrete.get_parameters_by_name(
+            names
+        ) + self.continuous.get_parameters_by_name(names)
+
+
+def to_searchspace(
+    x: Parameter | SubspaceDiscrete | SubspaceContinuous | SearchSpace, /
+) -> SearchSpace:
+    """Convert a parameter/subspace into a search space (with search space passthrough)."""  # noqa: E501
+    return x if isinstance(x, SearchSpace) else x.to_searchspace()
 
 
 def validate_searchspace_from_config(specs: dict, _) -> None:

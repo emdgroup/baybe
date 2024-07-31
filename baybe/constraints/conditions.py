@@ -1,6 +1,5 @@
 """Functionality for constraint conditions."""
 
-
 from __future__ import annotations
 
 import operator as ops

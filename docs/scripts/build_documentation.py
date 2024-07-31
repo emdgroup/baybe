@@ -1,4 +1,5 @@
 """Utility for building the documentation."""
+
 import argparse
 import os
 import pathlib

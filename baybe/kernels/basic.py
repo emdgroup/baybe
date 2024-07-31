@@ -1,19 +1,18 @@
 """Collection of basic kernels."""
 
-
 from attrs import define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import ge, in_, instance_of
+from attrs.validators import ge, gt, in_, instance_of
 from attrs.validators import optional as optional_v
 
-from baybe.kernels.base import Kernel
+from baybe.kernels.base import BasicKernel
 from baybe.priors.base import Prior
 from baybe.utils.conversion import fraction_to_float
 from baybe.utils.validation import finite_float
 
 
 @define(frozen=True)
-class LinearKernel(Kernel):
+class LinearKernel(BasicKernel):
     """A linear kernel."""
 
     variance_prior: Prior | None = field(
@@ -22,7 +21,9 @@ class LinearKernel(Kernel):
     """An optional prior on the kernel variance parameter."""
 
     variance_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel variance parameter."""
 
@@ -41,7 +42,7 @@ class LinearKernel(Kernel):
 
 
 @define(frozen=True)
-class MaternKernel(Kernel):
+class MaternKernel(BasicKernel):
     """A Matern kernel using a smoothness parameter."""
 
     nu: float = field(
@@ -58,13 +59,15 @@ class MaternKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
 
 @define(frozen=True)
-class PeriodicKernel(Kernel):
+class PeriodicKernel(BasicKernel):
     """A periodic kernel."""
 
     lengthscale_prior: Prior | None = field(
@@ -73,7 +76,9 @@ class PeriodicKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
@@ -83,7 +88,9 @@ class PeriodicKernel(Kernel):
     """An optional prior on the kernel period length."""
 
     period_length_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel period length."""
 
@@ -104,7 +111,7 @@ class PeriodicKernel(Kernel):
 
 
 @define(frozen=True)
-class PiecewisePolynomialKernel(Kernel):
+class PiecewisePolynomialKernel(BasicKernel):
     """A piecewise polynomial kernel."""
 
     q: int = field(validator=in_([0, 1, 2, 3]), default=2)
@@ -116,13 +123,15 @@ class PiecewisePolynomialKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
 
 @define(frozen=True)
-class PolynomialKernel(Kernel):
+class PolynomialKernel(BasicKernel):
     """A polynomial kernel."""
 
     power: int = field(validator=[instance_of(int), ge(0)])
@@ -134,7 +143,9 @@ class PolynomialKernel(Kernel):
     """An optional prior on the kernel offset."""
 
     offset_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel offset."""
 
@@ -151,7 +162,7 @@ class PolynomialKernel(Kernel):
 
 
 @define(frozen=True)
-class RBFKernel(Kernel):
+class RBFKernel(BasicKernel):
     """A radial basis function (RBF) kernel."""
 
     lengthscale_prior: Prior | None = field(
@@ -160,13 +171,15 @@ class RBFKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
 
 @define(frozen=True)
-class RFFKernel(Kernel):
+class RFFKernel(BasicKernel):
     """A random Fourier features (RFF) kernel."""
 
     num_samples: int = field(validator=[instance_of(int), ge(1)])
@@ -178,13 +191,15 @@ class RFFKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
 
 
 @define(frozen=True)
-class RQKernel(Kernel):
+class RQKernel(BasicKernel):
     """A rational quadratic (RQ) kernel."""
 
     lengthscale_prior: Prior | None = field(
@@ -193,6 +208,8 @@ class RQKernel(Kernel):
     """An optional prior on the kernel lengthscale."""
 
     lengthscale_initial_value: float | None = field(
-        default=None, converter=optional_c(float), validator=optional_v(finite_float)
+        default=None,
+        converter=optional_c(float),
+        validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""

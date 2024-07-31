@@ -1,4 +1,5 @@
 """Tests for basic input-output and iterative loop."""
+
 import numpy as np
 import pytest
 
@@ -22,7 +23,7 @@ def test_bad_parameter_input_value(campaign, good_reference_values, bad_val, req
     rec = campaign.recommend(batch_size=3)
     add_fake_results(
         rec,
-        campaign,
+        campaign.targets,
         good_reference_values=good_reference_values,
     )
 
@@ -45,7 +46,7 @@ def test_bad_target_input_value(campaign, good_reference_values, bad_val, reques
     rec = campaign.recommend(batch_size=3)
     add_fake_results(
         rec,
-        campaign,
+        campaign.targets,
         good_reference_values=good_reference_values,
     )
 

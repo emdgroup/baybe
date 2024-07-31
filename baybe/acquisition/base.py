@@ -18,7 +18,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import Surrogate
-from baybe.utils.basic import classproperty, filter_attributes
+from baybe.utils.basic import classproperty, match_attributes
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
 
@@ -35,6 +35,11 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Flag indicating whether this is a Monte-Carlo acquisition function."""
         return cls.abbreviation.startswith("q")
 
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        """Names of attributes that are not passed to the BoTorch constructor."""
+        return ()
+
     def to_botorch(
         self,
         surrogate: Surrogate,
@@ -45,9 +50,15 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Create the botorch-ready representation of the function."""
         import botorch.acquisition as botorch_acqf_module
 
+        # Retrieve corresponding botorch class
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
-        params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
+        # Match relevant attributes
+        params_dict = match_attributes(
+            self, acqf_cls.__init__, ignore=self._non_botorch_attrs
+        )[0]
+
+        # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
         if "model" in signature_params:

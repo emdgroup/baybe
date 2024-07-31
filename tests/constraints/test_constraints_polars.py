@@ -1,4 +1,5 @@
 """Test Polars implementations of constraints."""
+
 import pytest
 from pandas.testing import assert_frame_equal
 
@@ -139,7 +140,7 @@ def test_polars_label_duplicates(parameters, constraints):
 
 
 @pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
-@pytest.mark.parametrize("constraint_names", [["Constraint_14"]])
+@pytest.mark.parametrize("constraint_names", [["Constraint_15"]])
 def test_polars_linked_parameters(parameters, constraints):
     """Tests Polars implementation of linked parameters constraint."""
     ldf = _lazyframe_from_product(parameters)
@@ -176,7 +177,7 @@ def test_polars_linked_parameters(parameters, constraints):
     [
         ["Constraint_4"],
         ["Constraint_12"],
-        ["Constraint_14", "Constraint_8", "Constraint_9"],
+        ["Constraint_15", "Constraint_8", "Constraint_9"],
     ],
 )
 def test_polars_product(constraints, parameters):

@@ -1,6 +1,5 @@
 """Wrapper functionality for hybrid spaces."""
 
-
 import torch
 from attr import define
 from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction

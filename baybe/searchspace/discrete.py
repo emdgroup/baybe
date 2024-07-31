@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from collections.abc import Collection, Sequence
 from itertools import compress
 from math import prod
@@ -23,7 +24,11 @@ from baybe.parameters import (
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe
-from baybe.searchspace.validation import validate_parameter_names, validate_parameters
+from baybe.searchspace.validation import (
+    get_transform_parameters,
+    validate_parameter_names,
+    validate_parameters,
+)
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe
@@ -249,6 +254,18 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @classmethod
+    def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
+        """Create a subspace from a single parameter.
+
+        Args:
+            parameter: The parameter to span the subspace.
+
+        Returns:
+            The created subspace.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
     def from_product(
         cls,
         parameters: Sequence[DiscreteParameter],
@@ -379,6 +396,8 @@ class SubspaceDiscrete(SerialMixin):
             ValueError: If the passed simplex parameters are not suitable for a simplex
                 construction.
             ValueError: If the passed product parameters are not discrete.
+            ValueError: If the passed simplex parameters and product parameters are
+                not disjoint.
 
         Returns:
             The created simplex subspace.
@@ -411,6 +430,16 @@ class SubspaceDiscrete(SerialMixin):
             raise ValueError(
                 f"All parameters passed via 'product_parameters' "
                 f"must be of subclasses of '{DiscreteParameter.__name__}'."
+            )
+
+        # Validate no overlap between simplex parameters and product parameters
+        simplex_parameters_names = {p.name for p in simplex_parameters}
+        product_parameters_names = {p.name for p in product_parameters}
+        if overlap := simplex_parameters_names.intersection(product_parameters_names):
+            raise ValueError(
+                f"Parameter sets passed via 'simplex_parameters' and "
+                f"'product_parameters' must be disjoint but share the following "
+                f"parameters: {overlap}."
             )
 
         # Construct the product part of the space
@@ -565,7 +594,7 @@ class SubspaceDiscrete(SerialMixin):
 
     @staticmethod
     def estimate_product_space_size(
-        parameters: Sequence[DiscreteParameter]
+        parameters: Sequence[DiscreteParameter],
     ) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.
 
@@ -659,28 +688,57 @@ class SubspaceDiscrete(SerialMixin):
 
     def transform(
         self,
-        data: pd.DataFrame,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        """Transform parameters from experimental to computational representation.
+        """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
 
-        Continuous parameters and additional columns are ignored.
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
 
-        Args:
-            data: The data to be transformed. Must contain all specified parameters, can
-                contain more columns.
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
 
-        Returns:
-            A dataframe with the parameters in computational representation.
-        """
+        if allow_extra is None:
+            allow_extra = True
+            if set(df.columns) - {p.name for p in self.parameters}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
+        # Extract the parameters to be transformed
+        parameters = get_transform_parameters(
+            self.parameters, df, allow_missing, allow_extra
+        )
+
         # If the transformed values are not required, return an empty dataframe
-        if self.empty_encoding or len(data) < 1:
-            comp_rep = pd.DataFrame(index=data.index)
-            return comp_rep
+        if self.empty_encoding or len(df) < 1:
+            return pd.DataFrame(index=df.index)
 
         # Transform the parameters
         dfs = []
-        for param in self.parameters:
-            comp_df = param.transform_rep_exp2comp(data[param.name])
+        for param in parameters:
+            comp_df = param.transform(df[param.name])
             dfs.append(comp_df)
         comp_rep = pd.concat(dfs, axis=1) if dfs else pd.DataFrame()
 
@@ -688,11 +746,22 @@ class SubspaceDiscrete(SerialMixin):
         # removing some columns, e.g. due to decorrelation or dropping constant ones),
         # any subsequent transformation should yield the same columns.
         try:
-            comp_rep = comp_rep[self.comp_rep.columns]
+            return comp_rep[self.comp_rep.columns]
         except AttributeError:
-            pass
+            return comp_rep
 
-        return comp_rep
+    def get_parameters_by_name(
+        self, names: Sequence[str]
+    ) -> tuple[DiscreteParameter, ...]:
+        """Return parameters with the specified names.
+
+        Args:
+            names: Sequence of parameter names.
+
+        Returns:
+            The named parameters.
+        """
+        return tuple(p for p in self.parameters if p.name in names)
 
 
 def _apply_constraint_filter_pandas(

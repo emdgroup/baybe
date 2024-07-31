@@ -16,14 +16,17 @@ from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
-from baybe.constraints.base import ContinuousNonlinearConstraint
+from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
     validate_cardinality_constraints_are_nonoverlapping,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
-from baybe.searchspace.validation import validate_parameter_names
+from baybe.searchspace.validation import (
+    get_transform_parameters,
+    validate_parameter_names,
+)
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
@@ -83,7 +86,7 @@ class SubspaceContinuous(SerialMixin):
         param_df = pd.DataFrame(param_list)
         lin_eq_constr_df = pd.DataFrame(eq_constraints_list)
         lin_ineq_constr_df = pd.DataFrame(ineq_constraints_list)
-        cardinality_constr_df = pd.DataFrame(nonlin_constraints_list)
+        nonlinear_constr_df = pd.DataFrame(nonlin_constraints_list)
 
         # Put all attributes of the continuous class in one string
         continuous_str = f"""{start_bold}Continuous Search Space{end_bold}
@@ -92,8 +95,8 @@ class SubspaceContinuous(SerialMixin):
             \r{pretty_print_df(lin_eq_constr_df)}
             \n{start_bold}List of Linear Inequality Constraints{end_bold}
             \r{pretty_print_df(lin_ineq_constr_df)}
-            \n{start_bold}List of Cardinality Constraints{end_bold}
-            \r{pretty_print_df(cardinality_constr_df)}"""
+            \n{start_bold}List of Nonlinear Constraints{end_bold}
+            \r{pretty_print_df(nonlinear_constr_df)}"""
 
         return continuous_str.replace("\n", "\n ").replace("\r", "\r ")
 
@@ -124,6 +127,43 @@ class SubspaceContinuous(SerialMixin):
     def empty(cls) -> SubspaceContinuous:
         """Create an empty continuous subspace."""
         return SubspaceContinuous([])
+
+    @classmethod
+    def from_parameter(cls, parameter: ContinuousParameter) -> SubspaceContinuous:
+        """Create a subspace from a single parameter.
+
+        Args:
+            parameter: The parameter to span the subspace.
+
+        Returns:
+            The created subspace.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
+    def from_product(
+        cls,
+        parameters: Sequence[ContinuousParameter],
+        constraints: Sequence[ContinuousConstraint] | None = None,
+    ) -> SubspaceContinuous:
+        """See :class:`baybe.searchspace.core.SearchSpace`."""
+        constraints = constraints or []
+        return SubspaceContinuous(
+            parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
+            constraints_lin_eq=[  # type:ignore[misc]
+                c
+                for c in constraints
+                if isinstance(c, ContinuousLinearEqualityConstraint)
+            ],
+            constraints_lin_ineq=[  # type:ignore[misc]
+                c
+                for c in constraints
+                if isinstance(c, ContinuousLinearInequalityConstraint)
+            ],
+            constraints_nonlin=[
+                c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
+            ],
+        )
 
     @classmethod
     def from_bounds(cls, bounds: pd.DataFrame) -> SubspaceContinuous:
@@ -235,20 +275,51 @@ class SubspaceContinuous(SerialMixin):
 
     def transform(
         self,
-        data: pd.DataFrame,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        """See :func:`baybe.searchspace.discrete.SubspaceDiscrete.transform`.
+        """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
 
-        Args:
-            data: The data that should be transformed.
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
 
-        Returns:
-            The transformed data.
-        """
-        # Transform continuous parameters
-        comp_rep = data[[p.name for p in self.parameters]]
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
 
-        return comp_rep
+        if allow_extra is None:
+            allow_extra = True
+            if set(df) - {p.name for p in self.parameters}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
+        # Extract the parameters to be transformed
+        parameters = get_transform_parameters(
+            self.parameters, df, allow_missing, allow_extra
+        )
+
+        # Transform the parameters
+        return df[[p.name for p in parameters]]
 
     def samples_random(self, n_points: int = 1) -> pd.DataFrame:
         """Deprecated!"""  # noqa: D401
@@ -423,6 +494,19 @@ class SubspaceContinuous(SerialMixin):
         )
 
         return pd.DataFrame(index=index).reset_index()
+
+    def get_parameters_by_name(
+        self, names: Sequence[str]
+    ) -> tuple[NumericalContinuousParameter, ...]:
+        """Return parameters with the specified names.
+
+        Args:
+            names: Sequence of parameter names.
+
+        Returns:
+            The named parameters.
+        """
+        return tuple(p for p in self.parameters if p.name in names)
 
 
 # Register deserialization hook

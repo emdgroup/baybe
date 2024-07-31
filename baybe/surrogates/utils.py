@@ -195,7 +195,7 @@ def autoscale(cls: type[Surrogate]):
 
 
 def batchify(
-    posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]
+    posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]],
 ) -> Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]:
     """Wrap ``Surrogate`` posterior functions to enable proper batching.
 

@@ -11,6 +11,7 @@ from attrs.validators import ge, gt, instance_of, le
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
+from baybe.utils.basic import classproperty
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
@@ -65,6 +66,15 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
                 f"be specified at the same time."
             )
 
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        flds = fields(qNegIntegratedPosteriorVariance)
+        return (
+            flds.sampling_n_points.name,
+            flds.sampling_method.name,
+            flds.sampling_fraction.name,
+        )
+
     def get_integration_points(self, searchspace: SearchSpace) -> pd.DataFrame:
         """Sample points from a search space for integration purposes.
 
@@ -107,7 +117,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
                     f"provided for '{self.__class__.__name__}' when sampling purely "
                     f"continuous search spaces."
                 )
-            sampled_conti = searchspace.continuous.samples_random(n_candidates)
+            sampled_conti = searchspace.continuous.sample_uniform(n_candidates)
 
             # Align indices if discrete part is present
             if len(sampled_parts) > 0:
@@ -121,12 +131,42 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 
 
 ########################################################################################
-### Posterior Mean
+### Knowledge Gradient
+@define(frozen=True)
+class qKnowledgeGradient(AcquisitionFunction):
+    """Monte Carlo based knowledge gradient.
+
+    This acquisition function currently only supports purely continuous spaces.
+    """
+
+    abbreviation: ClassVar[str] = "qKG"
+
+    num_fantasies: int = field(validator=[instance_of(int), gt(0)], default=128)
+    """Number of fantasies to draw for approximating the knowledge gradient.
+
+    More samples result in a better approximation, at the expense of both increased
+    memory footprint and wall time."""
+
+
+########################################################################################
+### Posterior Statistics
 @define(frozen=True)
 class PosteriorMean(AcquisitionFunction):
     """Posterior mean."""
 
     abbreviation: ClassVar[str] = "PM"
+
+
+@define(frozen=True)
+class PosteriorStandardDeviation(AcquisitionFunction):
+    """Posterior standard deviation."""
+
+    abbreviation: ClassVar[str] = "PSTD"
+
+    maximize: bool = field(default=True, validator=instance_of(bool))
+    """If ``True``, points with maximum posterior standard deviation are selected.
+    If ``False``, the acquisition function value is negated, yielding a selection
+    with minimal posterior standard deviation."""
 
 
 ########################################################################################

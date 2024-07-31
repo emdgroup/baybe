@@ -18,6 +18,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.searchspace.core import (
     SearchSpace,
+    to_searchspace,
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
@@ -46,13 +47,17 @@ class Campaign(SerialMixin):
     """
 
     # DOE specifications
-    searchspace: SearchSpace = field(validator=instance_of(SearchSpace))
-    """The search space in which the experiments are conducted."""
+    searchspace: SearchSpace = field(converter=to_searchspace)
+    """The search space in which the experiments are conducted.
+    When passing a :class:`baybe.parameters.base.Parameter`,
+    a :class:`baybe.searchspace.discrete.SubspaceDiscrete`, or a
+    a :class:`baybe.searchspace.continuous.SubspaceContinuous`, conversion to
+    :class:`baybe.searchspace.core.SearchSpace` is automatically applied."""
 
     objective: Objective | None = field(default=None, converter=optional(to_objective))
     """The optimization objective.
-    When passing a single :class:`baybe.targets.base.Target`, it gets automatically
-    wrapped into a :class:`baybe.objectives.single.SingleTargetObjective`."""
+    When passing a :class:`baybe.targets.base.Target`, conversion to
+    :class:`baybe.objectives.single.SingleTargetObjective` is automatically applied."""
 
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,

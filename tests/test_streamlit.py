@@ -1,4 +1,5 @@
 """Tests for the streamlit demos."""
+
 import glob
 import subprocess
 

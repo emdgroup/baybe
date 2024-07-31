@@ -1,6 +1,15 @@
-"""Custom exceptions."""
+"""Custom exceptions and warnings."""
 
 
+##### Warnings #####
+class UnusedObjectWarning(UserWarning):
+    """
+    A method or function was called with undesired arguments which indicates an
+    unintended user fault.
+    """
+
+
+##### Exceptions #####
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations
@@ -50,3 +59,7 @@ class DeprecationError(Exception):
 
 class UnidentifiedSubclassError(Exception):
     """A specified subclass cannot be found in the given class hierarchy."""
+
+
+class UnmatchedAttributeError(Exception):
+    """An attribute cannot be matched against a certain callable signature."""

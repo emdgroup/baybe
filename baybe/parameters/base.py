@@ -1,8 +1,10 @@
 """Base classes for all parameters."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from functools import cached_property, partial
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -16,6 +18,11 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+
+if TYPE_CHECKING:
+    from baybe.searchspace.continuous import SubspaceContinuous
+    from baybe.searchspace.core import SearchSpace
+    from baybe.searchspace.discrete import SubspaceDiscrete
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
@@ -65,6 +72,12 @@ class Parameter(ABC, SerialMixin):
         """Boolean indicating if this is a discrete parameter."""
         return isinstance(self, DiscreteParameter)
 
+    def to_searchspace(self) -> SearchSpace:
+        """Create a one-dimensional search space from the parameter."""
+        from baybe.searchspace.core import SearchSpace
+
+        return SearchSpace.from_parameter(self)
+
 
 @define(frozen=True, slots=False)
 class DiscreteParameter(Parameter, ABC):
@@ -86,30 +99,36 @@ class DiscreteParameter(Parameter, ABC):
     def comp_df(self) -> pd.DataFrame:
         """Return the computational representation of the parameter."""
 
+    def to_subspace(self) -> SubspaceDiscrete:
+        """Create a one-dimensional search space from the parameter."""
+        from baybe.searchspace.discrete import SubspaceDiscrete
+
+        return SubspaceDiscrete.from_parameter(self)
+
     def is_in_range(self, item: Any) -> bool:  # noqa: D102
         # See base class.
         return item in self.values
 
-    def transform_rep_exp2comp(self, data: pd.Series) -> pd.DataFrame:
-        """Transform data from experimental to computational representation.
+    def transform(self, series: pd.Series, /) -> pd.DataFrame:
+        """Transform parameter values from experimental to computational representation.
 
         Args:
-            data: Data to be transformed.
+            series: The parameter values to be transformed.
 
         Returns:
-            The transformed version of the data.
+            The transformed parameter values.
         """
         if self.encoding:
             # replace each label with the corresponding encoding
             transformed = pd.merge(
-                left=data.rename("Labels").to_frame(),
+                left=series.rename("Labels").to_frame(),
                 left_on="Labels",
                 right=self.comp_df,
                 right_index=True,
                 how="left",
             ).drop(columns="Labels")
         else:
-            transformed = data.to_frame()
+            transformed = series.to_frame()
 
         return transformed
 
@@ -127,6 +146,12 @@ class DiscreteParameter(Parameter, ABC):
 @define(frozen=True, slots=False)
 class ContinuousParameter(Parameter):
     """Abstract class for continuous parameters."""
+
+    def to_subspace(self) -> SubspaceContinuous:
+        """Create a one-dimensional search space from the parameter."""
+        from baybe.searchspace.continuous import SubspaceContinuous
+
+        return SubspaceContinuous.from_parameter(self)
 
 
 # Register (un-)structure hooks

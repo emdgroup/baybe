@@ -16,8 +16,10 @@ from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
+    ContinuousCardinalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
+    DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
@@ -495,7 +497,12 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             parameters=["Pressure", "Solvent_1", "Temperature"],
             validator=custom_function,
         ),
-        "Constraint_14": DiscreteLinkedParametersConstraint(
+        "Constraint_14": DiscreteCardinalityConstraint(
+            parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
+            min_cardinality=1,
+            max_cardinality=2,
+        ),
+        "Constraint_15": DiscreteLinkedParametersConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
         ),
         "ContiConstraint_1": ContinuousLinearEqualityConstraint(
@@ -517,6 +524,11 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             parameters=["Conti_finite1", "Conti_finite2"],
             coefficients=[1.0, 3.0],
             rhs=0.3,
+        ),
+        "ContiConstraint_5": ContinuousCardinalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2", "Conti_finite3"],
+            min_cardinality=1,
+            max_cardinality=2,
         ),
     }
     return [
@@ -829,7 +841,7 @@ def run_iterations(
         rec = campaign.recommend(batch_size=batch_size)
         # dont use parameter noise for these tests
 
-        add_fake_results(rec, campaign)
+        add_fake_results(rec, campaign.targets)
         if add_noise and (k % 2):
             add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
 
