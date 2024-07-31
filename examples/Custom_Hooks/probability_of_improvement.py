@@ -161,7 +161,7 @@ recommender = TwoPhaseMetaRecommender(
 
 ### Triggering the Hook
 
-# We set up the campaign:
+# With all preparations completed, we can set up the campaign:
 
 test_function = Hartmann(dim=DIMENSION)
 WRAPPED_FUNCTION = botorch_function_wrapper(test_function=test_function)
