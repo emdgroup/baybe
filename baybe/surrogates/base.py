@@ -125,12 +125,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         return Normalize
 
     @staticmethod
-    def _make_target_scaler() -> OutcomeTransform | None:
-        """Return the scaler to be used for target scaling."""
+    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
+        """Return the scaler factory to be used for target scaling."""
         from botorch.models.transforms.outcome import Standardize
 
-        # TODO: Multi-target extension
-        return Standardize(1)
+        return Standardize
 
     def _make_input_scaler(self, searchspace: SearchSpace) -> ColumnTransformer:
         """Make the input scaler for transforming computational dataframes."""
@@ -153,9 +152,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         self, objective: Objective, measurements: pd.DataFrame
     ) -> OutcomeTransform | _NoTransform:
         """Make the output scaler for transforming computational dataframes."""
-        scaler = self._make_target_scaler()
-        if scaler is None:
+        if (factory := self._make_target_scaler_factory()) is None:
             return _IDENTITY_TRANSFORM
+
+        # TODO: Multi-target extension
+        scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
         scaler(to_tensor(objective.transform(measurements)))
