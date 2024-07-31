@@ -1,7 +1,7 @@
 """Test if all examples can be run without error."""
 
 import os
-import runpy
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -22,8 +22,13 @@ paths = [str(x) for x in Path("examples/").rglob("*.py")]
 )
 @pytest.mark.parametrize("example", paths, ids=paths)
 def test_example(example: str):
-    """Test an individual example by running it."""
-    runpy.run_path(example)
+    """Test an individual example by running it.
+
+    This runs in a separate process and isolated environment due to problems caused by
+    monkeypatching in some examples affecting other tests if they were executed in the
+    same environment.
+    """
+    subprocess.run(["python", example], check=True)
 
 
 if _SMOKE_TEST_CACHE is not None:
