@@ -311,8 +311,15 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def get_shap_feature_importance(self) -> pd.DataFrame:
+    def get_shap_feature_importance(self, nsamples: str | int = "auto") -> pd.DataFrame:
         """Calculate and return the SHAP values for the conducted experiments.
+
+        Args:
+            nsamples: Number of times to re-evaluate the model for
+                explaining each prediction. The default value is
+                "auto", which uses
+                "nsamples = 2*len(measurements)+2048" according to the
+                SHAP library documentation.
 
         Returns:
             The SHAP values for the conducted experiments.
@@ -335,14 +342,28 @@ class Campaign(SerialMixin):
         # This is needed as the SHAP explainer requires a numpy array as input.
         def surrogate_model_predict(measurements):
             data_tensor = torch.from_numpy(measurements).float()
-            print("Size of tensor")
-            print(data_tensor.shape)
             mean_predictions, covar = surrogate_model.posterior(data_tensor)
             return mean_predictions.detach().numpy()
 
         with torch.no_grad():
             explainer = shap.KernelExplainer(surrogate_model_predict, measurements)
-        shap_values = explainer.shap_values(measurements, nsamples=100)
+            try:
+                shap_values = explainer.shap_values(measurements, nsamples=nsamples)
+            except RuntimeError as e:
+                # For data sets with many samples and features, the memory consumption
+                # may be too high. In this case, the user is warned and the number of
+                # samples is reduced.
+                measurements_features = measurements.shape[1]
+                print("Exception occurred during SHAP value calculation:", e)
+                print(
+                    "Reducing the number of samples for SHAP value calculation to",
+                    measurements_features,
+                    ".",
+                )
+                shap_values = explainer.shap_values(
+                    measurements, nsamples=measurements_features
+                )
+
         return shap_values
 
     def plot_shap_feature_importance(self, max_display: int = 10) -> None:
