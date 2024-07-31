@@ -74,7 +74,8 @@ def extract_pi(
     if searchspace.type is not SearchSpaceType.DISCRETE:
         raise TypeError(
             f"Search spaces of type '{searchspace.type}' are not supported. "
-            f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are accepted."
+            f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
+            f"accepted."
         )
     train_x = searchspace.transform(measurements)
     train_y = objective.transform(measurements)
