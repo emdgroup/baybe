@@ -81,6 +81,8 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
             ValueError: If the search space is purely continuous and
                 'sampling_n_points' was not provided.
         """
+        # TODO: Move the core logic to `SearchSpace` and ``Subspace*`` classes
+
         sampled_parts: list[pd.DataFrame] = []
         n_candidates: int | None = None
 
