@@ -292,6 +292,11 @@ class SearchSpace(SerialMixin):
 
     def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
         """Find a parameter's column indices in the computational representation."""
+        if name not in (p.name for p in self.parameters):
+            raise ValueError(
+                f"There exists no parameter named '{name}' in the search space."
+            )
+
         # TODO: The "startswith" approach is not ideal since it relies on the implicit
         #   assumption that the substrings match. A more robust approach would
         #   be to generate this mapping while building the comp rep.
