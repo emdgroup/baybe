@@ -119,14 +119,22 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     def _make_parameter_scaler_factory(
         parameter: Parameter,
     ) -> type[InputTransform] | None:
-        """Return the scaler factory to be used for the given parameter."""
+        """Return the scaler factory to be used for the given parameter.
+
+        This method is supposed to be overridden by subclasses to implement their
+        custom parameter scaling logic.
+        """
         from botorch.models.transforms.input import Normalize
 
         return Normalize
 
     @staticmethod
     def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
-        """Return the scaler factory to be used for target scaling."""
+        """Return the scaler factory to be used for target scaling.
+
+        This method is supposed to be overridden by subclasses to implement their
+        custom target scaling logic.
+        """
         from botorch.models.transforms.outcome import Standardize
 
         return Standardize
