@@ -291,7 +291,19 @@ class SearchSpace(SerialMixin):
             return 1
 
     def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
-        """Find a parameter's column indices in the computational representation."""
+        """Find a parameter's column indices in the computational representation.
+
+        Args:
+            name: The name of the parameter whose columns indices are to be retrieved.
+
+        Raises:
+            ValueError: If no parameter with the provided name exists.
+
+        Returns:
+            A tuple containing the integer indices of the columns in the computational
+            representation associated with the parameter. When the parameter is not part
+            of the computational representation, an empty tuple is returned.
+        """
         if name not in (p.name for p in self.parameters):
             raise ValueError(
                 f"There exists no parameter named '{name}' in the search space."
