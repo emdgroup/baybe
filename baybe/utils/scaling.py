@@ -20,6 +20,9 @@ class ColumnTransformer:
     mapping: dict[tuple[int, ...], InputTransform] = field()
     """A mapping defining what transform to apply to which columns."""
 
+    _is_trained: bool = field(default=False, init=False)
+    """Boolean indicating if the transformer has been trained."""
+
     @mapping.validator
     def _validate_mapping_types_lazily(self, attr, value):
         """Perform transform isinstance check using lazy import."""
@@ -45,14 +48,24 @@ class ColumnTransformer:
 
     def fit(self, x: Tensor, /) -> None:
         """Fit the transformer to the given tensor."""
+        # Explicitly set flag to False to guarantee a clean state in case of
+        # exceptions occurring in the for-loop below
+        self._is_trained = False
+
         for cols, transformer in self.mapping.items():
             transformer.train()
             transformer(x[..., cols])
+            transformer.eval()
+        self._is_trained = True
 
     def transform(self, x: Tensor, /) -> Tensor:
         """Transform the given tensor."""
+        if not self._is_trained:
+            raise RuntimeError(
+                f"The {self.__class__.__name__} must be trained before it can be used."
+            )
+
         out = x.clone()
         for cols, transformer in self.mapping.items():
-            transformer.eval()
             out[..., cols] = transformer(out[..., cols])
         return out
