@@ -26,7 +26,6 @@ from baybe.surrogates.gaussian_process.presets.default import (
 )
 
 if TYPE_CHECKING:
-    from botorch.models.model import Model
     from botorch.models.transforms.input import InputTransform
     from botorch.posteriors import Posterior
     from torch import Tensor
@@ -105,11 +104,6 @@ class GaussianProcessSurrogate(Surrogate):
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
-
-    def to_botorch(self) -> Model:  # noqa: D102
-        # See base class.
-
-        return self._model
 
     @staticmethod
     def _make_parameter_scaler_factory(
