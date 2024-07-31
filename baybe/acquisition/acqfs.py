@@ -179,6 +179,21 @@ class qSimpleRegret(AcquisitionFunction):
 
 
 ########################################################################################
+### Expected Improvement
+@define(frozen=True)
+class ExpectedImprovement(AcquisitionFunction):
+    """Analytical expected improvement."""
+
+    abbreviation: ClassVar[str] = "EI"
+
+
+@define(frozen=True)
+class qExpectedImprovement(AcquisitionFunction):
+    """Monte Carlo based expected improvement."""
+
+    abbreviation: ClassVar[str] = "qEI"
+
+
 @define(frozen=True)
 class LogExpectedImprovement(AcquisitionFunction):
     """Logarithmic analytical expected improvement."""
@@ -194,6 +209,16 @@ class qLogExpectedImprovement(AcquisitionFunction):
 
 
 @define(frozen=True)
+class qNoisyExpectedImprovement(AcquisitionFunction):
+    """Monte Carlo based noisy expected improvement."""
+
+    abbreviation: ClassVar[str] = "qNEI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
+
+@define(frozen=True)
 class qLogNoisyExpectedImprovement(AcquisitionFunction):
     """Logarithmic Monte Carlo based noisy expected improvement."""
 
@@ -201,12 +226,6 @@ class qLogNoisyExpectedImprovement(AcquisitionFunction):
 
     prune_baseline: bool = field(default=True, validator=instance_of(bool))
     """Auto-prune candidates that are unlikely to be the best."""
-
-
-# Remapped because the log versions offer improved numerical stability
-ExpectedImprovement = LogExpectedImprovement
-qExpectedImprovement = qLogExpectedImprovement
-qNoisyExpectedImprovement = qLogNoisyExpectedImprovement
 
 
 ########################################################################################
