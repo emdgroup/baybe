@@ -133,6 +133,10 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     a single constraint.
     """
 
+    # class variables
+    eval_during_augmentation: ClassVar[bool] = True
+    # See base class
+
     # object variables
     conditions: list[Condition] = field()
     """The list of individual conditions."""
@@ -219,6 +223,10 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
     """
+
+    # class variables
+    eval_during_augmentation: ClassVar[bool] = True
+    # See base class
 
     # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)

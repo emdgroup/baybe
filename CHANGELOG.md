@@ -14,14 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Parameter.is_numeric` has been replaced with `Parameter.is_numerical`
 - `DiscreteParameter.transform_rep_exp2comp` has been replaced with
   `DiscreteParameter.transform` 
+- `filter_attributes` has been replaced with `match_attributes`
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
 - `SubspaceDiscrete.to_searchspace` and `SubspaceContinuous.to_searchspace`
   convenience constructor
 - Validators for `Campaign` attributes
-_ `_optional` subpackage for managing optional dependencies
-- Acquisition function for active learning: `qNIPV`
+- `_optional` subpackage for managing optional dependencies
+- New acquisition functions for active learning: `qNIPV` (negative integrated posterior
+  variance) and `PSTD` (posterior standard deviation)
 - Acquisition function: `qKG` (knowledge gradient)
 - Abstract `ContinuousNonlinearConstraint` class
 - Abstract `CardinalityConstraint` class and
@@ -37,6 +39,12 @@ _ `_optional` subpackage for managing optional dependencies
    convenience constructors
 - `DiscreteParameter.to_subspace`, `ContinuousParameter.to_subspace` and
   `Parameter.to_searchspace` convenience constructors
+- Utilities for permutation and dependency data augmentation
+- Validation and translation tests for kernels
+- `BasicKernel` and `CompositeKernel` base classes
+- Activated `pre-commit.ci` with auto-update
+- User guide for active learning
+- Example for monitoring the probability of improvement using `register_hooks`
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -47,16 +55,28 @@ _ `_optional` subpackage for managing optional dependencies
 - `Interval` class now supports degenerate intervals containing only one element
 - `add_fake_results` now directly processes `Target` objects instead of a `Campaign`
 - `path` argument in plotting utility is now optional and defaults to `Path(".")`
+- `UnusedObjectWarning` by non-predictive recommenders is now ignored during simulations
+- The default kernel factory now avoids strong jumps by linearly interpolating between
+  two fixed low and high dimensional prior regimes
+- The previous default kernel factory has been renamed to `EDBOKernelFactory` and now
+  fully reflects the original logic
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
   and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
+- Linter `typos` for spellchecking
 
 ### Fixed
 - `sequential` flag of `SequentialGreedyRecommender` is now set to `True`
 - Serialization bug related to class layout of `SKLearnClusteringRecommender`
 - `MetaRecommender`s no longer trigger warnings about non-empty objectives or
   measurements when calling a `NonPredictiveRecommender`
+- Bug introduced in 0.9.0 (PR #221, commit 3078f3), where arguments to `to_gpytorch` 
+  are not passed on to the GPyTorch kernels
+- Positive-valued kernel attributes are now correctly handled by validators
+  and hypothesis strategies
+- Reverted `fit_gpytorch_mll` call back to old `fit_gpytorch_mll_torch` call until
+  finetuning is achieved
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`

@@ -1,4 +1,5 @@
 """Tests for custom surrogate models."""
+
 from contextlib import nullcontext
 
 import pytest

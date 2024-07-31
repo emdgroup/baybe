@@ -166,7 +166,7 @@ class Surrogate(ABC, SerialMixin):
 
 
 def _make_hook_decode_onnx_str(
-    raw_unstructure_hook: UnstructureHook
+    raw_unstructure_hook: UnstructureHook,
 ) -> UnstructureHook:
     """Wrap an unstructuring hook to let it also decode the contained ONNX string."""
 
@@ -194,7 +194,7 @@ def _make_hook_encode_onnx_str(raw_structure_hook: StructureHook) -> StructureHo
 
 
 def _block_serialize_custom_architecture(
-    raw_unstructure_hook: UnstructureHook
+    raw_unstructure_hook: UnstructureHook,
 ) -> UnstructureHook:
     """Raise error if attempt to serialize a custom architecture surrogate."""
     # TODO: Ideally, this hook should be removed and unstructuring the Surrogate

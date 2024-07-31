@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from attrs import define
 
+from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
 from baybe.serialization.core import (
     converter,
@@ -14,7 +15,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.basic import filter_attributes, get_baseclasses
+from baybe.utils.basic import get_baseclasses, match_attributes
 
 if TYPE_CHECKING:
     import torch
@@ -42,38 +43,57 @@ class Kernel(ABC, SerialMixin):
         """Create the gpytorch representation of the kernel."""
         import gpytorch.kernels
 
-        # Fetch the necessary gpytorch constructor parameters of the kernel.
-        # NOTE: In gpytorch, some attributes (like the kernel lengthscale) are handled
-        # via the `gpytorch.kernels.Kernel` base class. Hence, it is not sufficient to
-        # just check the fields of the actual class, but also those of the base class.
+        # Extract keywords with non-default values. This is required since gpytorch
+        # makes use of kwargs, i.e. differentiates if certain keywords are explicitly
+        # passed or not. For instance, `ard_num_dims = kwargs.get("ard_num_dims", 1)`
+        # fails if we explicitly pass `ard_num_dims=None`.
+        kw: dict[str, Any] = dict(
+            ard_num_dims=ard_num_dims, batch_shape=batch_shape, active_dims=active_dims
+        )
+        kw = {k: v for k, v in kw.items() if v is not None}
+
+        # Get corresponding gpytorch kernel class and its base classes
         kernel_cls = getattr(gpytorch.kernels, self.__class__.__name__)
         base_classes = get_baseclasses(kernel_cls, abstract=True)
-        fields_dict = {}
+
+        # Fetch the necessary gpytorch constructor parameters of the kernel.
+        # NOTE: In gpytorch, some attributes (like the kernel lengthscale) are handled
+        #   via the `gpytorch.kernels.Kernel` base class. Hence, it is not sufficient to
+        #   just check the fields of the actual class, but also those of its base
+        #   classes.
+        kernel_attrs: dict[str, Any] = {}
+        unmatched_attrs: dict[str, Any] = {}
         for cls in [kernel_cls, *base_classes]:
-            fields_dict.update(filter_attributes(object=self, callable_=cls.__init__))
+            matched, unmatched = match_attributes(self, cls.__init__, strict=False)
+            kernel_attrs.update(matched)
+            unmatched_attrs.update(unmatched)
+
+        # Sanity check: all attributes of the BayBE kernel need a corresponding match
+        # in the gpytorch kernel (otherwise, the BayBE kernel class is misconfigured).
+        # Exception: initial values are not used during construction but are set
+        # on the created object (see code at the end of the method).
+        missing = set(unmatched) - set(kernel_attrs)
+        if leftover := {m for m in missing if not m.endswith("_initial_value")}:
+            raise UnmatchedAttributeError(leftover)
 
         # Convert specified priors to gpytorch, if provided
         prior_dict = {
             key: value.to_gpytorch()
-            for key, value in fields_dict.items()
+            for key, value in kernel_attrs.items()
             if isinstance(value, Prior)
         }
 
         # Convert specified inner kernels to gpytorch, if provided
         kernel_dict = {
-            key: value.to_gpytorch(
-                ard_num_dims=ard_num_dims,
-                batch_shape=batch_shape,
-                active_dims=active_dims,
-            )
-            for key, value in fields_dict.items()
+            key: value.to_gpytorch(**kw)
+            for key, value in kernel_attrs.items()
             if isinstance(value, Kernel)
         }
 
         # Create the kernel with all its inner gpytorch objects
-        fields_dict.update(kernel_dict)
-        fields_dict.update(prior_dict)
-        gpytorch_kernel = kernel_cls(**fields_dict)
+        kernel_attrs.update(kernel_dict)
+        kernel_attrs.update(prior_dict)
+        gpytorch_kernel = kernel_cls(**kernel_attrs, **kw)
 
         # If the kernel has a lengthscale, set its initial value
         if kernel_cls.has_lengthscale:
@@ -92,6 +112,16 @@ class Kernel(ABC, SerialMixin):
                 )
 
         return gpytorch_kernel
+
+
+@define(frozen=True)
+class BasicKernel(Kernel, ABC):
+    """Abstract base class for all basic kernels."""
+
+
+@define(frozen=True)
+class CompositeKernel(Kernel, ABC):
+    """Abstract base class for all composite kernels."""
 
 
 # Register de-/serialization hooks

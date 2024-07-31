@@ -11,6 +11,7 @@ from attrs.validators import ge, gt, instance_of, le
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
+from baybe.utils.basic import classproperty
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
@@ -64,6 +65,15 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
                 f"'{fields(self.__class__).sampling_n_points.name}' cannot "
                 f"be specified at the same time."
             )
+
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        flds = fields(qNegIntegratedPosteriorVariance)
+        return (
+            flds.sampling_n_points.name,
+            flds.sampling_method.name,
+            flds.sampling_fraction.name,
+        )
 
     def get_integration_points(self, searchspace: SearchSpace) -> pd.DataFrame:
         """Sample points from a search space for integration purposes.
@@ -139,12 +149,24 @@ class qKnowledgeGradient(AcquisitionFunction):
 
 
 ########################################################################################
-### Posterior Mean
+### Posterior Statistics
 @define(frozen=True)
 class PosteriorMean(AcquisitionFunction):
     """Posterior mean."""
 
     abbreviation: ClassVar[str] = "PM"
+
+
+@define(frozen=True)
+class PosteriorStandardDeviation(AcquisitionFunction):
+    """Posterior standard deviation."""
+
+    abbreviation: ClassVar[str] = "PSTD"
+
+    maximize: bool = field(default=True, validator=instance_of(bool))
+    """If ``True``, points with maximum posterior standard deviation are selected.
+    If ``False``, the acquisition function value is negated, yielding a selection
+    with minimal posterior standard deviation."""
 
 
 ########################################################################################

@@ -569,7 +569,7 @@ class SubspaceDiscrete(SerialMixin):
 
     @staticmethod
     def estimate_product_space_size(
-        parameters: Sequence[DiscreteParameter]
+        parameters: Sequence[DiscreteParameter],
     ) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.
 
@@ -724,6 +724,19 @@ class SubspaceDiscrete(SerialMixin):
             return comp_rep[self.comp_rep.columns]
         except AttributeError:
             return comp_rep
+
+    def get_parameters_by_name(
+        self, names: Sequence[str]
+    ) -> tuple[DiscreteParameter, ...]:
+        """Return parameters with the specified names.
+
+        Args:
+            names: Sequence of parameter names.
+
+        Returns:
+            The named parameters.
+        """
+        return tuple(p for p in self.parameters if p.name in names)
 
 
 def _apply_constraint_filter(

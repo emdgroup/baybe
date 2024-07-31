@@ -14,3 +14,6 @@ finite_floats = partial(
     width=32 if DTypeFloatNumpy == np.float32 else 64,
 )
 """A strategy producing finite (i.e., non-nan and non-infinite) floats."""
+
+positive_finite_floats = partial(finite_floats, min_value=0.0, exclude_min=True)
+""""A strategy producing positive finite (i.e., non-nan and non-infinite) floats."""
