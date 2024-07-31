@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 @define
 class ColumnTransformer:
-    """Class for applying transforms to individual columns of tensors."""
+    """Class for applying separate transforms to different column groups of tensors."""
 
     mapping: dict[tuple[int, ...], InputTransform] = field()
     """A mapping defining what transform to apply to which columns."""
