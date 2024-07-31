@@ -178,6 +178,17 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         Takes a dataframe of parameter configurations in **experimental representation**
         and returns the corresponding posterior object. Therefore, the method serves as
         the user-facing entry point for accessing model predictions.
+
+        Args:
+            candidates: A dataframe containing parameter configurations in
+                **experimental representation**.
+
+        Returns:
+            A :class:`botorch.posteriors.Posterior` object representing the posterior
+            distribution at the given candidate points, where the posterior is also
+            described in **experimental representation**. That is, the posterior values
+            lie in the same domain as the modelled targets/objective on which the
+            surrogate was trained via :meth:`baybe.surrogates.base.Surrogate.fit`.
         """
         return self._posterior_comp_rep(
             to_tensor(self._searchspace.transform(candidates))
@@ -190,6 +201,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         and returns the corresponding posterior object. Therefore, the method provides
         the entry point for queries coming from computational layers, for instance,
         BoTorch's `optimize_*` functions.
+
+        Args:
+            candidates: A tensor containing parameter configurations in **computational
+                representation**.
+
+        Returns:
+            The same :class:`botorch.posteriors.Posterior` object as returned via
+            :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
         p = self._posterior(self._input_scaler.transform(candidates))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
@@ -215,6 +234,17 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         to their model specifications and can implicitly that scaling is handled
         appropriately outside. In short: the returned posterior simply needs to be on
         the same scale as the given input.
+
+        Args:
+            candidates: A tensor containing **pre-scaled** parameter configurations
+                in **computational representation**, as defined through the input scaler
+                obtained via :meth:`baybe.surrogates.base.Surrogate._make_input_scaler`.
+
+        Returns:
+            A :class:`botorch.posteriors.Posterior` object representing the
+            **scale-transformed** posterior distributions at the given candidate points,
+            where the posterior is described on the scale dictated by the output scaler
+            obtained via :meth:`baybe.surrogates.base.Surrogate._make_output_scaler`.
         """
 
     @staticmethod
