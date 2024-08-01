@@ -44,8 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BasicKernel` and `CompositeKernel` base classes
 - Activated `pre-commit.ci` with auto-update
 - User guide for active learning
-- Example for monitoring the probability of improvement using `register_hooks`
-- Example for dynamic campaign stopping based on custom hooks
+- Examples demonstrating the `register_hooks` utility: basic registration mechanism,
+  monitoring the probability of improvement, and automatic campaign stopping
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
