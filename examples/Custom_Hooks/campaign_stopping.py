@@ -34,7 +34,7 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace, SearchSpaceType
-from baybe.simulation import simulate_experiment, simulate_scenarios
+from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils import register_hooks
 from baybe.utils.dataframe import to_tensor
@@ -105,7 +105,13 @@ parameters = [
     NumericalDiscreteParameter(name="Concentration", values=[0.057, 0.1, 0.153]),
 ]
 
+searchspace = SearchSpace.from_product(parameters=parameters)
+
 objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+
+recommender = TwoPhaseMetaRecommender(
+    initial_recommender=RandomRecommender(), recommender=BotorchRecommender()
+)
 
 # Also, we load the dataframe containing the lookup data for the closed-loop simulation:
 
@@ -119,14 +125,9 @@ except FileNotFoundError:
 # First, we run several Monte Carlo repetitions of the uninterrupted campaign to get a
 # feeling for the average trajectory:
 
-scenarios = {
-    "Average uninterrupted": Campaign(
-        searchspace=SearchSpace.from_product(parameters=parameters), objective=objective
-    )
-}
-
-results = simulate_scenarios(
-    scenarios,
+campaign = Campaign(searchspace, objective, recommender)
+results_unstopped = simulate_scenarios(
+    {"Average uninterrupted": campaign},
     lookup,
     batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
@@ -204,41 +205,49 @@ BotorchRecommender.recommend = register_hooks(
 
 ### Simulating the Stopped Campaigns
 
-# With the hook attached, we again run several Monte Carlo repetitions of the same
-# campaign:
+# With the hook attached to the class, we again run several Monte Carlo repetitions of
+# the same campaign. For this purpose, we instantiate a new recommender with the active
+# hook and assign it to a fresh copy of the campaign:
 
-stopped_results = []
-for k in range(N_STOPPED_CAMPAIGNS):
-    # Create a fresh campaign
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(parameters=parameters),
-        objective=objective,
-        recommender=TwoPhaseMetaRecommender(
-            initial_recommender=RandomRecommender(),
-            recommender=BotorchRecommender(),
-        ),
-    )
+recommender_with_hook = TwoPhaseMetaRecommender(
+    initial_recommender=RandomRecommender(), recommender=BotorchRecommender()
+)
+campaign_with_hook = Campaign(searchspace, objective, recommender)
 
-    # Run the simulation loop
-    # (If an exception is thrown inside the loop, the function still returns the partial
-    # trajectory, which effectively implements early stopping.)
-    result = simulate_experiment(
-        campaign,
-        lookup,
-        batch_size=BATCH_SIZE,
-        n_doe_iterations=N_DOE_ITERATIONS,
-    )
+# Now, we can simply trigger the simulation loop as before:
 
-    # Contrary to ``simulate_scenarios``, ``simulate_experiment`` runs on single
-    # iteration, and we have to add the scenario information ourselves here.
-    result["Scenario"] = f"PI-stopped, run {k+1}"
-    stopped_results.append(result)
+results_stopped = simulate_scenarios(
+    {"Interrupted": campaign_with_hook},
+    lookup,
+    batch_size=BATCH_SIZE,
+    n_doe_iterations=N_DOE_ITERATIONS,
+    n_mc_iterations=N_STOPPED_CAMPAIGNS,
+)
+
+# ```{note}
+# If an exception is thrown inside the loop, the function still returns the partial
+# trajectory, which effectively implements early stopping.
+# ```
+
 
 ### Plotting the Results
 
-# Finally, we plot both the stopped and the unstopped trajectories:
+# Finally, we plot both the stopped and the unstopped results.
+# To display the latter in terms of individual trajectories, we can leverage the column
+# that keeps track of the Monte Carlo iterations:
 
-results = pd.concat([results, *stopped_results])
+results_stopped = results_stopped.drop("Scenario", axis=1)
+results_stopped["Scenario"] = (
+    results_stopped["Random_Seed"]
+    .rank(method="dense")
+    .astype(int)
+    .apply(lambda k: f"PI-stopped, run {k}")
+)
+results_stopped["Scenario"] = results_stopped["Scenario"]
+
+# Now, we can easily create the plot from a single combined dataframe:
+
+results = pd.concat([results_unstopped, results_stopped])
 ax = sns.lineplot(
     data=results,
     marker="o",
