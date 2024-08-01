@@ -195,3 +195,9 @@ for i in range(N_DOE_ITERATIONS):
 
 ax = create_pi_plot(pi_per_iteration)
 create_example_plots(ax=ax, base_name="probability_of_improvement")
+
+# The results nicely reveal: as the experimentation progresses, the obtained
+# probabilities tend to shrink, reflecting the fact that there is (on average) less room
+# for improvement after each new measurement. This not only confirms that the
+# optimization behaves as expected; it also offers the possibility of defining criteria
+# for [automatic campaign termination](/examples/Custom_Hooks/campaign_stopping).
