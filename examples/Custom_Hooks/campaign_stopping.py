@@ -1,11 +1,17 @@
 ## Campaign Stopping
 
-# Here, we demonstrate how to use the custom hook mechanics to stop campaigns based on a
-# simple Probability of Improvement (PI) criterion.
-# This could for instance be desired to terminate a campaign automatically if the
-# results are sufficiently good or if the campaign seems unpromising and should rather
-# be terminated to refine the search space.
-# The use case is based on the "full lookup" example [here](../Backtesting/full_lookup.md).
+# Based on the insights from
+# [this other example](/examples/Custom_Hooks/probability_of_improvement), we now
+# demonstrate how to leverage the
+# {func}`register_hooks <baybe.utils.basic.register_hooks>`
+# mechanics to interrupt a running campaign based on a simple *Probability of
+# Improvement (PI)* criterion. This approach could be used, for instance, to terminate
+# unpromising campaigns early and refine their search spaces, or to end an ongoing
+# optimization if the found results are sufficiently good.
+
+# The underlying use case is taken from the example shown
+# [here](/examples/Backtesting/full_lookup).
+
 
 ### Imports
 
@@ -21,10 +27,7 @@ from baybe.acquisition import ProbabilityOfImprovement
 from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives import SingleTargetObjective
 from baybe.objectives.base import Objective
-from baybe.parameters import (
-    NumericalDiscreteParameter,
-    SubstanceParameter,
-)
+from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
     BotorchRecommender,
     RandomRecommender,
@@ -44,34 +47,26 @@ warnings.filterwarnings(
 )
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+
 ### Settings
 
-# For the full simulation, we need to define some additional settings.
-# These are the number of Monte Carlo runs, the number of experiments to be conducted
-# per run and number of campaigns we run with the stopping criterion.
-# We also fix the random seed for reproducibility.
+# Let's start by defining some basic settings required for the example:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 50
 N_STOPPED_CAMPAIGNS = 2 if SMOKE_TEST else 5
 BATCH_SIZE = 1
+
+# We also fix the random seed for reproducibility:
+
 set_random_seed(1337)
 
-### Lookup Functionality and Parameter Data
 
-# This loads the dataframe used for looking up measurements in the simulation.
+### Problem Definition and Lookup Functionality
 
-try:
-    lookup = pd.read_excel("./../Backtesting/lookup.xlsx")
-except FileNotFoundError:
-    try:
-        lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
-    except FileNotFoundError as e:
-        print(e)
-
-# For more details on the search space, see the [full lookup example](../Backtesting/full_lookup.md).
+# Following the setup described [here](../Backtesting/full_lookup.md), we create the
+# building blocks for the optimization problem:
 
 dict_solvent = {
     "DMAc": r"CC(N(C)C)=O",
@@ -102,13 +97,6 @@ dict_ligand = {
     "Me2PPh": r"CP(C)C1=CC=CC=C1",
 }
 
-### Run the Scenario for the Unstopped Campaign
-
-# We will run this campaign uninterrupted and several times to get a feeling for the
-# average trajectory.
-
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
-
 parameters = [
     SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED"),
     SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED"),
@@ -116,6 +104,21 @@ parameters = [
     NumericalDiscreteParameter(name="Temp_C", values=[90, 105, 120], tolerance=2),
     NumericalDiscreteParameter(name="Concentration", values=[0.057, 0.1, 0.153]),
 ]
+
+objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+
+# Also, we load the dataframe containing the lookup data for the closed-loop simulation:
+
+try:
+    lookup = pd.read_excel("./../Backtesting/lookup.xlsx")
+except FileNotFoundError:
+    lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
+
+### Simulating the Unstopped Campaigns
+
+# First, we run several Monte Carlo repetitions of the uninterrupted campaign to get a
+# feeling for the average trajectory:
+
 scenarios = {
     "Average uninterrupted": Campaign(
         searchspace=SearchSpace.from_product(parameters=parameters), objective=objective
@@ -131,25 +134,23 @@ results = simulate_scenarios(
 )
 
 
-### Prepare the Hook for Stopping a Campaign
+### Defining the Campaign-Stopping Hook
 
-
-# First, we define a custom exception to identify stopping
+# In order to interrupt a running campaign, we define a custom exception to identify our
+# stopping event:
 
 
 class CampaignStoppedException(Exception):
     """The campaign should be stopped."""
 
 
-# Now we define a hook that analyzes the PI.
-# PI is a traditional acquisition function that measures the probability of improvement
-# for a given point. We can utilize this to create a hook that stops the campaign by
-# throwing an exception.
-# As stopping criterion, we will count the number of candidates with a PI over 1% and
-# will terminate the campaign if there are not enough points that fulfill this.
+# Based on this exception class, we can now define a hook implementing the stopping
+# criterion. For this purpose, we count the fraction of candidates with a PI exceeding a
+# given value and terminate the campaign once the fraction falls below a certain
+# threshold.
 
-PI_THRESHOLD = 0.01  # PI of 1% to identify still promising points
-PI_REQUIRED_FRACTION = 0.1  # 10% of candidates must be over the threshold
+PI_THRESHOLD = 0.01  # PI of 1% to identify promising points
+PI_REQUIRED_FRACTION = 0.1  # 10% of candidates must be above the threshold
 
 
 def stop_on_PI(
@@ -158,11 +159,12 @@ def stop_on_PI(
     objective: Objective | None = None,
     measurements: pd.DataFrame | None = None,
 ) -> None:
-    """Raise an exception if the PI based stopping criterion is fulfilled."""
+    """Raise an exception if the PI-based stopping criterion is fulfilled."""
     if searchspace.type != SearchSpaceType.DISCRETE:
         raise TypeError(
-            f"{searchspace.type} search spaces are not supported yet. "
-            f"Currently only DISCRETE search spaces are accepted."
+            f"Search spaces of type '{searchspace.type}' are not supported. "
+            f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
+            f"accepted."
         )
     train_x = searchspace.transform(measurements)
     train_y = objective.transform(measurements)
@@ -185,22 +187,29 @@ def stop_on_PI(
         )
 
 
-# Now we attach the hook to the ``recommend`` function of the ``BotorchRecommender``
-# we intend to use. This will attach the hook to all future instances of that class,
-# which is OK in this example as we do not plan on creating more afterwards. It is also
-# possible to attach the hook to a specific instance via ``MethodType``
-# (see [here](./basics.md)) but this is not recommended in this case because the
-# simulation utilities use deep copies, which can clash with the hooks.
+# Now, we attach the hook to the ``recommend`` function of our recommender class:
 
 BotorchRecommender.recommend = register_hooks(
     BotorchRecommender.recommend, post_hooks=[stop_on_PI]
 )
 
-### Run Campaigns With the Stopping Hook
+# ```{admonition} Monkeypatching
+# :class: note
+# The above monkeypatch registers the hook with all future instances of the recommender
+# class. While it is possible to attach the hook only to a specific instance via
+# ``MethodType`` (see [here](./basics.md)), this approach does not work well with the
+# simulation utilities because they internally create deep copies of the simulated
+# campaign, effectively bypassing the patch.
+# ```
+
+### Simulating the Stopped Campaigns
+
+# With the hook attached, we again run several Monte Carlo repetitions of the same
+# campaign:
 
 stopped_results = []
 for k in range(N_STOPPED_CAMPAIGNS):
-    # Create the campaign
+    # Create a fresh campaign
     campaign = Campaign(
         searchspace=SearchSpace.from_product(parameters=parameters),
         objective=objective,
@@ -210,10 +219,9 @@ for k in range(N_STOPPED_CAMPAIGNS):
         ),
     )
 
-    # Run the loop
-    # If an exception is thrown during this loop, baybe still returns the partial
-    # result, which effectively means the campaign was stopped, but we have the partial
-    # trajectory. A ``UserWarning`` will be raised containing our custom exception.
+    # Run the simulation loop
+    # (If an exception is thrown inside the loop, the function still returns the partial
+    # trajectory, which effectively implements early stopping.)
     result = simulate_experiment(
         campaign,
         lookup,
@@ -222,13 +230,15 @@ for k in range(N_STOPPED_CAMPAIGNS):
     )
 
     # Contrary to ``simulate_scenarios``, ``simulate_experiment`` runs on single
-    # iteration, and we have to add the Scenario information ourselves here.
+    # iteration, and we have to add the scenario information ourselves here.
     result["Scenario"] = f"PI-stopped, run {k+1}"
     stopped_results.append(result)
 
-### Combine the results and plot them
+### Plotting the Results
 
-results = pd.concat([results] + stopped_results)
+# Finally, we plot both the stopped and the unstopped trajectories:
+
+results = pd.concat([results, *stopped_results])
 ax = sns.lineplot(
     data=results,
     marker="o",
