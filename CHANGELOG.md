@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Polars expressions for `DiscreteSumConstraint`, `DiscreteProductConstraint`, 
   `DiscreteExcludeConstraint`, `DiscreteLinkedParametersConstraint` and 
   `DiscreteNoLabelDuplicatesConstraint`
-- Discrete search space Cartesian product is created lazily via Polars
+- Discrete search space Cartesian product can be created lazily via Polars
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
