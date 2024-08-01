@@ -292,6 +292,7 @@ The available groups are:
 - `lint`: Required for linting and formatting.
 - `mypy`: Required for static type checking.
 - `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
+- `polars`: Required for optimized search space construction via [Polars](https://docs.pola.rs/)
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.

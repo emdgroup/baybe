@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BasicKernel` and `CompositeKernel` base classes
 - Activated `pre-commit.ci` with auto-update
 - User guide for active learning
+- Polars expressions for `DiscreteSumConstraint`, `DiscreteProductConstraint`, 
+  `DiscreteExcludeConstraint`, `DiscreteLinkedParametersConstraint` and 
+  `DiscreteNoLabelDuplicatesConstraint`
+- Discrete search space Cartesian product can be created lazily via Polars
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
