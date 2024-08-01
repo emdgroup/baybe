@@ -1,7 +1,11 @@
 ## Monitoring the Probability of Improvement
 
-# This example demonstrates how the {func}`register_hooks <baybe.utils.basic.register_hooks>` utility can be used to extract the probability of improvement (PI) from a running campaign:
-# * We define a hook that is compatible with the {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.recommend>` interface and lets us extract the PI achieved after each experimental iteration,
+# This example demonstrates how the
+# {func}`register_hooks <baybe.utils.basic.register_hooks>` utility can be used to
+# extract the *Probability of Improvement (PI)* from a running campaign:
+# * We define a hook that is compatible with the
+#   {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.recommend>`
+#   interface and lets us extract the PI achieved after each experimental iteration,
 # * attach the hook to the recommender driving our campaign,
 # * and plot the evolving PI values after campaign completion.
 
@@ -39,7 +43,7 @@ from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import create_example_plots
 from baybe.utils.random import set_random_seed
 
-### Settings for a full simulation loop
+### Settings
 
 # For the simulation, we need to define some basic settings like the number of
 # iterations or the batch size:
@@ -52,16 +56,17 @@ POINTS_PER_DIM = 2 if SMOKE_TEST else 4
 
 # We also fix the random seed to create a consistent plot:
 
-set_random_seed(1282)
+set_random_seed(1595)
 
-### Setup
+### Defining the Hook
 
-# We initialize a container for storing the PI from each iteration:
+# We start by initializing a container for storing the PI values from each iteration:
 
 pi_per_iteration: list[np.ndarray] = []
 
 # Then, we define the hook that calculates the PI.
-# To attach the hook, we need to match its signature to that of {meth}`RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>`.
+# To be able to attach the hook, we need to match its signature to that of
+# {meth}`RecommenderProtocol.recommend <baybe.recommenders.base.RecommenderProtocol.recommend>`.
 
 
 def extract_pi(
@@ -87,7 +92,65 @@ def extract_pi(
     pi_per_iteration.append(pi.numpy())
 
 
-# Additionally, we define a function that plots the collected PI values:
+### Monkeypatching
+
+# Next, we create our recommender and monkeypatch its `recommend` method:
+
+bayesian_recommender = BotorchRecommender(
+    surrogate_model=GaussianProcessSurrogate(),
+)
+bayesian_recommender.recommend = MethodType(
+    register_hooks(
+        BotorchRecommender.recommend,
+        post_hooks=[extract_pi],
+    ),
+    bayesian_recommender,
+)
+recommender = TwoPhaseMetaRecommender(
+    initial_recommender=RandomRecommender(),
+    recommender=bayesian_recommender,
+)
+
+# In this example, we use `MethodType` to bind the
+# {meth}`BotorchRecommender.recommend <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.recommend>`
+# **function** with our hook.
+# For more information, we refer to the [`basic example`](./basics.md) explaining the
+# hook mechanics.
+
+### Triggering the Hook
+
+# With all preparations completed, we can set up the campaign:
+
+test_function = Hartmann(dim=DIMENSION)
+wrapped_function = botorch_function_wrapper(test_function=test_function)
+
+discrete_params = [
+    NumericalDiscreteParameter(
+        name=f"x{d}",
+        values=np.linspace(lower, upper, POINTS_PER_DIM),
+    )
+    for d, (lower, upper) in enumerate(test_function.bounds.T)
+]
+
+searchspace = SearchSpace.from_product(parameters=discrete_params)
+objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+campaign = Campaign(
+    searchspace=searchspace,
+    recommender=recommender,
+    objective=objective,
+)
+
+# Now, we perform a couple of experimental iterations with the active hook:
+
+for i in range(N_DOE_ITERATIONS):
+    recommendation = campaign.recommend(BATCH_SIZE)
+    target_values = recommendation.apply(wrapped_function, axis=1)
+    recommendation["Target"] = target_values
+    campaign.add_measurements(recommendation)
+
+### Plotting the Results
+
+# Having collected the PI values, we define a helper function for plotting:
 
 
 def create_pi_plot(
@@ -134,70 +197,13 @@ def create_pi_plot(
     return ax
 
 
-### Monkeypatching
-
-# Next, we create our recommender and monkeypatch its `recommend` method:
-
-bayesian_recommender = BotorchRecommender(
-    surrogate_model=GaussianProcessSurrogate(),
-)
-bayesian_recommender.recommend = MethodType(
-    register_hooks(
-        BotorchRecommender.recommend,
-        post_hooks=[extract_pi],
-    ),
-    bayesian_recommender,
-)
-recommender = TwoPhaseMetaRecommender(
-    initial_recommender=RandomRecommender(),
-    recommender=bayesian_recommender,
-)
-
-
-# In this example, we use `MethodType` to bind the `BotorchRecommender.recommend`
-# **function** with our hook.
-# For more information, we refer to the [`basic hook example`](./basics.md).
-
-
-### Triggering the Hook
-
-# With all preparations completed, we can set up the campaign:
-
-test_function = Hartmann(dim=DIMENSION)
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=test_function)
-BOUNDS = test_function.bounds
-
-discrete_params = [
-    NumericalDiscreteParameter(
-        name=f"x{d}",
-        values=np.linspace(lower, upper, POINTS_PER_DIM),
-    )
-    for d, (lower, upper) in enumerate(BOUNDS.T)
-]
-
-searchspace = SearchSpace.from_product(parameters=discrete_params)
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
-campaign = Campaign(
-    searchspace=searchspace,
-    recommender=recommender,
-    objective=objective,
-)
-
-# Now, we perform a couple of iterations:
-
-for i in range(N_DOE_ITERATIONS):
-    recommendation = campaign.recommend(BATCH_SIZE)
-    target_values = recommendation.apply(WRAPPED_FUNCTION, axis=1)
-    recommendation["Target"] = target_values
-    campaign.add_measurements(recommendation)
-
 # Lastly, we plot the PI from the previous iterations:
 
 ax = create_pi_plot(pi_per_iteration)
 create_example_plots(ax=ax, base_name="probability_of_improvement")
 
-# The results nicely reveal: as the experimentation progresses, the obtained
-# probabilities tend to shrink, reflecting the fact that there is (on average) less room
+# The results nicely reveal: As the experimentation progresses, the obtained
+# PI values tend to shrink, reflecting the fact that there is (on average) less room
 # for improvement after each new measurement. This not only confirms that the
 # optimization behaves as expected; it also offers the possibility of defining criteria
 # for [automatic campaign termination](/examples/Custom_Hooks/campaign_stopping).
