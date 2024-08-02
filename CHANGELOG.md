@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   two fixed low and high dimensional prior regimes
 - The previous default kernel factory has been renamed to `EDBOKernelFactory` and now
   fully reflects the original logic
-- The default acquisition function has been changed from "qEI" to "qLogEI" for improved
+- The default acquisition function has been changed from `qEI` to `qLogEI` for improved
   numerical stability
 
 ### Removed
@@ -95,6 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Passing a dataframe via the `data` argument to the `transform` methods of
   `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
   The dataframe must now be passed as positional argument.
+- The new `allow_extra` flag is automatically set to `True` in `transform` methods
+  of search space classes when left unspecified
 
 ### Expired Deprecations (from 0.7.*)
 - `Interval.is_finite` property
