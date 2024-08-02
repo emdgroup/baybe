@@ -8,13 +8,10 @@
 # Improvement (PI)* criterion. This approach could be used, for instance, to terminate
 # unpromising campaigns early and refine their search spaces, or to end an ongoing
 # optimization if the found results are sufficiently good.
-
 # The underlying use case is taken from the example shown
 # [here](/examples/Backtesting/full_lookup).
-
-
 ### Imports
-
+import math
 import os
 import warnings
 
@@ -52,9 +49,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Let's start by defining some basic settings required for the example:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20
-N_MC_ITERATIONS = 2 if SMOKE_TEST else 10
-N_STOPPED_CAMPAIGNS = 2 if SMOKE_TEST else 5
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 25
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 20
+N_INTERRUPTED_CAMPAIGNS = 2 if SMOKE_TEST else 5
 BATCH_SIZE = 1
 RANDOM_SEED = 1337
 
@@ -148,7 +145,7 @@ class CampaignStoppedException(Exception):
 # given value and terminate the campaign once the fraction falls below a certain
 # threshold.
 
-PI_THRESHOLD = 0.02  # PI of 2% to identify promising points
+PI_THRESHOLD = 0.01  # PI of 1% to identify promising points
 PI_REQUIRED_FRACTION = 0.2  # 20% of candidates must be above the threshold
 
 
@@ -178,7 +175,7 @@ def stop_on_PI(
     acqf_values = botorch_acqf(comp_rep_tensor)
 
     n_pis_over = torch.sum(acqf_values > PI_THRESHOLD)
-    n_pis_over_required = len(candidates_comp_rep) * PI_REQUIRED_FRACTION
+    n_pis_over_required = math.ceil(len(candidates_comp_rep) * PI_REQUIRED_FRACTION)
     if n_pis_over < n_pis_over_required:
         raise CampaignStoppedException(
             f"Less than {PI_REQUIRED_FRACTION*100:.0f}% of candidates are above the PI "
@@ -201,7 +198,7 @@ BotorchRecommender.recommend = register_hooks(
 # campaign, effectively bypassing the patch.
 # ```
 
-### Simulating the Stopped Campaigns
+### Simulating the Interrupted Campaigns
 
 # With the hook attached to the class, we again run several Monte Carlo repetitions of
 # the same campaign. For this purpose, we instantiate a new recommender with the active
@@ -216,12 +213,12 @@ campaign_with_hook = Campaign(searchspace, objective, recommender)
 # comparison, we use the same random seed as before so that the initial states of all
 # trajectories are aligned with the previous runs:
 
-results_stopped = simulate_scenarios(
+results_interrupted = simulate_scenarios(
     {"Interrupted": campaign_with_hook},
     lookup,
     batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
-    n_mc_iterations=N_STOPPED_CAMPAIGNS,
+    n_mc_iterations=N_INTERRUPTED_CAMPAIGNS,
     random_seed=RANDOM_SEED,
 )
 
@@ -233,18 +230,18 @@ results_stopped = simulate_scenarios(
 
 ### Plotting the Results
 
-# Finally, we plot both the stopped and the uninterrupted results.
+# Finally, we plot both the interrupted and the uninterrupted results.
 # To display the latter in terms of individual trajectories, we can leverage the column
 # that keeps track of the Monte Carlo iterations:
 
-results_stopped = results_stopped.drop("Scenario", axis=1)
-results_stopped["Scenario"] = results_stopped["Monte_Carlo_Run"].apply(
+results_interrupted = results_interrupted.drop("Scenario", axis=1)
+results_interrupted["Scenario"] = results_interrupted["Monte_Carlo_Run"].apply(
     lambda k: f"PI-stopped, run {k}"
 )
 
 # Now, we can easily create the plot from a single combined dataframe:
 
-results = pd.concat([results_uninterrupted, results_stopped])
+results = pd.concat([results_uninterrupted, results_interrupted])
 ax = sns.lineplot(
     data=results,
     marker="o",
