@@ -164,7 +164,7 @@ def stop_on_PI(
             f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
             f"accepted."
         )
-    train_x = searchspace.transform(measurements)
+    train_x = searchspace.transform(measurements, allow_extra=True)
     train_y = objective.transform(measurements)
     acqf = ProbabilityOfImprovement()
 

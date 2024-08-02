@@ -56,7 +56,7 @@ POINTS_PER_DIM = 2 if SMOKE_TEST else 4
 
 # We also fix the random seed to create a consistent plot:
 
-set_random_seed(1595)
+set_random_seed(1337)
 
 ### Defining the Hook
 
@@ -82,7 +82,7 @@ def extract_pi(
             f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
             f"accepted."
         )
-    train_x = searchspace.transform(measurements)
+    train_x = searchspace.transform(measurements, allow_extra=True)
     train_y = objective.transform(measurements)
     acqf = ProbabilityOfImprovement()
     botorch_acqf = acqf.to_botorch(self.surrogate_model, searchspace, train_x, train_y)
@@ -144,7 +144,7 @@ campaign = Campaign(
 
 for i in range(N_DOE_ITERATIONS):
     recommendation = campaign.recommend(BATCH_SIZE)
-    target_values = recommendation.apply(wrapped_function, axis=1)
+    target_values = recommendation.apply(lambda x: wrapped_function(*x.values), axis=1)
     recommendation["Target"] = target_values
     campaign.add_measurements(recommendation)
 
@@ -171,7 +171,7 @@ def create_pi_plot(
 
         # Fill the area under the curve
         verts = []
-        verts.append([(x[i], 0.0), *zip(x, y), (x[-1], 0.0)])
+        verts.append([(x[0], 0.0), *zip(x, y), (x[-1], 0.0)])
         color = cmap(float(i) / len(pi_per_iteration))
         poly = PolyCollection(verts, color=color, alpha=0.9)
         ax.add_collection3d(poly, zs=i, zdir="x")
