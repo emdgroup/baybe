@@ -11,7 +11,6 @@ from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 
-from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
@@ -97,18 +96,6 @@ class Campaign(SerialMixin):
         \rFits Done: {self.n_fits_done}\n\n{fields_str}\n"""
 
         return campaign_str.replace("\n", "\n ").replace("\r", "\r ")
-
-    strategy: RecommenderProtocol = field(default=None)
-    """Deprecated! Raises an error when used."""
-
-    @strategy.validator
-    def _validate_strategy(self, _, value) -> None:
-        """Raise a DeprecationError if the strategy attribute is used."""
-        if value is not None:
-            raise DeprecationError(
-                "Passing 'strategy' to the constructor is deprecated. The attribute "
-                "has been renamed to 'recommender'."
-            )
 
     @property
     def measurements(self) -> pd.DataFrame:
@@ -290,11 +277,7 @@ def _drop_version(dict_: dict) -> dict:
 
 # Register de-/serialization hooks
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
-    Campaign,
-    converter,
-    _cattrs_include_init_false=True,
-    # TODO: Remove once deprecation got expired:
-    strategy=cattrs.override(omit=True),
+    Campaign, converter, _cattrs_include_init_false=True
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
     Campaign, converter, _cattrs_include_init_false=True, _cattrs_forbid_extra_keys=True

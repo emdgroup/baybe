@@ -1,7 +1,6 @@
 """Deprecation tests."""
 
 import json
-from unittest.mock import Mock
 
 import pandas as pd
 import pytest
@@ -13,22 +12,11 @@ from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
     SequentialGreedyRecommender,
 )
-from baybe.recommenders.pure.nonpredictive.sampling import (
-    FPSRecommender,
-    RandomRecommender,
-)
 from baybe.searchspace.continuous import SubspaceContinuous
-from baybe.searchspace.core import SearchSpace
-from baybe.strategies import (
-    SequentialStrategy,
-    StreamingSequentialStrategy,
-    TwoPhaseStrategy,
-)
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -39,37 +27,6 @@ def test_missing_recommender_type(config):
     config_without_strategy_type = json.dumps(dict_)
     with pytest.warns(DeprecationWarning):
         Campaign.from_config(config_without_strategy_type)
-
-
-# Create some recommenders of different class for better differentiation after roundtrip
-RECOMMENDERS = [RandomRecommender(), FPSRecommender()]
-assert len(RECOMMENDERS) == len({rec.__class__.__name__ for rec in RECOMMENDERS})
-
-
-@pytest.mark.parametrize(
-    "test_objects",
-    [
-        (TwoPhaseStrategy, {}),
-        (SequentialStrategy, {"recommenders": RECOMMENDERS}),
-        (StreamingSequentialStrategy, {"recommenders": RECOMMENDERS}),
-    ],
-)
-def test_deprecated_strategies(test_objects):
-    """Using the deprecated strategy classes raises a warning."""
-    strategy, arguments = test_objects
-    with pytest.warns(DeprecationWarning):
-        strategy(**arguments)
-
-
-def test_deprecated_strategy_campaign_flag(recommender):
-    """Using the deprecated strategy keyword raises an error."""
-    with pytest.raises(DeprecationError):
-        Campaign(
-            Mock(spec=SearchSpace),
-            Mock(spec=Objective),
-            Mock(spec=RecommenderProtocol),
-            strategy=recommender,
-        )
 
 
 def test_deprecated_objective_class():

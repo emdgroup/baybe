@@ -104,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `batch_quantity` argument 
 - Passing `allow_repeated_recommendations` or `allow_recommending_already_measured` 
   to `MetaRecommender` (or former `Strategy`)
+- `*Strategy` classes and `baybe.strategies` subpackage
 
 ## [0.9.1] - 2024-06-04
 ### Changed
