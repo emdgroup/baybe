@@ -23,6 +23,7 @@ from baybe.constraints import (
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
+    DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
@@ -500,6 +501,9 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
             min_cardinality=1,
             max_cardinality=2,
+        ),
+        "Constraint_15": DiscreteLinkedParametersConstraint(
+            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
         ),
         "ContiConstraint_1": ContinuousLinearEqualityConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],

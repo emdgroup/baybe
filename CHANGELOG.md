@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BasicKernel` and `CompositeKernel` base classes
 - Activated `pre-commit.ci` with auto-update
 - User guide for active learning
+- Polars expressions for `DiscreteSumConstraint`, `DiscreteProductConstraint`, 
+  `DiscreteExcludeConstraint`, `DiscreteLinkedParametersConstraint` and 
+  `DiscreteNoLabelDuplicatesConstraint`
+- Discrete search space Cartesian product can be created lazily via Polars
 - Examples demonstrating the `register_hooks` utility: basic registration mechanism,
   monitoring the probability of improvement, and automatic campaign stopping
 
@@ -61,6 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   two fixed low and high dimensional prior regimes
 - The previous default kernel factory has been renamed to `EDBOKernelFactory` and now
   fully reflects the original logic
+- The default acquisition function has been changed from "qEI" to "qLogEI" for improved
+  numerical stability
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
@@ -76,8 +82,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are not passed on to the GPyTorch kernels
 - Positive-valued kernel attributes are now correctly handled by validators
   and hypothesis strategies
-- Reverted `fit_gpytorch_mll` call back to old `fit_gpytorch_mll_torch` call until
-  finetuning is achieved
+- As a temporary workaround to compensate for missing `IndexKernel` priors, 
+ `fit_gpytorch_mll_torch` is used instead of `fit_gpytorch_mll` when a `TaskParameter`
+  is present, which acts as regularization via early stopping during model fitting
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`

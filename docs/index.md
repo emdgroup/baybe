@@ -1,16 +1,12 @@
 ```{toctree}
 :maxdepth: 2
 :titlesonly:
-:caption: General
+:caption: Documentation
 :hidden:
 
 Readme <self>
-Contribute <misc/contributing_link>
-Known Issues <known_issues>
-Changelog <misc/changelog_link>
-Github <https://github.com/emdgroup/baybe/>
-Contributors <misc/contributors_link>
-License <misc/license_link>
+User Guide <userguide/userguide>
+Examples <examples/examples>
 ```
 
 ```{include} ../README.md
@@ -22,7 +18,6 @@ License <misc/license_link>
    :toctree: _autosummary
    :template: custom-module-template.rst
    :recursive:
-   :caption: Package
 
    baybe
 ```
@@ -30,10 +25,15 @@ License <misc/license_link>
 ```{toctree}
 :maxdepth: 2
 :titlesonly:
+:caption: Misc
 :hidden:
 
-User Guide <userguide/userguide>
-Examples <examples/examples>
+Contribute <misc/contributing_link>
+Contributors <misc/contributors_link>
+Known Issues <known_issues>
+Changelog <misc/changelog_link>
+Github <https://github.com/emdgroup/baybe/>
+License <misc/license_link>
 ```
 
 # Indices and Tables
