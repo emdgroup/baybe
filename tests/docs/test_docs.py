@@ -22,10 +22,11 @@ doc_files_pseudocode = list(map(str, [Path("docs/userguide/campaigns.md")]))
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize("file", doc_files, ids=doc_files)
-def test_code_executability(file: Path):
+def test_code_executability(file: Path, campaign):
     """The code blocks in the file become a valid python script when concatenated.
 
-    Blocks surrounded with "triple-tilde" are ignored.
+    Blocks surrounded with "triple-tilde" are ignored. Fixtures made available to this
+    test will be available in the executed code too.
     """
     userguide_code = "\n".join(extract_code_blocks(file, include_tilde=False))
     exec(userguide_code)

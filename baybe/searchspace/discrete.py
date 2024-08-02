@@ -574,6 +574,11 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
+    def param_names(self) -> tuple[str, ...]:
+        """Return list of parameter names."""
+        return tuple(p.name for p in self.parameters)
+
+    @property
     def param_bounds_comp(self) -> np.ndarray:
         """Return bounds as tensor.
 
@@ -660,6 +665,7 @@ class SubspaceDiscrete(SerialMixin):
         self,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = False,
+        exclude: pd.DataFrame | None = None,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.
 
@@ -672,6 +678,8 @@ class SubspaceDiscrete(SerialMixin):
             allow_recommending_already_measured: If ``True``, parameters settings for
                 which there are already target values available are still considered as
                 valid candidates.
+            exclude: Points in experimental representation that should be excluded as
+                candidates.
 
         Returns:
             The candidate parameter settings both in experimental and computational
@@ -683,6 +691,12 @@ class SubspaceDiscrete(SerialMixin):
             mask_todrop |= self.metadata["was_recommended"]
         if not allow_recommending_already_measured:
             mask_todrop |= self.metadata["was_measured"]
+
+        # Remove additional excludes
+        if exclude is not None:
+            mask_todrop |= pd.merge(self.exp_rep, exclude, indicator=True, how="left")[
+                "_merge"
+            ].eq("both")
 
         return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
 

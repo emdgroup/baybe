@@ -106,6 +106,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
 
+        # Scale candidates
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         # Set model parameters and perform fit

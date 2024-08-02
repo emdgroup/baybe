@@ -25,7 +25,6 @@ class RandomRecommender(NonPredictiveRecommender):
         batch_size: int,
     ) -> pd.DataFrame:
         # See base class.
-
         if searchspace.type == SearchSpaceType.DISCRETE:
             return candidates_comp.sample(batch_size)
 
@@ -65,6 +64,8 @@ class FPSRecommender(NonPredictiveRecommender):
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
+
+        # Scale and sample
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]

@@ -49,6 +49,7 @@ class BayesianRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
+        pending_measurements: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         # TODO: Transition point from dataframe to tensor needs to be refactored.
@@ -56,9 +57,15 @@ class BayesianRecommender(PureRecommender, ABC):
         #   functions with dataframes.
         train_x = searchspace.transform(measurements, allow_extra=True)
         train_y = objective.transform(measurements)
+        pending_x = (
+            None
+            if pending_measurements is None
+            else searchspace.transform(pending_measurements, allow_extra=True)
+        )
+
         self.surrogate_model._fit(searchspace, *to_tensor(train_x, train_y))
         self._botorch_acqf = self.acquisition_function.to_botorch(
-            self.surrogate_model, searchspace, train_x, train_y
+            self.surrogate_model, searchspace, train_x, train_y, pending_x
         )
 
     def recommend(  # noqa: D102
@@ -67,6 +74,7 @@ class BayesianRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -85,11 +93,14 @@ class BayesianRecommender(PureRecommender, ABC):
         if isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
-        self._setup_botorch_acqf(searchspace, objective, measurements)
+        self._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_measurements
+        )
 
         return super().recommend(
             batch_size=batch_size,
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
+            pending_measurements=pending_measurements,
         )
