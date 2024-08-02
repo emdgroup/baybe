@@ -39,7 +39,6 @@ from baybe.targets import NumericalTarget
 from baybe.utils import register_hooks
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import create_example_plots
-from baybe.utils.random import set_random_seed
 
 ### Temporary
 warnings.filterwarnings(
@@ -57,10 +56,7 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 50
 N_STOPPED_CAMPAIGNS = 2 if SMOKE_TEST else 5
 BATCH_SIZE = 1
-
-# We also fix the random seed for reproducibility:
-
-set_random_seed(1337)
+RANDOM_SEED = 1337
 
 
 ### Problem Definition and Lookup Functionality
@@ -123,7 +119,7 @@ except FileNotFoundError:
 ### Simulating the Unstopped Campaigns
 
 # First, we run several Monte Carlo repetitions of the uninterrupted campaign to get a
-# feeling for the average trajectory:
+# feeling for the average trajectory. For reproducibility, we also fix the random seed:
 
 campaign = Campaign(searchspace, objective, recommender)
 results_unstopped = simulate_scenarios(
@@ -132,6 +128,7 @@ results_unstopped = simulate_scenarios(
     batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
+    random_seed=RANDOM_SEED,
 )
 
 
@@ -214,7 +211,9 @@ recommender_with_hook = TwoPhaseMetaRecommender(
 )
 campaign_with_hook = Campaign(searchspace, objective, recommender)
 
-# Now, we can simply trigger the simulation loop as before:
+# Now, we can simply re-trigger the simulation loop. In order to establish a 1:1
+# comparison, we use the same random seed as before so that the initial states of all
+# trajectories are aligned with the previous runs:
 
 results_stopped = simulate_scenarios(
     {"Interrupted": campaign_with_hook},
@@ -222,6 +221,7 @@ results_stopped = simulate_scenarios(
     batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_STOPPED_CAMPAIGNS,
+    random_seed=RANDOM_SEED,
 )
 
 # ```{note}
@@ -237,13 +237,13 @@ results_stopped = simulate_scenarios(
 # that keeps track of the Monte Carlo iterations:
 
 results_stopped = results_stopped.drop("Scenario", axis=1)
-results_stopped["Scenario"] = (
-    results_stopped["Random_Seed"]
-    .rank(method="dense")
-    .astype(int)
-    .apply(lambda k: f"PI-stopped, run {k}")
+results_stopped["Scenario"] = results_stopped["Monte_Carlo_Run"].apply(
+    lambda k: f"PI-stopped, run {k}"
 )
-results_stopped["Scenario"] = results_stopped["Scenario"]
+results_unstopped = results_unstopped.drop("Scenario", axis=1)
+results_unstopped["Scenario"] = results_unstopped["Monte_Carlo_Run"].apply(
+    lambda k: f"PI-unstopped, run {k}"
+)
 
 # Now, we can easily create the plot from a single combined dataframe:
 
