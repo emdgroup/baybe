@@ -80,8 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are not passed on to the GPyTorch kernels
 - Positive-valued kernel attributes are now correctly handled by validators
   and hypothesis strategies
-- Reverted `fit_gpytorch_mll` call back to old `fit_gpytorch_mll_torch` call until
-  finetuning is achieved
+- As a temporary workaround to compensate for missing `IndexKernel` priors, 
+ `fit_gpytorch_mll_torch` is used instead of `fit_gpytorch_mll` when a `TaskParameter`
+  is present, which acts as regularization via early stopping during model fitting
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
