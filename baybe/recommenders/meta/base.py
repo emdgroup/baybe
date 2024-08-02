@@ -9,11 +9,11 @@ from attrs import define
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
-from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
+from baybe.serialization.core import get_base_structure_hook
 
 
 @define
@@ -88,4 +88,6 @@ converter.register_unstructure_hook(
         ),
     ),
 )
-converter.register_structure_hook(MetaRecommender, structure_recommender_protocol)
+converter.register_structure_hook(
+    MetaRecommender, get_base_structure_hook(MetaRecommender)
+)

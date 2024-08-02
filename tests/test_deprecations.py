@@ -1,11 +1,8 @@
 """Deprecation tests."""
 
-import json
-
 import pandas as pd
 import pytest
 
-from baybe import Campaign
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import DeprecationError
 from baybe.objective import Objective as OldObjective
@@ -18,15 +15,6 @@ from baybe.recommenders.pure.bayesian import (
 )
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.targets.numerical import NumericalTarget
-
-
-def test_missing_recommender_type(config):
-    """Specifying a recommender without a corresponding type raises a warning."""
-    dict_ = json.loads(config)
-    dict_["recommender"].pop("type")
-    config_without_strategy_type = json.dumps(dict_)
-    with pytest.warns(DeprecationWarning):
-        Campaign.from_config(config_without_strategy_type)
 
 
 def test_deprecated_objective_class():
