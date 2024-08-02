@@ -5,9 +5,8 @@ from typing import Any
 
 import cattrs
 import pandas as pd
-from attrs import define, field
+from attrs import define
 
-from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.deprecation import structure_recommender_protocol
@@ -20,34 +19,6 @@ from baybe.serialization import SerialMixin, converter, unstructure_base
 @define
 class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all meta recommenders."""
-
-    allow_repeated_recommendations: bool = field(default=None, kw_only=True)
-    """Deprecated! The flag has become an attribute of
-    :class:`baybe.recommenders.pure.base.PureRecommender`."""
-
-    allow_recommending_already_measured: bool = field(default=None, kw_only=True)
-    """Deprecated! The flag has become an attribute of
-    :class:`baybe.recommenders.pure.base.PureRecommender`."""
-
-    @allow_repeated_recommendations.validator
-    def _validate_allow_repeated_recommendations(self, _, value):
-        """Raise a ``DeprecationError`` if the flag is used."""
-        if value is not None:
-            raise DeprecationError(
-                f"Passing 'allow_repeated_recommendations' to "
-                f"'{self.__class__.__name__}' is deprecated. The flag has become an "
-                f"attribute of the '{PureRecommender.__name__}' classes."
-            )
-
-    @allow_recommending_already_measured.validator
-    def _validate_allow_recommending_already_measured(self, _, value):
-        """Raise a ``DeprecationError`` if the flag is used."""
-        if value is not None:
-            raise DeprecationError(
-                f"Passing 'allow_recommending_already_measured' to "
-                f"{self.__class__.__name__} is deprecated. The flag has become an "
-                f"attribute of {PureRecommender.__name__}."
-            )
 
     @abstractmethod
     def select_recommender(

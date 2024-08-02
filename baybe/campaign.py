@@ -83,10 +83,6 @@ class Campaign(SerialMixin):
     )
     """The cached recommendations."""
 
-    # Deprecation
-    numerical_measurements_must_be_within_tolerance: bool = field(default=None)
-    """Deprecated! Raises an error when used."""
-
     def __str__(self) -> str:
         start_bold = "\033[1m"
         end_bold = "\033[0m"
@@ -104,16 +100,6 @@ class Campaign(SerialMixin):
 
     strategy: RecommenderProtocol = field(default=None)
     """Deprecated! Raises an error when used."""
-
-    @numerical_measurements_must_be_within_tolerance.validator
-    def _validate_tolerance_flag(self, _, value) -> None:
-        """Raise a DeprecationError if the tolerance flag is used."""
-        if value is not None:
-            raise DeprecationError(
-                f"Passing 'numerical_measurements_must_be_within_tolerance' to "
-                f"the constructor is deprecated. The flag has become a parameter of "
-                f"{self.__class__.__name__}.{Campaign.add_measurements.__name__}."
-            )
 
     @strategy.validator
     def _validate_strategy(self, _, value) -> None:
@@ -243,13 +229,11 @@ class Campaign(SerialMixin):
     def recommend(
         self,
         batch_size: int,
-        batch_quantity: int = None,  # type: ignore[assignment]
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
             batch_size: Number of requested recommendations.
-            batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
@@ -257,13 +241,6 @@ class Campaign(SerialMixin):
         Raises:
             ValueError: If ``batch_size`` is smaller than 1.
         """
-        if batch_quantity is not None:
-            raise DeprecationError(
-                f"Passing the keyword 'batch_quantity' to "
-                f"'{self.__class__.__name__}.{self.recommend.__name__}' is deprecated. "
-                f"Use 'batch_size' instead."
-            )
-
         if batch_size < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
@@ -317,7 +294,6 @@ unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     converter,
     _cattrs_include_init_false=True,
     # TODO: Remove once deprecation got expired:
-    numerical_measurements_must_be_within_tolerance=cattrs.override(omit=True),
     strategy=cattrs.override(omit=True),
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(

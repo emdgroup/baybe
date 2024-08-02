@@ -100,6 +100,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Interval.is_finite` property
 - Specifying target configs without explicit type information 
 - Specifying parameters/constraints at the top level of a campaign configuration JSON
+- Passing `numerical_measurements_must_be_within_tolerance` to `Campaign`
+- `batch_quantity` argument 
+- Passing `allow_repeated_recommendations` or `allow_recommending_already_measured` 
+  to `MetaRecommender` (or former `Strategy`)
 
 ## [0.9.1] - 2024-06-04
 ### Changed

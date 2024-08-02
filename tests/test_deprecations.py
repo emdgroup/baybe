@@ -14,7 +14,6 @@ from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.base import RecommenderProtocol
-from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
     SequentialGreedyRecommender,
@@ -60,33 +59,6 @@ def test_deprecated_strategies(test_objects):
     strategy, arguments = test_objects
     with pytest.warns(DeprecationWarning):
         strategy(**arguments)
-
-
-@pytest.mark.parametrize("flag", [False, True])
-def test_deprecated_campaign_tolerance_flag(flag):
-    """Constructing a Campaign with the deprecated tolerance flag raises an error."""
-    with pytest.raises(DeprecationError):
-        Campaign(
-            Mock(spec=SearchSpace),
-            Mock(spec=Objective),
-            Mock(spec=RecommenderProtocol),
-            numerical_measurements_must_be_within_tolerance=flag,
-        )
-
-
-def test_deprecated_batch_quantity_keyword(campaign):
-    """Using the deprecated batch_quantity keyword raises an error."""
-    with pytest.raises(DeprecationError):
-        campaign.recommend(batch_size=5, batch_quantity=5)
-
-
-@pytest.mark.parametrize("flag", (True, False))
-def test_deprecated_strategy_allow_flags(flag):
-    """Using the deprecated recommender "allow" flags raises an error."""
-    with pytest.raises(DeprecationError):
-        TwoPhaseMetaRecommender(allow_recommending_already_measured=flag)
-    with pytest.raises(DeprecationError):
-        TwoPhaseMetaRecommender(allow_repeated_recommendations=flag)
 
 
 def test_deprecated_strategy_campaign_flag(recommender):
