@@ -76,7 +76,6 @@ class GaussianProcessSurrogate(Surrogate):
         import botorch
         import gpytorch
         import torch
-        from botorch.optim.fit import fit_gpytorch_mll_torch
 
         # identify the indexes of the task and numeric dimensions
         # TODO: generalize to multiple task parameters
@@ -139,4 +138,11 @@ class GaussianProcessSurrogate(Surrogate):
             likelihood=likelihood,
         )
         mll = gpytorch.ExactMarginalLogLikelihood(self._model.likelihood, self._model)
-        fit_gpytorch_mll_torch(mll, step_limit=100)
+
+        # TODO: This is a simple temporary workaround to avoid model overfitting
+        #   via early stopping in the presence of task parameters, which currently
+        #   have no prior configured.
+        if n_task_params > 0:
+            botorch.optim.fit.fit_gpytorch_mll_torch(mll, step_limit=200)
+        else:
+            botorch.fit.fit_gpytorch_mll(mll)
