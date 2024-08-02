@@ -149,13 +149,7 @@ class Campaign(SerialMixin):
         Returns:
             The constructed campaign.
         """
-        from baybe.deprecation import compatibilize_config
-
         config = json.loads(config_json)
-
-        # Temporarily enable backward compatibility
-        config = compatibilize_config(config)
-
         return converter.structure(config, Campaign)
 
     @classmethod
@@ -165,13 +159,7 @@ class Campaign(SerialMixin):
         Args:
             config_json: The JSON that should be validated.
         """
-        from baybe.deprecation import compatibilize_config
-
         config = json.loads(config_json)
-
-        # Temporarily enable backward compatibility
-        config = compatibilize_config(config)
-
         _validation_converter.structure(config, Campaign)
 
     def add_measurements(

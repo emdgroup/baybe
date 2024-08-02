@@ -30,9 +30,7 @@ from baybe.strategies import (
     StreamingSequentialStrategy,
     TwoPhaseStrategy,
 )
-from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.interval import Interval
 
 
 def test_missing_recommender_type(config):
@@ -62,53 +60,6 @@ def test_deprecated_strategies(test_objects):
     strategy, arguments = test_objects
     with pytest.warns(DeprecationWarning):
         strategy(**arguments)
-
-
-def test_deprecated_interval_is_finite():
-    """Using the deprecated ``Interval.is_finite`` property raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        Interval(0, 1).is_finite
-
-
-def test_missing_target_type():
-    """Specifying a target without a corresponding type raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        Target.from_json(
-            json.dumps(
-                {
-                    "name": "missing_type",
-                    "mode": "MAX",
-                }
-            )
-        )
-
-
-old_style_config = """
-{
-    "parameters": [
-        {
-            "type": "CategoricalParameter",
-            "name": "Granularity",
-            "values": ["coarse", "fine", "ultra-fine"]
-        }
-    ],
-    "objective": {
-        "mode": "SINGLE",
-        "targets": [
-            {
-                "name": "Yield",
-                "mode": "MAX"
-            }
-        ]
-    }
-}
-"""
-
-
-def test_deprecated_config():
-    """Using the deprecated config format raises a warning."""
-    with pytest.warns(UserWarning):
-        Campaign.from_config(old_style_config)
 
 
 @pytest.mark.parametrize("flag", [False, True])
@@ -160,11 +111,13 @@ deprecated_objective_config = """
     "mode": "DESIRABILITY",
     "targets": [
         {
+            "type": "NumericalTarget",
             "name": "Yield",
             "mode": "MAX",
             "bounds": [0, 1]
         },
         {
+            "type": "NumericalTarget",
             "name": "Waste",
             "mode": "MIN",
             "bounds": [0, 1]

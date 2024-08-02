@@ -96,6 +96,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
   The dataframe must now be passed as positional argument.
 
+### Expired Deprecations (from 0.7.*)
+- `Interval.is_finite` property
+- Specifying target configs without explicit type information 
+- Specifying parameters/constraints at the top level of a campaign configuration JSON
+
 ## [0.9.1] - 2024-06-04
 ### Changed
 - Discrete searchspace memory estimate is now natively represented in bytes 
