@@ -61,28 +61,44 @@ RANDOM_SEED = 1337
 
 ### Problem Definition and Lookup Functionality
 
-# We load the dataframe containing the lookup data for the closed-loop simulation:
-
-try:
-    lookup = pd.read_excel("./../Backtesting/lookup.xlsx")
-except FileNotFoundError:
-    lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
-
 # Following the setup described [here](../Backtesting/full_lookup.md), we create the
 # building blocks for the optimization problem:
 
-solvent_data = dict(set(zip(lookup.Solvent, lookup.Solvent_SMILES)))
-base_data = dict(set(zip(lookup.Base, lookup.Base_SMILES)))
-ligand_data = dict(set(zip(lookup.Ligand, lookup.Ligand_SMILES)))
-temperature_values = set(lookup.Temp_C)
-concentration_values = set(lookup.Concentration)
+dict_solvent = {
+    "DMAc": r"CC(N(C)C)=O",
+    "Butyornitrile": r"CCCC#N",
+    "Butyl Ester": r"CCCCOC(C)=O",
+    "p-Xylene": r"CC1=CC=C(C)C=C1",
+}
+dict_base = {
+    "Potassium acetate": r"O=C([O-])C.[K+]",
+    "Potassium pivalate": r"O=C([O-])C(C)(C)C.[K+]",
+    "Cesium acetate": r"O=C([O-])C.[Cs+]",
+    "Cesium pivalate": r"O=C([O-])C(C)(C)C.[Cs+]",
+}
+dict_ligand = {
+    "BrettPhos": r"CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC4)C(OC)="
+    "CC=C2OC",
+    "Di-tert-butylphenylphosphine": r"CC(C)(C)P(C1=CC=CC=C1)C(C)(C)C",
+    "(t-Bu)PhCPhos": r"CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3",
+    "Tricyclohexylphosphine": r"P(C1CCCCC1)(C2CCCCC2)C3CCCCC3",
+    "PPh3": r"P(C1=CC=CC=C1)(C2=CC=CC=C2)C3=CC=CC=C3",
+    "XPhos": r"CC(C1=C(C2=CC=CC=C2P(C3CCCCC3)C4CCCCC4)C(C(C)C)=CC(C(C)C)=C1)C",
+    "P(2-furyl)3": r"P(C1=CC=CO1)(C2=CC=CO2)C3=CC=CO3",
+    "Methyldiphenylphosphine": r"CP(C1=CC=CC=C1)C2=CC=CC=C2",
+    "1268824-69-6": r"CC(OC1=C(P(C2CCCCC2)C3CCCCC3)C(OC(C)C)=CC=C1)C",
+    "JackiePhos": r"FC(F)(F)C1=CC(P(C2=C(C3=C(C(C)C)C=C(C(C)C)C=C3C(C)C)C(OC)=CC=C2OC)"
+    r"C4=CC(C(F)(F)F)=CC(C(F)(F)F)=C4)=CC(C(F)(F)F)=C1",
+    "SCHEMBL15068049": r"C[C@]1(O2)O[C@](C[C@]2(C)P3C4=CC=CC=C4)(C)O[C@]3(C)C1",
+    "Me2PPh": r"CP(C)C1=CC=CC=C1",
+}
 
 parameters = [
-    SubstanceParameter(name="Solvent", data=solvent_data, encoding="MORDRED"),
-    SubstanceParameter(name="Base", data=base_data, encoding="MORDRED"),
-    SubstanceParameter(name="Ligand", data=ligand_data, encoding="MORDRED"),
-    NumericalDiscreteParameter(name="Temp_C", values=temperature_values, tolerance=2),
-    NumericalDiscreteParameter(name="Concentration", values=concentration_values),
+    SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED"),
+    SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED"),
+    SubstanceParameter(name="Ligand", data=dict_ligand, encoding="MORDRED"),
+    NumericalDiscreteParameter(name="Temp_C", values=[90, 105, 120], tolerance=2),
+    NumericalDiscreteParameter(name="Concentration", values=[0.057, 0.1, 0.153]),
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
@@ -92,6 +108,14 @@ objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=RandomRecommender(), recommender=BotorchRecommender()
 )
+
+# Also, we load the dataframe containing the lookup data for the closed-loop simulation:
+
+try:
+    lookup = pd.read_excel("./../Backtesting/lookup.xlsx")
+except FileNotFoundError:
+    lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
+
 
 ### Simulating the Uninterrupted Campaigns
 
