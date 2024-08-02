@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.0] - 2024-08-02
 ### Breaking Changes
 - Providing an explicit `batch_size` is now mandatory when asking for recommendations
 - `RecommenderProtocol.recommend` now accepts an optional `Objective` 
@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   two fixed low and high dimensional prior regimes
 - The previous default kernel factory has been renamed to `EDBOKernelFactory` and now
   fully reflects the original logic
-- The default acquisition function has been changed from "qEI" to "qLogEI" for improved
+- The default acquisition function has been changed from `qEI` to `qLogEI` for improved
   numerical stability
 
 ### Removed
@@ -95,6 +95,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Passing a dataframe via the `data` argument to the `transform` methods of
   `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
   The dataframe must now be passed as positional argument.
+- The new `allow_extra` flag is automatically set to `True` in `transform` methods
+  of search space classes when left unspecified
+
+### Expired Deprecations (from 0.7.*)
+- `Interval.is_finite` property
+- Specifying target configs without type information 
+- Specifying parameters/constraints at the top level of a campaign configs
+- Passing `numerical_measurements_must_be_within_tolerance` to `Campaign`
+- `batch_quantity` argument 
+- Passing `allow_repeated_recommendations` or `allow_recommending_already_measured` 
+  to `MetaRecommender` (or former `Strategy`)
+- `*Strategy` classes and `baybe.strategies` subpackage
+- Specifying `MetaRecommender` (or former `Strategy`) configs without type information 
 
 ## [0.9.1] - 2024-06-04
 ### Changed
