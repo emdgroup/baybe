@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DiscreteExcludeConstraint`, `DiscreteLinkedParametersConstraint` and 
   `DiscreteNoLabelDuplicatesConstraint`
 - Discrete search space Cartesian product can be created lazily via Polars
+- Examples demonstrating the `register_hooks` utility: basic registration mechanism,
+  monitoring the probability of improvement, and automatic campaign stopping
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional

@@ -31,6 +31,7 @@ def simulate_scenarios(
     initial_data: list[pd.DataFrame] | None = None,
     groupby: list[str] | None = None,
     n_mc_iterations: int = 1,
+    random_seed: int | None = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -52,6 +53,9 @@ def simulate_scenarios(
             A separate simulation will be conducted for each partition, with the search
             restricted to that partition.
         n_mc_iterations: The number of Monte Carlo simulations to be used.
+        random_seed: An optional integer specifying the random seed for the first Monte
+            Carlo run. Each subsequent runs will increase this value by 1. If omitted,
+            the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
 
@@ -64,7 +68,10 @@ def simulate_scenarios(
         function:
 
         * ``Scenario``: Specifies the scenario identifier of the respective simulation.
-        * ``Random_Seed``: Specifies the random seed used for the respective simulation.
+        * ``Monte_Carlo_Run``: Specifies the Monte Carlo repetition of the
+          respective simulation.
+        * Optional, if ``random_seed`` is provided: A column ``Random_Seed`` that
+          specifies the random seed used for the respective simulation.
         * Optional, if ``initial_data`` is provided: A column ``Initial_Data`` that
           specifies the index of the initial data set used for the respective
           simulation.
@@ -90,24 +97,26 @@ def simulate_scenarios(
         @xyzpy.label(var_names=[result_variable])
         def simulate(
             Scenario: str,
-            Random_Seed=None,
+            Monte_Carlo_Run: int,
             Initial_Data=None,
         ):
             """Callable for xyzpy simulation."""
             data = None if initial_data is None else initial_data[Initial_Data]
-            return SimulationResult(
-                _simulate_groupby(
-                    scenarios[Scenario],
-                    lookup,
-                    batch_size=batch_size,
-                    n_doe_iterations=n_doe_iterations,
-                    initial_data=data,
-                    groupby=groupby,
-                    random_seed=Random_Seed,
-                    impute_mode=impute_mode,
-                    noise_percent=noise_percent,
-                )
+            seed = None if random_seed is None else Monte_Carlo_Run + _DEFAULT_SEED
+            result = _simulate_groupby(
+                scenarios[Scenario],
+                lookup,
+                batch_size=batch_size,
+                n_doe_iterations=n_doe_iterations,
+                initial_data=data,
+                groupby=groupby,
+                random_seed=seed,
+                impute_mode=impute_mode,
+                noise_percent=noise_percent,
             )
+            if random_seed is not None:
+                result["Random_Seed"] = seed
+            return SimulationResult(result)
 
         return simulate
 
@@ -130,7 +139,7 @@ def simulate_scenarios(
 
     # Collect the settings to be simulated
     combos = {"Scenario": scenarios.keys()}
-    combos["Random_Seed"] = range(_DEFAULT_SEED, _DEFAULT_SEED + n_mc_iterations)
+    combos["Monte_Carlo_Run"] = range(n_mc_iterations)
     if initial_data:
         combos["Initial_Data"] = range(len(initial_data))
 

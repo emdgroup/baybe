@@ -1,7 +1,7 @@
 """A wrapper class for synthetic BoTorch test functions."""
 
+import torch
 from botorch.test_functions import SyntheticTestFunction
-from torch import Tensor
 
 
 def botorch_function_wrapper(test_function: SyntheticTestFunction):
@@ -19,7 +19,7 @@ def botorch_function_wrapper(test_function: SyntheticTestFunction):
 
     def wrapper(*x: float) -> float:
         # Cast the provided list of floats to a tensor.
-        x_tensor = Tensor(x)
+        x_tensor = torch.tensor(x)
         result = test_function.forward(x_tensor)
         # We do not need to return a tuple here.
         return float(result)
