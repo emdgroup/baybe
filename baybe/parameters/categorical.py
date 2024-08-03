@@ -26,8 +26,9 @@ class CategoricalParameter(DiscreteParameter):
     # object variables
     _values: tuple[str, ...] = field(
         alias="values",
-        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
-        validator=(
+        # FIXME[typing]: `attrs.Converter` is not yet supported by type checkers
+        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore
+        validator=(  # type: ignore
             min_len(2),
             validate_unique_values,
             deep_iterable(member_validator=(instance_of(str), min_len(1))),
