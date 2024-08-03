@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `py.typed` file to enable the use of type checkers on the user side
 
+### Fixed
+- `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
+  string input to categories/tasks
+
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes
 - Providing an explicit `batch_size` is now mandatory when asking for recommendations
