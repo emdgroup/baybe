@@ -34,7 +34,7 @@ def simulate_experiment(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
-    get_shap_feature_importance: bool = False,
+    shap_feature_importance: bool = False,
 ) -> pd.DataFrame:
     """Simulate a Bayesian optimization loop.
 
@@ -62,8 +62,9 @@ def simulate_experiment(
                 made so that unmeasured experiments will not be recommended.
         noise_percent: If not ``None``, relative noise in percent of
             ``noise_percent`` will be applied to the parameter measurements.
-        get_shap_feature_importance: If ``True``, the SHAP feature importance
-            will be included in the output.
+        shap_feature_importance: If ``True``, the SHAP feature importance
+            will be included in the output. By default, the SHAP summary plot
+            will be displayed.
 
     Returns:
         A dataframe ready for plotting, see the ``Note`` for details.
@@ -243,8 +244,8 @@ def simulate_experiment(
 
             # Get SHAP feature importance results and add them to the
             # final row as a list object if requested
-            if get_shap_feature_importance:
-                shap_values = campaign.get_shap_feature_importance()
+            if shap_feature_importance:
+                shap_values = campaign.shap_feature_importance(plot=True)
                 shap_col = f"{target.name}_SHAP"
                 results[shap_col] = np.nan
                 results[shap_col] = results[shap_col].astype(object)

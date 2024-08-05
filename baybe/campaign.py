@@ -85,6 +85,11 @@ class Campaign(SerialMixin):
     )
     """The cached recommendations."""
 
+    _cached_shap_feature_importance: pd.DataFrame = field(
+        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    )
+    """The cached SHAP feature importance values."""
+
     # Deprecation
     numerical_measurements_must_be_within_tolerance: bool = field(default=None)
     """Deprecated! Raises an error when used."""
@@ -140,6 +145,15 @@ class Campaign(SerialMixin):
     def targets(self) -> tuple[Target, ...]:
         """The targets of the underlying objective."""
         return self.objective.targets if self.objective is not None else ()
+
+    @property
+    def cached_shap_feature_importance(self) -> pd.DataFrame:
+        """Retrieve cached SHAP feature importance values."""
+        return (
+            self._cached_shap_feature_importance
+            if self._cached_shap_feature_importance is not None
+            else pd.DataFrame()
+        )
 
     @classmethod
     def from_config(cls, config_json: str) -> Campaign:
@@ -311,7 +325,9 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def get_shap_feature_importance(self, nsamples: str | int = "auto") -> pd.DataFrame:
+    def shap_feature_importance(
+        self, nsamples: str | int = "auto", plot: bool = False, max_display: int = 10
+    ) -> pd.DataFrame:
         """Calculate and return the SHAP values for the conducted experiments.
 
         Args:
@@ -320,9 +336,12 @@ class Campaign(SerialMixin):
                 "auto", which uses
                 "nsamples = 2*len(measurements)+2048" according to the
                 SHAP library documentation.
+            plot: Flag indicating whether to plot the SHAP values.
+            max_display: Maximum number of features to display in the plot.
+                Ranked by the importance of the feature.
 
         Returns:
-            The SHAP values for the conducted experiments.
+            Dataframe with SHAP values for the conducted experiments.
 
         Raises:
             ValueError: If no surrogate model is found or if no measurements are found.
@@ -354,30 +373,21 @@ class Campaign(SerialMixin):
                 # may be too high. In this case, the user is warned and the number of
                 # samples is reduced.
                 measurements_features = measurements.shape[1]
-                print("Exception occurred during SHAP value calculation:", e)
+                print(f"Exception occurred during SHAP value calculation: {e}")
                 print(
-                    "Reducing the number of samples for SHAP value calculation to",
-                    measurements_features,
-                    ".",
+                    f"Reducing the number of samples for SHAP value"
+                    f"calculation to {measurements_features}."
                 )
                 shap_values = explainer.shap_values(
                     measurements, nsamples=measurements_features
                 )
 
+        if plot:
+            measurements = self.measurements.iloc[:, : len(self.parameters)]
+            measurements = self.searchspace.transform(measurements, allow_extra=True)
+            shap.summary_plot(shap_values, measurements, max_display=max_display)
+
         return shap_values
-
-    def plot_shap_feature_importance(self, max_display: int = 10) -> None:
-        """Plot the SHAP values for the conducted experiments.
-
-        Args:
-            max_display: The maximum number of features to display in the plot.
-        """
-        shap_values = self.get_shap_feature_importance()
-        measurements = self.measurements.iloc[:, : len(self.parameters)]
-
-        # Transform the measurements to the campaign search space.
-        measurements = self.searchspace.transform(measurements, allow_extra=True)
-        shap.summary_plot(shap_values, measurements, max_display=max_display)
 
 
 def _add_version(dict_: dict) -> dict:
