@@ -86,6 +86,7 @@ dev = [
     "baybe[lint]",
     "baybe[mypy]",
     "baybe[onnx]",
+    "baybe[polars]",
     "baybe[simulation]",
     "baybe[test]",
     "pip-audit>=2.5.5",
@@ -130,6 +131,10 @@ mypy = [
     "pandas-stubs>=2.2.2.240603",
     "funcy-stubs>=0.1.1",
     "types-seaborn>=0.13.2.20240618"
+]
+
+polars = [
+    "polars[pyarrow]>=0.19.19,<2",
 ]
 
 simulation = [

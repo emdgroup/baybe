@@ -5,7 +5,7 @@ from abc import ABC
 import pandas as pd
 from attrs import define, field
 
-from baybe.acquisition.acqfs import qExpectedImprovement
+from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import DeprecationError
@@ -25,7 +25,7 @@ class BayesianRecommender(PureRecommender, ABC):
     """The used surrogate model."""
 
     acquisition_function: AcquisitionFunction = field(
-        converter=convert_acqf, factory=qExpectedImprovement
+        converter=convert_acqf, factory=qLogExpectedImprovement
     )
     """The used acquisition function class."""
 

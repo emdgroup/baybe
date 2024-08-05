@@ -1,8 +1,10 @@
 """Discrete constraints."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from functools import reduce
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import pandas as pd
 from attr import define, field
@@ -12,6 +14,7 @@ from baybe.constraints.base import CardinalityConstraint, DiscreteConstraint
 from baybe.constraints.conditions import (
     Condition,
     ThresholdCondition,
+    _threshold_operators,
     _valid_logic_combiners,
 )
 from baybe.serialization import (
@@ -20,6 +23,9 @@ from baybe.serialization import (
     converter,
 )
 from baybe.utils.basic import Dummy
+
+if TYPE_CHECKING:
+    import polars as pl
 
 
 @define
@@ -41,6 +47,18 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         ]
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
         return data.index[res]
+
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        from baybe._optional.polars import polars as pl
+
+        satisfied = []
+        for k, cond in enumerate(self.conditions):
+            satisfied.append(cond.to_polars(pl.col(self.parameters[k])))
+
+        expr = pl.reduce(_valid_logic_combiners[self.combiner], satisfied)
+
+        return expr
 
 
 @define
@@ -64,6 +82,12 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        from baybe._optional.polars import polars as pl
+
+        return self.condition.to_polars(pl.sum_horizontal(self.parameters)).not_()
+
 
 @define
 class DiscreteProductConstraint(DiscreteConstraint):
@@ -86,6 +110,18 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        from baybe._optional.polars import polars as pl
+
+        op = _threshold_operators[self.condition.operator]
+
+        # Get the product of columns
+        expr = pl.reduce(lambda acc, x: acc * x, pl.col(self.parameters))
+
+        # Apply the threshold operator on expr and the condition threshold
+        return op(expr, self.condition.threshold).not_()
+
 
 class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
     """Constraint class for excluding entries where occurring labels are not unique.
@@ -107,6 +143,18 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
 
         return data.index[mask_bad]
 
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        from baybe._optional.polars import polars as pl
+
+        expr = (
+            pl.concat_list(pl.col(self.parameters))
+            .list.eval(pl.element().n_unique())
+            .explode()
+        ) != len(self.parameters)
+
+        return expr
+
 
 class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     """Constraint class for linking the values of parameters.
@@ -122,6 +170,18 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
         mask_bad = data[self.parameters].nunique(axis=1) != 1
 
         return data.index[mask_bad]
+
+    def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
+        # See base class.
+        from baybe._optional.polars import polars as pl
+
+        expr = (
+            pl.concat_list(pl.col(self.parameters))
+            .list.eval(pl.element().n_unique())
+            .explode()
+        ) != 1
+
+        return expr
 
 
 @define

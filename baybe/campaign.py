@@ -13,7 +13,6 @@ from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 
-from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
@@ -109,28 +108,6 @@ class Campaign(SerialMixin):
 
         return campaign_str.replace("\n", "\n ").replace("\r", "\r ")
 
-    strategy: RecommenderProtocol = field(default=None)
-    """Deprecated! Raises an error when used."""
-
-    @numerical_measurements_must_be_within_tolerance.validator
-    def _validate_tolerance_flag(self, _, value) -> None:
-        """Raise a DeprecationError if the tolerance flag is used."""
-        if value is not None:
-            raise DeprecationError(
-                f"Passing 'numerical_measurements_must_be_within_tolerance' to "
-                f"the constructor is deprecated. The flag has become a parameter of "
-                f"{self.__class__.__name__}.{Campaign.add_measurements.__name__}."
-            )
-
-    @strategy.validator
-    def _validate_strategy(self, _, value) -> None:
-        """Raise a DeprecationError if the strategy attribute is used."""
-        if value is not None:
-            raise DeprecationError(
-                "Passing 'strategy' to the constructor is deprecated. The attribute "
-                "has been renamed to 'recommender'."
-            )
-
     @property
     def measurements(self) -> pd.DataFrame:
         """The experimental data added to the Campaign."""
@@ -165,13 +142,7 @@ class Campaign(SerialMixin):
         Returns:
             The constructed campaign.
         """
-        from baybe.deprecation import compatibilize_config
-
         config = json.loads(config_json)
-
-        # Temporarily enable backward compatibility
-        config = compatibilize_config(config)
-
         return converter.structure(config, Campaign)
 
     @classmethod
@@ -181,13 +152,7 @@ class Campaign(SerialMixin):
         Args:
             config_json: The JSON that should be validated.
         """
-        from baybe.deprecation import compatibilize_config
-
         config = json.loads(config_json)
-
-        # Temporarily enable backward compatibility
-        config = compatibilize_config(config)
-
         _validation_converter.structure(config, Campaign)
 
     def add_measurements(
@@ -271,13 +236,11 @@ class Campaign(SerialMixin):
     def recommend(
         self,
         batch_size: int,
-        batch_quantity: int = None,  # type: ignore[assignment]
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
             batch_size: Number of requested recommendations.
-            batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
@@ -285,13 +248,6 @@ class Campaign(SerialMixin):
         Raises:
             ValueError: If ``batch_size`` is smaller than 1.
         """
-        if batch_quantity is not None:
-            raise DeprecationError(
-                f"Passing the keyword 'batch_quantity' to "
-                f"'{self.__class__.__name__}.{self.recommend.__name__}' is deprecated. "
-                f"Use 'batch_size' instead."
-            )
-
         if batch_size < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
@@ -405,12 +361,7 @@ def _drop_version(dict_: dict) -> dict:
 
 # Register de-/serialization hooks
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
-    Campaign,
-    converter,
-    _cattrs_include_init_false=True,
-    # TODO: Remove once deprecation got expired:
-    numerical_measurements_must_be_within_tolerance=cattrs.override(omit=True),
-    strategy=cattrs.override(omit=True),
+    Campaign, converter, _cattrs_include_init_false=True
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
     Campaign, converter, _cattrs_include_init_false=True, _cattrs_forbid_extra_keys=True
