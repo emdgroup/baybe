@@ -36,6 +36,3 @@ htmlcov
 docs/_autosummary
 docs/examples
 docs/sdk
-
-pk3.py
-molecular_encoding.py
