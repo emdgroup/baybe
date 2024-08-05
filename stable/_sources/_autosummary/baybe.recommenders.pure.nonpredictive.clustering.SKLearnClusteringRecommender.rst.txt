@@ -29,7 +29,6 @@ SKLearnClusteringRecommender
       ~SKLearnClusteringRecommender.allow_recommending_already_measured
       ~SKLearnClusteringRecommender.allow_repeated_recommendations
       ~SKLearnClusteringRecommender.compatibility
-      ~SKLearnClusteringRecommender.model_class
       ~SKLearnClusteringRecommender.model_cluster_num_parameter_name
    
    

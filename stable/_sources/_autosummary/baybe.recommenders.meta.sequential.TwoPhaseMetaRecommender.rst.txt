@@ -33,7 +33,5 @@ TwoPhaseMetaRecommender
       ~TwoPhaseMetaRecommender.initial_recommender
       ~TwoPhaseMetaRecommender.recommender
       ~TwoPhaseMetaRecommender.switch_after
-      ~TwoPhaseMetaRecommender.allow_recommending_already_measured
-      ~TwoPhaseMetaRecommender.allow_repeated_recommendations
    
    

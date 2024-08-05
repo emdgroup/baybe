@@ -22,8 +22,8 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders import (
+    BotorchRecommender,
     FPSRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -60,7 +60,7 @@ campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
-        recommender=SequentialGreedyRecommender(),
+        recommender=BotorchRecommender(),
         initial_recommender=FPSRecommender(),
     ),
 )
@@ -154,16 +154,14 @@ None
                     Type   Name Mode  Lower_Bound  Upper_Bound Transformation
       0  NumericalTarget  Yield  MAX         -inf          inf           None
      
-     TwoPhaseMetaRecommender(allow_repeated_recommendations=None,
-allow_recommending_already_measured=None,
-initial_recommender=FPSRecommender(allow_repeated_recommendations=False,
-allow_recommending_already_measured=True),
-recommender=SequentialGreedyRecommender(allow_repeated_recommendations=False,
+     TwoPhaseMetaRecommender(initial_recommender=FPSRecommender(allow_repeated_recommend
+ations=False, allow_recommending_already_measured=True),
+recommender=BotorchRecommender(allow_repeated_recommendations=False,
 allow_recommending_already_measured=True,
 surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
-_model=None), acquisition_function=qExpectedImprovement(), _botorch_acqf=None,
-acquisition_function_cls=None, hybrid_sampler='None', sampling_percentage=1.0),
-switch_after=1)
+_model=None), acquisition_function=qLogExpectedImprovement(), _botorch_acqf=None,
+acquisition_function_cls=None, sequential_continuous=False, hybrid_sampler=None,
+sampling_percentage=1.0), switch_after=1)
      
     
     
@@ -266,16 +264,14 @@ None
                     Type   Name Mode  Lower_Bound  Upper_Bound Transformation
       0  NumericalTarget  Yield  MAX         -inf          inf           None
      
-     TwoPhaseMetaRecommender(allow_repeated_recommendations=None,
-allow_recommending_already_measured=None,
-initial_recommender=FPSRecommender(allow_repeated_recommendations=False,
-allow_recommending_already_measured=True),
-recommender=SequentialGreedyRecommender(allow_repeated_recommendations=False,
+     TwoPhaseMetaRecommender(initial_recommender=FPSRecommender(allow_repeated_recommend
+ations=False, allow_recommending_already_measured=True),
+recommender=BotorchRecommender(allow_repeated_recommendations=False,
 allow_recommending_already_measured=True,
 surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
-_model=None), acquisition_function=qExpectedImprovement(), _botorch_acqf=None,
-acquisition_function_cls=None, hybrid_sampler='None', sampling_percentage=1.0),
-switch_after=1)
+_model=None), acquisition_function=qLogExpectedImprovement(), _botorch_acqf=None,
+acquisition_function_cls=None, sequential_continuous=False, hybrid_sampler=None,
+sampling_percentage=1.0), switch_after=1)
      
     
     

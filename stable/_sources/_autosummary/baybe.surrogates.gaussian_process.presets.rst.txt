@@ -33,3 +33,5 @@ baybe.surrogates.gaussian\_process.presets
 
    default
 
+   edbo
+

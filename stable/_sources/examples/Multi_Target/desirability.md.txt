@@ -10,6 +10,11 @@ We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 
 ```python
+import pandas as pd
+```
+
+
+```python
 from baybe import Campaign
 from baybe.objectives import DesirabilityObjective
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
@@ -220,16 +225,14 @@ print(campaign)
               
       [1mScalarizer: [0mMEAN
      
-     TwoPhaseMetaRecommender(allow_repeated_recommendations=None,
-allow_recommending_already_measured=None,
-initial_recommender=RandomRecommender(allow_repeated_recommendations=False,
-allow_recommending_already_measured=True),
-recommender=SequentialGreedyRecommender(allow_repeated_recommendations=False,
+     TwoPhaseMetaRecommender(initial_recommender=RandomRecommender(allow_repeated_recomm
+endations=False, allow_recommending_already_measured=True),
+recommender=BotorchRecommender(allow_repeated_recommendations=False,
 allow_recommending_already_measured=True,
 surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
-_model=None), acquisition_function=qExpectedImprovement(), _botorch_acqf=None,
-acquisition_function_cls=None, hybrid_sampler='None', sampling_percentage=1.0),
-switch_after=1)
+_model=None), acquisition_function=qLogExpectedImprovement(), _botorch_acqf=None,
+acquisition_function_cls=None, sequential_continuous=False, hybrid_sampler=None,
+sampling_percentage=1.0), switch_after=1)
      
 
 
@@ -246,110 +249,106 @@ N_ITERATIONS = 3
 
 ```python
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n#### ITERATION {kIter+1} ####")
-
     rec = campaign.recommend(batch_size=3)
-    print("\nRecommended measurements:\n", rec)
-
-    add_fake_results(rec, campaign)
-    print("\nRecommended measurements with fake measured results:\n", rec)
-
+    add_fake_results(rec, campaign.targets)
     campaign.add_measurements(rec)
+    desirability = campaign.objective.transform(campaign.measurements)
 
-    print("\n\nInternal measurement dataframe computational representation Y:\n")
-    print(campaign._measurements_targets_comp)
+    print(f"\n\n#### ITERATION {kIter+1} ####")
+    print("\nRecommended measurements with fake measured results:\n")
+    print(rec)
+    print("\nInternal measurement database with desirability values:\n")
+    print(pd.concat([campaign.measurements, desirability], axis=1))
 ```
 
     
     
     #### ITERATION 1 ####
     
-    Recommended measurements:
-         Cat_1 Cat_2  Num_disc_1  Num_disc_2
-    199    33    OK         1.0        -1.0
-    57     22    OK         1.0        -6.0
-    43     22   bad         4.0        -1.0
-    
     Recommended measurements with fake measured results:
-         Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-    199    33    OK         1.0        -1.0  81.708916  89.822662  52.613267
-    57     22    OK         1.0        -6.0  29.383613  84.732983  56.822865
-    43     22   bad         4.0        -1.0  35.678604  61.175268  56.208466
     
+        Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    46     22        bad         6.0        -3.0  89.287695  27.689040  53.620385
+    188    33        bad         8.0        -9.0  54.714958  32.395289  56.792072
+    136    22  very good        10.0        -9.0  82.235979  29.393339  53.739874
     
-    Internal measurement dataframe computational representation Y:
+    Internal measurement database with desirability values:
     
-       Desirability
-    0      0.707173
-    1      0.325790
-    2      0.426564
+      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+    0    22        bad         6.0        -3.0  89.287695  27.689040  53.620385   
+    1    33        bad         8.0        -9.0  54.714958  32.395289  56.792072   
+    2    22  very good        10.0        -9.0  82.235979  29.393339  53.739874   
+    
+       BatchNr  FitNr  Desirability  
+    0        1    NaN      0.784838  
+    1        1    NaN      0.483119  
+    2        1    NaN      0.759277  
+
+
     
     
     #### ITERATION 2 ####
-
-
-    
-    Recommended measurements:
-           Cat_1 Cat_2  Num_disc_1  Num_disc_2
-    index                                    
-    171      33   bad         1.0        -1.0
-    207      33    OK         3.0        -1.0
-    227      33  good         1.0        -1.0
     
     Recommended measurements with fake measured results:
-           Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-    index                                                                     
-    171      33   bad         1.0        -1.0  10.626523  99.114276  56.891405
-    207      33    OK         3.0        -1.0  29.006364  75.564656  53.371658
-    227      33  good         1.0        -1.0  34.086036  59.602904  53.642317
     
+          Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    index                                                                         
+    18       22  very bad         6.0        -3.0  52.099147  47.343427  51.813798
+    74       22        OK         6.0        -3.0  93.488807  41.706375  55.159932
+    104      22      good         8.0        -9.0  63.316223  84.934914  51.455603
     
-    Internal measurement dataframe computational representation Y:
+    Internal measurement database with desirability values:
     
-       Desirability
-    0      0.707173
-    1      0.325790
-    2      0.426564
-    3      0.255109
-    4      0.584863
-    5      0.609138
+      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+    0    22        bad         6.0        -3.0  89.287695  27.689040  53.620385   
+    1    33        bad         8.0        -9.0  54.714958  32.395289  56.792072   
+    2    22  very good        10.0        -9.0  82.235979  29.393339  53.739874   
+    3    22   very bad         6.0        -3.0  52.099147  47.343427  51.813798   
+    4    22         OK         6.0        -3.0  93.488807  41.706375  55.159932   
+    5    22       good         8.0        -9.0  63.316223  84.934914  51.455603   
+    
+       BatchNr  FitNr  Desirability  
+    0        1    1.0      0.784838  
+    1        1    1.0      0.483119  
+    2        1    1.0      0.759277  
+    3        2    NaN      0.771304  
+    4        2    NaN      0.655847  
+    5        2    NaN      0.731868  
     
     
     #### ITERATION 3 ####
     
-    Recommended measurements:
-           Cat_1      Cat_2  Num_disc_1  Num_disc_2
-    index                                         
-    27       22   very bad        10.0        -1.0
-    198      33         OK         1.0        -3.0
-    271      33  very good         6.0        -1.0
-    
     Recommended measurements with fake measured results:
-           Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
-    index                                                                  
-    27       22   very bad        10.0        -1.0  78.766479  91.049987   
-    198      33         OK         1.0        -3.0  65.518211  57.337644   
-    271      33  very good         6.0        -1.0  50.028294  50.220086   
     
-            Target_3  
-    index             
-    27     52.546025  
-    198    52.136110  
-    271    51.095909  
+          Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    index                                                                         
+    2        22  very bad         1.0        -3.0  32.944727  88.076184  56.847457
+    19       22  very bad         6.0        -1.0  73.640865  70.293208  56.821857
+    26       22  very bad        10.0        -3.0   5.462638  37.145001  53.003474
     
+    Internal measurement database with desirability values:
     
-    Internal measurement dataframe computational representation Y:
+      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+    0    22        bad         6.0        -3.0  89.287695  27.689040  53.620385   
+    1    33        bad         8.0        -9.0  54.714958  32.395289  56.792072   
+    2    22  very good        10.0        -9.0  82.235979  29.393339  53.739874   
+    3    22   very bad         6.0        -3.0  52.099147  47.343427  51.813798   
+    4    22         OK         6.0        -3.0  93.488807  41.706375  55.159932   
+    5    22       good         8.0        -9.0  63.316223  84.934914  51.455603   
+    6    22   very bad         1.0        -3.0  32.944727  88.076184  56.847457   
+    7    22   very bad         6.0        -1.0  73.640865  70.293208  56.821857   
+    8    22   very bad        10.0        -3.0   5.462638  37.145001  53.003474   
     
-       Desirability
-    0      0.707173
-    1      0.325790
-    2      0.426564
-    3      0.255109
-    4      0.584863
-    5      0.609138
-    6      0.702477
-    7      0.764030
-    8      0.785376
+       BatchNr  FitNr  Desirability  
+    0        1    1.0      0.784838  
+    1        1    1.0      0.483119  
+    2        1    1.0      0.759277  
+    3        2    2.0      0.771304  
+    4        2    2.0      0.655847  
+    5        2    2.0      0.731868  
+    6        3    NaN      0.324641  
+    7        3    NaN      0.443249  
+    8        3    NaN      0.637588  
 
 
 ## Addendum: Description of `transformation` functions

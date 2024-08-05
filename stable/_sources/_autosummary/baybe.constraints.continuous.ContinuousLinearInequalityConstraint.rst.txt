@@ -31,10 +31,12 @@ ContinuousLinearInequalityConstraint
    .. autosummary::
    
       ~ContinuousLinearInequalityConstraint.coefficients
+      ~ContinuousLinearInequalityConstraint.eval_during_augmentation
       ~ContinuousLinearInequalityConstraint.eval_during_creation
       ~ContinuousLinearInequalityConstraint.eval_during_modeling
       ~ContinuousLinearInequalityConstraint.is_continuous
       ~ContinuousLinearInequalityConstraint.is_discrete
+      ~ContinuousLinearInequalityConstraint.numerical_only
       ~ContinuousLinearInequalityConstraint.parameters
       ~ContinuousLinearInequalityConstraint.rhs
    

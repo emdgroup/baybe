@@ -21,6 +21,7 @@ Parameter
       ~Parameter.summary
       ~Parameter.to_dict
       ~Parameter.to_json
+      ~Parameter.to_searchspace
    
    
 
@@ -32,7 +33,7 @@ Parameter
    
       ~Parameter.is_continuous
       ~Parameter.is_discrete
-      ~Parameter.is_numeric
+      ~Parameter.is_numerical
       ~Parameter.name
    
    

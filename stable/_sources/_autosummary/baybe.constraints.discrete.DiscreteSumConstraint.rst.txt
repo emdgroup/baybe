@@ -18,6 +18,7 @@ DiscreteSumConstraint
       ~DiscreteSumConstraint.from_dict
       ~DiscreteSumConstraint.from_json
       ~DiscreteSumConstraint.get_invalid
+      ~DiscreteSumConstraint.get_invalid_polars
       ~DiscreteSumConstraint.summary
       ~DiscreteSumConstraint.to_dict
       ~DiscreteSumConstraint.to_json
@@ -31,10 +32,12 @@ DiscreteSumConstraint
    .. autosummary::
    
       ~DiscreteSumConstraint.condition
+      ~DiscreteSumConstraint.eval_during_augmentation
       ~DiscreteSumConstraint.eval_during_creation
       ~DiscreteSumConstraint.eval_during_modeling
       ~DiscreteSumConstraint.is_continuous
       ~DiscreteSumConstraint.is_discrete
+      ~DiscreteSumConstraint.numerical_only
       ~DiscreteSumConstraint.parameters
    
    

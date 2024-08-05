@@ -31,8 +31,6 @@ baybe.recommenders
 
    base
 
-   deprecation
-
    meta
 
    naive

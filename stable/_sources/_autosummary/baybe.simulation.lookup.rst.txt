@@ -9,6 +9,13 @@ baybe.simulation.lookup
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      look_up_targets
+   
    
 
    

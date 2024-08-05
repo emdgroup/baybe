@@ -1,6 +1,0 @@
-baybe.recommenders.deprecation.structure\_recommender\_protocol
-===============================================================
-
-.. currentmodule:: baybe.recommenders.deprecation
-
-.. autofunction:: structure_recommender_protocol

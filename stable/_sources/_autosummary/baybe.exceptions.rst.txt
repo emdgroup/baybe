@@ -32,6 +32,8 @@ baybe.exceptions
       NumericalUnderflowError
       OptionalImportError
       UnidentifiedSubclassError
+      UnmatchedAttributeError
+      UnusedObjectWarning
    
    
 

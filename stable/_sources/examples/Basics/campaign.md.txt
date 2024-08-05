@@ -83,6 +83,69 @@ parameters = [solvent, base, ligand, temperature, concentration]
 searchspace = SearchSpace.from_product(parameters=parameters)
 ```
 
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC(N(C)C)=O')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCCC#N')
+
+
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCCCOC(C)=O')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC1=CC=C(C)C=C1')
+
+
+    _______________________________________smiles_to_mordred_features - 0.2s, 0.0min
+
+
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C.[K+]')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[K+]')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C.[Cs+]')
+
+
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[Cs+]')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+
+
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC
+4)C(OC)=CC=C2OC')
+
+
+    _______________________________________smiles_to_mordred_features - 3.1s, 0.1min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC(C)(C)P(C1=CC=CC=C1)C(C)(C)C')
+
+
+    _______________________________________smiles_to_mordred_features - 0.4s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+_smiles_to_mordred_features('CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3')
+
+
+    _______________________________________smiles_to_mordred_features - 1.7s, 0.0min
+
+
 In this example, we maximize the yield of a reaction and define a corresponding
 objective.
 
@@ -119,9 +182,9 @@ print(recommendation)
     
     
     Recommended measurements with batch_size = 2: 
-             Solvent             Base         Ligand  Temperature  Concentration
-    297  Butyl Ester  Cesium pivalate      BrettPhos         90.0          0.057
-    430     p-Xylene  Cesium pivalate  (t-Bu)PhCPhos        120.0          0.100
+       Solvent                Base     Ligand  Temperature  Concentration
+    87    DMAc     Cesium pivalate  BrettPhos        120.0          0.057
+    32    DMAc  Potassium pivalate  BrettPhos        105.0          0.153
 
 
 Adding target values is done by creating a new column in the `recommendation`
@@ -131,7 +194,7 @@ We then update the campaign by adding the measurements.
 
 
 ```python
-add_fake_results(recommendation, campaign)
+add_fake_results(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 ```
@@ -139,13 +202,13 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent             Base         Ligand  Temperature  Concentration  \
-    297  Butyl Ester  Cesium pivalate      BrettPhos         90.0          0.057   
-    430     p-Xylene  Cesium pivalate  (t-Bu)PhCPhos        120.0          0.100   
+       Solvent                Base     Ligand  Temperature  Concentration  \
+    87    DMAc     Cesium pivalate  BrettPhos        120.0          0.057   
+    32    DMAc  Potassium pivalate  BrettPhos        105.0          0.153   
     
-             yield  
-    297  32.211179  
-    430  18.093378  
+            yield  
+    87  10.301524  
+    32   8.736092  
 
 
 

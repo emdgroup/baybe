@@ -35,8 +35,6 @@
 
    constraints
 
-   deprecation
-
    exceptions
 
    kernels
@@ -58,8 +56,6 @@
    serialization
 
    simulation
-
-   strategies
 
    surrogates
 

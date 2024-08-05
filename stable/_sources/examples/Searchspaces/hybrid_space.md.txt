@@ -149,7 +149,7 @@ Here, we explicitly create a recommender object to use the
 `NaiveHybridSpaceRecommender`.
 The keywords `disc_recommender` and `cont_recommender` can be used to select different
 recommenders for the corresponding subspaces.
-We use the default choices, which is the `SequentialGreedyRecommender`.
+We use the default choices, which is the `BotorchRecommender`.
 
 
 ```python
@@ -205,7 +205,7 @@ print(recommendation)
     
     Recommended experiments with measured values: 
          x_1   x_2   x_3       x_4       x_5       x_6      Target
-    22  5.12  0.00  0.00 -0.522380 -3.287908 -0.499786   92.518387
-    0  -5.12 -5.12 -5.12  1.155627  0.044178 -1.064922   94.860748
-    26  5.12  5.12  5.12 -0.213941  4.642896  1.453686  154.055847
+    4  -5.12  0.00  0.00 -5.062950 -3.598000 -3.560977  118.394821
+    15  0.00  5.12 -5.12  2.518722  4.923163  3.822993  129.692825
+    22  5.12  0.00  0.00  1.017797 -1.788585 -2.351331   62.295483
 

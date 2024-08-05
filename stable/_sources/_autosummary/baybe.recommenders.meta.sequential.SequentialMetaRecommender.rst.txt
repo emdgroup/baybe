@@ -32,7 +32,5 @@ SequentialMetaRecommender
    
       ~SequentialMetaRecommender.recommenders
       ~SequentialMetaRecommender.mode
-      ~SequentialMetaRecommender.allow_recommending_already_measured
-      ~SequentialMetaRecommender.allow_repeated_recommendations
    
    

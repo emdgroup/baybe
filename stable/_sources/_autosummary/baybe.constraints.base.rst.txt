@@ -19,8 +19,11 @@ baybe.constraints.base
       :toctree:                                       
       :template: custom-class-template.rst              
    
+      CardinalityConstraint
       Constraint
       ContinuousConstraint
+      ContinuousLinearConstraint
+      ContinuousNonlinearConstraint
       DiscreteConstraint
    
    

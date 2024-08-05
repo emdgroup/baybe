@@ -19,6 +19,8 @@ baybe.kernels.base
       :toctree:                                       
       :template: custom-class-template.rst              
    
+      BasicKernel
+      CompositeKernel
       Kernel
    
    

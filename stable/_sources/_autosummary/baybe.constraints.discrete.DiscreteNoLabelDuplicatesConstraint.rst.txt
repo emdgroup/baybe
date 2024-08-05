@@ -18,6 +18,7 @@ DiscreteNoLabelDuplicatesConstraint
       ~DiscreteNoLabelDuplicatesConstraint.from_dict
       ~DiscreteNoLabelDuplicatesConstraint.from_json
       ~DiscreteNoLabelDuplicatesConstraint.get_invalid
+      ~DiscreteNoLabelDuplicatesConstraint.get_invalid_polars
       ~DiscreteNoLabelDuplicatesConstraint.summary
       ~DiscreteNoLabelDuplicatesConstraint.to_dict
       ~DiscreteNoLabelDuplicatesConstraint.to_json
@@ -30,10 +31,12 @@ DiscreteNoLabelDuplicatesConstraint
 
    .. autosummary::
    
+      ~DiscreteNoLabelDuplicatesConstraint.eval_during_augmentation
       ~DiscreteNoLabelDuplicatesConstraint.eval_during_creation
       ~DiscreteNoLabelDuplicatesConstraint.eval_during_modeling
       ~DiscreteNoLabelDuplicatesConstraint.is_continuous
       ~DiscreteNoLabelDuplicatesConstraint.is_discrete
+      ~DiscreteNoLabelDuplicatesConstraint.numerical_only
       ~DiscreteNoLabelDuplicatesConstraint.parameters
    
    

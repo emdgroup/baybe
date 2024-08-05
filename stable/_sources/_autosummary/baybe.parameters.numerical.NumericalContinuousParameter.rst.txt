@@ -21,6 +21,8 @@ NumericalContinuousParameter
       ~NumericalContinuousParameter.summary
       ~NumericalContinuousParameter.to_dict
       ~NumericalContinuousParameter.to_json
+      ~NumericalContinuousParameter.to_searchspace
+      ~NumericalContinuousParameter.to_subspace
    
    
 
@@ -32,7 +34,7 @@ NumericalContinuousParameter
    
       ~NumericalContinuousParameter.is_continuous
       ~NumericalContinuousParameter.is_discrete
-      ~NumericalContinuousParameter.is_numeric
+      ~NumericalContinuousParameter.is_numerical
       ~NumericalContinuousParameter.bounds
       ~NumericalContinuousParameter.name
    
