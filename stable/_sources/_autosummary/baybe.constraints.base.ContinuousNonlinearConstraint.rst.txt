@@ -1,0 +1,40 @@
+ContinuousNonlinearConstraint
+=============================
+
+.. currentmodule:: baybe.constraints.base
+
+.. autoclass:: ContinuousNonlinearConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ContinuousNonlinearConstraint.__init__
+      ~ContinuousNonlinearConstraint.from_dict
+      ~ContinuousNonlinearConstraint.from_json
+      ~ContinuousNonlinearConstraint.summary
+      ~ContinuousNonlinearConstraint.to_dict
+      ~ContinuousNonlinearConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ContinuousNonlinearConstraint.eval_during_augmentation
+      ~ContinuousNonlinearConstraint.eval_during_creation
+      ~ContinuousNonlinearConstraint.eval_during_modeling
+      ~ContinuousNonlinearConstraint.is_continuous
+      ~ContinuousNonlinearConstraint.is_discrete
+      ~ContinuousNonlinearConstraint.numerical_only
+      ~ContinuousNonlinearConstraint.parameters
+   
+   

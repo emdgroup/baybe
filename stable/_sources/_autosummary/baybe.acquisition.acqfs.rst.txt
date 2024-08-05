@@ -22,11 +22,14 @@ baybe.acquisition.acqfs
       ExpectedImprovement
       LogExpectedImprovement
       PosteriorMean
+      PosteriorStandardDeviation
       ProbabilityOfImprovement
       UpperConfidenceBound
       qExpectedImprovement
+      qKnowledgeGradient
       qLogExpectedImprovement
       qLogNoisyExpectedImprovement
+      qNegIntegratedPosteriorVariance
       qNoisyExpectedImprovement
       qProbabilityOfImprovement
       qSimpleRegret

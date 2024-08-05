@@ -26,11 +26,4 @@ MetaRecommender
 
    
    
-   .. rubric:: Public attributes and properties
-
-   .. autosummary::
-   
-      ~MetaRecommender.allow_repeated_recommendations
-      ~MetaRecommender.allow_recommending_already_measured
-   
    

@@ -21,7 +21,9 @@ TaskParameter
       ~TaskParameter.summary
       ~TaskParameter.to_dict
       ~TaskParameter.to_json
-      ~TaskParameter.transform_rep_exp2comp
+      ~TaskParameter.to_searchspace
+      ~TaskParameter.to_subspace
+      ~TaskParameter.transform
    
    
 
@@ -34,7 +36,7 @@ TaskParameter
       ~TaskParameter.comp_df
       ~TaskParameter.is_continuous
       ~TaskParameter.is_discrete
-      ~TaskParameter.is_numeric
+      ~TaskParameter.is_numerical
       ~TaskParameter.values
       ~TaskParameter.active_values
       ~TaskParameter.encoding

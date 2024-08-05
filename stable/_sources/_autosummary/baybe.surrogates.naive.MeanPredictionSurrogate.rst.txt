@@ -19,6 +19,7 @@ MeanPredictionSurrogate
       ~MeanPredictionSurrogate.from_dict
       ~MeanPredictionSurrogate.from_json
       ~MeanPredictionSurrogate.posterior
+      ~MeanPredictionSurrogate.to_botorch
       ~MeanPredictionSurrogate.to_dict
       ~MeanPredictionSurrogate.to_json
    

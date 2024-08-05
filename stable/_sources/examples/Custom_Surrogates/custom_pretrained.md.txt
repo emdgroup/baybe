@@ -24,8 +24,8 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
+    BotorchRecommender,
     FPSRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -567,7 +567,7 @@ campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
     objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
-        recommender=SequentialGreedyRecommender(surrogate_model=surrogate_model),
+        recommender=BotorchRecommender(surrogate_model=surrogate_model),
         initial_recommender=FPSRecommender(),
     ),
 )
@@ -597,7 +597,7 @@ Add some fake results
 
 
 ```python
-add_fake_results(recommendation, campaign)
+add_fake_results(recommendation, campaign.targets)
 campaign.add_measurements(recommendation)
 ```
 
@@ -620,8 +620,8 @@ print(recommendation)
     Recommendation from campaign:
            Pressure[bar]  Temperature[degree_C]
     index                                      
-    1                1.0             111.111111
-    2                1.0             122.222222
+    9                1.0                  200.0
+    19               5.0                  200.0
 
 
 ## Using configuration instead

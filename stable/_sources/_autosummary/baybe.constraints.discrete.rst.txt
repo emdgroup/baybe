@@ -19,6 +19,7 @@ baybe.constraints.discrete
       :toctree:                                       
       :template: custom-class-template.rst              
    
+      DiscreteCardinalityConstraint
       DiscreteCustomConstraint
       DiscreteDependenciesConstraint
       DiscreteExcludeConstraint

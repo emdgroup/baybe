@@ -129,30 +129,30 @@ constraint = DiscreteCustomConstraint(
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 ```
 
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
-    [14:59:39] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
+    [08:37:00] DEPRECATION WARNING: please use MorganGenerator
 
 
 
@@ -242,16 +242,14 @@ Temperature  Concentration
                     Type   Name Mode  Lower_Bound  Upper_Bound Transformation
       0  NumericalTarget  yield  MAX         -inf          inf           None
      
-     TwoPhaseMetaRecommender(allow_repeated_recommendations=None,
-allow_recommending_already_measured=None,
-initial_recommender=RandomRecommender(allow_repeated_recommendations=False,
-allow_recommending_already_measured=True),
-recommender=SequentialGreedyRecommender(allow_repeated_recommendations=False,
+     TwoPhaseMetaRecommender(initial_recommender=RandomRecommender(allow_repeated_recomm
+endations=False, allow_recommending_already_measured=True),
+recommender=BotorchRecommender(allow_repeated_recommendations=False,
 allow_recommending_already_measured=True,
 surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
-_model=None), acquisition_function=qExpectedImprovement(), _botorch_acqf=None,
-acquisition_function_cls=None, hybrid_sampler='None', sampling_percentage=1.0),
-switch_after=1)
+_model=None), acquisition_function=qLogExpectedImprovement(), _botorch_acqf=None,
+acquisition_function_cls=None, sequential_continuous=False, hybrid_sampler=None,
+sampling_percentage=1.0), switch_after=1)
      
 
 
@@ -305,7 +303,7 @@ for kIter in range(N_ITERATIONS):
     )
 
     rec = campaign.recommend(batch_size=5)
-    add_fake_results(rec, campaign)
+    add_fake_results(rec, campaign.targets)
     campaign.add_measurements(rec)
 ```
 

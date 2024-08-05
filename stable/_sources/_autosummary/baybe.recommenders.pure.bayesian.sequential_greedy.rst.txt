@@ -9,17 +9,16 @@ baybe.recommenders.pure.bayesian.sequential\_greedy
 
    
    
-   
-
-   
-   
-   .. rubric:: Classes
+   .. rubric:: Functions
 
    .. autosummary::
       :toctree:                                       
-      :template: custom-class-template.rst              
    
       SequentialGreedyRecommender
+   
+   
+
+   
    
    
 

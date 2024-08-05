@@ -21,7 +21,9 @@ CategoricalParameter
       ~CategoricalParameter.summary
       ~CategoricalParameter.to_dict
       ~CategoricalParameter.to_json
-      ~CategoricalParameter.transform_rep_exp2comp
+      ~CategoricalParameter.to_searchspace
+      ~CategoricalParameter.to_subspace
+      ~CategoricalParameter.transform
    
    
 
@@ -34,7 +36,7 @@ CategoricalParameter
       ~CategoricalParameter.comp_df
       ~CategoricalParameter.is_continuous
       ~CategoricalParameter.is_discrete
-      ~CategoricalParameter.is_numeric
+      ~CategoricalParameter.is_numerical
       ~CategoricalParameter.values
       ~CategoricalParameter.encoding
       ~CategoricalParameter.name

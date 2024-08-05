@@ -20,10 +20,16 @@ SubspaceContinuous
       ~SubspaceContinuous.from_dataframe
       ~SubspaceContinuous.from_dict
       ~SubspaceContinuous.from_json
+      ~SubspaceContinuous.from_parameter
+      ~SubspaceContinuous.from_product
+      ~SubspaceContinuous.get_parameters_by_name
+      ~SubspaceContinuous.sample_from_full_factorial
+      ~SubspaceContinuous.sample_uniform
       ~SubspaceContinuous.samples_full_factorial
       ~SubspaceContinuous.samples_random
       ~SubspaceContinuous.to_dict
       ~SubspaceContinuous.to_json
+      ~SubspaceContinuous.to_searchspace
       ~SubspaceContinuous.transform
    
    
@@ -37,6 +43,8 @@ SubspaceContinuous
       ~SubspaceContinuous.parameters
       ~SubspaceContinuous.constraints_lin_eq
       ~SubspaceContinuous.constraints_lin_ineq
+      ~SubspaceContinuous.constraints_nonlin
+      ~SubspaceContinuous.constraints_cardinality
       ~SubspaceContinuous.full_factorial
       ~SubspaceContinuous.is_empty
       ~SubspaceContinuous.param_bounds_comp

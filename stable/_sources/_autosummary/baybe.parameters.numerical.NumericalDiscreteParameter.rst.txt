@@ -21,7 +21,9 @@ NumericalDiscreteParameter
       ~NumericalDiscreteParameter.summary
       ~NumericalDiscreteParameter.to_dict
       ~NumericalDiscreteParameter.to_json
-      ~NumericalDiscreteParameter.transform_rep_exp2comp
+      ~NumericalDiscreteParameter.to_searchspace
+      ~NumericalDiscreteParameter.to_subspace
+      ~NumericalDiscreteParameter.transform
    
    
 
@@ -34,7 +36,7 @@ NumericalDiscreteParameter
       ~NumericalDiscreteParameter.comp_df
       ~NumericalDiscreteParameter.is_continuous
       ~NumericalDiscreteParameter.is_discrete
-      ~NumericalDiscreteParameter.is_numeric
+      ~NumericalDiscreteParameter.is_numerical
       ~NumericalDiscreteParameter.values
       ~NumericalDiscreteParameter.tolerance
       ~NumericalDiscreteParameter.encoding

@@ -21,7 +21,9 @@ DiscreteParameter
       ~DiscreteParameter.summary
       ~DiscreteParameter.to_dict
       ~DiscreteParameter.to_json
-      ~DiscreteParameter.transform_rep_exp2comp
+      ~DiscreteParameter.to_searchspace
+      ~DiscreteParameter.to_subspace
+      ~DiscreteParameter.transform
    
    
 
@@ -36,7 +38,7 @@ DiscreteParameter
       ~DiscreteParameter.is_discrete
       ~DiscreteParameter.values
       ~DiscreteParameter.encoding
-      ~DiscreteParameter.is_numeric
+      ~DiscreteParameter.is_numerical
       ~DiscreteParameter.name
    
    

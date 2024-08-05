@@ -19,6 +19,7 @@ baybe.constraints.continuous
       :toctree:                                       
       :template: custom-class-template.rst              
    
+      ContinuousCardinalityConstraint
       ContinuousLinearEqualityConstraint
       ContinuousLinearInequalityConstraint
    

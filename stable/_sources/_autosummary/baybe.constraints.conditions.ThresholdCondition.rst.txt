@@ -20,6 +20,7 @@ ThresholdCondition
       ~ThresholdCondition.from_json
       ~ThresholdCondition.to_dict
       ~ThresholdCondition.to_json
+      ~ThresholdCondition.to_polars
    
    
 

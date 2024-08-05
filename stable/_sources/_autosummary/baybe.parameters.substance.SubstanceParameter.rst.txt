@@ -21,7 +21,9 @@ SubstanceParameter
       ~SubstanceParameter.summary
       ~SubstanceParameter.to_dict
       ~SubstanceParameter.to_json
-      ~SubstanceParameter.transform_rep_exp2comp
+      ~SubstanceParameter.to_searchspace
+      ~SubstanceParameter.to_subspace
+      ~SubstanceParameter.transform
    
    
 
@@ -34,7 +36,7 @@ SubstanceParameter
       ~SubstanceParameter.comp_df
       ~SubstanceParameter.is_continuous
       ~SubstanceParameter.is_discrete
-      ~SubstanceParameter.is_numeric
+      ~SubstanceParameter.is_numerical
       ~SubstanceParameter.values
       ~SubstanceParameter.data
       ~SubstanceParameter.decorrelate

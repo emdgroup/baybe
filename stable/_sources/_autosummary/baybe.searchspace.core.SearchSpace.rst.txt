@@ -19,7 +19,9 @@ SearchSpace
       ~SearchSpace.from_dataframe
       ~SearchSpace.from_dict
       ~SearchSpace.from_json
+      ~SearchSpace.from_parameter
       ~SearchSpace.from_product
+      ~SearchSpace.get_parameters_by_name
       ~SearchSpace.to_dict
       ~SearchSpace.to_json
       ~SearchSpace.transform
@@ -35,6 +37,7 @@ SearchSpace
       ~SearchSpace.discrete
       ~SearchSpace.continuous
       ~SearchSpace.constraints
+      ~SearchSpace.constraints_augmentable
       ~SearchSpace.contains_mordred
       ~SearchSpace.contains_rdkit
       ~SearchSpace.n_tasks

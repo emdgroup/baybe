@@ -14,6 +14,7 @@ baybe.searchspace.core
    .. autosummary::
       :toctree:                                       
    
+      to_searchspace
       validate_searchspace_from_config
    
    

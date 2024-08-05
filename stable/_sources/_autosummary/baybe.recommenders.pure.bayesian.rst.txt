@@ -31,5 +31,7 @@ baybe.recommenders.pure.bayesian
 
    base
 
+   botorch
+
    sequential_greedy
 

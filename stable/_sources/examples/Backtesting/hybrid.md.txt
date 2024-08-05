@@ -29,9 +29,9 @@ from baybe import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import (
+    BotorchRecommender,
     NaiveHybridSpaceRecommender,
     RandomRecommender,
-    SequentialGreedyRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
@@ -151,11 +151,9 @@ objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MI
 ## Constructing campaigns for the simulation loop
 
 This example compares three different available hybrid recommenders:
-The `SequentialGreedyRecommender`, the `NaiveHybridSpaceRecommender` and the
-`RandomRecommender`.
+The `BotorchRecommender`, the `NaiveHybridSpaceRecommender` and the `RandomRecommender`.
 For each of them, we initialize one recommender object.
-Note that it is possible to further specify the behavior of the
-`SequentialGreedyRecommender`.
+Note that it is possible to further specify the behavior of the `BotorchRecommender`.
 Using the two keywords `hybrid_sampler` and `sampling_percentage`, one can control
 - how much of the discrete subspace should be explored
 - how these points should be sampled.
@@ -167,9 +165,7 @@ We thus recommend to keep this parameter rather low.
 
 ```python
 seq_greedy_recommender = TwoPhaseMetaRecommender(
-    recommender=SequentialGreedyRecommender(
-        hybrid_sampler="Farthest", sampling_percentage=0.3
-    ),
+    recommender=BotorchRecommender(hybrid_sampler="FPS", sampling_percentage=0.3),
 )
 naive_hybrid_recommender = TwoPhaseMetaRecommender(
     recommender=NaiveHybridSpaceRecommender()
@@ -217,10 +213,6 @@ results = simulate_scenarios(
     n_mc_iterations=N_MC_ITERATIONS,
 )
 ```
-
-    
-
-    
 
     
 

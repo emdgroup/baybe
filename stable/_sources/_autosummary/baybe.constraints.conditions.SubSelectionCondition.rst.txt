@@ -20,6 +20,7 @@ SubSelectionCondition
       ~SubSelectionCondition.from_json
       ~SubSelectionCondition.to_dict
       ~SubSelectionCondition.to_json
+      ~SubSelectionCondition.to_polars
    
    
 

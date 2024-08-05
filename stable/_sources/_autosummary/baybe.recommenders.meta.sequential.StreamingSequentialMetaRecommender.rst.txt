@@ -32,7 +32,5 @@ StreamingSequentialMetaRecommender
    .. autosummary::
    
       ~StreamingSequentialMetaRecommender.recommenders
-      ~StreamingSequentialMetaRecommender.allow_recommending_already_measured
-      ~StreamingSequentialMetaRecommender.allow_repeated_recommendations
    
    

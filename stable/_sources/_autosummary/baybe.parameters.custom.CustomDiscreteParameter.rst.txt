@@ -21,7 +21,9 @@ CustomDiscreteParameter
       ~CustomDiscreteParameter.summary
       ~CustomDiscreteParameter.to_dict
       ~CustomDiscreteParameter.to_json
-      ~CustomDiscreteParameter.transform_rep_exp2comp
+      ~CustomDiscreteParameter.to_searchspace
+      ~CustomDiscreteParameter.to_subspace
+      ~CustomDiscreteParameter.transform
    
    
 
@@ -34,7 +36,7 @@ CustomDiscreteParameter
       ~CustomDiscreteParameter.comp_df
       ~CustomDiscreteParameter.is_continuous
       ~CustomDiscreteParameter.is_discrete
-      ~CustomDiscreteParameter.is_numeric
+      ~CustomDiscreteParameter.is_numerical
       ~CustomDiscreteParameter.values
       ~CustomDiscreteParameter.data
       ~CustomDiscreteParameter.decorrelate

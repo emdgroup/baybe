@@ -15,10 +15,19 @@ baybe.utils.sampling\_algorithms
       :toctree:                                       
    
       farthest_point_sampling
+      sample_numerical_df
    
    
 
    
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      DiscreteSamplingMethod
    
    
 

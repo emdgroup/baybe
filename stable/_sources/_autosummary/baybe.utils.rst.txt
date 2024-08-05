@@ -29,6 +29,8 @@ baybe.utils
    :recursive:
 
 
+   augmentation
+
    basic
 
    boolean

@@ -37,8 +37,6 @@ Campaign
       ~Campaign.recommender
       ~Campaign.n_batches_done
       ~Campaign.n_fits_done
-      ~Campaign.numerical_measurements_must_be_within_tolerance
-      ~Campaign.strategy
       ~Campaign.measurements
       ~Campaign.parameters
       ~Campaign.targets

@@ -21,6 +21,8 @@ ContinuousParameter
       ~ContinuousParameter.summary
       ~ContinuousParameter.to_dict
       ~ContinuousParameter.to_json
+      ~ContinuousParameter.to_searchspace
+      ~ContinuousParameter.to_subspace
    
    
 
@@ -32,7 +34,7 @@ ContinuousParameter
    
       ~ContinuousParameter.is_continuous
       ~ContinuousParameter.is_discrete
-      ~ContinuousParameter.is_numeric
+      ~ContinuousParameter.is_numerical
       ~ContinuousParameter.name
    
    

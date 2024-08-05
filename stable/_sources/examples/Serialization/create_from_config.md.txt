@@ -80,7 +80,7 @@ CONFIG = str(
             "type": "FPSRecommender"
         },
         "recommender": {
-            "type": "SequentialGreedyRecommender",
+            "type": "BotorchRecommender",
             "surrogate_model": {
                 "type": "GaussianProcessSurrogate"
             },
@@ -105,6 +105,26 @@ campaign. If the config is invalid an exception will be thrown.
 campaign = Campaign.from_config(CONFIG)
 ```
 
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('COC')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCCCC')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('COCOC')
+
+
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCOCCOCCN')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+
+
     /Users/M290244/Programming/baybe_dev/.tox/docs-py310/lib/python3.10/site-
 packages/baybe/objectives/deprecation.py:57: DeprecationWarning: An objective has been
 specified without a corresponding type. Since 1 target(s) have been provided,
@@ -126,7 +146,7 @@ print(recommendation)
 ```
 
        Granularity  Pressure[bar]    Solvent
-    0       coarse            1.0  Solvent A
-    21        fine           10.0  Solvent B
+    1       coarse            1.0  Solvent B
+    20        fine           10.0  Solvent A
     31  ultra-fine            5.0  Solvent D
 

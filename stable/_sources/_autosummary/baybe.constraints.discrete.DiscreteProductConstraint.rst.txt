@@ -18,6 +18,7 @@ DiscreteProductConstraint
       ~DiscreteProductConstraint.from_dict
       ~DiscreteProductConstraint.from_json
       ~DiscreteProductConstraint.get_invalid
+      ~DiscreteProductConstraint.get_invalid_polars
       ~DiscreteProductConstraint.summary
       ~DiscreteProductConstraint.to_dict
       ~DiscreteProductConstraint.to_json
@@ -31,10 +32,12 @@ DiscreteProductConstraint
    .. autosummary::
    
       ~DiscreteProductConstraint.condition
+      ~DiscreteProductConstraint.eval_during_augmentation
       ~DiscreteProductConstraint.eval_during_creation
       ~DiscreteProductConstraint.eval_during_modeling
       ~DiscreteProductConstraint.is_continuous
       ~DiscreteProductConstraint.is_discrete
+      ~DiscreteProductConstraint.numerical_only
       ~DiscreteProductConstraint.parameters
    
    

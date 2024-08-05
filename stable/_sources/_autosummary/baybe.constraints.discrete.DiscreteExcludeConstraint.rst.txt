@@ -18,6 +18,7 @@ DiscreteExcludeConstraint
       ~DiscreteExcludeConstraint.from_dict
       ~DiscreteExcludeConstraint.from_json
       ~DiscreteExcludeConstraint.get_invalid
+      ~DiscreteExcludeConstraint.get_invalid_polars
       ~DiscreteExcludeConstraint.summary
       ~DiscreteExcludeConstraint.to_dict
       ~DiscreteExcludeConstraint.to_json
@@ -32,10 +33,12 @@ DiscreteExcludeConstraint
    
       ~DiscreteExcludeConstraint.conditions
       ~DiscreteExcludeConstraint.combiner
+      ~DiscreteExcludeConstraint.eval_during_augmentation
       ~DiscreteExcludeConstraint.eval_during_creation
       ~DiscreteExcludeConstraint.eval_during_modeling
       ~DiscreteExcludeConstraint.is_continuous
       ~DiscreteExcludeConstraint.is_discrete
+      ~DiscreteExcludeConstraint.numerical_only
       ~DiscreteExcludeConstraint.parameters
    
    

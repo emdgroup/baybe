@@ -37,7 +37,7 @@ Interval
       ~Interval.upper
       ~Interval.center
       ~Interval.is_bounded
-      ~Interval.is_finite
+      ~Interval.is_degenerate
       ~Interval.is_fully_unbounded
       ~Interval.is_half_bounded
       ~Interval.is_left_bounded
