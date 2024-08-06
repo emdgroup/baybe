@@ -45,6 +45,9 @@ def farthest_point_sampling(
     # Compute the pairwise distances between all points
     dist_matrix = pairwise_distances(points)
 
+    # Avoid wrong behavior pathological situation where all points are duplicates
+    np.fill_diagonal(dist_matrix, -np.inf)
+
     # Initialize the point selection subset
     if initialization == "random":
         selected_point_indices = [np.random.randint(0, len(points))]
