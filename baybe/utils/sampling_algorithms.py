@@ -42,7 +42,7 @@ def farthest_point_sampling(
     """
     if np.ndim(points) != 2:
         raise ValueError("The provided array must be two-dimensional.")
-    if len(points) == 0:
+    if (n_points := len(points)) == 0:
         raise ValueError("The provided array must contain at least one row.")
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
@@ -59,7 +59,7 @@ def farthest_point_sampling(
 
     # Initialize the point selection
     if initialization == "random":
-        selected_point_indices = [np.random.randint(0, len(points))]
+        selected_point_indices = [np.random.randint(0, n_points)]
     elif initialization == "farthest":
         idx_1d = np.argmax(dist_matrix)
         selected_point_indices = list(np.unravel_index(idx_1d, dist_matrix.shape))
@@ -69,7 +69,7 @@ def farthest_point_sampling(
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
     # Initialize the list of remaining points
-    remaining_point_indices = list(range(len(points)))
+    remaining_point_indices = list(range(n_points))
     for idx in selected_point_indices:
         remaining_point_indices.remove(idx)
 
