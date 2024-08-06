@@ -42,7 +42,11 @@ def farthest_point_sampling(
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
 
-    # Compute the pairwise distances between all points
+    # Sort the points to produce the same result regardless of the input order
+    sort_idx = np.lexsort(tuple(points.T))
+    points = points[sort_idx]
+
+    # Pre-compute the pairwise distances between all points
     dist_matrix = pairwise_distances(points)
 
     # Avoid wrong behavior pathological situation where all points are duplicates
@@ -53,11 +57,9 @@ def farthest_point_sampling(
         selected_point_indices = [np.random.randint(0, len(points))]
     elif initialization == "farthest":
         idx_1d = np.argmax(dist_matrix)
-        selected_point_indices = list(
-            map(int, np.unravel_index(idx_1d, dist_matrix.shape))
-        )
+        selected_point_indices = list(np.unravel_index(idx_1d, dist_matrix.shape))
         if n_samples == 1:
-            return np.random.choice(selected_point_indices, 1).tolist()
+            return [selected_point_indices[0]]
     else:
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
@@ -81,7 +83,8 @@ def farthest_point_sampling(
         selected_point_indices.append(selected_point_index)
         remaining_point_indices.remove(selected_point_index)
 
-    return selected_point_indices
+    # Undo the initial point reordering
+    return sort_idx[selected_point_indices]
 
 
 class DiscreteSamplingMethod(Enum):
