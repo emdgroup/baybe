@@ -35,6 +35,13 @@ def farthest_point_sampling(
     Raises:
         ValueError: If an unknown initialization recommender is used.
     """
+    if np.ndim(points) != 2:
+        raise ValueError("The provided array must be two-dimensional.")
+    if len(points) == 0:
+        raise ValueError("The provided array must contain at least one row.")
+    if points.shape[-1] == 0:
+        raise ValueError("The provided input space must be at least one-dimensional.")
+
     # Compute the pairwise distances between all points
     dist_matrix = pairwise_distances(points)
 
@@ -48,11 +55,6 @@ def farthest_point_sampling(
         )
         if n_samples == 1:
             return np.random.choice(selected_point_indices, 1).tolist()
-        elif n_samples < 1:
-            raise ValueError(
-                f"Farthest point sampling must be done with >= 1 samples, but "
-                f"{n_samples=} was given."
-            )
     else:
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
