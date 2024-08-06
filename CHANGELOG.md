@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
   string input to categories/tasks
+- `farthest_point_sampling` no longer depends on the provided point order
 
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes
