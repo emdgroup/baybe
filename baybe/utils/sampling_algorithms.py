@@ -13,27 +13,32 @@ def farthest_point_sampling(
     n_samples: int = 1,
     initialization: Literal["farthest", "random"] = "farthest",
 ) -> list[int]:
-    """Sample points according to a farthest point heuristic.
+    """Select a subset of points using farthest point sampling.
 
-    Creates a subset of a collection of points by successively adding points with the
-    largest Euclidean distance to intermediate point selections encountered during
-    the algorithmic process.
+    Creates a subset of a given collection of points by successively adding points with
+    the largest Euclidean distance to intermediate point selections encountered during
+    the algorithmic process. The mechanism used for the initial point selection is
+    configurable.
 
     Args:
-        points: The points that are available for selection, represented as a 2D array
-            whose first dimension corresponds to the point index.
+        points: The points that are available for selection, represented as a 2-D array
+            of shape (n, k), where n is the number of points and k is the dimensionality
+            of the points.
         n_samples: The total number of points to be selected.
-        initialization: Determines how the first points are selected. When
-            ``"farthest"`` is chosen, the first two selected points are those with the
-            largest distance. If only a single point is requested, it is selected
-            randomly from these two. When ``"random"`` is chosen, the first point is
-            selected uniformly at random.
+        initialization: Determines how the first points are selected:
+            * ``"farthest"``: The first two selected points are those with the
+              largest distance. If only a single point is requested, a deterministic
+              choice is made based on the point coordinates.
+            * ``"random"``: The first point is selected uniformly at random.
 
     Returns:
         A list containing the positional indices of the selected points.
 
     Raises:
-        ValueError: If an unknown initialization recommender is used.
+        ValueError: If the provided array is not two-dimensional.
+        ValueError: If the array contains no points.
+        ValueError: If the input space has no dimensions.
+        ValueError: If an unknown method for initialization is specified.
     """
     if np.ndim(points) != 2:
         raise ValueError("The provided array must be two-dimensional.")
@@ -52,7 +57,7 @@ def farthest_point_sampling(
     # Avoid wrong behavior pathological situation where all points are duplicates
     np.fill_diagonal(dist_matrix, -np.inf)
 
-    # Initialize the point selection subset
+    # Initialize the point selection
     if initialization == "random":
         selected_point_indices = [np.random.randint(0, len(points))]
     elif initialization == "farthest":
