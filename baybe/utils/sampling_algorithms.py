@@ -62,7 +62,9 @@ def farthest_point_sampling(
         selected_point_indices = [np.random.randint(0, n_points)]
     elif initialization == "farthest":
         idx_1d = np.argmax(dist_matrix)
-        selected_point_indices = list(np.unravel_index(idx_1d, dist_matrix.shape))
+        selected_point_indices = list(
+            map(int, np.unravel_index(idx_1d, dist_matrix.shape))
+        )
         if n_samples == 1:
             return [sort_idx[selected_point_indices[0]]]
     else:
