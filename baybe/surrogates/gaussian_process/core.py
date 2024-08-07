@@ -9,7 +9,6 @@ from attrs.validators import instance_of
 
 from baybe.objective import Objective
 from baybe.parameters.base import Parameter
-from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -26,7 +25,9 @@ from baybe.surrogates.gaussian_process.presets.default import (
 )
 
 if TYPE_CHECKING:
+    from botorch.models.model import Model
     from botorch.models.transforms.input import InputTransform
+    from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
     from torch import Tensor
 
@@ -75,6 +76,19 @@ class _ModelContext:
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
 
+    # Note [Scaling Workaround]
+    # -------------------------
+    # For GPs, we deactivate the base class scaling and instead let the botorch
+    # model internally handle input/output scaling. The reasons is that we need to
+    # make `to_botorch` expose the actual botorch GP object, instead of going
+    # via the `AdapterModel`, because certain acquisition functions (like qNIPV)
+    # require the capability to `fantasize`, which the `AdapterModel` does not support.
+    # The base class scaling thus needs to be disabled since otherwise the botorch GP
+    # object would be trained on pre-scaled input/output data. This would cause a
+    # problem since the resulting `posterior` method of that object is exposed
+    # to `optimize_acqf_*`, which is configured to be called on the original scale.
+    # Moving the scaling operation into the botorch GP object avoids this conflict.
+
     # Class variables
     joint_posterior: ClassVar[bool] = True
     # See base class.
@@ -105,19 +119,26 @@ class GaussianProcessSurrogate(Surrogate):
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
 
+    def to_botorch(self) -> Model:  # noqa: D102
+        # See base class.
+
+        return self._model
+
     @staticmethod
     def _make_parameter_scaler_factory(
         parameter: Parameter,
     ) -> type[InputTransform] | None:
         # See base class.
 
-        # Task parameters are handled separately through an index kernel
-        if isinstance(parameter, TaskParameter):
-            return
+        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        return
 
-        from botorch.models.transforms.input import Normalize
+    @staticmethod
+    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
+        # See base class.
 
-        return Normalize
+        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        return
 
     @staticmethod
     def _get_model_context(
@@ -138,6 +159,12 @@ class GaussianProcessSurrogate(Surrogate):
         import torch
 
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
+
+        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        input_transform = botorch.models.transforms.Normalize(
+            train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
+        )
+        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
@@ -176,6 +203,8 @@ class GaussianProcessSurrogate(Surrogate):
         self._model = botorch.models.SingleTaskGP(
             train_x,
             train_y,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
             mean_module=mean_module,
             covar_module=covar_module,
             likelihood=likelihood,
