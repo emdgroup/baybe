@@ -90,3 +90,8 @@ def test_farthest_point_sampling(points: np.ndarray):
     permutation_idxs = np.random.permutation(len(points))
     sorting_idxs = farthest_point_sampling(points[permutation_idxs], len(points))
     assert np.array_equal(target, points[permutation_idxs][sorting_idxs])
+
+    # Because requesting a single point needs special treatment in FPS,
+    # we test this as additional case
+    sorting_idxs = farthest_point_sampling(points[permutation_idxs], 1)
+    assert np.array_equal(target[[0]], points[permutation_idxs][sorting_idxs])
