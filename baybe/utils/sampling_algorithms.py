@@ -64,7 +64,7 @@ def farthest_point_sampling(
         idx_1d = np.argmax(dist_matrix)
         selected_point_indices = list(np.unravel_index(idx_1d, dist_matrix.shape))
         if n_samples == 1:
-            return [selected_point_indices[0]]
+            return [sort_idx[selected_point_indices[0]]]
     else:
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
