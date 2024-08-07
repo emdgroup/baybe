@@ -304,7 +304,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             objective.transform(measurements),
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
-        train_y = self._output_scaler(train_y_comp_rep)[0]
+        train_y = (
+            train_y_comp_rep
+            if self._output_scaler is _IDENTITY_TRANSFORM
+            else self._output_scaler(train_y_comp_rep)[0]
+        )
         self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
     @abstractmethod
