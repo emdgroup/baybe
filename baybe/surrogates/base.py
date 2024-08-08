@@ -17,6 +17,7 @@ from cattrs.dispatch import (
     UnstructureHook,
 )
 
+from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -186,6 +187,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[_ModelContext]):
             candidates: A dataframe containing parameter configurations in
                 **experimental representation**.
 
+        Raises:
+            ModelNotTrainedError: When called before the model has been trained.
+
         Returns:
             A :class:`botorch.posteriors.Posterior` object representing the posterior
             distribution at the given candidate points, where the posterior is also
@@ -193,6 +197,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[_ModelContext]):
             lie in the same domain as the modelled targets/objective on which the
             surrogate was trained via :meth:`baybe.surrogates.base.Surrogate.fit`.
         """
+        if self._searchspace is None:
+            raise ModelNotTrainedError(
+                "The surrogate must be trained before a posterior can be computed."
+            )
         return self._posterior_comp_rep(
             to_tensor(self._searchspace.transform(candidates))
         )
