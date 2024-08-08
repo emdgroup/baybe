@@ -71,6 +71,11 @@ def add_version_to_selector_page(version: str) -> None:
     with file.open(mode="r") as f:
         lines = f.readlines()
         for ind, line in enumerate(lines):
+            # We might find strings that look like version numbers without wanting to
+            # We thus need to potentially reset `last_version_index`
+            if "<h1>Available versions</h1>" in line:
+                last_version_index = -1
+
             # Search for the version number in the current line
             if version_number := re.search(pattern, line):
                 # Memorize whether we saw a larger version number, implying that this is
