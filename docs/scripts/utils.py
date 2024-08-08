@@ -80,7 +80,8 @@ def add_version_to_selector_page(version: str) -> None:
             # Add the already existing line
             modified_lines.append(line)
 
-            if "stable" in line:
+            # Slightly weird string since the word "stable" appears is other places
+            if "stable</a></li>" in line:
                 stable_index = ind
     # We never found a larger number than the current, so we just insert after stable
     index = last_version_index + 1 if last_version_index != -1 else stable_index + 1
