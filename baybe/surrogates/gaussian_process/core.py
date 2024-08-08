@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 from attrs import define, field
 from attrs.validators import instance_of
 
-from baybe.objective import Objective
+from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
