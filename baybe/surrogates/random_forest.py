@@ -55,7 +55,7 @@ class RandomForestSurrogate(GaussianSurrogate):
         # See base class.
 
         # Tree-like models do not require any input scaling
-        return
+        return None
 
     @batchify
     def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:

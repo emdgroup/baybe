@@ -131,14 +131,14 @@ class GaussianProcessSurrogate(Surrogate):
         # See base class.
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        return
+        return None
 
     @staticmethod
     def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
         # See base class.
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        return
+        return None
 
     @staticmethod
     def _get_model_context(
