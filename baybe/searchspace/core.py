@@ -290,6 +290,32 @@ class SearchSpace(SerialMixin):
         except StopIteration:
             return 1
 
+    def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
+        """Find a parameter's column indices in the computational representation.
+
+        Args:
+            name: The name of the parameter whose columns indices are to be retrieved.
+
+        Raises:
+            ValueError: If no parameter with the provided name exists.
+
+        Returns:
+            A tuple containing the integer indices of the columns in the computational
+            representation associated with the parameter. When the parameter is not part
+            of the computational representation, an empty tuple is returned.
+        """
+        if name not in (p.name for p in self.parameters):
+            raise ValueError(
+                f"There exists no parameter named '{name}' in the search space."
+            )
+
+        # TODO: The "startswith" approach is not ideal since it relies on the implicit
+        #   assumption that the substrings match. A more robust approach would
+        #   be to generate this mapping while building the comp rep.
+        return tuple(
+            i for i, col in enumerate(self.comp_rep_columns) if col.startswith(name)
+        )
+
     @staticmethod
     def estimate_product_space_size(parameters: Iterable[Parameter]) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.

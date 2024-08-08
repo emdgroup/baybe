@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import pandas as pd
 from attrs import define, field
@@ -17,9 +16,7 @@ from cattrs.dispatch import (
     UnstructuredValue,
     UnstructureHook,
 )
-from sklearn.preprocessing import MinMaxScaler
 
-from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -30,13 +27,13 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.scaling import ParameterScalerProtocol
+from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
+    from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import GPyTorchPosterior, Posterior
-    from sklearn.compose import ColumnTransformer
     from torch import Tensor
 
 _ONNX_ENCODING = "latin-1"
@@ -62,8 +59,33 @@ _IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
 """Sentinel to indicate the absence of a transform where `None` is ambiguous."""
 
 
+class SurrogateProtocol(Protocol):
+    """Type protocol specifying the interface surrogate models need to implement."""
+
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        """Fit the surrogate to training data in a given modelling context.
+
+        For details on the expected method arguments, see
+        :meth:`baybe.recommenders.base.RecommenderProtocol`.
+        """
+
+    def to_botorch(self) -> Model:
+        """Create the botorch-ready representation of the fitted model.
+
+        The :class:`botorch.models.model.Model` created by this method needs to be
+        configured such that it can be called with candidate points in **computational
+        representation**, that is, input of the form as obtained via
+        :meth:`baybe.searchspace.core.SearchSpace.transform`.
+        """
+
+
 @define
-class Surrogate(ABC, SerialMixin):
+class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     # Class variables
@@ -74,69 +96,63 @@ class Surrogate(ABC, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
-    _input_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
-        init=False, default=None, eq=False
-    )
-    """Callable preparing surrogate inputs for training/prediction.
+    _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
+    """The search space on which the surrogate operates. Available after fitting."""
 
-    Transforms a dataframe containing parameter configurations in experimental
-    representation to a corresponding dataframe containing their **scaled**
-    computational representation. Only available after the surrogate has been fitted."""
-
-    _output_transform: Callable[[pd.DataFrame], pd.DataFrame] | None = field(
-        init=False, default=None, eq=False
-    )
-    """Callable preparing surrogate outputs for training.
-
-    Transforms a dataframe containing target measurements in experimental
-    representation to a corresponding dataframe containing their **scaled**
-    computational representation. Only available after the surrogate has been fitted."""
-
-    # TODO: type should be `Standardize | _NoTransform`` but is currently
-    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    # TODO: type should be
+    #   `botorch.models.transforms.outcome.Standardize | _NoTransform`
+    #   but is currently omitted due to:
+    #   https://github.com/python-attrs/cattrs/issues/531
     _output_scaler = field(init=False, default=None, eq=False)
-    """Optional callable for scaling output values.
+    """Scaler for transforming output values. Available after fitting.
 
     Scales a tensor containing target measurements in computational representation
-    to make them ready for processing by the surrogate. Only available after the
-    surrogate has been fitted."""
+    to make them digestible for the model-specific, scale-agnostic posterior logic."""
 
-    def to_botorch(self) -> Model:
-        """Create the botorch-ready representation of the model."""
+    def to_botorch(self) -> Model:  # noqa: D102
+        # See base class.
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)
 
     @staticmethod
-    def _make_parameter_scaler(
+    def _make_parameter_scaler_factory(
         parameter: Parameter,
-    ) -> ParameterScalerProtocol | None:
-        """Return the scaler to be used for the given parameter."""
-        return MinMaxScaler()
+    ) -> type[InputTransform] | None:
+        """Return the scaler factory to be used for the given parameter.
+
+        This method is supposed to be overridden by subclasses to implement their
+        custom parameter scaling logic.
+        """
+        from botorch.models.transforms.input import Normalize
+
+        return Normalize
 
     @staticmethod
-    def _make_target_scaler() -> OutcomeTransform | None:
-        """Return the scaler to be used for target scaling."""
+    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
+        """Return the scaler factory to be used for target scaling.
+
+        This method is supposed to be overridden by subclasses to implement their
+        custom target scaling logic.
+        """
         from botorch.models.transforms.outcome import Standardize
 
-        # TODO: Multi-target extension
-        return Standardize(1)
+        return Standardize
 
     def _make_input_scaler(self, searchspace: SearchSpace) -> ColumnTransformer:
         """Make the input scaler for transforming computational dataframes."""
-        from sklearn.compose import make_column_transformer
+        # Create a composite scaler from parameter-wise scaler objects
+        mapping: dict[tuple[int, ...], InputTransform] = {}
+        for p in searchspace.parameters:
+            if (factory := self._make_parameter_scaler_factory(p)) is None:
+                continue
+            idxs = searchspace.get_comp_rep_parameter_indices(p.name)
+            transformer = factory(len(idxs))
+            mapping[idxs] = transformer
+        scaler = ColumnTransformer(mapping)
 
-        # Create the composite scaler from the parameter-wise scaler objects
-        transformers = [
-            (
-                "passthrough" if (s := self._make_parameter_scaler(p)) is None else s,
-                [c for c in p.comp_rep_columns if c in searchspace.comp_rep_columns],
-            )
-            for p in searchspace.parameters
-        ]
-        scaler = make_column_transformer(*transformers, verbose_feature_names_out=False)
-
-        scaler.fit(searchspace.comp_rep_bounds)
+        # Fit the scaler to the parameter bounds
+        scaler.fit(to_tensor(searchspace.comp_rep_bounds))
 
         return scaler
 
@@ -144,40 +160,92 @@ class Surrogate(ABC, SerialMixin):
         self, objective: Objective, measurements: pd.DataFrame
     ) -> OutcomeTransform | _NoTransform:
         """Make the output scaler for transforming computational dataframes."""
-        import torch
-
-        scaler = self._make_target_scaler()
-        if scaler is None:
+        if (factory := self._make_target_scaler_factory()) is None:
             return _IDENTITY_TRANSFORM
 
+        # TODO: Multi-target extension
+        scaler = factory(1)
+
         # TODO: Consider taking into account target boundaries when available
-        scaler(torch.from_numpy(objective.transform(measurements).values))
+        scaler(to_tensor(objective.transform(measurements)))
         scaler.eval()
 
         return scaler
 
-    def transform_inputs(self, df: pd.DataFrame, /) -> pd.DataFrame:
-        """Transform an experimental parameter dataframe."""
-        if self._input_transform is None:
-            raise ModelNotTrainedError("The model must be trained first.")
-        return self._input_transform(df)
-
-    def transform_outputs(self, df: pd.DataFrame, /) -> pd.DataFrame:
-        """Transform an experimental measurement dataframe."""
-        if self._output_transform is None:
-            raise ModelNotTrainedError("The model must be trained first.")
-        return self._output_transform(df)
-
     def posterior(self, candidates: pd.DataFrame, /) -> Posterior:
-        """Evaluate the surrogate model at the given candidate points."""
-        p = self._posterior(to_tensor(self.transform_inputs(candidates)))
+        """Compute the posterior for candidates in experimental representation.
+
+        Takes a dataframe of parameter configurations in **experimental representation**
+        and returns the corresponding posterior object. Therefore, the method serves as
+        the user-facing entry point for accessing model predictions.
+
+        Args:
+            candidates: A dataframe containing parameter configurations in
+                **experimental representation**.
+
+        Returns:
+            A :class:`botorch.posteriors.Posterior` object representing the posterior
+            distribution at the given candidate points, where the posterior is also
+            described in **experimental representation**. That is, the posterior values
+            lie in the same domain as the modelled targets/objective on which the
+            surrogate was trained via :meth:`baybe.surrogates.base.Surrogate.fit`.
+        """
+        return self._posterior_comp_rep(
+            to_tensor(self._searchspace.transform(candidates))
+        )
+
+    def _posterior_comp_rep(self, candidates: Tensor, /) -> Posterior:
+        """Compute the posterior for candidates in computational representation.
+
+        Takes a tensor of parameter configurations in **computational representation**
+        and returns the corresponding posterior object. Therefore, the method provides
+        the entry point for queries coming from computational layers, for instance,
+        BoTorch's `optimize_*` functions.
+
+        Args:
+            candidates: A tensor containing parameter configurations in **computational
+                representation**.
+
+        Returns:
+            The same :class:`botorch.posteriors.Posterior` object as returned via
+            :meth:`baybe.surrogates.base.Surrogate.posterior`.
+        """
+        p = self._posterior(self._input_scaler.transform(candidates))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
         return p
 
     @abstractmethod
     def _posterior(self, candidates: Tensor, /) -> Posterior:
-        """Perform the actual posterior evaluation logic."""
+        """Perform the actual model-specific posterior evaluation logic.
+
+        This method is supposed to be overridden by subclasses to implement their
+        model-specific surrogate architecture. Internally, the method is called by the
+        base class with a **scaled** tensor of candidates in **computational
+        representation**, where the scaling is configurable by the subclass via its
+        other methods. The base class also takes care of transforming the returned
+        posterior back to the original scale according to the defined scalers.
+
+        This means:
+        -----------
+        Subclasses implementing this method do not have to bother about
+        pre-/postprocessing of the in-/output. Instead, they only need to implement the
+        mathematical operation of computing the posterior for the given input according
+        to their model specifications and can implicitly that scaling is handled
+        appropriately outside. In short: the returned posterior simply needs to be on
+        the same scale as the given input.
+
+        Args:
+            candidates: A tensor containing **pre-scaled** parameter configurations
+                in **computational representation**, as defined through the input scaler
+                obtained via :meth:`baybe.surrogates.base.Surrogate._make_input_scaler`.
+
+        Returns:
+            A :class:`botorch.posteriors.Posterior` object representing the
+            **scale-transformed** posterior distributions at the given candidate points,
+            where the posterior is described on the scale dictated by the output scaler
+            obtained via :meth:`baybe.surrogates.base.Surrogate._make_output_scaler`.
+        """
 
     @staticmethod
     def _get_model_context(searchspace: SearchSpace, objective: Objective) -> Any:
@@ -223,69 +291,23 @@ class Surrogate(ABC, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
-        # Create scaler objects
-        input_scaler = self._make_input_scaler(searchspace)
-        output_scaler = self._make_output_scaler(objective, measurements)
+        # Remember on which search space the model is trained
+        self._searchspace = searchspace
 
-        def transform_inputs(df: pd.DataFrame, /) -> pd.DataFrame:
-            """Fitted input transformation pipeline."""
-            # IMPROVE: This method currently relies on two workarounds required
-            #   due the working mechanism of sklearn's ColumnTransformer:
-            #   * Unfortunately, the transformer returns a raw array, meaning that
-            #       column names need to be manually attached afterward.
-            #   * In certain cases (e.g. in hybrid spaces), the method needs
-            #       to transform only a subset of columns. Unfortunately, it is not
-            #       possible to use a subset of columns once the transformer is set up,
-            #       which is a side-effect of the first point. As a workaround,
-            #       we thus fill the missing columns with NaN and subselect afterward.
-
-            # For the workaround, collect all comp rep columns of the parameters
-            # that are actually present in the given dataframe. At the end,
-            # we'll filter the transformed augmented dataframe down to these columns.
-            exp_rep_cols = [p.name for p in searchspace.parameters]
-            comp_rep_cols = []
-            for col in [c for c in df.columns if c in exp_rep_cols]:
-                parameter = next(p for p in searchspace.parameters if p.name == col)
-                comp_rep_cols.extend(parameter.comp_rep_columns)
-
-            # Actual workaround: augment the dataframe with NaN for missing parameters
-            df_augmented = df.reindex(columns=exp_rep_cols)
-
-            # The actual transformation step
-            out = input_scaler.transform(
-                searchspace.transform(df_augmented, allow_extra=True)
-            )
-            out = pd.DataFrame(
-                out, index=df.index, columns=input_scaler.get_feature_names_out()
-            )
-
-            # Undo the augmentation, taking into account that not all comp rep
-            # parameter columns may actually be part of the search space due
-            # to other preprocessing steps.
-            comp_rep_cols = list(set(comp_rep_cols).intersection(out.columns))
-            return out[comp_rep_cols]
-
-        def transform_outputs(df: pd.DataFrame, /) -> pd.DataFrame:
-            """Fitted output transformation pipeline."""
-            import torch
-
-            dft = objective.transform(df)
-
-            if output_scaler is _IDENTITY_TRANSFORM:
-                return dft
-
-            out = output_scaler(torch.from_numpy(dft.values))[0]
-            return pd.DataFrame(out.numpy(), index=df.index, columns=dft.columns)
-
-        # Store context-specific transformations
-        self._input_transform = transform_inputs
-        self._output_transform = transform_outputs
-        self._output_scaler = output_scaler
+        # Create context-specific transformations
+        self._input_scaler = self._make_input_scaler(searchspace)
+        self._output_scaler = self._make_output_scaler(objective, measurements)
 
         # Transform and fit
-        train_x, train_y = to_tensor(
-            self.transform_inputs(measurements),
-            self.transform_outputs(measurements),
+        train_x_comp_rep, train_y_comp_rep = to_tensor(
+            searchspace.transform(measurements, allow_extra=True),
+            objective.transform(measurements),
+        )
+        train_x = self._input_scaler.transform(train_x_comp_rep)
+        train_y = (
+            train_y_comp_rep
+            if self._output_scaler is _IDENTITY_TRANSFORM
+            else self._output_scaler(train_y_comp_rep)[0]
         )
         self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
@@ -379,14 +401,17 @@ def _block_serialize_custom_architecture(
 #   class, which would avoid the nested wrapping below. However, this requires
 #   adjusting the base class (un-)structure hooks such that they consistently apply
 #   existing hooks of the concrete subclasses.
-converter.register_unstructure_hook(
-    Surrogate,
-    _make_hook_decode_onnx_str(
-        _block_serialize_custom_architecture(
-            lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
-        )
-    ),
+_unstructure_hook = _make_hook_decode_onnx_str(
+    _block_serialize_custom_architecture(
+        lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
+    )
 )
+converter.register_unstructure_hook(Surrogate, _unstructure_hook)
 converter.register_structure_hook(
     Surrogate, _make_hook_encode_onnx_str(get_base_structure_hook(Surrogate))
+)
+converter.register_unstructure_hook(SurrogateProtocol, _unstructure_hook)
+converter.register_structure_hook(
+    SurrogateProtocol,
+    _make_hook_encode_onnx_str(get_base_structure_hook(SurrogateProtocol)),
 )

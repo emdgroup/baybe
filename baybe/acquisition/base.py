@@ -10,14 +10,15 @@ from typing import ClassVar
 import pandas as pd
 from attrs import define
 
-from baybe.searchspace import SearchSpace
+from baybe.objectives.base import Objective
+from baybe.searchspace.core import SearchSpace
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty, filter_attributes
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
@@ -37,22 +38,23 @@ class AcquisitionFunction(ABC, SerialMixin):
 
     def to_botorch(
         self,
-        surrogate: Surrogate,
+        surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
+        objective: Objective,
         measurements: pd.DataFrame,
     ):
         """Create the botorch-ready representation of the function.
 
         The required structure of `measurements` is specified in
-        :meth:`babye.recommenders.base.RecommenderProtocol.recommend`.
+        :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
         """
         import botorch.acquisition as botorch_acqf_module
 
         acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
         params_dict = filter_attributes(object=self, callable_=acqf_cls.__init__)
 
-        train_x = surrogate.transform_inputs(measurements)
-        train_y = surrogate.transform_outputs(measurements)
+        train_x = searchspace.transform(measurements, allow_extra=True)
+        train_y = objective.transform(measurements)
 
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
