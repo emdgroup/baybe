@@ -74,6 +74,10 @@ class NGBoostSurrogate(GaussianSurrogate):
     def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         # See base class.
 
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._model is not None
+
         import torch
 
         # Get predictions
