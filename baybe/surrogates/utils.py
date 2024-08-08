@@ -73,8 +73,8 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
             _fit_original(self, train_x, train_y, context)
 
     # Replace the methods
-    cls._posterior = _posterior_new
-    cls._fit = _fit_new
+    cls._posterior = _posterior_new  # type: ignore
+    cls._fit = _fit_new  # type: ignore
 
     return cls
 
