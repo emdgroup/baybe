@@ -67,9 +67,9 @@ class _ModelContext:
 
         return torch.from_numpy(self.searchspace.comp_rep_bounds.values)
 
-    def get_numerical_indices(self, n_inputs: int) -> list[int]:
+    def get_numerical_indices(self, n_inputs: int) -> tuple[int, ...]:
         """Get the indices of the regular numerical model inputs."""
-        return [i for i in range(n_inputs) if i != self.task_idx]
+        return tuple(i for i in range(n_inputs) if i != self.task_idx)
 
 
 @define
