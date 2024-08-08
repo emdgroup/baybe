@@ -69,11 +69,24 @@ jobs:
       - name:  Verify lockfile integrity 
         run: |
           pip install tox-uv
-          tox -e docs-lockfile 
-          if ! diff --ignore-matching-lines="^\#" $DOCS_LOCKFILE_PATH $TARGET_DOCS_LOCKFILE_PATH >/dev/null; then
+
+          # Extract the SHA of the last modification of the lockfile
+          LAST_COMMIT_SHA=$(git log -n 1 --pretty=format:%H -- $TARGET_DOCS_LOCKFILE_PATH)
+
+          # Re-export the lockfile to verify if changes in pyproject.toml would result
+          # in differences, restricting packages to versions available at the original
+          # creation time point (to avoid pulling new releases)
+          tox -e docs-lockfile -- --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd $LAST_COMMIT_SHA)
+
+          # Check if the diff is non-empty (meaning new dependencies or other versions
+          # are required) or if re-export failed (which indicates that changes in 
+          # pyproject.toml are no longer compatible with the available versions at the
+          # lockfile creation time). In both cases, the lockfile needs an update.
+          if [ $? -ne 0 ] || ! diff --ignore-matching-lines="^\#" $DOCS_LOCKFILE_PATH $TARGET_DOCS_LOCKFILE_PATH >/dev/null; then
             echo "Lockfile needs to be updated"
             exit 1
           fi
+
   lint:
     strategy:
       matrix:
