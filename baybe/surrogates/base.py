@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Protocol, TypeVar
 
 import pandas as pd
 from attrs import define, field
@@ -48,6 +48,9 @@ bytes to string and back, since the specification is a bijection between
 0-255 and the character set.
 """
 
+_ModelContext = TypeVar("_ModelContext", Any, None)
+"""Context information that is provided to the model fitting method."""
+
 
 class _NoTransform(Enum):
     """Sentinel class."""
@@ -85,7 +88,7 @@ class SurrogateProtocol(Protocol):
 
 
 @define
-class Surrogate(ABC, SurrogateProtocol, SerialMixin):
+class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[_ModelContext]):
     """Abstract base class for all surrogate models."""
 
     # Class variables
@@ -248,7 +251,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """
 
     @staticmethod
-    def _get_model_context(searchspace: SearchSpace, objective: Objective) -> Any:
+    def _get_model_context(
+        searchspace: SearchSpace, objective: Objective
+    ) -> _ModelContext:
         """Get the surrogate-specific context for model fitting.
 
         By default, no context is created. If context is required, subclasses are
@@ -312,7 +317,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
     @abstractmethod
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: Any = None) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor, context: _ModelContext) -> None:
         """Perform the actual fitting logic."""
 
 
