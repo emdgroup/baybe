@@ -233,16 +233,17 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[_ModelContext]):
         This method is supposed to be overridden by subclasses to implement their
         model-specific surrogate architecture. Internally, the method is called by the
         base class with a **scaled** tensor of candidates in **computational
-        representation**, where the scaling is configurable by the subclass via its
-        other methods. The base class also takes care of transforming the returned
-        posterior back to the original scale according to the defined scalers.
+        representation**, where the scaling is configurable by the subclass by
+        overriding the default scaler factory methods of the base. The base class also
+        takes care of transforming the returned posterior back to the original scale
+        according to the defined scalers.
 
         This means:
         -----------
         Subclasses implementing this method do not have to bother about
         pre-/postprocessing of the in-/output. Instead, they only need to implement the
         mathematical operation of computing the posterior for the given input according
-        to their model specifications and can implicitly that scaling is handled
+        to their model specifications and can implicitly assume that scaling is handled
         appropriately outside. In short: the returned posterior simply needs to be on
         the same scale as the given input.
 
