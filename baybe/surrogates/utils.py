@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Any
@@ -79,6 +80,9 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
     return cls
 
 
+# FIXME[typing]: Typing should be reactivated once the `joint_posterior` attribute
+#   has been refactored/removed
+@typing.no_type_check
 def batchify(
     posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]],
 ) -> Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]:
