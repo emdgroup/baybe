@@ -114,7 +114,7 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    @classmethod
+    @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
