@@ -80,16 +80,26 @@ def main():
     }
 
     # Streamlit simulation parameters
+    st.sidebar.markdown("# Domain")
     st_random_seed = int(st.sidebar.number_input("Random seed", value=1337))
     st_function_name = st.sidebar.selectbox(
         "Test function", list(test_functions.keys())
     )
+    st_target_mode = st.sidebar.radio(
+        "Objective",
+        ["MAX", "MIN"],
+        format_func=lambda x: {"MAX": "Maximization", "MIN": "Minimization"}[x],
+        horizontal=True,
+    )
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("# Model")
     st_surrogate_name = st.sidebar.selectbox(
         "Surrogate model", list(surrogate_model_classes.keys())
     )
     st_n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
     st_n_recommendations = st.sidebar.slider("Number of recommendations", 1, 20, 5)
     st.sidebar.markdown("---")
+    st.sidebar.markdown("# Validation")
     st.sidebar.markdown(
         """
         When scaling is implemented correctly, the plot should remain static (except for
@@ -139,7 +149,7 @@ def main():
         ),
     )
     searchspace = SearchSpace.from_product(parameters=[parameter])
-    objective = NumericalTarget(name="y", mode="MAX").to_objective()
+    objective = NumericalTarget(name="y", mode=st_target_mode).to_objective()
 
     # Create the surrogate model and the recommender
     surrogate_model = surrogate_model_classes[st_surrogate_name]()
