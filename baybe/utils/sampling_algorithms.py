@@ -40,8 +40,11 @@ def farthest_point_sampling(
         ValueError: If the input space has no dimensions.
         ValueError: If an unknown method for initialization is specified.
     """
-    if np.ndim(points) != 2:
-        raise ValueError("The provided array must be two-dimensional.")
+    if (n_dims := np.ndim(points)) != 2:
+        raise ValueError(
+            f"The provided array must be two-dimensional but the given input had "
+            f"{n_dims} dimensions."
+        )
     if (n_points := len(points)) == 0:
         raise ValueError("The provided array must contain at least one row.")
     if points.shape[-1] == 0:
