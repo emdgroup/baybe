@@ -10,6 +10,7 @@
 # optimization if the found results are sufficiently good.
 # The underlying use case is taken from the example shown
 # [here](/examples/Backtesting/full_lookup).
+
 ### Imports
 import math
 import os
