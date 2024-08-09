@@ -73,10 +73,13 @@ jobs:
           # Extract the SHA of the last modification of the lockfile
           LAST_COMMIT_SHA=$(git log -n 1 --pretty=format:%H -- $TARGET_DOCS_LOCKFILE_PATH)
 
+          # Extract the authored date of the commit
+          AUTHORED_DATE=$(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%ad $LAST_COMMIT_SHA)
+
           # Re-export the lockfile to verify if changes in pyproject.toml would result
           # in differences, restricting packages to versions available at the original
           # creation time point (to avoid pulling new releases)
-          tox -e docs-lockfile -- --exclude-newer $(git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd $LAST_COMMIT_SHA)
+          tox -e docs-lockfile -- --exclude-newer $AUTHORED_DATE
 
           # Check if the diff is non-empty (meaning new dependencies or other versions
           # are required) or if re-export failed (which indicates that changes in 
