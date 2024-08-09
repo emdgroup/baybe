@@ -91,7 +91,7 @@ def farthest_point_sampling(
         remaining_point_indices.remove(selected_point_index)
 
     # Undo the initial point reordering
-    return sort_idx[selected_point_indices]
+    return sort_idx[selected_point_indices].tolist()
 
 
 class DiscreteSamplingMethod(Enum):
