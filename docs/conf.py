@@ -188,6 +188,9 @@ html_theme_options = {
         # Color of the search text and icon
         "color-sidebar-search-text": "white",
         "color-sidebar-search-icon": BROWN,
+        # The announcement background and text color
+        "color-announcement-background": LIGHT_BLUE,
+        "color-announcement-text": LIGHT_GRAY,
     },
     # Colors for dark mode.
     "dark_css_variables": {
@@ -222,6 +225,9 @@ html_theme_options = {
         "color-toc-item-text--active": BROWN,
         # Color of search bar when clicking search
         "color-sidebar-search-background--focus": DARK_BLUE,
+        # The announcement background and text color
+        "color-announcement-background": LIGHT_BLUE,
+        "color-announcement-text": LIGHT_GRAY,
     },
     # Logos. Location is relative to _static folder.
     "light_logo": "logo1.svg",  # Logo for light mode

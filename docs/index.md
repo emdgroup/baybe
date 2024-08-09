@@ -1,4 +1,11 @@
 ```{toctree}
+:titlesonly:
+:hidden:
+
+Versions <https://avhopp.github.io/baybe_dev/versions>
+```
+
+```{toctree}
 :maxdepth: 2
 :titlesonly:
 :caption: Documentation
