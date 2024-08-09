@@ -95,3 +95,11 @@ def test_farthest_point_sampling(points: np.ndarray):
     # we test this as additional case
     sorting_idxs = farthest_point_sampling(points[permutation_idxs], 1)
     assert np.array_equal(target[[0]], points[permutation_idxs][sorting_idxs])
+
+
+def test_farthest_point_sampling_pathological_case():
+    """FPS executed on a degenerate point cloud raises a warning."""
+    points = np.ones((3, 3))
+    with pytest.warns(UserWarning, match="identical"):
+        selection = farthest_point_sampling(points, 2)
+    assert selection == [0, 1]
