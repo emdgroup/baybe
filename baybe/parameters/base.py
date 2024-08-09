@@ -1,8 +1,10 @@
 """Base classes for all parameters."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from functools import cached_property, partial
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -16,6 +18,11 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+
+if TYPE_CHECKING:
+    from baybe.searchspace.continuous import SubspaceContinuous
+    from baybe.searchspace.core import SearchSpace
+    from baybe.searchspace.discrete import SubspaceDiscrete
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
@@ -66,6 +73,12 @@ class Parameter(ABC, SerialMixin):
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The columns spanning the computational representation."""
 
+    def to_searchspace(self) -> SearchSpace:
+        """Create a one-dimensional search space from the parameter."""
+        from baybe.searchspace.core import SearchSpace
+
+        return SearchSpace.from_parameter(self)
+
     @abstractmethod
     def summary(self) -> dict:
         """Return a custom summarization of the parameter."""
@@ -96,6 +109,12 @@ class DiscreteParameter(Parameter, ABC):
     def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
         # See base class.
         return tuple(self.comp_df.columns)
+
+    def to_subspace(self) -> SubspaceDiscrete:
+        """Create a one-dimensional search space from the parameter."""
+        from baybe.searchspace.discrete import SubspaceDiscrete
+
+        return SubspaceDiscrete.from_parameter(self)
 
     def is_in_range(self, item: Any) -> bool:  # noqa: D102
         # See base class.
@@ -138,6 +157,12 @@ class DiscreteParameter(Parameter, ABC):
 @define(frozen=True, slots=False)
 class ContinuousParameter(Parameter):
     """Abstract class for continuous parameters."""
+
+    def to_subspace(self) -> SubspaceContinuous:
+        """Create a one-dimensional search space from the parameter."""
+        from baybe.searchspace.continuous import SubspaceContinuous
+
+        return SubspaceContinuous.from_parameter(self)
 
 
 # Register (un-)structure hooks

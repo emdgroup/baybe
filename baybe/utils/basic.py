@@ -6,7 +6,9 @@ from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from baybe.exceptions import UnidentifiedSubclassError
+from attrs import asdict, has
+
+from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 
 _C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
@@ -101,7 +103,7 @@ def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:
 
     Example:
         >>> group_duplicate_values({"A": 1, "B": 2, "C": 1, "D": 3})
-        {1: ['B', 'C']}
+        {1: ['A', 'C']}
     """
     group: dict[_U, list[_T]] = {}
     for key, value in dictionary.items():
@@ -121,31 +123,56 @@ def to_tuple(x: Sequence) -> tuple:
     return tuple(x)
 
 
-def filter_attributes(
+def match_attributes(
     object: Any,
     callable_: Callable,
-    ignore: Collection[str] = ("self", "kwargs", "args"),
-) -> dict[str, Any]:
+    /,
+    strict: bool = True,
+    ignore: Collection[str] = (),
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Find the attributes of an object that match with a given callable signature.
 
     Parameters appearing in the callable signature that have no match with the given
     object attributes are ignored.
 
     Args:
-        object: The object whose attributes are to be returned.
+        object: The object whose attributes are to be matched.
         callable_: The callable against whose signature the attributes are to be
             matched.
-        ignore: A collection of parameter names to be ignored in the signature.
+        strict: If ``True``, an error is raised when the object has attributes that
+            are not found in the callable signature (see also ``ignore``).
+            If ``False``, these attributes are returned separately.
+        ignore: A collection of attributes names that are to be ignored during matching.
+
+    Raises:
+        ValueError: If applied to a non-attrs object.
+        UnmatchedAttributeError: In strict mode, if not all attributes can be matched.
 
     Returns:
-        A dictionary mapping the matched attribute names to their values.
+        * A dictionary mapping the matched attribute names to their values.
+        * A dictionary mapping the unmatched attribute names to their values.
     """
-    params = inspect.signature(callable_).parameters
-    return {
-        p: getattr(object, p)
-        for p in params
-        if (p not in ignore) and hasattr(object, p)
-    }
+    if not has(object.__class__):
+        raise ValueError(
+            f"'{match_attributes.__name__}' only works with attrs objects."
+        )
+    # Get attribute/parameter sets
+    set_object = set(asdict(object)) - set(ignore)
+    set_callable = set(inspect.signature(callable_).parameters)
+
+    # Match
+    in_signature = set_object.intersection(set_callable)
+    not_in_signature = set_object - set_callable
+    if strict and not_in_signature:
+        raise UnmatchedAttributeError(
+            f"The following attributes cannot be matched: {not_in_signature}."
+        )
+
+    # Collect attributes for both sets
+    attrs_in_signature = {p: getattr(object, p) for p in in_signature}
+    attrs_not_in_signature = {p: getattr(object, p) for p in not_in_signature}
+
+    return attrs_in_signature, attrs_not_in_signature
 
 
 class classproperty:

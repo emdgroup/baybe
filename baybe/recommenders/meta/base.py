@@ -1,51 +1,24 @@
 """Base classes for all meta recommenders."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import cattrs
 import pandas as pd
-from attrs import define, field
+from attrs import define
 
-from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
-from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.recommenders.pure.base import PureRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
+from baybe.serialization.core import get_base_structure_hook
 
 
 @define
 class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all meta recommenders."""
-
-    allow_repeated_recommendations: bool = field(default=None, kw_only=True)
-    """Deprecated! The flag has become an attribute of
-    :class:`baybe.recommenders.pure.base.PureRecommender`."""
-
-    allow_recommending_already_measured: bool = field(default=None, kw_only=True)
-    """Deprecated! The flag has become an attribute of
-    :class:`baybe.recommenders.pure.base.PureRecommender`."""
-
-    @allow_repeated_recommendations.validator
-    def _validate_allow_repeated_recommendations(self, _, value):
-        """Raise a ``DeprecationError`` if the flag is used."""
-        if value is not None:
-            raise DeprecationError(
-                f"Passing 'allow_repeated_recommendations' to "
-                f"'{self.__class__.__name__}' is deprecated. The flag has become an "
-                f"attribute of the '{PureRecommender.__name__}' classes."
-            )
-
-    @allow_recommending_already_measured.validator
-    def _validate_allow_recommending_already_measured(self, _, value):
-        """Raise a ``DeprecationError`` if the flag is used."""
-        if value is not None:
-            raise DeprecationError(
-                f"Passing 'allow_recommending_already_measured' to "
-                f"{self.__class__.__name__} is deprecated. The flag has become an "
-                f"attribute of {PureRecommender.__name__}."
-            )
 
     @abstractmethod
     def select_recommender(
@@ -85,11 +58,21 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             objective=objective,
             measurements=measurements,
         )
+
+        # Non-predictive recommenders should not be called with an objective or
+        # measurements. Using dict value type Any here due to known mypy complication:
+        # https://github.com/python/mypy/issues/5382
+        optional_args: dict[str, Any] = (
+            {}
+            if isinstance(recommender, NonPredictiveRecommender)
+            else {
+                "objective": objective,
+                "measurements": measurements,
+            }
+        )
+
         return recommender.recommend(
-            batch_size=batch_size,
-            searchspace=searchspace,
-            objective=objective,
-            measurements=measurements,
+            batch_size=batch_size, searchspace=searchspace, **optional_args
         )
 
 
@@ -105,4 +88,6 @@ converter.register_unstructure_hook(
         ),
     ),
 )
-converter.register_structure_hook(MetaRecommender, structure_recommender_protocol)
+converter.register_structure_hook(
+    MetaRecommender, get_base_structure_hook(MetaRecommender)
+)

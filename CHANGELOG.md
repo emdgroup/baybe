@@ -6,6 +6,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Breaking Changes
+- `Surrogate` models now operate on dataframes in experimental representation instead of
+  tensors in computational representation
+- `Surrogate.posterior` models now returns a `Posterior` object
+- `param_bounds_comp` of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` has
+  been replaced with `comp_rep_bounds`, which returns a dataframe
+
+### Added
+- `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
+- `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
+  and `SubspaceContinuous` classes
+- Reworked mechanisms for surrogate input/output scaling configurable per class
+- `SurrogateProtocol` as an interface for user-defined surrogate architectures
+
+### Changed
+- Context information required by `Surrogate` models is now cleanly encapsulated into
+  a `context` object passed to `Surrogate._fit`
+- Fallback models created by `catch_constant_targets` are stored outside of surrogate
+- `to_tensor` now also handles `numpy` arrays
+- `GaussianProcessSurrogate` no longer uses a separate scaling approach
+
+### Removed
+- `register_custom_architecture` decorator
+- `Scalar` and `DefaultScaler` classes
+
+### Deprecations
+- The role of `register_custom_architecture` has been taken over by
+  `baybe.surrogates.base.SurrogateProtocol`
+
+## [0.10.0] - 2024-08-02
+### Breaking Changes
 - Providing an explicit `batch_size` is now mandatory when asking for recommendations
 - `RecommenderProtocol.recommend` now accepts an optional `Objective` 
 - `RecommenderProtocol.recommend` now expects training data to be provided as a single
@@ -14,19 +44,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Parameter.is_numeric` has been replaced with `Parameter.is_numerical`
 - `DiscreteParameter.transform_rep_exp2comp` has been replaced with
   `DiscreteParameter.transform` 
-- `Surrogate` models now operate on dataframes in experimental representation instead of
-  tensors in computational representation
-- `Surrogate.posterior` models now returns a `Posterior` object
-- `param_bounds_comp` of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` has
-  been replaced with `comp_rep_bounds`, which returns a dataframe
+- `filter_attributes` has been replaced with `match_attributes`
 
 ### Added
 - `Surrogate` base class now exposes a `to_botorch` method
 - `SubspaceDiscrete.to_searchspace` and `SubspaceContinuous.to_searchspace`
   convenience constructor
 - Validators for `Campaign` attributes
-_ `_optional` subpackage for managing optional dependencies
-- Acquisition function for active learning: `qNIPV`
+- `_optional` subpackage for managing optional dependencies
+- New acquisition functions for active learning: `qNIPV` (negative integrated posterior
+  variance) and `PSTD` (posterior standard deviation)
+- Acquisition function: `qKG` (knowledge gradient)
 - Abstract `ContinuousNonlinearConstraint` class
 - Abstract `CardinalityConstraint` class and
   `DiscreteCardinalityConstraint`/`ContinuousCardinalityConstraint` subclasses
@@ -34,11 +62,24 @@ _ `_optional` subpackage for managing optional dependencies
 - `register_hooks` utility enabling user-defined augmentation of arbitrary callables
 - `transform` methods of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous`
   now take additional `allow_missing` and `allow_extra` keyword arguments
-- `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
-- `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
-  and `SubspaceContinuous` classes
-- Reworked mechanisms for surrogate input/output scaling configurable per class
-- `SurrogateProtocol` as an interface for user-defined surrogate architectures 
+- More details to the transfer learning user guide
+- Activated doctests
+- `SubspaceDiscrete.from_parameter`, `SubspaceContinuous.from_parameter`,
+  `SubspaceContinuous.from_product` and `SearchSpace.from_parameter`
+   convenience constructors
+- `DiscreteParameter.to_subspace`, `ContinuousParameter.to_subspace` and
+  `Parameter.to_searchspace` convenience constructors
+- Utilities for permutation and dependency data augmentation
+- Validation and translation tests for kernels
+- `BasicKernel` and `CompositeKernel` base classes
+- Activated `pre-commit.ci` with auto-update
+- User guide for active learning
+- Polars expressions for `DiscreteSumConstraint`, `DiscreteProductConstraint`, 
+  `DiscreteExcludeConstraint`, `DiscreteLinkedParametersConstraint` and 
+  `DiscreteNoLabelDuplicatesConstraint`
+- Discrete search space Cartesian product can be created lazily via Polars
+- Examples demonstrating the `register_hooks` utility: basic registration mechanism,
+  monitoring the probability of improvement, and automatic campaign stopping
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -47,21 +88,33 @@ _ `_optional` subpackage for managing optional dependencies
 - Sampling methods in `qNIPV` and `BotorchRecommender` are now specified via 
   `DiscreteSamplingMethod` enum
 - `Interval` class now supports degenerate intervals containing only one element
-- Context information required by `Surrogate` models is now cleanly encapsulated into
-  a `context` object passed to `Surrogate._fit`
-- Fallback models created by `catch_constant_targets` are stored outside of surrogate
-- `to_tensor` now also handles `numpy` arrays
-- `GaussianProcessSurrogate` no longer uses a separate scaling approach
+- `add_fake_results` now directly processes `Target` objects instead of a `Campaign`
+- `path` argument in plotting utility is now optional and defaults to `Path(".")`
+- `UnusedObjectWarning` by non-predictive recommenders is now ignored during simulations
+- The default kernel factory now avoids strong jumps by linearly interpolating between
+  two fixed low and high dimensional prior regimes
+- The previous default kernel factory has been renamed to `EDBOKernelFactory` and now
+  fully reflects the original logic
+- The default acquisition function has been changed from `qEI` to `qLogEI` for improved
+  numerical stability
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
   and guidelines from [Scientific Python](https://scientific-python.org/specs/spec-0000/)
-- `register_custom_architecture` decorator
-- `Scalar` and `DefaultScaler` classes
+- Linter `typos` for spellchecking
 
 ### Fixed
 - `sequential` flag of `SequentialGreedyRecommender` is now set to `True`
 - Serialization bug related to class layout of `SKLearnClusteringRecommender`
+- `MetaRecommender`s no longer trigger warnings about non-empty objectives or
+  measurements when calling a `NonPredictiveRecommender`
+- Bug introduced in 0.9.0 (PR #221, commit 3078f3), where arguments to `to_gpytorch` 
+  are not passed on to the GPyTorch kernels
+- Positive-valued kernel attributes are now correctly handled by validators
+  and hypothesis strategies
+- As a temporary workaround to compensate for missing `IndexKernel` priors, 
+ `fit_gpytorch_mll_torch` is used instead of `fit_gpytorch_mll` when a `TaskParameter`
+  is present, which acts as regularization via early stopping during model fitting
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
@@ -72,8 +125,19 @@ _ `_optional` subpackage for managing optional dependencies
 - Passing a dataframe via the `data` argument to the `transform` methods of
   `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
   The dataframe must now be passed as positional argument.
-- The role of `register_custom_architecture` has been taken over by
-  `baybe.surrogates.base.SurrogateProtocol`
+- The new `allow_extra` flag is automatically set to `True` in `transform` methods
+  of search space classes when left unspecified
+
+### Expired Deprecations (from 0.7.*)
+- `Interval.is_finite` property
+- Specifying target configs without type information 
+- Specifying parameters/constraints at the top level of a campaign configs
+- Passing `numerical_measurements_must_be_within_tolerance` to `Campaign`
+- `batch_quantity` argument 
+- Passing `allow_repeated_recommendations` or `allow_recommending_already_measured` 
+  to `MetaRecommender` (or former `Strategy`)
+- `*Strategy` classes and `baybe.strategies` subpackage
+- Specifying `MetaRecommender` (or former `Strategy`) configs without type information 
 
 ## [0.9.1] - 2024-06-04
 ### Changed

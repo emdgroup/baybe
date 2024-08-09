@@ -1,4 +1,5 @@
 """Test for continuous parameters."""
+
 import numpy as np
 import pytest
 

@@ -81,7 +81,9 @@ extensions = [
     "sphinx.ext.viewcode",  # Links to code
     "sphinx_autodoc_typehints",  # Proper typehints
     "sphinx_copybutton",  # Copy button for code blocks
+    "sphinxcontrib.bibtex",  # Bibtex support
 ]
+bibtex_bibfiles = ["references.bib"]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
 autosectionlabel_prefix_document = True  # Make sure autosectionlabels are unique
 
@@ -124,6 +126,9 @@ nitpick_ignore_regex = [
     # Ignore custom class properties
     (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
 ]
+
+# Ignore the following links when checking inks for viability
+linkcheck_ignore = [r"https://github.com/b-shields/edbo/blob/master/edbo/bro.py*"]
 
 
 # Ignore the warnings that are given by autosectionlabel
@@ -234,6 +239,7 @@ modindex_common_prefix = ["baybe."]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
+    "polars": ("https://docs.pola.rs/api/python/stable/", None),
     "sklearn": ("http://scikit-learn.org/stable", None),
     "sklearn_extra": ("https://scikit-learn-extra.readthedocs.io/en/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),

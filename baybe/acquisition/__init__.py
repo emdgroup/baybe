@@ -4,9 +4,11 @@ from baybe.acquisition.acqfs import (
     ExpectedImprovement,
     LogExpectedImprovement,
     PosteriorMean,
+    PosteriorStandardDeviation,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
     qExpectedImprovement,
+    qKnowledgeGradient,
     qLogExpectedImprovement,
     qLogNoisyExpectedImprovement,
     qNegIntegratedPosteriorVariance,
@@ -17,9 +19,11 @@ from baybe.acquisition.acqfs import (
 )
 
 PM = PosteriorMean
+PSTD = PosteriorStandardDeviation
 qSR = qSimpleRegret
 EI = ExpectedImprovement
 qEI = qExpectedImprovement
+qKG = qKnowledgeGradient
 LogEI = LogExpectedImprovement
 qLogEI = qLogExpectedImprovement
 qNEI = qNoisyExpectedImprovement
@@ -32,8 +36,11 @@ qUCB = qUpperConfidenceBound
 
 __all__ = [
     ######################### Acquisition functions
-    # Posterior Mean
+    # Knowledge Gradient
+    "qKnowledgeGradient",
+    # Posterior Statistics
     "PosteriorMean",
+    "PosteriorStandardDeviation",
     # Simple Regret
     "qSimpleRegret",
     # Expected Improvement
@@ -51,8 +58,11 @@ __all__ = [
     "UpperConfidenceBound",
     "qUpperConfidenceBound",
     ######################### Abbreviations
-    # Posterior Mean
+    # Knowledge Gradient
+    "qKG",
+    # Posterior Statistics
     "PM",
+    "PSTD",
     # Simple Regret
     "qSR",
     # Expected Improvement

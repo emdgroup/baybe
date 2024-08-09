@@ -21,6 +21,7 @@ from baybe.serialization import (
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
+    import polars as pl
     from torch import Tensor
 
 
@@ -35,6 +36,10 @@ class Constraint(ABC, SerialMixin):
 
     eval_during_modeling: ClassVar[bool]
     """Class variable encoding whether the condition is evaluated during modeling."""
+
+    eval_during_augmentation: ClassVar[bool] = False
+    """Class variable encoding whether the constraint could be considered during data
+    augmentation."""
 
     numerical_only: ClassVar[bool] = False
     """Class variable encoding whether the constraint is valid only for numerical
@@ -103,6 +108,20 @@ class DiscreteConstraint(Constraint, ABC):
         Returns:
             The dataframe indices of rows where the constraint is violated.
         """
+
+    def get_invalid_polars(self) -> pl.Expr:
+        """Translate the constraint to Polars expression identifying undesired rows.
+
+        Returns:
+            The Polars expressions to pass to :meth:`polars.LazyFrame.filter`.
+
+        Raises:
+            NotImplementedError: If the constraint class does not have a Polars
+                implementation.
+        """
+        raise NotImplementedError(
+            f"'{self.__class__.__name__}' does not have a Polars implementation."
+        )
 
 
 @define

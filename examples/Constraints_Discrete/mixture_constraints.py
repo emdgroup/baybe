@@ -175,5 +175,5 @@ for kIter in range(N_ITERATIONS):
     )
 
     rec = campaign.recommend(batch_size=5)
-    add_fake_results(rec, campaign)
+    add_fake_results(rec, campaign.targets)
     campaign.add_measurements(rec)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Collection, Iterable, Iterator, Sequence
 from typing import (
     TYPE_CHECKING,
     Literal,
@@ -13,13 +13,13 @@ from typing import (
 import numpy as np
 import pandas as pd
 
+from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.campaign import Campaign
     from baybe.parameters import Parameter
 
 # Logging
@@ -27,13 +27,11 @@ _logger = logging.getLogger(__name__)
 
 
 @overload
-def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor:
-    ...
+def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor: ...
 
 
 @overload
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> Iterator[Tensor]:
-    ...
+def to_tensor(*x: np.ndarray | pd.DataFrame) -> Iterator[Tensor]: ...
 
 
 def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | Iterator[Tensor]:
@@ -69,7 +67,7 @@ def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | Iterator[Tensor]:
 
 def add_fake_results(
     data: pd.DataFrame,
-    campaign: Campaign,
+    targets: Collection[Target],
     good_reference_values: dict[str, list] | None = None,
     good_intervals: dict[str, tuple[float, float]] | None = None,
     bad_intervals: dict[str, tuple[float, float]] | None = None,
@@ -82,9 +80,10 @@ def add_fake_results(
     new dataframe and that the dataframe is changed in-place.
 
     Args:
-        data: Output of the ``recommend`` function of a ``Campaign``, see
+        data: A dataframe containing parameter configurations in experimental
+            representation, for instance, created via
             :func:`baybe.campaign.Campaign.recommend`.
-        campaign: The corresponding campaign, providing configuration, targets, etc.
+        targets: The targets for which fake results should be added to the dataframe.
         good_reference_values: A dictionary containing parameter names (= dict keys) and
             respective parameter values (= dict values) that specify what will be
             considered good parameter settings. Conditions for different parameters are
@@ -127,7 +126,7 @@ def add_fake_results(
     # Set defaults for good intervals
     if good_intervals is None:
         good_intervals = {}
-        for target in campaign.targets:
+        for target in targets:
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
                 ubound = (
@@ -156,7 +155,7 @@ def add_fake_results(
     # Set defaults for bad intervals
     if bad_intervals is None:
         bad_intervals = {}
-        for target in campaign.targets:
+        for target in targets:
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
@@ -184,7 +183,7 @@ def add_fake_results(
             bad_intervals[target.name] = interv
 
     # Add the fake data for each target
-    for target in campaign.targets:
+    for target in targets:
         # Add bad values
         data[target.name] = np.random.uniform(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)

@@ -85,6 +85,7 @@ dev = [
     "baybe[lint]",
     "baybe[mypy]",
     "baybe[onnx]",
+    "baybe[polars]",
     "baybe[simulation]",
     "baybe[test]",
     "pip-audit>=2.5.5",
@@ -100,6 +101,7 @@ docs = [
     "sphinx>=7.1.1",
     "sphinx-autodoc-typehints>=1.24.0",
     "sphinx-copybutton==0.5.2",
+    "sphinxcontrib-bibtex>=2.6.2 ",
 ]
 
 examples = [
@@ -116,18 +118,22 @@ examples = [
 ]
 
 lint = [
-    "flake8==7.0.0", # see DEV TOOLS NOTE
-    "pre-commit==2.19.0", # see DEV TOOLS NOTE
-    "pydoclint==0.5.1", # see DEV TOOLS NOTE
-    "ruff==0.1.6", # see DEV TOOLS NOTE
-    "typos==1.16.23" # see DEV TOOLS NOTE
+    "flake8==7.1.0", # see DEV TOOLS NOTE
+    "pre-commit==3.7.1", # see DEV TOOLS NOTE
+    "pydoclint==0.5.5", # see DEV TOOLS NOTE
+    "pyupgrade==3.16.0", # see DEV TOOLS NOTE
+    "ruff==0.5.2", # see DEV TOOLS NOTE
 ]
 
 mypy = [
-    "mypy>=1.6.1",
-    "pandas-stubs>=2.0.3.230814",
+    "mypy>=1.10.1",
+    "pandas-stubs>=2.2.2.240603",
     "funcy-stubs>=0.1.1",
-    "types-seaborn>=0.12.2"
+    "types-seaborn>=0.13.2.20240618"
+]
+
+polars = [
+    "polars[pyarrow]>=0.19.19,<2",
 ]
 
 simulation = [
@@ -138,7 +144,6 @@ test = [
     "hypothesis[pandas]>=6.88.4",
     "pytest>=7.2.0",
     "pytest-cov>=4.1.0",
-    "pytest-error-for-skips",
 ]
 
 [build-system]

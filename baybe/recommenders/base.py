@@ -6,9 +6,9 @@ import cattrs
 import pandas as pd
 
 from baybe.objectives.base import Objective
-from baybe.recommenders.deprecation import structure_recommender_protocol
 from baybe.searchspace import SearchSpace
 from baybe.serialization import converter, unstructure_base
+from baybe.serialization.core import get_base_structure_hook
 
 
 @runtime_checkable
@@ -57,4 +57,6 @@ converter.register_unstructure_hook(
         ),
     ),
 )
-converter.register_structure_hook(RecommenderProtocol, structure_recommender_protocol)
+converter.register_structure_hook(
+    RecommenderProtocol, get_base_structure_hook(RecommenderProtocol)
+)

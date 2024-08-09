@@ -1,6 +1,15 @@
-"""Custom exceptions."""
+"""Custom exceptions and warnings."""
 
 
+##### Warnings #####
+class UnusedObjectWarning(UserWarning):
+    """
+    A method or function was called with undesired arguments which indicates an
+    unintended user fault.
+    """
+
+
+##### Exceptions #####
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations
@@ -54,3 +63,7 @@ class UnidentifiedSubclassError(Exception):
 
 class ModelNotTrainedError(Exception):
     """A prediction/transformation is attempted before the model has been trained."""
+
+
+class UnmatchedAttributeError(Exception):
+    """An attribute cannot be matched against a certain callable signature."""

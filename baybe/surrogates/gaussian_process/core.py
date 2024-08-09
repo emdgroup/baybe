@@ -210,4 +210,11 @@ class GaussianProcessSurrogate(Surrogate):
             likelihood=likelihood,
         )
         mll = gpytorch.ExactMarginalLogLikelihood(self._model.likelihood, self._model)
-        botorch.fit_gpytorch_mll(mll)
+
+        # TODO: This is a simple temporary workaround to avoid model overfitting
+        #   via early stopping in the presence of task parameters, which currently
+        #   have no prior configured.
+        if context.n_task_dimensions > 0:
+            botorch.optim.fit.fit_gpytorch_mll_torch(mll, step_limit=200)
+        else:
+            botorch.fit.fit_gpytorch_mll(mll)

@@ -23,6 +23,7 @@ from baybe.constraints import (
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
     DiscreteExcludeConstraint,
+    DiscreteLinkedParametersConstraint,
     DiscreteNoLabelDuplicatesConstraint,
     DiscretePermutationInvarianceConstraint,
     DiscreteProductConstraint,
@@ -501,6 +502,9 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             min_cardinality=1,
             max_cardinality=2,
         ),
+        "Constraint_15": DiscreteLinkedParametersConstraint(
+            parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
+        ),
         "ContiConstraint_1": ContinuousLinearEqualityConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
             coefficients=[1.0, 1.0],
@@ -837,7 +841,7 @@ def run_iterations(
         rec = campaign.recommend(batch_size=batch_size)
         # dont use parameter noise for these tests
 
-        add_fake_results(rec, campaign)
+        add_fake_results(rec, campaign.targets)
         if add_noise and (k % 2):
             add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
 

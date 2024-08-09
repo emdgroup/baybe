@@ -1,6 +1,5 @@
 """Hypothesis strategies for parameters."""
 
-
 import hypothesis.strategies as st
 import numpy as np
 from hypothesis.extra.pandas import columns, data_frames

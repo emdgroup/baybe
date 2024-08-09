@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import warnings
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Sequence
+from itertools import compress
 from math import prod
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +16,7 @@ from cattrs import IterableValidationError
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
+from baybe.exceptions import OptionalImportError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -38,6 +41,8 @@ from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
+    import polars as pl
+
     from baybe.searchspace.core import SearchSpace
 
 _METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
@@ -162,7 +167,7 @@ class SubspaceDiscrete(SerialMixin):
     def _default_metadata(self) -> pd.DataFrame:
         """Create the default metadata."""
         # If the discrete search space is empty, explicitly return an empty dataframe
-        # instead of simply using a zero-length index. Otherwise, the boolean dtype
+        # instead of simply using a zero-length index. Otherwise, the Boolean dtype
         # would be lost during a serialization roundtrip as there would be no
         # data available that allows to determine the type, causing subsequent
         # equality checks to fail.
@@ -249,6 +254,18 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @classmethod
+    def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
+        """Create a subspace from a single parameter.
+
+        Args:
+            parameter: The parameter to span the subspace.
+
+        Returns:
+            The created subspace.
+        """
+        return cls.from_product([parameter])
+
+    @classmethod
     def from_product(
         cls,
         parameters: Sequence[DiscreteParameter],
@@ -256,19 +273,39 @@ class SubspaceDiscrete(SerialMixin):
         empty_encoding: bool = False,
     ) -> SubspaceDiscrete:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
-        # Set defaults
+        # Set defaults and order constraints
         constraints = constraints or []
+        constraints = sorted(
+            constraints,
+            key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
+        )
 
-        # Create a dataframe representing the experimental search space
-        exp_rep = parameter_cartesian_prod_to_df(parameters)
+        try:
+            # Check for manual deactivation of polars
+            if os.environ.get("BAYBE_DEACTIVATE_POLARS", None) is not None:
+                raise OptionalImportError(
+                    "Polars was deactivated manually via environment variable."
+                )
 
-        # Remove entries that violate parameter constraints
-        _apply_constraint_filter(exp_rep, constraints)
+            # Apply polars product and filtering
+            lazy_df = parameter_cartesian_prod_polars(parameters)
+            lazy_df, mask_missing = _apply_constraint_filter_polars(
+                lazy_df, constraints
+            )
+            df_records = lazy_df.collect(streaming=True).to_dicts()
+            df = pd.DataFrame.from_records(df_records)
+        except OptionalImportError:
+            # Apply pandas product
+            df = parameter_cartesian_prod_pandas(parameters)
+            mask_missing = [True] * len(constraints)
+
+        # Gather and use constraints not yet applied
+        _apply_constraint_filter_pandas(df, list(compress(constraints, mask_missing)))
 
         return SubspaceDiscrete(
             parameters=parameters,
             constraints=constraints,
-            exp_rep=exp_rep,
+            exp_rep=df,
             empty_encoding=empty_encoding,
         )
 
@@ -406,7 +443,7 @@ class SubspaceDiscrete(SerialMixin):
             )
 
         # Construct the product part of the space
-        product_space = parameter_cartesian_prod_to_df(product_parameters)
+        product_space = parameter_cartesian_prod_pandas(product_parameters)
         if not simplex_parameters:
             return cls(parameters=product_parameters, exp_rep=product_space)
 
@@ -523,7 +560,7 @@ class SubspaceDiscrete(SerialMixin):
             exp_rep = pd.merge(exp_rep, product_space, how="cross")
 
         # Remove entries that violate parameter constraints:
-        _apply_constraint_filter(exp_rep, constraints)
+        _apply_constraint_filter_pandas(exp_rep, constraints)
 
         return cls(
             parameters=[*simplex_parameters, *product_parameters],
@@ -707,34 +744,110 @@ class SubspaceDiscrete(SerialMixin):
         except AttributeError:
             return comp_rep
 
+    def get_parameters_by_name(
+        self, names: Sequence[str]
+    ) -> tuple[DiscreteParameter, ...]:
+        """Return parameters with the specified names.
 
-def _apply_constraint_filter(
+        Args:
+            names: Sequence of parameter names.
+
+        Returns:
+            The named parameters.
+        """
+        return tuple(p for p in self.parameters if p.name in names)
+
+
+def _apply_constraint_filter_pandas(
     df: pd.DataFrame, constraints: Collection[DiscreteConstraint]
-):
-    """Remove discrete search space entries inplace based on constraints.
+) -> pd.DataFrame:
+    """Remove discrete search space entries based on constraints.
+
+    The filtering is done inplace, but the modified object is still returned.
 
     Args:
         df: The data in experimental representation to be modified inplace.
         constraints: List of discrete constraints.
 
+    Returns:
+        The filtered dataframe.
     """
-    # Reorder the constraints according to their execution order
-    constraints = sorted(
-        constraints,
-        key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
-    )
-
     # Remove entries that violate parameter constraints:
     for constraint in (c for c in constraints if c.eval_during_creation):
         idxs = constraint.get_invalid(df)
         df.drop(index=idxs, inplace=True)
     df.reset_index(inplace=True, drop=True)
 
+    return df
 
-def parameter_cartesian_prod_to_df(
-    parameters: Iterable[Parameter],
+
+def _apply_constraint_filter_polars(
+    ldf: pl.LazyFrame,
+    constraints: Sequence[DiscreteConstraint],
+) -> tuple[pl.LazyFrame, list[bool]]:
+    """Remove discrete search space entries based on constraints.
+
+    Note:
+        This will silently skip constraints that have no Polars implementation.
+
+    Args:
+        ldf: The data in experimental representation to be filtered.
+        constraints: Collection of discrete constraints.
+
+    Returns:
+        A tuple containing
+            * The Polars lazyframe with undesired rows removed
+            * A Boolean mask indicating which constraints have **not** been applied
+    """
+    mask_missing = []
+
+    for c in constraints:
+        try:
+            to_keep = c.get_invalid_polars().not_()
+            ldf = ldf.filter(to_keep)
+            mask_missing.append(False)
+        except NotImplementedError:
+            mask_missing.append(True)
+
+    return ldf, mask_missing
+
+
+def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyFrame:
+    """Create the Cartesian product of all parameter values using Polars.
+
+    Ignores continuous parameters.
+
+    Args:
+        parameters: List of parameter objects.
+
+    Returns:
+        A lazy dataframe containing all possible discrete parameter value combinations.
+    """
+    from baybe._optional.polars import polars as pl
+
+    discrete_parameters = [p for p in parameters if p.is_discrete]
+    if not discrete_parameters:
+        return pl.LazyFrame()
+
+    # Convert each parameter to a lazy dataframe for cross-join operation
+    param_frames = [pl.LazyFrame({p.name: p.values}) for p in discrete_parameters]  # type:ignore[attr-defined]
+
+    # Handling edge cases
+    if len(param_frames) == 1:
+        return param_frames[0]
+
+    # Cross-join parameters
+    res = param_frames[0]
+    for frame in param_frames[1:]:
+        res = res.join(frame, how="cross", force_parallel=True)
+
+    return res
+
+
+def parameter_cartesian_prod_pandas(
+    parameters: Sequence[Parameter],
 ) -> pd.DataFrame:
-    """Create the Cartesian product of all parameter values.
+    """Create the Cartesian product of all parameter values using Pandas.
 
     Ignores continuous parameters.
 

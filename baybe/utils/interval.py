@@ -1,6 +1,5 @@
 """Utilities for handling intervals."""
 
-import warnings
 from collections.abc import Iterable
 from functools import singledispatchmethod
 from typing import TYPE_CHECKING, Any
@@ -74,16 +73,6 @@ class Interval(SerialMixin):
     def is_fully_unbounded(self) -> bool:
         """Check if the interval represents the entire real number line."""
         return not (self.is_left_bounded or self.is_right_bounded)
-
-    @property
-    def is_finite(self) -> bool:
-        """Check whether the interval is finite."""
-        warnings.warn(
-            "The use of 'Interval.is_finite' is deprecated and will be disabled in "
-            "a future version. Use 'Interval.is_bounded' instead.",
-            DeprecationWarning,
-        )
-        return np.isfinite(self.lower) and np.isfinite(self.upper)
 
     @property
     def center(self) -> float | None:
