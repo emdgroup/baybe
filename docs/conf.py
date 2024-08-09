@@ -276,6 +276,7 @@ typehints_use_signature = True
 # These allow us to change docstrings (resp. how they are processed)
 def setup(app):  # noqa: D103
     app.connect("autodoc-process-docstring", autodoc_process_docstring)
+    app.connect("autodoc-skip-member", autodoc_skip_member)
 
 
 def autodoc_process_docstring(app, what, name, obj, options, lines):
@@ -284,3 +285,8 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
         lines.append(
             "For details on the parameters, see **Public attributes and properties**."
         )
+
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    """Skip the docstring for the is_mc classproperty."""
+    return name == "is_mc"
