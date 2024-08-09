@@ -194,7 +194,7 @@ def _simulate_groupby(
 
     Returns:
         A dataframe like returned from
-        :func:`baybe.simulation.core.simulate_experiments`, but with additional
+        :func:`baybe.simulation.core.simulate_experiment`, but with additional
         ``groupby columns`` (named according to the specified groupby parameters) that
         subdivide the results into the different simulations.
 
