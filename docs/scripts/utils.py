@@ -57,7 +57,7 @@ def add_version_to_selector_page(version: str) -> None:
     indent = "        "
     new_line = (
         f"{indent}<li><a href="
-        f'"https://avhopp.github.io/baybe_dev/{version}/">{version}'
+        f'"https://emdgroup.github.io/baybe/{version}/">{version}'
         "</a></li>\n"
     )
     file = Path("versions.html")
@@ -106,11 +106,11 @@ def adjust_version_to_html(version: str) -> None:
     """
     prefix = '<li class="toctree-l1">'
     html_class = "reference external"
-    link = "https://avhopp.github.io/baybe_dev/versions"
+    link = "https://emdgroup.github.io/baybe/versions"
     new_line = (
         f'{prefix}<a class={html_class} href="{link}">Version: {version}</a></li>'
     )
-    link_to_stable = '<a href="https://avhopp.github.io/baybe_dev/stable">stable</a>'
+    link_to_stable = '<a href="https://emdgroup.github.io/baybe/stable">stable</a>'
     # The content of the announcement that might be added.
     announcement = (
         f"You are not viewing the documentation of the {link_to_stable} version."
