@@ -49,6 +49,11 @@ def farthest_point_sampling(
         raise ValueError("The provided array must contain at least one row.")
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
+    if n_samples > n_points:
+        raise ValueError(
+            f"The number of requested samples ({n_samples}) cannot be larger than the "
+            f"total number of points provided ({n_points})."
+        )
 
     # Sort the points to produce the same result regardless of the input order
     sort_idx = np.lexsort(tuple(points.T))
