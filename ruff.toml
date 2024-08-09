@@ -53,3 +53,6 @@ select=[
 
 [lint.pydocstyle]
 convention = "google"
+
+[lint.isort]
+known-third-party = ["streamlit"]  # needed because of our "streamlit" folder

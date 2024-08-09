@@ -109,3 +109,11 @@ def test_deprecated_transform_interface(searchspace):
         searchspace.discrete.transform(
             data=searchspace.discrete.exp_rep, allow_extra=True
         )
+
+
+def test_deprecated_surrogate_registration():
+    """Using the deprecated registration mechanism raises a warning."""
+    from baybe.surrogates import register_custom_architecture
+
+    with pytest.raises(DeprecationError):
+        register_custom_architecture()
