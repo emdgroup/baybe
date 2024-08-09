@@ -202,7 +202,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
                 "The surrogate must be trained before a posterior can be computed."
             )
         return self._posterior_comp_rep(
-            to_tensor(self._searchspace.transform(candidates))
+            to_tensor(self._searchspace.transform(candidates, allow_extra=True))
         )
 
     def _posterior_comp_rep(self, candidates: Tensor, /) -> Posterior:
