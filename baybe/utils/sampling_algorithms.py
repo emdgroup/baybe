@@ -23,8 +23,8 @@ def farthest_point_sampling(
 
     Args:
         points: The points that are available for selection, represented as a 2-D array
-            of shape (n, k), where n is the number of points and k is the dimensionality
-            of the points.
+            of shape ``(n, k)``, where ``n`` is the number of points and ``k`` is the
+            dimensionality of the points.
         n_samples: The total number of points to be selected.
         initialization: Determines how the first points are selected:
             * ``"farthest"``: The first two selected points are those with the
