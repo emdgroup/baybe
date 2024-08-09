@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 from attrs import define, field
 from attrs.validators import instance_of
 
-from baybe.objective import Objective
+from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -67,9 +67,9 @@ class _ModelContext:
 
         return torch.from_numpy(self.searchspace.comp_rep_bounds.values)
 
-    def get_numerical_indices(self, n_inputs: int) -> list[int]:
+    def get_numerical_indices(self, n_inputs: int) -> tuple[int, ...]:
         """Get the indices of the regular numerical model inputs."""
-        return [i for i in range(n_inputs) if i != self.task_idx]
+        return tuple(i for i in range(n_inputs) if i != self.task_idx)
 
 
 @define
@@ -114,7 +114,7 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    @classmethod
+    @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
@@ -131,14 +131,14 @@ class GaussianProcessSurrogate(Surrogate):
         # See base class.
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        return
+        return None
 
     @staticmethod
     def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
         # See base class.
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        return
+        return None
 
     @staticmethod
     def _get_model_context(

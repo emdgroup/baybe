@@ -21,6 +21,7 @@ from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
     from botorch.models.transforms.input import InputTransform
+    from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
 
 
@@ -60,11 +61,22 @@ class NGBoostSurrogate(GaussianSurrogate):
         # See base class.
 
         # Tree-like models do not require any input scaling
-        return
+        return None
+
+    @staticmethod
+    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
+        # See base class.
+
+        # Tree-like models do not require any output scaling
+        return None
 
     @batchify
     def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
         # See base class.
+
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._model is not None
 
         import torch
 

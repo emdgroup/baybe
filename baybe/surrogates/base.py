@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Protocol, TypeVar
 
 import pandas as pd
 from attrs import define, field
@@ -17,6 +17,7 @@ from cattrs.dispatch import (
     UnstructureHook,
 )
 
+from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -47,6 +48,9 @@ The use of latin-1 ensures there are no loss from the conversion of
 bytes to string and back, since the specification is a bijection between
 0-255 and the character set.
 """
+
+ModelContext = TypeVar("ModelContext", Any, None)
+"""Context information that is provided to the model fitting method."""
 
 
 class _NoTransform(Enum):
@@ -85,7 +89,7 @@ class SurrogateProtocol(Protocol):
 
 
 @define
-class Surrogate(ABC, SurrogateProtocol, SerialMixin):
+class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
     """Abstract base class for all surrogate models."""
 
     # Class variables
@@ -183,6 +187,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             candidates: A dataframe containing parameter configurations in
                 **experimental representation**.
 
+        Raises:
+            ModelNotTrainedError: When called before the model has been trained.
+
         Returns:
             A :class:`botorch.posteriors.Posterior` object representing the posterior
             distribution at the given candidate points, where the posterior is also
@@ -190,6 +197,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             lie in the same domain as the modelled targets/objective on which the
             surrogate was trained via :meth:`baybe.surrogates.base.Surrogate.fit`.
         """
+        if self._searchspace is None:
+            raise ModelNotTrainedError(
+                "The surrogate must be trained before a posterior can be computed."
+            )
         return self._posterior_comp_rep(
             to_tensor(self._searchspace.transform(candidates))
         )
@@ -222,16 +233,17 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         This method is supposed to be overridden by subclasses to implement their
         model-specific surrogate architecture. Internally, the method is called by the
         base class with a **scaled** tensor of candidates in **computational
-        representation**, where the scaling is configurable by the subclass via its
-        other methods. The base class also takes care of transforming the returned
-        posterior back to the original scale according to the defined scalers.
+        representation**, where the scaling is configurable by the subclass by
+        overriding the default scaler factory methods of the base. The base class also
+        takes care of transforming the returned posterior back to the original scale
+        according to the defined scalers.
 
         This means:
         -----------
         Subclasses implementing this method do not have to bother about
         pre-/postprocessing of the in-/output. Instead, they only need to implement the
         mathematical operation of computing the posterior for the given input according
-        to their model specifications and can implicitly that scaling is handled
+        to their model specifications and can implicitly assume that scaling is handled
         appropriately outside. In short: the returned posterior simply needs to be on
         the same scale as the given input.
 
@@ -248,7 +260,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """
 
     @staticmethod
-    def _get_model_context(searchspace: SearchSpace, objective: Objective) -> Any:
+    def _get_model_context(
+        searchspace: SearchSpace, objective: Objective
+    ) -> ModelContext:
         """Get the surrogate-specific context for model fitting.
 
         By default, no context is created. If context is required, subclasses are
@@ -312,7 +326,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
     @abstractmethod
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: Any = None) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor, context: ModelContext) -> None:
         """Perform the actual fitting logic."""
 
 

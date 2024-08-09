@@ -96,16 +96,16 @@ def _default_noise_factory(
 
     # low D priors
     if train_x.shape[-1] < 10:  # <-- different condition compared to EDBO
-        return [GammaPrior(1.05, 0.5), 0.1]
+        return (GammaPrior(1.05, 0.5), 0.1)
 
     # DFT optimized priors
     elif uses_descriptors and train_x.shape[-1] < 100:
-        return [GammaPrior(1.5, 0.1), 5.0]
+        return (GammaPrior(1.5, 0.1), 5.0)
 
     # Mordred optimized priors
     elif uses_descriptors:
-        return [GammaPrior(1.5, 0.1), 5.0]
+        return (GammaPrior(1.5, 0.1), 5.0)
 
     # OHE optimized priors
     else:
-        return [GammaPrior(1.5, 0.1), 5.0]
+        return (GammaPrior(1.5, 0.1), 5.0)
