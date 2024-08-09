@@ -150,13 +150,6 @@ class NumericalTarget(Target, SerialMixin):
             transformed = pd.DataFrame(
                 func(data, *self.bounds.to_tuple()), index=data.index
             )
-
-        # Otherwise, simply negate all target values for ``MIN`` mode.
-        # For ``MAX`` mode, nothing needs to be done.
-        # For ``MATCH`` mode, the validators avoid a situation without specified bounds.
-        elif self.mode is TargetMode.MIN:
-            transformed = -data
-
         else:
             transformed = data.copy()
 

@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a `context` object passed to `Surrogate._fit`
 - Fallback models created by `catch_constant_targets` are stored outside the surrogate
 - `to_tensor` now also handles `numpy` arrays
+- `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
+  instead of negating the computational representation
 
 ### Removed
 - `register_custom_architecture` decorator
