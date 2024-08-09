@@ -163,11 +163,10 @@ def stop_on_PI(
             f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
             f"accepted."
         )
-    train_x = searchspace.transform(measurements, allow_extra=True)
-    train_y = objective.transform(measurements)
     acqf = ProbabilityOfImprovement()
-
-    botorch_acqf = acqf.to_botorch(self.surrogate_model, searchspace, train_x, train_y)
+    botorch_acqf = acqf.to_botorch(
+        self.surrogate_model, searchspace, objective, measurements
+    )
     _, candidates_comp_rep = searchspace.discrete.get_candidates(
         allow_repeated_recommendations=self.allow_repeated_recommendations,
         allow_recommending_already_measured=self.allow_recommending_already_measured,
