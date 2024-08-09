@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Breaking Changes
+- The public methods of `Surrogate` models now operate on dataframes in experimental
+  representation instead of tensors in computational representation
+- `Surrogate.posterior` models now returns a `Posterior` object
+- `param_bounds_comp` of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` has
+  been replaced with `comp_rep_bounds`, which returns a dataframe
+
+### Added
+- `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
+- `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
+  and `SubspaceContinuous` classes
+- New mechanisms for surrogate input/output scaling configurable per class
+- `SurrogateProtocol` as an interface for user-defined surrogate architectures
+
+### Changed
+- The transition from experimental to computational representation no longer happens
+  in the recommender but in the surrogate
+- Context information required by `Surrogate` models is now cleanly encapsulated into
+  a `context` object passed to `Surrogate._fit`
+- Fallback models created by `catch_constant_targets` are stored outside the surrogate
+- `to_tensor` now also handles `numpy` arrays
+
+### Removed
+- `register_custom_architecture` decorator
+- `Scalar` and `DefaultScaler` classes
+
+### Deprecations
+- The role of `register_custom_architecture` has been taken over by
+  `baybe.surrogates.base.SurrogateProtocol`
+
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes
 - Providing an explicit `batch_size` is now mandatory when asking for recommendations

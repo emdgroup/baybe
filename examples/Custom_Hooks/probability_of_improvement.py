@@ -82,10 +82,10 @@ def extract_pi(
             f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
             f"accepted."
         )
-    train_x = searchspace.transform(measurements, allow_extra=True)
-    train_y = objective.transform(measurements)
     acqf = ProbabilityOfImprovement()
-    botorch_acqf = acqf.to_botorch(self.surrogate_model, searchspace, train_x, train_y)
+    botorch_acqf = acqf.to_botorch(
+        self.surrogate_model, searchspace, objective, measurements
+    )
     comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
     with torch.no_grad():
         pi = botorch_acqf(comp_rep_tensor)

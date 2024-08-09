@@ -55,10 +55,6 @@ class Parameter(ABC, SerialMixin):
             ``True`` if the item is within the parameter range, ``False`` otherwise.
         """
 
-    @abstractmethod
-    def summary(self) -> dict:
-        """Return a custom summarization of the parameter."""
-
     def __str__(self) -> str:
         return str(self.summary())
 
@@ -72,11 +68,20 @@ class Parameter(ABC, SerialMixin):
         """Boolean indicating if this is a discrete parameter."""
         return isinstance(self, DiscreteParameter)
 
+    @property
+    @abstractmethod
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+
     def to_searchspace(self) -> SearchSpace:
         """Create a one-dimensional search space from the parameter."""
         from baybe.searchspace.core import SearchSpace
 
         return SearchSpace.from_parameter(self)
+
+    @abstractmethod
+    def summary(self) -> dict:
+        """Return a custom summarization of the parameter."""
 
 
 @define(frozen=True, slots=False)
@@ -97,7 +102,13 @@ class DiscreteParameter(Parameter, ABC):
     @cached_property
     @abstractmethod
     def comp_df(self) -> pd.DataFrame:
+        # TODO: Should be renamed to `comp_rep`
         """Return the computational representation of the parameter."""
+
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
+        # See base class.
+        return tuple(self.comp_df.columns)
 
     def to_subspace(self) -> SubspaceDiscrete:
         """Create a one-dimensional search space from the parameter."""

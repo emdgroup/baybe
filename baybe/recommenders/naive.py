@@ -122,7 +122,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # Get discrete candidates. The metadata flags are ignored since the search space
         # is hybrid
         # TODO Slight BOILERPLATE CODE, see recommender.py, ll. 47+
-        _, candidates_comp = searchspace.discrete.get_candidates(
+        candidates_exp, _ = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
         )
@@ -147,7 +147,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # Call the private function of the discrete recommender and get the indices
         disc_rec_idx = self.disc_recommender._recommend_discrete(
             subspace_discrete=searchspace.discrete,
-            candidates_comp=candidates_comp,
+            candidates_exp=candidates_exp,
             batch_size=batch_size,
         )
 
