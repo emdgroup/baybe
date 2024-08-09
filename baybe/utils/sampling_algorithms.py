@@ -1,5 +1,6 @@
 """A collection of point sampling algorithms."""
 
+import warnings
 from enum import Enum
 from typing import Literal
 
@@ -13,51 +14,78 @@ def farthest_point_sampling(
     n_samples: int = 1,
     initialization: Literal["farthest", "random"] = "farthest",
 ) -> list[int]:
-    """Sample points according to a farthest point heuristic.
+    """Select a subset of points using farthest point sampling.
 
-    Creates a subset of a collection of points by successively adding points with the
-    largest Euclidean distance to intermediate point selections encountered during
-    the algorithmic process.
+    Creates a subset of a given collection of points by successively adding points with
+    the largest Euclidean distance to intermediate point selections encountered during
+    the algorithmic process. The mechanism used for the initial point selection is
+    configurable.
 
     Args:
-        points: The points that are available for selection, represented as a 2D array
-            whose first dimension corresponds to the point index.
+        points: The points that are available for selection, represented as a 2-D array
+            of shape ``(n, k)``, where ``n`` is the number of points and ``k`` is the
+            dimensionality of the points.
         n_samples: The total number of points to be selected.
-        initialization: Determines how the first points are selected. When
-            ``"farthest"`` is chosen, the first two selected points are those with the
-            largest distance. If only a single point is requested, it is selected
-            randomly from these two. When ``"random"`` is chosen, the first point is
-            selected uniformly at random.
+        initialization: Determines how the first points are selected:
+            * ``"farthest"``: The first two selected points are those with the
+              largest distance. If only a single point is requested, a deterministic
+              choice is made based on the point coordinates.
+            * ``"random"``: The first point is selected uniformly at random.
 
     Returns:
         A list containing the positional indices of the selected points.
 
     Raises:
-        ValueError: If an unknown initialization recommender is used.
+        ValueError: If the provided array is not two-dimensional.
+        ValueError: If the array contains no points.
+        ValueError: If the input space has no dimensions.
+        ValueError: If an unknown method for initialization is specified.
     """
-    # Compute the pairwise distances between all points
+    if (n_dims := np.ndim(points)) != 2:
+        raise ValueError(
+            f"The provided array must be two-dimensional but the given input had "
+            f"{n_dims} dimensions."
+        )
+    if (n_points := len(points)) == 0:
+        raise ValueError("The provided array must contain at least one row.")
+    if points.shape[-1] == 0:
+        raise ValueError("The provided input space must be at least one-dimensional.")
+    if n_samples > n_points:
+        raise ValueError(
+            f"The number of requested samples ({n_samples}) cannot be larger than the "
+            f"total number of points provided ({n_points})."
+        )
+
+    # Catch the pathological case upfront
+    if len(np.unique(points, axis=0)) == 1:
+        warnings.warn("All points are identical.", UserWarning)
+        return list(range(n_samples))
+
+    # Sort the points to produce the same result regardless of the input order
+    sort_idx = np.lexsort(tuple(points.T))
+    points = points[sort_idx]
+
+    # Pre-compute the pairwise distances between all points
     dist_matrix = pairwise_distances(points)
 
-    # Initialize the point selection subset
+    # Avoid wrong behavior situations where all (remaining) points are duplicates
+    np.fill_diagonal(dist_matrix, -np.inf)
+
+    # Initialize the point selection
     if initialization == "random":
-        selected_point_indices = [np.random.randint(0, len(points))]
+        selected_point_indices = [np.random.randint(0, n_points)]
     elif initialization == "farthest":
         idx_1d = np.argmax(dist_matrix)
         selected_point_indices = list(
             map(int, np.unravel_index(idx_1d, dist_matrix.shape))
         )
         if n_samples == 1:
-            return np.random.choice(selected_point_indices, 1).tolist()
-        elif n_samples < 1:
-            raise ValueError(
-                f"Farthest point sampling must be done with >= 1 samples, but "
-                f"{n_samples=} was given."
-            )
+            return [sort_idx[selected_point_indices[0]]]
     else:
         raise ValueError(f"unknown initialization recommender: '{initialization}'")
 
     # Initialize the list of remaining points
-    remaining_point_indices = list(range(len(points)))
+    remaining_point_indices = list(range(n_points))
     for idx in selected_point_indices:
         remaining_point_indices.remove(idx)
 
@@ -76,7 +104,8 @@ def farthest_point_sampling(
         selected_point_indices.append(selected_point_index)
         remaining_point_indices.remove(selected_point_index)
 
-    return selected_point_indices
+    # Undo the initial point reordering
+    return sort_idx[selected_point_indices].tolist()
 
 
 class DiscreteSamplingMethod(Enum):
