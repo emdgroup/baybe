@@ -120,7 +120,7 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._C"),
     (r"py:class", "baybe.utils.basic._T"),
     (r"py:class", "baybe.utils.basic._U"),
-    (r"ref:obj", "baybe.surrogates.base._ModelContext"),
+    (r"ref:obj", "baybe.surrogates.base.ModelContext"),
     # Ignore custom class properties
     (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
 ]

@@ -49,7 +49,7 @@ bytes to string and back, since the specification is a bijection between
 0-255 and the character set.
 """
 
-_ModelContext = TypeVar("_ModelContext", Any, None)
+ModelContext = TypeVar("ModelContext", Any, None)
 """Context information that is provided to the model fitting method."""
 
 
@@ -89,7 +89,7 @@ class SurrogateProtocol(Protocol):
 
 
 @define
-class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[_ModelContext]):
+class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
     """Abstract base class for all surrogate models."""
 
     # Class variables
@@ -262,7 +262,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[_ModelContext]):
     @staticmethod
     def _get_model_context(
         searchspace: SearchSpace, objective: Objective
-    ) -> _ModelContext:
+    ) -> ModelContext:
         """Get the surrogate-specific context for model fitting.
 
         By default, no context is created. If context is required, subclasses are
@@ -326,7 +326,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[_ModelContext]):
         self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
 
     @abstractmethod
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: _ModelContext) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor, context: ModelContext) -> None:
         """Perform the actual fitting logic."""
 
 
