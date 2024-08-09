@@ -1,5 +1,6 @@
 """A collection of point sampling algorithms."""
 
+import warnings
 from enum import Enum
 from typing import Literal
 
@@ -55,6 +56,11 @@ def farthest_point_sampling(
             f"total number of points provided ({n_points})."
         )
 
+    # Catch the pathological case upfront
+    if len(np.unique(points, axis=0)) == 1:
+        warnings.warn("All points are identical.", UserWarning)
+        return list(range(n_samples))
+
     # Sort the points to produce the same result regardless of the input order
     sort_idx = np.lexsort(tuple(points.T))
     points = points[sort_idx]
@@ -62,7 +68,7 @@ def farthest_point_sampling(
     # Pre-compute the pairwise distances between all points
     dist_matrix = pairwise_distances(points)
 
-    # Avoid wrong behavior pathological situation where all points are duplicates
+    # Avoid wrong behavior situations where all (remaining) points are duplicates
     np.fill_diagonal(dist_matrix, -np.inf)
 
     # Initialize the point selection
