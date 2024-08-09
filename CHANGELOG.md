@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Breaking Changes
-- `Surrogate` models now operate on dataframes in experimental representation instead of
-  tensors in computational representation
+- The public methods of `Surrogate` models now operate on dataframes in experimental
+  representation instead of tensors in computational representation
 - `Surrogate.posterior` models now returns a `Posterior` object
 - `param_bounds_comp` of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` has
   been replaced with `comp_rep_bounds`, which returns a dataframe
@@ -16,15 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
 - `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
   and `SubspaceContinuous` classes
-- Reworked mechanisms for surrogate input/output scaling configurable per class
+- New mechanisms for surrogate input/output scaling configurable per class
 - `SurrogateProtocol` as an interface for user-defined surrogate architectures
 
 ### Changed
+- The transition from experimental to computational representation no longer happens
+  in the recommender but in the surrogate
 - Context information required by `Surrogate` models is now cleanly encapsulated into
   a `context` object passed to `Surrogate._fit`
-- Fallback models created by `catch_constant_targets` are stored outside of surrogate
+- Fallback models created by `catch_constant_targets` are stored outside the surrogate
 - `to_tensor` now also handles `numpy` arrays
-- `GaussianProcessSurrogate` no longer uses a separate scaling approach
 
 ### Removed
 - `register_custom_architecture` decorator
