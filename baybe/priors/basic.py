@@ -2,6 +2,7 @@
 
 from typing import Any
 
+import numpy as np
 from attrs import define, field
 from attrs.validators import gt
 
@@ -85,3 +86,33 @@ class SmoothedBoxPrior(Prior):
                 f"For {self.__class__.__name__}, the upper bound `b` (provided: {b}) "
                 f"must be larger than the lower bound `a` (provided: {self.a})."
             )
+
+
+@define(frozen=True)
+class BetaPrior(Prior):
+    """A beta prior parameterized by alpha and beta."""
+
+    alpha: float = field(converter=float)
+    """Alpha of the beta distribution."""
+
+    beta: float = field(converter=float)
+    """Beta of the beta distribution."""
+
+    @alpha.validator
+    @beta.validator
+    def _validate_parameter(self, attributte, value) -> None:
+        if value <= 0.0:
+            raise ValueError(
+                f"The value of '{attributte.name} must be strictly positive.'"
+            )
+
+    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+        raise NotImplementedError(
+            f"The '{self.__class__.__name__}' does not have an analog in gpytorch"
+        )
+
+    def to_torch(self) -> np.ndarray:
+        """Return alpha and beta as a torch tensor."""
+        import torch
+
+        return torch.tensor([self.alpha, self.beta]).reshape(-1, 1)

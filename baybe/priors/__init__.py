@@ -5,6 +5,7 @@ arguments see https://docs.gpytorch.ai/en/stable/priors.html.
 """
 
 from baybe.priors.basic import (
+    BetaPrior,
     GammaPrior,
     HalfCauchyPrior,
     HalfNormalPrior,
@@ -20,4 +21,5 @@ __all__ = [
     "LogNormalPrior",
     "NormalPrior",
     "SmoothedBoxPrior",
+    "BetaPrior",
 ]
