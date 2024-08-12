@@ -3,6 +3,7 @@
 import hypothesis.strategies as st
 
 from baybe.priors import (
+    BetaPrior,
     GammaPrior,
     HalfCauchyPrior,
     HalfNormalPrior,
@@ -47,6 +48,13 @@ log_normal_priors = st.builds(
 )
 """A strategy that generates Log-Normal priors."""
 
+beta_priors = st.builds(
+    BetaPrior,
+    st.floats(min_value=0.0, exclude_min=True),
+    st.floats(min_value=0.0, exclude_min=True),
+)
+"""A strategy that generates Beta priors"""
+
 
 @st.composite
 def _smoothed_box_priors(draw: st.DrawFn):
@@ -69,6 +77,7 @@ priors = st.one_of(
         log_normal_priors,
         normal_priors,
         smoothed_box_priors,
+        beta_priors,
     ]
 )
 """A strategy that generates priors."""

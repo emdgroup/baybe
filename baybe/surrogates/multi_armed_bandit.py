@@ -62,9 +62,9 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         from torch.distributions import Beta
 
         beta_params_for_candidates = self._posterior_beta_parameters[
-            candidates.argmax(-1).squeeze()
+            candidates.argmax(-1)
         ]
-        return TorchPosterior(Beta(*beta_params_for_candidates.split(1, 1)))
+        return TorchPosterior(Beta(*beta_params_for_candidates.split(1, -1)))
 
     def _fit(self, train_x: Tensor, train_y: Tensor, _: Any = None) -> None:
         # See base class.
@@ -97,30 +97,11 @@ class CustomMCSampler(MCSampler):
 
     def forward(self, posterior: TorchPosterior) -> Tensor:
         """Sample the posterior."""
-        return posterior.rsample(self.sample_shape).unsqueeze(-1)
-        # import scipy.stats
-        # import torch
-
-        # sobol_engine = torch.quasirandom.SobolEngine(dimension=1, scramble=True)
-        # sobol_samples = sobol_engine.draw(self.sample_shape.numel()).view(
-        #     self.sample_shape
-        # )
-        # beta_samples_sobol = (
-        #     torch.tensor(
-        #         scipy.stats.beta.ppf(
-        #             sobol_samples.numpy(),
-        #             a=posterior.distribution.concentration0,
-        #             b=posterior.distribution.concentration1,
-        #         )
-        #     )
-        #     .permute(1, 0)
-        #     .unsqueeze(-1)
-        #     .unsqueeze(-1)
-        # )
-        # return beta_samples_sobol
+        samples = posterior.rsample(self.sample_shape)
+        return samples
 
 
 @GetSampler.register(Beta)
-def get_custom_sampler(posterior, sample_shape):
+def get_custom_sampler(_, sample_shape):
     """Get the sampler for the beta posterior."""
     return CustomMCSampler(sample_shape=sample_shape)

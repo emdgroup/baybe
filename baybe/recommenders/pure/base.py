@@ -182,6 +182,18 @@ class PureRecommender(ABC, RecommenderProtocol):
             or self.allow_recommending_already_measured,
         )
 
+        if self.allow_repeated_recommendations and (
+            (n_missing_to_batch_size := batch_size - len(candidates_exp)) > 0
+        ):
+            candidates_exp = pd.concat(
+                (
+                    candidates_exp,
+                    candidates_exp.sample(
+                        n_missing_to_batch_size, replace=True, axis=0
+                    ),
+                ),
+            )
+
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
         if (not is_hybrid_space) and (len(candidates_exp) < batch_size):

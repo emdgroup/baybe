@@ -59,6 +59,7 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
+from baybe.targets.binary import BinaryTarget
 from baybe.telemetry import (
     VARNAME_TELEMETRY_ENABLED,
     VARNAME_TELEMETRY_HOSTNAME,
@@ -382,6 +383,7 @@ def fixture_targets(target_names: list[str]):
             bounds=(0, 100),
             transformation="TRIANGULAR",
         ),
+        BinaryTarget(name="Target_binary"),
     ]
     return [t for t in valid_targets if t.name in target_names]
 
@@ -625,20 +627,43 @@ def fixture_default_surrogate_model(request, kernel):
     return GaussianProcessSurrogate(kernel_or_factory=kernel)
 
 
+@pytest.fixture(name="allow_repeated_recommendations")
+def fixture_allow_repeated_recommendations():
+    return False
+
+
+@pytest.fixture(name="allow_recommending_already_measured")
+def allow_recommending_already_measured():
+    return False
+
+
 @pytest.fixture(name="initial_recommender")
-def fixture_initial_recommender():
+def fixture_initial_recommender(
+    allow_recommending_already_measured, allow_repeated_recommendations
+):
     """The default initial recommender to be used if not specified differently."""
-    return RandomRecommender()
+    return RandomRecommender(
+        allow_repeated_recommendations=allow_repeated_recommendations,
+        allow_recommending_already_measured=allow_recommending_already_measured,
+    )
 
 
 @pytest.fixture(name="recommender")
-def fixture_recommender(initial_recommender, surrogate_model, acqf):
+def fixture_recommender(
+    initial_recommender,
+    surrogate_model,
+    acqf,
+    allow_repeated_recommendations,
+    allow_recommending_already_measured,
+):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
+            allow_repeated_recommendations=allow_repeated_recommendations,
+            allow_recommending_already_measured=allow_recommending_already_measured,
         ),
     )
 

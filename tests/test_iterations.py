@@ -4,7 +4,7 @@
 import pytest
 from pytest import param
 
-from baybe.acquisition import qKG, qNIPV
+from baybe.acquisition import qEI, qKG, qNIPV, qPI, qSR
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import UnusedObjectWarning
 from baybe.kernels.base import Kernel
@@ -43,6 +43,7 @@ from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
+from baybe.surrogates.multi_armed_bandit import BernoulliMultiArmedBanditSurrogate
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations
@@ -53,7 +54,10 @@ from .conftest import run_iterations
 valid_surrogate_models = [
     cls()
     for cls in get_subclasses(Surrogate)
-    if not issubclass(cls, CustomONNXSurrogate)
+    if (
+        not issubclass(cls, CustomONNXSurrogate)
+        and not issubclass(cls, BernoulliMultiArmedBanditSurrogate)
+    )
 ]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
@@ -292,3 +296,33 @@ def test_recommenders_hybrid(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("recommender", valid_meta_recommenders, indirect=True)
 def test_meta_recommenders(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
+
+
+@pytest.mark.parametrize(
+    "acqf",
+    [
+        qEI(),
+        qPI(),
+        qSR(),
+    ],
+)
+@pytest.mark.parametrize("surrogate_model", [BernoulliMultiArmedBanditSurrogate()])
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        ["Categorical_1"],
+        ["Switch_1"],
+        ["Switch_2"],
+        ["Frame_A"],
+        ["Frame_B"],
+    ],
+)
+@pytest.mark.parametrize(
+    "batch_size",
+    [1, 2, 5],
+)
+@pytest.mark.parametrize("target_names", [["Target_binary"]])
+@pytest.mark.parametrize("allow_repeated_recommendations", [True])
+@pytest.mark.parametrize("allow_recommending_already_measured", [True])
+def test_multi_arm_bandit(campaign, n_iterations, batch_size):
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
