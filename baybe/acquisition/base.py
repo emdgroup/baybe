@@ -78,8 +78,6 @@ class AcquisitionFunction(ABC, SerialMixin):
         additional_params = {}
         if "model" in signature_params:
             additional_params["model"] = surrogate.to_botorch()
-        if "best_f" in signature_params:
-            additional_params["best_f"] = train_y.max().item()
         if "X_baseline" in signature_params:
             additional_params["X_baseline"] = to_tensor(train_x)
         if "mc_points" in signature_params:
@@ -87,9 +85,12 @@ class AcquisitionFunction(ABC, SerialMixin):
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
             )
 
-        # Add acquisition objective
+        # Add acquisition objective / best observed value
         match objective:
             case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
+                if "best_f" in signature_params:
+                    additional_params["best_f"] = train_y.min().item()
+
                 if issubclass(acqf_cls, bacqf.AnalyticAcquisitionFunction):
                     additional_params["maximize"] = False
                 elif issubclass(acqf_cls, bacqf.MCAcquisitionFunction):
@@ -101,7 +102,8 @@ class AcquisitionFunction(ABC, SerialMixin):
                         f"Unsupported acquisition function type: {acqf_cls}."
                     )
             case SingleTargetObjective() | DesirabilityObjective():
-                pass
+                if "best_f" in signature_params:
+                    additional_params["best_f"] = train_y.max().item()
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
 
