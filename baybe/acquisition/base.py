@@ -57,7 +57,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         The required structure of `measurements` is specified in
         :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
         """
-        import botorch.acquisition as bacqf
+        import botorch.acquisition as bo_acqf
         import torch
         from botorch.acquisition.objective import LinearMCObjective
 
@@ -66,7 +66,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         train_y = objective.transform(measurements)
 
         # Retrieve corresponding botorch class
-        acqf_cls = getattr(bacqf, self.__class__.__name__)
+        acqf_cls = getattr(bo_acqf, self.__class__.__name__)
 
         # Match relevant attributes
         params_dict = match_attributes(
@@ -91,9 +91,9 @@ class AcquisitionFunction(ABC, SerialMixin):
                 if "best_f" in signature_params:
                     additional_params["best_f"] = train_y.min().item()
 
-                if issubclass(acqf_cls, bacqf.AnalyticAcquisitionFunction):
+                if issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
                     additional_params["maximize"] = False
-                elif issubclass(acqf_cls, bacqf.MCAcquisitionFunction):
+                elif issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
                     additional_params["objective"] = LinearMCObjective(
                         torch.tensor([-1.0])
                     )
