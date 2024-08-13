@@ -144,7 +144,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
         return Standardize
 
     def _make_input_scaler(self, searchspace: SearchSpace) -> ColumnTransformer:
-        """Make the input scaler for transforming computational dataframes."""
+        """Make and fit the input scaler for transforming computational dataframes."""
         # Create a composite scaler from parameter-wise scaler objects
         mapping: dict[tuple[int, ...], InputTransform] = {}
         for p in searchspace.parameters:
@@ -163,7 +163,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
     def _make_output_scaler(
         self, objective: Objective, measurements: pd.DataFrame
     ) -> OutcomeTransform | _NoTransform:
-        """Make the output scaler for transforming computational dataframes."""
+        """Make and fit the output scaler for transforming computational dataframes."""
         if (factory := self._make_target_scaler_factory()) is None:
             return _IDENTITY_TRANSFORM
 
