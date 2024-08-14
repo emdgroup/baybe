@@ -276,3 +276,25 @@ class qUpperConfidenceBound(AcquisitionFunction):
     mean only, resulting in pure exploitation. Higher values shift the focus more and
     more toward exploration.
     """
+
+
+@define(frozen=True)
+class ThompsonSampling(qSimpleRegret):
+    """Thomson Sampling implemented by using simple regret with a batch size of one.
+
+    For continous spaces this acquisition function is not optimizing on one posterior
+    sample. Each gradinet step is calculated on a new posterior sample.
+    """
+
+    import torch
+
+    _default_sample_shape = torch.Size([1])
+    """Number of MC samples drawn from the posterior at each design point. Only the
+    maximum from those is samples is taking for the acqusition function. The higher
+    the sample size the more exploitation is taking place.
+    """
+
+    @classproperty
+    def is_mc(cls) -> bool:
+        """Flag indicating whether this is a Monte-Carlo acquisition function."""
+        return True

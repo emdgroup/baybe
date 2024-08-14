@@ -29,8 +29,9 @@ build
 .mypy_cache
 htmlcov
 
-# Pictures created by backtesting
+# Pictures and animations
 *.png
+*.gif
 
 # Folders that are temporarily created when building the documentation
 docs/_autosummary

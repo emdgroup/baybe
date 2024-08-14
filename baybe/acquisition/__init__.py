@@ -16,6 +16,7 @@ from baybe.acquisition.acqfs import (
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
+    ThompsonSampling,
 )
 
 PM = PosteriorMean
@@ -79,4 +80,6 @@ __all__ = [
     # Upper Confidence Bound
     "UCB",
     "qUCB",
+    # Thompson Sampling
+    "ThompsonSampling",
 ]

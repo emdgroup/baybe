@@ -66,7 +66,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         train_y = objective.transform(measurements)
 
         # Retrieve corresponding botorch class
-        acqf_cls = getattr(bo_acqf, self.__class__.__name__)
+        acqf_cls = _get_botorch_acqf_class(self)
 
         # Match relevant attributes
         params_dict = match_attributes(
@@ -108,7 +108,20 @@ class AcquisitionFunction(ABC, SerialMixin):
                 raise ValueError(f"Unsupported objective type: {objective}")
 
         params_dict.update(additional_params)
-        return acqf_cls(**params_dict)
+
+        acqf = acqf_cls(**params_dict)
+        if hasattr(self, "_default_sample_shape"):
+            acqf._default_sample_shape = self._default_sample_shape
+
+        return acqf
+
+
+def _get_botorch_acqf_class(baybe_acqf: AcquisitionFunction):
+    import botorch.acquisition as botorch_acqf_module
+
+    for cls in baybe_acqf.__class__.mro():
+        if acqf_cls := getattr(botorch_acqf_module, cls.__name__, False):
+            return acqf_cls
 
 
 # Register de-/serialization hooks
