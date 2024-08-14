@@ -46,7 +46,7 @@ parser.add_argument(
 # Parse input arguments
 args = parser.parse_args()
 RUN_EXAMPLES = args.run_examples
-LINKCHECK = not args.dont_linkcheck
+LINKCHECK = not args.no_linkcheck
 FULL_REBUILD = args.full_rebuild
 INCLUDE_WARNINGS = args.include_warnings
 FORCE = args.force
