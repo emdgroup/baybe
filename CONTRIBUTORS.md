@@ -24,3 +24,5 @@
   Human readable output for search spaces
 - Di Jin (Merck Life Science KGaA, Darmstadt, Germany):\
   Cardinality constraints
+- Julian Streibel (Merck Life Science KGaA, Darmstadt, Germany)
+  Multi-Armed Bandit and Thompson sampling
