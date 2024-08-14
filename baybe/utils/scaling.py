@@ -25,7 +25,7 @@ class ColumnTransformer:
 
     @mapping.validator
     def _validate_mapping_types_lazily(self, attr, value):
-        """Perform transform isinstance check using lazy import."""
+        """Perform transform ``isinstance`` check using lazy import."""
         from botorch.models.transforms.input import InputTransform
 
         validator = deep_mapping(
