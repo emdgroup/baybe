@@ -289,4 +289,7 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     """Skip the docstring for the is_mc classproperty."""
-    return name == "is_mc"
+    # Note that we cannot do `return name == "is_mc"` since this messes up other members
+    # that need to be skipped.
+    if name == "is_mc":
+        return True
