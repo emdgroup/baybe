@@ -20,7 +20,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-l",
-    "--dont_linkcheck",
+    "--no_linkcheck",
     help="Do not check the links.",
     action="store_true",
 )
