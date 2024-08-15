@@ -1,5 +1,7 @@
 """Binary target."""
 
+from typing import TypeAlias
+
 import pandas as pd
 from attrs import define, field
 
@@ -7,15 +9,18 @@ from baybe.exceptions import UnknownTargetError
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
 
+ChoiceValue: TypeAlias = bool | int | float | str
+"""Types of values that a :class:`BinaryTarget` can take."""
+
 
 @define(frozen=True)
 class BinaryTarget(Target, SerialMixin):
     """Class for bernoulli targets."""
 
-    positive_value = field(default=1)
+    positive_value: ChoiceValue = field(default=1)
     """Experimental representation of the positive target"""
 
-    negative_value = field(default=0)
+    negative_value: ChoiceValue = field(default=0)
     """Experimental representation of the negative target"""
 
     # TODO: add optimization direction
