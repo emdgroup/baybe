@@ -13,8 +13,8 @@ from typing import (
 import numpy as np
 import pandas as pd
 
-from baybe.targets.binary import BinaryTarget
 from baybe.targets.base import Target
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy
 

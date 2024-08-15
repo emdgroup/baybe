@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from typing import Union
 
 from attrs import define
 from scipy.stats import rv_continuous, rv_discrete
@@ -9,7 +8,7 @@ from scipy.stats import rv_continuous, rv_discrete
 class MultiArmedBanditModel:
     """Representation of a multi armed bandit."""
 
-    real_distributions: list[Union[rv_discrete, rv_continuous]]
+    real_distributions: list[rv_discrete | rv_continuous]
     """List of the reward distribution per arm."""
 
     def sample(self, arm_idxs: Iterable[int]):

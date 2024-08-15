@@ -6,6 +6,7 @@ from baybe.acquisition.acqfs import (
     PosteriorMean,
     PosteriorStandardDeviation,
     ProbabilityOfImprovement,
+    ThompsonSampling,
     UpperConfidenceBound,
     qExpectedImprovement,
     qKnowledgeGradient,
@@ -16,7 +17,6 @@ from baybe.acquisition.acqfs import (
     qProbabilityOfImprovement,
     qSimpleRegret,
     qUpperConfidenceBound,
-    ThompsonSampling,
 )
 
 PM = PosteriorMean

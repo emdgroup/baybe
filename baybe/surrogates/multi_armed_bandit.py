@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
 from botorch.sampling.base import MCSampler
@@ -33,7 +33,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     prior: BetaPrior = field(default=BetaPrior(1, 1))
     """Beta prior parameters. By default, configured to produce a uniform prior."""
 
-    _win_lose_counts: Optional[Tensor] = field(init=False, default=None, eq=False)
+    _win_lose_counts: Tensor | None = field(init=False, default=None, eq=False)
     """Sufficient statistics of the likelihood model."""
 
     @property
