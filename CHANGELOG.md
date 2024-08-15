@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `py.typed` file to enable the use of type checkers on the user side
+- `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
+  in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
+- Attribute `n_threshold_inactive_parameters_generator` added to `BotorchRecommender`
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
