@@ -191,7 +191,7 @@ def add_fake_results(
     for target in targets:
         if isinstance(target, BinaryTarget):
             data[target.name] = np.random.choice(
-                [target.negative_target, target.positive_target]
+                [target.negative_value, target.positive_value]
             )
             continue
         # Add bad values
