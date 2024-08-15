@@ -244,7 +244,7 @@ class BotorchRecommender(BayesianRecommender):
 
         # Below we start recommendation
         if (
-            subspace_continuous.n_combinatorial_inactive_parameters
+            subspace_continuous.n_inactive_parameter_combinations
             > self.n_threshold_inactive_parameters_generator
         ):
             # When the combinatorial list is too large, randomly set some parameters
@@ -261,17 +261,9 @@ class BotorchRecommender(BayesianRecommender):
             # list of all possible inactive parameters.
             for (
                 inactive_params_generator
-            ) in subspace_continuous.combinatorial_inactive_parameters:
-                # Flatten inactive parameter generator
-                inactive_params_sample = tuple(
-                    {
-                        param
-                        for sublist in inactive_params_generator
-                        for param in sublist
-                    }
-                )
+            ) in subspace_continuous.inactive_parameter_combinations():
                 append_recommendation_for_inactive_parameters_setting(
-                    inactive_params_sample
+                    inactive_params_generator
                 )
 
         # Find the best option

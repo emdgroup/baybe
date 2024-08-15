@@ -113,35 +113,21 @@ class SubspaceContinuous(SerialMixin):
         )
 
     @property
-    def n_combinatorial_inactive_parameters(self) -> int:
-        """Counts of elements in the combinatorial list of inactive parameters."""
-        # Note that both continuous subspace and continuous cardinality constraint
-        # have this property. Both differs in that the former one refers to the
-        # parameters in the subspace while the latter one refers only to the
-        # constraint parameters.
-        if not self.constraints_cardinality:
-            return 0
+    def n_inactive_parameter_combinations(self) -> int:
+        """The number of possible inactive parameter combinations."""
+        return math.prod(
+            c.n_inactive_parameter_combinations for c in self.constraints_cardinality
+        )
 
-        n_combinatorial_inactive_params = [
-            con.n_inactive_parameter_combinations
-            for con in self.constraints_cardinality
-        ]
-        return math.prod(n_combinatorial_inactive_params)
-
-    @property
-    def combinatorial_inactive_parameters(
-        self,
-    ) -> Iterable[tuple[tuple[str, ...], ...]]:
-        """Combinatorial list of inactive parameters on subspace."""
-        # The comments on the difference in `n_combinatorial_inactive_parameters`
-        # applies here as well.
-
-        return product(
+    def inactive_parameter_combinations(self) -> Iterable[frozenset[str]]:
+        """Iterate over all possible combinations of inactive parameters."""
+        for combination in product(
             *[
                 con.inactive_parameter_combinations()
                 for con in self.constraints_cardinality
             ]
-        )
+        ):
+            yield frozenset(chain(*combination))
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
