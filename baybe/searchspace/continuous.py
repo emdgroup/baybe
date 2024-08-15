@@ -38,7 +38,6 @@ if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
 
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
-ZERO_THRESHOLD = 1e-5
 
 
 @define
@@ -273,6 +272,7 @@ class SubspaceContinuous(SerialMixin):
     @property
     def param_names_in_cardinality_constraint(self) -> tuple[str, ...]:
         """Return list of parameter names involved in cardinality constraints."""
+        # TODO: Is this property really needed? If so, apply naming conventions.
         params_per_cardinatliy_constraint = [
             c.parameters for c in self.constraints_cardinality
         ]
@@ -307,7 +307,7 @@ class SubspaceContinuous(SerialMixin):
     def _ensure_nonzero_parameters(
         self,
         inactive_parameters: Collection[str],
-        zero_threshold: float = ZERO_THRESHOLD,
+        inactivity_threshold: float = 1e-5,
     ) -> SubspaceContinuous:
         """Create a new subspace with following several actions.
 
@@ -316,47 +316,57 @@ class SubspaceContinuous(SerialMixin):
 
         Args:
             inactive_parameters: A list of inactive parameters.
-            zero_threshold: Threshold for checking whether a value is zero.
+            inactivity_threshold: Threshold for checking whether a value is zero.
 
         Returns:
             A new subspace object.
         """
+        # TODO: Revise function name/docstring and arguments. In particular: why
+        #   does the function expect the inactive parameters instead of the active ones?
+
+        # TODO: Shouldn't the x != 0 constraints be applied on the level of the
+        #   individual constrains, also taking into account whether min_cardinality > 0?
+
+        # TODO: Instead of adding additional constraints, why not alter the parameter
+        #   bounds? In case we keep the constraints: is the sign of the threshold
+        #   correct?
+
         # Active parameters: parameters involved in cardinality constraints
-        active_params_sample = set(
+        active_parameter_names = set(
             self.param_names_in_cardinality_constraint
         ).difference(set(inactive_parameters))
 
         constraints_lin_ineq = list(self.constraints_lin_ineq)
-        for active_param in active_params_sample:
-            index = self.param_names.index(active_param)
+        for name in active_parameter_names:
+            parameter = next(p for p in self.parameters if p.name == name)
 
             # TODO: Ensure x != 0 when x in [..., 0, ...] is not done. Do we need it?
             # TODO: To ensure the minimum cardinality constraints, shall we keep the x
             #  != 0 operations or shall we instead skip the invalid results at the end
             # Ensure x != 0 when bounds = [..., 0]. This is needed, otherwise
             # the minimum cardinality constraint is easily violated
-            if self.parameters[index].bounds.upper == 0:
+            if parameter.bounds.upper == 0:
                 constraints_lin_ineq.append(
                     ContinuousLinearInequalityConstraint(
-                        parameters=[active_param],
+                        parameters=[name],
                         coefficients=[-1.0],
-                        rhs=min(zero_threshold, -self.parameters[index].bounds.lower),
+                        rhs=min(inactivity_threshold, -parameter.bounds.lower),
                     )
                 )
             # Ensure x != 0 when bounds = [0, ...]
-            elif self.parameters[index].bounds.lower == 0:
+            elif parameter.bounds.lower == 0:
                 constraints_lin_ineq.append(
                     ContinuousLinearInequalityConstraint(
-                        parameters=[active_param],
+                        parameters=[name],
                         coefficients=[1.0],
-                        rhs=min(zero_threshold, self.parameters[index].bounds.upper),
+                        rhs=min(inactivity_threshold, parameter.bounds.upper),
                     ),
                 )
 
         return SubspaceContinuous(
-            parameters=tuple(self.parameters),
+            parameters=self.parameters,
             constraints_lin_eq=self.constraints_lin_eq,
-            constraints_lin_ineq=tuple(constraints_lin_ineq),
+            constraints_lin_ineq=constraints_lin_ineq,
         )
 
     def transform(
