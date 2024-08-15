@@ -286,6 +286,8 @@ class ThompsonSampling(qSimpleRegret):
     sample. Each gradinet step is calculated on a new posterior sample.
     """
 
+    abbreviation: ClassVar[str] = "TS"
+
     import torch
 
     _default_sample_shape = torch.Size([1])

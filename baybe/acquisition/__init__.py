@@ -34,6 +34,7 @@ PI = ProbabilityOfImprovement
 qPI = qProbabilityOfImprovement
 UCB = UpperConfidenceBound
 qUCB = qUpperConfidenceBound
+TS = ThompsonSampling
 
 __all__ = [
     ######################### Acquisition functions
@@ -58,6 +59,8 @@ __all__ = [
     # Upper Confidence Bound
     "UpperConfidenceBound",
     "qUpperConfidenceBound",
+    # Thompson Sampling
+    "ThompsonSampling",
     ######################### Abbreviations
     # Knowledge Gradient
     "qKG",
@@ -81,5 +84,5 @@ __all__ = [
     "UCB",
     "qUCB",
     # Thompson Sampling
-    "ThompsonSampling",
+    "TS",
 ]

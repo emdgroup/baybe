@@ -11,10 +11,10 @@ from baybe.surrogates.random_forest import RandomForestSurrogate
 __all__ = [
     "register_custom_architecture",
     "BayesianLinearSurrogate",
+    "BernoulliMultiArmedBanditSurrogate",
     "CustomONNXSurrogate",
     "GaussianProcessSurrogate",
     "MeanPredictionSurrogate",
     "NGBoostSurrogate",
     "RandomForestSurrogate",
-    "BernoulliMultiArmedBanditSurrogate",
 ]

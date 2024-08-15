@@ -15,11 +15,11 @@ from baybe.priors.basic import (
 )
 
 __all__ = [
+    "BetaPrior",
     "GammaPrior",
     "HalfCauchyPrior",
     "HalfNormalPrior",
     "LogNormalPrior",
     "NormalPrior",
     "SmoothedBoxPrior",
-    "BetaPrior",
 ]
