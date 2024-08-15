@@ -1,6 +1,6 @@
 """Validation functionality for constraints."""
 
-from collections.abc import Collection, Sequence
+from collections.abc import Collection
 from itertools import combinations
 
 from baybe.constraints.base import Constraint
@@ -10,6 +10,11 @@ from baybe.constraints.discrete import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import Parameter
+
+try:  # For python < 3.11, use the exceptiongroup backport
+    ExceptionGroup
+except NameError:
+    from exceptiongroup import ExceptionGroup
 
 
 def validate_constraints(  # noqa: DOC101, DOC103
@@ -27,8 +32,8 @@ def validate_constraints(  # noqa: DOC101, DOC103
         ValueError: If any discrete constraint includes a continuous parameter.
         ValueError: If any discrete constraint that is valid only for numerical
             discrete parameters includes non-numerical discrete parameters.
-        ValueError: If the bounds of any parameter in a cardinality constraint does
-            not cover zero.
+        ValueError: If any parameter affected by a cardinality constraint does
+            not include zero.
     """
     if sum(isinstance(itm, DiscreteDependenciesConstraint) for itm in constraints) > 1:
         raise ValueError(
@@ -85,8 +90,8 @@ def validate_constraints(  # noqa: DOC101, DOC103
             )
 
         if isinstance(constraint, ContinuousCardinalityConstraint):
-            validate_parameters_bounds_in_cardinality_constraint(
-                params_continuous, constraint
+            validate_cardinality_constraint_parameter_bounds(
+                constraint, params_continuous
             )
 
 
@@ -111,33 +116,37 @@ def validate_cardinality_constraints_are_nonoverlapping(
             )
 
 
-def validate_parameters_bounds_in_cardinality_constraint(
-    parameters: Sequence[NumericalContinuousParameter],
+def validate_cardinality_constraint_parameter_bounds(
     constraint: ContinuousCardinalityConstraint,
+    parameters: Collection[NumericalContinuousParameter],
 ) -> None:
-    """Validate that the bounds of all parameters in a cardinality constraint cover
-    zero.
+    """Validate that all parameters of a continuous cardinality constraint include zero.
 
     Args:
-        parameters: A collection of continuous numerical parameters.
         constraint: A continuous cardinality constraint.
+        parameters: A collection of parameters, including those affected by the
+            constraint.
 
     Raises:
-        ValueError: If the bounds of any parameter of a constraint does not cover zero.
-    """  # noqa D205
-    param_names = [p.name for p in parameters]
-    for param_in_constraint in constraint.parameters:
-        # Note that this implementation checks implicitly that all constraint
-        # parameters must be included in the list of parameters. Otherwise Runtime
-        # error occurs.
-        if (
-            param := parameters[param_names.index(param_in_constraint)]
-        ) and not param.is_in_range(0.0):
-            raise ValueError(
-                f"The bounds of all parameters in a constraint of type "
-                f"`{ContinuousCardinalityConstraint.__name__}` must cover "
-                f"zero. Either correct the parameter ({param}) bounds:"
-                f" {param.bounds=} or remove the parameter {param} from the "
-                f"{constraint=} and update the minimum/maximum cardinality "
-                f"accordingly."
+        ValueError: If one of the affected parameters does not include zero.
+        ExceptionGroup: If several of the affected parameters do not include zero.
+    """
+    exceptions = []
+    for name in constraint.parameters:
+        # We implicitly assume that the corresponding parameter exists
+        parameter = next(p for p in parameters if p.name == name)
+
+        if not parameter.is_in_range(0.0):
+            exceptions.append(
+                ValueError(
+                    f"The bounds of all parameters affected by a constraint of type "
+                    f"'{ContinuousCardinalityConstraint.__name__}' must include zero, "
+                    f"but the bounds of parameter '{name}' are: "
+                    f"{parameter.bounds.to_tuple()}"
+                )
             )
+
+    if exceptions:
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        raise ExceptionGroup("invalid parameter bounds", exceptions)

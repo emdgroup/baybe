@@ -19,8 +19,8 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
+    validate_cardinality_constraint_parameter_bounds,
     validate_cardinality_constraints_are_nonoverlapping,
-    validate_parameters_bounds_in_cardinality_constraint,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
@@ -138,7 +138,7 @@ class SubspaceContinuous(SerialMixin):
         )
 
         for con in self.constraints_cardinality:
-            validate_parameters_bounds_in_cardinality_constraint(self.parameters, con)
+            validate_cardinality_constraint_parameter_bounds(con, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
