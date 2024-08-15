@@ -1,6 +1,7 @@
 """Continuous constraints."""
 
 import math
+from collections.abc import Iterator
 from itertools import combinations
 from math import comb
 
@@ -49,26 +50,24 @@ class ContinuousCardinalityConstraint(
     """Class for continuous cardinality constraints."""
 
     @property
-    def n_combinatorial_inactive_parameters(self) -> int:
-        """Counts of elements in the combinatorial list of inactive parameters."""
-        n_combinatorial_inactive_params = 0
-        for i_zeros in range(
-            len(self.parameters) - self.max_cardinality,
-            len(self.parameters) - self.min_cardinality + 1,
-        ):
-            n_combinatorial_inactive_params += comb(len(self.parameters), i_zeros)
-        return n_combinatorial_inactive_params
+    def n_inactive_parameter_combinations(self) -> int:
+        """The number of possible inactive parameter combinations."""
+        return sum(
+            comb(len(self.parameters), n_inactive_parameters)
+            for n_inactive_parameters in self._inactive_set_sizes()
+        )
 
-    @property
-    def combinatorial_inactive_parameters(self) -> list[tuple[str, ...]]:
-        """Combinatorial list of inactive parameters."""
-        combinatorial_inactive_params: list[tuple[str, ...]] = []
-        for i_zeros in range(
+    def _inactive_set_sizes(self) -> Iterator[int]:
+        """Iterate over all possible sizes of inactive parameter sets."""
+        return range(
             len(self.parameters) - self.max_cardinality,
             len(self.parameters) - self.min_cardinality + 1,
-        ):
-            combinatorial_inactive_params.extend(combinations(self.parameters, i_zeros))
-        return combinatorial_inactive_params
+        )
+
+    def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
+        """Iterate over all possible combinations of inactive parameters."""
+        for n_inactive_parameters in self._inactive_set_sizes():
+            yield from combinations(self.parameters, n_inactive_parameters)
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.
