@@ -111,4 +111,4 @@ class BetaPrior(Prior):
         """Return alpha and beta as a torch tensor."""
         import torch
 
-        return torch.tensor([self.alpha, self.beta]).reshape(-1, 1)
+        return torch.tensor([self.alpha, self.beta])

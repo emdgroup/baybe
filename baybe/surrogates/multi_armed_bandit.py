@@ -44,7 +44,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         from torch.distributions import Beta
 
         # shape: (n_arms, )
-        return Beta(*self._posterior_beta_parameters.split(1, 1)).mode.squeeze()
+        return Beta(*self._posterior_beta_parameters).mode
 
     @property
     def _posterior_beta_parameters(self) -> Tensor:
@@ -54,8 +54,8 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
                 f"'{self.__class__.__name__}' must be "
                 "fitted to access likelihood information"
             )
-        # shape: (n_arms, 2)
-        return (self._win_lose_counts + self.prior.to_torch()).T
+        # shape: (2, n_arms)
+        return self._win_lose_counts + self.prior.to_torch().unsqueeze(-1)
 
     @staticmethod
     def _make_target_scaler_factory():
@@ -68,7 +68,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         from botorch.posteriors import TorchPosterior
         from torch.distributions import Beta
 
-        beta_params_for_candidates = self._posterior_beta_parameters[
+        beta_params_for_candidates = self._posterior_beta_parameters.T[
             candidates.argmax(-1)
         ]
         return TorchPosterior(Beta(*beta_params_for_candidates.split(1, -1)))
