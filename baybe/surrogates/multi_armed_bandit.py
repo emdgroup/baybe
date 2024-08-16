@@ -15,6 +15,7 @@ from baybe.parameters.enum import CategoricalEncoding
 from baybe.priors import BetaPrior
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
+from baybe.targets.binary import _NEGATIVE_VALUE_COMP, _POSITIVE_VALUE_COMP
 
 if TYPE_CHECKING:
     from botorch.posteriors import TorchPosterior
@@ -56,6 +57,11 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         # shape: (n_arms, 2)
         return (self._win_lose_counts + self.prior.to_torch()).T
 
+    @staticmethod
+    def _make_target_scaler_factory():
+        """Use computational representation from binary target."""
+        return None
+
     def _posterior(self, candidates: Tensor, /) -> TorchPosterior:
         # See base class.
 
@@ -88,14 +94,14 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
 
         import torch
 
-        wins = (train_x * train_y).sum(axis=0)
-        losses = (train_x * (1 - train_y)).sum(axis=0)
-        self._win_lose_counts = torch.vstack([wins, losses])
+        # IMPROVE: The training inputs/targets can actually be represented as
+        #   integers/boolean values but the transformation pipeline currently
+        #   converts them float. Potentially, this can be improved by making
+        #   the type conversion configurable.
 
-    @staticmethod
-    def _make_target_scaler_factory():
-        """Use computational representation from binary target."""
-        return None
+        wins = (train_x * (train_y == float(_POSITIVE_VALUE_COMP))).sum(axis=0)
+        losses = (train_x * (train_y == float(_NEGATIVE_VALUE_COMP))).sum(axis=0)
+        self._win_lose_counts = torch.vstack([wins, losses]).to(torch.int)
 
 
 class CustomMCSampler(MCSampler):

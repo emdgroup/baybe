@@ -2,6 +2,7 @@
 
 from typing import TypeAlias
 
+import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
@@ -12,6 +13,12 @@ from baybe.targets.base import Target
 
 ChoiceValue: TypeAlias = bool | int | float | str
 """Types of values that a :class:`BinaryTarget` can take."""
+
+_POSITIVE_VALUE_COMP = True
+"""Computational representation of the positive choice value."""
+
+_NEGATIVE_VALUE_COMP = False
+"""Computational representation of the negative choice value."""
 
 
 @define(frozen=True)
@@ -56,11 +63,15 @@ class BinaryTarget(Target, SerialMixin):
             )
 
         # Transform
-        data = data.copy()
         pos_idx = data.iloc[:, 0] == self.positive_value
         neg_idx = data.iloc[:, 0] == self.negative_value
-        data[pos_idx] = 1
-        data[neg_idx] = 0
+        data = pd.DataFrame(
+            np.zeros_like(data.values, dtype=bool),
+            index=data.index,
+            columns=data.columns,
+        )
+        data[pos_idx] = _POSITIVE_VALUE_COMP
+        data[neg_idx] = _NEGATIVE_VALUE_COMP
 
         return data
 
