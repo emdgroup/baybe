@@ -30,7 +30,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    prior: BetaPrior = field(default=BetaPrior(1, 1))
+    prior: BetaPrior = field(factory=lambda: BetaPrior(1, 1))
     """Beta prior parameters. By default, configured to produce a uniform prior."""
 
     _win_lose_counts: Tensor | None = field(init=False, default=None, eq=False)
