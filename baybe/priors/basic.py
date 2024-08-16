@@ -92,19 +92,11 @@ class SmoothedBoxPrior(Prior):
 class BetaPrior(Prior):
     """A beta prior parameterized by alpha and beta."""
 
-    alpha: float = field(converter=float)
+    alpha: float = field(converter=float, validator=gt(0.0))
     """Alpha of the beta distribution."""
 
-    beta: float = field(converter=float)
+    beta: float = field(converter=float, validator=gt(0.0))
     """Beta of the beta distribution."""
-
-    @alpha.validator
-    @beta.validator
-    def _validate_parameter(self, attributte, value) -> None:
-        if value <= 0.0:
-            raise ValueError(
-                f"The value of '{attributte.name} must be strictly positive.'"
-            )
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         raise NotImplementedError(
