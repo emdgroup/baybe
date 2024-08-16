@@ -6,7 +6,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
 
-from baybe.exceptions import UnknownTargetError
+from baybe.exceptions import InvalidTargetValueError
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
 
@@ -49,7 +49,7 @@ class BinaryTarget(Target, SerialMixin):
         col = data.iloc[:, [0]]
         invalid = col[~col.isin([self.positive_value, self.negative_value]).values]
         if len(invalid) > 0:
-            raise UnknownTargetError(
+            raise InvalidTargetValueError(
                 f"The following values entered for target '{self.name}' are not in the "
                 f"set of accepted choice values "
                 f"{set([self.positive_value, self.negative_value])}: \n{invalid}"
