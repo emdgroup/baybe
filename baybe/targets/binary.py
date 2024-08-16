@@ -25,13 +25,19 @@ _NEGATIVE_VALUE_COMP = False
 class BinaryTarget(Target, SerialMixin):
     """Class for binary targets."""
 
+    # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1336
+
     positive_value: ChoiceValue = field(
-        default=1, validator=instance_of(ChoiceValue), kw_only=True
+        default=1,
+        validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
+        kw_only=True,
     )
     """Experimental representation of the positive value."""
 
     negative_value: ChoiceValue = field(
-        default=0, validator=instance_of(ChoiceValue), kw_only=True
+        default=0,
+        validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
+        kw_only=True,
     )
     """Experimental representation of the negative value."""
 

@@ -110,8 +110,8 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         #   converts them float. Potentially, this can be improved by making
         #   the type conversion configurable.
 
-        wins = (train_x * (train_y == float(_POSITIVE_VALUE_COMP))).sum(axis=0)
-        losses = (train_x * (train_y == float(_NEGATIVE_VALUE_COMP))).sum(axis=0)
+        wins = (train_x * (train_y == float(_POSITIVE_VALUE_COMP))).sum(dim=0)
+        losses = (train_x * (train_y == float(_NEGATIVE_VALUE_COMP))).sum(dim=0)
         self._win_lose_counts = torch.vstack([wins, losses]).to(torch.int)
 
 
