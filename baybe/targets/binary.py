@@ -1,4 +1,4 @@
-"""Binary target."""
+"""Binary targets."""
 
 from typing import TypeAlias
 
@@ -16,17 +16,17 @@ ChoiceValue: TypeAlias = bool | int | float | str
 
 @define(frozen=True)
 class BinaryTarget(Target, SerialMixin):
-    """Class for bernoulli targets."""
+    """Class for binary targets."""
 
     positive_value: ChoiceValue = field(
         default=1, validator=instance_of(ChoiceValue), kw_only=True
     )
-    """Experimental representation of the positive target"""
+    """Experimental representation of the positive value."""
 
     negative_value: ChoiceValue = field(
         default=0, validator=instance_of(ChoiceValue), kw_only=True
     )
-    """Experimental representation of the negative target"""
+    """Experimental representation of the negative value."""
 
     @negative_value.validator
     def _validate_values(self, _, value):
@@ -65,7 +65,7 @@ class BinaryTarget(Target, SerialMixin):
         return data
 
     def summary(self) -> dict:  # noqa: D102
-        # see base class
+        # See base class.
         return dict(
             Type=self.__class__.__name__,
             Name=self.name,
