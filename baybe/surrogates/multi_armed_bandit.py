@@ -35,7 +35,9 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     prior: BetaPrior = field(factory=lambda: BetaPrior(1, 1))
     """The beta prior for the win rates of the bandit arms. Uniform by default."""
 
-    _win_lose_counts: Tensor | None = field(init=False, default=None, eq=False)
+    # TODO: type should be `torch.Tensor | None` but is currently
+    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    _win_lose_counts = field(init=False, default=None, eq=False)
     """Sufficient statistics for the Bernoulli likelihood model."""
 
     def maximum_a_posteriori_per_arm(self) -> Tensor:
