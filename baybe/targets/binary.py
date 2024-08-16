@@ -4,6 +4,7 @@ from typing import TypeAlias
 
 import pandas as pd
 from attrs import define, field
+from attrs.validators import instance_of
 
 from baybe.exceptions import UnknownTargetError
 from baybe.serialization import SerialMixin
@@ -17,13 +18,25 @@ ChoiceValue: TypeAlias = bool | int | float | str
 class BinaryTarget(Target, SerialMixin):
     """Class for bernoulli targets."""
 
-    positive_value: ChoiceValue = field(default=1, kw_only=True)
+    positive_value: ChoiceValue = field(
+        default=1, validator=instance_of(ChoiceValue), kw_only=True
+    )
     """Experimental representation of the positive target"""
 
-    negative_value: ChoiceValue = field(default=0, kw_only=True)
+    negative_value: ChoiceValue = field(
+        default=0, validator=instance_of(ChoiceValue), kw_only=True
+    )
     """Experimental representation of the negative target"""
 
-    # TODO: add optimization direction
+    @negative_value.validator
+    def _validate_values(self, _, value):
+        """Validate that the two choice values of the target are different."""
+        if value == self.positive_value:
+            raise ValueError(
+                f"The two choice values of a '{BinaryTarget.__name__}' must be "
+                f"different but the following value was provided for both choices of "
+                f"target '{self.name}': {value}"
+            )
 
     def transform_to_binary(self, experimental_representation):
         """Sample wise transform from experimental to computational representation."""
