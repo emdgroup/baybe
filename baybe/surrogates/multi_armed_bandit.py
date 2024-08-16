@@ -38,15 +38,13 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     _win_lose_counts: Tensor | None = field(init=False, default=None, eq=False)
     """Sufficient statistics of the likelihood model."""
 
-    @property
     def maximum_a_posteriori_per_arm(self) -> Tensor:
         """Maximum a posteriori for each arm. Returning nan for arms without a mode."""
         from torch.distributions import Beta
 
         # shape: (n_arms, )
-        return Beta(*self._posterior_beta_parameters).mode
+        return Beta(*self._posterior_beta_parameters()).mode
 
-    @property
     def _posterior_beta_parameters(self) -> Tensor:
         """The parameters of the posterior beta distribution."""
         if self._win_lose_counts is None:
@@ -68,7 +66,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         from botorch.posteriors import TorchPosterior
         from torch.distributions import Beta
 
-        beta_params_for_candidates = self._posterior_beta_parameters.T[
+        beta_params_for_candidates = self._posterior_beta_parameters().T[
             candidates.argmax(-1)
         ]
         return TorchPosterior(Beta(*beta_params_for_candidates.split(1, -1)))

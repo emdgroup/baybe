@@ -95,16 +95,16 @@ for i in range(N_ITERATIONS):
     campaign.add_measurements(df)
 
     if i > 0:
-        map_means = surrogate.maximum_a_posteriori_per_arm
+        map_means = surrogate.maximum_a_posteriori_per_arm()
         estimated_means.append(map_means)
-        posterior_params.append(surrogate._posterior_beta_parameters)
+        posterior_params.append(surrogate._posterior_beta_parameters())
         error = real_means - map_means
         error = error[~error.isnan()]
         mse = (error @ error).mean()
         mses.append(mse.item())
 
 print("real means", real_means)
-print("MAP means", surrogate.maximum_a_posteriori_per_arm)
+print("MAP means", surrogate.maximum_a_posteriori_per_arm())
 print("optimal expected reward", max(real_means) * N_ITERATIONS)
 print("total_reward", total_reward)
 print("regret", regrets[-1])
