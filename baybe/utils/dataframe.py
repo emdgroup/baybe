@@ -190,10 +190,12 @@ def add_fake_results(
     # Add the fake data for each target
     for target in targets:
         if isinstance(target, BinaryTarget):
+            # TODO: When refactoring, take into account good and bad intervals
             data[target.name] = np.random.choice(
-                [target.negative_value, target.positive_value]
+                [target.negative_value, target.positive_value], size=len(data)
             )
             continue
+
         # Add bad values
         data[target.name] = np.random.uniform(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)
