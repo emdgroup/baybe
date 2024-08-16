@@ -17,10 +17,10 @@ ChoiceValue: TypeAlias = bool | int | float | str
 class BinaryTarget(Target, SerialMixin):
     """Class for bernoulli targets."""
 
-    positive_value: ChoiceValue = field(default=1)
+    positive_value: ChoiceValue = field(default=1, kw_only=True)
     """Experimental representation of the positive target"""
 
-    negative_value: ChoiceValue = field(default=0)
+    negative_value: ChoiceValue = field(default=0, kw_only=True)
     """Experimental representation of the negative target"""
 
     # TODO: add optimization direction
