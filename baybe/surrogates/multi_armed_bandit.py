@@ -1,4 +1,4 @@
-"""Multi-armed bandit surrogate."""
+"""Multi-armed bandit surrogates."""
 
 from __future__ import annotations
 
@@ -33,31 +33,44 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     # See base class.
 
     prior: BetaPrior = field(factory=lambda: BetaPrior(1, 1))
-    """Beta prior parameters. By default, configured to produce a uniform prior."""
+    """The beta prior for the win rates of the bandit arms. Uniform by default."""
 
     _win_lose_counts: Tensor | None = field(init=False, default=None, eq=False)
-    """Sufficient statistics of the likelihood model."""
+    """Sufficient statistics for the Bernoulli likelihood model."""
 
     def maximum_a_posteriori_per_arm(self) -> Tensor:
-        """Maximum a posteriori for each arm. Returning nan for arms without a mode."""
+        """Compute the maximum a posteriori win rates for all arms.
+
+        Returns:
+            A tensor of length ``N``, where ``N`` is the number of bandit arms.
+            Contains ``float('nan')`` for arms with undefined mode.
+        """
         from torch.distributions import Beta
 
-        # shape: (n_arms, )
         return Beta(*self._posterior_beta_parameters()).mode
 
     def _posterior_beta_parameters(self) -> Tensor:
-        """The parameters of the posterior beta distribution."""
+        """Compute the posterior parameters of the beta distribution.
+
+        Raises:
+            ModelNotTrainedError: If accessed before the model was trained.
+
+        Returns:
+            A tensors of shape ``(2, N)`` containing the posterior beta parameters,
+            where ``N`` is the number of bandit arms.
+        """
         if self._win_lose_counts is None:
             raise ModelNotTrainedError(
-                f"'{self.__class__.__name__}' must be "
-                "fitted to access likelihood information"
+                f"'{self.__class__.__name__}' must be trained before posterior "
+                f"information can be accessed."
             )
-        # shape: (2, n_arms)
         return self._win_lose_counts + self.prior.to_torch().unsqueeze(-1)
 
     @staticmethod
     def _make_target_scaler_factory():
-        """Use computational representation from binary target."""
+        # See base class.
+        #
+        # We directly use the binary computational representation from the target.
         return None
 
     def _posterior(self, candidates: Tensor, /) -> TorchPosterior:
