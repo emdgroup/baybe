@@ -1,13 +1,17 @@
 """A collection of common prior distributions."""
 
-from typing import Any
+from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING, Any
+
 from attrs import define, field
 from attrs.validators import gt
 
 from baybe.priors.base import Prior
 from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define(frozen=True)
@@ -103,7 +107,7 @@ class BetaPrior(Prior):
             f"The '{self.__class__.__name__}' does not have an analog in gpytorch"
         )
 
-    def to_torch(self) -> np.ndarray:
+    def to_torch(self) -> Tensor:
         """Return alpha and beta as a torch tensor."""
         import torch
 
