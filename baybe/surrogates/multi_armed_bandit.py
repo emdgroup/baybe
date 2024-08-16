@@ -10,9 +10,10 @@ from botorch.sampling.get_sampler import GetSampler
 from torch.distributions import Beta  # TODO: how to import this?!
 
 from baybe.exceptions import IncompatibleSearchSpaceError, ModelNotTrainedError
-from baybe.parameters import CategoricalParameter
+from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.priors import BetaPrior
+from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 
 if TYPE_CHECKING:
@@ -69,17 +70,22 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     def _fit(self, train_x: Tensor, train_y: Tensor, _: Any = None) -> None:
         # See base class.
 
-        # TODO: Fix requirement of OHE encoding
+        # TODO: Fix requirement of OHE encoding. This is likely a long-term goal since
+        #   probably requires decoupling parameter from encodings and associating the
+        #   latter with the surrogate.
         # TODO: Generalize to arbitrary number of categorical parameters
-        if not (
-            (len(self._searchspace.parameters) == 1)
-            and isinstance(p := self._searchspace.parameters[0], CategoricalParameter)
-            and p.encoding is CategoricalEncoding.OHE
-        ):
-            raise IncompatibleSearchSpaceError(
-                f"'{self.__class__.__name__}' currently only supports search spaces "
-                f"spanned by exactly one categorical parameter using one-hot encoding."
-            )
+        match self._searchspace:
+            case SearchSpace(
+                parameters=[CategoricalParameter(encoding=CategoricalEncoding.OHE)]
+            ):
+                pass
+            case _:
+                raise IncompatibleSearchSpaceError(
+                    f"'{self.__class__.__name__}' currently only supports search "
+                    f"spaces spanned by exactly one categorical parameter using "
+                    f"one-hot encoding."
+                )
+
         import torch
 
         wins = (train_x * train_y).sum(axis=0)
