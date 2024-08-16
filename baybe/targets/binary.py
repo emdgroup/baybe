@@ -38,21 +38,30 @@ class BinaryTarget(Target, SerialMixin):
                 f"target '{self.name}': {value}"
             )
 
-    def transform_to_binary(self, experimental_representation):
-        """Sample wise transform from experimental to computational representation."""
-        if experimental_representation == self.positive_value:
-            return 1
-        elif experimental_representation == self.negative_value:
-            return 0
-        raise UnknownTargetError(
-            f"The entered target '{experimental_representation}' is not in the"
-            f" target set of {{{self.positive_value}, {self.negative_value}}}"
-        )
-
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # see base class
+        # TODO: The method (signature) needs to be refactored, potentially when
+        #   enabling multi-target settings. The current input type suggests that passing
+        #   dataframes is allowed, but the code was designed for single targets and
+        #   desirability objectives, where only one column is present.
         assert data.shape[1] == 1
-        data[data.columns[0]] = data[data.columns[0]].apply(self.transform_to_binary)
+
+        # Validate target values
+        col = data.iloc[:, [0]]
+        invalid = col[~col.isin([self.positive_value, self.negative_value]).values]
+        if len(invalid) > 0:
+            raise UnknownTargetError(
+                f"The following values entered for target '{self.name}' are not in the "
+                f"set of accepted choice values "
+                f"{set([self.positive_value, self.negative_value])}: \n{invalid}"
+            )
+
+        # Transform
+        data = data.copy()
+        pos_idx = data.iloc[:, 0] == self.positive_value
+        neg_idx = data.iloc[:, 0] == self.negative_value
+        data[pos_idx] = 1
+        data[neg_idx] = 0
+
         return data
 
     def summary(self) -> dict:  # noqa: D102
