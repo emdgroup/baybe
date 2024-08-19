@@ -288,6 +288,84 @@ class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
 
 
+@define(frozen=True)
+class ContinuousInterPointLinearConstraint(ContinuousConstraint, ABC):
+    """A class for single parameter inter-point constraints."""
+
+    eval_during_creation = False
+    eval_during_modeling = True
+    numerical_only = True
+
+    parameters: list[str] = field(
+        validator=[min_len(1)],
+        converter=lambda x: [x] if isinstance(x, str) else x,
+    )
+    """The parameter the constraint is handling. Note that the parameter can also be
+    handed over as a single ``str``, which is then converted into a list internally."""
+
+    # object variables
+    coefficients: Sequence[tuple[str, int, float]] = field()
+    """Sequence of tuples (parameter_name, batch_number, coefficient) describing the
+    in-/equality. Note that it is assumed that the first batch has number 0."""
+
+    rhs: float = field(default=0.0)
+    """Right-hand side value of the in-/equality."""
+
+    @coefficients.validator
+    def _check_coefficients(self, attribute, value):
+        for index, tup in enumerate(value):
+            if len(tup) != 3:
+                raise ValueError(f"Tuple at index {index} does not have 3 elements.")
+            if tup[0] not in self.parameters:
+                raise ValueError(
+                    f"Parameter {tup[0]} specified in tuple {tup} is not declared in "
+                    "the parameters list of the constraint."
+                )
+
+    @property
+    def _batchnumbers(self) -> list[int]:
+        """Return the batch numbers of the constraint."""
+        return [tup[1] for tup in self.coefficients]
+
+    @property
+    def _raw_coefficients(self) -> list[float]:
+        """Return the raw coefficients of the constraint."""
+        return [tup[2] for tup in self.coefficients]
+
+    def to_botorch(
+        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+    ) -> tuple[Tensor, Tensor, float]:
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ``optimize_acqf_*`` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            idx_offset: Offset to the provided parameter indices.
+
+        Returns:
+            The tuple required by botorch.
+        """
+        import torch
+
+        from baybe.utils.torch import DTypeFloatTorch
+
+        param_names = [p.name for p in parameters]
+        # Get the indices of the parameters used in the constraint
+        param_index = {name: param_names.index(name) for name in self.parameters}
+        param_indices = [
+            (batch, param_index[name] + idx_offset)
+            for name, batch, _ in self.coefficients
+        ]
+        coefficients = [coefficient for _, _, coefficient in self.coefficients]
+        return (
+            torch.tensor(param_indices),
+            torch.tensor(coefficients, dtype=DTypeFloatTorch),
+            np.asarray(self.rhs, dtype=DTypeFloatNumpy).item(),
+        )
+
+
 # Register (un-)structure hooks
 converter.register_unstructure_hook(Constraint, unstructure_base)
 converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))

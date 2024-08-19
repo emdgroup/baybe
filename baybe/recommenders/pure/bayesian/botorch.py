@@ -172,11 +172,13 @@ class BotorchRecommender(BayesianRecommender):
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
+                + subspace_continuous.constraints_interpoint_lin_eq
             ]
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             inequality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_ineq
+                + subspace_continuous.constraints_interpoint_lin_ineq
             ]
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             sequential=self.sequential_continuous,

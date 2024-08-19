@@ -7,6 +7,7 @@ from attrs import define
 
 from baybe.constraints.base import (
     CardinalityConstraint,
+    ContinuousInterPointLinearConstraint,
     ContinuousLinearConstraint,
     ContinuousNonlinearConstraint,
 )
@@ -34,6 +35,39 @@ class ContinuousLinearInequalityConstraint(ContinuousLinearConstraint):
     If you want to implement a constraint of the form `<=`, multiply ``rhs`` and
     ``coefficients`` by -1. The constraint is typically fulfilled up to a small
     numerical tolerance.
+
+    The class has no real content as it only serves the purpose of
+    distinguishing the constraints.
+    """
+
+
+@define
+class ContinuousInterPointLinearEqualityConstraint(
+    ContinuousInterPointLinearConstraint
+):
+    """Class for continuous inter-point equality constraints.
+
+    The constraint is defined as ``sum_i[ x_b * c_b ] = rhs``, where x_b denotes the
+    value of the parameter x in batch b and and (b, c_b) are the entries of
+    ``coefficients``. The constraint is typically fulfilled up to a small numerical
+    tolerance.
+
+    The class has no real content as it only serves the purpose of
+    distinguishing the constraints.
+    """
+
+
+@define
+class ContinuousInterPointLinearInequalityConstraint(
+    ContinuousInterPointLinearConstraint
+):
+    """Class for continuous inter-point inequality constraints.
+
+    The constraint is defined as ``sum_i[ x_b * c_b ] >= rhs``, where x_b denotes the
+    value of the parameter x in batch b and and (b, c_b) are the entries of
+    ``coefficients``. If you want to implement a constraint of the form `<=`, multiply
+    ``rhs`` and ``coefficients`` by -1. The constraint is typically fulfilled up to a
+    small numerical tolerance.
 
     The class has no real content as it only serves the purpose of
     distinguishing the constraints.

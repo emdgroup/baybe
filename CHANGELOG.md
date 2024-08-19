@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
+- Continuous inter-point constraints
 
 ## [0.11.0] - 2024-09-09
 ### Breaking Changes

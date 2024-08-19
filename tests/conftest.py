@@ -28,6 +28,8 @@ from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
+    ContinuousInterPointLinearEqualityConstraint,
+    ContinuousInterPointLinearInequalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
     DiscreteCardinalityConstraint,
@@ -543,6 +545,28 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             parameters=["Conti_finite1", "Conti_finite2", "Conti_finite3"],
             min_cardinality=1,
             max_cardinality=2,
+        ),
+        # Interpoint constraints using a single parameter
+        "InterConstraint_1": ContinuousInterPointLinearEqualityConstraint(
+            parameters=["Conti_finite1"],
+            coefficients=[("Conti_finite1", 0, 1.0), ("Conti_finite1", 1, 3.0)],
+            rhs=0.3,
+        ),
+        "InterConstraint_2": ContinuousInterPointLinearInequalityConstraint(
+            parameters=["Conti_finite1"],
+            coefficients=[("Conti_finite1", 0, 1.0), ("Conti_finite1", 1, 3.0)],
+            rhs=0.3,
+        ),
+        # Interpoint constraints using multiple parameters
+        "InterConstraint_3": ContinuousInterPointLinearEqualityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[("Conti_finite1", 0, 1.0), ("Conti_finite2", 1, 3.0)],
+            rhs=0.3,
+        ),
+        "InterConstraint_4": ContinuousInterPointLinearInequalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[("Conti_finite1", 0, 1.0), ("Conti_finite2", 1, 3.0)],
+            rhs=0.3,
         ),
     }
     return [
