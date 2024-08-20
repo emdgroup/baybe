@@ -16,6 +16,7 @@ from baybe.priors import BetaPrior
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.targets.binary import _NEGATIVE_VALUE_COMP, _POSITIVE_VALUE_COMP
+from baybe.utils.random import temporary_seed
 
 if TYPE_CHECKING:
     from botorch.posteriors import TorchPosterior
@@ -122,11 +123,12 @@ class CustomMCSampler(MCSampler):
 
     def forward(self, posterior: TorchPosterior) -> Tensor:
         """Sample the posterior."""
-        samples = posterior.rsample(self.sample_shape)
+        with temporary_seed(self.seed):
+            samples = posterior.rsample(self.sample_shape)
         return samples
 
 
 @GetSampler.register(Beta)
-def get_custom_sampler(_, sample_shape):
+def get_custom_sampler(_, sample_shape, seed: int | None = None):
     """Get the sampler for the beta posterior."""
-    return CustomMCSampler(sample_shape=sample_shape)
+    return CustomMCSampler(sample_shape=sample_shape, seed=seed)
