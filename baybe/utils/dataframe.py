@@ -449,7 +449,13 @@ def fuzzy_row_match(
     return pd.Index(inds_matched)
 
 
-def pretty_print_df(df: pd.DataFrame, max_rows: int = 6, max_columns: int = 4) -> str:
+def pretty_print_df(
+    df: pd.DataFrame,
+    max_rows: int = 6,
+    max_columns: int = 4,
+    max_colwidth: int = 16,
+    precision: int = 3,
+) -> str:
     """Convert a dataframe into a pretty/readable format.
 
     This function returns a customized str representation of the dataframe.
@@ -459,6 +465,8 @@ def pretty_print_df(df: pd.DataFrame, max_rows: int = 6, max_columns: int = 4) -
         df: The dataframe to be printed.
         max_rows: Maximum number of rows to display.
         max_columns: Maximum number of columns to display.
+        max_colwidth: Maximum width of an individual column.
+        precision: Number of digits to which numbers should be rounded.
 
     Returns:
         The values to be printed as a str table.
@@ -469,8 +477,19 @@ def pretty_print_df(df: pd.DataFrame, max_rows: int = 6, max_columns: int = 4) -
         max_rows,
         "display.max_columns",
         max_columns,
+        "display.max_colwidth",
+        max_colwidth,
+        "display.precision",
+        precision,
         "expand_frame_repr",
         False,
     ):
-        str_df = str(df)
+        # Pandas does not truncate the names of columns with long names, which makes
+        # computational representations barely readable in some of the examples. Hence,
+        # we truncate them manually. For details, see
+        # https://stackoverflow.com/questions/64976267/pandas-truncate-column-names)
+        str_df = df.rename(
+            columns=lambda x: x[:max_colwidth],
+        )
+        str_df = str(str_df)
     return str_df
