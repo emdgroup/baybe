@@ -29,6 +29,7 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils.boolean import eq_dataframe
+from baybe.utils.plotting import create_str_representation
 
 
 @define
@@ -84,16 +85,18 @@ class Campaign(SerialMixin):
     """The cached recommendations."""
 
     def __str__(self) -> str:
-        # Get str representation of campaign fields
-        fields_to_print = [self.searchspace, self.objective, self.recommender]
-        fields_str = "\n\n".join(str(x) for x in fields_to_print)
+        metadata_fields = [
+            create_str_representation(
+                "Batches done", [self.n_batches_done], single_line=True
+            ),
+            create_str_representation(
+                "Fits done", [self.n_fits_done], single_line=True
+            ),
+        ]
+        metadata = create_str_representation("Meta Data:", metadata_fields)
+        fields = [metadata, self.searchspace, self.objective, self.recommender]
 
-        # Put all relevant attributes of the campaign in one string
-        campaign_str = f"""Campaign
-        \nMeta Data\nBatches Done: {self.n_batches_done}
-        \rFits Done: {self.n_fits_done}\n\n{fields_str}\n"""
-
-        return campaign_str.replace("\n", "\n ").replace("\r", "\r ")
+        return create_str_representation(self.__class__.__name__, fields)
 
     @property
     def measurements(self) -> pd.DataFrame:
