@@ -58,10 +58,10 @@ parameters = [
 ]
 
 # We model the following constraints:
-# `1.0*x_1 + 1.0*x_2 = 1.0`
-# `1.0*x_3 - 1.0*x_4 = 2.0`
-# `1.0*x_1 + 1.0*x_3 >= 1.0`
-# `2.0*x_2 + 3.0*x_4 <= 1.0` which is equivalent to `-2.0*x_2 - 3.0*x_4 >= -1.0`
+# 1. $1.0*x_1 + 1.0*x_2 = 1.0$
+# 2. $1.0*x_3 - 1.0*x_4 = 2.0$
+# 3. $1.0*x_1 + 1.0*x_3 >= 1.0$
+# 4. $2.0*x_2 + 3.0*x_4 <= 1.0$ which is equivalent to $-2.0*x_2 - 3.0*x_4 >= -1.0$
 
 constraints = [
     ContinuousLinearEqualityConstraint(
@@ -112,7 +112,7 @@ for k in range(N_ITERATIONS):
 measurements = campaign.measurements
 TOLERANCE = 0.01
 
-# `1.0*x_1 + 1.0*x_2 = 1.0`
+# $1.0*x_1 + 1.0*x_2 = 1.0$
 
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
@@ -121,7 +121,7 @@ print(
     ),
 )
 
-# `1.0*x_3 - 1.0*x_4 = 2.0`
+# $1.0*x_3 - 1.0*x_4 = 2.0$
 
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",
@@ -130,14 +130,14 @@ print(
     ),
 )
 
-# `1.0*x_1 + 1.0*x_3 >= 1.0`
+# $1.0*x_1 + 1.0*x_3 >= 1.0$
 
 print(
     "1.0*x_1 + 1.0*x_3 >= 1.0 satisfied in all recommendations? ",
     (1.0 * measurements["x_1"] + 1.0 * measurements["x_3"]).ge(1.0 - TOLERANCE).all(),
 )
 
-# `2.0*x_2 + 3.0*x_4 <= 1.0`
+# $2.0*x_2 + 3.0*x_4 <= 1.0$
 
 print(
     "2.0*x_2 + 3.0*x_4 <= 1.0 satisfied in all recommendations? ",
