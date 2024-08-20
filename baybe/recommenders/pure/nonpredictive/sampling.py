@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
+from baybe.utils.plotting import create_str_representation
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
@@ -45,6 +46,14 @@ class RandomRecommender(NonPredictiveRecommender):
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)
 
+    def __str__(self) -> str:
+        fields = [
+            create_str_representation(
+                "Compatibility", [self.compatibility], single_line=True
+            )
+        ]
+        return create_str_representation(self.__class__.__name__, fields)
+
 
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling."""
@@ -70,3 +79,11 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]
+
+    def __str__(self) -> str:
+        fields = [
+            create_str_representation(
+                "Compatibility", [self.compatibility], single_line=True
+            )
+        ]
+        return create_str_representation(self.__class__.__name__, fields)

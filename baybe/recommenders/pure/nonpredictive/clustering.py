@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
+from baybe.utils.plotting import create_str_representation
 
 
 @define
@@ -124,6 +125,22 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
         # Convert positional indices into DataFrame indices and return result
         return candidates_comp.index[selection]
+
+    def __str__(self) -> str:
+        fields = [
+            create_str_representation(
+                "Compatibility", [self.compatibility], single_line=True
+            ),
+            create_str_representation(
+                "Name of clustering parameter",
+                [self.model_cluster_num_parameter_name],
+                single_line=True,
+            ),
+            create_str_representation(
+                "Model parameters", [self.model_params], single_line=True
+            ),
+        ]
+        return create_str_representation(self.__class__.__name__, fields)
 
 
 @define
