@@ -28,6 +28,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.plotting import create_str_representation
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
@@ -311,6 +312,16 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     @abstractmethod
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Perform the actual fitting logic."""
+
+    def __str__(self) -> str:
+        fields = [
+            create_str_representation(
+                "Supports Transfer Learning",
+                [self.supports_transfer_learning],
+                single_line=True,
+            ),
+        ]
+        return create_str_representation(self.__class__.__name__, fields)
 
 
 @define

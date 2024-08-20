@@ -13,6 +13,7 @@ from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify_ensemble_predictor, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
+from baybe.utils.plotting import create_str_representation
 
 if TYPE_CHECKING:
     from botorch.models.ensemble import EnsemblePosterior
@@ -104,3 +105,14 @@ class RandomForestSurrogate(Surrogate):
         # See base class.
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x.numpy(), train_y.numpy().ravel())
+
+    def __str__(self) -> str:
+        output_str = super().__str__()
+        # Replace first line which contains the incorrect name of the parent class
+        output_str = self.__class__.__name__ + output_str[output_str.find("\n") :]
+        fields = [
+            create_str_representation(
+                "Model Params", [self.model_params], single_line=True
+            )
+        ]
+        return create_str_representation(output_str, fields)

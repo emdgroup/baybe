@@ -22,6 +22,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
+from baybe.utils.plotting import create_str_representation
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -211,3 +212,14 @@ class GaussianProcessSurrogate(Surrogate):
             botorch.optim.fit.fit_gpytorch_mll_torch(mll, step_limit=200)
         else:
             botorch.fit.fit_gpytorch_mll(mll)
+
+    def __str__(self) -> str:
+        output_str = super().__str__()
+        # Replace first line which contains the incorrect name of the parent class
+        output_str = self.__class__.__name__ + output_str[output_str.find("\n") :]
+        fields = [
+            create_str_representation(
+                "Kernel factory", [self.kernel_factory], single_line=True
+            ),
+        ]
+        return create_str_representation(output_str, fields)
