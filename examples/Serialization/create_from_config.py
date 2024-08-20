@@ -59,14 +59,13 @@ CONFIG = str(
         "constraints": []
     },
     "objective": {
-        "mode": "SINGLE",
-        "targets": [
+        "type": "SingleTargetObjective",
+        "target":
             {
                 "type": "NumericalTarget",
                 "name": "Yield",
                 "mode": "MAX"
             }
-        ]
     },
     "recommender": {
         "type": "TwoPhaseMetaRecommender",
@@ -96,5 +95,6 @@ CONFIG = str(
 campaign = Campaign.from_config(CONFIG)
 
 # We now perform a recommendation as usual and print it.
+
 recommendation = campaign.recommend(batch_size=3)
 print(recommendation)
