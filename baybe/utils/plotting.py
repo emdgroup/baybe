@@ -140,3 +140,9 @@ def create_example_plots(
         else:
             warnings.warn("Plots could not be saved.")
     plt.close()
+
+
+def indent(text: str, amount: int = 3, ch: str = " ") -> str:
+    """Indent a given text by a certain amount."""
+    padding = amount * ch
+    return "".join(padding + line for line in text.splitlines(True))
