@@ -71,9 +71,6 @@ class SubspaceContinuous(SerialMixin):
         if self.is_empty:
             return ""
 
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-
         # Convert the lists to dataFrames to be able to use pretty_printing
         param_list = [param.summary() for param in self.parameters]
         eq_constraints_list = [constr.summary() for constr in self.constraints_lin_eq]
@@ -89,13 +86,13 @@ class SubspaceContinuous(SerialMixin):
         nonlinear_constr_df = pd.DataFrame(nonlin_constraints_list)
 
         # Put all attributes of the continuous class in one string
-        continuous_str = f"""{start_bold}Continuous Search Space{end_bold}
-            \n{start_bold}Continuous Parameters{end_bold}\n{pretty_print_df(param_df)}
-            \n{start_bold}List of Linear Equality Constraints{end_bold}
+        continuous_str = f"""Continuous Search Space
+            \nContinuous Parameters\n{pretty_print_df(param_df)}
+            \nList of Linear Equality Constraints
             \r{pretty_print_df(lin_eq_constr_df)}
-            \n{start_bold}List of Linear Inequality Constraints{end_bold}
+            \nList of Linear Inequality Constraints
             \r{pretty_print_df(lin_ineq_constr_df)}
-            \n{start_bold}List of Nonlinear Constraints{end_bold}
+            \nList of Nonlinear Constraints
             \r{pretty_print_df(nonlinear_constr_df)}"""
 
         return continuous_str.replace("\n", "\n ").replace("\r", "\r ")

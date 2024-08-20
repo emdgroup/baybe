@@ -66,10 +66,8 @@ class SearchSpace(SerialMixin):
     """The (potentially empty) continuous subspace of the overall search space."""
 
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-        head_str = f"""{start_bold}Search Space{end_bold}
-        \n{start_bold}Search Space Type: {end_bold}{self.type.name}"""
+        head_str = f"""Search Space
+        \nSearch Space Type: {self.type.name}"""
 
         # Check the sub space size to avoid adding unwanted break lines
         # if the sub space is empty

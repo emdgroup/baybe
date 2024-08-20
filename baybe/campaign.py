@@ -84,16 +84,13 @@ class Campaign(SerialMixin):
     """The cached recommendations."""
 
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-
         # Get str representation of campaign fields
         fields_to_print = [self.searchspace, self.objective, self.recommender]
         fields_str = "\n\n".join(str(x) for x in fields_to_print)
 
         # Put all relevant attributes of the campaign in one string
-        campaign_str = f"""{start_bold}Campaign{end_bold}
-        \n{start_bold}Meta Data{end_bold}\nBatches Done: {self.n_batches_done}
+        campaign_str = f"""Campaign
+        \nMeta Data\nBatches Done: {self.n_batches_done}
         \rFits Done: {self.n_fits_done}\n\n{fields_str}\n"""
 
         return campaign_str.replace("\n", "\n ").replace("\r", "\r ")
