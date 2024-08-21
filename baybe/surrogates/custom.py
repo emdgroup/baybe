@@ -10,7 +10,7 @@ It is planned to solve this issue in the future.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
+from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 from attrs import define, field, validators
 
@@ -96,7 +96,7 @@ class CustomONNXSurrogate(GaussianSurrogate):
             torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
         )
 
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # TODO: This method actually needs to raise a NotImplementedError because
         #   ONNX surrogate models cannot be retrained. However, this would currently
         #   break the code since `BayesianRecommender` assumes that surrogates

@@ -5,7 +5,7 @@ from __future__ import annotations
 import typing
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
@@ -55,7 +55,7 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         # Regular operation
         return _posterior_original(self, candidates)
 
-    def _fit_new(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
+    def _fit_new(self, train_x: Tensor, train_y: Tensor) -> None:
         """Original fit but with fallback model creation for constant targets."""
         if not (train_y.ndim == 2 and train_y.shape[-1] == 1):
             raise NotImplementedError(
@@ -65,13 +65,13 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
         # Alternative model fallback
         if train_y.numel() == 1 or train_y.std() < std_threshold:
             model = MeanPredictionSurrogate()
-            model._fit(train_x, train_y, context)
+            model._fit(train_x, train_y)
             _constant_target_model_store[id(self)] = model
 
         # Regular operation
         else:
             _constant_target_model_store.pop(id(self), None)
-            _fit_original(self, train_x, train_y, context)
+            _fit_original(self, train_x, train_y)
 
     # Replace the methods
     cls._posterior = _posterior_new  # type: ignore

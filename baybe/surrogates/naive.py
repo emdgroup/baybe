@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from attr import define, field
 
@@ -43,6 +43,6 @@ class MeanPredictionSurrogate(GaussianSurrogate):
         var = torch.ones(len(candidates))
         return mean, var
 
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = train_y.mean().item()

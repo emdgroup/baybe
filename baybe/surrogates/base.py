@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Protocol, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 import pandas as pd
 from attrs import define, field
@@ -49,9 +49,6 @@ bytes to string and back, since the specification is a bijection between
 0-255 and the character set.
 """
 
-ModelContext = TypeVar("ModelContext", Any, None)
-"""Context information that is provided to the model fitting method."""
-
 
 class _NoTransform(Enum):
     """Sentinel class."""
@@ -89,7 +86,7 @@ class SurrogateProtocol(Protocol):
 
 
 @define
-class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
+class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
     # Class variables
@@ -259,17 +256,6 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
             obtained via :meth:`baybe.surrogates.base.Surrogate._make_output_scaler`.
         """
 
-    @staticmethod
-    def _get_model_context(
-        searchspace: SearchSpace, objective: Objective
-    ) -> ModelContext:
-        """Get the surrogate-specific context for model fitting.
-
-        By default, no context is created. If context is required, subclasses are
-        expected to override this method.
-        """
-        return None
-
     def fit(
         self,
         searchspace: SearchSpace,
@@ -323,10 +309,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin, Generic[ModelContext]):
             if self._output_scaler is _IDENTITY_TRANSFORM
             else self._output_scaler(train_y_comp_rep)[0]
         )
-        self._fit(train_x, train_y, self._get_model_context(searchspace, objective))
+        self._fit(train_x, train_y)
 
     @abstractmethod
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: ModelContext) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Perform the actual fitting logic."""
 
 

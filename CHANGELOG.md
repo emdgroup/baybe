@@ -22,8 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The transition from experimental to computational representation no longer happens
   in the recommender but in the surrogate
-- Context information required by `Surrogate` models is now cleanly encapsulated into
-  a `context` object passed to `Surrogate._fit`
 - Fallback models created by `catch_constant_targets` are stored outside the surrogate
 - `to_tensor` now also handles `numpy` arrays
 

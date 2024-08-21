@@ -94,7 +94,7 @@ class RandomForestSurrogate(GaussianSurrogate):
 
         return mean, var
 
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: Any) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())

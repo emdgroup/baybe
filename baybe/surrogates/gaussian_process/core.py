@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, ClassVar
 from attrs import define, field
 from attrs.validators import instance_of
 
-from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -140,23 +139,18 @@ class GaussianProcessSurrogate(Surrogate):
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
 
-    @staticmethod
-    def _get_model_context(
-        searchspace: SearchSpace, objective: Objective
-    ) -> _ModelContext:
-        # See base class.
-        return _ModelContext(searchspace=searchspace)
-
     def _posterior(self, candidates: Tensor, /) -> Posterior:
         # See base class.
         return self._model.posterior(candidates)
 
-    def _fit(self, train_x: Tensor, train_y: Tensor, context: _ModelContext) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
 
         import botorch
         import gpytorch
         import torch
+
+        context = _ModelContext(self._searchspace)
 
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
 
