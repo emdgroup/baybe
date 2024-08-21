@@ -92,6 +92,7 @@ def test_invalid_bounds_numerical_continuous_parameter(bounds, error):
 @pytest.mark.parametrize(
     ("values", "error"),
     [
+        param("ABC", ValueError, id="string"),
         param(["", "A"], ValueError, id="empty_string"),
         param(["A", "A"], ValueError, id="duplicates"),
         param(["A"], ValueError, id="only_one_value"),
@@ -113,6 +114,7 @@ def test_invalid_encoding_categorical_parameter():
 @pytest.mark.parametrize(
     ("values", "active_values", "error"),
     [
+        param("ABC", NOTHING, ValueError, id="string"),
         param(["", "A"], NOTHING, ValueError, id="empty_string"),
         param(["A", "A"], NOTHING, ValueError, id="duplicates"),
         param(["A"], NOTHING, ValueError, id="only_one_value"),
