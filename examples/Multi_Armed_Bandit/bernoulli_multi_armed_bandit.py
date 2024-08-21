@@ -1,4 +1,4 @@
-## Example for a Multi Armed Bandit
+## Bernoulli Multi Armed Bandit
 
 # This example shows how to use the bernoulli multi armed bandit surrogate.
 
@@ -27,11 +27,13 @@ from baybe.targets import BinaryTarget
 
 ### Setup
 
-# We are using a 5-armed bandit in this example. The bandit has a random win rate for now.
+# We are using a 5-armed bandit in this example. The bandit has a hard coded win rate for now.
+# As acquisition functions we are taking ThompsonSampling for the online optimization task and
+# the identification of the maximizing arm. For the active learning task we are taking the PosteriorStandardDeviation.
 
+N_ARMS = 5
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 RENDER = not SMOKE_TEST
-N_ARMS = 5
 N_MC_RUNS = 10 if not SMOKE_TEST else 3
 COLORS = ["blue", "red", "green", "black", "pink"]
 N_ITERATIONS = 300 if not SMOKE_TEST else 50
@@ -43,11 +45,16 @@ acqfs = [
 ]
 real_means = Tensor([0.3, 0.4, 0.6, 0.65, 0.8])
 mab = MultiArmedBanditModel(
-    real_distributions=[bernoulli(real_means[i]) for i in range(N_ARMS)]
+    real_distributions=[bernoulli(real_mean) for real_mean in real_means]
 )
-
 print("real means", real_means)
 
+### Campaign
+
+# We are using the BinaryTarget as we are modeling a bernoulli reward.
+# The searchspace has one categorical parameter to model the arms of the bandit.
+
+# To test the approach we are running multiple Monte Carlo runs per acquisition function.
 
 for acqf in acqfs:
     np.random.seed(0)
@@ -60,11 +67,6 @@ for acqf in acqfs:
     posterior_params = None
 
     for mc_run_i in range(N_MC_RUNS):
-        ### Campaign
-
-        # We are using the BinaryTarget as we are modeling a bernoulli reward.
-        # The searchspace has one categorical parameter to model the arms of the bandit.
-
         target = BinaryTarget(name="clicked")
         objective = SingleTargetObjective(target=target)
         parameters = [
@@ -88,8 +90,6 @@ for acqf in acqfs:
             ),
         )
         campaign = Campaign(searchspace, objective, recommender)
-
-        ### Optimization Loop
 
         total_reward = 0
         estimated_means = []
