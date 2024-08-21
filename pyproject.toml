@@ -90,6 +90,7 @@ dev = [
     "baybe[test]",
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
+    "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
 ]
 
 docs = [
