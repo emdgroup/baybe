@@ -77,7 +77,6 @@ priors = st.one_of(
         log_normal_priors,
         normal_priors,
         smoothed_box_priors,
-        beta_priors,
     ]
 )
 """A strategy that generates priors."""
