@@ -52,6 +52,16 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
 
         return Beta(*self._posterior_beta_parameters()).mode
 
+    def posterior_mean_per_arm(self) -> Tensor:
+        """Compute the posterior mean win rates for all arms.
+
+        Returns:
+            A tensor of length ``N``, where ``N`` is the number of bandit arms.
+        """
+        from torch.distributions import Beta
+
+        return Beta(*self._posterior_beta_parameters()).mean
+
     def _posterior_beta_parameters(self) -> Tensor:
         """Compute the posterior parameters of the beta distribution.
 
