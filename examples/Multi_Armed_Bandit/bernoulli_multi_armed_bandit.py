@@ -2,15 +2,12 @@
 
 # This example shows how to use the bernoulli multi armed bandit surrogate.
 
-import os
 
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.animation import FuncAnimation, PillowWriter
 from multi_armed_bandit_model import MultiArmedBanditModel
 from scipy.stats import bernoulli, beta
 from torch import Tensor
-from utils import max_rv_distribution
+from utils import create_mab_plot, max_rv_distribution
 
 from baybe import Campaign
 from baybe.acquisition import PosteriorStandardDeviation, ThompsonSampling
@@ -32,10 +29,9 @@ from baybe.targets import BinaryTarget
 # the identification of the maximizing arm. For the active learning task we are taking the PosteriorStandardDeviation.
 
 N_ARMS = 5
-SMOKE_TEST = "SMOKE_TEST" in os.environ
-RENDER = not SMOKE_TEST
+SMOKE_TEST = True  # "SMOKE_TEST" in os.environ
+RENDER = True  # not SMOKE_TEST
 N_MC_RUNS = 10 if not SMOKE_TEST else 3
-COLORS = ["blue", "red", "green", "black", "pink"]
 N_ITERATIONS = 300 if not SMOKE_TEST else 50
 acqfs = [
     # Aptimization (best arm identification)
@@ -138,120 +134,17 @@ for acqf in acqfs:
     print("MSE last iteration", mc_estimated_means_squared_error_mean[-1].item())
 
     if RENDER:
-        fig, [top_left_ax, middle_ax, bottom_ax] = plt.subplots(
-            3,
-            height_ratios=(0.25, 0.25, 0.5),
-        )
-        fig.set_figheight(7)
-        top_right_ax = top_left_ax.twinx()
-
-        def animate(i):
-            """Animate one frame."""
-            bottom_ax.clear()
-            bottom_ax.set_xlim(-0.05, 1.05)
-            bottom_ax.set_ylim(-0.1, 8)
-            top_left_ax.clear()
-            top_right_ax.clear()
-            middle_ax.clear()
-            middle_ax.set_xlim(0, N_ITERATIONS)
-            middle_ax.set_ylim(0, 1)
-            top_left_ax.set_xlim(0, N_ITERATIONS)
-            top_left_ax.set_ylim(0, (mc_regret_mean + mc_regret_std).max() + 0.05)
-            top_right_ax.set_ylim(
-                0,
-                (
-                    mc_estimated_means_squared_error_mean
-                    + mc_estimated_means_squared_error_std
-                ).max()
-                + 0.5,
-            )
-            current_params = posterior_params[i].T
-            current_means = estimated_means[i]
-
-            for j in range(N_ARMS):
-                if current_means[j]:
-                    bottom_ax.vlines(
-                        x=current_means[j],
-                        ymin=0,
-                        ymax=0.5,
-                        color=COLORS[j],
-                        label=f"Est. {j}",
-                        linestyle="dashed",
-                    )
-                x = np.arange(0, 1, 0.01)
-                bottom_ax.plot(
-                    x,
-                    beta.pdf(x, *current_params[j]),
-                    color=COLORS[j],
-                    label=f"Dist. {j}",
-                )
-                bottom_ax.scatter(
-                    [real_means[j]],
-                    [0],
-                    color=COLORS[j],
-                    label=f"Real {j}",
-                )
-            x = list(range(i))
-            top_left_ax.plot(
-                x,
-                mc_regret_mean[:i],
-                color="red",
-                label="Regret",
-            )
-            top_left_ax.fill_between(
-                x,
-                mc_regret_mean[:i] + mc_regret_std[:i],
-                mc_regret_mean[:i] - mc_regret_std[:i],
-                facecolor="red",
-                alpha=0.2,
-            )
-            top_right_ax.plot(
-                x,
-                mc_estimated_means_squared_error_mean[:i],
-                color="blue",
-                label="MSE",
-            )
-            top_right_ax.fill_between(
-                x,
-                mc_estimated_means_squared_error_mean[:i]
-                + mc_estimated_means_squared_error_std[:i],
-                mc_estimated_means_squared_error_mean[:i]
-                - mc_estimated_means_squared_error_std[:i],
-                facecolor="blue",
-                alpha=0.2,
-            )
-            middle_ax.stackplot(
-                x,
-                *max_rv_distribution_over_iterations[:i].T,
-                labels=[f"Arm {i+1}" for i in range(N_ARMS)],
-                colors=COLORS,
-            )
-            middle_ax.set_xlabel("Iterations")
-            middle_ax.set_ylabel(r"$P(X_i > X_{-i})$")
-
-            bottom_ax.set_xlabel("Win Rate")
-            bottom_ax.set_ylabel("Density")
-            top_left_ax.set_ylabel("Regret")
-            top_right_ax.set_ylabel("MSE")
-            top_right_ax.yaxis.set_label_position("right")
-
-            bottom_ax.legend(loc="upper left", ncol=N_ARMS, prop={"size": 8})
-            top_left_ax.legend(loc="upper left", ncol=1, prop={"size": 8})
-            top_right_ax.legend(loc="upper right", ncol=1, prop={"size": 8})
-            # middle_ax.legend(loc="lower right", ncol=N_ARMS, prop={"size": 8})
-            plt.tight_layout()
-
-        ani = FuncAnimation(
-            fig,
-            animate,
-            interval=40,
-            blit=False,
-            repeat=False,
-            frames=N_ITERATIONS - 1,
-        )
-        plt.title("Optimizing a Bernoulli Multi-Armed Bandit")
-        ani.save(
-            f"BMAB_optimization_{acqf.__class__.__name__}.gif",
-            dpi=300,
-            writer=PillowWriter(fps=15),
+        create_mab_plot(
+            N_ITERATIONS,
+            N_ARMS,
+            mc_regret_mean,
+            mc_regret_std,
+            mc_estimated_means_squared_error_mean,
+            mc_estimated_means_squared_error_std,
+            max_rv_distribution_over_iterations,
+            posterior_params,
+            real_means,
+            estimated_means,
+            acqf,
+            "bernoulli_multi_armed_bandit",
         )

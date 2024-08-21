@@ -13,33 +13,8 @@ from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def create_example_plots(
-    ax: Axes | Axes3D,
-    base_name: str,
-    path: Path = Path("."),
-) -> None:
-    """Create plots from an Axes object and save them as a svg file.
-
-    If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
-    immediately returns.
-
-    The function attempts to read the predefined themes from ``plotting_themes.json``.
-    For each theme it finds, a file ``{base_name}_{theme}.svg`` is being created.
-    If the file cannot be found, if the JSON cannot be loaded or if the JSON is not well
-    configured, a fallback theme is used.
-
-    Args:
-        ax: The Axes object containing the figure that should be plotted.
-        base_name: The base name that is used for naming the output files.
-        path: Optional path to the directory in which the plots should be saved.
-
-    Returns:
-        The ``Figure`` containing ``ax``
-    """
-    # Check whether we immediately return due to just running a SMOKE_TEST
-    if "SMOKE_TEST" in os.environ:
-        return
-
+def get_themes():
+    """Find plotting thems."""
     # Define a fallback theme in case no configuration is found
     fallback: dict[str, Any] = {
         "color": "black",
@@ -72,6 +47,38 @@ def create_example_plots(
                 UserWarning,
             )
             themes = {"fallback": fallback}
+
+    return themes, fallback
+
+
+def create_example_plots(
+    ax: Axes | Axes3D,
+    base_name: str,
+    path: Path = Path("."),
+) -> None:
+    """Create plots from an Axes object and save them as a svg file.
+
+    If the ``SMOKE_TEST`` variable is set, no plots are being created and this method
+    immediately returns.
+
+    The function attempts to read the predefined themes from ``plotting_themes.json``.
+    For each theme it finds, a file ``{base_name}_{theme}.svg`` is being created.
+    If the file cannot be found, if the JSON cannot be loaded or if the JSON is not well
+    configured, a fallback theme is used.
+
+    Args:
+        ax: The Axes object containing the figure that should be plotted.
+        base_name: The base name that is used for naming the output files.
+        path: Optional path to the directory in which the plots should be saved.
+
+    Returns:
+        The ``Figure`` containing ``ax``
+    """
+    # Check whether we immediately return due to just running a SMOKE_TEST
+    if "SMOKE_TEST" in os.environ:
+        return
+
+    themes, fallback = get_themes()
 
     for theme_name in themes:
         # Get all of the values from the themes
