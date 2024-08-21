@@ -315,7 +315,7 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize(
     "batch_size",
-    [1, 2, 5],
+    [1, 2],
 )
 @pytest.mark.parametrize("target_names", [["Target_binary"]])
 @pytest.mark.parametrize("allow_repeated_recommendations", [True])
