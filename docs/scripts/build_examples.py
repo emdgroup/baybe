@@ -1,5 +1,6 @@
 """Utility for creating the examples."""
 
+import os
 import shutil
 import textwrap
 from pathlib import Path
@@ -134,7 +135,11 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
 
             to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
 
-            check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
+            check_call(
+                convert_execute,
+                stdout=DEVNULL,
+                stderr=STDOUT,
+            )
             check_call(
                 to_markdown,
                 stdout=DEVNULL,
@@ -182,6 +187,28 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
                 lines.append(":align: center\n")
                 lines.append(":class: only-dark\n")
                 lines.append("```\n")
+            # search for GIFs
+            gif_base_names = {
+                file.rsplit("_", 1)[0]
+                for file in os.listdir(sub_directory)
+                if file.endswith("gif")
+            }
+            for gif_base_name in gif_base_names:
+                light_figure = Path(sub_directory / (gif_base_name + "_light.gif"))
+                dark_figure = Path(sub_directory / (gif_base_name + "_dark.gif"))
+                if light_figure.is_file() and dark_figure.is_file():
+                    lines.append(f"```{{image}} {gif_base_name}_light.gif\n")
+                    lines.append(":alt: StreamPlayer\n")
+                    lines.append(":align: center\n")
+                    lines.append(":width: 500\n")
+                    lines.append(":class: only-light\n")
+                    lines.append("```\n")
+                    lines.append(f"```{{image}} {gif_base_name}_dark.gif\n")
+                    lines.append(":alt: StreamPlayer\n")
+                    lines.append(":align: center\n")
+                    lines.append(":width: 500\n")
+                    lines.append(":class: only-dark\n")
+                    lines.append("```\n")
 
             # Rewrite the file
             with open(markdown_path, "w", encoding="UTF-8") as markdown_file:
@@ -209,7 +236,7 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
     # Remove any not markdown files
     for file in destination_directory.glob("**/*"):
         if file.is_file():
-            if file.suffix not in (".md", ".svg") or "Header" in file.name:
+            if file.suffix not in (".md", ".svg", ".gif") or "Header" in file.name:
                 file.unlink(file)
 
     # Remove any remaining empty subdirectories

@@ -2,6 +2,7 @@
 
 # This example shows how to use the bernoulli multi armed bandit surrogate.
 
+import os
 
 import numpy as np
 from multi_armed_bandit_model import MultiArmedBanditModel
@@ -25,16 +26,17 @@ from baybe.targets import BinaryTarget
 ### Setup
 
 # We are using a 5-armed bandit in this example. The bandit has a hard coded win rate for now.
-# As acquisition functions we are taking ThompsonSampling for the online optimization task and
-# the identification of the maximizing arm. For the active learning task we are taking the PosteriorStandardDeviation.
+# As acquisition functions we are using ThompsonSampling for the online optimization task and
+# the identification of the maximizing arm. For the active learning task we are using
+# the PosteriorStandardDeviation acquisition function.
 
 N_ARMS = 5
-SMOKE_TEST = True  # "SMOKE_TEST" in os.environ
-RENDER = True  # not SMOKE_TEST
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+RENDER = not SMOKE_TEST
 N_MC_RUNS = 10 if not SMOKE_TEST else 3
 N_ITERATIONS = 300 if not SMOKE_TEST else 50
 acqfs = [
-    # Aptimization (best arm identification)
+    # Online optimization (maximizing the reward)
     ThompsonSampling(),
     # Active learning (learning the effect size per arm)
     PosteriorStandardDeviation(),
