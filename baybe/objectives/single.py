@@ -6,6 +6,8 @@ from attr.validators import instance_of
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
+from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.plotting import create_str_representation
 
 
 @define(frozen=True, slots=False)
@@ -19,11 +21,14 @@ class SingleTargetObjective(Objective):
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
 
-        objective_str = f"""Objective
-        \nType: {self.__class__.__name__}
-        \nTargets \n{targets_df}"""
+        fields = [
+            create_str_representation(
+                "Type", [self.__class__.__name__], single_line=True
+            ),
+            create_str_representation("Targets", [pretty_print_df(targets_df)]),
+        ]
 
-        return objective_str.replace("\n", "\n ")
+        return create_str_representation("Objective", fields)
 
     @property
     def targets(self) -> tuple[Target, ...]:  # noqa: D102
