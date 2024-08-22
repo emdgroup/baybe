@@ -30,6 +30,7 @@ from baybe.searchspace.validation import (
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.plotting import create_str_representation
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
@@ -81,21 +82,26 @@ class SubspaceContinuous(SerialMixin):
             constr.summary() for constr in self.constraints_nonlin
         ]
         param_df = pd.DataFrame(param_list)
-        lin_eq_constr_df = pd.DataFrame(eq_constraints_list)
-        lin_ineq_constr_df = pd.DataFrame(ineq_constraints_list)
-        nonlinear_constr_df = pd.DataFrame(nonlin_constraints_list)
+        lin_eq_df = pd.DataFrame(eq_constraints_list)
+        lin_ineq_df = pd.DataFrame(ineq_constraints_list)
+        nonlinear_df = pd.DataFrame(nonlin_constraints_list)
 
-        # Put all attributes of the continuous class in one string
-        continuous_str = f"""Continuous Search Space
-            \nContinuous Parameters\n{pretty_print_df(param_df)}
-            \nList of Linear Equality Constraints
-            \r{pretty_print_df(lin_eq_constr_df)}
-            \nList of Linear Inequality Constraints
-            \r{pretty_print_df(lin_ineq_constr_df)}
-            \nList of Nonlinear Constraints
-            \r{pretty_print_df(nonlinear_constr_df)}"""
+        fields = [
+            create_str_representation(
+                "Continuous Parameters:", [pretty_print_df(param_df)]
+            ),
+            create_str_representation(
+                "Linear Equality Constraints:", [pretty_print_df(lin_eq_df)]
+            ),
+            create_str_representation(
+                "Linear Inequality Constraints:", [pretty_print_df(lin_ineq_df)]
+            ),
+            create_str_representation(
+                "Non-linear Constraints:", [pretty_print_df(nonlinear_df)]
+            ),
+        ]
 
-        return continuous_str.replace("\n", "\n ").replace("\r", "\r ")
+        return create_str_representation(self.__class__.__name__, fields)
 
     @property
     def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
