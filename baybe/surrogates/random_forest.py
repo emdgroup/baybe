@@ -16,11 +16,12 @@ from attr import define, field
 from sklearn.ensemble import RandomForestRegressor
 
 from baybe.parameters.base import Parameter
-from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify, catch_constant_targets
+from baybe.surrogates.base import Surrogate
+from baybe.surrogates.utils import catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
+    from botorch.models.ensemble import EnsemblePosterior
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
@@ -28,11 +29,11 @@ if TYPE_CHECKING:
 
 @catch_constant_targets
 @define
-class RandomForestSurrogate(GaussianSurrogate):
+class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
 
     # Class variables
-    joint_posterior: ClassVar[bool] = False
+    joint_posterior: ClassVar[bool] = True
     # See base class.
 
     supports_transfer_learning: ClassVar[bool] = False
@@ -65,10 +66,7 @@ class RandomForestSurrogate(GaussianSurrogate):
         # Tree-like models do not require any output scaling
         return None
 
-    @batchify
-    def _estimate_moments(
-        self, candidates_comp_scaled: Tensor, /
-    ) -> tuple[Tensor, Tensor]:
+    def _posterior(self, candidates_comp_scaled: Tensor, /) -> EnsemblePosterior:
         # See base class.
 
         # FIXME[typing]: It seems there is currently no better way to inform the type
@@ -76,25 +74,30 @@ class RandomForestSurrogate(GaussianSurrogate):
         assert self._model is not None
 
         import torch
+        from botorch.models.ensemble import EnsemblePosterior
+
+        # Extract / augment shapes
+        q_shape = candidates_comp_scaled.shape[-2]
+        if is_t_batched := candidates_comp_scaled.ndim == 3:
+            t_shape = candidates_comp_scaled.shape[-3]
+        else:
+            candidates_comp_scaled = candidates_comp_scaled.unsqueeze(0)
+            t_shape = 1
+        n_estimators = self._model.n_estimators
 
         # Evaluate all trees
-        # NOTE: explicit conversion to ndarray is needed due to a pytorch issue:
-        # https://github.com/pytorch/pytorch/pull/51731
-        # https://github.com/pytorch/pytorch/issues/13918
-        predictions = torch.from_numpy(
-            np.asarray(
-                [
-                    self._model.estimators_[tree].predict(candidates_comp_scaled)
-                    for tree in range(self._model.n_estimators)
-                ]
-            )
-        )
+        predictions = np.zeros((t_shape, n_estimators, q_shape, 1))
+        for t, t_batch in enumerate(candidates_comp_scaled):
+            for q, q_batch in enumerate(t_batch):
+                for e, estimator in enumerate(self._model.estimators_):
+                    predictions[t, e, q, :] = estimator.predict(q_batch.unsqueeze(-1))
+        predictions = torch.from_numpy(predictions)
 
-        # Compute posterior mean and variance
-        mean = predictions.mean(dim=0)
-        var = predictions.var(dim=0)
+        # Remove augmented t-dimensions
+        if not is_t_batched:
+            predictions = predictions.squeeze(0)
 
-        return mean, var
+        return EnsemblePosterior(predictions)
 
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
