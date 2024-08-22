@@ -99,4 +99,4 @@ class RandomForestSurrogate(GaussianSurrogate):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = RandomForestRegressor(**(self.model_params))
-        self._model.fit(train_x, train_y.ravel())
+        self._model.fit(train_x.numpy(), train_y.numpy().ravel())
