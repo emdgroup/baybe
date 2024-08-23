@@ -9,6 +9,7 @@ available in the future. Thus, please have a look in the source code directly.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Collection
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
@@ -17,7 +18,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import catch_constant_targets
+from baybe.surrogates.utils import batchify_ensemble_predictor, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
@@ -69,35 +70,41 @@ class RandomForestSurrogate(Surrogate):
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> EnsemblePosterior:
         # See base class.
 
+        from botorch.models.ensemble import EnsemblePosterior
+
         # FIXME[typing]: It seems there is currently no better way to inform the type
         #   checker that the attribute is available at the time of the function call
         assert self._model is not None
 
-        import torch
-        from botorch.models.ensemble import EnsemblePosterior
+        @batchify_ensemble_predictor
+        def predict(candidates_comp_scaled: Tensor) -> Tensor:
+            """Make the end-to-end ensemble prediction."""
+            import torch
 
-        # Extract / augment shapes
-        q_shape = candidates_comp_scaled.shape[-2]
-        if is_t_batched := candidates_comp_scaled.ndim == 3:
-            t_shape = candidates_comp_scaled.shape[-3]
-        else:
-            candidates_comp_scaled = candidates_comp_scaled.unsqueeze(0)
-            t_shape = 1
-        n_estimators = self._model.n_estimators
+            return torch.from_numpy(
+                self._predict_ensemble(
+                    self._model.estimators_, candidates_comp_scaled.numpy()
+                )
+            )
+
+        return EnsemblePosterior(predict(candidates_comp_scaled).unsqueeze(-1))
+
+    @staticmethod
+    def _predict_ensemble(
+        predictors: Collection[Callable[[np.ndarray], np.ndarray]],
+        candidates: np.ndarray,
+    ) -> Tensor:
+        """Evaluate an ensemble of predictors on a given candidate set."""
+        # Extract shapes
+        n_candidates = len(candidates)
+        n_estimators = len(predictors)
 
         # Evaluate all trees
-        predictions = np.zeros((t_shape, n_estimators, q_shape, 1))
-        for t, t_batch in enumerate(candidates_comp_scaled):
-            for q, q_batch in enumerate(t_batch):
-                for e, estimator in enumerate(self._model.estimators_):
-                    predictions[t, e, q, :] = estimator.predict(q_batch.unsqueeze(-1))
-        predictions = torch.from_numpy(predictions)
+        predictions = np.zeros((n_estimators, n_candidates))
+        for p, predictor in enumerate(predictors):
+            predictions[p] = predictor.predict(candidates)
 
-        # Remove augmented t-dimensions
-        if not is_t_batched:
-            predictions = predictions.squeeze(0)
-
-        return EnsemblePosterior(predictions)
+        return predictions
 
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.

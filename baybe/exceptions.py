@@ -67,3 +67,7 @@ class ModelNotTrainedError(Exception):
 
 class UnmatchedAttributeError(Exception):
     """An attribute cannot be matched against a certain callable signature."""
+
+
+class InvalidSurrogateModelError(Exception):
+    """A surrogate model does not behave as required."""
