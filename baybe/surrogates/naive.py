@@ -21,14 +21,9 @@ class MeanPredictionSurrogate(IndependentGaussianSurrogate):
     as posterior mean and a (data-independent) constant posterior variance.
     """
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     _model: float | None = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
 

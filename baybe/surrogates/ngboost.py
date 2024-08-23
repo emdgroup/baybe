@@ -30,17 +30,12 @@ if TYPE_CHECKING:
 class NGBoostSurrogate(IndependentGaussianSurrogate):
     """A natural-gradient-boosting surrogate model."""
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
     """Class variable encoding the default model parameters."""
 
-    # Object variables
     model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,

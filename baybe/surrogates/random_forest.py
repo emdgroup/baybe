@@ -33,14 +33,9 @@ if TYPE_CHECKING:
 class RandomForestSurrogate(Surrogate):
     """A random forest surrogate model."""
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = True
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,

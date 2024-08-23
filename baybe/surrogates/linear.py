@@ -27,14 +27,9 @@ if TYPE_CHECKING:
 class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     """A Bayesian linear regression surrogate model."""
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,

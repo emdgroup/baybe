@@ -49,14 +49,9 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
     Note that these surrogates cannot be retrained.
     """
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     onnx_input_name: str = field(validator=validators.instance_of(str))
     """The input name used for constructing the ONNX str."""
 
