@@ -71,7 +71,7 @@ def test_cardinality_constraint(campaign, n_iterations, batch_size):
     """Test cardinality constraint for both random recommender and botorch
     recommender."""  # noqa
 
-    MIN_CARDINALITY = 0
+    MIN_CARDINALITY = 1
     MAX_CARDINALITY = 2
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     recommendations = campaign.measurements
