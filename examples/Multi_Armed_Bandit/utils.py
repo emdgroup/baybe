@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from pathlib import Path
 
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
@@ -8,6 +9,27 @@ from scipy.integrate import quad
 from scipy.stats import beta, rv_continuous
 
 from baybe.utils.plotting import get_themes
+
+
+class TransparentPillowWriter(PillowWriter):
+    """Pillow writer which is able to write GIFs with transparent background."""
+
+    def grab_frame(self, **savefig_kwargs):
+        """Override the savefig_kwargs after the animation call changed the original values."""
+        savefig_kwargs["facecolor"] = "#00000000"
+        savefig_kwargs["transparent"] = True
+        super().grab_frame(**savefig_kwargs)
+
+    def finish(self):
+        """Save GIF without rendering ontop of the last frame."""
+        self._frames[0].save(
+            self.outfile,
+            save_all=True,
+            append_images=self._frames[1:],
+            duration=int(1000 / self.fps),
+            loop=0,  # loop forever
+            disposal=2,  # dont draw ontop of last frame
+        )
 
 
 def max_rv_distribution(
@@ -44,20 +66,26 @@ def create_mab_plot(
     base_name,
 ):
     """Create multi armed bandit plots for multiple mc runs."""
-    COLORS = ["blue", "red", "green", "aqua", "pink"]
+    # Merck colors
+    MERCK_BLUE = "#0f69af"
+    MERCK_RED = "#e61e50"
+    COLORS = [
+        MERCK_BLUE,
+        MERCK_RED,
+        "#a5cd50",
+        "#2dbecd",
+        "#eb3c96",
+    ]
     themes, _ = get_themes()
 
     for theme_name in themes:
-        if theme_name == "dark":
-            plt.style.use("dark_background")
-        else:
-            plt.style.use("default")
         fig, [top_left_ax, middle_ax, bottom_ax] = plt.subplots(
             3,
             height_ratios=(0.25, 0.25, 0.5),
         )
         fig.set_figheight(7)
         top_right_ax = top_left_ax.twinx()
+        color = themes[theme_name]["color"]
 
         def animate(i):
             """Animate one frame."""
@@ -106,24 +134,21 @@ def create_mab_plot(
                     label=f"Real {j}",
                 )
             x = list(range(i))
-            top_left_ax.plot(
-                x,
-                mc_regret_mean[:i],
-                color="red",
-                label="Regret",
-            )
+            alpha = 0.5
             top_left_ax.fill_between(
                 x,
                 mc_regret_mean[:i] + mc_regret_std[:i],
                 mc_regret_mean[:i] - mc_regret_std[:i],
-                facecolor="red",
-                alpha=0.2,
+                # Pillow does not recognize the alpha on transparent background when creating a GIF, so this hack creates a slightly ligher color scaled by the wanted alpha.
+                facecolor=alpha * np.array(mcolors.to_rgba(MERCK_RED)) + 1 - alpha,
+                # The alpha needs to be set as Pillow recognizes it when two plots intersect.
+                alpha=alpha,
             )
-            top_right_ax.plot(
+            top_left_ax.plot(
                 x,
-                mc_estimated_means_squared_error_mean[:i],
-                color="blue",
-                label="MSE",
+                mc_regret_mean[:i],
+                color=MERCK_RED,
+                label="Regret",
             )
             top_right_ax.fill_between(
                 x,
@@ -131,8 +156,14 @@ def create_mab_plot(
                 + mc_estimated_means_squared_error_std[:i],
                 mc_estimated_means_squared_error_mean[:i]
                 - mc_estimated_means_squared_error_std[:i],
-                facecolor="blue",
-                alpha=0.2,
+                facecolor=alpha * np.array(mcolors.to_rgba(MERCK_BLUE)) + 1 - alpha,
+                alpha=alpha,
+            )
+            top_right_ax.plot(
+                x,
+                mc_estimated_means_squared_error_mean[:i],
+                color=MERCK_BLUE,
+                label="MSE",
             )
             middle_ax.stackplot(
                 x,
@@ -154,16 +185,36 @@ def create_mab_plot(
             top_right_ax.legend(loc="upper right", ncol=1, prop={"size": 8})
             plt.tight_layout()
 
+            # Realize theme
+            for ax in [top_left_ax, top_right_ax, middle_ax, bottom_ax]:
+                for key in ax.spines.keys():
+                    ax.spines[key].set_color(color)
+                ax.xaxis.label.set_color(color)
+                ax.yaxis.label.set_color(color)
+                ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
+                for label in ticklabels:
+                    label.set_color(color)
+                legend = ax.get_legend()
+                if legend:
+                    frame = legend.get_frame()
+                    # frame.set_alpha(themes[theme_name]["framealpha"])
+                    frame.set_color(themes[theme_name]["legend_color"])
+                    legend.get_title().set_color(color)
+                    for text in legend.get_texts():
+                        text.set_color(color)
+
+        writer = TransparentPillowWriter(fps=15, codec="png")
+
         ani = FuncAnimation(
             fig,
             animate,
             interval=40,
-            blit=False,
             repeat=False,
             frames=n_iterations - 1,
         )
         fig.suptitle(
-            f"Optimizing a Bernoulli Multi-Armed Bandit with {acqf.__class__.__name__}"
+            f"Optimizing a Bernoulli Multi-Armed Bandit with {acqf.__class__.__name__}",
+            color=color,
         )
         output_path = Path(
             ".", f"{base_name}_{acqf.__class__.__name__}_{theme_name}.gif"
@@ -171,5 +222,5 @@ def create_mab_plot(
         ani.save(
             output_path,
             dpi=300,
-            writer=PillowWriter(fps=15),
+            writer=writer,
         )

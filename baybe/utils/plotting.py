@@ -21,6 +21,7 @@ def get_themes():
         "figsize": (24, 8),
         "fontsize": 22,
         "framealpha": 0.3,
+        "legend_color": "white",
     }
 
     # Try to find the plotting themes by backtracking
