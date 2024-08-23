@@ -1,5 +1,7 @@
 """Test for imposing continuous constraints."""
 
+import sys
+
 import numpy as np
 import pytest
 
@@ -7,7 +9,6 @@ from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
-from baybe.searchspace.continuous import ZERO_THRESHOLD
 from tests.conftest import run_iterations
 from tests.constraints.test_cardinality_constraint_continuous import _validate_samples
 
@@ -87,7 +88,7 @@ def test_cardinality_constraint(campaign, n_iterations, batch_size):
             max_cardinality=MAX_CARDINALITY,
             min_cardinality=MIN_CARDINALITY,
             batch_size=batch_size,
-            threshold=ZERO_THRESHOLD,
+            threshold=sys.float_info.min,
         )
 
 

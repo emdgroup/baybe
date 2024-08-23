@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import sys
 import warnings
 from collections.abc import Collection, Iterable, Sequence
 from itertools import chain, product
@@ -32,6 +33,7 @@ from baybe.searchspace.validation import (
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.interval import Interval
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
@@ -306,16 +308,16 @@ class SubspaceContinuous(SerialMixin):
 
     def _ensure_nonzero_parameters(
         self,
-        inactive_parameters: Collection[str],
-        inactivity_threshold: float = 1e-5,
+        inactive_parameter_names: Collection[str],
+        inactivity_threshold: float = sys.float_info.min,
     ) -> SubspaceContinuous:
         """Create a new subspace with following several actions.
 
-        * Ensure active parameter != 0.0.
-        * Remove cardinality constraint.
+        * Remove cardinality constraints.
+        * Ensure active parameters != 0.0 when its bounds locate on zero.
 
         Args:
-            inactive_parameters: A list of inactive parameters.
+            inactive_parameter_names: A list of inactive parameters.
             inactivity_threshold: Threshold for checking whether a value is zero.
 
         Returns:
@@ -327,46 +329,43 @@ class SubspaceContinuous(SerialMixin):
         # TODO: Shouldn't the x != 0 constraints be applied on the level of the
         #   individual constrains, also taking into account whether min_cardinality > 0?
 
-        # TODO: Instead of adding additional constraints, why not alter the parameter
-        #   bounds? In case we keep the constraints: is the sign of the threshold
-        #   correct?
+        def ensure_active_parameters(
+            parameters: tuple[NumericalContinuousParameter, ...],
+            active_parameter_names: Collection[str],
+        ) -> tuple[NumericalContinuousParameter, ...]:
+            parameters_active_guaranteed = []
+            for p in parameters:
+                if p.name not in active_parameter_names:
+                    bounds = p.bounds
+                # Active parameter x with bounds [..., 0], ensure x != 0
+                elif p.bounds.upper == 0.0:
+                    bounds = Interval(lower=p.bounds.lower, upper=inactivity_threshold)
+                # Active parameter x with bounds [0, ...], ensure x != 0
+                elif p.bounds.lower == 0.0:
+                    bounds = Interval(lower=inactivity_threshold, upper=p.bounds.upper)
+                # TODO: For active parameter x in [..., 0, ...], ensure x != 0 is not
+                #  done.
+                else:
+                    bounds = p.bounds
+                parameters_active_guaranteed.append(
+                    NumericalContinuousParameter(
+                        name=p.name,
+                        bounds=bounds,
+                    )
+                )
+            return tuple(parameters_active_guaranteed)
 
         # Active parameters: parameters involved in cardinality constraints
         active_parameter_names = set(
             self.param_names_in_cardinality_constraint
-        ).difference(set(inactive_parameters))
-
-        constraints_lin_ineq = list(self.constraints_lin_ineq)
-        for name in active_parameter_names:
-            parameter = next(p for p in self.parameters if p.name == name)
-
-            # TODO: Ensure x != 0 when x in [..., 0, ...] is not done. Do we need it?
-            # TODO: To ensure the minimum cardinality constraints, shall we keep the x
-            #  != 0 operations or shall we instead skip the invalid results at the end
-            # Ensure x != 0 when bounds = [..., 0]. This is needed, otherwise
-            # the minimum cardinality constraint is easily violated
-            if parameter.bounds.upper == 0:
-                constraints_lin_ineq.append(
-                    ContinuousLinearInequalityConstraint(
-                        parameters=[name],
-                        coefficients=[-1.0],
-                        rhs=min(inactivity_threshold, -parameter.bounds.lower),
-                    )
-                )
-            # Ensure x != 0 when bounds = [0, ...]
-            elif parameter.bounds.lower == 0:
-                constraints_lin_ineq.append(
-                    ContinuousLinearInequalityConstraint(
-                        parameters=[name],
-                        coefficients=[1.0],
-                        rhs=min(inactivity_threshold, parameter.bounds.upper),
-                    ),
-                )
+        ).difference(set(inactive_parameter_names))
 
         return SubspaceContinuous(
-            parameters=self.parameters,
+            parameters=ensure_active_parameters(
+                self.parameters, active_parameter_names
+            ),
             constraints_lin_eq=self.constraints_lin_eq,
-            constraints_lin_ineq=constraints_lin_ineq,
+            constraints_lin_ineq=self.constraints_lin_ineq,
         )
 
     def transform(
