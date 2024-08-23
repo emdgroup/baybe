@@ -25,6 +25,7 @@ from baybe.constraints.validation import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
+from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import (
     get_transform_parameters,
@@ -306,22 +307,19 @@ class SubspaceContinuous(SerialMixin):
             ],
         )
 
-    def _ensure_nonzero_parameters(
+    def _remove_cardinality_constraints(
         self,
         inactive_parameter_names: Collection[str],
         inactivity_threshold: float = sys.float_info.min,
     ) -> SubspaceContinuous:
-        """Create a new subspace with following several actions.
-
-        * Remove cardinality constraints.
-        * Ensure active parameters != 0.0 when its bounds locate on zero.
+        """Create a copy of the subspace with cardinality constraints removed.
 
         Args:
             inactive_parameter_names: A list of inactive parameters.
             inactivity_threshold: Threshold for checking whether a value is zero.
 
         Returns:
-            A new subspace object.
+            A new subspace object without cardinality constraints.
         """
         # TODO: Revise function name/docstring and arguments. In particular: why
         #   does the function expect the inactive parameters instead of the active ones?
@@ -329,10 +327,21 @@ class SubspaceContinuous(SerialMixin):
         # TODO: Shouldn't the x != 0 constraints be applied on the level of the
         #   individual constrains, also taking into account whether min_cardinality > 0?
 
+        # TODO: Merge _drop_parameters() to this method.
         def ensure_active_parameters(
             parameters: tuple[NumericalContinuousParameter, ...],
             active_parameter_names: Collection[str],
         ) -> tuple[NumericalContinuousParameter, ...]:
+            """Ensure certain parameters being non-zero by adjusting bounds.
+
+            Args:
+                parameters: A list of parameters.
+                active_parameter_names: A list of parameters names that must be
+                    non-zero.
+
+            Returns:
+                A list of parameters with certain parameters guaranteed to be non-zero.
+            """
             parameters_active_guaranteed = []
             for p in parameters:
                 if p.name not in active_parameter_names:
@@ -360,9 +369,18 @@ class SubspaceContinuous(SerialMixin):
             self.param_names_in_cardinality_constraint
         ).difference(set(inactive_parameter_names))
 
+        active_parameters_guaranteed = ensure_active_parameters(
+            self.parameters, active_parameter_names
+        )
+
         return SubspaceContinuous(
-            parameters=ensure_active_parameters(
-                self.parameters, active_parameter_names
+            parameters=tuple(
+                [
+                    _FixedNumericalContinuousParameter(name=p.name, value=0.0)
+                    if p.name in inactive_parameter_names
+                    else p
+                    for p in active_parameters_guaranteed
+                ]
             ),
             constraints_lin_eq=self.constraints_lin_eq,
             constraints_lin_ineq=self.constraints_lin_ineq,

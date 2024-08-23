@@ -12,6 +12,7 @@ from attrs.validators import ge, instance_of
 
 from baybe.constraints import ContinuousCardinalityConstraint
 from baybe.exceptions import NoMCAcquisitionFunctionError
+from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
     SearchSpace,
@@ -209,7 +210,7 @@ class BotorchRecommender(BayesianRecommender):
                 f"This method expects a subspace object with constraints of type "
                 f"{ContinuousCardinalityConstraint.__name__}. For a subspace object "
                 f"without constraints of type"
-                f" {ContinuousCardinalityConstraint.__name__}, "
+                f" {ContinuousCardinalityConstraint.__name__}, use method"
                 f"{self._recommend_continuous_without_cardinality_constraints.__name__}."  # noqa
             )
 
@@ -226,21 +227,23 @@ class BotorchRecommender(BayesianRecommender):
             """
             # Create a new subspace by ensuring all active parameters being
             # non-zeros.
-            subspace_continuous_with_active_params = (
-                subspace_continuous._ensure_nonzero_parameters(inactive_parameters)
+            subspace_continuous_without_cardinality_constraints = (
+                subspace_continuous._remove_cardinality_constraints(inactive_parameters)
             )
             # Optimize the acquisition function
             (
                 points_i,
                 acqf_values_i,
             ) = self._recommend_continuous_without_cardinality_constraints(
-                subspace_continuous_with_active_params,
+                subspace_continuous_without_cardinality_constraints,
                 batch_size,
-                inactive_parameters,
             )
             # Append recommendation list and acquisition function values
             points_all.append(points_i.unsqueeze(0))
             acqf_values_all.append(acqf_values_i.unsqueeze(0))
+
+        # TODO: For certain setting of inactive parameters, the resulting problem may
+        #  be infeasible. Add "try" section to handle it.
 
         # Below we start recommendation
         if (
@@ -275,7 +278,6 @@ class BotorchRecommender(BayesianRecommender):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
-        inactive_parameters: tuple[str, ...] | None = None,
     ) -> tuple[Tensor, Tensor]:
         """Recommend from a continuous search space without cardinality constraints.
 
@@ -283,7 +285,6 @@ class BotorchRecommender(BayesianRecommender):
             subspace_continuous: The continuous subspace from which to generate
                 recommendations.
             batch_size: The size of the recommendation batch.
-            inactive_parameters: A list of inactive parameters.
 
         Returns:
             The recommendations.
@@ -304,17 +305,11 @@ class BotorchRecommender(BayesianRecommender):
                 f"try method {self._recommend_continuous.__name__}."
             )
 
-        if not inactive_parameters:
-            fixed_parameters = None
-        else:
-            # Cast the inactive parameters to the format of fixed features used
-            # in optimize_acqf())
-            indices_inactive_params = [
-                subspace_continuous.param_names.index(key)
-                for key in subspace_continuous.param_names
-                if key in inactive_parameters
-            ]
-            fixed_parameters = {ind: 0.0 for ind in indices_inactive_params}
+        fixed_parameters = {
+            idx: p.value
+            for (idx, p) in enumerate(subspace_continuous.parameters)
+            if isinstance(p, _FixedNumericalContinuousParameter)
+        }
 
         points, acqf_values = optimize_acqf(
             acq_function=self._botorch_acqf,
@@ -322,7 +317,7 @@ class BotorchRecommender(BayesianRecommender):
             q=batch_size,
             num_restarts=5,  # TODO make choice for num_restarts
             raw_samples=10,  # TODO make choice for raw_samples
-            fixed_features=fixed_parameters,
+            fixed_features=fixed_parameters or None,
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
