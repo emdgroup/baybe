@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
+import torch
 from funcy import rpartial
 
 from baybe.parameters.numerical import NumericalDiscreteParameter
@@ -55,7 +56,7 @@ def linear(
     x: np.ndarray, x_min: float, x_max: float, amplitude: float, bias: float
 ) -> np.ndarray:
     """Linear test function."""
-    out = amplitude * np.linspace(0, 1, len(x)) + bias
+    out = amplitude * x + bias
     return out
 
 
@@ -159,9 +160,10 @@ def main():
     recommendations = recommender.recommend(
         st_n_recommendations, searchspace, objective, measurements
     )
-    posterior = surrogate_model.posterior(candidates)
-    mean = posterior.mean.squeeze().detach().numpy()
-    std = posterior.stddev.detach().numpy()
+    with torch.no_grad():
+        posterior = surrogate_model.posterior(candidates)
+    mean = posterior.mean.squeeze().numpy()
+    std = posterior.variance.sqrt().squeeze().numpy()
 
     # Visualize the test function, training points, model predictions, recommendations
     fig = plt.figure()
