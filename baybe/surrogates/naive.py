@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 from attr import define, field
 
 from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify
+from baybe.surrogates.utils import batchify_mean_var_prediction
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -32,7 +32,7 @@ class MeanPredictionSurrogate(GaussianSurrogate):
     _model: float | None = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
 
-    @batchify
+    @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:

@@ -15,7 +15,7 @@ from attr import define, field
 from sklearn.linear_model import ARDRegression
 
 from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify, catch_constant_targets
+from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ class BayesianLinearSurrogate(GaussianSurrogate):
     _model: ARDRegression | None = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    @batchify
+    @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:

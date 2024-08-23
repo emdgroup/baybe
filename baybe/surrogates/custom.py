@@ -25,7 +25,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify
+from baybe.surrogates.utils import batchify_mean_var_prediction
 from baybe.utils.numerical import DTypeFloatONNX
 
 if TYPE_CHECKING:
@@ -78,14 +78,16 @@ class CustomONNXSurrogate(GaussianSurrogate):
         except Exception as exc:
             raise ValueError("Invalid ONNX string") from exc
 
-    @batchify
-    def _estimate_moments(self, candidates_comp: Tensor, /) -> tuple[Tensor, Tensor]:
+    @batchify_mean_var_prediction
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
 
         model_inputs = {
-            self.onnx_input_name: candidates_comp.numpy().astype(DTypeFloatONNX)
+            self.onnx_input_name: candidates_comp_scaled.numpy().astype(DTypeFloatONNX)
         }
         results = self._model.run(None, model_inputs)
 

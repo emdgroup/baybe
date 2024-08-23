@@ -16,7 +16,7 @@ from ngboost import NGBRegressor
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify, catch_constant_targets
+from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ class NGBoostSurrogate(GaussianSurrogate):
         # Tree-like models do not require any output scaling
         return None
 
-    @batchify
+    @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:
