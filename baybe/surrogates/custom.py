@@ -24,7 +24,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import GaussianSurrogate
+from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction
 from baybe.utils.numerical import DTypeFloatONNX
 
@@ -43,7 +43,7 @@ def register_custom_architecture(*args, **kwargs) -> NoReturn:
 
 
 @define(kw_only=True)
-class CustomONNXSurrogate(GaussianSurrogate):
+class CustomONNXSurrogate(IndependentGaussianSurrogate):
     """A wrapper class for custom pretrained surrogate models.
 
     Note that these surrogates cannot be retrained.

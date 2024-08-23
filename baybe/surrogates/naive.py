@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attr import define, field
 
-from baybe.surrogates.base import GaussianSurrogate
+from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @define
-class MeanPredictionSurrogate(GaussianSurrogate):
+class MeanPredictionSurrogate(IndependentGaussianSurrogate):
     """A trivial surrogate model.
 
     It provides the average value of the training targets

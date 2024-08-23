@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from attr import define, field
 from sklearn.linear_model import ARDRegression
 
-from baybe.surrogates.base import GaussianSurrogate
+from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 @catch_constant_targets
 @define
-class BayesianLinearSurrogate(GaussianSurrogate):
+class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     """A Bayesian linear regression surrogate model."""
 
     # Class variables

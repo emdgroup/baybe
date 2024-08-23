@@ -15,7 +15,7 @@ from attr import define, field
 from ngboost import NGBRegressor
 
 from baybe.parameters.base import Parameter
-from baybe.surrogates.base import GaussianSurrogate
+from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 @catch_constant_targets
 @define
-class NGBoostSurrogate(GaussianSurrogate):
+class NGBoostSurrogate(IndependentGaussianSurrogate):
     """A natural-gradient-boosting surrogate model."""
 
     # Class variables

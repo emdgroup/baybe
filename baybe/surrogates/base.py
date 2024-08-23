@@ -318,8 +318,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
 
 @define
-class GaussianSurrogate(Surrogate, ABC):
-    """A surrogate model providing Gaussian posterior estimates."""
+class IndependentGaussianSurrogate(Surrogate, ABC):
+    """A surrogate base class providing independent Gaussian posteriors."""
 
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
         # See base class.

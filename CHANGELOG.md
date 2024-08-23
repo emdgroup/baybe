@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `py.typed` file to enable the use of type checkers on the user side
-- `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
+- `IndependentGaussianSurrogate` base class for surrogate models providing independent 
+  Gaussian posteriors for all candidates (cannot be used for batch prediction)
 - `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
   and `SubspaceContinuous` classes
 - New mechanisms for surrogate input/output scaling configurable per class
