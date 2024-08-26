@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Collection
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
@@ -218,7 +219,7 @@ class BotorchRecommender(BayesianRecommender):
         points_all: list[Tensor] = []
 
         def append_recommendation_for_inactive_parameters_setting(
-            inactive_parameters: tuple[str, ...],
+            inactive_parameters: Collection[str],
         ):
             """Append the recommendation for each inactive parameter configuration.
 
