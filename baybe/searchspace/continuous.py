@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import math
+import sys
 import warnings
-from collections.abc import Collection, Sequence
-from itertools import chain
+from collections.abc import Collection, Iterable, Sequence
+from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -18,10 +20,12 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
+    validate_cardinality_constraint_parameter_bounds,
     validate_cardinality_constraints_are_nonoverlapping,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
+from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe
 from baybe.searchspace.validation import (
     get_transform_parameters,
@@ -30,6 +34,7 @@ from baybe.searchspace.validation import (
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.interval import Interval
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
@@ -109,6 +114,23 @@ class SubspaceContinuous(SerialMixin):
             if isinstance(c, ContinuousCardinalityConstraint)
         )
 
+    @property
+    def n_inactive_parameter_combinations(self) -> int:
+        """The number of possible inactive parameter combinations."""
+        return math.prod(
+            c.n_inactive_parameter_combinations for c in self.constraints_cardinality
+        )
+
+    def inactive_parameter_combinations(self) -> Iterable[frozenset[str]]:
+        """Iterate over all possible combinations of inactive parameters."""
+        for combination in product(
+            *[
+                con.inactive_parameter_combinations()
+                for con in self.constraints_cardinality
+            ]
+        ):
+            yield frozenset(chain(*combination))
+
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
         """Validate nonlinear constraints."""
@@ -116,6 +138,9 @@ class SubspaceContinuous(SerialMixin):
         validate_cardinality_constraints_are_nonoverlapping(
             self.constraints_cardinality
         )
+
+        for con in self.constraints_cardinality:
+            validate_cardinality_constraint_parameter_bounds(con, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
@@ -248,6 +273,15 @@ class SubspaceContinuous(SerialMixin):
         return tuple(p.name for p in self.parameters)
 
     @property
+    def param_names_in_cardinality_constraint(self) -> tuple[str, ...]:
+        """Return list of parameter names involved in cardinality constraints."""
+        # TODO: Is this property really needed? If so, apply naming conventions.
+        params_per_cardinatliy_constraint = [
+            c.parameters for c in self.constraints_cardinality
+        ]
+        return tuple(chain(*params_per_cardinatliy_constraint))
+
+    @property
     def param_bounds_comp(self) -> np.ndarray:
         """Return bounds as numpy array."""
         if not self.parameters:
@@ -271,6 +305,85 @@ class SubspaceContinuous(SerialMixin):
             constraints_lin_ineq=[
                 c._drop_parameters(parameter_names) for c in self.constraints_lin_ineq
             ],
+        )
+
+    def _remove_cardinality_constraints(
+        self,
+        inactive_parameter_names: Collection[str],
+        inactivity_threshold: float = sys.float_info.min,
+    ) -> SubspaceContinuous:
+        """Create a copy of the subspace with cardinality constraints removed.
+
+        Args:
+            inactive_parameter_names: A list of inactive parameters.
+            inactivity_threshold: Threshold for checking whether a value is zero.
+
+        Returns:
+            A new subspace object without cardinality constraints.
+        """
+        # TODO: Revise function name/docstring and arguments. In particular: why
+        #   does the function expect the inactive parameters instead of the active ones?
+
+        # TODO: Shouldn't the x != 0 constraints be applied on the level of the
+        #   individual constrains, also taking into account whether min_cardinality > 0?
+
+        # TODO: Merge _drop_parameters() to this method.
+        def ensure_active_parameters(
+            parameters: tuple[NumericalContinuousParameter, ...],
+            active_parameter_names: Collection[str],
+        ) -> tuple[NumericalContinuousParameter, ...]:
+            """Ensure certain parameters being non-zero by adjusting bounds.
+
+            Args:
+                parameters: A list of parameters.
+                active_parameter_names: A list of parameters names that must be
+                    non-zero.
+
+            Returns:
+                A list of parameters with certain parameters guaranteed to be non-zero.
+            """
+            parameters_active_guaranteed = []
+            for p in parameters:
+                if p.name not in active_parameter_names:
+                    bounds = p.bounds
+                # Active parameter x with bounds [..., 0], ensure x != 0
+                elif p.bounds.upper == 0.0:
+                    bounds = Interval(lower=p.bounds.lower, upper=inactivity_threshold)
+                # Active parameter x with bounds [0, ...], ensure x != 0
+                elif p.bounds.lower == 0.0:
+                    bounds = Interval(lower=inactivity_threshold, upper=p.bounds.upper)
+                # TODO: For active parameter x in [..., 0, ...], ensure x != 0 is not
+                #  done.
+                else:
+                    bounds = p.bounds
+                parameters_active_guaranteed.append(
+                    NumericalContinuousParameter(
+                        name=p.name,
+                        bounds=bounds,
+                    )
+                )
+            return tuple(parameters_active_guaranteed)
+
+        # Active parameters: parameters involved in cardinality constraints
+        active_parameter_names = set(
+            self.param_names_in_cardinality_constraint
+        ).difference(set(inactive_parameter_names))
+
+        active_parameters_guaranteed = ensure_active_parameters(
+            self.parameters, active_parameter_names
+        )
+
+        return SubspaceContinuous(
+            parameters=tuple(
+                [
+                    _FixedNumericalContinuousParameter(name=p.name, value=0.0)
+                    if p.name in inactive_parameter_names
+                    else p
+                    for p in active_parameters_guaranteed
+                ]
+            ),
+            constraints_lin_eq=self.constraints_lin_eq,
+            constraints_lin_ineq=self.constraints_lin_ineq,
         )
 
     def transform(
