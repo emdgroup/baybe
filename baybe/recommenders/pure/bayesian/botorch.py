@@ -230,20 +230,24 @@ class BotorchRecommender(BayesianRecommender):
             subspace_continuous_without_cardinality_constraints = (
                 subspace_continuous._remove_cardinality_constraints(inactive_parameters)
             )
-            # Optimize the acquisition function
-            (
-                points_i,
-                acqf_values_i,
-            ) = self._recommend_continuous_without_cardinality_constraints(
-                subspace_continuous_without_cardinality_constraints,
-                batch_size,
-            )
-            # Append recommendation list and acquisition function values
-            points_all.append(points_i.unsqueeze(0))
-            acqf_values_all.append(acqf_values_i.unsqueeze(0))
+            try:
+                # Optimize the acquisition function
+                (
+                    points_i,
+                    acqf_values_i,
+                ) = self._recommend_continuous_without_cardinality_constraints(
+                    subspace_continuous_without_cardinality_constraints,
+                    batch_size,
+                )
+                # Append recommendation list and acquisition function values
+                points_all.append(points_i.unsqueeze(0))
+                acqf_values_all.append(acqf_values_i.unsqueeze(0))
 
-        # TODO: For certain setting of inactive parameters, the resulting problem may
-        #  be infeasible. Add "try" section to handle it.
+            # The optimization problem may be infeasible for certain inactive
+            # parameters. The optimize_acqf raises a ValueError when the optimization
+            # problem is infeasible.
+            except ValueError:
+                pass
 
         # Below we start recommendation
         if (
