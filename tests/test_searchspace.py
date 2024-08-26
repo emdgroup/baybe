@@ -290,7 +290,7 @@ def test_cardinality_constraint_with_invalid_parameter_bounds():
         NumericalContinuousParameter("c1", (0, 1)),
         NumericalContinuousParameter("c2", (1, 2)),
     )
-    with pytest.raises(ValueError, match="must cover zero"):
+    with pytest.raises(ValueError, match="must include zero"):
         SubspaceContinuous(
             parameters=parameters,
             constraints_nonlin=(
