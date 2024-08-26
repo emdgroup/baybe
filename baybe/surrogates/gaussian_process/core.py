@@ -150,6 +150,10 @@ class GaussianProcessSurrogate(Surrogate):
         import gpytorch
         import torch
 
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._searchspace is not None
+
         context = _ModelContext(self._searchspace)
 
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
