@@ -58,10 +58,10 @@ parameters = [
 ]
 
 # We model the following constraints:
-# 1. $1.0*x_1 + 1.0*x_2 = 1.0$
-# 2. $1.0*x_3 - 1.0*x_4 = 2.0$
-# 3. $1.0*x_1 + 1.0*x_3 >= 1.0$
-# 4. $2.0*x_2 + 3.0*x_4 <= 1.0$ which is equivalent to $-2.0*x_2 - 3.0*x_4 >= -1.0$
+# - $1.0*x_1 + 1.0*x_2 = 1.0$
+# - $1.0*x_3 - 1.0*x_4 = 2.0$
+# - $1.0*x_1 + 1.0*x_3 >= 1.0$
+# - $2.0*x_2 + 3.0*x_4 <= 1.0$ which is equivalent to $-2.0*x_2 - 3.0*x_4 >= -1.0$
 
 constraints = [
     ContinuousLinearEqualityConstraint(
