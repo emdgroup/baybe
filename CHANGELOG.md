@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
   in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
 - Attribute `n_threshold_inactive_parameters_generator` added to `BotorchRecommender`
+- Class `_FixedNumericalContinuousParameter`
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
