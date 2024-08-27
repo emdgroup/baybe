@@ -5,9 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
-from botorch.sampling.base import MCSampler
-from botorch.sampling.get_sampler import GetSampler
-from torch.distributions import Beta  # TODO: how to import this?!
 
 from baybe.exceptions import IncompatibleSearchSpaceError, ModelNotTrainedError
 from baybe.parameters.categorical import CategoricalParameter
@@ -19,6 +16,7 @@ from baybe.targets.binary import _NEGATIVE_VALUE_COMP, _POSITIVE_VALUE_COMP
 from baybe.utils.random import temporary_seed
 
 if TYPE_CHECKING:
+    from botorch.models.model import Model
     from botorch.posteriors import TorchPosterior
     from torch import Tensor
 
@@ -79,6 +77,31 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
             )
         return self._win_lose_counts + self.prior.to_torch().unsqueeze(-1)
 
+    def to_botorch(self) -> Model:  # noqa: D102
+        # See base class.
+
+        # We register the sampler on the fly to avoid eager loading of torch
+
+        from botorch.sampling.base import MCSampler
+        from botorch.sampling.get_sampler import GetSampler
+        from torch.distributions import Beta
+
+        class CustomMCSampler(MCSampler):
+            """Customer sampler for beta posterior."""
+
+            def forward(self, posterior: TorchPosterior) -> Tensor:
+                """Sample the posterior."""
+                with temporary_seed(self.seed):
+                    samples = posterior.rsample(self.sample_shape)
+                return samples
+
+        @GetSampler.register(Beta)
+        def get_custom_sampler(_, sample_shape, seed: int | None = None):
+            """Get the sampler for the beta posterior."""
+            return CustomMCSampler(sample_shape=sample_shape, seed=seed)
+
+        return super().to_botorch()
+
     @staticmethod
     def _make_target_scaler_factory():
         # See base class.
@@ -126,19 +149,3 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         wins = (train_x * (train_y == float(_POSITIVE_VALUE_COMP))).sum(dim=0)
         losses = (train_x * (train_y == float(_NEGATIVE_VALUE_COMP))).sum(dim=0)
         self._win_lose_counts = torch.vstack([wins, losses]).to(torch.int)
-
-
-class CustomMCSampler(MCSampler):
-    """Customer sampler for beta posterior."""
-
-    def forward(self, posterior: TorchPosterior) -> Tensor:
-        """Sample the posterior."""
-        with temporary_seed(self.seed):
-            samples = posterior.rsample(self.sample_shape)
-        return samples
-
-
-@GetSampler.register(Beta)
-def get_custom_sampler(_, sample_shape, seed: int | None = None):
-    """Get the sampler for the beta posterior."""
-    return CustomMCSampler(sample_shape=sample_shape, seed=seed)
