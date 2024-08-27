@@ -41,6 +41,7 @@ def numerical_targets(
 
 
 binary_targets = st.builds(BinaryTarget)
+"""A strategy that generates binary targets."""
 
 targets = st.one_of([binary_targets, numerical_targets()])
 """A strategy that generates targets."""
