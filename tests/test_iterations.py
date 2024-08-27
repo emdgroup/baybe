@@ -37,13 +37,13 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
+from baybe.surrogates.bandit import BernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
-from baybe.surrogates.multi_armed_bandit import BernoulliMultiArmedBanditSurrogate
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations
