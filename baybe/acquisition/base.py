@@ -5,11 +5,12 @@ from __future__ import annotations
 import warnings
 from abc import ABC
 from inspect import signature
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import define
 
+from baybe.exceptions import UnidentifiedSubclassError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -26,6 +27,9 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import classproperty, match_attributes
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
+
+if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
 
 
 @define(frozen=True)
@@ -68,7 +72,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         train_y = objective.transform(measurements)
 
         # Retrieve corresponding botorch class
-        acqf_cls = _get_botorch_acqf_class(self)
+        acqf_cls = _get_botorch_acqf_class(type(self))
 
         # Match relevant attributes
         params_dict = match_attributes(
@@ -120,12 +124,22 @@ class AcquisitionFunction(ABC, SerialMixin):
         return acqf
 
 
-def _get_botorch_acqf_class(baybe_acqf: AcquisitionFunction):
-    import botorch.acquisition as botorch_acqf_module
+def _get_botorch_acqf_class(
+    baybe_acqf_cls: type[AcquisitionFunction], /
+) -> type[BotorchAcquisitionFunction]:
+    """Extract the BoTorch acquisition class for the given BayBE acquisition class."""
+    import botorch
 
-    for cls in baybe_acqf.__class__.mro():
-        if acqf_cls := getattr(botorch_acqf_module, cls.__name__, False):
+    for cls in baybe_acqf_cls.mro():
+        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False):
+            if is_abstract(acqf_cls):
+                continue
             return acqf_cls
+
+    raise UnidentifiedSubclassError(
+        f"No BoTorch acquisition function class match found for "
+        f"'{baybe_acqf_cls.__name__}'."
+    )
 
 
 # Register de-/serialization hooks
