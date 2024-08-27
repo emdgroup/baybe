@@ -97,17 +97,17 @@ class BetaPrior(Prior):
     """A beta prior parameterized by alpha and beta."""
 
     alpha: float = field(converter=float, validator=gt(0.0))
-    """Alpha of the beta distribution."""
+    """Alpha concentration parameter. Controls mass accumulated toward zero."""
 
     beta: float = field(converter=float, validator=gt(0.0))
-    """Beta of the beta distribution."""
+    """Beta concentration parameter. Controls mass accumulated toward one."""
 
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
         raise NotImplementedError(
-            f"The '{self.__class__.__name__}' does not have an analog in gpytorch"
+            f"'{self.__class__.__name__}' does not have a gpytorch analog."
         )
 
-    def to_torch(self) -> Tensor:
+    def to_tensor(self) -> Tensor:
         """Return alpha and beta as a torch tensor."""
         import torch
 

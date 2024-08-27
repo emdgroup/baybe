@@ -75,7 +75,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
                 f"'{self.__class__.__name__}' must be trained before posterior "
                 f"information can be accessed."
             )
-        return self._win_lose_counts + self.prior.to_torch().unsqueeze(-1)
+        return self._win_lose_counts + self.prior.to_tensor().unsqueeze(-1)
 
     def to_botorch(self) -> Model:  # noqa: D102
         # See base class.
