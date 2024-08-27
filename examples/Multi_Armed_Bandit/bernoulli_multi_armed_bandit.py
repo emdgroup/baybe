@@ -107,7 +107,7 @@ for acqf in acqfs:
 
             if i > 0:
                 regrets.append((i + 1) * max(real_means) - total_reward)
-                posterior_means = surrogate.posterior_mean_per_arm().tolist()
+                posterior_means = surrogate.posterior_means().tolist()
                 estimated_means.append(posterior_means)
                 posterior_params.append(surrogate._posterior_beta_parameters())
 

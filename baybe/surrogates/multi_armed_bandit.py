@@ -39,22 +39,24 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     _win_lose_counts = field(init=False, default=None, eq=False)
     """Sufficient statistics for the Bernoulli likelihood model."""
 
-    def maximum_a_posteriori_per_arm(self) -> Tensor:
-        """Compute the maximum a posteriori win rates for all arms.
+    def posterior_modes(self) -> Tensor:
+        """Compute the posterior mode win rates for all arms.
 
         Returns:
-            A tensor of length ``N``, where ``N`` is the number of bandit arms.
+            A tensor of length ``N`` containing the posterior mode estimates of the win
+            rates, where ``N`` is the number of bandit arms.
             Contains ``float('nan')`` for arms with undefined mode.
         """
         from torch.distributions import Beta
 
         return Beta(*self._posterior_beta_parameters()).mode
 
-    def posterior_mean_per_arm(self) -> Tensor:
+    def posterior_means(self) -> Tensor:
         """Compute the posterior mean win rates for all arms.
 
         Returns:
-            A tensor of length ``N``, where ``N`` is the number of bandit arms.
+            A tensor of length ``N`` containing the posterior mean estimates of the win
+            rates, where ``N`` is the number of bandit arms.
         """
         from torch.distributions import Beta
 
