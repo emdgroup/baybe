@@ -4,7 +4,7 @@
 import pytest
 from pytest import param
 
-from baybe.acquisition import ThompsonSampling, qKG, qNIPV, qUCB
+from baybe.acquisition import qKG, qNIPV, qThompsonSampling, qUCB
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import UnusedObjectWarning
 from baybe.kernels.base import Kernel
@@ -300,7 +300,7 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
 
 @pytest.mark.parametrize(
     "acqf",
-    [ThompsonSampling(), qUCB(beta=9999999)],
+    [qThompsonSampling(), qUCB(beta=9999999)],
 )
 @pytest.mark.parametrize("surrogate_model", [BernoulliMultiArmedBanditSurrogate()])
 @pytest.mark.parametrize(

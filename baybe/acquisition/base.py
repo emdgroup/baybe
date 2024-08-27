@@ -61,6 +61,8 @@ class AcquisitionFunction(ABC, SerialMixin):
         import torch
         from botorch.acquisition.objective import LinearMCObjective
 
+        from baybe.acquisition.acqfs import qThompsonSampling
+
         # Get computational data representations
         train_x = searchspace.transform(measurements, allow_extra=True)
         train_y = objective.transform(measurements)
@@ -110,8 +112,10 @@ class AcquisitionFunction(ABC, SerialMixin):
         params_dict.update(additional_params)
 
         acqf = acqf_cls(**params_dict)
-        if hasattr(self, "_default_sample_shape"):
-            acqf._default_sample_shape = self._default_sample_shape
+
+        if isinstance(self, qThompsonSampling):
+            assert hasattr(acqf, "_default_sample_shape")
+            acqf._default_sample_shape = torch.Size([self.n_mc_samples])
 
         return acqf
 

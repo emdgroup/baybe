@@ -14,7 +14,7 @@ from torch import Tensor
 from utils import create_mab_plot, max_rv_distribution
 
 from baybe import Campaign
-from baybe.acquisition import PosteriorStandardDeviation, ThompsonSampling
+from baybe.acquisition import PosteriorStandardDeviation, qThompsonSampling
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import CategoricalParameter
 from baybe.recommenders import (
@@ -41,7 +41,7 @@ N_MC_RUNS = 10 if not SMOKE_TEST else 3
 N_ITERATIONS = 300 if not SMOKE_TEST else 50
 acqfs = [
     # Online optimization (maximizing the reward)
-    ThompsonSampling(),
+    qThompsonSampling(),
     # Active learning (learning the effect size per arm)
     PosteriorStandardDeviation(),
 ]

@@ -6,7 +6,6 @@ from baybe.acquisition.acqfs import (
     PosteriorMean,
     PosteriorStandardDeviation,
     ProbabilityOfImprovement,
-    ThompsonSampling,
     UpperConfidenceBound,
     qExpectedImprovement,
     qKnowledgeGradient,
@@ -16,6 +15,7 @@ from baybe.acquisition.acqfs import (
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
+    qThompsonSampling,
     qUpperConfidenceBound,
 )
 
@@ -34,7 +34,7 @@ PI = ProbabilityOfImprovement
 qPI = qProbabilityOfImprovement
 UCB = UpperConfidenceBound
 qUCB = qUpperConfidenceBound
-TS = ThompsonSampling
+qTS = qThompsonSampling
 
 __all__ = [
     ######################### Acquisition functions
@@ -60,7 +60,7 @@ __all__ = [
     "UpperConfidenceBound",
     "qUpperConfidenceBound",
     # Thompson Sampling
-    "ThompsonSampling",
+    "qThompsonSampling",
     ######################### Abbreviations
     # Knowledge Gradient
     "qKG",
@@ -84,5 +84,5 @@ __all__ = [
     "UCB",
     "qUCB",
     # Thompson Sampling
-    "TS",
+    "qTS",
 ]

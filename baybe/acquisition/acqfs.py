@@ -279,24 +279,19 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
 
 @define(frozen=True)
-class ThompsonSampling(qSimpleRegret):
-    """Thomson Sampling implemented by using simple regret with a batch size of one.
+class qThompsonSampling(qSimpleRegret):
+    """Thomson sampling, implemented via simple regret. Inherently Monte Carlo based."""
 
-    For continous spaces this acquisition function is not optimizing on one posterior
-    sample. Each gradinet step is calculated on a new posterior sample.
-    """
+    abbreviation: ClassVar[str] = "qTS"
 
-    abbreviation: ClassVar[str] = "TS"
+    n_mc_samples: int = field(default=1, validator=[instance_of(int), ge(1)])
+    """Number of Monte Carlo samples drawn from the posterior at each design point.
 
-    import torch
-
-    _default_sample_shape = torch.Size([1])
-    """Number of MC samples drawn from the posterior at each design point. Only the
-    maximum from those is samples is taking for the acqusition function. The higher
-    the sample size the more exploitation is taking place.
+    The acquisition value at a given design point is the maximum of the corresponding
+    sample values. Accordingly, larger sample sizes result in stronger exploitation.
     """
 
     @classproperty
-    def is_mc(cls) -> bool:
-        """Flag indicating whether this is a Monte-Carlo acquisition function."""
-        return True
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        flds = fields(qThompsonSampling)
+        return (flds.n_mc_samples.name,)
