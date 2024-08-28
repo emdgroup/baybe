@@ -134,7 +134,7 @@ def _get_botorch_acqf_class(
         if acqf_cls := getattr(botorch.acquisition, cls.__name__, False):
             if is_abstract(acqf_cls):
                 continue
-            return acqf_cls
+            return acqf_cls  # typing: ignore
 
     raise UnidentifiedSubclassError(
         f"No BoTorch acquisition function class match found for "
