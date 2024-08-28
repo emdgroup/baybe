@@ -574,8 +574,8 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_names(self) -> tuple[str, ...]:
-        """Return list of parameter names."""
+    def parameter_names(self) -> tuple[str, ...]:
+        """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
 
     @property

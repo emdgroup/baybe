@@ -174,7 +174,7 @@ class BotorchRecommender(BayesianRecommender):
         )
 
         # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
+        rec = pd.DataFrame(points, columns=subspace_continuous.parameter_names)
         return rec
 
     def _recommend_hybrid(
@@ -279,7 +279,7 @@ class BotorchRecommender(BayesianRecommender):
         # Get experimental representation of discrete and continuous parts
         rec_disc_exp = searchspace.discrete.exp_rep.loc[idxs]
         rec_cont_exp = pd.DataFrame(
-            cont_points, columns=searchspace.continuous.param_names
+            cont_points, columns=searchspace.continuous.parameter_names
         )
 
         # Adjust the index of the continuous part and create overall recommendations
