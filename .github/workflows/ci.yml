@@ -107,7 +107,7 @@ jobs:
       - name: Build Docs
         run: |
           pip install tox-uv
-          tox -e docs -- -r
+          tox -e docs-py310 -- -r
           
   typecheck:
     needs: [lint]
