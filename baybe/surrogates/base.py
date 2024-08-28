@@ -123,7 +123,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """Return the scaler factory to be used for the given parameter.
 
         This method is supposed to be overridden by subclasses to implement their
-        custom parameter scaling logic.
+        custom parameter scaling logic. Otherwise, parameters will be normalized.
         """
         from botorch.models.transforms.input import Normalize
 
@@ -134,7 +134,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """Return the scaler factory to be used for target scaling.
 
         This method is supposed to be overridden by subclasses to implement their
-        custom target scaling logic.
+        custom target scaling logic. Otherwise, targets will be standardized.
         """
         from botorch.models.transforms.outcome import Standardize
 
@@ -245,7 +245,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         the same scale as the given input.
 
         Args:
-            candidates_comp_scaled: A tensor containing **pre-scaled** parameter
+            candidates_comp_scaled: A tensor containing **scaled** parameter
                 configurations in **computational representation**, as defined through
                 the input scaler obtained via
                 :meth:`baybe.surrogates.base.Surrogate._make_input_scaler`.
