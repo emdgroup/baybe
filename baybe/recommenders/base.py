@@ -19,8 +19,8 @@ class RecommenderProtocol(Protocol):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective | None,
-        measurements: pd.DataFrame | None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
         pending_measurements: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
