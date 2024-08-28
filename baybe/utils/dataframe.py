@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Collection, Iterable, Iterator, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from typing import (
     TYPE_CHECKING,
     Literal,
@@ -31,11 +31,11 @@ def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor: ...
 
 
 @overload
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> Iterator[Tensor]: ...
+def to_tensor(*x: np.ndarray | pd.DataFrame) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | Iterator[Tensor]:
-    """Convert numpy arrays and pandas dataframes into tensors.
+def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
+    """Convert numpy arrays and pandas dataframes to tensors.
 
     Args:
         *x: The array(s)/dataframe(s) to be converted.
@@ -54,14 +54,14 @@ def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | Iterator[Tensor]:
 
     from baybe.utils.torch import DTypeFloatTorch
 
-    out = (
+    out = tuple(
         torch.from_numpy(
             (xi.values if isinstance(xi, pd.DataFrame) else xi).astype(DTypeFloatNumpy)
         ).to(DTypeFloatTorch)
         for xi in x
     )
     if len(x) == 1:
-        out = next(out)
+        out = out[0]
     return out
 
 
