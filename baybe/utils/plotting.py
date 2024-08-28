@@ -13,45 +13,6 @@ from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def get_themes():
-    """Find plotting thems."""
-    # Define a fallback theme in case no configuration is found
-    fallback: dict[str, Any] = {
-        "color": "black",
-        "figsize": (24, 8),
-        "fontsize": 22,
-        "framealpha": 0.3,
-        "legend_color": "white",
-    }
-
-    # Try to find the plotting themes by backtracking
-    # Get the absolute path of the current script
-    script_path = Path(sys.argv[0]).resolve()
-    while (
-        not Path(script_path / "plotting_themes.json").is_file()
-        and script_path != script_path.parent
-    ):
-        script_path = script_path.parent
-    if script_path == script_path.parent:
-        warnings.warn("No themes for plotting found. A fallback theme is used.")
-        themes = {"fallback": fallback}
-    else:
-        # Open the file containing all the themes
-        # If we reach this point, we know that the file exists, so we try to load it.
-        # If the file is no proper json, the fallback theme is used.
-        try:
-            themes = json.load(open(script_path / "plotting_themes.json"))
-        except json.JSONDecodeError:
-            warnings.warn(
-                "The JSON containing the themes could not be loaded."
-                "A fallback theme is used.",
-                UserWarning,
-            )
-            themes = {"fallback": fallback}
-
-    return themes, fallback
-
-
 def create_example_plots(
     ax: Axes | Axes3D,
     base_name: str,
@@ -79,7 +40,38 @@ def create_example_plots(
     if "SMOKE_TEST" in os.environ:
         return
 
-    themes, fallback = get_themes()
+    # Define a fallback theme in case no configuration is found
+    fallback: dict[str, Any] = {
+        "color": "black",
+        "figsize": (24, 8),
+        "fontsize": 22,
+        "framealpha": 0.3,
+    }
+
+    # Try to find the plotting themes by backtracking
+    # Get the absolute path of the current script
+    script_path = Path(sys.argv[0]).resolve()
+    while (
+        not Path(script_path / "plotting_themes.json").is_file()
+        and script_path != script_path.parent
+    ):
+        script_path = script_path.parent
+    if script_path == script_path.parent:
+        warnings.warn("No themes for plotting found. A fallback theme is used.")
+        themes = {"fallback": fallback}
+    else:
+        # Open the file containing all the themes
+        # If we reach this point, we know that the file exists, so we try to load it.
+        # If the file is no proper json, the fallback theme is used.
+        try:
+            themes = json.load(open(script_path / "plotting_themes.json"))
+        except json.JSONDecodeError:
+            warnings.warn(
+                "The JSON containing the themes could not be loaded."
+                "A fallback theme is used.",
+                UserWarning,
+            )
+            themes = {"fallback": fallback}
 
     for theme_name in themes:
         # Get all of the values from the themes

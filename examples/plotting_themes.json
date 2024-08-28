@@ -1,7 +1,6 @@
 {
     "dark": {
         "color": "white",
-        "legend_color": "black",
         "figsize": [
             24,
             8
@@ -11,7 +10,6 @@
     },
     "light": {
         "color": "black",
-        "legend_color": "white",
         "figsize": [
             24,
             8
