@@ -198,11 +198,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a posterior can be computed."
             )
-        return self._posterior_comp_rep(
+        return self._posterior_comp(
             to_tensor(self._searchspace.transform(candidates, allow_extra=True))
         )
 
-    def _posterior_comp_rep(self, candidates_comp: Tensor, /) -> Posterior:
+    def _posterior_comp(self, candidates_comp: Tensor, /) -> Posterior:
         """Compute the posterior for candidates in computational representation.
 
         Takes a tensor of parameter configurations in **computational representation**

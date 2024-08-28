@@ -47,4 +47,4 @@ class AdapterModel(Model):
             raise NotImplementedError(
                 "The optional model posterior arguments are not yet implemented."
             )
-        return self._surrogate._posterior_comp_rep(X)
+        return self._surrogate._posterior_comp(X)
