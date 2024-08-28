@@ -21,26 +21,26 @@ been started, but not yet completed by time of triggering the next set of
 recommendations. This is not to be confused with a situation where the targets of a
 recommendation have been partially measured. A measurement is *pending* whenever one or
 more of its targets are not measured yet. Only once all the targets are available,
-the data point can be removed from `pending_measurements` and be provided via 
+the data point can be removed from `pending_experiments` and be provided via 
 `measurements`.
 
 To avoid repeated recommendations in the above scenario, BayBE provides the 
-`pending_measurements` keyword. It is available wherever recommendations can be
+`pending_experiments` keyword. It is available wherever recommendations can be
 requested, i.e. [`Campaign.recommend`](baybe.campaign.Campaign.recommend) or 
 [`RecommenderProtocol.recommend`](baybe.recommenders.base.RecommenderProtocol.recommend).
 
 ```{admonition} Supported Acquisition Functions
 :class: important
-`pending_measurementes` is only supported by Monte Carlo (MC) acquisition functions, i.e. the
+`pending_experiments` is only supported by Monte Carlo (MC) acquisition functions, i.e. the
 ones that start with a `q` in their name. Attempting to use a non-MC acquisition
-function with `pending_measurements` will result in an 
+function with `pending_experiments` will result in an 
 [`IncompatibleAcquisitionFunctionError`](baybe.exceptions.IncompatibleAcquisitionFunctionError).
 ```
 
 ```{admonition} Supported Recommenders
 :class: important
 For technical reasons, not every recommender is able to fully or even partially
-utilize `pending_measurements`. For instance, 
+utilize `pending_experiments`. For instance, 
 [`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)
 takes all pending measurements into account, even if they do not match exactly with any
 point in the search space.
@@ -52,7 +52,7 @@ does not take pending points into consideration at all and will raise a correspo
 [warning](baybe.exceptions.UnusedObjectWarning).
 ```
 
-Akin to `measurements` or `recommendations`, `pending_measurements` is a dataframe in
+Akin to `measurements` or `recommendations`, `pending_experiments` is a dataframe in
 experimental representation (see [here](/userguide/searchspace)). 
 In the following example, we get a set of recommendations, add results for half of them,
 and start the next recommendation, marking the other half pending:
@@ -70,5 +70,5 @@ campaign.add_measurements(rec_finished)
 
 # Get the next set of recommendations, incorporating the still unfinished ones
 # These will not include the pending recommendations again
-rec_next = campaign.recommend(10, pending_measurements=rec_pending)
+rec_next = campaign.recommend(10, pending_experiments=rec_pending)
 ```

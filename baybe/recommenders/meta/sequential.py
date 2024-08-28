@@ -55,7 +55,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
         # See base class.
 
@@ -127,7 +127,7 @@ class SequentialMetaRecommender(MetaRecommender):
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
         # See base class.
 
@@ -210,7 +210,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
         # See base class.
 

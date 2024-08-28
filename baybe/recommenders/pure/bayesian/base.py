@@ -49,7 +49,7 @@ class BayesianRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         # TODO: Transition point from dataframe to tensor needs to be refactored.
@@ -59,8 +59,8 @@ class BayesianRecommender(PureRecommender, ABC):
         train_y = objective.transform(measurements)
         pending_x = (
             None
-            if pending_measurements is None
-            else searchspace.transform(pending_measurements, allow_extra=True)
+            if pending_experiments is None
+            else searchspace.transform(pending_experiments, allow_extra=True)
         )
 
         self.surrogate_model._fit(searchspace, *to_tensor(train_x, train_y))
@@ -74,7 +74,7 @@ class BayesianRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -94,7 +94,7 @@ class BayesianRecommender(PureRecommender, ABC):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
         self._setup_botorch_acqf(
-            searchspace, objective, measurements, pending_measurements
+            searchspace, objective, measurements, pending_experiments
         )
 
         return super().recommend(
@@ -102,5 +102,5 @@ class BayesianRecommender(PureRecommender, ABC):
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
-            pending_measurements=pending_measurements,
+            pending_experiments=pending_experiments,
         )

@@ -83,7 +83,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -110,13 +110,13 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 searchspace=searchspace,
                 objective=objective,
                 measurements=measurements,
-                pending_measurements=pending_measurements,
+                pending_experiments=pending_experiments,
             )
 
         # We are in a hybrid setting now
-        if pending_measurements is not None:
+        if pending_experiments is not None:
             raise UnusedObjectWarning(
-                f"Pending measurements were provided but the selected recommender "
+                f"Pending experiments were provided but the selected recommender "
                 f"'{self.__class__.__name__}' with discrete "
                 f"sub-recommender '{self.disc_recommender.__class__.__name__}' only "
                 f"utilizes this information for purely discrete spaces."
@@ -140,7 +140,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements, pending_measurements
+                searchspace, objective, measurements, pending_experiments
             )
 
             # Construct the partial acquisition function that attaches cont_part
@@ -167,7 +167,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Setup a fresh acquisition function for the continuous recommender
         self.cont_recommender._setup_botorch_acqf(
-            searchspace, objective, measurements, pending_measurements
+            searchspace, objective, measurements, pending_experiments
         )
 
         # Construct the continuous space as a standalone space

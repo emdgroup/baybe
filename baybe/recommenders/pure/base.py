@@ -38,7 +38,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
@@ -49,7 +49,7 @@ class PureRecommender(ABC, RecommenderProtocol):
             return self._recommend_with_discrete_parts(
                 searchspace,
                 batch_size,
-                pending_measurements=pending_measurements,
+                pending_experiments=pending_experiments,
             )
 
     def _recommend_discrete(
@@ -159,7 +159,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-        pending_measurements: pd.DataFrame | None,
+        pending_experiments: pd.DataFrame | None,
     ) -> pd.DataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
@@ -169,7 +169,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The search space from which to generate recommendations.
             batch_size: The size of the recommendation batch.
-            pending_measurements: Pending points in experimental representation.
+            pending_experiments: Pending experiments in experimental representation.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
@@ -182,13 +182,13 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get discrete candidates
         # Repeated recommendations are always allowed for hybrid spaces
-        # Pending points are excluded for discrete spaces
+        # Pending experiments are excluded for discrete spaces
         _, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=is_hybrid_space
             or self.allow_repeated_recommendations,
             allow_recommending_already_measured=is_hybrid_space
             or self.allow_recommending_already_measured,
-            exclude=None if is_hybrid_space else pending_measurements,
+            exclude=None if is_hybrid_space else pending_experiments,
         )
 
         # Check if enough candidates are left

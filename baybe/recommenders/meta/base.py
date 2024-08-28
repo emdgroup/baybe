@@ -56,7 +56,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
         """Select a pure recommender for the given experimentation context.
 
@@ -69,7 +69,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
                 See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
             measurements:
                 See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
-            pending_measurements:
+            pending_experiments:
                 See :func:`baybe.recommenders.meta.base.MetaRecommender.recommend`.
 
         Returns:
@@ -82,7 +82,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """See :func:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
         recommender = self.select_recommender(
@@ -90,7 +90,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
-            pending_measurements=pending_measurements,
+            pending_experiments=pending_experiments,
         )
 
         # Non-predictive recommenders should not be called with an objective or
@@ -108,7 +108,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         return recommender.recommend(
             batch_size=batch_size,
             searchspace=searchspace,
-            pending_measurements=pending_measurements,
+            pending_experiments=pending_experiments,
             **optional_args,
         )
 

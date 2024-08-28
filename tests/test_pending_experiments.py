@@ -1,4 +1,4 @@
-"""Tests pending points mechanism."""
+"""Tests pending experiments mechanism."""
 
 import warnings
 
@@ -80,7 +80,7 @@ _flags = dict(
 )
 @pytest.mark.parametrize("n_grid_points", [8], ids=["grid8"])
 def test_pending_points(campaign, batch_size):
-    """Test there is no recommendation overlap if pending points are specified."""
+    """Test there is no recommendation overlap if pending experiments are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)
 
     # Perform a fake first iteration
@@ -88,14 +88,14 @@ def test_pending_points(campaign, batch_size):
     add_fake_results(rec, campaign.targets)
     campaign.add_measurements(rec)
 
-    # Get recommendations and set them as pending while getting another set
+    # Get recommendations and set them as pending experiments while getting another set
     # Fix the random seed for each recommend call to limit influence of randomness in
     # some recommenders which could also trivially avoid overlap
     with temporary_seed(1337):
         rec1 = campaign.recommend(batch_size)
     campaign._cached_recommendation = pd.DataFrame()  # ensure no recommendation cache
     with temporary_seed(1337):
-        rec2 = campaign.recommend(batch_size=batch_size, pending_measurements=rec1)
+        rec2 = campaign.recommend(batch_size=batch_size, pending_experiments=rec1)
 
     # Assert they have no overlap, round to avoid numerical fluctuation
     overlap = pd.merge(rec1.round(3), rec2.round(3), how="inner")
@@ -122,7 +122,7 @@ _non_mc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
-    """Test exception raised for acqfs that don't support pending points."""
+    """Test exception raised for acqfs that don't support pending experiments."""
     recommender = TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(acquisition_function=acqf)
     )
@@ -131,7 +131,7 @@ def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
     rec1 = recommender.recommend(batch_size, searchspace, objective)
     add_fake_results(rec1, objective.targets)
 
-    # Create fake pending measurements
+    # Create fake pending experiments
     rec2 = rec1.copy()
     add_parameter_noise(rec2, searchspace.parameters)
 
@@ -141,5 +141,5 @@ def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
             searchspace,
             objective,
             measurements=rec1,
-            pending_measurements=rec2,
+            pending_experiments=rec2,
         )

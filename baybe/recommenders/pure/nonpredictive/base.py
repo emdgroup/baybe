@@ -22,7 +22,7 @@ class NonPredictiveRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
-        pending_measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -41,11 +41,11 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 UnusedObjectWarning,
             )
         if (
-            pending_measurements is not None
+            pending_experiments is not None
             and searchspace.type is not SearchSpaceType.DISCRETE
         ):
             raise UnusedObjectWarning(
-                f"Pending measurements were provided but the selected recommender "
+                f"Pending experiments were provided but the selected recommender "
                 f"'{self.__class__.__name__}' only utilizes this information for "
                 f"purely discrete spaces."
             )
@@ -54,5 +54,5 @@ class NonPredictiveRecommender(PureRecommender, ABC):
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
-            pending_measurements=pending_measurements,
+            pending_experiments=pending_experiments,
         )

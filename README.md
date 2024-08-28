@@ -35,10 +35,9 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - 🎯 Single and multiple targets with min, max and match objectives
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
-- 🌎 Distributed workflows: Run campaigns asynchronously with pending measurements
+- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments
 - 🎓 Active learning: Perform smart data acquisition campaigns
-
-- ⚙️ Custom surrogate models: For specialized problems
+- ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
 - 📝 Fully typed and hypothesis-tested: Robust code base
 - 🔄 All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
