@@ -46,7 +46,9 @@ class BayesianLinearSurrogate(GaussianSurrogate):
     """The actual model."""
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         # See base class.
 
         # FIXME[typing]: It seems there is currently no better way to inform the type
@@ -56,7 +58,7 @@ class BayesianLinearSurrogate(GaussianSurrogate):
         import torch
 
         # Get predictions
-        dists = self._model.predict(candidates.numpy(), return_std=True)
+        dists = self._model.predict(candidates_comp_scaled.numpy(), return_std=True)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists[0])

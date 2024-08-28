@@ -202,7 +202,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             to_tensor(self._searchspace.transform(candidates, allow_extra=True))
         )
 
-    def _posterior_comp_rep(self, candidates: Tensor, /) -> Posterior:
+    def _posterior_comp_rep(self, candidates_comp: Tensor, /) -> Posterior:
         """Compute the posterior for candidates in computational representation.
 
         Takes a tensor of parameter configurations in **computational representation**
@@ -211,20 +211,20 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         BoTorch's `optimize_*` functions.
 
         Args:
-            candidates: A tensor containing parameter configurations in **computational
-                representation**.
+            candidates_comp: A tensor containing parameter configurations in
+                **computational representation**.
 
         Returns:
             The same :class:`botorch.posteriors.Posterior` object as returned via
             :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
-        p = self._posterior(self._input_scaler.transform(candidates))
+        p = self._posterior(self._input_scaler.transform(candidates_comp))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
         return p
 
     @abstractmethod
-    def _posterior(self, candidates: Tensor, /) -> Posterior:
+    def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
         """Perform the actual model-specific posterior evaluation logic.
 
         This method is supposed to be overridden by subclasses to implement their
@@ -245,9 +245,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         the same scale as the given input.
 
         Args:
-            candidates: A tensor containing **pre-scaled** parameter configurations
-                in **computational representation**, as defined through the input scaler
-                obtained via :meth:`baybe.surrogates.base.Surrogate._make_input_scaler`.
+            candidates_comp_scaled: A tensor containing **pre-scaled** parameter
+                configurations in **computational representation**, as defined through
+                the input scaler obtained via
+                :meth:`baybe.surrogates.base.Surrogate._make_input_scaler`.
 
         Returns:
             A :class:`botorch.posteriors.Posterior` object representing the
@@ -320,7 +321,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 class GaussianSurrogate(Surrogate, ABC):
     """A surrogate model providing Gaussian posterior estimates."""
 
-    def _posterior(self, candidates: Tensor, /) -> GPyTorchPosterior:
+    def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
         # See base class.
 
         import torch
@@ -328,14 +329,16 @@ class GaussianSurrogate(Surrogate, ABC):
         from gpytorch.distributions import MultivariateNormal
 
         # Construct the Gaussian posterior from the estimated first and second moment
-        mean, var = self._estimate_moments(candidates)
+        mean, var = self._estimate_moments(candidates_comp_scaled)
         if not self.joint_posterior:
             var = torch.diag_embed(var)
         mvn = MultivariateNormal(mean, var)
         return GPyTorchPosterior(mvn)
 
     @abstractmethod
-    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         """Estimate first and second moments of the Gaussian posterior.
 
         The second moment may either be a 1-D tensor of marginal variances for the

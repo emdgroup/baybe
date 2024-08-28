@@ -33,14 +33,16 @@ class MeanPredictionSurrogate(GaussianSurrogate):
     """The estimated posterior mean value of the training targets."""
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         # See base class.
 
         import torch
 
         # TODO: use target value bounds for covariance scaling when explicitly provided
-        mean = self._model * torch.ones([len(candidates)])
-        var = torch.ones(len(candidates))
+        mean = self._model * torch.ones([len(candidates_comp_scaled)])
+        var = torch.ones(len(candidates_comp_scaled))
         return mean, var
 
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:

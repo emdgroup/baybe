@@ -139,9 +139,9 @@ class GaussianProcessSurrogate(Surrogate):
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
 
-    def _posterior(self, candidates: Tensor, /) -> Posterior:
+    def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
         # See base class.
-        return self._model.posterior(candidates)
+        return self._model.posterior(candidates_comp_scaled)
 
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.

@@ -71,7 +71,9 @@ class NGBoostSurrogate(GaussianSurrogate):
         return None
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         # See base class.
 
         # FIXME[typing]: It seems there is currently no better way to inform the type
@@ -81,7 +83,7 @@ class NGBoostSurrogate(GaussianSurrogate):
         import torch
 
         # Get predictions
-        dists = self._model.pred_dist(candidates)
+        dists = self._model.pred_dist(candidates_comp_scaled)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists.mean())

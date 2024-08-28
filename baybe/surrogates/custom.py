@@ -79,12 +79,14 @@ class CustomONNXSurrogate(GaussianSurrogate):
             raise ValueError("Invalid ONNX string") from exc
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(self, candidates_comp: Tensor, /) -> tuple[Tensor, Tensor]:
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
 
-        model_inputs = {self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)}
+        model_inputs = {
+            self.onnx_input_name: candidates_comp.numpy().astype(DTypeFloatONNX)
+        }
         results = self._model.run(None, model_inputs)
 
         # IMPROVE: At the moment, we assume that the second model output contains

@@ -66,7 +66,9 @@ class RandomForestSurrogate(GaussianSurrogate):
         return None
 
     @batchify
-    def _estimate_moments(self, candidates: Tensor, /) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         # See base class.
 
         # FIXME[typing]: It seems there is currently no better way to inform the type
@@ -82,7 +84,7 @@ class RandomForestSurrogate(GaussianSurrogate):
         predictions = torch.from_numpy(
             np.asarray(
                 [
-                    self._model.estimators_[tree].predict(candidates)
+                    self._model.estimators_[tree].predict(candidates_comp_scaled)
                     for tree in range(self._model.n_estimators)
                 ]
             )
