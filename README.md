@@ -36,7 +36,8 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
 - 🌎 Distributed workflows: Run campaigns asynchronously with pending measurements
-- 🎓 Active Learning: Perform smart data acquisition campaigns
+- 🎓 Active learning: Perform smart data acquisition campaigns
+
 - ⚙️ Custom surrogate models: For specialized problems
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
 - 📝 Fully typed and hypothesis-tested: Robust code base

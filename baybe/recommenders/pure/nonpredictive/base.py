@@ -45,9 +45,9 @@ class NonPredictiveRecommender(PureRecommender, ABC):
             and searchspace.type is not SearchSpaceType.DISCRETE
         ):
             raise UnusedObjectWarning(
-                f"A non-empty set of pending measurements was provided, but the "
-                f"selected recommender {self.__class__.__name__} only utilizes this "
-                f"information for purely discrete spaces."
+                f"Pending measurements were provided but the selected recommender "
+                f"'{self.__class__.__name__}' only utilizes this information for "
+                f"purely discrete spaces."
             )
         return super().recommend(
             batch_size=batch_size,

@@ -78,9 +78,8 @@ class AcquisitionFunction(ABC, SerialMixin):
                 additional_params["X_pending"] = to_tensor(pending_x)
             else:
                 raise IncompatibleAcquisitionFunctionError(
-                    f"Non-empty pending measurements were provided, but the "
-                    f"chosen acquisition function {self.__class__.__name__} does not "
-                    f"support this."
+                    f"Pending measurements were provided but the chosen acquisition "
+                    f"function '{self.__class__.__name__}' does not support this."
                 )
 
         params_dict.update(additional_params)

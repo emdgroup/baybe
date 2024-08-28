@@ -116,9 +116,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # We are in a hybrid setting now
         if pending_measurements is not None:
             raise UnusedObjectWarning(
-                f"A non-empty set of pending measurements was provided, but the "
-                f"selected recommender {self.__class__.__name__} with discrete "
-                f"sub-recommender {self.disc_recommender.__class__.__name__} only "
+                f"Pending measurements were provided but the selected recommender "
+                f"'{self.__class__.__name__}' with discrete "
+                f"sub-recommender '{self.disc_recommender.__class__.__name__}' only "
                 f"utilizes this information for purely discrete spaces."
             )
 
