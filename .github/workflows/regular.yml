@@ -45,7 +45,7 @@ jobs:
       - name: Build Docs
         run: |
           pip install tox-uv
-          tox -e docs-py310 -- -r
+          tox -e docs-- -r
 
   lint:
     strategy:
