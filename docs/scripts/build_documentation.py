@@ -20,8 +20,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "-l",
-    "--linkcheck",
-    help="Check the links.",
+    "--no_linkcheck",
+    help="Do not check the links.",
     action="store_true",
 )
 parser.add_argument(
@@ -46,7 +46,7 @@ parser.add_argument(
 # Parse input arguments
 args = parser.parse_args()
 RUN_EXAMPLES = args.run_examples
-LINKCHECK = args.linkcheck
+LINKCHECK = not args.no_linkcheck
 FULL_REBUILD = args.full_rebuild
 INCLUDE_WARNINGS = args.include_warnings
 FORCE = args.force
@@ -131,6 +131,8 @@ if __name__ == "__main__":
         os.environ["PYTHONWARNINGS"] = "ignore"
 
     os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
+
+    print(f"{LINKCHECK=}")
 
     build_documentation(
         run_examples=RUN_EXAMPLES,

@@ -240,8 +240,8 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
-    "sklearn": ("http://scikit-learn.org/stable", None),
-    "sklearn_extra": ("https://scikit-learn-extra.readthedocs.io/en/stable/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "sklearn_extra": ("https://scikit-learn-extra.readthedocs.io/en/stable", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "torch": ("https://pytorch.org/docs/master/", None),
     "rdkit": ("https://rdkit.org/docs/", None),
@@ -276,6 +276,7 @@ typehints_use_signature = True
 # These allow us to change docstrings (resp. how they are processed)
 def setup(app):  # noqa: D103
     app.connect("autodoc-process-docstring", autodoc_process_docstring)
+    app.connect("autodoc-skip-member", autodoc_skip_member)
 
 
 def autodoc_process_docstring(app, what, name, obj, options, lines):
@@ -284,3 +285,11 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
         lines.append(
             "For details on the parameters, see **Public attributes and properties**."
         )
+
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    """Skip the docstring for the is_mc classproperty."""
+    # Note that we cannot do `return name == "is_mc"` since this messes up other members
+    # that need to be skipped.
+    if name == "is_mc":
+        return True
