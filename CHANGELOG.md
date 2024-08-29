@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   been replaced with `comp_rep_bounds`, which returns a dataframe
 
 ### Added
+- `py.typed` file to enable the use of type checkers on the user side
 - `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
 - `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
   and `SubspaceContinuous` classes
@@ -24,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in the recommender but in the surrogate
 - Fallback models created by `catch_constant_targets` are stored outside the surrogate
 - `to_tensor` now also handles `numpy` arrays
+
+### Fixed
+- `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
+  string input to categories/tasks
+- `farthest_point_sampling` no longer depends on the provided point order
 
 ### Removed
 - `register_custom_architecture` decorator
@@ -79,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Discrete search space Cartesian product can be created lazily via Polars
 - Examples demonstrating the `register_hooks` utility: basic registration mechanism,
   monitoring the probability of improvement, and automatic campaign stopping
+- Documentation building now uses a lockfile to fix the exact environment
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
