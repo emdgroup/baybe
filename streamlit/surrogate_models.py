@@ -1,28 +1,29 @@
-"""Compare different surrogate model and verify their predictions.
+"""# Surrogate Models
 
 The purpose of this script is to compare different surrogate models and verify that
-their predictions are invariant to changes in scale of the underlying target function.
+their predictions are invariant to changes in location/scale of the underlying target
+function.
 
-This means that the shown function approximation should always appear visually the same
-when the input and output scales are changed.
-"""
+This means that the displayed function approximation should always look the same when
+the input and output locations/scales are changed.
+"""  # noqa: D415
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
-from botorch.optim import optimize_acqf_discrete
+import streamlit as st
 from funcy import rpartial
 
-import streamlit as st
-from baybe.acquisition import qExpectedImprovement
-from baybe.parameters import NumericalDiscreteParameter
+from baybe.parameters.numerical import NumericalDiscreteParameter
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.surrogates.base import Surrogate
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
+from baybe.utils.random import set_random_seed
 
-# define constants
+# Number of values used for the input parameter
 N_PARAMETER_VALUES = 1000
 
 
@@ -60,13 +61,10 @@ def linear(
 
 def main():
     """Create the streamlit dashboard."""
-    # basic settings
-    plt.style.use("seaborn-v0_8-paper")  # 'seaborn' is depreciated since matplotlib 3.6
-
-    # show docstring in dashboard
+    # Show module docstring in dashboard
     st.info(__doc__)
 
-    # define all available test functions
+    # Collect all available test functions
     test_functions = {
         "Sine": sin,
         "Constant": constant,
@@ -74,89 +72,95 @@ def main():
         "Cubic": cubic,
     }
 
-    # collect all available surrogate models
+    # Collect all available surrogate models
     surrogate_model_classes = {
-        surr.__name__: surr
-        for surr in get_subclasses(Surrogate)
-        if not issubclass(surr, CustomONNXSurrogate)
+        cls.__name__: cls
+        for cls in get_subclasses(Surrogate)
+        if not issubclass(cls, CustomONNXSurrogate)
     }
 
-    # simulation parameters
-    random_seed = int(st.sidebar.number_input("Random seed", value=1337))
-    function_name = st.sidebar.selectbox("Test function", list(test_functions.keys()))
-    surrogate_name = st.sidebar.selectbox(
+    # Streamlit simulation parameters
+    st_random_seed = int(st.sidebar.number_input("Random seed", value=1337))
+    st_function_name = st.sidebar.selectbox(
+        "Test function", list(test_functions.keys())
+    )
+    st_surrogate_name = st.sidebar.selectbox(
         "Surrogate model", list(surrogate_model_classes.keys())
     )
-    n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
-    n_recommendations = st.sidebar.slider("Number of recommendations", 1, 20, 5)
+    st_n_training_points = st.sidebar.slider("Number of training points", 1, 20, 5)
+    st_n_recommendations = st.sidebar.slider("Number of recommendations", 1, 20, 5)
     st.sidebar.markdown("---")
     st.sidebar.markdown(
         """
-        The plot should remain static (except for the axis labels) when changing the
-        following parameters.
+        When scaling is implemented correctly, the plot should remain static (except for
+        the axis labels) when changing the following parameters:
         """
     )
-    upper_parameter_limit = st.sidebar.slider("Upper parameter limit", 0.0, 100.0, 1.0)
-    lower_parameter_limit = st.sidebar.slider("Lower parameter limit", -100.0, 0.0, 0.0)
-    function_amplitude = st.sidebar.slider("Function amplitude", 1.0, 100.0, 1.0)
-    function_bias = st.sidebar.slider("Function bias", -100.0, 100.0, 0.0)
+    st_upper_parameter_limit = st.sidebar.slider(
+        "Upper parameter limit", 0.0, 100.0, 1.0
+    )
+    st_lower_parameter_limit = st.sidebar.slider(
+        "Lower parameter limit", -100.0, 0.0, 0.0
+    )
+    st_function_amplitude = st.sidebar.slider("Function amplitude", 1.0, 100.0, 1.0)
+    st_function_bias = st.sidebar.slider("Function bias", -100.0, 100.0, 0.0)
 
-    # fix the chosen random seed
-    np.random.seed(random_seed)
-    torch.manual_seed(random_seed)
+    # Set the chosen random seed
+    set_random_seed(st_random_seed)
 
-    # select the test function and the surrogate model class
+    # Construct the specific test function
     fun = rpartial(
-        test_functions[function_name],
-        lower_parameter_limit,
-        upper_parameter_limit,
-        function_amplitude,
-        function_bias,
+        test_functions[st_function_name],
+        st_lower_parameter_limit,
+        st_upper_parameter_limit,
+        st_function_amplitude,
+        st_function_bias,
     )
 
-    # create the input grid and corresponding target values
-    test_x = torch.linspace(
-        lower_parameter_limit, upper_parameter_limit, N_PARAMETER_VALUES
+    # Create the training data
+    train_x = np.random.uniform(
+        st_lower_parameter_limit, st_upper_parameter_limit, st_n_training_points
     )
-    test_y = torch.from_numpy(fun(test_x.numpy()))
+    train_y = fun(train_x)
+    measurements = pd.DataFrame({"x": train_x, "y": train_y})
 
-    # randomly select the specified number of training data points
-    train_idx = np.random.choice(
-        range(N_PARAMETER_VALUES), n_training_points, replace=False
+    # Create the plotting grid and corresponding target values
+    test_x = np.linspace(
+        st_lower_parameter_limit, st_upper_parameter_limit, N_PARAMETER_VALUES
     )
-    train_x = test_x[train_idx]
-    train_y = test_y[train_idx]
+    test_y = fun(test_x)
+    candidates = pd.DataFrame({"x": test_x, "y": test_y})
 
-    # create the searchspace object
-    param = NumericalDiscreteParameter(name="param", values=test_x.numpy().tolist())
-    searchspace = SearchSpace.from_product(parameters=[param])
-
-    # create the surrogate model, train it, and get its predictions
-    surrogate_model = surrogate_model_classes[surrogate_name]()
-    surrogate_model.fit(searchspace, train_x.unsqueeze(-1), train_y.unsqueeze(-1))
-
-    # recommend next experiments
-    # TODO: use BayBE recommender and add widgets for recommender selection
-    acqf = qExpectedImprovement().to_botorch(
-        surrogate_model, searchspace, pd.DataFrame(train_x), pd.DataFrame(train_y)
+    # Create the searchspace and objective
+    parameter = NumericalDiscreteParameter(
+        name="x",
+        values=np.linspace(
+            st_lower_parameter_limit, st_upper_parameter_limit, N_PARAMETER_VALUES
+        ),
     )
-    recommendatations = optimize_acqf_discrete(
-        acqf, q=n_recommendations, choices=test_x.unsqueeze(-1)
-    )[0]
+    searchspace = SearchSpace.from_product(parameters=[parameter])
+    objective = NumericalTarget(name="y", mode="MAX").to_objective()
 
-    # create the mean and standard deviation predictions for the entire search space
-    mean, covar = surrogate_model.posterior(test_x.unsqueeze(-1))
-    mean = mean.detach().numpy()
-    std = covar.diag().sqrt().detach().numpy()
+    # Create the surrogate model and the recommender
+    surrogate_model = surrogate_model_classes[st_surrogate_name]()
+    recommender = BotorchRecommender(surrogate_model=surrogate_model)
 
-    # visualize the test function, training points, model predictions, recommendations
+    # Get the recommendations and extract the posterior mean / standard deviation
+    recommendations = recommender.recommend(
+        st_n_recommendations, searchspace, objective, measurements
+    )
+    posterior = surrogate_model.posterior(candidates)
+    mean = posterior.mean.squeeze().detach().numpy()
+    std = posterior.stddev.detach().numpy()
+
+    # Visualize the test function, training points, model predictions, recommendations
     fig = plt.figure()
     plt.plot(test_x, test_y, color="tab:blue", label="Test function")
     plt.plot(train_x, train_y, "o", color="tab:blue")
     plt.plot(test_x, mean, color="tab:red", label="Surrogate model")
     plt.fill_between(test_x, mean - std, mean + std, alpha=0.2, color="tab:red")
     plt.vlines(
-        recommendatations, *plt.gca().get_ylim(), color="k", label="Recommendations"
+        recommendations, *plt.gca().get_ylim(), color="k", label="Recommendations"
     )
     plt.legend()
     st.pyplot(fig)

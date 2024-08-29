@@ -50,7 +50,7 @@ class PureRecommender(ABC, RecommenderProtocol):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
         """Generate recommendations from a discrete search space.
@@ -58,7 +58,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             subspace_discrete: The discrete subspace from which to generate
                 recommendations.
-            candidates_comp: The computational representation of all discrete candidate
+            candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
 
@@ -67,14 +67,14 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         Returns:
             The dataframe indices of the recommended points in the provided
-            computational representation.
+            experimental representation.
         """
         # If this method is not implemented by a child class, try to resort to hybrid
         # recommendation (with an empty subspace) instead.
         try:
             return self._recommend_hybrid(
                 searchspace=SearchSpace(discrete=subspace_discrete),
-                candidates_comp=candidates_comp,
+                candidates_exp=candidates_exp,
                 batch_size=batch_size,
             ).index
         except NotImplementedError as exc:
@@ -110,7 +110,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         try:
             return self._recommend_hybrid(
                 searchspace=SearchSpace(continuous=subspace_continuous),
-                candidates_comp=pd.DataFrame(),
+                candidates_exp=pd.DataFrame(),
                 batch_size=batch_size,
             )
         except NotImplementedError as exc:
@@ -126,7 +126,7 @@ class PureRecommender(ABC, RecommenderProtocol):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Generate recommendations from a hybrid search space.
@@ -138,7 +138,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The hybrid search space from which to generate
                 recommendations.
-            candidates_comp: The computational representation of all discrete candidate
+            candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
 
@@ -175,7 +175,7 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get discrete candidates
         # Repeated recommendations are always allowed for hybrid spaces
-        _, candidates_comp = searchspace.discrete.get_candidates(
+        candidates_exp, _ = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=is_hybrid_space
             or self.allow_repeated_recommendations,
             allow_recommending_already_measured=is_hybrid_space
@@ -184,7 +184,7 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
-        if (not is_hybrid_space) and (len(candidates_comp) < batch_size):
+        if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
                 "possible data points left to recommend. This can be "
@@ -196,11 +196,11 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get recommendations
         if is_hybrid_space:
-            rec = self._recommend_hybrid(searchspace, candidates_comp, batch_size)
+            rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
             idxs = rec.index
         else:
             idxs = self._recommend_discrete(
-                searchspace.discrete, candidates_comp, batch_size
+                searchspace.discrete, candidates_exp, batch_size
             )
             rec = searchspace.discrete.exp_rep.loc[idxs, :]
 

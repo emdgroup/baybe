@@ -75,7 +75,7 @@ class BotorchRecommender(BayesianRecommender):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
         """Generate recommendations from a discrete search space.
@@ -83,7 +83,7 @@ class BotorchRecommender(BayesianRecommender):
         Args:
             subspace_discrete: The discrete subspace from which to generate
                 recommendations.
-            candidates_comp: The computational representation of all discrete candidate
+            candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
 
@@ -93,7 +93,7 @@ class BotorchRecommender(BayesianRecommender):
 
         Returns:
             The dataframe indices of the recommended points in the provided
-            computational representation.
+            experimental representation.
         """
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
@@ -105,9 +105,9 @@ class BotorchRecommender(BayesianRecommender):
         from botorch.optim import optimize_acqf_discrete
 
         # determine the next set of points to be tested
-        candidates_tensor = to_tensor(candidates_comp)
+        candidates_comp = subspace_discrete.transform(candidates_exp)
         points, _ = optimize_acqf_discrete(
-            self._botorch_acqf, batch_size, candidates_tensor
+            self._botorch_acqf, batch_size, to_tensor(candidates_comp)
         )
 
         # retrieve the index of the points from the input dataframe
@@ -115,6 +115,7 @@ class BotorchRecommender(BayesianRecommender):
         #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
         #   a simpler matching logic. When refactoring the SearchSpace class to
         #   handle continuous parameters, a corresponding utility could be extracted.
+        # IMPROVE: Maintain order of recommendations (currently lost during merge)
         idxs = pd.Index(
             pd.merge(
                 candidates_comp.reset_index(),
@@ -156,7 +157,7 @@ class BotorchRecommender(BayesianRecommender):
 
         points, _ = optimize_acqf(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
+            bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
             q=batch_size,
             num_restarts=5,  # TODO make choice for num_restarts
             raw_samples=10,  # TODO make choice for raw_samples
@@ -180,7 +181,7 @@ class BotorchRecommender(BayesianRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
@@ -194,7 +195,7 @@ class BotorchRecommender(BayesianRecommender):
 
         Args:
             searchspace: The search space in which the recommendations should be made.
-            candidates_comp: The computational representation of the candidates
+            candidates_exp: The experimental representation of the candidates
                 of the discrete subspace.
             batch_size: The size of the calculated batch.
 
@@ -214,6 +215,9 @@ class BotorchRecommender(BayesianRecommender):
 
         import torch
         from botorch.optim import optimize_acqf_mixed
+
+        # Transform discrete candidates
+        candidates_comp = searchspace.discrete.transform(candidates_exp)
 
         if len(candidates_comp) > 0:
             # Calculate the number of samples from the given percentage
@@ -241,7 +245,7 @@ class BotorchRecommender(BayesianRecommender):
         # Actual call of the BoTorch optimization routine
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(searchspace.param_bounds_comp),
+            bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
             q=batch_size,
             num_restarts=5,  # TODO make choice for num_restarts
             raw_samples=10,  # TODO make choice for raw_samples

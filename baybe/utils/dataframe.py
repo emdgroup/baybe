@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Collection, Iterable, Iterator, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from typing import (
     TYPE_CHECKING,
     Literal,
@@ -27,21 +27,21 @@ _logger = logging.getLogger(__name__)
 
 
 @overload
-def to_tensor(df: pd.DataFrame) -> Tensor: ...
+def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor: ...
 
 
 @overload
-def to_tensor(*dfs: pd.DataFrame) -> Iterator[Tensor]: ...
+def to_tensor(*x: np.ndarray | pd.DataFrame) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(*dfs: pd.DataFrame) -> Tensor | Iterator[Tensor]:
-    """Convert a given set of dataframes into tensors (dropping all indices).
+def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
+    """Convert numpy arrays and pandas dataframes to tensors.
 
     Args:
-        *dfs: A set of dataframes
+        *x: The array(s)/dataframe(s) to be converted.
 
     Returns:
-        The provided dataframe(s), transformed into Tensor(s)
+        The provided array(s)/dataframe(s) represented as tensor(s).
     """
     # FIXME This function seems to trigger a problem when some columns in either of
     #  the dfs have a dtype other than int or float (e.g. object, bool). This can
@@ -54,12 +54,14 @@ def to_tensor(*dfs: pd.DataFrame) -> Tensor | Iterator[Tensor]:
 
     from baybe.utils.torch import DTypeFloatTorch
 
-    out = (
-        torch.from_numpy(df.values.astype(DTypeFloatNumpy)).to(DTypeFloatTorch)
-        for df in dfs
+    out = tuple(
+        torch.from_numpy(
+            (xi.values if isinstance(xi, pd.DataFrame) else xi).astype(DTypeFloatNumpy)
+        ).to(DTypeFloatTorch)
+        for xi in x
     )
-    if len(dfs) == 1:
-        out = next(out)
+    if len(x) == 1:
+        out = out[0]
     return out
 
 

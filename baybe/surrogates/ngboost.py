@@ -14,19 +14,20 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from attr import define, field
 from ngboost import NGBRegressor
 
-from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import autoscale, batchify, catch_constant_targets
+from baybe.parameters.base import Parameter
+from baybe.surrogates.base import GaussianSurrogate
+from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
+    from botorch.models.transforms.input import InputTransform
+    from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
 
 
 @catch_constant_targets
-@autoscale
-@define(slots=False)
-class NGBoostSurrogate(Surrogate):
+@define
+class NGBoostSurrogate(GaussianSurrogate):
     """A natural-gradient-boosting surrogate model."""
 
     # Class variables
@@ -53,14 +54,36 @@ class NGBoostSurrogate(Surrogate):
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}
 
-    @batchify
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    @staticmethod
+    def _make_parameter_scaler_factory(
+        parameter: Parameter,
+    ) -> type[InputTransform] | None:
         # See base class.
+
+        # Tree-like models do not require any input scaling
+        return None
+
+    @staticmethod
+    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
+        # See base class.
+
+        # Tree-like models do not require any output scaling
+        return None
+
+    @batchify
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
+        # See base class.
+
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._model is not None
 
         import torch
 
         # Get predictions
-        dists = self._model.pred_dist(candidates)
+        dists = self._model.pred_dist(candidates_comp_scaled)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists.mean())
@@ -68,6 +91,6 @@ class NGBoostSurrogate(Surrogate):
 
         return mean, var
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())

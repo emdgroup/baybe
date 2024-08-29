@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attr import define, field
 
-from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import GaussianSurrogate
 from baybe.surrogates.utils import batchify
 
 if TYPE_CHECKING:
@@ -15,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @define
-class MeanPredictionSurrogate(Surrogate):
+class MeanPredictionSurrogate(GaussianSurrogate):
     """A trivial surrogate model.
 
     It provides the average value of the training targets
@@ -34,16 +33,18 @@ class MeanPredictionSurrogate(Surrogate):
     """The estimated posterior mean value of the training targets."""
 
     @batchify
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         # See base class.
 
         import torch
 
         # TODO: use target value bounds for covariance scaling when explicitly provided
-        mean = self._model * torch.ones([len(candidates)])
-        var = torch.ones(len(candidates))
+        mean = self._model * torch.ones([len(candidates_comp_scaled)])
+        var = torch.ones(len(candidates_comp_scaled))
         return mean, var
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = train_y.mean().item()

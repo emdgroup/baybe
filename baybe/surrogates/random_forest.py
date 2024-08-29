@@ -15,19 +15,20 @@ import numpy as np
 from attr import define, field
 from sklearn.ensemble import RandomForestRegressor
 
-from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import autoscale, batchify, catch_constant_targets
+from baybe.parameters.base import Parameter
+from baybe.surrogates.base import GaussianSurrogate
+from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
+    from botorch.models.transforms.input import InputTransform
+    from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
 
 
 @catch_constant_targets
-@autoscale
-@define(slots=False)
-class RandomForestSurrogate(Surrogate):
+@define
+class RandomForestSurrogate(GaussianSurrogate):
     """A random forest surrogate model."""
 
     # Class variables
@@ -48,9 +49,31 @@ class RandomForestSurrogate(Surrogate):
     _model: RandomForestRegressor | None = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    @batchify
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    @staticmethod
+    def _make_parameter_scaler_factory(
+        parameter: Parameter,
+    ) -> type[InputTransform] | None:
         # See base class.
+
+        # Tree-like models do not require any input scaling
+        return None
+
+    @staticmethod
+    def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
+        # See base class.
+
+        # Tree-like models do not require any output scaling
+        return None
+
+    @batchify
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
+        # See base class.
+
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._model is not None
 
         import torch
 
@@ -61,7 +84,7 @@ class RandomForestSurrogate(Surrogate):
         predictions = torch.from_numpy(
             np.asarray(
                 [
-                    self._model.estimators_[tree].predict(candidates)
+                    self._model.estimators_[tree].predict(candidates_comp_scaled)
                     for tree in range(self._model.n_estimators)
                 ]
             )
@@ -73,7 +96,7 @@ class RandomForestSurrogate(Surrogate):
 
         return mean, var
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())

@@ -61,5 +61,9 @@ class UnidentifiedSubclassError(Exception):
     """A specified subclass cannot be found in the given class hierarchy."""
 
 
+class ModelNotTrainedError(Exception):
+    """A prediction/transformation is attempted before the model has been trained."""
+
+
 class UnmatchedAttributeError(Exception):
     """An attribute cannot be matched against a certain callable signature."""

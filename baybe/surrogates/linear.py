@@ -14,9 +14,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from attr import define, field
 from sklearn.linear_model import ARDRegression
 
-from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import autoscale, batchify, catch_constant_targets
+from baybe.surrogates.base import GaussianSurrogate
+from baybe.surrogates.utils import batchify, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
@@ -24,9 +23,8 @@ if TYPE_CHECKING:
 
 
 @catch_constant_targets
-@autoscale
-@define(slots=False)
-class BayesianLinearSurrogate(Surrogate):
+@define
+class BayesianLinearSurrogate(GaussianSurrogate):
     """A Bayesian linear regression surrogate model."""
 
     # Class variables
@@ -48,13 +46,19 @@ class BayesianLinearSurrogate(Surrogate):
     """The actual model."""
 
     @batchify
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         # See base class.
+
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._model is not None
 
         import torch
 
         # Get predictions
-        dists = self._model.predict(candidates.numpy(), return_std=True)
+        dists = self._model.predict(candidates_comp_scaled.numpy(), return_std=True)
 
         # Split into posterior mean and variance
         mean = torch.from_numpy(dists[0])
@@ -62,7 +66,7 @@ class BayesianLinearSurrogate(Surrogate):
 
         return mean, var
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())

@@ -87,5 +87,5 @@ def _default_noise_factory(
             np.interp(effective_dims, _DIM_LIMITS, [1.05, 1.5]),
             np.interp(effective_dims, _DIM_LIMITS, [0.5, 0.1]),
         ),
-        np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]),
+        np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]).item(),
     )
