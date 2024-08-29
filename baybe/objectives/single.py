@@ -12,7 +12,7 @@ from baybe.targets.base import Target
 class SingleTargetObjective(Objective):
     """An objective focusing on a single target."""
 
-    _target: Target = field(validator=instance_of(Target), alias="target")  # type: ignore[type-abstract]
+    _target: Target = field(validator=instance_of(Target), alias="target")
     """The single target considered by the objective."""
 
     def __str__(self) -> str:

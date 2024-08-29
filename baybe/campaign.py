@@ -60,7 +60,7 @@ class Campaign(SerialMixin):
 
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,
-        validator=instance_of(RecommenderProtocol),  # type: ignore[type-abstract]
+        validator=instance_of(RecommenderProtocol),
     )
     """The employed recommender"""
 
