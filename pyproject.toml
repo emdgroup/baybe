@@ -34,6 +34,7 @@ dependencies = [
     "exceptiongroup",
     "funcy>=1.17",
     "gpytorch>=1.9.1,<2",
+    "joblib>1.4.0,<2",
     "ngboost>=0.3.12,<1",
     "numpy>=1.24.1,<2",
     "pandas>=1.4.2",
