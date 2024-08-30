@@ -12,6 +12,7 @@ from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
@@ -25,7 +26,7 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -286,14 +287,23 @@ class Campaign(SerialMixin):
             candidates: The candidate points in experimental recommendations.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
 
+        Raises:
+            IncompatibilityError: If the underlying surrogate model exposes no
+                method for computing the posterior distribution.
+
         Returns:
             Posterior: The corresponding posterior object.
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
         surrogate = self.get_surrogate()
+        if not hasattr(surrogate, method_name := "posterior"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
+                f"provide a '{method_name}' method."
+            )
         return surrogate.posterior(candidates)
 
-    def get_surrogate(self) -> Surrogate:
+    def get_surrogate(self) -> SurrogateProtocol:
         """Get the current surrogate model.
 
         Raises:
@@ -302,6 +312,12 @@ class Campaign(SerialMixin):
         Returns:
             Surrogate: The surrogate of the current recommender.
         """
+        if self.objective is None:
+            raise IncompatibilityError(
+                f"No surrogate is available since no '{Objective.__name__}' is defined."
+            )
+
+        pure_recommender: RecommenderProtocol
         if isinstance(self.recommender, MetaRecommender):
             pure_recommender = self.recommender.get_current_recommender()
         else:

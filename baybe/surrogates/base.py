@@ -65,6 +65,9 @@ _IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
 class SurrogateProtocol(Protocol):
     """Type protocol specifying the interface surrogate models need to implement."""
 
+    # TODO: Final layout still to be optimized. For example, shall we require a
+    #   `posterior` method?
+
     def fit(
         self,
         searchspace: SearchSpace,
