@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in the recommender but in the surrogate
 - Fallback models created by `catch_constant_targets` are stored outside the surrogate
 - `to_tensor` now also handles `numpy` arrays
+- `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
+  instead of negating the computational representation
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
