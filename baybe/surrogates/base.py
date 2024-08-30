@@ -16,6 +16,7 @@ from cattrs.dispatch import (
     UnstructuredValue,
     UnstructureHook,
 )
+from joblib.hashing import hash
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -96,6 +97,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
+
+    _objective: Objective | None = field(init=False, default=None, eq=False)
+    """The objective for which the surrogate was trained. Available after fitting."""
+
+    _measurements_hash = field(init=False, default=None, eq=False)
+    """The hash of the data the surrogate was trained on."""
 
     # TODO: type should be
     #   `botorch.models.transforms.outcome.Standardize | _NoTransform`
@@ -275,6 +282,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """
         # TODO: consider adding a validation step for `measurements`
 
+        # When the context is unchanged, no retraining is necessary
+        if (
+            searchspace == self._searchspace
+            and objective == self._objective
+            and hash(measurements) == self._measurements_hash
+        ):
+            return
+
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
@@ -289,8 +304,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
-        # Remember on which search space the model is trained
+        # Remember the training context
         self._searchspace = searchspace
+        self._objective = objective
+        self._measurements_hash = hash(measurements)
 
         # Create context-specific transformations
         self._input_scaler = self._make_input_scaler(searchspace)
