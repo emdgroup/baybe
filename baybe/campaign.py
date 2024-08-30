@@ -301,7 +301,11 @@ class Campaign(SerialMixin):
                 f"The used surrogate type '{surrogate.__class__.__name__}' does not "
                 f"provide a '{method_name}' method."
             )
-        return surrogate.posterior(candidates)
+
+        import torch
+
+        with torch.no_grad():
+            return surrogate.posterior(candidates)
 
     def get_surrogate(self) -> SurrogateProtocol:
         """Get the current surrogate model.
