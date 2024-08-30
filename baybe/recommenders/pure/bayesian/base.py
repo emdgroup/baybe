@@ -1,9 +1,10 @@
 """Base class for all Bayesian recommenders."""
 
+import warnings
 from abc import ABC
 
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 
 from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
@@ -20,7 +21,9 @@ from baybe.surrogates.base import IndependentGaussianSurrogate, SurrogateProtoco
 class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
-    surrogate_model: SurrogateProtocol = field(factory=GaussianProcessSurrogate)
+    _surrogate_model: SurrogateProtocol = field(
+        alias="surrogate_model", factory=GaussianProcessSurrogate
+    )
     """The used surrogate model."""
 
     acquisition_function: AcquisitionFunction = field(
@@ -43,6 +46,28 @@ class BayesianRecommender(PureRecommender, ABC):
                 "The parameter has been renamed to 'acquisition_function'."
             )
 
+    @property
+    def surrogate_model(self) -> SurrogateProtocol:
+        """Deprecated!"""
+        warnings.warn(
+            f"Accessing the surrogate model via 'surrogate_model' has been "
+            f"deprecated. Use '{self.get_surrogate.__name__}' instead to get the "
+            f"trained model instance (or "
+            f"'{fields(type(self))._surrogate_model.name}' to access the raw object).",
+            DeprecationWarning,
+        )
+        return self._surrogate_model
+
+    def get_surrogate(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+    ) -> SurrogateProtocol:
+        """Get the trained surrogate model."""
+        self._surrogate_model.fit(searchspace, objective, measurements)
+        return self._surrogate_model
+
     def _setup_botorch_acqf(
         self,
         searchspace: SearchSpace,
@@ -51,9 +76,9 @@ class BayesianRecommender(PureRecommender, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
-        self.surrogate_model.fit(searchspace, objective, measurements)
+        surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = self.acquisition_function.to_botorch(
-            self.surrogate_model,
+            surrogate,
             searchspace,
             objective,
             measurements,
@@ -83,12 +108,12 @@ class BayesianRecommender(PureRecommender, ABC):
             )
 
         if (
-            isinstance(self.surrogate_model, IndependentGaussianSurrogate)
+            isinstance(self._surrogate_model, IndependentGaussianSurrogate)
             and batch_size > 1
         ):
             raise InvalidSurrogateModelError(
                 f"The specified surrogate model of type "
-                f"'{self.surrogate_model.__class__.__name__}' "
+                f"'{self._surrogate_model.__class__.__name__}' "
                 f"cannot be used for batch recommendation."
             )
 

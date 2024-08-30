@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - The role of `register_custom_architecture` has been taken over by
   `baybe.surrogates.base.SurrogateProtocol`
+- `BayesianRecommender.surrogate_model` has been replaced with `get_surrogate`
 
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes

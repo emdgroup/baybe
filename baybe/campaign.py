@@ -324,9 +324,9 @@ class Campaign(SerialMixin):
             pure_recommender = self.recommender
 
         if isinstance(pure_recommender, BayesianRecommender):
-            surrogate = pure_recommender.surrogate_model
-            surrogate.fit(self.searchspace, self.objective, self.measurements)
-            return surrogate
+            return pure_recommender.get_surrogate(
+                self.searchspace, self.objective, self.measurements
+            )
         else:
             raise RuntimeError(
                 f"The current recommender is of type "
