@@ -146,3 +146,19 @@ def indent(text: str, amount: int = 3, ch: str = " ") -> str:
     """Indent a given text by a certain amount."""
     padding = amount * ch
     return "".join(padding + line for line in text.splitlines(keepends=True))
+
+
+def create_str_representation(header: str, fields: list[any]) -> str:
+    """Create the nested `str`representation that is used in the `__str__` methods.
+
+    Args:
+        header: The header, typically the name of the class.
+        fields: List of fields that should be printed with an indentation.
+
+    Returns:
+        The representation with indented fields.
+    """
+    # Add a ":" to header if it does not end with a "."
+    if not header.endswith("."):
+        header += ":"
+    return "\n".join([header] + [indent(str(f)) for f in fields])
