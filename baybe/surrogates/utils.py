@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from baybe.exceptions import InvalidSurrogateModelError
+from baybe.surrogates.base import Surrogate
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
     from torch import Tensor
 
-    from baybe.surrogates.base import Surrogate
     from baybe.surrogates.naive import MeanPredictionSurrogate
+
+_TSurrogate = TypeVar("_TSurrogate", bound=Surrogate)
 
 
 _constant_target_model_store: dict[int, MeanPredictionSurrogate] = {}
@@ -82,13 +84,13 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
 
 
 def batchify_mean_var_prediction(
-    posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]],
-) -> Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]:
+    posterior: Callable[[_TSurrogate, Tensor], tuple[Tensor, Tensor]],
+) -> Callable[[_TSurrogate, Tensor], tuple[Tensor, Tensor]]:
     """Wrap a posterior method to make it evaluate t-batches as an augmented q-batch."""
 
     @wraps(posterior)
     def sequential_posterior(
-        model: Surrogate, candidates: Tensor
+        model: _TSurrogate, candidates: Tensor
     ) -> tuple[Tensor, Tensor]:
         # If no batch dimensions are given, call the model directly
         if candidates.ndim == 2:

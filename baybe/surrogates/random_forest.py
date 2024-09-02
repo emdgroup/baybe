@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection
-from typing import TYPE_CHECKING, Any, ClassVar
+from collections.abc import Collection
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import numpy as np
 from attr import define, field
@@ -19,6 +19,12 @@ if TYPE_CHECKING:
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
+
+
+class _Predictor(Protocol):
+    """A basic predictor."""
+
+    def predict(self, x: np.ndarray, /) -> np.ndarray: ...
 
 
 @catch_constant_targets
@@ -60,14 +66,15 @@ class RandomForestSurrogate(Surrogate):
 
         from botorch.models.ensemble import EnsemblePosterior
 
-        # FIXME[typing]: It seems there is currently no better way to inform the type
-        #   checker that the attribute is available at the time of the function call
-        assert self._model is not None
-
         @batchify_ensemble_predictor
         def predict(candidates_comp_scaled: Tensor) -> Tensor:
             """Make the end-to-end ensemble prediction."""
             import torch
+
+            # FIXME[typing]: It seems there is currently no better way to inform the
+            #   type checker that the attribute is available at the time of the
+            #   function call
+            assert self._model is not None
 
             return torch.from_numpy(
                 self._predict_ensemble(
@@ -79,9 +86,8 @@ class RandomForestSurrogate(Surrogate):
 
     @staticmethod
     def _predict_ensemble(
-        predictors: Collection[Callable[[np.ndarray], np.ndarray]],
-        candidates: np.ndarray,
-    ) -> Tensor:
+        predictors: Collection[_Predictor], candidates: np.ndarray
+    ) -> np.ndarray:
         """Evaluate an ensemble of predictors on a given candidate set."""
         # Extract shapes
         n_candidates = len(candidates)
