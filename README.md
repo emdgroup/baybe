@@ -36,7 +36,7 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - ⚙️ Custom surrogate models: For specialized problems or active learning
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
-- 🎰 Bandit models: A principled approach to A/B testing
+- 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
 - 📝 Fully typed and hypothesis-tested: Robust code base
 - 🔄 All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
