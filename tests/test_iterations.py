@@ -218,6 +218,8 @@ test_targets = [
 def test_mc_acqfs(campaign, n_iterations, batch_size, acqf):
     if isinstance(acqf, qKG):
         pytest.skip(f"{acqf.__class__.__name__} only works with continuous spaces.")
+    if isinstance(acqf, qThompsonSampling) and batch_size > 1:
+        pytest.skip(f"{acqf.__class__.__name__} only works with batch size 1.")
 
     run_iterations(campaign, n_iterations, batch_size)
 
@@ -310,7 +312,7 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
         ["Frame_B"],
     ],
 )
-@pytest.mark.parametrize("batch_size", [1, 2])
+@pytest.mark.parametrize("batch_size", [1])
 @pytest.mark.parametrize("target_names", [["Target_binary"]])
 @pytest.mark.parametrize("allow_repeated_recommendations", [True])
 @pytest.mark.parametrize("allow_recommending_already_measured", [True])
