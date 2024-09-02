@@ -280,15 +280,22 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
 @define(frozen=True)
 class qThompsonSampling(qSimpleRegret):
-    """Thomson sampling, implemented via simple regret. Inherently Monte Carlo based."""
+    """Thomson sampling, implemented via simple regret. Inherently Monte Carlo based.
+
+    This implementation exploits the fact that one-sample-based Thompson sampling
+    (i.e. where the action probability is approximated using a single posterior sample)
+    is equivalent to optimizing the Monte Carlo approximated posterior mean with
+    sample size one. The latter can be achieved via `qSimpleRegret` and controlling
+    its sample shape attribute.
+    """
 
     abbreviation: ClassVar[str] = "qTS"
 
-    n_mc_samples: int = field(default=1, validator=[instance_of(int), ge(1)])
+    n_mc_samples: int = field(default=1, init=False)
     """Number of Monte Carlo samples drawn from the posterior at each design point.
 
-    The acquisition value at a given design point is the maximum of the corresponding
-    sample values. Accordingly, larger sample sizes result in stronger exploitation.
+    Restring the the sample size to one allows us to emulate (one-sample based)
+    Thompson sampling using the regular acquisition function machinery.
     """
 
     @classproperty
