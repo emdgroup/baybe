@@ -105,6 +105,13 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
         return super().to_botorch()
 
     @staticmethod
+    def _make_input_scaler_factory():
+        # See base class.
+        #
+        # Due to enforced one-hot encoding, no input scaling is needed.
+        return None
+
+    @staticmethod
     def _make_target_scaler_factory():
         # See base class.
         #
