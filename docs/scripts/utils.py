@@ -62,8 +62,10 @@ def add_version_to_selector_page(version: str) -> None:
     )
     file = Path("versions.html")
     modified_lines = []
+
     # Regular expression pattern to match the version number in the format X.Y.Z
     pattern = r"\b\d+\.\d+\.\d+\b"
+
     # Indices for memorizing the index of the line containing "stable" and the last
     # version that was larger than the one to be inserted
     stable_index = -1
@@ -82,12 +84,14 @@ def add_version_to_selector_page(version: str) -> None:
                 # a hotfix
                 if Version(version_number.group()) > Version(version):
                     last_version_index = ind
+
             # Add the already existing line
             modified_lines.append(line)
 
             # Slightly weird string since the word "stable" appears is other places
             if "stable</a></li>" in line:
                 stable_index = ind
+
     # We never found a larger number than the current, so we just insert after stable
     index = last_version_index + 1 if last_version_index != -1 else stable_index + 1
     modified_lines.insert(index, new_line)
