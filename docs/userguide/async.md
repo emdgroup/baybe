@@ -7,22 +7,26 @@ could for instance be:
   operators, e.g. at different locations or in several reactors, some experiments might
   have been started, but are not ready when the next batch of recommendations is requested.
   Without further consideration, the algorithm would be likely to recommend the pending
-  measurements again, as it is unaware they were already started.
+  experiments again, as it is unaware they were already started.
 - **Partial targets**: When dealing with multiple targets that require very different
   amounts of time to measure, the targets of previously recommended points might only be
   partially available when requesting the next batch of recommendations. Still, these
-  partial measurements should ideally be considered when generating the recommendations.
+  partial experiments should ideally be considered when generating the recommendations.
 
-
-## Pending Measurements
-
-With *pending measurements* we mean recommendations whose measurement process has
+With *pending experiments* we mean experiments whose measurement process has
 been started, but not yet completed by time of triggering the next set of
-recommendations. This is not to be confused with a situation where the targets of a
-recommendation have been partially measured. A measurement is *pending* whenever one or
-more of its targets are not measured yet. Only once all the targets are available,
-the data point can be removed from `pending_experiments` and be provided via 
-`measurements`.
+recommendations - this is typically the case when at least one of the configured
+targets has not yet been measured.
+
+There are two levels of dealing with such situations:
+1) **Marking experiments as pending**: If an experiment is not ready (meaning at least one target is not yet measured), it
+  cannot be added as measurement. However, it can be marked as pending via
+  `pending_experiments` in `recommend`.
+1) **Adding partial results**: If an experiment is partially completed (meaning at least one target has been
+  measured), in principle we can already update the model with that partial information
+  and add the partial measurement.
+
+## Marking Experiments as Pending
 
 To avoid repeated recommendations in the above scenario, BayBE provides the 
 `pending_experiments` keyword. It is available wherever recommendations can be
@@ -39,17 +43,19 @@ function with `pending_experiments` will result in an
 
 ```{admonition} Supported Recommenders
 :class: important
-For technical reasons, not every recommender is able to fully or even partially
-utilize `pending_experiments`. For instance, 
+For technical reasons, not every recommender is able to utilize `pending_experiments` in
+the same way. For instance,
 [`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)
-takes all pending measurements into account, even if they do not match exactly with any
-point in the search space.
-[Clustering recommenders](baybe.recommenders.pure.nonpredictive.clustering.SKLearnClusteringRecommender)
-only incorporate pending points that are exact search space matches by excluding them
-from the candidates. The 
-[`RandomRecommender`](baybe.recommenders.pure.nonpredictive.sampling.RandomRecommender)
-does not take pending points into consideration at all and will raise a correspoding
-[warning](baybe.exceptions.UnusedObjectWarning).
+takes all pending experiments into account, even if they do not match exactly with any
+point in the search space. 
+[Non-predictive recommenders](baybe.recommenders.pure.nonpredictive.base.NonPredictiveRecommender) like 
+[`SKLearnClusteringRecommender`](baybe.recommenders.pure.nonpredictive.clustering.SKLearnClusteringRecommender)s,
+[`RandomRecommender`](baybe.recommenders.pure.nonpredictive.sampling.RandomRecommender) or
+[`FPSRecommender`](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender)
+only take pending points into consideration if the recommender flag
+[allow_recommending_pending_experiments](baybe.recommenders.pure.nonpredictive.base.NonPredictiveRecommender.allow_recommending_pending_experiments)
+was set to `False`. In that case, the candidate space is stripped of pending experiments
+that are exact matches with the search space, i.e. they will not even be considered.
 ```
 
 Akin to `measurements` or `recommendations`, `pending_experiments` is a dataframe in
@@ -69,6 +75,9 @@ rec_finished["Target_max"] = 1337
 campaign.add_measurements(rec_finished)
 
 # Get the next set of recommendations, incorporating the still unfinished ones
-# These will not include the pending recommendations again
+# These will not include the experiments marked as pending again
 rec_next = campaign.recommend(10, pending_experiments=rec_pending)
 ```
+
+## Adding Partial Results
+This functionality is under development as part of multi-target models.
