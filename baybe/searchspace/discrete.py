@@ -23,7 +23,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
-from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
     get_transform_parameters,
     validate_parameter_names,
@@ -91,7 +91,8 @@ class SubspaceDiscrete(SerialMixin):
     """
 
     parameters: tuple[DiscreteParameter, ...] = field(
-        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
+        converter=sort_parameters,
+        validator=lambda _, __, x: validate_parameter_names(x),
     )
     """The list of parameters of the subspace."""
 
@@ -579,23 +580,17 @@ class SubspaceDiscrete(SerialMixin):
         return tuple(p.name for p in self.parameters)
 
     @property
-    def param_bounds_comp(self) -> np.ndarray:
-        """Return bounds as tensor.
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        # We go via `comp_rep` here instead of using the columns of the individual
+        # parameters because the search space potentially uses only a subset of the
+        # columns due to decorrelation
+        return tuple(self.comp_rep.columns)
 
-        Take bounds from the parameter definitions, but discards bounds belonging to
-        columns that were filtered out during the creation of the space.
-        """
-        if not self.parameters:
-            return np.empty((2, 0))
-        bounds = np.hstack(
-            [
-                np.vstack([p.comp_df[col].min(), p.comp_df[col].max()])
-                for p in self.parameters
-                for col in p.comp_df
-                if col in self.comp_rep.columns
-            ]
-        )
-        return bounds
+    @property
+    def comp_rep_bounds(self) -> pd.DataFrame:
+        """The minimum and maximum values of the computational representation."""
+        return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T
 
     @staticmethod
     def estimate_product_space_size(

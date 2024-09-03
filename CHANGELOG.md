@@ -6,6 +6,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Breaking Changes
+- The public methods of `Surrogate` models now operate on dataframes in experimental
+  representation instead of tensors in computational representation
+- `Surrogate.posterior` models now returns a `Posterior` object
+- `param_bounds_comp` of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` has
+  been replaced with `comp_rep_bounds`, which returns a dataframe
+
+### Added
+- `py.typed` file to enable the use of type checkers on the user side
+- `IndependentGaussianSurrogate` base class for surrogate models providing independent 
+  Gaussian posteriors for all candidates (cannot be used for batch prediction)
+- `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
+  and `SubspaceContinuous` classes
+- New mechanisms for surrogate input/output scaling configurable per class
+- `SurrogateProtocol` as an interface for user-defined surrogate architectures
+- `recommend` now accepts the `pending_experiments` argument, informing the algorithm
+  about points that were already selected for evaluation
+- Pure recommenders now have the `allow_recommending_pending_experiments` flag,
+  controlling whether pending experiments are excluded from candidates in purely
+  discrete search spaces
+
+### Changed
+- The transition from experimental to computational representation no longer happens
+  in the recommender but in the surrogate
+- Fallback models created by `catch_constant_targets` are stored outside the surrogate
+- `to_tensor` now also handles `numpy` arrays
+- `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
+  instead of negating the computational representation
+- Search spaces now store their parameters in alphabetical order by name
+
+### Fixed
+- `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
+  string input to categories/tasks
+- `farthest_point_sampling` no longer depends on the provided point order
+- Batch predictions for `RandomForestSurrogate`
+- Surrogates providing only marginal posterior information can no longer be used for
+  batch recommendation
+
+### Removed
+- `register_custom_architecture` decorator
+- `Scalar` and `DefaultScaler` classes
+
+### Deprecations
+- The role of `register_custom_architecture` has been taken over by
+  `baybe.surrogates.base.SurrogateProtocol`
+
+## [0.10.0] - 2024-08-02
+### Breaking Changes
 - Providing an explicit `batch_size` is now mandatory when asking for recommendations
 - `RecommenderProtocol.recommend` now accepts an optional `Objective` 
 - `RecommenderProtocol.recommend` now expects training data to be provided as a single
@@ -48,11 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DiscreteExcludeConstraint`, `DiscreteLinkedParametersConstraint` and 
   `DiscreteNoLabelDuplicatesConstraint`
 - Discrete search space Cartesian product can be created lazily via Polars
-- `recommend` now accepts the `pending_experiments` argument, informing the algorithm
-  about points that were already selected for evaluation
-- Pure recommenders now have the `allow_recommending_pending_experiments` flag,
-  controlling whether pending experiments are excluded from candidates in purely
-  discrete search spaces
+- Examples demonstrating the `register_hooks` utility: basic registration mechanism,
+  monitoring the probability of improvement, and automatic campaign stopping
+- Documentation building now uses a lockfile to fix the exact environment
 
 ### Changed
 - Passing an `Objective` to `Campaign` is now optional
@@ -68,7 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   two fixed low and high dimensional prior regimes
 - The previous default kernel factory has been renamed to `EDBOKernelFactory` and now
   fully reflects the original logic
-- The default acquisition function has been changed from "qEI" to "qLogEI" for improved
+- The default acquisition function has been changed from `qEI` to `qLogEI` for improved
   numerical stability
 
 ### Removed
@@ -85,8 +130,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are not passed on to the GPyTorch kernels
 - Positive-valued kernel attributes are now correctly handled by validators
   and hypothesis strategies
-- Reverted `fit_gpytorch_mll` call back to old `fit_gpytorch_mll_torch` call until
-  finetuning is achieved
+- As a temporary workaround to compensate for missing `IndexKernel` priors, 
+ `fit_gpytorch_mll_torch` is used instead of `fit_gpytorch_mll` when a `TaskParameter`
+  is present, which acts as regularization via early stopping during model fitting
 
 ### Deprecations
 - `SequentialGreedyRecommender` class replaced with `BotorchRecommender`
@@ -97,6 +143,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Passing a dataframe via the `data` argument to the `transform` methods of
   `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` is no longer possible.
   The dataframe must now be passed as positional argument.
+- The new `allow_extra` flag is automatically set to `True` in `transform` methods
+  of search space classes when left unspecified
+
+### Expired Deprecations (from 0.7.*)
+- `Interval.is_finite` property
+- Specifying target configs without type information 
+- Specifying parameters/constraints at the top level of a campaign configs
+- Passing `numerical_measurements_must_be_within_tolerance` to `Campaign`
+- `batch_quantity` argument 
+- Passing `allow_repeated_recommendations` or `allow_recommending_already_measured` 
+  to `MetaRecommender` (or former `Strategy`)
+- `*Strategy` classes and `baybe.strategies` subpackage
+- Specifying `MetaRecommender` (or former `Strategy`) configs without type information 
 
 ## [0.9.1] - 2024-06-04
 ### Changed

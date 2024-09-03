@@ -21,12 +21,13 @@ class RandomRecommender(NonPredictiveRecommender):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         # See base class.
+
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return candidates_comp.sample(batch_size)
+            return candidates_exp.sample(batch_size)
 
         cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
@@ -55,7 +56,7 @@ class FPSRecommender(NonPredictiveRecommender):
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
         # See base class.
@@ -66,6 +67,7 @@ class FPSRecommender(NonPredictiveRecommender):
         scaler.fit(subspace_discrete.comp_rep)
 
         # Scale and sample
+        candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]

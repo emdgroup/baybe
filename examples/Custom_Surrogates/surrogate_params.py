@@ -97,7 +97,7 @@ print("The model object in json format:")
 print(surrogate_model.to_json(), end="\n" * 3)
 
 # Let's do a first round of recommendation
-recommendation = campaign.recommend(batch_size=2)
+recommendation = campaign.recommend(batch_size=1)
 
 print("Recommendation from campaign:")
 print(recommendation)
@@ -112,11 +112,11 @@ campaign.add_measurements(recommendation)
 
 print("Here you will see some model outputs as we set verbose to True")
 
-# Do another round of recommendations
-recommendation = campaign.recommend(batch_size=2)
+# Do another round of recommendation
+recommendation = campaign.recommend(batch_size=1)
 
 
-# Print second round of recommendations
+# Print second round of recommendation
 
 print("Recommendation from campaign:")
 print(recommendation)

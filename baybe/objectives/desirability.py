@@ -67,7 +67,7 @@ class DesirabilityObjective(Objective):
 
     _targets: tuple[Target, ...] = field(
         converter=to_tuple,
-        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],  # type: ignore[type-abstract]
+        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],
         alias="targets",
     )
     "The targets considered by the objective."

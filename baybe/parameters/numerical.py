@@ -27,6 +27,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
     # object variables
     # NOTE: The parameter values are assumed to be sorted by the tolerance validator.
     _values: tuple[float, ...] = field(
+        alias="values",
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: sorted(cattrs.structure(x, tuple[float, ...])),  # type: ignore
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
@@ -131,6 +132,11 @@ class NumericalContinuousParameter(ContinuousParameter):
         # See base class.
 
         return self.bounds.contains(item)
+
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
+        # See base class.
+        return (self.name,)
 
     def summary(self) -> dict:  # noqa: D102
         # See base class.

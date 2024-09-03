@@ -10,11 +10,11 @@ It is planned to solve this issue in the future.
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 from attrs import define, field, validators
 
+from baybe.exceptions import DeprecationError
 from baybe.parameters import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -24,10 +24,8 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
-from baybe.serialization.core import block_serialization_hook, converter
-from baybe.surrogates.base import Surrogate
-from baybe.surrogates.utils import batchify, catch_constant_targets
-from baybe.surrogates.validation import validate_custom_architecture_cls
+from baybe.surrogates.base import IndependentGaussianSurrogate
+from baybe.surrogates.utils import batchify_mean_var_prediction
 from baybe.utils.numerical import DTypeFloatONNX
 
 if TYPE_CHECKING:
@@ -35,99 +33,25 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 
-def register_custom_architecture(
-    joint_posterior_attr: bool = False,
-    constant_target_catching: bool = True,
-    batchify_posterior: bool = True,
-) -> Callable:
-    """Wrap a given custom model architecture class into a ```Surrogate```.
-
-    Args:
-        joint_posterior_attr: Boolean indicating if the model returns a posterior
-            distribution jointly across candidates or on individual points.
-        constant_target_catching: Boolean indicating if the model cannot handle
-            constant target values and needs the @catch_constant_targets decorator.
-        batchify_posterior: Boolean indicating if the model is incompatible
-            with t- and q-batching and needs the @batchify decorator for its posterior.
-
-    Returns:
-        A function that wraps around a model class based on the specifications.
-    """
-
-    def construct_custom_architecture(model_cls):
-        """Construct a surrogate class wrapped around the custom class."""
-        validate_custom_architecture_cls(model_cls)
-
-        class CustomArchitectureSurrogate(Surrogate):
-            """Wraps around a custom architecture class."""
-
-            joint_posterior: ClassVar[bool] = joint_posterior_attr
-            supports_transfer_learning: ClassVar[bool] = False
-
-            def __init__(self, *args, **kwargs):
-                self._model = model_cls(*args, **kwargs)
-
-            def _fit(
-                self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
-            ) -> None:
-                return self._model._fit(searchspace, train_x, train_y)
-
-            def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
-                return self._model._posterior(candidates)
-
-            def __get_attribute__(self, attr):
-                """Access the attributes of the class instance if available.
-
-                If the attributes are not available,
-                it uses the attributes of the internal model instance.
-                """
-                # Try to retrieve the attribute in the class
-                try:
-                    val = super().__getattribute__(attr)
-                except AttributeError:
-                    pass
-                else:
-                    return val
-
-                # If the attribute is not overwritten, use that of the internal model
-                return self._model.__getattribute__(attr)
-
-        # Catch constant targets if needed
-        cls = (
-            catch_constant_targets(CustomArchitectureSurrogate)
-            if constant_target_catching
-            else CustomArchitectureSurrogate
-        )
-
-        # batchify posterior if needed
-        if batchify_posterior:
-            cls._posterior = batchify(cls._posterior)
-
-        # Block serialization of custom architectures
-        converter.register_unstructure_hook(
-            CustomArchitectureSurrogate, block_serialization_hook
-        )
-
-        return cls
-
-    return construct_custom_architecture
+def register_custom_architecture(*args, **kwargs) -> NoReturn:
+    """Deprecated! Raises an error when used."""  # noqa: D401
+    raise DeprecationError(
+        "The 'register_custom_architecture' decorator is no longer available. "
+        "Use :class:`baybe.surrogates.base.SurrogateProtocol` instead to define "
+        "your custom architectures."
+    )
 
 
 @define(kw_only=True)
-class CustomONNXSurrogate(Surrogate):
+class CustomONNXSurrogate(IndependentGaussianSurrogate):
     """A wrapper class for custom pretrained surrogate models.
 
     Note that these surrogates cannot be retrained.
     """
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     onnx_input_name: str = field(validator=validators.instance_of(str))
     """The input name used for constructing the ONNX str."""
 
@@ -149,13 +73,17 @@ class CustomONNXSurrogate(Surrogate):
         except Exception as exc:
             raise ValueError("Invalid ONNX string") from exc
 
-    @batchify
-    def _posterior(self, candidates: Tensor) -> tuple[Tensor, Tensor]:
+    @batchify_mean_var_prediction
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
 
-        model_inputs = {self.onnx_input_name: candidates.numpy().astype(DTypeFloatONNX)}
+        model_inputs = {
+            self.onnx_input_name: candidates_comp_scaled.numpy().astype(DTypeFloatONNX)
+        }
         results = self._model.run(None, model_inputs)
 
         # IMPROVE: At the moment, we assume that the second model output contains
@@ -167,7 +95,7 @@ class CustomONNXSurrogate(Surrogate):
             torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
         )
 
-    def _fit(self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor) -> None:
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # TODO: This method actually needs to raise a NotImplementedError because
         #   ONNX surrogate models cannot be retrained. However, this would currently
         #   break the code since `BayesianRecommender` assumes that surrogates

@@ -11,14 +11,19 @@ import pandas as pd
 from attrs import define
 
 from baybe.exceptions import IncompatibleAcquisitionFunctionError
-from baybe.searchspace import SearchSpace
+from baybe.objectives.base import Objective
+from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.single import SingleTargetObjective
+from baybe.searchspace.core import SearchSpace
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import SurrogateProtocol
+from baybe.targets.enum import TargetMode
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import classproperty, match_attributes
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
@@ -43,17 +48,27 @@ class AcquisitionFunction(ABC, SerialMixin):
 
     def to_botorch(
         self,
-        surrogate: Surrogate,
+        surrogate: SurrogateProtocol,
         searchspace: SearchSpace,
-        train_x: pd.DataFrame,
-        train_y: pd.DataFrame,
-        pending_x: pd.DataFrame | None = None,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
     ):
-        """Create the botorch-ready representation of the function."""
-        import botorch.acquisition as botorch_acqf_module
+        """Create the botorch-ready representation of the function.
+
+        The required structure of `measurements` is specified in
+        :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+        """
+        import botorch.acquisition as bo_acqf
+        import torch
+        from botorch.acquisition.objective import LinearMCObjective
+
+        # Get computational data representations
+        train_x = searchspace.transform(measurements, allow_extra=True)
+        train_y = objective.transform(measurements)
 
         # Retrieve corresponding botorch class
-        acqf_cls = getattr(botorch_acqf_module, self.__class__.__name__)
+        acqf_cls = getattr(bo_acqf, self.__class__.__name__)
 
         # Match relevant attributes
         params_dict = match_attributes(
@@ -65,22 +80,43 @@ class AcquisitionFunction(ABC, SerialMixin):
         additional_params = {}
         if "model" in signature_params:
             additional_params["model"] = surrogate.to_botorch()
-        if "best_f" in signature_params:
-            additional_params["best_f"] = train_y.max().item()
         if "X_baseline" in signature_params:
             additional_params["X_baseline"] = to_tensor(train_x)
         if "mc_points" in signature_params:
             additional_params["mc_points"] = to_tensor(
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
             )
-        if pending_x is not None:
+        if pending_experiments is not None:
             if self.is_mc:
+                pending_x = searchspace.transform(pending_experiments, allow_extra=True)
                 additional_params["X_pending"] = to_tensor(pending_x)
             else:
                 raise IncompatibleAcquisitionFunctionError(
                     f"Pending experiments were provided but the chosen acquisition "
                     f"function '{self.__class__.__name__}' does not support this."
                 )
+
+        # Add acquisition objective / best observed value
+        match objective:
+            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
+                if "best_f" in signature_params:
+                    additional_params["best_f"] = train_y.min().item()
+
+                if issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
+                    additional_params["maximize"] = False
+                elif issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
+                    additional_params["objective"] = LinearMCObjective(
+                        torch.tensor([-1.0])
+                    )
+                else:
+                    raise ValueError(
+                        f"Unsupported acquisition function type: {acqf_cls}."
+                    )
+            case SingleTargetObjective() | DesirabilityObjective():
+                if "best_f" in signature_params:
+                    additional_params["best_f"] = train_y.max().item()
+            case _:
+                raise ValueError(f"Unsupported objective type: {objective}")
 
         params_dict.update(additional_params)
 
