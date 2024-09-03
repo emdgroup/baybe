@@ -48,6 +48,11 @@ class BotorchRecommender(BayesianRecommender):
     optimization is applied automatically.)
     """
 
+    unique_batch: bool = field(default=True)
+    """Flag controlling whether the recommended points in a batch are enforced to be
+    unique. Only relevant for purely discrete search spaces.
+    """
+
     hybrid_sampler: DiscreteSamplingMethod | None = field(
         converter=optional(DiscreteSamplingMethod), default=None
     )
@@ -107,7 +112,7 @@ class BotorchRecommender(BayesianRecommender):
         # determine the next set of points to be tested
         candidates_tensor = to_tensor(candidates_comp)
         points, _ = optimize_acqf_discrete(
-            self._botorch_acqf, batch_size, candidates_tensor
+            self._botorch_acqf, batch_size, candidates_tensor, unique=self.unique_batch
         )
 
         # retrieve the index of the points from the input dataframe

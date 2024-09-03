@@ -4,6 +4,7 @@ from typing import ClassVar
 
 import numpy as np
 import pandas as pd
+from attrs import field
 from sklearn.preprocessing import StandardScaler
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
@@ -18,6 +19,12 @@ class RandomRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
+    # Object variables
+    unique_batch: bool = field(default=True)
+    """Flag controlling whether the recommended points in a batch are enforced to be
+    unique. Only relevant for purely discrete search spaces.
+    """
+
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
@@ -26,7 +33,7 @@ class RandomRecommender(NonPredictiveRecommender):
     ) -> pd.DataFrame:
         # See base class.
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return candidates_comp.sample(batch_size)
+            return candidates_comp.sample(batch_size, replace=not self.unique_batch)
 
         cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
