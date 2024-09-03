@@ -67,9 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fully reflects the original logic
 - The default acquisition function has been changed from "qEI" to "qLogEI" for improved
   numerical stability
-- `BotorchRecommender` and `RandomRecommender` now have a flag `unique_batch`,
-  controlling whether in purely discrete search spaces the recommended batch is enforced
-  to comprise only unique points
 
 ### Removed
 - Support for Python 3.9 removed due to new [BoTorch requirements](https://github.com/pytorch/botorch/pull/2293) 
