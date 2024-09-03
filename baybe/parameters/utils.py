@@ -85,5 +85,5 @@ def get_parameters_from_dataframe(
 
 
 def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
-    """Sort parameters by type and name."""
-    return tuple(sorted(parameters, key=lambda p: (p.__class__.__name__, p.name)))
+    """Sort parameters alphabetically by their names."""
+    return tuple(sorted(parameters, key=lambda p: p.name))

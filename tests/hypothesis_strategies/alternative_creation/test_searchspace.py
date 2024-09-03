@@ -48,8 +48,8 @@ df = pd.concat([df_discrete, df_continuous], axis=1)
         param(df_discrete, (p_x, p_x), ValueError, id="duplicate-name"),
         param(s_x.to_frame(), (p_x, p_y), ValueError, id="no_match"),
         param(s_y.to_frame(), (p_y,), (p_y,), id="cat-match"),
-        param(df_discrete, (p_x, p_y), (p_y, p_x), id="both-match"),
-        param(df_discrete, (p_x,), (p_y, p_x), id="one-unspecified"),
+        param(df_discrete, (p_x, p_y), (p_x, p_y), id="both-match"),
+        param(df_discrete, (p_x,), (p_x, p_y), id="one-unspecified"),
     ],
 )
 def test_discrete_space_creation_from_dataframe(df, parameters, expected):
@@ -88,7 +88,7 @@ def test_continuous_space_creation_from_dataframe(df, parameters, expected):
 @pytest.mark.parametrize(
     ("df", "parameters", "expected"),
     [
-        param(df, (p_x, p_y, p_a, p_b), (p_y, p_x, p_a, p_b), id="match"),
+        param(df, (p_x, p_y, p_a, p_b), (p_x, p_y, p_a, p_b), id="match"),
         param(df, (p_x, p_x, p_x, p_x), ValueError, id="duplicates"),
         param(df, (p_x,), ValueError, id="missing"),
     ],
