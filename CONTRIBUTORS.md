@@ -24,3 +24,5 @@
   Human readable output for search spaces
 - Di Jin (Merck Life Science KGaA, Darmstadt, Germany):\
   Cardinality constraints
+- Karin Hrovatin (Merck KGaA, Darmstadt, Germany):\
+  Update fingerprint encodings
