@@ -11,6 +11,10 @@ on:
 concurrency:
   group: ${{ github.event_name }}_${{  github.ref_name }}
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   # Build and verify wheels
   build:
