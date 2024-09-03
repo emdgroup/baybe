@@ -60,7 +60,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
 
   # Upload to real PyPI on GitHub Releases.
   release-pypi:
@@ -84,5 +83,3 @@ jobs:
           path: dist
       - name: Upload package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_TOKEN }}
