@@ -148,17 +148,34 @@ def indent(text: str, amount: int = 3, ch: str = " ") -> str:
     return "".join(padding + line for line in text.splitlines(keepends=True))
 
 
-def create_str_representation(header: str, fields: list[any]) -> str:
+def create_str_representation(
+    header: str, fields: list[any], *, single_line: bool = False
+) -> str:
     """Create the nested `str`representation that is used in the `__str__` methods.
 
     Args:
         header: The header, typically the name of the class.
         fields: List of fields that should be printed with an indentation.
+        single_line: If ``True``, print the representation on a single line. Used for
+            simple fields that would require manual configuration otherwise. Only
+            applicable for lists with a single fields.
+
+    Raises:
+        ValueError: If ``single_line`` is ``True`` but ``fields`` contains more than one
+            element.
 
     Returns:
         The representation with indented fields.
     """
-    # Add a ":" to header if it does not end with a "."
-    if not header.endswith("."):
+    # Add a ":" to header if it does not end with a ":"
+    if not header.endswith(":"):
         header += ":"
+
+    if single_line:
+        if len(fields) > 1:
+            raise ValueError(
+                "single_line is only applicable for lists with a single field"
+            )
+        return f"{header} {str(fields[0])}"
+
     return "\n".join([header] + [indent(str(f)) for f in fields])
