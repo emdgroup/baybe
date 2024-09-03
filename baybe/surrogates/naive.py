@@ -6,33 +6,28 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attr import define, field
 
-from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify
+from baybe.surrogates.base import IndependentGaussianSurrogate
+from baybe.surrogates.utils import batchify_mean_var_prediction
 
 if TYPE_CHECKING:
     from torch import Tensor
 
 
 @define
-class MeanPredictionSurrogate(GaussianSurrogate):
+class MeanPredictionSurrogate(IndependentGaussianSurrogate):
     """A trivial surrogate model.
 
     It provides the average value of the training targets
     as posterior mean and a (data-independent) constant posterior variance.
     """
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     _model: float | None = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
 
-    @batchify
+    @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:

@@ -88,14 +88,9 @@ class GaussianProcessSurrogate(Surrogate):
     # to `optimize_acqf_*`, which is configured to be called on the original scale.
     # Moving the scaling operation into the botorch GP object avoids this conflict.
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = True
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
-    # Object variables
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
         factory=DefaultKernelFactory,

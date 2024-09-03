@@ -37,7 +37,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
@@ -249,7 +249,9 @@ def test_kernel_factories(campaign, n_iterations, batch_size):
     valid_surrogate_models,
     ids=[c.__class__ for c in valid_surrogate_models],
 )
-def test_surrogate_models(campaign, n_iterations, batch_size):
+def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
+    if batch_size > 1 and isinstance(surrogate_model, IndependentGaussianSurrogate):
+        pytest.skip("Batch recommendation is not supported.")
     run_iterations(campaign, n_iterations, batch_size)
 
 

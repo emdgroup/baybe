@@ -89,10 +89,6 @@ class SurrogateProtocol(Protocol):
 class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
-    # Class variables
-    joint_posterior: ClassVar[bool]
-    """Class variable encoding whether or not a joint posterior is calculated."""
-
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
@@ -318,8 +314,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
 
 @define
-class GaussianSurrogate(Surrogate, ABC):
-    """A surrogate model providing Gaussian posterior estimates."""
+class IndependentGaussianSurrogate(Surrogate, ABC):
+    """A surrogate base class providing independent Gaussian posteriors."""
 
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
         # See base class.
@@ -330,21 +326,14 @@ class GaussianSurrogate(Surrogate, ABC):
 
         # Construct the Gaussian posterior from the estimated first and second moment
         mean, var = self._estimate_moments(candidates_comp_scaled)
-        if not self.joint_posterior:
-            var = torch.diag_embed(var)
-        mvn = MultivariateNormal(mean, var)
+        mvn = MultivariateNormal(mean, torch.diag_embed(var))
         return GPyTorchPosterior(mvn)
 
     @abstractmethod
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:
-        """Estimate first and second moments of the Gaussian posterior.
-
-        The second moment may either be a 1-D tensor of marginal variances for the
-        candidates or a 2-D tensor representing a full covariance matrix over all
-        candidates, depending on the ``joint_posterior`` flag of the model.
-        """
+        """Estimate first and second moments of the Gaussian posterior."""
 
 
 def _make_hook_decode_onnx_str(

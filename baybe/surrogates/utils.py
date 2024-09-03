@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
-import typing
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
+
+from baybe.exceptions import InvalidSurrogateModelError
+from baybe.surrogates.base import Surrogate
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
     from torch import Tensor
 
-    from baybe.surrogates.base import Surrogate
     from baybe.surrogates.naive import MeanPredictionSurrogate
+
+_TSurrogate = TypeVar("_TSurrogate", bound=Surrogate)
 
 
 _constant_target_model_store: dict[int, MeanPredictionSurrogate] = {}
@@ -80,76 +83,94 @@ def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
     return cls
 
 
-# FIXME[typing]: Typing should be reactivated once the `joint_posterior` attribute
-#   has been refactored/removed
-@typing.no_type_check
-def batchify(
-    posterior: Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]],
-) -> Callable[[Surrogate, Tensor], tuple[Tensor, Tensor]]:
-    """Wrap ``Surrogate`` posterior functions to enable proper batching.
-
-    More precisely, this wraps model that are incompatible with t- and q-batching such
-    that they become able to process batched inputs.
-
-    Args:
-        posterior: The original ``posterior`` function.
-
-    Returns:
-        The wrapped posterior function.
-    """
+def batchify_mean_var_prediction(
+    posterior: Callable[[_TSurrogate, Tensor], tuple[Tensor, Tensor]],
+) -> Callable[[_TSurrogate, Tensor], tuple[Tensor, Tensor]]:
+    """Wrap a posterior method to make it evaluate t-batches as an augmented q-batch."""
 
     @wraps(posterior)
     def sequential_posterior(
-        model: Surrogate, candidates: Tensor
+        model: _TSurrogate, candidates: Tensor
     ) -> tuple[Tensor, Tensor]:
-        """Replace the posterior function by one that processes batches sequentially.
-
-        Args:
-            model: The ``Surrogate`` model.
-            candidates: The candidates tensor.
-
-        Returns:
-            The mean and the covariance.
-        """
-        import torch
-
         # If no batch dimensions are given, call the model directly
         if candidates.ndim == 2:
             return posterior(model, candidates)
 
+        # Parameter batching is not (yet) supported
+        if candidates.ndim > 3:
+            raise ValueError("Multiple t-batch dimensions are not supported.")
+
         # Keep track of batch dimensions
-        t_shape = candidates.shape[:-2]
+        t_shape = candidates.shape[-3]
         q_shape = candidates.shape[-2]
 
-        # If the posterior function provides full covariance information, call it
-        # t-batch by t-batch
-        if model.joint_posterior:
-            # Flatten all t-batch dimensions into a single one
-            flattened = candidates.flatten(end_dim=-3)
+        # Flatten the t-batch dimension into the q-batch dimension
+        flattened = candidates.flatten(end_dim=-2)
 
-            # Call the model on each (flattened) t-batch
-            out = (posterior(model, batch) for batch in flattened)
+        # Call the model on the entire input
+        mean, var = posterior(model, flattened)
 
-            # Collect the results and restore the batch dimensions
-            mean, covar = zip(*out)
-            mean = torch.reshape(torch.stack(mean), t_shape + (q_shape,))
-            covar = torch.reshape(torch.stack(covar), t_shape + (q_shape, q_shape))
+        # Restore the batch dimensions
+        mean = mean.reshape((t_shape, q_shape))
+        var = var.reshape((t_shape, q_shape))
 
-            return mean, covar
-
-        # Otherwise, flatten all t- and q-batches into a single q-batch dimension
-        # and evaluate the posterior function in one go
-        else:
-            # Flatten *all* batches into the q-batch dimension
-            flattened = candidates.flatten(end_dim=-2)
-
-            # Call the model on the entire input
-            mean, var = posterior(model, flattened)
-
-            # Restore the batch dimensions
-            mean = torch.reshape(mean, t_shape + (q_shape,))
-            var = torch.reshape(var, t_shape + (q_shape,))
-
-            return mean, var
+        return mean, var
 
     return sequential_posterior
+
+
+def batchify_ensemble_predictor(
+    base_predictor: Callable[[Tensor], Tensor],
+) -> Callable[[Tensor], Tensor]:
+    """Wrap an ensemble predictor to make it evaluate t-batches as an augmented q-batch.
+
+    Args:
+        base_predictor: The ensemble predictor to be wrapped.
+
+    Returns:
+        The wrapped predictor.
+    """
+
+    @wraps(base_predictor)
+    def batch_predictor(candidates: Tensor) -> Tensor:
+        # If no batch dimensions are given, call the model directly
+        if candidates.ndim == 2:
+            return base_predictor(candidates)
+
+        # Ensemble models do not (yet) support model parameter batching
+        if candidates.ndim > 3:
+            raise ValueError("Multiple t-batch dimensions are not supported.")
+
+        # Keep track of batch dimensions
+        t_shape = candidates.shape[-3]
+        q_shape = candidates.shape[-2]
+
+        # Flatten the t-batch dimension into the q-batch dimension
+        flattened = candidates.flatten(end_dim=-2)
+
+        # Call the model on the entire input
+        predictions = base_predictor(flattened)
+
+        # Assert that the model provides the ensemble predictions in the correct shape
+        # (otherwise the reshaping operation below could silently produce wrong results)
+        try:
+            assert predictions.ndim == 2
+            n_estimators = predictions.shape[0]
+            assert predictions.shape[1] == t_shape * q_shape
+        except AssertionError:
+            raise InvalidSurrogateModelError(
+                f"For the given input of shape {tuple(candidates.shape)}, "
+                f"the ensemble model is supposed to create predictions of shape "
+                f"(n_estimators, t_shape * q_shape) = "
+                f"(n_estimators, {t_shape * q_shape}) "
+                f"but returned an array of incompatible shape "
+                f"{tuple(predictions.shape)}."
+            )
+
+        # Restore the batch dimensions
+        predictions = predictions.reshape((n_estimators, t_shape, q_shape))
+        predictions = predictions.permute((1, 0, 2))
+
+        return predictions
+
+    return batch_predictor

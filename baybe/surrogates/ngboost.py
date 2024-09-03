@@ -1,11 +1,4 @@
-"""NGBoost surrogates.
-
-Currently, the documentation for this surrogate is not available. This is due to a bug
-in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750.
-
-Since we plan to refactor the surrogates, this part of the documentation will be
-available in the future. Thus, please have a look in the source code directly.
-"""
+"""NGBoost surrogates."""
 
 from __future__ import annotations
 
@@ -15,8 +8,8 @@ from attr import define, field
 from ngboost import NGBRegressor
 
 from baybe.parameters.base import Parameter
-from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify, catch_constant_targets
+from baybe.surrogates.base import IndependentGaussianSurrogate
+from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
 
 if TYPE_CHECKING:
@@ -27,12 +20,8 @@ if TYPE_CHECKING:
 
 @catch_constant_targets
 @define
-class NGBoostSurrogate(GaussianSurrogate):
+class NGBoostSurrogate(IndependentGaussianSurrogate):
     """A natural-gradient-boosting surrogate model."""
-
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
 
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
@@ -40,7 +29,6 @@ class NGBoostSurrogate(GaussianSurrogate):
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
     """Class variable encoding the default model parameters."""
 
-    # Object variables
     model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,
@@ -70,7 +58,7 @@ class NGBoostSurrogate(GaussianSurrogate):
         # Tree-like models do not require any output scaling
         return None
 
-    @batchify
+    @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:

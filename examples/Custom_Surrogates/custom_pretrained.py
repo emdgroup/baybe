@@ -110,7 +110,7 @@ campaign = Campaign(
 ### Iterate with recommendations and measurements
 
 # Let's do a first round of recommendation
-recommendation = campaign.recommend(batch_size=2)
+recommendation = campaign.recommend(batch_size=1)
 
 print("Recommendation from campaign:")
 print(recommendation)
@@ -122,10 +122,10 @@ campaign.add_measurements(recommendation)
 
 ### Model Outputs
 
-# Do another round of recommendations
-recommendation = campaign.recommend(batch_size=2)
+# Do another round of recommendation
+recommendation = campaign.recommend(batch_size=1)
 
-# Print second round of recommendations
+# Print second round of recommendation
 
 print("Recommendation from campaign:")
 print(recommendation)

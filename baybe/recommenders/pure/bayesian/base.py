@@ -8,12 +8,12 @@ from attrs import define, field
 from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import DeprecationError
+from baybe.exceptions import DeprecationError, InvalidSurrogateModelError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import IndependentGaussianSurrogate, SurrogateProtocol
 
 
 @define
@@ -74,6 +74,16 @@ class BayesianRecommender(PureRecommender, ABC):
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."
+            )
+
+        if (
+            isinstance(self.surrogate_model, IndependentGaussianSurrogate)
+            and batch_size > 1
+        ):
+            raise InvalidSurrogateModelError(
+                f"The specified surrogate model of type "
+                f"'{self.surrogate_model.__class__.__name__}' "
+                f"cannot be used for batch recommendation."
             )
 
         if isinstance(self.surrogate_model, CustomONNXSurrogate):
