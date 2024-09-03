@@ -37,7 +37,7 @@ class BernoulliMultiArmedBanditSurrogate(Surrogate):
     # TODO: type should be `torch.Tensor | None` but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _win_lose_counts = field(init=False, default=None, eq=False)
-    """Sufficient statistics for the Bernoulli likelihood model."""
+    """Sufficient statistics for the Bernoulli likelihood model: (# wins, # losses)."""
 
     def posterior_modes(self) -> Tensor:
         """Compute the posterior mode win rates for all arms.
