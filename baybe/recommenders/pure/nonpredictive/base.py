@@ -4,6 +4,7 @@ import warnings
 from abc import ABC
 
 import pandas as pd
+from attr import fields
 from attrs import define
 
 from baybe.exceptions import UnusedObjectWarning
@@ -40,14 +41,16 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 f"consider any objectives, meaning that the argument is ignored.",
                 UnusedObjectWarning,
             )
-        if (
-            pending_experiments is not None
-            and searchspace.type is not SearchSpaceType.DISCRETE
+        if (pending_experiments is not None) and (
+            self.allow_recommending_pending_experiments
+            or searchspace.type is not SearchSpaceType.DISCRETE
         ):
             raise UnusedObjectWarning(
                 f"Pending experiments were provided but the selected recommender "
                 f"'{self.__class__.__name__}' only utilizes this information for "
-                f"purely discrete spaces."
+                f"purely discrete spaces and "
+                f"{fields(self.__class__).allow_recommending_pending_experiments.name}"
+                f"=False."
             )
         return super().recommend(
             batch_size=batch_size,

@@ -32,6 +32,11 @@ class PureRecommender(ABC, RecommenderProtocol):
     """Allow to make recommendations that were measured previously.
     This only has an influence in discrete search spaces."""
 
+    allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
+    """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
+    the corresponding points will be removed from the candidates. This only influences
+    recommendations for purely discrete search spaces."""
+
     def recommend(  # noqa: D102
         self,
         batch_size: int,
@@ -182,13 +187,17 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get discrete candidates
         # Repeated recommendations are always allowed for hybrid spaces
-        # Pending experiments are excluded for discrete spaces
+        # Pending experiments are excluded for discrete spaces unless configured
+        # differently.
+        dont_exclude_pending = (
+            is_hybrid_space or self.allow_recommending_pending_experiments
+        )
         _, candidates_comp = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=is_hybrid_space
             or self.allow_repeated_recommendations,
             allow_recommending_already_measured=is_hybrid_space
             or self.allow_recommending_already_measured,
-            exclude=None if is_hybrid_space else pending_experiments,
+            exclude=None if dont_exclude_pending else pending_experiments,
         )
 
         # Check if enough candidates are left

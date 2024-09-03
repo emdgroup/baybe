@@ -6,7 +6,6 @@ from typing import ClassVar
 import pandas as pd
 from attrs import define, evolve, field, fields
 
-from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
@@ -114,14 +113,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             )
 
         # We are in a hybrid setting now
-        if pending_experiments is not None:
-            raise UnusedObjectWarning(
-                f"Pending experiments were provided but the selected recommender "
-                f"'{self.__class__.__name__}' with discrete "
-                f"sub-recommender '{self.disc_recommender.__class__.__name__}' only "
-                f"utilizes this information for purely discrete spaces."
-            )
-
         # We will attach continuous parts to discrete parts and the other way round.
         # To make things simple, we sample a single point in the continuous space which
         # will then be attached to every discrete point when the acquisition function

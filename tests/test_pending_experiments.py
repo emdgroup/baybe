@@ -28,7 +28,9 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
 # Repeated recommendations explicitly need to be allowed or the potential overlap will
 # be avoided trivially
 _flags = dict(
-    allow_repeated_recommendations=True, allow_recommending_already_measured=True
+    allow_repeated_recommendations=True,
+    allow_recommending_already_measured=True,
+    allow_recommending_pending_experiments=False,
 )
 
 
