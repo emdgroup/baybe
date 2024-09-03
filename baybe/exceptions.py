@@ -70,4 +70,4 @@ class UnmatchedAttributeError(Exception):
 
 
 class InvalidSurrogateModelError(Exception):
-    """A surrogate model does not behave as required."""
+    """An invalid surrogate model was chosen."""

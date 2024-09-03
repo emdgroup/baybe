@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
   string input to categories/tasks
 - `farthest_point_sampling` no longer depends on the provided point order
-- `RandomForestSurrogate` now produces proper batch predictions
+- Batch predictions for `RandomForestSurrogate`
 - Surrogates providing only marginal posterior information can no longer be used for
   batch recommendation
 
