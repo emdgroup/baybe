@@ -53,7 +53,7 @@ CONFIG = str(
                     "Solvent D": "CCOCCOCCN"
                 },
                 "decorrelate": true,
-                "encoding": "MORDRED"
+                "encoding": "DefaultFingerprint"
             }
         ],
         "constraints": []

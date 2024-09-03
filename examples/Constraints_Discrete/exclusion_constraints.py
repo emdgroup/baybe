@@ -40,7 +40,9 @@ dict_solvent = {
     "c6": "c1ccccc1",
     "C6": "CCCCCC",
 }
-solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="RDKIT")
+solvent = SubstanceParameter(
+    name="Solv", data=dict_solvent, encoding="RDKitFingerprint"
+)
 speed = CategoricalParameter(
     name="Speed",
     values=["very slow", "slow", "normal", "fast", "very fast"],

@@ -93,10 +93,10 @@ objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX
 ### Constructing campaigns for the simulation loop
 
 # In this example, we create several campaigns.
-# First let us create three campaigns that each use a different chemical encoding to
+# First let us create two campaigns that each use a different chemical encoding to
 # treat substances.
 
-substance_encodings = ["MORDRED", "RDKIT", "MORGAN_FP"]
+substance_encodings = ["MordredFingerprint", "RDKitFingerprint"]
 scenarios = {
     encoding: Campaign(
         searchspace=SearchSpace.from_product(

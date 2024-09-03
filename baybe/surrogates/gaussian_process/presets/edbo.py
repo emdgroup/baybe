@@ -36,9 +36,9 @@ class EDBOKernelFactory(KernelFactory):
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )
 
-        mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
-            effective_dims >= 50
-        )
+        # TODO rename this to fingerprint after decided
+        #  that it can be used for all fingerprints
+        mordred = searchspace.contains_fingerprint and (effective_dims >= 50)
 
         # low D priors
         if effective_dims < 5:
@@ -95,9 +95,7 @@ def _edbo_noise_factory(
         [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
     )
 
-    uses_descriptors = (
-        searchspace.contains_mordred or searchspace.contains_rdkit
-    ) and (effective_dims >= 50)
+    uses_descriptors = searchspace.contains_fingerprint and effective_dims >= 50
 
     # low D priors
     if effective_dims < 5:

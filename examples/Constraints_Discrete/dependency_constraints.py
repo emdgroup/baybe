@@ -34,7 +34,9 @@ dict_solvent = {
     "water": "O",
     "C1": "C",
 }
-solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="MORDRED")
+solvent = SubstanceParameter(
+    name="Solv", data=dict_solvent, encoding="DefaultFingerprint"
+)
 switch1 = CategoricalParameter(name="Switch1", values=["on", "off"])
 switch2 = CategoricalParameter(name="Switch2", values=["left", "right"])
 fraction1 = NumericalDiscreteParameter(

@@ -2,6 +2,8 @@
 
 from enum import Enum
 
+from baybe._optional.info import CHEM_INSTALLED
+
 
 class ParameterEncoding(Enum):
     """Generic base class for all parameter encodings."""
@@ -17,17 +19,39 @@ class CategoricalEncoding(ParameterEncoding):
     """Integer encoding."""
 
 
-class SubstanceEncoding(ParameterEncoding):
-    """Available encodings for substance parameters."""
+# TODO Ideally, this should be turned into a class that can:
+#  - return default when CHEM not installed
+#  - check if enum is fingerprint
+PARAM_SUFFIX_FINGERPRINT = "Fingerprint"
 
-    MORDRED = "MORDRED"
-    """Encoding based on Mordred chemical descriptors."""
+if CHEM_INSTALLED:
+    import inspect
 
-    RDKIT = "RDKIT"
-    """Encoding based on RDKit chemical descriptors."""
+    from baybe._optional.chem import BaseFingerprintTransformer, skfp_fingerprints
 
-    MORGAN_FP = "MORGAN_FP"
-    """Encoding based on Morgan molecule fingerprints."""
+    AVAILABLE_SKFP_FP = dict(
+        inspect.getmembers(
+            skfp_fingerprints,
+            lambda x: inspect.isclass(x) and issubclass(x, BaseFingerprintTransformer),
+        )
+    )
+    AVAILABLE_SKFP_FP["Default"] = AVAILABLE_SKFP_FP["MordredFingerprint"]
+else:
+    AVAILABLE_SKFP_FP = {"Default": None}
+
+AVAILABLE_SKFP_FP = {
+    (
+        name
+        if name.endswith(PARAM_SUFFIX_FINGERPRINT)
+        else name + PARAM_SUFFIX_FINGERPRINT
+    ): fp
+    for name, fp in AVAILABLE_SKFP_FP.items()
+}
+
+SubstanceEncoding = ParameterEncoding(
+    "SubstanceEncoding", dict(zip(AVAILABLE_SKFP_FP.keys(), AVAILABLE_SKFP_FP.keys()))
+)
+"""Available encodings for substance parameters."""
 
 
 class CustomEncoding(ParameterEncoding):

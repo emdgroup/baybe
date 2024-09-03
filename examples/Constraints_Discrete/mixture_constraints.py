@@ -46,9 +46,15 @@ dict_solvents = {
     "C2": "CC",
     "C3": "CCC",
 }
-solvent1 = SubstanceParameter(name="Solv1", data=dict_solvents, encoding="MORDRED")
-solvent2 = SubstanceParameter(name="Solv2", data=dict_solvents, encoding="MORDRED")
-solvent3 = SubstanceParameter(name="Solv3", data=dict_solvents, encoding="MORDRED")
+solvent1 = SubstanceParameter(
+    name="Solv1", data=dict_solvents, encoding="DefaultFingerprint"
+)
+solvent2 = SubstanceParameter(
+    name="Solv2", data=dict_solvents, encoding="DefaultFingerprint"
+)
+solvent3 = SubstanceParameter(
+    name="Solv3", data=dict_solvents, encoding="DefaultFingerprint"
+)
 
 # Parameters for representing the fraction.
 

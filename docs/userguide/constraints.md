@@ -228,12 +228,12 @@ dict_solvents = {"Water": "O", "THF": "C1CCOC1", "Octanol": "CCCCCCCCO"}
 solvent_encoding1 = SubstanceParameter(
     name="Solvent_RDKIT_enc",
     data=dict_solvents,
-    encoding="RDKIT",
+    encoding="RDKitFingerprint",
 )
 solvent_encoding2 = SubstanceParameter(
     name="Solvent_MORDRED_enc",
     data=dict_solvents,
-    encoding="MORDRED",
+    encoding="MordredFingerprint",
 )
 DiscreteLinkedParametersConstraint(
     parameters=["Solvent_RDKIT_enc", "Solvent_MORDRED_enc"]

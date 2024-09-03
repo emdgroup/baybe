@@ -142,7 +142,7 @@ def substance_parameters(draw: st.DrawFn):
     decorrelate = draw(decorrelations)
     encoding = draw(st.sampled_from(SubstanceEncoding))
     return SubstanceParameter(
-        name=name, data=data, decorrelate=decorrelate, encoding=encoding
+        name=name, data=data, decorrelate=decorrelate, encoding=encoding.name
     )
 
 

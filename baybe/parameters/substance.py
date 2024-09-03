@@ -8,7 +8,7 @@ from attrs import define, field
 from attrs.validators import and_, deep_mapping, instance_of, min_len
 
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.enum import AVAILABLE_SKFP_FP, SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.basic import group_duplicate_values
 from baybe.utils.dataframe import df_drop_single_value_columns, df_uncorrelated_features
@@ -58,7 +58,7 @@ class SubstanceParameter(DiscreteParameter):
     """
 
     encoding: SubstanceEncoding = field(
-        default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding
+        default=SubstanceEncoding.DefaultFingerprint, converter=SubstanceEncoding
     )
     # See base class.
 
@@ -118,22 +118,18 @@ class SubstanceParameter(DiscreteParameter):
         pref = self.name + "_"
 
         # Get the raw descriptors
-        if self.encoding is SubstanceEncoding.MORDRED:
-            comp_df = chemistry.smiles_to_mordred_features(vals, prefix=pref)
-        elif self.encoding is SubstanceEncoding.RDKIT:
-            comp_df = chemistry.smiles_to_rdkit_features(vals, prefix=pref)
-        elif self.encoding is SubstanceEncoding.MORGAN_FP:
-            comp_df = chemistry.smiles_to_fp_features(vals, prefix=pref)
-        else:
-            raise ValueError(
-                f"Unknown parameter encoding {self.encoding} for parameter {self.name}."
-            )
+        comp_df = chemistry.smiles_to_fingerprint_features(
+            vals,
+            fingerprint_encoder=AVAILABLE_SKFP_FP[self.encoding.name](),
+            prefix=pref,
+        )
 
         # Drop NaN and constant columns
         comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
         comp_df = df_drop_single_value_columns(comp_df)
 
         # If there are bool columns, convert them to int (possible for Mordred)
+        # TODO should this be removed as with skfp all Mordred columns are float32?
         bool_cols = comp_df.select_dtypes(bool).columns
         comp_df[bool_cols] = comp_df[bool_cols].astype(int)
 

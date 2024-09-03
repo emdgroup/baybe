@@ -69,7 +69,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 [project.optional-dependencies]
 chem = [
     "rdkit>=2022.3.4",
-    "mordredcommunity>=1.2.0",
+    "scikit-fingerprints>=1.7.0",
 ]
 
 onnx = [

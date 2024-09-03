@@ -3,9 +3,10 @@
 from baybe.exceptions import OptionalImportError
 
 try:
-    from mordred import Calculator, descriptors
-    from rdkit import Chem, RDLogger
-    from rdkit.Chem.rdMolDescriptors import GetMorganFingerprintAsBitVect
+    from rdkit import Chem
+    from skfp import fingerprints as skfp_fingerprints
+    from skfp.bases import BaseFingerprintTransformer
+
 except ModuleNotFoundError as ex:
     raise OptionalImportError(
         "Chemistry functionality is unavailable because the necessary optional "
@@ -14,10 +15,4 @@ except ModuleNotFoundError as ex:
         "e.g. via `pip install baybe[chem]`."
     ) from ex
 
-__all__ = [
-    "descriptors",
-    "Calculator",
-    "Chem",
-    "GetMorganFingerprintAsBitVect",
-    "RDLogger",
-]
+__all__ = ["Chem", "skfp_fingerprints", "BaseFingerprintTransformer"]

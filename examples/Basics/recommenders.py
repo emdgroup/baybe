@@ -140,9 +140,11 @@ dict_ligand = {
     "(t-Bu)PhCPhos": r"CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3",
 }
 
-solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="MORDRED")
-base = SubstanceParameter("Base", data=dict_base, encoding="MORDRED")
-ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="MORDRED")
+solvent = SubstanceParameter(
+    "Solvent", data=dict_solvent, encoding="DefaultFingerprint"
+)
+base = SubstanceParameter("Base", data=dict_base, encoding="DefaultFingerprint")
+ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="DefaultFingerprint")
 temperature = NumericalDiscreteParameter(
     "Temperature", values=[90, 105, 120], tolerance=2
 )

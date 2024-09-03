@@ -40,13 +40,15 @@ dict_ligand = {
 }
 
 # We define the chemical substances parameters using the dictionaries defined previously.
-# Here, we use `"MORDRED"` encoding, but others are available.
+# Here, we use `"DefaultFingerprint"` encoding, but others are available.
 # We proceed to define numerical discrete parameters `temperature` and `concentration`
 # and create the search space.
 
-solvent = SubstanceParameter("Solvent", data=dict_solvent, encoding="MORDRED")
-base = SubstanceParameter("Base", data=dict_base, encoding="MORDRED")
-ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="MORDRED")
+solvent = SubstanceParameter(
+    "Solvent", data=dict_solvent, encoding="DefaultFingerprint"
+)
+base = SubstanceParameter("Base", data=dict_base, encoding="DefaultFingerprint")
+ligand = SubstanceParameter("Ligand", data=dict_ligand, encoding="DefaultFingerprint")
 
 temperature = NumericalDiscreteParameter(
     "Temperature", values=[90, 105, 120], tolerance=2

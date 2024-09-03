@@ -14,8 +14,9 @@ from baybe.constraints import (
     validate_constraints,
 )
 from baybe.constraints.base import Constraint
-from baybe.parameters import SubstanceEncoding, TaskParameter
+from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.enum import PARAM_SUFFIX_FINGERPRINT
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -226,18 +227,19 @@ class SearchSpace(SerialMixin):
             return SearchSpaceType.HYBRID
         raise RuntimeError("This line should be impossible to reach.")
 
+    # TODO replaces previously used contains_mordred and contains_rdkit
+    #  which are both used likewise in edbo.py -
+    #  not sure if this can be extrapolated to all fingerprints by using single property
     @property
-    def contains_mordred(self) -> bool:
-        """Indicates if any of the discrete parameters uses ``MORDRED`` encoding."""
+    def contains_fingerprint(self) -> bool:
+        """Indicates if any of the discrete parameters uses ``Fingerprint`` encoding."""
         return any(
-            p.encoding is SubstanceEncoding.MORDRED for p in self.discrete.parameters
-        )
-
-    @property
-    def contains_rdkit(self) -> bool:
-        """Indicates if any of the discrete parameters uses ``RDKIT`` encoding."""
-        return any(
-            p.encoding is SubstanceEncoding.RDKIT for p in self.discrete.parameters
+            (
+                False
+                if p.encoding is None
+                else p.encoding.name.endswith(PARAM_SUFFIX_FINGERPRINT)
+            )
+            for p in self.discrete.parameters
         )
 
     @property
