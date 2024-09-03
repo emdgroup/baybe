@@ -22,7 +22,7 @@ from baybe.constraints.validation import (
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
-from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
     get_transform_parameters,
     validate_parameter_names,
@@ -47,7 +47,8 @@ class SubspaceContinuous(SerialMixin):
     """
 
     parameters: tuple[NumericalContinuousParameter, ...] = field(
-        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
+        converter=sort_parameters,
+        validator=lambda _, __, x: validate_parameter_names(x),
     )
     """The parameters of the subspace."""
 

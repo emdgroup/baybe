@@ -23,7 +23,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
-from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
     get_transform_parameters,
     validate_parameter_names,
@@ -91,7 +91,8 @@ class SubspaceDiscrete(SerialMixin):
     """
 
     parameters: tuple[DiscreteParameter, ...] = field(
-        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
+        converter=sort_parameters,
+        validator=lambda _, __, x: validate_parameter_names(x),
     )
     """The list of parameters of the subspace."""
 
