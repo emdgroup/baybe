@@ -45,12 +45,13 @@ class NonPredictiveRecommender(PureRecommender, ABC):
             self.allow_recommending_pending_experiments
             or searchspace.type is not SearchSpaceType.DISCRETE
         ):
-            raise UnusedObjectWarning(
+            warnings.warn(
                 f"Pending experiments were provided but the selected recommender "
                 f"'{self.__class__.__name__}' only utilizes this information for "
                 f"purely discrete spaces and "
                 f"{fields(self.__class__).allow_recommending_pending_experiments.name}"
-                f"=False."
+                f"=False.",
+                UnusedObjectWarning,
             )
         return super().recommend(
             batch_size=batch_size,
