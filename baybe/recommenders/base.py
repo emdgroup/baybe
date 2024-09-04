@@ -37,8 +37,8 @@ class RecommenderProtocol(Protocol):
                 Each row corresponds to one conducted experiment, where the parameter
                 columns define the experimental setting and the target columns report
                 the measured outcomes.
-            pending_experiments: Parameter configurations specifying experiments
-                that are currently pending.
+            pending_experiments: Parameter configurations in "experimental
+                representation" specifying experiments that are currently pending.
 
         Returns:
             A dataframe containing the recommendations in experimental representation

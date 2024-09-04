@@ -34,8 +34,8 @@ class PureRecommender(ABC, RecommenderProtocol):
 
     allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
     """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
-    the corresponding points will be removed from the candidates. This only influences
-    recommendations for purely discrete search spaces."""
+    the corresponding points will be removed from the candidates. This only has an
+    influence in discrete search spaces."""
 
     def recommend(  # noqa: D102
         self,
