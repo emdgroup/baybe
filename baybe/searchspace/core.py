@@ -73,9 +73,9 @@ class SearchSpace(SerialMixin):
             ),
         ]
         if not self.discrete.is_empty:
-            fields.append(self.discrete)
+            fields.append(str(self.discrete))
         if not self.continuous.is_empty:
-            fields.append(self.continuous)
+            fields.append(str(self.continuous))
         return create_str_representation(self.__class__.__name__, fields)
 
     def __attrs_post_init__(self):

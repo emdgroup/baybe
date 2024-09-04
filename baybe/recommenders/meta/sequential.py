@@ -179,7 +179,7 @@ class SequentialMetaRecommender(MetaRecommender):
 
     def __str__(self) -> str:
         fields = [
-            create_str_representation("Recommenders", [self.recommender]),
+            create_str_representation("Recommenders", [self.recommenders]),
             create_str_representation("Mode", [self.mode], single_line=True),
         ]
         return create_str_representation(self.__class__.__name__, fields)

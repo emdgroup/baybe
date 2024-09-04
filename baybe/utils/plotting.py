@@ -149,7 +149,7 @@ def indent(text: str, amount: int = 3, ch: str = " ") -> str:
 
 
 def create_str_representation(
-    header: str, fields: list[any], *, single_line: bool = False
+    header: str, fields: list[Any], *, single_line: bool = False
 ) -> str:
     """Create the nested `str`representation that is used in the `__str__` methods.
 
