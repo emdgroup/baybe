@@ -191,7 +191,7 @@ class Campaign(SerialMixin):
 
         # Update meta data
         # TODO: refactor responsibilities
-        if self.searchspace.type is SearchSpaceType.DISCRETE:
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             self.searchspace.discrete.mark_as_measured(
                 data, numerical_measurements_must_be_within_tolerance
             )
