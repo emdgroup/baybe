@@ -49,7 +49,7 @@ AVAILABLE_SKFP_FP = {
 }
 
 SubstanceEncoding = ParameterEncoding(
-    "SubstanceEncoding", dict(zip(AVAILABLE_SKFP_FP.keys(), AVAILABLE_SKFP_FP.keys()))
+    value="SubstanceEncoding", names={k: k for k in AVAILABLE_SKFP_FP.keys()}
 )
 """Available encodings for substance parameters."""
 
