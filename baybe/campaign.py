@@ -14,6 +14,7 @@ from attrs.validators import instance_of
 
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
@@ -28,6 +29,7 @@ from baybe.searchspace.core import (
 from baybe.serialization import SerialMixin, converter
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.base import Target
+from baybe.targets.numerical import NumericalTarget
 from baybe.telemetry import (
     TELEM_LABELS,
     telemetry_record_recommended_measurement_percentage,
@@ -316,6 +318,18 @@ class Campaign(SerialMixin):
         Returns:
             Surrogate: The surrogate of the current recommender.
         """
+        # TODO: remove temporary restriction when target transformations can be handled
+        match self.objective:
+            case SingleTargetObjective(
+                _target=NumericalTarget(bounds=b)
+            ) if not b.is_bounded:
+                pass
+            case _:
+                raise NotImplementedError(
+                    "Surrogate model access is currently only supported for a single "
+                    "untransformed target."
+                )
+
         if self.objective is None:
             raise IncompatibilityError(
                 f"No surrogate is available since no '{Objective.__name__}' is defined."
