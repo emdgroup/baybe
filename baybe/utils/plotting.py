@@ -164,10 +164,6 @@ def to_string(header: str, *fields: Any, single_line: bool = False) -> str:
     Returns:
         The string representation with indented fields.
     """
-    # Add a ":" to header if it does not end with a ":"
-    if not header.endswith(":"):
-        header += ":"
-
     if single_line:
         if len(fields) > 1:
             raise ValueError(
