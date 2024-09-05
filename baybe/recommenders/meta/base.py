@@ -20,11 +20,24 @@ from baybe.serialization.core import get_base_structure_hook
 class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all meta recommenders."""
 
-    _current_recommender: PureRecommender | None = field(default=None, init=False)
-    """The current recommender."""
+    # TODO: The attributes should be `init=False` but this currently prevents them from
+    #   being serialized. The reason is that setting `_cattrs_include_init_false=True`
+    #   for this class has currently no effect when serializing it as
+    #   a `RecommenderProtocol`, since the hook of the latter does not reuse the
+    #   hook of the actual class. Fix is already planned and also needed for other
+    #   reasons. Until that, as a workaround, we expose the attributes as "private"
+    #   attributes.
 
-    _current_recommender_was_used: bool = field(default=False, init=False)
-    """Flag indicating if the current recommender has already been used."""
+    _current_recommender: PureRecommender | None = field(
+        alias="_current_recommender", default=None, kw_only=True
+    )
+    """The current recommender. (For internal use only!)"""
+
+    _current_recommender_was_used: bool = field(
+        alias="_current_recommender_was_used", default=False, kw_only=True
+    )
+    """Flag indicating if the current recommender has already been used.
+    (For internal use only!)"""
 
     @abstractmethod
     def select_recommender(
