@@ -90,10 +90,10 @@ N_ITERATIONS = 200
 # The corresponding search space is spanned by a {class}`~baybe.parameters.categorical.CategoricalParameter` describing the bandit's arms.
 
 n_arms = len(WIN_RATES)
-objective = BinaryTarget(name="clicked").to_objective()
-searchspace = CategoricalParameter(
+target = BinaryTarget(name="clicked")
+parameter = CategoricalParameter(
     name="Bandit Arm", values=[str(i) for i in range(n_arms)]
-).to_searchspace()
+)
 surrogate = BetaBernoulliMultiArmedBanditSurrogate()
 
 
@@ -113,13 +113,11 @@ class SimulationResult(NamedTuple):
 def simulate(acqf: AcquisitionFunction) -> SimulationResult:
     """Simulate the campaign with with the given acquisition function."""
     recommender = TwoPhaseMetaRecommender(
-        initial_recommender=RandomRecommender(
-            allow_repeated_recommendations=True,
-            allow_recommending_already_measured=True,
-        ),
+        initial_recommender=RandomRecommender(),
         recommender=BotorchRecommender(
             surrogate_model=surrogate,
             acquisition_function=acqf,
+            # The same arm can be pulled several times:
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
         ),
@@ -130,6 +128,8 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
     estimated_win_rates = np.zeros((N_MC_RUNS, n_arms))
 
     for mc in range(N_MC_RUNS):
+        searchspace = parameter.to_searchspace()
+        objective = target.to_objective()
         campaign = Campaign(searchspace, objective, recommender)
 
         for i in range(N_ITERATIONS):
