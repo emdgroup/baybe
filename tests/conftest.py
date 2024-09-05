@@ -634,7 +634,7 @@ def fixture_allow_repeated_recommendations():
 
 @pytest.fixture(name="allow_recommending_already_measured")
 def allow_recommending_already_measured():
-    return False
+    return True
 
 
 @pytest.fixture(name="initial_recommender")
