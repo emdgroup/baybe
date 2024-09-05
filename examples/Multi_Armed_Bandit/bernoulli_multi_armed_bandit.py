@@ -92,7 +92,10 @@ N_ITERATIONS = 200
 n_arms = len(WIN_RATES)
 target = BinaryTarget(name="clicked")
 parameter = CategoricalParameter(
-    name="Bandit Arm", values=[str(i) for i in range(n_arms)]
+    name="Bandit Arm",
+    values=[str(i) for i in range(n_arms)],
+    # For bandits, one-hot parameter encoding is required:
+    encoding="OHE",
 )
 surrogate = BetaBernoulliMultiArmedBanditSurrogate()
 
