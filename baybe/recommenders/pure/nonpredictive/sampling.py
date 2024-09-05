@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
@@ -47,12 +47,8 @@ class RandomRecommender(NonPredictiveRecommender):
         return pd.concat([disc_random, cont_random], axis=1)
 
     def __str__(self) -> str:
-        fields = [
-            create_str_representation(
-                "Compatibility", [self.compatibility], single_line=True
-            )
-        ]
-        return create_str_representation(self.__class__.__name__, fields)
+        fields = [to_string("Compatibility", [self.compatibility], single_line=True)]
+        return to_string(self.__class__.__name__, fields)
 
 
 class FPSRecommender(NonPredictiveRecommender):
@@ -81,9 +77,5 @@ class FPSRecommender(NonPredictiveRecommender):
         return candidates_comp.index[ilocs]
 
     def __str__(self) -> str:
-        fields = [
-            create_str_representation(
-                "Compatibility", [self.compatibility], single_line=True
-            )
-        ]
-        return create_str_representation(self.__class__.__name__, fields)
+        fields = [to_string("Compatibility", [self.compatibility], single_line=True)]
+        return to_string(self.__class__.__name__, fields)

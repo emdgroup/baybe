@@ -29,7 +29,7 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 
 
 @define
@@ -86,17 +86,13 @@ class Campaign(SerialMixin):
 
     def __str__(self) -> str:
         metadata_fields = [
-            create_str_representation(
-                "Batches done", [self.n_batches_done], single_line=True
-            ),
-            create_str_representation(
-                "Fits done", [self.n_fits_done], single_line=True
-            ),
+            to_string("Batches done", [self.n_batches_done], single_line=True),
+            to_string("Fits done", [self.n_fits_done], single_line=True),
         ]
-        metadata = create_str_representation("Meta Data:", metadata_fields)
+        metadata = to_string("Meta Data:", metadata_fields)
         fields = [metadata, self.searchspace, self.objective, self.recommender]
 
-        return create_str_representation(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, fields)
 
     @property
     def measurements(self) -> pd.DataFrame:

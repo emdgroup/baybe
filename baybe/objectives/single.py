@@ -7,7 +7,7 @@ from attr.validators import instance_of
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.utils.dataframe import pretty_print_df
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 
 
 @define(frozen=True, slots=False)
@@ -22,13 +22,11 @@ class SingleTargetObjective(Objective):
         targets_df = pd.DataFrame(targets_list)
 
         fields = [
-            create_str_representation(
-                "Type", [self.__class__.__name__], single_line=True
-            ),
-            create_str_representation("Targets", [pretty_print_df(targets_df)]),
+            to_string("Type", [self.__class__.__name__], single_line=True),
+            to_string("Targets", [pretty_print_df(targets_df)]),
         ]
 
-        return create_str_representation("Objective", fields)
+        return to_string("Objective", fields)
 
     @property
     def targets(self) -> tuple[Target, ...]:  # noqa: D102

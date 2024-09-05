@@ -17,7 +17,7 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
@@ -299,21 +299,17 @@ class BotorchRecommender(BayesianRecommender):
 
     def __str__(self) -> str:
         fields = [
-            create_str_representation("Surrogate", [self.surrogate_model]),
-            create_str_representation(
+            to_string("Surrogate", [self.surrogate_model]),
+            to_string(
                 "Acquisition function", [self.acquisition_function], single_line=True
             ),
-            create_str_representation(
-                "Compatibility", [self.compatibility], single_line=True
-            ),
-            create_str_representation(
+            to_string("Compatibility", [self.compatibility], single_line=True),
+            to_string(
                 "Sequential continuous", [self.sequential_continuous], single_line=True
             ),
-            create_str_representation(
-                "Hybrid sampler", [self.hybrid_sampler], single_line=True
-            ),
-            create_str_representation(
+            to_string("Hybrid sampler", [self.hybrid_sampler], single_line=True),
+            to_string(
                 "Sampling percentage", [self.sampling_percentage], single_line=True
             ),
         ]
-        return create_str_representation(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, fields)

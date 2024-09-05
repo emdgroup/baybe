@@ -148,10 +148,8 @@ def indent(text: str, amount: int = 3, ch: str = " ") -> str:
     return "".join(padding + line for line in text.splitlines(keepends=True))
 
 
-def create_str_representation(
-    header: str, fields: list[Any], *, single_line: bool = False
-) -> str:
-    """Create the nested `str`representation that is used in the `__str__` methods.
+def to_string(header: str, fields: list[Any], *, single_line: bool = False) -> str:
+    """Create a nested string representation.
 
     Args:
         header: The header, typically the name of the class.

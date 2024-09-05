@@ -28,7 +28,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
@@ -315,13 +315,13 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     def __str__(self) -> str:
         fields = [
-            create_str_representation(
+            to_string(
                 "Supports Transfer Learning",
                 [self.supports_transfer_learning],
                 single_line=True,
             ),
         ]
-        return create_str_representation(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, fields)
 
 
 @define

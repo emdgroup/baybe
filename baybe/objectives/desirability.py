@@ -18,7 +18,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import geom_mean
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
 
 
@@ -129,16 +129,12 @@ class DesirabilityObjective(Objective):
         targets_df["Weight"] = self.weights
 
         fields = [
-            create_str_representation(
-                "Type", [self.__class__.__name__], single_line=True
-            ),
-            create_str_representation("Targets", [pretty_print_df(targets_df)]),
-            create_str_representation(
-                "Scalarizer", [self.scalarizer.name], single_line=True
-            ),
+            to_string("Type", [self.__class__.__name__], single_line=True),
+            to_string("Targets", [pretty_print_df(targets_df)]),
+            to_string("Scalarizer", [self.scalarizer.name], single_line=True),
         ]
 
-        return create_str_representation("Objective", fields)
+        return to_string("Objective", fields)
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.

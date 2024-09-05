@@ -10,7 +10,7 @@ from sklearn.linear_model import ARDRegression
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -64,9 +64,5 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
         output_str = super().__str__()
         # Replace first line which contains the incorrect name of the parent class
         output_str = self.__class__.__name__ + output_str[output_str.find("\n") :]
-        fields = [
-            create_str_representation(
-                "Model Params", [self.model_params], single_line=True
-            )
-        ]
-        return create_str_representation(output_str, fields)
+        fields = [to_string("Model Params", [self.model_params], single_line=True)]
+        return to_string(output_str, fields)

@@ -30,7 +30,7 @@ from baybe.searchspace.validation import (
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
@@ -87,21 +87,13 @@ class SubspaceContinuous(SerialMixin):
         nonlinear_df = pd.DataFrame(nonlin_constraints_list)
 
         fields = [
-            create_str_representation(
-                "Continuous Parameters:", [pretty_print_df(param_df)]
-            ),
-            create_str_representation(
-                "Linear Equality Constraints:", [pretty_print_df(lin_eq_df)]
-            ),
-            create_str_representation(
-                "Linear Inequality Constraints:", [pretty_print_df(lin_ineq_df)]
-            ),
-            create_str_representation(
-                "Non-linear Constraints:", [pretty_print_df(nonlinear_df)]
-            ),
+            to_string("Continuous Parameters:", [pretty_print_df(param_df)]),
+            to_string("Linear Equality Constraints:", [pretty_print_df(lin_eq_df)]),
+            to_string("Linear Inequality Constraints:", [pretty_print_df(lin_ineq_df)]),
+            to_string("Non-linear Constraints:", [pretty_print_df(nonlinear_df)]),
         ]
 
-        return create_str_representation(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, fields)
 
     @property
     def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:

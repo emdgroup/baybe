@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
-from baybe.utils.plotting import create_str_representation
+from baybe.utils.plotting import to_string
 
 
 @define
@@ -128,19 +128,15 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     def __str__(self) -> str:
         fields = [
-            create_str_representation(
-                "Compatibility", [self.compatibility], single_line=True
-            ),
-            create_str_representation(
+            to_string("Compatibility", [self.compatibility], single_line=True),
+            to_string(
                 "Name of clustering parameter",
                 [self.model_cluster_num_parameter_name],
                 single_line=True,
             ),
-            create_str_representation(
-                "Model parameters", [self.model_params], single_line=True
-            ),
+            to_string("Model parameters", [self.model_params], single_line=True),
         ]
-        return create_str_representation(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, fields)
 
 
 @define
