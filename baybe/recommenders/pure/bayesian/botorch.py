@@ -123,12 +123,12 @@ class BotorchRecommender(BayesianRecommender):
         #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
         #   a simpler matching logic. When refactoring the SearchSpace class to
         #   handle continuous parameters, a corresponding utility could be extracted.
-        # IMPROVE: Maintain order of recommendations (currently lost during merge)
         idxs = pd.Index(
             pd.merge(
-                candidates_comp.reset_index(),
                 pd.DataFrame(points, columns=candidates_comp.columns),
+                candidates_comp.reset_index(),
                 on=list(candidates_comp),
+                how="left",
             )["index"]
         )
 
@@ -282,9 +282,10 @@ class BotorchRecommender(BayesianRecommender):
         # Get selected candidate indices
         idxs = pd.Index(
             pd.merge(
-                candidates_comp.reset_index(),
                 pd.DataFrame(disc_points, columns=candidates_comp.columns),
+                candidates_comp.reset_index(),
                 on=list(candidates_comp),
+                how="left",
             )["index"]
         )
 
