@@ -30,14 +30,17 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
 _flags = dict(
     allow_repeated_recommendations=True,
     allow_recommending_already_measured=True,
-    allow_recommending_pending_experiments=False,
 )
 
 
 @pytest.mark.parametrize(
     "parameter_names, recommender",
     [
-        param(_discrete_params, FPSRecommender(**_flags), id="fps_discrete"),
+        param(
+            _discrete_params,
+            FPSRecommender(**_flags),
+            id="fps_discrete",
+        ),
         param(_discrete_params, PAMClusteringRecommender(**_flags), id="pam_discrete"),
         param(
             _discrete_params,
@@ -63,6 +66,33 @@ _flags = dict(
             _hybrid_params,
             TwoPhaseMetaRecommender(recommender=BotorchRecommender(**_flags)),
             id="botorch_hybrid",
+        ),
+        param(
+            _discrete_params,
+            TwoPhaseMetaRecommender(
+                recommender=BotorchRecommender(
+                    **_flags, allow_recommending_pending_experiments=True
+                )
+            ),
+            id="botorch_discrete_allow",
+        ),
+        param(
+            _continuous_params,
+            TwoPhaseMetaRecommender(
+                recommender=BotorchRecommender(
+                    **_flags, allow_recommending_pending_experiments=True
+                )
+            ),
+            id="botorch_continuous_allow",
+        ),
+        param(
+            _hybrid_params,
+            TwoPhaseMetaRecommender(
+                recommender=BotorchRecommender(
+                    **_flags, allow_recommending_pending_experiments=True
+                )
+            ),
+            id="botorch_hybrid_allow",
         ),
         param(
             _discrete_params,
