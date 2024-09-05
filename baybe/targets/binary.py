@@ -28,14 +28,14 @@ class BinaryTarget(Target, SerialMixin):
     # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1336
 
     positive_value: ChoiceValue = field(
-        default=1,
+        default=True,
         validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
         kw_only=True,
     )
     """Experimental representation of the positive value."""
 
     negative_value: ChoiceValue = field(
-        default=0,
+        default=False,
         validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
         kw_only=True,
     )
