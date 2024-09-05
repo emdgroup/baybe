@@ -61,25 +61,24 @@ class AcquisitionFunction(ABC, SerialMixin):
         import torch
         from botorch.acquisition.objective import LinearMCObjective
 
-        # Get computational data representations
-        train_x = searchspace.transform(measurements, allow_extra=True)
-        train_y = objective.transform(measurements)
-
-        # Retrieve corresponding botorch class
+        # Retrieve botorch acquisition function class and match attributes
         acqf_cls = getattr(bo_acqf, self.__class__.__name__)
-
-        # Match relevant attributes
         params_dict = match_attributes(
             self, acqf_cls.__init__, ignore=self._non_botorch_attrs
         )[0]
 
+        # Create botorch surrogate model
+        bo_surrogate = surrogate.to_botorch()
+
+        # Get computational data representation
+        train_x = to_tensor(searchspace.transform(measurements, allow_extra=True))
+
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
-        if "model" in signature_params:
-            additional_params["model"] = surrogate.to_botorch()
+        additional_params["model"] = bo_surrogate
         if "X_baseline" in signature_params:
-            additional_params["X_baseline"] = to_tensor(train_x)
+            additional_params["X_baseline"] = train_x
         if "mc_points" in signature_params:
             additional_params["mc_points"] = to_tensor(
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
@@ -89,7 +88,9 @@ class AcquisitionFunction(ABC, SerialMixin):
         match objective:
             case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
                 if "best_f" in signature_params:
-                    additional_params["best_f"] = train_y.min().item()
+                    additional_params["best_f"] = (
+                        bo_surrogate.posterior(train_x).mean.min().item()
+                    )
 
                 if issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
                     additional_params["maximize"] = False
@@ -103,7 +104,9 @@ class AcquisitionFunction(ABC, SerialMixin):
                     )
             case SingleTargetObjective() | DesirabilityObjective():
                 if "best_f" in signature_params:
-                    additional_params["best_f"] = train_y.max().item()
+                    additional_params["best_f"] = (
+                        bo_surrogate.posterior(train_x).mean.max().item()
+                    )
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
 

@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
   instead of negating the computational representation
 - Search spaces now store their parameters in alphabetical order by name
+- Improvement-based acquisition functions now consider the maximum posterior mean
+  instead of the maximum noisy measurement as reference value
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
