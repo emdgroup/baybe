@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from attrs import define, field
 from attrs.validators import gt
 
 from baybe.priors.base import Prior
 from baybe.utils.validation import finite_float
-
-if TYPE_CHECKING:
-    from torch import Tensor
 
 
 @define(frozen=True)
@@ -106,9 +103,3 @@ class BetaPrior(Prior):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' does not have a gpytorch analog."
         )
-
-    def to_tensor(self) -> Tensor:
-        """Return alpha and beta as a torch tensor."""
-        import torch
-
-        return torch.tensor([self.alpha, self.beta])
