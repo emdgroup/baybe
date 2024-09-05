@@ -92,7 +92,7 @@ N_ITERATIONS = 200
 n_arms = len(WIN_RATES)
 objective = BinaryTarget(name="clicked").to_objective()
 searchspace = CategoricalParameter(
-    name="Bandit Arm", values=[f"arm_{i}" for i in range(n_arms)]
+    name="Bandit Arm", values=[str(i) for i in range(n_arms)]
 ).to_searchspace()
 surrogate = BetaBernoulliMultiArmedBanditSurrogate()
 
@@ -134,7 +134,7 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
 
         for i in range(N_ITERATIONS):
             df = campaign.recommend(batch_size=1)
-            recommended_arm_idx = int(df.iloc[0, 0].split("_")[1])
+            recommended_arm_idx = int(df.values.item())
             reward = BANDIT.draw_arm(recommended_arm_idx)
             earned_rewards[mc, i] = reward
             df["clicked"] = reward
