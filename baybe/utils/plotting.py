@@ -152,18 +152,17 @@ def to_string(header: str, fields: list[Any], *, single_line: bool = False) -> s
     """Create a nested string representation.
 
     Args:
-        header: The header, typically the name of the class.
-        fields: List of fields that should be printed with an indentation.
-        single_line: If ``True``, print the representation on a single line. Used for
-            simple fields that would require manual configuration otherwise. Only
-            applicable for lists with a single fields.
+        header: The header, typically the name of a class.
+        fields: Fields to be printed with an indentation.
+        single_line: If ``True``, print the representation on a single line.
+            Only applicable when given a single field.
 
     Raises:
         ValueError: If ``single_line`` is ``True`` but ``fields`` contains more than one
             element.
 
     Returns:
-        The representation with indented fields.
+        The string representation with indented fields.
     """
     # Add a ":" to header if it does not end with a ":"
     if not header.endswith(":"):
@@ -172,7 +171,7 @@ def to_string(header: str, fields: list[Any], *, single_line: bool = False) -> s
     if single_line:
         if len(fields) > 1:
             raise ValueError(
-                "single_line is only applicable for lists with a single field"
+                "``single_line`` is only applicable when given a single field."
             )
         return f"{header} {str(fields[0])}"
 
