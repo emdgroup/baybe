@@ -4,7 +4,7 @@
 import pytest
 from pytest import param
 
-from baybe.acquisition import qKG, qNIPV, qThompsonSampling, qUCB
+from baybe.acquisition import qKG, qNIPV, qTS, qUCB
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import UnusedObjectWarning
 from baybe.kernels.base import Kernel
@@ -218,7 +218,7 @@ test_targets = [
 def test_mc_acqfs(campaign, n_iterations, batch_size, acqf):
     if isinstance(acqf, qKG):
         pytest.skip(f"{acqf.__class__.__name__} only works with continuous spaces.")
-    if isinstance(acqf, qThompsonSampling) and batch_size > 1:
+    if isinstance(acqf, qTS) and batch_size > 1:
         pytest.skip(f"{acqf.__class__.__name__} only works with batch size 1.")
 
     run_iterations(campaign, n_iterations, batch_size)
@@ -302,7 +302,7 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
-@pytest.mark.parametrize("acqf", [qThompsonSampling(), qUCB()])
+@pytest.mark.parametrize("acqf", [qTS(), qUCB()])
 @pytest.mark.parametrize("surrogate_model", [BetaBernoulliMultiArmedBanditSurrogate()])
 @pytest.mark.parametrize(
     "parameter_names",
