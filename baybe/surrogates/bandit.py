@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @define
-class BernoulliMultiArmedBanditSurrogate(Surrogate):
+class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
     """A multi-armed bandit model with Bernoulli likelihood and beta prior."""
 
     supports_transfer_learning: ClassVar[bool] = False

@@ -37,7 +37,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
-from baybe.surrogates.bandit import BernoulliMultiArmedBanditSurrogate
+from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
@@ -56,7 +56,7 @@ valid_surrogate_models = [
     for cls in get_subclasses(Surrogate)
     if (
         not issubclass(cls, CustomONNXSurrogate)
-        and not issubclass(cls, BernoulliMultiArmedBanditSurrogate)
+        and not issubclass(cls, BetaBernoulliMultiArmedBanditSurrogate)
     )
 ]
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
@@ -303,7 +303,7 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.parametrize("acqf", [qThompsonSampling(), qUCB()])
-@pytest.mark.parametrize("surrogate_model", [BernoulliMultiArmedBanditSurrogate()])
+@pytest.mark.parametrize("surrogate_model", [BetaBernoulliMultiArmedBanditSurrogate()])
 @pytest.mark.parametrize(
     "parameter_names",
     [

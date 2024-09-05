@@ -1,7 +1,7 @@
 ## Bernoulli Multi Armed Bandit
 
 # The goal of this example is twofold:
-# - It shows how to use the {class}`~baybe.surrogates.bandit.BernoulliMultiArmedBanditSurrogate` for use cases like A/B testing.
+# - It shows how to use the {class}`~baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate` for use cases like A/B testing.
 # - It demonstrates the difference between **optimization** and **active learning** in this context, by employing different acquisition functions chosen for each purpose.
 #   Results are compared in terms of the achieved optimality of the resulting policy and the induced system identification error.
 
@@ -22,7 +22,7 @@ from baybe.recommenders import (
     RandomRecommender,
     TwoPhaseMetaRecommender,
 )
-from baybe.surrogates import BernoulliMultiArmedBanditSurrogate
+from baybe.surrogates import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.targets import BinaryTarget
 
 ### An Imaginary Use Case
@@ -94,7 +94,7 @@ objective = BinaryTarget(name="clicked").to_objective()
 searchspace = CategoricalParameter(
     name="Bandit Arm", values=[f"arm_{i}" for i in range(n_arms)]
 ).to_searchspace()
-surrogate = BernoulliMultiArmedBanditSurrogate()
+surrogate = BetaBernoulliMultiArmedBanditSurrogate()
 
 
 # For each simulation, we report the trajectory of earned rewards and the estimated win rates of the bandit arms:
