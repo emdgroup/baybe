@@ -23,7 +23,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     _current_recommender: PureRecommender | None = field(default=None, init=False)
     """The current recommender."""
 
-    _has_been_used_for_recommendation: bool = field(default=False, init=False)
+    _current_recommender_was_used: bool = field(default=False, init=False)
     """Flag indicating if the current recommender has already been used."""
 
     @abstractmethod
@@ -74,7 +74,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         # Check if the stored recommender instance can be returned
         if (
             self._current_recommender is not None
-            and not self._has_been_used_for_recommendation
+            and not self._current_recommender_was_used
         ):
             recommender = self._current_recommender
 
@@ -88,7 +88,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
                 pending_experiments=pending_experiments,
             )
             self._current_recommender = recommender
-            self._has_been_used_for_recommendation = False
+            self._current_recommender_was_used = False
 
         return recommender
 
@@ -127,7 +127,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             pending_experiments=pending_experiments,
             **optional_args,
         )
-        self._has_been_used_for_recommendation = True
+        self._current_recommender_was_used = True
         return recommendations
 
 
