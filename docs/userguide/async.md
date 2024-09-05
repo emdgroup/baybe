@@ -27,6 +27,7 @@ There are two levels of dealing with such situations:
   measured), we can already update the model with the available information
   by adding a *partial* measurement.
 
+(PENDING_EXPERIMENTS)=
 ## Marking Experiments as Pending
 
 To avoid repeated recommendations in the above scenario, BayBE provides the 
