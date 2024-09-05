@@ -157,7 +157,10 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
 for acqf in ACQFS:
     name = acqf.__class__.__name__
     result = simulate(acqf)
-    MSE = np.linalg.norm(result.estimated_win_rates - WIN_RATES, "fro") / n_arms
+    estimates = result.estimated_win_rates
+    estimation_bias = estimates.mean(axis=0) - WIN_RATES
+    estimation_variance = estimates.var(axis=0)
+    MSE = np.sum(estimation_bias**2 + estimation_variance)
 
     print(name)
     print("-" * len(name))
