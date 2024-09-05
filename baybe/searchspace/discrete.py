@@ -347,6 +347,10 @@ class SubspaceDiscrete(SerialMixin):
             except IterableValidationError:
                 return CategoricalParameter(name=name, values=values)
 
+        # Catch edge case
+        if df.shape[1] == 0:
+            return cls.empty()
+
         # Get the full list of both explicitly and implicitly defined parameter
         parameters = get_parameters_from_dataframe(
             df, discrete_parameter_factory, parameters
