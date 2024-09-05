@@ -69,17 +69,12 @@ class BinaryTarget(Target, SerialMixin):
             )
 
         # Transform
-        pos_idx = data.iloc[:, 0] == self.success_value
-        neg_idx = data.iloc[:, 0] == self.failure_value
-        data = pd.DataFrame(
-            np.zeros_like(data.values, dtype=bool),
+        success_idx = data.iloc[:, 0] == self.success_value
+        return pd.DataFrame(
+            np.where(success_idx, _SUCCESS_VALUE_COMP, _FAILURE_VALUE_COMP),
             index=data.index,
             columns=data.columns,
         )
-        data[pos_idx] = _SUCCESS_VALUE_COMP
-        data[neg_idx] = _FAILURE_VALUE_COMP
-
-        return data
 
     def summary(self) -> dict:  # noqa: D102
         # See base class.
