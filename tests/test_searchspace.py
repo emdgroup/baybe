@@ -74,7 +74,7 @@ def test_discrete_searchspace_creation_from_dataframe():
         name="cat_unspecified", values=["d", "e", "f"]
     )
 
-    all_params = (num_specified, num_unspecified, cat_specified, cat_unspecified)
+    all_params = (cat_specified, cat_unspecified, num_specified, num_unspecified)
 
     df = pd.DataFrame({param.name: param.values for param in all_params})
     searchspace = SearchSpace(

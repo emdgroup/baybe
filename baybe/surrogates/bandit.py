@@ -25,9 +25,6 @@ if TYPE_CHECKING:
 class BernoulliMultiArmedBanditSurrogate(Surrogate):
     """A multi-armed bandit model with Bernoulli likelihood and beta prior."""
 
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 

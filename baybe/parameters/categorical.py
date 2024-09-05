@@ -15,6 +15,12 @@ from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
+def _convert_values(value, self, field) -> tuple[str, ...]:
+    """Sort and convert values for categorical parameters."""
+    value = nonstring_to_tuple(value, self, field)
+    return tuple(sorted(value))
+
+
 @define(frozen=True, slots=False)
 class CategoricalParameter(DiscreteParameter):
     """Parameter class for categorical parameters."""
@@ -26,8 +32,7 @@ class CategoricalParameter(DiscreteParameter):
     # object variables
     _values: tuple[str, ...] = field(
         alias="values",
-        # FIXME[typing]: `attrs.Converter` is not yet supported by type checkers
-        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore
+        converter=Converter(_convert_values, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
             min_len(2),
             validate_unique_values,

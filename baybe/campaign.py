@@ -17,6 +17,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.searchspace.core import (
     SearchSpace,
+    SearchSpaceType,
     to_searchspace,
     validate_searchspace_from_config,
 )
@@ -190,9 +191,10 @@ class Campaign(SerialMixin):
 
         # Update meta data
         # TODO: refactor responsibilities
-        self.searchspace.discrete.mark_as_measured(
-            data, numerical_measurements_must_be_within_tolerance
-        )
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            self.searchspace.discrete.mark_as_measured(
+                data, numerical_measurements_must_be_within_tolerance
+            )
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1

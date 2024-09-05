@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `py.typed` file to enable the use of type checkers on the user side
-- `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
+- `IndependentGaussianSurrogate` base class for surrogate models providing independent 
+  Gaussian posteriors for all candidates (cannot be used for batch prediction)
 - `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
   and `SubspaceContinuous` classes
 - New mechanisms for surrogate input/output scaling configurable per class
@@ -27,11 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `to_tensor` now also handles `numpy` arrays
 - `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
   instead of negating the computational representation
+- Search spaces now store their parameters in alphabetical order by name
+- Improvement-based acquisition functions now consider the maximum posterior mean
+  instead of the maximum noisy measurement as reference value
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
   string input to categories/tasks
 - `farthest_point_sampling` no longer depends on the provided point order
+- Batch predictions for `RandomForestSurrogate`
+- Surrogates providing only marginal posterior information can no longer be used for
+  batch recommendation
+- `SearchSpace.from_dataframe` now creates a proper empty discrete subspace without
+  index when called with continuous parameters only
+- Metadata updates are now only triggered when a discrete subspace is present
 
 ### Removed
 - `register_custom_architecture` decorator

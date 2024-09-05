@@ -11,6 +11,10 @@ on:
 concurrency:
   group: ${{ github.event_name }}_${{  github.ref_name }}
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   # Build and verify wheels
   build:
@@ -60,7 +64,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
 
   # Upload to real PyPI on GitHub Releases.
   release-pypi:
@@ -84,5 +87,3 @@ jobs:
           path: dist
       - name: Upload package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_TOKEN }}

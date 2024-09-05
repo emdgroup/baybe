@@ -75,5 +75,9 @@ class UnmatchedAttributeError(Exception):
     """An attribute cannot be matched against a certain callable signature."""
 
 
+class InvalidSurrogateModelError(Exception):
+    """An invalid surrogate model was chosen."""
+
+
 class InvalidTargetValueError(Exception):
     """A target value was entered that is not in the target space."""
