@@ -14,10 +14,10 @@ from baybe.targets.base import Target
 ChoiceValue: TypeAlias = bool | int | float | str
 """Types of values that a :class:`BinaryTarget` can take."""
 
-_SUCCESS_VALUE_COMP = True
+_SUCCESS_VALUE_COMP = 1.0
 """Computational representation of the success value."""
 
-_FAILURE_VALUE_COMP = False
+_FAILURE_VALUE_COMP = 0.0
 """Computational representation of the failure value."""
 
 
