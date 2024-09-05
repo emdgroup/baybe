@@ -140,10 +140,6 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
             )
 
     def __str__(self) -> str:
-        output_str = super().__str__()
-        # Replace first line which contains the incorrect name of the parent class
-        output_str = self.__class__.__name__ + output_str[output_str.find("\n") :]
-        fields = [
-            to_string("ONNX input name", [self.onnx_input_name], single_line=True)
-        ]
-        return to_string(output_str, fields)
+        # Make a super call to get the representation of the parent class.
+        fields = [to_string("ONNX input name", self.onnx_input_name, single_line=True)]
+        return to_string(super().__str__(), *fields)

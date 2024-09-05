@@ -128,15 +128,15 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
 
     def __str__(self) -> str:
         fields = [
-            to_string("Compatibility", [self.compatibility], single_line=True),
+            to_string("Compatibility", self.compatibility, single_line=True),
             to_string(
                 "Name of clustering parameter",
-                [self.model_cluster_num_parameter_name],
+                self.model_cluster_num_parameter_name,
                 single_line=True,
             ),
-            to_string("Model parameters", [self.model_params], single_line=True),
+            to_string("Model parameters", self.model_params, single_line=True),
         ]
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
 
 @define

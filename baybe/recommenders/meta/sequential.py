@@ -67,11 +67,11 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 
     def __str__(self) -> str:
         fields = [
-            to_string("Initial recommender", [self.initial_recommender]),
-            to_string("Recommender", [self.recommender]),
-            to_string("Switch after", [self.switch_after], single_line=True),
+            to_string("Initial recommender", self.initial_recommender),
+            to_string("Recommender", self.recommender),
+            to_string("Switch after", self.switch_after, single_line=True),
         ]
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
 
 @define
@@ -175,10 +175,10 @@ class SequentialMetaRecommender(MetaRecommender):
 
     def __str__(self) -> str:
         fields = [
-            to_string("Recommenders", [self.recommenders]),
-            to_string("Mode", [self.mode], single_line=True),
+            to_string("Recommenders", self.recommenders),
+            to_string("Mode", self.mode, single_line=True),
         ]
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
 
 @define
@@ -260,9 +260,9 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
 
     def __str__(self) -> str:
         fields = [
-            to_string("Recommenders", [self.recommenders]),
+            to_string("Recommenders", self.recommenders),
         ]
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
 
 # The recommender iterable cannot be serialized

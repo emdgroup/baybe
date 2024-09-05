@@ -47,8 +47,8 @@ class RandomRecommender(NonPredictiveRecommender):
         return pd.concat([disc_random, cont_random], axis=1)
 
     def __str__(self) -> str:
-        fields = [to_string("Compatibility", [self.compatibility], single_line=True)]
-        return to_string(self.__class__.__name__, fields)
+        fields = [to_string("Compatibility", self.compatibility, single_line=True)]
+        return to_string(self.__class__.__name__, *fields)
 
 
 class FPSRecommender(NonPredictiveRecommender):
@@ -77,5 +77,5 @@ class FPSRecommender(NonPredictiveRecommender):
         return candidates_comp.index[ilocs]
 
     def __str__(self) -> str:
-        fields = [to_string("Compatibility", [self.compatibility], single_line=True)]
-        return to_string(self.__class__.__name__, fields)
+        fields = [to_string("Compatibility", self.compatibility, single_line=True)]
+        return to_string(self.__class__.__name__, *fields)

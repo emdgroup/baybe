@@ -136,28 +136,28 @@ class SubspaceDiscrete(SerialMixin):
         metadata_fields = [
             to_string(
                 f"{_METADATA_COLUMNS[0]}",
-                [f"{was_recommended_count}/{metadata_count}"],
+                f"{was_recommended_count}/{metadata_count}",
                 single_line=True,
             ),
             to_string(
                 f"{_METADATA_COLUMNS[1]}",
-                [f"{was_measured_count}/{metadata_count}"],
+                f"{was_measured_count}/{metadata_count}",
                 single_line=True,
             ),
             to_string(
                 f"{_METADATA_COLUMNS[2]}",
-                [f"{dont_recommend_count}/{metadata_count}"],
+                f"{dont_recommend_count}/{metadata_count}",
                 single_line=True,
             ),
         ]
         fields = [
-            to_string("Discrete Parameters", [pretty_print_df(param_df)]),
-            to_string("Experimental Representation", [pretty_print_df(self.exp_rep)]),
-            to_string("Meta Data", metadata_fields),
-            to_string("Constraints", [pretty_print_df(constraints_df)]),
-            to_string("Computational Representation", [pretty_print_df(self.comp_rep)]),
+            to_string("Discrete Parameters", pretty_print_df(param_df)),
+            to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
+            to_string("Meta Data", *metadata_fields),
+            to_string("Constraints", pretty_print_df(constraints_df)),
+            to_string("Computational Representation", pretty_print_df(self.comp_rep)),
         ]
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
     @exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103

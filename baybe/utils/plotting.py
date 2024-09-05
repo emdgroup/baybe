@@ -148,12 +148,12 @@ def indent(text: str, amount: int = 3, ch: str = " ") -> str:
     return "".join(padding + line for line in text.splitlines(keepends=True))
 
 
-def to_string(header: str, fields: list[Any], *, single_line: bool = False) -> str:
+def to_string(header: str, *fields: Any, single_line: bool = False) -> str:
     """Create a nested string representation.
 
     Args:
         header: The header, typically the name of a class.
-        fields: Fields to be printed with an indentation.
+        *fields: Fields to be printed with an indentation.
         single_line: If ``True``, print the representation on a single line.
             Only applicable when given a single field.
 

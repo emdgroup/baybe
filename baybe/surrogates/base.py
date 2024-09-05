@@ -317,11 +317,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         fields = [
             to_string(
                 "Supports Transfer Learning",
-                [self.supports_transfer_learning],
+                self.supports_transfer_learning,
                 single_line=True,
             ),
         ]
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
 
 @define

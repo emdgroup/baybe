@@ -22,11 +22,11 @@ class SingleTargetObjective(Objective):
         targets_df = pd.DataFrame(targets_list)
 
         fields = [
-            to_string("Type", [self.__class__.__name__], single_line=True),
-            to_string("Targets", [pretty_print_df(targets_df)]),
+            to_string("Type", self.__class__.__name__, single_line=True),
+            to_string("Targets", pretty_print_df(targets_df)),
         ]
 
-        return to_string("Objective", fields)
+        return to_string("Objective", *fields)
 
     @property
     def targets(self) -> tuple[Target, ...]:  # noqa: D102

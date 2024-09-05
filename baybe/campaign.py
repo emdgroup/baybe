@@ -86,13 +86,13 @@ class Campaign(SerialMixin):
 
     def __str__(self) -> str:
         metadata_fields = [
-            to_string("Batches done", [self.n_batches_done], single_line=True),
-            to_string("Fits done", [self.n_fits_done], single_line=True),
+            to_string("Batches done", self.n_batches_done, single_line=True),
+            to_string("Fits done", self.n_fits_done, single_line=True),
         ]
-        metadata = to_string("Meta Data:", metadata_fields)
+        metadata = to_string("Meta Data:", *metadata_fields)
         fields = [metadata, self.searchspace, self.objective, self.recommender]
 
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
     @property
     def measurements(self) -> pd.DataFrame:

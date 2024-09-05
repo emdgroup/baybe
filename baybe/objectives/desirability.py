@@ -129,12 +129,12 @@ class DesirabilityObjective(Objective):
         targets_df["Weight"] = self.weights
 
         fields = [
-            to_string("Type", [self.__class__.__name__], single_line=True),
-            to_string("Targets", [pretty_print_df(targets_df)]),
-            to_string("Scalarizer", [self.scalarizer.name], single_line=True),
+            to_string("Type", self.__class__.__name__, single_line=True),
+            to_string("Targets", pretty_print_df(targets_df)),
+            to_string("Scalarizer", self.scalarizer.name, single_line=True),
         ]
 
-        return to_string("Objective", fields)
+        return to_string("Objective", *fields)
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.

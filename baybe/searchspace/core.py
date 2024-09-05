@@ -68,13 +68,13 @@ class SearchSpace(SerialMixin):
 
     def __str__(self) -> str:
         fields = [
-            to_string("Search Space Type", [self.type.name], single_line=True),
+            to_string("Search Space Type", self.type.name, single_line=True),
         ]
         if not self.discrete.is_empty:
             fields.append(str(self.discrete))
         if not self.continuous.is_empty:
             fields.append(str(self.continuous))
-        return to_string(self.__class__.__name__, fields)
+        return to_string(self.__class__.__name__, *fields)
 
     def __attrs_post_init__(self):
         """Perform validation and record telemetry values."""
