@@ -14,11 +14,11 @@ from baybe.targets.base import Target
 ChoiceValue: TypeAlias = bool | int | float | str
 """Types of values that a :class:`BinaryTarget` can take."""
 
-_POSITIVE_VALUE_COMP = True
-"""Computational representation of the positive choice value."""
+_SUCCESS_VALUE_COMP = True
+"""Computational representation of the success value."""
 
-_NEGATIVE_VALUE_COMP = False
-"""Computational representation of the negative choice value."""
+_FAILURE_VALUE_COMP = False
+"""Computational representation of the failure value."""
 
 
 @define(frozen=True)
@@ -27,24 +27,24 @@ class BinaryTarget(Target, SerialMixin):
 
     # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1336
 
-    positive_value: ChoiceValue = field(
+    success_value: ChoiceValue = field(
         default=True,
         validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
         kw_only=True,
     )
-    """Experimental representation of the positive value."""
+    """Experimental representation of the success value."""
 
-    negative_value: ChoiceValue = field(
+    failure_value: ChoiceValue = field(
         default=False,
         validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
         kw_only=True,
     )
-    """Experimental representation of the negative value."""
+    """Experimental representation of the failure value."""
 
-    @negative_value.validator
+    @failure_value.validator
     def _validate_values(self, _, value):
         """Validate that the two choice values of the target are different."""
-        if value == self.positive_value:
+        if value == self.success_value:
             raise ValueError(
                 f"The two choice values of a '{BinaryTarget.__name__}' must be "
                 f"different but the following value was provided for both choices of "
@@ -60,24 +60,24 @@ class BinaryTarget(Target, SerialMixin):
 
         # Validate target values
         col = data.iloc[:, [0]]
-        invalid = col[~col.isin([self.positive_value, self.negative_value]).values]
+        invalid = col[~col.isin([self.success_value, self.failure_value]).values]
         if len(invalid) > 0:
             raise InvalidTargetValueError(
                 f"The following values entered for target '{self.name}' are not in the "
                 f"set of accepted choice values "
-                f"{set([self.positive_value, self.negative_value])}: \n{invalid}"
+                f"{set([self.success_value, self.failure_value])}: \n{invalid}"
             )
 
         # Transform
-        pos_idx = data.iloc[:, 0] == self.positive_value
-        neg_idx = data.iloc[:, 0] == self.negative_value
+        pos_idx = data.iloc[:, 0] == self.success_value
+        neg_idx = data.iloc[:, 0] == self.failure_value
         data = pd.DataFrame(
             np.zeros_like(data.values, dtype=bool),
             index=data.index,
             columns=data.columns,
         )
-        data[pos_idx] = _POSITIVE_VALUE_COMP
-        data[neg_idx] = _NEGATIVE_VALUE_COMP
+        data[pos_idx] = _SUCCESS_VALUE_COMP
+        data[neg_idx] = _FAILURE_VALUE_COMP
 
         return data
 
@@ -86,6 +86,6 @@ class BinaryTarget(Target, SerialMixin):
         return dict(
             Type=self.__class__.__name__,
             Name=self.name,
-            Positive_value=self.positive_value,
-            Negative_value=self.negative_value,
+            Success_value=self.success_value,
+            Failure_value=self.failure_value,
         )

@@ -192,7 +192,7 @@ def add_fake_results(
         if isinstance(target, BinaryTarget):
             # TODO: When refactoring, take into account good and bad intervals
             data[target.name] = np.random.choice(
-                [target.negative_value, target.positive_value], size=len(data)
+                [target.failure_value, target.success_value], size=len(data)
             )
             continue
 

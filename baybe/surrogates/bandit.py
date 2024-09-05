@@ -12,7 +12,7 @@ from baybe.parameters.enum import CategoricalEncoding
 from baybe.priors import BetaPrior
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
-from baybe.targets.binary import _NEGATIVE_VALUE_COMP, _POSITIVE_VALUE_COMP
+from baybe.targets.binary import _FAILURE_VALUE_COMP, _SUCCESS_VALUE_COMP
 from baybe.utils.random import temporary_seed
 
 if TYPE_CHECKING:
@@ -157,6 +157,6 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         #   converts them float. Potentially, this can be improved by making
         #   the type conversion configurable.
 
-        wins = (train_x * (train_y == float(_POSITIVE_VALUE_COMP))).sum(dim=0)
-        losses = (train_x * (train_y == float(_NEGATIVE_VALUE_COMP))).sum(dim=0)
+        wins = (train_x * (train_y == float(_SUCCESS_VALUE_COMP))).sum(dim=0)
+        losses = (train_x * (train_y == float(_FAILURE_VALUE_COMP))).sum(dim=0)
         self._win_lose_counts = torch.vstack([wins, losses]).to(torch.int)

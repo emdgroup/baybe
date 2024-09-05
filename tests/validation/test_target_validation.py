@@ -41,7 +41,7 @@ def test_numerical_target_incompatible_transform_mode(mode, bounds, transformati
 @pytest.mark.parametrize(
     ("choices", "error", "match"),
     [
-        param((None, 0), TypeError, "'positive_value' must be", id="wrong_type"),
+        param((None, 0), TypeError, "'success_value' must be", id="wrong_type"),
         param((0, 0), ValueError, "must be different", id="identical"),
     ],
 )
@@ -50,6 +50,6 @@ def test_binary_target_invalid_values(choices, error, match):
     with pytest.raises(error, match=match):
         BinaryTarget(
             name="invalid_value",
-            positive_value=choices[0],
-            negative_value=choices[1],
+            success_value=choices[0],
+            failure_value=choices[1],
         )
