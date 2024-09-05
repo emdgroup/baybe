@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Batch predictions for `RandomForestSurrogate`
 - Surrogates providing only marginal posterior information can no longer be used for
   batch recommendation
+- `SearchSpace.from_dataframe` now creates a proper empty discrete subspace without
+  index when called with continuous parameters only
+- Metadata updates are now only triggered when a discrete subspace is present
 
 ### Removed
 - `register_custom_architecture` decorator
