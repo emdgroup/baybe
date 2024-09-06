@@ -625,6 +625,11 @@ def fixture_default_surrogate_model(request, kernel):
     return GaussianProcessSurrogate(kernel_or_factory=kernel)
 
 
+@pytest.fixture(name="allow_recommending_pending_experiments")
+def fixture_allow_recommending_pending_experiments():
+    return False
+
+
 @pytest.fixture(name="initial_recommender")
 def fixture_initial_recommender():
     """The default initial recommender to be used if not specified differently."""
@@ -632,13 +637,16 @@ def fixture_initial_recommender():
 
 
 @pytest.fixture(name="recommender")
-def fixture_recommender(initial_recommender, surrogate_model, acqf):
+def fixture_recommender(
+    initial_recommender, surrogate_model, acqf, allow_recommending_pending_experiments
+):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
+            allow_recommending_pending_experiments=allow_recommending_pending_experiments,
         ),
     )
 
