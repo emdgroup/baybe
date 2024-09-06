@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
+from attrs.validators import instance_of
 
 from baybe.exceptions import IncompatibleSearchSpaceError, ModelNotTrainedError
 from baybe.parameters.categorical import CategoricalParameter
@@ -28,7 +29,9 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    prior: BetaPrior = field(factory=lambda: BetaPrior(1, 1))
+    prior: BetaPrior = field(
+        factory=lambda: BetaPrior(1, 1), validator=instance_of(BetaPrior)
+    )
     """The beta prior for the win rates of the bandit arms. Uniform by default."""
 
     # TODO: type should be `torch.Tensor | None` but is currently
