@@ -33,10 +33,12 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - ✨ Custom parameter encodings: Improve your campaign with domain knowledge
 - 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
 - 🎯 Single and multiple targets with min, max and match objectives
-- ⚙️ Custom surrogate models: For specialized problems or active learning
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
 - 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
+- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments
+- 🎓 Active learning: Perform smart data acquisition campaigns
+- ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
 - 📝 Fully typed and hypothesis-tested: Robust code base
 - 🔄 All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs

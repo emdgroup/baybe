@@ -48,11 +48,16 @@ class BayesianRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         self.surrogate_model.fit(searchspace, objective, measurements)
         self._botorch_acqf = self.acquisition_function.to_botorch(
-            self.surrogate_model, searchspace, objective, measurements
+            self.surrogate_model,
+            searchspace,
+            objective,
+            measurements,
+            pending_experiments,
         )
 
     def recommend(  # noqa: D102
@@ -61,6 +66,7 @@ class BayesianRecommender(PureRecommender, ABC):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -89,11 +95,14 @@ class BayesianRecommender(PureRecommender, ABC):
         if isinstance(self.surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
-        self._setup_botorch_acqf(searchspace, objective, measurements)
+        self._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_experiments
+        )
 
         return super().recommend(
             batch_size=batch_size,
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
+            pending_experiments=pending_experiments,
         )

@@ -249,6 +249,11 @@ class SearchSpace(SerialMixin):
         )
 
     @property
+    def parameter_names(self) -> tuple[str, ...]:
+        """Return tuple of parameter names."""
+        return self.discrete.parameter_names + self.continuous.parameter_names
+
+    @property
     def task_idx(self) -> int | None:
         """The column index of the task parameter in computational representation."""
         try:

@@ -637,14 +637,22 @@ def allow_recommending_already_measured():
     return True
 
 
+@pytest.fixture(name="allow_recommending_pending_experiments")
+def fixture_allow_recommending_pending_experiments():
+    return False
+
+
 @pytest.fixture(name="initial_recommender")
 def fixture_initial_recommender(
-    allow_recommending_already_measured, allow_repeated_recommendations
+    allow_recommending_already_measured,
+    allow_repeated_recommendations,
+    allow_recommending_pending_experiments,
 ):
     """The default initial recommender to be used if not specified differently."""
     return RandomRecommender(
         allow_repeated_recommendations=allow_repeated_recommendations,
         allow_recommending_already_measured=allow_recommending_already_measured,
+        allow_recommending_pending_experiments=allow_recommending_pending_experiments,
     )
 
 
@@ -655,6 +663,7 @@ def fixture_recommender(
     acqf,
     allow_repeated_recommendations,
     allow_recommending_already_measured,
+    allow_recommending_pending_experiments,
 ):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
@@ -664,6 +673,7 @@ def fixture_recommender(
             acquisition_function=acqf,
             allow_repeated_recommendations=allow_repeated_recommendations,
             allow_recommending_already_measured=allow_recommending_already_measured,
+            allow_recommending_pending_experiments=allow_recommending_pending_experiments,
         ),
     )
 

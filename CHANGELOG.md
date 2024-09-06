@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bandit optimization example
 - `qThompsonSampling` acquisition function
 - `BetaPrior` class
+- `recommend` now accepts the `pending_experiments` argument, informing the algorithm
+  about points that were already selected for evaluation
+- Pure recommenders now have the `allow_recommending_pending_experiments` flag,
+  controlling whether pending experiments are excluded from candidates in purely
+  discrete search spaces
 
 ### Changed
 - The transition from experimental to computational representation no longer happens

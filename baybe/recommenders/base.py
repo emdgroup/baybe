@@ -19,8 +19,9 @@ class RecommenderProtocol(Protocol):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective | None,
-        measurements: pd.DataFrame | None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
 
@@ -36,6 +37,8 @@ class RecommenderProtocol(Protocol):
                 Each row corresponds to one conducted experiment, where the parameter
                 columns define the experimental setting and the target columns report
                 the measured outcomes.
+            pending_experiments: Parameter configurations in "experimental
+                representation" specifying experiments that are currently pending.
 
         Returns:
             A dataframe containing the recommendations in experimental representation

@@ -10,7 +10,10 @@ from typing import TYPE_CHECKING, ClassVar
 import pandas as pd
 from attrs import define
 
-from baybe.exceptions import UnidentifiedSubclassError
+from baybe.exceptions import (
+    IncompatibleAcquisitionFunctionError,
+    UnidentifiedSubclassError,
+)
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -55,6 +58,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
     ):
         """Create the botorch-ready representation of the function.
 
@@ -89,6 +93,15 @@ class AcquisitionFunction(ABC, SerialMixin):
             additional_params["mc_points"] = to_tensor(
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
             )
+        if pending_experiments is not None:
+            if self.is_mc:
+                pending_x = searchspace.transform(pending_experiments, allow_extra=True)
+                additional_params["X_pending"] = to_tensor(pending_x)
+            else:
+                raise IncompatibleAcquisitionFunctionError(
+                    f"Pending experiments were provided but the chosen acquisition "
+                    f"function '{self.__class__.__name__}' does not support this."
+                )
 
         # Add acquisition objective / best observed value
         match objective:

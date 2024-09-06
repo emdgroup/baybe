@@ -32,12 +32,18 @@ class PureRecommender(ABC, RecommenderProtocol):
     """Allow to make recommendations that were measured previously.
     This only has an influence in discrete search spaces."""
 
+    allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
+    """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
+    the corresponding points will be removed from the candidates. This only has an
+    influence in discrete search spaces."""
+
     def recommend(  # noqa: D102
         self,
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
@@ -45,7 +51,11 @@ class PureRecommender(ABC, RecommenderProtocol):
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
         else:
-            return self._recommend_with_discrete_parts(searchspace, batch_size)
+            return self._recommend_with_discrete_parts(
+                searchspace,
+                batch_size,
+                pending_experiments=pending_experiments,
+            )
 
     def _recommend_discrete(
         self,
@@ -154,6 +164,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
+        pending_experiments: pd.DataFrame | None,
     ) -> pd.DataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
@@ -163,6 +174,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The search space from which to generate recommendations.
             batch_size: The size of the recommendation batch.
+            pending_experiments: Pending experiments in experimental representation.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
@@ -175,11 +187,17 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get discrete candidates
         # Repeated recommendations are always allowed for hybrid spaces
+        # Pending experiments are excluded for discrete spaces unless configured
+        # differently.
+        dont_exclude_pending = (
+            is_hybrid_space or self.allow_recommending_pending_experiments
+        )
         candidates_exp, _ = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=is_hybrid_space
             or self.allow_repeated_recommendations,
             allow_recommending_already_measured=is_hybrid_space
             or self.allow_recommending_already_measured,
+            exclude=None if dont_exclude_pending else pending_experiments,
         )
 
         # TODO: Introduce new flag to recommend batches larger than the search space

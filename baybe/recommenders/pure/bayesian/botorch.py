@@ -8,7 +8,10 @@ from attr.converters import optional
 from attrs import define, field
 
 from baybe.acquisition.acqfs import qThompsonSampling
-from baybe.exceptions import IncompatibilityError, NoMCAcquisitionFunctionError
+from baybe.exceptions import (
+    IncompatibilityError,
+    IncompatibleAcquisitionFunctionError,
+)
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
     SearchSpace,
@@ -90,15 +93,15 @@ class BotorchRecommender(BayesianRecommender):
             batch_size: The size of the recommendation batch.
 
         Raises:
-            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
-                used with a batch size > 1.
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
 
         Returns:
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
         if batch_size > 1 and not self.acquisition_function.is_mc:
-            raise NoMCAcquisitionFunctionError(
+            raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
             )
@@ -144,15 +147,15 @@ class BotorchRecommender(BayesianRecommender):
             batch_size: The size of the recommendation batch.
 
         Raises:
-            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
-                used with a batch size > 1.
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
-            raise NoMCAcquisitionFunctionError(
+            raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
             )
@@ -180,7 +183,7 @@ class BotorchRecommender(BayesianRecommender):
         )
 
         # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
+        rec = pd.DataFrame(points, columns=subspace_continuous.parameter_names)
         return rec
 
     def _recommend_hybrid(
@@ -205,15 +208,15 @@ class BotorchRecommender(BayesianRecommender):
             batch_size: The size of the calculated batch.
 
         Raises:
-            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
-                used with a batch size > 1.
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
 
         Returns:
             The recommended points.
         """
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
-            raise NoMCAcquisitionFunctionError(
+            raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
             )
@@ -288,7 +291,7 @@ class BotorchRecommender(BayesianRecommender):
         # Get experimental representation of discrete and continuous parts
         rec_disc_exp = searchspace.discrete.exp_rep.loc[idxs]
         rec_cont_exp = pd.DataFrame(
-            cont_points, columns=searchspace.continuous.param_names
+            cont_points, columns=searchspace.continuous.parameter_names
         )
 
         # Adjust the index of the continuous part and create overall recommendations

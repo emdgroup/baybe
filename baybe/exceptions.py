@@ -23,6 +23,10 @@ class IncompatibleSearchSpaceError(IncompatibilityError):
     """
 
 
+class IncompatibleAcquisitionFunctionError(IncompatibilityError):
+    """An incompatible acquisition function was selected."""
+
+
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations

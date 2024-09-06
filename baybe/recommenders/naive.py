@@ -82,6 +82,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -108,6 +109,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 searchspace=searchspace,
                 objective=objective,
                 measurements=measurements,
+                pending_experiments=pending_experiments,
             )
 
         # We are in a hybrid setting now
@@ -121,7 +123,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Get discrete candidates. The metadata flags are ignored since the search space
         # is hybrid
-        # TODO Slight BOILERPLATE CODE, see recommender.py, ll. 47+
         candidates_exp, _ = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
@@ -131,7 +132,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements
+                searchspace, objective, measurements, pending_experiments
             )
 
             # Construct the partial acquisition function that attaches cont_part
@@ -157,7 +158,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
-        self.cont_recommender._setup_botorch_acqf(searchspace, objective, measurements)
+        self.cont_recommender._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_experiments
+        )
 
         # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(

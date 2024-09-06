@@ -238,8 +238,8 @@ class SubspaceContinuous(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_names(self) -> tuple[str, ...]:
-        """Return list of parameter names."""
+    def parameter_names(self) -> tuple[str, ...]:
+        """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
 
     @property
@@ -375,7 +375,7 @@ class SubspaceContinuous(SerialMixin):
             low=bounds[0, :], high=bounds[1, :], size=(batch_size, len(self.parameters))
         )
 
-        return pd.DataFrame(points, columns=self.param_names)
+        return pd.DataFrame(points, columns=self.parameter_names)
 
     def _sample_from_polytope(
         self, batch_size: int, bounds: np.ndarray
@@ -394,7 +394,7 @@ class SubspaceContinuous(SerialMixin):
                 c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
             ],
         )
-        return pd.DataFrame(points, columns=self.param_names)
+        return pd.DataFrame(points, columns=self.parameter_names)
 
     def _sample_from_polytope_with_cardinality_constraints(
         self, batch_size: int
@@ -491,7 +491,7 @@ class SubspaceContinuous(SerialMixin):
     def full_factorial(self) -> pd.DataFrame:
         """Get the full factorial of the continuous space."""
         index = pd.MultiIndex.from_product(
-            self.comp_rep_bounds.values.T.tolist(), names=self.param_names
+            self.comp_rep_bounds.values.T.tolist(), names=self.parameter_names
         )
 
         return pd.DataFrame(index=index).reset_index()

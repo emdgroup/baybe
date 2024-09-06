@@ -71,6 +71,7 @@ class FPSRecommender(NonPredictiveRecommender):
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
 
+        # Scale and sample
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)

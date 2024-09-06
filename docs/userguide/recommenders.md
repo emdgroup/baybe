@@ -16,11 +16,16 @@ compatibility is indicated via the corresponding `compatibility` class variable.
 
 ```{admonition} Additional Options for Discrete Search Spaces
 :class: note
-For discrete search spaces, BayBE provides additional control over pure recommenders.
-You can explicitly define whether a recommender is allowed to recommend previous 
-recommendations again via `allow_repeated_recommendations` and whether it can output
-recommendations that have already been measured via
-`allow_recommending_already_measured`. 
+For discrete search spaces, BayBE provides additional controls for pure recommenders:
+- `allow_repeated_recommendations`: Controls whether a recommender is allowed to
+  recommend previous recommendations again. 
+- `allow_recommending_already_measured`: Controls whether a recommender is allowed to
+  recommend points that have already been measured. This only considers exact matches
+  to the search space.
+- `allow_recommending_pending_experiments`: Controls whether a recommender is allowed
+  to recommend points that have been marked as `pending_experiments`
+  (see [asynchronous workflows](PENDING_EXPERIMENTS)). This only considers exact matches to the
+  search space.
 ```
 
 ### Bayesian Recommenders
