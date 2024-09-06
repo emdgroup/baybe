@@ -235,6 +235,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             The same :class:`botorch.posteriors.Posterior` object as returned via
             :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._input_scaler is not None
+
         p = self._posterior(self._input_scaler.transform(candidates_comp))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
