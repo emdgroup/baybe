@@ -169,6 +169,8 @@ def to_string(header: str, *fields: Any, single_line: bool = False) -> str:
             raise ValueError(
                 "``single_line`` is only applicable when given a single field."
             )
+        # Since single line headers look ugly without a ":", we add it manually
+        header = header if header.endswith(":") else header + ":"
         return f"{header} {str(fields[0])}"
 
     return "\n".join([header] + [indent(str(f)) for f in fields])
