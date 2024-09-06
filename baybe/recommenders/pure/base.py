@@ -182,6 +182,8 @@ class PureRecommender(ABC, RecommenderProtocol):
             or self.allow_recommending_already_measured,
         )
 
+        # TODO: Introduce new flag to recommend batches larger than the search space
+
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
         if (not is_hybrid_space) and (len(candidates_exp) < batch_size):

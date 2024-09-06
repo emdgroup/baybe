@@ -7,7 +7,8 @@ import pandas as pd
 from attr.converters import optional
 from attrs import define, field
 
-from baybe.exceptions import NoMCAcquisitionFunctionError
+from baybe.acquisition.acqfs import qThompsonSampling
+from baybe.exceptions import IncompatibilityError, NoMCAcquisitionFunctionError
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
     SearchSpace,
@@ -95,11 +96,14 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
-        # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
             raise NoMCAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
+            )
+        if batch_size > 1 and isinstance(self.acquisition_function, qThompsonSampling):
+            raise IncompatibilityError(
+                "Thompson sampling currently only supports a batch size of 1."
             )
 
         from botorch.optim import optimize_acqf_discrete

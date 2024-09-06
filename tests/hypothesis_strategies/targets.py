@@ -2,6 +2,7 @@
 
 import hypothesis.strategies as st
 
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS, NumericalTarget
 from baybe.utils.interval import Interval
@@ -39,5 +40,19 @@ def numerical_targets(
     )
 
 
-targets = numerical_targets()
+choice_values = st.one_of(
+    [st.booleans(), st.integers(), st.floats(allow_nan=False), st.text()]
+)
+"""A strategy that generates choice values."""
+
+
+@st.composite
+def binary_targets(draw: st.DrawFn):
+    """A strategy that generates binary targets."""
+    name = draw(target_name)
+    choices = draw(st.lists(choice_values, min_size=2, max_size=2, unique=True))
+    return BinaryTarget(name, success_value=choices[0], failure_value=choices[1])
+
+
+targets = st.one_of([binary_targets(), numerical_targets()])
 """A strategy that generates targets."""

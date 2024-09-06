@@ -5,11 +5,12 @@ from __future__ import annotations
 import warnings
 from abc import ABC
 from inspect import signature
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import define
 
+from baybe.exceptions import UnidentifiedSubclassError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -26,6 +27,9 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import classproperty, match_attributes
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
+
+if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
 
 
 @define(frozen=True)
@@ -61,8 +65,10 @@ class AcquisitionFunction(ABC, SerialMixin):
         import torch
         from botorch.acquisition.objective import LinearMCObjective
 
+        from baybe.acquisition.acqfs import qThompsonSampling
+
         # Retrieve botorch acquisition function class and match attributes
-        acqf_cls = getattr(bo_acqf, self.__class__.__name__)
+        acqf_cls = _get_botorch_acqf_class(type(self))
         params_dict = match_attributes(
             self, acqf_cls.__init__, ignore=self._non_botorch_attrs
         )[0]
@@ -111,7 +117,32 @@ class AcquisitionFunction(ABC, SerialMixin):
                 raise ValueError(f"Unsupported objective type: {objective}")
 
         params_dict.update(additional_params)
-        return acqf_cls(**params_dict)
+
+        acqf = acqf_cls(**params_dict)
+
+        if isinstance(self, qThompsonSampling):
+            assert hasattr(acqf, "_default_sample_shape")
+            acqf._default_sample_shape = torch.Size([self.n_mc_samples])
+
+        return acqf
+
+
+def _get_botorch_acqf_class(
+    baybe_acqf_cls: type[AcquisitionFunction], /
+) -> type[BotorchAcquisitionFunction]:
+    """Extract the BoTorch acquisition class for the given BayBE acquisition class."""
+    import botorch
+
+    for cls in baybe_acqf_cls.mro():
+        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False):
+            if is_abstract(acqf_cls):
+                continue
+            return acqf_cls  # type: ignore
+
+    raise UnidentifiedSubclassError(
+        f"No BoTorch acquisition function class match found for "
+        f"'{baybe_acqf_cls.__name__}'."
+    )
 
 
 # Register de-/serialization hooks
