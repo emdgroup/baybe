@@ -17,6 +17,12 @@ class CategoricalEncoding(ParameterEncoding):
     """Integer encoding."""
 
 
+class SubstanceEncodingAliases(ParameterEncoding):
+    """Aliases for SubstanceEncoding values."""
+
+    MORGAN_FP = "ECFP"
+
+
 class SubstanceEncoding(ParameterEncoding):
     """Available encodings for substance parameters."""
 
@@ -60,8 +66,9 @@ class SubstanceEncoding(ParameterEncoding):
         Enable backwards compatibility of value names that
         differ between SKFP and previous version.
         """
-        if value == "MORGAN_FP":
-            return cls.ECFPFingerprint
+        if value in SubstanceEncodingAliases.__members__:
+            replace = SubstanceEncodingAliases[str(value)].value
+            return cls(replace)
         else:
             return super()._missing_(value)
 
