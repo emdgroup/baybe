@@ -276,28 +276,29 @@ class BotorchRecommender(BayesianRecommender):
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
         )
 
-        disc_points = points[:, :num_comp_columns]
-        cont_points = points[:, num_comp_columns:]
+        # Align candidates with search space index. Done via including the search space
+        # index during the merge, which is used later for back-translation into the
+        # experimental representation
+        merged = pd.merge(
+            pd.DataFrame(points),
+            candidates_comp.reset_index(),
+            on=list(candidates_comp.columns),
+            how="left",
+        ).set_index("index")
 
-        # Get selected candidate indices
-        idxs = pd.Index(
-            pd.merge(
-                pd.DataFrame(disc_points, columns=candidates_comp.columns),
-                candidates_comp.reset_index(),
-                on=list(candidates_comp),
-                how="left",
-            )["index"]
+        # Get experimental representation of discrete part
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[merged.index]
+
+        # Combine discrete and continuous parts
+        rec_exp = pd.concat(
+            [
+                rec_disc_exp,
+                merged.iloc[:, num_comp_columns:].set_axis(
+                    searchspace.continuous.parameter_names, axis=1
+                ),
+            ],
+            axis=1,
         )
-
-        # Get experimental representation of discrete and continuous parts
-        rec_disc_exp = searchspace.discrete.exp_rep.loc[idxs]
-        rec_cont_exp = pd.DataFrame(
-            cont_points, columns=searchspace.continuous.parameter_names
-        )
-
-        # Adjust the index of the continuous part and create overall recommendations
-        rec_cont_exp.index = rec_disc_exp.index
-        rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
 
         return rec_exp
 
