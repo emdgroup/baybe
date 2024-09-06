@@ -323,7 +323,7 @@ def fixture_parameters(
                 SubstanceParameter(
                     name=f"Substance_1_{encoding}",
                     data=mock_substances,
-                    encoding=encoding.name,
+                    encoding=encoding,
                 )
                 for encoding in SubstanceEncoding
             ],
@@ -731,7 +731,7 @@ def fixture_default_config():
                 "name": "Solvent",
                 "data": {"sol1":"C", "sol2":"CC", "sol3":"CCC"},
                 "decorrelate": true,
-                "encoding": "DefaultFingerprint"
+                "encoding": "MORDRED"
             },"""
         if CHEM_INSTALLED
         else """

@@ -110,7 +110,7 @@ parameters = [
             "Solvent C": "O",
             "Solvent D": "CS(=O)C",
         },
-        encoding="DefaultFingerprint",  # chemical encoding via scikit-fingerprints
+        encoding="MORDRED",  # chemical encoding via scikit-fingerprints
     ),
 ]
 ```

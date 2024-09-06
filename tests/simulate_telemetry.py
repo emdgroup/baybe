@@ -55,11 +55,9 @@ dict_ligand = {
 }
 
 parameters = [
-    SubstanceParameter(
-        name="Solvent", data=dict_solvent, encoding="DefaultFingerprint"
-    ),
-    SubstanceParameter(name="Base", data=dict_base, encoding="DefaultFingerprint"),
-    SubstanceParameter(name="Ligand", data=dict_ligand, encoding="DefaultFingerprint"),
+    SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED"),
+    SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED"),
+    SubstanceParameter(name="Ligand", data=dict_ligand, encoding="MORDRED"),
     NumericalDiscreteParameter(name="Temp_C", values=[90, 105, 120], tolerance=2),
     NumericalDiscreteParameter(
         name="Concentration", values=[0.057, 0.1, 0.153], tolerance=0.005

@@ -29,7 +29,6 @@ with exclude_sys_path(os.getcwd()):
     POLARS_INSTALLED = find_spec("polars") is not None
     PRE_COMMIT_INSTALLED = find_spec("pre_commit") is not None
     PYDOCLINT_INSTALLED = find_spec("pydoclint") is not None
-    RDKIT_INSTALLED = find_spec("rdkit") is not None
     RUFF_INSTALLED = find_spec("ruff") is not None
     SKFP_INSTALLED = find_spec("skfp") is not None  # scikit-fingerprints
     STREAMLIT_INSTALLED = find_spec("streamlit") is not None
@@ -44,7 +43,7 @@ with exclude_sys_path(os.getcwd()):
 TYPOS_INSTALLED = True
 
 # Package combinations
-CHEM_INSTALLED = RDKIT_INSTALLED and SKFP_INSTALLED
+CHEM_INSTALLED = SKFP_INSTALLED
 LINT_INSTALLED = all(
     (
         FLAKE8_INSTALLED,

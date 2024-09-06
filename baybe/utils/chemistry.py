@@ -4,15 +4,20 @@ import os
 import ssl
 import tempfile
 import urllib.request
+from functools import lru_cache
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from joblib import Memory
+from skfp.preprocessing import ConformerGenerator, MolFromSmilesTransformer
 
 from baybe._optional.chem import (
     BaseFingerprintTransformer,
     Chem,
+    skfp_fingerprints,
 )
+from baybe.utils.numerical import DTypeFloatNumpy
 
 # Caching
 _cachedir = os.environ.get(
@@ -61,26 +66,67 @@ def name_to_smiles(name: str) -> str:
         return ""
 
 
+@lru_cache(maxsize=None)
+@_disk_cache
+def _smiles_str_to_fingerprint_features(
+    fingerprint_encoder: BaseFingerprintTransformer,
+    smiles_str: str,
+) -> np.ndarray:
+    """Compute molecular fingerprint for a single SMILES string.
+
+    Args:
+        fingerprint_encoder: Instance of Fingerprint class used to
+            transform smiles string to fingerprint
+        smiles_str: Smiles string
+
+    Returns:
+        Array containing fingerprint for SMILES string.
+    """
+    return fingerprint_encoder.transform([smiles_str])
+
+
 def smiles_to_fingerprint_features(
     smiles_list: list[str],
-    fingerprint_encoder: BaseFingerprintTransformer,
+    fingerprint_name: str,
     prefix: str = "",
+    kwargs_conformer: dict | None = None,
+    kwargs_fingerprint: dict | None = None,
 ) -> pd.DataFrame:
-    """Compute molecule fingerprints for a list of SMILES strings.
+    """Compute molecular fingerprints for a list of SMILES strings.
 
     Args:
         smiles_list: List of SMILES strings.
-        fingerprint_encoder: Object used to transform smiles to fingerprints
+        fingerprint_name: Name of Fingerprint class used to
+            transform smiles to fingerprints
         prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
+        kwargs_conformer: kwargs for ConformerGenerator
+        kwargs_fingerprint: kwargs for ConformerGenerator
 
     Returns:
         Dataframe containing fingerprints for each SMILES string.
     """
-    features = fingerprint_encoder.transform(smiles_list)
-    col_names = [
-        prefix + "SKFP_" + f for f in fingerprint_encoder.get_feature_names_out()
-    ]
-    df = pd.DataFrame(features, columns=col_names)
+    kwargs_fingerprint = {} if kwargs_fingerprint is None else kwargs_fingerprint
+    fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_name)(
+        **kwargs_fingerprint
+    )
+
+    if fingerprint_encoder.requires_conformers:
+        kwargs_conformer = {} if kwargs_conformer is None else kwargs_conformer
+        smiles_list = ConformerGenerator(**kwargs_conformer).transform(
+            MolFromSmilesTransformer().transform(smiles_list)
+        )
+
+    features = np.concatenate(
+        [
+            _smiles_str_to_fingerprint_features(
+                fingerprint_encoder=fingerprint_encoder, smiles_str=smiles_str
+            )
+            for smiles_str in smiles_list
+        ]
+    )
+    name = f"skfp{fingerprint_encoder.__class__.__name__.replace('Fingerprint', '')}_"
+    col_names = [prefix + name + f for f in fingerprint_encoder.get_feature_names_out()]
+    df = pd.DataFrame(features, columns=col_names, dtype=DTypeFloatNumpy)
 
     return df
 

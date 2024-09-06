@@ -53,7 +53,7 @@ parameters = [
             "Solvent C": "O",
             "Solvent D": "CS(=O)C",
         },
-        encoding="DefaultFingerprint",
+        encoding="MORDRED",
     ),
 ]
 

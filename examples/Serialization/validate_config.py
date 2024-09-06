@@ -52,7 +52,7 @@ CONFIG = str(
                     "Solvent D": "CCOCCOCCN"
                 },
                 "decorrelate": true,
-                "encoding": "DefaultFingerprint"
+                "encoding": "MORDRED"
             }
         ],
         "constraints": []
@@ -123,7 +123,7 @@ INVALID_CONFIG = str(
                     "Solvent D": "CCOCCOCCN"
                 },
                 "decorrelate": true,
-                "encoding": "DefaultFingerprint"
+                "encoding": "MORDRED"
             }
         ],
         "constraints": []

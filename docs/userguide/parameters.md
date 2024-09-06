@@ -122,14 +122,16 @@ SubstanceParameter(
         "1-Octanol": "CCCCCCCCO",
         "Toluene": "CC1=CC=CC=C1",
     },
-    encoding="MordredFingerprint",  # optional
+    encoding="MORDRED",  # optional
     decorrelate=0.7,  # optional
 )
 ```
 
 The ``encoding`` option defines what kind of descriptors are calculated.
 All descriptors are calculated using [scikit-fingerprints package](https://github.com/scikit-fingerprints/scikit-fingerprints/).
-Any fingerprint class name from `scikit-fingerprints` can be used as an input parameter for chemical encoding.
+Any fingerprint class from `scikit-fingerprints` can be used as an input parameter for chemical encoding.
+The fingerprint class names should be passed in all upper case and without the `Fingeprint` suffix,
+e.g. use alias `MORDRED` for `MordredFingerprint` class.
 
 These calculations will typically result in 500 to 1500 numbers per molecule.
 To avoid detrimental effects on the surrogate model fit, we reduce the number of 

@@ -36,9 +36,7 @@ class EDBOKernelFactory(KernelFactory):
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )
 
-        # TODO rename this to fingerprint after decided
-        #  that it can be used for all fingerprints
-        mordred = searchspace.contains_fingerprint and (effective_dims >= 50)
+        uses_descriptors = searchspace.contains_fingerprint and (effective_dims >= 50)
 
         # low D priors
         if effective_dims < 5:
@@ -48,14 +46,14 @@ class EDBOKernelFactory(KernelFactory):
             outputscale_initial_value = 8.0
 
         # DFT optimized priors
-        elif mordred and effective_dims < 100:
+        elif uses_descriptors and effective_dims < 100:
             lengthscale_prior = GammaPrior(2.0, 0.2)
             lengthscale_initial_value = 5.0
             outputscale_prior = GammaPrior(5.0, 0.5)
             outputscale_initial_value = 8.0
 
         # Mordred optimized priors
-        elif mordred:
+        elif uses_descriptors:
             lengthscale_prior = GammaPrior(2.0, 0.1)
             lengthscale_initial_value = 10.0
             outputscale_prior = GammaPrior(2.0, 0.1)

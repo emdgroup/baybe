@@ -8,7 +8,7 @@ from attrs import define, field
 from attrs.validators import and_, deep_mapping, instance_of, min_len
 
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.enum import AVAILABLE_SKFP_FP, SubstanceEncoding
+from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.basic import group_duplicate_values
 from baybe.utils.dataframe import df_drop_single_value_columns, df_uncorrelated_features
@@ -17,7 +17,6 @@ try:  # For python < 3.11, use the exceptiongroup backport
     ExceptionGroup
 except NameError:
     from exceptiongroup import ExceptionGroup
-
 
 Smiles = str
 """Type alias for SMILES strings."""
@@ -58,9 +57,27 @@ class SubstanceParameter(DiscreteParameter):
     """
 
     encoding: SubstanceEncoding = field(
-        default=SubstanceEncoding.DefaultFingerprint, converter=SubstanceEncoding
+        default=SubstanceEncoding.MordredFingerprint,
+        converter=lambda x: (
+            # Passed enum
+            x
+            if isinstance(x, SubstanceEncoding)
+            # Passed enum name
+            else (
+                SubstanceEncoding[x]
+                if x in SubstanceEncoding.__members__
+                # Passed enum value
+                else SubstanceEncoding(x)
+            )
+        ),
     )
     # See base class.
+
+    kwargs_fingerprint: dict = field(default={})
+    """Kwargs for fingerprint generator"""
+
+    kwargs_conformer: dict = field(default={})
+    """Kwargs for conformer generator"""
 
     @data.validator
     def _validate_substance_data(  # noqa: DOC101, DOC103
@@ -120,18 +137,15 @@ class SubstanceParameter(DiscreteParameter):
         # Get the raw descriptors
         comp_df = chemistry.smiles_to_fingerprint_features(
             vals,
-            fingerprint_encoder=AVAILABLE_SKFP_FP[self.encoding.name](),
+            fingerprint_name=self.encoding.name,
             prefix=pref,
+            kwargs_conformer=self.kwargs_conformer,
+            kwargs_fingerprint=self.kwargs_fingerprint,
         )
 
         # Drop NaN and constant columns
         comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
         comp_df = df_drop_single_value_columns(comp_df)
-
-        # If there are bool columns, convert them to int (possible for Mordred)
-        # TODO should this be removed as with skfp all Mordred columns are float32?
-        bool_cols = comp_df.select_dtypes(bool).columns
-        comp_df[bool_cols] = comp_df[bool_cols].astype(int)
 
         # Label the rows with the molecule names
         comp_df.index = pd.Index(self.values)

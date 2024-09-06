@@ -91,13 +91,9 @@ dict_ligand = {
 
 # Here, we create the parameter objects, the searchspace and the objective.
 
-base = SubstanceParameter(name="Base", data=dict_base, encoding="DefaultFingerprint")
-solvent = SubstanceParameter(
-    name="Solvent", data=dict_solvent, encoding="DefaultFingerprint"
-)
-ligand = SubstanceParameter(
-    name="Ligand", data=dict_ligand, encoding="DefaultFingerprint"
-)
+base = SubstanceParameter(name="Base", data=dict_base, encoding="MORDRED")
+solvent = SubstanceParameter(name="Solvent", data=dict_solvent, encoding="MORDRED")
+ligand = SubstanceParameter(name="Ligand", data=dict_ligand, encoding="MORDRED")
 temperature = NumericalDiscreteParameter(
     name="Temp_C", values=[90, 105, 120], tolerance=2
 )

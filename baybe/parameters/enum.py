@@ -2,8 +2,6 @@
 
 from enum import Enum
 
-from baybe._optional.info import CHEM_INSTALLED
-
 
 class ParameterEncoding(Enum):
     """Generic base class for all parameter encodings."""
@@ -19,39 +17,53 @@ class CategoricalEncoding(ParameterEncoding):
     """Integer encoding."""
 
 
-# TODO Ideally, this should be turned into a class that can:
-#  - return default when CHEM not installed
-#  - check if enum is fingerprint
-PARAM_SUFFIX_FINGERPRINT = "Fingerprint"
+class SubstanceEncoding(ParameterEncoding):
+    """Available encodings for substance parameters."""
 
-if CHEM_INSTALLED:
-    import inspect
+    AtomPairFingerprint = "ATOMPAIR"
+    AutocorrFingerprint = "AUTOCORR"
+    AvalonFingerprint = "AVALON"
+    E3FPFingerprint = "E3FP"
+    ECFPFingerprint = "ECFP"
+    ERGFingerprint = "ERG"
+    EStateFingerprint = "ESTATE"
+    FunctionalGroupsFingerprint = "FUNCTIONALGROUPS"
+    GETAWAYFingerprint = "GETAWAY"
+    GhoseCrippenFingerprint = "GHOSECRIPPEN"
+    KlekotaRothFingerprint = "KLEKOTAROTH"
+    LaggnerFingerprint = "LAGGNER"
+    LayeredFingerprint = "LAYERED"
+    LingoFingerprint = "LINGO"
+    MACCSFingerprint = "MACCS"
+    MAPFingerprint = "MAP"
+    MHFPFingerprint = "MHFP"
+    MORSEFingerprint = "MORSE"
+    MQNsFingerprint = "MQNS"
+    MordredFingerprint = "MORDRED"
+    PatternFingerprint = "PATTERN"
+    PharmacophoreFingerprint = "PHARMACOPHORE"
+    PhysiochemicalPropertiesFingerprint = "PHYSIOCHEMICALPROPERTIES"
+    PubChemFingerprint = "PUBCHEM"
+    RDFFingerprint = "RDF"
+    RDKit2DDescriptorsFingerprint = "RDKIT2DDESCRIPTORS"
+    RDKitFingerprint = "RDKIT"
+    SECFPFingerprint = "SECFP"
+    TopologicalTorsionFingerprint = "TOPOLOGICALTORSION"
+    USRCATFingerprint = "USRCAT"
+    USRFingerprint = "USR"
+    WHIMFingerprint = "WHIM"
 
-    from baybe._optional.chem import BaseFingerprintTransformer, skfp_fingerprints
+    @classmethod
+    def _missing_(cls, value):
+        """Backward compatibility of enum values.
 
-    AVAILABLE_SKFP_FP = dict(
-        inspect.getmembers(
-            skfp_fingerprints,
-            lambda x: inspect.isclass(x) and issubclass(x, BaseFingerprintTransformer),
-        )
-    )
-    AVAILABLE_SKFP_FP["Default"] = AVAILABLE_SKFP_FP["MordredFingerprint"]
-else:
-    AVAILABLE_SKFP_FP = {"Default": None}
-
-AVAILABLE_SKFP_FP = {
-    (
-        name
-        if name.endswith(PARAM_SUFFIX_FINGERPRINT)
-        else name + PARAM_SUFFIX_FINGERPRINT
-    ): fp
-    for name, fp in AVAILABLE_SKFP_FP.items()
-}
-
-SubstanceEncoding = ParameterEncoding(
-    value="SubstanceEncoding", names={k: k for k in AVAILABLE_SKFP_FP.keys()}
-)
-"""Available encodings for substance parameters."""
+        Enable backwards compatibility of value names that
+        differ between SKFP and previous version.
+        """
+        if value == "MORGAN_FP":
+            return cls.ECFPFingerprint
+        else:
+            return super()._missing_(value)
 
 
 class CustomEncoding(ParameterEncoding):
