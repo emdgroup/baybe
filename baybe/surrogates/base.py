@@ -104,7 +104,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     _objective: Objective | None = field(init=False, default=None, eq=False)
     """The objective for which the surrogate was trained. Available after fitting."""
 
-    _measurements_hash = field(init=False, default=None, eq=False)
+    _measurements_hash: str = field(init=False, default=None, eq=False)
     """The hash of the data the surrogate was trained on."""
 
     # TODO: type should be
