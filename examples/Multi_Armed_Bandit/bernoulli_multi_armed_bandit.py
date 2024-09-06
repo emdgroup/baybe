@@ -17,12 +17,13 @@ from baybe import Campaign
 from baybe.acquisition import PosteriorStandardDeviation, qThompsonSampling
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.parameters import CategoricalParameter
+from baybe.priors.basic import BetaPrior
 from baybe.recommenders import (
     BotorchRecommender,
     RandomRecommender,
     TwoPhaseMetaRecommender,
 )
-from baybe.surrogates import BetaBernoulliMultiArmedBanditSurrogate
+from baybe.surrogates import MultiArmedBanditSurrogate
 from baybe.targets import BinaryTarget
 
 ### An Imaginary Use Case
@@ -97,7 +98,7 @@ parameter = CategoricalParameter(
     # For bandits, one-hot parameter encoding is required:
     encoding="OHE",
 )
-surrogate = BetaBernoulliMultiArmedBanditSurrogate()
+surrogate = MultiArmedBanditSurrogate(BetaPrior(1, 1))
 
 
 # For each simulation, we report the trajectory of earned rewards and the estimated win rates of the bandit arms:
