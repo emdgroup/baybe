@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `to_tensor` now also handles `numpy` arrays
 - `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
   instead of negating the computational representation
+- Fingerprint encodings are now computed exclusively with `scikit_fingerprints` package. 
+  Previously available `SubstanceParameter` values for `encoding` attribute are still valid,
+  with `MORGAN_FP` now being an alias for `ECFP`.
+  Additional values for `encoding` attribute are available, corresponding to
+  `scikit_fingerprints` fingerprint classes (see 
+  [Parameters documentation](https://emdgroup.github.io/baybe/userguide/parameters.html#substanceparameter) 
+  for details).
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
