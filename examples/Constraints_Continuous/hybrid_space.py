@@ -74,8 +74,8 @@ parameters = [
 ]
 
 # We model the following constraints:
-# `1.0*x_1 + 1.0*x_2 = 1.0`
-# `1.0*x_3 - 1.0*x_4 = 2.0`
+# - $1.0*x_1 + 1.0*x_2 = 1.0$
+# - $1.0*x_3 - 1.0*x_4 = 2.0$
 
 constraints = [
     DiscreteSumConstraint(
@@ -118,7 +118,7 @@ for k in range(N_ITERATIONS):
 measurements = campaign.measurements
 TOLERANCE = 0.01
 
-# `1.0*x_1 + 1.0*x_2 = 1.0`
+# $1.0*x_1 + 1.0*x_2 = 1.0$
 
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
@@ -127,7 +127,7 @@ print(
     ),
 )
 
-# `1.0*x_3 - 1.0*x_4 = 2.0`
+# $1.0*x_3 - 1.0*x_4 = 2.0$
 
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",

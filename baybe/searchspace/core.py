@@ -25,6 +25,7 @@ from baybe.searchspace.discrete import (
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
+from baybe.utils.plotting import to_string
 
 
 class SearchSpaceType(Enum):
@@ -66,19 +67,14 @@ class SearchSpace(SerialMixin):
     """The (potentially empty) continuous subspace of the overall search space."""
 
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-        head_str = f"""{start_bold}Search Space{end_bold}
-        \n{start_bold}Search Space Type: {end_bold}{self.type.name}"""
-
-        # Check the sub space size to avoid adding unwanted break lines
-        # if the sub space is empty
-        discrete_str = f"\n\n{self.discrete}" if not self.discrete.is_empty else ""
-        continuous_str = (
-            f"\n\n{self.continuous}" if not self.continuous.is_empty else ""
-        )
-        searchspace_str = f"{head_str}{discrete_str}{continuous_str}"
-        return searchspace_str.replace("\n", "\n ").replace("\r", "\r ")
+        fields = [
+            to_string("Search Space Type", self.type.name, single_line=True),
+        ]
+        if not self.discrete.is_empty:
+            fields.append(str(self.discrete))
+        if not self.continuous.is_empty:
+            fields.append(str(self.continuous))
+        return to_string(self.__class__.__name__, *fields)
 
     def __attrs_post_init__(self):
         """Perform validation and record telemetry values."""

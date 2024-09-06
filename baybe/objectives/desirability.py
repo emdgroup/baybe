@@ -16,7 +16,9 @@ from baybe.objectives.enum import Scalarizer
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
+from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import geom_mean
+from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
 
 
@@ -122,19 +124,17 @@ class DesirabilityObjective(Objective):
         return np.asarray(self.weights) / np.sum(self.weights)
 
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
         targets_df["Weight"] = self.weights
 
-        objective_str = f"""{start_bold}Objective{end_bold}
-        \n{start_bold}Type: {end_bold}{self.__class__.__name__}
-        \n{start_bold}Targets {end_bold}\n{targets_df}
-        \n{start_bold}Scalarizer: {end_bold}{self.scalarizer.name}"""
+        fields = [
+            to_string("Type", self.__class__.__name__, single_line=True),
+            to_string("Targets", pretty_print_df(targets_df)),
+            to_string("Scalarizer", self.scalarizer.name, single_line=True),
+        ]
 
-        return objective_str.replace("\n", "\n ")
+        return to_string("Objective", *fields)
 
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # See base class.

@@ -13,6 +13,7 @@ from baybe.priors import BetaPrior
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.targets.binary import _FAILURE_VALUE_COMP, _SUCCESS_VALUE_COMP
+from baybe.utils.plotting import to_string
 from baybe.utils.random import temporary_seed
 
 if TYPE_CHECKING:
@@ -160,3 +161,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         wins = (train_x * (train_y == float(_SUCCESS_VALUE_COMP))).sum(dim=0)
         losses = (train_x * (train_y == float(_FAILURE_VALUE_COMP))).sum(dim=0)
         self._win_lose_counts = torch.vstack([wins, losses]).to(torch.int)
+
+    def __str__(self) -> str:
+        fields = [to_string("Prior", self.prior, single_line=True)]
+        return to_string(super().__str__(), *fields)

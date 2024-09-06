@@ -10,6 +10,7 @@ from sklearn.linear_model import ARDRegression
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -58,3 +59,7 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
         # See base class.
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
+
+    def __str__(self) -> str:
+        fields = [to_string("Model Params", self.model_params, single_line=True)]
+        return to_string(super().__str__(), *fields)
