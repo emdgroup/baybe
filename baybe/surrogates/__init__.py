@@ -1,6 +1,9 @@
 """BayBE surrogates."""
 
-from baybe.surrogates.bandits import BetaBernoulliMultiArmedBanditSurrogate
+from baybe.surrogates.bandits.base import MultiArmedBanditSurrogate
+from baybe.surrogates.bandits.beta_bernoulli import (
+    BetaBernoulliMultiArmedBanditSurrogate,
+)
 from baybe.surrogates.custom import CustomONNXSurrogate, register_custom_architecture
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.linear import BayesianLinearSurrogate
@@ -15,6 +18,7 @@ __all__ = [
     "CustomONNXSurrogate",
     "GaussianProcessSurrogate",
     "MeanPredictionSurrogate",
+    "MultiArmedBanditSurrogate",
     "NGBoostSurrogate",
     "RandomForestSurrogate",
 ]
