@@ -40,7 +40,9 @@ def numerical_targets(
     )
 
 
-choice_values = st.one_of([st.booleans(), st.integers(), st.floats(), st.text()])
+choice_values = st.one_of(
+    [st.booleans(), st.integers(), st.floats(allow_nan=False), st.text()]
+)
 """A strategy that generates choice values."""
 
 

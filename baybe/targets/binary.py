@@ -10,6 +10,7 @@ from attrs.validators import instance_of
 from baybe.exceptions import InvalidTargetValueError
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
+from baybe.utils.validation import validate_not_nan
 
 ChoiceValue: TypeAlias = bool | int | float | str
 """Types of values that a :class:`BinaryTarget` can take."""
@@ -29,14 +30,14 @@ class BinaryTarget(Target, SerialMixin):
 
     success_value: ChoiceValue = field(
         default=True,
-        validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
+        validator=[instance_of(ChoiceValue), validate_not_nan],  # type: ignore[call-overload]
         kw_only=True,
     )
     """Experimental representation of the success value."""
 
     failure_value: ChoiceValue = field(
         default=False,
-        validator=instance_of(ChoiceValue),  # type: ignore[call-overload]
+        validator=[instance_of(ChoiceValue), validate_not_nan],  # type: ignore[call-overload]
         kw_only=True,
     )
     """Experimental representation of the failure value."""
