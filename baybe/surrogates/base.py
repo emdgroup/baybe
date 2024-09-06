@@ -111,8 +111,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     _measurements_hash: str = field(init=False, default=None, eq=False)
     """The hash of the data the surrogate was trained on."""
 
+    _input_scaler: ColumnTransformer | None = field(init=False, default=None, eq=False)
+    """Scaler for transforming input values. Available after fitting.
+
+    Scales a tensor containing parameter configurations in computational representation
+    to make them digestible for the model-specific, scale-agnostic posterior logic."""
+
     # TODO: type should be
-    #   `botorch.models.transforms.outcome.Standardize | _NoTransform`
+    #   `botorch.models.transforms.outcome.Standardize | _NoTransform` | None
     #   but is currently omitted due to:
     #   https://github.com/python-attrs/cattrs/issues/531
     _output_scaler = field(init=False, default=None, eq=False)
