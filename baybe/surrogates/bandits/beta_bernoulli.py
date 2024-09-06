@@ -1,4 +1,4 @@
-"""Multi-armed bandit surrogates."""
+"""A Beta-Bernoulli multi-armed bandit surrogate."""
 
 from __future__ import annotations
 
