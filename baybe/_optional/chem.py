@@ -6,6 +6,7 @@ try:
     from rdkit import Chem
     from skfp import fingerprints as skfp_fingerprints
     from skfp.bases import BaseFingerprintTransformer
+    from skfp.preprocessing import ConformerGenerator, MolFromSmilesTransformer
 
 except ModuleNotFoundError as ex:
     raise OptionalImportError(
@@ -15,4 +16,10 @@ except ModuleNotFoundError as ex:
         "e.g. via `pip install baybe[chem]`."
     ) from ex
 
-__all__ = ["Chem", "skfp_fingerprints", "BaseFingerprintTransformer"]
+__all__ = [
+    "Chem",
+    "skfp_fingerprints",
+    "BaseFingerprintTransformer",
+    "ConformerGenerator",
+    "MolFromSmilesTransformer",
+]

@@ -10,11 +10,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from joblib import Memory
-from skfp.preprocessing import ConformerGenerator, MolFromSmilesTransformer
 
 from baybe._optional.chem import (
     BaseFingerprintTransformer,
     Chem,
+    ConformerGenerator,
+    MolFromSmilesTransformer,
     skfp_fingerprints,
 )
 from baybe.utils.numerical import DTypeFloatNumpy
