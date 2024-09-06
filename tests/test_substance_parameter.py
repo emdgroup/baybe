@@ -13,7 +13,7 @@ from .conftest import run_iterations
 )
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Categorical_1", f"Substance_1_{enc.name}"] for enc in SubstanceEncoding],
+    [["Categorical_1", f"Substance_1_{enc}"] for enc in SubstanceEncoding],
     ids=[enc.name for enc in SubstanceEncoding],
 )
 def test_run_iterations(campaign, batch_size, n_iterations):

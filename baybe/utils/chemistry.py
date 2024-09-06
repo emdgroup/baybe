@@ -110,7 +110,11 @@ def smiles_to_fingerprint_features(
         **kwargs_fingerprint
     )
 
-    if fingerprint_encoder.requires_conformers:
+    if fingerprint_encoder.requires_conformers or (
+        # TODO removed once fixed in skfp package, see
+        #  https://github.com/scikit-fingerprints/scikit-fingerprints/issues/239
+        fingerprint_name in ["USRCATFingerprint", "USRFingerprint"]
+    ):
         kwargs_conformer = {} if kwargs_conformer is None else kwargs_conformer
         smiles_list = ConformerGenerator(**kwargs_conformer).transform(
             MolFromSmilesTransformer().transform(smiles_list)
