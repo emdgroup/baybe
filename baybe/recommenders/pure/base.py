@@ -15,7 +15,10 @@ from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 
 
-@define
+# TODO: Slots are currently disabled since they also block the monkeypatching necessary
+#   to use `register_hooks`. Probably, we need to update our documentation and
+#   explain how to work around that before we re-enable slots.
+@define(slots=False)
 class PureRecommender(ABC, RecommenderProtocol):
     """Abstract base class for all pure recommenders."""
 
