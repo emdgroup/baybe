@@ -37,7 +37,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
-from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
+from baybe.surrogates.bandits import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
