@@ -166,10 +166,7 @@ class ContinuousParameter(Parameter):
 
 
 # Register (un-)structure hooks
-_overrides = {
-    "_values": override(rename="values"),
-    "decorrelate": override(struct_hook=lambda x, _: x),
-}
+_overrides = {"_values": override(rename="values")}
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(
     Parameter,

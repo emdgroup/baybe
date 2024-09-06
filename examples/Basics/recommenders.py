@@ -45,6 +45,7 @@ initial_recommenders = [
 
 
 # Per default the initial recommender chosen is a random recommender.
+
 INITIAL_RECOMMENDER = RandomRecommender()
 
 ### Available surrogate models
@@ -52,8 +53,10 @@ INITIAL_RECOMMENDER = RandomRecommender()
 # This model uses available data to model the objective function as well as the uncertainty.
 # The surrogate model is then used by the acquisition function to make recommendations.
 
-# The following are the available basic surrogates
-print(get_subclasses(Surrogate))
+# The following are the available basic surrogates:
+
+for subclass in get_subclasses(Surrogate):
+    print(subclass)
 
 # Per default a Gaussian Process is used
 # You can change the used kernel by using the optional `kernel` keyword.

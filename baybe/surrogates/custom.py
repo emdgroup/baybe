@@ -27,6 +27,7 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction
 from baybe.utils.numerical import DTypeFloatONNX
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     import onnxruntime as ort
@@ -137,3 +138,7 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
                 f"a one-dimensional computational representation or "
                 f"{CustomDiscreteParameter.__name__}."
             )
+
+    def __str__(self) -> str:
+        fields = [to_string("ONNX input name", self.onnx_input_name, single_line=True)]
+        return to_string(super().__str__(), *fields)

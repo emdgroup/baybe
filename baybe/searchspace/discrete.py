@@ -39,6 +39,7 @@ from baybe.utils.dataframe import (
 )
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     import polars as pl
@@ -120,9 +121,6 @@ class SubspaceDiscrete(SerialMixin):
         if self.is_empty:
             return ""
 
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-
         # Convert the lists to dataFrames to be able to use pretty_printing
         param_list = [param.summary() for param in self.parameters]
         constraints_list = [constr.summary() for constr in self.constraints]
@@ -135,19 +133,31 @@ class SubspaceDiscrete(SerialMixin):
         dont_recommend_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[2]]])
         metadata_count = len(self.metadata)
 
-        # Put all attributes of the discrete class in one string.
-        discrete_str = f"""{start_bold}Discrete Search Space{end_bold}
-            \n{start_bold}Discrete Parameters{end_bold}\n{pretty_print_df(param_df)}
-            \n{start_bold}Experimental Representation{end_bold}
-            \r{pretty_print_df(self.exp_rep)}\n\n{start_bold}Metadata:{end_bold}
-            \r{_METADATA_COLUMNS[0]}: {was_recommended_count}/{metadata_count}
-            \r{_METADATA_COLUMNS[1]}: {was_measured_count}/{metadata_count}
-            \r{_METADATA_COLUMNS[2]}: {dont_recommend_count}/{metadata_count}
-            \n{start_bold}Constraints{end_bold}\n{pretty_print_df(constraints_df)}
-            \n{start_bold}Computational Representation{end_bold}
-            \r{pretty_print_df(self.comp_rep)}"""
-
-        return discrete_str.replace("\n", "\n ").replace("\r", "\r ")
+        metadata_fields = [
+            to_string(
+                f"{_METADATA_COLUMNS[0]}",
+                f"{was_recommended_count}/{metadata_count}",
+                single_line=True,
+            ),
+            to_string(
+                f"{_METADATA_COLUMNS[1]}",
+                f"{was_measured_count}/{metadata_count}",
+                single_line=True,
+            ),
+            to_string(
+                f"{_METADATA_COLUMNS[2]}",
+                f"{dont_recommend_count}/{metadata_count}",
+                single_line=True,
+            ),
+        ]
+        fields = [
+            to_string("Discrete Parameters", pretty_print_df(param_df)),
+            to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
+            to_string("Meta Data", *metadata_fields),
+            to_string("Constraints", pretty_print_df(constraints_df)),
+            to_string("Computational Representation", pretty_print_df(self.comp_rep)),
+        ]
+        return to_string(self.__class__.__name__, *fields)
 
     @exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103
@@ -346,6 +356,10 @@ class SubspaceDiscrete(SerialMixin):
                 return NumericalDiscreteParameter(name=name, values=values)
             except IterableValidationError:
                 return CategoricalParameter(name=name, values=values)
+
+        # Catch edge case
+        if df.shape[1] == 0:
+            return cls.empty()
 
         # Get the full list of both explicitly and implicitly defined parameter
         parameters = get_parameters_from_dataframe(

@@ -22,6 +22,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.utils.plotting import to_string
 
 
 @define
@@ -64,6 +65,14 @@ class TwoPhaseMetaRecommender(MetaRecommender):
             if (measurements is not None) and (len(measurements) >= self.switch_after)
             else self.initial_recommender
         )
+
+    def __str__(self) -> str:
+        fields = [
+            to_string("Initial recommender", self.initial_recommender),
+            to_string("Recommender", self.recommender),
+            to_string("Switch after", self.switch_after, single_line=True),
+        ]
+        return to_string(self.__class__.__name__, *fields)
 
 
 @define
@@ -166,6 +175,13 @@ class SequentialMetaRecommender(MetaRecommender):
 
         return recommender
 
+    def __str__(self) -> str:
+        fields = [
+            to_string("Recommenders", self.recommenders),
+            to_string("Mode", self.mode, single_line=True),
+        ]
+        return to_string(self.__class__.__name__, *fields)
+
 
 @define
 class StreamingSequentialMetaRecommender(MetaRecommender):
@@ -244,6 +260,12 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         self._n_last_measurements = n_data
 
         return self._last_recommender  # type: ignore[return-value]
+
+    def __str__(self) -> str:
+        fields = [
+            to_string("Recommenders", self.recommenders),
+        ]
+        return to_string(self.__class__.__name__, *fields)
 
 
 # The recommender iterable cannot be serialized

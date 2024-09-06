@@ -76,6 +76,7 @@ campaign_recreate = Campaign.from_json(string)
 print(campaign_recreate, end="\n" * 3)
 
 # Verify that both objects are equal.
+
 assert campaign == campaign_recreate
 print("Passed basic assertion check!")
 

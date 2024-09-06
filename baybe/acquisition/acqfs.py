@@ -276,3 +276,29 @@ class qUpperConfidenceBound(AcquisitionFunction):
     mean only, resulting in pure exploitation. Higher values shift the focus more and
     more toward exploration.
     """
+
+
+@define(frozen=True)
+class qThompsonSampling(qSimpleRegret):
+    """Thomson sampling, implemented via simple regret. Inherently Monte Carlo based.
+
+    This implementation exploits the fact that one-sample-based Thompson sampling
+    (i.e. where the action probability is approximated using a single posterior sample)
+    is equivalent to optimizing the Monte Carlo approximated posterior mean with
+    sample size one. The latter can be achieved via `qSimpleRegret` and controlling
+    its sample shape attribute.
+    """
+
+    abbreviation: ClassVar[str] = "qTS"
+
+    n_mc_samples: int = field(default=1, init=False)
+    """Number of Monte Carlo samples drawn from the posterior at each design point.
+
+    Restring the the sample size to one allows us to emulate (one-sample based)
+    Thompson sampling using the regular acquisition function machinery.
+    """
+
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        flds = fields(qThompsonSampling)
+        return (flds.n_mc_samples.name,)

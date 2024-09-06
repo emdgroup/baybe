@@ -7,7 +7,11 @@ import pandas as pd
 from attr.converters import optional
 from attrs import define, field
 
-from baybe.exceptions import IncompatibleAcquisitionFunctionError
+from baybe.acquisition.acqfs import qThompsonSampling
+from baybe.exceptions import (
+    IncompatibilityError,
+    IncompatibleAcquisitionFunctionError,
+)
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
     SearchSpace,
@@ -16,6 +20,7 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
@@ -95,11 +100,14 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
-        # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
+            )
+        if batch_size > 1 and isinstance(self.acquisition_function, qThompsonSampling):
+            raise IncompatibilityError(
+                "Thompson sampling currently only supports a batch size of 1."
             )
 
         from botorch.optim import optimize_acqf_discrete
@@ -291,3 +299,20 @@ class BotorchRecommender(BayesianRecommender):
         rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
 
         return rec_exp
+
+    def __str__(self) -> str:
+        fields = [
+            to_string("Surrogate", self.surrogate_model),
+            to_string(
+                "Acquisition function", self.acquisition_function, single_line=True
+            ),
+            to_string("Compatibility", self.compatibility, single_line=True),
+            to_string(
+                "Sequential continuous", self.sequential_continuous, single_line=True
+            ),
+            to_string("Hybrid sampler", self.hybrid_sampler, single_line=True),
+            to_string(
+                "Sampling percentage", self.sampling_percentage, single_line=True
+            ),
+        ]
+        return to_string(self.__class__.__name__, *fields)

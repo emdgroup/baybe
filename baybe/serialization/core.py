@@ -9,6 +9,7 @@ import attrs
 import cattrs
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
+from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import is_abstract
@@ -19,6 +20,8 @@ _T = TypeVar("_T")
 #   switch to the cattrs built-in subclass recommender.
 converter = cattrs.Converter()
 """The default converter for (de-)serializing BayBE-related objects."""
+
+configure_union_passthrough(bool | int | float | str, converter)
 
 
 def unstructure_base(base: Any, overrides: dict | None = None) -> dict:

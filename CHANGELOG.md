@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `SubspaceContinuous` classes
 - New mechanisms for surrogate input/output scaling configurable per class
 - `SurrogateProtocol` as an interface for user-defined surrogate architectures
+- Support for binary targets via `BinaryTarget` class
+- Support for bandit optimization via `BetaBernoulliMultiArmedBanditSurrogate` class
+- Bandit optimization example
+- `qThompsonSampling` acquisition function
+- `BetaPrior` class
 - `recommend` now accepts the `pending_experiments` argument, informing the algorithm
   about points that were already selected for evaluation
 - Pure recommenders now have the `allow_recommending_pending_experiments` flag,
@@ -34,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
   instead of negating the computational representation
 - Search spaces now store their parameters in alphabetical order by name
+- Improvement-based acquisition functions now consider the maximum posterior mean
+  instead of the maximum noisy measurement as reference value
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
@@ -42,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Batch predictions for `RandomForestSurrogate`
 - Surrogates providing only marginal posterior information can no longer be used for
   batch recommendation
+- `SearchSpace.from_dataframe` now creates a proper empty discrete subspace without
+  index when called with continuous parameters only
+- Metadata updates are now only triggered when a discrete subspace is present
 
 ### Removed
 - `register_custom_architecture` decorator

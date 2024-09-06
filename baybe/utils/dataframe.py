@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from baybe.targets.base import Target
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -127,6 +128,8 @@ def add_fake_results(
     if good_intervals is None:
         good_intervals = {}
         for target in targets:
+            if isinstance(target, BinaryTarget):
+                continue
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
                 ubound = (
@@ -156,6 +159,8 @@ def add_fake_results(
     if bad_intervals is None:
         bad_intervals = {}
         for target in targets:
+            if isinstance(target, BinaryTarget):
+                continue
             if target.mode is TargetMode.MAX:
                 lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
                 ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
@@ -184,6 +189,13 @@ def add_fake_results(
 
     # Add the fake data for each target
     for target in targets:
+        if isinstance(target, BinaryTarget):
+            # TODO: When refactoring, take into account good and bad intervals
+            data[target.name] = np.random.choice(
+                [target.failure_value, target.success_value], size=len(data)
+            )
+            continue
+
         # Add bad values
         data[target.name] = np.random.uniform(
             bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)
@@ -437,7 +449,13 @@ def fuzzy_row_match(
     return pd.Index(inds_matched)
 
 
-def pretty_print_df(df: pd.DataFrame, max_rows: int = 6, max_columns: int = 4) -> str:
+def pretty_print_df(
+    df: pd.DataFrame,
+    max_rows: int = 6,
+    max_columns: int = 4,
+    max_colwidth: int = 16,
+    precision: int = 3,
+) -> str:
     """Convert a dataframe into a pretty/readable format.
 
     This function returns a customized str representation of the dataframe.
@@ -447,6 +465,8 @@ def pretty_print_df(df: pd.DataFrame, max_rows: int = 6, max_columns: int = 4) -
         df: The dataframe to be printed.
         max_rows: Maximum number of rows to display.
         max_columns: Maximum number of columns to display.
+        max_colwidth: Maximum width of an individual column.
+        precision: Number of digits to which numbers should be rounded.
 
     Returns:
         The values to be printed as a str table.
@@ -457,8 +477,19 @@ def pretty_print_df(df: pd.DataFrame, max_rows: int = 6, max_columns: int = 4) -
         max_rows,
         "display.max_columns",
         max_columns,
+        "display.max_colwidth",
+        max_colwidth,
+        "display.precision",
+        precision,
         "expand_frame_repr",
         False,
     ):
-        str_df = str(df)
+        # Pandas does not truncate the names of columns with long names, which makes
+        # computational representations barely readable in some of the examples. Hence,
+        # we truncate them manually. For details, see
+        # https://stackoverflow.com/questions/64976267/pandas-truncate-column-names)
+        str_df = df.rename(
+            columns=lambda x: x[:max_colwidth],
+        )
+        str_df = str(str_df)
     return str_df

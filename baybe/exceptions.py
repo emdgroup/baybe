@@ -10,6 +10,23 @@ class UnusedObjectWarning(UserWarning):
 
 
 ##### Exceptions #####
+
+
+class IncompatibilityError(Exception):
+    """Incompatible components are used together."""
+
+
+class IncompatibleSearchSpaceError(IncompatibilityError):
+    """
+    A recommender is used with a search space that contains incompatible parts,
+    e.g. a discrete recommender is used with a hybrid or continuous search space.
+    """
+
+
+class IncompatibleAcquisitionFunctionError(IncompatibilityError):
+    """An incompatible acquisition function was selected."""
+
+
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations
@@ -17,15 +34,11 @@ class NotEnoughPointsLeftError(Exception):
     """
 
 
-class IncompatibleSearchSpaceError(Exception):
+class NoMCAcquisitionFunctionError(Exception):
     """
-    A recommender is used with a search space that contains incompatible parts,
-    e.g. a discrete recommender is used with a hybrid or continuous search space.
+    A Monte Carlo acquisition function is required but an analytical acquisition
+    function has been selected by the user.
     """
-
-
-class IncompatibleAcquisitionFunctionError(Exception):
-    """An incompatible acquisition function was selected."""
 
 
 class EmptySearchSpaceError(Exception):
@@ -68,3 +81,7 @@ class UnmatchedAttributeError(Exception):
 
 class InvalidSurrogateModelError(Exception):
     """An invalid surrogate model was chosen."""
+
+
+class InvalidTargetValueError(Exception):
+    """A target value was entered that is not in the target space."""

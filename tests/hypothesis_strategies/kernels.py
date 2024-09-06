@@ -30,7 +30,7 @@ class KernelType(Enum):
 
 linear_kernels = st.builds(
     LinearKernel,
-    variance_prior=st.one_of(st.none(), priors),
+    variance_prior=st.one_of(st.none(), priors()),
     variance_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates linear kernels."""
@@ -38,16 +38,16 @@ linear_kernels = st.builds(
 matern_kernels = st.builds(
     MaternKernel,
     nu=st.sampled_from((0.5, 1.5, 2.5)),
-    lengthscale_prior=st.one_of(st.none(), priors),
+    lengthscale_prior=st.one_of(st.none(), priors()),
     lengthscale_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates Matern kernels."""
 
 periodic_kernels = st.builds(
     PeriodicKernel,
-    lengthscale_prior=st.one_of(st.none(), priors),
+    lengthscale_prior=st.one_of(st.none(), priors()),
     lengthscale_initial_value=st.one_of(st.none(), positive_finite_floats()),
-    period_length_prior=st.one_of(st.none(), priors),
+    period_length_prior=st.one_of(st.none(), priors()),
     period_length_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates periodic kernels."""
@@ -55,7 +55,7 @@ periodic_kernels = st.builds(
 piecewise_polynomial_kernels = st.builds(
     PiecewisePolynomialKernel,
     q=st.integers(min_value=0, max_value=3),
-    lengthscale_prior=st.one_of(st.none(), priors),
+    lengthscale_prior=st.one_of(st.none(), priors()),
     lengthscale_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates piecewise polynomial kernels."""
@@ -63,14 +63,14 @@ piecewise_polynomial_kernels = st.builds(
 polynomial_kernels = st.builds(
     PolynomialKernel,
     power=st.integers(min_value=0),
-    offset_prior=st.one_of(st.none(), priors),
+    offset_prior=st.one_of(st.none(), priors()),
     offset_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates polynomial kernels."""
 
 rbf_kernels = st.builds(
     RBFKernel,
-    lengthscale_prior=st.one_of(st.none(), priors),
+    lengthscale_prior=st.one_of(st.none(), priors()),
     lengthscale_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates radial basis function (RBF) kernels."""
@@ -78,14 +78,14 @@ rbf_kernels = st.builds(
 rff_kernels = st.builds(
     RFFKernel,
     num_samples=st.integers(min_value=1),
-    lengthscale_prior=st.one_of(st.none(), priors),
+    lengthscale_prior=st.one_of(st.none(), priors()),
     lengthscale_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates random Fourier features (RFF) kernels."""
 
 rq_kernels = st.builds(
     RQKernel,
-    lengthscale_prior=st.one_of(st.none(), priors),
+    lengthscale_prior=st.one_of(st.none(), priors()),
     lengthscale_initial_value=st.one_of(st.none(), positive_finite_floats()),
 )
 """A strategy that generates rational quadratic (RQ) kernels."""
@@ -113,7 +113,7 @@ def single_kernels(draw: st.DrawFn):
     if add_scale:
         return ScaleKernel(
             base_kernel=base_kernel,
-            outputscale_prior=draw(st.one_of(st.none(), priors)),
+            outputscale_prior=draw(st.one_of(st.none(), priors())),
             outputscale_initial_value=draw(
                 st.one_of(st.none(), positive_finite_floats()),
             ),

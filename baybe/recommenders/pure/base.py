@@ -200,6 +200,8 @@ class PureRecommender(ABC, RecommenderProtocol):
             exclude=None if dont_exclude_pending else pending_experiments,
         )
 
+        # TODO: Introduce new flag to recommend batches larger than the search space
+
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
         if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
