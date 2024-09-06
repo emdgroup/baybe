@@ -15,6 +15,10 @@ from baybe.serialization.core import get_base_structure_hook
 class RecommenderProtocol(Protocol):
     """Type protocol specifying the interface recommenders need to implement."""
 
+    # Use slots so that derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+    __slots__ = ()
+
     def recommend(
         self,
         batch_size: int,

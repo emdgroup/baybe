@@ -65,6 +65,10 @@ _IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
 class SurrogateProtocol(Protocol):
     """Type protocol specifying the interface surrogate models need to implement."""
 
+    # Use slots so that derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+    __slots__ = ()
+
     # TODO: Final layout still to be optimized. For example, shall we require a
     #   `posterior` method?
 
