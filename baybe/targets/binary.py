@@ -65,7 +65,7 @@ class BinaryTarget(Target, SerialMixin):
             raise InvalidTargetValueError(
                 f"The following values entered for target '{self.name}' are not in the "
                 f"set of accepted choice values "
-                f"{set([self.success_value, self.failure_value])}: \n{invalid}"
+                f"{{self.success_value, self.failure_value}}: \n{invalid}"
             )
 
         # Transform
