@@ -85,6 +85,5 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
         self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
     def __str__(self) -> str:
-        # Make a super call to get the representation of the parent class.
         fields = [to_string("Model Params", self.model_params, single_line=True)]
         return to_string(super().__str__(), *fields)

@@ -107,6 +107,5 @@ class RandomForestSurrogate(Surrogate):
         self._model.fit(train_x.numpy(), train_y.numpy().ravel())
 
     def __str__(self) -> str:
-        # Make a super call to get the representation of the parent class.
         fields = [to_string("Model Params", self.model_params, single_line=True)]
         return to_string(super().__str__(), *fields)
