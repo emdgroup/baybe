@@ -9,7 +9,6 @@ from pandas import DataFrame
 from baybe.objectives.base import Objective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.priors.base import Prior
-from baybe.priors.basic import BetaPrior
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.bandits.beta_bernoulli import (
     BetaBernoulliMultiArmedBanditSurrogate,
@@ -44,14 +43,6 @@ class MultiArmedBanditSurrogate:
 
     _bandit_model: Surrogate | None = field(init=False, default=None, eq=False)
     """The specific bandit model to which is being dispatched."""
-
-    @prior.validator
-    def _validate_prior(self, _, value):
-        if not isinstance(value, BetaPrior):
-            raise NotImplementedError(
-                f"Currently, only priors of type '{BetaPrior.__name__}' "
-                f"are supported."
-            )
 
     def fit(
         self, searchspace: SearchSpace, objective: Objective, measurements: DataFrame
