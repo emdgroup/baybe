@@ -197,9 +197,13 @@ class BotorchRecommender(BayesianRecommender):
         This functions samples points from the discrete subspace, performs optimization
         in the continuous subspace with these points being fixed and returns the best
         found solution.
+
         **Important**: This performs a brute-force calculation by fixing every possible
         assignment of discrete variables and optimizing the continuous subspace for
         each of them. It is thus computationally expensive.
+
+        **Note**: This function implicitly assumes that discrete search space parts in
+        the respective data frame come first and continuous parts come second.
 
         Args:
             searchspace: The search space in which the recommendations should be made.
@@ -227,28 +231,20 @@ class BotorchRecommender(BayesianRecommender):
         # Transform discrete candidates
         candidates_comp = searchspace.discrete.transform(candidates_exp)
 
-        if len(candidates_comp) > 0:
-            # Calculate the number of samples from the given percentage
-            n_candidates = math.ceil(
-                self.sampling_percentage * len(candidates_comp.index)
+        # Calculate the number of samples from the given percentage
+        n_candidates = math.ceil(self.sampling_percentage * len(candidates_comp.index))
+
+        # Potential sampling of discrete candidates
+        if self.hybrid_sampler is not None:
+            candidates_comp = sample_numerical_df(
+                candidates_comp, n_candidates, method=self.hybrid_sampler
             )
 
-            # Potential sampling of discrete candidates
-            if self.hybrid_sampler is not None:
-                candidates_comp = sample_numerical_df(
-                    candidates_comp, n_candidates, method=self.hybrid_sampler
-                )
-
-            # Prepare all considered discrete configurations in the
-            # List[Dict[int, float]] format expected by BoTorch.
-            # TODO: Currently assumes that discrete parameters are first and continuous
-            #   second. Once parameter redesign [11611] is completed, we might adjust
-            #   this.
-            num_comp_columns = len(candidates_comp.columns)
-            candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
-            fixed_features_list = candidates_comp.to_dict("records")
-        else:
-            fixed_features_list = None
+        # Prepare all considered discrete configurations in the
+        # List[Dict[int, float]] format expected by BoTorch.
+        num_comp_columns = len(candidates_comp.columns)
+        candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
+        fixed_features_list = candidates_comp.to_dict("records")
 
         # Actual call of the BoTorch optimization routine
         points, _ = optimize_acqf_mixed(
