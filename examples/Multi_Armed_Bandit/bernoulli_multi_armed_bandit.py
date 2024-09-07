@@ -7,6 +7,7 @@
 
 ### Imports
 
+import os
 from dataclasses import dataclass
 from typing import NamedTuple
 
@@ -76,12 +77,14 @@ BANDIT = MultiArmedBandit(WIN_RATES)
 
 # To estimate the corresponding effects, we simulate each campaign for a certain number of steps and repeat this process in multiple Monte Carlo runs:
 
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
 ACQFS = [
     qThompsonSampling(),  # Online optimization
     PosteriorStandardDeviation(),  # Active learning
 ]
-N_MC_RUNS = 10
-N_ITERATIONS = 200
+N_MC_RUNS = 2 if SMOKE_TEST else 10
+N_ITERATIONS = 2 if SMOKE_TEST else 200
 
 
 ### Building the Model
