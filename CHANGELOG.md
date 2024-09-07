@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SearchSpace.from_dataframe` now creates a proper empty discrete subspace without
   index when called with continuous parameters only
 - Metadata updates are now only triggered when a discrete subspace is present
+- Unintended reordering of discrete search space parts for recommendations obtained
+  with `BotorchRecommender`
 
 ### Removed
 - `register_custom_architecture` decorator

@@ -123,12 +123,12 @@ class BotorchRecommender(BayesianRecommender):
         #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
         #   a simpler matching logic. When refactoring the SearchSpace class to
         #   handle continuous parameters, a corresponding utility could be extracted.
-        # IMPROVE: Maintain order of recommendations (currently lost during merge)
         idxs = pd.Index(
             pd.merge(
-                candidates_comp.reset_index(),
                 pd.DataFrame(points, columns=candidates_comp.columns),
+                candidates_comp.reset_index(),
                 on=list(candidates_comp),
+                how="left",
             )["index"]
         )
 
@@ -197,9 +197,13 @@ class BotorchRecommender(BayesianRecommender):
         This functions samples points from the discrete subspace, performs optimization
         in the continuous subspace with these points being fixed and returns the best
         found solution.
+
         **Important**: This performs a brute-force calculation by fixing every possible
         assignment of discrete variables and optimizing the continuous subspace for
         each of them. It is thus computationally expensive.
+
+        **Note**: This function implicitly assumes that discrete search space parts in
+        the respective data frame come first and continuous parts come second.
 
         Args:
             searchspace: The search space in which the recommendations should be made.
@@ -227,28 +231,20 @@ class BotorchRecommender(BayesianRecommender):
         # Transform discrete candidates
         candidates_comp = searchspace.discrete.transform(candidates_exp)
 
-        if len(candidates_comp) > 0:
-            # Calculate the number of samples from the given percentage
-            n_candidates = math.ceil(
-                self.sampling_percentage * len(candidates_comp.index)
+        # Calculate the number of samples from the given percentage
+        n_candidates = math.ceil(self.sampling_percentage * len(candidates_comp.index))
+
+        # Potential sampling of discrete candidates
+        if self.hybrid_sampler is not None:
+            candidates_comp = sample_numerical_df(
+                candidates_comp, n_candidates, method=self.hybrid_sampler
             )
 
-            # Potential sampling of discrete candidates
-            if self.hybrid_sampler is not None:
-                candidates_comp = sample_numerical_df(
-                    candidates_comp, n_candidates, method=self.hybrid_sampler
-                )
-
-            # Prepare all considered discrete configurations in the
-            # List[Dict[int, float]] format expected by BoTorch.
-            # TODO: Currently assumes that discrete parameters are first and continuous
-            #   second. Once parameter redesign [11611] is completed, we might adjust
-            #   this.
-            num_comp_columns = len(candidates_comp.columns)
-            candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
-            fixed_features_list = candidates_comp.to_dict("records")
-        else:
-            fixed_features_list = None
+        # Prepare all considered discrete configurations in the
+        # List[Dict[int, float]] format expected by BoTorch.
+        num_comp_columns = len(candidates_comp.columns)
+        candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
+        fixed_features_list = candidates_comp.to_dict("records")
 
         # Actual call of the BoTorch optimization routine
         points, _ = optimize_acqf_mixed(
@@ -276,27 +272,29 @@ class BotorchRecommender(BayesianRecommender):
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
         )
 
-        disc_points = points[:, :num_comp_columns]
-        cont_points = points[:, num_comp_columns:]
+        # Align candidates with search space index. Done via including the search space
+        # index during the merge, which is used later for back-translation into the
+        # experimental representation
+        merged = pd.merge(
+            pd.DataFrame(points),
+            candidates_comp.reset_index(),
+            on=list(candidates_comp.columns),
+            how="left",
+        ).set_index("index")
 
-        # Get selected candidate indices
-        idxs = pd.Index(
-            pd.merge(
-                candidates_comp.reset_index(),
-                pd.DataFrame(disc_points, columns=candidates_comp.columns),
-                on=list(candidates_comp),
-            )["index"]
+        # Get experimental representation of discrete part
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[merged.index]
+
+        # Combine discrete and continuous parts
+        rec_exp = pd.concat(
+            [
+                rec_disc_exp,
+                merged.iloc[:, num_comp_columns:].set_axis(
+                    searchspace.continuous.parameter_names, axis=1
+                ),
+            ],
+            axis=1,
         )
-
-        # Get experimental representation of discrete and continuous parts
-        rec_disc_exp = searchspace.discrete.exp_rep.loc[idxs]
-        rec_cont_exp = pd.DataFrame(
-            cont_points, columns=searchspace.continuous.parameter_names
-        )
-
-        # Adjust the index of the continuous part and create overall recommendations
-        rec_cont_exp.index = rec_disc_exp.index
-        rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
 
         return rec_exp
 
