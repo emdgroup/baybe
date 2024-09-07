@@ -65,7 +65,9 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
+        # This fit applies internal caching and does not necessarily involve computation
         self._surrogate_model.fit(searchspace, objective, measurements)
+
         return self._surrogate_model
 
     def _setup_botorch_acqf(
