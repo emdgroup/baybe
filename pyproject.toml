@@ -144,6 +144,7 @@ simulation = [
 
 test = [
     "hypothesis[pandas]>=6.88.4",
+    "tenacity>=8.5.0",
     "pytest>=7.2.0",
     "pytest-cov>=4.1.0",
 ]
