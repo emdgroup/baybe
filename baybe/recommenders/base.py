@@ -68,7 +68,7 @@ converter.register_unstructure_hook(
             # Temporary workaround (see TODO note above)
             _surrogate_model=override(rename="surrogate_model"),
             _current_recommender=override(omit=False),
-            _current_recommender_was_used=override(omit=False),
+            _used_recommender_ids=override(omit=False),
         ),
     ),
 )
@@ -80,7 +80,7 @@ converter.register_structure_hook(
         overrides=dict(
             _surrogate_model=override(rename="surrogate_model"),
             _current_recommender=override(omit=False),
-            _current_recommender_was_used=override(omit=False),
+            _used_recommender_ids=override(omit=False),
         ),
     ),
 )

@@ -18,7 +18,9 @@ _T = TypeVar("_T")
 
 # TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
 #   switch to the cattrs built-in subclass recommender.
-converter = cattrs.Converter()
+# Using GenConverter for built-in overrides for sets, see
+# https://catt.rs/en/latest/indepth.html#customizing-collection-unstructuring
+converter = cattrs.GenConverter(unstruct_collection_overrides={set: list})
 """The default converter for (de-)serializing BayBE-related objects."""
 
 configure_union_passthrough(bool | int | float | str, converter)
@@ -158,6 +160,6 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     return converter.structure_attrs_fromdict(specs, cls)
 
 
-# Register un-/structure hooks
+# Register custom un-/structure hooks
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
