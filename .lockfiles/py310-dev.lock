@@ -843,6 +843,7 @@ tbb==2021.13.0 ; platform_system == 'Windows'
     # via mkl
 tenacity==8.5.0
     # via
+    #   baybe (pyproject.toml)
     #   plotly
     #   streamlit
 terminado==0.18.1
