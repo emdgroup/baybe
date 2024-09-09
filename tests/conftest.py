@@ -878,7 +878,7 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
     retry=retry_any(
         retry_if_exception_type((ModelFittingError, _LinAlgError)),
         retry_if_exception_message(
-            ".*Expected value argument.*to be within the support.*"  # type ValueError
+            match=r".*Expected value argument.*to be within the support.*"
         ),
     ),
     before_sleep=lambda x: warnings.warn(
