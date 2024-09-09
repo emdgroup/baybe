@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pure recommenders now have the `allow_recommending_pending_experiments` flag,
   controlling whether pending experiments are excluded from candidates in purely
   discrete search spaces
+- `get_surrogate` and `posterior` methods to `Campaign`
 
 ### Changed
 - The transition from experimental to computational representation no longer happens
@@ -62,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - The role of `register_custom_architecture` has been taken over by
   `baybe.surrogates.base.SurrogateProtocol`
+- `BayesianRecommender.surrogate_model` has been replaced with `get_surrogate`
 
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes

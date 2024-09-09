@@ -11,7 +11,7 @@ _T = TypeVar("_T")
 class SerialMixin:
     """A mixin class providing serialization functionality."""
 
-    # Use slots so that the derived classes also remain slotted
+    # Use slots so that derived classes also remain slotted
     # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
     __slots__ = ()
 

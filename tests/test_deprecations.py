@@ -117,3 +117,10 @@ def test_deprecated_surrogate_registration():
 
     with pytest.raises(DeprecationError):
         register_custom_architecture()
+
+
+def test_deprecated_surrogate_access():
+    """Public attribute access to the surrogate model raises a warning."""
+    recommender = BotorchRecommender()
+    with pytest.warns(DeprecationWarning):
+        recommender.surrogate_model

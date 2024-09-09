@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
 import cattrs
 import numpy as np
@@ -11,10 +12,14 @@ from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
+from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -22,7 +27,9 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
+from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.base import Target
+from baybe.targets.numerical import NumericalTarget
 from baybe.telemetry import (
     TELEM_LABELS,
     telemetry_record_recommended_measurement_percentage,
@@ -30,6 +37,9 @@ from baybe.telemetry import (
 )
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.plotting import to_string
+
+if TYPE_CHECKING:
+    from botorch.posteriors import Posterior
 
 
 @define
@@ -268,6 +278,80 @@ class Campaign(SerialMixin):
         telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
 
         return rec
+
+    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+        """Get the posterior predictive distribution for the given candidates.
+
+        The predictive distribution is based on the surrogate model of the last used
+        recommender.
+
+        Args:
+            candidates: The candidate points in experimental recommendations.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+
+        Raises:
+            IncompatibilityError: If the underlying surrogate model exposes no
+                method for computing the posterior distribution.
+
+        Returns:
+            Posterior: The corresponding posterior object.
+            For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+        """
+        surrogate = self.get_surrogate()
+        if not hasattr(surrogate, method_name := "posterior"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
+                f"provide a '{method_name}' method."
+            )
+
+        import torch
+
+        with torch.no_grad():
+            return surrogate.posterior(candidates)
+
+    def get_surrogate(self) -> SurrogateProtocol:
+        """Get the current surrogate model.
+
+        Raises:
+            RuntimeError: If the current recommender does not provide a surrogate model.
+
+        Returns:
+            Surrogate: The surrogate of the current recommender.
+        """
+        # TODO: remove temporary restriction when target transformations can be handled
+        match self.objective:
+            case SingleTargetObjective(
+                _target=NumericalTarget(bounds=b)
+            ) if not b.is_bounded:
+                pass
+            case _:
+                raise NotImplementedError(
+                    "Surrogate model access is currently only supported for a single "
+                    "untransformed target."
+                )
+
+        if self.objective is None:
+            raise IncompatibilityError(
+                f"No surrogate is available since no '{Objective.__name__}' is defined."
+            )
+
+        pure_recommender: RecommenderProtocol
+        if isinstance(self.recommender, MetaRecommender):
+            pure_recommender = self.recommender.get_current_recommender()
+        else:
+            pure_recommender = self.recommender
+
+        if isinstance(pure_recommender, BayesianRecommender):
+            return pure_recommender.get_surrogate(
+                self.searchspace, self.objective, self.measurements
+            )
+        else:
+            raise RuntimeError(
+                f"The current recommender is of type "
+                f"'{pure_recommender.__class__.__name__}', which does not provide "
+                f"a surrogate model. Surrogate models are only available for "
+                f"recommender subclasses of '{BayesianRecommender.__name__}'."
+            )
 
 
 def _add_version(dict_: dict) -> dict:

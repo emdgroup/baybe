@@ -16,6 +16,7 @@ from cattrs.dispatch import (
     UnstructuredValue,
     UnstructureHook,
 )
+from joblib.hashing import hash
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -64,6 +65,13 @@ _IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
 class SurrogateProtocol(Protocol):
     """Type protocol specifying the interface surrogate models need to implement."""
 
+    # Use slots so that derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+    __slots__ = ()
+
+    # TODO: Final layout still to be optimized. For example, shall we require a
+    #   `posterior` method?
+
     def fit(
         self,
         searchspace: SearchSpace,
@@ -97,8 +105,20 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
 
+    _objective: Objective | None = field(init=False, default=None, eq=False)
+    """The objective for which the surrogate was trained. Available after fitting."""
+
+    _measurements_hash: str = field(init=False, default=None, eq=False)
+    """The hash of the data the surrogate was trained on."""
+
+    _input_scaler: ColumnTransformer | None = field(init=False, default=None, eq=False)
+    """Scaler for transforming input values. Available after fitting.
+
+    Scales a tensor containing parameter configurations in computational representation
+    to make them digestible for the model-specific, scale-agnostic posterior logic."""
+
     # TODO: type should be
-    #   `botorch.models.transforms.outcome.Standardize | _NoTransform`
+    #   `botorch.models.transforms.outcome.Standardize | _NoTransform` | None
     #   but is currently omitted due to:
     #   https://github.com/python-attrs/cattrs/issues/531
     _output_scaler = field(init=False, default=None, eq=False)
@@ -215,6 +235,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             The same :class:`botorch.posteriors.Posterior` object as returned via
             :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._input_scaler is not None
+
         p = self._posterior(self._input_scaler.transform(candidates_comp))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
@@ -275,6 +299,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """
         # TODO: consider adding a validation step for `measurements`
 
+        # When the context is unchanged, no retraining is necessary
+        if (
+            searchspace == self._searchspace
+            and objective == self._objective
+            and hash(measurements) == self._measurements_hash
+        ):
+            return
+
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
@@ -289,8 +321,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
-        # Remember on which search space the model is trained
+        # Remember the training context
         self._searchspace = searchspace
+        self._objective = objective
+        self._measurements_hash = hash(measurements)
 
         # Create context-specific transformations
         self._input_scaler = self._make_input_scaler(searchspace)
