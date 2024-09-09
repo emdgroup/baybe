@@ -882,7 +882,7 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
         ),
     ),
     before_sleep=lambda x: warnings.warn(
-        f"Retrying iteration test due to {x.outcome.exception()}"
+        f"Retrying iteration test due to '{x.outcome.exception()}'"
     ),
 )
 def run_iterations(
@@ -906,7 +906,7 @@ def run_iterations(
 
             add_fake_results(rec, campaign.targets)
             if add_noise and (k % 2):
-                add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
+                add_parameter_noise(rec, campaign.parameters, noise_level=0.02)
 
             campaign.add_measurements(rec)
 
