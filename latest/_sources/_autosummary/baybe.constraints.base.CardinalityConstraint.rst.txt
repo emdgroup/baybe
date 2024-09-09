@@ -1,0 +1,42 @@
+CardinalityConstraint
+=====================
+
+.. currentmodule:: baybe.constraints.base
+
+.. autoclass:: CardinalityConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~CardinalityConstraint.__init__
+      ~CardinalityConstraint.from_dict
+      ~CardinalityConstraint.from_json
+      ~CardinalityConstraint.summary
+      ~CardinalityConstraint.to_dict
+      ~CardinalityConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CardinalityConstraint.min_cardinality
+      ~CardinalityConstraint.max_cardinality
+      ~CardinalityConstraint.eval_during_augmentation
+      ~CardinalityConstraint.is_continuous
+      ~CardinalityConstraint.is_discrete
+      ~CardinalityConstraint.numerical_only
+      ~CardinalityConstraint.parameters
+      ~CardinalityConstraint.eval_during_creation
+      ~CardinalityConstraint.eval_during_modeling
+   
+   

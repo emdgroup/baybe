@@ -1,0 +1,33 @@
+baybe.recommenders.meta.sequential
+==================================
+
+.. automodule:: baybe.recommenders.meta.sequential
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      SequentialMetaRecommender
+      StreamingSequentialMetaRecommender
+      TwoPhaseMetaRecommender
+   
+   
+
+   
+   
+   
+
+
+

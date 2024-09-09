@@ -1,0 +1,30 @@
+baybe.objective
+===============
+
+.. automodule:: baybe.objective
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      Objective
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

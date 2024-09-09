@@ -1,0 +1,42 @@
+NumericalContinuousParameter
+============================
+
+.. currentmodule:: baybe.parameters.numerical
+
+.. autoclass:: NumericalContinuousParameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NumericalContinuousParameter.__init__
+      ~NumericalContinuousParameter.from_dict
+      ~NumericalContinuousParameter.from_json
+      ~NumericalContinuousParameter.is_in_range
+      ~NumericalContinuousParameter.summary
+      ~NumericalContinuousParameter.to_dict
+      ~NumericalContinuousParameter.to_json
+      ~NumericalContinuousParameter.to_searchspace
+      ~NumericalContinuousParameter.to_subspace
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NumericalContinuousParameter.comp_rep_columns
+      ~NumericalContinuousParameter.is_continuous
+      ~NumericalContinuousParameter.is_discrete
+      ~NumericalContinuousParameter.is_numerical
+      ~NumericalContinuousParameter.bounds
+      ~NumericalContinuousParameter.name
+   
+   

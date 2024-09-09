@@ -1,0 +1,6 @@
+baybe.targets.transforms.linear\_transform
+==========================================
+
+.. currentmodule:: baybe.targets.transforms
+
+.. autofunction:: linear_transform

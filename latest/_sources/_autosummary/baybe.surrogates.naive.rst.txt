@@ -1,0 +1,31 @@
+baybe.surrogates.naive
+======================
+
+.. automodule:: baybe.surrogates.naive
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      MeanPredictionSurrogate
+   
+   
+
+   
+   
+   
+
+
+
