@@ -114,7 +114,7 @@ campaign = Campaign(
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('COC')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('CCC')
@@ -122,12 +122,12 @@ campaign = Campaign(
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('O')
+
+
     _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('CS(=O)C')
-
-
     _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
 
 

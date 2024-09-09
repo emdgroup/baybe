@@ -266,15 +266,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent                Base                        Ligand  \
-    397  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-    353     p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-    356     p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    407  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    219    Butyl Ester   Potassium acetate                     BrettPhos   
+    79     Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
     
          Temperature  Concentration  
-    397         90.0          0.100  
-    353         90.0          0.153  
-    356        105.0          0.153  
+    407         90.0          0.153  
+    219        105.0          0.057  
+    79         120.0          0.100  
 
 
 
@@ -287,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent                Base                        Ligand  \
-    397  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-    353     p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-    356     p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    407  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    219    Butyl Ester   Potassium acetate                     BrettPhos   
+    79     Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
     
-         Temperature  Concentration     yield  
-    397         90.0          0.100  6.204657  
-    353         90.0          0.153  7.862294  
-    356        105.0          0.153  0.272962  
+         Temperature  Concentration      yield  
+    407         90.0          0.153  10.845329  
+    219        105.0          0.057  13.210730  
+    79         120.0          0.100  28.005465  
 
 
 
