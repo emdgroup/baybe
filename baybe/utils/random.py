@@ -14,6 +14,9 @@ def set_random_seed(seed: int):
     """
     import torch
 
+    # Ensure seed limits
+    seed %= 2**32
+
     torch.manual_seed(seed)
     random.seed(seed)
     np.random.seed(seed)
@@ -27,6 +30,9 @@ def temporary_seed(seed: int):  # noqa: DOC402, DOC404
         seed: The chosen random seed.
     """
     import torch
+
+    # Ensure seed limits
+    seed %= 2**32
 
     # Collect the current RNG states
     state_builtin = random.getstate()

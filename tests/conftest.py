@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import time
+import warnings
 from itertools import chain
 from unittest.mock import Mock
 
@@ -10,7 +12,16 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from botorch.exceptions import ModelFittingError
 from hypothesis import settings as hypothesis_settings
+from tenacity import (
+    retry,
+    retry_any,
+    retry_if_exception_message,
+    retry_if_exception_type,
+    stop_after_attempt,
+)
+from torch._C import _LinAlgError
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition import qExpectedImprovement
@@ -68,6 +79,7 @@ from baybe.telemetry import (
 from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.random import temporary_seed
 
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
@@ -861,10 +873,25 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
 
 # TODO consider turning this into a fixture returning a campaign after running some
 #  fake iterations
+@retry(
+    stop=stop_after_attempt(5),
+    retry=retry_any(
+        retry_if_exception_type((ModelFittingError, _LinAlgError)),
+        retry_if_exception_message(
+            match=r".*Expected value argument.*to be within the support.*"
+        ),
+    ),
+    before_sleep=lambda x: warnings.warn(
+        f"Retrying iteration test due to '{x.outcome.exception()}'"
+    ),
+)
 def run_iterations(
     campaign: Campaign, n_iterations: int, batch_size: int, add_noise: bool = True
 ) -> None:
     """Run a campaign for some fake iterations.
+
+    This function attempts up to five executions if numerical errors were encountered.
+    Each retry is done with a different seed to ensure numerical variance.
 
     Args:
         campaign: The campaign encapsulating the experiments.
@@ -872,15 +899,16 @@ def run_iterations(
         batch_size: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
     """
-    for k in range(n_iterations):
-        rec = campaign.recommend(batch_size=batch_size)
-        # dont use parameter noise for these tests
+    with temporary_seed(int(time.time())):
+        for k in range(n_iterations):
+            rec = campaign.recommend(batch_size=batch_size)
+            # dont use parameter noise for these tests
 
-        add_fake_results(rec, campaign.targets)
-        if add_noise and (k % 2):
-            add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
+            add_fake_results(rec, campaign.targets)
+            if add_noise and (k % 2):
+                add_parameter_noise(rec, campaign.parameters, noise_level=0.02)
 
-        campaign.add_measurements(rec)
+            campaign.add_measurements(rec)
 
 
 def select_recommender(

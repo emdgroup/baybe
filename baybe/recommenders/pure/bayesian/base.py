@@ -119,7 +119,7 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"cannot be used for batch recommendation."
             )
 
-        if isinstance(self.surrogate_model, CustomONNXSurrogate):
+        if isinstance(self._surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
 
         self._setup_botorch_acqf(

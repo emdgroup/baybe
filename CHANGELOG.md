@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   controlling whether pending experiments are excluded from candidates in purely
   discrete search spaces
 - `get_surrogate` and `posterior` methods to `Campaign`
+- `tenacity` test dependency
 
 ### Changed
 - The transition from experimental to computational representation no longer happens
@@ -42,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search spaces now store their parameters in alphabetical order by name
 - Improvement-based acquisition functions now consider the maximum posterior mean
   instead of the maximum noisy measurement as reference value
+- Iteration tests now attempt up to 5 repeated executions if they fail due to numerical
+  reasons
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
