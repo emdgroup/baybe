@@ -141,7 +141,7 @@ def stop_on_PI(
         )
     acqf = ProbabilityOfImprovement()
     botorch_acqf = acqf.to_botorch(
-        self.surrogate_model, searchspace, objective, measurements
+        self._surrogate_model, searchspace, objective, measurements
     )
     _, candidates_comp_rep = searchspace.discrete.get_candidates(
         allow_repeated_recommendations=self.allow_repeated_recommendations,

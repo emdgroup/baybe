@@ -84,7 +84,7 @@ def extract_pi(
         )
     acqf = ProbabilityOfImprovement()
     botorch_acqf = acqf.to_botorch(
-        self.surrogate_model, searchspace, objective, measurements
+        self._surrogate_model, searchspace, objective, measurements
     )
     comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
     with torch.no_grad():

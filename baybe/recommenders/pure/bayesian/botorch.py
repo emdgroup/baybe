@@ -300,7 +300,7 @@ class BotorchRecommender(BayesianRecommender):
 
     def __str__(self) -> str:
         fields = [
-            to_string("Surrogate", self.surrogate_model),
+            to_string("Surrogate", self._surrogate_model),
             to_string(
                 "Acquisition function", self.acquisition_function, single_line=True
             ),
