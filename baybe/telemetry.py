@@ -1,6 +1,6 @@
 """Telemetry functionality for BayBE.
 
-For more details, see https://emdgroup.github.io/baybe/userguide/envvars.html#telemetry
+For more details, see https://emdgroup.github.io/baybe/stable/userguide/envvars.html#telemetry
 """
 
 import getpass
