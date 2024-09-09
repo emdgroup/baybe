@@ -1,0 +1,36 @@
+LinearKernel
+============
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: LinearKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~LinearKernel.__init__
+      ~LinearKernel.from_dict
+      ~LinearKernel.from_json
+      ~LinearKernel.to_dict
+      ~LinearKernel.to_factory
+      ~LinearKernel.to_gpytorch
+      ~LinearKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~LinearKernel.variance_prior
+      ~LinearKernel.variance_initial_value
+   
+   

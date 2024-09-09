@@ -1,6 +1,0 @@
-baybe.surrogates.utils.batchify
-===============================
-
-.. currentmodule:: baybe.surrogates.utils
-
-.. autofunction:: batchify

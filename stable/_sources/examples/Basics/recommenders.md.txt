@@ -50,9 +50,10 @@ initial_recommenders = [
 ]
 ```
 
+Per default the initial recommender chosen is a random recommender.
+
 
 ```python
-# Per default the initial recommender chosen is a random recommender.
 INITIAL_RECOMMENDER = RandomRecommender()
 ```
 
@@ -62,18 +63,21 @@ This model uses available data to model the objective function as well as the
 uncertainty.
 The surrogate model is then used by the acquisition function to make recommendations.
 
+The following are the available basic surrogates:
+
 
 ```python
-# The following are the available basic surrogates
-print(get_subclasses(Surrogate))
+for subclass in get_subclasses(Surrogate):
+    print(subclass)
 ```
 
-    [<class 'baybe.surrogates.custom.CustomONNXSurrogate'>, <class
-'baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate'>, <class
-'baybe.surrogates.linear.BayesianLinearSurrogate'>, <class
-'baybe.surrogates.naive.MeanPredictionSurrogate'>, <class
-'baybe.surrogates.ngboost.NGBoostSurrogate'>, <class
-'baybe.surrogates.random_forest.RandomForestSurrogate'>]
+    <class 'baybe.surrogates.custom.CustomONNXSurrogate'>
+    <class 'baybe.surrogates.linear.BayesianLinearSurrogate'>
+    <class 'baybe.surrogates.naive.MeanPredictionSurrogate'>
+    <class 'baybe.surrogates.ngboost.NGBoostSurrogate'>
+    <class 'baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate'>
+    <class 'baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate'>
+    <class 'baybe.surrogates.random_forest.RandomForestSurrogate'>
 
 
 Per default a Gaussian Process is used
@@ -155,14 +159,22 @@ recommender = TwoPhaseMetaRecommender(
 print(recommender)
 ```
 
-    TwoPhaseMetaRecommender(initial_recommender=RandomRecommender(allow_repeated_recomme
-ndations=False, allow_recommending_already_measured=True),
-recommender=BotorchRecommender(allow_repeated_recommendations=True,
-allow_recommending_already_measured=True,
-surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
-_model=None), acquisition_function=qExpectedImprovement(), _botorch_acqf=None,
-acquisition_function_cls=None, sequential_continuous=False, hybrid_sampler=None,
-sampling_percentage=1.0), switch_after=1)
+    TwoPhaseMetaRecommender
+       Initial recommender
+          RandomRecommender
+             Compatibility: SearchSpaceType.HYBRID
+       Recommender
+          BotorchRecommender
+             Surrogate
+                GaussianProcessSurrogate
+                   Supports Transfer Learning: True
+                   Kernel factory: DefaultKernelFactory()
+             Acquisition function: qExpectedImprovement()
+             Compatibility: SearchSpaceType.HYBRID
+             Sequential continuous: False
+             Hybrid sampler: None
+             Sampling percentage: 1.0
+       Switch after: 1
 
 
 Note that there are the additional keywords `hybrid_sampler` and `sampling_percentag`.
@@ -254,15 +266,10 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent               Base                        Ligand  \
-    216    Butyl Ester  Potassium acetate                     BrettPhos   
-    9             DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    213  Butyornitrile    Cesium pivalate                 (t-Bu)PhCPhos   
-    
-         Temperature  Concentration  
-    216         90.0          0.057  
-    9           90.0          0.057  
-    213        120.0          0.057  
+             Solvent             Base         Ligand  Temperature  Concentration
+    167         DMAc   Cesium acetate      BrettPhos        105.0          0.153
+    36   Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos         90.0          0.057
+    146  Butyl Ester   Cesium acetate      BrettPhos         90.0          0.153
 
 
 
@@ -275,15 +282,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent               Base                        Ligand  \
-    216    Butyl Ester  Potassium acetate                     BrettPhos   
-    9             DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    213  Butyornitrile    Cesium pivalate                 (t-Bu)PhCPhos   
+             Solvent             Base         Ligand  Temperature  Concentration  \
+    167         DMAc   Cesium acetate      BrettPhos        105.0          0.153   
+    36   Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos         90.0          0.057   
+    146  Butyl Ester   Cesium acetate      BrettPhos         90.0          0.153   
     
-         Temperature  Concentration      yield  
-    216         90.0          0.057  12.551871  
-    9           90.0          0.057   5.598312  
-    213        120.0          0.057  20.525907  
+             yield  
+    167  25.068910  
+    36   24.335035  
+    146  23.398659  
 
 
 

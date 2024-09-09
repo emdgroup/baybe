@@ -1,0 +1,37 @@
+PolynomialKernel
+================
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: PolynomialKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PolynomialKernel.__init__
+      ~PolynomialKernel.from_dict
+      ~PolynomialKernel.from_json
+      ~PolynomialKernel.to_dict
+      ~PolynomialKernel.to_factory
+      ~PolynomialKernel.to_gpytorch
+      ~PolynomialKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PolynomialKernel.power
+      ~PolynomialKernel.offset_prior
+      ~PolynomialKernel.offset_initial_value
+   
+   

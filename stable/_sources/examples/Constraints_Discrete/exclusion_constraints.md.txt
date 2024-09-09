@@ -127,30 +127,30 @@ searchspace = SearchSpace.from_product(
 )
 ```
 
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:21] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
+    [17:01:06] DEPRECATION WARNING: please use MorganGenerator
 
 
 
@@ -165,91 +165,73 @@ campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 ```
 
-    [1mCampaign[0m
+    Campaign
+       Meta Data
+          Batches done: 0
+          Fits done: 0
+       SearchSpace
+          Search Space Type: DISCRETE
+          SubspaceDiscrete
+             Discrete Parameters
+                       Name             Type  Num_Values         Encoding
+                0  Pressure  NumericalDis...           4             None
+                1      Solv  SubstancePar...           8  SubstanceEnc...
+                2     Speed  CategoricalP...           5  CategoricalE...
+                3      Temp  NumericalDis...          15             None
+             Experimental Representation
+                       Solv      Speed     Temp  Pressure
+                0        C1       fast  100.000       1.0
+                1        C1       fast  100.000       2.0
+                2        C1       fast  100.000       5.0
+                ...     ...        ...      ...       ...
+                1147  water  very slow  192.857      10.0
+                1148  water  very slow  200.000       5.0
+                1149  water  very slow  200.000      10.0
+                
+                [1150 rows x 4 columns]
+             Meta Data
+                was_recommended: 0/1150
+                was_measured: 0/1150
+                dont_recommend: 0/1150
+             Constraints
+                              Type Affected_Paramet
+                0  DiscreteExcl...     [Temp, Solv]
+                1  DiscreteExcl...  [Pressure, S...
+                2  DiscreteExcl...  [Pressure, T...
+             Computational Representation
+                      Pressure  Solv_RDKIT_MaxAb  ...  Speed     Temp
+                0          1.0              0.0   ...    0.0  100.000
+                1          2.0              0.0   ...    0.0  100.000
+                2          5.0              0.0   ...    0.0  100.000
+                ...        ...              ...   ...    ...      ...
+                1147      10.0              0.0   ...    4.0  192.857
+                1148       5.0              0.0   ...    4.0  200.000
+                1149      10.0              0.0   ...    4.0  200.000
+                
+                [1150 rows x 9 columns]
+       Objective
+          Type: SingleTargetObjective
+          Targets
+                           Type      Name  ... Upper_Bound  Transformation
+             0  NumericalTarget  Target_1  ...         inf            None
              
-     [1mMeta Data[0m
-     Batches Done: 0
-             
- Fits Done: 0
-     
-     [1mSearch Space[0m
-              
-      [1mSearch Space Type: [0mDISCRETE
-      
-      [1mDiscrete Search Space[0m
-                   
-       [1mDiscrete Parameters[0m
-              Name                        Type  Num_Values                 Encoding
-       0      Solv          SubstanceParameter           8  SubstanceEncoding.RDKIT
-       1     Speed        CategoricalParameter           5  CategoricalEncoding.INT
-       2      Temp  NumericalDiscreteParameter          15                     None
-       3  Pressure  NumericalDiscreteParameter           4                     None
-                   
-       [1mExperimental Representation[0m
-                   
-          Solv      Speed        Temp  Pressure
-       0     water  very slow  100.000000       1.0
-       1     water  very slow  100.000000       2.0
-       2     water  very slow  100.000000       5.0
-       ...     ...        ...         ...       ...
-       1147     C6  very fast  185.714286       5.0
-       1148     C6  very fast  192.857143       5.0
-       1149     C6  very fast  200.000000       5.0
-       
-       [1150 rows x 4 columns]
-       
-       [1mMetadata:[0m
-                   
-   was_recommended: 0/1150
-                   
-   was_measured: 0/1150
-                   
-   dont_recommend: 0/1150
-                   
-       [1mConstraints[0m
-                               Type Affected_Parameters
-       0  DiscreteExcludeConstraint        [Temp, Solv]
-       1  DiscreteExcludeConstraint    [Pressure, Solv]
-       2  DiscreteExcludeConstraint    [Pressure, Temp]
-                   
-       [1mComputational Representation[0m
-                   
-         Solv_RDKIT_MaxAbsEStateIndex  Solv_RDKIT_MaxPartialCharge  ...        Temp
-Pressure
-       0                         0.000000                    -0.411510  ...  100.000000
-1.0
-       1                         0.000000                    -0.411510  ...  100.000000
-2.0
-       2                         0.000000                    -0.411510  ...  100.000000
-5.0
-       ...                            ...                          ...  ...         ...
-...
-       1147                      2.231806                    -0.053579  ...  185.714286
-5.0
-       1148                      2.231806                    -0.053579  ...  192.857143
-5.0
-       1149                      2.231806                    -0.053579  ...  200.000000
-5.0
-       
-       [1150 rows x 9 columns]
-     
-     [1mObjective[0m
-              
-      [1mType: [0mSingleTargetObjective
-              
-      [1mTargets [0m
-                    Type      Name Mode  Lower_Bound  Upper_Bound Transformation
-      0  NumericalTarget  Target_1  MAX         -inf          inf           None
-     
-     TwoPhaseMetaRecommender(initial_recommender=RandomRecommender(allow_repeated_recomm
-endations=False, allow_recommending_already_measured=True),
-recommender=BotorchRecommender(allow_repeated_recommendations=False,
-allow_recommending_already_measured=True,
-surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
-_model=None), acquisition_function=qLogExpectedImprovement(), _botorch_acqf=None,
-acquisition_function_cls=None, sequential_continuous=False, hybrid_sampler=None,
-sampling_percentage=1.0), switch_after=1)
-     
+             [1 rows x 6 columns]
+       TwoPhaseMetaRecommender
+          Initial recommender
+             RandomRecommender
+                Compatibility: SearchSpaceType.HYBRID
+          Recommender
+             BotorchRecommender
+                Surrogate
+                   GaussianProcessSurrogate
+                      Supports Transfer Learning: True
+                      Kernel factory: DefaultKernelFactory()
+                Acquisition function: qLogExpectedImprovement()
+                Compatibility: SearchSpaceType.HYBRID
+                Sequential continuous: False
+                Hybrid sampler: None
+                Sampling percentage: 1.0
+          Switch after: 1
 
 
 ## Manual verification of the constraints

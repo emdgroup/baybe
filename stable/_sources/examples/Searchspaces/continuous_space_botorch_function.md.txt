@@ -64,8 +64,8 @@ WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 ## Creating the searchspace and the objective
 
-Since the searchspace is continuous test, we construct `NumericalContinuousParameter`s
-We use that data of the test function to deduce bounds and number of parameters.
+Since the searchspace is continuous, we use `NumericalContinuousParameter`s.
+We use the data of the test function to deduce bounds and number of parameters.
 
 
 ```python
@@ -132,8 +132,8 @@ print(recommendation)
     
     
     Recommended experiments with measured values: 
-            x_1       x_2       x_3       x_4     Target
-    0  4.267491 -4.283002 -2.930097  5.011827  94.391739
-    1  5.011295  1.451399  1.483903  1.654672  87.308846
-    2 -1.630071  0.912858  4.374178 -3.325553  83.592552
+            x_1       x_2       x_3       x_4      Target
+    0 -0.264446 -4.522893  3.674496 -4.295241  110.653259
+    1  2.178597  0.647430 -4.419142 -2.493019   91.307121
+    2 -5.090438 -1.109709  2.807990  4.399903   82.765709
 

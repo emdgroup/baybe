@@ -151,126 +151,68 @@ scenarios = {
 }
 ```
 
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('P(C1CCCCC1)(C2CCCCC2)C3CCCCC3')
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
 
 
-    _______________________________________smiles_to_mordred_features - 0.9s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('P(C1=CC=CC=C1)(C2=CC=CC=C2)C3=CC=CC=C3')
-
-
-    _______________________________________smiles_to_mordred_features - 0.9s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(C1=C(C2=CC=CC=C2P(C3CCCCC3)C4CCCCC4)C(C(C)C)=CC(C(C)
-C)=C1)C')
-
-
-    _______________________________________smiles_to_mordred_features - 2.5s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('P(C1=CC=CO1)(C2=CC=CO2)C3=CC=CO3')
-
-
-    _______________________________________smiles_to_mordred_features - 0.7s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CP(C1=CC=CC=C1)C2=CC=CC=C2')
-
-
-    _______________________________________smiles_to_mordred_features - 0.5s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(OC1=C(P(C2CCCCC2)C3CCCCC3)C(OC(C)C)=CC=C1)C')
-
-
-    _______________________________________smiles_to_mordred_features - 1.6s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('FC(F)(F)C1=CC(P(C2=C(C3=C(C(C)C)C=C(C(C)C)C=C3C(C)C)C(O
-C)=CC=C2OC)C4=CC(C(F)(F)F)=CC(C(F)(F)F)=C4)=CC(C(F)(F)F)=C1')
-
-
-    _______________________________________smiles_to_mordred_features - 5.2s, 0.1min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('C[C@]1(O2)O[C@](C[C@]2(C)P3C4=CC=CC=C4)(C)O[C@]3(C)C1')
-
-
-    _______________________________________smiles_to_mordred_features - 2.3s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CP(C)C1=CC=CC=C1')
-
-
-    _______________________________________smiles_to_mordred_features - 0.2s, 0.0min
-
-
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:16] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-
-
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
-    [08:35:17] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
+    [17:03:02] DEPRECATION WARNING: please use MorganGenerator
 
 
 Now we create another campaign that treats the substances as simple one-hot encoded
@@ -326,6 +268,12 @@ results = simulate_scenarios(
     n_mc_iterations=N_MC_ITERATIONS,
 )
 ```
+
+    
+
+    
+
+    
 
     
 

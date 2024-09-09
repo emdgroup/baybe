@@ -578,7 +578,7 @@ campaign = Campaign(
 
 ```python
 # Let's do a first round of recommendation
-recommendation = campaign.recommend(batch_size=2)
+recommendation = campaign.recommend(batch_size=1)
 ```
 
 
@@ -588,9 +588,8 @@ print(recommendation)
 ```
 
     Recommendation from campaign:
-        Pressure[bar]  Temperature[degree_C]
-    0             1.0                  100.0
-    29           10.0                  200.0
+       Pressure[bar]  Temperature[degree_C]
+    0            1.0                  100.0
 
 
 Add some fake results
@@ -605,11 +604,11 @@ campaign.add_measurements(recommendation)
 
 
 ```python
-# Do another round of recommendations
-recommendation = campaign.recommend(batch_size=2)
+# Do another round of recommendation
+recommendation = campaign.recommend(batch_size=1)
 ```
 
-Print second round of recommendations
+Print second round of recommendation
 
 
 ```python
@@ -620,8 +619,7 @@ print(recommendation)
     Recommendation from campaign:
            Pressure[bar]  Temperature[degree_C]
     index                                      
-    9                1.0                  200.0
-    19               5.0                  200.0
+    29              10.0                  200.0
 
 
 ## Using configuration instead

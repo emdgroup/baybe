@@ -1,0 +1,36 @@
+baybe.utils.chemistry
+=====================
+
+.. automodule:: baybe.utils.chemistry
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      get_canonical_smiles
+      is_valid_smiles
+      name_to_smiles
+      smiles_to_fp_features
+      smiles_to_molecules
+      smiles_to_mordred_features
+      smiles_to_rdkit_features
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

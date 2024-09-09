@@ -1,0 +1,6 @@
+baybe.utils.augmentation.df\_apply\_permutation\_augmentation
+=============================================================
+
+.. currentmodule:: baybe.utils.augmentation
+
+.. autofunction:: df_apply_permutation_augmentation

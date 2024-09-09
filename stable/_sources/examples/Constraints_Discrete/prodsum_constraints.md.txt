@@ -126,15 +126,15 @@ constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 ```
 
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
-    [08:37:12] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
+    [17:00:57] DEPRECATION WARNING: please use MorganGenerator
 
 
 
@@ -150,96 +150,78 @@ campaign = Campaign(searchspace=searchspace, objective=objective)
 print(campaign)
 ```
 
-    [1mCampaign[0m
+    Campaign
+       Meta Data
+          Batches done: 0
+          Fits done: 0
+       SearchSpace
+          Search Space Type: DISCRETE
+          SubspaceDiscrete
+             Discrete Parameters
+                         Name             Type  Num_Values         Encoding
+                0   NumParam1  NumericalDis...           3             None
+                1   NumParam2  NumericalDis...           3             None
+                2   NumParam3  NumericalDis...           3             None
+                ..        ...              ...         ...              ...
+                5   NumParam6  NumericalDis...           3             None
+                6     Solvent  SubstancePar...           3  SubstanceEnc...
+                7       Speed  CategoricalP...           3  CategoricalE...
+                
+                [8 rows x 4 columns]
+             Experimental Representation
+                    Solvent Speed  ...  NumParam5  NumParam6
+                0        C1  fast  ...        0.0      100.0
+                1        C1  fast  ...       50.0       50.0
+                2        C1  fast  ...      100.0        0.0
+                ..      ...   ...  ...        ...        ...
+                861   water  slow  ...        0.0      100.0
+                862   water  slow  ...       50.0       50.0
+                863   water  slow  ...      100.0        0.0
+                
+                [864 rows x 8 columns]
+             Meta Data
+                was_recommended: 0/864
+                was_measured: 0/864
+                dont_recommend: 0/864
+             Constraints
+                              Type Affected_Paramet
+                0  DiscreteSumC...  [NumParam1, ...
+                1  DiscreteSumC...  [NumParam5, ...
+                2  DiscreteProd...  [NumParam3, ...
+             Computational Representation
+                     NumParam1  NumParam2  ...  Solvent_RDKIT_Ma  Speed
+                0          0.0        0.0  ...           -0.078     0.0
+                1          0.0        0.0  ...           -0.078     0.0
+                2          0.0        0.0  ...           -0.078     0.0
+                ..         ...        ...  ...              ...     ...
+                861      100.0       50.0  ...           -0.412     2.0
+                862      100.0       50.0  ...           -0.412     2.0
+                863      100.0       50.0  ...           -0.412     2.0
+                
+                [864 rows x 9 columns]
+       Objective
+          Type: SingleTargetObjective
+          Targets
+                           Type      Name  ... Upper_Bound  Transformation
+             0  NumericalTarget  Target_1  ...         inf            None
              
-     [1mMeta Data[0m
-     Batches Done: 0
-             
- Fits Done: 0
-     
-     [1mSearch Space[0m
-              
-      [1mSearch Space Type: [0mDISCRETE
-      
-      [1mDiscrete Search Space[0m
-                   
-       [1mDiscrete Parameters[0m
-                Name                        Type  Num_Values                 Encoding
-       0     Solvent          SubstanceParameter           3  SubstanceEncoding.RDKIT
-       1       Speed        CategoricalParameter           3  CategoricalEncoding.INT
-       2   NumParam1  NumericalDiscreteParameter           3                     None
-       ..        ...                         ...         ...                      ...
-       5   NumParam4  NumericalDiscreteParameter           3                     None
-       6   NumParam5  NumericalDiscreteParameter           3                     None
-       7   NumParam6  NumericalDiscreteParameter           3                     None
-       
-       [8 rows x 4 columns]
-                   
-       [1mExperimental Representation[0m
-                   
-       Solvent Speed  ...  NumParam5  NumParam6
-       0     water  slow  ...        0.0      100.0
-       1     water  slow  ...       50.0       50.0
-       2     water  slow  ...      100.0        0.0
-       ..      ...   ...  ...        ...        ...
-       861      C2  fast  ...        0.0      100.0
-       862      C2  fast  ...       50.0       50.0
-       863      C2  fast  ...      100.0        0.0
-       
-       [864 rows x 8 columns]
-       
-       [1mMetadata:[0m
-                   
-   was_recommended: 0/864
-                   
-   was_measured: 0/864
-                   
-   dont_recommend: 0/864
-                   
-       [1mConstraints[0m
-                               Type     Affected_Parameters
-       0      DiscreteSumConstraint  [NumParam1, NumParam2]
-       1      DiscreteSumConstraint  [NumParam5, NumParam6]
-       2  DiscreteProductConstraint  [NumParam3, NumParam4]
-                   
-       [1mComputational Representation[0m
-                   
-        Solvent_RDKIT_MaxAbsEStateIndex  Solvent_RDKIT_MaxPartialCharge  ...  NumParam5
-NumParam6
-       0                                0.0                       -0.411510  ...
-0.0      100.0
-       1                                0.0                       -0.411510  ...
-50.0       50.0
-       2                                0.0                       -0.411510  ...
-100.0        0.0
-       ..                               ...                             ...  ...
-...        ...
-       861                              2.0                       -0.068262  ...
-0.0      100.0
-       862                              2.0                       -0.068262  ...
-50.0       50.0
-       863                              2.0                       -0.068262  ...
-100.0        0.0
-       
-       [864 rows x 9 columns]
-     
-     [1mObjective[0m
-              
-      [1mType: [0mSingleTargetObjective
-              
-      [1mTargets [0m
-                    Type      Name Mode  Lower_Bound  Upper_Bound Transformation
-      0  NumericalTarget  Target_1  MAX         -inf          inf           None
-     
-     TwoPhaseMetaRecommender(initial_recommender=RandomRecommender(allow_repeated_recomm
-endations=False, allow_recommending_already_measured=True),
-recommender=BotorchRecommender(allow_repeated_recommendations=False,
-allow_recommending_already_measured=True,
-surrogate_model=GaussianProcessSurrogate(kernel_factory=DefaultKernelFactory(),
-_model=None), acquisition_function=qLogExpectedImprovement(), _botorch_acqf=None,
-acquisition_function_cls=None, sequential_continuous=False, hybrid_sampler=None,
-sampling_percentage=1.0), switch_after=1)
-     
+             [1 rows x 6 columns]
+       TwoPhaseMetaRecommender
+          Initial recommender
+             RandomRecommender
+                Compatibility: SearchSpaceType.HYBRID
+          Recommender
+             BotorchRecommender
+                Surrogate
+                   GaussianProcessSurrogate
+                      Supports Transfer Learning: True
+                      Kernel factory: DefaultKernelFactory()
+                Acquisition function: qLogExpectedImprovement()
+                Compatibility: SearchSpaceType.HYBRID
+                Sequential continuous: False
+                Hybrid sampler: None
+                Sampling percentage: 1.0
+          Switch after: 1
 
 
 ## Manual verification of the constraints

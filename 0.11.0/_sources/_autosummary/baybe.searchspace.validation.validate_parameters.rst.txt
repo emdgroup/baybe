@@ -1,0 +1,6 @@
+baybe.searchspace.validation.validate\_parameters
+=================================================
+
+.. currentmodule:: baybe.searchspace.validation
+
+.. autofunction:: validate_parameters

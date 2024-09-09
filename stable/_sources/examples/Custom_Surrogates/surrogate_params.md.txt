@@ -111,6 +111,26 @@ campaign = Campaign(
 )
 ```
 
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('COC')
+
+
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCC')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CS(=O)C')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+
+
 ## Iterate with recommendations and measurements
 
 We can print the surrogate model object
@@ -130,7 +150,7 @@ print(surrogate_model.to_json(), end="\n" * 3)
 
 ```python
 # Let's do a first round of recommendation
-recommendation = campaign.recommend(batch_size=2)
+recommendation = campaign.recommend(batch_size=1)
 ```
 
 
@@ -140,9 +160,8 @@ print(recommendation)
 ```
 
     Recommendation from campaign:
-        Granularity  Pressure[bar]  Temperature[degree_C]    Solvent
-    2        coarse            1.0                  100.0  Solvent C
-    239      medium           10.0                  200.0  Solvent D
+      Granularity  Pressure[bar]  Temperature[degree_C]    Solvent
+    3      coarse            1.0                  100.0  Solvent D
 
 
 
@@ -166,14 +185,11 @@ print("Here you will see some model outputs as we set verbose to True")
 
 
 ```python
-# Do another round of recommendations
-recommendation = campaign.recommend(batch_size=2)
+# Do another round of recommendation
+recommendation = campaign.recommend(batch_size=1)
 ```
 
-    [iter 0] loss=1.0724 val_loss=0.0000 scale=1.0000 norm=0.7071
-
-
-Print second round of recommendations
+Print second round of recommendation
 
 
 ```python
@@ -184,8 +200,7 @@ print(recommendation)
     Recommendation from campaign:
           Granularity  Pressure[bar]  Temperature[degree_C]    Solvent
     index                                                             
-    6          coarse            1.0             111.111111  Solvent C
-    10         coarse            1.0             122.222222  Solvent C
+    0          coarse            1.0                  100.0  Solvent A
 
 
 ## Using configuration instead
