@@ -297,22 +297,29 @@ class SearchSpace(SerialMixin):
 
         Raises:
             ValueError: If no parameter with the provided name exists.
+            ValueError: If more than one parameter with the provided name exists.
 
         Returns:
             A tuple containing the integer indices of the columns in the computational
             representation associated with the parameter. When the parameter is not part
             of the computational representation, an empty tuple is returned.
         """
-        if name not in (p.name for p in self.parameters):
+        params = self.get_parameters_by_name([name])
+        if len(params) < 1:
             raise ValueError(
                 f"There exists no parameter named '{name}' in the search space."
             )
+        if len(params) > 1:
+            raise ValueError(
+                f"There exist multiple parameter matches for '{name}' in the search "
+                f"space."
+            )
+        p = params[0]
 
-        # TODO: The "startswith" approach is not ideal since it relies on the implicit
-        #   assumption that the substrings match. A more robust approach would
-        #   be to generate this mapping while building the comp rep.
         return tuple(
-            i for i, col in enumerate(self.comp_rep_columns) if col.startswith(name)
+            i
+            for i, col in enumerate(self.comp_rep_columns)
+            if col in p.comp_rep_columns
         )
 
     @staticmethod
