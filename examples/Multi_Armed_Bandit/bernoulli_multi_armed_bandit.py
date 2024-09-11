@@ -25,6 +25,7 @@ from baybe.recommenders import (
 )
 from baybe.surrogates import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.targets import BinaryTarget
+from baybe.utils.random import set_random_seed
 
 ### An Imaginary Use Case
 
@@ -61,6 +62,10 @@ class MultiArmedBandit:
 
 ### Setup
 
+# Setting a random seed for reproducability.
+
+set_random_seed(42)
+
 # For our example, we use a system with a fixed collection of win rates, which we
 # assume are unknown to us:
 
@@ -78,13 +83,14 @@ BANDIT = MultiArmedBandit(WIN_RATES)
 # To estimate the corresponding effects, we simulate each campaign for a certain number of steps and repeat this process in multiple Monte Carlo runs:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
+print(SMOKE_TEST)
 
 ACQFS = [
     qThompsonSampling(),  # Online optimization
     PosteriorStandardDeviation(),  # Active learning
 ]
-N_MC_RUNS = 2 if SMOKE_TEST else 10
-N_ITERATIONS = 2 if SMOKE_TEST else 200
+N_MC_RUNS = 2 if SMOKE_TEST else 3
+N_ITERATIONS = 2 if SMOKE_TEST else 50
 
 
 ### Building the Model
