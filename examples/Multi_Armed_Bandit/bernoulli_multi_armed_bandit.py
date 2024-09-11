@@ -89,8 +89,8 @@ ACQFS = [
     qThompsonSampling(),  # Online optimization
     PosteriorStandardDeviation(),  # Active learning
 ]
-N_MC_RUNS = 2 if SMOKE_TEST else 3
-N_ITERATIONS = 2 if SMOKE_TEST else 50
+N_MC_RUNS = 3 if SMOKE_TEST else 10
+N_ITERATIONS = 50 if SMOKE_TEST else 200
 
 
 ### Building the Model
