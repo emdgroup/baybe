@@ -62,7 +62,7 @@ class MultiArmedBandit:
 
 ### Setup
 
-# Setting a random seed for reproducability.
+# Setting a random seed for reproducibility.
 
 set_random_seed(42)
 
