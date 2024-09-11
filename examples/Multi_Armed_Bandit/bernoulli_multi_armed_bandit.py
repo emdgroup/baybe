@@ -83,7 +83,6 @@ BANDIT = MultiArmedBandit(WIN_RATES)
 # To estimate the corresponding effects, we simulate each campaign for a certain number of steps and repeat this process in multiple Monte Carlo runs:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-print(SMOKE_TEST)
 
 ACQFS = [
     qThompsonSampling(),  # Online optimization
