@@ -25,4 +25,4 @@
 - Di Jin (Merck Life Science KGaA, Darmstadt, Germany):\
   Cardinality constraints
 - Karin Hrovatin (Merck KGaA, Darmstadt, Germany):\
-  Add scikit-fingerprints support
+`scikit-fingerprints` support
