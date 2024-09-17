@@ -139,6 +139,27 @@ which is a circular topological fingerprint similar to Morgan fingerprint.
 * ``MORDRED``: Chemical descriptor based fingerprint.
 * ``RDKIT``: The RDKit fingerprint, which is based on hashing of molecular sub-graphs.
 
+You can adjust fingerprint computation with parameters for `Fingerprint` classes from `scikit-fingerprints`.
+These can be specified via the `kwargs_fingerprint` in the `SubstanceParameter` class.
+
+```python
+from baybe.parameters import SubstanceParameter
+
+SubstanceParameter(
+    name="Solvent",
+    data={
+        "Water": "O",
+        "1-Octanol": "CCCCCCCCO",
+        "Toluene": "CC1=CC=CC=C1",
+    },
+    encoding="ECFP", 
+    kwargs_fingerprint = {
+        "n_jobs" : 2,  # Parallelize fingerprint computation across input molecules
+        "fp_size" : 1024,  # Change the number of computed fingerprint features
+    },
+)
+```
+
 These calculations will typically result in 500 to 1500 numbers per molecule.
 To avoid detrimental effects on the surrogate model fit, we reduce the number of 
 descriptors via decorrelation before using them. 
