@@ -73,10 +73,10 @@ class SubstanceParameter(DiscreteParameter):
     )
     # See base class.
 
-    kwargs_fingerprint: dict = field(default={})
+    kwargs_fingerprint: dict = field(factory=dict)
     """Kwargs for fingerprint generator"""
 
-    kwargs_conformer: dict = field(default={})
+    kwargs_conformer: dict = field(factory=dict)
     """Kwargs for conformer generator"""
 
     @data.validator
