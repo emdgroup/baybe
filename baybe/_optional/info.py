@@ -42,7 +42,7 @@ with exclude_sys_path(os.getcwd()):
 #   directly depend on the flag – we thus simply set it to `True`.
 TYPOS_INSTALLED = True
 
-# Package combinations
+# Information on whether all required packages for certain functionality are available
 CHEM_INSTALLED = SKFP_INSTALLED
 LINT_INSTALLED = all(
     (
