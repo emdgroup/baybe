@@ -1,5 +1,6 @@
 """Parameter-related enumerations."""
 
+import warnings
 from enum import Enum
 
 
@@ -68,6 +69,11 @@ class SubstanceEncoding(ParameterEncoding):
         """
         if value in SubstanceEncodingAliases.__members__:
             replace = SubstanceEncodingAliases[str(value)].value
+            warnings.warn(
+                f"Fingerprint name {value} has changed and will be disabled in "
+                f"a future version. Use fingerprint name {replace} instead.",
+                DeprecationWarning,
+            )
             return cls(replace)
         else:
             return super()._missing_(value)

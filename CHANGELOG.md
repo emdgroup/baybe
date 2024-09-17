@@ -29,7 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of negating the computational representation
 - Fingerprint encodings are now computed exclusively with `scikit-fingerprints` package. 
   Previously available `SubstanceParameter` values for `encoding` attribute are still valid,
-  with `MORGAN_FP` now being an alias for `ECFP`.
+  with `MORGAN_FP` now being an alias for `ECFP`. 
+  However, the alias `MORGAN_FP` will be deprecated in future versions.
   Additional values for `encoding` attribute are available, corresponding to
   `scikit-fingerprints` fingerprint classes (see 
   [Parameters documentation](https://emdgroup.github.io/baybe/userguide/parameters.html#substanceparameter) 
