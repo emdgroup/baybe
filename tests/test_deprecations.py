@@ -8,6 +8,7 @@ from baybe.exceptions import DeprecationError
 from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
+from baybe.parameters import SubstanceEncoding
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
@@ -117,3 +118,9 @@ def test_deprecated_surrogate_registration():
 
     with pytest.raises(DeprecationError):
         register_custom_architecture()
+
+
+def test_deprecated_morgan_fp(acqf):
+    """Deprecated fingerprint name raises warning and uses a replacement."""
+    with pytest.warns(DeprecationWarning):
+        assert SubstanceEncoding("MORGAN_FP") == SubstanceEncoding("ECFP")
