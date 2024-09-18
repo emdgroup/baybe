@@ -100,19 +100,19 @@ def smiles_to_fingerprint_features(
         fingerprint_name: Name of Fingerprint class used to
             transform smiles to fingerprints
         prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-        kwargs_conformer: kwargs for ConformerGenerator
-        kwargs_fingerprint: kwargs for ConformerGenerator
+        kwargs_conformer: kwargs for conformer generator
+        kwargs_fingerprint: kwargs for fingerprint generator
 
     Returns:
         Dataframe containing fingerprints for each SMILES string.
     """
-    kwargs_fingerprint = {} if kwargs_fingerprint is None else kwargs_fingerprint
+    kwargs_fingerprint = kwargs_fingerprint or {}
     fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_name)(
         **kwargs_fingerprint
     )
 
     if fingerprint_encoder.requires_conformers:
-        kwargs_conformer = {} if kwargs_conformer is None else kwargs_conformer
+        kwargs_conformer = kwargs_conformer or {}
         smiles_list = ConformerGenerator(**kwargs_conformer).transform(
             MolFromSmilesTransformer().transform(smiles_list)
         )
