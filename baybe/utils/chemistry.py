@@ -112,7 +112,7 @@ def smiles_to_fingerprint_features(
     )
 
     if fingerprint_encoder.requires_conformers:
-        kwargs_conformer = {} if kwargs_conformer is None else kwargs_conformer
+        kwargs_conformer = kwargs_conformer or {}
         smiles_list = ConformerGenerator(**kwargs_conformer).transform(
             MolFromSmilesTransformer().transform(smiles_list)
         )
