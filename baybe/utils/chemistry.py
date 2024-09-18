@@ -106,7 +106,7 @@ def smiles_to_fingerprint_features(
     Returns:
         Dataframe containing fingerprints for each SMILES string.
     """
-    kwargs_fingerprint = {} if kwargs_fingerprint is None else kwargs_fingerprint
+    kwargs_fingerprint = kwargs_fingerprint or {}
     fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_name)(
         **kwargs_fingerprint
     )
