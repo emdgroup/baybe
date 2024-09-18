@@ -69,21 +69,22 @@ def name_to_smiles(name: str) -> str:
 
 @lru_cache(maxsize=None)
 @_disk_cache
-def _smiles_str_to_fingerprint_features(
+def _molecule_to_fingerprint_features(
     fingerprint_encoder: BaseFingerprintTransformer,
-    smiles_str: str,
+    molecule: str | Chem.PropertyMol.PropertyMol,
 ) -> np.ndarray:
     """Compute molecular fingerprint for a single SMILES string.
 
     Args:
         fingerprint_encoder: Instance of Fingerprint class used to
             transform smiles string to fingerprint
-        smiles_str: Smiles string
+        molecule: Smiles string or molecule object,
+            depending on what should be input into fingerprint_encoder's transform
 
     Returns:
         Array containing fingerprint for SMILES string.
     """
-    return fingerprint_encoder.transform([smiles_str])
+    return fingerprint_encoder.transform([molecule])
 
 
 def smiles_to_fingerprint_features(
@@ -114,16 +115,18 @@ def smiles_to_fingerprint_features(
     )
 
     if fingerprint_encoder.requires_conformers:
-        smiles_list = ConformerGenerator(**kwargs_conformer).transform(
+        mol_list = ConformerGenerator(**kwargs_conformer).transform(
             MolFromSmilesTransformer().transform(smiles_list)
         )
+    else:
+        mol_list = smiles_list
 
     features = np.concatenate(
         [
-            _smiles_str_to_fingerprint_features(
-                fingerprint_encoder=fingerprint_encoder, smiles_str=smiles_str
+            _molecule_to_fingerprint_features(
+                fingerprint_encoder=fingerprint_encoder, molecule=mol
             )
-            for smiles_str in smiles_list
+            for mol in mol_list
         ]
     )
     name = f"skfp{fingerprint_encoder.__class__.__name__.replace('Fingerprint', '')}_"
