@@ -107,12 +107,13 @@ def smiles_to_fingerprint_features(
         Dataframe containing fingerprints for each SMILES string.
     """
     kwargs_fingerprint = kwargs_fingerprint or {}
+    kwargs_conformer = kwargs_conformer or {}
+
     fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_name)(
         **kwargs_fingerprint
     )
 
     if fingerprint_encoder.requires_conformers:
-        kwargs_conformer = kwargs_conformer or {}
         smiles_list = ConformerGenerator(**kwargs_conformer).transform(
             MolFromSmilesTransformer().transform(smiles_list)
         )
