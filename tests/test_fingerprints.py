@@ -24,8 +24,18 @@ def test_fingerprint_computation():
     # Also run one time without passing kwargs
     smiles_to_fingerprint_features(
         smiles_list=smiles_list,
-        fingerprint_name=SubstanceEncoding("MORGAN_FP").name,
+        fingerprint_name=SubstanceEncoding("MORDRED").name,
         prefix="",
         kwargs_conformer=None,
         kwargs_fingerprint=None,
     )
+
+    # Check that fingerprint embedding is of correct size and
+    # fingerprint kwargs specifying embedding size are used
+    assert smiles_to_fingerprint_features(
+        smiles_list=smiles_list,
+        fingerprint_name=SubstanceEncoding("ECFP").name,
+        prefix="",
+        kwargs_conformer=None,
+        kwargs_fingerprint={"fp_size": 64},
+    ).shape == (len(smiles_list), 64)
