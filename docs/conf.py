@@ -249,7 +249,7 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "sklearn_extra": ("https://scikit-learn-extra.readthedocs.io/en/stable", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "torch": ("https://pytorch.org/docs/master/", None),
+    "torch": ("https://pytorch.org/docs/main/", None),
     "rdkit": ("https://rdkit.org/docs/", None),
 }
 
