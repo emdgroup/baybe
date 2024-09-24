@@ -1294,22 +1294,29 @@
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If no parameter with the provided name exists.</span>
+<span class="sd">            ValueError: If more than one parameter with the provided name exists.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A tuple containing the integer indices of the columns in the computational</span>
 <span class="sd">            representation associated with the parameter. When the parameter is not part</span>
 <span class="sd">            of the computational representation, an empty tuple is returned.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">):</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameters_by_name</span><span class="p">([</span><span class="n">name</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;There exists no parameter named &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in the search space.&quot;</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;There exist multiple parameter matches for &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in the search &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;space.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="c1"># TODO: The &quot;startswith&quot; approach is not ideal since it relies on the implicit</span>
-        <span class="c1">#   assumption that the substrings match. A more robust approach would</span>
-        <span class="c1">#   be to generate this mapping while building the comp rep.</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
-            <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comp_rep_columns</span><span class="p">)</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">i</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comp_rep_columns</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">comp_rep_columns</span>
         <span class="p">)</span></div>
 
 

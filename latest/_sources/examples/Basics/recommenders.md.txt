@@ -285,6 +285,8 @@ _smiles_to_mordred_features('CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('CC1=CC=C(C)C=C1')
+
+
     _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
 
 
@@ -319,15 +321,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base         Ligand  Temperature  \
-    86   Butyornitrile   Potassium acetate  (t-Bu)PhCPhos        105.0   
-    187    Butyl Ester     Cesium pivalate      BrettPhos        120.0   
-    278           DMAc  Potassium pivalate      BrettPhos        120.0   
+             Solvent                Base                        Ligand  \
+    28      p-Xylene      Cesium acetate                 (t-Bu)PhCPhos   
+    424     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    324  Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration  
-    86           0.153  
-    187          0.100  
-    278          0.153  
+         Temperature  Concentration  
+    28          90.0          0.100  
+    424         90.0          0.100  
+    324         90.0          0.057  
 
 
 
@@ -340,15 +342,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base         Ligand  Temperature  \
-    86   Butyornitrile   Potassium acetate  (t-Bu)PhCPhos        105.0   
-    187    Butyl Ester     Cesium pivalate      BrettPhos        120.0   
-    278           DMAc  Potassium pivalate      BrettPhos        120.0   
+             Solvent                Base                        Ligand  \
+    28      p-Xylene      Cesium acetate                 (t-Bu)PhCPhos   
+    424     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    324  Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration      yield  
-    86           0.153  22.374071  
-    187          0.100   2.189760  
-    278          0.153  18.223441  
+         Temperature  Concentration      yield  
+    28          90.0          0.100  17.837303  
+    424         90.0          0.100   5.649895  
+    324         90.0          0.057   3.882168  
 
 
 
