@@ -235,6 +235,59 @@ We create the searchspace and the objective.
 searchspace = SearchSpace.from_product(parameters=parameters)
 ```
 
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C.[Cs+]')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[Cs+]')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C.[K+]')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[K+]')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+
+
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+_smiles_to_mordred_features('CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3')
+    _______________________________________smiles_to_mordred_features - 0.2s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC
+4)C(OC)=CC=C2OC')
+
+
+    _______________________________________smiles_to_mordred_features - 0.3s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC(C)(C)P(C1=CC=CC=C1)C(C)(C)C')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+
+
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCCCOC(C)=O')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCCC#N')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC(N(C)C)=O')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CC1=CC=C(C)C=C1')
+    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+
+
 
 ```python
 objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
@@ -266,10 +319,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent             Base         Ligand  Temperature  Concentration
-    167         DMAc   Cesium acetate      BrettPhos        105.0          0.153
-    36   Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos         90.0          0.057
-    146  Butyl Ester   Cesium acetate      BrettPhos         90.0          0.153
+               Solvent                Base         Ligand  Temperature  \
+    86   Butyornitrile   Potassium acetate  (t-Bu)PhCPhos        105.0   
+    187    Butyl Ester     Cesium pivalate      BrettPhos        120.0   
+    278           DMAc  Potassium pivalate      BrettPhos        120.0   
+    
+         Concentration  
+    86           0.153  
+    187          0.100  
+    278          0.153  
 
 
 
@@ -282,15 +340,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent             Base         Ligand  Temperature  Concentration  \
-    167         DMAc   Cesium acetate      BrettPhos        105.0          0.153   
-    36   Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos         90.0          0.057   
-    146  Butyl Ester   Cesium acetate      BrettPhos         90.0          0.153   
+               Solvent                Base         Ligand  Temperature  \
+    86   Butyornitrile   Potassium acetate  (t-Bu)PhCPhos        105.0   
+    187    Butyl Ester     Cesium pivalate      BrettPhos        120.0   
+    278           DMAc  Potassium pivalate      BrettPhos        120.0   
     
-             yield  
-    167  25.068910  
-    36   24.335035  
-    146  23.398659  
+         Concentration      yield  
+    86           0.153  22.374071  
+    187          0.100   2.189760  
+    278          0.153  18.223441  
 
 
 

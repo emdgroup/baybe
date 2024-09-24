@@ -157,6 +157,14 @@ searchspace = SearchSpace.from_product(parameters=parameters, constraints=constr
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('CC')
     _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCC')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
 
 
 
