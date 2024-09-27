@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     import polars as pl
     from torch import Tensor
 
+from itertools import chain, repeat
+
 
 @define
 class Constraint(ABC, SerialMixin):
@@ -289,51 +291,24 @@ class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
 
 
 @define(frozen=True)
-class ContinuousInterPointLinearConstraint(ContinuousConstraint, ABC):
-    """A class for single parameter inter-point constraints."""
+class ContinuousInterPointLinearConstraint(ContinuousLinearConstraint, ABC):
+    """Abstract class for inter-point constraints.
+
+    An inter-point constraint is a constraint that is defined over full batches. That
+    is, and inter-point constraint of the form ``param_1 + 2*param_2 <=2`` means that
+    the sum of ``param2`` plus two times the sum of ``param_2`` across the full batch
+    must not exceed 2.
+    """
 
     eval_during_creation = False
     eval_during_modeling = True
     numerical_only = True
 
-    parameters: list[str] = field(
-        validator=[min_len(1)],
-        converter=lambda x: [x] if isinstance(x, str) else x,
-    )
-    """The parameter the constraint is handling. Note that the parameter can also be
-    handed over as a single ``str``, which is then converted into a list internally."""
-
-    # object variables
-    coefficients: Sequence[tuple[str, int, float]] = field()
-    """Sequence of tuples (parameter_name, batch_number, coefficient) describing the
-    in-/equality. Note that it is assumed that the first batch has number 0."""
-
-    rhs: float = field(default=0.0)
-    """Right-hand side value of the in-/equality."""
-
-    @coefficients.validator
-    def _check_coefficients(self, attribute, value):
-        for index, tup in enumerate(value):
-            if len(tup) != 3:
-                raise ValueError(f"Tuple at index {index} does not have 3 elements.")
-            if tup[0] not in self.parameters:
-                raise ValueError(
-                    f"Parameter {tup[0]} specified in tuple {tup} is not declared in "
-                    "the parameters list of the constraint."
-                )
-
-    @property
-    def _batchnumbers(self) -> list[int]:
-        """Return the batch numbers of the constraint."""
-        return [tup[1] for tup in self.coefficients]
-
-    @property
-    def _raw_coefficients(self) -> list[float]:
-        """Return the raw coefficients of the constraint."""
-        return [tup[2] for tup in self.coefficients]
-
     def to_botorch(
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+        self,
+        parameters: Sequence[NumericalContinuousParameter],
+        batch_size: int,
+        idx_offset: int = 0,
     ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
@@ -342,11 +317,18 @@ class ContinuousInterPointLinearConstraint(ContinuousConstraint, ABC):
 
         Args:
             parameters: The parameter objects of the continuous space.
+            batch_size: The size of the batch for which the constraint is applied.
             idx_offset: Offset to the provided parameter indices.
+
+        Raises:
+            ValueError: If ``batch_size`` is smaller than 1.
 
         Returns:
             The tuple required by botorch.
         """
+        if batch_size < 1:
+            raise ValueError(f"Batch size must be at least 1 but is {batch_size}.")
+
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
@@ -356,9 +338,10 @@ class ContinuousInterPointLinearConstraint(ContinuousConstraint, ABC):
         param_index = {name: param_names.index(name) for name in self.parameters}
         param_indices = [
             (batch, param_index[name] + idx_offset)
-            for name, batch, _ in self.coefficients
+            for name in self.parameters
+            for batch in range(batch_size)
         ]
-        coefficients = [coefficient for _, _, coefficient in self.coefficients]
+        coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
         return (
             torch.tensor(param_indices),
             torch.tensor(coefficients, dtype=DTypeFloatTorch),
