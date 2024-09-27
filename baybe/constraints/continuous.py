@@ -1,9 +1,11 @@
 """Continuous constraints."""
 
 import math
+from typing import Literal
 
 import numpy as np
-from attrs import define
+from attr.validators import in_
+from attrs import define, field
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -31,13 +33,19 @@ class ContinuousLinearInequalityConstraint(ContinuousLinearConstraint):
 
     The constraint is defined as ``sum_i[ x_i * c_i ] >= rhs``, where x_i are the
     parameter names from ``parameters`` and c_i are the entries of ``coefficients``.
-    If you want to implement a constraint of the form `<=`, multiply ``rhs`` and
-    ``coefficients`` by -1. The constraint is typically fulfilled up to a small
-    numerical tolerance.
-
-    The class has no real content as it only serves the purpose of
-    distinguishing the constraints.
+    A constraint of the form `<=` can be achieved by changing the ``operator`` or
+    multiplying ``rhs`` and ``coefficients`` by -1. The constraint is typically
+    fulfilled up to a small numerical tolerance.
     """
+
+    operator: Literal[">=", "<="] = field(default=">=", validator=in_((">=", "<=")))
+    """Defines the inequality operator used in the equation. Internally this will
+    negate rhs and coefficients for `<=`."""
+
+    @property
+    def _multiplier(self) -> float:
+        """The internal multiplier for rhs and coefficients."""
+        return 1.0 if self.operator == ">=" else -1.0
 
 
 @define

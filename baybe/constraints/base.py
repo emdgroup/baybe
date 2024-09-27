@@ -19,6 +19,7 @@ from baybe.serialization import (
     unstructure_base,
 )
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
     import polars as pl
@@ -208,7 +209,7 @@ class ContinuousLinearConstraint(ContinuousConstraint, ABC):
     coefficients: list[float] = field()
     """In-/equality coefficient for each entry in ``parameters``."""
 
-    rhs: float = field(default=0.0)
+    rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
 
     @coefficients.validator
@@ -279,9 +280,16 @@ class ContinuousLinearConstraint(ContinuousConstraint, ABC):
 
         return (
             torch.tensor(param_indices),
-            torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
-            np.asarray(self.rhs, dtype=DTypeFloatNumpy).item(),
+            torch.tensor(
+                [self._multiplier * c for c in self.coefficients], dtype=DTypeFloatTorch
+            ),
+            np.asarray(self._multiplier * self.rhs, dtype=DTypeFloatNumpy).item(),
         )
+
+    @property
+    def _multiplier(self) -> float:
+        """The internal multiplier for rhs and coefficients."""
+        return 1.0
 
 
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
