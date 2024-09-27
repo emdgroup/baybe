@@ -173,16 +173,24 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf
 
-        interpoint_constraints_lin_eq = [
-            c
-            for c in interpoint_constraints
-            if isinstance(c, ContinuousInterPointLinearEqualityConstraint)
-        ]
-        interpoint_constraints_lin_ineq = [
-            c
-            for c in interpoint_constraints
-            if isinstance(c, ContinuousInterPointLinearInequalityConstraint)
-        ]
+        interpoint_constraints_lin_eq = (
+            [
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
+                for c in interpoint_constraints
+                if isinstance(c, ContinuousInterPointLinearEqualityConstraint)
+            ]
+            if interpoint_constraints is not None
+            else []
+        )
+        interpoint_constraints_lin_ineq = (
+            [
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
+                for c in interpoint_constraints
+                if isinstance(c, ContinuousInterPointLinearInequalityConstraint)
+            ]
+            if interpoint_constraints is not None
+            else []
+        )
 
         points, _ = optimize_acqf(
             acq_function=self._botorch_acqf,
@@ -193,14 +201,14 @@ class BotorchRecommender(BayesianRecommender):
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
-                + interpoint_constraints_lin_eq
             ]
+            + interpoint_constraints_lin_eq
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             inequality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_ineq
-                + interpoint_constraints_lin_ineq
             ]
+            + interpoint_constraints_lin_ineq
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             sequential=self.sequential_continuous,
         )
