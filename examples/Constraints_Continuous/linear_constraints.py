@@ -74,7 +74,7 @@ constraints = [
         parameters=["x_1", "x_3"], coefficients=[1.0, 1.0], rhs=1.0
     ),
     ContinuousLinearInequalityConstraint(
-        parameters=["x_2", "x_4"], coefficients=[-2.0, -3.0], rhs=-1.0
+        parameters=["x_2", "x_4"], coefficients=[2.0, 3.0], rhs=-1.0, operator="<="
     ),
 ]
 
