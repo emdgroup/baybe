@@ -2,11 +2,13 @@
 
 import warnings
 from abc import ABC
+from collections.abc import Sequence
 
 import pandas as pd
 from attr import fields
 from attrs import define
 
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
@@ -24,6 +26,8 @@ class NonPredictiveRecommender(PureRecommender, ABC):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -53,10 +57,14 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 f"=False.",
                 UnusedObjectWarning,
             )
+        # TODO How and where to check for interpoint constraints? Should passing them
+        # in a non-continuous spaceraise a ValueError at the earliest point possible
+        # or should this also just raise a warning here?
         return super().recommend(
             batch_size=batch_size,
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
             pending_experiments=pending_experiments,
+            interpoint_constraints=interpoint_constraints,
         )
