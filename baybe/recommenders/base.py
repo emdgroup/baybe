@@ -1,11 +1,13 @@
 """Base protocol for all recommenders."""
 
+from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
 import cattrs
 import pandas as pd
 from cattrs import override
 
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
 from baybe.serialization import converter, unstructure_base
@@ -27,6 +29,8 @@ class RecommenderProtocol(Protocol):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
 
@@ -44,6 +48,9 @@ class RecommenderProtocol(Protocol):
                 the measured outcomes.
             pending_experiments: Parameter configurations in "experimental
                 representation" specifying experiments that are currently pending.
+            interpoint_constraints: Sequence of inter-point constraints that are used
+                for the recommendation. Currently only supported for continuous search
+                spaces.
 
         Returns:
             A dataframe containing the recommendations in experimental representation
