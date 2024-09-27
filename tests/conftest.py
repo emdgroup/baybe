@@ -544,6 +544,12 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             min_cardinality=1,
             max_cardinality=2,
         ),
+        "ContiConstraint_6": ContinuousLinearInequalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1.0, 3.0],
+            rhs=0.3,
+            operator="<=",
+        ),
     }
     return [
         c_item

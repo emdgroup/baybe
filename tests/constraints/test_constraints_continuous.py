@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from pytest import param
 
 from baybe.constraints import (
     ContinuousLinearEqualityConstraint,
@@ -58,6 +59,18 @@ def test_inequality2(campaign, n_iterations, batch_size):
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
 
 
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize("constraint_names", [["ContiConstraint_6"]])
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_inequality3(campaign, n_iterations, batch_size):
+    """Test inequality constraint with unequal weights."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+
+    assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).le(0.301).all()
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "parameter_names",
@@ -92,26 +105,76 @@ def test_hybridspace_ineq(campaign, n_iterations, batch_size):
     assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
 
 
-def test_invalid_constraints():
+@pytest.mark.parametrize(
+    ("cl", "parameters", "coefficients", "rhs", "kws"),
+    [
+        param(
+            ContinuousLinearEqualityConstraint,
+            ["A", "B"],
+            [1.0],
+            0.0,
+            {},
+            id="eq_too_few_coeffs",
+        ),
+        param(
+            ContinuousLinearEqualityConstraint,
+            ["A", "B"],
+            [1.0, 2.0, 3.0],
+            0.0,
+            {},
+            id="eq_too_many_coeffs",
+        ),
+        param(
+            ContinuousLinearEqualityConstraint,
+            ["A", "B"],
+            [1.0, 2.0],
+            "bla",
+            {},
+            id="eq_invalid_rhs",
+        ),
+        param(
+            ContinuousLinearInequalityConstraint,
+            ["A", "B"],
+            [1.0],
+            0.0,
+            {},
+            id="ineq_too_few_coeffs",
+        ),
+        param(
+            ContinuousLinearInequalityConstraint,
+            ["A", "B"],
+            [1.0, 2.0, 3.0],
+            0.0,
+            {},
+            id="ineq_too_many_coeffs",
+        ),
+        param(
+            ContinuousLinearInequalityConstraint,
+            ["A", "B"],
+            [1.0, 2.0],
+            "bla",
+            {},
+            id="ineq_invalid_rhs",
+        ),
+        param(
+            ContinuousLinearInequalityConstraint,
+            ["A", "B"],
+            [1.0, 2.0],
+            0.0,
+            {"operator": "=="},
+            id="ineq_invalid_operator1",
+        ),
+        param(
+            ContinuousLinearInequalityConstraint,
+            ["A", "B"],
+            [1.0, 2.0],
+            0.0,
+            {"operator": 2.0},
+            id="ineq_invalid_operator1",
+        ),
+    ],
+)
+def test_invalid_constraints(cl, parameters, coefficients, rhs, kws):
     """Test invalid continuous constraint creations."""
-    # number of parameters and coefficients doesn't match
-
     with pytest.raises(ValueError):
-        ContinuousLinearEqualityConstraint(
-            parameters=["A", "B"], coefficients=[1.0], rhs=0.0
-        )
-
-    with pytest.raises(ValueError):
-        ContinuousLinearEqualityConstraint(
-            parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
-        )
-
-    with pytest.raises(ValueError):
-        ContinuousLinearInequalityConstraint(
-            parameters=["A", "B"], coefficients=[1.0], rhs=0.0
-        )
-
-    with pytest.raises(ValueError):
-        ContinuousLinearInequalityConstraint(
-            parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
-        )
+        cl(parameters=parameters, coefficients=coefficients, rhs=rhs, **kws)
