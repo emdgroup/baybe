@@ -1,11 +1,13 @@
 """Base classes for all pure recommenders."""
 
 from abc import ABC
+from collections.abc import Sequence
 from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
 
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.exceptions import NotEnoughPointsLeftError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
@@ -47,11 +49,15 @@ class PureRecommender(ABC, RecommenderProtocol):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
-                subspace_continuous=searchspace.continuous, batch_size=batch_size
+                subspace_continuous=searchspace.continuous,
+                batch_size=batch_size,
+                interpoint_constraints=interpoint_constraints,
             )
         else:
             return self._recommend_with_discrete_parts(
@@ -89,6 +95,7 @@ class PureRecommender(ABC, RecommenderProtocol):
                 searchspace=SearchSpace(discrete=subspace_discrete),
                 candidates_exp=candidates_exp,
                 batch_size=batch_size,
+                interpoint_constraints=None,
             ).index
         except NotImplementedError as exc:
             raise NotImplementedError(
@@ -104,6 +111,8 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         """Generate recommendations from a continuous search space.
 
@@ -111,6 +120,8 @@ class PureRecommender(ABC, RecommenderProtocol):
             subspace_continuous: The continuous subspace from which to generate
                 recommendations.
             batch_size: The size of the recommendation batch.
+            interpoint_constraints: Sequence of inter-point constraints that are used
+                during recommendation.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
@@ -125,6 +136,7 @@ class PureRecommender(ABC, RecommenderProtocol):
                 searchspace=SearchSpace(continuous=subspace_continuous),
                 candidates_exp=pd.DataFrame(),
                 batch_size=batch_size,
+                interpoint_constraints=interpoint_constraints,
             )
         except NotImplementedError as exc:
             raise NotImplementedError(
@@ -141,6 +153,8 @@ class PureRecommender(ABC, RecommenderProtocol):
         searchspace: SearchSpace,
         candidates_exp: pd.DataFrame,
         batch_size: int,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         """Generate recommendations from a hybrid search space.
 
@@ -154,6 +168,8 @@ class PureRecommender(ABC, RecommenderProtocol):
             candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
+            interpoint_constraints: Sequence of inter-point constraints that are used
+                during recommendation.
 
         Raises:
             NotImplementedError: If the function is not implemented by the child class.
