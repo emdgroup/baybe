@@ -69,11 +69,14 @@ $$
 where $x_i$ is the value of the $i$'th parameter affected by the constraint,
 $c_i$ is the coefficient for that parameter, and $\text{rhs}$ is a user-chosen number.
 
-```{admonition} Reversing the inequality
-:class: note
-You can specify a constraint involving `<=` instead of `>=` by multiplying
-both sides, i.e. the coefficients and rhs, by -1.
-```
+A constraint of the form
+
+$$
+\sum_{i} x_i \cdot c_i <= \text{rhs}
+$$
+
+can be achieved by multiplying both sides, i.e. the coefficients and rhs, by -1 or
+by using the convenience keyword `operator`.
 
 Let us amend [the example from `ContinuousLinearEqualityConstraint`](#CLEQ) and assume
 that there is always a fourth component to the mixture that serves as a "filler".
@@ -84,9 +87,10 @@ The following constraint would achieve this:
 from baybe.constraints import ContinuousLinearInequalityConstraint
 
 ContinuousLinearInequalityConstraint(
-    parameters=["x_1", "x_2", "x_3"],  # these parameters must exist in the search space
-    coefficients=[-1.0, -1.0, -1.0],
-    rhs=-0.8,  # coefficients and rhs are negated because we model a `<=` constraint
+    parameters=["x_1", "x_2", "x_3"],
+    coefficients=[1.0, 1.0, 1.0],
+    rhs=0.8,
+    operator="<=",
 )
 ```
 
