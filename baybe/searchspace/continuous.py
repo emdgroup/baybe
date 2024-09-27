@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Collection, Sequence
-from itertools import chain
+from itertools import chain, repeat
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -14,11 +14,11 @@ from attr import define, field
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousInterPointLinearEqualityConstraint,
-    ContinuousInterPointLinearInequalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.constraints.validation import (
     validate_cardinality_constraints_are_nonoverlapping,
 )
@@ -70,16 +70,6 @@ class SubspaceContinuous(SerialMixin):
     )
     """Nonlinear constraints."""
 
-    constraints_interpoint_lin_eq: tuple[
-        ContinuousInterPointLinearEqualityConstraint
-    ] = field(converter=to_tuple, factory=tuple)
-    "Interpoint linear equality constraints."
-
-    constraints_interpoint_lin_ineq: tuple[
-        ContinuousInterPointLinearInequalityConstraint
-    ] = field(converter=to_tuple, factory=tuple)
-    "Interpoint linear inequality constraints."
-
     def __str__(self) -> str:
         if self.is_empty:
             return ""
@@ -93,34 +83,18 @@ class SubspaceContinuous(SerialMixin):
         nonlin_constraints_list = [
             constr.summary() for constr in self.constraints_nonlin
         ]
-        interpoint_eq_constraints_list = [
-            constr.summary() for constr in self.constraints_interpoint_lin_eq
-        ]
-        interpoint_ineq_constraints_list = [
-            constr.summary() for constr in self.constraints_interpoint_lin_ineq
-        ]
         nonlin_constraints_list = [
             constr.summary() for constr in self.constraints_nonlin
         ]
         param_df = pd.DataFrame(param_list)
         lin_eq_df = pd.DataFrame(eq_constraints_list)
         lin_ineq_df = pd.DataFrame(ineq_constraints_list)
-        interpoint_lin_eq_df = pd.DataFrame(interpoint_eq_constraints_list)
-        interpoint_lin_ineq_df = pd.DataFrame(interpoint_ineq_constraints_list)
         nonlinear_df = pd.DataFrame(nonlin_constraints_list)
 
         fields = [
             to_string("Continuous Parameters", pretty_print_df(param_df)),
             to_string("Linear Equality Constraints", pretty_print_df(lin_eq_df)),
             to_string("Linear Inequality Constraints", pretty_print_df(lin_ineq_df)),
-            to_string(
-                "Linear Interpoint Equality Constraints",
-                pretty_print_df(interpoint_lin_eq_df),
-            ),
-            to_string(
-                "Linear Interpoint Inequality Constraints",
-                pretty_print_df(interpoint_lin_ineq_df),
-            ),
             to_string("Non-linear Constraints", pretty_print_df(nonlinear_df)),
         ]
 
@@ -185,16 +159,6 @@ class SubspaceContinuous(SerialMixin):
                 c
                 for c in constraints
                 if isinstance(c, ContinuousLinearInequalityConstraint)
-            ],
-            constraints_interpoint_lin_eq=[  # type:ignore[misc]
-                c
-                for c in constraints
-                if isinstance(c, ContinuousInterPointLinearEqualityConstraint)
-            ],
-            constraints_interpoint_lin_ineq=[  # type:ignore[misc]
-                c
-                for c in constraints
-                if isinstance(c, ContinuousInterPointLinearInequalityConstraint)
             ],
             constraints_nonlin=[
                 c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
@@ -298,22 +262,17 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def is_constrained(self) -> bool:
-        """Return whether the subspace is constrained in any way."""
+        """Return whether the subspace is constrained in any way.
+
+        Note that this does not check for inter-point constraints as these are not part
+        of the space.
+        """
         return any(
             (
-                self.constraints_interpoint_lin_eq,
-                self.constraints_interpoint_lin_ineq,
                 self.constraints_lin_eq,
                 self.constraints_lin_ineq,
                 self.constraints_nonlin,
             )
-        )
-
-    @property
-    def has_interpoint_constraints(self) -> bool:
-        """Return whether or not the space has any interpoint constraints."""
-        return any(
-            (self.constraints_interpoint_lin_eq, self.constraints_interpoint_lin_ineq)
         )
 
     def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
@@ -393,11 +352,18 @@ class SubspaceContinuous(SerialMixin):
         )
         return self.sample_uniform(n_points)
 
-    def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
+    def sample_uniform(
+        self,
+        batch_size: int = 1,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
+    ) -> pd.DataFrame:
         """Draw uniform random parameter configurations from the continuous space.
 
         Args:
             batch_size: The number of parameter configurations to be sampled.
+            interpoint_constraints: Sequence of inter-point constraints that need to be
+                respected during sampling.
 
         Returns:
             A dataframe containing the parameter configurations as rows with columns
@@ -418,12 +384,12 @@ class SubspaceContinuous(SerialMixin):
         if not self.parameters:
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
         # If the space is completely unconstrained, we can sample from bounds.
-        if not self.is_constrained:
+        if not self.is_constrained and interpoint_constraints is None:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
-        if self.has_interpoint_constraints:
+        if interpoint_constraints is not None:
             return self._sample_from_polytope_with_interpoint_constraints(
-                batch_size, self.comp_rep_bounds.values
+                batch_size, self.comp_rep_bounds.values, interpoint_constraints
             )
 
         # If there are no cardinality constraints, we sample directly from the polytope
@@ -441,7 +407,10 @@ class SubspaceContinuous(SerialMixin):
         return pd.DataFrame(points, columns=self.parameter_names)
 
     def _sample_from_polytope_with_interpoint_constraints(
-        self, batch_size: int, bounds: np.ndarray
+        self,
+        batch_size: int,
+        bounds: np.ndarray,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint],
     ) -> pd.DataFrame:
         """Draw uniform random samples from a polytope with interpoint constraints."""
         # If the space has interpoint constraints, we need to sample from a larger
@@ -460,93 +429,17 @@ class SubspaceContinuous(SerialMixin):
 
         eq_constraints, ineq_constraints = [], []
         # We start with creating the interpoint constraints
-        for c in [
-            *self.constraints_interpoint_lin_eq,
-            *self.constraints_interpoint_lin_ineq,
-        ]:
-            # Get the index of the parameter that is used in this constraint
-            param_offset = self.parameter_names.index(c.parameters[0])
-            if batch_size < max(c._batchnumbers) + 1:
-                raise ValueError(
-                    f"Number of requested batches is smaller than number of "
-                    f"batches defined in the constraint {c}"
-                )
-            param_indices = [
-                batch_number * num_of_params + param_offset
-                for batch_number in c._batchnumbers
-            ]
-            coefficients = c._raw_coefficients
-            botorch_tuple = (
-                torch.tensor(param_indices),
-                torch.tensor(coefficients, dtype=DTypeFloatTorch),
-                np.asarray(c.rhs, dtype=DTypeFloatNumpy).item(),
-            )
-            if isinstance(c, ContinuousInterPointLinearEqualityConstraint):
-                eq_constraints.append(botorch_tuple)
-            else:
-                ineq_constraints.append(botorch_tuple)
-
-        # We now continue with the non-interpoint constraints which also need to be
-        # adjusted.
-        for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
-            param_indices, coefficients, rhs = c.to_botorch(self.parameters)
-            for b in range(batch_size):
-                botorch_tuple = (param_indices + b * num_of_params, coefficients, rhs)
-                if isinstance(c, ContinuousLinearEqualityConstraint):
-                    eq_constraints.append(botorch_tuple)
-                else:
-                    ineq_constraints.append(botorch_tuple)
-
-        bounds_joint = torch.cat(
-            [torch.from_numpy(bounds) for _ in range(batch_size)], dim=-1
-        )
-        points = get_polytope_samples(
-            n=1,
-            bounds=bounds_joint,
-            equality_constraints=eq_constraints,
-            inequality_constraints=ineq_constraints,
-        )
-        points = points.reshape(batch_size, points.shape[-1] // batch_size)
-        return pd.DataFrame(points, columns=self.parameter_names)
-
-    def _sample_from_polytope_with_interpoint_constraints(
-        self, batch_size: int, bounds: np.ndarray
-    ) -> pd.DataFrame:
-        """Draw uniform random samples from a polytope with interpoint constraints."""
-        # If the space has interpoint constraints, we need to sample from a larger
-        # searchspace that models the batch size via additional dimension. This is
-        # necessary since `get_polytope_samples` cannot handle inter-point constraints,
-        # see https://github.com/pytorch/botorch/issues/2468
-
-        import torch
-        from botorch.utils.sampling import get_polytope_samples
-
-        from baybe.utils.numerical import DTypeFloatNumpy
-        from baybe.utils.torch import DTypeFloatTorch
-
-        # The number of parameters is needed at some places for adjusting indices
-        num_of_params = len(self.parameters)
-
-        eq_constraints, ineq_constraints = [], []
-        # We start with creating the interpoint constraints
-        for c in [
-            *self.constraints_interpoint_lin_eq,
-            *self.constraints_interpoint_lin_ineq,
-        ]:
-            # Get the offset of the parameters used in this constraint
-            param_offset = {
+        for c in interpoint_constraints:
+            # Get the indices of the parameters used in the constraint
+            param_index = {
                 name: self.parameter_names.index(name) for name in c.parameters
             }
-            if batch_size < max(c._batchnumbers) + 1:
-                raise ValueError(
-                    f"Number of requested batches is smaller than number of "
-                    f"batches defined in the constraint {c}"
-                )
             param_indices = [
-                batch * num_of_params + param_offset[name]
-                for name, batch, _ in c.coefficients
+                batch * num_of_params + param_index[param]
+                for param in c.parameters
+                for batch in range(batch_size)
             ]
-            coefficients = c._raw_coefficients
+            coefficients = list(chain(*zip(*repeat(c.coefficients, batch_size))))
             botorch_tuple = (
                 torch.tensor(param_indices),
                 torch.tensor(coefficients, dtype=DTypeFloatTorch),
