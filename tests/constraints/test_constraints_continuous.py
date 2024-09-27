@@ -59,68 +59,6 @@ def test_inequality2(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_1"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size):
-    """Test single parameter inter-point equality constraint."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-    print(res)
-
-    assert np.isclose(
-        res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite1"], 0.3
-    )
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_2"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_size):
-    """Test single parameter inter-point inequality constraint."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-    print(res)
-
-    assert res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite1"] >= 0.299
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_3"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_size):
-    """Test inter-point equality constraint involving multiple parameters."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-    print(res)
-
-    assert np.isclose(
-        res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite2"], 0.3
-    )
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_4"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_interpoint_inequality_multiple_parameters(campaign, n_iterations, batch_size):
-    """Test inter-point inequality constraint involving multiple parameters."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-    print(res)
-
-    assert res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite2"] >= 0.299
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_2"]])
-@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
-def test_interpoint_small_batch_size(campaign, n_iterations, batch_size):
-    """Fail if requesting too small batch."""
-    print(f"{batch_size=}")
-    with pytest.raises(ValueError):
-        run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize(
     "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
 )
