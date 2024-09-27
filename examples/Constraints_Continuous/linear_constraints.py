@@ -151,48 +151,36 @@ print(
 
 # It is also possible to require inter-point constraints which constraint the value of
 # a single parameter across a full batch.
+# Since these constraints require information about the batch size, they are not used
+# during the creation of the search space but handed over to the `recommend` call.
 # This example models the following inter-point constraints and combines them also
 # with regular constraints.
-# 1. The sum of `x_1` across the first three batches needs to be at least 2.5.
-# 2. The sum of `x_2` across the first four batches needs to be exactly 3.
-# 3. The sum of `x_1` and `x_3` across the first three batches needs to be at least 5.
+# 1. The sum of `x_1` across all batches needs to be >= 2.5.
+# 2. The sum of `x_2` across all batches needs to be exactly 5.
+# 3. The sum of `2*x_3` minus the sum of `x_4` across all batches needs to be >= 5.
+
 
 inter_constraints = [
     ContinuousInterPointLinearInequalityConstraint(
         parameters=["x_1"],
-        coefficients=[("x_1", 0, 1), ("x_1", 1, 1), ("x_1", 2, 1)],
+        coefficients=[1],
         rhs=2.5,
     ),
     ContinuousInterPointLinearEqualityConstraint(
-        parameters="x_2",  # For single parameters, parameter names are converted.
-        coefficients=[("x_2", 0, 1), ("x_2", 1, 1), ("x_2", 2, 1), ("x_2", 3, 1)],
-        rhs=3,
-    ),
-    ContinuousInterPointLinearEqualityConstraint(
-        parameters=["x_1", "x_3"],
-        coefficients=[
-            ("x_1", 0, 1),
-            ("x_1", 1, 1),
-            ("x_1", 2, 1),
-            ("x_3", 0, 1),
-            ("x_3", 1, 1),
-            ("x_3", 2, 1),
-        ],
+        parameters=["x_2"],
+        coefficients=[1],
         rhs=5,
     ),
-    ContinuousLinearEqualityConstraint(
-        parameters=["x_1", "x_2"], coefficients=[1, 1], rhs=2
-    ),
-    ContinuousLinearInequalityConstraint(
-        parameters=["x_3", "x_4"], coefficients=[-1, 1], rhs=-1
+    ContinuousInterPointLinearInequalityConstraint(
+        parameters=["x_3", "x_4"],
+        coefficients=[2, -1],
+        rhs=5,
     ),
 ]
 
-### Re-construct search space and campaign and run some iterations
+### Construct search space without the previous constraints
 
-inter_searchspace = SearchSpace.from_product(
-    parameters=parameters, constraints=inter_constraints
-)
+inter_searchspace = SearchSpace.from_product(parameters=parameters)
 
 inter_campaign = Campaign(
     searchspace=inter_searchspace,
@@ -200,7 +188,9 @@ inter_campaign = Campaign(
 )
 
 for k in range(N_ITERATIONS):
-    rec = inter_campaign.recommend(batch_size=BATCH_SIZE)
+    rec = inter_campaign.recommend(
+        batch_size=BATCH_SIZE, interpoint_constraints=inter_constraints
+    )
 
     # target value are looked up via the botorch wrapper
     target_values = []
@@ -210,21 +200,6 @@ for k in range(N_ITERATIONS):
     rec["Target"] = target_values
     inter_campaign.add_measurements(rec)
     # Check inter-point constraints
-    assert rec.at[0, "x_1"] + rec.at[1, "x_1"] + rec.at[2, "x_1"] >= 2.5 - TOLERANCE
-    assert np.isclose(
-        rec.at[0, "x_2"] + rec.at[1, "x_2"] + rec.at[2, "x_2"] + rec.at[3, "x_2"],
-        3,
-    )
-    assert (
-        rec.at[0, "x_1"]
-        + rec.at[1, "x_1"]
-        + rec.at[2, "x_1"]
-        + rec.at[0, "x_3"]
-        + rec.at[1, "x_3"]
-        + rec.at[2, "x_3"]
-        >= 4 - TOLERANCE
-    )
-    # Check normal constraints for each batch individually
-    for b in range(BATCH_SIZE):
-        assert np.isclose(rec.at[b, "x_1"] + rec.at[b, "x_2"], 2)
-        assert -rec.at[b, "x_3"] + rec.at[b, "x_4"] >= -1 - TOLERANCE
+    assert rec["x_1"].sum() >= 2.5 - TOLERANCE
+    assert np.isclose(rec["x_2"].sum(), 5)
+    assert 2 * rec["x_3"].sum() - rec["x_4"].sum() >= 2.5 - TOLERANCE
