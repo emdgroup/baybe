@@ -240,7 +240,13 @@ def _continuous_linear_constraints(
         )
     )
     rhs = draw(finite_floats())
-    return constraint_type(parameter_names, coefficients, rhs)
+
+    # Optionally add the operator
+    kwargs = {}
+    if constraint_type is ContinuousLinearInequalityConstraint:
+        kwargs["operator"] = draw(st.sampled_from([">=", "<="]))
+
+    return constraint_type(parameter_names, coefficients, rhs, **kwargs)
 
 
 continuous_linear_equality_constraints = partial(
