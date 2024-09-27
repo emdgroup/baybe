@@ -3,13 +3,14 @@
 #  this file will resolve type errors
 # mypy: disable-error-code="arg-type"
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from typing import Literal
 
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, in_, instance_of
 
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
 from baybe.recommenders.meta.base import MetaRecommender
@@ -57,6 +58,8 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> PureRecommender:
         # See base class.
 
@@ -137,6 +140,8 @@ class SequentialMetaRecommender(MetaRecommender):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> PureRecommender:
         # See base class.
 
@@ -227,6 +232,8 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> PureRecommender:
         # See base class.
 
