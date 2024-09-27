@@ -2,6 +2,7 @@
 
 import warnings
 from abc import ABC
+from collections.abc import Sequence
 
 import pandas as pd
 from attrs import define, field, fields
@@ -9,6 +10,7 @@ from attrs import define, field, fields
 from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.exceptions import DeprecationError, InvalidSurrogateModelError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
@@ -94,6 +96,8 @@ class BayesianRecommender(PureRecommender, ABC):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
@@ -132,4 +136,5 @@ class BayesianRecommender(PureRecommender, ABC):
             objective=objective,
             measurements=measurements,
             pending_experiments=pending_experiments,
+            interpoint_constraints=interpoint_constraints,
         )
