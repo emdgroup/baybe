@@ -6,9 +6,8 @@ try:
     import shap
 except ModuleNotFoundError as ex:
     raise OptionalImportError(
-        "Feature importance ranking functionality is unavailable "
-        "because 'shap' is not installed. "
-        "Consider installing BayBE with 'polars' dependency, e.g. via "
+        "Shapley functionality is unavailable because 'shap' is not installed. "
+        "Consider installing BayBE with 'shap' dependency, e.g. via "
         "`pip install baybe[shap]`."
     ) from ex
 
