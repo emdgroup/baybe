@@ -6,7 +6,7 @@ the utilization of custom models. All surrogate models are based upon the genera
 [`Surrogate`](baybe.surrogates.base.Surrogate) class. Some models even support transfer
 learning, as indicated by the `supports_transfer_learning` attribute.
 
-## Available models
+## Available Models
 
 BayBE provides a comprehensive selection of surrogate models, empowering you to choose
 the most suitable option for your specific needs. The following surrogate models are
@@ -40,6 +40,16 @@ explainer = shap.Explainer(model, data)
 shap_values = explainer(data)
 shap.plots.bar(shap_values)
 ~~~
+
+```{admonition} Current Scalarization Limitations
+:class: note
+Currently, ``get_surrogate`` always returns the surrogate model with respect to the
+transformed target(s) / objective. This means that if you are using a
+``SingleTargetObjective`` with a transformed target or a ``DesirabilityObjective``, the
+model's output will correspond to the transformed quantities and not the original
+untransformed target(s). If you are using the model for subsequent analysis this should
+be kept in mind.
+```
 
 ## Using Custom Models
 
