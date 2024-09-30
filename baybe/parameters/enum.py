@@ -70,8 +70,8 @@ class SubstanceEncoding(ParameterEncoding):
         if value in SubstanceEncodingAliases.__members__:
             replace = SubstanceEncodingAliases[str(value)].value
             warnings.warn(
-                f"Fingerprint name {value} has changed and will be disabled in "
-                f"a future version. Use fingerprint name {replace} instead.",
+                f"Substance encoding '{value}' is deprecated and will be disabled in "
+                f"a future version. Use '{replace}' instead.",
                 DeprecationWarning,
             )
             return cls(replace)
