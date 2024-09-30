@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import time
 import warnings
+from collections.abc import Sequence
 from itertools import chain
 from unittest.mock import Mock
 
@@ -28,6 +29,8 @@ from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
+    ContinuousInterPointLinearEqualityConstraint,
+    ContinuousInterPointLinearInequalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
     DiscreteCardinalityConstraint,
@@ -42,6 +45,7 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.kernels import MaternKernel
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -552,6 +556,37 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
     ]
 
 
+@pytest.fixture(name="interpoint_constraints")
+def fixture_interpoint_constraints(interpoint_constraints_names: list[str]):
+    valid_interpoint_constraints = {
+        "InterConstraint_1": ContinuousInterPointLinearEqualityConstraint(
+            parameters=["Conti_finite1"],
+            coefficients=[1],
+            rhs=0.3,
+        ),
+        "InterConstraint_2": ContinuousInterPointLinearInequalityConstraint(
+            parameters=["Conti_finite1"],
+            coefficients=[2],
+            rhs=0.3,
+        ),
+        "InterConstraint_3": ContinuousInterPointLinearEqualityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[1, 1],
+            rhs=0.3,
+        ),
+        "InterConstraint_4": ContinuousInterPointLinearInequalityConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[2, -1],
+            rhs=0.3,
+        ),
+    }
+    return [
+        c_item
+        for c_name, c_item in valid_interpoint_constraints.items()
+        if c_name in interpoint_constraints_names
+    ]
+
+
 @pytest.fixture(name="target_names")
 def fixture_default_target_selection():
     """The default targets to be used if not specified differently."""
@@ -886,7 +921,11 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
     ),
 )
 def run_iterations(
-    campaign: Campaign, n_iterations: int, batch_size: int, add_noise: bool = True
+    campaign: Campaign,
+    n_iterations: int,
+    batch_size: int,
+    add_noise: bool = True,
+    interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint] = None,
 ) -> None:
     """Run a campaign for some fake iterations.
 
@@ -898,10 +937,14 @@ def run_iterations(
         n_iterations: Number of iterations run.
         batch_size: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
+        interpoint_constraints: Sequence of inter-point constraints that need to be
+            respected during the recommendation.
     """
     with temporary_seed(int(time.time())):
         for k in range(n_iterations):
-            rec = campaign.recommend(batch_size=batch_size)
+            rec = campaign.recommend(
+                batch_size=batch_size, interpoint_constraints=interpoint_constraints
+            )
             # dont use parameter noise for these tests
 
             add_fake_results(rec, campaign.targets)

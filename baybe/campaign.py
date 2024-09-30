@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import cattrs
@@ -12,6 +13,7 @@ from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
@@ -223,6 +225,8 @@ class Campaign(SerialMixin):
         self,
         batch_size: int,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
         batch_quantity: int = None,  # type: ignore[assignment]
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
@@ -231,6 +235,8 @@ class Campaign(SerialMixin):
             batch_size: Number of requested recommendations.
             pending_experiments: Parameter configurations specifying experiments
                 that are currently pending.
+            interpoint_constraints: Sequence of inter-point constraints that are used
+                during recommendation.
             batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
@@ -245,6 +251,14 @@ class Campaign(SerialMixin):
                 f"{batch_size=}."
             )
 
+        if (
+            self.searchspace.type != SearchSpaceType.CONTINUOUS
+            and interpoint_constraints is not None
+        ):
+            raise ValueError(
+                "Inter-point constraints are currently only supported for"
+                "continuous search spaces."
+            )
         # Invalidate cached recommendation if pending experiments are provided
         if (pending_experiments is not None) and (len(pending_experiments) > 0):
             self._cached_recommendation = pd.DataFrame()
@@ -266,6 +280,7 @@ class Campaign(SerialMixin):
             self.objective,
             self._measurements_exp,
             pending_experiments,
+            interpoint_constraints,
         )
 
         # Cache the recommendations

@@ -1,6 +1,7 @@
 """Botorch recommender."""
 
 import math
+from collections.abc import Sequence
 from typing import Any, ClassVar
 
 import pandas as pd
@@ -8,6 +9,11 @@ from attr.converters import optional
 from attrs import define, field
 
 from baybe.acquisition.acqfs import qThompsonSampling
+from baybe.constraints import (
+    ContinuousInterPointLinearEqualityConstraint,
+    ContinuousInterPointLinearInequalityConstraint,
+)
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
@@ -138,6 +144,8 @@ class BotorchRecommender(BayesianRecommender):
         self,
         subspace_continuous: SubspaceContinuous,
         batch_size: int,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         """Generate recommendations from a continuous search space.
 
@@ -145,6 +153,8 @@ class BotorchRecommender(BayesianRecommender):
             subspace_continuous: The continuous subspace from which to generate
                 recommendations.
             batch_size: The size of the recommendation batch.
+            interpoint_constraints: Sequence of inter-point constraints that need to be
+                respected by the generated recommendations.
 
         Raises:
             IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
@@ -163,6 +173,25 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf
 
+        interpoint_constraints_lin_eq = (
+            [
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
+                for c in interpoint_constraints
+                if isinstance(c, ContinuousInterPointLinearEqualityConstraint)
+            ]
+            if interpoint_constraints is not None
+            else []
+        )
+        interpoint_constraints_lin_ineq = (
+            [
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
+                for c in interpoint_constraints
+                if isinstance(c, ContinuousInterPointLinearInequalityConstraint)
+            ]
+            if interpoint_constraints is not None
+            else []
+        )
+
         points, _ = optimize_acqf(
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
@@ -173,11 +202,13 @@ class BotorchRecommender(BayesianRecommender):
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
             ]
+            + interpoint_constraints_lin_eq
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             inequality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_ineq
             ]
+            + interpoint_constraints_lin_ineq
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             sequential=self.sequential_continuous,
         )
@@ -218,6 +249,8 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
+        # TODO Interpoint constraints?
+
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
             raise IncompatibleAcquisitionFunctionError(

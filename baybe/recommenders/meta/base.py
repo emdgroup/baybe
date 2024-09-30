@@ -1,17 +1,19 @@
 """Base classes for all meta recommenders."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any
 
 import cattrs
 import pandas as pd
 from attrs import define, field
 
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
-from baybe.searchspace import SearchSpace
+from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.serialization import SerialMixin, converter, unstructure_base
 from baybe.serialization.core import get_base_structure_hook
 
@@ -34,6 +36,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> PureRecommender:
         """Select a pure recommender for the given experimentation context.
 
@@ -60,6 +64,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> PureRecommender:
         """Get the recommender for the next recommendation.
 
@@ -86,6 +92,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
                 objective=objective,
                 measurements=measurements,
                 pending_experiments=pending_experiments,
+                interpoint_constraints=interpoint_constraints,
             )
             self._current_recommender = recommender
 
@@ -98,6 +105,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         """See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
         recommender = self.get_next_recommender(
@@ -106,7 +115,20 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             objective=objective,
             measurements=measurements,
             pending_experiments=pending_experiments,
+            interpoint_constraints=interpoint_constraints,
         )
+
+        # Raise an error if the search space is not continuous but inter-point
+        # constraints were provided.
+        # TODO What is the best place to check for this?
+        if (
+            searchspace.type != SearchSpaceType.CONTINUOUS
+            and interpoint_constraints is not None
+        ):
+            raise ValueError(
+                "You provided inter-point constraints for a non-continuous search space"
+                " which is not supported."
+            )
 
         # Non-predictive recommenders should not be called with an objective or
         # measurements. Using dict value type Any here due to known mypy complication:
@@ -124,6 +146,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             batch_size=batch_size,
             searchspace=searchspace,
             pending_experiments=pending_experiments,
+            interpoint_constraints=interpoint_constraints,
             **optional_args,
         )
         self._used_recommender_ids.add(id(recommender))

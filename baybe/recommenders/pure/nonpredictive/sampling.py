@@ -1,11 +1,13 @@
 """Recommenders based on sampling."""
 
+from collections.abc import Sequence
 from typing import ClassVar
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+from baybe.constraints.continuous import ContinuousInterPointLinearConstraint
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.plotting import to_string
@@ -24,13 +26,18 @@ class RandomRecommender(NonPredictiveRecommender):
         searchspace: SearchSpace,
         candidates_exp: pd.DataFrame,
         batch_size: int,
+        interpoint_constraints: Sequence[ContinuousInterPointLinearConstraint]
+        | None = None,
     ) -> pd.DataFrame:
         # See base class.
 
         if searchspace.type == SearchSpaceType.DISCRETE:
             return candidates_exp.sample(batch_size)
 
-        cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
+        # TODO Can we maybe enable this for continuous parameters already?
+        cont_random = searchspace.continuous.sample_uniform(
+            batch_size=batch_size, interpoint_constraints=interpoint_constraints
+        )
         if searchspace.type == SearchSpaceType.CONTINUOUS:
             return cont_random
 

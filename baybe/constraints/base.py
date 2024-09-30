@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     import polars as pl
     from torch import Tensor
 
+from itertools import chain, repeat
+
 
 @define
 class Constraint(ABC, SerialMixin):
@@ -286,6 +288,65 @@ class ContinuousLinearConstraint(ContinuousConstraint, ABC):
 
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
+
+
+@define(frozen=True)
+class ContinuousInterPointLinearConstraint(ContinuousLinearConstraint, ABC):
+    """Abstract class for inter-point constraints.
+
+    An inter-point constraint is a constraint that is defined over full batches. That
+    is, and inter-point constraint of the form ``param_1 + 2*param_2 <=2`` means that
+    the sum of ``param2`` plus two times the sum of ``param_2`` across the full batch
+    must not exceed 2.
+    """
+
+    eval_during_creation = False
+    eval_during_modeling = True
+    numerical_only = True
+
+    def to_botorch(
+        self,
+        parameters: Sequence[NumericalContinuousParameter],
+        batch_size: int,
+        idx_offset: int = 0,
+    ) -> tuple[Tensor, Tensor, float]:
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ``optimize_acqf_*`` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            batch_size: The size of the batch for which the constraint is applied.
+            idx_offset: Offset to the provided parameter indices.
+
+        Raises:
+            ValueError: If ``batch_size`` is smaller than 1.
+
+        Returns:
+            The tuple required by botorch.
+        """
+        if batch_size < 1:
+            raise ValueError(f"Batch size must be at least 1 but is {batch_size}.")
+
+        import torch
+
+        from baybe.utils.torch import DTypeFloatTorch
+
+        param_names = [p.name for p in parameters]
+        # Get the indices of the parameters used in the constraint
+        param_index = {name: param_names.index(name) for name in self.parameters}
+        param_indices = [
+            (batch, param_index[name] + idx_offset)
+            for name in self.parameters
+            for batch in range(batch_size)
+        ]
+        coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
+        return (
+            torch.tensor(param_indices),
+            torch.tensor(coefficients, dtype=DTypeFloatTorch),
+            np.asarray(self.rhs, dtype=DTypeFloatNumpy).item(),
+        )
 
 
 # Register (un-)structure hooks

@@ -58,6 +58,21 @@ def test_inequality2(campaign, n_iterations, batch_size):
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
 
 
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize(
+    "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
+)
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
+    """Test mixing interpoint and normal inequality constraints."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+
+    assert res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite1"] >= 0.299
+    assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "parameter_names",
@@ -114,4 +129,24 @@ def test_invalid_constraints():
     with pytest.raises(ValueError):
         ContinuousLinearInequalityConstraint(
             parameters=["A", "B"], coefficients=[1.0, 2.0, 3.0], rhs=0.0
+        )
+
+    with pytest.raises(ValueError):
+        ContinuousLinearEqualityConstraint(
+            parameters=["A", "B"], coefficients=["C", 0, 1], rhs=0.0
+        )
+
+    with pytest.raises(ValueError):
+        ContinuousLinearInequalityConstraint(
+            parameters=["A", "B"], coefficients=["C", 0, 1], rhs=0.0
+        )
+
+    with pytest.raises(ValueError):
+        ContinuousLinearEqualityConstraint(
+            parameters=["A"], coefficients=["A", 0], rhs=0.0
+        )
+
+    with pytest.raises(ValueError):
+        ContinuousLinearInequalityConstraint(
+            parameters=["A"], coefficients=["A", 0], rhs=0.0
         )

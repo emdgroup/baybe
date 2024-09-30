@@ -3,6 +3,8 @@
 from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
+    ContinuousInterPointLinearEqualityConstraint,
+    ContinuousInterPointLinearInequalityConstraint,
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
@@ -28,6 +30,8 @@ __all__ = [
     "ContinuousCardinalityConstraint",
     "ContinuousLinearEqualityConstraint",
     "ContinuousLinearInequalityConstraint",
+    "ContinuousInterPointLinearEqualityConstraint",
+    "ContinuousInterPointLinearInequalityConstraint",
     # --- Discrete constraints ---#
     "DiscreteCardinalityConstraint",
     "DiscreteCustomConstraint",
