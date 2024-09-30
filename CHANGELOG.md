@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
   instead of negating the computational representation
 - Fingerprint encodings are now computed exclusively with the `scikit-fingerprints` package, 
-  granting access to all fingerprints available within `scikit-fingerprints`.
+  granting access to all fingerprints available therein.
   The `SubstanceParameter` value `MORGAN_FP` is now an alias for `ECFP` 
   and will be deprecated in future versions.
 
