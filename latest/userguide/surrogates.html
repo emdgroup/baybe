@@ -987,10 +987,16 @@
         <article role="main" id="furo-main-content">
           <section class="tex2jax_ignore mathjax_ignore" id="surrogates">
 <h1>Surrogates<a class="headerlink" href="#surrogates" title="Link to this heading">¶</a></h1>
-<p>Surrogate models are used to model and estimate the unknown objective function of the DoE campaign. BayBE offers a diverse array of surrogate models, while also allowing for the utilization of custom models. All surrogate models are based upon the general <a class="reference internal" href="../_autosummary/baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate" title="baybe.surrogates.base.Surrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Surrogate</span></code></span></a> class. Some models even support transfer learning, as indicated by the <code class="docutils literal notranslate"><span class="pre">supports_transfer_learning</span></code> attribute.</p>
+<p>Surrogate models are used to model and estimate the unknown objective function of the
+DoE campaign. BayBE offers a diverse array of surrogate models, while also allowing for
+the utilization of custom models. All surrogate models are based upon the general
+<a class="reference internal" href="../_autosummary/baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate" title="baybe.surrogates.base.Surrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Surrogate</span></code></span></a> class. Some models even support transfer
+learning, as indicated by the <code class="docutils literal notranslate"><span class="pre">supports_transfer_learning</span></code> attribute.</p>
 <section id="available-models">
-<h2>Available models<a class="headerlink" href="#available-models" title="Link to this heading">¶</a></h2>
-<p>BayBE provides a comprehensive selection of surrogate models, empowering you to choose the most suitable option for your specific needs. The following surrogate models are available within BayBE:</p>
+<h2>Available Models<a class="headerlink" href="#available-models" title="Link to this heading">¶</a></h2>
+<p>BayBE provides a comprehensive selection of surrogate models, empowering you to choose
+the most suitable option for your specific needs. The following surrogate models are
+available within BayBE:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate" title="baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">GaussianProcessSurrogate</span></code></span></a></p></li>
 <li><p><a class="reference internal" href="../_autosummary/baybe.surrogates.linear.BayesianLinearSurrogate.html#baybe.surrogates.linear.BayesianLinearSurrogate" title="baybe.surrogates.linear.BayesianLinearSurrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">BayesianLinearSurrogate</span></code></span></a></p></li>
@@ -999,9 +1005,42 @@
 <li><p><a class="reference internal" href="../_autosummary/baybe.surrogates.random_forest.RandomForestSurrogate.html#baybe.surrogates.random_forest.RandomForestSurrogate" title="baybe.surrogates.random_forest.RandomForestSurrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">RandomForestSurrogate</span></code></span></a></p></li>
 </ul>
 </section>
+<section id="extracting-the-model-for-advanced-study">
+<h2>Extracting the Model for Advanced Study<a class="headerlink" href="#extracting-the-model-for-advanced-study" title="Link to this heading">¶</a></h2>
+<p>In principle, the surrogate model does not need to be a persistent object during
+Bayesian optimization since each iteration performs a new fit anyway. However, for
+advanced study, such as investigating the posterior predictions, acquisition functions
+or feature importance, it can be useful to diretly extract the current surrogate model.</p>
+<p>For this, BayBE provides the <code class="docutils literal notranslate"><span class="pre">get_surrogate</span></code> method, which is available for the
+<a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.get_surrogate" title="baybe.campaign.Campaign.get_surrogate"><span class="xref myst py py-meth"><code class="docutils literal notranslate"><span class="pre">Campaign</span></code></span></a> or for
+<a class="reference internal" href="../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.get_surrogate" title="baybe.recommenders.pure.bayesian.base.BayesianRecommender.get_surrogate"><span class="xref myst py py-meth">recommenders</span></a>.
+Below an example of how to utilize this in conjunction with the popular SHAP package:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Assuming we already have a campaign created and measurements added</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">measurements</span><span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">campaign</span><span class="o">.</span><span class="n">parameters</span><span class="p">]]</span>
+<span class="n">model</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">campaign</span><span class="o">.</span><span class="n">get_surrogate</span><span class="p">()</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span>
+
+<span class="c1"># Apply SHAP</span>
+<span class="n">explainer</span> <span class="o">=</span> <span class="n">shap</span><span class="o">.</span><span class="n">Explainer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="n">shap_values</span> <span class="o">=</span> <span class="n">explainer</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">shap</span><span class="o">.</span><span class="n">plots</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">shap_values</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="note admonition">
+<p class="admonition-title">Current Scalarization Limitations</p>
+<p>Currently, <code class="docutils literal notranslate"><span class="pre">get_surrogate</span></code> always returns the surrogate model with respect to the
+transformed target(s) / objective. This means that if you are using a
+<code class="docutils literal notranslate"><span class="pre">SingleTargetObjective</span></code> with a transformed target or a <code class="docutils literal notranslate"><span class="pre">DesirabilityObjective</span></code>, the
+model’s output will correspond to the transformed quantities and not the original
+untransformed target(s). If you are using the model for subsequent analysis this should
+be kept in mind.</p>
+</div>
+</section>
 <section id="using-custom-models">
-<h2>Using custom models<a class="headerlink" href="#using-custom-models" title="Link to this heading">¶</a></h2>
-<p>BayBE goes one step further by allowing you to incorporate custom models based on the ONNX architecture. Note however that these cannot be retrained.  For a detailed explanation on using custom models, refer to the comprehensive examples provided in the corresponding <a class="reference internal" href="../examples/Custom_Surrogates/Custom_Surrogates.html"><span class="doc std std-doc">example folder</span></a>.</p>
+<h2>Using Custom Models<a class="headerlink" href="#using-custom-models" title="Link to this heading">¶</a></h2>
+<p>BayBE goes one step further by allowing you to incorporate custom models based on the
+ONNX architecture. Note however that these cannot be retrained. For a detailed
+explanation on using custom models, refer to the comprehensive examples provided in the
+corresponding <a class="reference internal" href="../examples/Custom_Surrogates/Custom_Surrogates.html"><span class="doc std std-doc">example folder</span></a>.</p>
 </section>
 </section>
 
@@ -1061,8 +1100,9 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Surrogates</a><ul>
-<li><a class="reference internal" href="#available-models">Available models</a></li>
-<li><a class="reference internal" href="#using-custom-models">Using custom models</a></li>
+<li><a class="reference internal" href="#available-models">Available Models</a></li>
+<li><a class="reference internal" href="#extracting-the-model-for-advanced-study">Extracting the Model for Advanced Study</a></li>
+<li><a class="reference internal" href="#using-custom-models">Using Custom Models</a></li>
 </ul>
 </li>
 </ul>

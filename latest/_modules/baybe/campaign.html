@@ -995,7 +995,6 @@
 
 <span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibilityError</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">to_objective</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.single</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">Parameter</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.base</span> <span class="kn">import</span> <span class="n">RecommenderProtocol</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.meta.base</span> <span class="kn">import</span> <span class="n">MetaRecommender</span>
@@ -1010,7 +1009,6 @@
 <span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="n">SerialMixin</span><span class="p">,</span> <span class="n">converter</span>
 <span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">SurrogateProtocol</span>
 <span class="kn">from</span> <span class="nn">baybe.targets.base</span> <span class="kn">import</span> <span class="n">Target</span>
-<span class="kn">from</span> <span class="nn">baybe.targets.numerical</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
 <span class="kn">from</span> <span class="nn">baybe.telemetry</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">TELEM_LABELS</span><span class="p">,</span>
     <span class="n">telemetry_record_recommended_measurement_percentage</span><span class="p">,</span>
@@ -1317,19 +1315,14 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Surrogate: The surrogate of the current recommender.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># TODO: remove temporary restriction when target transformations can be handled</span>
-        <span class="k">match</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">:</span>
-            <span class="k">case</span> <span class="n">SingleTargetObjective</span><span class="p">(</span>
-                <span class="n">_target</span><span class="o">=</span><span class="n">NumericalTarget</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
-            <span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">b</span><span class="o">.</span><span class="n">is_bounded</span><span class="p">:</span>
-                <span class="k">pass</span>
-            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                    <span class="s2">&quot;Surrogate model access is currently only supported for a single &quot;</span>
-                    <span class="s2">&quot;untransformed target.&quot;</span>
-                <span class="p">)</span>
 
+<span class="sd">        Note:</span>
+<span class="sd">            Currently, this method always returns the surrogate model with respect to</span>
+<span class="sd">            the transformed target(s) / objective. This means that if you are using a</span>
+<span class="sd">            ``SingleTargetObjective`` with a transformed target or a</span>
+<span class="sd">            ``DesirabilityObjective``, the model&#39;s output will correspond to the</span>
+<span class="sd">            transformed quantities and not the original untransformed target(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">IncompatibilityError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;No surrogate is available since no &#39;</span><span class="si">{</span><span class="n">Objective</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; is defined.&quot;</span>

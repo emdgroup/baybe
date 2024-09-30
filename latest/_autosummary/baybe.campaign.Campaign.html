@@ -1181,6 +1181,14 @@ numerical parameters need to be within their tolerances.</p></li>
 <dd class="field-odd"><p><a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate" title="baybe.surrogates.base.Surrogate"><em>Surrogate</em></a></p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Currently, this method always returns the surrogate model with respect to
+the transformed target(s) / objective. This means that if you are using a
+<code class="docutils literal notranslate"><span class="pre">SingleTargetObjective</span></code> with a transformed target or a
+<code class="docutils literal notranslate"><span class="pre">DesirabilityObjective</span></code>, the model’s output will correspond to the
+transformed quantities and not the original untransformed target(s).</p>
+</div>
 </dd></dl>
 
 <dl class="py method">
