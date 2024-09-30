@@ -128,7 +128,7 @@ SubstanceParameter(
 ```
 
 The ``encoding`` option defines what kind of descriptors are calculated.
-All descriptors are calculated using 
+All descriptors are calculated using the
 [scikit-fingerprints package](https://github.com/scikit-fingerprints/scikit-fingerprints/).
 Any fingerprint class from `scikit-fingerprints` can be used as an input parameter for chemical encoding.
 The fingerprint class names should be passed in all upper case and without the `Fingeprint` suffix,
