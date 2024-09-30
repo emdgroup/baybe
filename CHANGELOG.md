@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- `get_surrogate` now also returns the model for transformed single targets or
+  desirability objectives
+
 ### Fixed
 - Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
 
