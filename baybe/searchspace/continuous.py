@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field, fields
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -102,6 +102,32 @@ class SubspaceContinuous(SerialMixin):
             for c in self.constraints_nonlin
             if isinstance(c, ContinuousCardinalityConstraint)
         )
+
+    @constraints_lin_eq.validator
+    def _validate_constraints_lin_eq(
+        self, _, lst: list[ContinuousLinearConstraint]
+    ) -> None:
+        """Validate linear equality constraints."""
+        # TODO Remove once eq and ineq constraints are consolidated into one list
+        if not all(c.is_eq for c in lst):
+            raise ValueError(
+                f"The list '{fields(self.__class__).constraints_lin_eq.name}' of "
+                f"{self.__class__.__name__} only accepts equality constraints, i.e. "
+                f"the 'operator' for all list items should be '='."
+            )
+
+    @constraints_lin_ineq.validator
+    def _validate_constraints_lin_ineq(
+        self, _, lst: list[ContinuousLinearConstraint]
+    ) -> None:
+        """Validate linear inequality constraints."""
+        # TODO Remove once eq and ineq constraints are consolidated into one list
+        if any(c.is_eq for c in lst):
+            raise ValueError(
+                f"The list '{fields(self.__class__).constraints_lin_ineq.name}' of "
+                f"{self.__class__.__name__} only accepts inequality constraints, i.e. "
+                f"the 'operator' for all list items should be '>=' or '<='."
+            )
 
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
