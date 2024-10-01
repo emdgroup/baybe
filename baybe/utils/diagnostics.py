@@ -5,16 +5,22 @@ import shap
 import torch
 
 from baybe import Campaign
+from baybe.utils.dataframe import to_tensor
 
 
 def shapley_values(
-    campaign: Campaign, explainer: callable = shap.KernelExplainer
+    campaign: Campaign,
+    explainer: callable = shap.KernelExplainer,
+    computational_representation: bool = False,
 ) -> shap.Explanation:
     """Compute the Shapley values for the provided campaign and data.
 
     Args:
         campaign: The campaign to be explained.
         explainer: The explainer to be used. Default is shap.KernelExplainer.
+        computational_representation: Whether to compute the Shapley values
+            in  computational or experimental searchspace.
+            Default is False.
 
     Returns:
         The Shapley values for the provided campaign and data.
@@ -27,15 +33,31 @@ def shapley_values(
 
     data = campaign.measurements[[p.name for p in campaign.parameters]]
 
-    def model(x):
-        df = pd.DataFrame(x, columns=data.columns)
+    if computational_representation:
+        data = campaign.searchspace.transform(data)
 
-        output = campaign.get_surrogate().posterior(df).mean
+        def model(x):
+            df = pd.DataFrame(x, columns=data.columns)
 
-        if isinstance(output, torch.Tensor):
-            return output.detach().numpy()
+            tensor = to_tensor(df)
 
-        return output
+            output = campaign.get_surrogate()._posterior_comp(tensor).mean
+
+            if isinstance(output, torch.Tensor):
+                return output.detach().numpy()
+
+            return output
+    else:
+
+        def model(x):
+            df = pd.DataFrame(x, columns=data.columns)
+
+            output = campaign.get_surrogate().posterior(df).mean
+
+            if isinstance(output, torch.Tensor):
+                return output.detach().numpy()
+
+            return output
 
     explain = explainer(model, data)
     shap_values = explain(data)
