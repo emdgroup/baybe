@@ -1,7 +1,10 @@
 """Continuous constraints."""
 
+from __future__ import annotations
+
 import math
-from typing import Literal
+from collections.abc import Collection, Sequence
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 from attr.validators import in_
@@ -9,43 +12,123 @@ from attrs import define, field
 
 from baybe.constraints.base import (
     CardinalityConstraint,
-    ContinuousLinearConstraint,
+    ContinuousConstraint,
     ContinuousNonlinearConstraint,
 )
+from baybe.parameters import NumericalContinuousParameter
+from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define
-class ContinuousLinearEqualityConstraint(ContinuousLinearConstraint):
-    """Class for continuous equality constraints.
+class ContinuousLinearConstraint(ContinuousConstraint):
+    """Class for continuous linear constraints.
 
-    The constraint is defined as ``sum_i[ x_i * c_i ] == rhs``, where x_i are the
-    parameter names from ``parameters`` and c_i are the entries of ``coefficients``.
-    The constraint is typically fulfilled up to a small numerical tolerance.
-
-    The class has no real content as it only serves the purpose of distinguishing the
-    constraints.
+    Continuous linear constraints use parameter lists and coefficients to define
+    in-/equality constraints over a continuous parameter space.
     """
 
+    # object variables
+    coefficients: list[float] = field()
+    """In-/equality coefficient for each entry in ``parameters``."""
 
-@define
-class ContinuousLinearInequalityConstraint(ContinuousLinearConstraint):
-    """Class for continuous inequality constraints.
+    rhs: float = field(default=0.0, converter=float, validator=finite_float)
+    """Right-hand side value of the in-/equality."""
 
-    The constraint is defined as ``sum_i[ x_i * c_i ] >= rhs``, where x_i are the
-    parameter names from ``parameters`` and c_i are the entries of ``coefficients``.
-    A constraint of the form `<=` can be achieved by changing the ``operator`` or
-    multiplying ``rhs`` and ``coefficients`` by -1. The constraint is typically
-    fulfilled up to a small numerical tolerance.
-    """
+    operator: Literal["=", "==", ">=", "<="] = field(
+        default=">=", validator=in_(("=", "==", ">=", "<="))
+    )
+    """Defines the operator used in the equation. Internally this will negate rhs and
+    coefficients for `<=`."""
 
-    operator: Literal[">=", "<="] = field(default=">=", validator=in_((">=", "<=")))
-    """Defines the inequality operator used in the equation. Internally this will
-    negate rhs and coefficients for `<=`."""
+    @coefficients.validator
+    def _validate_coefficients(  # noqa: DOC101, DOC103
+        self, _: Any, coefficients: list[float]
+    ) -> None:
+        """Validate the coefficients.
+
+        Raises:
+            ValueError: If the number of coefficients does not match the number of
+                parameters.
+        """
+        if len(self.parameters) != len(coefficients):
+            raise ValueError(
+                "The given 'coefficients' list must have one floating point entry for "
+                "each entry in 'parameters'."
+            )
+
+    @coefficients.default
+    def _default_coefficients(self):
+        """Return equal weight coefficients as default."""
+        return [1.0] * len(self.parameters)
 
     @property
     def _multiplier(self) -> float:
         """The internal multiplier for rhs and coefficients."""
-        return 1.0 if self.operator == ">=" else -1.0
+        return -1.0 if self.operator == "<=" else 1.0
+
+    @property
+    def is_eq(self):
+        """Whether this constraint models an equality (assumed inequality otherwise)."""
+        return self.operator in ["=", "=="]
+
+    def _drop_parameters(
+        self, parameter_names: Collection[str]
+    ) -> ContinuousLinearConstraint:
+        """Create a copy of the constraint with certain parameters removed.
+
+        Args:
+            parameter_names: The names of the parameter to be removed.
+
+        Returns:
+            The reduced constraint.
+        """
+        parameters = [p for p in self.parameters if p not in parameter_names]
+        coefficients = [
+            c
+            for p, c in zip(self.parameters, self.coefficients)
+            if p not in parameter_names
+        ]
+        return ContinuousLinearConstraint(
+            parameters, coefficients, self.rhs, self.operator
+        )
+
+    def to_botorch(
+        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+    ) -> tuple[Tensor, Tensor, float]:
+        """Cast the constraint in a format required by botorch.
+
+        Used in calling ``optimize_acqf_*`` functions, for details see
+        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+
+        Args:
+            parameters: The parameter objects of the continuous space.
+            idx_offset: Offset to the provided parameter indices.
+
+        Returns:
+            The tuple required by botorch.
+        """
+        import torch
+
+        from baybe.utils.torch import DTypeFloatTorch
+
+        param_names = [p.name for p in parameters]
+        param_indices = [
+            param_names.index(p) + idx_offset
+            for p in self.parameters
+            if p in param_names
+        ]
+
+        return (
+            torch.tensor(param_indices),
+            torch.tensor(
+                [self._multiplier * c for c in self.coefficients], dtype=DTypeFloatTorch
+            ),
+            np.asarray(self._multiplier * self.rhs, dtype=DTypeFloatNumpy).item(),
+        )
 
 
 @define
