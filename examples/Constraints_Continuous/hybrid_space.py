@@ -18,7 +18,7 @@ from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
 from baybe.constraints import (
-    ContinuousLinearEqualityConstraint,
+    ContinuousLinearConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -84,8 +84,8 @@ constraints = [
             threshold=1.0, operator="==", tolerance=STRIDE / 2.0
         ),
     ),
-    ContinuousLinearEqualityConstraint(
-        parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0
+    ContinuousLinearConstraint(
+        parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0, operator="="
     ),
 ]
 

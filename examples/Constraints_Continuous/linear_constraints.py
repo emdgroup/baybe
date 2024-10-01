@@ -18,10 +18,7 @@ import numpy as np
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
-from baybe.constraints import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
-)
+from baybe.constraints import ContinuousLinearConstraint
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
@@ -64,16 +61,16 @@ parameters = [
 # - $2.0*x_2 + 3.0*x_4 <= 1.0$ which is equivalent to $-2.0*x_2 - 3.0*x_4 >= -1.0$
 
 constraints = [
-    ContinuousLinearEqualityConstraint(
-        parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0
+    ContinuousLinearConstraint(
+        parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0, operator="="
     ),
-    ContinuousLinearEqualityConstraint(
-        parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0
+    ContinuousLinearConstraint(
+        parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0, operator="="
     ),
-    ContinuousLinearInequalityConstraint(
-        parameters=["x_1", "x_3"], coefficients=[1.0, 1.0], rhs=1.0
+    ContinuousLinearConstraint(
+        parameters=["x_1", "x_3"], coefficients=[1.0, 1.0], rhs=1.0, operator=">="
     ),
-    ContinuousLinearInequalityConstraint(
+    ContinuousLinearConstraint(
         parameters=["x_2", "x_4"], coefficients=[2.0, 3.0], rhs=-1.0, operator="<="
     ),
 ]
