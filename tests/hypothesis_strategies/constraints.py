@@ -12,8 +12,7 @@ from baybe.constraints.conditions import (
     _valid_logic_combiners,
 )
 from baybe.constraints.continuous import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
+    ContinuousLinearConstraint,
 )
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
@@ -217,12 +216,9 @@ discrete_linked_parameters_constraints = partial(
 
 
 @st.composite
-def _continuous_linear_constraints(
+def continuous_linear_constraints(
     draw: st.DrawFn,
-    constraint_type: (
-        type[ContinuousLinearEqualityConstraint]
-        | type[ContinuousLinearInequalityConstraint]
-    ),
+    operators: list[str] | None = None,
     parameter_names: list[str] | None = None,
 ):
     """Generate continuous linear constraints."""  # noqa:E501
@@ -242,19 +238,18 @@ def _continuous_linear_constraints(
     rhs = draw(finite_floats())
 
     # Optionally add the operator
-    kwargs = {}
-    if constraint_type is ContinuousLinearInequalityConstraint:
-        kwargs["operator"] = draw(st.sampled_from([">=", "<="]))
+    operators = operators or ["=", ">=", "<="]
+    operator = draw(st.sampled_from(operators))
 
-    return constraint_type(parameter_names, coefficients, rhs, **kwargs)
+    return ContinuousLinearConstraint(parameter_names, coefficients, rhs, operator)
 
 
 continuous_linear_equality_constraints = partial(
-    _continuous_linear_constraints, ContinuousLinearEqualityConstraint
+    continuous_linear_constraints, operators=["="]
 )
-"""Generate :class:`baybe.constraints.continuous.ContinuousLinearEqualityConstraint`."""
+"""Generate linear equality constraints."""
 
 continuous_linear_inequality_constraints = partial(
-    _continuous_linear_constraints, ContinuousLinearInequalityConstraint
+    continuous_linear_constraints, operators=[">=", "<="]
 )
-"""Generate :class:`baybe.constraints.continuous.ContinuousLinearInequalityConstraint`."""  # noqa:E501
+"""Generate linear inequality constraints."""
