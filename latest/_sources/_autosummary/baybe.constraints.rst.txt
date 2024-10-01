@@ -35,6 +35,8 @@ baybe.constraints
 
    continuous
 
+   deprecation
+
    discrete
 
    validation

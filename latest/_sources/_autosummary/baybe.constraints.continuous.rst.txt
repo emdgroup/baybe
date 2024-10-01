@@ -20,8 +20,7 @@ baybe.constraints.continuous
       :template: custom-class-template.rst              
    
       ContinuousCardinalityConstraint
-      ContinuousLinearEqualityConstraint
-      ContinuousLinearInequalityConstraint
+      ContinuousLinearConstraint
    
    
 

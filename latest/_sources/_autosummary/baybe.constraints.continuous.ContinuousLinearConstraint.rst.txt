@@ -1,7 +1,7 @@
 ContinuousLinearConstraint
 ==========================
 
-.. currentmodule:: baybe.constraints.base
+.. currentmodule:: baybe.constraints.continuous
 
 .. autoclass:: ContinuousLinearConstraint
    :members:                              
@@ -30,6 +30,7 @@ ContinuousLinearConstraint
 
    .. autosummary::
    
+      ~ContinuousLinearConstraint.operator
       ~ContinuousLinearConstraint.coefficients
       ~ContinuousLinearConstraint.rhs
       ~ContinuousLinearConstraint.eval_during_augmentation
@@ -37,6 +38,7 @@ ContinuousLinearConstraint
       ~ContinuousLinearConstraint.eval_during_modeling
       ~ContinuousLinearConstraint.is_continuous
       ~ContinuousLinearConstraint.is_discrete
+      ~ContinuousLinearConstraint.is_eq
       ~ContinuousLinearConstraint.numerical_only
       ~ContinuousLinearConstraint.parameters
    

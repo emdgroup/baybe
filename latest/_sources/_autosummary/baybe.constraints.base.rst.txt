@@ -22,7 +22,6 @@ baybe.constraints.base
       CardinalityConstraint
       Constraint
       ContinuousConstraint
-      ContinuousLinearConstraint
       ContinuousNonlinearConstraint
       DiscreteConstraint
    
