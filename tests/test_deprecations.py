@@ -170,9 +170,9 @@ def test_constraint_config_deserialization(type_, op):
 
     expected = ContinuousLinearConstraint(
         parameters=["p1", "p2", "p3"],
+        operator=op,
         coefficients=[1.0, 2.0, 3.0],
         rhs=2.0,
-        operator=op,
     )
 
     with warnings.catch_warnings():

@@ -241,7 +241,7 @@ def continuous_linear_constraints(
     operators = operators or ["=", ">=", "<="]
     operator = draw(st.sampled_from(operators))
 
-    return ContinuousLinearConstraint(parameter_names, coefficients, rhs, operator)
+    return ContinuousLinearConstraint(parameter_names, operator, coefficients, rhs)
 
 
 continuous_linear_equality_constraints = partial(

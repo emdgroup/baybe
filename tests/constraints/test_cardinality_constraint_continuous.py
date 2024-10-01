@@ -103,15 +103,15 @@ def test_polytope_sampling_with_cardinality_constraint():
     constraints = [
         ContinuousLinearConstraint(
             parameters=params_equality,
+            operator="=",
             coefficients=coeffs_equality,
             rhs=rhs_equality,
-            operator="=",
         ),
         ContinuousLinearConstraint(
             parameters=params_inequality,
+            operator=">=",
             coefficients=coeffs_inequality,
             rhs=rhs_equality,
-            operator=">=",
         ),
         ContinuousCardinalityConstraint(
             parameters=params_cardinality,

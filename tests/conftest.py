@@ -520,27 +520,27 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         ),
         "ContiConstraint_1": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator="=",
             coefficients=[1.0, 1.0],
             rhs=0.3,
-            operator="=",
         ),
         "ContiConstraint_2": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator="=",
             coefficients=[1.0, 3.0],
             rhs=0.3,
-            operator="=",
         ),
         "ContiConstraint_3": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator=">=",
             coefficients=[1.0, 1.0],
             rhs=0.3,
-            operator=">=",
         ),
         "ContiConstraint_4": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator=">=",
             coefficients=[1.0, 3.0],
             rhs=0.3,
-            operator=">=",
         ),
         "ContiConstraint_5": ContinuousCardinalityConstraint(
             parameters=["Conti_finite1", "Conti_finite2", "Conti_finite3"],
@@ -549,9 +549,9 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         ),
         "ContiConstraint_6": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator="<=",
             coefficients=[1.0, 3.0],
             rhs=0.3,
-            operator="<=",
         ),
     }
     return [

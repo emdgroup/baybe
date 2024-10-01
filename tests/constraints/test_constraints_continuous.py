@@ -103,7 +103,7 @@ def test_hybridspace_ineq(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.parametrize(
-    ("parameters", "coefficients", "rhs", "operator"),
+    ("parameters", "coefficients", "rhs", "op"),
     [
         param(["A", "B"], [1.0], 0.0, "=", id="eq_too_few_coeffs"),
         param(["A", "B"], [1.0, 2.0, 3.0], 0.0, "=", id="eq_too_many_coeffs"),
@@ -115,9 +115,9 @@ def test_hybridspace_ineq(campaign, n_iterations, batch_size):
         param(["A", "B"], [1.0, 2.0], 0.0, 2.0, id="ineq_invalid_operator1"),
     ],
 )
-def test_invalid_constraints(parameters, coefficients, rhs, operator):
+def test_invalid_constraints(parameters, coefficients, rhs, op):
     """Test invalid continuous constraint creations."""
     with pytest.raises(ValueError):
         ContinuousLinearConstraint(
-            parameters=parameters, coefficients=coefficients, rhs=rhs, operator=operator
+            parameters=parameters, operator=op, coefficients=coefficients, rhs=rhs
         )

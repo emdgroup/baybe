@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Collection, Sequence
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attr.validators import in_
@@ -22,6 +22,8 @@ from baybe.utils.validation import finite_float
 if TYPE_CHECKING:
     from torch import Tensor
 
+_valid_linear_constraint_operators = ["=", ">=", "<="]
+
 
 @define
 class ContinuousLinearConstraint(ContinuousConstraint):
@@ -32,17 +34,15 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     """
 
     # object variables
+    operator: str = field(validator=in_(_valid_linear_constraint_operators))
+    """Defines the operator used in the equation. Internally this will negate rhs and
+    coefficients for `<=`."""
+
     coefficients: list[float] = field()
     """In-/equality coefficient for each entry in ``parameters``."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
-
-    operator: Literal["=", "==", ">=", "<="] = field(
-        default=">=", validator=in_(("=", "==", ">=", "<="))
-    )
-    """Defines the operator used in the equation. Internally this will negate rhs and
-    coefficients for `<=`."""
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
@@ -73,7 +73,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     @property
     def is_eq(self):
         """Whether this constraint models an equality (assumed inequality otherwise)."""
-        return self.operator in ["=", "=="]
+        return self.operator == "="
 
     def _drop_parameters(
         self, parameter_names: Collection[str]
@@ -93,7 +93,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             if p not in parameter_names
         ]
         return ContinuousLinearConstraint(
-            parameters, coefficients, self.rhs, self.operator
+            parameters, self.operator, coefficients, self.rhs
         )
 
     def to_botorch(

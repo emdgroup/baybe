@@ -62,16 +62,16 @@ parameters = [
 
 constraints = [
     ContinuousLinearConstraint(
-        parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0, operator="="
+        parameters=["x_1", "x_2"], operator="=", coefficients=[1.0, 1.0], rhs=1.0
     ),
     ContinuousLinearConstraint(
-        parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0, operator="="
+        parameters=["x_3", "x_4"], operator="=", coefficients=[1.0, -1.0], rhs=2.0
     ),
     ContinuousLinearConstraint(
-        parameters=["x_1", "x_3"], coefficients=[1.0, 1.0], rhs=1.0, operator=">="
+        parameters=["x_1", "x_3"], operator=">=", coefficients=[1.0, 1.0], rhs=1.0
     ),
     ContinuousLinearConstraint(
-        parameters=["x_2", "x_4"], coefficients=[2.0, 3.0], rhs=-1.0, operator="<="
+        parameters=["x_2", "x_4"], operator="<=", coefficients=[2.0, 3.0], rhs=-1.0
     ),
 ]
 
