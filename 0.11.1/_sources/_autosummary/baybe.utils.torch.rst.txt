@@ -1,0 +1,32 @@
+baybe.utils.torch
+=================
+
+.. automodule:: baybe.utils.torch
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      VARNAME_TORCH_USE_SINGLE_PRECISION
+      DTypeFloatTorch
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

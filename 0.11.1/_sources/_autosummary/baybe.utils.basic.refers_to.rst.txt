@@ -1,0 +1,6 @@
+baybe.utils.basic.refers\_to
+============================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: refers_to

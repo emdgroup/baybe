@@ -129,30 +129,30 @@ constraint = DiscreteCustomConstraint(
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 ```
 
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
-    [17:00:47] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
+    [12:00:49] DEPRECATION WARNING: please use MorganGenerator
 
 
 

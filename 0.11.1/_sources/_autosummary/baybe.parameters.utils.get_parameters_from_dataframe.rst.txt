@@ -1,0 +1,6 @@
+baybe.parameters.utils.get\_parameters\_from\_dataframe
+=======================================================
+
+.. currentmodule:: baybe.parameters.utils
+
+.. autofunction:: get_parameters_from_dataframe

@@ -1,0 +1,6 @@
+baybe.utils.plotting.create\_example\_plots
+===========================================
+
+.. currentmodule:: baybe.utils.plotting
+
+.. autofunction:: create_example_plots

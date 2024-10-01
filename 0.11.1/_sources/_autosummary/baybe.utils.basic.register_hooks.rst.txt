@@ -1,0 +1,6 @@
+baybe.utils.basic.register\_hooks
+=================================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: register_hooks
