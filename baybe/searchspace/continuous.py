@@ -9,12 +9,11 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field, fields
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
+    ContinuousLinearConstraint,
 )
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
@@ -53,12 +52,12 @@ class SubspaceContinuous(SerialMixin):
     )
     """The parameters of the subspace."""
 
-    constraints_lin_eq: tuple[ContinuousLinearEqualityConstraint, ...] = field(
+    constraints_lin_eq: tuple[ContinuousLinearConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """Linear equality constraints."""
 
-    constraints_lin_ineq: tuple[ContinuousLinearInequalityConstraint, ...] = field(
+    constraints_lin_ineq: tuple[ContinuousLinearConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """Linear inequality constraints."""
@@ -104,6 +103,32 @@ class SubspaceContinuous(SerialMixin):
             if isinstance(c, ContinuousCardinalityConstraint)
         )
 
+    @constraints_lin_eq.validator
+    def _validate_constraints_lin_eq(
+        self, _, lst: list[ContinuousLinearConstraint]
+    ) -> None:
+        """Validate linear equality constraints."""
+        # TODO Remove once eq and ineq constraints are consolidated into one list
+        if not all(c.is_eq for c in lst):
+            raise ValueError(
+                f"The list '{fields(self.__class__).constraints_lin_eq.name}' of "
+                f"{self.__class__.__name__} only accepts equality constraints, i.e. "
+                f"the 'operator' for all list items should be '='."
+            )
+
+    @constraints_lin_ineq.validator
+    def _validate_constraints_lin_ineq(
+        self, _, lst: list[ContinuousLinearConstraint]
+    ) -> None:
+        """Validate linear inequality constraints."""
+        # TODO Remove once eq and ineq constraints are consolidated into one list
+        if any(c.is_eq for c in lst):
+            raise ValueError(
+                f"The list '{fields(self.__class__).constraints_lin_ineq.name}' of "
+                f"{self.__class__.__name__} only accepts inequality constraints, i.e. "
+                f"the 'operator' for all list items should be '>=' or '<='."
+            )
+
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
         """Validate nonlinear constraints."""
@@ -121,7 +146,7 @@ class SubspaceContinuous(SerialMixin):
     @classmethod
     def empty(cls) -> SubspaceContinuous:
         """Create an empty continuous subspace."""
-        return SubspaceContinuous([])
+        return SubspaceContinuous(())
 
     @classmethod
     def from_parameter(cls, parameter: ContinuousParameter) -> SubspaceContinuous:
@@ -145,17 +170,17 @@ class SubspaceContinuous(SerialMixin):
         constraints = constraints or []
         return SubspaceContinuous(
             parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
-            constraints_lin_eq=[  # type:ignore[misc]
+            constraints_lin_eq=[  # type:ignore[attr-misc]
                 c
                 for c in constraints
-                if isinstance(c, ContinuousLinearEqualityConstraint)
+                if (isinstance(c, ContinuousLinearConstraint) and c.is_eq)
             ],
-            constraints_lin_ineq=[  # type:ignore[misc]
+            constraints_lin_ineq=[  # type:ignore[attr-misc]
                 c
                 for c in constraints
-                if isinstance(c, ContinuousLinearInequalityConstraint)
+                if (isinstance(c, ContinuousLinearConstraint) and not c.is_eq)
             ],
-            constraints_nonlin=[
+            constraints_nonlin=[  # type:ignore[attr-misc]
                 c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
             ],
         )

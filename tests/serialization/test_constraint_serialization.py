@@ -8,8 +8,7 @@ from pytest import param
 from baybe.constraints.base import Constraint
 
 from ..hypothesis_strategies.constraints import (
-    continuous_linear_equality_constraints,
-    continuous_linear_inequality_constraints,
+    continuous_linear_constraints,
     discrete_dependencies_constraints,
     discrete_excludes_constraints,
     discrete_linked_parameters_constraints,
@@ -40,12 +39,8 @@ from ..hypothesis_strategies.constraints import (
             id="DiscreteLinkedParametersConstraint",
         ),
         param(
-            continuous_linear_equality_constraints(),
-            id="ContinuousLinearEqualityConstraint",
-        ),
-        param(
-            continuous_linear_inequality_constraints(),
-            id="ContinuousLinearInequalityConstraint",
+            continuous_linear_constraints(),
+            id="ContinuousLinearonstraint",
         ),
     ],
 )
