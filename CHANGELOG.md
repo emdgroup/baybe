@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Convenience choice for the `operator` used in `ContinuousLinearInequalityConstraint`,
-  which takes care of required negation for `<=` constraints
+- Continuous linear constraints have been consolidated in the new
+  `ContinuousLinearConstraint` class
 
 ### Changed
 - `get_surrogate` now also returns the model for transformed single targets or
@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
+
+### Deprecated
+- `ContinuousLinearEqualityConstraint` and `ContinuousLinearInequalityConstraint`
+  replaced by `ContinuousLinearConstraint` with the corresponding `operator` keyword
 
 ## [0.11.0] - 2024-09-09
 ### Breaking Changes
