@@ -141,6 +141,8 @@ which is a circular topological fingerprint similar to Morgan fingerprint.
 
 You can adjust fingerprint computation with parameters for `Fingerprint` classes from `scikit-fingerprints`.
 These can be specified via the `kwargs_fingerprint` in the `SubstanceParameter` class.
+Similarly, for fingerprints requiring conformers, 
+the parameters for conformer computation can be specified via `kwargs_conformer`.
 
 ```python
 from baybe.parameters import SubstanceParameter
