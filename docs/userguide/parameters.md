@@ -156,7 +156,6 @@ SubstanceParameter(
     },
     encoding="ECFP",
     kwargs_fingerprint={
-        "n_jobs": 2,  # Parallelize fingerprint computation across input molecules
         "fp_size": 1024,  # Change the number of computed bits
     },
 )
