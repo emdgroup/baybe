@@ -28,9 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
   instead of negating the computational representation
 - Fingerprint encodings are now computed exclusively with the `scikit-fingerprints` package, 
-  granting access to all fingerprints available therein.
+  granting access to all fingerprints available therein. 
   The `SubstanceParameter` value `MORGAN_FP` is now an alias for `ECFP` 
-  and will be deprecated in future versions.
+  with 1024 features and radius of 4.
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - The role of `register_custom_architecture` has been taken over by
   `baybe.surrogates.base.SurrogateProtocol`
+- The `SubstanceParameter` value `MORGAN_FP` will be deprecated in future versions.
 
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes
