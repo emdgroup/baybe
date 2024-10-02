@@ -57,19 +57,7 @@ class SubstanceParameter(DiscreteParameter):
     """
 
     encoding: SubstanceEncoding = field(
-        default=SubstanceEncoding.MordredFingerprint,
-        converter=lambda x: (
-            # Passed enum
-            x
-            if isinstance(x, SubstanceEncoding)
-            # Passed enum name
-            else (
-                SubstanceEncoding[x]
-                if x in SubstanceEncoding.__members__
-                # Passed enum value
-                else SubstanceEncoding(x)
-            )
-        ),
+        default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding
     )
     # See base class.
 

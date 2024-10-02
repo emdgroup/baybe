@@ -10,7 +10,6 @@ from baybe.parameters.categorical import (
     TaskParameter,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
-from baybe.parameters.enum import SubstanceEncodingAliases
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -143,10 +142,7 @@ def substance_parameters(draw: st.DrawFn):
     decorrelate = draw(decorrelations)
     encoding = draw(
         st.sampled_from(
-            list(SubstanceEncoding)  # Check all fingerprints
-            + [
-                SubstanceEncoding(alias.name) for alias in SubstanceEncodingAliases
-            ]  # Check fingerprint aliases
+            list(SubstanceEncoding)  # Check all fingerprint names
         )
     )
     return SubstanceParameter(

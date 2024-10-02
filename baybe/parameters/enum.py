@@ -1,6 +1,5 @@
 """Parameter-related enumerations."""
 
-import warnings
 from enum import Enum
 
 
@@ -18,65 +17,42 @@ class CategoricalEncoding(ParameterEncoding):
     """Integer encoding."""
 
 
-class SubstanceEncodingAliases(ParameterEncoding):
-    """Aliases for SubstanceEncoding values."""
-
-    MORGAN_FP = "ECFP"
-
-
 class SubstanceEncoding(ParameterEncoding):
     """Available encodings for substance parameters."""
 
-    AtomPairFingerprint = "ATOMPAIR"
-    AutocorrFingerprint = "AUTOCORR"
-    AvalonFingerprint = "AVALON"
-    E3FPFingerprint = "E3FP"
-    ECFPFingerprint = "ECFP"
-    ERGFingerprint = "ERG"
-    EStateFingerprint = "ESTATE"
-    FunctionalGroupsFingerprint = "FUNCTIONALGROUPS"
-    GETAWAYFingerprint = "GETAWAY"
-    GhoseCrippenFingerprint = "GHOSECRIPPEN"
-    KlekotaRothFingerprint = "KLEKOTAROTH"
-    LaggnerFingerprint = "LAGGNER"
-    LayeredFingerprint = "LAYERED"
-    LingoFingerprint = "LINGO"
-    MACCSFingerprint = "MACCS"
-    MAPFingerprint = "MAP"
-    MHFPFingerprint = "MHFP"
-    MORSEFingerprint = "MORSE"
-    MQNsFingerprint = "MQNS"
-    MordredFingerprint = "MORDRED"
-    PatternFingerprint = "PATTERN"
-    PharmacophoreFingerprint = "PHARMACOPHORE"
-    PhysiochemicalPropertiesFingerprint = "PHYSIOCHEMICALPROPERTIES"
-    PubChemFingerprint = "PUBCHEM"
-    RDFFingerprint = "RDF"
-    RDKit2DDescriptorsFingerprint = "RDKIT2DDESCRIPTORS"
-    RDKitFingerprint = "RDKIT"
-    SECFPFingerprint = "SECFP"
-    TopologicalTorsionFingerprint = "TOPOLOGICALTORSION"
-    USRCATFingerprint = "USRCAT"
-    USRFingerprint = "USR"
-    WHIMFingerprint = "WHIM"
-
-    @classmethod
-    def _missing_(cls, value):
-        """Backward compatibility of enum values.
-
-        Enable backwards compatibility of value names that
-        differ between SKFP and previous version.
-        """
-        if value in SubstanceEncodingAliases.__members__:
-            replace = SubstanceEncodingAliases[str(value)].value
-            warnings.warn(
-                f"Substance encoding '{value}' is deprecated and will be disabled in "
-                f"a future version. Use '{replace}' instead.",
-                DeprecationWarning,
-            )
-            return cls(replace)
-        else:
-            return super()._missing_(value)
+    ATOMPAIR = "ATOMPAIR"
+    AUTOCORR = "AUTOCORR"
+    AVALON = "AVALON"
+    E3FP = "E3FP"
+    ECFP = "ECFP"
+    MORGAN_FP = "MORGAN_FP"
+    ERG = "ERG"
+    ESTATE = "ESTATE"
+    FUNCTIONALGROUPS = "FUNCTIONALGROUPS"
+    GETAWAY = "GETAWAY"
+    GHOSECRIPPEN = "GHOSECRIPPEN"
+    KLEKOTAROTH = "KLEKOTAROTH"
+    LAGGNER = "LAGGNER"
+    LAYERED = "LAYERED"
+    LINGO = "LINGO"
+    MACCS = "MACCS"
+    MAP = "MAP"
+    MHFP = "MHFP"
+    MORSE = "MORSE"
+    MQNS = "MQNS"
+    MORDRED = "MORDRED"
+    PATTERN = "PATTERN"
+    PHARMACOPHORE = "PHARMACOPHORE"
+    PHYSIOCHEMICALPROPERTIES = "PHYSIOCHEMICALPROPERTIES"
+    PUBCHEM = "PUBCHEM"
+    RDF = "RDF"
+    RDKIT2DDESCRIPTORS = "RDKIT2DDESCRIPTORS"
+    RDKIT = "RDKIT"
+    SECFP = "SECFP"
+    TOPOLOGICALTORSION = "TOPOLOGICALTORSION"
+    USRCAT = "USRCAT"
+    USR = "USR"
+    WHIM = "WHIM"
 
 
 class CustomEncoding(ParameterEncoding):
@@ -84,3 +60,41 @@ class CustomEncoding(ParameterEncoding):
 
     CUSTOM = "CUSTOM"
     """User-defined encoding."""
+
+
+class FingerprintNames(Enum):
+    """Mapping of substance parameter encoding names to fingerprint classes."""
+
+    ATOMPAIR = "AtomPairFingerprint"
+    AUTOCORR = "AutocorrFingerprint"
+    AVALON = "AvalonFingerprint"
+    E3FP = "E3FPFingerprint"
+    ECFP = "ECFPFingerprint"
+    MORGAN_FP = "ECFPFingerprint"
+    ERG = "ERGFingerprint"
+    ESTATE = "EStateFingerprint"
+    FUNCTIONALGROUPS = "FunctionalGroupsFingerprint"
+    GETAWAY = "GETAWAYFingerprint"
+    GHOSECRIPPEN = "GhoseCrippenFingerprint"
+    KLEKOTAROTH = "KlekotaRothFingerprint"
+    LAGGNER = "LaggnerFingerprint"
+    LAYERED = "LayeredFingerprint"
+    LINGO = "LingoFingerprint"
+    MACCS = "MACCSFingerprint"
+    MAP = "MAPFingerprint"
+    MHFP = "MHFPFingerprint"
+    MORSE = "MORSEFingerprint"
+    MQNS = "MQNsFingerprint"
+    MORDRED = "MordredFingerprint"
+    PATTERN = "PatternFingerprint"
+    PHARMACOPHORE = "PharmacophoreFingerprint"
+    PHYSIOCHEMICALPROPERTIES = "PhysiochemicalPropertiesFingerprint"
+    PUBCHEM = "PubChemFingerprint"
+    RDF = "RDFFingerprint"
+    RDKIT2DDESCRIPTORS = "RDKit2DDescriptorsFingerprint"
+    RDKIT = "RDKitFingerprint"
+    SECFP = "SECFPFingerprint"
+    TOPOLOGICALTORSION = "TopologicalTorsionFingerprint"
+    USRCAT = "USRCATFingerprint"
+    USR = "USRFingerprint"
+    WHIM = "WHIMFingerprint"

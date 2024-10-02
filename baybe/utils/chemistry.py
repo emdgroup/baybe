@@ -4,6 +4,7 @@ import os
 import ssl
 import tempfile
 import urllib.request
+import warnings
 from functools import lru_cache
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from baybe._optional.chem import (
     MolFromSmilesTransformer,
     skfp_fingerprints,
 )
+from baybe.parameters.enum import FingerprintNames
 from baybe.utils.numerical import DTypeFloatNumpy
 
 # Caching
@@ -107,10 +109,12 @@ def smiles_to_fingerprint_features(
     Returns:
         Dataframe containing fingerprints for each SMILES string.
     """
-    kwargs_fingerprint = kwargs_fingerprint or {}
+    fingerprint_cls, kwargs_fingerprint = convert_fingeprint_parameters(
+        name=fingerprint_name, kwargs_fingerprint=kwargs_fingerprint
+    )
     kwargs_conformer = kwargs_conformer or {}
 
-    fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_name)(
+    fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_cls)(
         **kwargs_fingerprint
     )
 
@@ -134,6 +138,51 @@ def smiles_to_fingerprint_features(
     df = pd.DataFrame(features, columns=col_names, dtype=DTypeFloatNumpy)
 
     return df
+
+
+def convert_fingeprint_parameters(
+    name: str, kwargs_fingerprint: dict | None = None
+) -> (str, dict):
+    """Convert fingerprint name parameters for computing the fingerprint.
+
+    Args:
+        name: Name of fingerprint.
+        kwargs_fingerprint: Optional user-specified params
+            for computing the fingerprint.
+
+    Raises:
+        KeyError: If fingerprint name is not recognized.
+
+    Returns:
+        Fingerprint class name and kwargs to use for the fingerprint computation.
+    """
+    # Get fingerprint class
+    try:
+        fp_class = FingerprintNames[name].value
+    except KeyError:
+        raise KeyError(f"Fingerprint name {name} is not valid.")
+
+    # For backwards-compatibility purposes
+
+    # Update default kwargs to match the fingerprint name when
+    # using a different fingerprint class to compute the desired fingerprint
+    kwargs_fp_update = {}
+    kwargs_fingerprint = {} if not kwargs_fingerprint else kwargs_fingerprint
+    if name == "MORGAN_FP":
+        warnings.warn(
+            "Substance encoding 'MORGAN_FP' is deprecated and will be disabled in "
+            "a future version. Use 'ECFP' with 'fp_size' 1204 and 'radius' 4 instead.",
+            DeprecationWarning,
+        )
+        kwargs_fp_update = {
+            "fp_size": 1024,
+            "radius": 4,
+        }
+    # Update kwargs with fingerprint-specific defaults
+    # If a kwarg is specified in the input it overrides the fingerprint default
+    kwargs_fingerprint = {**kwargs_fp_update, **kwargs_fingerprint}
+
+    return fp_class, kwargs_fingerprint
 
 
 def get_canonical_smiles(smiles: str) -> str:

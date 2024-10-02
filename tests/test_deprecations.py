@@ -16,6 +16,7 @@ from baybe.recommenders.pure.bayesian import (
 )
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.targets.numerical import NumericalTarget
+from baybe.utils.chemistry import convert_fingeprint_parameters
 
 
 def test_deprecated_objective_class():
@@ -121,6 +122,20 @@ def test_deprecated_surrogate_registration():
 
 
 def test_deprecated_morgan_fp(acqf):
-    """Deprecated fingerprint name raises warning and uses a replacement."""
+    """Deprecated fingerprint name raises warning and uses ECFP replacement."""
     with pytest.warns(DeprecationWarning):
-        assert SubstanceEncoding("MORGAN_FP") == SubstanceEncoding("ECFP")
+        # Check that ECFP is used instead of Morgan with correct pre-defined kwargs
+        morgan_class, morgan_kwargs = convert_fingeprint_parameters(
+            name=SubstanceEncoding("MORGAN_FP").name, kwargs_fingerprint=None
+        )
+        ecfp_class, _ = convert_fingeprint_parameters(
+            name=SubstanceEncoding("ECFP").name, kwargs_fingerprint=None
+        )
+        assert morgan_class == ecfp_class
+        assert morgan_kwargs == {"fp_size": 1024, "radius": 4}
+
+        # Check that user-specified kwargs override the defaults
+        _, morgan_custom_kwargs = convert_fingeprint_parameters(
+            name=SubstanceEncoding("MORGAN_FP").name, kwargs_fingerprint={"radius": 5}
+        )
+        assert morgan_custom_kwargs == {"fp_size": 1024, "radius": 5}

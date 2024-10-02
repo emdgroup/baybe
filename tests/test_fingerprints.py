@@ -1,12 +1,12 @@
 """Test for fingerprint generation."""
 
-from baybe.parameters import SubstanceEncoding
+from baybe.parameters.enum import FingerprintNames
 from baybe.utils.chemistry import smiles_to_fingerprint_features
 
 
 def test_fingerprint_computation():
     smiles_list = ["CC(N(C)C)=O", "CCCC#N"]
-    for fingerprint in SubstanceEncoding:
+    for fingerprint in FingerprintNames:
         smiles_to_fingerprint_features(
             smiles_list=smiles_list,
             fingerprint_name=fingerprint.name,
@@ -24,7 +24,7 @@ def test_fingerprint_computation():
     # Also run one time without passing kwargs
     smiles_to_fingerprint_features(
         smiles_list=smiles_list,
-        fingerprint_name=SubstanceEncoding("MORDRED").name,
+        fingerprint_name=FingerprintNames["MORDRED"].name,
         prefix="",
         kwargs_conformer=None,
         kwargs_fingerprint=None,
@@ -34,7 +34,7 @@ def test_fingerprint_computation():
     # fingerprint kwargs specifying embedding size are used
     assert smiles_to_fingerprint_features(
         smiles_list=smiles_list,
-        fingerprint_name=SubstanceEncoding("ECFP").name,
+        fingerprint_name=FingerprintNames["ECFP"].name,
         prefix="",
         kwargs_conformer=None,
         kwargs_fingerprint={"fp_size": 64},
