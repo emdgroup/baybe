@@ -25,7 +25,7 @@ def test_shapley_values_no_measurements():
     campaign = Campaign(searchspace, objective)
 
     with pytest.raises(ValueError, match="No measurements have been provided yet."):
-        diag.explain(campaign)
+        diag.explanation(campaign)
 
 
 def test_shapley_with_measurements():
@@ -60,20 +60,35 @@ def test_shapley_with_measurements():
     campaign.recommend(3)
 
     """Test the default explainer in experimental representation."""
-    shap_val = diag.explain(campaign)
+    shap_val = diag.explanation(campaign)
     assert isinstance(shap_val, shap.Explanation)
 
     """Test the default explainer in computational representation."""
-    shap_val_comp = diag.explain(campaign, computational_representation=True)
+    shap_val_comp = diag.explanation(campaign, computational_representation=True)
     assert isinstance(shap_val_comp, shap.Explanation)
 
-    """Test the MAPLE explainer in experimental representation."""
+    """Test the MAPLE explainer in computational representation."""
     maple_explainer = diag.explainer(
         campaign,
         computational_representation=True,
-        explainer=shap.explainers.other.Maple,
+        explainer_class=shap.explainers.other.Maple,
     )
     assert isinstance(maple_explainer, shap.explainers.other._maple.Maple)
+
+    """Ensure that an error is raised if non-computational representation
+    is used with a non-Kernel SHAP explainer."""
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Experimental representation is not supported "
+            "for non-Kernel SHAP explainer."
+        ),
+    ):
+        diag.explanation(
+            campaign,
+            computational_representation=False,
+            explainer_class=shap.explainers.other.Maple,
+        )
 
     """Ensure that an error is raised if the data
     to be explained has a different number of parameters."""
@@ -92,4 +107,4 @@ def test_shapley_with_measurements():
             "amount of parameters as the shap explainer background."
         ),
     ):
-        diag.explain(campaign, data=df)
+        diag.explanation(campaign, data=df)
