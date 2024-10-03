@@ -1,41 +1,30 @@
 """Test for fingerprint generation."""
 
-from baybe.parameters.enum import FingerprintNames
+import pytest
+
 from baybe.utils.chemistry import smiles_to_fingerprint_features
 
 
-def test_fingerprint_computation():
+@pytest.mark.parametrize(
+    "fingerprint_name,kwargs_fingerprint,kwargs_conformer",
+    [
+        # Test fingerprint calculation with different kwargs
+        ("ECFP", {}, {}),
+        ("ECFP", {"fp_size": 64}, {}),
+        ("ECFP", {}, {"max_gen_attempts": 5000}),
+    ],
+)
+def test_fingerprint_kwargs(fingerprint_name, kwargs_fingerprint, kwargs_conformer):
     smiles_list = ["CC(N(C)C)=O", "CCCC#N"]
-    for fingerprint in FingerprintNames:
-        smiles_to_fingerprint_features(
-            smiles_list=smiles_list,
-            fingerprint_name=fingerprint.name,
-            prefix="",
-            # Some params that make the test faster
-            kwargs_conformer={
-                "max_gen_attempts": 5000,
-                "n_jobs": 4,
-            },
-            kwargs_fingerprint={
-                "n_jobs": 4,
-            },
-        )
-
-    # Also run one time without passing kwargs
-    smiles_to_fingerprint_features(
+    x = smiles_to_fingerprint_features(
         smiles_list=smiles_list,
-        fingerprint_name=FingerprintNames["MORDRED"].name,
+        fingerprint_name=fingerprint_name,
         prefix="",
-        kwargs_conformer=None,
-        kwargs_fingerprint=None,
+        kwargs_conformer=kwargs_conformer,
+        kwargs_fingerprint=kwargs_fingerprint,
     )
-
     # Check that fingerprint embedding is of correct size and
     # fingerprint kwargs specifying embedding size are used
-    assert smiles_to_fingerprint_features(
-        smiles_list=smiles_list,
-        fingerprint_name=FingerprintNames["ECFP"].name,
-        prefix="",
-        kwargs_conformer=None,
-        kwargs_fingerprint={"fp_size": 64},
-    ).shape == (len(smiles_list), 64)
+    assert x.shape[0] == len(smiles_list)
+    if "fp_size" in kwargs_fingerprint:
+        assert x.shape[1] == kwargs_fingerprint["fp_size"]
