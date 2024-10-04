@@ -29,7 +29,11 @@ def test_code_executability(file: Path, campaign):
     test will be available in the executed code too.
     """
     userguide_code = "\n".join(extract_code_blocks(file, include_tilde=False))
-    exec(userguide_code)
+
+    namespace = {"__builtins__": __builtins__, "campaign": campaign}
+
+    # Execute the code in the isolated namespace
+    exec(userguide_code, namespace, namespace)
 
 
 # TODO: Needs a refactoring (files codeblocks should be auto-detected)

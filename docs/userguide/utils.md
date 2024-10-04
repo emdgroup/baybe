@@ -124,6 +124,5 @@ measurements = recommendations.copy()
 add_fake_results(measurements, campaign.targets)
 add_parameter_noise(measurements, campaign.parameters)
 
-# Continue the loop by adding the fake results
-campaign.add_measurements(measurements)
+# Now continue the loop, e.g by adding the measurements...
 ```
