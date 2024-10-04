@@ -3,6 +3,7 @@
 import hypothesis.strategies as st
 
 from baybe.priors import (
+    BetaPrior,
     GammaPrior,
     HalfCauchyPrior,
     HalfNormalPrior,
@@ -47,6 +48,13 @@ log_normal_priors = st.builds(
 )
 """A strategy that generates Log-Normal priors."""
 
+beta_priors = st.builds(
+    BetaPrior,
+    st.floats(min_value=0.0, exclude_min=True),
+    st.floats(min_value=0.0, exclude_min=True),
+)
+"""A strategy that generates Beta priors."""
+
 
 @st.composite
 def _smoothed_box_priors(draw: st.DrawFn):
@@ -61,8 +69,10 @@ def _smoothed_box_priors(draw: st.DrawFn):
 
 smoothed_box_priors = _smoothed_box_priors()
 
-priors = st.one_of(
-    [
+
+def priors(gpytorch_only: bool = True):
+    """A strategy that generates priors."""
+    prior_choices = [
         gamma_priors,
         half_cauchy_priors,
         half_normal_priors,
@@ -70,5 +80,6 @@ priors = st.one_of(
         normal_priors,
         smoothed_box_priors,
     ]
-)
-"""A strategy that generates priors."""
+    if not gpytorch_only:
+        prior_choices.append(beta_priors)
+    return st.one_of(prior_choices)

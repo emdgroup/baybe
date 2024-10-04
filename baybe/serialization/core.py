@@ -9,6 +9,7 @@ import attrs
 import cattrs
 import pandas as pd
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
+from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import is_abstract
@@ -17,8 +18,12 @@ _T = TypeVar("_T")
 
 # TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
 #   switch to the cattrs built-in subclass recommender.
-converter = cattrs.Converter()
+# Using GenConverter for built-in overrides for sets, see
+# https://catt.rs/en/latest/indepth.html#customizing-collection-unstructuring
+converter = cattrs.GenConverter(unstruct_collection_overrides={set: list})
 """The default converter for (de-)serializing BayBE-related objects."""
+
+configure_union_passthrough(bool | int | float | str, converter)
 
 
 def unstructure_base(base: Any, overrides: dict | None = None) -> dict:
@@ -155,6 +160,6 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     return converter.structure_attrs_fromdict(specs, cls)
 
 
-# Register un-/structure hooks
+# Register custom un-/structure hooks
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)

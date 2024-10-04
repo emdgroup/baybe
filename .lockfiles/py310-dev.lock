@@ -255,6 +255,7 @@ jinja2==3.1.4
     #   torch
 joblib==1.4.2
     # via
+    #   baybe (pyproject.toml)
     #   scikit-learn
     #   xyzpy
 json5==0.9.25
@@ -842,6 +843,7 @@ tbb==2021.13.0 ; platform_system == 'Windows'
     # via mkl
 tenacity==8.5.0
     # via
+    #   baybe (pyproject.toml)
     #   plotly
     #   streamlit
 terminado==0.18.1

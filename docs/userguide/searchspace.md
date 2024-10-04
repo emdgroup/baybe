@@ -110,6 +110,7 @@ subspace = SubspaceDiscrete.from_simplex(max_sum=1.0, simplex_parameters=paramet
 Note that it is also possible to provide additional parameters that then enter in the form of a Cartesian product.
 These can be provided via the keyword `product_parameters`.
 
+(DATA_REPRESENTATION)=
 ### Representation of Data within Discrete Subspaces
 
 Internally, discrete subspaces are represented by two dataframes, the *experimental* and the *computational* representation.

@@ -1,20 +1,14 @@
 name: Documentation
 
 on:
+  push:
+    branches:
+      - main
   release:
     types:
       - published
-  workflow_dispatch:
-    inputs:
-      force:
-        description: 'Force'
-        default: false
-        required: false
-        type: boolean
-      tag:
-        description: 'Specify tag (empty builds branch HEAD)'
-        required: false
-        default: ''
+  workflow_dispatch:  # Allow manually triggering the workflow
+
 
 concurrency:
   group: ${{ github.workflow }}
@@ -24,35 +18,77 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ github.ref }}
       - uses: actions/setup-python@v5
         with: {python-version: "3.10"}
       - name: Install tox
         run: pip install tox-uv
-      - name: Build Docs ${{ inputs.force == true && '(Force)' || '' }}
-        run: tox -e docs-py310 ${{ inputs.force == true && '-- -f -r' || '-- -r' }}
-      - name: Upload docs artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: 'docs/build'
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
+      - name: Build Docs
+        run: tox -e docs-py310 -- -r
+      - name: Configure sphinx bot for pushing and fetch branches
+        run: |
+            git config --local user.email "sphinx-upload[bot]@users.noreply.github.com"
+            git config --local user.name "sphinx-upload[bot]"
+            git fetch origin gh-pages:gh-pages
+            git checkout gh-pages
+            git fetch origin main:main
+            git show main:docs/scripts/utils.py > utils.py
+      - name: Check for Hotfix
+        id: hotfix
+        run: |
+          pip install packaging
+          git fetch --tags
+          tags=$(git tag -l)
+          if ${{ github.event_name == 'release' }}; then
+            HOTFIX_VERSION=$(python utils.py hotfix "${{github.event.release.tag_name}}" "$tags")
+          else
+            HOTFIX_VERSION="False"
+          fi
+          echo "$HOTFIX_VERSION"
+          echo "hotfix=$HOTFIX_VERSION" >> "$GITHUB_OUTPUT"
+      - name: Verify setting of hotfix
+        run: |
+          echo "The value of hotfix is ${{ steps.hotfix.outputs.hotfix }}"       
+      - if: ${{ steps.hotfix.outputs.hotfix == 'False'}}
+        name: Copy latest folder to gh-pages branch and update branch
+        run: |
+            if [ -d "latest" ]; then
+              rm -rf latest
+            fi
+            mkdir ./latest
+            cp -r docs/build/* ./latest
+            echo "Successfully copied into latest"
+            python utils.py html latest
+            git add -f latest
+      - if: ${{ github.event_name == 'release' }}
+        name: Create numbered version
+        run: |
+            FOLDER=${{github.event.release.tag_name}}
+            mkdir ./$FOLDER
+            cp -r docs/build/* ./$FOLDER
+            python utils.py selector_page $FOLDER
+            python utils.py html $FOLDER
+            git add -f $FOLDER
+            git add -f versions.html
+      - if: ${{ (github.event_name == 'release') && (steps.hotfix.outputs.hotfix == 'False') }}
+        name: Copy stable folder to gh-pages branch when releasing
+        run: |
+            if [ -d "stable" ]; then
+              rm -rf stable
+            fi
+            mkdir ./stable
+            cp -rv docs/build/* ./stable
+            python utils.py html stable
+            git add -f stable
+      - name: Create git commit
+        run: | 
+            git_hash=$(git rev-parse --short "$GITHUB_SHA")
+            git commit -m "Sphinx documentation for ${git_hash}"
+      - name: Push changes to gh-pages branch
+        run: git push origin gh-pages

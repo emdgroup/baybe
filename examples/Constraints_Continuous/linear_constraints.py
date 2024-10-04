@@ -18,10 +18,7 @@ import numpy as np
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
-from baybe.constraints import (
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
-)
+from baybe.constraints import ContinuousLinearConstraint
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
@@ -58,23 +55,23 @@ parameters = [
 ]
 
 # We model the following constraints:
-# `1.0*x_1 + 1.0*x_2 = 1.0`
-# `1.0*x_3 - 1.0*x_4 = 2.0`
-# `1.0*x_1 + 1.0*x_3 >= 1.0`
-# `2.0*x_2 + 3.0*x_4 <= 1.0` which is equivalent to `-2.0*x_2 - 3.0*x_4 >= -1.0`
+# - $1.0*x_1 + 1.0*x_2 = 1.0$
+# - $1.0*x_3 - 1.0*x_4 = 2.0$
+# - $1.0*x_1 + 1.0*x_3 >= 1.0$
+# - $2.0*x_2 + 3.0*x_4 <= 1.0$ which is equivalent to $-2.0*x_2 - 3.0*x_4 >= -1.0$
 
 constraints = [
-    ContinuousLinearEqualityConstraint(
-        parameters=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.0
+    ContinuousLinearConstraint(
+        parameters=["x_1", "x_2"], operator="=", coefficients=[1.0, 1.0], rhs=1.0
     ),
-    ContinuousLinearEqualityConstraint(
-        parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0
+    ContinuousLinearConstraint(
+        parameters=["x_3", "x_4"], operator="=", coefficients=[1.0, -1.0], rhs=2.0
     ),
-    ContinuousLinearInequalityConstraint(
-        parameters=["x_1", "x_3"], coefficients=[1.0, 1.0], rhs=1.0
+    ContinuousLinearConstraint(
+        parameters=["x_1", "x_3"], operator=">=", coefficients=[1.0, 1.0], rhs=1.0
     ),
-    ContinuousLinearInequalityConstraint(
-        parameters=["x_2", "x_4"], coefficients=[-2.0, -3.0], rhs=-1.0
+    ContinuousLinearConstraint(
+        parameters=["x_2", "x_4"], operator="<=", coefficients=[2.0, 3.0], rhs=-1.0
     ),
 ]
 
@@ -112,7 +109,7 @@ for k in range(N_ITERATIONS):
 measurements = campaign.measurements
 TOLERANCE = 0.01
 
-# `1.0*x_1 + 1.0*x_2 = 1.0`
+# $1.0*x_1 + 1.0*x_2 = 1.0$
 
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
@@ -121,7 +118,7 @@ print(
     ),
 )
 
-# `1.0*x_3 - 1.0*x_4 = 2.0`
+# $1.0*x_3 - 1.0*x_4 = 2.0$
 
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",
@@ -130,14 +127,14 @@ print(
     ),
 )
 
-# `1.0*x_1 + 1.0*x_3 >= 1.0`
+# $1.0*x_1 + 1.0*x_3 >= 1.0$
 
 print(
     "1.0*x_1 + 1.0*x_3 >= 1.0 satisfied in all recommendations? ",
     (1.0 * measurements["x_1"] + 1.0 * measurements["x_3"]).ge(1.0 - TOLERANCE).all(),
 )
 
-# `2.0*x_2 + 3.0*x_4 <= 1.0`
+# $2.0*x_2 + 3.0*x_4 <= 1.0$
 
 print(
     "2.0*x_2 + 3.0*x_4 <= 1.0 satisfied in all recommendations? ",

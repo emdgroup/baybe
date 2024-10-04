@@ -22,6 +22,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -88,14 +89,9 @@ class GaussianProcessSurrogate(Surrogate):
     # to `optimize_acqf_*`, which is configured to be called on the original scale.
     # Moving the scaling operation into the botorch GP object avoids this conflict.
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = True
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
-    # Object variables
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
         factory=DefaultKernelFactory,
@@ -216,3 +212,9 @@ class GaussianProcessSurrogate(Surrogate):
             botorch.optim.fit.fit_gpytorch_mll_torch(mll, step_limit=200)
         else:
             botorch.fit.fit_gpytorch_mll(mll)
+
+    def __str__(self) -> str:
+        fields = [
+            to_string("Kernel factory", self.kernel_factory, single_line=True),
+        ]
+        return to_string(super().__str__(), *fields)

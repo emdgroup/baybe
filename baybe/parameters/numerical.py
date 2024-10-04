@@ -18,7 +18,7 @@ from baybe.utils.numerical import DTypeFloatNumpy
 
 @define(frozen=True, slots=False)
 class NumericalDiscreteParameter(DiscreteParameter):
-    """Parameter class for discrete numerical parameters (a.k.a. setpoints)."""
+    """Class for discrete numerical parameters (a.k.a. setpoints)."""
 
     # class variables
     is_numerical: ClassVar[bool] = True
@@ -100,7 +100,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
 @define(frozen=True, slots=False)
 class NumericalContinuousParameter(ContinuousParameter):
-    """Parameter class for continuous numerical parameters."""
+    """Class for continuous numerical parameters."""
 
     # class variables
     is_numerical: ClassVar[bool] = True

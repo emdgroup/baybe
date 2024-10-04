@@ -16,11 +16,11 @@
 &nbsp;
 <a href="https://emdgroup.github.io/baybe/">Homepage<a/>
 &nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/userguide/userguide.html">User Guide<a/>
+<a href="https://emdgroup.github.io/baybe/stable/userguide/userguide.html">User Guide<a/>
 &nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/_autosummary/baybe.html">Documentation<a/>
+<a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.html">Documentation<a/>
 &nbsp;•&nbsp;
-<a href="https://emdgroup.github.io/baybe/misc/contributing_link.html">Contribute<a/>
+<a href="https://emdgroup.github.io/baybe/stable/misc/contributing_link.html">Contribute<a/>
 &nbsp;
 </div>
 
@@ -33,9 +33,12 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - ✨ Custom parameter encodings: Improve your campaign with domain knowledge
 - 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
 - 🎯 Single and multiple targets with min, max and match objectives
-- ⚙️ Custom surrogate models: For specialized problems or active learning
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
+- 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
+- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments
+- 🎓 Active learning: Perform smart data acquisition campaigns
+- ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
 - 📝 Fully typed and hypothesis-tested: Robust code base
 - 🔄 All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
@@ -72,7 +75,7 @@ In cases where we are confronted with multiple (potentially conflicting) targets
 the `DesirabilityObjective` can be used instead. It allows to define additional
 settings, such as how these targets should be balanced.
 For more details, see the
-[objectives section](https://emdgroup.github.io/baybe/userguide/objectives.html)
+[objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
 of the user guide.
 
 ### Defining the Search Space
@@ -116,12 +119,12 @@ parameters = [
 ```
 
 For more parameter types and their details, see the
-[parameters section](https://emdgroup.github.io/baybe/userguide/parameters.html)
+[parameters section](https://emdgroup.github.io/baybe/stable/userguide/parameters.html)
 of the user guide.
 
 Additionally, we can define a set of constraints to further specify allowed ranges and
 relationships between our parameters. Details can be found in the
-[constraints section](https://emdgroup.github.io/baybe/userguide/constraints.html) of the user guide.
+[constraints section](https://emdgroup.github.io/baybe/stable/userguide/constraints.html) of the user guide.
 In this example, we assume no further constraints.
 
 With the parameter definitions at hand, we can now create our
@@ -133,7 +136,7 @@ from baybe.searchspace import SearchSpace
 searchspace = SearchSpace.from_product(parameters)
 ```
 
-See the [search spaces section](https://emdgroup.github.io/baybe/userguide/searchspace.html)
+See the [search spaces section](https://emdgroup.github.io/baybe/stable/userguide/searchspace.html)
 of our user guide for more information on the structure of search spaces
 and alternative ways of construction. 
 
@@ -151,7 +154,7 @@ For our example, we combine two recommenders via a so-called meta recommender na
 
 For more details on the different recommenders, their underlying algorithmic
 details, and their configuration settings, see the
-[recommenders section](https://emdgroup.github.io/baybe/userguide/recommenders.html)
+[recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
 of the user guide.
 
 ```python
@@ -293,7 +296,7 @@ The available groups are:
 - `mypy`: Required for static type checking.
 - `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
 - `polars`: Required for optimized search space construction via [Polars](https://docs.pola.rs/)
-- `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/_autosummary/baybe.simulation.html) module.
+- `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
@@ -308,7 +311,7 @@ host machine names are anonymized with via truncated hashing.
   `telemetry` module.
 - You can always deactivate all telemetry by setting the environment variable 
   `BAYBE_TELEMETRY_ENABLED` to `false` or `off`. For details please consult
-  [this page](https://emdgroup.github.io/baybe/userguide/envvars.html#telemetry).
+  [this page](https://emdgroup.github.io/baybe/stable/userguide/envvars.html#telemetry).
 - If you want to be absolutely sure, you can uninstall internet related packages such
   as `opentelemetry*` or its secondary dependencies from the environment. Due to the
   inability of specifying opt-out dependencies, these are installed by default, but the
@@ -322,7 +325,7 @@ host machine names are anonymized with via truncated hashing.
 
 
 ## 🛠️ Known Issues
-A list of know issues can be found [here](https://emdgroup.github.io/baybe/known_issues.html).
+A list of know issues can be found [here](https://emdgroup.github.io/baybe/stable/known_issues.html).
 
 
 ## 📄 License

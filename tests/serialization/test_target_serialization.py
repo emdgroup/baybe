@@ -8,7 +8,7 @@ from ..hypothesis_strategies.targets import targets
 
 
 @given(targets)
-def test_parameter_roundtrip(target: Target):
+def test_target_roundtrip(target: Target):
     """A serialization roundtrip yields an equivalent object."""
     string = target.to_json()
     target2 = Target.from_json(string)

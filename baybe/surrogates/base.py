@@ -16,6 +16,7 @@ from cattrs.dispatch import (
     UnstructuredValue,
     UnstructureHook,
 )
+from joblib.hashing import hash
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -28,6 +29,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.plotting import to_string
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
@@ -63,6 +65,13 @@ _IDENTITY_TRANSFORM = _NoTransform.IDENTITY_TRANSFORM
 class SurrogateProtocol(Protocol):
     """Type protocol specifying the interface surrogate models need to implement."""
 
+    # Use slots so that derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+    __slots__ = ()
+
+    # TODO: Final layout still to be optimized. For example, shall we require a
+    #   `posterior` method?
+
     def fit(
         self,
         searchspace: SearchSpace,
@@ -89,10 +98,6 @@ class SurrogateProtocol(Protocol):
 class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Abstract base class for all surrogate models."""
 
-    # Class variables
-    joint_posterior: ClassVar[bool]
-    """Class variable encoding whether or not a joint posterior is calculated."""
-
     supports_transfer_learning: ClassVar[bool]
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
@@ -100,8 +105,20 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
 
+    _objective: Objective | None = field(init=False, default=None, eq=False)
+    """The objective for which the surrogate was trained. Available after fitting."""
+
+    _measurements_hash: str = field(init=False, default=None, eq=False)
+    """The hash of the data the surrogate was trained on."""
+
+    _input_scaler: ColumnTransformer | None = field(init=False, default=None, eq=False)
+    """Scaler for transforming input values. Available after fitting.
+
+    Scales a tensor containing parameter configurations in computational representation
+    to make them digestible for the model-specific, scale-agnostic posterior logic."""
+
     # TODO: type should be
-    #   `botorch.models.transforms.outcome.Standardize | _NoTransform`
+    #   `botorch.models.transforms.outcome.Standardize | _NoTransform` | None
     #   but is currently omitted due to:
     #   https://github.com/python-attrs/cattrs/issues/531
     _output_scaler = field(init=False, default=None, eq=False)
@@ -218,6 +235,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             The same :class:`botorch.posteriors.Posterior` object as returned via
             :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._input_scaler is not None
+
         p = self._posterior(self._input_scaler.transform(candidates_comp))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
@@ -278,6 +299,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         """
         # TODO: consider adding a validation step for `measurements`
 
+        # When the context is unchanged, no retraining is necessary
+        if (
+            searchspace == self._searchspace
+            and objective == self._objective
+            and hash(measurements) == self._measurements_hash
+        ):
+            return
+
         # Check if transfer learning capabilities are needed
         if (searchspace.n_tasks > 1) and (not self.supports_transfer_learning):
             raise ValueError(
@@ -292,8 +321,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 "Continuous search spaces are currently only supported by GPs."
             )
 
-        # Remember on which search space the model is trained
+        # Remember the training context
         self._searchspace = searchspace
+        self._objective = objective
+        self._measurements_hash = hash(measurements)
 
         # Create context-specific transformations
         self._input_scaler = self._make_input_scaler(searchspace)
@@ -316,10 +347,20 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Perform the actual fitting logic."""
 
+    def __str__(self) -> str:
+        fields = [
+            to_string(
+                "Supports Transfer Learning",
+                self.supports_transfer_learning,
+                single_line=True,
+            ),
+        ]
+        return to_string(self.__class__.__name__, *fields)
+
 
 @define
-class GaussianSurrogate(Surrogate, ABC):
-    """A surrogate model providing Gaussian posterior estimates."""
+class IndependentGaussianSurrogate(Surrogate, ABC):
+    """A surrogate base class providing independent Gaussian posteriors."""
 
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
         # See base class.
@@ -330,21 +371,14 @@ class GaussianSurrogate(Surrogate, ABC):
 
         # Construct the Gaussian posterior from the estimated first and second moment
         mean, var = self._estimate_moments(candidates_comp_scaled)
-        if not self.joint_posterior:
-            var = torch.diag_embed(var)
-        mvn = MultivariateNormal(mean, var)
+        mvn = MultivariateNormal(mean, torch.diag_embed(var))
         return GPyTorchPosterior(mvn)
 
     @abstractmethod
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:
-        """Estimate first and second moments of the Gaussian posterior.
-
-        The second moment may either be a 1-D tensor of marginal variances for the
-        candidates or a 2-D tensor representing a full covariance matrix over all
-        candidates, depending on the ``joint_posterior`` flag of the model.
-        """
+        """Estimate first and second moments of the Gaussian posterior."""
 
 
 def _make_hook_decode_onnx_str(

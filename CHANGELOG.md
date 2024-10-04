@@ -4,7 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.1] - 2024-10-01
+### Added
+- Continuous linear constraints have been consolidated in the new
+  `ContinuousLinearConstraint` class
+
+### Changed
+- `get_surrogate` now also returns the model for transformed single targets or
+  desirability objectives
+
+### Fixed
+- Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
+
+### Deprecated
+- `ContinuousLinearEqualityConstraint` and `ContinuousLinearInequalityConstraint`
+  replaced by `ContinuousLinearConstraint` with the corresponding `operator` keyword
+
+## [0.11.0] - 2024-09-09
 ### Breaking Changes
 - The public methods of `Surrogate` models now operate on dataframes in experimental
   representation instead of tensors in computational representation
@@ -14,11 +30,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `py.typed` file to enable the use of type checkers on the user side
-- `GaussianSurrogate` base class for surrogate models with Gaussian posteriors
+- `IndependentGaussianSurrogate` base class for surrogate models providing independent 
+  Gaussian posteriors for all candidates (cannot be used for batch prediction)
 - `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
   and `SubspaceContinuous` classes
 - New mechanisms for surrogate input/output scaling configurable per class
 - `SurrogateProtocol` as an interface for user-defined surrogate architectures
+- Support for binary targets via `BinaryTarget` class
+- Support for bandit optimization via `BetaBernoulliMultiArmedBanditSurrogate` class
+- Bandit optimization example
+- `qThompsonSampling` acquisition function
+- `BetaPrior` class
+- `recommend` now accepts the `pending_experiments` argument, informing the algorithm
+  about points that were already selected for evaluation
+- Pure recommenders now have the `allow_recommending_pending_experiments` flag,
+  controlling whether pending experiments are excluded from candidates in purely
+  discrete search spaces
+- `get_surrogate` and `posterior` methods to `Campaign`
+- `tenacity` test dependency
+- Multi-version documentation
 
 ### Changed
 - The transition from experimental to computational representation no longer happens
@@ -31,11 +61,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   granting access to all fingerprints available therein. 
   The `SubstanceParameter` value `MORGAN_FP` is now an alias for `ECFP` 
   with 1024 features and radius of 4.
+- Search spaces now store their parameters in alphabetical order by name
+- Improvement-based acquisition functions now consider the maximum posterior mean
+  instead of the maximum noisy measurement as reference value
+- Iteration tests now attempt up to 5 repeated executions if they fail due to numerical
+  reasons
 
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
   string input to categories/tasks
 - `farthest_point_sampling` no longer depends on the provided point order
+- Batch predictions for `RandomForestSurrogate`
+- Surrogates providing only marginal posterior information can no longer be used for
+  batch recommendation
+- `SearchSpace.from_dataframe` now creates a proper empty discrete subspace without
+  index when called with continuous parameters only
+- Metadata updates are now only triggered when a discrete subspace is present
+- Unintended reordering of discrete search space parts for recommendations obtained
+  with `BotorchRecommender`
 
 ### Removed
 - `register_custom_architecture` decorator
@@ -45,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The role of `register_custom_architecture` has been taken over by
   `baybe.surrogates.base.SurrogateProtocol`
 - The `SubstanceParameter` value `MORGAN_FP` will be deprecated in future versions.
+- `BayesianRecommender.surrogate_model` has been replaced with `get_surrogate`
 
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes

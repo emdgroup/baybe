@@ -3,6 +3,7 @@
 import pytest
 from pytest import param
 
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -14,7 +15,7 @@ from baybe.targets.numerical import NumericalTarget
         param("MAX", (0, 0), id="degenerate"),
     ],
 )
-def test_invalid_bounds_mode(mode, bounds):
+def test_numerical_target_invalid_bounds_mode(mode, bounds):
     """Providing invalid bounds raises an exception."""
     with pytest.raises(ValueError):
         NumericalTarget(name="invalid_bounds", mode=mode, bounds=bounds)
@@ -27,11 +28,28 @@ def test_invalid_bounds_mode(mode, bounds):
         param("MATCH", (0, 1), "LINEAR", id="linear_for_match"),
     ],
 )
-def test_incompatible_transform_mode(mode, bounds, transformation):
+def test_numerical_target_incompatible_transform_mode(mode, bounds, transformation):
     with pytest.raises(ValueError):
         NumericalTarget(
             name="incompatible_transform",
             mode=mode,
             bounds=bounds,
             transformation=transformation,
+        )
+
+
+@pytest.mark.parametrize(
+    ("choices", "error", "match"),
+    [
+        param((None, 0), TypeError, "'success_value' must be", id="wrong_type"),
+        param((0, 0), ValueError, "must be different", id="identical"),
+    ],
+)
+def test_binary_target_invalid_values(choices, error, match):
+    """Providing invalid choice values raises an error."""
+    with pytest.raises(error, match=match):
+        BinaryTarget(
+            name="invalid_value",
+            success_value=choices[0],
+            failure_value=choices[1],
         )

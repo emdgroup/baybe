@@ -24,9 +24,10 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify
+from baybe.surrogates.base import IndependentGaussianSurrogate
+from baybe.surrogates.utils import batchify_mean_var_prediction
 from baybe.utils.numerical import DTypeFloatONNX
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     import onnxruntime as ort
@@ -43,20 +44,15 @@ def register_custom_architecture(*args, **kwargs) -> NoReturn:
 
 
 @define(kw_only=True)
-class CustomONNXSurrogate(GaussianSurrogate):
+class CustomONNXSurrogate(IndependentGaussianSurrogate):
     """A wrapper class for custom pretrained surrogate models.
 
     Note that these surrogates cannot be retrained.
     """
 
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
-
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     onnx_input_name: str = field(validator=validators.instance_of(str))
     """The input name used for constructing the ONNX str."""
 
@@ -78,14 +74,16 @@ class CustomONNXSurrogate(GaussianSurrogate):
         except Exception as exc:
             raise ValueError("Invalid ONNX string") from exc
 
-    @batchify
-    def _estimate_moments(self, candidates_comp: Tensor, /) -> tuple[Tensor, Tensor]:
+    @batchify_mean_var_prediction
+    def _estimate_moments(
+        self, candidates_comp_scaled: Tensor, /
+    ) -> tuple[Tensor, Tensor]:
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
 
         model_inputs = {
-            self.onnx_input_name: candidates_comp.numpy().astype(DTypeFloatONNX)
+            self.onnx_input_name: candidates_comp_scaled.numpy().astype(DTypeFloatONNX)
         }
         results = self._model.run(None, model_inputs)
 
@@ -140,3 +138,7 @@ class CustomONNXSurrogate(GaussianSurrogate):
                 f"a one-dimensional computational representation or "
                 f"{CustomDiscreteParameter.__name__}."
             )
+
+    def __str__(self) -> str:
+        fields = [to_string("ONNX input name", self.onnx_input_name, single_line=True)]
+        return to_string(super().__str__(), *fields)

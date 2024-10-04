@@ -18,7 +18,7 @@ from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
 from baybe.constraints import (
-    ContinuousLinearEqualityConstraint,
+    ContinuousLinearConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -74,8 +74,8 @@ parameters = [
 ]
 
 # We model the following constraints:
-# `1.0*x_1 + 1.0*x_2 = 1.0`
-# `1.0*x_3 - 1.0*x_4 = 2.0`
+# - $1.0*x_1 + 1.0*x_2 = 1.0$
+# - $1.0*x_3 - 1.0*x_4 = 2.0$
 
 constraints = [
     DiscreteSumConstraint(
@@ -84,8 +84,8 @@ constraints = [
             threshold=1.0, operator="==", tolerance=STRIDE / 2.0
         ),
     ),
-    ContinuousLinearEqualityConstraint(
-        parameters=["x_3", "x_4"], coefficients=[1.0, -1.0], rhs=2.0
+    ContinuousLinearConstraint(
+        parameters=["x_3", "x_4"], operator="=", coefficients=[1.0, -1.0], rhs=2.0
     ),
 ]
 
@@ -118,7 +118,7 @@ for k in range(N_ITERATIONS):
 measurements = campaign.measurements
 TOLERANCE = 0.01
 
-# `1.0*x_1 + 1.0*x_2 = 1.0`
+# $1.0*x_1 + 1.0*x_2 = 1.0$
 
 print(
     "1.0*x_1 + 1.0*x_2 = 1.0 satisfied in all recommendations? ",
@@ -127,7 +127,7 @@ print(
     ),
 )
 
-# `1.0*x_3 - 1.0*x_4 = 2.0`
+# $1.0*x_3 - 1.0*x_4 = 2.0$
 
 print(
     "1.0*x_3 - 1.0*x_4 = 2.0 satisfied in all recommendations? ",

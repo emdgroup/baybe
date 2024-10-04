@@ -1,11 +1,4 @@
-"""Linear surrogates.
-
-Currently, the documentation for this surrogate is not available. This is due to a bug
-in our documentation tool, see https://github.com/sphinx-doc/sphinx/issues/11750.
-
-Since we plan to refactor the surrogates, this part of the documentation will be
-available in the future. Thus, please have a look in the source code directly.
-"""
+"""Linear surrogates."""
 
 from __future__ import annotations
 
@@ -14,9 +7,10 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from attr import define, field
 from sklearn.linear_model import ARDRegression
 
-from baybe.surrogates.base import GaussianSurrogate
-from baybe.surrogates.utils import batchify, catch_constant_targets
+from baybe.surrogates.base import IndependentGaussianSurrogate
+from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -24,17 +18,12 @@ if TYPE_CHECKING:
 
 @catch_constant_targets
 @define
-class BayesianLinearSurrogate(GaussianSurrogate):
+class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     """A Bayesian linear regression surrogate model."""
-
-    # Class variables
-    joint_posterior: ClassVar[bool] = False
-    # See base class.
 
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    # Object variables
     model_params: dict[str, Any] = field(
         factory=dict,
         converter=dict,
@@ -45,7 +34,7 @@ class BayesianLinearSurrogate(GaussianSurrogate):
     _model: ARDRegression | None = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    @batchify
+    @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:
@@ -70,3 +59,7 @@ class BayesianLinearSurrogate(GaussianSurrogate):
         # See base class.
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
+
+    def __str__(self) -> str:
+        fields = [to_string("Model Params", self.model_params, single_line=True)]
+        return to_string(super().__str__(), *fields)

@@ -6,6 +6,8 @@ from attr.validators import instance_of
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
+from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.plotting import to_string
 
 
 @define(frozen=True, slots=False)
@@ -16,17 +18,15 @@ class SingleTargetObjective(Objective):
     """The single target considered by the objective."""
 
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
 
-        objective_str = f"""{start_bold}Objective{end_bold}
-        \n{start_bold}Type: {end_bold}{self.__class__.__name__}
-        \n{start_bold}Targets {end_bold}\n{targets_df}"""
+        fields = [
+            to_string("Type", self.__class__.__name__, single_line=True),
+            to_string("Targets", pretty_print_df(targets_df)),
+        ]
 
-        return objective_str.replace("\n", "\n ")
+        return to_string("Objective", *fields)
 
     @property
     def targets(self) -> tuple[Target, ...]:  # noqa: D102

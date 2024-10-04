@@ -6,8 +6,7 @@ import pytest
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
+    ContinuousLinearConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -74,7 +73,7 @@ def test_discrete_searchspace_creation_from_dataframe():
         name="cat_unspecified", values=["d", "e", "f"]
     )
 
-    all_params = (num_specified, num_unspecified, cat_specified, cat_unspecified)
+    all_params = (cat_specified, cat_unspecified, num_specified, num_unspecified)
 
     df = pd.DataFrame({param.name: param.values for param in all_params})
     searchspace = SearchSpace(
@@ -153,22 +152,14 @@ def test_invalid_constraint_parameter_combos():
     with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
-            constraints=[
-                ContinuousLinearEqualityConstraint(
-                    parameters=["c1", "c2", "d1"],
-                )
-            ],
+            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
         )
 
     # Attempting continuous constraint over hybrid parameter set
     with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
-            constraints=[
-                ContinuousLinearInequalityConstraint(
-                    parameters=["c1", "c2", "d1"],
-                )
-            ],
+            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
         )
 
     # Attempting discrete constraint over hybrid parameter set
@@ -199,11 +190,7 @@ def test_invalid_constraint_parameter_combos():
     with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
-            constraints=[
-                ContinuousLinearInequalityConstraint(
-                    parameters=["c1", "e7", "d1"],
-                )
-            ],
+            constraints=[ContinuousLinearConstraint(["c1", "e7", "d1"], "=")],
         )
 
     # Attempting constraints over parameter sets containing non-numerical discrete
