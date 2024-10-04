@@ -113,7 +113,7 @@ def explanation(
     if not is_shap_explainer:
         """Return attributions for non-SHAP explainers."""
         if explainer_class.__module__.endswith("maple"):
-            """Aditional argument for maple to increase comparability to SHAP."""
+            """Additional argument for maple to increase comparability to SHAP."""
             attributions = explainer_obj.attributions(data, multiply_by_input=True)[0]
         else:
             attributions = explainer_obj.attributions(data)[0]
@@ -140,22 +140,22 @@ def explanation(
     return shap_explanations
 
 
-def shap_plot_beeswarm(explanation: shap.Explanation, **kwargs) -> None:
+def plot_beeswarm(explanation: shap.Explanation, **kwargs) -> None:
     """Plot the Shapley values using a beeswarm plot."""
     shap.plots.beeswarm(explanation, **kwargs)
 
 
-def shap_plot_waterfall(explanation: shap.Explanation, **kwargs) -> None:
+def plot_waterfall(explanation: shap.Explanation, **kwargs) -> None:
     """Plot the Shapley values using a waterfall plot."""
     shap.plots.waterfall(explanation, **kwargs)
 
 
-def shap_plot_bar(explanation: shap.Explanation, **kwargs) -> None:
+def plot_bar(explanation: shap.Explanation, **kwargs) -> None:
     """Plot the Shapley values using a bar plot."""
     shap.plots.bar(explanation, **kwargs)
 
 
-def shap_plot_scatter(explanation: shap.Explanation | memoryview, **kwargs) -> None:
+def plot_scatter(explanation: shap.Explanation | memoryview, **kwargs) -> None:
     """Plot the Shapley values using a scatter plot while leaving out string values.
 
     Args:
