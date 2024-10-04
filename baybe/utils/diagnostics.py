@@ -112,7 +112,11 @@ def explanation(
 
     if not is_shap_explainer:
         """Return attributions for non-SHAP explainers."""
-        attributions = explainer_obj.attributions(data)[0]
+        if explainer_class.__module__.endswith("maple"):
+            """Aditional argument for maple to increase comparability to SHAP."""
+            attributions = explainer_obj.attributions(data, multiply_by_input=True)[0]
+        else:
+            attributions = explainer_obj.attributions(data)[0]
         if computational_representation:
             feature_names = campaign.searchspace.comp_rep_columns
         else:
@@ -181,12 +185,10 @@ def shap_plot_scatter(explanation: shap.Explanation | memoryview, **kwargs) -> N
         else:
             shap.plots.scatter(explanation, **kwargs)
     else:
-        for i in range(data.shape[1]):
-            if is_not_numeric_column(data[:, i]):
-                warnings.warn(
-                    "Cannot plot scatter plot for column "
-                    f"'{explanation.feature_names[i]}' "
-                    "as it contains non-numeric values."
-                )
-            else:
-                shap.plots.scatter(explanation[:, i], **kwargs)
+        number_enum = [i for i, x in enumerate(data[1]) if not isinstance(x, str)]
+        if len(number_enum) < len(explanation.feature_names):
+            warnings.warn(
+                "Cannot plot SHAP scatter plot for all "
+                "parameters as some contain non-numeric values."
+            )
+        shap.plots.scatter(explanation[:, number_enum], **kwargs)
