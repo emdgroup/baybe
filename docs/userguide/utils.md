@@ -3,13 +3,14 @@
 BayBE comes with a set of useful functions that can make your life easier in certain
 scenarios.
 
-## Search Space Memory Size Estimation
+## Search Space Memory Estimation
 In search spaces that have discrete parts, the memory needed to store the respective
 data can become excessively large as the number of points grows with the amount of
 possible combinations arising form all discrete parameter values.
 
-The [`estimate_product_space_size`](baybe.searchspace.SearchSpace.estimate_product_space_size)
-utility allows estimating the memory needed to represent the discrete subspace. 
+The [`SearchSpace.estimate_product_space_size`](baybe.searchspace.core.SearchSpace.estimate_product_space_size)
+and [`SubspaceDiscrete.estimate_product_space_size`](baybe.searchspace.discrete.SubspaceDiscrete.estimate_product_space_size)
+utilities allows estimating the memory needed to represent the discrete subspace. 
 It will return a [`MemorySize`](baybe.searchspace.discrete.MemorySize) object that
 contains some relevant estimates.
 
@@ -78,7 +79,51 @@ of the search space and its constraints.
 ```
 
 ## Reproducibility
+In some scenarios, for instance when testing your code setup, it can be useful to fix
+the random seeds for all relevant engines to generate reproducible results. BayBE offers
+the [`set_random_seed`](baybe.utils.random.set_random_seed) utility for this purpose:
 
-## Add Fake Target Measurements
+```python
+from baybe.utils.random import set_random_seed
 
+# Set the global random seed for all relevant engines
+set_random_seed(1337)
 
+# Assuming we have a prepared campaign
+campaign.recommend(5)
+```
+
+Setting the global random seed can be undesirable if there are other packages in your
+setup. For this, BayBE offers [`temporary_seed`](baybe.utils.random.temporary_seed):
+
+```python
+from baybe.utils.random import temporary_seed
+
+# Set the random seed for all relevant engines temporarily within the context
+with temporary_seed(1337):
+    campaign.recommend(5)
+```
+
+## Add Fake Target Measurements and Noise
+When creating test scripts, it is often useful to try the recommendation loop for a few
+iterations. However, this requires some arbitrary target measurements to be set. Instead
+of coming up with a custom logic every time, you can use the
+[`add_fake_results`](baybe.utils.dataframe.add_fake_results) utility to add fake target
+measurements and the [`add_parameter_noise`](baybe.utils.dataframe.add_parameter_noise)
+utility to add artificial parameter noise:
+
+```python
+from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+
+# Get recommendations
+recommendations = campaign.recommend(5)
+
+# Add fake target measurements and artificial parameter noise to the recommendations
+# The utilities will modify the data frames inplace
+measurements = recommendations.copy()
+add_fake_results(measurements, campaign.targets)
+add_parameter_noise(measurements, campaign.parameters)
+
+# Continue the loop by adding the fake results
+campaign.add_measurements(measurements)
+```
