@@ -197,7 +197,7 @@ Without this constraint, combinations like below would be possible:
 | 3 | Octanol   | Octanol   | would be excluded                        |
 
 The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
-[example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
+[example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 ### DiscreteLinkedParametersConstraint
 The [`DiscreteLinkedParametersConstraint`](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
@@ -367,7 +367,7 @@ DiscretePermutationInvarianceConstraint(
 ```
 
 The usage of `DiscretePermutationInvarianceConstraint` is also part of the
-[example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
+[example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 ### DiscreteCustomConstraint
 With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
