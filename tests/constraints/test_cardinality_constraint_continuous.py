@@ -8,8 +8,7 @@ import pytest
 
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
+    ContinuousLinearConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
@@ -102,11 +101,15 @@ def test_polytope_sampling_with_cardinality_constraint():
     rhs_inequality = 1.3
     params_cardinality = ["x_1", "x_2", "x_3", "x_5"]
     constraints = [
-        ContinuousLinearEqualityConstraint(
-            parameters=params_equality, coefficients=coeffs_equality, rhs=rhs_equality
+        ContinuousLinearConstraint(
+            parameters=params_equality,
+            operator="=",
+            coefficients=coeffs_equality,
+            rhs=rhs_equality,
         ),
-        ContinuousLinearInequalityConstraint(
+        ContinuousLinearConstraint(
             parameters=params_inequality,
+            operator=">=",
             coefficients=coeffs_inequality,
             rhs=rhs_equality,
         ),
