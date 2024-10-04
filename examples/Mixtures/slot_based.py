@@ -1,4 +1,4 @@
-## Example for using a mixture use case in a discrete searchspace
+## Example for Modelling a Slot-Based Mixture
 
 # Example for imposing sum constraints for discrete parameters.
 # The constraints simulate a situation where we want to mix up to three solvents.
@@ -108,10 +108,9 @@ searchspace = SearchSpace.from_product(parameters=parameters, constraints=constr
 
 objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))
 
-### Creating and printing the campaign
+### Creating the Campaign
 
 campaign = Campaign(searchspace=searchspace, objective=objective)
-print(campaign)
 
 ### Manual verification of the constraint
 
