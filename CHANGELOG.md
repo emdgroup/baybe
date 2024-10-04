@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `n_restarts` and `n_raw_samples` keywords to configure continuous optimization
   behavior for `BotorchRecommender`
+- User guide for utilities
 
 ### Fixed
 - Leftover attrs-decorated classes are garbage collected before the subclass tree is
-  traversed, avoiding sporadic serialization problems 
+  traversed, avoiding sporadic serialization problems
 
 ## [0.11.1] - 2024-10-01
 ### Added
