@@ -140,11 +140,12 @@ def substance_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     data = draw(substance_data())
     decorrelate = draw(decorrelations)
-    encoding = draw(
-        st.sampled_from(
-            list(SubstanceEncoding)  # Check all fingerprint names
-        )
-    )
+
+    # Ignore deprecated encodings
+    encodings = list(SubstanceEncoding)
+    encodings.remove(SubstanceEncoding.MORGAN_FP)
+    encoding = draw(st.sampled_from(encodings))
+
     return SubstanceParameter(
         name=name, data=data, decorrelate=decorrelate, encoding=encoding
     )
