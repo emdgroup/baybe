@@ -17,6 +17,13 @@ class CategoricalEncoding(ParameterEncoding):
     """Integer encoding."""
 
 
+class CustomEncoding(ParameterEncoding):
+    """Available encodings for custom parameters."""
+
+    CUSTOM = "CUSTOM"
+    """User-defined encoding."""
+
+
 class SubstanceEncoding(ParameterEncoding):
     """Available encodings for substance parameters."""
 
@@ -55,46 +62,39 @@ class SubstanceEncoding(ParameterEncoding):
     WHIM = "WHIM"
 
 
-class CustomEncoding(ParameterEncoding):
-    """Available encodings for custom parameters."""
-
-    CUSTOM = "CUSTOM"
-    """User-defined encoding."""
-
-
-class FingerprintNames(Enum):
-    """Mapping of substance parameter encoding names to fingerprint classes."""
-
-    ATOMPAIR = "AtomPairFingerprint"
-    AUTOCORR = "AutocorrFingerprint"
-    AVALON = "AvalonFingerprint"
-    E3FP = "E3FPFingerprint"
-    ECFP = "ECFPFingerprint"
-    MORGAN_FP = "ECFPFingerprint"
-    ERG = "ERGFingerprint"
-    ESTATE = "EStateFingerprint"
-    FUNCTIONALGROUPS = "FunctionalGroupsFingerprint"
-    GETAWAY = "GETAWAYFingerprint"
-    GHOSECRIPPEN = "GhoseCrippenFingerprint"
-    KLEKOTAROTH = "KlekotaRothFingerprint"
-    LAGGNER = "LaggnerFingerprint"
-    LAYERED = "LayeredFingerprint"
-    LINGO = "LingoFingerprint"
-    MACCS = "MACCSFingerprint"
-    MAP = "MAPFingerprint"
-    MHFP = "MHFPFingerprint"
-    MORSE = "MORSEFingerprint"
-    MQNS = "MQNsFingerprint"
-    MORDRED = "MordredFingerprint"
-    PATTERN = "PatternFingerprint"
-    PHARMACOPHORE = "PharmacophoreFingerprint"
-    PHYSIOCHEMICALPROPERTIES = "PhysiochemicalPropertiesFingerprint"
-    PUBCHEM = "PubChemFingerprint"
-    RDF = "RDFFingerprint"
-    RDKIT2DDESCRIPTORS = "RDKit2DDescriptorsFingerprint"
-    RDKIT = "RDKitFingerprint"
-    SECFP = "SECFPFingerprint"
-    TOPOLOGICALTORSION = "TopologicalTorsionFingerprint"
-    USRCAT = "USRCATFingerprint"
-    USR = "USRFingerprint"
-    WHIM = "WHIMFingerprint"
+fingerprint_name_map: dict[str, str] = {
+    "ATOMPAIR": "AtomPairFingerprint",
+    "AUTOCORR": "AutocorrFingerprint",
+    "AVALON": "AvalonFingerprint",
+    "E3FP": "E3FPFingerprint",
+    "ECFP": "ECFPFingerprint",
+    "MORGAN_FP": "ECFPFingerprint",
+    "ERG": "ERGFingerprint",
+    "ESTATE": "EStateFingerprint",
+    "FUNCTIONALGROUPS": "FunctionalGroupsFingerprint",
+    "GETAWAY": "GETAWAYFingerprint",
+    "GHOSECRIPPEN": "GhoseCrippenFingerprint",
+    "KLEKOTAROTH": "KlekotaRothFingerprint",
+    "LAGGNER": "LaggnerFingerprint",
+    "LAYERED": "LayeredFingerprint",
+    "LINGO": "LingoFingerprint",
+    "MACCS": "MACCSFingerprint",
+    "MAP": "MAPFingerprint",
+    "MHFP": "MHFPFingerprint",
+    "MORSE": "MORSEFingerprint",
+    "MQNS": "MQNsFingerprint",
+    "MORDRED": "MordredFingerprint",
+    "PATTERN": "PatternFingerprint",
+    "PHARMACOPHORE": "PharmacophoreFingerprint",
+    "PHYSIOCHEMICALPROPERTIES": "PhysiochemicalPropertiesFingerprint",
+    "PUBCHEM": "PubChemFingerprint",
+    "RDF": "RDFFingerprint",
+    "RDKIT2DDESCRIPTORS": "RDKit2DDescriptorsFingerprint",
+    "RDKIT": "RDKitFingerprint",
+    "SECFP": "SECFPFingerprint",
+    "TOPOLOGICALTORSION": "TopologicalTorsionFingerprint",
+    "USRCAT": "USRCATFingerprint",
+    "USR": "USRFingerprint",
+    "WHIM": "WHIMFingerprint",
+}
+"""Mapping of substance parameter encoding names to fingerprint classes."""

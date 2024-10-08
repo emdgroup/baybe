@@ -19,7 +19,7 @@ from baybe._optional.chem import (
     MolFromSmilesTransformer,
     skfp_fingerprints,
 )
-from baybe.parameters.enum import FingerprintNames
+from baybe.parameters.enum import fingerprint_name_map
 from baybe.utils.numerical import DTypeFloatNumpy
 
 # Caching
@@ -142,7 +142,7 @@ def smiles_to_fingerprint_features(
 
 def convert_fingeprint_parameters(
     name: str, kwargs_fingerprint: dict | None = None
-) -> (str, dict):
+) -> tuple[str, dict]:
     """Convert fingerprint name parameters for computing the fingerprint.
 
     Args:
@@ -158,7 +158,7 @@ def convert_fingeprint_parameters(
     """
     # Get fingerprint class
     try:
-        fp_class = FingerprintNames[name].value
+        fp_class = fingerprint_name_map[name]
     except KeyError:
         raise KeyError(f"Fingerprint name {name} is not valid.")
 
