@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- `SubstanceParameter` encodings are now computed exclusively with the
+  `scikit-fingerprints` package, granting access to all fingerprints available therein
+
+### Deprecations
+- `SubstanceEncoding` value `MORGAN_FP`. It is equivalent to `ECFP` with 1024 bits and
+  radius of 4
+
 ## [0.11.1] - 2024-10-01
 ### Added
 - Continuous linear constraints have been consolidated in the new
@@ -16,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
 
-### Deprecated
+### Deprecations
 - `ContinuousLinearEqualityConstraint` and `ContinuousLinearInequalityConstraint`
   replaced by `ContinuousLinearConstraint` with the corresponding `operator` keyword
 
@@ -57,10 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `to_tensor` now also handles `numpy` arrays
 - `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
   instead of negating the computational representation
-- Fingerprint encodings are now computed exclusively with the `scikit-fingerprints` package, 
-  granting access to all fingerprints available therein. 
-  The `SubstanceParameter` value `MORGAN_FP` is now an alias for `ECFP` 
-  with 1024 features and radius of 4.
 - Search spaces now store their parameters in alphabetical order by name
 - Improvement-based acquisition functions now consider the maximum posterior mean
   instead of the maximum noisy measurement as reference value
@@ -87,7 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecations
 - The role of `register_custom_architecture` has been taken over by
   `baybe.surrogates.base.SurrogateProtocol`
-- The `SubstanceParameter` value `MORGAN_FP` will be deprecated in future versions.
 - `BayesianRecommender.surrogate_model` has been replaced with `get_surrogate`
 
 ## [0.10.0] - 2024-08-02
