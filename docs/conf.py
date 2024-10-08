@@ -268,6 +268,7 @@ autodoc_preserve_defaults = False
 autodoc_default_options = {
     # Order by type (function, attribute...), required for proper inheritance
     "member-order": "groupwise",
+    "undoc-members": True,  # Include members without docstrings
 }
 # Only show parameters that are documented.
 autodoc_typehints_description_target = "documented_params"
