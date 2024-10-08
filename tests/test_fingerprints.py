@@ -1,9 +1,9 @@
-"""Test for fingerprint generation."""
+"""Tests for fingerprint generation."""
 
 import pytest
 
+from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.substance import SubstanceEncoding
-from baybe.utils.chemistry import smiles_to_fingerprint_features
 
 test_lst = [
     (enc.name, {}, {})
@@ -11,9 +11,10 @@ test_lst = [
     if enc is not SubstanceEncoding.MORGAN_FP  # excluded due to deprecation
 ]
 
-print(test_lst)
 
-
+@pytest.mark.skipif(
+    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
 @pytest.mark.parametrize(
     "name,kw_fp,kw_conf",
     test_lst
@@ -26,6 +27,9 @@ print(test_lst)
     ],
 )
 def test_fingerprint_kwargs(name, kw_fp, kw_conf):
+    """Test all fingerprint computations."""
+    from baybe.utils.chemistry import smiles_to_fingerprint_features
+
     smiles_list = ["CC(N(C)C)=O", "CCCC#N"]
     x = smiles_to_fingerprint_features(
         smiles_list=smiles_list,

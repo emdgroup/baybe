@@ -5,6 +5,7 @@ import warnings
 import pandas as pd
 import pytest
 
+from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.constraints import (
     ContinuousLinearConstraint,
@@ -24,7 +25,6 @@ from baybe.recommenders.pure.bayesian import (
 )
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.chemistry import convert_fingeprint_parameters
 
 
 def test_objective_class():
@@ -131,8 +131,13 @@ def test_surrogate_registration():
         register_custom_architecture()
 
 
+@pytest.mark.skipif(
+    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
 def test_deprecated_morgan_fp(acqf):
     """Deprecated fingerprint name raises warning and uses ECFP replacement."""
+    from baybe.utils.chemistry import convert_fingeprint_parameters
+
     with pytest.warns(DeprecationWarning):
         # Check that ECFP is used instead of Morgan with correct pre-defined kwargs
         morgan_class, morgan_kwargs = convert_fingeprint_parameters(
