@@ -44,11 +44,11 @@ for various acquisition functions.
   
   Note that the recommender performs a brute-force search when applied to hybrid search
   spaces, as it does gradient-based optimization in the continuous part of the space
-  while exhaustively searching choices in the discrete subspace. You can customize this
+  while exhaustively evaluating configurations of the discrete subspace. You can customize this
   behavior to only sample a certain percentage of the discrete subspace via the
   `sample_percentage` attribute and to choose different sampling algorithms via the
   `hybrid_sampler` attribute. The gradient-based optimization part can also further be
-  controlled by the `num_restarts` and `raw_samples` keywords, for details please refer
+  controlled by the `num_restarts` and `raw_samples` keywords. For details, please refer
   to [BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender).
  
   An example on using this recommender in a hybrid space can be found
