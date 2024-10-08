@@ -70,6 +70,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 [project.optional-dependencies]
 chem = [
     "scikit-fingerprints>=1.7.0",
+    "descriptastorus==2.6.1", # secondary dep, newer versions cause uv install issues
 ]
 
 onnx = [
