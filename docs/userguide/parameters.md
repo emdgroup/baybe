@@ -156,6 +156,7 @@ SubstanceParameter(
     },
     encoding="ECFP",
     kwargs_fingerprint={
+        "radius": 4,  # Set maximum radius of resulting subgraphs
         "fp_size": 1024,  # Change the number of computed bits
     },
 )
