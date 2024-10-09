@@ -2,24 +2,24 @@
 
 ## Installation Related Issues
 
-### macOS-arm64 - Leaked Semaphore
-We know of a number of instances where baybe fails during runtime on macOS-arm64
+### macOS-arm64 – Leaked Semaphore
+We know of a number of instances where BayBE fails during runtime on macOS-arm64
 systems. In particular M1 seems to be affected.
 
 The issues often contain a reference to `semaphore`, e.g.
 `UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown`. 
 While we do not know the exact source of the problem, it seems to be related to linked
-libraries that need to be compiled from source since no `macOS-arm64` binaries are
+libraries that need to be compiled from source when no `macOS-arm64` binaries are
 available. Packages that seem to have regular problems are `sklearn-extra`, `pymatgen`
 and `matminer`.
 
 ```{admonition} Suggested Fix
 :class: tip
 Install `baybe` into a clean environment without pre-existing
-packages. If you require other packages, try to install baybe first.
+packages. If you require other packages, try to install `baybe` first.
 ```
 
-### Windows - Torch Problems
+### Windows – Torch Problems
 Reports of crashes during runtime on Windows machines often stem from a faulty `torch`
 installation, e.g. wrongly installed CUDA-`torch` combinations. Errors look like
 `OSError: [WinError 126] The specified module was not found. Error loading 
