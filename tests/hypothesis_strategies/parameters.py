@@ -144,6 +144,7 @@ def substance_parameters(draw: st.DrawFn):
     # Ignore deprecated encodings
     encodings = list(SubstanceEncoding)
     encodings.remove(SubstanceEncoding.MORGAN_FP)
+    encodings.remove(SubstanceEncoding.RDKIT)
     encoding = draw(st.sampled_from(encodings))
 
     return SubstanceParameter(

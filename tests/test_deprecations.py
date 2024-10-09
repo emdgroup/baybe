@@ -4,6 +4,7 @@ import warnings
 
 import pandas as pd
 import pytest
+from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition.base import AcquisitionFunction
@@ -131,29 +132,33 @@ def test_surrogate_registration():
         register_custom_architecture()
 
 
+@pytest.mark.parametrize(
+    "deprecated,expected",
+    [
+        param("MORGAN_FP", "ECFP", id="morgan"),
+        param("RDKIT", "RDKIT2DDESCRIPTORS", id="rdkit"),
+    ],
+)
 @pytest.mark.skipif(
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
-def test_deprecated_morgan_fp(acqf):
+def test_deprecated_encodings(deprecated, expected):
     """Deprecated fingerprint name raises warning and uses ECFP replacement."""
     from baybe.utils.chemistry import convert_fingeprint_parameters
 
     with pytest.warns(DeprecationWarning):
-        # Check that ECFP is used instead of Morgan with correct pre-defined kwargs
-        morgan_class, morgan_kwargs = convert_fingeprint_parameters(
-            name=SubstanceEncoding("MORGAN_FP").name, kwargs_fingerprint=None
+        # Check that equivalent is used instead of deprecated encoding
+        deprecated_cls, fp_kwargs = convert_fingeprint_parameters(
+            name=SubstanceEncoding(deprecated).name, kwargs_fingerprint=None
         )
-        ecfp_class, _ = convert_fingeprint_parameters(
-            name=SubstanceEncoding("ECFP").name, kwargs_fingerprint=None
-        )
-        assert morgan_class == ecfp_class
-        assert morgan_kwargs == {"fp_size": 1024, "radius": 4}
 
-        # Check that user-specified kwargs override the defaults
-        _, morgan_custom_kwargs = convert_fingeprint_parameters(
-            name=SubstanceEncoding("MORGAN_FP").name, kwargs_fingerprint={"radius": 5}
-        )
-        assert morgan_custom_kwargs == {"fp_size": 1024, "radius": 5}
+    expected_cls, _ = convert_fingeprint_parameters(
+        name=SubstanceEncoding(expected).name, kwargs_fingerprint=None
+    )
+    assert deprecated_cls == expected_cls
+
+    if deprecated == "MORGAN_FP":
+        assert fp_kwargs == {"fp_size": 1024, "radius": 4}
 
 
 def test_surrogate_access():

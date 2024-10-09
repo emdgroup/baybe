@@ -8,7 +8,11 @@ from baybe.parameters.substance import SubstanceEncoding
 test_lst = [
     (enc.name, {}, {})
     for enc in SubstanceEncoding
-    if enc is not SubstanceEncoding.MORGAN_FP  # excluded due to deprecation
+    if enc
+    not in {  # Ignore deprecated encodings
+        SubstanceEncoding.MORGAN_FP,
+        SubstanceEncoding.RDKIT,
+    }
 ]
 
 
@@ -18,7 +22,7 @@ test_lst = [
 @pytest.mark.parametrize(
     "name,kw_fp,kw_conf",
     test_lst
-    + [
+    + [  # Add some custom tests
         ("ECFP", {"fp_size": 64}, {}),
         ("ECFP", {"fp_size": 512}, {}),
         ("ECFP", {"radius": 4}, {}),
@@ -38,6 +42,7 @@ def test_fingerprint_kwargs(name, kw_fp, kw_conf):
         kwargs_conformer=kw_conf,
         kwargs_fingerprint=kw_fp,
     )
+
     # Check that fingerprint embedding is of correct size and
     # fingerprint kwargs specifying embedding size are used
     assert x.shape[0] == len(smiles_list)

@@ -105,11 +105,14 @@ class SubstanceEncoding(ParameterEncoding):
     RDF = "RDF"
     """RDFFingerprint from scikit-fingerprints."""
 
+    RDKIT = "RDKIT"
+    """Deprecated!"""
+
+    RDKITFINGERPRINT = "RDKITFINGERPRINT"
+    """RDKitFingerprint from scikit-fingerprints."""
+
     RDKIT2DDESCRIPTORS = "RDKIT2DDESCRIPTORS"
     """RDKit2DDescriptorsFingerprint from scikit-fingerprints."""
-
-    RDKIT = "RDKIT"
-    """RDKitFingerprint from scikit-fingerprints."""
 
     SECFP = "SECFP"
     """SECFPFingerprint from scikit-fingerprints."""
@@ -133,7 +136,6 @@ fingerprint_name_map: dict[str, str] = {
     "AVALON": "AvalonFingerprint",
     "E3FP": "E3FPFingerprint",
     "ECFP": "ECFPFingerprint",
-    "MORGAN_FP": "ECFPFingerprint",
     "ERG": "ERGFingerprint",
     "ESTATE": "EStateFingerprint",
     "FUNCTIONALGROUPS": "FunctionalGroupsFingerprint",
@@ -146,6 +148,7 @@ fingerprint_name_map: dict[str, str] = {
     "MACCS": "MACCSFingerprint",
     "MAP": "MAPFingerprint",
     "MHFP": "MHFPFingerprint",
+    "MORGAN_FP": "ECFPFingerprint",  # Deprecated!
     "MORSE": "MORSEFingerprint",
     "MQNS": "MQNsFingerprint",
     "MORDRED": "MordredFingerprint",
@@ -154,8 +157,9 @@ fingerprint_name_map: dict[str, str] = {
     "PHYSIOCHEMICALPROPERTIES": "PhysiochemicalPropertiesFingerprint",
     "PUBCHEM": "PubChemFingerprint",
     "RDF": "RDFFingerprint",
+    "RDKIT": "RDKit2DDescriptorsFingerprint",  # Deprecated!
+    "RDKITFINGERPRINT": "RDKitFingerprint",
     "RDKIT2DDESCRIPTORS": "RDKit2DDescriptorsFingerprint",
-    "RDKIT": "RDKitFingerprint",
     "SECFP": "SECFPFingerprint",
     "TOPOLOGICALTORSION": "TopologicalTorsionFingerprint",
     "USRCAT": "USRCATFingerprint",

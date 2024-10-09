@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `scikit-fingerprints` package, granting access to all fingerprints available therein
 
 ### Deprecations
-- `SubstanceEncoding` value `MORGAN_FP`. It is equivalent to `ECFP` with 1024 bits and
+- `SubstanceEncoding` value `MORGAN_FP`. Please use `ECFP` with 1024 bits and
   radius of 4
+- `SubstanceEncoding` value `RDKIT`. Please use `RDKIT2DDESCRIPTORS`.
 
 ## [0.11.1] - 2024-10-01
 ### Added

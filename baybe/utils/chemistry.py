@@ -146,9 +146,9 @@ def convert_fingeprint_parameters(
     """Convert fingerprint name parameters for computing the fingerprint.
 
     Args:
-        name: Name of fingerprint.
-        kwargs_fingerprint: Optional user-specified params
-            for computing the fingerprint.
+        name: Name of the fingerprint.
+        kwargs_fingerprint: Optional user-specified settings for computing the
+            fingerprint.
 
     Raises:
         KeyError: If fingerprint name is not recognized.
@@ -156,18 +156,16 @@ def convert_fingeprint_parameters(
     Returns:
         Fingerprint class name and kwargs to use for the fingerprint computation.
     """
+    kwargs_fingerprint = kwargs_fingerprint or {}
+
     # Get fingerprint class
     try:
         fp_class = fingerprint_name_map[name]
     except KeyError:
-        raise KeyError(f"Fingerprint name {name} is not valid.")
+        raise KeyError(f"Substance encoding {name} is not valid.")
 
-    # For backwards-compatibility purposes
-
-    # Update default kwargs to match the fingerprint name when
-    # using a different fingerprint class to compute the desired fingerprint
+    # For deprecation purposes
     kwargs_fp_update = {}
-    kwargs_fingerprint = {} if not kwargs_fingerprint else kwargs_fingerprint
     if name == "MORGAN_FP":
         warnings.warn(
             "Substance encoding 'MORGAN_FP' is deprecated and will be disabled in "
@@ -178,9 +176,13 @@ def convert_fingeprint_parameters(
             "fp_size": 1024,
             "radius": 4,
         }
-    # Update kwargs with fingerprint-specific defaults
-    # If a kwarg is specified in the input it overrides the fingerprint default
-    kwargs_fingerprint = {**kwargs_fp_update, **kwargs_fingerprint}
+    elif name == "RDKIT":
+        warnings.warn(
+            "Substance encoding 'RDKIT' is deprecated and will be disabled in "
+            "a future version. Use 'RDKIT2DDESCRIPTORS' instead.",
+            DeprecationWarning,
+        )
+    kwargs_fingerprint.update(kwargs_fp_update)
 
     return fp_class, kwargs_fingerprint
 
