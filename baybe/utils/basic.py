@@ -1,6 +1,7 @@
 """Collection of small basic utilities."""
 
 import functools
+import gc
 import inspect
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
@@ -202,6 +203,11 @@ def refers_to(cls: type, name_or_abbr: str, /) -> bool:
 
 def find_subclass(base: type, name_or_abbr: str, /):
     """Retrieve a specific subclass of a base class via its name or abbreviation."""
+    # Garbage collection must be explicitly triggered here since otherwise the original
+    # classes processed by `attrs.define` might still be lying around:
+    # https://github.com/python-attrs/cattrs/issues/589#issuecomment-2401991550
+    gc.collect()
+
     try:
         return next(cl for cl in get_subclasses(base) if refers_to(cl, name_or_abbr))
     except StopIteration:
