@@ -4,6 +4,7 @@ import os
 import ssl
 import tempfile
 import urllib.request
+import warnings
 from functools import lru_cache
 from pathlib import Path
 
@@ -12,16 +13,14 @@ import pandas as pd
 from joblib import Memory
 
 from baybe._optional.chem import (
-    Calculator,
+    BaseFingerprintTransformer,
     Chem,
-    GetMorganFingerprintAsBitVect,
-    RDLogger,
-    descriptors,
+    ConformerGenerator,
+    MolFromSmilesTransformer,
+    skfp_fingerprints,
 )
+from baybe.parameters.enum import fingerprint_name_map
 from baybe.utils.numerical import DTypeFloatNumpy
-
-_mordred_calculator = Calculator(descriptors)
-
 
 # Caching
 _cachedir = os.environ.get(
@@ -72,158 +71,120 @@ def name_to_smiles(name: str) -> str:
 
 @lru_cache(maxsize=None)
 @_disk_cache
-def _smiles_to_mordred_features(smiles: str) -> np.ndarray:
-    """Memory- and disk-cached computation of Mordred descriptors.
+def _molecule_to_fingerprint_features(
+    fingerprint_encoder: BaseFingerprintTransformer,
+    molecule: str | Chem.PropertyMol.PropertyMol,
+) -> np.ndarray:
+    """Compute molecular fingerprint for a single SMILES string.
 
     Args:
-        smiles: SMILES string.
+        fingerprint_encoder: Instance of Fingerprint class used to
+            transform smiles string to fingerprint
+        molecule: Smiles string or molecule object,
+            depending on what should be input into fingerprint_encoder's transform
 
     Returns:
-        Mordred descriptors for the given smiles string.
+        Array containing fingerprint for SMILES string.
     """
-    try:
-        return np.asarray(
-            _mordred_calculator(Chem.MolFromSmiles(smiles)).fill_missing()
-        )
-    except Exception:
-        return np.full(len(_mordred_calculator.descriptors), np.nan)
+    return fingerprint_encoder.transform([molecule])
 
 
-def smiles_to_mordred_features(
+def smiles_to_fingerprint_features(
     smiles_list: list[str],
+    fingerprint_name: str,
     prefix: str = "",
-    dropna: bool = True,
+    kwargs_conformer: dict | None = None,
+    kwargs_fingerprint: dict | None = None,
 ) -> pd.DataFrame:
-    """Compute Mordred chemical descriptors for a list of SMILES strings.
+    """Compute molecular fingerprints for a list of SMILES strings.
 
     Args:
         smiles_list: List of SMILES strings.
-        prefix: Name prefix for each descriptor
-            (e.g., nBase --> <prefix>_nBase).
-        dropna: If ``True``, drops columns that contain NaNs.
+        fingerprint_name: Name of Fingerprint class used to
+            transform smiles to fingerprints
+        prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
+        kwargs_conformer: kwargs for conformer generator
+        kwargs_fingerprint: kwargs for fingerprint generator
 
     Returns:
-        Dataframe containing overlapping Mordred descriptors for each SMILES
-        string.
+        Dataframe containing fingerprints for each SMILES string.
     """
-    features = [_smiles_to_mordred_features(smiles) for smiles in smiles_list]
-    descriptor_names = list(_mordred_calculator.descriptors)
-    columns = [prefix + "MORDRED_" + str(name) for name in descriptor_names]
-    dataframe = pd.DataFrame(data=features, columns=columns, dtype=DTypeFloatNumpy)
+    fingerprint_cls, kwargs_fingerprint = convert_fingeprint_parameters(
+        name=fingerprint_name, kwargs_fingerprint=kwargs_fingerprint
+    )
+    kwargs_conformer = kwargs_conformer or {}
 
-    if dropna:
-        dataframe = dataframe.dropna(axis=1)
+    fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_cls)(
+        **kwargs_fingerprint
+    )
 
-    return dataframe
+    if fingerprint_encoder.requires_conformers:
+        mol_list = ConformerGenerator(**kwargs_conformer).transform(
+            MolFromSmilesTransformer().transform(smiles_list)
+        )
+    else:
+        mol_list = smiles_list
+
+    features = np.concatenate(
+        [
+            _molecule_to_fingerprint_features(
+                fingerprint_encoder=fingerprint_encoder, molecule=mol
+            )
+            for mol in mol_list
+        ]
+    )
+    name = f"skfp{fingerprint_encoder.__class__.__name__.replace('Fingerprint', '')}_"
+    col_names = [prefix + name + f for f in fingerprint_encoder.get_feature_names_out()]
+    df = pd.DataFrame(features, columns=col_names, dtype=DTypeFloatNumpy)
+
+    return df
 
 
-def smiles_to_molecules(smiles_list: list[str]) -> list[Chem.Mol]:
-    """Convert a given list of SMILES strings into corresponding Molecule objects.
+def convert_fingeprint_parameters(
+    name: str, kwargs_fingerprint: dict | None = None
+) -> tuple[str, dict]:
+    """Convert fingerprint name parameters for computing the fingerprint.
 
     Args:
-        smiles_list: List of SMILES strings.
-
-    Returns:
-        List of corresponding molecules.
+        name: Name of the fingerprint.
+        kwargs_fingerprint: Optional user-specified settings for computing the
+            fingerprint.
 
     Raises:
-        ValueError: If the SMILES does not seem to be chemically valid.
-    """
-    mols = []
-    for smiles in smiles_list:
-        try:
-            mol = Chem.MolFromSmiles(smiles)
-            if mol is None:
-                raise ValueError()
-            mols.append(mol)
-        except Exception as ex:
-            raise ValueError(
-                f"The SMILES {smiles} does not seem to be chemically valid."
-            ) from ex
-    return mols
-
-
-def smiles_to_rdkit_features(
-    smiles_list: list[str], prefix: str = "", dropna: bool = True
-) -> pd.DataFrame:
-    """Compute RDKit chemical descriptors for a list of SMILES strings.
-
-    Args:
-        smiles_list: List of SMILES strings.
-        prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-        dropna: If ``True``, drops columns that contain NaNs.
+        KeyError: If fingerprint name is not recognized.
 
     Returns:
-        Dataframe containing overlapping RDKit descriptors for each SMILES string.
+        Fingerprint class name and kwargs to use for the fingerprint computation.
     """
-    mols = smiles_to_molecules(smiles_list)
+    kwargs_fingerprint = kwargs_fingerprint or {}
 
-    res = []
-    for mol in mols:
-        desc = {
-            prefix + "RDKIT_" + dname: DTypeFloatNumpy(func(mol))
-            for dname, func in Chem.Descriptors.descList
-        }
-        res.append(desc)
-
-    df = pd.DataFrame(res)
-    if dropna:
-        df = df.dropna(axis=1)
-
-    return df
-
-
-def smiles_to_fp_features(
-    smiles_list: list[str],
-    prefix: str = "",
-    dtype: type[int] | type[float] = int,
-    radius: int = 4,
-    n_bits: int = 1024,
-) -> pd.DataFrame:
-    """Compute standard Morgan molecule fingerprints for a list of SMILES strings.
-
-    Args:
-        smiles_list: List of SMILES strings.
-        prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
-        dtype: Specifies whether fingerprints will have int or float data type.
-        radius: Radius for the Morgan fingerprint.
-        n_bits:Number of bits for the Morgan fingerprint.
-
-    Returns:
-        Dataframe containing Morgan fingerprints for each SMILES string.
-    """
-    mols = smiles_to_molecules(smiles_list)
-
-    res = []
-    for mol in mols:
-        RDLogger.logger().setLevel(RDLogger.CRITICAL)
-
-        fingerp = GetMorganFingerprintAsBitVect(mol, radius, nBits=n_bits).ToBitString()
-        fingerp = map(int, fingerp)
-        fpvec = np.array(list(fingerp))
-        res.append(
-            {prefix + "FP_" + f"{k + 1}": dtype(bit) for k, bit in enumerate(fpvec)}
-        )
-
-    df = pd.DataFrame(res)
-
-    return df
-
-
-def is_valid_smiles(smiles: str) -> bool:
-    """Test if a SMILES string is valid according to RDKit.
-
-    Args:
-        smiles: SMILES string to be tested.
-
-    Returns:
-        ``True`` if the provided SMILES is valid, ``False`` else.
-    """
+    # Get fingerprint class
     try:
-        mol = Chem.MolFromSmiles(smiles)
-        return mol is not None
-    except Exception:
-        return False
+        fp_class = fingerprint_name_map[name]
+    except KeyError:
+        raise KeyError(f"Substance encoding {name} is not valid.")
+
+    # For deprecation purposes
+    kwargs_fp_update = {}
+    if name == "MORGAN_FP":
+        warnings.warn(
+            "Substance encoding 'MORGAN_FP' is deprecated and will be disabled in "
+            "a future version. Use 'ECFP' with 'fp_size' 1204 and 'radius' 4 instead.",
+            DeprecationWarning,
+        )
+        kwargs_fp_update = {
+            "fp_size": 1024,
+            "radius": 4,
+        }
+    elif name == "RDKIT":
+        warnings.warn(
+            "Substance encoding 'RDKIT' is deprecated and will be disabled in "
+            "a future version. Use 'RDKIT2DDESCRIPTORS' instead.",
+            DeprecationWarning,
+        )
+    kwargs_fingerprint.update(kwargs_fp_update)
+
+    return fp_class, kwargs_fingerprint
 
 
 def get_canonical_smiles(smiles: str) -> str:
