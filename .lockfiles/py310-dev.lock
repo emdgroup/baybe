@@ -119,9 +119,7 @@ deprecated==1.2.14
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
 descriptastorus==2.6.1
-    # via
-    #   baybe (pyproject.toml)
-    #   scikit-fingerprints
+    # via scikit-fingerprints
 distlib==0.3.8
     # via virtualenv
 docstring-parser-fork==0.0.9
