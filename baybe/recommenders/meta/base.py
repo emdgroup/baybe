@@ -1,5 +1,6 @@
 """Base classes for all meta recommenders."""
 
+import gc
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -146,3 +147,6 @@ converter.register_unstructure_hook(
 converter.register_structure_hook(
     MetaRecommender, get_base_structure_hook(MetaRecommender)
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

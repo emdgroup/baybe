@@ -1,5 +1,6 @@
 """Base classes for all objectives."""
 
+import gc
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -57,3 +58,6 @@ converter.register_unstructure_hook(
         ),
     ),
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

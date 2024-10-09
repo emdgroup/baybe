@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import Any
 
 from attrs import define, field
@@ -103,3 +104,7 @@ class BetaPrior(Prior):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' does not have a gpytorch analog."
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

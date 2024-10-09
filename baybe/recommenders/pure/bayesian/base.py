@@ -1,5 +1,6 @@
 """Base class for all Bayesian recommenders."""
 
+import gc
 import warnings
 from abc import ABC
 
@@ -133,3 +134,7 @@ class BayesianRecommender(PureRecommender, ABC):
             measurements=measurements,
             pending_experiments=pending_experiments,
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

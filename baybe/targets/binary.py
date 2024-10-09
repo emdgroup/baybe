@@ -1,5 +1,6 @@
 """Binary targets."""
 
+import gc
 from typing import TypeAlias
 
 import numpy as np
@@ -85,3 +86,7 @@ class BinaryTarget(Target, SerialMixin):
             Success_value=self.success_value,
             Failure_value=self.failure_value,
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

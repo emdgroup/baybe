@@ -1,5 +1,6 @@
 """Categorical parameters."""
 
+import gc
 from functools import cached_property
 from typing import Any, ClassVar
 
@@ -109,3 +110,7 @@ class TaskParameter(CategoricalParameter):
             raise ValueError("The active parameter values must be unique.")
         if not all(v in self.values for v in values):
             raise ValueError("All active values must be valid parameter choices.")
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

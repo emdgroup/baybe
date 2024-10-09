@@ -3,6 +3,7 @@
 #  this file will resolve type errors
 # mypy: disable-error-code="arg-type"
 
+import gc
 from collections.abc import Iterable, Iterator
 from typing import Literal
 
@@ -275,3 +276,6 @@ converter.register_unstructure_hook(
 converter.register_structure_hook(
     StreamingSequentialMetaRecommender, block_deserialization_hook
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

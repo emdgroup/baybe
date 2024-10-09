@@ -1,5 +1,6 @@
 """Numerical targets."""
 
+import gc
 import warnings
 from collections.abc import Callable, Sequence
 from functools import partial
@@ -166,3 +167,7 @@ class NumericalTarget(Target, SerialMixin):
             Transformation=self.transformation.name if self.transformation else "None",
         )
         return target_dict
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

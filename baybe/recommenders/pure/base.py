@@ -1,5 +1,6 @@
 """Base classes for all pure recommenders."""
 
+import gc
 from abc import ABC
 from typing import ClassVar
 
@@ -232,3 +233,7 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Return recommendations
         return rec
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

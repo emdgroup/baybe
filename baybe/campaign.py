@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import json
 from typing import TYPE_CHECKING
 
@@ -380,3 +381,6 @@ _validation_converter = converter.copy()
 _validation_converter.register_structure_hook(
     SearchSpace, validate_searchspace_from_config
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

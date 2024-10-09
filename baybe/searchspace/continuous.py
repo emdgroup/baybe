@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import warnings
 from collections.abc import Collection, Sequence
 from itertools import chain
@@ -537,3 +538,6 @@ class SubspaceContinuous(SerialMixin):
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

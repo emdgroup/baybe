@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -89,3 +90,7 @@ def _default_noise_factory(
         ),
         np.interp(effective_dims, _DIM_LIMITS, [0.1, 5.0]).item(),
     )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

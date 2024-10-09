@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING
 
 from attrs import define
@@ -114,3 +115,7 @@ def _edbo_noise_factory(
     # OHE optimized priors
     else:
         return (GammaPrior(1.5, 0.1), 5.0)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

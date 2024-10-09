@@ -1,5 +1,7 @@
 """Wrapper functionality for hybrid spaces."""
 
+import gc
+
 import torch
 from attr import define
 from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
@@ -89,3 +91,7 @@ class PartialAcquisitionFunction:
             X_pending = torch.squeeze(X_pending, -2)
         # Now use the original set_X_pending function
         self.botorch_acqf.set_X_pending(X_pending)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

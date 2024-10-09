@@ -1,5 +1,7 @@
 """Collection of basic kernels."""
 
+import gc
+
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, in_, instance_of
@@ -213,3 +215,7 @@ class RQKernel(BasicKernel):
         validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

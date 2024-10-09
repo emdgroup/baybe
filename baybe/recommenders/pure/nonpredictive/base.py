@@ -1,5 +1,6 @@
 """Base class for all nonpredictive recommenders."""
 
+import gc
 import warnings
 from abc import ABC
 
@@ -60,3 +61,7 @@ class NonPredictiveRecommender(PureRecommender, ABC):
             measurements=measurements,
             pending_experiments=pending_experiments,
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

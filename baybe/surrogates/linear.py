@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attr import define, field
@@ -63,3 +64,7 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     def __str__(self) -> str:
         fields = [to_string("Model Params", self.model_params, single_line=True)]
         return to_string(super().__str__(), *fields)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

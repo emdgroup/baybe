@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import warnings
 from collections.abc import Iterable, Sequence
 from enum import Enum
@@ -470,3 +471,6 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
 
 # Register deserialization hook
 converter.register_structure_hook(SearchSpace, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

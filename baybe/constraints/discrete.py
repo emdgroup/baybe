@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from collections.abc import Callable
 from functools import reduce
 from typing import TYPE_CHECKING, Any, ClassVar, cast
@@ -387,3 +388,6 @@ DISCRETE_CONSTRAINTS_FILTERING_ORDER = (
 # Prevent (de-)serialization of custom constraints
 converter.register_unstructure_hook(DiscreteCustomConstraint, block_serialization_hook)
 converter.register_structure_hook(DiscreteCustomConstraint, block_deserialization_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
