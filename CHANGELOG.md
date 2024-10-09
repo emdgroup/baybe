@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `num_restarts` and `raw_samples` keywords to configure continuous optimization
+- `n_restarts` and `n_raw_samples` keywords to configure continuous optimization
   behavior for `BotorchRecommender`
 
 ### Fixed

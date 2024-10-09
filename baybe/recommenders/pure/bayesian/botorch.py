@@ -49,12 +49,12 @@ class BotorchRecommender(BayesianRecommender):
     # See base class.
 
     # Object variables
-    num_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
+    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
     """Controls how many times gradient-based optimization is restarted from different
     initial points. **Does not affect purely discrete optimization**.
     """
 
-    raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
+    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
     """Controls the number of raw samples drawn for the initialization heuristic in
     gradient-based optimization. **Does not affect purely discrete optimization**.
     """
@@ -179,8 +179,8 @@ class BotorchRecommender(BayesianRecommender):
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
             q=batch_size,
-            num_restarts=self.num_restarts,
-            raw_samples=self.raw_samples,
+            num_restarts=self.n_restarts,
+            raw_samples=self.n_raw_samples,
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
@@ -263,8 +263,8 @@ class BotorchRecommender(BayesianRecommender):
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
             q=batch_size,
-            num_restarts=self.num_restarts,
-            raw_samples=self.raw_samples,
+            num_restarts=self.n_restarts,
+            raw_samples=self.n_raw_samples,
             fixed_features_list=fixed_features_list,
             equality_constraints=[
                 c.to_botorch(
