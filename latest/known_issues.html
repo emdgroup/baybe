@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="misc/changelog_link.html" /><link rel="prev" title="Contributors" href="misc/contributors_link.html" />
 
     <link rel="shortcut icon" href="_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
-        <title>PyCharm vs. exceptiongroup - BayBE documentation</title>
+        <title>Known Issues - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=613ab9ff" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -989,8 +989,40 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section class="tex2jax_ignore mathjax_ignore" id="pycharm-vs-exceptiongroup">
-<h1>PyCharm vs. <code class="docutils literal notranslate"><span class="pre">exceptiongroup</span></code><a class="headerlink" href="#pycharm-vs-exceptiongroup" title="Link to this heading">¶</a></h1>
+          <section class="tex2jax_ignore mathjax_ignore" id="known-issues">
+<h1>Known Issues<a class="headerlink" href="#known-issues" title="Link to this heading">¶</a></h1>
+<section id="installation-related-issues">
+<h2>Installation Related Issues<a class="headerlink" href="#installation-related-issues" title="Link to this heading">¶</a></h2>
+<section id="macos-arm64-leaked-semaphore">
+<h3>macOS-arm64 – Leaked Semaphore<a class="headerlink" href="#macos-arm64-leaked-semaphore" title="Link to this heading">¶</a></h3>
+<p>We know of a number of instances where BayBE fails during runtime on macOS-arm64
+systems. In particular M1 seems to be affected.</p>
+<p>The issues often contain a reference to <code class="docutils literal notranslate"><span class="pre">semaphore</span></code>, e.g.
+<code class="docutils literal notranslate"><span class="pre">UserWarning:</span> <span class="pre">resource_tracker:</span> <span class="pre">There</span> <span class="pre">appear</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">1</span> <span class="pre">leaked</span> <span class="pre">semaphore</span> <span class="pre">objects</span> <span class="pre">to</span> <span class="pre">clean</span> <span class="pre">up</span> <span class="pre">at</span> <span class="pre">shutdown</span></code>.
+While we do not know the exact source of the problem, it seems to be related to linked
+libraries that need to be compiled from source when no <code class="docutils literal notranslate"><span class="pre">macOS-arm64</span></code> binaries are
+available. Packages that seem to have regular problems are <code class="docutils literal notranslate"><span class="pre">sklearn-extra</span></code>, <code class="docutils literal notranslate"><span class="pre">pymatgen</span></code>
+and <code class="docutils literal notranslate"><span class="pre">matminer</span></code>.</p>
+<div class="tip admonition">
+<p class="admonition-title">Suggested Fix</p>
+<p>Install <code class="docutils literal notranslate"><span class="pre">baybe</span></code> into a clean environment without pre-existing
+packages. If you require other packages, try to install <code class="docutils literal notranslate"><span class="pre">baybe</span></code> first.</p>
+</div>
+</section>
+<section id="windows-torch-problems">
+<h3>Windows – Torch Problems<a class="headerlink" href="#windows-torch-problems" title="Link to this heading">¶</a></h3>
+<p>Reports of crashes during runtime on Windows machines often stem from a faulty <code class="docutils literal notranslate"><span class="pre">torch</span></code>
+installation, e.g. wrongly installed CUDA-<code class="docutils literal notranslate"><span class="pre">torch</span></code> combinations. Errors look like
+<code class="docutils literal notranslate"><span class="pre">OSError:</span> <span class="pre">[WinError</span> <span class="pre">126]</span> <span class="pre">The</span> <span class="pre">specified</span> <span class="pre">module</span> <span class="pre">was</span> <span class="pre">not</span> <span class="pre">found.</span> <span class="pre">Error</span> <span class="pre">loading</span>&#160; <span class="pre">C:\Users\xxxx\AppData\Roaming\Python\Python310\site-packages\torch\lib\shm.dll</span> <span class="pre">or</span> <span class="pre">one</span> <span class="pre">of</span> <span class="pre">its</span> <span class="pre">dependencies</span></code></p>
+<div class="tip admonition">
+<p class="admonition-title">Suggested Fix</p>
+<p>Install <code class="docutils literal notranslate"><span class="pre">torch</span></code> with the right drivers, for instance a no-CUDA version on CPU. You can
+create the commands to do so <a class="reference external" href="https://pytorch.org/get-started/locally/">here</a>.</p>
+</div>
+</section>
+</section>
+<section id="pycharm-vs-exceptiongroup">
+<h2>PyCharm vs. <code class="docutils literal notranslate"><span class="pre">exceptiongroup</span></code><a class="headerlink" href="#pycharm-vs-exceptiongroup" title="Link to this heading">¶</a></h2>
 <p>BayBE’s (de-)serialization machinery is build upon <code class="docutils literal notranslate"><span class="pre">cattrs</span></code>, which in turn relies on
 <code class="docutils literal notranslate"><span class="pre">ExceptionGroup</span></code>s to report problems in a nicely structured format when using its
 <a class="reference external" href="https://catt.rs/en/stable/validation.html#detailed-validation">detailed validation</a>
@@ -1000,15 +1032,10 @@ enable the feature nevertheless, <code class="docutils literal notranslate"><spa
 backport</a>, which enables the same
 functionality by monkeypatching <code class="docutils literal notranslate"><span class="pre">TracebackException</span></code> and installing a special
 exception hook on <code class="docutils literal notranslate"><span class="pre">sys.excepthook</span></code>.</p>
-<section id="the-problem">
-<h2>The Problem<a class="headerlink" href="#the-problem" title="Link to this heading">¶</a></h2>
 <p>The changes attempted by <code class="docutils literal notranslate"><span class="pre">exceptiongroup</span></code> will only be executed if <strong>no prior
 modifications have been made</strong>. However, PyCharm appears to make similar modifications
 for its own purposes, blocking those of <code class="docutils literal notranslate"><span class="pre">exceptiongroup</span></code> and thus preventing the
 exceptions from being properly thrown in detailed validation mode.</p>
-</section>
-<section id="when-to-encounter">
-<h2>When to encounter<a class="headerlink" href="#when-to-encounter" title="Link to this heading">¶</a></h2>
 <p>The chances of encountering this problem when interacting with BayBE are rather low
 as the (de-)serialization objects are usually created by BayBE itself under normal
 operation, so there is little risk of them being invalid in the first place. A
@@ -1016,34 +1043,33 @@ potential situation where you might run into the problem is if you manually
 write a BayBE configuration and try to deserialize it into a Python BayBE object.
 This can happen, for example, while engineering the configuration for later API
 calls and testing it locally <strong>using PyCharm</strong>.</p>
-</section>
-<section id="how-to-avoid">
-<h2>How to avoid<a class="headerlink" href="#how-to-avoid" title="Link to this heading">¶</a></h2>
-<p>If you encounter the problem, you can use <strong>any</strong> of the following workarounds to
-circumvent the problem:</p>
-<ul class="simple">
+<div class="tip admonition">
+<p class="admonition-title">Suggested Fix</p>
+<p>You can use <strong>any</strong> of the following workarounds to circumvent the problem:</p>
+<ul>
 <li><p>Run the code from the terminal instead of inside PyCharm</p></li>
 <li><p>Change PyCharm’s run configuration from “Run with Python Console” to “Emulate
 terminal in output console”</p></li>
 <li><p>Use Python version 3.11 or higher</p></li>
 <li><p>Undo the monkeypatch applied by PyCharm by running the following code <strong>at the start
-of your script</strong>:</p></li>
-</ul>
+of your script</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">excepthook</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">__excepthook__</span>
 </pre></div>
 </div>
-<ul class="simple">
-<li><p>Manually <a class="reference external" href="https://github.com/agronholm/exceptiongroup/blob/8b8791b662c0f62a574a09f305cd204dfb0a6a05/README.rst?plain=1">format the exception</a> thrown by the problematic code:</p></li>
-</ul>
+</li>
+<li><p>Manually <a class="reference external" href="https://github.com/agronholm/exceptiongroup/blob/8b8791b662c0f62a574a09f305cd204dfb0a6a05/README.rst?plain=1">format the exception</a> thrown by the problematic code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">exceptiongroup</span>
 <span class="kn">from</span> <span class="nn">cattrs</span> <span class="kn">import</span> <span class="n">ClassValidationError</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="o">&lt;</span><span class="n">problematic</span> <span class="n">code</span><span class="o">&gt;</span>
+<span class="o">&lt;</span><span class="n">problematic</span> <span class="n">code</span><span class="o">&gt;</span>
 <span class="k">except</span> <span class="n">ClassValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exceptiongroup</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
+<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exceptiongroup</span><span class="o">.</span><span class="n">format_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
 </pre></div>
+</div>
+</li>
+</ul>
 </div>
 </section>
 </section>
@@ -1103,10 +1129,13 @@ of your script</strong>:</p></li>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">PyCharm vs. <code class="docutils literal notranslate"><span class="pre">exceptiongroup</span></code></a><ul>
-<li><a class="reference internal" href="#the-problem">The Problem</a></li>
-<li><a class="reference internal" href="#when-to-encounter">When to encounter</a></li>
-<li><a class="reference internal" href="#how-to-avoid">How to avoid</a></li>
+<li><a class="reference internal" href="#">Known Issues</a><ul>
+<li><a class="reference internal" href="#installation-related-issues">Installation Related Issues</a><ul>
+<li><a class="reference internal" href="#macos-arm64-leaked-semaphore">macOS-arm64 – Leaked Semaphore</a></li>
+<li><a class="reference internal" href="#windows-torch-problems">Windows – Torch Problems</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycharm-vs-exceptiongroup">PyCharm vs. <code class="docutils literal notranslate"><span class="pre">exceptiongroup</span></code></a></li>
 </ul>
 </li>
 </ul>
