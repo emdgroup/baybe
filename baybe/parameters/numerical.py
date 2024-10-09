@@ -1,5 +1,6 @@
 """Numerical parameters."""
 
+import gc
 from functools import cached_property
 from typing import Any, ClassVar
 
@@ -147,3 +148,7 @@ class NumericalContinuousParameter(ContinuousParameter):
             Upper_Bound=self.bounds.upper,
         )
         return param_dict
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import os
 import warnings
 from collections.abc import Collection, Sequence
@@ -948,3 +949,6 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceDiscrete, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

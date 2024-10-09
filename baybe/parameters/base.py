@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from functools import cached_property, partial
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -175,3 +176,6 @@ converter.register_structure_hook(
 converter.register_unstructure_hook(
     Parameter, partial(unstructure_base, overrides=_overrides)
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

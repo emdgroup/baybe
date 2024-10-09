@@ -1,5 +1,6 @@
 """Functionality for desirability objectives."""
 
+import gc
 from collections.abc import Callable
 from functools import cached_property, partial
 from typing import TypeGuard
@@ -151,3 +152,7 @@ class DesirabilityObjective(Objective):
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)
 
         return transformed
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

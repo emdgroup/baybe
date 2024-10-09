@@ -1,5 +1,6 @@
 """Botorch recommender."""
 
+import gc
 import math
 from typing import Any, ClassVar
 
@@ -314,3 +315,7 @@ class BotorchRecommender(BayesianRecommender):
             ),
         ]
         return to_string(self.__class__.__name__, *fields)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

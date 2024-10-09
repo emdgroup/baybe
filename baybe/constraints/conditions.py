@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import operator as ops
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -231,3 +232,6 @@ converter.register_structure_hook(
 converter.register_unstructure_hook(
     Condition, partial(unstructure_base, overrides=_overrides)
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

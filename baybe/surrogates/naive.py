@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, ClassVar
 
 from attr import define, field
@@ -43,3 +44,7 @@ class MeanPredictionSurrogate(IndependentGaussianSurrogate):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # See base class.
         self._model = train_y.mean().item()
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -1,5 +1,7 @@
 """Functionality for single-target objectives."""
 
+import gc
+
 import pandas as pd
 from attr import define, field
 from attr.validators import instance_of
@@ -37,3 +39,7 @@ class SingleTargetObjective(Objective):
         # See base class.
         target_data = data[[self._target.name]].copy()
         return self._target.transform(target_data)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

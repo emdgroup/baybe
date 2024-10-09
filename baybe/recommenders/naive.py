@@ -1,5 +1,6 @@
 """Naive recommender for hybrid spaces."""
 
+import gc
 import warnings
 from typing import ClassVar
 
@@ -180,3 +181,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         rec_cont.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont], axis=1)
         return rec_exp
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

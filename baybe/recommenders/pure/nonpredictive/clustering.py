@@ -1,5 +1,6 @@
 """Recommenders based on clustering."""
 
+import gc
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
@@ -290,3 +291,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
 
             selection.append(np.argmax(density).item())
         return selection
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
@@ -218,3 +219,7 @@ class GaussianProcessSurrogate(Surrogate):
             to_string("Kernel factory", self.kernel_factory, single_line=True),
         ]
         return to_string(super().__str__(), *fields)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

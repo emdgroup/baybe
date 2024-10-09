@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import itertools
 from typing import TYPE_CHECKING
 
@@ -69,3 +70,7 @@ class ColumnTransformer:
         for cols, transformer in self.mapping.items():
             out[..., cols] = transformer(out[..., cols])
         return out
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

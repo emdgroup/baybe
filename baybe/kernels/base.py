@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC
 from typing import TYPE_CHECKING, Any
 
@@ -127,3 +128,6 @@ class CompositeKernel(Kernel, ABC):
 # Register de-/serialization hooks
 converter.register_structure_hook(Kernel, get_base_structure_hook(Kernel))
 converter.register_unstructure_hook(Kernel, unstructure_base)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

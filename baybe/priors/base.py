@@ -1,5 +1,6 @@
 """Base class for all priors."""
 
+import gc
 from abc import ABC
 
 from attrs import define
@@ -41,3 +42,7 @@ class Prior(ABC, SerialMixin):
 # Register de-/serialization hooks
 converter.register_structure_hook(Prior, get_base_structure_hook(Prior))
 converter.register_unstructure_hook(Prior, unstructure_base)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

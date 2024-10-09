@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -60,3 +61,6 @@ class Target(ABC, SerialMixin):
 # Register (un-)structure hooks
 converter.register_structure_hook(Target, get_base_structure_hook(Target))
 converter.register_unstructure_hook(Target, unstructure_base)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -10,6 +10,7 @@ It is planned to solve this issue in the future.
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 from attrs import define, field, validators
@@ -142,3 +143,7 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
     def __str__(self) -> str:
         fields = [to_string("ONNX input name", self.onnx_input_name, single_line=True)]
         return to_string(super().__str__(), *fields)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

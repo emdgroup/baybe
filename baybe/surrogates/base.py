@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import TYPE_CHECKING, ClassVar, Protocol
@@ -452,3 +453,6 @@ converter.register_structure_hook(
     SurrogateProtocol,
     _make_hook_encode_onnx_str(get_base_structure_hook(SurrogateProtocol)),
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -1,5 +1,6 @@
 """Available acquisition functions."""
 
+import gc
 import math
 from typing import ClassVar
 
@@ -302,3 +303,7 @@ class qThompsonSampling(qSimpleRegret):
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
         flds = fields(qThompsonSampling)
         return (flds.n_mc_samples.name,)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

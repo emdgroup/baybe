@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
@@ -165,3 +166,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
     def __str__(self) -> str:
         fields = [to_string("Prior", self.prior, single_line=True)]
         return to_string(super().__str__(), *fields)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

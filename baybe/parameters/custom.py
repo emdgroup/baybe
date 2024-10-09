@@ -1,5 +1,6 @@
 """Custom parameters."""
 
+import gc
 from functools import cached_property
 from typing import Any, ClassVar
 
@@ -111,3 +112,7 @@ class CustomDiscreteParameter(DiscreteParameter):
                 comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
         return comp_df
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

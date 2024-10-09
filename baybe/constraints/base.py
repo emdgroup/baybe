@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -201,3 +202,6 @@ converter.register_unstructure_hook(Constraint, unstructure_base)
 # Currently affected by a deprecation
 # converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
 converter.register_structure_hook(Constraint, structure_constraints)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

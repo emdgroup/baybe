@@ -1,5 +1,6 @@
 """Composite kernels (that is, kernels composed of other kernels)."""
 
+import gc
 from functools import reduce
 from operator import add, mul
 
@@ -80,3 +81,7 @@ class ProductKernel(CompositeKernel):
         # See base class.
 
         return reduce(mul, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
