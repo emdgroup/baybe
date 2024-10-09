@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Leftover attrs-decorated classes are garbage collected before the subclass tree is
+  traversed, avoiding sporadic serialization problems 
+
 ## [0.11.1] - 2024-10-01
 ### Added
 - Continuous linear constraints have been consolidated in the new
