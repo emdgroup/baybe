@@ -49,16 +49,6 @@ class BotorchRecommender(BayesianRecommender):
     # See base class.
 
     # Object variables
-    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
-    """Controls how many times gradient-based optimization is restarted from different
-    initial points. **Does not affect purely discrete optimization**.
-    """
-
-    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
-    """Controls the number of raw samples drawn for the initialization heuristic in
-    gradient-based optimization. **Does not affect purely discrete optimization**.
-    """
-
     sequential_continuous: bool = field(default=False)
     """Flag defining whether to apply sequential greedy or batch optimization in
     **continuous** search spaces. In discrete/hybrid spaces, sequential greedy
@@ -74,6 +64,16 @@ class BotorchRecommender(BayesianRecommender):
     sampling_percentage: float = field(default=1.0)
     """Percentage of discrete search space that is sampled when performing hybrid search
     space optimization. Ignored when ``hybrid_sampler="None"``."""
+
+    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
+    """Controls how many times gradient-based optimization is restarted from different
+    initial points. **Does not affect purely discrete optimization**.
+    """
+
+    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
+    """Controls the number of raw samples drawn for the initialization heuristic in
+    gradient-based optimization. **Does not affect purely discrete optimization**.
+    """
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
