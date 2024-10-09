@@ -54,6 +54,9 @@ we recommend the following workflow:
    tox -e fulltest-py312
    ```
 
+   Other tox tests that are useful to verify your work locally are `tox -e lint-py312`,
+   `tox -e mypy-py312` and `tox -e coretest-py312`.
+
    If you want to challenge your machine, you can run all checks in all Python versions
    in parallel via:
    ```console
