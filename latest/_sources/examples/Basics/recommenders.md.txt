@@ -235,59 +235,6 @@ We create the searchspace and the objective.
 searchspace = SearchSpace.from_product(parameters=parameters)
 ```
 
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C.[Cs+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[Cs+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C.[K+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[K+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-
-
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features('CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3')
-    _______________________________________smiles_to_mordred_features - 0.2s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC
-4)C(OC)=CC=C2OC')
-
-
-    _______________________________________smiles_to_mordred_features - 0.3s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(C)(C)P(C1=CC=CC=C1)C(C)(C)C')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-
-
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCCCOC(C)=O')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCCC#N')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(N(C)C)=O')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC1=CC=C(C)C=C1')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-
-
 
 ```python
 objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
@@ -319,15 +266,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    248       p-Xylene   Potassium acetate                     BrettPhos   
-    260    Butyl Ester  Potassium pivalate                     BrettPhos   
-    369  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    416         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    76   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
+    270         DMAc  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration  
-    248        105.0          0.153  
-    260        120.0          0.153  
-    369         90.0          0.057  
+    416         90.0          0.153  
+    76         105.0          0.100  
+    270         90.0          0.057  
 
 
 
@@ -340,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    248       p-Xylene   Potassium acetate                     BrettPhos   
-    260    Butyl Ester  Potassium pivalate                     BrettPhos   
-    369  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    416         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    76   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
+    270         DMAc  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    248        105.0          0.153  30.299226  
-    260        120.0          0.153  31.241996  
-    369         90.0          0.057  10.913688  
+    416         90.0          0.153  20.497340  
+    76         105.0          0.100  30.201025  
+    270         90.0          0.057  13.358787  
 
 
 
