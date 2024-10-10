@@ -72,13 +72,13 @@ def add_fake_results(
     good_reference_values: dict[str, list] | None = None,
     good_intervals: dict[str, tuple[float, float]] | None = None,
     bad_intervals: dict[str, tuple[float, float]] | None = None,
-) -> None:
+) -> pd.DataFrame:
     """Add fake results to a dataframe which was the result of a BayBE recommendation.
 
     It is possible to specify "good" values, which will be given a better
     target value. With this, the algorithm can be driven towards certain optimal values
-    whilst still being random. Useful for testing. Note that this does not return a
-    new dataframe and that the dataframe is changed in-place.
+    whilst still being random. Useful for testing. Note that the dataframe is changed
+    in-place and also returned.
 
     Args:
         data: A dataframe containing parameter configurations in experimental
@@ -98,6 +98,9 @@ def add_fake_results(
         bad_intervals: Analogous to ``good_intervals`` but covering the cases where
             the parameters lie outside the conditions specified through
             ``good_reference_values``.
+
+    Returns:
+        The modified dataframe.
 
     Raises:
         ValueError: If good values for a parameter were specified, but this parameter
@@ -216,19 +219,21 @@ def add_fake_results(
                 final_mask.sum(),
             )
 
+    return data
+
 
 def add_parameter_noise(
     data: pd.DataFrame,
     parameters: Iterable[Parameter],
     noise_type: Literal["absolute", "relative_percent"] = "absolute",
     noise_level: float = 1.0,
-) -> None:
+) -> pd.DataFrame:
     """Apply uniform noise to the parameter values of a recommendation frame.
 
     The noise can be additive or multiplicative.
     This can be used to simulate experimental noise or imperfect user input containing
     numerical parameter values that differ from the recommendations. Note that the
-    dataframe is modified in-place, and that no new dataframe is returned.
+    dataframe is changed in-place and also returned.
 
     Args:
         data: Output of the ``recommend`` function of a ``Campaign`` object, see
@@ -238,6 +243,9 @@ def add_parameter_noise(
         noise_level: Level/magnitude of the noise. Must be provided as numerical value
             for noise type ``absolute`` and as percentage for noise type
             ``relative_percent``.
+
+    Returns:
+        The modified dataframe.
 
     Raises:
         ValueError: If ``noise_type`` is neither ``absolute`` nor
@@ -264,6 +272,8 @@ def add_parameter_noise(
             data[param.name] = data[param.name].clip(
                 param.bounds.lower, param.bounds.upper
             )
+
+    return data
 
 
 def df_drop_single_value_columns(
