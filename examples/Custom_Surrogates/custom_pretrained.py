@@ -26,7 +26,7 @@ from baybe.recommenders import (
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results, to_tensor
+from baybe.utils.dataframe import add_fake_measurements, to_tensor
 
 ### Experiment Setup
 
@@ -117,7 +117,7 @@ print(recommendation)
 
 # Add some fake results
 
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 campaign.add_measurements(recommendation)
 
 ### Model Outputs

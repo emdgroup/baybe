@@ -11,7 +11,7 @@ import pandas as pd
 
 from baybe.simulation._imputation import _impute_lookup
 from baybe.targets.base import Target
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 
 _logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def look_up_targets(
         2  3    15.0
     """
     if lookup is None:
-        add_fake_results(queries, targets)
+        add_fake_measurements(queries, targets)
     elif isinstance(lookup, Callable):
         _look_up_targets_from_callable(queries, targets, lookup)
     elif isinstance(lookup, pd.DataFrame):

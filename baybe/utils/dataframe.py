@@ -66,7 +66,7 @@ def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
     return out
 
 
-def add_fake_results(
+def add_fake_measurements(
     data: pd.DataFrame,
     targets: Collection[Target],
     good_reference_values: dict[str, list] | None = None,

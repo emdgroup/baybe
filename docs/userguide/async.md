@@ -65,7 +65,7 @@ Akin to `measurements` or `recommendations`, `pending_experiments` is a datafram
 In the following example, we get a set of recommendations, add results for half of them,
 and start the next recommendation, marking the other half pending:
 ```python
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 
 # Get a set of 10 recommendation
 rec = campaign.recommend(batch_size=10)
@@ -75,7 +75,7 @@ rec_finished = rec.iloc[:5]
 rec_pending = rec.iloc[5:]
 
 # Add target measurements to the finished part. Here we add fake results
-add_fake_results(rec_finished, campaign.targets)
+add_fake_measurements(rec_finished, campaign.targets)
 campaign.add_measurements(rec_finished)
 
 # Get the next set of recommendations, incorporating the still unfinished experiments.
