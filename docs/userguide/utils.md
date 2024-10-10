@@ -49,7 +49,7 @@ print(f"Expected data frame shape: {mem_estimate.comp_rep_shape}")
 constraints in your search space as it is generally very hard to incorporate the effect
 of arbitrary constraints without actually buidling the entire space. Hence, you should
 always **treat the number you get as upper bound** of required memory. This can still be
-useful - for instance if your estimate already is several Exabytes, it is unlikely that
+useful – for instance if your estimate already is several Exabytes, it is unlikely that
 most computers would be able to handle the result even if there are constraints present.
 ```
 
