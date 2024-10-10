@@ -30,9 +30,13 @@ def test_code_executability(file: Path, campaign):
     """
     userguide_code = "\n".join(extract_code_blocks(file, include_tilde=False))
 
+    # Create a fixed namespace, which is provided to exec as both global and local
+    # name space. This ensures that all snippets are executed in their own fresh
+    # environment unaffected by other snippets. The space for globals and locals must
+    # be the same, as otherwise exec uses separate scopes for specific patterns within
+    # the snippet (e.g. list comprehensions) causing unknown name errors despite
+    # correct import.
     namespace = {"__builtins__": __builtins__, "campaign": campaign}
-
-    # Execute the code in the isolated namespace
     exec(userguide_code, namespace, namespace)
 
 
