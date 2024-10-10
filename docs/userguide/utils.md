@@ -10,9 +10,9 @@ possible combinations arising form all discrete parameter values.
 
 The [`SearchSpace.estimate_product_space_size`](baybe.searchspace.core.SearchSpace.estimate_product_space_size)
 and [`SubspaceDiscrete.estimate_product_space_size`](baybe.searchspace.discrete.SubspaceDiscrete.estimate_product_space_size)
-utilities allows estimating the memory needed to represent the discrete subspace. 
-It will return a [`MemorySize`](baybe.searchspace.discrete.MemorySize) object that
-contains some relevant estimates.
+utilities allow estimating the memory needed to represent the discrete subspace. 
+They return a [`MemorySize`](baybe.searchspace.discrete.MemorySize) object that
+contains some relevant estimates:
 
 ```python
 import numpy as np
@@ -20,15 +20,15 @@ import numpy as np
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 
-# This will create 10 parameters with 20 values each
+# This creates 10 parameters with 20 values each.
 # The resulting space would have 20^10 entries, requiring around 745 TB of memory for
-# both experimental and computational representation of the search space
+# both experimental and computational representation of the search space.
 parameters = [
     NumericalDiscreteParameter(name=f"p{k+1}", values=np.linspace(0, 100, 20))
     for k in range(10)
 ]
 
-# Estimate the required memory for such a space in Bytes
+# Estimate the required memory for such a space
 mem_estimate = SearchSpace.estimate_product_space_size(parameters)
 
 # Print quantities of interest
@@ -43,20 +43,14 @@ print(f"Estimated size in Bytes: {mem_estimate.comp_rep_bytes}")
 print(f"Expected data frame shape: {mem_estimate.comp_rep_shape}")
 ```
 
-```{admonition} Estimate with Constraints
+```{admonition} Estimation with Constraints
 :class: warning
 `estimate_product_space_size` currently does not include the influence of potential
 constraints in your search space as it is generally very hard to incorporate the effect
-of arbitrary constraints without actually buidling the entire space. Hence, you should
+of arbitrary constraints without actually building the entire space. Hence, you should
 always **treat the number you get as upper bound** of required memory. This can still be
-useful - for instance if your estimate already is several Exabytes, it is unlikely that
+useful – for instance if your estimate already is several Exabytes, it is unlikely that
 most computers would be able to handle the result even if there are constraints present.
-```
-
-```{admonition} Influence of Continuous Parameters
-:class: info
-Continuous parameters fo not influence the size of the discrete search space part.
-Hence, they are ignored by the utility.
 ```
 
 ```{admonition} Memory During Optimization
@@ -64,6 +58,12 @@ Hence, they are ignored by the utility.
 `estimate_product_space_size` only estimates the memory required to handle the search
 space. **It does not estimate the memory required during optimization**, which can be
 of a similar magnitude, but generally depends on additional factors.
+```
+
+```{admonition} Influence of Continuous Parameters
+:class: info
+Continuous parameters do not influence the size of the discrete search space part.
+Hence, they are ignored by the utility.
 ```
 
 ```{admonition} Efficient Search Space Creation
@@ -109,7 +109,7 @@ with temporary_seed(1337):
     campaign.recommend(5)
 ```
 
-## Add Fake Target Measurements and Noise
+## Adding Fake Target Measurements and Parameter Noise
 When creating test scripts, it is often useful to try the recommendation loop for a few
 iterations. However, this requires some arbitrary target measurements to be set. Instead
 of coming up with a custom logic every time, you can use the
@@ -123,11 +123,11 @@ from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 # Get recommendations
 recommendations = campaign.recommend(5)
 
-# Add fake target measurements and artificial parameter noise to the recommendations
-# The utilities will modify the data frames inplace
+# Add fake target measurements and artificial parameter noise to the recommendations.
+# The utilities modify the dataframes inplace.
 measurements = recommendations.copy()
 add_fake_results(measurements, campaign.targets)
 add_parameter_noise(measurements, campaign.parameters)
 
-# Now continue the loop, e.g by adding the measurements...
+# Now continue the loop, e.g. by adding the measurements...
 ```
