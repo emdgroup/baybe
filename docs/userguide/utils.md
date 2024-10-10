@@ -10,9 +10,9 @@ possible combinations arising form all discrete parameter values.
 
 The [`SearchSpace.estimate_product_space_size`](baybe.searchspace.core.SearchSpace.estimate_product_space_size)
 and [`SubspaceDiscrete.estimate_product_space_size`](baybe.searchspace.discrete.SubspaceDiscrete.estimate_product_space_size)
-utilities allows estimating the memory needed to represent the discrete subspace. 
-It will return a [`MemorySize`](baybe.searchspace.discrete.MemorySize) object that
-contains some relevant estimates.
+utilities allow estimating the memory needed to represent the discrete subspace. 
+They return a [`MemorySize`](baybe.searchspace.discrete.MemorySize) object that
+contains some relevant estimates:
 
 ```python
 import numpy as np
