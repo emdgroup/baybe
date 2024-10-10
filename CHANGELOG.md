@@ -25,8 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
-- Leftover attrs-decorated classes are garbage collected before the subclass tree is
-  traversed, avoiding sporadic serialization problems 
 
 ### Deprecations
 - `ContinuousLinearEqualityConstraint` and `ContinuousLinearInequalityConstraint`
