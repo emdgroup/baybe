@@ -45,19 +45,21 @@ print(f"Expected data frame shape: {mem_estimate.comp_rep_shape}")
 
 ```{admonition} Estimation with Constraints
 :class: warning
-`estimate_product_space_size` currently does not include the influence of potential
-constraints in your search space as it is generally very hard to incorporate the effect
-of arbitrary constraints without actually building the entire space. Hence, you should
-always **treat the number you get as upper bound** of required memory. This can still be
-useful – for instance if your estimate already is several Exabytes, it is unlikely that
-most computers would be able to handle the result even if there are constraints present.
+{meth}`~baybe.searchspace.core.SearchSpace.estimate_product_space_size`
+currently does not include the influence of potential constraints in your search space
+as it is generally very hard to incorporate the effect of arbitrary constraints without
+actually building the entire space. Hence, you should always **treat the number you get
+as upper bound** of required memory. This can still be useful – for instance if your
+estimate already is several Exabytes, it is unlikely that most computers would be able
+to handle the result even if there are constraints present.
 ```
 
 ```{admonition} Memory During Optimization
 :class: warning
-`estimate_product_space_size` only estimates the memory required to handle the search
-space. **It does not estimate the memory required during optimization**, which can be
-of a similar magnitude, but generally depends on additional factors.
+{meth}`~baybe.searchspace.core.SearchSpace.estimate_product_space_size`
+only estimates the memory required to handle the search space. **It does not estimate
+the memory required during optimization**, which can be of a similar magnitude, but
+generally depends on additional factors.
 ```
 
 ```{admonition} Influence of Continuous Parameters
@@ -69,8 +71,8 @@ Hence, they are ignored by the utility.
 ```{admonition} Efficient Search Space Creation
 :class: tip
 If you run into issues creating large search spaces, as for instance in mixture
-use cases, you should consider resorting to more specialized ways of creation by invoking alternative
-search space constructors like 
+use cases, you should consider resorting to more specialized ways of creation by
+invoking alternative search space constructors like 
 {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_dataframe`
 or 
 {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex`.
