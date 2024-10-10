@@ -55,7 +55,7 @@ most computers would be able to handle the result even if there are constraints 
 
 ```{admonition} Influence of Continuous Parameters
 :class: info
-Continuous parameters fo not influence the size of the discrete search space part.
+Continuous parameters do not influence the size of the discrete search space part.
 Hence, they are ignored by the utility.
 ```
 
