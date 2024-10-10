@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   behavior for `BotorchRecommender`
 - User guide for utilities
 
+### Changed
+- Utility `add_fake_results` renamed to `add_fake_measurements`
+- Utilities `add_fake_measurements` and `add_parameter_noise` now also return the
+  dataframe they modified in-place
+
 ### Fixed
 - Leftover attrs-decorated classes are garbage collected before the subclass tree is
   traversed, avoiding sporadic serialization problems
