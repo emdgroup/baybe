@@ -123,8 +123,8 @@ from baybe.utils.dataframe import add_fake_results, add_parameter_noise
 # Get recommendations
 recommendations = campaign.recommend(5)
 
-# Add fake target measurements and artificial parameter noise to the recommendations
-# The utilities will modify the data frames inplace
+# Add fake target measurements and artificial parameter noise to the recommendations.
+# The utilities modify the dataframes inplace.
 measurements = recommendations.copy()
 add_fake_results(measurements, campaign.targets)
 add_parameter_noise(measurements, campaign.parameters)
