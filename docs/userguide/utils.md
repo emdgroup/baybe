@@ -43,7 +43,7 @@ print(f"Estimated size in Bytes: {mem_estimate.comp_rep_bytes}")
 print(f"Expected data frame shape: {mem_estimate.comp_rep_shape}")
 ```
 
-```{admonition} Estimate with Constraints
+```{admonition} Estimation with Constraints
 :class: warning
 `estimate_product_space_size` currently does not include the influence of potential
 constraints in your search space as it is generally very hard to incorporate the effect
