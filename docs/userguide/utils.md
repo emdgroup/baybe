@@ -66,16 +66,21 @@ space. **It does not estimate the memory required during optimization**, which c
 of a similar magnitude, but generally depends on additional factors.
 ```
 
-```{admonition} Effective Search Space Creation for Mixtures
+```{admonition} Efficient Search Space Creation
 :class: tip
-If you run into issues creating large search spaces, as for instance for mixtures, you
-can try to use the [`SubspaceDiscrete.from_simplex`](baybe.searchspace.discrete.SubspaceDiscrete.from_simplex)
-constructor. Instead of creating the search space completely before filtering it down
-according to the constraints, this constructor includes the main mixture constraint
-already during the Cartesian product, requiring substantially less memory overall. In
-addition, BayBE can also be installed with an optional `polars` dependency (`pip install
-baybe[polars]`) that will utilize the more efficient machinery form polars for handling
-of the search space and its constraints.
+If you run into issues creating large search spaces, as for instance in mixture
+use cases, you should consider resorting to more specialized ways of creation by invoking alternative
+search space constructors like 
+{meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_dataframe`
+or 
+{meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex`.
+Instead of creating a product space first and then filtering it down
+according to constraints, they offer a more direct and thus efficient path to the 
+desired result, typically requiring substantially less memory. 
+For example, {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex` 
+includes the mixture constraint already *during* the product creation. 
+In addition, BayBE can also be installed with its optional `polars` dependency 
+(`pip install baybe[polars]`) that activates efficient machinery for constraint handling.
 ```
 
 ## Reproducibility
