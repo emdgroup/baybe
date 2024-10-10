@@ -109,7 +109,7 @@ with temporary_seed(1337):
     campaign.recommend(5)
 ```
 
-## Add Fake Target Measurements and Noise
+## Adding Fake Target Measurements and Parameter Noise
 When creating test scripts, it is often useful to try the recommendation loop for a few
 iterations. However, this requires some arbitrary target measurements to be set. Instead
 of coming up with a custom logic every time, you can use the
