@@ -13,7 +13,11 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.basic import group_duplicate_values
-from baybe.utils.dataframe import df_drop_single_value_columns, df_uncorrelated_features
+from baybe.utils.dataframe import (
+    df_add_noise_to_degenerate_rows,
+    df_drop_single_value_columns,
+    df_uncorrelated_features,
+)
 
 try:  # For python < 3.11, use the exceptiongroup backport
     ExceptionGroup
@@ -149,6 +153,10 @@ class SubstanceParameter(DiscreteParameter):
                 comp_df = df_uncorrelated_features(comp_df)
             else:
                 comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
+
+        # Add noise to degenerate rows, if present
+        if comp_df.duplicated().any():
+            df_add_noise_to_degenerate_rows(comp_df)
 
         return comp_df
 
