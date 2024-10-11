@@ -27,7 +27,6 @@ from baybe.parameters import (
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
-    get_transform_parameters,
     validate_parameter_names,
     validate_parameters,
 )
@@ -42,6 +41,7 @@ from baybe.utils.dataframe import (
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.plotting import to_string
+from baybe.utils.validation import get_transform_objects
 
 if TYPE_CHECKING:
     import polars as pl
@@ -753,7 +753,7 @@ class SubspaceDiscrete(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
-        parameters = get_transform_parameters(
+        parameters = get_transform_objects(
             self.parameters, df, allow_missing, allow_extra
         )
 

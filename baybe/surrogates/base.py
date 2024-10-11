@@ -187,7 +187,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
-        scaler(to_tensor(objective.transform(measurements)))
+        scaler(to_tensor(objective.transform(measurements, allow_extra=True)))
         scaler.eval()
 
         return scaler
@@ -336,7 +336,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         # Transform and fit
         train_x_comp_rep, train_y_comp_rep = to_tensor(
             searchspace.transform(measurements, allow_extra=True),
-            objective.transform(measurements),
+            objective.transform(measurements, allow_extra=True),
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (

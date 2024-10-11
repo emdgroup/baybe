@@ -11,6 +11,7 @@ from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.plotting import to_string
+from baybe.utils.validation import get_transform_objects
 
 
 @define(frozen=True, slots=False)
@@ -46,7 +47,13 @@ class SingleTargetObjective(Objective):
         allow_missing: bool = False,
         allow_extra: bool = False,
     ) -> pd.DataFrame:
-        target_data = df[[self._target.name]].copy()
+        # Even for a single target, it is convenient to use the existing machinery
+        # instead of re-implementing the validation logic
+        targets = get_transform_objects(
+            [self._target], df, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        target_data = df[[t.name for t in targets]].copy()
+
         return self._target.transform(target_data)
 
 

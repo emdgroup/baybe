@@ -21,7 +21,7 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.numerical import geom_mean
 from baybe.utils.plotting import to_string
-from baybe.utils.validation import finite_float
+from baybe.utils.validation import finite_float, get_transform_objects
 
 
 def _is_all_numerical_targets(
@@ -148,8 +148,13 @@ class DesirabilityObjective(Objective):
         allow_missing: bool = False,
         allow_extra: bool = False,
     ) -> pd.DataFrame:
+        # Extract the relevant part of the dataframe
+        targets = get_transform_objects(
+            self.targets, df, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        transformed = df[[t.name for t in targets]].copy()
+
         # Transform all targets individually
-        transformed = df[[t.name for t in self.targets]].copy()
         for target in self.targets:
             transformed[target.name] = target.transform(df[[target.name]])
 
