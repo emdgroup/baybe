@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - Example for a traditional mixture
+- `df_add_noise_to_degenerate_rows` utility
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
@@ -15,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example for slot-based mixtures has been revised and grouped together with the new 
   traditional mixture example
 - Memory caching is now non-verbose
+- `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
+
+### Fixed
+- Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
+  wrong number of recommendations being returned
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
