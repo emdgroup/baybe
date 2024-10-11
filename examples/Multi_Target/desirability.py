@@ -15,7 +15,7 @@ from baybe.objectives import DesirabilityObjective
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 
 ### Experiment setup and creating the searchspace
 
@@ -107,7 +107,7 @@ N_ITERATIONS = 3
 
 for kIter in range(N_ITERATIONS):
     rec = campaign.recommend(batch_size=3)
-    add_fake_results(rec, campaign.targets)
+    add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)
     desirability = campaign.objective.transform(campaign.measurements)
 
