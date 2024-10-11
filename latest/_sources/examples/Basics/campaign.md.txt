@@ -13,7 +13,7 @@ from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 ```
 
 ## Setup
@@ -119,23 +119,23 @@ print(recommendation)
     
     
     Recommended measurements with batch_size = 2: 
-               Solvent             Base                        Ligand  \
-    350           DMAc  Cesium pivalate  Di-tert-butylphenylphosphine   
-    340  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    403  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+    284     p-Xylene  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration  
-    350        120.0          0.153  
-    340        120.0          0.100  
+    403        120.0          0.100  
+    284        105.0          0.153  
 
 
 Adding target values is done by creating a new column in the `recommendation`
 dataframe named after the target.
-In this example, we use the `add_fake_results()` utility to create fake results.
+In this example, we use the `add_fake_measurements()` utility to create fake results.
 We then update the campaign by adding the measurements.
 
 
 ```python
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 ```
@@ -143,13 +143,13 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent             Base                        Ligand  \
-    350           DMAc  Cesium pivalate  Di-tert-butylphenylphosphine   
-    340  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    403  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+    284     p-Xylene  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    350        120.0          0.153  21.747413  
-    340        120.0          0.100  24.477688  
+    403        120.0          0.100  12.089417  
+    284        105.0          0.153   7.333745  
 
 
 

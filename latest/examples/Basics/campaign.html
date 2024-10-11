@@ -288,6 +288,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/surrogates.html">Surrogates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/targets.html">Targets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/transfer_learning.html">Transfer Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/utils.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../examples.html">Examples</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
@@ -870,7 +871,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_fake_results.html">baybe.utils.dataframe.add_fake_results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1001,7 +1002,7 @@ read the corresponding <a class="reference internal" href="../../userguide/campa
 <span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span><span class="p">,</span> <span class="n">SubstanceParameter</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">add_fake_results</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">add_fake_measurements</span>
 </pre></div>
 </div>
 </section>
@@ -1080,32 +1081,32 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent             Base                        Ligand  \
-350           DMAc  Cesium pivalate  Di-tert-butylphenylphosphine   
-340  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+         Solvent                Base                        Ligand  \
+403  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+284     p-Xylene  Potassium pivalate                     BrettPhos   
 
      Temperature  Concentration  
-350        120.0          0.153  
-340        120.0          0.100  
+403        120.0          0.100  
+284        105.0          0.153  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
 dataframe named after the target.
-In this example, we use the <code class="docutils literal notranslate"><span class="pre">add_fake_results()</span></code> utility to create fake results.
+In this example, we use the <code class="docutils literal notranslate"><span class="pre">add_fake_measurements()</span></code> utility to create fake results.
 We then update the campaign by adding the measurements.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_results</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Recommended experiments with fake measured values: &quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent             Base                        Ligand  \
-350           DMAc  Cesium pivalate  Di-tert-butylphenylphosphine   
-340  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+         Solvent                Base                        Ligand  \
+403  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+284     p-Xylene  Potassium pivalate                     BrettPhos   
 
      Temperature  Concentration      yield  
-350        120.0          0.153  21.747413  
-340        120.0          0.100  24.477688  
+403        120.0          0.100  12.089417  
+284        105.0          0.153   7.333745  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

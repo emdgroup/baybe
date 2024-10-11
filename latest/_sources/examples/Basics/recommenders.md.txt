@@ -32,7 +32,7 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 ```
 
 ## Available recommenders suitable for initial recommendation
@@ -266,20 +266,20 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent               Base                        Ligand  \
-    385         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    73   Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
-    166         DMAc     Cesium acetate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    113    Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+    384           DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
+    16   Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
     
          Temperature  Concentration  
-    385        120.0            0.1  
-    73          90.0            0.1  
-    166        105.0            0.1  
+    113        105.0          0.153  
+    384        120.0          0.057  
+    16         120.0          0.100  
 
 
 
 ```python
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 ```
@@ -287,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent               Base                        Ligand  \
-    385         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    73   Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
-    166         DMAc     Cesium acetate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    113    Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+    384           DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
+    16   Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
     
          Temperature  Concentration      yield  
-    385        120.0            0.1  17.562394  
-    73          90.0            0.1  27.583509  
-    166        105.0            0.1  28.506797  
+    113        105.0          0.153   0.578743  
+    384        120.0          0.057  11.010215  
+    16         120.0          0.100  29.385128  
 
 
 

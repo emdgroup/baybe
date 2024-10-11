@@ -287,6 +287,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../userguide/surrogates.html">Surrogates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../userguide/targets.html">Targets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../userguide/transfer_learning.html">Transfer Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../userguide/utils.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../examples/examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -869,7 +870,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_fake_results.html">baybe.utils.dataframe.add_fake_results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1054,21 +1055,21 @@
 
 
 
-<div class="viewcode-block" id="add_fake_results">
-<a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.add_fake_results.html#baybe.utils.dataframe.add_fake_results">[docs]</a>
-<span class="k">def</span> <span class="nf">add_fake_results</span><span class="p">(</span>
+<div class="viewcode-block" id="add_fake_measurements">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html#baybe.utils.dataframe.add_fake_measurements">[docs]</a>
+<span class="k">def</span> <span class="nf">add_fake_measurements</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">targets</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Target</span><span class="p">],</span>
     <span class="n">good_reference_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">good_intervals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">bad_intervals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add fake results to a dataframe which was the result of a BayBE recommendation.</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add fake measurements to a dataframe which was the result of a recommendation.</span>
 
 <span class="sd">    It is possible to specify &quot;good&quot; values, which will be given a better</span>
 <span class="sd">    target value. With this, the algorithm can be driven towards certain optimal values</span>
-<span class="sd">    whilst still being random. Useful for testing. Note that this does not return a</span>
-<span class="sd">    new dataframe and that the dataframe is changed in-place.</span>
+<span class="sd">    whilst still being random. Useful for testing. Note that the dataframe is changed</span>
+<span class="sd">    in-place and also returned.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data: A dataframe containing parameter configurations in experimental</span>
@@ -1088,6 +1089,9 @@
 <span class="sd">        bad_intervals: Analogous to ``good_intervals`` but covering the cases where</span>
 <span class="sd">            the parameters lie outside the conditions specified through</span>
 <span class="sd">            ``good_reference_values``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The modified dataframe.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If good values for a parameter were specified, but this parameter</span>
@@ -1204,7 +1208,9 @@
                 <span class="n">good_intervals</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
                 <span class="n">good_intervals</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">final_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
 
 
 
@@ -1215,13 +1221,13 @@
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Parameter</span><span class="p">],</span>
     <span class="n">noise_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;absolute&quot;</span><span class="p">,</span> <span class="s2">&quot;relative_percent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;absolute&quot;</span><span class="p">,</span>
     <span class="n">noise_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply uniform noise to the parameter values of a recommendation frame.</span>
 
 <span class="sd">    The noise can be additive or multiplicative.</span>
 <span class="sd">    This can be used to simulate experimental noise or imperfect user input containing</span>
 <span class="sd">    numerical parameter values that differ from the recommendations. Note that the</span>
-<span class="sd">    dataframe is modified in-place, and that no new dataframe is returned.</span>
+<span class="sd">    dataframe is changed in-place and also returned.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data: Output of the ``recommend`` function of a ``Campaign`` object, see</span>
@@ -1231,6 +1237,9 @@
 <span class="sd">        noise_level: Level/magnitude of the noise. Must be provided as numerical value</span>
 <span class="sd">            for noise type ``absolute`` and as percentage for noise type</span>
 <span class="sd">            ``relative_percent``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The modified dataframe.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If ``noise_type`` is neither ``absolute`` nor</span>
@@ -1256,7 +1265,9 @@
         <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">is_continuous</span><span class="p">:</span>
             <span class="n">data</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
                 <span class="n">param</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">upper</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
 
 
 

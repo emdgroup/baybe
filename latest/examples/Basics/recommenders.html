@@ -288,6 +288,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/surrogates.html">Surrogates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/targets.html">Targets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/transfer_learning.html">Transfer Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/utils.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../examples.html">Examples</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
@@ -870,7 +871,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_fake_results.html">baybe.utils.dataframe.add_fake_results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1020,7 +1021,7 @@ We refer to <a class="reference internal" href="campaign.html"><span class="std 
 <span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">Surrogate</span>
 <span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">get_subclasses</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">add_fake_results</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">add_fake_measurements</span>
 </pre></div>
 </div>
 </section>
@@ -1213,32 +1214,32 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent               Base                        Ligand  \
-385         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-73   Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
-166         DMAc     Cesium acetate                     BrettPhos   
+           Solvent                Base                        Ligand  \
+113    Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+384           DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
+16   Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration  
-385        120.0            0.1  
-73          90.0            0.1  
-166        105.0            0.1  
+113        105.0          0.153  
+384        120.0          0.057  
+16         120.0          0.100  
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_results</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Recommended experiments with fake measured values: &quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent               Base                        Ligand  \
-385         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-73   Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
-166         DMAc     Cesium acetate                     BrettPhos   
+           Solvent                Base                        Ligand  \
+113    Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+384           DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
+16   Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration      yield  
-385        120.0            0.1  17.562394  
-73          90.0            0.1  27.583509  
-166        105.0            0.1  28.506797  
+113        105.0          0.153   0.578743  
+384        120.0          0.057  11.010215  
+16         120.0          0.100  29.385128  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.utils.dataframe.df_drop_single_value_columns" href="baybe.utils.dataframe.df_drop_single_value_columns.html" /><link rel="prev" title="baybe.utils.dataframe.add_fake_results" href="baybe.utils.dataframe.add_fake_results.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.utils.dataframe.df_drop_single_value_columns" href="baybe.utils.dataframe.df_drop_single_value_columns.html" /><link rel="prev" title="baybe.utils.dataframe.add_fake_measurements" href="baybe.utils.dataframe.add_fake_measurements.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
         <title>baybe.utils.dataframe.add_parameter_noise - BayBE documentation</title>
@@ -288,6 +288,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../userguide/surrogates.html">Surrogates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/targets.html">Targets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/transfer_learning.html">Transfer Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../userguide/utils.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../examples/examples.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Examples</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -870,7 +871,7 @@
 </ul>
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.utils.dataframe.html">baybe.utils.dataframe</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.add_fake_results.html">baybe.utils.dataframe.add_fake_results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -998,7 +999,7 @@
 <p>The noise can be additive or multiplicative.
 This can be used to simulate experimental noise or imperfect user input containing
 numerical parameter values that differ from the recommendations. Note that the
-dataframe is modified in-place, and that no new dataframe is returned.</p>
+dataframe is changed in-place and also returned.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1011,12 +1012,15 @@ for noise type <code class="docutils literal notranslate"><span class="pre">abso
 <code class="docutils literal notranslate"><span class="pre">relative_percent</span></code>.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type">pd.DataFrame</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The modified dataframe.</p>
+</dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">noise_type</span></code> is neither <code class="docutils literal notranslate"><span class="pre">absolute</span></code> nor
     <code class="docutils literal notranslate"><span class="pre">relative_percent</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">None</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1037,14 +1041,14 @@ for noise type <code class="docutils literal notranslate"><span class="pre">abso
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="baybe.utils.dataframe.add_fake_results.html">
+          <a class="prev-page" href="baybe.utils.dataframe.add_fake_measurements.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">baybe.utils.dataframe.add_fake_results</div>
+                <div class="title">baybe.utils.dataframe.add_fake_measurements</div>
                 
               </div>
             </a>

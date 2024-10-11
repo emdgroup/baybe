@@ -31,7 +31,7 @@ from baybe.recommenders import (
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results, to_tensor
+from baybe.utils.dataframe import add_fake_measurements, to_tensor
 ```
 
 ## Experiment Setup
@@ -596,7 +596,7 @@ Add some fake results
 
 
 ```python
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 campaign.add_measurements(recommendation)
 ```
 
@@ -619,7 +619,7 @@ print(recommendation)
     Recommendation from campaign:
            Pressure[bar]  Temperature[degree_C]
     index                                      
-    4               10.0                  100.0
+    21               1.0                  200.0
 
 
 ## Using configuration instead
