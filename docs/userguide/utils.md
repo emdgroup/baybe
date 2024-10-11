@@ -64,7 +64,8 @@ generally depends on additional factors.
 
 ```{admonition} Influence of Continuous Parameters
 :class: info
-Continuous parameters do not influence the size of the discrete search space part.
+Continuous parameters do not influence the size of the discrete search space part as 
+they do not contribute to the combinatorial configurations like discrete parameters.
 Hence, they are ignored by the utility.
 ```
 
@@ -101,7 +102,8 @@ campaign.recommend(5)
 ```
 
 Setting the global random seed can be undesirable if there are other packages in your
-setup. For this, BayBE offers [`temporary_seed`](baybe.utils.random.temporary_seed):
+setup that might unintentionally be influenced by this. For this, BayBE offers 
+[`temporary_seed`](baybe.utils.random.temporary_seed):
 
 ```python
 from baybe.utils.random import temporary_seed
