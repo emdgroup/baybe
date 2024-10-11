@@ -29,6 +29,8 @@ BotorchRecommender
       ~BotorchRecommender.sequential_continuous
       ~BotorchRecommender.hybrid_sampler
       ~BotorchRecommender.sampling_percentage
+      ~BotorchRecommender.n_restarts
+      ~BotorchRecommender.n_raw_samples
       ~BotorchRecommender.acquisition_function
       ~BotorchRecommender.acquisition_function_cls
       ~BotorchRecommender.compatibility
