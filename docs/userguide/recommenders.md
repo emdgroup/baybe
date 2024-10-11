@@ -47,8 +47,10 @@ for various acquisition functions.
   while exhaustively evaluating configurations of the discrete subspace. You can customize this
   behavior to only sample a certain percentage of the discrete subspace via the
   `sample_percentage` attribute and to choose different sampling algorithms via the
-  `hybrid_sampler` attribute. The gradient-based optimization part can also further be
-  controlled by the `n_restarts` and `n_raw_samples` keywords. For details, please refer
+  `hybrid_sampler` attribute.
+
+  The gradient-based optimization part can also further be controlled by the
+  `n_restarts` and `n_raw_samples` keywords. For details, please refer
   to [BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender).
  
   An example on using this recommender in a hybrid space can be found
