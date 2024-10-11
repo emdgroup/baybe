@@ -66,13 +66,13 @@ class BotorchRecommender(BayesianRecommender):
     space optimization. Ignored when ``hybrid_sampler="None"``."""
 
     n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
-    """Controls how many times gradient-based optimization is restarted from different
-    initial points. **Does not affect purely discrete optimization**.
+    """Number of times gradient-based optimization is restarted from different initial
+    points. **Does not affect purely discrete optimization**.
     """
 
     n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
-    """Controls the number of raw samples drawn for the initialization heuristic in
-    gradient-based optimization. **Does not affect purely discrete optimization**.
+    """Number of raw samples drawn for the initialization heuristic in gradient-based
+    optimization. **Does not affect purely discrete optimization**.
     """
 
     @sampling_percentage.validator
