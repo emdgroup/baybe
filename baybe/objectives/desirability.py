@@ -137,13 +137,20 @@ class DesirabilityObjective(Objective):
 
         return to_string("Objective", *fields)
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+    def transform(  # noqa: D102
+        self,
+        df: pd.DataFrame,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool = False,
+    ) -> pd.DataFrame:
         # See base class.
 
         # Transform all targets individually
-        transformed = data[[t.name for t in self.targets]].copy()
+        transformed = df[[t.name for t in self.targets]].copy()
         for target in self.targets:
-            transformed[target.name] = target.transform(data[[target.name]])
+            transformed[target.name] = target.transform(df[[target.name]])
 
         # Scalarize the transformed targets into desirability values
         vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)

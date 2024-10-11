@@ -35,9 +35,16 @@ class SingleTargetObjective(Objective):
         # See base class.
         return (self._target,)
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+    def transform(  # noqa: D102
+        self,
+        df: pd.DataFrame,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool = False,
+    ) -> pd.DataFrame:
         # See base class.
-        target_data = data[[self._target.name]].copy()
+        target_data = df[[self._target.name]].copy()
         return self._target.transform(target_data)
 
 
