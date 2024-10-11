@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- `df_add_noise_to_degenerate_rows` utility
+
+### Changed
+- `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
+
+### Fixed
+- Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
+  wrong number of recommendations being returned
+
 ## [0.11.2] - 2024-10-11
 ### Added
 - `n_restarts` and `n_raw_samples` keywords to configure continuous optimization
