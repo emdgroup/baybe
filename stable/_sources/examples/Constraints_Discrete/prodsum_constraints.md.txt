@@ -33,7 +33,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 ```
 
 ## Experiment setup
@@ -126,15 +126,15 @@ constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 ```
 
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
-    [12:01:16] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
+    [15:20:53] DEPRECATION WARNING: please use MorganGenerator
 
 
 
@@ -265,7 +265,7 @@ for kIter in range(N_ITERATIONS):
     )
 
     rec = campaign.recommend(batch_size=5)
-    add_fake_results(rec, campaign.targets)
+    add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)
 ```
 

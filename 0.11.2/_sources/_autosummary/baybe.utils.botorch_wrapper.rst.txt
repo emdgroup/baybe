@@ -1,0 +1,30 @@
+baybe.utils.botorch\_wrapper
+============================
+
+.. automodule:: baybe.utils.botorch_wrapper
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      botorch_function_wrapper
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

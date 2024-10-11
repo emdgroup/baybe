@@ -1,0 +1,6 @@
+baybe.exceptions.NothingToSimulateError
+=======================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NothingToSimulateError

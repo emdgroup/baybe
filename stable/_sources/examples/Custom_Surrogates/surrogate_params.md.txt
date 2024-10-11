@@ -31,7 +31,7 @@ from baybe.recommenders import (
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import NGBoostSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 ```
 
 ## Experiment Setup
@@ -117,7 +117,17 @@ campaign = Campaign(
     _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('CCC')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('O')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('CS(=O)C')
+
+
     _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
 
 
@@ -157,7 +167,7 @@ print(recommendation)
 
 ```python
 # Add some fake results
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 campaign.add_measurements(recommendation)
 ```
 

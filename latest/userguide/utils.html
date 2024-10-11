@@ -1051,7 +1051,8 @@ generally depends on additional factors.</p>
 </div>
 <div class="info admonition">
 <p class="admonition-title">Influence of Continuous Parameters</p>
-<p>Continuous parameters do not influence the size of the discrete search space part.
+<p>Continuous parameters do not influence the size of the discrete search space part as
+they do not contribute to the combinatorial configurations like discrete parameters.
 Hence, they are ignored by the utility.</p>
 </div>
 <div class="tip admonition">
@@ -1086,7 +1087,8 @@ the <a class="reference internal" href="../_autosummary/baybe.utils.random.set_r
 </pre></div>
 </div>
 <p>Setting the global random seed can be undesirable if there are other packages in your
-setup. For this, BayBE offers <a class="reference internal" href="../_autosummary/baybe.utils.random.temporary_seed.html#baybe.utils.random.temporary_seed" title="baybe.utils.random.temporary_seed"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">temporary_seed</span></code></span></a>:</p>
+setup that might unintentionally be influenced by this. For this, BayBE offers
+<a class="reference internal" href="../_autosummary/baybe.utils.random.temporary_seed.html#baybe.utils.random.temporary_seed" title="baybe.utils.random.temporary_seed"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">temporary_seed</span></code></span></a>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.utils.random</span> <span class="kn">import</span> <span class="n">temporary_seed</span>
 
 <span class="c1"># Set the random seed for all relevant engines temporarily within the context</span>

@@ -32,7 +32,7 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 ```
 
 ## Available recommenders suitable for initial recommendation
@@ -235,59 +235,6 @@ We create the searchspace and the objective.
 searchspace = SearchSpace.from_product(parameters=parameters)
 ```
 
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C.[Cs+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[Cs+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C.[K+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('O=C([O-])C(C)(C)C.[K+]')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-
-
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features('CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3')
-    _______________________________________smiles_to_mordred_features - 0.2s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC
-4)C(OC)=CC=C2OC')
-
-
-    _______________________________________smiles_to_mordred_features - 0.3s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(C)(C)P(C1=CC=CC=C1)C(C)(C)C')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-
-
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCCCOC(C)=O')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCCC#N')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(N(C)C)=O')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC1=CC=C(C)C=C1')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-
-
 
 ```python
 objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
@@ -319,20 +266,20 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    248       p-Xylene   Potassium acetate                     BrettPhos   
-    260    Butyl Ester  Potassium pivalate                     BrettPhos   
-    369  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+          Solvent            Base                        Ligand  Temperature  \
+    322  p-Xylene  Cesium acetate  Di-tert-butylphenylphosphine        120.0   
+    317  p-Xylene  Cesium acetate  Di-tert-butylphenylphosphine         90.0   
+    169      DMAc  Cesium acetate                     BrettPhos        120.0   
     
-         Temperature  Concentration  
-    248        105.0          0.153  
-    260        120.0          0.153  
-    369         90.0          0.057  
+         Concentration  
+    322          0.100  
+    317          0.153  
+    169          0.100  
 
 
 
 ```python
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 ```
@@ -340,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    248       p-Xylene   Potassium acetate                     BrettPhos   
-    260    Butyl Ester  Potassium pivalate                     BrettPhos   
-    369  Butyornitrile   Potassium acetate  Di-tert-butylphenylphosphine   
+          Solvent            Base                        Ligand  Temperature  \
+    322  p-Xylene  Cesium acetate  Di-tert-butylphenylphosphine        120.0   
+    317  p-Xylene  Cesium acetate  Di-tert-butylphenylphosphine         90.0   
+    169      DMAc  Cesium acetate                     BrettPhos        120.0   
     
-         Temperature  Concentration      yield  
-    248        105.0          0.153  30.299226  
-    260        120.0          0.153  31.241996  
-    369         90.0          0.057  10.913688  
+         Concentration      yield  
+    322          0.100  18.571088  
+    317          0.153  14.099775  
+    169          0.100   2.001188  
 
 
 

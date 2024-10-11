@@ -1,0 +1,29 @@
+Kernel
+======
+
+.. currentmodule:: baybe.kernels.base
+
+.. autoclass:: Kernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Kernel.__init__
+      ~Kernel.from_dict
+      ~Kernel.from_json
+      ~Kernel.to_dict
+      ~Kernel.to_factory
+      ~Kernel.to_gpytorch
+      ~Kernel.to_json
+   
+   
+
+   
+   
+   

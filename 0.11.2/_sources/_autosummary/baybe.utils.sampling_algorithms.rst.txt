@@ -1,0 +1,39 @@
+baybe.utils.sampling\_algorithms
+================================
+
+.. automodule:: baybe.utils.sampling_algorithms
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      farthest_point_sampling
+      sample_numerical_df
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      DiscreteSamplingMethod
+   
+   
+
+   
+   
+   
+
+
+

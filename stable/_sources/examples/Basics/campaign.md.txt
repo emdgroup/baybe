@@ -13,7 +13,7 @@ from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 ```
 
 ## Setup
@@ -120,22 +120,22 @@ print(recommendation)
     
     Recommended measurements with batch_size = 2: 
                Solvent                Base                        Ligand  \
-    412  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
-    66        p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
+    252    Butyl Ester  Potassium pivalate                     BrettPhos   
+    299  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    412        120.0          0.100  
-    66         105.0          0.057  
+    252         90.0          0.057  
+    299         90.0          0.153  
 
 
 Adding target values is done by creating a new column in the `recommendation`
 dataframe named after the target.
-In this example, we use the `add_fake_results()` utility to create fake results.
+In this example, we use the `add_fake_measurements()` utility to create fake results.
 We then update the campaign by adding the measurements.
 
 
 ```python
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 ```
@@ -144,12 +144,12 @@ print(recommendation)
     
     Recommended experiments with fake measured values: 
                Solvent                Base                        Ligand  \
-    412  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
-    66        p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
+    252    Butyl Ester  Potassium pivalate                     BrettPhos   
+    299  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    412        120.0          0.100  32.543816  
-    66         105.0          0.057   1.755287  
+    252         90.0          0.057  24.244232  
+    299         90.0          0.153   9.688697  
 
 
 

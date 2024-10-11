@@ -1,0 +1,25 @@
+TargetMode
+==========
+
+.. currentmodule:: baybe.targets.enum
+
+.. autoclass:: TargetMode
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~TargetMode.MIN
+      ~TargetMode.MAX
+      ~TargetMode.MATCH
+   
+   

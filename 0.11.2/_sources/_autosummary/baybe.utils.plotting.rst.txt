@@ -1,0 +1,32 @@
+baybe.utils.plotting
+====================
+
+.. automodule:: baybe.utils.plotting
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      create_example_plots
+      indent
+      to_string
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
