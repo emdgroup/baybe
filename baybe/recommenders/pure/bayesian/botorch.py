@@ -5,8 +5,9 @@ import math
 from typing import Any, ClassVar
 
 import pandas as pd
-from attr.converters import optional
 from attrs import define, field
+from attrs.converters import optional as optional_c
+from attrs.validators import gt, instance_of
 
 from baybe.acquisition.acqfs import qThompsonSampling
 from baybe.exceptions import (
@@ -50,12 +51,12 @@ class BotorchRecommender(BayesianRecommender):
     # Object variables
     sequential_continuous: bool = field(default=False)
     """Flag defining whether to apply sequential greedy or batch optimization in
-    **continuous** search spaces. (In discrete/hybrid spaces, sequential greedy
-    optimization is applied automatically.)
+    **continuous** search spaces. In discrete/hybrid spaces, sequential greedy
+    optimization is applied automatically.
     """
 
     hybrid_sampler: DiscreteSamplingMethod | None = field(
-        converter=optional(DiscreteSamplingMethod), default=None
+        converter=optional_c(DiscreteSamplingMethod), default=None
     )
     """Strategy used for sampling the discrete subspace when performing hybrid search
     space optimization."""
@@ -63,6 +64,16 @@ class BotorchRecommender(BayesianRecommender):
     sampling_percentage: float = field(default=1.0)
     """Percentage of discrete search space that is sampled when performing hybrid search
     space optimization. Ignored when ``hybrid_sampler="None"``."""
+
+    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
+    """Number of times gradient-based optimization is restarted from different initial
+    points. **Does not affect purely discrete optimization**.
+    """
+
+    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
+    """Number of raw samples drawn for the initialization heuristic in gradient-based
+    optimization. **Does not affect purely discrete optimization**.
+    """
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -168,8 +179,8 @@ class BotorchRecommender(BayesianRecommender):
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
             q=batch_size,
-            num_restarts=5,  # TODO make choice for num_restarts
-            raw_samples=10,  # TODO make choice for raw_samples
+            num_restarts=self.n_restarts,
+            raw_samples=self.n_raw_samples,
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
@@ -252,8 +263,8 @@ class BotorchRecommender(BayesianRecommender):
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
             q=batch_size,
-            num_restarts=5,  # TODO make choice for num_restarts
-            raw_samples=10,  # TODO make choice for raw_samples
+            num_restarts=self.n_restarts,
+            raw_samples=self.n_raw_samples,
             fixed_features_list=fixed_features_list,
             equality_constraints=[
                 c.to_botorch(
