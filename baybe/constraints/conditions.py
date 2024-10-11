@@ -9,12 +9,12 @@ from collections.abc import Callable
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
+import cattrs
 import numpy as np
 import pandas as pd
 from attr import define, field
 from attr.validators import in_
 from attrs.validators import min_len
-from cattrs.gen import override
 from funcy import rpartial
 from numpy.typing import ArrayLike
 
@@ -222,7 +222,7 @@ class SubSelectionCondition(Condition):
 
 # Register (un-)structure hooks
 _overrides = {
-    "_selection": override(rename="selection"),
+    "_selection": cattrs.override(rename="selection"),
 }
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(

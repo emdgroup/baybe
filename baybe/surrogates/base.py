@@ -7,9 +7,9 @@ from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import TYPE_CHECKING, ClassVar, Protocol
 
+import cattrs
 import pandas as pd
 from attrs import define, field
-from cattrs import override
 from cattrs.dispatch import (
     StructuredValue,
     StructureHook,
@@ -441,7 +441,7 @@ def _block_serialize_custom_architecture(
 #   existing hooks of the concrete subclasses.
 _unstructure_hook = _make_hook_decode_onnx_str(
     _block_serialize_custom_architecture(
-        lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
+        lambda x: unstructure_base(x, overrides={"_model": cattrs.override(omit=True)})
     )
 )
 converter.register_unstructure_hook(Surrogate, _unstructure_hook)
