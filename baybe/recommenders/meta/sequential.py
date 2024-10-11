@@ -10,6 +10,7 @@ from typing import Literal
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, in_, instance_of
+from typing_extensions import override
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
@@ -51,6 +52,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """The number of experiments after which the recommender is switched for the next
     requested batch."""
 
+    @override
     def select_recommender(  # noqa: D102
         self,
         batch_size: int,
@@ -59,8 +61,6 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        # See base class.
-
         return (
             self.recommender
             if (measurements is not None) and (len(measurements) >= self.switch_after)
@@ -131,6 +131,7 @@ class SequentialMetaRecommender(MetaRecommender):
     _n_last_measurements: int = field(default=-1, alias="_n_last_measurements")
     """The number of measurements that were available at the last call."""
 
+    @override
     def select_recommender(  # noqa: D102
         self,
         batch_size: int,
@@ -139,8 +140,6 @@ class SequentialMetaRecommender(MetaRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        # See base class.
-
         n_data = len(measurements) if measurements is not None else 0
 
         # If the training dataset size has increased, move to the next recommender
@@ -221,6 +220,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         """Initialize the recommender iterator."""
         return iter(self.recommenders)
 
+    @override
     def select_recommender(  # noqa: D102
         self,
         batch_size: int,
@@ -229,8 +229,6 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        # See base class.
-
         use_last = True
         n_data = len(measurements) if measurements is not None else 0
 

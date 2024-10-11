@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from numpy.typing import ArrayLike
+from typing_extensions import override
 
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
@@ -130,9 +131,8 @@ class NumericalTarget(Target, SerialMixin):
         """Indicate if the computational transformation maps to the unit interval."""
         return (self.bounds.is_bounded) and (self.transformation is not None)
 
+    @override
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # See base class.
-
         # TODO: The method (signature) needs to be refactored, potentially when
         #   enabling multi-target settings. The current input type suggests that passing
         #   dataframes is allowed, but the code was designed for single targets and
@@ -156,8 +156,8 @@ class NumericalTarget(Target, SerialMixin):
 
         return transformed
 
+    @override
     def summary(self) -> dict:  # noqa: D102
-        # See base class.
         target_dict = dict(
             Type=self.__class__.__name__,
             Name=self.name,

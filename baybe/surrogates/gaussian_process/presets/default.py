@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from attrs import define
+from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
@@ -33,10 +34,10 @@ class DefaultKernelFactory(KernelFactory):
     and interpolates the prior moments linearly between them.
     """
 
+    @override
     def __call__(  # noqa: D102
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        # See base class.
         effective_dims = train_x.shape[-1] - len(
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )

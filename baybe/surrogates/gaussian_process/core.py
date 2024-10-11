@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
 from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
@@ -115,34 +116,30 @@ class GaussianProcessSurrogate(Surrogate):
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
 
+    @override
     def to_botorch(self) -> Model:  # noqa: D102
-        # See base class.
-
         return self._model
 
+    @override
     @staticmethod
     def _make_parameter_scaler_factory(
         parameter: Parameter,
     ) -> type[InputTransform] | None:
-        # See base class.
-
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
 
+    @override
     @staticmethod
     def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
-        # See base class.
-
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
 
+    @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        # See base class.
         return self._model.posterior(candidates_comp_scaled)
 
+    @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class.
-
         import botorch
         import gpytorch
         import torch

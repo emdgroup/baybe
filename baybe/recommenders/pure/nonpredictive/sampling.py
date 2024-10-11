@@ -5,6 +5,7 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
@@ -19,14 +20,13 @@ class RandomRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
+    @override
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        # See base class.
-
         if searchspace.type == SearchSpaceType.DISCRETE:
             return candidates_exp.sample(batch_size)
 
@@ -58,14 +58,13 @@ class FPSRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
 
+    @override
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
-        # See base class.
-
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()

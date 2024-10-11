@@ -5,6 +5,7 @@ import gc
 import pandas as pd
 from attr import define, field
 from attr.validators import instance_of
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
@@ -30,13 +31,13 @@ class SingleTargetObjective(Objective):
 
         return to_string("Objective", *fields)
 
+    @override
     @property
     def targets(self) -> tuple[Target, ...]:  # noqa: D102
-        # See base class.
         return (self._target,)
 
+    @override
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # See base class.
         target_data = data[[self._target.name]].copy()
         return self._target.transform(target_data)
 

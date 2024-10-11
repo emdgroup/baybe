@@ -11,6 +11,7 @@ from scipy.stats import multivariate_normal
 from sklearn.base import ClusterMixin
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import StandardScaler
+from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
@@ -95,14 +96,13 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         """
         raise NotImplementedError("This line in the code should be unreachable. Sry.")
 
+    @override
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
-        # See base class.
-
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
@@ -160,9 +160,9 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
         """Create the default model parameters."""
         return {"max_iter": 100, "init": "k-medoids++"}
 
+    @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        # See base class.
         from sklearn_extra.cluster import KMedoids
 
         return KMedoids
@@ -208,9 +208,9 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
         """Create the default model parameters."""
         return {"max_iter": 1000, "n_init": 50}
 
+    @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        # See base class.
         from sklearn.cluster import KMeans
 
         return KMeans
@@ -252,9 +252,9 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
     # See base class.
 
+    @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        # See base class.
         from sklearn.mixture import GaussianMixture
 
         return GaussianMixture

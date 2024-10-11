@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import min_len
+from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CustomEncoding
@@ -94,9 +95,9 @@ class CustomDiscreteParameter(DiscreteParameter):
         """Returns the representing labels of the parameter."""
         return tuple(self.data.index)
 
+    @override
     @cached_property
     def comp_df(self) -> pd.DataFrame:  # noqa: D102
-        # See base class.
         # The encoding is directly provided by the user
         # We prepend the parameter name to the columns names to avoid potential
         # conflicts with other parameters

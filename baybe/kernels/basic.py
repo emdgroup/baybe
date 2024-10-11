@@ -6,6 +6,7 @@ from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, in_, instance_of
 from attrs.validators import optional as optional_v
+from typing_extensions import override
 
 from baybe.kernels.base import BasicKernel
 from baybe.priors.base import Prior
@@ -29,8 +30,8 @@ class LinearKernel(BasicKernel):
     )
     """An optional initial value for the kernel variance parameter."""
 
+    @override
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
@@ -96,8 +97,8 @@ class PeriodicKernel(BasicKernel):
     )
     """An optional initial value for the kernel period length."""
 
+    @override
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
@@ -151,8 +152,8 @@ class PolynomialKernel(BasicKernel):
     )
     """An optional initial value for the kernel offset."""
 
+    @override
     def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch

@@ -11,6 +11,7 @@ import cattrs
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of, min_len
+from typing_extensions import override
 
 from baybe.parameters.enum import ParameterEncoding
 from baybe.serialization import (
@@ -106,9 +107,9 @@ class DiscreteParameter(Parameter, ABC):
         # TODO: Should be renamed to `comp_rep`
         """Return the computational representation of the parameter."""
 
+    @override
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
-        # See base class.
         return tuple(self.comp_df.columns)
 
     def to_subspace(self) -> SubspaceDiscrete:
@@ -117,8 +118,8 @@ class DiscreteParameter(Parameter, ABC):
 
         return SubspaceDiscrete.from_parameter(self)
 
+    @override
     def is_in_range(self, item: Any) -> bool:  # noqa: D102
-        # See base class.
         return item in self.values
 
     def transform(self, series: pd.Series, /) -> pd.DataFrame:
@@ -144,8 +145,8 @@ class DiscreteParameter(Parameter, ABC):
 
         return transformed
 
+    @override
     def summary(self) -> dict:  # noqa: D102
-        # See base class.
         param_dict = dict(
             Name=self.name,
             Type=self.__class__.__name__,

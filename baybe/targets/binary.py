@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.exceptions import InvalidTargetValueError
 from baybe.serialization import SerialMixin
@@ -78,8 +79,8 @@ class BinaryTarget(Target, SerialMixin):
             columns=data.columns,
         )
 
+    @override
     def summary(self) -> dict:  # noqa: D102
-        # See base class.
         return dict(
             Type=self.__class__.__name__,
             Name=self.name,

@@ -17,6 +17,7 @@ from attr.validators import in_
 from attrs.validators import min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
+from typing_extensions import override
 
 from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
@@ -171,8 +172,8 @@ class ThresholdCondition(Condition):
             func = rpartial(func, atol=self.tolerance)
         return func
 
+    @override
     def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
-        # See base class.
         if data.dtype.kind not in "iufb":
             raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
@@ -182,8 +183,8 @@ class ThresholdCondition(Condition):
         func = self._make_operator_function()
         return data.apply(func)
 
+    @override
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
-        # See base class.
         op = self._make_operator_function()
         return op(expr)
 
@@ -211,12 +212,12 @@ class SubSelectionCondition(Condition):
             for itm in self._selection
         )
 
+    @override
     def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
-        # See base class.
         return data.isin(self.selection)
 
+    @override
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
-        # See base class.
         return expr.is_in(self.selection)
 
 

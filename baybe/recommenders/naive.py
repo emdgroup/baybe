@@ -6,6 +6,7 @@ from typing import ClassVar
 
 import pandas as pd
 from attrs import define, evolve, field, fields
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
@@ -77,6 +78,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 allow_repeated_recommendations=flag,
             )
 
+    @override
     def recommend(  # noqa: D102
         self,
         batch_size: int,
@@ -85,8 +87,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # See base class.
-
         from baybe.acquisition.partial import PartialAcquisitionFunction
 
         if (not isinstance(self.disc_recommender, BayesianRecommender)) and (

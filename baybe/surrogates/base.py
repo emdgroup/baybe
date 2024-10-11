@@ -18,6 +18,7 @@ from cattrs.dispatch import (
     UnstructureHook,
 )
 from joblib.hashing import hash
+from typing_extensions import override
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -128,8 +129,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     Scales a tensor containing target measurements in computational representation
     to make them digestible for the model-specific, scale-agnostic posterior logic."""
 
+    @override
     def to_botorch(self) -> Model:  # noqa: D102
-        # See base class.
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)
@@ -363,9 +364,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 class IndependentGaussianSurrogate(Surrogate, ABC):
     """A surrogate base class providing independent Gaussian posteriors."""
 
+    @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
-        # See base class.
-
         import torch
         from botorch.posteriors import GPyTorchPosterior
         from gpytorch.distributions import MultivariateNormal

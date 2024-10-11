@@ -11,6 +11,7 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, min_len
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
@@ -114,9 +115,9 @@ class DesirabilityObjective(Objective):
                 f"Specified number of targets: {lt}. Specified number of weights: {lw}."
             )
 
+    @override
     @property
     def targets(self) -> tuple[Target, ...]:  # noqa: D102
-        # See base class.
         return self._targets
 
     @cached_property
@@ -137,9 +138,8 @@ class DesirabilityObjective(Objective):
 
         return to_string("Objective", *fields)
 
+    @override
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # See base class.
-
         # Transform all targets individually
         transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:

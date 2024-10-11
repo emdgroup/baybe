@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 import pandas as pd
 from attr import define, field
 from attr.validators import in_, min_len
+from typing_extensions import override
 
 from baybe.constraints.base import CardinalityConstraint, DiscreteConstraint
 from baybe.constraints.conditions import (
@@ -40,8 +41,8 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
     combiner: str = field(default="AND", validator=in_(_valid_logic_combiners))
     """Operator encoding how to combine the individual conditions."""
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         satisfied = [
             cond.evaluate(data[self.parameters[k]])
             for k, cond in enumerate(self.conditions)
@@ -49,8 +50,8 @@ class DiscreteExcludeConstraint(DiscreteConstraint):
         res = reduce(_valid_logic_combiners[self.combiner], satisfied)
         return data.index[res]
 
+    @override
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
-        # See base class.
         from baybe._optional.polars import polars as pl
 
         satisfied = []
@@ -76,15 +77,15 @@ class DiscreteSumConstraint(DiscreteConstraint):
     condition: ThresholdCondition = field()
     """The condition modeled by this constraint."""
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         evaluate_data = data[self.parameters].sum(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
         return data.index[mask_bad]
 
+    @override
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
-        # See base class.
         from baybe._optional.polars import polars as pl
 
         return self.condition.to_polars(pl.sum_horizontal(self.parameters)).not_()
@@ -104,15 +105,15 @@ class DiscreteProductConstraint(DiscreteConstraint):
     condition: ThresholdCondition = field()
     """The condition that is used for this constraint."""
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         evaluate_data = data[self.parameters].prod(axis=1)
         mask_bad = ~self.condition.evaluate(evaluate_data)
 
         return data.index[mask_bad]
 
+    @override
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
-        # See base class.
         from baybe._optional.polars import polars as pl
 
         op = _threshold_operators[self.condition.operator]
@@ -138,14 +139,14 @@ class DiscreteNoLabelDuplicatesConstraint(DiscreteConstraint):
     - A,C,B,C would be removed
     """
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         mask_bad = data[self.parameters].nunique(axis=1) != len(self.parameters)
 
         return data.index[mask_bad]
 
+    @override
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
-        # See base class.
         from baybe._optional.polars import polars as pl
 
         expr = (
@@ -166,14 +167,14 @@ class DiscreteLinkedParametersConstraint(DiscreteConstraint):
     search space where the parameter values differ.
     """
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         mask_bad = data[self.parameters].nunique(axis=1) != 1
 
         return data.index[mask_bad]
 
+    @override
     def get_invalid_polars(self) -> pl.Expr:  # noqa: D102
-        # See base class.
         from baybe._optional.polars import polars as pl
 
         expr = (
@@ -227,8 +228,8 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
                 f"the conditions list."
             )
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         # Create data copy and mark entries where the dependency conditions are negative
         # with a dummy value to cause degeneracy.
         censored_data = data.copy()
@@ -293,8 +294,8 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
     """Dependencies connected with the invariant parameters."""
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         # Get indices of entries with duplicate label entries. These will also be
         # dropped by this constraint.
         mask_duplicate_labels = pd.Series(False, index=data.index)
@@ -348,8 +349,8 @@ class DiscreteCustomConstraint(DiscreteConstraint):
     return is a pandas series with boolean entries True/False for search space elements
     you want to keep/remove."""
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         mask_bad = ~self.validator(data[self.parameters])
 
         return data.index[mask_bad]
@@ -363,8 +364,8 @@ class DiscreteCardinalityConstraint(CardinalityConstraint, DiscreteConstraint):
     numerical_only: ClassVar[bool] = True
     # See base class.
 
+    @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:  # noqa: D102
-        # See base class.
         non_zeros = (data[self.parameters] != 0.0).sum(axis=1)
         mask_bad = non_zeros > self.max_cardinality
         mask_bad |= non_zeros < self.min_cardinality
