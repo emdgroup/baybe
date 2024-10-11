@@ -104,6 +104,7 @@ class RandomForestSurrogate(Surrogate):
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x.numpy(), train_y.numpy().ravel())
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Model Params", self.model_params, single_line=True)]
         return to_string(super().__str__(), *fields)

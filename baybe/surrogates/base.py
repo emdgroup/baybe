@@ -280,6 +280,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             obtained via :meth:`baybe.surrogates.base.Surrogate._make_output_scaler`.
         """
 
+    @override
     def fit(
         self,
         searchspace: SearchSpace,
@@ -349,6 +350,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Perform the actual fitting logic."""
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string(

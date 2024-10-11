@@ -46,6 +46,7 @@ class RandomRecommender(NonPredictiveRecommender):
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Compatibility", self.compatibility, single_line=True)]
         return to_string(self.__class__.__name__, *fields)
@@ -76,6 +77,7 @@ class FPSRecommender(NonPredictiveRecommender):
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Compatibility", self.compatibility, single_line=True)]
         return to_string(self.__class__.__name__, *fields)

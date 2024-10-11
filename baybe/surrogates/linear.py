@@ -61,6 +61,7 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Model Params", self.model_params, single_line=True)]
         return to_string(super().__str__(), *fields)

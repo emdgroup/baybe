@@ -7,6 +7,7 @@ from typing import Any
 import cattrs
 import pandas as pd
 from attrs import define, field
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
@@ -92,6 +93,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
 
         return recommender
 
+    @override
     def recommend(
         self,
         batch_size: int,

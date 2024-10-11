@@ -159,6 +159,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         losses = (train_x * (train_y == float(_FAILURE_VALUE_COMP))).sum(dim=0)
         self._win_lose_counts = torch.vstack([wins, losses]).to(torch.int)
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Prior", self.prior, single_line=True)]
         return to_string(super().__str__(), *fields)

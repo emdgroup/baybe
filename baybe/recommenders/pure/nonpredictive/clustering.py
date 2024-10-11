@@ -128,6 +128,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         # Convert positional indices into DataFrame indices and return result
         return candidates_comp.index[selection]
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Compatibility", self.compatibility, single_line=True),
@@ -167,6 +168,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
 
         return KMedoids
 
+    @override
     def _make_selection_custom(
         self,
         model: ClusterMixin,
@@ -215,6 +217,7 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
 
         return KMeans
 
+    @override
     def _make_selection_custom(
         self,
         model: ClusterMixin,
@@ -259,6 +262,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
 
         return GaussianMixture
 
+    @override
     def _make_selection_custom(
         self,
         model: ClusterMixin,

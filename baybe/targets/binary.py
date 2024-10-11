@@ -54,6 +54,7 @@ class BinaryTarget(Target, SerialMixin):
                 f"target '{self.name}': {value}"
             )
 
+    @override
     def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
         # TODO: The method (signature) needs to be refactored, potentially when
         #   enabling multi-target settings. The current input type suggests that passing

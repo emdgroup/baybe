@@ -106,6 +106,7 @@ class SubstanceParameter(DiscreteParameter):
                 )
             raise ExceptionGroup("duplicate substances", exceptions)
 
+    @override
     @property
     def values(self) -> tuple:
         """Returns the labels of the given set of molecules."""

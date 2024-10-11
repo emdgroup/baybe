@@ -82,6 +82,7 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Model Params", self.model_params, single_line=True)]
         return to_string(super().__str__(), *fields)

@@ -125,6 +125,7 @@ class DesirabilityObjective(Objective):
         """The normalized target weights."""
         return np.asarray(self.weights) / np.sum(self.weights)
 
+    @override
     def __str__(self) -> str:
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)

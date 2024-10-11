@@ -48,6 +48,7 @@ class CategoricalParameter(DiscreteParameter):
     )
     # See base class.
 
+    @override
     @property
     def values(self) -> tuple:
         """The values of the parameter."""

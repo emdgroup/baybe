@@ -90,6 +90,7 @@ class CustomDiscreteParameter(DiscreteParameter):
                 "that contain only a single value and hence carry no information."
             )
 
+    @override
     @property
     def values(self) -> tuple:
         """Returns the representing labels of the parameter."""

@@ -211,6 +211,7 @@ class GaussianProcessSurrogate(Surrogate):
         else:
             botorch.fit.fit_gpytorch_mll(mll)
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Kernel factory", self.kernel_factory, single_line=True),

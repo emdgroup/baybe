@@ -67,6 +67,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
             else self.initial_recommender
         )
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Initial recommender", self.initial_recommender),
@@ -175,6 +176,7 @@ class SequentialMetaRecommender(MetaRecommender):
 
         return recommender
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Recommenders", self.recommenders),
@@ -260,6 +262,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
 
         return self._last_recommender  # type: ignore[return-value]
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Recommenders", self.recommenders),

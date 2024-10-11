@@ -57,6 +57,7 @@ class Parameter(ABC, SerialMixin):
             ``True`` if the item is within the parameter range, ``False`` otherwise.
         """
 
+    @override
     def __str__(self) -> str:
         return str(self.summary())
 
