@@ -38,8 +38,15 @@ class SingleTargetObjective(Objective):
         return (self._target,)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        target_data = data[[self._target.name]].copy()
+    def transform(
+        self,
+        df: pd.DataFrame,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool = False,
+    ) -> pd.DataFrame:
+        target_data = df[[self._target.name]].copy()
         return self._target.transform(target_data)
 
 
