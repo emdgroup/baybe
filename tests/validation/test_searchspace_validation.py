@@ -5,7 +5,7 @@ import pytest
 from pytest import param
 
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.searchspace.validation import get_transform_parameters
+from baybe.utils.validation import get_transform_objects
 
 parameters = [NumericalDiscreteParameter("d1", [0, 1])]
 
@@ -15,7 +15,7 @@ parameters = [NumericalDiscreteParameter("d1", [0, 1])]
     [
         param(
             pd.DataFrame(columns=[]),
-            r"parameter\(s\) \{'d1'\} cannot be matched",
+            r"object\(s\) named \{'d1'\} cannot be matched",
             id="missing",
         ),
         param(
@@ -28,7 +28,7 @@ parameters = [NumericalDiscreteParameter("d1", [0, 1])]
 def test_invalid_transforms(df, match):
     """Transforming dataframes with incorrect columns raises an error."""
     with pytest.raises(ValueError, match=match):
-        get_transform_parameters(parameters, df, allow_missing=False, allow_extra=False)
+        get_transform_objects(parameters, df, allow_missing=False, allow_extra=False)
 
 
 @pytest.mark.parametrize(
@@ -41,4 +41,4 @@ def test_invalid_transforms(df, match):
 )
 def test_valid_transforms(df, missing, extra):
     """When providing the appropriate flags, the columns of the dataframe to be transformed can be flexibly chosen."""  # noqa
-    get_transform_parameters(parameters, df, allow_missing=missing, allow_extra=extra)
+    get_transform_objects(parameters, df, allow_missing=missing, allow_extra=extra)
