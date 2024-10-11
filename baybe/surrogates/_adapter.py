@@ -6,7 +6,6 @@ from typing import Any
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
 from torch import Tensor
-from typing_extensions import override
 
 from baybe.surrogates.base import Surrogate
 
@@ -25,13 +24,11 @@ class AdapterModel(Model):
         super().__init__()
         self._surrogate = surrogate
 
-    @override
     @property
     def num_outputs(self) -> int:  # noqa: D102
         # TODO: So far, the usage is limited to single-output models.
         return 1
 
-    @override
     def posterior(  # noqa: D102
         self,
         X: Tensor,
