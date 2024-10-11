@@ -73,7 +73,7 @@ def add_fake_measurements(
     good_intervals: dict[str, tuple[float, float]] | None = None,
     bad_intervals: dict[str, tuple[float, float]] | None = None,
 ) -> pd.DataFrame:
-    """Add fake results to a dataframe which was the result of a BayBE recommendation.
+    """Add fake measurements to a dataframe which was the result of a recommendation.
 
     It is possible to specify "good" values, which will be given a better
     target value. With this, the algorithm can be driven towards certain optimal values
