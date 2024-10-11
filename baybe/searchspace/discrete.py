@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 from cattrs import IterableValidationError
 from typing_extensions import override
 

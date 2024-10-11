@@ -12,9 +12,8 @@ from typing import TYPE_CHECKING, Any
 import cattrs
 import numpy as np
 import pandas as pd
-from attr import define, field
-from attr.validators import in_
-from attrs.validators import min_len
+from attrs import define, field
+from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
 from typing_extensions import override

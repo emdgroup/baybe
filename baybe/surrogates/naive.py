@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from typing import TYPE_CHECKING, ClassVar
 
-from attr import define, field
+from attrs import define, field
 from typing_extensions import override
 
 from baybe.surrogates.base import IndependentGaussianSurrogate

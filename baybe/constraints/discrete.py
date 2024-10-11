@@ -8,8 +8,8 @@ from functools import reduce
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import pandas as pd
-from attr import define, field
-from attr.validators import in_, min_len
+from attrs import define, field
+from attrs.validators import in_, min_len
 from typing_extensions import override
 
 from baybe.constraints.base import CardinalityConstraint, DiscreteConstraint

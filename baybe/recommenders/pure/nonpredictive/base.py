@@ -5,8 +5,7 @@ import warnings
 from abc import ABC
 
 import pandas as pd
-from attr import fields
-from attrs import define
+from attrs import define, fields
 from typing_extensions import override
 
 from baybe.exceptions import UnusedObjectWarning

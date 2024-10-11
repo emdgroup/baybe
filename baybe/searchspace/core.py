@@ -9,7 +9,7 @@ from enum import Enum
 from typing import cast
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 from typing_extensions import override
 
 from baybe.constraints import (

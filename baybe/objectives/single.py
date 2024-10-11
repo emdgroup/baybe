@@ -3,8 +3,8 @@
 import gc
 
 import pandas as pd
-from attr import define, field
-from attr.validators import instance_of
+from attrs import define, field
+from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.objectives.base import Objective

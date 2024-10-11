@@ -6,7 +6,7 @@ from collections.abc import Collection
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import numpy as np
-from attr import define, field
+from attrs import define, field
 from sklearn.ensemble import RandomForestRegressor
 from typing_extensions import override
 

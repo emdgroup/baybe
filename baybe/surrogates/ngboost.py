@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from attr import define, field
+from attrs import define, field
 from ngboost import NGBRegressor
 from typing_extensions import override
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from attr import define, field
+from attrs import define, field
 from sklearn.linear_model import ARDRegression
 from typing_extensions import override
 

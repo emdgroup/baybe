@@ -3,7 +3,7 @@
 import gc
 
 import torch
-from attr import define
+from attrs import define
 from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
 from torch import Tensor
 

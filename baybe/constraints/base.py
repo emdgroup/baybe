@@ -7,8 +7,8 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
-from attr import define, field
-from attr.validators import ge, instance_of, min_len
+from attrs import define, field
+from attrs.validators import ge, instance_of, min_len
 
 from baybe.constraints.deprecation import structure_constraints
 from baybe.serialization import (
