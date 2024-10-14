@@ -365,6 +365,8 @@ def df_add_noise_to_degenerate_rows(
 ) -> pd.DataFrame:
     """Add noise to degenerate rows to being able to numerically distinguish them.
 
+    Note that the dataframe is changed in-place and also returned.
+
     Args:
         df: The dataframe to be modified.
         noise_level: The magnitude of noise relative to the min-max range of
