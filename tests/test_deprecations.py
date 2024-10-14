@@ -23,6 +23,7 @@ from baybe.recommenders.pure.bayesian import (
     SequentialGreedyRecommender,
 )
 from baybe.searchspace.continuous import SubspaceContinuous
+from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -215,3 +216,11 @@ def test_objective_transform_interface():
         single.transform(data=pd.DataFrame(columns=["A"]), allow_extra=True)
     with pytest.warns(DeprecationWarning):
         desirability.transform(data=pd.DataFrame(columns=["A", "B"]), allow_extra=True)
+
+
+def test_deprecated_get_transform_parameters():
+    """Using the deprecated utility raises a warning."""
+    with pytest.warns(
+        DeprecationWarning, match="'get_transform_parameters' has been deprecated"
+    ):
+        get_transform_parameters(pd.DataFrame(), [])
