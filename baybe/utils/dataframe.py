@@ -514,7 +514,7 @@ def get_transform_objects(
 ) -> list[_T]:
     """Extract the objects relevant for transforming a given dataframe.
 
-    The passed object are assumed to have corresponding columns in the given dataframe,
+    The passed objects are assumed to have corresponding columns in the given dataframe,
     identified through their name attribute. The function returns the subset of objects
     that have a corresponding column in the dataframe and thus provide the necessary
     information for transforming the dataframe.
