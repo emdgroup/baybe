@@ -43,10 +43,10 @@ class Objective(ABC, SerialMixin):
             df: The dataframe to be transformed. The allowed columns of the dataframe
                 are dictated by the ``allow_missing`` and ``allow_extra`` flags.
             allow_missing: If ``False``, each target of the objective must have
-                (exactly) one corresponding column in the given dataframe. If ``True``,
+                exactly one corresponding column in the given dataframe. If ``True``,
                 the dataframe may contain only a subset of target columns.
             allow_extra: If ``False``, every column present in the dataframe must
-                correspond to (exactly) one target of the objective. If ``True``, the
+                correspond to exactly one target of the objective. If ``True``, the
                 dataframe may contain additional non-target-related columns, which
                 will be ignored.
 
