@@ -5,14 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Breaking Changes
-- Passing a dataframe via the `data` argument to `Objective.transform` is no longer
-  possible. The dataframe must now be passed as positional argument.
-- Providing additional dataframe columns to `Objective.transform` now requires
-  explicitly passing `allow_extra=True` 
-
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+
+### Deprecations
+- Passing a dataframe via the `data` argument to `Objective.transform` is no longer
+  possible. The dataframe must now be passed as positional argument.
+- The new `allow_extra` flag is automatically set to `True` in `Objective.transform`
+  when left unspecified
 
 ## [0.11.2] - 2024-10-11
 ### Added
