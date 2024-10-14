@@ -360,7 +360,7 @@ class SearchSpace(SerialMixin):
             allow_missing: If ``False``, each parameter of the space must have
                 exactly one corresponding column in the given dataframe. If ``True``,
                 the dataframe may contain only a subset of parameter columns.
-            allow_extra: If ``False``, every column present in the dataframe must
+            allow_extra: If ``False``, each column present in the dataframe must
                 correspond to exactly one parameter of the space. If ``True``, the
                 dataframe may contain additional non-parameter-related columns, which
                 will be ignored.
