@@ -29,9 +29,8 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.plotting import to_string
-from baybe.utils.validation import get_transform_objects
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace

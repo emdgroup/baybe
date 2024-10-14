@@ -5,7 +5,7 @@ import pytest
 from pytest import param
 
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.utils.validation import get_transform_objects
+from baybe.utils.dataframe import get_transform_objects
 
 parameters = [NumericalDiscreteParameter("d1", [0, 1])]
 

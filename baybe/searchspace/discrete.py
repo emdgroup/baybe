@@ -36,12 +36,12 @@ from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     fuzzy_row_match,
+    get_transform_objects,
     pretty_print_df,
 )
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.plotting import to_string
-from baybe.utils.validation import get_transform_objects
 
 if TYPE_CHECKING:
     import polars as pl

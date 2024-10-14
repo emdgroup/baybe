@@ -19,10 +19,10 @@ from baybe.objectives.enum import Scalarizer
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.numerical import geom_mean
 from baybe.utils.plotting import to_string
-from baybe.utils.validation import finite_float, get_transform_objects
+from baybe.utils.validation import finite_float
 
 
 def _is_all_numerical_targets(
