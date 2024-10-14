@@ -505,7 +505,12 @@ def pretty_print_df(
 
 
 def get_transform_objects(
-    df: pd.DataFrame, objects: Sequence[_T], allow_missing: bool, allow_extra: bool
+    df: pd.DataFrame,
+    objects: Sequence[_T],
+    /,
+    *,
+    allow_missing: bool,
+    allow_extra: bool,
 ) -> list[_T]:
     """Extract the objects relevant for transforming a given dataframe.
 
