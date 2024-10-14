@@ -365,7 +365,8 @@ def df_add_noise_to_degenerate_rows(
 ) -> pd.DataFrame:
     """Add noise to degenerate rows to make them numerically distinguishable.
 
-    Note that the dataframe is changed in-place and also returned.
+    Note that the dataframe is changed in-place and also returned. The dataframe is
+    left untouched if no rows are degenerate.
 
     Args:
         df: The dataframe to be modified.
@@ -378,6 +379,11 @@ def df_add_noise_to_degenerate_rows(
     Raises:
         TypeError: If the provided dataframe has non-numerical content.
     """
+    # Find degenerate rows, exit if there are none
+    degen_rows = df.duplicated(keep=False)
+    if degen_rows.sum() == 0:
+        return df
+
     # Assert that the input is purely numerical
     if any(df[col].dtype.kind not in "iufb" for col in df.columns):
         raise TypeError(
@@ -390,8 +396,7 @@ def df_add_noise_to_degenerate_rows(
     column_ranges = df.max() - df.min()
     column_ranges = column_ranges.replace(0, 1)
 
-    # Find degenerate rows and generate noise
-    degen_rows = df.duplicated(keep=False)
+    # Generate noise
     noise = np.random.normal(
         -noise_level, noise_level, size=(degen_rows.sum(), df.shape[1])
     )

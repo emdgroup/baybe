@@ -154,9 +154,8 @@ class SubstanceParameter(DiscreteParameter):
             else:
                 comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
-        # Add noise to degenerate rows, if present
-        if comp_df.duplicated().any():
-            df_add_noise_to_degenerate_rows(comp_df)
+        # Add noise to degenerate rows if present
+        df_add_noise_to_degenerate_rows(comp_df)
 
         return comp_df
 
