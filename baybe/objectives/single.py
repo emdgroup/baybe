@@ -81,7 +81,7 @@ class SingleTargetObjective(Objective):
         # Even for a single target, it is convenient to use the existing machinery
         # instead of re-implementing the validation logic
         targets = get_transform_objects(
-            [self._target], df, allow_missing=allow_missing, allow_extra=allow_extra
+            df, [self._target], allow_missing=allow_missing, allow_extra=allow_extra
         )
         target_data = df[[t.name for t in targets]].copy()
 

@@ -754,7 +754,7 @@ class SubspaceDiscrete(SerialMixin):
 
         # Extract the parameters to be transformed
         parameters = get_transform_objects(
-            self.parameters, df, allow_missing, allow_extra
+            df, self.parameters, allow_missing, allow_extra
         )
 
         # If the transformed values are not required, return an empty dataframe

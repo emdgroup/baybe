@@ -182,7 +182,7 @@ class DesirabilityObjective(Objective):
 
         # Extract the relevant part of the dataframe
         targets = get_transform_objects(
-            self.targets, df, allow_missing=allow_missing, allow_extra=allow_extra
+            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
         transformed = df[[t.name for t in targets]].copy()
 

@@ -343,7 +343,7 @@ class SubspaceContinuous(SerialMixin):
 
         # Extract the parameters to be transformed
         parameters = get_transform_objects(
-            self.parameters, df, allow_missing, allow_extra
+            df, self.parameters, allow_missing, allow_extra
         )
 
         # Transform the parameters

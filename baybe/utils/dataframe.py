@@ -505,10 +505,7 @@ def pretty_print_df(
 
 
 def get_transform_objects(
-    objects: Sequence[_T],
-    df: pd.DataFrame,
-    allow_missing: bool,
-    allow_extra: bool,
+    df: pd.DataFrame, objects: Sequence[_T], allow_missing: bool, allow_extra: bool
 ) -> list[_T]:
     """Extract the objects relevant for transforming a given dataframe.
 
@@ -518,9 +515,9 @@ def get_transform_objects(
     information for transforming the dataframe.
 
     Args:
+        df: The dataframe to be searched for corresponding columns.
         objects: A collection of objects to be considered for transformation (provided
             they have a match in the given dataframe).
-        df: The dataframe to be searched for corresponding columns.
         allow_missing: Flag controlling if objects are allowed to have no corresponding
             columns in the dataframe.
         allow_extra: Flag controlling if the dataframe is allowed to have columns
