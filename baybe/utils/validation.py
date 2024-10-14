@@ -122,4 +122,4 @@ def get_transform_objects(
             f"with additional columns, explicitly set `allow_extra=True'."
         )
 
-    return [p for p in objects if p.name in df] if allow_missing else list(objects)
+    return [p for p in objects if p.name in df]
