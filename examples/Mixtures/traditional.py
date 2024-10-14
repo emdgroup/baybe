@@ -1,13 +1,13 @@
 ## Example for Modelling a Mixture in Traditional Representation
 
-# When modelling mixtures one is typically confronted with a large set of substances to
+# When modelling mixtures, one is typically confronted with a large set of substances to
 # chose from. In the traditional representation, for each of these substance choices we
 # would have one single parameter describing the amount of that substance which should
 # go into the mixture. Then, there is one overall constraint to ensure that all substance
 # amounts sum to 100. Additionally, there could be more constraints, for instance if
 # there are subgroups of substances that have their own constraints.
 
-# In this example we will create a simple mixture of up to 6 components. There are
+# In this example, we will create a simple mixture of up to 6 components. There are
 # three subgroups of substances: solvents, bases and phase agents.
 
 ### Imports
