@@ -509,8 +509,8 @@ def get_transform_objects(
     objects: Sequence[_T],
     /,
     *,
-    allow_missing: bool,
-    allow_extra: bool,
+    allow_missing: bool = False,
+    allow_extra: bool = False,
 ) -> list[_T]:
     """Extract the objects relevant for transforming a given dataframe.
 
