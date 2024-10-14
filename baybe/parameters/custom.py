@@ -93,7 +93,7 @@ class CustomDiscreteParameter(DiscreteParameter):
         if value.duplicated().any():
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} has duplicated rows."
-                f"This is not allowed because it creates problems with the "
+                f"This is not supported because it creates problems with the "
                 f"computational representation. Please ensure all labels have a unique "
                 f"numerical representation."
             )
