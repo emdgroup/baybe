@@ -97,7 +97,7 @@ def get_transform_objects(
         allow_missing: Flag controlling if objects are allowed to have no corresponding
             columns in the dataframe.
         allow_extra: Flag controlling if the dataframe is allowed to have columns
-            that have corresponding objects.
+            that have no corresponding objects.
 
     Raises:
         ValueError: If the given objects and dataframe are not compatible

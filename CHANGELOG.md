@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
   possible. The dataframe must now be passed as positional argument.
-- Providing additional dataframe columns to `Objective.transforms` now requires
+- Providing additional dataframe columns to `Objective.transform` now requires
   explicitly passing `allow_extra=True` 
 
 ### Added
