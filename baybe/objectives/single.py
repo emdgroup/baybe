@@ -9,9 +9,8 @@ from attr.validators import instance_of
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.plotting import to_string
-from baybe.utils.validation import get_transform_objects
 
 
 @define(frozen=True, slots=False)
