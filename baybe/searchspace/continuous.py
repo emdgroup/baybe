@@ -122,7 +122,7 @@ class SubspaceContinuous(SerialMixin):
         )
 
     def inactive_parameter_combinations(self) -> Iterable[frozenset[str]]:
-        """Iterate over all possible combinations of inactive parameters."""
+        """Get an iterator over all possible combinations of inactive parameters."""
         for combination in product(
             *[
                 con.inactive_parameter_combinations()

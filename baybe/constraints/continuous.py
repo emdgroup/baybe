@@ -58,14 +58,14 @@ class ContinuousCardinalityConstraint(
         )
 
     def _inactive_set_sizes(self) -> Iterable[int]:
-        """Iterate over all possible sizes of inactive parameter sets."""
+        """Get all possible sizes of inactive parameter sets."""
         return range(
             len(self.parameters) - self.max_cardinality,
             len(self.parameters) - self.min_cardinality + 1,
         )
 
     def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
-        """Iterate over all possible combinations of inactive parameters."""
+        """Get an iterator over all possible combinations of inactive parameters."""
         for n_inactive_parameters in self._inactive_set_sizes():
             yield from combinations(self.parameters, n_inactive_parameters)
 
