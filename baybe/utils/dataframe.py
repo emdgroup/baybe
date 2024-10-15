@@ -381,7 +381,7 @@ def df_add_noise_to_degenerate_rows(
     """
     # Find degenerate rows, exit if there are none
     degen_rows = df.duplicated(keep=False)
-    if degen_rows.sum() == 0:
+    if not degen_rows.any():
         return df
 
     # Assert that the input is purely numerical
