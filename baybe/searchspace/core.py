@@ -356,10 +356,10 @@ class SearchSpace(SerialMixin):
                 The ``None`` default value is for temporary backward compatibility only
                 and will be removed in a future version.
             allow_missing: If ``False``, each parameter of the space must have
-                (exactly) one corresponding column in the given dataframe. If ``True``,
+                exactly one corresponding column in the given dataframe. If ``True``,
                 the dataframe may contain only a subset of parameter columns.
-            allow_extra: If ``False``, every column present in the dataframe must
-                correspond to (exactly) one parameter of the space. If ``True``, the
+            allow_extra: If ``False``, each column present in the dataframe must
+                correspond to exactly one parameter of the space. If ``True``, the
                 dataframe may contain additional non-parameter-related columns, which
                 will be ignored.
                 The ``None`` default value is for temporary backward compatibility only
@@ -377,7 +377,7 @@ class SearchSpace(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:

@@ -1,5 +1,6 @@
 """Validation functionality for search spaces."""
 
+import warnings
 from collections.abc import Collection, Sequence
 from typing import TypeVar
 
@@ -8,6 +9,7 @@ import pandas as pd
 from baybe.exceptions import EmptySearchSpaceError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.utils.dataframe import get_transform_objects
 
 _T = TypeVar("_T", bound=Parameter)
 
@@ -49,41 +51,15 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
 def get_transform_parameters(
     parameters: Sequence[_T],
     df: pd.DataFrame,
-    allow_missing: bool,
-    allow_extra: bool,
+    allow_missing: bool = False,
+    allow_extra: bool = False,
 ) -> list[_T]:
-    """Extract the parameters relevant for transforming a given dataframe.
-
-    Args:
-        parameters: The parameters to be considered for transformation (provided
-            they have match in the given dataframe).
-        df: See :meth:`baybe.searchspace.core.SearchSpace.transform`.
-        allow_missing: See :meth:`baybe.searchspace.core.SearchSpace.transform`.
-        allow_extra: See :meth:`baybe.searchspace.core.SearchSpace.transform`.
-
-    Raises:
-        ValueError: If the given parameters and dataframe are not compatible
-            under the specified values for the Boolean flags.
-
-    Returns:
-        The (subset of) parameters that need to be considered for the transformation.
-    """
-    parameter_names = [p.name for p in parameters]
-
-    if (not allow_missing) and (missing := set(parameter_names) - set(df)):  # type: ignore[arg-type]
-        raise ValueError(
-            f"The search space parameter(s) {missing} cannot be matched against "
-            f"the provided dataframe. If you want to transform a subset of "
-            f"parameter columns, explicitly set `allow_missing=True`."
-        )
-
-    if (not allow_extra) and (extra := set(df) - set(parameter_names)):
-        raise ValueError(
-            f"The provided dataframe column(s) {extra} cannot be matched against"
-            f"the search space parameters. If you want to transform a dataframe "
-            f"with additional columns, explicitly set `allow_extra=True'."
-        )
-
-    return (
-        [p for p in parameters if p.name in df] if allow_missing else list(parameters)
+    """Deprecated!"""  # noqa: D401
+    warnings.warn(
+        f"The function 'get_transform_parameters' has been deprecated and will be "
+        f"removed in a future version. Use '{get_transform_objects.__name__}' instead.",
+        DeprecationWarning,
+    )
+    return get_transform_objects(
+        df, parameters, allow_missing=allow_missing, allow_extra=allow_extra
     )

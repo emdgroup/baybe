@@ -26,7 +26,6 @@ from baybe.parameters import (
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
-    get_transform_parameters,
     validate_parameter_names,
     validate_parameters,
 )
@@ -36,6 +35,7 @@ from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     fuzzy_row_match,
+    get_transform_objects,
     pretty_print_df,
 )
 from baybe.utils.memory import bytes_to_human_readable
@@ -723,7 +723,7 @@ class SubspaceDiscrete(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -751,8 +751,8 @@ class SubspaceDiscrete(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
-        parameters = get_transform_parameters(
-            self.parameters, df, allow_missing, allow_extra
+        parameters = get_transform_objects(
+            df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # If the transformed values are not required, return an empty dataframe
