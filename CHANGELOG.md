@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - Example for a traditional mixture
-- `df_add_noise_to_degenerate_rows` utility
+- `add_noise_to_perturb_degenerate_rows` utility
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the

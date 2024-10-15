@@ -360,7 +360,7 @@ def df_uncorrelated_features(
     return data
 
 
-def df_add_noise_to_degenerate_rows(
+def add_noise_to_perturb_degenerate_rows(
     df: pd.DataFrame, noise_ratio: float = 0.001
 ) -> pd.DataFrame:
     """Add noise to degenerate rows to make them numerically distinguishable.
@@ -387,7 +387,7 @@ def df_add_noise_to_degenerate_rows(
     # Assert that the input is purely numerical
     if any(df[col].dtype.kind not in "iufb" for col in df.columns):
         raise TypeError(
-            f"'{df_add_noise_to_degenerate_rows.__name__}' only supports purely "
+            f"'{add_noise_to_perturb_degenerate_rows.__name__}' only supports purely "
             f"numerical dataframes."
         )
 
