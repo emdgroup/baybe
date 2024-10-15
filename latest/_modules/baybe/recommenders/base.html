@@ -990,7 +990,6 @@
 
 <span class="kn">import</span> <span class="nn">cattrs</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">cattrs</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
@@ -1058,9 +1057,9 @@
         <span class="n">overrides</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
             <span class="n">acquisition_function_cls</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="c1"># Temporary workaround (see TODO note above)</span>
-            <span class="n">_surrogate_model</span><span class="o">=</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">),</span>
-            <span class="n">_current_recommender</span><span class="o">=</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">_used_recommender_ids</span><span class="o">=</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">_surrogate_model</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">),</span>
+            <span class="n">_current_recommender</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">_used_recommender_ids</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
         <span class="p">),</span>
     <span class="p">),</span>
 <span class="p">)</span>
@@ -1070,9 +1069,9 @@
         <span class="n">RecommenderProtocol</span><span class="p">,</span>
         <span class="c1"># Temporary workaround (see TODO note above)</span>
         <span class="n">overrides</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-            <span class="n">_surrogate_model</span><span class="o">=</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">),</span>
-            <span class="n">_current_recommender</span><span class="o">=</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">_used_recommender_ids</span><span class="o">=</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">_surrogate_model</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">),</span>
+            <span class="n">_current_recommender</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">_used_recommender_ids</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">omit</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
         <span class="p">),</span>
     <span class="p">),</span>
 <span class="p">)</span>

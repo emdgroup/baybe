@@ -992,6 +992,7 @@
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">evolve</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.pure.base</span> <span class="kn">import</span> <span class="n">PureRecommender</span>
@@ -1067,7 +1068,8 @@
 
 <div class="viewcode-block" id="NaiveHybridSpaceRecommender.recommend">
 <a class="viewcode-back" href="../../../_autosummary/baybe.recommenders.naive.NaiveHybridSpaceRecommender.html#baybe.recommenders.naive.NaiveHybridSpaceRecommender.recommend">[docs]</a>
-    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span>  <span class="c1"># noqa: D102</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
@@ -1075,8 +1077,6 @@
         <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="c1"># See base class.</span>
-
         <span class="kn">from</span> <span class="nn">baybe.acquisition.partial</span> <span class="kn">import</span> <span class="n">PartialAcquisitionFunction</span>
 
         <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">disc_recommender</span><span class="p">,</span> <span class="n">BayesianRecommender</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span>

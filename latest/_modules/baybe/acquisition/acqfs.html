@@ -995,6 +995,7 @@
 <span class="kn">from</span> <span class="nn">attr.validators</span> <span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_v</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">ge</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">le</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.acquisition.base</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
@@ -1055,6 +1056,7 @@
                 <span class="sa">f</span><span class="s2">&quot;be specified at the same time.&quot;</span>
             <span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="nd">@classproperty</span>
     <span class="k">def</span> <span class="nf">_non_botorch_attrs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
         <span class="n">flds</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">qNegIntegratedPosteriorVariance</span><span class="p">)</span>
@@ -1335,6 +1337,7 @@
 <span class="sd">    Thompson sampling using the regular acquisition function machinery.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="nd">@override</span>
     <span class="nd">@classproperty</span>
     <span class="k">def</span> <span class="nf">_non_botorch_attrs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
         <span class="n">flds</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">qThompsonSampling</span><span class="p">)</span>

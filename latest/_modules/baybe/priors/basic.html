@@ -993,6 +993,7 @@
 
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">gt</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.priors.base</span> <span class="kn">import</span> <span class="n">Prior</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">finite_float</span>
@@ -1108,7 +1109,8 @@
 
 <div class="viewcode-block" id="BetaPrior.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.priors.basic.BetaPrior.html#baybe.priors.basic.BetaPrior.to_gpytorch">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># noqa: D102</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; does not have a gpytorch analog.&quot;</span>
         <span class="p">)</span></div>
