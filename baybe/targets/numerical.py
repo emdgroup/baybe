@@ -130,8 +130,30 @@ class NumericalTarget(Target, SerialMixin):
         """Indicate if the computational transformation maps to the unit interval."""
         return (self.bounds.is_bounded) and (self.transformation is not None)
 
-    def transform(self, series: pd.Series, /) -> pd.Series:  # noqa: D102
+    def transform(  # noqa: D102
+        self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
+    ) -> pd.Series:
         # See base class.
+
+        # >>>>>>>>>> Deprecation
+        if not ((series is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the data to be transformed as first positional argument."
+            )
+
+        if data is not None:
+            assert data.shape[1] == 1
+            series = data.iloc[:, 0]
+            warnings.warn(
+                "Providing a dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your data "
+                "in form of a series as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `series` must be a series here
+        assert isinstance(series, pd.Series)
+        # <<<<<<<<<< Deprecation
 
         # When a transformation is specified, apply it
         if self.transformation is not None:

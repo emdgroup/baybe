@@ -1,6 +1,7 @@
 """Binary targets."""
 
 import gc
+import warnings
 from typing import TypeAlias
 
 import numpy as np
@@ -53,8 +54,30 @@ class BinaryTarget(Target, SerialMixin):
                 f"target '{self.name}': {value}"
             )
 
-    def transform(self, series: pd.Series, /) -> pd.Series:  # noqa: D102
+    def transform(  # noqa: D102
+        self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
+    ) -> pd.Series:
         # See base class.
+
+        # >>>>>>>>>> Deprecation
+        if not ((series is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the data to be transformed as first positional argument."
+            )
+
+        if data is not None:
+            assert data.shape[1] == 1
+            series = data.iloc[:, 0]
+            warnings.warn(
+                "Providing a dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your data "
+                "in form of a series as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `series` must be a series here
+        assert isinstance(series, pd.Series)
+        # <<<<<<<<<< Deprecation
 
         # Validate target values
         invalid = series[~series.isin([self.success_value, self.failure_value]).values]

@@ -24,6 +24,7 @@ from baybe.recommenders.pure.bayesian import (
 )
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -224,3 +225,15 @@ def test_deprecated_get_transform_parameters():
         DeprecationWarning, match="'get_transform_parameters' has been deprecated"
     ):
         get_transform_parameters(pd.DataFrame(), [])
+
+
+def test_target_transform_interface():
+    """Using the deprecated transform interface raises a warning."""
+    numerical = NumericalTarget("num", "MAX")
+    binary = BinaryTarget("bin")
+
+    # Passing dataframe via `data`
+    with pytest.warns(DeprecationWarning):
+        numerical.transform(data=pd.DataFrame(columns=["num"]))
+    with pytest.warns(DeprecationWarning):
+        binary.transform(data=pd.DataFrame(columns=["bin"]))
