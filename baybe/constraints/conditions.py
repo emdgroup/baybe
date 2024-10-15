@@ -9,14 +9,14 @@ from collections.abc import Callable
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
+import cattrs
 import numpy as np
 import pandas as pd
-from attr import define, field
-from attr.validators import in_
-from attrs.validators import min_len
-from cattrs.gen import override
+from attrs import define, field
+from attrs.validators import in_, min_len
 from funcy import rpartial
 from numpy.typing import ArrayLike
+from typing_extensions import override
 
 from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
@@ -171,8 +171,8 @@ class ThresholdCondition(Condition):
             func = rpartial(func, atol=self.tolerance)
         return func
 
-    def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
-        # See base class.
+    @override
+    def evaluate(self, data: pd.Series) -> pd.Series:
         if data.dtype.kind not in "iufb":
             raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
@@ -182,8 +182,8 @@ class ThresholdCondition(Condition):
         func = self._make_operator_function()
         return data.apply(func)
 
-    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
-        # See base class.
+    @override
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         op = self._make_operator_function()
         return op(expr)
 
@@ -204,25 +204,25 @@ class SubSelectionCondition(Condition):
     """The internal list of items which are considered valid."""
 
     @property
-    def selection(self) -> tuple:  # noqa: D102
+    def selection(self) -> tuple:
         """The list of items which are considered valid."""
         return tuple(
             DTypeFloatNumpy(itm) if isinstance(itm, (float, int, bool)) else itm
             for itm in self._selection
         )
 
-    def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
-        # See base class.
+    @override
+    def evaluate(self, data: pd.Series) -> pd.Series:
         return data.isin(self.selection)
 
-    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
-        # See base class.
+    @override
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         return expr.is_in(self.selection)
 
 
 # Register (un-)structure hooks
 _overrides = {
-    "_selection": override(rename="selection"),
+    "_selection": cattrs.override(rename="selection"),
 }
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(

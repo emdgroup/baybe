@@ -5,7 +5,8 @@ from __future__ import annotations
 import gc
 from typing import TYPE_CHECKING, ClassVar
 
-from attr import define, field
+from attrs import define, field
+from typing_extensions import override
 
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction
@@ -28,12 +29,11 @@ class MeanPredictionSurrogate(IndependentGaussianSurrogate):
     _model: float | None = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
 
+    @override
     @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:
-        # See base class.
-
         import torch
 
         # TODO: use target value bounds for covariance scaling when explicitly provided
@@ -41,8 +41,8 @@ class MeanPredictionSurrogate(IndependentGaussianSurrogate):
         var = torch.ones(len(candidates_comp_scaled))
         return mean, var
 
+    @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class.
         self._model = train_y.mean().item()
 
 

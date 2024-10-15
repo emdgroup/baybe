@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 import pandas as pd
 from attrs import define, field, fields
+from typing_extensions import override
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -68,6 +69,7 @@ class SubspaceContinuous(SerialMixin):
     )
     """Nonlinear constraints."""
 
+    @override
     def __str__(self) -> str:
         if self.is_empty:
             return ""

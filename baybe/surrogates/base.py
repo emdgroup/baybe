@@ -7,9 +7,9 @@ from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import TYPE_CHECKING, ClassVar, Protocol
 
+import cattrs
 import pandas as pd
 from attrs import define, field
-from cattrs import override
 from cattrs.dispatch import (
     StructuredValue,
     StructureHook,
@@ -18,6 +18,7 @@ from cattrs.dispatch import (
     UnstructureHook,
 )
 from joblib.hashing import hash
+from typing_extensions import override
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -128,8 +129,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     Scales a tensor containing target measurements in computational representation
     to make them digestible for the model-specific, scale-agnostic posterior logic."""
 
-    def to_botorch(self) -> Model:  # noqa: D102
-        # See base class.
+    @override
+    def to_botorch(self) -> Model:
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)
@@ -279,6 +280,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             obtained via :meth:`baybe.surrogates.base.Surrogate._make_output_scaler`.
         """
 
+    @override
     def fit(
         self,
         searchspace: SearchSpace,
@@ -348,6 +350,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Perform the actual fitting logic."""
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string(
@@ -363,9 +366,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 class IndependentGaussianSurrogate(Surrogate, ABC):
     """A surrogate base class providing independent Gaussian posteriors."""
 
+    @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
-        # See base class.
-
         import torch
         from botorch.posteriors import GPyTorchPosterior
         from gpytorch.distributions import MultivariateNormal
@@ -441,7 +443,7 @@ def _block_serialize_custom_architecture(
 #   existing hooks of the concrete subclasses.
 _unstructure_hook = _make_hook_decode_onnx_str(
     _block_serialize_custom_architecture(
-        lambda x: unstructure_base(x, overrides={"_model": override(omit=True)})
+        lambda x: unstructure_base(x, overrides={"_model": cattrs.override(omit=True)})
     )
 )
 converter.register_unstructure_hook(Surrogate, _unstructure_hook)

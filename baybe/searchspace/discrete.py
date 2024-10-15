@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 from cattrs import IterableValidationError
+from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
@@ -118,6 +119,7 @@ class SubspaceDiscrete(SerialMixin):
     and thereby speed up construction. If not provided, the default hook will derive it
     from ``exp_rep``."""
 
+    @override
     def __str__(self) -> str:
         if self.is_empty:
             return ""

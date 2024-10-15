@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
+from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
@@ -47,14 +48,15 @@ class CategoricalParameter(DiscreteParameter):
     )
     # See base class.
 
+    @override
     @property
     def values(self) -> tuple:
         """The values of the parameter."""
         return self._values
 
+    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
-        # See base class.
+    def comp_df(self) -> pd.DataFrame:
         if self.encoding is CategoricalEncoding.OHE:
             cols = [f"{self.name}_{val}" for val in self.values]
             comp_df = pd.DataFrame(

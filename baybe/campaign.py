@@ -12,6 +12,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
@@ -93,6 +94,7 @@ class Campaign(SerialMixin):
     )
     """The cached recommendations."""
 
+    @override
     def __str__(self) -> str:
         metadata_fields = [
             to_string("Batches done", self.n_batches_done, single_line=True),

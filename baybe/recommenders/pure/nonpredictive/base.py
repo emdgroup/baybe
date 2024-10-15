@@ -5,8 +5,8 @@ import warnings
 from abc import ABC
 
 import pandas as pd
-from attr import fields
-from attrs import define
+from attrs import define, fields
+from typing_extensions import override
 
 from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives.base import Objective
@@ -18,7 +18,8 @@ from baybe.searchspace.core import SearchSpace, SearchSpaceType
 class NonPredictiveRecommender(PureRecommender, ABC):
     """Abstract base class for all nonpredictive recommenders."""
 
-    def recommend(  # noqa: D102
+    @override
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,
@@ -26,8 +27,6 @@ class NonPredictiveRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # See base class.
-
         if (measurements is not None) and (len(measurements) != 0):
             warnings.warn(
                 f"'{self.recommend.__name__}' was called with a non-empty "

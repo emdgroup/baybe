@@ -11,6 +11,7 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, min_len
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
@@ -114,9 +115,9 @@ class DesirabilityObjective(Objective):
                 f"Specified number of targets: {lt}. Specified number of weights: {lw}."
             )
 
+    @override
     @property
-    def targets(self) -> tuple[Target, ...]:  # noqa: D102
-        # See base class.
+    def targets(self) -> tuple[Target, ...]:
         return self._targets
 
     @cached_property
@@ -124,6 +125,7 @@ class DesirabilityObjective(Objective):
         """The normalized target weights."""
         return np.asarray(self.weights) / np.sum(self.weights)
 
+    @override
     def __str__(self) -> str:
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
@@ -137,9 +139,8 @@ class DesirabilityObjective(Objective):
 
         return to_string("Objective", *fields)
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # See base class.
-
+    @override
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         # Transform all targets individually
         transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:
