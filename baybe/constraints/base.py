@@ -137,12 +137,15 @@ class ContinuousConstraint(Constraint, ABC):
 
 @define
 class CardinalityConstraint(Constraint, ABC):
-    """Abstract base class for cardinality constraints.
+    r"""Abstract base class for cardinality constraints.
 
     Places a constraint on the set of nonzero (i.e. "active") values among the
-    specified parameters, bounding it between the two given integers,
-        ``min_cardinality`` <= |{p_i : p_i != 0}| <= ``max_cardinality``
-    where ``{p_i}`` are the parameters specified for the constraint.
+    specified parameters, bounding it between the two given integers, i.e.
+
+    .. math::
+        \text{min_cardinality} \leq |\{p_i : p_i \neq 0\}| \leq \text{max_cardinality}
+
+    where :math:`\{p_i\}` are the parameters specified for the constraint.
 
     Note that this can be equivalently regarded as L0-constraint on the vector
     containing the specified parameters.
