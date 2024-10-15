@@ -80,7 +80,9 @@ class BinaryTarget(Target, SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Validate target values
-        invalid = series[~series.isin([self.success_value, self.failure_value]).values]
+        invalid = series[
+            ~series.isin([self.success_value, self.failure_value]).to_numpy()
+        ]
         if len(invalid) > 0:
             raise InvalidTargetValueError(
                 f"The following values entered for target '{self.name}' are not in the "
