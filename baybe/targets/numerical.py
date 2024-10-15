@@ -132,13 +132,7 @@ class NumericalTarget(Target, SerialMixin):
         return (self.bounds.is_bounded) and (self.transformation is not None)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        # TODO: The method (signature) needs to be refactored, potentially when
-        #   enabling multi-target settings. The current input type suggests that passing
-        #   dataframes is allowed, but the code was designed for single targets and
-        #   desirability objectives, where only one column is present.
-        assert data.shape[1] == 1
-
+    def transform(self, series: pd.Series, /) -> pd.Series:
         # When a transformation is specified, apply it
         if self.transformation is not None:
             func = _get_target_transformation(
@@ -148,11 +142,11 @@ class NumericalTarget(Target, SerialMixin):
                 self.mode,
                 cast(TargetTransformation, self.transformation),
             )
-            transformed = pd.DataFrame(
-                func(data, *self.bounds.to_tuple()), index=data.index
+            transformed = pd.Series(
+                func(series, *self.bounds.to_tuple()), index=series.index
             )
         else:
-            transformed = data.copy()
+            transformed = series.copy()
 
         return transformed
 
