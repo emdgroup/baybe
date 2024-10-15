@@ -90,7 +90,7 @@ class BayesianRecommender(PureRecommender, ABC):
         )
 
     @override
-    def recommend(  # noqa: D102
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,

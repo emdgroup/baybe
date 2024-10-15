@@ -132,7 +132,7 @@ class NumericalTarget(Target, SerialMixin):
         return (self.bounds.is_bounded) and (self.transformation is not None)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         # TODO: The method (signature) needs to be refactored, potentially when
         #   enabling multi-target settings. The current input type suggests that passing
         #   dataframes is allowed, but the code was designed for single targets and
@@ -157,7 +157,7 @@ class NumericalTarget(Target, SerialMixin):
         return transformed
 
     @override
-    def summary(self) -> dict:  # noqa: D102
+    def summary(self) -> dict:
         target_dict = dict(
             Type=self.__class__.__name__,
             Name=self.name,

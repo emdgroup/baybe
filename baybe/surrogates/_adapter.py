@@ -25,11 +25,11 @@ class AdapterModel(Model):
         self._surrogate = surrogate
 
     @property
-    def num_outputs(self) -> int:  # noqa: D102
+    def num_outputs(self) -> int:
         # TODO: So far, the usage is limited to single-output models.
         return 1
 
-    def posterior(  # noqa: D102
+    def posterior(
         self,
         X: Tensor,
         output_indices: list[int] | None = None,

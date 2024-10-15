@@ -160,10 +160,6 @@ Apart from that, we generally recommend adhering to the following guideline:
     * an optional extended summary or description below and
     * all relevant sections (`Args`, `Raises`, ...).
   
-  Potential exceptions are functions whose docstring is to be fully inherited from a 
-  parent class.
-  In this case, use `# noqa: D102` to disable the automatic checks locally.
-
 - Use type hints (for variables/constants, attributes, function/method signatures, ...).
   Avoid repeating type hints in docstrings.
 

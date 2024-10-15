@@ -117,7 +117,7 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def targets(self) -> tuple[Target, ...]:  # noqa: D102
+    def targets(self) -> tuple[Target, ...]:
         return self._targets
 
     @cached_property
@@ -140,7 +140,7 @@ class DesirabilityObjective(Objective):
         return to_string("Objective", *fields)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         # Transform all targets individually
         transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:

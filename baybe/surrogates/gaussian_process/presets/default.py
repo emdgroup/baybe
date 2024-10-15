@@ -35,7 +35,7 @@ class DefaultKernelFactory(KernelFactory):
     """
 
     @override
-    def __call__(  # noqa: D102
+    def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         effective_dims = train_x.shape[-1] - len(

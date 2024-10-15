@@ -172,7 +172,7 @@ class ThresholdCondition(Condition):
         return func
 
     @override
-    def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
+    def evaluate(self, data: pd.Series) -> pd.Series:
         if data.dtype.kind not in "iufb":
             raise ValueError(
                 "You tried to apply a threshold condition to non-numeric data. "
@@ -183,7 +183,7 @@ class ThresholdCondition(Condition):
         return data.apply(func)
 
     @override
-    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         op = self._make_operator_function()
         return op(expr)
 
@@ -204,7 +204,7 @@ class SubSelectionCondition(Condition):
     """The internal list of items which are considered valid."""
 
     @property
-    def selection(self) -> tuple:  # noqa: D102
+    def selection(self) -> tuple:
         """The list of items which are considered valid."""
         return tuple(
             DTypeFloatNumpy(itm) if isinstance(itm, (float, int, bool)) else itm
@@ -212,11 +212,11 @@ class SubSelectionCondition(Condition):
         )
 
     @override
-    def evaluate(self, data: pd.Series) -> pd.Series:  # noqa: D102
+    def evaluate(self, data: pd.Series) -> pd.Series:
         return data.isin(self.selection)
 
     @override
-    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:  # noqa: D102
+    def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         return expr.is_in(self.selection)
 
 

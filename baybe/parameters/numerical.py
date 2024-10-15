@@ -81,19 +81,19 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
     @override
     @property
-    def values(self) -> tuple:  # noqa: D102
+    def values(self) -> tuple:
         return tuple(DTypeFloatNumpy(itm) for itm in self._values)
 
     @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
+    def comp_df(self) -> pd.DataFrame:
         comp_df = pd.DataFrame(
             {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
         )
         return comp_df
 
     @override
-    def is_in_range(self, item: float) -> bool:  # noqa: D102
+    def is_in_range(self, item: float) -> bool:
         differences_acceptable = [
             np.abs(val - item) <= self.tolerance for val in self.values
         ]
@@ -131,16 +131,16 @@ class NumericalContinuousParameter(ContinuousParameter):
             )
 
     @override
-    def is_in_range(self, item: float) -> bool:  # noqa: D102
+    def is_in_range(self, item: float) -> bool:
         return self.bounds.contains(item)
 
     @override
     @property
-    def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
+    def comp_rep_columns(self) -> tuple[str, ...]:
         return (self.name,)
 
     @override
-    def summary(self) -> dict:  # noqa: D102
+    def summary(self) -> dict:
         param_dict = dict(
             Name=self.name,
             Type=self.__class__.__name__,

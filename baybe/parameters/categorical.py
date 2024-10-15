@@ -56,7 +56,7 @@ class CategoricalParameter(DiscreteParameter):
 
     @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
+    def comp_df(self) -> pd.DataFrame:
         if self.encoding is CategoricalEncoding.OHE:
             cols = [f"{self.name}_{val}" for val in self.values]
             comp_df = pd.DataFrame(

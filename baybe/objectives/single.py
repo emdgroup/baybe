@@ -34,11 +34,11 @@ class SingleTargetObjective(Objective):
 
     @override
     @property
-    def targets(self) -> tuple[Target, ...]:  # noqa: D102
+    def targets(self) -> tuple[Target, ...]:
         return (self._target,)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         target_data = data[[self._target.name]].copy()
         return self._target.transform(target_data)
 

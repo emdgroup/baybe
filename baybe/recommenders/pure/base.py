@@ -43,7 +43,7 @@ class PureRecommender(ABC, RecommenderProtocol):
     influence in discrete search spaces."""
 
     @override
-    def recommend(  # noqa: D102
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,

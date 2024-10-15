@@ -85,7 +85,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         ).unsqueeze(-1)
 
     @override
-    def to_botorch(self) -> Model:  # noqa: D102
+    def to_botorch(self) -> Model:
         # We register the sampler on the fly to avoid eager loading of torch
 
         from botorch.sampling.base import MCSampler

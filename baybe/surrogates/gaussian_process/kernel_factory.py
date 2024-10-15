@@ -45,7 +45,7 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
     """The fixed kernel to be returned by the factory."""
 
     @override
-    def __call__(  # noqa: D102
+    def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
         return self.kernel

@@ -19,7 +19,7 @@ class NonPredictiveRecommender(PureRecommender, ABC):
     """Abstract base class for all nonpredictive recommenders."""
 
     @override
-    def recommend(  # noqa: D102
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,

@@ -114,7 +114,7 @@ class SubstanceParameter(DiscreteParameter):
 
     @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
+    def comp_df(self) -> pd.DataFrame:
         from baybe.utils import chemistry
 
         vals = list(self.data.values())

@@ -53,7 +53,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     requested batch."""
 
     @override
-    def select_recommender(  # noqa: D102
+    def select_recommender(
         self,
         batch_size: int,
         searchspace: SearchSpace | None = None,
@@ -133,7 +133,7 @@ class SequentialMetaRecommender(MetaRecommender):
     """The number of measurements that were available at the last call."""
 
     @override
-    def select_recommender(  # noqa: D102
+    def select_recommender(
         self,
         batch_size: int,
         searchspace: SearchSpace | None = None,
@@ -223,7 +223,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         return iter(self.recommenders)
 
     @override
-    def select_recommender(  # noqa: D102
+    def select_recommender(
         self,
         batch_size: int,
         searchspace: SearchSpace | None = None,

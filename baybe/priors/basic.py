@@ -102,7 +102,7 @@ class BetaPrior(Prior):
     """Beta concentration parameter. Controls mass accumulated toward one."""
 
     @override
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    def to_gpytorch(self, *args, **kwargs):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' does not have a gpytorch analog."
         )

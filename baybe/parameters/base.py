@@ -110,7 +110,7 @@ class DiscreteParameter(Parameter, ABC):
 
     @override
     @property
-    def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
+    def comp_rep_columns(self) -> tuple[str, ...]:
         return tuple(self.comp_df.columns)
 
     def to_subspace(self) -> SubspaceDiscrete:
@@ -120,7 +120,7 @@ class DiscreteParameter(Parameter, ABC):
         return SubspaceDiscrete.from_parameter(self)
 
     @override
-    def is_in_range(self, item: Any) -> bool:  # noqa: D102
+    def is_in_range(self, item: Any) -> bool:
         return item in self.values
 
     def transform(self, series: pd.Series, /) -> pd.DataFrame:
@@ -147,7 +147,7 @@ class DiscreteParameter(Parameter, ABC):
         return transformed
 
     @override
-    def summary(self) -> dict:  # noqa: D102
+    def summary(self) -> dict:
         param_dict = dict(
             Name=self.name,
             Type=self.__class__.__name__,

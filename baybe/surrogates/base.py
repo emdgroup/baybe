@@ -130,7 +130,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     to make them digestible for the model-specific, scale-agnostic posterior logic."""
 
     @override
-    def to_botorch(self) -> Model:  # noqa: D102
+    def to_botorch(self) -> Model:
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)

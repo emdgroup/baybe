@@ -98,7 +98,7 @@ class CustomDiscreteParameter(DiscreteParameter):
 
     @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
+    def comp_df(self) -> pd.DataFrame:
         # The encoding is directly provided by the user
         # We prepend the parameter name to the columns names to avoid potential
         # conflicts with other parameters

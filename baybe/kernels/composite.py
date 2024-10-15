@@ -35,7 +35,7 @@ class ScaleKernel(CompositeKernel):
     """An optional initial value for the output scale."""
 
     @override
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    def to_gpytorch(self, *args, **kwargs):
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
@@ -61,7 +61,7 @@ class AdditiveKernel(CompositeKernel):
     """The individual kernels to be summed."""
 
     @override
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    def to_gpytorch(self, *args, **kwargs):
         return reduce(add, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
 
@@ -78,7 +78,7 @@ class ProductKernel(CompositeKernel):
     """The individual kernels to be multiplied."""
 
     @override
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    def to_gpytorch(self, *args, **kwargs):
         return reduce(mul, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
 

@@ -31,7 +31,7 @@ class LinearKernel(BasicKernel):
     """An optional initial value for the kernel variance parameter."""
 
     @override
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    def to_gpytorch(self, *args, **kwargs):
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
@@ -98,7 +98,7 @@ class PeriodicKernel(BasicKernel):
     """An optional initial value for the kernel period length."""
 
     @override
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    def to_gpytorch(self, *args, **kwargs):
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
@@ -153,7 +153,7 @@ class PolynomialKernel(BasicKernel):
     """An optional initial value for the kernel offset."""
 
     @override
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    def to_gpytorch(self, *args, **kwargs):
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch

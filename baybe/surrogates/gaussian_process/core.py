@@ -117,7 +117,7 @@ class GaussianProcessSurrogate(Surrogate):
         return make_gp_from_preset(preset)
 
     @override
-    def to_botorch(self) -> Model:  # noqa: D102
+    def to_botorch(self) -> Model:
         return self._model
 
     @override
