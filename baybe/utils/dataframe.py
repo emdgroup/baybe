@@ -361,7 +361,7 @@ def df_uncorrelated_features(
 
 
 def df_add_noise_to_degenerate_rows(
-    df: pd.DataFrame, noise_level: float = 0.001
+    df: pd.DataFrame, noise_ratio: float = 0.001
 ) -> pd.DataFrame:
     """Add noise to degenerate rows to make them numerically distinguishable.
 
@@ -370,8 +370,8 @@ def df_add_noise_to_degenerate_rows(
 
     Args:
         df: The dataframe to be modified.
-        noise_level: The magnitude of noise relative to the min-max range of
-            values for each column.
+        noise_ratio: The magnitude of generated uniform noise relative to the
+            min-max range of values for each column.
 
     Returns:
         The modified dataframe.
@@ -397,8 +397,8 @@ def df_add_noise_to_degenerate_rows(
     column_ranges = column_ranges.replace(0, 1)
 
     # Generate noise
-    noise = np.random.normal(
-        -noise_level, noise_level, size=(degen_rows.sum(), df.shape[1])
+    noise = np.random.uniform(
+        -noise_ratio, noise_ratio, size=(degen_rows.sum(), df.shape[1])
     )
     noise_df = pd.DataFrame(noise, columns=df.columns, index=df.index[degen_rows])
 
