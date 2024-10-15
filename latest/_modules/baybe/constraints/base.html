@@ -1143,12 +1143,15 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.CardinalityConstraint.html#baybe.constraints.base.CardinalityConstraint">[docs]</a>
 <span class="nd">@define</span>
 <span class="k">class</span> <span class="nc">CardinalityConstraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for cardinality constraints.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Abstract base class for cardinality constraints.</span>
 
 <span class="sd">    Places a constraint on the set of nonzero (i.e. &quot;active&quot;) values among the</span>
-<span class="sd">    specified parameters, bounding it between the two given integers,</span>
-<span class="sd">        ``min_cardinality`` &lt;= |{p_i : p_i != 0}| &lt;= ``max_cardinality``</span>
-<span class="sd">    where ``{p_i}`` are the parameters specified for the constraint.</span>
+<span class="sd">    specified parameters, bounding it between the two given integers, i.e.</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        \text{min_cardinality} \leq |\{p_i : p_i \neq 0\}| \leq \text{max_cardinality}</span>
+
+<span class="sd">    where :math:`\{p_i\}` are the parameters specified for the constraint.</span>
 
 <span class="sd">    Note that this can be equivalently regarded as L0-constraint on the vector</span>
 <span class="sd">    containing the specified parameters.</span>
