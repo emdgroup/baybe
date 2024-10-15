@@ -1,7 +1,7 @@
 """Continuous constraints."""
 
 import math
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from itertools import combinations
 from math import comb
 
@@ -57,7 +57,7 @@ class ContinuousCardinalityConstraint(
             for n_inactive_parameters in self._inactive_set_sizes()
         )
 
-    def _inactive_set_sizes(self) -> Iterable[int]:
+    def _inactive_set_sizes(self) -> range:
         """Get all possible sizes of inactive parameter sets."""
         return range(
             len(self.parameters) - self.max_cardinality,
