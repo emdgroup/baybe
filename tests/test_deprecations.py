@@ -16,12 +16,14 @@ from baybe.exceptions import DeprecationError
 from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
     SequentialGreedyRecommender,
 )
 from baybe.searchspace.continuous import SubspaceContinuous
+from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -106,17 +108,25 @@ def test_samples_full_factorial():
         SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
 
 
-def test_transform_interface(searchspace):
+def test_subspace_transform_interface(searchspace):
     """Using the deprecated transform interface raises a warning."""
     # Not providing `allow_extra` when there are additional columns
     with pytest.warns(DeprecationWarning):
         searchspace.discrete.transform(
-            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns])
+            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
+        )
+    with pytest.warns(DeprecationWarning):
+        searchspace.continuous.transform(
+            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
         )
 
     # Passing dataframe via `data`
     with pytest.warns(DeprecationWarning):
         searchspace.discrete.transform(
+            data=searchspace.discrete.exp_rep, allow_extra=True
+        )
+    with pytest.warns(DeprecationWarning):
+        searchspace.continuous.transform(
             data=searchspace.discrete.exp_rep, allow_extra=True
         )
 
@@ -179,3 +189,38 @@ def test_constraint_config_deserialization(type_, op):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         actual = Constraint.from_json(config)
     assert expected == actual, (expected, actual)
+
+
+def test_objective_transform_interface():
+    """Using the deprecated transform interface raises a warning."""
+    single = SingleTargetObjective(NumericalTarget("A", "MAX"))
+    desirability = DesirabilityObjective(
+        [
+            NumericalTarget("A", "MAX", (0, 1)),
+            NumericalTarget("B", "MIN", (-1, 1)),
+        ]
+    )
+
+    # Not providing `allow_extra` when there are additional columns
+    with pytest.warns(DeprecationWarning):
+        single.transform(
+            pd.DataFrame(columns=["A", "additional"]),
+        )
+    with pytest.warns(DeprecationWarning):
+        desirability.transform(
+            pd.DataFrame(columns=["A", "B", "additional"]),
+        )
+
+    # Passing dataframe via `data`
+    with pytest.warns(DeprecationWarning):
+        single.transform(data=pd.DataFrame(columns=["A"]), allow_extra=True)
+    with pytest.warns(DeprecationWarning):
+        desirability.transform(data=pd.DataFrame(columns=["A", "B"]), allow_extra=True)
+
+
+def test_deprecated_get_transform_parameters():
+    """Using the deprecated utility raises a warning."""
+    with pytest.warns(
+        DeprecationWarning, match="'get_transform_parameters' has been deprecated"
+    ):
+        get_transform_parameters(pd.DataFrame(), [])
