@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from baybe.utils.dataframe import df_add_noise_to_degenerate_rows
+from baybe.utils.dataframe import add_noise_to_perturb_degenerate_rows
 
 
 def test_degenerate_rows():
@@ -20,7 +20,7 @@ def test_degenerate_rows():
     df.iloc[:, -1] = 50.0  # Make last column constant to test the edge case
 
     # Add noise
-    df_add_noise_to_degenerate_rows(df)
+    add_noise_to_perturb_degenerate_rows(df)
 
     # Assert that the utility fixed the degenerate rows
     assert not df.duplicated().any(), "Degenerate rows were not fixed by the utility."
@@ -43,4 +43,4 @@ def test_degenerate_rows_invalid_input():
 
     # Add noise
     with pytest.raises(TypeError):
-        df_add_noise_to_degenerate_rows(df)
+        add_noise_to_perturb_degenerate_rows(df)

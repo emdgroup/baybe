@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `df_add_noise_to_degenerate_rows` utility
+- `add_noise_to_perturb_degenerate_rows` utility
 
 ### Changed
 - `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
