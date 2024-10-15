@@ -174,7 +174,9 @@ Apart from that, we generally recommend adhering to the following guideline:
 
 - Use double backticks for literals like in ``` ``MyString`` ```.
 
-## Writing `attrs` classes 
+## Writing classes 
+
+### Conventions for `attrs` classes
 
 - Place attribute docstrings below the attribute declaration, not in the class 
   docstring.
@@ -205,3 +207,31 @@ Apart from that, we generally recommend adhering to the following guideline:
   section if applicable. Linter warnings regarding missing attribute docstrings can be 
   silenced using `# noqa: DOC101, DOC103`.
   
+### Method overrides
+
+When overriding methods in subclasses, decorate them with `@typing_extensions.override`
+to make the relationship explicit:
+```python
+from typing_extensions import override
+
+class Parent:
+
+   def le_method():
+      """The method of the parent class."""
+      ...
+
+class Child:
+
+   @override
+   def le_method():
+      """Overridden method of the child class."""
+      ...
+```
+Using the decorator provides a type-safe approach for defining inheritance structures
+that eliminates two potential sources of unintended class design:
+* An intended override is does not occur because the method names differ between
+  the parent and child classes (e.g. if the parent method is renamed)
+* An unintended override occurs because a method name that exists in the parent class
+  is used in the child class by mistake.
+In both cases, `mypy` will complain and force you to fix the problem.
+
