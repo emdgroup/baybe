@@ -25,106 +25,106 @@ class CustomEncoding(ParameterEncoding):
 
 
 class SubstanceEncoding(ParameterEncoding):
-    """Available encodings for substance parameters from scikit-fingerprints package."""
+    """Available encodings for substance parameters from [scikit-fingerprints](https://scikit-fingerprints.github.io/scikit-fingerprints/)."""
 
     ATOMPAIR = "ATOMPAIR"
-    """AtomPairFingerprint."""
+    """:class:`skfp.fingerprints.AtomPairFingerprint`"""
 
     AUTOCORR = "AUTOCORR"
-    """AutocorrFingerprint."""
+    """:class:`skfp.fingerprints.AutocorrFingerprint`"""
 
     AVALON = "AVALON"
-    """AvalonFingerprint."""
+    """:class:`skfp.fingerprints.AvalonFingerprint`"""
 
     E3FP = "E3FP"
-    """E3FPFingerprint."""
+    """:class:`skfp.fingerprints.E3FPFingerprint`"""
 
     ECFP = "ECFP"
-    """ECFPFingerprint."""
+    """:class:`skfp.fingerprints.ECFPFingerprint`"""
 
     MORGAN_FP = "MORGAN_FP"
     """Deprecated!"""
 
     ERG = "ERG"
-    """ERGFingerprint."""
+    """:class:`skfp.fingerprints.ERGFingerprint`"""
 
     ESTATE = "ESTATE"
-    """EStateFingerprint."""
+    """:class:`skfp.fingerprints.EStateFingerprint`"""
 
     FUNCTIONALGROUPS = "FUNCTIONALGROUPS"
-    """FunctionalGroupsFingerprint."""
+    """:class:`skfp.fingerprints.FunctionalGroupsFingerprint`"""
 
     GETAWAY = "GETAWAY"
-    """GETAWAYFingerprint."""
+    """:class:`skfp.fingerprints.GETAWAYFingerprint`"""
 
     GHOSECRIPPEN = "GHOSECRIPPEN"
-    """GhoseCrippenFingerprint."""
+    """:class:`skfp.fingerprints.GhoseCrippenFingerprint`"""
 
     KLEKOTAROTH = "KLEKOTAROTH"
-    """KlekotaRothFingerprint."""
+    """:class:`skfp.fingerprints.KlekotaRothFingerprint`"""
 
     LAGGNER = "LAGGNER"
-    """LaggnerFingerprint."""
+    """:class:`skfp.fingerprints.LaggnerFingerprint`"""
 
     LAYERED = "LAYERED"
-    """LayeredFingerprint."""
+    """:class:`skfp.fingerprints.LayeredFingerprint`"""
 
     LINGO = "LINGO"
-    """LingoFingerprint."""
+    """:class:`skfp.fingerprints.LingoFingerprint`"""
 
     MACCS = "MACCS"
-    """MACCSFingerprint."""
+    """:class:`skfp.fingerprints.MACCSFingerprint`"""
 
     MAP = "MAP"
-    """MAPFingerprint."""
+    """:class:`skfp.fingerprints.MAPFingerprint`"""
 
     MHFP = "MHFP"
-    """MHFPFingerprint."""
+    """:class:`skfp.fingerprints.MHFPFingerprint`"""
 
     MORSE = "MORSE"
-    """MORSEFingerprint."""
+    """:class:`skfp.fingerprints.MORSEFingerprint`"""
 
     MQNS = "MQNS"
-    """MQNsFingerprint."""
+    """:class:`skfp.fingerprints.MQNsFingerprint`"""
 
     MORDRED = "MORDRED"
-    """MordredFingerprint."""
+    """:class:`skfp.fingerprints.MordredFingerprint`"""
 
     PATTERN = "PATTERN"
-    """PatternFingerprint."""
+    """:class:`skfp.fingerprints.PatternFingerprint`"""
 
     PHARMACOPHORE = "PHARMACOPHORE"
-    """PharmacophoreFingerprint."""
+    """:class:`skfp.fingerprints.PharmacophoreFingerprint`"""
 
     PHYSIOCHEMICALPROPERTIES = "PHYSIOCHEMICALPROPERTIES"
-    """PhysiochemicalPropertiesFingerprint."""
+    """:class:`skfp.fingerprints.PhysiochemicalPropertiesFingerprint`"""
 
     PUBCHEM = "PUBCHEM"
-    """PubChemFingerprint."""
+    """:class:`skfp.fingerprints.PubChemFingerprint`"""
 
     RDF = "RDF"
-    """RDFFingerprint."""
+    """:class:`skfp.fingerprints.RDFFingerprint`"""
 
     RDKIT = "RDKIT"
     """Deprecated!"""
 
     RDKITFINGERPRINT = "RDKITFINGERPRINT"
-    """RDKitFingerprint."""
+    """:class:`skfp.fingerprints.RDKitFingerprint`"""
 
     RDKIT2DDESCRIPTORS = "RDKIT2DDESCRIPTORS"
-    """RDKit2DDescriptorsFingerprint."""
+    """:class:`skfp.fingerprints.RDKit2DDescriptorsFingerprint`"""
 
     SECFP = "SECFP"
-    """SECFPFingerprint."""
+    """:class:`skfp.fingerprints.SECFPFingerprint`"""
 
     TOPOLOGICALTORSION = "TOPOLOGICALTORSION"
-    """TopologicalTorsionFingerprint."""
+    """:class:`skfp.fingerprints.TopologicalTorsionFingerprint`"""
 
     USR = "USR"
-    """USRFingerprint."""
+    """:class:`skfp.fingerprints.USRFingerprint`"""
 
     USRCAT = "USRCAT"
-    """USRCATFingerprint."""
+    """:class:`skfp.fingerprints.USRCATFingerprint`"""
 
     WHIM = "WHIM"
-    """WHIMFingerprint."""
+    """:class:`skfp.fingerprints.WHIMFingerprint`"""
