@@ -120,10 +120,10 @@ class SubstanceEncoding(ParameterEncoding):
     TOPOLOGICALTORSION = "TOPOLOGICALTORSION"
     """TopologicalTorsionFingerprint from scikit-fingerprints."""
 
-    USRCAT = "USRCAT"
+    USR = "USR"
     """USRFingerprint from scikit-fingerprints."""
 
-    USR = "USR"
+    USRCAT = "USRCAT"
     """USRCATFingerprint from scikit-fingerprints."""
 
     WHIM = "WHIM"
