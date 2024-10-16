@@ -36,9 +36,9 @@ def test_fingerprint_kwargs(encoding, kw_fp, kw_conf):
     """Test all fingerprint computations."""
     from baybe.utils.chemistry import smiles_to_fingerprint_features
 
-    smiles_list = ["CC(N(C)C)=O", "CCCC#N"]
+    smiles = ["CC(N(C)C)=O", "CCCC#N"]
     x = smiles_to_fingerprint_features(
-        smiles_list=smiles_list,
+        smiles=smiles,
         encoding=encoding,
         prefix="",
         kwargs_conformer=kw_conf,
@@ -47,6 +47,6 @@ def test_fingerprint_kwargs(encoding, kw_fp, kw_conf):
 
     # Check that fingerprint embedding is of correct size and
     # fingerprint kwargs specifying embedding size are used
-    assert x.shape[0] == len(smiles_list)
+    assert x.shape[0] == len(smiles)
     if "fp_size" in kw_fp:
         assert x.shape[1] == kw_fp["fp_size"]

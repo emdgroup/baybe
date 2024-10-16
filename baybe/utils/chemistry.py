@@ -90,7 +90,7 @@ def _molecule_to_fingerprint_features(
 
 
 def smiles_to_fingerprint_features(
-    smiles_list: list[str],
+    smiles: list[str],
     encoding: SubstanceEncoding,
     prefix: str = "",
     kwargs_conformer: dict | None = None,
@@ -99,7 +99,7 @@ def smiles_to_fingerprint_features(
     """Compute molecular fingerprints for a list of SMILES strings.
 
     Args:
-        smiles_list: List of SMILES strings.
+        smiles: List of SMILES strings.
         encoding: Encoding used to transform SMILES to fingerprints.
         prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
         kwargs_conformer: kwargs for conformer generator
@@ -135,10 +135,10 @@ def smiles_to_fingerprint_features(
 
     if fingerprint_encoder.requires_conformers:
         mol_list = ConformerGenerator(**kwargs_conformer).transform(
-            MolFromSmilesTransformer().transform(smiles_list)
+            MolFromSmilesTransformer().transform(smiles)
         )
     else:
-        mol_list = smiles_list
+        mol_list = smiles
 
     features = np.concatenate(
         [
