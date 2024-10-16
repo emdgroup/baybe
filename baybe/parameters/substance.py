@@ -62,11 +62,13 @@ class SubstanceParameter(DiscreteParameter):
     )
     # See base class.
 
-    kwargs_fingerprint: dict = field(factory=dict)
-    """Kwargs for fingerprint generator"""
+    kwargs_fingerprint: dict[str, Any] = field(
+        factory=dict, validator=instance_of(dict)
+    )
+    """Keyword arguments passed to fingerprint generator."""
 
-    kwargs_conformer: dict = field(factory=dict)
-    """Kwargs for conformer generator"""
+    kwargs_conformer: dict[str, Any] = field(factory=dict, validator=instance_of(dict))
+    """Keyword arguments passed to conformer generator."""
 
     @data.validator
     def _validate_substance_data(  # noqa: DOC101, DOC103
