@@ -128,7 +128,7 @@ class SubstanceParameter(DiscreteParameter):
         # Get the raw descriptors
         comp_df = chemistry.smiles_to_fingerprint_features(
             vals,
-            fingerprint_name=self.encoding.name,
+            encoding=self.encoding,
             prefix=pref,
             kwargs_conformer=self.kwargs_conformer,
             kwargs_fingerprint=self.kwargs_fingerprint,

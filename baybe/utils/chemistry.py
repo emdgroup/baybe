@@ -91,7 +91,7 @@ def _molecule_to_fingerprint_features(
 
 def smiles_to_fingerprint_features(
     smiles_list: list[str],
-    fingerprint_name: str,
+    encoding: SubstanceEncoding,
     prefix: str = "",
     kwargs_conformer: dict | None = None,
     kwargs_fingerprint: dict | None = None,
@@ -100,8 +100,7 @@ def smiles_to_fingerprint_features(
 
     Args:
         smiles_list: List of SMILES strings.
-        fingerprint_name: Name of Fingerprint class used to
-            transform smiles to fingerprints
+        encoding: Encoding used to transform SMILES to fingerprints.
         prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
         kwargs_conformer: kwargs for conformer generator
         kwargs_fingerprint: kwargs for fingerprint generator
@@ -112,26 +111,26 @@ def smiles_to_fingerprint_features(
     kwargs_fingerprint = kwargs_fingerprint or {}
     kwargs_conformer = kwargs_conformer or {}
 
-    if fingerprint_name == "MORGAN_FP":
+    if encoding is SubstanceEncoding.MORGAN_FP:
         warnings.warn(
-            f"Substance encoding 'MORGAN_FP' is deprecated and will be disabled in "
-            f"a future version. Use '{SubstanceEncoding.ECFP.name}' "
+            f"Substance encoding '{encoding.name}' is deprecated and will be disabled "
+            f"in a future version. Use '{SubstanceEncoding.ECFP.name}' "
             f"with 'fp_size' 1204 and 'radius' 4 instead.",
             DeprecationWarning,
         )
-        fingerprint_name = SubstanceEncoding.ECFP.name
+        encoding = SubstanceEncoding.ECFP
         kwargs_fingerprint.update({"fp_size": 1024, "radius": 4})
 
-    elif fingerprint_name == "RDKIT":
+    elif encoding is SubstanceEncoding.RDKIT:
         warnings.warn(
-            f"Substance encoding 'RDKIT' is deprecated and will be disabled in "
-            f"a future version. Use '{SubstanceEncoding.RDKIT2DDESCRIPTORS.name}' "
+            f"Substance encoding '{encoding.name}' is deprecated and will be disabled "
+            f"in a future version. Use '{SubstanceEncoding.RDKIT2DDESCRIPTORS.name}' "
             f"instead.",
             DeprecationWarning,
         )
-        fingerprint_name = SubstanceEncoding.RDKIT2DDESCRIPTORS.name
+        encoding = SubstanceEncoding.RDKIT2DDESCRIPTORS
 
-    fingerprint_cls = get_fingerprint_class(SubstanceEncoding(fingerprint_name))
+    fingerprint_cls = get_fingerprint_class(encoding)
     fingerprint_encoder = fingerprint_cls(**kwargs_fingerprint)
 
     if fingerprint_encoder.requires_conformers:
