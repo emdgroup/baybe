@@ -149,7 +149,7 @@ def smiles_to_fingerprint_features(
             for mol in mol_list
         ]
     )
-    name = f"skfp{fingerprint_encoder.__class__.__name__.replace('Fingerprint', '')}_"
+    name = f"skfp{fingerprint_encoder.__class__.__name__.removesuffix('Fingerprint')}_"
     col_names = [prefix + name + f for f in fingerprint_encoder.get_feature_names_out()]
     df = pd.DataFrame(features, columns=col_names, dtype=DTypeFloatNumpy)
 
