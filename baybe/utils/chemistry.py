@@ -168,6 +168,10 @@ def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransfo
     Returns:
         The fingerprint class.
     """
+    # Exception case
+    if encoding is SubstanceEncoding.RDKITFINGERPRINT:
+        return skfp_fingerprints.RDKitFingerprint
+
     try:
         cls_name = next(
             name
