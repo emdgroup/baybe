@@ -1,5 +1,7 @@
 """Basic result classes for benchmarking."""
 
+import logging
+
 import pandas as pd
 import seaborn as sns
 from attrs import define
@@ -49,7 +51,9 @@ class SingleResult(Result):
 
         See :func:`benchmark.result.base.Result.evaluate_result` for more information.
         """
-        return metric.evaluate(self)
+        metric_value = metric.evaluate(self.result)
+        print(f"Metric: {metric} - Value: {metric_value}")
+        return metric_value
 
 
 @define(frozen=True)
@@ -116,4 +120,6 @@ class MultiResult(Result):
         sum_of_metrics = sum(
             [metric.evaluate(result) for result in self.benchmark_results]
         )
-        return sum_of_metrics / len(self.benchmark_results)
+        metric_value = sum_of_metrics / len(self.benchmark_results)
+        logging.info(f"Mean Metric: {metric} - Value: {metric_value}")
+        return metric_value

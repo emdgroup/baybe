@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from attrs import define, field
 from pandas import DataFrame
 
+from benchmark.metric import Metric
 from benchmark.result import Result
 
 
@@ -26,6 +27,9 @@ class Benchmark(ABC):
 
     metadata: dict[str, str] = field(factory=lambda: dict())
     """Metadata about the benchmark."""
+
+    metrics: list[Metric] = field(factory=lambda: list())
+    """Optional metrics to evaluate the benchmarking results."""
 
     def __str__(self) -> str:
         return self.title

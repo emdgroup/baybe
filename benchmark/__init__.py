@@ -2,7 +2,10 @@
 
 from benchmark.base import Benchmark
 from benchmark.basic import MultiExecutionBenchmark, SingleExecutionBenchmark
-from benchmark.metric import Metric
+from benchmark.metric import (
+    Metric,
+    NormalizedNegativeRootMeanSquaredErrorMetric,
+)
 from benchmark.result import Result
 from benchmark.result.basic import MultiResult, SingleResult
 
@@ -14,4 +17,6 @@ __all__ = [
     "MultiResult",
     "SingleResult",
     "Metric",
+    "NormalizedGoalOrientationMetric",
+    "NormalizedNegativeRootMeanSquaredErrorMetric",
 ]

@@ -18,7 +18,7 @@ class SingleExecutionBenchmark(Benchmark):
     _benchmark_result: SingleResult = field(init=False)
     """The result of the benchmarking which is set after execution."""
 
-    def execute(self) -> SingleResult:
+    def execute_benchmark(self) -> SingleResult:
         """Execute the benchmark in parallel."""
         start_ns = time.perf_counter_ns()
         result = self.benchmark_function()
@@ -27,6 +27,8 @@ class SingleExecutionBenchmark(Benchmark):
         self._benchmark_result = SingleResult(
             self.title, self.identifier, self.metadata, result, time_delta
         )
+        for metric in self.metrics:
+            self._benchmark_result.evaluate_result(metric)
         return self._benchmark_result
 
     def get_results(self) -> SingleResult:
@@ -40,8 +42,8 @@ class SingleExecutionBenchmark(Benchmark):
 class MultiExecutionBenchmark(Benchmark):
     """Benchmarking class for testing multiple benchmark executions."""
 
-    number_of_runs: int
-    """The number of times to run the benchmark."""
+    number_of_runs: int = field(default=3)
+    """The number of times to run the benchmark. Default is 3."""
 
     _benchmark_results: MultiResult = field(init=False)
     """The results of the benchmarking which is set after execution."""
@@ -54,7 +56,7 @@ class MultiExecutionBenchmark(Benchmark):
         time_delta = stop_ns - start_ns
         return result, time_delta
 
-    def execute(self) -> MultiResult:
+    def execute_benchmark(self) -> MultiResult:
         """Execute the benchmark in parallel."""
         num_cores = os.cpu_count()
         results: list[SingleResult] = []
@@ -77,6 +79,8 @@ class MultiExecutionBenchmark(Benchmark):
         self._benchmark_results = MultiResult(
             self.title, self.identifier, self.metadata, results
         )
+        for metric in self.metrics:
+            self._benchmark_results.evaluate_result(metric)
         return self._benchmark_results
 
     def get_results(self) -> MultiResult:
