@@ -7,6 +7,7 @@ from typing import Any, ClassVar
 import pandas as pd
 from attrs import define, field
 from attrs.validators import and_, deep_mapping, instance_of, min_len
+from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
@@ -105,15 +106,15 @@ class SubstanceParameter(DiscreteParameter):
                 )
             raise ExceptionGroup("duplicate substances", exceptions)
 
+    @override
     @property
     def values(self) -> tuple:
         """Returns the labels of the given set of molecules."""
         return tuple(self.data.keys())
 
+    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
-        # See base class.
-
+    def comp_df(self) -> pd.DataFrame:
         from baybe.utils import chemistry
 
         vals = list(self.data.values())

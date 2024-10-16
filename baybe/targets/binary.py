@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.exceptions import InvalidTargetValueError
 from baybe.serialization import SerialMixin
@@ -53,7 +54,8 @@ class BinaryTarget(Target, SerialMixin):
                 f"target '{self.name}': {value}"
             )
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
+    @override
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         # TODO: The method (signature) needs to be refactored, potentially when
         #   enabling multi-target settings. The current input type suggests that passing
         #   dataframes is allowed, but the code was designed for single targets and
@@ -78,8 +80,8 @@ class BinaryTarget(Target, SerialMixin):
             columns=data.columns,
         )
 
-    def summary(self) -> dict:  # noqa: D102
-        # See base class.
+    @override
+    def summary(self) -> dict:
         return dict(
             Type=self.__class__.__name__,
             Name=self.name,

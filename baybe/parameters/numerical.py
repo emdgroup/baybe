@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import min_len
+from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
@@ -78,21 +79,21 @@ class NumericalDiscreteParameter(DiscreteParameter):
                 f"tolerance must be smaller than {max_tol} to avoid ambiguity."
             )
 
+    @override
     @property
-    def values(self) -> tuple:  # noqa: D102
-        # See base class.
+    def values(self) -> tuple:
         return tuple(DTypeFloatNumpy(itm) for itm in self._values)
 
+    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
-        # See base class.
+    def comp_df(self) -> pd.DataFrame:
         comp_df = pd.DataFrame(
             {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
         )
         return comp_df
 
-    def is_in_range(self, item: float) -> bool:  # noqa: D102
-        # See base class.
+    @override
+    def is_in_range(self, item: float) -> bool:
         differences_acceptable = [
             np.abs(val - item) <= self.tolerance for val in self.values
         ]
@@ -129,18 +130,17 @@ class NumericalContinuousParameter(ContinuousParameter):
                 "The interval specified by the parameter bounds cannot be degenerate."
             )
 
-    def is_in_range(self, item: float) -> bool:  # noqa: D102
-        # See base class.
-
+    @override
+    def is_in_range(self, item: float) -> bool:
         return self.bounds.contains(item)
 
+    @override
     @property
-    def comp_rep_columns(self) -> tuple[str, ...]:  # noqa: D102
-        # See base class.
+    def comp_rep_columns(self) -> tuple[str, ...]:
         return (self.name,)
 
-    def summary(self) -> dict:  # noqa: D102
-        # See base class.
+    @override
+    def summary(self) -> dict:
         param_dict = dict(
             Name=self.name,
             Type=self.__class__.__name__,

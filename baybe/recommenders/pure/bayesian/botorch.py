@@ -8,6 +8,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import gt, instance_of
+from typing_extensions import override
 
 from baybe.acquisition.acqfs import qThompsonSampling
 from baybe.exceptions import (
@@ -89,6 +90,7 @@ class BotorchRecommender(BayesianRecommender):
                 f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
             )
 
+    @override
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
@@ -146,6 +148,7 @@ class BotorchRecommender(BayesianRecommender):
 
         return idxs
 
+    @override
     def _recommend_continuous(
         self,
         subspace_continuous: SubspaceContinuous,
@@ -198,6 +201,7 @@ class BotorchRecommender(BayesianRecommender):
         rec = pd.DataFrame(points, columns=subspace_continuous.parameter_names)
         return rec
 
+    @override
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
@@ -310,6 +314,7 @@ class BotorchRecommender(BayesianRecommender):
 
         return rec_exp
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Surrogate", self._surrogate_model),

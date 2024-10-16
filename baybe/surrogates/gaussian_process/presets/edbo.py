@@ -6,6 +6,7 @@ import gc
 from typing import TYPE_CHECKING
 
 from attrs import define
+from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
@@ -29,10 +30,10 @@ class EDBOKernelFactory(KernelFactory):
         * https://doi.org/10.1038/s41586-021-03213-y
     """
 
-    def __call__(  # noqa: D102
+    @override
+    def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        # See base class.
         effective_dims = train_x.shape[-1] - len(
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )

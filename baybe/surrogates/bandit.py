@@ -6,6 +6,7 @@ import gc
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
+from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError, ModelNotTrainedError
 from baybe.parameters.categorical import CategoricalParameter
@@ -83,9 +84,8 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
             [self.prior.alpha, self.prior.beta]
         ).unsqueeze(-1)
 
-    def to_botorch(self) -> Model:  # noqa: D102
-        # See base class.
-
+    @override
+    def to_botorch(self) -> Model:
         # We register the sampler on the fly to avoid eager loading of torch
 
         from botorch.sampling.base import MCSampler
@@ -108,23 +108,20 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
 
         return super().to_botorch()
 
+    @override
     @staticmethod
     def _make_input_scaler_factory():
-        # See base class.
-        #
         # Due to enforced one-hot encoding, no input scaling is needed.
         return None
 
+    @override
     @staticmethod
     def _make_target_scaler_factory():
-        # See base class.
-        #
         # We directly use the binary computational representation from the target.
         return None
 
+    @override
     def _posterior(self, candidates: Tensor, /) -> TorchPosterior:
-        # See base class.
-
         from botorch.posteriors import TorchPosterior
         from torch.distributions import Beta
 
@@ -133,9 +130,8 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         ]
         return TorchPosterior(Beta(*beta_params_for_candidates.split(1, -1)))
 
+    @override
     def _fit(self, train_x: Tensor, train_y: Tensor, _: Any = None) -> None:
-        # See base class.
-
         # TODO: Fix requirement of OHE encoding. This is likely a long-term goal since
         #   probably requires decoupling parameter from encodings and associating the
         #   latter with the surrogate.
@@ -163,6 +159,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         losses = (train_x * (train_y == float(_FAILURE_VALUE_COMP))).sum(dim=0)
         self._win_lose_counts = torch.vstack([wins, losses]).to(torch.int)
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Prior", self.prior, single_line=True)]
         return to_string(super().__str__(), *fields)

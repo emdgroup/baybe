@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `n_restarts` and `n_raw_samples` keywords to configure continuous optimization
   behavior for `BotorchRecommender`
 - User guide for utilities
+- `mypy` rule expecting explicit `override` markers for method overrides
 
 ### Changed
 - Utility `add_fake_results` renamed to `add_fake_measurements`

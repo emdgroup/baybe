@@ -8,6 +8,7 @@ from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from attrs.validators import optional as optional_v
+from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
 from baybe.priors.base import Prior
@@ -33,8 +34,8 @@ class ScaleKernel(CompositeKernel):
     )
     """An optional initial value for the output scale."""
 
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
+    @override
+    def to_gpytorch(self, *args, **kwargs):
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
@@ -59,9 +60,8 @@ class AdditiveKernel(CompositeKernel):
     )
     """The individual kernels to be summed."""
 
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
-
+    @override
+    def to_gpytorch(self, *args, **kwargs):
         return reduce(add, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
 
@@ -77,9 +77,8 @@ class ProductKernel(CompositeKernel):
     )
     """The individual kernels to be multiplied."""
 
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
-        # See base class.
-
+    @override
+    def to_gpytorch(self, *args, **kwargs):
         return reduce(mul, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
 

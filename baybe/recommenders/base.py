@@ -4,7 +4,6 @@ from typing import Protocol, runtime_checkable
 
 import cattrs
 import pandas as pd
-from cattrs import override
 
 from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
@@ -66,9 +65,9 @@ converter.register_unstructure_hook(
         overrides=dict(
             acquisition_function_cls=cattrs.override(omit=True),
             # Temporary workaround (see TODO note above)
-            _surrogate_model=override(rename="surrogate_model"),
-            _current_recommender=override(omit=False),
-            _used_recommender_ids=override(omit=False),
+            _surrogate_model=cattrs.override(rename="surrogate_model"),
+            _current_recommender=cattrs.override(omit=False),
+            _used_recommender_ids=cattrs.override(omit=False),
         ),
     ),
 )
@@ -78,9 +77,9 @@ converter.register_structure_hook(
         RecommenderProtocol,
         # Temporary workaround (see TODO note above)
         overrides=dict(
-            _surrogate_model=override(rename="surrogate_model"),
-            _current_recommender=override(omit=False),
-            _used_recommender_ids=override(omit=False),
+            _surrogate_model=cattrs.override(rename="surrogate_model"),
+            _current_recommender=cattrs.override(omit=False),
+            _used_recommender_ids=cattrs.override(omit=False),
         ),
     ),
 )

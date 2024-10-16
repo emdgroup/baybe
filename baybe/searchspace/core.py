@@ -9,7 +9,8 @@ from enum import Enum
 from typing import cast
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
+from typing_extensions import override
 
 from baybe.constraints import (
     validate_constraints,
@@ -67,6 +68,7 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
     """The (potentially empty) continuous subspace of the overall search space."""
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Search Space Type", self.type.name, single_line=True),

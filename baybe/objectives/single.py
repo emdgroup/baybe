@@ -3,8 +3,9 @@
 import gc
 
 import pandas as pd
-from attr import define, field
-from attr.validators import instance_of
+from attrs import define, field
+from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
@@ -19,6 +20,7 @@ class SingleTargetObjective(Objective):
     _target: Target = field(validator=instance_of(Target), alias="target")
     """The single target considered by the objective."""
 
+    @override
     def __str__(self) -> str:
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
@@ -30,13 +32,13 @@ class SingleTargetObjective(Objective):
 
         return to_string("Objective", *fields)
 
+    @override
     @property
-    def targets(self) -> tuple[Target, ...]:  # noqa: D102
-        # See base class.
+    def targets(self) -> tuple[Target, ...]:
         return (self._target,)
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # See base class.
+    @override
+    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
         target_data = data[[self._target.name]].copy()
         return self._target.transform(target_data)
 

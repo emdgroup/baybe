@@ -3,9 +3,9 @@
 import gc
 from abc import ABC, abstractmethod
 
+import cattrs
 import pandas as pd
 from attrs import define
-from cattrs import override
 
 from baybe.objectives.deprecation import structure_objective
 from baybe.serialization.core import (
@@ -53,8 +53,8 @@ converter.register_unstructure_hook(
     lambda x: unstructure_base(
         x,
         overrides=dict(
-            _target=override(rename="target"),
-            _targets=override(rename="targets"),
+            _target=cattrs.override(rename="target"),
+            _targets=cattrs.override(rename="targets"),
         ),
     ),
 )

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 from attrs import define, field
+from typing_extensions import override
 
 from baybe.serialization import (
     SerialMixin,
@@ -54,6 +55,7 @@ class Target(ABC, SerialMixin):
     def summary(self) -> dict:
         """Return a custom summarization of the target."""
 
+    @override
     def __str__(self) -> str:
         return str(self.summary())
 
