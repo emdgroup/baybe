@@ -19,7 +19,7 @@ from baybe._optional.chem import (
     MolFromSmilesTransformer,
     skfp_fingerprints,
 )
-from baybe.parameters.enum import fingerprint_name_map
+from baybe.parameters.enum import SubstanceEncoding
 from baybe.utils.numerical import DTypeFloatNumpy
 
 # Caching
@@ -109,14 +109,30 @@ def smiles_to_fingerprint_features(
     Returns:
         Dataframe containing fingerprints for each SMILES string.
     """
-    fingerprint_cls, kwargs_fingerprint = convert_fingeprint_parameters(
-        name=fingerprint_name, kwargs_fingerprint=kwargs_fingerprint
-    )
+    kwargs_fingerprint = kwargs_fingerprint or {}
     kwargs_conformer = kwargs_conformer or {}
 
-    fingerprint_encoder = getattr(skfp_fingerprints, fingerprint_cls)(
-        **kwargs_fingerprint
-    )
+    if fingerprint_name == "MORGAN_FP":
+        warnings.warn(
+            f"Substance encoding 'MORGAN_FP' is deprecated and will be disabled in "
+            f"a future version. Use '{SubstanceEncoding.ECFP.name}' "
+            f"with 'fp_size' 1204 and 'radius' 4 instead.",
+            DeprecationWarning,
+        )
+        fingerprint_name = SubstanceEncoding.ECFP.name
+        kwargs_fingerprint.update({"fp_size": 1024, "radius": 4})
+
+    elif fingerprint_name == "RDKIT":
+        warnings.warn(
+            f"Substance encoding 'RDKIT' is deprecated and will be disabled in "
+            f"a future version. Use '{SubstanceEncoding.RDKIT2DDESCRIPTORS.name}' "
+            f"instead.",
+            DeprecationWarning,
+        )
+        fingerprint_name = SubstanceEncoding.RDKIT2DDESCRIPTORS.name
+
+    fingerprint_cls = get_fingerprint_class(SubstanceEncoding(fingerprint_name))
+    fingerprint_encoder = fingerprint_cls(**kwargs_fingerprint)
 
     if fingerprint_encoder.requires_conformers:
         mol_list = ConformerGenerator(**kwargs_conformer).transform(
@@ -140,51 +156,29 @@ def smiles_to_fingerprint_features(
     return df
 
 
-def convert_fingeprint_parameters(
-    name: str, kwargs_fingerprint: dict | None = None
-) -> tuple[str, dict]:
-    """Convert fingerprint name parameters for computing the fingerprint.
+def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransformer:
+    """Retrieve the fingerprint class corresponding to a given encoding.
 
     Args:
-        name: Name of the fingerprint.
-        kwargs_fingerprint: Optional user-specified settings for computing the
-            fingerprint.
+        encoding: A substance encoding.
 
     Raises:
-        KeyError: If fingerprint name is not recognized.
+        ValueError: If no fingerprint class for the specified encoding.
 
     Returns:
-        Fingerprint class name and kwargs to use for the fingerprint computation.
+        The fingerprint class.
     """
-    kwargs_fingerprint = kwargs_fingerprint or {}
-
-    # Get fingerprint class
     try:
-        fp_class = fingerprint_name_map[name]
-    except KeyError:
-        raise KeyError(f"Substance encoding {name} is not valid.")
-
-    # For deprecation purposes
-    kwargs_fp_update = {}
-    if name == "MORGAN_FP":
-        warnings.warn(
-            "Substance encoding 'MORGAN_FP' is deprecated and will be disabled in "
-            "a future version. Use 'ECFP' with 'fp_size' 1204 and 'radius' 4 instead.",
-            DeprecationWarning,
+        cls_name = next(
+            name
+            for name in dir(skfp_fingerprints)
+            if (encoding.name + "Fingerprint").casefold() == name.casefold()
         )
-        kwargs_fp_update = {
-            "fp_size": 1024,
-            "radius": 4,
-        }
-    elif name == "RDKIT":
-        warnings.warn(
-            "Substance encoding 'RDKIT' is deprecated and will be disabled in "
-            "a future version. Use 'RDKIT2DDESCRIPTORS' instead.",
-            DeprecationWarning,
-        )
-    kwargs_fingerprint.update(kwargs_fp_update)
-
-    return fp_class, kwargs_fingerprint
+    except StopIteration as e:
+        raise ValueError(
+            f"No fingerprint class exists for the specified encoding '{encoding.name}'."
+        ) from e
+    return getattr(skfp_fingerprints, cls_name)
 
 
 def get_canonical_smiles(smiles: str) -> str:
