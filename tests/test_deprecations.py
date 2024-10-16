@@ -1,10 +1,12 @@
 """Deprecation tests."""
 
 import warnings
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
 from pytest import param
+from skfp.fingerprints import ECFPFingerprint, RDKit2DDescriptorsFingerprint
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition.base import AcquisitionFunction
@@ -18,7 +20,7 @@ from baybe.exceptions import DeprecationError
 from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
-from baybe.parameters import SubstanceEncoding
+from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
@@ -26,6 +28,7 @@ from baybe.recommenders.pure.bayesian import (
 )
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.targets.numerical import NumericalTarget
+from baybe.utils.chemistry import smiles_to_fingerprint_features
 
 
 def test_objective_class():
@@ -132,35 +135,6 @@ def test_surrogate_registration():
         register_custom_architecture()
 
 
-@pytest.mark.parametrize(
-    "deprecated,expected",
-    [
-        param("MORGAN_FP", "ECFP", id="morgan"),
-        param("RDKIT", "RDKIT2DDESCRIPTORS", id="rdkit"),
-    ],
-)
-@pytest.mark.skipif(
-    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
-)
-def test_deprecated_encodings(deprecated, expected):
-    """Deprecated fingerprint name raises warning and uses ECFP replacement."""
-    from baybe.utils.chemistry import convert_fingeprint_parameters
-
-    with pytest.warns(DeprecationWarning):
-        # Check that equivalent is used instead of deprecated encoding
-        deprecated_cls, fp_kwargs = convert_fingeprint_parameters(
-            name=SubstanceEncoding(deprecated).name, kwargs_fingerprint=None
-        )
-
-    expected_cls, _ = convert_fingeprint_parameters(
-        name=SubstanceEncoding(expected).name, kwargs_fingerprint=None
-    )
-    assert deprecated_cls == expected_cls
-
-    if deprecated == "MORGAN_FP":
-        assert fp_kwargs == {"fp_size": 1024, "radius": 4}
-
-
 def test_surrogate_access():
     """Public attribute access to the surrogate model raises a warning."""
     recommender = BotorchRecommender()
@@ -211,3 +185,29 @@ def test_constraint_config_deserialization(type_, op):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         actual = Constraint.from_json(config)
     assert expected == actual, (expected, actual)
+
+
+@pytest.mark.parametrize(
+    ("deprecated", "replacement"),
+    [
+        param(SubstanceEncoding.MORGAN_FP, ECFPFingerprint, id="morgan"),
+        param(SubstanceEncoding.RDKIT, RDKit2DDescriptorsFingerprint, id="rdkit"),
+    ],
+)
+@pytest.mark.skipif(
+    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
+def test_deprecated_encodings(deprecated, replacement):
+    """Deprecated encoding raises a warning and uses correct replacement."""
+    path = f"skfp.fingerprints.{replacement.__name__}"
+
+    with patch(path, wraps=replacement) as patched:
+        # Assert warning
+        with pytest.warns(DeprecationWarning):
+            smiles_to_fingerprint_features(["C"], deprecated)
+
+        # Check that equivalent is used instead of deprecated encoding
+        if deprecated is SubstanceEncoding.MORGAN_FP:
+            patched.assert_called_once_with(**{"fp_size": 1024, "radius": 4})
+        else:
+            patched.assert_called_once()

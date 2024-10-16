@@ -4,8 +4,9 @@ import pytest
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.enum import SubstanceEncoding
+from baybe.utils.chemistry import smiles_to_fingerprint_features
 
-test_lst = [
+test_cases: list[tuple[SubstanceEncoding, dict, dict]] = [
     (enc, {}, {})
     for enc in SubstanceEncoding
     if enc
@@ -22,8 +23,8 @@ ECFP = SubstanceEncoding.ECFP
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize(
-    "encoding,kw_fp,kw_conf",
-    test_lst
+    ("encoding", "kw_fp", "kw_conf"),
+    test_cases
     + [  # Add some custom tests
         (ECFP, {"fp_size": 64}, {}),
         (ECFP, {"fp_size": 512}, {}),
@@ -34,8 +35,6 @@ ECFP = SubstanceEncoding.ECFP
 )
 def test_fingerprint_kwargs(encoding, kw_fp, kw_conf):
     """Test all fingerprint computations."""
-    from baybe.utils.chemistry import smiles_to_fingerprint_features
-
     smiles = ["CC(N(C)C)=O", "CCCC#N"]
     x = smiles_to_fingerprint_features(
         smiles=smiles,
