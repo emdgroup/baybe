@@ -25,13 +25,12 @@ def exclude_sys_path(path: str, /):  # noqa: DOC402, DOC404
 # Individual packages
 with exclude_sys_path(os.getcwd()):
     FLAKE8_INSTALLED = find_spec("flake8") is not None
-    MORDRED_INSTALLED = find_spec("mordred") is not None
     ONNX_INSTALLED = find_spec("onnxruntime") is not None
     POLARS_INSTALLED = find_spec("polars") is not None
     PRE_COMMIT_INSTALLED = find_spec("pre_commit") is not None
     PYDOCLINT_INSTALLED = find_spec("pydoclint") is not None
-    RDKIT_INSTALLED = find_spec("rdkit") is not None
     RUFF_INSTALLED = find_spec("ruff") is not None
+    SKFP_INSTALLED = find_spec("skfp") is not None  # scikit-fingerprints
     STREAMLIT_INSTALLED = find_spec("streamlit") is not None
     XYZPY_INSTALLED = find_spec("xyzpy") is not None
 
@@ -43,8 +42,8 @@ with exclude_sys_path(os.getcwd()):
 #   directly depend on the flag – we thus simply set it to `True`.
 TYPOS_INSTALLED = True
 
-# Package combinations
-CHEM_INSTALLED = MORDRED_INSTALLED and RDKIT_INSTALLED
+# Information on whether all required packages for certain functionality are available
+CHEM_INSTALLED = SKFP_INSTALLED
 LINT_INSTALLED = all(
     (
         FLAKE8_INSTALLED,

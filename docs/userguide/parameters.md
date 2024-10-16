@@ -127,11 +127,41 @@ SubstanceParameter(
 )
 ```
 
-The ``encoding`` option defines what kind of descriptors are calculated:
-* ``MORDRED``: 2D descriptors from the [Mordred package](https://mordred-descriptor.github.io/documentation/master/).
-  Since the original package is now unmaintained, baybe requires the community replacement [mordredcommunity](https://github.com/JacksonBurns/mordred-community)
-* ``RDKIT``: 2D descriptors from the [RDKit package](https://www.rdkit.org/)
-* ``MORGAN_FP``: Morgan fingerprints calculated with RDKit (1024 bits, radius 4)
+The ``encoding`` option defines what kind of descriptors are calculated.
+All descriptors are calculated using the
+[scikit-fingerprints package](https://github.com/scikit-fingerprints/scikit-fingerprints/).
+Any fingerprint class from `scikit-fingerprints` can be used as an input parameter for chemical encoding.
+The fingerprint class names should be passed in all upper case and without the `Fingeprint` suffix,
+e.g. use alias `MORDRED` for `MordredFingerprint` class.
+Here are examples of a few popular fingerprints:
+* ``ECFP``: Extended Connectivity FingerPrint, 
+which is a circular topological fingerprint similar to Morgan fingerprint.
+* ``MORDRED``: Chemical descriptor based fingerprint.
+* ``RDKIT``: The RDKit fingerprint, which is based on hashing of molecular sub-graphs.
+
+You can adjust fingerprint computation with parameters for `Fingerprint` classes from `scikit-fingerprints`.
+These can be specified via the `kwargs_fingerprint` in the `SubstanceParameter` class.
+Similarly, for fingerprints requiring conformers, 
+the parameters for conformer computation can be specified via `kwargs_conformer`.
+
+```python
+from baybe.parameters import SubstanceParameter
+
+SubstanceParameter(
+    name="Solvent",
+    data={
+        "Water": "O",
+        "1-Octanol": "CCCCCCCCO",
+        "Toluene": "CC1=CC=CC=C1",
+    },
+    encoding="ECFP",
+    kwargs_fingerprint={
+        "radius": 4,  # Set maximum radius of resulting subgraphs
+        "fp_size": 1024,  # Change the number of computed bits
+    },
+)
+
+```
 
 These calculations will typically result in 500 to 1500 numbers per molecule.
 To avoid detrimental effects on the surrogate model fit, we reduce the number of 
