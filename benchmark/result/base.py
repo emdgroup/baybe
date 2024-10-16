@@ -6,6 +6,8 @@ from uuid import UUID
 from attrs import define
 from matplotlib.figure import Figure, SubFigure
 
+from benchmark.metric import Metric
+
 
 @define(frozen=True)
 class Result(ABC):
@@ -22,6 +24,11 @@ class Result(ABC):
     """Metadata about the benchmarking result."""
 
     @abstractmethod
+    def get_execution_time_ns(self) -> float:
+        """Return the execution time of the benchmark in nanoseconds."""
+        pass
+
+    @abstractmethod
     def create_convergence_plot(self) -> Figure | SubFigure:
         """Generate a plot of the benchmarking result.
 
@@ -30,5 +37,15 @@ class Result(ABC):
         result contains a column with the name `Num_Experiments`, a
         column with the name `Scenario`, and that the last column
         contains the best found value over the experiments.
+        """
+        pass
+
+    @abstractmethod
+    def evaluate_result(self, metric: Metric) -> float:
+        """Evaluate the benchmarking result using the given metric.
+
+        The function will evaluate the benchmarking result using the
+        given metric. The metric may throw an exception if a threshold
+        is set and the result does not meet the threshold.
         """
         pass
