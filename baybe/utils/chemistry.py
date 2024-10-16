@@ -5,6 +5,7 @@ import ssl
 import tempfile
 import urllib.request
 import warnings
+from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
 
@@ -90,7 +91,7 @@ def _molecule_to_fingerprint_features(
 
 
 def smiles_to_fingerprint_features(
-    smiles: list[str],
+    smiles: Sequence[str],
     encoding: SubstanceEncoding,
     prefix: str = "",
     kwargs_conformer: dict | None = None,
@@ -99,7 +100,7 @@ def smiles_to_fingerprint_features(
     """Compute molecular fingerprints for a list of SMILES strings.
 
     Args:
-        smiles: List of SMILES strings.
+        smiles: Sequence of SMILES strings.
         encoding: Encoding used to transform SMILES to fingerprints.
         prefix: Name prefix for each descriptor (e.g., nBase --> <prefix>_nBase).
         kwargs_conformer: kwargs for conformer generator
