@@ -1,6 +1,14 @@
+[`SearchSpace`]: baybe.searchspace.core.SearchSpace
+[`Constraint`]: baybe.constraints.base.Constraint
+[`SubstanceParameter`]: baybe.parameters.categorical.SubstanceParameter
+[`CategoricalParameter`]: baybe.parameters.categorical.CategoricalParameter
+[`TaskParameter`]: baybe.parameters.categorical.TaskParameter
+[`CustomDiscreteParameter`]: baybe.parameters.custom.CustomDiscreteParameter
+[scikit-fingerprints]: https://scikit-fingerprints.github.io/scikit-fingerprints/
+
 # Parameters
 
-Parameters are fundamental for BayBE, as they configure the ``SearchSpace`` and serve 
+Parameters are fundamental for BayBE, as they configure the [`SearchSpace`] and serve 
 as the direct link to the controllable variables in your experiment. 
 Before starting an iterative campaign, the user is required to specify the exact 
 parameters they can control and want to consider in their optimization.
@@ -16,11 +24,11 @@ differently under the hood: Discrete and continuous parameters.
 
 ## Continuous Parameters
 
-### ``NumericalContinuousParameter``
+### NumericalContinuousParameter
 This is currently the only continuous parameter type BayBE supports. 
 It defines possible values from a numerical interval called 
 ``bounds``, and thus has an infinite amount of possibilities. 
-Unless restrained by `Constraint`s, BayBE will consider any possible parameter value 
+Unless restrained by [`Constraint`]s, BayBE will consider any possible parameter value 
 that lies within the chosen interval.
 
 ```python
@@ -47,7 +55,7 @@ number space. For different parameters, different types of encoding make sense. 
 situations are reflected by the different discrete parameter types BayBE offers.
 ```
 
-### ``NumericalDiscreteParameter``
+### NumericalDiscreteParameter
 This is the right type for parameters that have numerical values.
 We support sets with equidistant values like ``(1, 2, 3, 4, 5)`` but also unevenly 
 spaced sets of numbers like ``(0.2, 1.0, 2.0, 5.0, 10.0, 50.0)``.
@@ -66,8 +74,8 @@ NumericalDiscreteParameter(
 )
 ```
 
-### ``CategoricalParameter``
-A ``CategoricalParameter`` supports sets of strings as labels. 
+### CategoricalParameter
+A [`CategoricalParameter`] supports sets of strings as labels. 
 This is most suitable if the experimental choices cannot easily be translated into a 
 number. 
 Examples for this could be vendors like ``("Vendor A", "Vendor B", "Vendor C")`` or 
@@ -97,14 +105,14 @@ simply because the number 1 is closer to 2 than to 3.
 Hence, for an arbitrary set of labels, such an ordering cannot generally be assumed.
 In the particular case of substances, it not even possible to describe the similarity
 between labels by ordering along one single dimension.
-For this reason, we also provide the ``SubstanceParameter``, which encodes labels 
+For this reason, we also provide the [`SubstanceParameter`], which encodes labels 
 corresponding to small molecules with chemical descriptors, capturing their similarities
 much better and without the need for the user to think about ordering and similarity
 in the first place.
-This concept is generalized in the ``CustomDiscreteParameter``, where the user can 
+This concept is generalized in the [`CustomDiscreteParameter`], where the user can 
 provide their own custom set of descriptors for each label.
 
-### ``SubstanceParameter``
+### SubstanceParameter
 Instead of ``values``, this parameter accepts ``data`` in form of a dictionary. The 
 items correspond to pairs of labels and [SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system).
 SMILES are string-based representations of molecular structures. 
@@ -129,18 +137,18 @@ SubstanceParameter(
 
 The ``encoding`` option defines what kind of descriptors are calculated.
 All descriptors are calculated using the
-[scikit-fingerprints package](https://github.com/scikit-fingerprints/scikit-fingerprints/).
+[scikit-fingerprints](https://github.com/scikit-fingerprints/scikit-fingerprints/) package.
 Any fingerprint class from `scikit-fingerprints` can be used as an input parameter for chemical encoding.
 The fingerprint class names should be passed in all upper case and without the `Fingeprint` suffix,
-e.g. use alias `MORDRED` for `MordredFingerprint` class.
+e.g. use alias `MORDRED` for {class}`~skfp.fingerprints.MordredFingerprint` class.
 Here are examples of a few popular fingerprints:
 * ``ECFP``: Extended Connectivity FingerPrint, 
 which is a circular topological fingerprint similar to Morgan fingerprint.
 * ``MORDRED``: Chemical descriptor based fingerprint.
 * ``RDKIT``: The RDKit fingerprint, which is based on hashing of molecular sub-graphs.
 
-You can adjust fingerprint computation with parameters for `Fingerprint` classes from `scikit-fingerprints`.
-These can be specified via the `kwargs_fingerprint` in the `SubstanceParameter` class.
+You can adjust fingerprint computation with parameters for `Fingerprint` classes from [scikit-fingerprints].
+These can be specified via the `kwargs_fingerprint` in the [`SubstanceParameter`] class.
 Similarly, for fingerprints requiring conformers, 
 the parameters for conformer computation can be specified via `kwargs_conformer`.
 
@@ -172,10 +180,10 @@ This usually reduces the number of descriptors to 10-50, depending on the specif
 items in ``data``.
 
 ```{warning}
-The descriptors calculated for a ``SubstanceParameter`` were developed to describe 
+The descriptors calculated for a [`SubstanceParameter`] were developed to describe 
 small molecules and are not suitable for other substances. If you deal with large 
 molecules like polymers or arbitrary substance mixtures, we recommend to provide your 
-own descriptors via the ``CustomParameter``.
+own descriptors via the [`CustomDiscreteParameter`].
 ```
 
 In the following example from an application you can see
@@ -199,14 +207,14 @@ The ``SubstanceParameter`` is only available if BayBE was installed with the
 additional ``chem`` dependency.
 ```
 
-### ``CustomDiscreteParameter``
+### CustomDiscreteParameter
 The ``encoding`` concept introduced above is generalized by the 
-``CustomParameter``.
+[`CustomDiscreteParameter`].
 Here, the user is expected to provide their own descriptors for the encoding.
 
 Take, for instance, a parameter that corresponds to the choice of a polymer. 
 Polymers are not well represented by the small molecule descriptors utilized in the 
-``SubstanceParameter``. 
+[`SubstanceParameter`]. 
 Still, one could provide experimental measurements or common metrics used to classify 
 polymers:
 
@@ -229,15 +237,15 @@ CustomDiscreteParameter(
 )
 ```
 
-With the ``CustomParameter``, you can also encode parameter labels that have 
+With the [`CustomDiscreteParameter`], you can also encode parameter labels that have 
 nothing to do with substances. 
 For example, a parameter corresponding to the choice of a vendor is typically not 
 easily encoded with standard means.
 In BayBE's framework, you can provide numbers corresponding e.g. to delivery time, 
 reliability or average price of the vendor to encode the labels via the 
-``CustomParameter``.
+[`CustomDiscreteParameter`].
 
-### ``TaskParameter``
+### TaskParameter
 Often, several experimental campaigns involve similar or even identical parameters but 
 still have one or more differences. 
 For example, when optimizing reagents in a chemical reaction, the reactants remain 
@@ -246,7 +254,7 @@ Similarly, in a mixture development for cell culture media, the cell type is fix
 hence not a parameter. 
 However, once we plan to mix data from several campaigns, both reactants and cell 
 lines can also be considered parameters in that they encode the necessary context.
-BayBE is able to process such context information with the `TaskParameter`.
+BayBE is able to process such context information with the [`TaskParameter`].
 In many cases, this can drastically increase the optimization performance due to the 
 enlarged data corpus.
 
