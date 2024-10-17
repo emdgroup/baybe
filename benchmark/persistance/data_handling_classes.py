@@ -83,7 +83,6 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
         metadata["workflow_actor"] = self.actor_initiated_workflow
         metadata["unique_id"] = str(experiment_id)
         metadata["execution_time_nanosec"] = str(result.get_execution_time_ns())
-        metadata["date_time"] = self.date_time.isoformat()
 
         client.put_object(
             Bucket=self.bucket_name,
