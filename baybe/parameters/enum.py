@@ -25,7 +25,11 @@ class CustomEncoding(ParameterEncoding):
 
 
 class SubstanceEncoding(ParameterEncoding):
-    """Available encodings for substance parameters from scikit-fingerprints package."""
+    """Available encodings for substance parameters from scikit-fingerprints package.
+
+    For more information on individual fingerprints refer to
+    scikit-fingerprints package.
+    """
 
     ATOMPAIR = "ATOMPAIR"
     """AtomPairFingerprint."""
@@ -43,7 +47,10 @@ class SubstanceEncoding(ParameterEncoding):
     """ECFPFingerprint."""
 
     MORGAN_FP = "MORGAN_FP"
-    """Deprecated!"""
+    """Deprecated!
+    As a substitution, ECFP fingerprint
+    with fp_size=1024 and radius=4 will be used.
+    """
 
     ERG = "ERG"
     """ERGFingerprint."""
@@ -106,7 +113,8 @@ class SubstanceEncoding(ParameterEncoding):
     """RDFFingerprint."""
 
     RDKIT = "RDKIT"
-    """Deprecated!"""
+    """Deprecated! As a substitution, RDKit2DDescriptors will be used.
+    """
 
     RDKITFINGERPRINT = "RDKITFINGERPRINT"
     """RDKitFingerprint."""
