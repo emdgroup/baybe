@@ -222,15 +222,11 @@ class PureRecommender(ABC, RecommenderProtocol):
         # Get recommendations
         if is_hybrid_space:
             rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
-            idxs = rec.index
         else:
             idxs = self._recommend_discrete(
                 searchspace.discrete, candidates_exp, batch_size
             )
             rec = searchspace.discrete.exp_rep.loc[idxs, :]
-
-        # Update metadata
-        searchspace.discrete.metadata.loc[idxs, "was_recommended"] = True
 
         # Return recommendations
         return rec
