@@ -44,8 +44,14 @@ def test_fingerprint_kwargs(encoding, kw_fp, kw_conf):
         kwargs_fingerprint=kw_fp,
     )
 
-    # Check that fingerprint embedding is of correct size and
-    # fingerprint kwargs specifying embedding size are used
-    assert x.shape[0] == len(smiles)
+    assert x.shape[0] == len(smiles), (
+        "The number of fingerprint "
+        + "embedding rows does not match "
+        + "the number of molecules."
+    )
     if "fp_size" in kw_fp:
-        assert x.shape[1] == kw_fp["fp_size"]
+        assert x.shape[1] == kw_fp["fp_size"], (
+            "The fingerprint dimension "
+            + "parameter was ignored, fingerprints "
+            + "have a wrong number of dimensions."
+        )
