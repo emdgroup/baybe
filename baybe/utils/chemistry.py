@@ -18,7 +18,7 @@ from baybe._optional.chem import (
     Chem,
     ConformerGenerator,
     MolFromSmilesTransformer,
-    skfp_fingerprints,
+    fingerprints,
 )
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.utils.numerical import DTypeFloatNumpy
@@ -170,19 +170,19 @@ def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransfo
     """
     # Exception case
     if encoding is SubstanceEncoding.RDKITFINGERPRINT:
-        return skfp_fingerprints.RDKitFingerprint
+        return fingerprints.RDKitFingerprint
 
     try:
         cls_name = next(
             name
-            for name in dir(skfp_fingerprints)
+            for name in dir(fingerprints)
             if (encoding.name + "Fingerprint").casefold() == name.casefold()
         )
     except StopIteration as e:
         raise ValueError(
             f"No fingerprint class exists for the specified encoding '{encoding.name}'."
         ) from e
-    return getattr(skfp_fingerprints, cls_name)
+    return getattr(fingerprints, cls_name)
 
 
 def get_canonical_smiles(smiles: str) -> str:

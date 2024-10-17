@@ -4,7 +4,7 @@ from baybe.exceptions import OptionalImportError
 
 try:
     from rdkit import Chem
-    from skfp import fingerprints as skfp_fingerprints
+    from skfp import fingerprints
     from skfp.bases import BaseFingerprintTransformer
     from skfp.preprocessing import ConformerGenerator, MolFromSmilesTransformer
 
@@ -18,7 +18,7 @@ except ModuleNotFoundError as ex:
 
 __all__ = [
     "Chem",
-    "skfp_fingerprints",
+    "fingerprints",
     "BaseFingerprintTransformer",
     "ConformerGenerator",
     "MolFromSmilesTransformer",
