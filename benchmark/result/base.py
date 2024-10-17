@@ -49,3 +49,12 @@ class Result(ABC):
         is set and the result does not meet the threshold.
         """
         pass
+
+    @abstractmethod
+    def to_csv(self, path: str = None) -> str | None:
+        """Write the result to a csv file.
+
+        Writes the result to a csv file. If no path is given, the function
+        will return the csv as a string.
+        """
+        pass

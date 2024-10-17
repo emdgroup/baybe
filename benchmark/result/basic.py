@@ -55,6 +55,16 @@ class SingleResult(Result):
         print(f"Metric: {metric} - Value: {metric_value}")
         return metric_value
 
+    def to_csv(self, path: str = None) -> str | None:
+        """Write the result to a csv file.
+
+        Writes the result to a csv file. If no path is given, the function
+        will return the csv as a string.
+        """
+        if path is None:
+            return self.result.to_csv(index=False)
+        self.result.to_csv(path, index=False)
+
 
 @define(frozen=True)
 class MultiResult(Result):
@@ -123,3 +133,20 @@ class MultiResult(Result):
         metric_value = sum_of_metrics / len(self.benchmark_results)
         logging.info(f"Mean Metric: {metric} - Value: {metric_value}")
         return metric_value
+
+    def to_csv(self, path: str = None) -> str | None:
+        """Write all result to a csv file.
+
+        Combine the results of all runs and write them to one csv file.
+        If no path is given, the function will return the csv as a string.
+        """
+        list_of_dataframes = []
+        iteration = 0
+        for result in self.benchmark_results:
+            iteration += 1
+            result.result["Iteration"] = iteration
+            list_of_dataframes.append(result.result)
+        combined_results = pd.concat(list_of_dataframes, ignore_index=True)
+        if path is None:
+            return combined_results.to_csv(index=False)
+        combined_results.to_csv(path, index=False)
