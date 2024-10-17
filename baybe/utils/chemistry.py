@@ -79,10 +79,11 @@ def _molecule_to_fingerprint_features(
     """Compute molecular fingerprint for a single SMILES string.
 
     Args:
-        fingerprint_encoder: Instance of Fingerprint class used to
+        fingerprint_encoder: Instance of the fingerprint class used to
             transform smiles string to fingerprint
         molecule: Smiles string or molecule object,
-            depending on what should be input into fingerprint_encoder's transform
+            depending on what should be input into
+            ``transform`` of ``fingerprint_encoder``.
 
     Returns:
         Array containing fingerprint for SMILES string.
