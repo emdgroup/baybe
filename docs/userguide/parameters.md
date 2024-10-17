@@ -16,7 +16,7 @@ differently under the hood: Discrete and continuous parameters.
 
 ## Continuous Parameters
 
-### ``NumericalContinuousParameter``
+### NumericalContinuousParameter
 This is currently the only continuous parameter type BayBE supports. 
 It defines possible values from a numerical interval called 
 ``bounds``, and thus has an infinite amount of possibilities. 
@@ -47,7 +47,7 @@ number space. For different parameters, different types of encoding make sense. 
 situations are reflected by the different discrete parameter types BayBE offers.
 ```
 
-### ``NumericalDiscreteParameter``
+### NumericalDiscreteParameter
 This is the right type for parameters that have numerical values.
 We support sets with equidistant values like ``(1, 2, 3, 4, 5)`` but also unevenly 
 spaced sets of numbers like ``(0.2, 1.0, 2.0, 5.0, 10.0, 50.0)``.
@@ -66,7 +66,7 @@ NumericalDiscreteParameter(
 )
 ```
 
-### ``CategoricalParameter``
+### CategoricalParameter
 A ``CategoricalParameter`` supports sets of strings as labels. 
 This is most suitable if the experimental choices cannot easily be translated into a 
 number. 
@@ -104,7 +104,7 @@ in the first place.
 This concept is generalized in the ``CustomDiscreteParameter``, where the user can 
 provide their own custom set of descriptors for each label.
 
-### ``SubstanceParameter``
+### SubstanceParameter
 Instead of ``values``, this parameter accepts ``data`` in form of a dictionary. The 
 items correspond to pairs of labels and [SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system).
 SMILES are string-based representations of molecular structures. 
@@ -199,7 +199,7 @@ The ``SubstanceParameter`` is only available if BayBE was installed with the
 additional ``chem`` dependency.
 ```
 
-### ``CustomDiscreteParameter``
+### CustomDiscreteParameter
 The ``encoding`` concept introduced above is generalized by the 
 ``CustomParameter``.
 Here, the user is expected to provide their own descriptors for the encoding.
@@ -237,7 +237,7 @@ In BayBE's framework, you can provide numbers corresponding e.g. to delivery tim
 reliability or average price of the vendor to encode the labels via the 
 ``CustomParameter``.
 
-### ``TaskParameter``
+### TaskParameter
 Often, several experimental campaigns involve similar or even identical parameters but 
 still have one or more differences. 
 For example, when optimizing reagents in a chemical reaction, the reactants remain 
