@@ -25,106 +25,106 @@ class CustomEncoding(ParameterEncoding):
 
 
 class SubstanceEncoding(ParameterEncoding):
-    """Available encodings for substance parameters."""
+    """Available encodings for substance parameters from scikit-fingerprints package."""
 
     ATOMPAIR = "ATOMPAIR"
-    """AtomPairFingerprint from scikit-fingerprints."""
+    """AtomPairFingerprint."""
 
     AUTOCORR = "AUTOCORR"
-    """AutocorrFingerprint from scikit-fingerprints."""
+    """AutocorrFingerprint."""
 
     AVALON = "AVALON"
-    """AvalonFingerprint from scikit-fingerprints."""
+    """AvalonFingerprint."""
 
     E3FP = "E3FP"
-    """E3FPFingerprint from scikit-fingerprints."""
+    """E3FPFingerprint."""
 
     ECFP = "ECFP"
-    """ECFPFingerprint from scikit-fingerprints."""
+    """ECFPFingerprint."""
 
     MORGAN_FP = "MORGAN_FP"
     """Deprecated!"""
 
     ERG = "ERG"
-    """ERGFingerprint from scikit-fingerprints."""
+    """ERGFingerprint."""
 
     ESTATE = "ESTATE"
-    """EStateFingerprint from scikit-fingerprints."""
+    """EStateFingerprint."""
 
     FUNCTIONALGROUPS = "FUNCTIONALGROUPS"
-    """FunctionalGroupsFingerprint from scikit-fingerprints."""
+    """FunctionalGroupsFingerprint."""
 
     GETAWAY = "GETAWAY"
-    """GETAWAYFingerprint from scikit-fingerprints."""
+    """GETAWAYFingerprint."""
 
     GHOSECRIPPEN = "GHOSECRIPPEN"
-    """GhoseCrippenFingerprint from scikit-fingerprints."""
+    """GhoseCrippenFingerprint."""
 
     KLEKOTAROTH = "KLEKOTAROTH"
-    """KlekotaRothFingerprint from scikit-fingerprints."""
+    """KlekotaRothFingerprint."""
 
     LAGGNER = "LAGGNER"
-    """LaggnerFingerprint from scikit-fingerprints."""
+    """LaggnerFingerprint."""
 
     LAYERED = "LAYERED"
-    """LayeredFingerprint from scikit-fingerprints."""
+    """LayeredFingerprint."""
 
     LINGO = "LINGO"
-    """LingoFingerprint from scikit-fingerprints."""
+    """LingoFingerprint."""
 
     MACCS = "MACCS"
-    """MACCSFingerprint from scikit-fingerprints."""
+    """MACCSFingerprint."""
 
     MAP = "MAP"
-    """MAPFingerprint from scikit-fingerprints."""
+    """MAPFingerprint."""
 
     MHFP = "MHFP"
-    """MHFPFingerprint from scikit-fingerprints."""
+    """MHFPFingerprint."""
 
     MORSE = "MORSE"
-    """MORSEFingerprint from scikit-fingerprints."""
+    """MORSEFingerprint."""
 
     MQNS = "MQNS"
-    """MQNsFingerprint from scikit-fingerprints."""
+    """MQNsFingerprint."""
 
     MORDRED = "MORDRED"
-    """MordredFingerprint from scikit-fingerprints."""
+    """MordredFingerprint."""
 
     PATTERN = "PATTERN"
-    """PatternFingerprint from scikit-fingerprints."""
+    """PatternFingerprint."""
 
     PHARMACOPHORE = "PHARMACOPHORE"
-    """PharmacophoreFingerprint from scikit-fingerprints."""
+    """PharmacophoreFingerprint."""
 
     PHYSIOCHEMICALPROPERTIES = "PHYSIOCHEMICALPROPERTIES"
-    """PhysiochemicalPropertiesFingerprint from scikit-fingerprints."""
+    """PhysiochemicalPropertiesFingerprint."""
 
     PUBCHEM = "PUBCHEM"
-    """PubChemFingerprint from scikit-fingerprints."""
+    """PubChemFingerprint."""
 
     RDF = "RDF"
-    """RDFFingerprint from scikit-fingerprints."""
+    """RDFFingerprint."""
 
     RDKIT = "RDKIT"
     """Deprecated!"""
 
     RDKITFINGERPRINT = "RDKITFINGERPRINT"
-    """RDKitFingerprint from scikit-fingerprints."""
+    """RDKitFingerprint."""
 
     RDKIT2DDESCRIPTORS = "RDKIT2DDESCRIPTORS"
-    """RDKit2DDescriptorsFingerprint from scikit-fingerprints."""
+    """RDKit2DDescriptorsFingerprint."""
 
     SECFP = "SECFP"
-    """SECFPFingerprint from scikit-fingerprints."""
+    """SECFPFingerprint."""
 
     TOPOLOGICALTORSION = "TOPOLOGICALTORSION"
-    """TopologicalTorsionFingerprint from scikit-fingerprints."""
+    """TopologicalTorsionFingerprint."""
 
     USR = "USR"
-    """USRFingerprint from scikit-fingerprints."""
+    """USRFingerprint."""
 
     USRCAT = "USRCAT"
-    """USRCATFingerprint from scikit-fingerprints."""
+    """USRCATFingerprint."""
 
     WHIM = "WHIM"
-    """WHIMFingerprint from scikit-fingerprints."""
+    """WHIMFingerprint."""
