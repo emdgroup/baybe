@@ -4,6 +4,7 @@
 [`CategoricalParameter`]: baybe.parameters.categorical.CategoricalParameter
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter
 [`CustomDiscreteParameter`]: baybe.parameters.custom.CustomDiscreteParameter
+[`SubstanceEncoding`]: baybe.parameters.enum.SubstanceEncoding
 [scikit-fingerprints]: https://scikit-fingerprints.github.io/scikit-fingerprints/
 
 # Parameters
@@ -135,22 +136,24 @@ SubstanceParameter(
 )
 ```
 
-The ``encoding`` option defines what kind of descriptors are calculated.
-All descriptors are calculated using the
-[scikit-fingerprints](https://github.com/scikit-fingerprints/scikit-fingerprints/) package.
-Any fingerprint class from `scikit-fingerprints` can be used as an input parameter for chemical encoding.
-The fingerprint class names should be passed in all upper case and without the `Fingeprint` suffix,
-e.g. use alias `MORDRED` for {class}`~skfp.fingerprints.MordredFingerprint` class.
-Here are examples of a few popular fingerprints:
-* ``ECFP``: Extended Connectivity FingerPrint, 
-which is a circular topological fingerprint similar to Morgan fingerprint.
-* ``MORDRED``: Chemical descriptor based fingerprint.
-* ``RDKIT``: The RDKit fingerprint, which is based on hashing of molecular sub-graphs.
+The ``encoding`` option defines what kind of descriptors are calculated using the
+[scikit-fingerprints] package.
+Any of the fingerprint classes provided by the package can be used.
+The encoding can be specified either by passing the corresponding [`SubstanceEncoding`] member
+(click to see full list of options) or its string representation, e.g. use 
+[`SubstanceParameter.MORDRED`](baybe.parameters.enum.SubstanceEncoding.MORDRED) 
+or its string alias `"MORDRED"` to select the {class}`~skfp.fingerprints.MordredFingerprint`.
 
-You can adjust fingerprint computation with parameters for `Fingerprint` classes from [scikit-fingerprints].
-These can be specified via the `kwargs_fingerprint` in the [`SubstanceParameter`] class.
+Here are examples of a few popular fingerprints:
+* {attr}`~baybe.parameters.enum.SubstanceEncoding.ECFP`: Extended Connectivity FingerPrint, 
+which is a circular topological fingerprint similar to Morgan fingerprint.
+* {attr}`~baybe.parameters.enum.SubstanceEncoding.MORDRED`: Chemical descriptor based fingerprint.
+* {attr}`~baybe.parameters.enum.SubstanceEncoding.RDKIT`: The RDKit fingerprint, which is based on hashing of molecular subgraphs.
+
+You can customize the fingerprint computation by passing arguments of the corresponding
+[scikit-fingerprints] class to the `kwargs_fingerprint` argument the [`SubstanceParameter`] constructor.
 Similarly, for fingerprints requiring conformers, 
-the parameters for conformer computation can be specified via `kwargs_conformer`.
+the configuration options for conformer computation can be specified via `kwargs_conformer`.
 
 ```python
 from baybe.parameters import SubstanceParameter
