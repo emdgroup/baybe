@@ -63,7 +63,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
         """Check if the threshold is met."""
         if self.threshold is None:
             return True
-        return value <= self.threshold
+        return abs(value) <= self.threshold
 
     def evaluate(self, prediction: DataFrame) -> float:
         """Evaluate the benchmarking metric and return the result."""
@@ -74,7 +74,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
             (normalized_prediction[performance_row] - target) ** 2
         ).mean() ** 0.5
         if not self._threshold_met(rooted_mean_squared_error):
-            raise ValueError(
+            raise AssertionError(
                 f"Rooted mean squared error of {rooted_mean_squared_error} "
                 f"exceeds threshold of {self.threshold}."
             )
