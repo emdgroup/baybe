@@ -34,6 +34,14 @@ def _contains_encoding(
     )
 
 
+_EDBO_ENCODINGS = (
+    SubstanceEncoding.MORDRED,
+    SubstanceEncoding.RDKIT,
+    SubstanceEncoding.RDKIT2DDESCRIPTORS,
+)
+"""Encodings relevant to EDBO logic."""
+
+
 @define
 class EDBOKernelFactory(KernelFactory):
     """A factory providing the kernel for Gaussian process surrogates adapted from EDBO.
@@ -52,7 +60,7 @@ class EDBOKernelFactory(KernelFactory):
         )
 
         switching_condition = _contains_encoding(
-            searchspace.discrete, (SubstanceEncoding.MORDRED, SubstanceEncoding.RDKIT)
+            searchspace.discrete, _EDBO_ENCODINGS
         ) and (effective_dims >= 50)
 
         # low D priors
@@ -110,18 +118,20 @@ def _edbo_noise_factory(
         [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
     )
 
-    uses_descriptors = searchspace.contains_fingerprint and effective_dims >= 50
+    switching_condition = _contains_encoding(
+        searchspace.discrete, _EDBO_ENCODINGS
+    ) and (effective_dims >= 50)
 
     # low D priors
     if effective_dims < 5:
         return (GammaPrior(1.05, 0.5), 0.1)
 
     # DFT optimized priors
-    elif uses_descriptors and effective_dims < 100:
+    elif switching_condition and effective_dims < 100:
         return (GammaPrior(1.5, 0.1), 5.0)
 
     # Mordred optimized priors
-    elif uses_descriptors:
+    elif switching_condition:
         return (GammaPrior(1.5, 0.1), 5.0)
 
     # OHE optimized priors
