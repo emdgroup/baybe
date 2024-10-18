@@ -7,6 +7,7 @@ import seaborn as sns
 from attrs import define
 from matplotlib.figure import Figure, SubFigure
 from pandas import DataFrame
+from typing_extensions import override
 
 from benchmark.metric import Metric
 from benchmark.result.base import Result
@@ -22,10 +23,12 @@ class SingleResult(Result):
     execution_time_ns: int
     """The execution time of the benchmark in nanoseconds."""
 
+    @override
     def get_execution_time_ns(self) -> float:
         """Return the execution time of the benchmark in nanoseconds."""
         return self.execution_time_ns
 
+    @override
     def create_convergence_plot(self) -> Figure | SubFigure:
         """Generate a plot of the benchmarking result.
 
@@ -46,6 +49,7 @@ class SingleResult(Result):
             raise ValueError("The plot could not be created.")
         return ax.figure
 
+    @override
     def evaluate_result(self, metric: Metric) -> float:
         """Evaluate the benchmarking result using the given metric.
 
@@ -55,6 +59,7 @@ class SingleResult(Result):
         print(f"Metric: {metric} - Value: {metric_value}")
         return metric_value
 
+    @override
     def to_csv(self, path: str = None) -> str | None:
         """Write the result to a csv file.
 
@@ -81,6 +86,7 @@ class MultiResult(Result):
             [result.execution_time_ns for result in self.benchmark_results]
         ) / len(self.benchmark_results)
 
+    @override
     def get_execution_time_ns(self) -> float:
         """Return the mean execution time of all benchmarks in nanoseconds.
 
@@ -89,6 +95,7 @@ class MultiResult(Result):
         """
         return self.get_mean_execution_time()
 
+    @override
     def create_convergence_plot(self) -> Figure | SubFigure:
         """Generate a plot of the benchmarking result.
 
@@ -121,6 +128,7 @@ class MultiResult(Result):
         """Return the best found result of the benchmarking."""
         return max(self.benchmark_results, key=lambda x: x.result.iloc[-1].max())
 
+    @override
     def evaluate_result(self, metric: Metric) -> float:
         """Evaluate the benchmarking result using the given metric.
 
@@ -134,6 +142,7 @@ class MultiResult(Result):
         logging.info(f"Mean Metric: {metric} - Value: {metric_value}")
         return metric_value
 
+    @override
     def to_csv(self, path: str = None) -> str | None:
         """Write all result to a csv file.
 

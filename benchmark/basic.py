@@ -6,6 +6,7 @@ import time
 
 from attrs import define, field
 from pandas import DataFrame
+from typing_extensions import override
 
 from benchmark.base import Benchmark
 from benchmark.result.basic import MultiResult, SingleResult
@@ -18,6 +19,7 @@ class SingleExecutionBenchmark(Benchmark):
     _benchmark_result: SingleResult = field(init=False)
     """The result of the benchmarking which is set after execution."""
 
+    @override
     def execute_benchmark(self) -> SingleResult:
         """Execute the benchmark in parallel."""
         start_ns = time.perf_counter_ns()
@@ -31,6 +33,7 @@ class SingleExecutionBenchmark(Benchmark):
             self._benchmark_result.evaluate_result(metric)
         return self._benchmark_result
 
+    @override
     def get_results(self) -> SingleResult:
         """Return the results of the benchmark."""
         if not self._benchmark_result:
@@ -56,6 +59,7 @@ class MultiExecutionBenchmark(Benchmark):
         time_delta = stop_ns - start_ns
         return result, time_delta
 
+    @override
     def execute_benchmark(self) -> MultiResult:
         """Execute the benchmark in parallel."""
         num_cores = os.cpu_count()
@@ -83,6 +87,7 @@ class MultiExecutionBenchmark(Benchmark):
             self._benchmark_results.evaluate_result(metric)
         return self._benchmark_results
 
+    @override
     def get_results(self) -> MultiResult:
         """Return the results of the benchmark."""
         if not self._benchmark_results:

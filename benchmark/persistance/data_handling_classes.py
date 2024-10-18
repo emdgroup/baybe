@@ -11,6 +11,7 @@ from attr import define, field
 from botocore.paginate import PageIterator
 from pandas import DataFrame
 from sortedcontainers import SortedDict, SortedList
+from typing_extensions import override
 
 from benchmark.persistance.base import ResultPersistenceInterface
 from benchmark.result import Result
@@ -65,6 +66,7 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
     actor_initiated_workflow: str = field(factory=_default_actor_initiated_workflow)
     """The actor who initiated the workflow. It stays the same for a rerun."""
 
+    @override
     def persist_new_result(self, result: Result) -> None:
         """Store the result of a performance test.
 
@@ -118,6 +120,7 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
             raise ValueError("No result found for the given experiment ID.")
         return latest_object
 
+    @override
     def load_compare_result(self, experiment_id: UUID) -> DataFrame:
         """Load the oldest stable result for a given experiment ID.
 
@@ -257,6 +260,7 @@ class LocalExperimentResultPersistence(ResultPersistenceInterface):
     def __attrs_post_init__(self):
         os.makedirs(self._path, exist_ok=True)
 
+    @override
     def persist_new_result(self, result: Result) -> None:
         """Persist a new result for the given experiment.
 
@@ -269,6 +273,7 @@ class LocalExperimentResultPersistence(ResultPersistenceInterface):
             f"{self._path}/{experiment_id}_{sanatised_date}_{self.baybe_version}.csv"
         )
 
+    @override
     def load_compare_result(self, experiment_id: UUID) -> DataFrame:
         """Load the oldest stable result for a given experiment ID.
 

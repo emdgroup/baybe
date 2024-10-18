@@ -2,6 +2,7 @@
 
 from attrs import define, field
 from pandas import DataFrame
+from typing_extensions import override
 
 from baybe.targets import TargetMode
 from benchmark.metric.base import (
@@ -31,6 +32,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
     """Optional threshold for the metric.
     If the metric is below the threshold, an exception is thrown."""
 
+    @override
     def _normalize_data(self, data: DataFrame, index_name: str) -> DataFrame:
         """Normalize the data."""
         max_value = data[index_name].max()
@@ -47,6 +49,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
         normalized_lookup = self._normalize_data(self.lookup, self.objective_name)
         self.lookup = normalized_lookup
 
+    @override
     def get_objective_value(self) -> float:
         """Get the objective value from the lookup table."""
         if self.target_mode_to_eval == TargetMode.MAX:
@@ -65,6 +68,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
             return True
         return abs(value) <= self.threshold
 
+    @override
     def evaluate(self, prediction: DataFrame) -> float:
         """Evaluate the benchmarking metric and return the result."""
         target = self.get_objective_value()
