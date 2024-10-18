@@ -117,7 +117,7 @@ def smiles_to_fingerprint_features(
         warnings.warn(
             f"Substance encoding '{encoding.name}' is deprecated and will be disabled "
             f"in a future version. Use '{SubstanceEncoding.ECFP.name}' "
-            f"with 'fp_size' 1204 and 'radius' 4 instead.",
+            f"with 'fp_size' 1024 and 'radius' 4 instead.",
             DeprecationWarning,
         )
         encoding = SubstanceEncoding.ECFP
