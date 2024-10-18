@@ -94,7 +94,7 @@ def _molecule_to_fingerprint_features(
 def smiles_to_fingerprint_features(
     smiles: Sequence[str],
     encoding: SubstanceEncoding,
-    prefix: str = "",
+    prefix: str | None = None,
     kwargs_conformer: dict | None = None,
     kwargs_fingerprint: dict | None = None,
 ) -> pd.DataFrame:
@@ -151,7 +151,11 @@ def smiles_to_fingerprint_features(
         ]
     )
     name = f"skfp{fingerprint_encoder.__class__.__name__.removesuffix('Fingerprint')}_"
-    col_names = [prefix + name + f for f in fingerprint_encoder.get_feature_names_out()]
+    prefix = prefix + "_" if prefix else ""
+    col_names = [
+        prefix + name + f.split("fingerprint")[1]
+        for f in fingerprint_encoder.get_feature_names_out()
+    ]
     df = pd.DataFrame(features, columns=col_names, dtype=DTypeFloatNumpy)
 
     return df

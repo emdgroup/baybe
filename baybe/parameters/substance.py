@@ -123,7 +123,7 @@ class SubstanceParameter(DiscreteParameter):
         from baybe.utils import chemistry
 
         vals = list(self.data.values())
-        pref = self.name + "_"
+        pref = self.name
 
         # Get the raw descriptors
         comp_df = chemistry.smiles_to_fingerprint_features(
