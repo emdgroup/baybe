@@ -1,7 +1,5 @@
 """Tests for dataframe utilities."""
 
-import warnings
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -36,10 +34,9 @@ def test_degenerate_rows_invalid_input():
     df.loc[3] = df.loc[2]  # Make row 3 identical to row 2
 
     # Insert invalid data types
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        df.iloc[:, -1] = "A"
-        df.iloc[1, 2] = "B"
+    df = df.astype(object)  # to avoid pandas column dtype warnings
+    df["invalid"] = "A"
+    df.iloc[1, 0] = "B"
 
     # Add noise
     with pytest.raises(TypeError):
