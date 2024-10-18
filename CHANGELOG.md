@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+- `add_noise_to_perturb_degenerate_rows` utility
+
+### Changed
+- `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
+
+### Fixed
+- Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
+  wrong number of recommendations being returned
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
