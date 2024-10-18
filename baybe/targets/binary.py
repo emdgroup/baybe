@@ -95,6 +95,7 @@ class BinaryTarget(Target, SerialMixin):
         return pd.Series(
             np.where(success_idx, _SUCCESS_VALUE_COMP, _FAILURE_VALUE_COMP),
             index=series.index,
+            name=series.name,
         )
 
     @override

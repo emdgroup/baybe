@@ -165,7 +165,9 @@ class NumericalTarget(Target, SerialMixin):
                 cast(TargetTransformation, self.transformation),
             )
             transformed = pd.Series(
-                func(series, *self.bounds.to_tuple()), index=series.index
+                func(series, *self.bounds.to_tuple()),
+                index=series.index,
+                name=series.name,
             )
         else:
             transformed = series.copy()
