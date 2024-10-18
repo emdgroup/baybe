@@ -73,22 +73,19 @@ def name_to_smiles(name: str) -> str:
 @lru_cache(maxsize=None)
 @_disk_cache
 def _molecule_to_fingerprint_features(
-    fingerprint_encoder: BaseFingerprintTransformer,
     molecule: str | Chem.Mol,
+    encoder: BaseFingerprintTransformer,
 ) -> np.ndarray:
-    """Compute molecular fingerprint for a single SMILES string.
+    """Compute molecular fingerprint for a single molecule.
 
     Args:
-        fingerprint_encoder: Instance of the fingerprint class used to
-            transform smiles string to fingerprint
-        molecule: Smiles string or molecule object,
-            depending on what should be input into
-            ``transform`` of ``fingerprint_encoder``.
+        molecule: SMILES string or molecule object.
+        encoder: Instance of the fingerprint class to be used for computation.
 
     Returns:
-        Array containing fingerprint for SMILES string.
+        Array of fingerprint features.
     """
-    return fingerprint_encoder.transform([molecule])
+    return encoder.transform([molecule])
 
 
 def smiles_to_fingerprint_features(
@@ -144,9 +141,7 @@ def smiles_to_fingerprint_features(
 
     features = np.concatenate(
         [
-            _molecule_to_fingerprint_features(
-                fingerprint_encoder=fingerprint_encoder, molecule=mol
-            )
+            _molecule_to_fingerprint_features(mol, fingerprint_encoder)
             for mol in mol_list
         ]
     )
