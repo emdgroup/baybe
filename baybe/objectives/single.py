@@ -78,14 +78,15 @@ class SingleTargetObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
-        # Even for a single target, it is convenient to use the existing machinery
-        # instead of re-implementing the validation logic
-        targets = get_transform_objects(
+        # Even for a single target, it is convenient to use the existing validation
+        # machinery instead of re-implementing it
+        get_transform_objects(
             df, [self._target], allow_missing=allow_missing, allow_extra=allow_extra
         )
-        target_data = df[[t.name for t in targets]].copy()
 
-        return self._target.transform(target_data)
+        target_data = df[self._target.name].copy()
+
+        return self._target.transform(target_data).to_frame()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

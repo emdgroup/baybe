@@ -188,7 +188,7 @@ class DesirabilityObjective(Objective):
 
         # Transform all targets individually
         for target in self.targets:
-            transformed[target.name] = target.transform(df[[target.name]])
+            transformed[target.name] = target.transform(df[target.name])
 
         # Scalarize the transformed targets into desirability values
         vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
