@@ -876,6 +876,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1366,10 +1367,10 @@
 <span class="sd">                The ``None`` default value is for temporary backward compatibility only</span>
 <span class="sd">                and will be removed in a future version.</span>
 <span class="sd">            allow_missing: If ``False``, each parameter of the space must have</span>
-<span class="sd">                (exactly) one corresponding column in the given dataframe. If ``True``,</span>
+<span class="sd">                exactly one corresponding column in the given dataframe. If ``True``,</span>
 <span class="sd">                the dataframe may contain only a subset of parameter columns.</span>
-<span class="sd">            allow_extra: If ``False``, every column present in the dataframe must</span>
-<span class="sd">                correspond to (exactly) one parameter of the space. If ``True``, the</span>
+<span class="sd">            allow_extra: If ``False``, each column present in the dataframe must</span>
+<span class="sd">                correspond to exactly one parameter of the space. If ``True``, the</span>
 <span class="sd">                dataframe may contain additional non-parameter-related columns, which</span>
 <span class="sd">                will be ignored.</span>
 <span class="sd">                The ``None`` default value is for temporary backward compatibility only</span>

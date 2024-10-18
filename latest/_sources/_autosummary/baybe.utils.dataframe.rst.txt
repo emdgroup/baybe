@@ -20,6 +20,7 @@ baybe.utils.dataframe
       df_drop_string_columns
       df_uncorrelated_features
       fuzzy_row_match
+      get_transform_objects
       pretty_print_df
       to_tensor
    

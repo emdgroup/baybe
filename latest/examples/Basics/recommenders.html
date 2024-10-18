@@ -877,6 +877,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1214,15 +1215,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent                Base                        Ligand  \
-322     p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
-414         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
-295  Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
+      Solvent               Base                        Ligand  Temperature  \
+319  p-Xylene     Cesium acetate  Di-tert-butylphenylphosphine        105.0   
+170      DMAc     Cesium acetate                     BrettPhos        120.0   
+246  p-Xylene  Potassium acetate                     BrettPhos        105.0   
 
-     Temperature  Concentration  
-322        120.0          0.100  
-414         90.0          0.057  
-295        120.0          0.100  
+     Concentration  
+319          0.100  
+170          0.153  
+246          0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1231,15 +1232,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base                        Ligand  \
-322     p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
-414         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
-295  Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
+      Solvent               Base                        Ligand  Temperature  \
+319  p-Xylene     Cesium acetate  Di-tert-butylphenylphosphine        105.0   
+170      DMAc     Cesium acetate                     BrettPhos        120.0   
+246  p-Xylene  Potassium acetate                     BrettPhos        105.0   
 
-     Temperature  Concentration      yield  
-322        120.0          0.100   1.679299  
-414         90.0          0.057  19.270019  
-295        120.0          0.100  16.172335  
+     Concentration      yield  
+319          0.100  26.158352  
+170          0.153  31.872520  
+246          0.057  17.559437  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
