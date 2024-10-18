@@ -25,12 +25,11 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
-    get_transform_parameters,
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
@@ -343,8 +342,8 @@ class SubspaceContinuous(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
-        parameters = get_transform_parameters(
-            self.parameters, df, allow_missing, allow_extra
+        parameters = get_transform_objects(
+            df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # Transform the parameters

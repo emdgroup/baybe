@@ -1,6 +1,7 @@
 """Functionality for single-target objectives."""
 
 import gc
+import warnings
 
 import pandas as pd
 from attrs import define, field
@@ -9,7 +10,7 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.plotting import to_string
 
 
@@ -38,8 +39,52 @@ class SingleTargetObjective(Objective):
         return (self._target,)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        target_data = data[[self._target.name]].copy()
+    def transform(
+        self,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
+
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
+
+        if allow_extra is None:
+            allow_extra = True
+            if set(df.columns) - {p.name for p in self.targets}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
+        # Even for a single target, it is convenient to use the existing machinery
+        # instead of re-implementing the validation logic
+        targets = get_transform_objects(
+            df, [self._target], allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        target_data = df[[t.name for t in targets]].copy()
+
         return self._target.transform(target_data)
 
 

@@ -1,6 +1,7 @@
 """Functionality for desirability objectives."""
 
 import gc
+import warnings
 from collections.abc import Callable
 from functools import cached_property, partial
 from typing import TypeGuard
@@ -18,7 +19,7 @@ from baybe.objectives.enum import Scalarizer
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.numerical import geom_mean
 from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
@@ -140,11 +141,54 @@ class DesirabilityObjective(Objective):
         return to_string("Objective", *fields)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform(
+        self,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
+
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
+
+        if allow_extra is None:
+            allow_extra = True
+            if set(df.columns) - {p.name for p in self.targets}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
+        # Extract the relevant part of the dataframe
+        targets = get_transform_objects(
+            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        transformed = df[[t.name for t in targets]].copy()
+
         # Transform all targets individually
-        transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:
-            transformed[target.name] = target.transform(data[[target.name]])
+            transformed[target.name] = target.transform(df[[target.name]])
 
         # Scalarize the transformed targets into desirability values
         vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
