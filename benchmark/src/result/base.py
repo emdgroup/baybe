@@ -21,7 +21,11 @@ class Result(ABC):
         The function will convert the metadata to a string representation
         to ensure that the metadata can be written to a csv file.
         """
-        return {str(key): str(value) for key, value in metadata.items()}
+        metadata_return: dict[str, str] = dict()
+        for key, value in metadata.items():
+            sanitized_key = str(key).replace(" ", "_")
+            metadata_return[sanitized_key] = str(value)
+        return metadata_return
 
     title: str
     """The title of the benchmarking result."""
