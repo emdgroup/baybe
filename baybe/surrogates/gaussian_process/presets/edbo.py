@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Collection
 from typing import TYPE_CHECKING
 
 from attrs import define
@@ -9,7 +10,10 @@ from attrs import define
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
+from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
+from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 
 if TYPE_CHECKING:
@@ -17,6 +21,17 @@ if TYPE_CHECKING:
 
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
+
+
+def _contains_encoding(
+    subspace: SubspaceDiscrete, encodings: Collection[SubstanceEncoding]
+) -> bool:
+    """Tell if any of the substance parameters uses one of the specified encodings."""
+    return any(
+        p.encoding in encodings
+        for p in subspace.parameters
+        if isinstance(p, SubstanceParameter)
+    )
 
 
 @define
@@ -36,7 +51,9 @@ class EDBOKernelFactory(KernelFactory):
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )
 
-        uses_descriptors = searchspace.contains_fingerprint and (effective_dims >= 50)
+        switching_condition = _contains_encoding(
+            searchspace.discrete, (SubstanceEncoding.MORDRED, SubstanceEncoding.RDKIT)
+        ) and (effective_dims >= 50)
 
         # low D priors
         if effective_dims < 5:
@@ -46,14 +63,14 @@ class EDBOKernelFactory(KernelFactory):
             outputscale_initial_value = 8.0
 
         # DFT optimized priors
-        elif uses_descriptors and effective_dims < 100:
+        elif switching_condition and effective_dims < 100:
             lengthscale_prior = GammaPrior(2.0, 0.2)
             lengthscale_initial_value = 5.0
             outputscale_prior = GammaPrior(5.0, 0.5)
             outputscale_initial_value = 8.0
 
         # Mordred optimized priors
-        elif uses_descriptors:
+        elif switching_condition:
             lengthscale_prior = GammaPrior(2.0, 0.1)
             lengthscale_initial_value = 10.0
             outputscale_prior = GammaPrior(2.0, 0.1)

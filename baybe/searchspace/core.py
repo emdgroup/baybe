@@ -16,7 +16,6 @@ from baybe.constraints import (
 from baybe.constraints.base import Constraint
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
-from baybe.parameters.enum import SubstanceEncoding
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -222,14 +221,6 @@ class SearchSpace(SerialMixin):
         if not self.discrete.is_empty and not self.continuous.is_empty:
             return SearchSpaceType.HYBRID
         raise RuntimeError("This line should be impossible to reach.")
-
-    @property
-    def contains_fingerprint(self) -> bool:
-        """Indicates if any of the discrete parameters uses ``Fingerprint`` encoding."""
-        return any(
-            p.encoding in SubstanceEncoding if p.encoding is not None else False
-            for p in self.discrete.parameters
-        )
 
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
