@@ -74,7 +74,7 @@ def name_to_smiles(name: str) -> str:
 @_disk_cache
 def _molecule_to_fingerprint_features(
     fingerprint_encoder: BaseFingerprintTransformer,
-    molecule: str | Chem.PropertyMol.PropertyMol,
+    molecule: str | Chem.Mol,
 ) -> np.ndarray:
     """Compute molecular fingerprint for a single SMILES string.
 
