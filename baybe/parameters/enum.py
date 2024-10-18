@@ -132,5 +132,8 @@ class SubstanceEncoding(ParameterEncoding):
     USRCAT = "USRCAT"
     """:class:`skfp.fingerprints.USRCATFingerprint`"""
 
+    VSA = "VSA"
+    """:class:`skfp.fingerprints.VSAFingerprint`"""
+
     WHIM = "WHIM"
     """:class:`skfp.fingerprints.WHIMFingerprint`"""
