@@ -7,7 +7,7 @@ from uuid import UUID
 from attrs import define, field
 from matplotlib.figure import Figure, SubFigure
 
-from benchmark.metric import Metric
+from src.metric import Metric
 
 
 @define(frozen=True)

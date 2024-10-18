@@ -1,11 +1,13 @@
 """Metrics for evaluating the performance of algorithms."""
 
-from benchmark.metric.base import (
+from src.metric.base import (
     GoalOrientedMetricInterface,
     Metric,
     NormalizationInterface,
 )
-from benchmark.metric.error_metric import NormalizedNegativeRootMeanSquaredErrorMetric
+from src.metric.error_metric import (
+    NormalizedNegativeRootMeanSquaredErrorMetric,
+)
 
 __all__ = [
     "Metric",

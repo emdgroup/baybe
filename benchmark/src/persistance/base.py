@@ -8,7 +8,7 @@ from attr import define, field
 from pandas import DataFrame
 
 from baybe import __version__
-from benchmark.result import Result
+from src.result import Result
 
 
 @define
@@ -24,8 +24,8 @@ class ResultPersistenceInterface(ABC):
         """
         POST_RELEASE_VERSION = len(__version__.split(".")) > 3
         if POST_RELEASE_VERSION:
-            baybe_version = ".".join(__version__.split(".")[:3])
-        return baybe_version
+            return ".".join(__version__.split(".")[:3])
+        return __version__
 
     date_time: datetime
     baybe_version: str = field(factory=_default_baybe_version)

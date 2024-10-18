@@ -9,8 +9,8 @@ from matplotlib.figure import Figure, SubFigure
 from pandas import DataFrame
 from typing_extensions import override
 
-from benchmark.metric import Metric
-from benchmark.result.base import Result
+from src.metric import Metric
+from src.result.base import Result
 
 
 @define(frozen=True)

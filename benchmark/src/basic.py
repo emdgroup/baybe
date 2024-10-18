@@ -8,22 +8,22 @@ from attrs import define, field
 from pandas import DataFrame
 from typing_extensions import override
 
-from benchmark.base import Benchmark
-from benchmark.result.basic import MultiResult, SingleResult
+from src.base import Benchmark
+from src.result.basic import MultiResult, SingleResult
 
 
 @define
 class SingleExecutionBenchmark(Benchmark):
     """A basic benchmarking class for testing a single benchmark execution."""
 
-    _benchmark_result: SingleResult = field(init=False)
+    _benchmark_result: SingleResult = field(default=None)
     """The result of the benchmarking which is set after execution."""
 
     @override
     def execute_benchmark(self) -> SingleResult:
         """Execute the benchmark in parallel."""
         start_ns = time.perf_counter_ns()
-        result = self.benchmark_function()
+        result, self.metadata = self.benchmark_function()
         stop_ns = time.perf_counter_ns()
         time_delta = stop_ns - start_ns
         self._benchmark_result = SingleResult(
@@ -34,7 +34,7 @@ class SingleExecutionBenchmark(Benchmark):
         return self._benchmark_result
 
     @override
-    def get_results(self) -> SingleResult:
+    def get_result(self) -> SingleResult:
         """Return the results of the benchmark."""
         if not self._benchmark_result:
             self._benchmark_result = self.execute()
@@ -48,13 +48,13 @@ class MultiExecutionBenchmark(Benchmark):
     number_of_runs: int = field(default=3)
     """The number of times to run the benchmark. Default is 3."""
 
-    _benchmark_results: MultiResult = field(init=False)
+    _benchmark_results: MultiResult = field(default=None)
     """The results of the benchmarking which is set after execution."""
 
     def _execute_with_timing(self) -> tuple[DataFrame, int]:
         """Execute the benchmark and return the execution time."""
         start_ns = time.perf_counter_ns()
-        result = self.benchmark_function()
+        result, self.metadata = self.benchmark_function()
         stop_ns = time.perf_counter_ns()
         time_delta = stop_ns - start_ns
         return result, time_delta
@@ -88,7 +88,7 @@ class MultiExecutionBenchmark(Benchmark):
         return self._benchmark_results
 
     @override
-    def get_results(self) -> MultiResult:
+    def get_result(self) -> MultiResult:
         """Return the results of the benchmark."""
         if not self._benchmark_results:
             self._benchmark_results = self.execute()

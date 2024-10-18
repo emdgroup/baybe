@@ -7,8 +7,8 @@ from uuid import UUID, uuid4
 from attrs import define, field
 from pandas import DataFrame
 
-from benchmark.metric import Metric
-from benchmark.result import Result
+from src.metric import Metric
+from src.result import Result
 
 
 @define
@@ -18,7 +18,7 @@ class Benchmark(ABC):
     title: str
     """The title of the benchmark."""
 
-    benchmark_function: Callable[[], DataFrame]
+    benchmark_function: Callable[[], tuple[DataFrame, dict[str, str]]]
     """The function that executes the benchmark code and returns the results."""
 
     identifier: UUID = field(factory=uuid4)
@@ -44,6 +44,6 @@ class Benchmark(ABC):
         pass
 
     @abstractmethod
-    def get_results(self) -> Result:
+    def get_result(self) -> Result:
         """Return the results of the benchmark."""
         pass

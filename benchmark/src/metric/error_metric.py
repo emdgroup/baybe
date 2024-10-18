@@ -5,7 +5,7 @@ from pandas import DataFrame
 from typing_extensions import override
 
 from baybe.targets import TargetMode
-from benchmark.metric.base import (
+from src.metric.base import (
     GoalOrientedMetricInterface,
     Metric,
     NormalizationInterface,
