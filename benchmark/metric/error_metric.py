@@ -34,7 +34,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
 
     @override
     def _normalize_data(self, data: DataFrame, index_name: str) -> DataFrame:
-        """Normalize the data."""
+        """Normalize the column with the best found value so far for comparison."""
         max_value = data[index_name].max()
         min_value = data[index_name].min()
         data[index_name] = data[index_name].apply(
@@ -84,6 +84,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
             )
         return -rooted_mean_squared_error
 
+    @override
     def __str__(self) -> str:
         """Return the string representation of the metric."""
         return "Normalized Negative Root Mean Squared Error"
