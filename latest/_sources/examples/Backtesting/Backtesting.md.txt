@@ -6,10 +6,10 @@ These examples demonstrate BayBE's
 :maxdepth: 1
 
 Hybrid<hybrid>
+Botorch Analytical<botorch_analytical>
 Full Lookup<full_lookup>
+Impute Mode<impute_mode>
 Full Initial Data<full_initial_data>
 Multi Target<multi_target>
-Botorch Analytical<botorch_analytical>
 Custom Analytical<custom_analytical>
-Impute Mode<impute_mode>
 ```

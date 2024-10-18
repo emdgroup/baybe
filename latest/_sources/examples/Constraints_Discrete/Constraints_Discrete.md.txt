@@ -6,9 +6,9 @@ can be applied to discrete search spaces.
 ```{toctree}
 :maxdepth: 1
 
-Exclusion <exclusion_constraints>
-Custom <custom_constraints>
 Product/Sum <prodsum_constraints>
 Mixture <mixture_constraints>
+Custom <custom_constraints>
+Exclusion <exclusion_constraints>
 Dependency <dependency_constraints>
 ```
