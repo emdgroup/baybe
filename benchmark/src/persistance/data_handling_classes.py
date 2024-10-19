@@ -51,6 +51,12 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
             raise ValueError("The environment variable GITHUB_ACTOR is not set.")
         return os.environ["GITHUB_ACTOR"]
 
+    @staticmethod
+    def _default_workflow_id() -> str:
+        if "GITHUB_RUN_ID" not in os.environ:
+            raise ValueError("The environment variable GITHUB_RUN_ID is not set.")
+        return os.environ["GITHUB_RUN_ID"]
+
     bucket_name: str = field(factory=_default_bucket_name)
     """The name of the S3 bucket where the results are stored."""
 
@@ -66,6 +72,9 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
     actor_initiated_workflow: str = field(factory=_default_actor_initiated_workflow)
     """The actor who initiated the workflow. It stays the same for a rerun."""
 
+    workflow_run_id: str = field(factory=_default_workflow_id)
+    """The ID of the workflow run."""
+
     @override
     def persist_new_result(self, result: Result) -> None:
         """Store the result of a performance test.
@@ -77,7 +86,7 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
         client = self._object_session.client("s3")
         bucket_path = (
             f"{experiment_id}/{self.branch}/{self.baybe_version}/"
-            + f"{self.date_time.isoformat()}/{self.commit_hash}"
+            + f"{self.date_time.isoformat()}/{self.commit_hash}/{self.workflow_run_id}"
         )
 
         metadata = result.metadata
