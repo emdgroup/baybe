@@ -3,7 +3,7 @@
 ### Terminology
 
 # Modelling a mixture is possible in a non-traditional way with something we refer to as
-# **slot**. A slot consists of one parameter indicating the amount of a substance and
+# **slots**. A slot consists of one parameter indicating the amount of a substance and
 # another parameter indicating the type of substance (as label) that is in the slot.
 # Contrary to traditional mixture modelling, the total number of parameters is not
 # defined by how many substance choices we have, but by the maximum number of slots we
@@ -16,7 +16,7 @@
 # | Solvent1    | 10           | Solvent5    | 20           | Solvent4    | 70           |
 # | Solvent1    | 30           | Solvent8    | 40           | Solvent2    | 30           |
 # | Solvent3    | 20           | Solvent1    | 35           | Solvent9    | 45           |
-# | Solvent2    | 15           | Solvent3    | 10           | Solvent1    | 45           |
+# | Solvent2    | 15           | Solvent3    | 40           | Solvent1    | 45           |
 
 # This slot-based representation has one decided advantage compared to traditional
 # modelling: We can utilize BayBE's label encodings for the label parameters. For
@@ -98,8 +98,6 @@ slot3_amount = NumericalDiscreteParameter(
     name="Slot3_Amount", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
 )
 
-# Store all parameters.
-
 parameters = [
     slot1_label,
     slot2_label,
@@ -157,8 +155,6 @@ perm_inv_constraint = DiscretePermutationInvarianceConstraint(
         affected_parameters=[["Slot1_Label"], ["Slot2_Label"], ["Slot3_Label"]],
     ),
 )
-
-# Store all constraints.
 
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 
