@@ -18,7 +18,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from domains.utils import PATH_PREFIX
+from domain.utils import PATH_PREFIX
 
 
 def direct_arylation() -> tuple[DataFrame, dict[str, str]]:
@@ -68,28 +68,28 @@ def direct_arylation() -> tuple[DataFrame, dict[str, str]]:
             encoding=SubstanceEncoding.MORDRED,
             data=solvent_dict,
         ),
-        NumericalDiscreteParameter("Concentration", values=[0.057, 0.1, 0.153]),
-        NumericalDiscreteParameter("Temp_C", values=[90, 105, 120]),
+        NumericalDiscreteParameter("Concentration", values=(0.057, 0.1, 0.153)),
+        NumericalDiscreteParameter("Temp_C", values=(90.0, 105.0, 120.0)),
     ]
 
     direct_arylation_ohe = [
         CategoricalParameter(
             name="Base",
             encoding=CategoricalEncoding.OHE,
-            values=base_dict.keys(),
+            values=tuple(base_dict.keys()),
         ),
         CategoricalParameter(
             name="Ligand",
             encoding=CategoricalEncoding.OHE,
-            values=ligand_dict.keys(),
+            values=tuple(ligand_dict.keys()),
         ),
         CategoricalParameter(
             name="Solvent",
             encoding=CategoricalEncoding.OHE,
-            values=solvent_dict.keys(),
+            values=tuple(solvent_dict.keys()),
         ),
-        NumericalDiscreteParameter("Concentration", values=[0.057, 0.1, 0.153]),
-        NumericalDiscreteParameter("Temp_C", values=[90, 105, 120]),
+        NumericalDiscreteParameter("Concentration", values=(0.057, 0.1, 0.153)),
+        NumericalDiscreteParameter("Temp_C", values=(90, 105, 120)),
     ]
 
     objective = SingleTargetObjective(
@@ -113,9 +113,9 @@ def direct_arylation() -> tuple[DataFrame, dict[str, str]]:
     n_mc_iterations = 50
 
     metadata = {
-        "DOE_iterations": n_doe_iterations,
-        "batch_size": batch_size,
-        "n_mc_iterations": n_mc_iterations,
+        "DOE_iterations": str(n_doe_iterations),
+        "batch_size": str(batch_size),
+        "n_mc_iterations": str(n_mc_iterations),
     }
 
     scenarios = {"Mordred Encoding": campaign, "Random Baseline": campaign_rand}
@@ -125,7 +125,7 @@ def direct_arylation() -> tuple[DataFrame, dict[str, str]]:
         batch_size=batch_size,
         n_doe_iterations=n_doe_iterations,
         n_mc_iterations=n_mc_iterations,
-        impute_mode="ignore",
+        impute_mode="error",
     ), metadata
 
 

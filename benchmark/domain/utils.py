@@ -2,4 +2,4 @@
 
 from pathlib import Path
 
-PATH_PREFIX = Path(".//benchmark//domains//lookup//")
+PATH_PREFIX = Path(".//benchmark//domain//lookup//")

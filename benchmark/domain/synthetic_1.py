@@ -73,9 +73,9 @@ def synthetic_1() -> tuple[DataFrame, dict[str, str]]:
     n_mc_iterations = 50
 
     metadata = {
-        "DOE_iterations": n_doe_iterations,
-        "batch_size": batch_size,
-        "n_mc_iterations": n_mc_iterations,
+        "DOE_iterations": str(n_doe_iterations),
+        "batch_size": str(batch_size),
+        "n_mc_iterations": str(n_mc_iterations),
     }
 
     scenarios = {
@@ -88,6 +88,7 @@ def synthetic_1() -> tuple[DataFrame, dict[str, str]]:
         batch_size=batch_size,
         n_doe_iterations=n_doe_iterations,
         n_mc_iterations=n_mc_iterations,
+        impute_mode="error",
     ), metadata
 
 
