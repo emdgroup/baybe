@@ -1,7 +1,7 @@
 """Module for persisting benchmarking results."""
 
-from src.persistance.base import ResultPersistenceInterface
-from src.persistance.data_handling_classes import (
+from benchmark.src.persistance.base import ResultPersistenceInterface
+from benchmark.src.persistance.data_handling_classes import (
     LocalExperimentResultPersistence,
     S3ExperimentResultPersistence,
 )

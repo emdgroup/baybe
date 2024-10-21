@@ -1,18 +1,18 @@
 """Benchmarking module for executing and comparing performance related tasks."""
 
-from src.base import Benchmark
-from src.basic import MultiExecutionBenchmark, SingleExecutionBenchmark
-from src.metric import (
+from benchmark.src.base import Benchmark
+from benchmark.src.basic import MultiExecutionBenchmark, SingleExecutionBenchmark
+from benchmark.src.metric import (
     Metric,
-    NormalizedNegativeRootMeanSquaredErrorMetric,
+    NormalizedAreaUnderTheCurve,
 )
-from src.persistance import (
+from benchmark.src.persistance import (
     LocalExperimentResultPersistence,
     ResultPersistenceInterface,
     S3ExperimentResultPersistence,
 )
-from src.result import Result
-from src.result.basic import MultiResult, SingleResult
+from benchmark.src.result import Result
+from benchmark.src.result.basic import MultiResult, SingleResult
 
 __all__ = [
     "Benchmark",
@@ -22,8 +22,7 @@ __all__ = [
     "MultiResult",
     "SingleResult",
     "Metric",
-    "NormalizedGoalOrientationMetric",
-    "NormalizedNegativeRootMeanSquaredErrorMetric",
+    "NormalizedAreaUnderTheCurve",
     "ResultPersistenceInterface",
     "LocalExperimentResultPersistence",
     "S3ExperimentResultPersistence",

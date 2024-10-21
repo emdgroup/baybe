@@ -8,7 +8,7 @@ from attr import define, field
 from pandas import DataFrame
 
 from baybe import __version__
-from src.result import Result
+from benchmark.src.result import Result
 
 
 @define

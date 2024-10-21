@@ -7,7 +7,7 @@ from uuid import UUID
 from attrs import define, field
 from matplotlib.figure import Figure, SubFigure
 
-from src.metric import Metric
+from benchmark.src.metric import Metric
 
 
 @define(frozen=True)
@@ -55,17 +55,22 @@ class Result(ABC):
         pass
 
     @abstractmethod
-    def evaluate_result(self, metric: Metric) -> float:
-        """Evaluate the benchmarking result using the given metric.
+    def evaluate_result(
+        self, metric: Metric, objective_scenario: list[str]
+    ) -> dict[str, float]:
+        """Evaluate the result based on the given metric and objective scenario.
 
-        The function will evaluate the benchmarking result using the
-        given metric. The metric may throw an exception if a threshold
-        is set and the result does not meet the threshold.
+        Args:
+            metric: The metric to be used for evaluation.
+            objective_scenario: The scenario name to be used for evaluation.
+
+        Returns:
+            float: The evaluation result as a floating-point number.
         """
         pass
 
     @abstractmethod
-    def to_csv(self, path: str = None) -> str | None:
+    def to_csv(self, path: str | None = None) -> str | None:
         """Write the result to a csv file.
 
         Writes the result to a csv file. If no path is given, the function

@@ -4,8 +4,8 @@ import concurrent.futures
 import os
 from datetime import datetime
 
-from domains import SINGE_BENCHMARKS_TO_RUN
-from src import (
+from benchmark.domain import SINGE_BENCHMARKS_TO_RUN
+from benchmark.src import (
     LocalExperimentResultPersistence,
     ResultPersistenceInterface,
     S3ExperimentResultPersistence,

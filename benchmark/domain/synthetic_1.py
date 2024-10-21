@@ -3,7 +3,6 @@
 from uuid import UUID
 
 from pandas import DataFrame
-from src import SingleExecutionBenchmark
 
 from baybe.campaign import Campaign
 from baybe.objective import SingleTargetObjective
@@ -14,6 +13,7 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
+from benchmark.src import SingleExecutionBenchmark
 
 
 def lookup_direct_arylation(*args) -> float:

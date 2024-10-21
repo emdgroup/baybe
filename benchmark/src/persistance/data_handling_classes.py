@@ -13,8 +13,8 @@ from pandas import DataFrame
 from sortedcontainers import SortedDict, SortedList
 from typing_extensions import override
 
-from src.persistance.base import ResultPersistenceInterface
-from src.result import Result
+from benchmark.src.persistance.base import ResultPersistenceInterface
+from benchmark.src.result import Result
 
 
 @define

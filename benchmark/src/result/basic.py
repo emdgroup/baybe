@@ -9,8 +9,8 @@ from matplotlib.figure import Figure, SubFigure
 from pandas import DataFrame
 from typing_extensions import override
 
-from src.metric import Metric
-from src.result.base import Result
+from benchmark.src.metric import Metric
+from benchmark.src.result.base import Result
 
 
 @define(frozen=True)
@@ -50,17 +50,19 @@ class SingleResult(Result):
         return ax.figure
 
     @override
-    def evaluate_result(self, metric: Metric) -> float:
+    def evaluate_result(
+        self, metric: Metric, objective_scenario: list[str]
+    ) -> dict[str, float]:
         """Evaluate the benchmarking result using the given metric.
 
         See :func:`benchmark.result.base.Result.evaluate_result` for more information.
         """
-        metric_value = metric.evaluate(self.result)
+        metric_value = metric.evaluate(self.result, objective_scenario)
         print(f"Metric: {metric} - Value: {metric_value}")
         return metric_value
 
     @override
-    def to_csv(self, path: str = None) -> str | None:
+    def to_csv(self, path: str | None = None) -> str | None:
         """Write the result to a csv file.
 
         Writes the result to a csv file. If no path is given, the function
@@ -129,21 +131,31 @@ class MultiResult(Result):
         return max(self.benchmark_results, key=lambda x: x.result.iloc[-1].max())
 
     @override
-    def evaluate_result(self, metric: Metric) -> float:
+    def evaluate_result(
+        self, metric: Metric, objective_scenario: list[str]
+    ) -> dict[str, float]:
         """Evaluate the benchmarking result using the given metric.
 
         If a threshold is set a exception may be thrown if one result does not meet it.
         See :func:`benchmark.result.base.Result.evaluate_result` for more information.
         """
-        sum_of_metrics = sum(
-            [metric.evaluate(result) for result in self.benchmark_results]
-        )
-        metric_value = sum_of_metrics / len(self.benchmark_results)
-        logging.info(f"Mean Metric: {metric} - Value: {metric_value}")
-        return metric_value
+        metric_sum_dict = dict()
+        for result in self.benchmark_results:
+            metric_dict = metric.evaluate(result.result, objective_scenario)
+            for key, value in metric_dict.items():
+                if key not in metric_sum_dict:
+                    metric_sum_dict[key] = 0
+                metric_sum_dict[key] += value
+        metric_mean_dict = dict()
+        for key, value in metric_sum_dict.items():
+            metric_mean_dict[key] = value / len(self.benchmark_results)
+            logging.info(
+                f"Mean Metric: {metric} - for {key} with value: {metric_mean_dict[key]}"
+            )
+        return metric_mean_dict
 
     @override
-    def to_csv(self, path: str = None) -> str | None:
+    def to_csv(self, path: str | None = None) -> str | None:
         """Write all result to a csv file.
 
         Combine the results of all runs and write them to one csv file.

@@ -3,7 +3,6 @@
 from uuid import UUID
 
 from pandas import DataFrame, read_csv
-from src import SingleExecutionBenchmark
 
 from baybe.campaign import Campaign
 from baybe.objective import SingleTargetObjective
@@ -18,7 +17,8 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from domain.utils import PATH_PREFIX
+from benchmark.domain.utils import PATH_PREFIX
+from benchmark.src import SingleExecutionBenchmark
 
 
 def direct_arylation() -> tuple[DataFrame, dict[str, str]]:
