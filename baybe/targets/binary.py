@@ -84,10 +84,11 @@ class BinaryTarget(Target, SerialMixin):
             ~series.isin([self.success_value, self.failure_value]).to_numpy()
         ]
         if len(invalid) > 0:
+            valid = {self.success_value, self.failure_value}
             raise InvalidTargetValueError(
                 f"The following values entered for target '{self.name}' are not in the "
                 f"set of accepted choice values "
-                f"{set((self.success_value, self.failure_value))}: {set(invalid)}"
+                f"{valid}: {set(invalid)}"
             )
 
         # Transform
