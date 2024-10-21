@@ -39,13 +39,14 @@ class Target(ABC, SerialMixin):
 
     @abstractmethod
     def transform(self, series: pd.Series, /) -> pd.Series:
-        """Transform target measurements into computational representation.
+        """Transform target measurements to computational representation.
 
         Args:
-            series: The measurement data to be transformed.
+            series: The target measurements to be transformed.
 
         Returns:
-            A series containing the transformed target data.
+            A series containing the transformed measurements. The series name matches
+            that of the input.
         """
 
     @abstractmethod
