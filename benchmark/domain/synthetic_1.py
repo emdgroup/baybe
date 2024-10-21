@@ -1,4 +1,4 @@
-"""Direct Arylation Benchmark."""
+"""Synthetic dataset. Custom parabolic test with irrelevant parameters."""
 
 from uuid import UUID
 
@@ -16,8 +16,26 @@ from baybe.targets import NumericalTarget, TargetMode
 from benchmark.src import SingleExecutionBenchmark
 
 
-def lookup_direct_arylation(*args) -> float:
-    """Lookup Direct Arylation Benchmark."""
+def lookup_synthetic_1(*args) -> float:
+    """Synthetic dataset. Custom parabolic test with irrelevant parameters.
+
+    ================================================================================
+                                        Summary
+    --------------------------------------------------------------------------------
+        Number of Samples            inf
+        Dimensionality                20
+        Features:
+            x1   continuous [0, 1]
+            x3   continuous [0, 1]
+            x6   continuous [0, 1]
+            x12  continuous [0, 1]
+            x18  continuous [0, 1]
+            15 other xi's are irrelevant
+        Targets:
+            output   continuous
+    ================================================================================
+    Best Value 0.19999999999999996
+    """
     (x1, _, x3, _, _, x6, _, _, _, _, _, x12, _, _, _, _, _, x18, _, _) = args
     return (
         (x1 - 2) ** 2
@@ -84,7 +102,7 @@ def synthetic_1() -> tuple[DataFrame, dict[str, str]]:
     }
     return simulate_scenarios(
         scenarios,
-        lookup_direct_arylation,
+        lookup_synthetic_1,
         batch_size=batch_size,
         n_doe_iterations=n_doe_iterations,
         n_mc_iterations=n_mc_iterations,
@@ -93,8 +111,7 @@ def synthetic_1() -> tuple[DataFrame, dict[str, str]]:
 
 
 benchmark_synthetic_1 = SingleExecutionBenchmark(
-    title="20 dimensional synthetic dataset (x1-2)**2+0.8"
-    + "*x3+0.4*(x6+1)**2+(x12)**2-0.3*(x18-2)**2+x1*x6",
+    title="Custom parabolic test with irrelevant parameters.",
     identifier=UUID("7a855462-048a-4a1e-86b3-ac8fc6bd91aa"),
     benchmark_function=synthetic_1,
 )
