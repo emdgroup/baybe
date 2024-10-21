@@ -6,9 +6,10 @@ from uuid import UUID, uuid4
 
 from attrs import define, field
 from pandas import DataFrame
+from typing_extensions import override
 
-from src.metric import Metric
-from src.result import Result
+from benchmark.src.metric import Metric
+from benchmark.src.result import Result
 
 
 @define
@@ -21,16 +22,20 @@ class Benchmark(ABC):
     benchmark_function: Callable[[], tuple[DataFrame, dict[str, str]]]
     """The function that executes the benchmark code and returns the results."""
 
+    objective_scenarios: list[str] = field(factory=lambda: list())
+    """The name of the scenarios to evaluate the benchmarking results."""
+
     identifier: UUID = field(factory=uuid4)
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    metadata: dict[str, str] = field(factory=lambda: dict())
+    _metadata: dict[str, str] = field(factory=lambda: dict())
     """Metadata about the benchmark."""
 
     metrics: list[Metric] = field(factory=lambda: list())
     """Optional metrics to evaluate the benchmarking results."""
 
+    @override
     def __str__(self) -> str:
         """Return a string representation of the object.
 
@@ -39,6 +44,7 @@ class Benchmark(ABC):
         """
         return self.title
 
+    @override
     def __repr__(self) -> str:
         """Return a string representation of the object for debugging.
 

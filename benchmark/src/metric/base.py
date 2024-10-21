@@ -11,8 +11,24 @@ class Metric(ABC):
     """Abstract base class for all benchmarking metrics."""
 
     @abstractmethod
-    def evaluate(self, prediction: DataFrame) -> float:
-        """Evaluate the benchmarking metric and return the result."""
+    def evaluate(
+        self, prediction: DataFrame, objective_scenarios: list[str] | None = None
+    ) -> dict[str, float]:
+        """Evaluate the given predictions against the objective scenario.
+
+        Args:
+            prediction: The predictions to evaluate.
+                        objective_scenarios: The scenario names to calculate the
+                        metric and apply the thresholds if set.
+            objective_scenarios: The scenario names to calculate the metric.
+                                 must match the the defined names in the
+                                 :func:`baybe.simulation.scenarios.simulate_scenarios`
+                                 scenarios dict.
+
+        Returns:
+            dict[str, float]: A dictionary containing evaluation metrics as keys
+            and their corresponding values.
+        """
         pass
 
     @abstractmethod
@@ -24,21 +40,9 @@ class Metric(ABC):
         """
         pass
 
-
-@define
-class GoalOrientedMetricInterface(ABC):
-    """Interface for goal-oriented metrics."""
-
     @abstractmethod
-    def get_objective_value(self) -> float:
-        """Retrieve the objective value.
-
-        This method return the objective value of the
-        metric based in the metric (e.g., Min or Max).
-
-        Returns:
-            float: The objective value.
-        """
+    def _check_threshold(self, values: dict[str, float]) -> None:
+        """Check if the threshold is met."""
         pass
 
 
