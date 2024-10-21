@@ -18,10 +18,9 @@ def result_data_handler(
 ) -> ResultPersistenceInterface:
     """Create a result data handler.
 
-    This fixture is used to store the results of the performance tests in a persistent
-    way with a function scope to ensure that all test cases can run independently
-    since basic boto3 is not thread safe but creating a boto3 client session is.
-    For local testing, the results are stored in a local directory.
+    The following function checks if persisting data to S3 is enabled.
+    If not, the function will use the local file system to store the data.
+    This is meant to be used for development and local testing only.
 
     Parameters:
         time_stamp_test_execution: The timestamp of the test.
@@ -36,7 +35,13 @@ def result_data_handler(
 
 
 def main():
-    """Run the performance test for the given scenario."""
+    """Run the performance test for the given scenario.
+
+    This function runs the performance test cases defined in the domain module
+    in parallel. The function uses the number of cores available on the machine
+    to create a reasonable number of workers for the execution.
+    The results of the benchmarks are persisted to the file system or S3.
+    """
     num_cores = os.cpu_count()
     persistance_handler = result_data_handler(datetime.now())
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_cores) as executor:

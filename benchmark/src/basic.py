@@ -19,7 +19,12 @@ class SingleExecutionBenchmark(Benchmark):
     """The result of the benchmarking which is set after execution."""
 
     def execute_benchmark(self) -> SingleResult:
-        """Execute the benchmark in parallel."""
+        """Execute the benchmark.
+
+        The function will execute the benchmark and return
+        the result apply added metrics if any were set and
+        measures execution time.
+        """
         start_ns = time.perf_counter_ns()
         result, self._metadata = self.benchmark_function()
         stop_ns = time.perf_counter_ns()
@@ -32,7 +37,7 @@ class SingleExecutionBenchmark(Benchmark):
         return self._benchmark_result
 
     def get_result(self) -> SingleResult:
-        """Return the results of the benchmark."""
+        """Return the single result of the benchmark."""
         if not self._benchmark_result:
             self._benchmark_result = self.execute_benchmark()
         return self._benchmark_result
@@ -40,7 +45,7 @@ class SingleExecutionBenchmark(Benchmark):
 
 @define
 class MultiExecutionBenchmark(Benchmark):
-    """Benchmarking class for testing multiple benchmark executions."""
+    """Benchmarking class for testing multiple executions of the same scenario."""
 
     number_of_runs: int = field(default=3)
     """The number of times to run the benchmark. Default is 3."""
@@ -49,7 +54,12 @@ class MultiExecutionBenchmark(Benchmark):
     """The results of the benchmarking which is set after execution."""
 
     def _execute_with_timing(self) -> tuple[DataFrame, int]:
-        """Execute the benchmark and return the execution time."""
+        """Execute the benchmark.
+
+        The function will execute the benchmark and return
+        the result apply added metrics if any were set and
+        measures execution time.
+        """
         start_ns = time.perf_counter_ns()
         result, self._metadata = self.benchmark_function()
         stop_ns = time.perf_counter_ns()
@@ -57,7 +67,15 @@ class MultiExecutionBenchmark(Benchmark):
         return result, time_delta
 
     def execute_benchmark(self) -> MultiResult:
-        """Execute the benchmark in parallel."""
+        """Execute the benchmark in parallel.
+
+        This function will execute the benchmark in parallel using
+        the number of cores available on the machine. The function
+        will return the results of the benchmark and execute the
+        metrics if any were set. Those are calculating the arithmetic mean
+        of all single results by default. See
+        :class:benchmark.src.result.basic.MultiResult for more information.
+        """
         num_cores = os.cpu_count()
         results: list[SingleResult] = []
         number_of_iterations = range(self.number_of_runs)
@@ -84,7 +102,7 @@ class MultiExecutionBenchmark(Benchmark):
         return self._benchmark_results
 
     def get_result(self) -> MultiResult:
-        """Return the results of the benchmark."""
+        """Return the benchmark's result or creates the result is not present jet."""
         if not self._benchmark_results:
             self._benchmark_results = self.execute_benchmark()
         return self._benchmark_results
