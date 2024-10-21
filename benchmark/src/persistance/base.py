@@ -28,6 +28,8 @@ class ResultPersistenceInterface(ABC):
         return __version__
 
     date_time: datetime
+    """The date and time when the experiment was executed."""
+
     baybe_version: str = field(factory=_default_baybe_version)
     """The version of the Baybe library."""
 

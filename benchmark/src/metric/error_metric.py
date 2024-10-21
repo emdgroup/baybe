@@ -34,7 +34,15 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
 
     @override
     def _normalize_data(self, data: DataFrame, index_name: str) -> DataFrame:
-        """Normalize the column with the best found value so far for comparison."""
+        """Normalize the specified column in the DataFrame using min-max normalization.
+
+        Args:
+            data: The input DataFrame containing the data to be normalized.
+            index_name: The name of the column to be normalized.
+
+        Returns:
+            DataFrame: The DataFrame with the specified column normalized.
+        """
         max_value = data[index_name].max()
         min_value = data[index_name].min()
         data[index_name] = data[index_name].apply(
@@ -43,6 +51,11 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
         return data
 
     def __attrs_post_init__(self):
+        """Post-initialization method for the class.
+
+        Raises:
+            ValueError: If `target_mode_to_eval` is `TargetMode.MATCH`.
+        """
         if self.target_mode_to_eval == TargetMode.MATCH:
             raise ValueError("Matching target mode not yet supported.")
         normalized_lookup = self.lookup.copy()
@@ -51,7 +64,17 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
 
     @override
     def get_objective_value(self) -> float:
-        """Get the objective value from the lookup table."""
+        """Get the objective value from the lookup table based on the target mode.
+
+        Returns:
+            float: The objective value, which is 1.0 for TargetMode.MAX,
+                   0.0 for TargetMode.MIN, or raises an error for TargetMode.MATCH.
+
+        Raises:
+            NotImplementedError: If the target mode is TargetMode.MATCH
+                                 and bounds are provided.
+            ValueError: If the target mode is unrecognized.
+        """
         if self.target_mode_to_eval == TargetMode.MAX:
             MAX_NORMALIZED = 1.0
             return MAX_NORMALIZED
@@ -70,7 +93,21 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
 
     @override
     def evaluate(self, prediction: DataFrame) -> float:
-        """Evaluate the benchmarking metric and return the result."""
+        """Evaluate the prediction against the target objective value.
+
+        This method calculates the rooted mean squared error (RMSE) between the
+        normalized prediction and the target objective value. If the RMSE exceeds
+        a predefined threshold, an AssertionError is raised.
+
+        Args:
+            prediction: The predicted values to be evaluated.
+
+        Returns:
+            float: The negative rooted mean squared error.
+
+        Raises:
+            AssertionError: If a threshold is set and the metric exceeds the threshold.
+        """
         target = self.get_objective_value()
         performance_row = f"{self.objective_name}_CumBest"
         normalized_prediction = self._normalize_data(prediction, performance_row)

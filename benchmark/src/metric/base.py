@@ -17,7 +17,11 @@ class Metric(ABC):
 
     @abstractmethod
     def __str__(self) -> str:
-        """Return the string representation of the metric."""
+        """Return the string representation of the metric.
+
+        Returns:
+            str: A readable metric name.
+        """
         pass
 
 
@@ -27,7 +31,14 @@ class GoalOrientedMetricInterface(ABC):
 
     @abstractmethod
     def get_objective_value(self) -> float:
-        """Get the objective value from the lookup table."""
+        """Retrieve the objective value.
+
+        This method return the objective value of the
+        metric based in the metric (e.g., Min or Max).
+
+        Returns:
+            float: The objective value.
+        """
         pass
 
 
@@ -37,5 +48,13 @@ class NormalizationInterface(ABC):
 
     @abstractmethod
     def _normalize_data(self, data: DataFrame, index_name: str) -> DataFrame:
-        """Normalize the data."""
+        """Normalize the given data to scale the metric to [0,1].
+
+        Args:
+            data: The data to be normalized.
+            index_name: The name of the index to be used for normalization.
+
+        Returns:
+            DataFrame: The normalized data.
+        """
         pass

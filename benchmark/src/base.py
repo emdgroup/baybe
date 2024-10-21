@@ -32,9 +32,20 @@ class Benchmark(ABC):
     """Optional metrics to evaluate the benchmarking results."""
 
     def __str__(self) -> str:
+        """Return a string representation of the object.
+
+        Returns:
+            str: The title of the object.
+        """
         return self.title
 
     def __repr__(self) -> str:
+        """Return a string representation of the object for debugging.
+
+        Returns:
+            str: A string that includes the class name,
+            title, and identifier of the object.
+        """
         classname = self.__class__.__name__
         return f"{classname}(name={self.title}, identifier={self.identifier})"
 
