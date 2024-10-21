@@ -17,7 +17,7 @@ from benchmark.src.result.base import Result
 class SingleResult(Result):
     """A single result of the benchmarking."""
 
-    result: DataFrame
+    benchmark_result: DataFrame
     """The result of the benchmarking."""
 
     execution_time_ns: int
@@ -35,10 +35,10 @@ class SingleResult(Result):
         See :func:`benchmark.result.base.Result.create_convergence_plot`
         for more information.
         """
-        dataframe_index_titles = self.result.columns
+        dataframe_index_titles = self.benchmark_result.columns
         cumbest_col_name = dataframe_index_titles[-1]
         ax = sns.lineplot(
-            data=self.result,
+            data=self.benchmark_result,
             marker="o",
             markersize=10,
             x="Num_Experiments",
@@ -57,7 +57,7 @@ class SingleResult(Result):
 
         See :func:`benchmark.result.base.Result.evaluate_result` for more information.
         """
-        metric_value = metric.evaluate(self.result, objective_scenario)
+        metric_value = metric.evaluate(self.benchmark_result, objective_scenario)
         print(f"Metric: {metric} - Value: {metric_value}")
         return metric_value
 
@@ -69,8 +69,8 @@ class SingleResult(Result):
         will return the csv as a string.
         """
         if path is None:
-            return self.result.to_csv(index=False)
-        self.result.to_csv(path, index=False)
+            return self.benchmark_result.to_csv(index=False)
+        self.benchmark_result.to_csv(path, index=False)
 
 
 @define(frozen=True)
@@ -108,7 +108,9 @@ class MultiResult(Result):
         See :func:`benchmark.result.base.Result.create_convergence_plot`
         for more information.
         """
-        list_of_dataframes = [result.result for result in self.benchmark_results]
+        list_of_dataframes = [
+            result.benchmark_result for result in self.benchmark_results
+        ]
         df_concat = pd.concat(list_of_dataframes)
         by_row_index = df_concat.groupby(df_concat.index)
         df_means = by_row_index.mean()
@@ -128,7 +130,9 @@ class MultiResult(Result):
 
     def get_best_found(self) -> SingleResult:
         """Return the best found result of the benchmarking."""
-        return max(self.benchmark_results, key=lambda x: x.result.iloc[-1].max())
+        return max(
+            self.benchmark_results, key=lambda x: x.benchmark_result.iloc[-1].max()
+        )
 
     @override
     def evaluate_result(
@@ -141,7 +145,7 @@ class MultiResult(Result):
         """
         metric_sum_dict = dict()
         for result in self.benchmark_results:
-            metric_dict = metric.evaluate(result.result, objective_scenario)
+            metric_dict = metric.evaluate(result.benchmark_result, objective_scenario)
             for key, value in metric_dict.items():
                 if key not in metric_sum_dict:
                     metric_sum_dict[key] = 0
@@ -165,8 +169,8 @@ class MultiResult(Result):
         iteration = 0
         for result in self.benchmark_results:
             iteration += 1
-            result.result["Iteration"] = iteration
-            list_of_dataframes.append(result.result)
+            result.benchmark_result["Iteration"] = iteration
+            list_of_dataframes.append(result.benchmark_result)
         combined_results = pd.concat(list_of_dataframes, ignore_index=True)
         if path is None:
             return combined_results.to_csv(index=False)

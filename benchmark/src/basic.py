@@ -53,7 +53,7 @@ class MultiExecutionBenchmark(Benchmark):
     _benchmark_results: MultiResult = field(default=None)
     """The results of the benchmarking which is set after execution."""
 
-    def _execute_with_timing(self) -> tuple[DataFrame, int]:
+    def _execute_with_timing(self) -> tuple[DataFrame, int, dict[str, str]]:
         """Execute the benchmark.
 
         The function will execute the benchmark and return
@@ -61,10 +61,10 @@ class MultiExecutionBenchmark(Benchmark):
         measures execution time.
         """
         start_ns = time.perf_counter_ns()
-        result, self._metadata = self.benchmark_function()
+        result, metadata = self.benchmark_function()
         stop_ns = time.perf_counter_ns()
         time_delta = stop_ns - start_ns
-        return result, time_delta
+        return result, time_delta, metadata
 
     def execute_benchmark(self) -> MultiResult:
         """Execute the benchmark in parallel.
@@ -84,16 +84,17 @@ class MultiExecutionBenchmark(Benchmark):
                 executor.submit(self._execute_with_timing) for _ in number_of_iterations
             ]
             for future in concurrent.futures.as_completed(futures):
-                result_benchmarking, time_delta = future.result()
+                result_benchmarking, time_delta, metadata = future.result()
                 results.append(
                     SingleResult(
                         self.title,
                         self.identifier,
-                        self._metadata,
+                        metadata,
                         result_benchmarking,
                         time_delta,
                     )
                 )
+        self._metadata = results[0].metadata
         self._benchmark_results = MultiResult(
             self.title, self.identifier, self._metadata, results
         )
