@@ -4,7 +4,7 @@
 # chose from. In the traditional representation, for each of these substance choices we
 # would have one single parameter describing the amount of that substance which should
 # go into the mixture. Then, there is one overall constraint to ensure that all substance
-# amounts sum to 100. Additionally, there could be more constraints, for instance if
+# amounts sum to 100%. Additionally, there could be more constraints, for instance if
 # there are subgroups of substances that have their own constraints.
 
 # In this example, we will create a simple mixture of up to 6 components. There are
@@ -20,7 +20,7 @@ from baybe.targets import NumericalTarget
 
 ### Parameters Setup
 
-# List of substance labels, divided into subgroups.
+# Create lists of substance labels, divided into subgroups.
 
 g1 = ["Solvent1", "Solvent2"]
 g2 = ["Base1", "Base2"]
