@@ -18,7 +18,7 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
 ):
     """Normalized negative root mean squared error metric for regression tasks."""
 
-    lookup: DataFrame
+    lookup: DataFrame | tuple[float, float]
     """The lookup table or function to evaluate the goal orientation
     metric and compare the best included result."""
 
@@ -32,6 +32,12 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
     """Optional threshold for the metric.
     If the metric is below the threshold, an exception is thrown."""
 
+    _max_value: float = field(init=False)
+    """The maximum value in the lookup table or function."""
+
+    _min_value: float = field(init=False)
+    """The minimum value in the lookup table or function."""
+
     @override
     def _normalize_data(self, data: DataFrame, index_name: str) -> DataFrame:
         """Normalize the specified column in the DataFrame using min-max normalization.
@@ -43,24 +49,29 @@ class NormalizedNegativeRootMeanSquaredErrorMetric(
         Returns:
             DataFrame: The DataFrame with the specified column normalized.
         """
-        max_value = data[index_name].max()
-        min_value = data[index_name].min()
         data[index_name] = data[index_name].apply(
-            lambda x: (x - min_value) / (max_value - min_value)
+            lambda x: (x - self._min_value) / (self._max_value - self._min_value)
         )
         return data
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         """Post-initialization method for the class.
+
+        Returns:
+            None
 
         Raises:
             ValueError: If `target_mode_to_eval` is `TargetMode.MATCH`.
         """
         if self.target_mode_to_eval == TargetMode.MATCH:
             raise ValueError("Matching target mode not yet supported.")
-        normalized_lookup = self.lookup.copy()
-        normalized_lookup = self._normalize_data(self.lookup, self.objective_name)
-        self.lookup = normalized_lookup
+        LOOKUP_IS_MIN_MAX = isinstance(self.lookup, tuple)
+        if LOOKUP_IS_MIN_MAX:
+            self._min_value, self._max_value = self.lookup
+            return
+        cumbest_row = self.lookup.filter(like="CumBest").columns.tolist()[0]
+        self._max_value = self.lookup[cumbest_row].max()
+        self._min_value = self.lookup[cumbest_row].min()
 
     @override
     def get_objective_value(self) -> float:
