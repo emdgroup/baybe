@@ -127,7 +127,8 @@ class DiscreteParameter(Parameter, ABC):
         """Transform parameter values to computational representation.
 
         Args:
-            series: The parameter values to be transformed.
+            series: The parameter values in experimental representation to be
+                transformed.
 
         Returns:
             A series containing the transformed values. The series name matches

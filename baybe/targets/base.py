@@ -42,7 +42,8 @@ class Target(ABC, SerialMixin):
         """Transform target measurements to computational representation.
 
         Args:
-            series: The target measurements to be transformed.
+            series: The target measurements in experimental representation to be
+                transformed.
 
         Returns:
             A series containing the transformed measurements. The series name matches
