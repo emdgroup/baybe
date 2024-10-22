@@ -132,12 +132,28 @@ class NumericalTarget(Target, SerialMixin):
         return (self.bounds.is_bounded) and (self.transformation is not None)
 
     @override
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        # TODO: The method (signature) needs to be refactored, potentially when
-        #   enabling multi-target settings. The current input type suggests that passing
-        #   dataframes is allowed, but the code was designed for single targets and
-        #   desirability objectives, where only one column is present.
-        assert data.shape[1] == 1
+    def transform(
+        self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
+    ) -> pd.Series:
+        # >>>>>>>>>> Deprecation
+        if not ((series is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the data to be transformed as first positional argument."
+            )
+
+        if data is not None:
+            assert data.shape[1] == 1
+            series = data.iloc[:, 0]
+            warnings.warn(
+                "Providing a dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your data "
+                "in form of a series as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `series` must be a series here
+        assert isinstance(series, pd.Series)
+        # <<<<<<<<<< Deprecation
 
         # When a transformation is specified, apply it
         if self.transformation is not None:
@@ -148,11 +164,13 @@ class NumericalTarget(Target, SerialMixin):
                 self.mode,
                 cast(TargetTransformation, self.transformation),
             )
-            transformed = pd.DataFrame(
-                func(data, *self.bounds.to_tuple()), index=data.index
+            transformed = pd.Series(
+                func(series, *self.bounds.to_tuple()),
+                index=series.index,
+                name=series.name,
             )
         else:
-            transformed = data.copy()
+            transformed = series.copy()
 
         return transformed
 
