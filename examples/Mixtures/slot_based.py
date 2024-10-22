@@ -1,42 +1,41 @@
-## Example for Modelling a Slot-Based Mixture
+## Modeling a Slot-Based Mixture
 
 ### Terminology
 
-# Modelling a mixture is possible in a non-traditional way with something we refer to as
-# **slots**. A slot consists of one parameter indicating the amount of a substance and
-# another parameter indicating the type of substance (as label) that is in the slot.
-# Contrary to traditional mixture modelling, the total number of parameters is not
-# defined by how many substance choices we have, but by the maximum number of slots we
-# want to allow. For instance, if we want to design a mixture with *up to five*
-# components, we would need 5 slots, i.e. 10 parameters.
+# Modeling a mixture is possible in a non-traditional way by using a concept we
+# refer to as a **slot**. A slot is represented through the combination of two
+# parameters: one indicating the amount of a mixture ingredient, and another indicating
+# the type of ingredient (as a label) populating the slot. Unlike [traditional
+# mixture modeling](/examples/Mixtures/traditional.md), the total number of parameters
+# is not determined by how many ingredient choices we have, but by the maximum number of
+# slots we allow. For instance, if we want to design a mixture with *up to three*
+# ingredients, we can do so by creating three slots represented by six parameters.
 
-# A corresponding search space with three slots could look like this:
+# A corresponding search space could look like this:
 # | Slot1_Label | Slot1_Amount | Slot2_Label | Slot2_Amount | Slot3_Label | Slot3_Amount |
 # |:------------|:-------------|:------------|:-------------|:------------|:-------------|
-# | Solvent1    | 10           | Solvent5    | 20           | Solvent4    | 70           |
+# | Solvent1    | 10           | Solvent5    | 20           | Solvent4    | 30           |
 # | Solvent1    | 30           | Solvent8    | 40           | Solvent2    | 30           |
-# | Solvent3    | 20           | Solvent1    | 35           | Solvent9    | 45           |
-# | Solvent2    | 15           | Solvent3    | 40           | Solvent1    | 45           |
+# | Solvent3    | 20           | Solvent1    | 35           | Solvent9    | 30           |
+# | Solvent2    | 15           | Solvent3    | 10           | Solvent1    | 30           |
 
-# This slot-based representation has one decided advantage compared to traditional
-# modelling: We can utilize BayBE's label encodings for the label parameters. For
+# The slot-based representation has one decided advantage over traditional
+# modeling: We can use BayBE's label encodings for the label parameters. For
 # instance, when mixing small molecules, the
 # [`SubstanceParameter`](baybe.parameters.substance.SubstanceParameter) can be used to
 # smartly encode the slot labels, enabling the algorithm to perform a chemically-aware
 # mixture optimization.
 
-# In this example, we show how to design the search space and the various discrete
-# constraints we need to impose. We simulate a situation where we want to mix up to
-# three solvents, i.e. we will have 3 slots (6 parameters). Their respective amounts
-# need to sum up to 100. Also, a solvents should never be chosen twice, which
-# requires various other constraints.
+# In this example, we show how to design such a search space, including the various
+# discrete constraints we need to impose. We simulate a situation where we want to mix
+# up to three solvents, whose respective amounts must add up to 100.
 
-# ```{admonition} Discrete vs. Continuous Modelling
+# ```{admonition} Discrete vs. Continuous Modeling
 # :class: important
-# In here, we utilize only discrete parameters, although in principle, the parameters
-# corresponding to amounts could also be modelled as continuous numbers. This however,
-# would mean some of the constraints we need act between discrete and continuous
-# parameters - which is not supported at the moment.
+# Here, we only use discrete parameters, although in principle the parameters
+# corresponding to amounts could also be modeled as continuous numbers. However, this
+# would imply that some of the constraints would have to act on both discrete and
+# continuous parameters, which is not currently supported.
 # ```
 
 ### Imports
@@ -59,16 +58,16 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
-# Basic example settings.
+# Basic example settings:
 
-SUM_TOLERANCE = 0.1  # The tolerance we allow for the fulfillment of sum constraints
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-RESOLUTION = 5 if SMOKE_TEST else 11  # resolution of the discretization
+SUM_TOLERANCE = 0.1  # tolerance allowed to fulfill the sum constraints
+RESOLUTION = 5 if SMOKE_TEST else 11  # resolution for discretizing the slot amounts
 
 ### Parameter Setup
 
-# Create parameters for the slot labels. Each of our slots offers a choice between
-# 4 solvents.
+# First, we create the parameters for the slot labels. Each slot offers a choice of
+# four solvents:
 
 dict_solvents = {
     "water": "O",
@@ -86,17 +85,19 @@ slot3_label = SubstanceParameter(
     name="Slot3_Label", data=dict_solvents, encoding="MORDRED"
 )
 
-# Create parameters for the slot amounts.
+# Next, we create the parameters representing the slot amounts:
 
 slot1_amount = NumericalDiscreteParameter(
-    name="Slot1_Amount", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
+    name="Slot1_Amount", values=np.linspace(0, 100, RESOLUTION), tolerance=0.2
 )
 slot2_amount = NumericalDiscreteParameter(
-    name="Slot2_Amount", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
+    name="Slot2_Amount", values=np.linspace(0, 100, RESOLUTION), tolerance=0.2
 )
 slot3_amount = NumericalDiscreteParameter(
-    name="Slot3_Amount", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
+    name="Slot3_Amount", values=np.linspace(0, 100, RESOLUTION), tolerance=0.2
 )
+
+# We collect all parameters in a single list:
 
 parameters = [
     slot1_label,
@@ -109,39 +110,44 @@ parameters = [
 
 ### Constraint Setup
 
-# Like for all mixtures, let us ensure that the overall sum of slot amounts is always
-# 100.
+# For the sake of demonstration, we consider a scenario where we do *not* care about the
+# order of addition of components to the mixture, which imposes two additional
+# constraints.
+#
+# ```{admonition} Order of Addition
+# :class: note
+# Whether you need to impose the constraints for removing duplicates and imposing
+# permutation invariance depends on your use case. If the order of addition is relevant
+# to your mixture, the permutation invariance constraint should be discarded and one
+# could further argue that adding the same substance multiple times should be allowed.
+# ```
 
-sum_constraint = DiscreteSumConstraint(
-    parameters=["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"],
-    condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
-)
+#### Duplicate Substances
 
-# We could have a situation where we do not care about the order of addition of
-# components to the mixture. This comes with two additional constraints.
-
-# If there is no order of addition, it does not matter whether we have two slots
-# with the same substance or just one holding the combined amounts of two slots
-# with the same slot ingredient. Thus, let us make sure that no slot contains a
-# duplicate label entry.
+# Assuming that the order of addition is irrelevant, there is no difference between
+# having two slots with the same substance or having only one slot with the combined
+# amounts. Thus, we want to make sure that there are no such duplicate label entries:
 
 no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
     parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"]
 )
 
-# Next, we need to take care of permutation invariance. If our order of addition does
-# not matter, the result of exchanging slot 1 with slot 3 does not change the mixture,
-# i.e. the mixture slots are permutation invariant.
+#### Permutation Invariance
 
-# One complication arising for the permutation invariance in this case stems from the
-# fact that we not only have a label per slot, but also a numerical amount. Now if
-# this amount is zero, it actually does not matter what label the slot has (i.e.
-# what substance should be considered for that slot), because we are adding 0 of it to
-# the mixture anyway. In BayBE, we call this a "dependency", i.e. the slot labels
-# depend on the slot amounts and are only relevant if the amount fulfills some
-# condition (in this case "amount > 0"). The `DiscreteDependenciesConstraint` tells
-# the `DiscretePermutationInvarianceConstraint` about these dependencies so that they
-# are correctly included in the filtering process.
+# Next, we need to take care of permutation invariance. If our order of addition does
+# not matter, the result of interchanging any two slots does not alter the overall
+# mixture, i.e. the mixture slots are are considered permutation-invariant.
+
+# A complication with permutation invariance arises from the fact that we have not
+# only a label per slot, but also a numerical amount. If this amount is zero, then the
+# label of the slot becomes meaningless (i.e. which ingredient should be considered for the
+# slot), because adding zero of it does not change the mixture. In BayBE, we call
+# this a "dependency", i.e. the slot labels depend on the slot amounts and are only
+# relevant if the amount satisfies some condition (in this case "amount > 0").
+
+# The {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint` informs the
+# {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint` about
+# these dependencies so that they are correctly included in the filtering process:
 
 perm_inv_constraint = DiscretePermutationInvarianceConstraint(
     parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"],
@@ -156,17 +162,25 @@ perm_inv_constraint = DiscretePermutationInvarianceConstraint(
     ),
 )
 
+#### Substance Amounts
+
+# Interpreting the slot amounts as percentages, we need to ensure that their total is
+# always 100:
+
+sum_constraint = DiscreteSumConstraint(
+    parameters=["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"],
+    condition=ThresholdCondition(threshold=100, operator="=", tolerance=SUM_TOLERANCE),
+)
+
+
+# We store all constraints in a single list:
+
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 
-# ```{admonition} Order of Addition
-# :class: note
-# Whether you need to impose the constraints for removing duplicates and
-# permutation invariance depends on your use case. If the order of addition is relevant
-# to your mixture, there is no permutation invariance and one could argue that
-# duplicates should also be allowed if subsequent steps can add the same substance.
-# ```
 
 ### Campaign Setup
+
+# With all basic building blocks in place, we can now assemble our campaign:
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 objective = NumericalTarget(name="Target_1", mode="MAX").to_objective()
