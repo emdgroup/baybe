@@ -322,6 +322,10 @@ class Campaign(SerialMixin):
         # Cache the recommendations
         self._cached_recommendation = rec.copy()
 
+        # Update metadata
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            self.searchspace_metadata.loc[rec.index, _WAS_RECOMMENDED] = True
+
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
         telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
