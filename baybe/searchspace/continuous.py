@@ -524,7 +524,17 @@ class SubspaceContinuous(SerialMixin):
         num_of_params = len(self.parameters)
 
         eq_constraints, ineq_constraints = [], []
-        # We start with creating the interpoint constraints
+
+        # We start with the general constraints before going to interpoint constraints
+        for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
+            param_indices, coefficients, rhs = c.to_botorch(self.parameters)
+            for b in range(batch_size):
+                botorch_tuple = (param_indices + b * num_of_params, coefficients, rhs)
+                if c.is_eq:
+                    eq_constraints.append(botorch_tuple)
+                else:
+                    ineq_constraints.append(botorch_tuple)
+
         if self.has_interpoint_constraints:
             for c in [
                 *self.constraints_ip_lin_eq,
@@ -534,28 +544,19 @@ class SubspaceContinuous(SerialMixin):
                 param_index = {
                     name: self.parameter_names.index(name) for name in c.parameters
                 }
-                param_indices = [
+                param_indices_list = [
                     batch * num_of_params + param_index[param]
                     for param in c.parameters
                     for batch in range(batch_size)
                 ]
-                coefficients = list(chain(*zip(*repeat(c.coefficients, batch_size))))
+                coefficients_list = list(
+                    chain(*zip(*repeat(c.coefficients, batch_size)))
+                )
                 botorch_tuple = (
-                    torch.tensor(param_indices),
-                    torch.tensor(coefficients, dtype=DTypeFloatTorch),
+                    torch.tensor(param_indices_list),
+                    torch.tensor(coefficients_list, dtype=DTypeFloatTorch),
                     np.asarray(c.rhs, dtype=DTypeFloatNumpy).item(),
                 )
-                if c.is_eq:
-                    eq_constraints.append(botorch_tuple)
-                else:
-                    ineq_constraints.append(botorch_tuple)
-
-        # We now continue with the non-interpoint constraints which also need to be
-        # adjusted.
-        for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
-            param_indices, coefficients, rhs = c.to_botorch(self.parameters)
-            for b in range(batch_size):
-                botorch_tuple = (param_indices + b * num_of_params, coefficients, rhs)
                 if c.is_eq:
                     eq_constraints.append(botorch_tuple)
                 else:
