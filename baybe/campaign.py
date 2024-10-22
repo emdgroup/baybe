@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import Factory, define, evolve, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -21,6 +21,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.searchspace._annotated import AnnotatedSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
     to_searchspace,
@@ -39,6 +40,12 @@ from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
+
+# Metadata columns
+_WAS_RECOMMENDED = "was_recommended"
+_WAS_MEASURED = "was_measured"
+_DONT_RECOMMEND = "dont_recommend"
+_METADATA_COLUMNS = [_WAS_RECOMMENDED, _WAS_MEASURED, _DONT_RECOMMEND]
 
 
 @define
@@ -76,6 +83,20 @@ class Campaign(SerialMixin):
     """The employed recommender"""
 
     # Metadata
+    searchspace_metadata: pd.DataFrame = field(
+        init=False,
+        default=Factory(
+            lambda self: pd.DataFrame(
+                False,
+                index=self.searchspace.discrete.exp_rep.index,
+                columns=_METADATA_COLUMNS,
+            ),
+            takes_self=True,
+        ),
+        eq=eq_dataframe,
+    )
+    """Metadata tracking the experimentation status of the search space."""
+
     n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
 
@@ -252,10 +273,18 @@ class Campaign(SerialMixin):
             self.n_fits_done += 1
             self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
+        # Prepare the search space according to the current campaign state
+        annotated_searchspace = evolve(
+            self.searchspace,
+            discrete=AnnotatedSubspaceDiscrete.from_subspace(
+                self.searchspace.discrete, self.searchspace_metadata
+            ),
+        )
+
         # Get the recommended search space entries
         rec = self.recommender.recommend(
             batch_size,
-            self.searchspace,
+            annotated_searchspace,
             self.objective,
             self._measurements_exp,
             pending_experiments,
