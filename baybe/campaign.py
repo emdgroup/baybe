@@ -24,6 +24,7 @@ from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace._annotated import AnnotatedSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
+    SearchSpaceType,
     to_searchspace,
     validate_searchspace_from_config,
 )
@@ -36,6 +37,7 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils.boolean import eq_dataframe
+from baybe.utils.dataframe import fuzzy_row_match
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
@@ -226,6 +228,12 @@ class Campaign(SerialMixin):
             [self._measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
+        # Update metadata
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            self._mark_as_measured(
+                data, numerical_measurements_must_be_within_tolerance
+            )
+
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
@@ -234,6 +242,27 @@ class Campaign(SerialMixin):
             self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
+
+    def _mark_as_measured(
+        self,
+        measurements: pd.DataFrame,
+        numerical_measurements_must_be_within_tolerance: bool,
+    ) -> None:
+        """Mark the given elements of the space as measured.
+
+        Args:
+            measurements: A dataframe containing parameter configurations to be
+                marked as measured.
+            numerical_measurements_must_be_within_tolerance: See
+                :func:`baybe.utils.dataframe.fuzzy_row_match`.
+        """
+        idxs_matched = fuzzy_row_match(
+            self.searchspace.discrete.exp_rep,
+            measurements,
+            self.parameters,
+            numerical_measurements_must_be_within_tolerance,
+        )
+        self.searchspace_metadata.loc[idxs_matched, _WAS_MEASURED] = True
 
     def recommend(
         self,
