@@ -8,7 +8,7 @@ from attrs import define, field
 from pandas import DataFrame
 
 from benchmark.src.base import Benchmark
-from benchmark.src.result.basic import MultiResult, SingleResult
+from benchmark.src.result.basic_results import MultiResult, SingleResult
 
 
 @define

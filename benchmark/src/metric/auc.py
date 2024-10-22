@@ -43,7 +43,8 @@ class NormalizedAreaUnderTheCurve(Metric, NormalizationInterface):
 
         Args:
             data: The input DataFrame containing the data to be normalized.
-            index_name: The name of the column to be normalized.
+            index_name: The name of the column to be normalized. Usually
+                        the objective name.
 
         Returns:
             DataFrame: The DataFrame with the specified column normalized.
@@ -71,7 +72,15 @@ class NormalizedAreaUnderTheCurve(Metric, NormalizationInterface):
 
     @override
     def _check_threshold(self, values: dict[str, float]) -> None:
-        """Check if the threshold is met."""
+        """Check if the threshold is met.
+
+        Args:
+            values: The dictionary containing the scenario names and their values.
+
+        Raises:
+            ValueError: If the threshold is set and violated for the
+                        given list of objective_scenarios.
+        """
         if self.threshold is None:
             return
         for threshold_scenario, threshold_value in self.threshold.items():
@@ -90,7 +99,7 @@ class NormalizedAreaUnderTheCurve(Metric, NormalizationInterface):
     ) -> dict[str, float]:
         """Calculate the Area Under the Curve (AUC) for given prediction data.
 
-        Parameters:
+        Args:
             prediction: Prediction data containing the scenarios and their values.
                         objective_scenarios: A list of objective scenarios to evaluate.
                         If None, all scenarios are evaluated.

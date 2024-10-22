@@ -67,6 +67,13 @@ class SingleResult(Result):
 
         Writes the result to a csv file. If no path is given, the function
         will return the csv as a string.
+
+        Args:
+            path: Optional path to write the csv file to. If None, the function
+                will return the csv as a string.
+
+        Returns:
+            str | None: The csv as a string if no path is given.
         """
         if path is None:
             return self.benchmark_result.to_csv(index=False)
@@ -164,6 +171,13 @@ class MultiResult(Result):
 
         Combine the results of all runs and write them to one csv file.
         If no path is given, the function will return the csv as a string.
+
+        Args:
+            path: Optional path to write the csv file to. If None, the function
+                  will return the csv as a string.
+
+        Returns:
+            str | None: The csv as a string if no path is given.
         """
         list_of_dataframes = []
         iteration = 0

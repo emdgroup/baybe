@@ -51,7 +51,7 @@ class ResultPersistenceInterface(ABC):
         over a longer time period and to ensure that the results don't just a bit from
         version to version which would be not noticeable in the short term.
 
-        Parameters:
+        Args:
             experiment_id: The ID of the experiment.
 
         Returns:

@@ -22,7 +22,7 @@ def result_data_handler(
     If not, the function will use the local file system to store the data.
     This is meant to be used for development and local testing only.
 
-    Parameters:
+    Args:
         time_stamp_test_execution: The timestamp of the test.
 
     Returns:

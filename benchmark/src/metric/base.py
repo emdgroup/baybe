@@ -42,7 +42,11 @@ class Metric(ABC):
 
     @abstractmethod
     def _check_threshold(self, values: dict[str, float]) -> None:
-        """Check if the threshold is met."""
+        """Check if the threshold is met.
+
+        Args:
+            values: The dictionary containing the scenario names and their values.
+        """
         pass
 
 

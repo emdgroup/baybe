@@ -139,7 +139,7 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
         over a longer time period and to ensure that the results don't just a bit from
         version to version which would be not noticeable in the short term.
 
-        Parameters:
+        Args:
             experiment_id: The ID of the experiment.
 
         Returns:
@@ -154,7 +154,7 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
     def _get_last_available_release(self, experiment_id: UUID) -> str:
         """Retrieve the last available release for a given experiment ID.
 
-        Parameters:
+        Args:
             experiment_id: The ID of the experiment.
 
         Returns:
@@ -228,7 +228,7 @@ class S3ExperimentResultPersistence(ResultPersistenceInterface):
     def _retrieve_dataframe_from_s3(self, key: str) -> DataFrame:
         """Retrieve a DataFrame from an S3 bucket.
 
-        Parameters:
+        Args:
             key: The key of the object in the S3 bucket.
 
         Returns:
@@ -292,7 +292,7 @@ class LocalExperimentResultPersistence(ResultPersistenceInterface):
         over a longer time period and to ensure that the results don't just a bit from
         version to version which would be not noticeable in the short term.
 
-        Parameters:
+        Args:
             experiment_id: The ID of the experiment.
 
         Returns:
