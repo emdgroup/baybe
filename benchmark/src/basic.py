@@ -25,12 +25,12 @@ class SingleExecutionBenchmark(Benchmark):
         the result apply added metrics if any were set and
         measures execution time.
         """
-        start_ns = time.perf_counter_ns()
         try:
+            start_ns = time.perf_counter_ns()
             result, self._metadata = self.benchmark_function()
+            stop_ns = time.perf_counter_ns()
         except Exception as e:
             raise Exception(f"Error in benchmark {self.identifier}: {e}")
-        stop_ns = time.perf_counter_ns()
         time_delta = stop_ns - start_ns
         self._benchmark_result = SingleResult(
             self.title, self.identifier, self._metadata, result, time_delta
@@ -63,12 +63,12 @@ class MultiExecutionBenchmark(Benchmark):
         the result apply added metrics if any were set and
         measures execution time.
         """
-        start_ns = time.perf_counter_ns()
         try:
+            start_ns = time.perf_counter_ns()
             result, metadata = self.benchmark_function()
+            stop_ns = time.perf_counter_ns()
         except Exception as e:
             raise Exception(f"Error in benchmark {self.identifier}: {e}")
-        stop_ns = time.perf_counter_ns()
         time_delta = stop_ns - start_ns
         return result, time_delta, metadata
 
