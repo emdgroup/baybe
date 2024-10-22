@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from attr.validators import in_
 from attrs import define, field
+from typing_extensions import override
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -99,7 +100,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         )
 
     def to_botorch(
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+        self,
+        parameters: Sequence[NumericalContinuousParameter],
+        idx_offset: int = 0,
+        batch_size: int = 1,
     ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
@@ -109,6 +113,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         Args:
             parameters: The parameter objects of the continuous space.
             idx_offset: Offset to the provided parameter indices.
+            batch_size: the batch size used in the recommendation. Necessary for
+                interpoint constraints, ignored by all others.
 
         Returns:
             The tuple required by botorch.
@@ -147,11 +153,12 @@ class ContinuousLinearInterPointConstraint(ContinuousLinearConstraint):
     eval_during_modeling = True
     numerical_only = True
 
+    @override
     def to_botorch(
         self,
         parameters: Sequence[NumericalContinuousParameter],
-        batch_size: int,
         idx_offset: int = 0,
+        batch_size: int = 1,
     ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
@@ -160,8 +167,8 @@ class ContinuousLinearInterPointConstraint(ContinuousLinearConstraint):
 
         Args:
             parameters: The parameter objects of the continuous space.
-            batch_size: The size of the batch for which the constraint is applied.
             idx_offset: Offset to the provided parameter indices.
+            batch_size: The size of the batch for which the constraint is applied.
 
         Raises:
             ValueError: If ``batch_size`` is smaller than 1.
