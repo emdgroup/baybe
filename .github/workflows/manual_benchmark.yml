@@ -33,5 +33,4 @@ jobs:
         - name: Benchmark
           run: |
             pip install '.[dev]'
-            pip install boto3==1.18.63
             python -m benchmark
