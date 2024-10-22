@@ -55,7 +55,11 @@ class NormalizedAreaUnderTheCurve(Metric, NormalizationInterface):
 
     def __attrs_post_init__(self) -> None:
         """Post-initialization method for the class."""
-        LOOKUP_IS_MIN_MAX = isinstance(self.lookup, tuple) and len(self.lookup) == 2
+        LOOKUP_IS_MIN_MAX = (
+            isinstance(self.lookup, tuple)
+            and len(self.lookup) == 2
+            and all(isinstance(i, (int, float)) for i in self.lookup)
+        )
         if LOOKUP_IS_MIN_MAX:
             self._min_value_y, self._max_value_y = self.lookup
             return
