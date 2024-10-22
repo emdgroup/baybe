@@ -49,8 +49,11 @@ def main():
             executor.submit(func.execute_benchmark) for func in SINGE_BENCHMARKS_TO_RUN
         ]
         for future in concurrent.futures.as_completed(futures):
-            result_benchmarking: SingleResult = future.result()
-            persistance_handler.persist_new_result(result_benchmarking)
+            try:
+                result_benchmarking: SingleResult = future.result()
+                persistance_handler.persist_new_result(result_benchmarking)
+            except Exception as e:
+                print(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":

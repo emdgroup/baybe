@@ -71,11 +71,11 @@ class NormalizedAreaUnderTheCurve(Metric, NormalizationInterface):
         if self.threshold is None:
             return
         for threshold_scenario, threshold_value in self.threshold.items():
-            TRESHOLD_VIOLATED = (
+            THRESHOLD_VIOLATED = (
                 threshold_scenario in values
                 and abs(values[threshold_scenario]) < threshold_value
             )
-            if TRESHOLD_VIOLATED:
+            if THRESHOLD_VIOLATED:
                 raise ValueError(
                     f"Threshold {threshold_value} violated for {threshold_scenario}"
                 )
