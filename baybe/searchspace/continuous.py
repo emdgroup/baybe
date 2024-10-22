@@ -70,12 +70,12 @@ class SubspaceContinuous(SerialMixin):
     )
     """Nonlinear constraints."""
 
-    constraints_ip_lin_eq: tuple[ContinuousLinearInterPointConstraint] = field(
+    constraints_ip_lin_eq: tuple[ContinuousLinearInterPointConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     "Linear interpoint equality constraints."
 
-    constraints_ip_lin_ineq: tuple[ContinuousLinearInterPointConstraint] = field(
+    constraints_ip_lin_ineq: tuple[ContinuousLinearInterPointConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     "Linear interpoint inequality constraints."
