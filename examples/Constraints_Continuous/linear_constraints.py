@@ -18,7 +18,10 @@ import pandas as pd
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
-from baybe.constraints import ContinuousLinearConstraint
+from baybe.constraints import (
+    ContinuousLinearConstraint,
+    ContinuousLinearInterPointConstraint,
+)
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -139,3 +142,61 @@ print(
     "2.0*x_2 + 3.0*x_4 <= 1.0 satisfied in all recommendations? ",
     (2.0 * measurements["x_2"] + 3.0 * measurements["x_4"]).le(1.0 + TOLERANCE).all(),
 )
+
+
+### Using inter-point constraints
+
+# It is also possible to require inter-point constraints which constraint the value of
+# a single parameter across a full batch.
+# Since these constraints require information about the batch size, they are not used
+# during the creation of the search space but handed over to the `recommend` call.
+# This example models the following inter-point constraints and combines them also
+# with regular constraints.
+# 1. The sum of `x_1` across all batches needs to be >= 2.5.
+# 2. The sum of `x_2` across all batches needs to be exactly 5.
+# 3. The sum of `2*x_3` minus the sum of `x_4` across all batches needs to be >= 5.
+
+
+inter_constraints = [
+    ContinuousLinearInterPointConstraint(
+        parameters=["x_1"],
+        operator=">=",
+        coefficients=[1],
+        rhs=2.5,
+    ),
+    ContinuousLinearInterPointConstraint(
+        parameters=["x_2"], operator="=", coefficients=[1], rhs=5
+    ),
+    ContinuousLinearInterPointConstraint(
+        parameters=["x_3", "x_4"],
+        operator=">=",
+        coefficients=[2, -1],
+        rhs=5,
+    ),
+]
+
+### Construct search space without the previous constraints
+
+inter_searchspace = SearchSpace.from_product(
+    parameters=parameters, constraints=inter_constraints
+)
+
+inter_campaign = Campaign(
+    searchspace=inter_searchspace,
+    objective=objective,
+)
+
+for k in range(N_ITERATIONS):
+    rec = inter_campaign.recommend(batch_size=BATCH_SIZE)
+
+    # target value are looked up via the botorch wrapper
+    target_values = []
+    for index, row in rec.iterrows():
+        target_values.append(WRAPPED_FUNCTION(*row.to_list()))
+
+    rec["Target"] = target_values
+    inter_campaign.add_measurements(rec)
+    # Check inter-point constraints
+    assert rec["x_1"].sum() >= 2.5 - TOLERANCE
+    assert np.isclose(rec["x_2"].sum(), 5)
+    assert 2 * rec["x_3"].sum() - rec["x_4"].sum() >= 2.5 - TOLERANCE
