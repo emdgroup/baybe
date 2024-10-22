@@ -124,13 +124,15 @@ class DiscreteParameter(Parameter, ABC):
         return item in self.values
 
     def transform(self, series: pd.Series, /) -> pd.DataFrame:
-        """Transform parameter values from experimental to computational representation.
+        """Transform parameter values to computational representation.
 
         Args:
-            series: The parameter values to be transformed.
+            series: The parameter values in experimental representation to be
+                transformed.
 
         Returns:
-            The transformed parameter values.
+            A series containing the transformed values. The series name matches
+            that of the input.
         """
         if self.encoding:
             # replace each label with the corresponding encoding

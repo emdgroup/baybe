@@ -38,17 +38,16 @@ class Target(ABC, SerialMixin):
         return SingleTargetObjective(self)
 
     @abstractmethod
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Transform data into computational representation.
-
-        The transformation depends on the target mode, e.g. minimization, maximization,
-        matching, etc.
+    def transform(self, series: pd.Series, /) -> pd.Series:
+        """Transform target measurements to computational representation.
 
         Args:
-            data: The data to be transformed.
+            series: The target measurements in experimental representation to be
+                transformed.
 
         Returns:
-            A dataframe containing the transformed data.
+            A series containing the transformed measurements. The series name matches
+            that of the input.
         """
 
     @abstractmethod
