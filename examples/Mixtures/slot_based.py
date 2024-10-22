@@ -41,11 +41,9 @@
 ### Imports
 
 import math
-import os
 
 import numpy as np
 
-from baybe import Campaign
 from baybe.constraints import (
     DiscreteDependenciesConstraint,
     DiscreteNoLabelDuplicatesConstraint,
@@ -54,15 +52,12 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
-from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_measurements
+from baybe.searchspace.discrete import SubspaceDiscrete
 
 # Basic example settings:
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
 SUM_TOLERANCE = 0.1  # tolerance allowed to fulfill the sum constraints
-RESOLUTION = 5 if SMOKE_TEST else 11  # resolution for discretizing the slot amounts
+RESOLUTION = 5  # resolution for discretizing the slot amounts
 
 ### Parameter Setup
 
@@ -178,101 +173,86 @@ sum_constraint = DiscreteSumConstraint(
 constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 
 
-### Campaign Setup
+### Search Space Creation
 
-# With all basic building blocks in place, we can now assemble our campaign:
+# With all building blocks in place, we can now assemble our discrete space and inspect
+# its configurations:
 
-searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
-objective = NumericalTarget(name="Target_1", mode="MAX").to_objective()
-campaign = Campaign(searchspace=searchspace, objective=objective)
+space = SubspaceDiscrete.from_product(parameters=parameters, constraints=constraints)
+print(space.exp_rep)
 
 ### Verification of Constraints
 
-# Now let us take a look at some recommendations for this campaign and check whether
-# the constraints we imposed are indeed adhered to.
+# Let us programmatically assert that all constraints are satisfied:
 
-N_ITERATIONS = 2 if SMOKE_TEST else 3
-for kIter in range(N_ITERATIONS):
-    print(f"\n#### ITERATION {kIter+1} ####")
+amounts = space.exp_rep[["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]]
+labels = space.exp_rep[["Slot1_Label", "Slot2_Label", "Slot3_Label"]]
 
-    print("## ASSERTS ##")
-    print(
-        "No. of searchspace entries where amounts do not sum to 100.0:      ",
-        campaign.searchspace.discrete.exp_rep[
-            ["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]
-        ]
-        .sum(axis=1)
-        .apply(lambda x: x - 100.0)
-        .abs()
-        .gt(SUM_TOLERANCE)
-        .sum(),
-    )
-    print(
-        "No. of searchspace entries that have duplicate slot labels:        ",
-        campaign.searchspace.discrete.exp_rep[
-            ["Slot1_Label", "Slot2_Label", "Slot3_Label"]
-        ]
-        .nunique(axis=1)
-        .ne(3)
-        .sum(),
-    )
-    print(
-        "No. of searchspace entries with permutation-invariant combinations:",
-        campaign.searchspace.discrete.exp_rep[
-            ["Slot1_Label", "Slot2_Label", "Slot3_Label"]
-        ]
-        .apply(frozenset, axis=1)
-        .to_frame()
-        .join(
-            campaign.searchspace.discrete.exp_rep[
-                ["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]
-            ]
-        )
-        .duplicated()
-        .sum(),
-    )
-    # The following asserts only work if the tolerance for the threshold condition in
-    # the constraint are not 0. Otherwise, the sum/prod constraints will remove more
-    # points than intended due to numeric rounding
-    print(
-        f"No. of unique 1-solvent entries (exp. {math.comb(len(dict_solvents), 1)*1})",
-        (
-            campaign.searchspace.discrete.exp_rep[
-                ["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]
-            ]
-            == 0.0
-        )
-        .sum(axis=1)
-        .eq(2)
-        .sum(),
-    )
-    print(
-        f"No. of unique 2-solvent entries (exp."
-        f" {math.comb(len(dict_solvents), 2)*(RESOLUTION-2)})",
-        (
-            campaign.searchspace.discrete.exp_rep[
-                ["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]
-            ]
-            == 0.0
-        )
-        .sum(axis=1)
-        .eq(1)
-        .sum(),
-    )
-    print(
-        f"No. of unique 3-solvent entries (exp."
-        f" {math.comb(len(dict_solvents), 3)*((RESOLUTION-3)*(RESOLUTION-2))//2})",
-        (
-            campaign.searchspace.discrete.exp_rep[
-                ["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]
-            ]
-            == 0.0
-        )
-        .sum(axis=1)
-        .eq(0)
-        .sum(),
-    )
 
-    rec = campaign.recommend(batch_size=5)
-    add_fake_measurements(rec, campaign.targets)
-    campaign.add_measurements(rec)
+# * All amounts sum to 100:
+
+n_wrong_sum = amounts.sum(axis=1).apply(lambda x: x - 100).abs().gt(SUM_TOLERANCE).sum()
+assert n_wrong_sum == 0
+print("Number of configurations whose amounts do not sum to 100: ", n_wrong_sum)
+
+
+# * There are no duplicate slot labels:
+
+n_duplicates = labels.nunique(axis=1).ne(3).sum()
+assert n_duplicates == 0
+print("Number of configurations with duplicate slot labels: ", n_duplicates)
+
+
+# * There are no permutation-invariant configurations:
+
+n_permute = labels.apply(frozenset, axis=1).to_frame().join(amounts).duplicated().sum()
+assert n_permute == 0
+print("Number of permuted configurations: ", n_permute)
+
+
+### Verification of Span
+
+# Finally, we also assert if we have completely spanned the space of allowed
+# configurations by comparing the numbers of unique `K`-solvent entries against their
+# theoretical values.
+
+# ```{admonition} Theoretical Span
+# :class: info
+
+# The number of possible `K`-solvent entries can be found by imagining the corresponding
+# [traditional mixture representation](/examples/Mixtures/traditional.md) and solving a
+# slightly more complex version of the ["stars and bars"
+# problem](https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)), where the
+# number of non-empty bins is fixed. That is, we need to ask how many possible ways
+# exist to distribute `N` items (= increase from one percentage amount to the next)
+# across `M` bins (= number of solvents) if exactly `K` bins are non-empty (= number of
+# solvents in the configurations).
+#
+# There are `(M choose K)` ways to select the non-empty buckets. When distributing the
+# `N` items, one item needs to go to each of the `K` buckets for it to be non-empty.
+# The remaining `N - K` items can be freely distributed among the `K` buckets. The
+# number of configurations for the latter is given by the "stars and bars" formula,
+# which states that `X` indistinguishable items can be placed in `Y` distinguishable
+# bins in `((X + Y -1) choose (Y - 1))` ways. Setting `X`=`N-K` and `Y`=`K` gives
+# `((N - 1) choose (K - 1))`. Combined with the former count, we get the formula
+# implemented in the helper function below.
+# ```
+
+# Helper function to compute the theoretical numbers:
+
+
+def n_combinations(N: int, M: int, K: int) -> int:
+    """Get number of ways to put `N` items into `M` bins yielding `K` non-empty bins."""
+    return math.comb(M, K) * math.comb(N - 1, K - 1)
+
+
+# Verify that the space is fully spanned:
+
+for K in range(1, 4):
+    n_combinations_expected = n_combinations(RESOLUTION - 1, len(dict_solvents), K)
+    n_combinations_actual = (amounts != 0).sum(axis=1).eq(K).sum()
+    assert n_combinations_expected == n_combinations_actual
+    print(
+        f"Number of unique {K}-solvent entries: "
+        f"{n_combinations_actual} ({n_combinations_expected} expected)"
+    )
