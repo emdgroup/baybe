@@ -1032,17 +1032,16 @@
 <div class="viewcode-block" id="Target.transform">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.base.Target.html#baybe.targets.base.Target.transform">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform data into computational representation.</span>
-
-<span class="sd">        The transformation depends on the target mode, e.g. minimization, maximization,</span>
-<span class="sd">        matching, etc.</span>
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform target measurements to computational representation.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            data: The data to be transformed.</span>
+<span class="sd">            series: The target measurements in experimental representation to be</span>
+<span class="sd">                transformed.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A dataframe containing the transformed data.</span>
+<span class="sd">            A series containing the transformed measurements. The series name matches</span>
+<span class="sd">            that of the input.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
 
 

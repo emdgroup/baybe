@@ -1182,7 +1182,7 @@
 
         <span class="c1"># Transform all targets individually</span>
         <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-            <span class="n">transformed</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">[[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">]])</span>
+            <span class="n">transformed</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
 
         <span class="c1"># Scalarize the transformed targets into desirability values</span>
         <span class="n">vals</span> <span class="o">=</span> <span class="n">scalarize</span><span class="p">(</span><span class="n">transformed</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scalarizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalized_weights</span><span class="p">)</span>

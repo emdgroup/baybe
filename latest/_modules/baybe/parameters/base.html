@@ -1133,13 +1133,15 @@
 <div class="viewcode-block" id="DiscreteParameter.transform">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.base.DiscreteParameter.html#baybe.parameters.base.DiscreteParameter.transform">[docs]</a>
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform parameter values from experimental to computational representation.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform parameter values to computational representation.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            series: The parameter values to be transformed.</span>
+<span class="sd">            series: The parameter values in experimental representation to be</span>
+<span class="sd">                transformed.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The transformed parameter values.</span>
+<span class="sd">            A series containing the transformed values. The series name matches</span>
+<span class="sd">            that of the input.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">:</span>
             <span class="c1"># replace each label with the corresponding encoding</span>

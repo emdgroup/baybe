@@ -1069,14 +1069,15 @@
                 <span class="p">)</span>
         <span class="c1"># &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; Deprecation</span>
 
-        <span class="c1"># Even for a single target, it is convenient to use the existing machinery</span>
-        <span class="c1"># instead of re-implementing the validation logic</span>
-        <span class="n">targets</span> <span class="o">=</span> <span class="n">get_transform_objects</span><span class="p">(</span>
+        <span class="c1"># Even for a single target, it is convenient to use the existing validation</span>
+        <span class="c1"># machinery instead of re-implementing it</span>
+        <span class="n">get_transform_objects</span><span class="p">(</span>
             <span class="n">df</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="p">],</span> <span class="n">allow_missing</span><span class="o">=</span><span class="n">allow_missing</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="n">allow_extra</span>
         <span class="p">)</span>
-        <span class="n">target_data</span> <span class="o">=</span> <span class="n">df</span><span class="p">[[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">target_data</span><span class="p">)</span></div>
+        <span class="n">target_data</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">target_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span></div>
 </div>
 
 

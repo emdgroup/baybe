@@ -1035,7 +1035,7 @@ labels given.</p>
 <td><p>Create a one-dimensional search space from the parameter.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.parameters.substance.SubstanceParameter.transform" title="baybe.parameters.substance.SubstanceParameter.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>(series, /)</p></td>
-<td><p>Transform parameter values from experimental to computational representation.</p></td>
+<td><p>Transform parameter values to computational representation.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1198,16 +1198,18 @@ labels given.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.parameters.substance.SubstanceParameter.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.2.3)"><span class="pre">Series</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.parameters.substance.SubstanceParameter.transform" title="Link to this definition">¶</a></dt>
-<dd><p>Transform parameter values from experimental to computational representation.</p>
+<dd><p>Transform parameter values to computational representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>series</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code></a></span>) – The parameter values to be transformed.</p>
+<dd class="field-odd"><p><strong>series</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code></a></span>) – The parameter values in experimental representation to be
+transformed.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The transformed parameter values.</p>
+<dd class="field-odd"><p>A series containing the transformed values. The series name matches
+that of the input.</p>
 </dd>
 </dl>
 </dd></dl>
