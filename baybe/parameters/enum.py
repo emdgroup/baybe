@@ -45,6 +45,9 @@ class SubstanceEncoding(ParameterEncoding):
     ECFP = "ECFP"
     """:class:`skfp.fingerprints.ECFPFingerprint`"""
 
+    ELECTROSHAPE = "ELECTROSHAPE"
+    """:class:`skfp.fingerprints.ElectroShapeFingerprint`"""
+
     MORGAN_FP = "MORGAN_FP"
     """
     Deprecated! Uses :class:`skfp.fingerprints.ECFPFingerprint` with ``fp_size=1024``
