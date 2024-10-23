@@ -5,9 +5,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import shap
 
 from baybe import Campaign
+from baybe._optional.diagnostics import shap
 from baybe.utils.dataframe import to_tensor
 
 
