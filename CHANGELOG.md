@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+
+### Deprecations
+- Passing a dataframe via the `data` argument to `Objective.transform` is no longer
+  possible. The dataframe must now be passed as positional argument.
+- The new `allow_extra` flag is automatically set to `True` in `Objective.transform`
+  when left unspecified
+- `get_transform_parameters` has been replaced with `get_transform_objects`
+- Passing a dataframe via the `data` argument to `Target.transform` is no longer
+  possible. The data must now be passed as a series as first positional argument.
+
+## [0.11.2] - 2024-10-11
+### Added
+- `n_restarts` and `n_raw_samples` keywords to configure continuous optimization
+  behavior for `BotorchRecommender`
+- User guide for utilities
+- `mypy` rule expecting explicit `override` markers for method overrides
+
+### Changed
+- Utility `add_fake_results` renamed to `add_fake_measurements`
+- Utilities `add_fake_measurements` and `add_parameter_noise` now also return the
+  dataframe they modified in-place
+
+### Fixed
+- Leftover attrs-decorated classes are garbage collected before the subclass tree is
+  traversed, avoiding sporadic serialization problems
+
 ## [0.11.1] - 2024-10-01
 ### Added
 - Continuous linear constraints have been consolidated in the new
@@ -16,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
 
-### Deprecated
+### Deprecations
 - `ContinuousLinearEqualityConstraint` and `ContinuousLinearInequalityConstraint`
   replaced by `ContinuousLinearConstraint` with the corresponding `operator` keyword
 

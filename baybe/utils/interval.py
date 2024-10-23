@@ -1,5 +1,6 @@
 """Utilities for handling intervals."""
 
+import gc
 from collections.abc import Iterable
 from functools import singledispatchmethod
 from typing import TYPE_CHECKING, Any
@@ -150,3 +151,6 @@ def use_fallback_constructor_hook(value: Any, cls: type[Interval]) -> Interval:
 
 # Register structure hooks
 converter.register_structure_hook(Interval, use_fallback_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

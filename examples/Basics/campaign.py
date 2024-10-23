@@ -11,7 +11,7 @@ from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 
 ### Setup
 
@@ -82,10 +82,10 @@ print(recommendation)
 
 # Adding target values is done by creating a new column in the `recommendation`
 # dataframe named after the target.
-# In this example, we use the `add_fake_results()` utility to create fake results.
+# In this example, we use the `add_fake_measurements()` utility to create fake results.
 # We then update the campaign by adding the measurements.
 
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 

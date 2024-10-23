@@ -1,5 +1,6 @@
 """Recommenders based on clustering."""
 
+import gc
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
@@ -10,6 +11,7 @@ from scipy.stats import multivariate_normal
 from sklearn.base import ClusterMixin
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import StandardScaler
+from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
@@ -94,14 +96,13 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         """
         raise NotImplementedError("This line in the code should be unreachable. Sry.")
 
+    @override
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
-        # See base class.
-
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
@@ -127,6 +128,7 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         # Convert positional indices into DataFrame indices and return result
         return candidates_comp.index[selection]
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Compatibility", self.compatibility, single_line=True),
@@ -159,13 +161,14 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
         """Create the default model parameters."""
         return {"max_iter": 100, "init": "k-medoids++"}
 
+    @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        # See base class.
         from sklearn_extra.cluster import KMedoids
 
         return KMedoids
 
+    @override
     def _make_selection_custom(
         self,
         model: ClusterMixin,
@@ -207,13 +210,14 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
         """Create the default model parameters."""
         return {"max_iter": 1000, "n_init": 50}
 
+    @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        # See base class.
         from sklearn.cluster import KMeans
 
         return KMeans
 
+    @override
     def _make_selection_custom(
         self,
         model: ClusterMixin,
@@ -251,13 +255,14 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
     model_cluster_num_parameter_name: ClassVar[str] = "n_components"
     # See base class.
 
+    @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        # See base class.
         from sklearn.mixture import GaussianMixture
 
         return GaussianMixture
 
+    @override
     def _make_selection_custom(
         self,
         model: ClusterMixin,
@@ -290,3 +295,7 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
 
             selection.append(np.argmax(density).item())
         return selection
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

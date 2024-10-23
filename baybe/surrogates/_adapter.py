@@ -25,12 +25,11 @@ class AdapterModel(Model):
         self._surrogate = surrogate
 
     @property
-    def num_outputs(self) -> int:  # noqa: D102
-        # See base class.
+    def num_outputs(self) -> int:
         # TODO: So far, the usage is limited to single-output models.
         return 1
 
-    def posterior(  # noqa: D102
+    def posterior(
         self,
         X: Tensor,
         output_indices: list[int] | None = None,
@@ -38,7 +37,6 @@ class AdapterModel(Model):
         posterior_transform: Callable[[Posterior], Posterior] | None = None,
         **kwargs: Any,
     ) -> Posterior:
-        # See base class.
         if (
             (output_indices is not None)
             or observation_noise

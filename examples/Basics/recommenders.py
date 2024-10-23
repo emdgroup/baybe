@@ -29,7 +29,7 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 
 ### Available recommenders suitable for initial recommendation
 
@@ -179,7 +179,7 @@ recommendation = campaign.recommend(batch_size=3)
 print("\n\nRecommended experiments: ")
 print(recommendation)
 
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 print("\n\nRecommended experiments with fake measured values: ")
 print(recommendation)
 

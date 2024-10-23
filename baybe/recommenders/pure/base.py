@@ -1,10 +1,12 @@
 """Base classes for all pure recommenders."""
 
+import gc
 from abc import ABC
 from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
+from typing_extensions import override
 
 from baybe.exceptions import NotEnoughPointsLeftError
 from baybe.objectives.base import Objective
@@ -40,7 +42,8 @@ class PureRecommender(ABC, RecommenderProtocol):
     the corresponding points will be removed from the candidates. This only has an
     influence in discrete search spaces."""
 
-    def recommend(  # noqa: D102
+    @override
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,
@@ -48,7 +51,6 @@ class PureRecommender(ABC, RecommenderProtocol):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
@@ -232,3 +234,7 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Return recommendations
         return rec
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

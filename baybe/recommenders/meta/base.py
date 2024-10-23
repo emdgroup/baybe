@@ -1,11 +1,13 @@
 """Base classes for all meta recommenders."""
 
+import gc
 from abc import ABC, abstractmethod
 from typing import Any
 
 import cattrs
 import pandas as pd
 from attrs import define, field
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
@@ -91,6 +93,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
 
         return recommender
 
+    @override
     def recommend(
         self,
         batch_size: int,
@@ -146,3 +149,6 @@ converter.register_unstructure_hook(
 converter.register_structure_hook(
     MetaRecommender, get_base_structure_hook(MetaRecommender)
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

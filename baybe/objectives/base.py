@@ -1,10 +1,11 @@
 """Base classes for all objectives."""
 
+import gc
 from abc import ABC, abstractmethod
 
+import cattrs
 import pandas as pd
 from attrs import define
-from cattrs import override
 
 from baybe.objectives.deprecation import structure_objective
 from baybe.serialization.core import (
@@ -28,15 +29,29 @@ class Objective(ABC, SerialMixin):
         """The targets included in the objective."""
 
     @abstractmethod
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform(
+        self,
+        df: pd.DataFrame,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool = False,
+    ) -> pd.DataFrame:
         """Transform target values from experimental to computational representation.
 
         Args:
-            data: The data to be transformed. Must contain columns for all targets
-                but can contain additional columns.
+            df: The dataframe to be transformed. The allowed columns of the dataframe
+                are dictated by the ``allow_missing`` and ``allow_extra`` flags.
+            allow_missing: If ``False``, each target of the objective must have
+                exactly one corresponding column in the given dataframe. If ``True``,
+                the dataframe may contain only a subset of target columns.
+            allow_extra: If ``False``, each column present in the dataframe must
+                correspond to exactly one target of the objective. If ``True``, the
+                dataframe may contain additional non-target-related columns, which
+                will be ignored.
 
         Returns:
-            A new dataframe with the targets in computational representation.
+            A corresponding dataframe with the targets in computational representation.
         """
 
 
@@ -52,8 +67,11 @@ converter.register_unstructure_hook(
     lambda x: unstructure_base(
         x,
         overrides=dict(
-            _target=override(rename="target"),
-            _targets=override(rename="targets"),
+            _target=cattrs.override(rename="target"),
+            _targets=cattrs.override(rename="targets"),
         ),
     ),
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

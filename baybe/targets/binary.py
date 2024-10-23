@@ -1,11 +1,14 @@
 """Binary targets."""
 
+import gc
+import warnings
 from typing import TypeAlias
 
 import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.exceptions import InvalidTargetValueError
 from baybe.serialization import SerialMixin
@@ -52,36 +55,58 @@ class BinaryTarget(Target, SerialMixin):
                 f"target '{self.name}': {value}"
             )
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # TODO: The method (signature) needs to be refactored, potentially when
-        #   enabling multi-target settings. The current input type suggests that passing
-        #   dataframes is allowed, but the code was designed for single targets and
-        #   desirability objectives, where only one column is present.
-        assert data.shape[1] == 1
+    @override
+    def transform(
+        self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
+    ) -> pd.Series:
+        # >>>>>>>>>> Deprecation
+        if not ((series is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the data to be transformed as first positional argument."
+            )
+
+        if data is not None:
+            assert data.shape[1] == 1
+            series = data.iloc[:, 0]
+            warnings.warn(
+                "Providing a dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your data "
+                "in form of a series as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `series` must be a series here
+        assert isinstance(series, pd.Series)
+        # <<<<<<<<<< Deprecation
 
         # Validate target values
-        col = data.iloc[:, [0]]
-        invalid = col[~col.isin([self.success_value, self.failure_value]).values]
+        invalid = series[
+            ~series.isin([self.success_value, self.failure_value]).to_numpy()
+        ]
         if len(invalid) > 0:
             raise InvalidTargetValueError(
                 f"The following values entered for target '{self.name}' are not in the "
                 f"set of accepted choice values "
-                f"{{self.success_value, self.failure_value}}: \n{invalid}"
+                f"{set((self.success_value, self.failure_value))}: {set(invalid)}"
             )
 
         # Transform
-        success_idx = data.iloc[:, 0] == self.success_value
-        return pd.DataFrame(
+        success_idx = series == self.success_value
+        return pd.Series(
             np.where(success_idx, _SUCCESS_VALUE_COMP, _FAILURE_VALUE_COMP),
-            index=data.index,
-            columns=data.columns,
+            index=series.index,
+            name=series.name,
         )
 
-    def summary(self) -> dict:  # noqa: D102
-        # See base class.
+    @override
+    def summary(self) -> dict:
         return dict(
             Type=self.__class__.__name__,
             Name=self.name,
             Success_value=self.success_value,
             Failure_value=self.failure_value,
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

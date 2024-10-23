@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, TypeVar
 
 from attrs import asdict, has
+from typing_extensions import override
 
 from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 
@@ -22,6 +23,7 @@ class Dummy:
     Useful e.g. for detecting duplicates in constraints.
     """
 
+    @override
     def __repr__(self):
         """Return a representation of the placeholder."""
         return "<dummy>"
