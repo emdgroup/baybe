@@ -1,0 +1,51 @@
+name: Attaches a runner to your repository
+
+on:
+  workflow_call:
+    inputs:
+      RunnerCount:
+        description: 'Number of runners to attach'
+        required: false
+        default: 1
+        type: number
+      RunnerComputeType:
+        description: 'The type which indicates the compute power of the runner. Either "XS", "S", "M", "L" or "XL"'
+        required: false
+        default: 'S'
+        type: string
+    secrets:
+      GitHubToken:
+        description: 'GitHub Token which must provide admin permissions to attach a runner to the repository'
+        required: true
+      AWSRoleToAssume:
+        description: 'AWS Role ARN which must provide permissions to attach a runner to the repository (Will be provided within the documentation)'  
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+    add-runner:
+        name: Add one JIT Runner
+        runs-on: ubuntu-22.04
+        steps:
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            role-to-assume: ${{ secrets.AWSRoleToAssume }}
+            role-session-name: Github_Add_Runner
+            aws-region: eu-central-1
+
+        - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v2
+
+        - name: Execute Lambda function
+          run: |
+            aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ secrets.GitHubToken }}", "count_container":  ${{ inputs.RunnerCount }}, "container_compute": "${{ inputs.RunnerComputeType }}", "repository": "${{ github.repository }}" }'  response.json
+            cat response.json
+            if ! grep -q '"statusCode": 200' response.json; then
+              echo "Lambda function failed. statusCode is not 200."
+              exit 1
+            fi
