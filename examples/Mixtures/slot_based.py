@@ -2,22 +2,22 @@
 
 ### Terminology
 
-# Modeling a mixture is possible in a non-traditional way by using a concept we
-# refer to as a **slot**. A slot is represented through the combination of two
-# parameters: one indicating the amount of a mixture ingredient, and another indicating
-# the type of ingredient (as a label) populating the slot. Unlike [traditional
-# mixture modeling](/examples/Mixtures/traditional.md), the total number of parameters
-# is not determined by how many ingredient choices we have, but by the maximum number of
-# slots we allow. For instance, if we want to design a mixture with *up to three*
-# ingredients, we can do so by creating three slots represented by six parameters.
+# Modeling a mixture is possible in a non-traditional way by using a concept we refer to
+# as a **slot**. A slot is represented through the combination of two parameters: one
+# indicating the *amount* of a mixture ingredient, and another indicating the *type* of
+# the ingredient (as a label) populating the slot. Unlike in [traditional mixture
+# modeling](/examples/Mixtures/traditional.md), the total number of parameters is not
+# determined by how many ingredient choices we have, but by the maximum number of slots
+# we allow. For instance, if we want to design a mixture with *up to three* ingredients,
+# we can do so by creating three slots represented by six parameters.
 
 # A corresponding search space could look like this:
 # | Slot1_Label | Slot1_Amount | Slot2_Label | Slot2_Amount | Slot3_Label | Slot3_Amount |
 # |:------------|:-------------|:------------|:-------------|:------------|:-------------|
-# | Solvent1    | 10           | Solvent5    | 20           | Solvent4    | 30           |
+# | Solvent1    | 10           | Solvent5    | 20           | Solvent4    | 70           |
 # | Solvent1    | 30           | Solvent8    | 40           | Solvent2    | 30           |
-# | Solvent3    | 20           | Solvent1    | 35           | Solvent9    | 30           |
-# | Solvent2    | 15           | Solvent3    | 10           | Solvent1    | 30           |
+# | Solvent3    | 20           | Solvent1    | 35           | Solvent9    | 45           |
+# | Solvent2    | 15           | Solvent3    | 40           | Solvent1    | 45           |
 
 # The slot-based representation has one decided advantage over traditional
 # modeling: We can use BayBE's label encodings for the label parameters. For
@@ -27,7 +27,7 @@
 # mixture optimization.
 
 # In this example, we show how to design such a search space, including the various
-# discrete constraints we need to impose. We simulate a situation where we want to mix
+# discrete constraints we need to impose. We consider a situation where we want to mix
 # up to three solvents, whose respective amounts must add up to 100.
 
 # ```{admonition} Discrete vs. Continuous Modeling
@@ -52,7 +52,7 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
-from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.searchspace import SubspaceDiscrete
 
 # Basic example settings:
 
@@ -107,7 +107,7 @@ parameters = [
 
 # For the sake of demonstration, we consider a scenario where we do *not* care about the
 # order of addition of components to the mixture, which imposes two additional
-# constraints.
+# constraints: one for removing duplicates and one for imposing permutation invariance.
 #
 # ```{admonition} Order of Addition
 # :class: note
@@ -121,7 +121,9 @@ parameters = [
 
 # Assuming that the order of addition is irrelevant, there is no difference between
 # having two slots with the same substance or having only one slot with the combined
-# amounts. Thus, we want to make sure that there are no such duplicate label entries:
+# amounts. Thus, we want to make sure that there are no such duplicate label entries,
+# which can be achieved using a
+# {class}`~baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint`:
 
 no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
     parameters=["Slot1_Label", "Slot2_Label", "Slot3_Label"]
@@ -133,12 +135,12 @@ no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
 # not matter, the result of interchanging any two slots does not alter the overall
 # mixture, i.e. the mixture slots are are considered permutation-invariant.
 
-# A complication with permutation invariance arises from the fact that we have not
-# only a label per slot, but also a numerical amount. If this amount is zero, then the
-# label of the slot becomes meaningless (i.e. which ingredient should be considered for the
-# slot), because adding zero of it does not change the mixture. In BayBE, we call
-# this a "dependency", i.e. the slot labels depend on the slot amounts and are only
-# relevant if the amount satisfies some condition (in this case "amount > 0").
+# A complication with permutation invariance arises from the fact that we have not only
+# a label per slot, but also a numerical amount. If this amount is zero, then the label
+# of the slot becomes meaningless, because adding zero of the corresponding substance
+# does not change the mixture. In BayBE, we call this a "dependency", i.e. the slot
+# labels depend on the slot amounts and are only relevant if the amount satisfies some
+# condition (in this case "amount > 0").
 
 # The {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint` informs the
 # {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint` about
@@ -224,9 +226,9 @@ print("Number of permuted configurations: ", n_permute)
 # slightly more complex version of the ["stars and bars"
 # problem](https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)), where the
 # number of non-empty bins is fixed. That is, we need to ask how many possible ways
-# exist to distribute `N` items (= increase from one percentage amount to the next)
-# across `M` bins (= number of solvents) if exactly `K` bins are non-empty (= number of
-# solvents in the configurations).
+# exist to distribute `N` items (= increase from one percentage level to the next)
+# across `M` bins (= number of available solvents) if exactly `K` bins are non-empty (=
+# number of solvents allowed in the mixture).
 #
 # There are `(M choose K)` ways to select the non-empty buckets. When distributing the
 # `N` items, one item needs to go to each of the `K` buckets for it to be non-empty.
