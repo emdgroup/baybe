@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+- Linear interpoint constraints for continuous search spaces
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer

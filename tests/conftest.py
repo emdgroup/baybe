@@ -29,6 +29,7 @@ from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
+    ContinuousLinearInterPointConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
@@ -553,6 +554,30 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             coefficients=[1.0, 3.0],
             rhs=0.3,
         ),
+        "InterConstraint_1": ContinuousLinearInterPointConstraint(
+            parameters=["Conti_finite1"],
+            operator="=",
+            coefficients=[1],
+            rhs=0.3,
+        ),
+        "InterConstraint_2": ContinuousLinearInterPointConstraint(
+            parameters=["Conti_finite1"],
+            operator=">=",
+            coefficients=[2],
+            rhs=0.3,
+        ),
+        "InterConstraint_3": ContinuousLinearInterPointConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            operator="=",
+            coefficients=[1, 1],
+            rhs=0.3,
+        ),
+        "InterConstraint_4": ContinuousLinearInterPointConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[2, -1],
+            operator=">=",
+            rhs=0.3,
+        ),
     }
     return [
         c_item
@@ -895,7 +920,10 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
     ),
 )
 def run_iterations(
-    campaign: Campaign, n_iterations: int, batch_size: int, add_noise: bool = True
+    campaign: Campaign,
+    n_iterations: int,
+    batch_size: int,
+    add_noise: bool = True,
 ) -> None:
     """Run a campaign for some fake iterations.
 
