@@ -1,9 +1,4 @@
-"""Test for initial simple input, recommendation and adding fake results.
-
-Fake target measurements are simulated for each round. Noise is added every second
-round. From the three recommendations only one is actually added to test the matching
-and metadata. Target objective is minimize to test computational transformation.
-"""
+"""Tests for the custom parameter."""
 
 import pytest
 
