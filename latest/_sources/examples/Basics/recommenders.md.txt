@@ -266,15 +266,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    262  Butyornitrile  Potassium pivalate                     BrettPhos   
-    359       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-    243       p-Xylene   Potassium acetate                     BrettPhos   
+             Solvent                Base                        Ligand  \
+    327  Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
+    392     p-Xylene   Potassium acetate  Di-tert-butylphenylphosphine   
+    259  Butyl Ester  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration  
-    262         90.0          0.100  
-    359        120.0          0.153  
-    243         90.0          0.057  
+    327        105.0          0.057  
+    392        105.0          0.153  
+    259        120.0          0.100  
 
 
 
@@ -287,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    262  Butyornitrile  Potassium pivalate                     BrettPhos   
-    359       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-    243       p-Xylene   Potassium acetate                     BrettPhos   
+             Solvent                Base                        Ligand  \
+    327  Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
+    392     p-Xylene   Potassium acetate  Di-tert-butylphenylphosphine   
+    259  Butyl Ester  Potassium pivalate                     BrettPhos   
     
-         Temperature  Concentration     yield  
-    262         90.0          0.100  3.857088  
-    359        120.0          0.153  7.515822  
-    243         90.0          0.057  4.921568  
+         Temperature  Concentration      yield  
+    327        105.0          0.057  10.060155  
+    392        105.0          0.153  14.874613  
+    259        120.0          0.100  11.098960  
 
 
 
