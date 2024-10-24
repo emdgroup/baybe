@@ -145,7 +145,7 @@ def smiles_to_fingerprint_features(
             for mol in mol_list
         ]
     )
-    name = f"{fingerprint_encoder.__class__.__name__.removesuffix('Fingerprint')}_"
+    name = f"{encoding.name}_"
     prefix = prefix + "_" if prefix else ""
     col_names = [
         prefix + name + f.split("fingerprint")[1]
