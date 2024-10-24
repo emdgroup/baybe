@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import Factory, define, evolve, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -21,6 +21,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.searchspace._annotated import _AnnotatedSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -36,10 +37,17 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils.boolean import eq_dataframe
+from baybe.utils.dataframe import fuzzy_row_match
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
+
+# Metadata columns
+_WAS_RECOMMENDED = "was_recommended"
+_WAS_MEASURED = "was_measured"
+_DONT_RECOMMEND = "dont_recommend"
+_METADATA_COLUMNS = [_WAS_RECOMMENDED, _WAS_MEASURED, _DONT_RECOMMEND]
 
 
 @define
@@ -77,6 +85,20 @@ class Campaign(SerialMixin):
     """The employed recommender"""
 
     # Metadata
+    searchspace_metadata: pd.DataFrame = field(
+        init=False,
+        default=Factory(
+            lambda self: pd.DataFrame(
+                False,
+                index=self.searchspace.discrete.exp_rep.index,
+                columns=_METADATA_COLUMNS,
+            ),
+            takes_self=True,
+        ),
+        eq=eq_dataframe,
+    )
+    """Metadata tracking the experimentation status of the search space."""
+
     n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
 
@@ -196,13 +218,6 @@ class Campaign(SerialMixin):
                     f" the provided dataframe."
                 )
 
-        # Update meta data
-        # TODO: refactor responsibilities
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self.searchspace.discrete.mark_as_measured(
-                data, numerical_measurements_must_be_within_tolerance
-            )
-
         # Read in measurements and add them to the database
         self.n_batches_done += 1
         to_insert = data.copy()
@@ -213,6 +228,12 @@ class Campaign(SerialMixin):
             [self._measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
+        # Update metadata
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            self._mark_as_measured(
+                data, numerical_measurements_must_be_within_tolerance
+            )
+
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
@@ -221,6 +242,27 @@ class Campaign(SerialMixin):
             self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
+
+    def _mark_as_measured(
+        self,
+        measurements: pd.DataFrame,
+        numerical_measurements_must_be_within_tolerance: bool,
+    ) -> None:
+        """Mark the given elements of the space as measured.
+
+        Args:
+            measurements: A dataframe containing parameter configurations to be
+                marked as measured.
+            numerical_measurements_must_be_within_tolerance: See
+                :func:`baybe.utils.dataframe.fuzzy_row_match`.
+        """
+        idxs_matched = fuzzy_row_match(
+            self.searchspace.discrete.exp_rep,
+            measurements,
+            self.parameters,
+            numerical_measurements_must_be_within_tolerance,
+        )
+        self.searchspace_metadata.loc[idxs_matched, _WAS_MEASURED] = True
 
     def recommend(
         self,
@@ -260,10 +302,18 @@ class Campaign(SerialMixin):
             self.n_fits_done += 1
             self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
+        # Prepare the search space according to the current campaign state
+        annotated_searchspace = evolve(
+            self.searchspace,
+            discrete=_AnnotatedSubspaceDiscrete.from_subspace(
+                self.searchspace.discrete, self.searchspace_metadata
+            ),
+        )
+
         # Get the recommended search space entries
         rec = self.recommender.recommend(
             batch_size,
-            self.searchspace,
+            annotated_searchspace,
             self.objective,
             self._measurements_exp,
             pending_experiments,
@@ -271,6 +321,10 @@ class Campaign(SerialMixin):
 
         # Cache the recommendations
         self._cached_recommendation = rec.copy()
+
+        # Update metadata
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            self.searchspace_metadata.loc[rec.index, _WAS_RECOMMENDED] = True
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
