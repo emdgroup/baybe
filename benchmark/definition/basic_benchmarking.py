@@ -3,6 +3,7 @@
 import time
 
 from attrs import define, field
+from typing_extensions import override
 
 from benchmark.definition.base import Benchmark
 from benchmark.result.basic_results import SingleResult
@@ -15,6 +16,7 @@ class SingleExecutionBenchmark(Benchmark):
     _benchmark_result: SingleResult = field(default=None)
     """The result of the benchmarking which is set after execution."""
 
+    @override
     def execute_benchmark(self) -> SingleResult:
         """Execute the benchmark.
 
@@ -31,10 +33,4 @@ class SingleExecutionBenchmark(Benchmark):
         self._benchmark_result = SingleResult(
             self.title, self.identifier, self._metadata, result, time_delta
         )
-        for metric in self.metrics:
-            metric_value = self._benchmark_result.evaluate_result(
-                metric, self.objective_scenarios
-            )
-            metric_name = metric.__class__.__name__
-            print(f"Metric: {metric_name} - Value: {metric_value}")
         return self._benchmark_result

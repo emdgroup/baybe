@@ -4,7 +4,6 @@ from attrs import define, field
 from pandas import DataFrame
 from typing_extensions import override
 
-from benchmark.metric.base import Metric
 from benchmark.result.base import Result
 
 
@@ -22,17 +21,6 @@ class SingleResult(Result):
     def get_execution_time_ns(self) -> float:
         """Return the execution time of the benchmark in nanoseconds."""
         return self.execution_time_ns
-
-    @override
-    def evaluate_result(
-        self, metric: Metric, objective_scenario: list[str]
-    ) -> dict[str, float]:
-        """Evaluate the benchmarking result using the given metric.
-
-        See :func:`benchmark.result.base.Result.evaluate_result` for more information.
-        """
-        metric_value = metric.evaluate(self.benchmark_result, objective_scenario)
-        return metric_value
 
     @override
     def to_csv(self, path: str | None = None) -> str | None:
