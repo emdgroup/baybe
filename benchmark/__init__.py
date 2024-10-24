@@ -1,13 +1,9 @@
 """Benchmarking module for executing and comparing performance related tasks."""
 
-from benchmark.definition.base import Benchmark
-from benchmark.definition.basic_benchmarking import SingleExecutionBenchmark
-from benchmark.result.base import Result
-from benchmark.result.basic_results import SingleResult
+from benchmark.definition.benchmarking import Benchmark
+from benchmark.result import Result
 
 __all__ = [
     "Benchmark",
-    "SingleExecutionBenchmark",
     "Result",
-    "SingleResult",
 ]

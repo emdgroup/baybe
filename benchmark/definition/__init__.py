@@ -1,6 +1,5 @@
 """Benchmark task definitions."""
 
-from benchmark.definition.base import Benchmark
-from benchmark.definition.basic_benchmarking import SingleExecutionBenchmark
+from benchmark.definition.benchmarking import Benchmark
 
-__all__ = ["Benchmark", "SingleExecutionBenchmark"]
+__all__ = ["Benchmark"]
