@@ -2,27 +2,23 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import numpy as np
 import pandas as pd
-from attr import define, field
-from attr.validators import ge, instance_of, min_len
+from attrs import define, field
+from attrs.validators import ge, instance_of, min_len
 
-from baybe.parameters import NumericalContinuousParameter
+from baybe.constraints.deprecation import structure_constraints
 from baybe.serialization import (
     SerialMixin,
     converter,
-    get_base_structure_hook,
     unstructure_base,
 )
-from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     import polars as pl
-    from torch import Tensor
 
 
 @define
@@ -141,12 +137,15 @@ class ContinuousConstraint(Constraint, ABC):
 
 @define
 class CardinalityConstraint(Constraint, ABC):
-    """Abstract base class for cardinality constraints.
+    r"""Abstract base class for cardinality constraints.
 
     Places a constraint on the set of nonzero (i.e. "active") values among the
-    specified parameters, bounding it between the two given integers,
-        ``min_cardinality`` <= |{p_i : p_i != 0}| <= ``max_cardinality``
-    where ``{p_i}`` are the parameters specified for the constraint.
+    specified parameters, bounding it between the two given integers, i.e.
+
+    .. math::
+        \text{min_cardinality} \leq |\{p_i : p_i \neq 0\}| \leq \text{max_cardinality}
+
+    where :math:`\{p_i\}` are the parameters specified for the constraint.
 
     Note that this can be equivalently regarded as L0-constraint on the vector
     containing the specified parameters.
@@ -196,98 +195,16 @@ class CardinalityConstraint(Constraint, ABC):
             )
 
 
-@define
-class ContinuousLinearConstraint(ContinuousConstraint, ABC):
-    """Abstract base class for continuous linear constraints.
-
-    Continuous linear constraints use parameter lists and coefficients to define
-    in-/equality constraints over a continuous parameter space.
-    """
-
-    # object variables
-    coefficients: list[float] = field()
-    """In-/equality coefficient for each entry in ``parameters``."""
-
-    rhs: float = field(default=0.0)
-    """Right-hand side value of the in-/equality."""
-
-    @coefficients.validator
-    def _validate_coefficients(  # noqa: DOC101, DOC103
-        self, _: Any, coefficients: list[float]
-    ) -> None:
-        """Validate the coefficients.
-
-        Raises:
-            ValueError: If the number of coefficients does not match the number of
-                parameters.
-        """
-        if len(self.parameters) != len(coefficients):
-            raise ValueError(
-                "The given 'coefficients' list must have one floating point entry for "
-                "each entry in 'parameters'."
-            )
-
-    @coefficients.default
-    def _default_coefficients(self):
-        """Return equal weight coefficients as default."""
-        return [1.0] * len(self.parameters)
-
-    def _drop_parameters(
-        self, parameter_names: Collection[str]
-    ) -> ContinuousLinearConstraint:
-        """Create a copy of the constraint with certain parameters removed.
-
-        Args:
-            parameter_names: The names of the parameter to be removed.
-
-        Returns:
-            The reduced constraint.
-        """
-        parameters = [p for p in self.parameters if p not in parameter_names]
-        coefficients = [
-            c
-            for p, c in zip(self.parameters, self.coefficients)
-            if p not in parameter_names
-        ]
-        return ContinuousLinearConstraint(parameters, coefficients, self.rhs)
-
-    def to_botorch(
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
-    ) -> tuple[Tensor, Tensor, float]:
-        """Cast the constraint in a format required by botorch.
-
-        Used in calling ``optimize_acqf_*`` functions, for details see
-        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
-
-        Args:
-            parameters: The parameter objects of the continuous space.
-            idx_offset: Offset to the provided parameter indices.
-
-        Returns:
-            The tuple required by botorch.
-        """
-        import torch
-
-        from baybe.utils.torch import DTypeFloatTorch
-
-        param_names = [p.name for p in parameters]
-        param_indices = [
-            param_names.index(p) + idx_offset
-            for p in self.parameters
-            if p in param_names
-        ]
-
-        return (
-            torch.tensor(param_indices),
-            torch.tensor(self.coefficients, dtype=DTypeFloatTorch),
-            np.asarray(self.rhs, dtype=DTypeFloatNumpy).item(),
-        )
-
-
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
 
 
 # Register (un-)structure hooks
 converter.register_unstructure_hook(Constraint, unstructure_base)
-converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
+
+# Currently affected by a deprecation
+# converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
+converter.register_structure_hook(Constraint, structure_constraints)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

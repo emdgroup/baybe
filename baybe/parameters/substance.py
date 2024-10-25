@@ -1,11 +1,13 @@
 """Substance parameters."""
 
+import gc
 from functools import cached_property
 from typing import Any, ClassVar
 
 import pandas as pd
 from attrs import define, field
 from attrs.validators import and_, deep_mapping, instance_of, min_len
+from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import SubstanceEncoding
@@ -40,12 +42,13 @@ class SubstanceParameter(DiscreteParameter):
 
     # object variables
     data: dict[str, Smiles] = field(
+        converter=lambda x: dict(sorted(x.items())),
         validator=deep_mapping(
             mapping_validator=min_len(2),
             # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1206
             key_validator=and_(instance_of(str), min_len(1)),
             value_validator=lambda *x: None,
-        )
+        ),
     )
     """A mapping that provides the SMILES strings for all available parameter values."""
 
@@ -103,15 +106,15 @@ class SubstanceParameter(DiscreteParameter):
                 )
             raise ExceptionGroup("duplicate substances", exceptions)
 
+    @override
     @property
     def values(self) -> tuple:
         """Returns the labels of the given set of molecules."""
         return tuple(self.data.keys())
 
+    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
-        # See base class.
-
+    def comp_df(self) -> pd.DataFrame:
         from baybe.utils import chemistry
 
         vals = list(self.data.values())
@@ -148,3 +151,7 @@ class SubstanceParameter(DiscreteParameter):
                 comp_df = df_uncorrelated_features(comp_df, threshold=self.decorrelate)
 
         return comp_df
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

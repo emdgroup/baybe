@@ -1,10 +1,12 @@
 """Naive recommender for hybrid spaces."""
 
+import gc
 import warnings
 from typing import ClassVar
 
 import pandas as pd
 from attrs import define, evolve, field, fields
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
@@ -76,15 +78,15 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 allow_repeated_recommendations=flag,
             )
 
-    def recommend(  # noqa: D102
+    @override
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # See base class.
-
         from baybe.acquisition.partial import PartialAcquisitionFunction
 
         if (not isinstance(self.disc_recommender, BayesianRecommender)) and (
@@ -108,6 +110,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 searchspace=searchspace,
                 objective=objective,
                 measurements=measurements,
+                pending_experiments=pending_experiments,
             )
 
         # We are in a hybrid setting now
@@ -121,8 +124,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
 
         # Get discrete candidates. The metadata flags are ignored since the search space
         # is hybrid
-        # TODO Slight BOILERPLATE CODE, see recommender.py, ll. 47+
-        _, candidates_comp = searchspace.discrete.get_candidates(
+        candidates_exp, _ = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=True,
             allow_recommending_already_measured=True,
         )
@@ -131,7 +133,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         if isinstance(self.disc_recommender, BayesianRecommender):
             # Get access to the recommenders acquisition function
             self.disc_recommender._setup_botorch_acqf(
-                searchspace, objective, measurements
+                searchspace, objective, measurements, pending_experiments
             )
 
             # Construct the partial acquisition function that attaches cont_part
@@ -147,7 +149,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         # Call the private function of the discrete recommender and get the indices
         disc_rec_idx = self.disc_recommender._recommend_discrete(
             subspace_discrete=searchspace.discrete,
-            candidates_comp=candidates_comp,
+            candidates_exp=candidates_exp,
             batch_size=batch_size,
         )
 
@@ -157,7 +159,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
-        self.cont_recommender._setup_botorch_acqf(searchspace, objective, measurements)
+        self.cont_recommender._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_experiments
+        )
 
         # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(
@@ -177,3 +181,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         rec_cont.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont], axis=1)
         return rec_exp
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

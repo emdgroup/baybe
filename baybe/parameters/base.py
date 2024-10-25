@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from functools import cached_property, partial
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import cattrs
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of, min_len
-from cattrs.gen import override
+from typing_extensions import override
 
 from baybe.parameters.enum import ParameterEncoding
 from baybe.serialization import (
@@ -55,10 +57,7 @@ class Parameter(ABC, SerialMixin):
             ``True`` if the item is within the parameter range, ``False`` otherwise.
         """
 
-    @abstractmethod
-    def summary(self) -> dict:
-        """Return a custom summarization of the parameter."""
-
+    @override
     def __str__(self) -> str:
         return str(self.summary())
 
@@ -72,11 +71,20 @@ class Parameter(ABC, SerialMixin):
         """Boolean indicating if this is a discrete parameter."""
         return isinstance(self, DiscreteParameter)
 
+    @property
+    @abstractmethod
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+
     def to_searchspace(self) -> SearchSpace:
         """Create a one-dimensional search space from the parameter."""
         from baybe.searchspace.core import SearchSpace
 
         return SearchSpace.from_parameter(self)
+
+    @abstractmethod
+    def summary(self) -> dict:
+        """Return a custom summarization of the parameter."""
 
 
 @define(frozen=True, slots=False)
@@ -97,7 +105,13 @@ class DiscreteParameter(Parameter, ABC):
     @cached_property
     @abstractmethod
     def comp_df(self) -> pd.DataFrame:
+        # TODO: Should be renamed to `comp_rep`
         """Return the computational representation of the parameter."""
+
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return tuple(self.comp_df.columns)
 
     def to_subspace(self) -> SubspaceDiscrete:
         """Create a one-dimensional search space from the parameter."""
@@ -105,18 +119,20 @@ class DiscreteParameter(Parameter, ABC):
 
         return SubspaceDiscrete.from_parameter(self)
 
-    def is_in_range(self, item: Any) -> bool:  # noqa: D102
-        # See base class.
+    @override
+    def is_in_range(self, item: Any) -> bool:
         return item in self.values
 
     def transform(self, series: pd.Series, /) -> pd.DataFrame:
-        """Transform parameter values from experimental to computational representation.
+        """Transform parameter values to computational representation.
 
         Args:
-            series: The parameter values to be transformed.
+            series: The parameter values in experimental representation to be
+                transformed.
 
         Returns:
-            The transformed parameter values.
+            A series containing the transformed values. The series name matches
+            that of the input.
         """
         if self.encoding:
             # replace each label with the corresponding encoding
@@ -132,8 +148,8 @@ class DiscreteParameter(Parameter, ABC):
 
         return transformed
 
-    def summary(self) -> dict:  # noqa: D102
-        # See base class.
+    @override
+    def summary(self) -> dict:
         param_dict = dict(
             Name=self.name,
             Type=self.__class__.__name__,
@@ -155,10 +171,7 @@ class ContinuousParameter(Parameter):
 
 
 # Register (un-)structure hooks
-_overrides = {
-    "_values": override(rename="values"),
-    "decorrelate": override(struct_hook=lambda x, _: x),
-}
+_overrides = {"_values": cattrs.override(rename="values")}
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(
     Parameter,
@@ -167,3 +180,6 @@ converter.register_structure_hook(
 converter.register_unstructure_hook(
     Parameter, partial(unstructure_base, overrides=_overrides)
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -1,5 +1,6 @@
 """Numerical parameters."""
 
+import gc
 from functools import cached_property
 from typing import Any, ClassVar
 
@@ -8,6 +9,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import min_len
+from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
@@ -18,7 +20,7 @@ from baybe.utils.numerical import DTypeFloatNumpy
 
 @define(frozen=True, slots=False)
 class NumericalDiscreteParameter(DiscreteParameter):
-    """Parameter class for discrete numerical parameters (a.k.a. setpoints)."""
+    """Class for discrete numerical parameters (a.k.a. setpoints)."""
 
     # class variables
     is_numerical: ClassVar[bool] = True
@@ -77,21 +79,21 @@ class NumericalDiscreteParameter(DiscreteParameter):
                 f"tolerance must be smaller than {max_tol} to avoid ambiguity."
             )
 
+    @override
     @property
-    def values(self) -> tuple:  # noqa: D102
-        # See base class.
+    def values(self) -> tuple:
         return tuple(DTypeFloatNumpy(itm) for itm in self._values)
 
+    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
-        # See base class.
+    def comp_df(self) -> pd.DataFrame:
         comp_df = pd.DataFrame(
             {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
         )
         return comp_df
 
-    def is_in_range(self, item: float) -> bool:  # noqa: D102
-        # See base class.
+    @override
+    def is_in_range(self, item: float) -> bool:
         differences_acceptable = [
             np.abs(val - item) <= self.tolerance for val in self.values
         ]
@@ -100,7 +102,7 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
 @define(frozen=True, slots=False)
 class NumericalContinuousParameter(ContinuousParameter):
-    """Parameter class for continuous numerical parameters."""
+    """Class for continuous numerical parameters."""
 
     # class variables
     is_numerical: ClassVar[bool] = True
@@ -128,13 +130,17 @@ class NumericalContinuousParameter(ContinuousParameter):
                 "The interval specified by the parameter bounds cannot be degenerate."
             )
 
-    def is_in_range(self, item: float) -> bool:  # noqa: D102
-        # See base class.
-
+    @override
+    def is_in_range(self, item: float) -> bool:
         return self.bounds.contains(item)
 
-    def summary(self) -> dict:  # noqa: D102
-        # See base class.
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return (self.name,)
+
+    @override
+    def summary(self) -> dict:
         param_dict = dict(
             Name=self.name,
             Type=self.__class__.__name__,
@@ -159,9 +165,19 @@ class _FixedNumericalContinuousParameter(ContinuousParameter):
         """The value of the parameter as a degenerate interval."""
         return Interval(self.value, self.value)
 
+    @override
     def is_in_range(self, item: float) -> bool:
-        # See base class.
         return item == self.value
 
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return (self.name,)
+
+    @override
     def summary(self) -> dict:
         raise NotImplementedError()
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

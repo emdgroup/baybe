@@ -1,5 +1,6 @@
 """Categorical parameters."""
 
+import gc
 from functools import cached_property
 from typing import Any, ClassVar
 
@@ -7,12 +8,19 @@ import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
+from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
 from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
+
+
+def _convert_values(value, self, field) -> tuple[str, ...]:
+    """Sort and convert values for categorical parameters."""
+    value = nonstring_to_tuple(value, self, field)
+    return tuple(sorted(value))
 
 
 @define(frozen=True, slots=False)
@@ -26,8 +34,7 @@ class CategoricalParameter(DiscreteParameter):
     # object variables
     _values: tuple[str, ...] = field(
         alias="values",
-        # FIXME[typing]: `attrs.Converter` is not yet supported by type checkers
-        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore
+        converter=Converter(_convert_values, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
             min_len(2),
             validate_unique_values,
@@ -41,14 +48,15 @@ class CategoricalParameter(DiscreteParameter):
     )
     # See base class.
 
+    @override
     @property
     def values(self) -> tuple:
         """The values of the parameter."""
         return self._values
 
+    @override
     @cached_property
-    def comp_df(self) -> pd.DataFrame:  # noqa: D102
-        # See base class.
+    def comp_df(self) -> pd.DataFrame:
         if self.encoding is CategoricalEncoding.OHE:
             cols = [f"{self.name}_{val}" for val in self.values]
             comp_df = pd.DataFrame(
@@ -104,3 +112,7 @@ class TaskParameter(CategoricalParameter):
             raise ValueError("The active parameter values must be unique.")
         if not all(v in self.values for v in values):
             raise ValueError("All active values must be valid parameter choices.")
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

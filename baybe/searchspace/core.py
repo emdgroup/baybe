@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import gc
 import warnings
 from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
 
-import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field
+from typing_extensions import override
 
 from baybe.constraints import (
     validate_constraints,
@@ -26,6 +27,7 @@ from baybe.searchspace.discrete import (
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
+from baybe.utils.plotting import to_string
 
 
 class SearchSpaceType(Enum):
@@ -66,20 +68,16 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
     """The (potentially empty) continuous subspace of the overall search space."""
 
+    @override
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-        head_str = f"""{start_bold}Search Space{end_bold}
-        \n{start_bold}Search Space Type: {end_bold}{self.type.name}"""
-
-        # Check the sub space size to avoid adding unwanted break lines
-        # if the sub space is empty
-        discrete_str = f"\n\n{self.discrete}" if not self.discrete.is_empty else ""
-        continuous_str = (
-            f"\n\n{self.continuous}" if not self.continuous.is_empty else ""
-        )
-        searchspace_str = f"{head_str}{discrete_str}{continuous_str}"
-        return searchspace_str.replace("\n", "\n ").replace("\r", "\r ")
+        fields = [
+            to_string("Search Space Type", self.type.name, single_line=True),
+        ]
+        if not self.discrete.is_empty:
+            fields.append(str(self.discrete))
+        if not self.continuous.is_empty:
+            fields.append(str(self.continuous))
+        return to_string(self.__class__.__name__, *fields)
 
     def __attrs_post_init__(self):
         """Perform validation and record telemetry values."""
@@ -242,11 +240,21 @@ class SearchSpace(SerialMixin):
         )
 
     @property
-    def param_bounds_comp(self) -> np.ndarray:
-        """Return bounds as tensor."""
-        return np.hstack(
-            [self.discrete.param_bounds_comp, self.continuous.param_bounds_comp]
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        return self.discrete.comp_rep_columns + self.continuous.comp_rep_columns
+
+    @property
+    def comp_rep_bounds(self) -> pd.DataFrame:
+        """The minimum and maximum values of the computational representation."""
+        return pd.concat(
+            [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds], axis=1
         )
+
+    @property
+    def parameter_names(self) -> tuple[str, ...]:
+        """Return tuple of parameter names."""
+        return self.discrete.parameter_names + self.continuous.parameter_names
 
     @property
     def task_idx(self) -> int | None:
@@ -284,6 +292,39 @@ class SearchSpace(SerialMixin):
         except StopIteration:
             return 1
 
+    def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
+        """Find a parameter's column indices in the computational representation.
+
+        Args:
+            name: The name of the parameter whose columns indices are to be retrieved.
+
+        Raises:
+            ValueError: If no parameter with the provided name exists.
+            ValueError: If more than one parameter with the provided name exists.
+
+        Returns:
+            A tuple containing the integer indices of the columns in the computational
+            representation associated with the parameter. When the parameter is not part
+            of the computational representation, an empty tuple is returned.
+        """
+        params = self.get_parameters_by_name([name])
+        if len(params) < 1:
+            raise ValueError(
+                f"There exists no parameter named '{name}' in the search space."
+            )
+        if len(params) > 1:
+            raise ValueError(
+                f"There exist multiple parameter matches for '{name}' in the search "
+                f"space."
+            )
+        p = params[0]
+
+        return tuple(
+            i
+            for i, col in enumerate(self.comp_rep_columns)
+            if col in p.comp_rep_columns
+        )
+
     @staticmethod
     def estimate_product_space_size(parameters: Iterable[Parameter]) -> MemorySize:
         """Estimate an upper bound for the memory size of a product space.
@@ -317,10 +358,10 @@ class SearchSpace(SerialMixin):
                 The ``None`` default value is for temporary backward compatibility only
                 and will be removed in a future version.
             allow_missing: If ``False``, each parameter of the space must have
-                (exactly) one corresponding column in the given dataframe. If ``True``,
+                exactly one corresponding column in the given dataframe. If ``True``,
                 the dataframe may contain only a subset of parameter columns.
-            allow_extra: If ``False``, every column present in the dataframe must
-                correspond to (exactly) one parameter of the space. If ``True``, the
+            allow_extra: If ``False``, each column present in the dataframe must
+                correspond to exactly one parameter of the space. If ``True``, the
                 dataframe may contain additional non-parameter-related columns, which
                 will be ignored.
                 The ``None`` default value is for temporary backward compatibility only
@@ -338,7 +379,7 @@ class SearchSpace(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -432,3 +473,6 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
 
 # Register deserialization hook
 converter.register_structure_hook(SearchSpace, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

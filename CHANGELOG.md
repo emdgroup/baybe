@@ -6,17 +6,118 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `py.typed` file to enable the use of type checkers on the user side
+- `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
   in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
 - Attribute `n_threshold_inactive_parameters_generator` added to `BotorchRecommender`
 - Class `_FixedNumericalContinuousParameter`
 
+### Deprecations
+- Passing a dataframe via the `data` argument to `Objective.transform` is no longer
+  possible. The dataframe must now be passed as positional argument.
+- The new `allow_extra` flag is automatically set to `True` in `Objective.transform`
+  when left unspecified
+- `get_transform_parameters` has been replaced with `get_transform_objects`
+- Passing a dataframe via the `data` argument to `Target.transform` is no longer
+  possible. The data must now be passed as a series as first positional argument.
+
+## [0.11.2] - 2024-10-11
+### Added
+- `n_restarts` and `n_raw_samples` keywords to configure continuous optimization
+  behavior for `BotorchRecommender`
+- User guide for utilities
+- `mypy` rule expecting explicit `override` markers for method overrides
+
+### Changed
+- Utility `add_fake_results` renamed to `add_fake_measurements`
+- Utilities `add_fake_measurements` and `add_parameter_noise` now also return the
+  dataframe they modified in-place
+
+### Fixed
+- Leftover attrs-decorated classes are garbage collected before the subclass tree is
+  traversed, avoiding sporadic serialization problems
+
+## [0.11.1] - 2024-10-01
+### Added
+- Continuous linear constraints have been consolidated in the new
+  `ContinuousLinearConstraint` class
+
+### Changed
+- `get_surrogate` now also returns the model for transformed single targets or
+  desirability objectives
+
+### Fixed
+- Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
+
+### Deprecations
+- `ContinuousLinearEqualityConstraint` and `ContinuousLinearInequalityConstraint`
+  replaced by `ContinuousLinearConstraint` with the corresponding `operator` keyword
+
+## [0.11.0] - 2024-09-09
+### Breaking Changes
+- The public methods of `Surrogate` models now operate on dataframes in experimental
+  representation instead of tensors in computational representation
+- `Surrogate.posterior` models now returns a `Posterior` object
+- `param_bounds_comp` of `SearchSpace`, `SubspaceDiscrete` and `SubspaceContinuous` has
+  been replaced with `comp_rep_bounds`, which returns a dataframe
+
+### Added
+- `py.typed` file to enable the use of type checkers on the user side
+- `IndependentGaussianSurrogate` base class for surrogate models providing independent 
+  Gaussian posteriors for all candidates (cannot be used for batch prediction)
+- `comp_rep_columns` property for `Parameter`, `SearchSpace`, `SubspaceDiscrete`
+  and `SubspaceContinuous` classes
+- New mechanisms for surrogate input/output scaling configurable per class
+- `SurrogateProtocol` as an interface for user-defined surrogate architectures
+- Support for binary targets via `BinaryTarget` class
+- Support for bandit optimization via `BetaBernoulliMultiArmedBanditSurrogate` class
+- Bandit optimization example
+- `qThompsonSampling` acquisition function
+- `BetaPrior` class
+- `recommend` now accepts the `pending_experiments` argument, informing the algorithm
+  about points that were already selected for evaluation
+- Pure recommenders now have the `allow_recommending_pending_experiments` flag,
+  controlling whether pending experiments are excluded from candidates in purely
+  discrete search spaces
+- `get_surrogate` and `posterior` methods to `Campaign`
+- `tenacity` test dependency
+- Multi-version documentation
+
+### Changed
+- The transition from experimental to computational representation no longer happens
+  in the recommender but in the surrogate
+- Fallback models created by `catch_constant_targets` are stored outside the surrogate
+- `to_tensor` now also handles `numpy` arrays
+- `MIN` mode of `NumericalTarget` is now implemented via the acquisition function
+  instead of negating the computational representation
+- Search spaces now store their parameters in alphabetical order by name
+- Improvement-based acquisition functions now consider the maximum posterior mean
+  instead of the maximum noisy measurement as reference value
+- Iteration tests now attempt up to 5 repeated executions if they fail due to numerical
+  reasons
+
 ### Fixed
 - `CategoricalParameter` and `TaskParameter` no longer incorrectly coerce a single
   string input to categories/tasks
 - `farthest_point_sampling` no longer depends on the provided point order
+- Batch predictions for `RandomForestSurrogate`
+- Surrogates providing only marginal posterior information can no longer be used for
+  batch recommendation
+- `SearchSpace.from_dataframe` now creates a proper empty discrete subspace without
+  index when called with continuous parameters only
+- Metadata updates are now only triggered when a discrete subspace is present
+- Unintended reordering of discrete search space parts for recommendations obtained
+  with `BotorchRecommender`
+
+### Removed
+- `register_custom_architecture` decorator
+- `Scalar` and `DefaultScaler` classes
+
+### Deprecations
+- The role of `register_custom_architecture` has been taken over by
+  `baybe.surrogates.base.SurrogateProtocol`
+- `BayesianRecommender.surrogate_model` has been replaced with `get_surrogate`
 
 ## [0.10.0] - 2024-08-02
 ### Breaking Changes

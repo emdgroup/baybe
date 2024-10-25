@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+import gc
 import math
 from collections.abc import Collection
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
-from attr.converters import optional
 from attrs import define, field
-from attrs.validators import ge, instance_of
+from attrs.converters import optional as optional_c
+from attrs.validators import ge, gt, instance_of
+from typing_extensions import override
 
+from baybe.acquisition.acqfs import qThompsonSampling
 from baybe.constraints import ContinuousCardinalityConstraint
-from baybe.exceptions import NoMCAcquisitionFunctionError
+from baybe.exceptions import (
+    IncompatibilityError,
+    IncompatibleAcquisitionFunctionError,
+)
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
@@ -22,6 +28,7 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
@@ -53,12 +60,12 @@ class BotorchRecommender(BayesianRecommender):
     # Object variables
     sequential_continuous: bool = field(default=False)
     """Flag defining whether to apply sequential greedy or batch optimization in
-    **continuous** search spaces. (In discrete/hybrid spaces, sequential greedy
-    optimization is applied automatically.)
+    **continuous** search spaces. In discrete/hybrid spaces, sequential greedy
+    optimization is applied automatically.
     """
 
     hybrid_sampler: DiscreteSamplingMethod | None = field(
-        converter=optional(DiscreteSamplingMethod), default=None
+        converter=optional_c(DiscreteSamplingMethod), default=None
     )
     """Strategy used for sampling the discrete subspace when performing hybrid search
     space optimization."""
@@ -66,6 +73,16 @@ class BotorchRecommender(BayesianRecommender):
     sampling_percentage: float = field(default=1.0)
     """Percentage of discrete search space that is sampled when performing hybrid search
     space optimization. Ignored when ``hybrid_sampler="None"``."""
+
+    n_restarts: int = field(validator=[instance_of(int), gt(0)], default=10)
+    """Number of times gradient-based optimization is restarted from different initial
+    points. **Does not affect purely discrete optimization**.
+    """
+
+    n_raw_samples: int = field(validator=[instance_of(int), gt(0)], default=64)
+    """Number of raw samples drawn for the initialization heuristic in gradient-based
+    optimization. **Does not affect purely discrete optimization**.
+    """
 
     n_threshold_inactive_parameters_generator: int = field(
         default=10, validator=[instance_of(int), ge(1)]
@@ -91,10 +108,11 @@ class BotorchRecommender(BayesianRecommender):
                 f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
             )
 
+    @override
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
         """Generate recommendations from a discrete search space.
@@ -102,31 +120,34 @@ class BotorchRecommender(BayesianRecommender):
         Args:
             subspace_discrete: The discrete subspace from which to generate
                 recommendations.
-            candidates_comp: The computational representation of all discrete candidate
+            candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
 
         Raises:
-            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
-                used with a batch size > 1.
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
 
         Returns:
             The dataframe indices of the recommended points in the provided
-            computational representation.
+            experimental representation.
         """
-        # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
-            raise NoMCAcquisitionFunctionError(
+            raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
+            )
+        if batch_size > 1 and isinstance(self.acquisition_function, qThompsonSampling):
+            raise IncompatibilityError(
+                "Thompson sampling currently only supports a batch size of 1."
             )
 
         from botorch.optim import optimize_acqf_discrete
 
         # determine the next set of points to be tested
-        candidates_tensor = to_tensor(candidates_comp)
+        candidates_comp = subspace_discrete.transform(candidates_exp)
         points, _ = optimize_acqf_discrete(
-            self._botorch_acqf, batch_size, candidates_tensor
+            self._botorch_acqf, batch_size, to_tensor(candidates_comp)
         )
 
         # retrieve the index of the points from the input dataframe
@@ -136,14 +157,16 @@ class BotorchRecommender(BayesianRecommender):
         #   handle continuous parameters, a corresponding utility could be extracted.
         idxs = pd.Index(
             pd.merge(
-                candidates_comp.reset_index(),
                 pd.DataFrame(points, columns=candidates_comp.columns),
+                candidates_comp.reset_index(),
                 on=list(candidates_comp),
+                how="left",
             )["index"]
         )
 
         return idxs
 
+    @override
     def _recommend_continuous(
         self,
         subspace_continuous: SubspaceContinuous,
@@ -157,15 +180,15 @@ class BotorchRecommender(BayesianRecommender):
             batch_size: The size of the recommendation batch.
 
         Raises:
-            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
-                used with a batch size > 1.
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
-            raise NoMCAcquisitionFunctionError(
+            raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
             )
@@ -182,7 +205,7 @@ class BotorchRecommender(BayesianRecommender):
             )
 
         # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=subspace_continuous.param_names)
+        rec = pd.DataFrame(points, columns=subspace_continuous.parameter_names)
         return rec
 
     def _recommend_continuous_with_cardinality_constraints(
@@ -318,10 +341,10 @@ class BotorchRecommender(BayesianRecommender):
 
         points, acqf_values = optimize_acqf(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(subspace_continuous.param_bounds_comp),
+            bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
             q=batch_size,
-            num_restarts=5,  # TODO make choice for num_restarts
-            raw_samples=10,  # TODO make choice for raw_samples
+            num_restarts=self.n_restarts,
+            raw_samples=self.n_raw_samples,
             fixed_features=fixed_parameters or None,
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
@@ -339,10 +362,11 @@ class BotorchRecommender(BayesianRecommender):
         )
         return points, acqf_values
 
+    @override
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
@@ -350,26 +374,30 @@ class BotorchRecommender(BayesianRecommender):
         This functions samples points from the discrete subspace, performs optimization
         in the continuous subspace with these points being fixed and returns the best
         found solution.
+
         **Important**: This performs a brute-force calculation by fixing every possible
         assignment of discrete variables and optimizing the continuous subspace for
         each of them. It is thus computationally expensive.
 
+        **Note**: This function implicitly assumes that discrete search space parts in
+        the respective data frame come first and continuous parts come second.
+
         Args:
             searchspace: The search space in which the recommendations should be made.
-            candidates_comp: The computational representation of the candidates
+            candidates_exp: The experimental representation of the candidates
                 of the discrete subspace.
             batch_size: The size of the calculated batch.
 
         Raises:
-            NoMCAcquisitionFunctionError: If a non-Monte Carlo acquisition function is
-                used with a batch size > 1.
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
 
         Returns:
             The recommended points.
         """
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
-            raise NoMCAcquisitionFunctionError(
+            raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
             )
@@ -377,36 +405,31 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf_mixed
 
-        if len(candidates_comp) > 0:
-            # Calculate the number of samples from the given percentage
-            n_candidates = math.ceil(
-                self.sampling_percentage * len(candidates_comp.index)
+        # Transform discrete candidates
+        candidates_comp = searchspace.discrete.transform(candidates_exp)
+
+        # Calculate the number of samples from the given percentage
+        n_candidates = math.ceil(self.sampling_percentage * len(candidates_comp.index))
+
+        # Potential sampling of discrete candidates
+        if self.hybrid_sampler is not None:
+            candidates_comp = sample_numerical_df(
+                candidates_comp, n_candidates, method=self.hybrid_sampler
             )
 
-            # Potential sampling of discrete candidates
-            if self.hybrid_sampler is not None:
-                candidates_comp = sample_numerical_df(
-                    candidates_comp, n_candidates, method=self.hybrid_sampler
-                )
-
-            # Prepare all considered discrete configurations in the
-            # List[Dict[int, float]] format expected by BoTorch.
-            # TODO: Currently assumes that discrete parameters are first and continuous
-            #   second. Once parameter redesign [11611] is completed, we might adjust
-            #   this.
-            num_comp_columns = len(candidates_comp.columns)
-            candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
-            fixed_features_list = candidates_comp.to_dict("records")
-        else:
-            fixed_features_list = None
+        # Prepare all considered discrete configurations in the
+        # List[Dict[int, float]] format expected by BoTorch.
+        num_comp_columns = len(candidates_comp.columns)
+        candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
+        fixed_features_list = candidates_comp.to_dict("records")
 
         # Actual call of the BoTorch optimization routine
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(searchspace.param_bounds_comp),
+            bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
             q=batch_size,
-            num_restarts=5,  # TODO make choice for num_restarts
-            raw_samples=10,  # TODO make choice for raw_samples
+            num_restarts=self.n_restarts,
+            raw_samples=self.n_raw_samples,
             fixed_features_list=fixed_features_list,
             equality_constraints=[
                 c.to_botorch(
@@ -426,26 +449,50 @@ class BotorchRecommender(BayesianRecommender):
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
         )
 
-        disc_points = points[:, :num_comp_columns]
-        cont_points = points[:, num_comp_columns:]
+        # Align candidates with search space index. Done via including the search space
+        # index during the merge, which is used later for back-translation into the
+        # experimental representation
+        merged = pd.merge(
+            pd.DataFrame(points),
+            candidates_comp.reset_index(),
+            on=list(candidates_comp.columns),
+            how="left",
+        ).set_index("index")
 
-        # Get selected candidate indices
-        idxs = pd.Index(
-            pd.merge(
-                candidates_comp.reset_index(),
-                pd.DataFrame(disc_points, columns=candidates_comp.columns),
-                on=list(candidates_comp),
-            )["index"]
+        # Get experimental representation of discrete part
+        rec_disc_exp = searchspace.discrete.exp_rep.loc[merged.index]
+
+        # Combine discrete and continuous parts
+        rec_exp = pd.concat(
+            [
+                rec_disc_exp,
+                merged.iloc[:, num_comp_columns:].set_axis(
+                    searchspace.continuous.parameter_names, axis=1
+                ),
+            ],
+            axis=1,
         )
-
-        # Get experimental representation of discrete and continuous parts
-        rec_disc_exp = searchspace.discrete.exp_rep.loc[idxs]
-        rec_cont_exp = pd.DataFrame(
-            cont_points, columns=searchspace.continuous.param_names
-        )
-
-        # Adjust the index of the continuous part and create overall recommendations
-        rec_cont_exp.index = rec_disc_exp.index
-        rec_exp = pd.concat([rec_disc_exp, rec_cont_exp], axis=1)
 
         return rec_exp
+
+    @override
+    def __str__(self) -> str:
+        fields = [
+            to_string("Surrogate", self._surrogate_model),
+            to_string(
+                "Acquisition function", self.acquisition_function, single_line=True
+            ),
+            to_string("Compatibility", self.compatibility, single_line=True),
+            to_string(
+                "Sequential continuous", self.sequential_continuous, single_line=True
+            ),
+            to_string("Hybrid sampler", self.hybrid_sampler, single_line=True),
+            to_string(
+                "Sampling percentage", self.sampling_percentage, single_line=True
+            ),
+        ]
+        return to_string(self.__class__.__name__, *fields)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

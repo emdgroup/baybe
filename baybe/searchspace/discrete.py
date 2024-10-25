@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import os
 import warnings
 from collections.abc import Collection, Sequence
@@ -11,8 +12,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 from cattrs import IterableValidationError
+from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
@@ -23,9 +25,8 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.parameters.base import DiscreteParameter, Parameter
-from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
-    get_transform_parameters,
     validate_parameter_names,
     validate_parameters,
 )
@@ -35,10 +36,12 @@ from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     fuzzy_row_match,
+    get_transform_objects,
     pretty_print_df,
 )
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     import polars as pl
@@ -91,7 +94,8 @@ class SubspaceDiscrete(SerialMixin):
     """
 
     parameters: tuple[DiscreteParameter, ...] = field(
-        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
+        converter=sort_parameters,
+        validator=lambda _, __, x: validate_parameter_names(x),
     )
     """The list of parameters of the subspace."""
 
@@ -115,12 +119,10 @@ class SubspaceDiscrete(SerialMixin):
     and thereby speed up construction. If not provided, the default hook will derive it
     from ``exp_rep``."""
 
+    @override
     def __str__(self) -> str:
         if self.is_empty:
             return ""
-
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
 
         # Convert the lists to dataFrames to be able to use pretty_printing
         param_list = [param.summary() for param in self.parameters]
@@ -134,19 +136,31 @@ class SubspaceDiscrete(SerialMixin):
         dont_recommend_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[2]]])
         metadata_count = len(self.metadata)
 
-        # Put all attributes of the discrete class in one string.
-        discrete_str = f"""{start_bold}Discrete Search Space{end_bold}
-            \n{start_bold}Discrete Parameters{end_bold}\n{pretty_print_df(param_df)}
-            \n{start_bold}Experimental Representation{end_bold}
-            \r{pretty_print_df(self.exp_rep)}\n\n{start_bold}Metadata:{end_bold}
-            \r{_METADATA_COLUMNS[0]}: {was_recommended_count}/{metadata_count}
-            \r{_METADATA_COLUMNS[1]}: {was_measured_count}/{metadata_count}
-            \r{_METADATA_COLUMNS[2]}: {dont_recommend_count}/{metadata_count}
-            \n{start_bold}Constraints{end_bold}\n{pretty_print_df(constraints_df)}
-            \n{start_bold}Computational Representation{end_bold}
-            \r{pretty_print_df(self.comp_rep)}"""
-
-        return discrete_str.replace("\n", "\n ").replace("\r", "\r ")
+        metadata_fields = [
+            to_string(
+                f"{_METADATA_COLUMNS[0]}",
+                f"{was_recommended_count}/{metadata_count}",
+                single_line=True,
+            ),
+            to_string(
+                f"{_METADATA_COLUMNS[1]}",
+                f"{was_measured_count}/{metadata_count}",
+                single_line=True,
+            ),
+            to_string(
+                f"{_METADATA_COLUMNS[2]}",
+                f"{dont_recommend_count}/{metadata_count}",
+                single_line=True,
+            ),
+        ]
+        fields = [
+            to_string("Discrete Parameters", pretty_print_df(param_df)),
+            to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
+            to_string("Meta Data", *metadata_fields),
+            to_string("Constraints", pretty_print_df(constraints_df)),
+            to_string("Computational Representation", pretty_print_df(self.comp_rep)),
+        ]
+        return to_string(self.__class__.__name__, *fields)
 
     @exp_rep.validator
     def _validate_exp_rep(  # noqa: DOC101, DOC103
@@ -345,6 +359,10 @@ class SubspaceDiscrete(SerialMixin):
                 return NumericalDiscreteParameter(name=name, values=values)
             except IterableValidationError:
                 return CategoricalParameter(name=name, values=values)
+
+        # Catch edge case
+        if df.shape[1] == 0:
+            return cls.empty()
 
         # Get the full list of both explicitly and implicitly defined parameter
         parameters = get_parameters_from_dataframe(
@@ -574,23 +592,22 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_bounds_comp(self) -> np.ndarray:
-        """Return bounds as tensor.
+    def parameter_names(self) -> tuple[str, ...]:
+        """Return tuple of parameter names."""
+        return tuple(p.name for p in self.parameters)
 
-        Take bounds from the parameter definitions, but discards bounds belonging to
-        columns that were filtered out during the creation of the space.
-        """
-        if not self.parameters:
-            return np.empty((2, 0))
-        bounds = np.hstack(
-            [
-                np.vstack([p.comp_df[col].min(), p.comp_df[col].max()])
-                for p in self.parameters
-                for col in p.comp_df
-                if col in self.comp_rep.columns
-            ]
-        )
-        return bounds
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        # We go via `comp_rep` here instead of using the columns of the individual
+        # parameters because the search space potentially uses only a subset of the
+        # columns due to decorrelation
+        return tuple(self.comp_rep.columns)
+
+    @property
+    def comp_rep_bounds(self) -> pd.DataFrame:
+        """The minimum and maximum values of the computational representation."""
+        return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T
 
     @staticmethod
     def estimate_product_space_size(
@@ -660,6 +677,7 @@ class SubspaceDiscrete(SerialMixin):
         self,
         allow_repeated_recommendations: bool = False,
         allow_recommending_already_measured: bool = False,
+        exclude: pd.DataFrame | None = None,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.
 
@@ -672,6 +690,8 @@ class SubspaceDiscrete(SerialMixin):
             allow_recommending_already_measured: If ``True``, parameters settings for
                 which there are already target values available are still considered as
                 valid candidates.
+            exclude: Points in experimental representation that should be excluded as
+                candidates.
 
         Returns:
             The candidate parameter settings both in experimental and computational
@@ -683,6 +703,12 @@ class SubspaceDiscrete(SerialMixin):
             mask_todrop |= self.metadata["was_recommended"]
         if not allow_recommending_already_measured:
             mask_todrop |= self.metadata["was_measured"]
+
+        # Remove additional excludes
+        if exclude is not None:
+            mask_todrop |= pd.merge(self.exp_rep, exclude, indicator=True, how="left")[
+                "_merge"
+            ].eq("both")
 
         return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
 
@@ -699,7 +725,7 @@ class SubspaceDiscrete(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -727,8 +753,8 @@ class SubspaceDiscrete(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
-        parameters = get_transform_parameters(
-            self.parameters, df, allow_missing, allow_extra
+        parameters = get_transform_objects(
+            df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # If the transformed values are not required, return an empty dataframe
@@ -925,3 +951,6 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceDiscrete, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

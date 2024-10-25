@@ -69,7 +69,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 ### Creating multiple target object
 
 # The multi target mode is handled when creating the objective object.
-# Thus we first need to define the different targets.
+# Thus, we first need to define the different targets.
 # We use two targets here.
 # The first target is maximized and the second target is minimized during the optimization process.
 

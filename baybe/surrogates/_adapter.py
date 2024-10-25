@@ -3,10 +3,8 @@
 from collections.abc import Callable
 from typing import Any
 
-import gpytorch.distributions
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
-from botorch.posteriors.gpytorch import GPyTorchPosterior
 from torch import Tensor
 
 from baybe.surrogates.base import Surrogate
@@ -27,12 +25,11 @@ class AdapterModel(Model):
         self._surrogate = surrogate
 
     @property
-    def num_outputs(self) -> int:  # noqa: D102
-        # See base class.
+    def num_outputs(self) -> int:
         # TODO: So far, the usage is limited to single-output models.
         return 1
 
-    def posterior(  # noqa: D102
+    def posterior(
         self,
         X: Tensor,
         output_indices: list[int] | None = None,
@@ -40,7 +37,12 @@ class AdapterModel(Model):
         posterior_transform: Callable[[Posterior], Posterior] | None = None,
         **kwargs: Any,
     ) -> Posterior:
-        # See base class.
-        mean, var = self._surrogate.posterior(X)
-        mvn = gpytorch.distributions.MultivariateNormal(mean, var)
-        return GPyTorchPosterior(mvn)
+        if (
+            (output_indices is not None)
+            or observation_noise
+            or (posterior_transform is not None)
+        ):
+            raise NotImplementedError(
+                "The optional model posterior arguments are not yet implemented."
+            )
+        return self._surrogate._posterior_comp(X)

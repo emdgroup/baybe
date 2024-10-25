@@ -1,9 +1,13 @@
 """A collection of common prior distributions."""
 
+from __future__ import annotations
+
+import gc
 from typing import Any
 
 from attrs import define, field
 from attrs.validators import gt
+from typing_extensions import override
 
 from baybe.priors.base import Prior
 from baybe.utils.validation import finite_float
@@ -85,3 +89,24 @@ class SmoothedBoxPrior(Prior):
                 f"For {self.__class__.__name__}, the upper bound `b` (provided: {b}) "
                 f"must be larger than the lower bound `a` (provided: {self.a})."
             )
+
+
+@define(frozen=True)
+class BetaPrior(Prior):
+    """A beta prior parameterized by alpha and beta."""
+
+    alpha: float = field(converter=float, validator=gt(0.0))
+    """Alpha concentration parameter. Controls mass accumulated toward zero."""
+
+    beta: float = field(converter=float, validator=gt(0.0))
+    """Beta concentration parameter. Controls mass accumulated toward one."""
+
+    @override
+    def to_gpytorch(self, *args, **kwargs):
+        raise NotImplementedError(
+            f"'{self.__class__.__name__}' does not have a gpytorch analog."
+        )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

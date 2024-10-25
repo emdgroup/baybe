@@ -1,5 +1,7 @@
 """Functionality for desirability objectives."""
 
+import gc
+import warnings
 from collections.abc import Callable
 from functools import cached_property, partial
 from typing import TypeGuard
@@ -10,13 +12,16 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, min_len
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.numerical import geom_mean
+from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
 
 
@@ -67,7 +72,7 @@ class DesirabilityObjective(Objective):
 
     _targets: tuple[Target, ...] = field(
         converter=to_tuple,
-        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],  # type: ignore[type-abstract]
+        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],
         alias="targets",
     )
     "The targets considered by the objective."
@@ -111,9 +116,9 @@ class DesirabilityObjective(Objective):
                 f"Specified number of targets: {lt}. Specified number of weights: {lw}."
             )
 
+    @override
     @property
-    def targets(self) -> tuple[Target, ...]:  # noqa: D102
-        # See base class.
+    def targets(self) -> tuple[Target, ...]:
         return self._targets
 
     @cached_property
@@ -121,28 +126,69 @@ class DesirabilityObjective(Objective):
         """The normalized target weights."""
         return np.asarray(self.weights) / np.sum(self.weights)
 
+    @override
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
-
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
         targets_df["Weight"] = self.weights
 
-        objective_str = f"""{start_bold}Objective{end_bold}
-        \n{start_bold}Type: {end_bold}{self.__class__.__name__}
-        \n{start_bold}Targets {end_bold}\n{targets_df}
-        \n{start_bold}Scalarizer: {end_bold}{self.scalarizer.name}"""
+        fields = [
+            to_string("Type", self.__class__.__name__, single_line=True),
+            to_string("Targets", pretty_print_df(targets_df)),
+            to_string("Scalarizer", self.scalarizer.name, single_line=True),
+        ]
 
-        return objective_str.replace("\n", "\n ")
+        return to_string("Objective", *fields)
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # See base class.
+    @override
+    def transform(
+        self,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
+
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
+
+        if allow_extra is None:
+            allow_extra = True
+            if set(df.columns) - {p.name for p in self.targets}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
+        # Extract the relevant part of the dataframe
+        targets = get_transform_objects(
+            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        transformed = df[[t.name for t in targets]].copy()
 
         # Transform all targets individually
-        transformed = data[[t.name for t in self.targets]].copy()
         for target in self.targets:
-            transformed[target.name] = target.transform(data[[target.name]])
+            transformed[target.name] = target.transform(df[target.name])
 
         # Scalarize the transformed targets into desirability values
         vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
@@ -151,3 +197,7 @@ class DesirabilityObjective(Objective):
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)
 
         return transformed
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

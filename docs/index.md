@@ -1,4 +1,11 @@
 ```{toctree}
+:titlesonly:
+:hidden:
+
+Versions <https://emdgroup.github.io/baybe/versions>
+```
+
+```{toctree}
 :maxdepth: 2
 :titlesonly:
 :caption: Documentation

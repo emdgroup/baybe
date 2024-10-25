@@ -58,14 +58,13 @@ CONFIG = str(
         "constraints": []
     },
     "objective": {
-        "mode": "SINGLE",
-        "targets": [
+        "type": "SingleTargetObjective",
+        "target":
             {
                 "type": "NumericalTarget",
                 "name": "Yield",
                 "mode": "MAX"
             }
-        ]
     },
     "recommender": {
         "type": "TwoPhaseMetaRecommender",
@@ -129,14 +128,13 @@ INVALID_CONFIG = str(
         "constraints": []
     },
     "objective": {
-        "mode": "SINGLE",
-        "targets": [
+        "type": "SingleTargetObjective",
+        "target":
             {
                 "type": "NumericalTarget",
                 "name": "Yield",
                 "mode": "MAX"
             }
-        ]
     },
     "recommender": {
         "type": "TwoPhaseMetaRecommender",

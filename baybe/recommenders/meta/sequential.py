@@ -3,12 +3,14 @@
 #  this file will resolve type errors
 # mypy: disable-error-code="arg-type"
 
+import gc
 from collections.abc import Iterable, Iterator
 from typing import Literal
 
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, in_, instance_of
+from typing_extensions import override
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
@@ -22,6 +24,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
+from baybe.utils.plotting import to_string
 
 
 @define
@@ -49,20 +52,29 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """The number of experiments after which the recommender is switched for the next
     requested batch."""
 
-    def select_recommender(  # noqa: D102
+    @override
+    def select_recommender(
         self,
         batch_size: int,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        # See base class.
-
         return (
             self.recommender
             if (measurements is not None) and (len(measurements) >= self.switch_after)
             else self.initial_recommender
         )
+
+    @override
+    def __str__(self) -> str:
+        fields = [
+            to_string("Initial recommender", self.initial_recommender),
+            to_string("Recommender", self.recommender),
+            to_string("Switch after", self.switch_after, single_line=True),
+        ]
+        return to_string(self.__class__.__name__, *fields)
 
 
 @define
@@ -120,15 +132,15 @@ class SequentialMetaRecommender(MetaRecommender):
     _n_last_measurements: int = field(default=-1, alias="_n_last_measurements")
     """The number of measurements that were available at the last call."""
 
-    def select_recommender(  # noqa: D102
+    @override
+    def select_recommender(
         self,
         batch_size: int,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        # See base class.
-
         n_data = len(measurements) if measurements is not None else 0
 
         # If the training dataset size has increased, move to the next recommender
@@ -163,6 +175,14 @@ class SequentialMetaRecommender(MetaRecommender):
         self._n_last_measurements = n_data
 
         return recommender
+
+    @override
+    def __str__(self) -> str:
+        fields = [
+            to_string("Recommenders", self.recommenders),
+            to_string("Mode", self.mode, single_line=True),
+        ]
+        return to_string(self.__class__.__name__, *fields)
 
 
 @define
@@ -202,15 +222,15 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
         """Initialize the recommender iterator."""
         return iter(self.recommenders)
 
-    def select_recommender(  # noqa: D102
+    @override
+    def select_recommender(
         self,
         batch_size: int,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        # See base class.
-
         use_last = True
         n_data = len(measurements) if measurements is not None else 0
 
@@ -242,6 +262,13 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
 
         return self._last_recommender  # type: ignore[return-value]
 
+    @override
+    def __str__(self) -> str:
+        fields = [
+            to_string("Recommenders", self.recommenders),
+        ]
+        return to_string(self.__class__.__name__, *fields)
+
 
 # The recommender iterable cannot be serialized
 converter.register_unstructure_hook(
@@ -250,3 +277,6 @@ converter.register_unstructure_hook(
 converter.register_structure_hook(
     StreamingSequentialMetaRecommender, block_deserialization_hook
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

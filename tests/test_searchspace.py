@@ -6,8 +6,7 @@ import pytest
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
+    ContinuousLinearConstraint,
     DiscreteSumConstraint,
     ThresholdCondition,
 )
@@ -45,7 +44,7 @@ def test_bounds_order():
     searchspace = SearchSpace.from_product(parameters=parameters)
     expected = np.array([[1.0, 7.0, 4.0, 10.0], [3.0, 9.0, 6.0, 12.0]])
     assert np.array_equal(
-        searchspace.param_bounds_comp,
+        searchspace.comp_rep_bounds.values,
         expected,
     )
 
@@ -58,9 +57,9 @@ def test_empty_parameter_bounds():
     parameters = []
     searchspace_discrete = SubspaceDiscrete.from_product(parameters=parameters)
     searchspace_continuous = SubspaceContinuous(parameters=parameters)
-    expected = np.empty((2, 0))
-    assert np.array_equal(searchspace_discrete.param_bounds_comp, expected)
-    assert np.array_equal(searchspace_continuous.param_bounds_comp, expected)
+    expected = pd.DataFrame(np.empty((2, 0)), index=["min", "max"])
+    pd.testing.assert_frame_equal(searchspace_discrete.comp_rep_bounds, expected)
+    pd.testing.assert_frame_equal(searchspace_continuous.comp_rep_bounds, expected)
 
 
 def test_discrete_searchspace_creation_from_dataframe():
@@ -74,7 +73,7 @@ def test_discrete_searchspace_creation_from_dataframe():
         name="cat_unspecified", values=["d", "e", "f"]
     )
 
-    all_params = (num_specified, num_unspecified, cat_specified, cat_unspecified)
+    all_params = (cat_specified, cat_unspecified, num_specified, num_unspecified)
 
     df = pd.DataFrame({param.name: param.values for param in all_params})
     searchspace = SearchSpace(
@@ -153,22 +152,14 @@ def test_invalid_constraint_parameter_combos():
     with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
-            constraints=[
-                ContinuousLinearEqualityConstraint(
-                    parameters=["c1", "c2", "d1"],
-                )
-            ],
+            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
         )
 
     # Attempting continuous constraint over hybrid parameter set
     with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
-            constraints=[
-                ContinuousLinearInequalityConstraint(
-                    parameters=["c1", "c2", "d1"],
-                )
-            ],
+            constraints=[ContinuousLinearConstraint(["c1", "c2", "d1"], "=")],
         )
 
     # Attempting discrete constraint over hybrid parameter set
@@ -199,11 +190,7 @@ def test_invalid_constraint_parameter_combos():
     with pytest.raises(ValueError):
         SearchSpace.from_product(
             parameters=parameters,
-            constraints=[
-                ContinuousLinearInequalityConstraint(
-                    parameters=["c1", "e7", "d1"],
-                )
-            ],
+            constraints=[ContinuousLinearConstraint(["c1", "e7", "d1"], "=")],
         )
 
     # Attempting constraints over parameter sets containing non-numerical discrete

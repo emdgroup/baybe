@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from hypothesis import given
+from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.parameters import (
@@ -102,6 +103,13 @@ def test_searchspace_creation_from_dataframe(df, parameters, expected):
     else:
         with pytest.raises(expected):
             SearchSpace.from_dataframe(df, parameters)
+
+
+def test_discrete_searchspace_creation_from_degenerate_dataframe():
+    """A degenerate dataframe with index but no columns yields an empty space."""
+    df = pd.DataFrame(index=[0])
+    subspace = SubspaceDiscrete.from_dataframe(df)
+    assert_frame_equal(subspace.exp_rep, pd.DataFrame())
 
 
 @pytest.mark.parametrize("boundary_only", (False, True))

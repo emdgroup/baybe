@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import math
 import sys
 import warnings
@@ -11,12 +12,12 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field, fields
+from typing_extensions import override
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
+    ContinuousLinearConstraint,
 )
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
@@ -26,16 +27,15 @@ from baybe.constraints.validation import (
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
-from baybe.parameters.utils import get_parameters_from_dataframe
+from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
-    get_transform_parameters,
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.interval import Interval
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
@@ -53,16 +53,17 @@ class SubspaceContinuous(SerialMixin):
     """
 
     parameters: tuple[NumericalContinuousParameter, ...] = field(
-        converter=to_tuple, validator=lambda _, __, x: validate_parameter_names(x)
+        converter=sort_parameters,
+        validator=lambda _, __, x: validate_parameter_names(x),
     )
     """The parameters of the subspace."""
 
-    constraints_lin_eq: tuple[ContinuousLinearEqualityConstraint, ...] = field(
+    constraints_lin_eq: tuple[ContinuousLinearConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """Linear equality constraints."""
 
-    constraints_lin_ineq: tuple[ContinuousLinearInequalityConstraint, ...] = field(
+    constraints_lin_ineq: tuple[ContinuousLinearConstraint, ...] = field(
         converter=to_tuple, factory=tuple
     )
     """Linear inequality constraints."""
@@ -72,12 +73,10 @@ class SubspaceContinuous(SerialMixin):
     )
     """Nonlinear constraints."""
 
+    @override
     def __str__(self) -> str:
         if self.is_empty:
             return ""
-
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
 
         # Convert the lists to dataFrames to be able to use pretty_printing
         param_list = [param.summary() for param in self.parameters]
@@ -89,21 +88,18 @@ class SubspaceContinuous(SerialMixin):
             constr.summary() for constr in self.constraints_nonlin
         ]
         param_df = pd.DataFrame(param_list)
-        lin_eq_constr_df = pd.DataFrame(eq_constraints_list)
-        lin_ineq_constr_df = pd.DataFrame(ineq_constraints_list)
-        nonlinear_constr_df = pd.DataFrame(nonlin_constraints_list)
+        lin_eq_df = pd.DataFrame(eq_constraints_list)
+        lin_ineq_df = pd.DataFrame(ineq_constraints_list)
+        nonlinear_df = pd.DataFrame(nonlin_constraints_list)
 
-        # Put all attributes of the continuous class in one string
-        continuous_str = f"""{start_bold}Continuous Search Space{end_bold}
-            \n{start_bold}Continuous Parameters{end_bold}\n{pretty_print_df(param_df)}
-            \n{start_bold}List of Linear Equality Constraints{end_bold}
-            \r{pretty_print_df(lin_eq_constr_df)}
-            \n{start_bold}List of Linear Inequality Constraints{end_bold}
-            \r{pretty_print_df(lin_ineq_constr_df)}
-            \n{start_bold}List of Nonlinear Constraints{end_bold}
-            \r{pretty_print_df(nonlinear_constr_df)}"""
+        fields = [
+            to_string("Continuous Parameters", pretty_print_df(param_df)),
+            to_string("Linear Equality Constraints", pretty_print_df(lin_eq_df)),
+            to_string("Linear Inequality Constraints", pretty_print_df(lin_ineq_df)),
+            to_string("Non-linear Constraints", pretty_print_df(nonlinear_df)),
+        ]
 
-        return continuous_str.replace("\n", "\n ").replace("\r", "\r ")
+        return to_string(self.__class__.__name__, *fields)
 
     @property
     def constraints_cardinality(self) -> tuple[ContinuousCardinalityConstraint, ...]:
@@ -113,6 +109,32 @@ class SubspaceContinuous(SerialMixin):
             for c in self.constraints_nonlin
             if isinstance(c, ContinuousCardinalityConstraint)
         )
+
+    @constraints_lin_eq.validator
+    def _validate_constraints_lin_eq(
+        self, _, lst: list[ContinuousLinearConstraint]
+    ) -> None:
+        """Validate linear equality constraints."""
+        # TODO Remove once eq and ineq constraints are consolidated into one list
+        if not all(c.is_eq for c in lst):
+            raise ValueError(
+                f"The list '{fields(self.__class__).constraints_lin_eq.name}' of "
+                f"{self.__class__.__name__} only accepts equality constraints, i.e. "
+                f"the 'operator' for all list items should be '='."
+            )
+
+    @constraints_lin_ineq.validator
+    def _validate_constraints_lin_ineq(
+        self, _, lst: list[ContinuousLinearConstraint]
+    ) -> None:
+        """Validate linear inequality constraints."""
+        # TODO Remove once eq and ineq constraints are consolidated into one list
+        if any(c.is_eq for c in lst):
+            raise ValueError(
+                f"The list '{fields(self.__class__).constraints_lin_ineq.name}' of "
+                f"{self.__class__.__name__} only accepts inequality constraints, i.e. "
+                f"the 'operator' for all list items should be '>=' or '<='."
+            )
 
     @property
     def n_inactive_parameter_combinations(self) -> int:
@@ -151,7 +173,7 @@ class SubspaceContinuous(SerialMixin):
     @classmethod
     def empty(cls) -> SubspaceContinuous:
         """Create an empty continuous subspace."""
-        return SubspaceContinuous([])
+        return SubspaceContinuous(())
 
     @classmethod
     def from_parameter(cls, parameter: ContinuousParameter) -> SubspaceContinuous:
@@ -175,17 +197,17 @@ class SubspaceContinuous(SerialMixin):
         constraints = constraints or []
         return SubspaceContinuous(
             parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
-            constraints_lin_eq=[  # type:ignore[misc]
+            constraints_lin_eq=[  # type:ignore[attr-misc]
                 c
                 for c in constraints
-                if isinstance(c, ContinuousLinearEqualityConstraint)
+                if (isinstance(c, ContinuousLinearConstraint) and c.is_eq)
             ],
-            constraints_lin_ineq=[  # type:ignore[misc]
+            constraints_lin_ineq=[  # type:ignore[attr-misc]
                 c
                 for c in constraints
-                if isinstance(c, ContinuousLinearInequalityConstraint)
+                if (isinstance(c, ContinuousLinearConstraint) and not c.is_eq)
             ],
-            constraints_nonlin=[
+            constraints_nonlin=[  # type:ignore[attr-misc]
                 c for c in constraints if isinstance(c, ContinuousNonlinearConstraint)
             ],
         )
@@ -268,9 +290,14 @@ class SubspaceContinuous(SerialMixin):
         return len(self.parameters) == 0
 
     @property
-    def param_names(self) -> tuple[str, ...]:
-        """Return list of parameter names."""
+    def parameter_names(self) -> tuple[str, ...]:
+        """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)
+
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The columns spanning the computational representation."""
+        return tuple(chain.from_iterable(p.comp_rep_columns for p in self.parameters))
 
     @property
     def param_names_in_cardinality_constraint(self) -> tuple[str, ...]:
@@ -282,11 +309,12 @@ class SubspaceContinuous(SerialMixin):
         return tuple(chain(*params_per_cardinatliy_constraint))
 
     @property
-    def param_bounds_comp(self) -> np.ndarray:
-        """Return bounds as numpy array."""
-        if not self.parameters:
-            return np.empty((2, 0), dtype=DTypeFloatNumpy)
-        return np.stack([p.bounds.to_ndarray() for p in self.parameters]).T
+    def comp_rep_bounds(self) -> pd.DataFrame:
+        """The minimum and maximum values of the computational representation."""
+        return pd.DataFrame(
+            {p.name: p.bounds.to_tuple() for p in self.parameters},
+            index=["min", "max"],
+        )
 
     def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
         """Create a copy of the subspace with certain parameters removed.
@@ -399,7 +427,7 @@ class SubspaceContinuous(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -427,8 +455,8 @@ class SubspaceContinuous(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
-        parameters = get_transform_parameters(
-            self.parameters, df, allow_missing, allow_extra
+        parameters = get_transform_objects(
+            df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # Transform the parameters
@@ -474,10 +502,10 @@ class SubspaceContinuous(SerialMixin):
             and len(self.constraints_lin_ineq) == 0
             and len(self.constraints_cardinality) == 0
         ):
-            return self._sample_from_bounds(batch_size, self.param_bounds_comp)
+            return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
         if len(self.constraints_cardinality) == 0:
-            return self._sample_from_polytope(batch_size, self.param_bounds_comp)
+            return self._sample_from_polytope(batch_size, self.comp_rep_bounds.values)
 
         return self._sample_from_polytope_with_cardinality_constraints(batch_size)
 
@@ -487,7 +515,7 @@ class SubspaceContinuous(SerialMixin):
             low=bounds[0, :], high=bounds[1, :], size=(batch_size, len(self.parameters))
         )
 
-        return pd.DataFrame(points, columns=self.param_names)
+        return pd.DataFrame(points, columns=self.parameter_names)
 
     def _sample_from_polytope(
         self, batch_size: int, bounds: np.ndarray
@@ -506,7 +534,7 @@ class SubspaceContinuous(SerialMixin):
                 c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
             ],
         )
-        return pd.DataFrame(points, columns=self.param_names)
+        return pd.DataFrame(points, columns=self.parameter_names)
 
     def _sample_from_polytope_with_cardinality_constraints(
         self, batch_size: int
@@ -603,7 +631,7 @@ class SubspaceContinuous(SerialMixin):
     def full_factorial(self) -> pd.DataFrame:
         """Get the full factorial of the continuous space."""
         index = pd.MultiIndex.from_product(
-            self.param_bounds_comp.T.tolist(), names=self.param_names
+            self.comp_rep_bounds.values.T.tolist(), names=self.parameter_names
         )
 
         return pd.DataFrame(index=index).reset_index()
@@ -624,3 +652,6 @@ class SubspaceContinuous(SerialMixin):
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

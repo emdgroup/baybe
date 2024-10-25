@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import time
+import warnings
 from itertools import chain
 from unittest.mock import Mock
 
@@ -10,15 +12,23 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from botorch.exceptions import ModelFittingError
 from hypothesis import settings as hypothesis_settings
+from tenacity import (
+    retry,
+    retry_any,
+    retry_if_exception_message,
+    retry_if_exception_type,
+    stop_after_attempt,
+)
+from torch._C import _LinAlgError
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition import qExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
-    ContinuousLinearEqualityConstraint,
-    ContinuousLinearInequalityConstraint,
+    ContinuousLinearConstraint,
     DiscreteCardinalityConstraint,
     DiscreteCustomConstraint,
     DiscreteDependenciesConstraint,
@@ -59,6 +69,7 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
+from baybe.targets.binary import BinaryTarget
 from baybe.telemetry import (
     VARNAME_TELEMETRY_ENABLED,
     VARNAME_TELEMETRY_HOSTNAME,
@@ -66,7 +77,8 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
-from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
+from baybe.utils.random import temporary_seed
 
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
@@ -382,6 +394,7 @@ def fixture_targets(target_names: list[str]):
             bounds=(0, 100),
             transformation="TRIANGULAR",
         ),
+        BinaryTarget(name="Target_binary"),
     ]
     return [t for t in valid_targets if t.name in target_names]
 
@@ -505,23 +518,27 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         "Constraint_15": DiscreteLinkedParametersConstraint(
             parameters=["Solvent_1", "Solvent_2", "Solvent_3"],
         ),
-        "ContiConstraint_1": ContinuousLinearEqualityConstraint(
+        "ContiConstraint_1": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator="=",
             coefficients=[1.0, 1.0],
             rhs=0.3,
         ),
-        "ContiConstraint_2": ContinuousLinearEqualityConstraint(
+        "ContiConstraint_2": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator="=",
             coefficients=[1.0, 3.0],
             rhs=0.3,
         ),
-        "ContiConstraint_3": ContinuousLinearInequalityConstraint(
+        "ContiConstraint_3": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator=">=",
             coefficients=[1.0, 1.0],
             rhs=0.3,
         ),
-        "ContiConstraint_4": ContinuousLinearInequalityConstraint(
+        "ContiConstraint_4": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
+            operator=">=",
             coefficients=[1.0, 3.0],
             rhs=0.3,
         ),
@@ -529,6 +546,12 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             parameters=["Conti_finite1", "Conti_finite2", "Conti_finite3"],
             min_cardinality=1,
             max_cardinality=2,
+        ),
+        "ContiConstraint_6": ContinuousLinearConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            operator="<=",
+            coefficients=[1.0, 3.0],
+            rhs=0.3,
         ),
     }
     return [
@@ -625,20 +648,53 @@ def fixture_default_surrogate_model(request, kernel):
     return GaussianProcessSurrogate(kernel_or_factory=kernel)
 
 
+@pytest.fixture(name="allow_repeated_recommendations")
+def fixture_allow_repeated_recommendations():
+    return False
+
+
+@pytest.fixture(name="allow_recommending_already_measured")
+def allow_recommending_already_measured():
+    return True
+
+
+@pytest.fixture(name="allow_recommending_pending_experiments")
+def fixture_allow_recommending_pending_experiments():
+    return False
+
+
 @pytest.fixture(name="initial_recommender")
-def fixture_initial_recommender():
+def fixture_initial_recommender(
+    allow_recommending_already_measured,
+    allow_repeated_recommendations,
+    allow_recommending_pending_experiments,
+):
     """The default initial recommender to be used if not specified differently."""
-    return RandomRecommender()
+    return RandomRecommender(
+        allow_repeated_recommendations=allow_repeated_recommendations,
+        allow_recommending_already_measured=allow_recommending_already_measured,
+        allow_recommending_pending_experiments=allow_recommending_pending_experiments,
+    )
 
 
 @pytest.fixture(name="recommender")
-def fixture_recommender(initial_recommender, surrogate_model, acqf):
+def fixture_recommender(
+    initial_recommender,
+    surrogate_model,
+    acqf,
+    allow_repeated_recommendations,
+    allow_recommending_already_measured,
+    allow_recommending_pending_experiments,
+):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
+            allow_repeated_recommendations=allow_repeated_recommendations,
+            allow_recommending_already_measured=allow_recommending_already_measured,
+            allow_recommending_pending_experiments=allow_recommending_pending_experiments,
         ),
     )
 
@@ -826,10 +882,25 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
 
 # TODO consider turning this into a fixture returning a campaign after running some
 #  fake iterations
+@retry(
+    stop=stop_after_attempt(5),
+    retry=retry_any(
+        retry_if_exception_type((ModelFittingError, _LinAlgError)),
+        retry_if_exception_message(
+            match=r".*Expected value argument.*to be within the support.*"
+        ),
+    ),
+    before_sleep=lambda x: warnings.warn(
+        f"Retrying iteration test due to '{x.outcome.exception()}'"
+    ),
+)
 def run_iterations(
     campaign: Campaign, n_iterations: int, batch_size: int, add_noise: bool = True
 ) -> None:
     """Run a campaign for some fake iterations.
+
+    This function attempts up to five executions if numerical errors were encountered.
+    Each retry is done with a different seed to ensure numerical variance.
 
     Args:
         campaign: The campaign encapsulating the experiments.
@@ -837,15 +908,16 @@ def run_iterations(
         batch_size: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
     """
-    for k in range(n_iterations):
-        rec = campaign.recommend(batch_size=batch_size)
-        # dont use parameter noise for these tests
+    with temporary_seed(int(time.time())):
+        for k in range(n_iterations):
+            rec = campaign.recommend(batch_size=batch_size)
+            # dont use parameter noise for these tests
 
-        add_fake_results(rec, campaign.targets)
-        if add_noise and (k % 2):
-            add_parameter_noise(rec, campaign.parameters, noise_level=0.1)
+            add_fake_measurements(rec, campaign.targets)
+            if add_noise and (k % 2):
+                add_parameter_noise(rec, campaign.parameters, noise_level=0.02)
 
-        campaign.add_measurements(rec)
+            campaign.add_measurements(rec)
 
 
 def select_recommender(

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import gc
 import json
+from typing import TYPE_CHECKING
 
 import cattrs
 import numpy as np
@@ -10,17 +12,23 @@ import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
+from typing_extensions import override
 
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
+from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace.core import (
     SearchSpace,
+    SearchSpaceType,
     to_searchspace,
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
+from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -28,6 +36,10 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils.boolean import eq_dataframe
+from baybe.utils.plotting import to_string
+
+if TYPE_CHECKING:
+    from botorch.posteriors import Posterior
 
 
 @define
@@ -60,7 +72,7 @@ class Campaign(SerialMixin):
 
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,
-        validator=instance_of(RecommenderProtocol),  # type: ignore[type-abstract]
+        validator=instance_of(RecommenderProtocol),
     )
     """The employed recommender"""
 
@@ -82,20 +94,16 @@ class Campaign(SerialMixin):
     )
     """The cached recommendations."""
 
+    @override
     def __str__(self) -> str:
-        start_bold = "\033[1m"
-        end_bold = "\033[0m"
+        metadata_fields = [
+            to_string("Batches done", self.n_batches_done, single_line=True),
+            to_string("Fits done", self.n_fits_done, single_line=True),
+        ]
+        metadata = to_string("Meta Data", *metadata_fields)
+        fields = [metadata, self.searchspace, self.objective, self.recommender]
 
-        # Get str representation of campaign fields
-        fields_to_print = [self.searchspace, self.objective, self.recommender]
-        fields_str = "\n\n".join(str(x) for x in fields_to_print)
-
-        # Put all relevant attributes of the campaign in one string
-        campaign_str = f"""{start_bold}Campaign{end_bold}
-        \n{start_bold}Meta Data{end_bold}\nBatches Done: {self.n_batches_done}
-        \rFits Done: {self.n_fits_done}\n\n{fields_str}\n"""
-
-        return campaign_str.replace("\n", "\n ").replace("\r", "\r ")
+        return to_string(self.__class__.__name__, *fields)
 
     @property
     def measurements(self) -> pd.DataFrame:
@@ -190,9 +198,10 @@ class Campaign(SerialMixin):
 
         # Update meta data
         # TODO: refactor responsibilities
-        self.searchspace.discrete.mark_as_measured(
-            data, numerical_measurements_must_be_within_tolerance
-        )
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            self.searchspace.discrete.mark_as_measured(
+                data, numerical_measurements_must_be_within_tolerance
+            )
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1
@@ -216,11 +225,14 @@ class Campaign(SerialMixin):
     def recommend(
         self,
         batch_size: int,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
         Args:
             batch_size: Number of requested recommendations.
+            pending_experiments: Parameter configurations specifying experiments
+                that are currently pending.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
@@ -233,6 +245,10 @@ class Campaign(SerialMixin):
                 f"You must at least request one recommendation per batch, but provided "
                 f"{batch_size=}."
             )
+
+        # Invalidate cached recommendation if pending experiments are provided
+        if (pending_experiments is not None) and (len(pending_experiments) > 0):
+            self._cached_recommendation = pd.DataFrame()
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
@@ -250,6 +266,7 @@ class Campaign(SerialMixin):
             self.searchspace,
             self.objective,
             self._measurements_exp,
+            pending_experiments,
         )
 
         # Cache the recommendations
@@ -260,6 +277,75 @@ class Campaign(SerialMixin):
         telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
 
         return rec
+
+    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+        """Get the posterior predictive distribution for the given candidates.
+
+        The predictive distribution is based on the surrogate model of the last used
+        recommender.
+
+        Args:
+            candidates: The candidate points in experimental recommendations.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+
+        Raises:
+            IncompatibilityError: If the underlying surrogate model exposes no
+                method for computing the posterior distribution.
+
+        Returns:
+            Posterior: The corresponding posterior object.
+            For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+        """
+        surrogate = self.get_surrogate()
+        if not hasattr(surrogate, method_name := "posterior"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
+                f"provide a '{method_name}' method."
+            )
+
+        import torch
+
+        with torch.no_grad():
+            return surrogate.posterior(candidates)
+
+    def get_surrogate(self) -> SurrogateProtocol:
+        """Get the current surrogate model.
+
+        Raises:
+            RuntimeError: If the current recommender does not provide a surrogate model.
+
+        Returns:
+            Surrogate: The surrogate of the current recommender.
+
+        Note:
+            Currently, this method always returns the surrogate model with respect to
+            the transformed target(s) / objective. This means that if you are using a
+            ``SingleTargetObjective`` with a transformed target or a
+            ``DesirabilityObjective``, the model's output will correspond to the
+            transformed quantities and not the original untransformed target(s).
+        """
+        if self.objective is None:
+            raise IncompatibilityError(
+                f"No surrogate is available since no '{Objective.__name__}' is defined."
+            )
+
+        pure_recommender: RecommenderProtocol
+        if isinstance(self.recommender, MetaRecommender):
+            pure_recommender = self.recommender.get_current_recommender()
+        else:
+            pure_recommender = self.recommender
+
+        if isinstance(pure_recommender, BayesianRecommender):
+            return pure_recommender.get_surrogate(
+                self.searchspace, self.objective, self.measurements
+            )
+        else:
+            raise RuntimeError(
+                f"The current recommender is of type "
+                f"'{pure_recommender.__class__.__name__}', which does not provide "
+                f"a surrogate model. Surrogate models are only available for "
+                f"recommender subclasses of '{BayesianRecommender.__name__}'."
+            )
 
 
 def _add_version(dict_: dict) -> dict:
@@ -295,3 +381,6 @@ _validation_converter = converter.copy()
 _validation_converter.register_structure_hook(
     SearchSpace, validate_searchspace_from_config
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

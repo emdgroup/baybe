@@ -1,10 +1,12 @@
 """Base classes for all pure recommenders."""
 
+import gc
 from abc import ABC
 from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
+from typing_extensions import override
 
 from baybe.exceptions import NotEnoughPointsLeftError
 from baybe.objectives.base import Objective
@@ -15,7 +17,10 @@ from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 
 
-@define
+# TODO: Slots are currently disabled since they also block the monkeypatching necessary
+#   to use `register_hooks`. Probably, we need to update our documentation and
+#   explain how to work around that before we re-enable slots.
+@define(slots=False)
 class PureRecommender(ABC, RecommenderProtocol):
     """Abstract base class for all pure recommenders."""
 
@@ -32,25 +37,35 @@ class PureRecommender(ABC, RecommenderProtocol):
     """Allow to make recommendations that were measured previously.
     This only has an influence in discrete search spaces."""
 
-    def recommend(  # noqa: D102
+    allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
+    """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
+    the corresponding points will be removed from the candidates. This only has an
+    influence in discrete search spaces."""
+
+    @override
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # See base class
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
             )
         else:
-            return self._recommend_with_discrete_parts(searchspace, batch_size)
+            return self._recommend_with_discrete_parts(
+                searchspace,
+                batch_size,
+                pending_experiments=pending_experiments,
+            )
 
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
         """Generate recommendations from a discrete search space.
@@ -58,7 +73,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             subspace_discrete: The discrete subspace from which to generate
                 recommendations.
-            candidates_comp: The computational representation of all discrete candidate
+            candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
 
@@ -67,14 +82,14 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         Returns:
             The dataframe indices of the recommended points in the provided
-            computational representation.
+            experimental representation.
         """
         # If this method is not implemented by a child class, try to resort to hybrid
         # recommendation (with an empty subspace) instead.
         try:
             return self._recommend_hybrid(
                 searchspace=SearchSpace(discrete=subspace_discrete),
-                candidates_comp=candidates_comp,
+                candidates_exp=candidates_exp,
                 batch_size=batch_size,
             ).index
         except NotImplementedError as exc:
@@ -110,7 +125,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         try:
             return self._recommend_hybrid(
                 searchspace=SearchSpace(continuous=subspace_continuous),
-                candidates_comp=pd.DataFrame(),
+                candidates_exp=pd.DataFrame(),
                 batch_size=batch_size,
             )
         except NotImplementedError as exc:
@@ -126,7 +141,7 @@ class PureRecommender(ABC, RecommenderProtocol):
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
         """Generate recommendations from a hybrid search space.
@@ -138,7 +153,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The hybrid search space from which to generate
                 recommendations.
-            candidates_comp: The computational representation of all discrete candidate
+            candidates_exp: The experimental representation of all discrete candidate
                 points to be considered.
             batch_size: The size of the recommendation batch.
 
@@ -154,6 +169,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
+        pending_experiments: pd.DataFrame | None,
     ) -> pd.DataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
@@ -163,6 +179,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         Args:
             searchspace: The search space from which to generate recommendations.
             batch_size: The size of the recommendation batch.
+            pending_experiments: Pending experiments in experimental representation.
 
         Returns:
             A dataframe containing the recommendations as individual rows.
@@ -175,16 +192,24 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get discrete candidates
         # Repeated recommendations are always allowed for hybrid spaces
-        _, candidates_comp = searchspace.discrete.get_candidates(
+        # Pending experiments are excluded for discrete spaces unless configured
+        # differently.
+        dont_exclude_pending = (
+            is_hybrid_space or self.allow_recommending_pending_experiments
+        )
+        candidates_exp, _ = searchspace.discrete.get_candidates(
             allow_repeated_recommendations=is_hybrid_space
             or self.allow_repeated_recommendations,
             allow_recommending_already_measured=is_hybrid_space
             or self.allow_recommending_already_measured,
+            exclude=None if dont_exclude_pending else pending_experiments,
         )
+
+        # TODO: Introduce new flag to recommend batches larger than the search space
 
         # Check if enough candidates are left
         # TODO [15917]: This check is not perfectly correct.
-        if (not is_hybrid_space) and (len(candidates_comp) < batch_size):
+        if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
                 "possible data points left to recommend. This can be "
@@ -196,11 +221,11 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get recommendations
         if is_hybrid_space:
-            rec = self._recommend_hybrid(searchspace, candidates_comp, batch_size)
+            rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
             idxs = rec.index
         else:
             idxs = self._recommend_discrete(
-                searchspace.discrete, candidates_comp, batch_size
+                searchspace.discrete, candidates_exp, batch_size
             )
             rec = searchspace.discrete.exp_rep.loc[idxs, :]
 
@@ -209,3 +234,7 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Return recommendations
         return rec
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -3,6 +3,9 @@
 from baybe.constraints.conditions import SubSelectionCondition, ThresholdCondition
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
+    ContinuousLinearConstraint,
+)
+from baybe.constraints.deprecation import (
     ContinuousLinearEqualityConstraint,
     ContinuousLinearInequalityConstraint,
 )
@@ -25,6 +28,7 @@ __all__ = [
     "SubSelectionCondition",
     "ThresholdCondition",
     # --- Continuous constraints ---#
+    "ContinuousLinearConstraint",
     "ContinuousCardinalityConstraint",
     "ContinuousLinearEqualityConstraint",
     "ContinuousLinearInequalityConstraint",

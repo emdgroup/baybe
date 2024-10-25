@@ -15,12 +15,17 @@ from baybe.serialization.core import get_base_structure_hook
 class RecommenderProtocol(Protocol):
     """Type protocol specifying the interface recommenders need to implement."""
 
+    # Use slots so that derived classes also remain slotted
+    # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+    __slots__ = ()
+
     def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Objective | None,
-        measurements: pd.DataFrame | None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Recommend a batch of points from the given search space.
 
@@ -36,6 +41,8 @@ class RecommenderProtocol(Protocol):
                 Each row corresponds to one conducted experiment, where the parameter
                 columns define the experimental setting and the target columns report
                 the measured outcomes.
+            pending_experiments: Parameter configurations in "experimental
+                representation" specifying experiments that are currently pending.
 
         Returns:
             A dataframe containing the recommendations in experimental representation
@@ -44,6 +51,11 @@ class RecommenderProtocol(Protocol):
         ...
 
 
+# TODO: The workarounds below are currently required since the hooks created through
+#   `unstructure_base` and `get_base_structure_hook` do not reuse the hooks of the
+#   actual class, hence we cannot control things there. Fix is already planned and also
+#   needed for other reasons.
+
 # Register (un-)structure hooks
 converter.register_unstructure_hook(
     RecommenderProtocol,
@@ -51,12 +63,23 @@ converter.register_unstructure_hook(
         x,
         # TODO: Remove once deprecation got expired:
         overrides=dict(
-            allow_repeated_recommendations=cattrs.override(omit=True),
-            allow_recommending_already_measured=cattrs.override(omit=True),
             acquisition_function_cls=cattrs.override(omit=True),
+            # Temporary workaround (see TODO note above)
+            _surrogate_model=cattrs.override(rename="surrogate_model"),
+            _current_recommender=cattrs.override(omit=False),
+            _used_recommender_ids=cattrs.override(omit=False),
         ),
     ),
 )
 converter.register_structure_hook(
-    RecommenderProtocol, get_base_structure_hook(RecommenderProtocol)
+    RecommenderProtocol,
+    get_base_structure_hook(
+        RecommenderProtocol,
+        # Temporary workaround (see TODO note above)
+        overrides=dict(
+            _surrogate_model=cattrs.override(rename="surrogate_model"),
+            _current_recommender=cattrs.override(omit=False),
+            _used_recommender_ids=cattrs.override(omit=False),
+        ),
+    ),
 )

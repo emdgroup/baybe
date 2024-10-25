@@ -5,9 +5,11 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
+from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
@@ -18,16 +20,15 @@ class RandomRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
+    @override
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        # See base class.
-
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return candidates_comp.sample(batch_size)
+            return candidates_exp.sample(batch_size)
 
         cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
@@ -45,6 +46,11 @@ class RandomRecommender(NonPredictiveRecommender):
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)
 
+    @override
+    def __str__(self) -> str:
+        fields = [to_string("Compatibility", self.compatibility, single_line=True)]
+        return to_string(self.__class__.__name__, *fields)
+
 
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling."""
@@ -53,18 +59,25 @@ class FPSRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
 
+    @override
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
-        candidates_comp: pd.DataFrame,
+        candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
-        # See base class.
-
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
+
+        # Scale and sample
+        candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]
+
+    @override
+    def __str__(self) -> str:
+        fields = [to_string("Compatibility", self.compatibility, single_line=True)]
+        return to_string(self.__class__.__name__, *fields)

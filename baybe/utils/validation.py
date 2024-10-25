@@ -1,10 +1,21 @@
 """Validation utilities."""
 
+from __future__ import annotations
+
 import math
 from collections.abc import Callable
 from typing import Any
 
 from attrs import Attribute
+
+
+def validate_not_nan(self: Any, attribute: Attribute, value: Any) -> None:
+    """Attrs-compatible validator to forbid 'nan' values."""
+    if isinstance(value, float) and math.isnan(value):
+        raise ValueError(
+            f"The value passed to attribute '{attribute.name}' of class "
+            f"'{self.__class__.__name__}' cannot be 'nan'."
+        )
 
 
 def _make_restricted_float_validator(
