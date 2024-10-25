@@ -133,8 +133,13 @@ def validate_cardinality_constraint_parameter_bounds(
     """
     exceptions = []
     for name in constraint.parameters:
-        # We implicitly assume that the corresponding parameter exists
-        parameter = next(p for p in parameters if p.name == name)
+        try:
+            parameter = next(p for p in parameters if p.name == name)
+        except StopIteration as ex:
+            raise ValueError(
+                f"The parameter '{name}' referenced by the constraint is not contained "
+                f"in the given collection of parameters."
+            ) from ex
 
         if not parameter.is_in_range(0.0):
             exceptions.append(
