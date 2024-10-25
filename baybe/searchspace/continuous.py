@@ -300,13 +300,10 @@ class SubspaceContinuous(SerialMixin):
         return tuple(chain.from_iterable(p.comp_rep_columns for p in self.parameters))
 
     @property
-    def param_names_in_cardinality_constraint(self) -> tuple[str, ...]:
-        """Return list of parameter names involved in cardinality constraints."""
-        # TODO: Is this property really needed? If so, apply naming conventions.
-        params_per_cardinatliy_constraint = [
-            c.parameters for c in self.constraints_cardinality
-        ]
-        return tuple(chain(*params_per_cardinatliy_constraint))
+    def parameter_names_in_cardinality_constraints(self) -> tuple[str, ...]:
+        """The names of all parameters affected by cardinality constraints."""
+        names_per_constraint = (c.parameters for c in self.constraints_cardinality)
+        return tuple(chain(*names_per_constraint))
 
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
@@ -394,7 +391,7 @@ class SubspaceContinuous(SerialMixin):
 
         # Active parameters: parameters involved in cardinality constraints
         active_parameter_names = set(
-            self.param_names_in_cardinality_constraint
+            self.parameter_names_in_cardinality_constraints
         ).difference(set(inactive_parameter_names))
 
         active_parameters_guaranteed = ensure_active_parameters(
