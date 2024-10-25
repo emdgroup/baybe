@@ -252,7 +252,9 @@ class BotorchRecommender(BayesianRecommender):
             # Create a new subspace by ensuring all active parameters being
             # non-zeros.
             subspace_continuous_without_cardinality_constraints = (
-                subspace_continuous._remove_cardinality_constraints(inactive_parameters)
+                subspace_continuous._enforce_cardinality_constraints_via_assignment(
+                    inactive_parameters
+                )
             )
             try:
                 # Optimize the acquisition function

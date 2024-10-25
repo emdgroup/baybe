@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gc
 import math
-import sys
 import warnings
 from collections.abc import Collection, Iterable, Sequence
 from itertools import chain, product
@@ -12,7 +11,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-from attrs import define, field, fields
+from attrs import define, evolve, field, fields
 from typing_extensions import override
 
 from baybe.constraints import (
@@ -335,50 +334,44 @@ class SubspaceContinuous(SerialMixin):
             ],
         )
 
-    def _remove_cardinality_constraints(
+    def _enforce_cardinality_constraints_via_assignment(
         self,
         inactive_parameter_names: Collection[str],
-        inactivity_threshold: float = sys.float_info.min,
+        threshold: float = 1e-8,
     ) -> SubspaceContinuous:
-        """Create a copy of the subspace with cardinality constraints removed.
+        """Create a copy of the subspace with fixed inactive parameters.
+
+        The returned subspace requires no cardinality constraints since – for the
+        given separation of parameter into active an inactive sets – the
+        cardinality constraints are implemented by fixing the inactive parameters to
+        zero and bounding the active parameters away from zero.
 
         Args:
-            inactive_parameter_names: A list of inactive parameters.
-            inactivity_threshold: Threshold for checking whether a value is zero.
+            inactive_parameter_names: The names of the parameter to be inactivated.
+            threshold: The threshold for a parameter to be considered active.
 
         Returns:
-            A new subspace object without cardinality constraints.
+            A new subspace with fixed inactive parameters and no cardinality
+            constraints.
         """
-        # TODO: Revise function name/docstring and arguments. In particular: why
-        #   does the function expect the inactive parameters instead of the active ones?
-
-        # TODO: Shouldn't the x != 0 constraints be applied on the level of the
-        #   individual constrains, also taking into account whether min_cardinality > 0?
-
-        # Active parameters: parameters involved in cardinality constraints
+        # Extract active parameters involved in cardinality constraints
         active_parameter_names = set(
             self.parameter_names_in_cardinality_constraints
-        ).difference(set(inactive_parameter_names))
+        ).difference(inactive_parameter_names)
 
-        active_parameters_guaranteed = [
-            activate_parameter(p, inactivity_threshold)
-            if p.name in active_parameter_names
-            else p
-            for p in self.parameters
-        ]
+        # Adjust parameters depending on their in-/activity assignment
+        adjusted_parameters: list[ContinuousParameter] = []
+        p_adjusted: ContinuousParameter
+        for p in self.parameters:
+            if p.name in inactive_parameter_names:
+                p_adjusted = _FixedNumericalContinuousParameter(name=p.name, value=0.0)
+            elif p.name in active_parameter_names:
+                p_adjusted = activate_parameter(p, threshold)
+            else:
+                p_adjusted = p
+            adjusted_parameters.append(p_adjusted)
 
-        return SubspaceContinuous(
-            parameters=tuple(
-                [
-                    _FixedNumericalContinuousParameter(name=p.name, value=0.0)
-                    if p.name in inactive_parameter_names
-                    else p
-                    for p in active_parameters_guaranteed
-                ]
-            ),
-            constraints_lin_eq=self.constraints_lin_eq,
-            constraints_lin_ineq=self.constraints_lin_ineq,
-        )
+        return evolve(self, parameters=adjusted_parameters, constraints_nonlin=())
 
     def transform(
         self,
