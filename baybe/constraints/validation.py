@@ -149,4 +149,4 @@ def validate_cardinality_constraint_parameter_bounds(
     if exceptions:
         if len(exceptions) == 1:
             raise exceptions[0]
-        raise ExceptionGroup("invalid parameter bounds", exceptions)
+        raise ExceptionGroup("Invalid parameter bounds", exceptions)
