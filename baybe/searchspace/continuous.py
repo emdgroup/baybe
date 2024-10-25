@@ -27,14 +27,17 @@ from baybe.constraints.validation import (
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
-from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
+from baybe.parameters.utils import (
+    activate_parameter,
+    get_parameters_from_dataframe,
+    sort_parameters,
+)
 from baybe.searchspace.validation import (
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
-from baybe.utils.interval import Interval
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
@@ -352,51 +355,17 @@ class SubspaceContinuous(SerialMixin):
         # TODO: Shouldn't the x != 0 constraints be applied on the level of the
         #   individual constrains, also taking into account whether min_cardinality > 0?
 
-        # TODO: Merge _drop_parameters() to this method.
-        def ensure_active_parameters(
-            parameters: tuple[NumericalContinuousParameter, ...],
-            active_parameter_names: Collection[str],
-        ) -> tuple[NumericalContinuousParameter, ...]:
-            """Ensure certain parameters being non-zero by adjusting bounds.
-
-            Args:
-                parameters: A list of parameters.
-                active_parameter_names: A list of parameters names that must be
-                    non-zero.
-
-            Returns:
-                A list of parameters with certain parameters guaranteed to be non-zero.
-            """
-            parameters_active_guaranteed = []
-            for p in parameters:
-                if p.name not in active_parameter_names:
-                    bounds = p.bounds
-                # Active parameter x with bounds [..., 0], ensure x != 0
-                elif p.bounds.upper == 0.0:
-                    bounds = Interval(lower=p.bounds.lower, upper=inactivity_threshold)
-                # Active parameter x with bounds [0, ...], ensure x != 0
-                elif p.bounds.lower == 0.0:
-                    bounds = Interval(lower=inactivity_threshold, upper=p.bounds.upper)
-                # TODO: For active parameter x in [..., 0, ...], ensure x != 0 is not
-                #  done.
-                else:
-                    bounds = p.bounds
-                parameters_active_guaranteed.append(
-                    NumericalContinuousParameter(
-                        name=p.name,
-                        bounds=bounds,
-                    )
-                )
-            return tuple(parameters_active_guaranteed)
-
         # Active parameters: parameters involved in cardinality constraints
         active_parameter_names = set(
             self.parameter_names_in_cardinality_constraints
         ).difference(set(inactive_parameter_names))
 
-        active_parameters_guaranteed = ensure_active_parameters(
-            self.parameters, active_parameter_names
-        )
+        active_parameters_guaranteed = [
+            activate_parameter(p, inactivity_threshold)
+            if p.name in active_parameter_names
+            else p
+            for p in self.parameters
+        ]
 
         return SubspaceContinuous(
             parameters=tuple(
