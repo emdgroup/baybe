@@ -1,34 +1,46 @@
-## Example for Modelling a Mixture in Traditional Representation
+## Modelling a Mixture in Traditional Representation
 
-# When modelling mixtures, one is typically confronted with a large set of substances to
-# chose from. In the traditional representation, for each of these substance choices we
-# would have one single parameter describing the amount of that substance which should
-# go into the mixture. Then, there is one overall constraint to ensure that all substance
-# amounts sum to 100%. Additionally, there could be more constraints, for instance if
-# there are subgroups of substances that have their own constraints.
+# When modelling mixtures, we are often faced with a large set of ingredients to choose
+# from. A common way to formalize this type of selection problem is to assign each
+# ingredient its own numerical parameter representing the amount of the ingredient in
+# the mixture. A sum constraint imposed on all parameters then ensures that the total
+# amount of ingredients in the mix is always 100%. In addition, there could be other
+# constraints, for instance, to impose further restrictions on individual subgroups of
+# ingredients. In BayBE's language, we call this the *traditional mixture
+# representation*.
 
-# In this example, we will create a simple mixture of up to 6 components. There are
-# three subgroups of substances: solvents, bases and phase agents.
+# In this example, we demonstrate how to create a search space in this representation,
+# using a simple mixture of up to six components, which are divided into three
+# subgroups: solvents, bases and phase agents.
+
+# ```{admonition} Slot-based Representation
+# :class: seealso
+# For an alternative way to describe mixtures, see our
+# [slot-based representation](/examples/Mixtures/slot_based.md).
+# ```
 
 ### Imports
 
-from baybe import Campaign
+import numpy as np
+import pandas as pd
+
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
-from baybe.searchspace import SearchSpace, SubspaceContinuous
-from baybe.targets import NumericalTarget
+from baybe.recommenders import RandomRecommender
+from baybe.searchspace import SubspaceContinuous
 
-### Parameters Setup
+### Parameter Setup
 
-# Create lists of substance labels, divided into subgroups.
+# We start by creating lists containing our substance labels according to their
+# subgroups:
 
 g1 = ["Solvent1", "Solvent2"]
 g2 = ["Base1", "Base2"]
 g3 = ["PhaseAgent1", "PhaseAgent2"]
 
-# Make continuous parameters for each subtance amount for each group. Here, the maximum
-# amount for each substance depends on the group, i.e. we would allow more addition of each
-# solvent compared to bases or phase agents.
+# Next, we create continuous parameters describing the substance amounts for each group.
+# Here, the maximum amount for each substance depends on its group, i.e. we allow
+# adding more of a solvent compared to a base or a phase agent:
 
 p_g1_amounts = [
     NumericalContinuousParameter(name=f"{name}", bounds=(0, 80)) for name in g1
@@ -42,49 +54,64 @@ p_g3_amounts = [
 
 ### Constraints Setup
 
-# Ensure total sum is 100%.
+# Now, we set up our constraints. We start with the overall mixture constraint, ensuring
+# the total of all ingredients is 100%:
 
 c_total_sum = ContinuousLinearConstraint(
     parameters=g1 + g2 + g3,
     operator="=",
-    coefficients=[1.0] * len(g1 + g2 + g3),
-    rhs=100.0,
+    coefficients=[1] * len(g1 + g2 + g3),
+    rhs=100,
 )
 
-# Ensure bases make up at least 10% of the mixture.
+# Additionally, we require bases make up at least 10% of the mixture:
 
 c_g2_min = ContinuousLinearConstraint(
     parameters=g2,
     operator=">=",
-    coefficients=[1.0] * len(g2),
+    coefficients=[1] * len(g2),
     rhs=10,
 )
 
-# Ensure phase agents make up no more than 5%.
+# By contrast, phase agents should make up no more than 5%:
 
 c_g3_max = ContinuousLinearConstraint(
     parameters=g3,
     operator="<=",
-    coefficients=[1.0] * len(g3),
+    coefficients=[1] * len(g3),
     rhs=5,
 )
 
-### Campaign Setup
+### Search Space Creation
 
-searchspace = SearchSpace(
-    continuous=SubspaceContinuous.from_product(
-        parameters=p_g1_amounts + p_g2_amounts + p_g3_amounts,
-        constraints=[c_total_sum, c_g2_min, c_g3_max],
-    ),
+# Having both parameter and constraint definitions at hand, we can create our
+# search space:
+
+searchspace = SubspaceContinuous.from_product(
+    parameters=[*p_g1_amounts, *p_g2_amounts, *p_g3_amounts],
+    constraints=[c_total_sum, c_g2_min, c_g3_max],
+).to_searchspace()
+
+
+### Verification of Constraints
+
+# To verify that the constraints imposed above are fulfilled, let us draw some
+# random points from the search space:
+
+recommendations = RandomRecommender().recommend(batch_size=10, searchspace=searchspace)
+print(recommendations)
+
+# Computing the respective row sums reveals the expected result:
+
+stats = pd.DataFrame(
+    {
+        "Total": recommendations.sum(axis=1),
+        "Total_Bases": recommendations[g2].sum(axis=1),
+        "Total_Phase_Agents": recommendations[g3].sum(axis=1),
+    }
 )
-campaign = Campaign(
-    searchspace=searchspace,
-    objective=NumericalTarget(name="MyTarget", mode="MAX").to_objective(),
-)
+print(stats)
 
-### Inspect Some Recommendations
-
-# We can quickly verify that the constraints imposed above are respected.
-
-rec = campaign.recommend(10)
-print(rec)
+assert np.allclose(stats["Total"], 100)
+assert (stats["Total_Bases"] >= 10).all()
+assert (stats["Total_Phase_Agents"] <= 5).all()
