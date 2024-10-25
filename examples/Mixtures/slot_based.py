@@ -1,4 +1,4 @@
-## Modeling a Slot-Based Mixture
+## Modelling a Mixture in Slot-Based Representation
 
 ### Terminology
 
