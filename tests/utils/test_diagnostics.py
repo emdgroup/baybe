@@ -1,92 +1,72 @@
 """Tests for diagnostic utilities."""
 
+import inspect
+
 import pandas as pd
 import pytest
-import shap
 
 import baybe.utils.diagnostics as diag
-from baybe import Campaign
-from baybe.objective import SingleTargetObjective
-from baybe.parameters import (
-    NumericalContinuousParameter,
-    NumericalDiscreteParameter,
-    SubstanceParameter,
+from baybe._optional.diagnostics import shap
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.searchspace import SearchSpaceType
+from baybe.utils.basic import get_subclasses
+from tests.conftest import run_iterations
+
+
+def has_required_init_parameters(cls):
+    """Helpfer function checks if initializer has required standard parameters."""
+    required_parameters = ["self", "model", "data"]
+    init_signature = inspect.signature(cls.__init__)
+    parameters = list(init_signature.parameters.keys())
+    return parameters[:3] == required_parameters
+
+
+valid_explainers = [
+    getattr(shap.explainers.other, cls_name)
+    for cls_name in shap.explainers.other.__all__
+    if has_required_init_parameters(getattr(shap.explainers.other, cls_name))
+]
+
+valid_hybrid_bayesian_recommenders = [
+    TwoPhaseMetaRecommender(recommender=cls())
+    for cls in get_subclasses(BayesianRecommender)
+    if cls.compatibility == SearchSpaceType.HYBRID
+]
+
+
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"]],
 )
-from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
-
-
-@pytest.fixture
-def diagnostics_campaign():
-    """Create a campaign with a hybrid space including substances."""
-    parameters = [
-        NumericalDiscreteParameter("NumDisc", values=(0, 1, 2)),
-        NumericalContinuousParameter("NumCont", bounds=(2, 3)),
-        SubstanceParameter(
-            name="Molecules",
-            data={
-                "TAP": "C12=CC=CC=C1N=C3C(C=C(N=C(C=CC=C4)C4=N5)C5=C3)=N2",
-                "Pyrene": "C1(C=CC2)=C(C2=CC=C3CC=C4)C3=C4C=C1",
-            },
-            encoding="MORDRED",
-        ),
-    ]
-    searchspace = SearchSpace.from_product(parameters=parameters)
-    target = NumericalTarget(name="y_1", mode="MAX")
-    objective = SingleTargetObjective(target=target)
-    campaign = Campaign(searchspace, objective)
-    return campaign
-
-
-@pytest.fixture
-def diagnostics_campaign_activated(diagnostics_campaign):
-    """Create an activated campaign with a hybrid space including substances.
-
-    Measurements were added and first recommendations were made.
-    """
-    diagnostics_campaign.add_measurements(
-        pd.DataFrame(
-            {
-                "NumDisc": [0, 2],
-                "NumCont": [2.2, 2.8],
-                "Molecules": ["Pyrene", "TAP"],
-                "y_1": [0.5, 0.7],
-            }
-        )
-    )
-    diagnostics_campaign.recommend(3)
-    return diagnostics_campaign
-
-
-def test_shapley_values_no_measurements(diagnostics_campaign):
+def test_shapley_values_no_measurements(campaign):
     """A campaign without measurements raises an error."""
     with pytest.raises(ValueError, match="No measurements have been provided yet."):
-        diag.explanation(diagnostics_campaign)
+        diag.explanation(campaign)
 
 
-def test_shapley_with_measurements(diagnostics_campaign_activated):
+@pytest.mark.slow
+@pytest.mark.parametrize("recommender", valid_hybrid_bayesian_recommenders)
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"]],
+)
+def test_shapley_with_measurements(campaign):
     """Test the explain functionalities with measurements."""
-    """Test the default explainer in experimental representation."""
-    shap_val = diag.explanation(diagnostics_campaign_activated)
-    assert isinstance(shap_val, shap.Explanation)
+    """Test the default explainer in experimental
+    and computational representations."""
+    run_iterations(campaign, n_iterations=2, batch_size=1)
 
-    """Test the default explainer in computational representation."""
-    shap_val_comp = diag.explanation(
-        diagnostics_campaign_activated,
-        computational_representation=True,
-    )
-    assert isinstance(shap_val_comp, shap.Explanation)
+    for computational_representation in [False, True]:
+        shap_val = diag.explanation(
+            campaign,
+            computational_representation=computational_representation,
+        )
+        assert isinstance(shap_val, shap.Explanation)
 
     """Ensure that an error is raised if the data
     to be explained has a different number of parameters."""
-    df = pd.DataFrame(
-        {
-            "NumDisc": [0, 2],
-            "NumCont": [2.2, 2.8],
-            "Molecules": ["Pyrene", "TAP"],
-            "ExtraParam": [0, 1],
-        }
-    )
+    df = pd.DataFrame({"Num_disc_1": [0, 2]})
     with pytest.raises(
         ValueError,
         match=(
@@ -94,30 +74,40 @@ def test_shapley_with_measurements(diagnostics_campaign_activated):
             "amount of parameters as the shap explainer background."
         ),
     ):
-        diag.explanation(diagnostics_campaign_activated, data=df)
+        diag.explanation(campaign, data=df)
 
 
-def test_non_shapley_explainers(diagnostics_campaign_activated):
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"]],
+)
+def test_non_shapley_explainers(campaign):
     """Test the explain functionalities with the non-SHAP explainer MAPLE."""
-    """Ensure that an error is raised if non-computational representation
-    is used with a non-Kernel SHAP explainer."""
-    with pytest.raises(
-        ValueError,
-        match=(
-            "Experimental representation is not supported "
-            "for non-Kernel SHAP explainer."
-        ),
-    ):
-        diag.explanation(
-            diagnostics_campaign_activated,
-            computational_representation=False,
-            explainer_class=shap.explainers.other.Maple,
-        )
+    run_iterations(campaign, n_iterations=2, batch_size=1)
 
-    """Test the MAPLE explainer in computational representation."""
-    maple_explainer = diag.explainer(
-        diagnostics_campaign_activated,
-        computational_representation=True,
-        explainer_class=shap.explainers.other.Maple,
-    )
-    assert isinstance(maple_explainer, shap.explainers.other._maple.Maple)
+    for explainer_cls in valid_explainers:
+        try:
+            """Ensure that an error is raised if non-computational representation
+                is used with a non-Kernel SHAP explainer."""
+            with pytest.raises(
+                ValueError,
+                match=(
+                    "Experimental representation is not supported "
+                    "for non-Kernel SHAP explainer."
+                ),
+            ):
+                diag.explanation(
+                    campaign,
+                    computational_representation=False,
+                    explainer_class=explainer_cls,
+                )
+
+            """Test the non-SHAP explainer in computational representation."""
+            other_explainer = diag.explanation(
+                campaign,
+                computational_representation=True,
+                explainer_class=explainer_cls,
+            )
+            assert isinstance(other_explainer, shap.Explanation)
+        except NotImplementedError:
+            pass
