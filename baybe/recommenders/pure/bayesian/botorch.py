@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import math
-from collections.abc import Collection
+from collections.abc import Collection, Iterable
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
@@ -230,19 +230,25 @@ class BotorchRecommender(BayesianRecommender):
                 f"'{ContinuousCardinalityConstraint.__name__}'. "
             )
 
+        # Determine search scope based on number of inactive parameter combinations
+        exhaustive_search = (
+            subspace_continuous.n_inactive_parameter_combinations
+            <= self.n_threshold_inactive_parameters_generator
+        )
+        iterator: Iterable[Collection[str]]
+        if exhaustive_search:
+            # If manageable, evaluate all combinations of inactive parameters
+            iterator = subspace_continuous.inactive_parameter_combinations()
+        else:
+            # Otherwise, draw a random subset of inactive parameter combinations
+            iterator = subspace_continuous._sample_inactive_parameters(
+                self.n_threshold_inactive_parameters_generator
+            )
+
         acqf_values_all: list[Tensor] = []
         points_all: list[Tensor] = []
 
-        def append_recommendation_for_inactive_parameters_setting(
-            inactive_parameters: Collection[str],
-        ):
-            """Append the recommendation for each inactive parameter configuration.
-
-            Args:
-                inactive_parameters: A list of inactive parameters.
-            """
-            # Create a new subspace by ensuring all active parameters being
-            # non-zeros.
+        for inactive_parameters in iterator:
             subspace_continuous_without_cardinality_constraints = (
                 subspace_continuous._enforce_cardinality_constraints_via_assignment(
                     inactive_parameters
@@ -266,30 +272,6 @@ class BotorchRecommender(BayesianRecommender):
             # problem is infeasible.
             except ValueError:
                 pass
-
-        # Below we start recommendation
-        if (
-            subspace_continuous.n_inactive_parameter_combinations
-            > self.n_threshold_inactive_parameters_generator
-        ):
-            # When the combinatorial list is too large, randomly set some parameters
-            # inactive.
-            for _ in range(self.n_threshold_inactive_parameters_generator):
-                inactive_params_sample = tuple(
-                    subspace_continuous._sample_inactive_parameters(1)[0]
-                )
-                append_recommendation_for_inactive_parameters_setting(
-                    inactive_params_sample
-                )
-        else:
-            # When the combinatorial list is not too large, iterate the combinatorial
-            # list of all possible inactive parameters.
-            for (
-                inactive_params_generator
-            ) in subspace_continuous.inactive_parameter_combinations():
-                append_recommendation_for_inactive_parameters_setting(
-                    inactive_params_generator
-                )
 
         # Find the best option
         points = torch.cat(points_all)[torch.argmax(torch.cat(acqf_values_all)), :]
