@@ -226,7 +226,6 @@ class Campaign(SerialMixin):
         self,
         batch_size: int,
         pending_experiments: pd.DataFrame | None = None,
-        batch_quantity: int = None,  # type: ignore[assignment]
     ) -> pd.DataFrame:
         """Provide the recommendations for the next batch of experiments.
 
@@ -234,7 +233,6 @@ class Campaign(SerialMixin):
             batch_size: Number of requested recommendations.
             pending_experiments: Parameter configurations specifying experiments
                 that are currently pending.
-            batch_quantity: Deprecated! Use ``batch_size`` instead.
 
         Returns:
             Dataframe containing the recommendations in experimental representation.
