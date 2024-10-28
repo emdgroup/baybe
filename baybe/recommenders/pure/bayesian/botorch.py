@@ -221,8 +221,6 @@ class BotorchRecommender(BayesianRecommender):
         Raises:
             ValueError: If the continuous search space has no cardinality constraints.
         """
-        import torch
-
         if not subspace_continuous.constraints_cardinality:
             raise ValueError(
                 f"'{self._recommend_continuous_with_cardinality_constraints.__name__}' "
@@ -245,38 +243,19 @@ class BotorchRecommender(BayesianRecommender):
                 self.n_threshold_inactive_parameters_generator
             )
 
-        acqf_values_all: list[Tensor] = []
-        points_all: list[Tensor] = []
-
-        for inactive_parameters in iterator:
-            subspace_continuous_without_cardinality_constraints = (
+        # Create iterable of subspaces to be optimized
+        subspaces = (
+            (
                 subspace_continuous._enforce_cardinality_constraints_via_assignment(
                     inactive_parameters
                 )
             )
-            try:
-                # Optimize the acquisition function
-                (
-                    points_i,
-                    acqf_values_i,
-                ) = self._recommend_continuous_without_cardinality_constraints(
-                    subspace_continuous_without_cardinality_constraints,
-                    batch_size,
-                )
-                # Append recommendation list and acquisition function values
-                points_all.append(points_i.unsqueeze(0))
-                acqf_values_all.append(acqf_values_i.unsqueeze(0))
+            for inactive_parameters in iterator
+        )
 
-            # The optimization problem may be infeasible for certain inactive
-            # parameters. The optimize_acqf raises a ValueError when the optimization
-            # problem is infeasible.
-            except ValueError:
-                pass
-
-        # Find the best option
-        points = torch.cat(points_all)[torch.argmax(torch.cat(acqf_values_all)), :]
-        acqf_values = torch.max(torch.cat(acqf_values_all))
-        return points, acqf_values
+        return self._optimize_subspaces_without_cardinality_constraints(
+            subspaces, batch_size
+        )
 
     def _recommend_continuous_without_cardinality_constraints(
         self,
@@ -466,6 +445,36 @@ class BotorchRecommender(BayesianRecommender):
             ),
         ]
         return to_string(self.__class__.__name__, *fields)
+
+    def _optimize_subspaces_without_cardinality_constraints(
+        self, subspaces: Iterable[SubspaceContinuous], batch_size: int
+    ) -> tuple[Tensor, Tensor]:
+        import torch
+
+        acqf_values_all: list[Tensor] = []
+        points_all: list[Tensor] = []
+
+        for subspace in subspaces:
+            try:
+                # Optimize the acquisition function
+                f = self._recommend_continuous_without_cardinality_constraints
+                points_i, acqf_values_i = f(subspace, batch_size)
+
+                # Append recommendation list and acquisition function values
+                points_all.append(points_i.unsqueeze(0))
+                acqf_values_all.append(acqf_values_i.unsqueeze(0))
+
+            # # The optimization problem may be infeasible for certain inactive
+            # # parameters. The optimize_acqf raises a ValueError when the optimization
+            # # problem is infeasible.
+            except ValueError:
+                pass
+
+        # Find the best option
+        points = torch.cat(points_all)[torch.argmax(torch.cat(acqf_values_all)), :]
+        acqf_values = torch.max(torch.cat(acqf_values_all))
+
+        return points, acqf_values
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
