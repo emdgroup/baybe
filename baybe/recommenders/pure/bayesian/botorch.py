@@ -225,17 +225,15 @@ class BotorchRecommender(BayesianRecommender):
             The acquisition values.
 
         Raises:
-            RuntimeError: If the continuous search space has no cardinality constraint.
+            ValueError: If the continuous search space has no cardinality constraints.
         """
         import torch
 
         if not subspace_continuous.constraints_cardinality:
-            raise RuntimeError(
-                f"This method expects a subspace object with constraints of type "
-                f"{ContinuousCardinalityConstraint.__name__}. For a subspace object "
-                f"without constraints of type"
-                f" {ContinuousCardinalityConstraint.__name__}, use method"
-                f"{self._recommend_continuous_without_cardinality_constraints.__name__}."  # noqa
+            raise ValueError(
+                f"'{self._recommend_continuous_with_cardinality_constraints.__name__}' "
+                f"expects a subspace with constraints of type "
+                f"'{ContinuousCardinalityConstraint.__name__}'. "
             )
 
         acqf_values_all: list[Tensor] = []
@@ -321,18 +319,16 @@ class BotorchRecommender(BayesianRecommender):
             The acquisition values.
 
         Raises:
-            RuntimeError: If the continuous search space has any cardinality
-                constraints.
+            ValueError: If the continuous search space has cardinality constraints.
         """
         import torch
         from botorch.optim import optimize_acqf
 
         if subspace_continuous.constraints_cardinality:
-            raise RuntimeError(
-                f"This method expects only subspace object without constraints of type "
-                f"{ContinuousCardinalityConstraint.__name__}. For a subspace object "
-                f"with constraints of type {ContinuousCardinalityConstraint.__name__}, "
-                f"try method {self._recommend_continuous.__name__}."
+            raise ValueError(
+                f"'{self._recommend_continuous_without_cardinality_constraints.__name__}' "  # noqa: E501
+                f"expects a subspace without constraints of type "
+                f"'{ContinuousCardinalityConstraint.__name__}'. "
             )
 
         fixed_parameters = {
