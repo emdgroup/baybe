@@ -186,7 +186,6 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
-        # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
@@ -195,18 +194,14 @@ class BotorchRecommender(BayesianRecommender):
 
         if len(subspace_continuous.constraints_cardinality):
             points, _ = self._recommend_continuous_with_cardinality_constraints(
-                subspace_continuous,
-                batch_size,
+                subspace_continuous, batch_size
             )
         else:
             points, _ = self._recommend_continuous_without_cardinality_constraints(
-                subspace_continuous,
-                batch_size,
+                subspace_continuous, batch_size
             )
 
-        # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=subspace_continuous.parameter_names)
-        return rec
+        return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
 
     def _recommend_continuous_with_cardinality_constraints(
         self,
@@ -221,8 +216,7 @@ class BotorchRecommender(BayesianRecommender):
             batch_size: The size of the recommendation batch.
 
         Returns:
-            The recommendations.
-            The acquisition values.
+            The recommendations and corresponding acquisition values.
 
         Raises:
             ValueError: If the continuous search space has no cardinality constraints.
@@ -315,8 +309,7 @@ class BotorchRecommender(BayesianRecommender):
             batch_size: The size of the recommendation batch.
 
         Returns:
-            The recommendations.
-            The acquisition values.
+            The recommendations and corresponding acquisition values.
 
         Raises:
             ValueError: If the continuous search space has cardinality constraints.
@@ -343,7 +336,9 @@ class BotorchRecommender(BayesianRecommender):
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
+            # TODO: https://github.com/pytorch/botorch/issues/2042
             fixed_features=fixed_parameters or None,
+            # TODO: https://github.com/pytorch/botorch/issues/2042
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
@@ -355,7 +350,6 @@ class BotorchRecommender(BayesianRecommender):
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,
-            # TODO: https://github.com/pytorch/botorch/issues/2042
             sequential=self.sequential_continuous,
         )
         return points, acqf_values
