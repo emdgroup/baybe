@@ -192,7 +192,7 @@ class BotorchRecommender(BayesianRecommender):
                 f"acquisition functions for batch sizes > 1."
             )
 
-        if len(subspace_continuous.constraints_cardinality):
+        if subspace_continuous.constraints_cardinality:
             points, _ = self._recommend_continuous_with_cardinality_constraints(
                 subspace_continuous, batch_size
             )
