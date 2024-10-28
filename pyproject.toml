@@ -115,7 +115,7 @@ examples = [
     "pillow>=10.0.1", # Necessary due to vulnerability
     "plotly>=5.10.0",
     "seaborn>=0.12.2",
-    "streamlit>=1.20.0",
+    "streamlit>=1.37.0", # Necessary due to vulnerability
     "tornado>=6.3.3", # see AUDIT NOTE, required by streamlit
 ]
 
@@ -123,7 +123,7 @@ lint = [
     "flake8==7.1.0", # see DEV TOOLS NOTE
     "pre-commit==3.7.1", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
-    "pyupgrade==3.16.0", # see DEV TOOLS NOTE
+    "pyupgrade==3.19.0", # see DEV TOOLS NOTE
     "ruff==0.5.2", # see DEV TOOLS NOTE
 ]
 

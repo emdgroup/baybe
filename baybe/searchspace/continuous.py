@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import warnings
 from collections.abc import Collection, Sequence
 from itertools import chain
@@ -10,6 +11,7 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 import pandas as pd
 from attrs import define, field, fields
+from typing_extensions import override
 
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -23,12 +25,11 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
-    get_transform_parameters,
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
@@ -67,6 +68,7 @@ class SubspaceContinuous(SerialMixin):
     )
     """Nonlinear constraints."""
 
+    @override
     def __str__(self) -> str:
         if self.is_empty:
             return ""
@@ -312,7 +314,7 @@ class SubspaceContinuous(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -340,8 +342,8 @@ class SubspaceContinuous(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
-        parameters = get_transform_parameters(
-            self.parameters, df, allow_missing, allow_extra
+        parameters = get_transform_objects(
+            df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # Transform the parameters
@@ -537,3 +539,6 @@ class SubspaceContinuous(SerialMixin):
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceContinuous, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

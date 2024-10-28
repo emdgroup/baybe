@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Unsafe name-based matching of columns in `get_comp_rep_parameter_indices`
 
-### Deprecated
+### Deprecations
 - `ContinuousLinearEqualityConstraint` and `ContinuousLinearInequalityConstraint`
   replaced by `ContinuousLinearConstraint` with the corresponding `operator` keyword
 

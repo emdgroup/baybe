@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import gc
 import warnings
 from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
 
 import pandas as pd
-from attr import define, field
+from attrs import define, field
+from typing_extensions import override
 
 from baybe.constraints import (
     validate_constraints,
@@ -66,6 +68,7 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
     """The (potentially empty) continuous subspace of the overall search space."""
 
+    @override
     def __str__(self) -> str:
         fields = [
             to_string("Search Space Type", self.type.name, single_line=True),
@@ -355,10 +358,10 @@ class SearchSpace(SerialMixin):
                 The ``None`` default value is for temporary backward compatibility only
                 and will be removed in a future version.
             allow_missing: If ``False``, each parameter of the space must have
-                (exactly) one corresponding column in the given dataframe. If ``True``,
+                exactly one corresponding column in the given dataframe. If ``True``,
                 the dataframe may contain only a subset of parameter columns.
-            allow_extra: If ``False``, every column present in the dataframe must
-                correspond to (exactly) one parameter of the space. If ``True``, the
+            allow_extra: If ``False``, each column present in the dataframe must
+                correspond to exactly one parameter of the space. If ``True``, the
                 dataframe may contain additional non-parameter-related columns, which
                 will be ignored.
                 The ``None`` default value is for temporary backward compatibility only
@@ -376,7 +379,7 @@ class SearchSpace(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -470,3 +473,6 @@ def validate_searchspace_from_config(specs: dict, _) -> None:
 
 # Register deserialization hook
 converter.register_structure_hook(SearchSpace, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

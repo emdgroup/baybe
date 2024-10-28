@@ -26,7 +26,7 @@ from baybe.recommenders import (
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import NGBoostSurrogate
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 
 ### Experiment Setup
 
@@ -103,7 +103,7 @@ print("Recommendation from campaign:")
 print(recommendation)
 
 # Add some fake results
-add_fake_results(recommendation, campaign.targets)
+add_fake_measurements(recommendation, campaign.targets)
 campaign.add_measurements(recommendation)
 
 ### Model Outputs

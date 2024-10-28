@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import os
 import warnings
 from collections.abc import Collection, Sequence
@@ -11,8 +12,9 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
-from attr import define, field
+from attrs import define, field
 from cattrs import IterableValidationError
+from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
@@ -25,7 +27,6 @@ from baybe.parameters import (
 from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
-    get_transform_parameters,
     validate_parameter_names,
     validate_parameters,
 )
@@ -35,6 +36,7 @@ from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     fuzzy_row_match,
+    get_transform_objects,
     pretty_print_df,
 )
 from baybe.utils.memory import bytes_to_human_readable
@@ -117,6 +119,7 @@ class SubspaceDiscrete(SerialMixin):
     and thereby speed up construction. If not provided, the default hook will derive it
     from ``exp_rep``."""
 
+    @override
     def __str__(self) -> str:
         if self.is_empty:
             return ""
@@ -722,7 +725,7 @@ class SubspaceDiscrete(SerialMixin):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the data to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -750,8 +753,8 @@ class SubspaceDiscrete(SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # Extract the parameters to be transformed
-        parameters = get_transform_parameters(
-            self.parameters, df, allow_missing, allow_extra
+        parameters = get_transform_objects(
+            df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # If the transformed values are not required, return an empty dataframe
@@ -948,3 +951,6 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
 
 # Register deserialization hook
 converter.register_structure_hook(SubspaceDiscrete, select_constructor_hook)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

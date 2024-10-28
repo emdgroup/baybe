@@ -8,7 +8,7 @@ from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_results
+from baybe.utils.dataframe import add_fake_measurements
 
 # List of tests that are expected to fail (still missing implementation etc)
 param_xfails = []
@@ -26,7 +26,7 @@ def test_bad_parameter_input_value(campaign, good_reference_values, bad_val, req
         pytest.xfail()
 
     rec = campaign.recommend(batch_size=3)
-    add_fake_results(
+    add_fake_measurements(
         rec,
         campaign.targets,
         good_reference_values=good_reference_values,
@@ -49,7 +49,7 @@ def test_bad_target_input_value(campaign, good_reference_values, bad_val, reques
         pytest.xfail()
 
     rec = campaign.recommend(batch_size=3)
-    add_fake_results(
+    add_fake_measurements(
         rec,
         campaign.targets,
         good_reference_values=good_reference_values,

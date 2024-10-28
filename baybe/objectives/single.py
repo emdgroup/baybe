@@ -1,12 +1,16 @@
 """Functionality for single-target objectives."""
 
+import gc
+import warnings
+
 import pandas as pd
-from attr import define, field
-from attr.validators import instance_of
+from attrs import define, field
+from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
-from baybe.utils.dataframe import pretty_print_df
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.plotting import to_string
 
 
@@ -17,6 +21,7 @@ class SingleTargetObjective(Objective):
     _target: Target = field(validator=instance_of(Target), alias="target")
     """The single target considered by the objective."""
 
+    @override
     def __str__(self) -> str:
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
@@ -28,12 +33,61 @@ class SingleTargetObjective(Objective):
 
         return to_string("Objective", *fields)
 
+    @override
     @property
-    def targets(self) -> tuple[Target, ...]:  # noqa: D102
-        # See base class.
+    def targets(self) -> tuple[Target, ...]:
         return (self._target,)
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:  # noqa: D102
-        # See base class.
-        target_data = data[[self._target.name]].copy()
-        return self._target.transform(target_data)
+    @override
+    def transform(
+        self,
+        df: pd.DataFrame | None = None,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool | None = None,
+        data: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        # >>>>>>>>>> Deprecation
+        if not ((df is None) ^ (data is None)):
+            raise ValueError(
+                "Provide the dataframe to be transformed as argument to `df`."
+            )
+
+        if data is not None:
+            df = data
+            warnings.warn(
+                "Providing the dataframe via the `data` argument is deprecated and "
+                "will be removed in a future version. Please pass your dataframe "
+                "as positional argument instead.",
+                DeprecationWarning,
+            )
+
+        # Mypy does not infer from the above that `df` must be a dataframe here
+        assert isinstance(df, pd.DataFrame)
+
+        if allow_extra is None:
+            allow_extra = True
+            if set(df.columns) - {p.name for p in self.targets}:
+                warnings.warn(
+                    "For backward compatibility, the new `allow_extra` flag is set "
+                    "to `True` when left unspecified. However, this behavior will be "
+                    "changed in a future version. If you want to invoke the old "
+                    "behavior, please explicitly set `allow_extra=True`.",
+                    DeprecationWarning,
+                )
+        # <<<<<<<<<< Deprecation
+
+        # Even for a single target, it is convenient to use the existing validation
+        # machinery instead of re-implementing it
+        get_transform_objects(
+            df, [self._target], allow_missing=allow_missing, allow_extra=allow_extra
+        )
+
+        target_data = df[self._target.name].copy()
+
+        return self._target.transform(target_data).to_frame()
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

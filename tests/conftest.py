@@ -77,7 +77,7 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
-from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
 from baybe.utils.random import temporary_seed
 
 # Hypothesis settings
@@ -913,7 +913,7 @@ def run_iterations(
             rec = campaign.recommend(batch_size=batch_size)
             # dont use parameter noise for these tests
 
-            add_fake_results(rec, campaign.targets)
+            add_fake_measurements(rec, campaign.targets)
             if add_noise and (k % 2):
                 add_parameter_noise(rec, campaign.parameters, noise_level=0.02)
 

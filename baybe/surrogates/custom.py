@@ -10,9 +10,11 @@ It is planned to solve this issue in the future.
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 from attrs import define, field, validators
+from typing_extensions import override
 
 from baybe.exceptions import DeprecationError
 from baybe.parameters import (
@@ -74,6 +76,7 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
         except Exception as exc:
             raise ValueError("Invalid ONNX string") from exc
 
+    @override
     @batchify_mean_var_prediction
     def _estimate_moments(
         self, candidates_comp_scaled: Tensor, /
@@ -96,6 +99,7 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
             torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
         )
 
+    @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         # TODO: This method actually needs to raise a NotImplementedError because
         #   ONNX surrogate models cannot be retrained. However, this would currently
@@ -139,6 +143,11 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
                 f"{CustomDiscreteParameter.__name__}."
             )
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("ONNX input name", self.onnx_input_name, single_line=True)]
         return to_string(super().__str__(), *fields)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

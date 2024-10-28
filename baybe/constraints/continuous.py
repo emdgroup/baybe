@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import math
 from collections.abc import Collection, Sequence
 from typing import TYPE_CHECKING, Any
@@ -174,3 +175,7 @@ class ContinuousCardinalityConstraint(
         ]
 
         return inactive_params
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

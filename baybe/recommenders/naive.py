@@ -1,10 +1,12 @@
 """Naive recommender for hybrid spaces."""
 
+import gc
 import warnings
 from typing import ClassVar
 
 import pandas as pd
 from attrs import define, evolve, field, fields
+from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
@@ -76,7 +78,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 allow_repeated_recommendations=flag,
             )
 
-    def recommend(  # noqa: D102
+    @override
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,
@@ -84,8 +87,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # See base class.
-
         from baybe.acquisition.partial import PartialAcquisitionFunction
 
         if (not isinstance(self.disc_recommender, BayesianRecommender)) and (
@@ -180,3 +181,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         rec_cont.index = rec_disc_exp.index
         rec_exp = pd.concat([rec_disc_exp, rec_cont], axis=1)
         return rec_exp
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

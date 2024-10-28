@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import json
 from typing import TYPE_CHECKING
 
@@ -11,6 +12,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
@@ -92,6 +94,7 @@ class Campaign(SerialMixin):
     )
     """The cached recommendations."""
 
+    @override
     def __str__(self) -> str:
         metadata_fields = [
             to_string("Batches done", self.n_batches_done, single_line=True),
@@ -380,3 +383,6 @@ _validation_converter = converter.copy()
 _validation_converter.register_structure_hook(
     SearchSpace, validate_searchspace_from_config
 )
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

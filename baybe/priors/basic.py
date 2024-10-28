@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import gc
 from typing import Any
 
 from attrs import define, field
 from attrs.validators import gt
+from typing_extensions import override
 
 from baybe.priors.base import Prior
 from baybe.utils.validation import finite_float
@@ -99,7 +101,12 @@ class BetaPrior(Prior):
     beta: float = field(converter=float, validator=gt(0.0))
     """Beta concentration parameter. Controls mass accumulated toward one."""
 
-    def to_gpytorch(self, *args, **kwargs):  # noqa: D102
+    @override
+    def to_gpytorch(self, *args, **kwargs):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' does not have a gpytorch analog."
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

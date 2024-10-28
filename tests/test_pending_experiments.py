@@ -18,7 +18,7 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.utils.basic import get_subclasses
-from baybe.utils.dataframe import add_fake_results, add_parameter_noise
+from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
 from baybe.utils.random import temporary_seed
 
 _discrete_params = ["Categorical_1", "Switch_1", "Num_disc_1"]
@@ -117,7 +117,7 @@ def test_pending_points(campaign, batch_size):
 
     # Perform a fake first iteration
     rec = campaign.recommend(batch_size)
-    add_fake_results(rec, campaign.targets)
+    add_fake_measurements(rec, campaign.targets)
     campaign.add_measurements(rec)
 
     # Get recommendations and set them as pending experiments while getting another set
@@ -161,7 +161,7 @@ def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
 
     # Get recommendation and add a fake results
     rec1 = recommender.recommend(batch_size, searchspace, objective)
-    add_fake_results(rec1, objective.targets)
+    add_fake_measurements(rec1, objective.targets)
 
     # Create fake pending experiments
     rec2 = rec1.copy()
