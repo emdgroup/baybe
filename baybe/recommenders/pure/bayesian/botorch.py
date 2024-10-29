@@ -85,15 +85,12 @@ class BotorchRecommender(BayesianRecommender):
     optimization. **Does not affect purely discrete optimization**.
     """
 
-    n_threshold_inactive_parameters_generator: int = field(
-        default=10, validator=[instance_of(int), ge(1)]
-    )
-    """Threshold used for checking which inactive parameters generator is used when
-    cardinality constraints are present. When the size of the combinatorial list of
-    all possible inactive parameters is larger than the threshold, a fixed number of
-    randomly generated inactive parameter configurations are used and the best
-    optimum among them is recommended; Otherwise, we find the best one by iterating the
-    combinatorial list of all possible inactive parameters """
+    max_n_subspaces: int = field(default=10, validator=[instance_of(int), ge(1)])
+    """Threshold defining the maximum number of subspaces to consider for exhaustive
+    search in the presence of cardinality constraints. If the combinatorial number of
+    groupings into active and inactive parameters dictated by the constraints is greater
+    than this number, that many randomly selected combinations are selected for
+    optimization."""
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -256,7 +253,7 @@ class BotorchRecommender(BayesianRecommender):
         # Determine search scope based on number of inactive parameter combinations
         exhaustive_search = (
             subspace_continuous.n_inactive_parameter_combinations
-            <= self.n_threshold_inactive_parameters_generator
+            <= self.max_n_subspaces
         )
         iterator: Iterable[Collection[str]]
         if exhaustive_search:
@@ -265,7 +262,7 @@ class BotorchRecommender(BayesianRecommender):
         else:
             # Otherwise, draw a random subset of inactive parameter combinations
             iterator = subspace_continuous._sample_inactive_parameters(
-                self.n_threshold_inactive_parameters_generator
+                self.max_n_subspaces
             )
 
         # Create iterable of subspaces to be optimized
