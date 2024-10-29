@@ -193,16 +193,22 @@ class BotorchRecommender(BayesianRecommender):
                 f"acquisition functions for batch sizes > 1."
             )
 
+        points, _ = self._recommend_continuous_torch(subspace_continuous, batch_size)
+
+        return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
+
+    def _recommend_continuous_torch(
+        self, subspace_continuous: SubspaceContinuous, batch_size: int
+    ) -> tuple[Tensor, Tensor]:
+        """Dispatcher selecting continuous optimization routine."""
         if subspace_continuous.constraints_cardinality:
-            points, _ = self._recommend_continuous_with_cardinality_constraints(
+            return self._recommend_continuous_with_cardinality_constraints(
                 subspace_continuous, batch_size
             )
         else:
-            points, _ = self._recommend_continuous_without_cardinality_constraints(
+            return self._recommend_continuous_without_cardinality_constraints(
                 subspace_continuous, batch_size
             )
-
-        return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
 
     def _recommend_continuous_with_cardinality_constraints(
         self,
@@ -254,9 +260,7 @@ class BotorchRecommender(BayesianRecommender):
             for inactive_parameters in iterator
         )
 
-        return self._optimize_subspaces_without_cardinality_constraints(
-            subspaces, batch_size
-        )
+        return self._optimize_continuous_subspaces(subspaces, batch_size)
 
     def _recommend_continuous_without_cardinality_constraints(
         self,
@@ -447,10 +451,10 @@ class BotorchRecommender(BayesianRecommender):
         ]
         return to_string(self.__class__.__name__, *fields)
 
-    def _optimize_subspaces_without_cardinality_constraints(
+    def _optimize_continuous_subspaces(
         self, subspaces: Iterable[SubspaceContinuous], batch_size: int
     ) -> tuple[Tensor, Tensor]:
-        """Find the optimum candidates from multiple subspaces.
+        """Find the optimum candidates from multiple continuous subspaces.
 
         Args:
             subspaces: The subspaces to consider for the optimization.
@@ -465,12 +469,11 @@ class BotorchRecommender(BayesianRecommender):
         for subspace in subspaces:
             try:
                 # Optimize the acquisition function
-                f = self._recommend_continuous_without_cardinality_constraints
-                points_i, acqf_values_i = f(subspace, batch_size)
+                p, acqf = self._recommend_continuous_torch(subspace, batch_size)
 
                 # Append optimization results
-                points_all.append(points_i)
-                acqf_values_all.append(acqf_values_i)
+                points_all.append(p)
+                acqf_values_all.append(acqf)
 
             # The optimization problem may be infeasible in certain subspaces
             except ValueError:
