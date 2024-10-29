@@ -7,6 +7,7 @@ import math
 from collections.abc import Collection, Iterable
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -449,8 +450,15 @@ class BotorchRecommender(BayesianRecommender):
     def _optimize_subspaces_without_cardinality_constraints(
         self, subspaces: Iterable[SubspaceContinuous], batch_size: int
     ) -> tuple[Tensor, Tensor]:
-        import torch
+        """Find the optimum candidates from multiple subspaces.
 
+        Args:
+            subspaces: The subspaces to consider for the optimization.
+            batch_size: The number of points to be recommended.
+
+        Returns:
+            The batch of candidates and the corresponding acquisition value.
+        """
         acqf_values_all: list[Tensor] = []
         points_all: list[Tensor] = []
 
@@ -460,21 +468,20 @@ class BotorchRecommender(BayesianRecommender):
                 f = self._recommend_continuous_without_cardinality_constraints
                 points_i, acqf_values_i = f(subspace, batch_size)
 
-                # Append recommendation list and acquisition function values
-                points_all.append(points_i.unsqueeze(0))
-                acqf_values_all.append(acqf_values_i.unsqueeze(0))
+                # Append optimization results
+                points_all.append(points_i)
+                acqf_values_all.append(acqf_values_i)
 
-            # # The optimization problem may be infeasible for certain inactive
-            # # parameters. The optimize_acqf raises a ValueError when the optimization
-            # # problem is infeasible.
+            # The optimization problem may be infeasible in certain subspaces
             except ValueError:
                 pass
 
-        # Find the best option
-        points = torch.cat(points_all)[torch.argmax(torch.cat(acqf_values_all)), :]
-        acqf_values = torch.max(torch.cat(acqf_values_all))
+        # Find the best option f
+        best_idx = np.argmax(acqf_values_all)
+        points = points_all[best_idx]
+        acqf_value = acqf_values_all[best_idx]
 
-        return points, acqf_values
+        return points, acqf_value
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
