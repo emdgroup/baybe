@@ -277,9 +277,12 @@ class SubspaceContinuous(SerialMixin):
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
+        from baybe.utils.numerical import DTypeFloatNumpy
+
         return pd.DataFrame(
             {p.name: p.bounds.to_tuple() for p in self.parameters},
             index=["min", "max"],
+            dtype=DTypeFloatNumpy,
         )
 
     def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
