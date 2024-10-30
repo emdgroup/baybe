@@ -1,8 +1,3 @@
-# NOTES:
-# - The map syntax used for matrix is flagged red but actually works
-# - This runs everything in Python 3.12, except the fulltest which is also run in 3.10
-# - Only coretest and fulltest environments are cached due to space limit
-
 name: Continuous Integration
 on:
   push:

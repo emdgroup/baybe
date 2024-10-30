@@ -1,9 +1,3 @@
-# NOTES:
-# - The map syntax used for matrix is flagged red but actually works
-# - This runs everything in Python 3.10, 3.11 and 3.12
-# - Environments are **not** cached in order to perform a full end-to-end test
-#   (and due to space limit)
-
 name: Regular Checks
 on:
   schedule:
