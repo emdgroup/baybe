@@ -176,7 +176,11 @@ class _FixedNumericalContinuousParameter(ContinuousParameter):
 
     @override
     def summary(self) -> dict:
-        raise NotImplementedError()
+        return dict(
+            Name=self.name,
+            Type=self.__class__.__name__,
+            Value=self.value,
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
