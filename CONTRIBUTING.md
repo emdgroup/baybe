@@ -15,8 +15,8 @@ we recommend the following workflow:
 1. Clone a [fork](https://github.com/emdgroup/BayBE/fork) of the repository to 
    your local machine.
 
-1. Create and activate a virtual python environment using one of the supported 
-   python versions.
+1. Create and activate a virtual Python environment using one of the supported 
+   Python versions.
 
 1. Change into the root folder of the cloned repository and install an editable version
    including all development dependencies:
