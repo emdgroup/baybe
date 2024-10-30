@@ -53,7 +53,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -74,7 +75,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -95,7 +97,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -116,7 +119,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -137,7 +141,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
