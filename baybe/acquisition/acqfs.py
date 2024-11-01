@@ -1,5 +1,6 @@
 """Available acquisition functions."""
 
+import gc
 import math
 from typing import ClassVar
 
@@ -8,6 +9,7 @@ from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import define, field, fields
 from attrs.validators import ge, gt, instance_of, le
+from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
@@ -66,6 +68,7 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
                 f"be specified at the same time."
             )
 
+    @override
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
         flds = fields(qNegIntegratedPosteriorVariance)
@@ -298,7 +301,12 @@ class qThompsonSampling(qSimpleRegret):
     Thompson sampling using the regular acquisition function machinery.
     """
 
+    @override
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
         flds = fields(qThompsonSampling)
         return (flds.n_mc_samples.name,)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

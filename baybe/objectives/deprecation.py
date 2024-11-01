@@ -5,7 +5,7 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-from cattrs import override
+import cattrs
 from cattrs.gen import make_dict_structure_fn
 
 from baybe.serialization import converter
@@ -40,8 +40,8 @@ def structure_objective(val: dict, cls: type) -> Objective:
             cls,
             converter,
             _cattrs_forbid_extra_keys=True,
-            _target=override(rename="target"),
-            _targets=override(rename="targets"),
+            _target=cattrs.override(rename="target"),
+            _targets=cattrs.override(rename="targets"),
         )  # type: ignore
         return fun(val, cls)
 

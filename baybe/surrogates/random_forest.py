@@ -6,8 +6,9 @@ from collections.abc import Collection
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import numpy as np
-from attr import define, field
+from attrs import define, field
 from sklearn.ensemble import RandomForestRegressor
+from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
@@ -46,25 +47,22 @@ class RandomForestSurrogate(Surrogate):
     _model: RandomForestRegressor | None = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    @override
     @staticmethod
     def _make_parameter_scaler_factory(
         parameter: Parameter,
     ) -> type[InputTransform] | None:
-        # See base class.
-
         # Tree-like models do not require any input scaling
         return None
 
+    @override
     @staticmethod
     def _make_target_scaler_factory() -> type[OutcomeTransform] | None:
-        # See base class.
-
         # Tree-like models do not require any output scaling
         return None
 
+    @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> EnsemblePosterior:
-        # See base class.
-
         from botorch.models.ensemble import EnsemblePosterior
 
         @batchify_ensemble_predictor
@@ -101,11 +99,12 @@ class RandomForestSurrogate(Surrogate):
 
         return predictions
 
+    @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
-        # See base class.
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x.numpy(), train_y.numpy().ravel())
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Model Params", self.model_params, single_line=True)]
         return to_string(super().__str__(), *fields)

@@ -3,7 +3,7 @@
 from contextlib import nullcontext
 
 import pytest
-from attr import NOTHING as N
+from attrs import NOTHING as N
 from pytest import param
 
 from baybe.acquisition import UCB, qLogNEI, qNEI, qNIPV, qUCB

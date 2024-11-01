@@ -5,6 +5,7 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
@@ -19,14 +20,13 @@ class RandomRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
+    @override
     def _recommend_hybrid(
         self,
         searchspace: SearchSpace,
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        # See base class.
-
         if searchspace.type == SearchSpaceType.DISCRETE:
             return candidates_exp.sample(batch_size)
 
@@ -46,6 +46,7 @@ class RandomRecommender(NonPredictiveRecommender):
         cont_random.index = disc_random.index
         return pd.concat([disc_random, cont_random], axis=1)
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Compatibility", self.compatibility, single_line=True)]
         return to_string(self.__class__.__name__, *fields)
@@ -58,14 +59,13 @@ class FPSRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
 
+    @override
     def _recommend_discrete(
         self,
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.Index:
-        # See base class.
-
         # Fit scaler on entire search space
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
@@ -77,6 +77,7 @@ class FPSRecommender(NonPredictiveRecommender):
         ilocs = farthest_point_sampling(candidates_scaled, batch_size)
         return candidates_comp.index[ilocs]
 
+    @override
     def __str__(self) -> str:
         fields = [to_string("Compatibility", self.compatibility, single_line=True)]
         return to_string(self.__class__.__name__, *fields)

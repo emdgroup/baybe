@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import warnings
 from abc import ABC
 from inspect import signature
@@ -195,3 +196,6 @@ converter.register_structure_hook(
     _add_deprecation_hook(get_base_structure_hook(AcquisitionFunction)),
 )
 converter.register_unstructure_hook(AcquisitionFunction, unstructure_base)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

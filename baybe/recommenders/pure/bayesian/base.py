@@ -1,10 +1,12 @@
 """Base class for all Bayesian recommenders."""
 
+import gc
 import warnings
 from abc import ABC
 
 import pandas as pd
 from attrs import define, field, fields
+from typing_extensions import override
 
 from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
@@ -87,7 +89,8 @@ class BayesianRecommender(PureRecommender, ABC):
             pending_experiments,
         )
 
-    def recommend(  # noqa: D102
+    @override
+    def recommend(
         self,
         batch_size: int,
         searchspace: SearchSpace,
@@ -95,8 +98,6 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # See base class.
-
         if objective is None:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' require "
@@ -133,3 +134,7 @@ class BayesianRecommender(PureRecommender, ABC):
             measurements=measurements,
             pending_experiments=pending_experiments,
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

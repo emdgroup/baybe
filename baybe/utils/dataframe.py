@@ -4,11 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Collection, Iterable, Sequence
-from typing import (
-    TYPE_CHECKING,
-    Literal,
-    overload,
-)
+from typing import TYPE_CHECKING, Literal, TypeVar, overload
 
 import numpy as np
 import pandas as pd
@@ -21,7 +17,10 @@ from baybe.utils.numerical import DTypeFloatNumpy
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.parameters import Parameter
+    from baybe.parameters.base import Parameter
+    from baybe.targets.base import Target
+
+    _T = TypeVar("_T", bound=Parameter | Target)
 
 # Logging
 _logger = logging.getLogger(__name__)
@@ -66,19 +65,19 @@ def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
     return out
 
 
-def add_fake_results(
+def add_fake_measurements(
     data: pd.DataFrame,
     targets: Collection[Target],
     good_reference_values: dict[str, list] | None = None,
     good_intervals: dict[str, tuple[float, float]] | None = None,
     bad_intervals: dict[str, tuple[float, float]] | None = None,
-) -> None:
-    """Add fake results to a dataframe which was the result of a BayBE recommendation.
+) -> pd.DataFrame:
+    """Add fake measurements to a dataframe which was the result of a recommendation.
 
     It is possible to specify "good" values, which will be given a better
     target value. With this, the algorithm can be driven towards certain optimal values
-    whilst still being random. Useful for testing. Note that this does not return a
-    new dataframe and that the dataframe is changed in-place.
+    whilst still being random. Useful for testing. Note that the dataframe is changed
+    in-place and also returned.
 
     Args:
         data: A dataframe containing parameter configurations in experimental
@@ -98,6 +97,9 @@ def add_fake_results(
         bad_intervals: Analogous to ``good_intervals`` but covering the cases where
             the parameters lie outside the conditions specified through
             ``good_reference_values``.
+
+    Returns:
+        The modified dataframe.
 
     Raises:
         ValueError: If good values for a parameter were specified, but this parameter
@@ -216,19 +218,21 @@ def add_fake_results(
                 final_mask.sum(),
             )
 
+    return data
+
 
 def add_parameter_noise(
     data: pd.DataFrame,
     parameters: Iterable[Parameter],
     noise_type: Literal["absolute", "relative_percent"] = "absolute",
     noise_level: float = 1.0,
-) -> None:
+) -> pd.DataFrame:
     """Apply uniform noise to the parameter values of a recommendation frame.
 
     The noise can be additive or multiplicative.
     This can be used to simulate experimental noise or imperfect user input containing
     numerical parameter values that differ from the recommendations. Note that the
-    dataframe is modified in-place, and that no new dataframe is returned.
+    dataframe is changed in-place and also returned.
 
     Args:
         data: Output of the ``recommend`` function of a ``Campaign`` object, see
@@ -238,6 +242,9 @@ def add_parameter_noise(
         noise_level: Level/magnitude of the noise. Must be provided as numerical value
             for noise type ``absolute`` and as percentage for noise type
             ``relative_percent``.
+
+    Returns:
+        The modified dataframe.
 
     Raises:
         ValueError: If ``noise_type`` is neither ``absolute`` nor
@@ -264,6 +271,8 @@ def add_parameter_noise(
             data[param.name] = data[param.name].clip(
                 param.bounds.lower, param.bounds.upper
             )
+
+    return data
 
 
 def df_drop_single_value_columns(
@@ -493,3 +502,53 @@ def pretty_print_df(
         )
         str_df = str(str_df)
     return str_df
+
+
+def get_transform_objects(
+    df: pd.DataFrame,
+    objects: Sequence[_T],
+    /,
+    *,
+    allow_missing: bool = False,
+    allow_extra: bool = False,
+) -> list[_T]:
+    """Extract the objects relevant for transforming a given dataframe.
+
+    The passed objects are assumed to have corresponding columns in the given dataframe,
+    identified through their name attribute. The function returns the subset of objects
+    that have a corresponding column in the dataframe and thus provide the necessary
+    information for transforming the dataframe.
+
+    Args:
+        df: The dataframe to be searched for corresponding columns.
+        objects: A collection of objects to be considered for transformation (provided
+            they have a match in the given dataframe).
+        allow_missing: Flag controlling if objects are allowed to have no corresponding
+            columns in the dataframe.
+        allow_extra: Flag controlling if the dataframe is allowed to have columns
+            that have no corresponding objects.
+
+    Raises:
+        ValueError: If the given objects and dataframe are not compatible
+            under the specified values for the Boolean flags.
+
+    Returns:
+        The (subset of) objects that need to be considered for the transformation.
+    """
+    names = [p.name for p in objects]
+
+    if (not allow_missing) and (missing := set(names) - set(df)):  # type: ignore[arg-type]
+        raise ValueError(
+            f"The object(s) named {missing} cannot be matched against "
+            f"the provided dataframe. If you want to transform a subset of "
+            f"columns, explicitly set `allow_missing=True`."
+        )
+
+    if (not allow_extra) and (extra := set(df) - set(names)):
+        raise ValueError(
+            f"The provided dataframe column(s) {extra} cannot be matched against"
+            f"the given objects. If you want to transform a dataframe "
+            f"with additional columns, explicitly set `allow_extra=True'."
+        )
+
+    return [p for p in objects if p.name in df]

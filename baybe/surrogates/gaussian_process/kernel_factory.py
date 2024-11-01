@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import gc
 from typing import TYPE_CHECKING, Protocol
 
 from attrs import define, field
 from attrs.validators import instance_of
+from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
@@ -42,14 +44,17 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
     kernel: Kernel = field(validator=instance_of(Kernel))
     """The fixed kernel to be returned by the factory."""
 
-    def __call__(  # noqa: D102
+    @override
+    def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
-        # See base class.
-
         return self.kernel
 
 
 def to_kernel_factory(x: Kernel | KernelFactory, /) -> KernelFactory:
     """Wrap a kernel into a plain kernel factory (with factory passthrough)."""
     return x.to_factory() if isinstance(x, Kernel) else x
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

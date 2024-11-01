@@ -710,7 +710,7 @@ python-json-logger==2.0.7
     # via jupyter-events
 pytz==2024.1
     # via pandas
-pyupgrade==3.16.0
+pyupgrade==3.19.0
     # via baybe (pyproject.toml)
 pywin32==306 ; platform_python_implementation != 'PyPy' and sys_platform == 'win32'
     # via jupyter-core
@@ -874,7 +874,7 @@ sphinxcontrib-serializinghtml==1.1.10
     # via sphinx
 stack-data==0.6.3
     # via ipython
-streamlit==1.36.0
+streamlit==1.39.0
     # via baybe (pyproject.toml)
 sympy==1.13.1
     # via
@@ -895,7 +895,7 @@ threadpoolctl==3.5.0
     # via scikit-learn
 tinycss2==1.3.0
     # via nbconvert
-tokenize-rt==5.2.0
+tokenize-rt==6.1.0
     # via pyupgrade
 toml==0.10.2
     # via
