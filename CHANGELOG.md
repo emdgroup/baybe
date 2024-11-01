@@ -8,10 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
+  optimization behavior in the presence of multiple subspaces
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
   in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
-- Attribute `n_threshold_inactive_parameters_generator` added to `BotorchRecommender`
-- Class `_FixedNumericalContinuousParameter`
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
