@@ -32,6 +32,7 @@
 
 # ```{admonition} Discrete vs. Continuous Modeling
 # :class: important
+#
 # Here, we only use discrete parameters, although in principle the parameters
 # corresponding to amounts could also be modeled as continuous numbers. However, this
 # would imply that some of the constraints would have to act on both discrete and
@@ -181,6 +182,17 @@ constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 # With all building blocks in place, we can now assemble our discrete space and inspect
 # its configurations:
 
+# ```{admonition} Simplex Construction
+# :class: tip
+#
+# In this example, we use the
+# {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_product` constructor in order
+# to demonstrate the explicit creation all involved constraint objects. However, for
+# creating mixture representations, the
+# {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex` constructor should
+# generally be preferred, as it provides a more efficient path to the same result.
+# ````
+
 space = SubspaceDiscrete.from_product(parameters=parameters, constraints=constraints)
 print(
     pretty_print_df(
@@ -227,7 +239,7 @@ print("Number of permuted configurations: ", n_permute)
 
 # ```{admonition} Theoretical Span
 # :class: info
-
+#
 # The number of possible `K`-solvent entries can be found by imagining the corresponding
 # [traditional mixture representation](/examples/Mixtures/traditional.md) and solving a
 # slightly more complex version of the ["stars and bars"
