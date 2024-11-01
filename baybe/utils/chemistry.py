@@ -163,7 +163,7 @@ def get_fingerprint_class(encoding: SubstanceEncoding) -> BaseFingerprintTransfo
         encoding: A substance encoding.
 
     Raises:
-        ValueError: If no fingerprint class for the specified encoding.
+        ValueError: If no fingerprint class for the specified encoding is found.
 
     Returns:
         The fingerprint class.
