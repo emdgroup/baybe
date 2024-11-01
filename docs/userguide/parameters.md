@@ -136,10 +136,9 @@ SubstanceParameter(
 )
 ```
 
-The ``encoding`` option defines what kind of descriptors are calculated using the
+The ``encoding`` defines what kind of descriptors are calculated using the
 [scikit-fingerprints] package.
-Any of the fingerprint classes provided by the package can be used.
-The encoding can be specified either by passing the corresponding [`SubstanceEncoding`] member
+It can be specified either by passing the corresponding [`SubstanceEncoding`] member
 (click to see full list of options) or its string representation, e.g. use 
 [`SubstanceParameter.MORDRED`](baybe.parameters.enum.SubstanceEncoding.MORDRED) 
 or its string alias `"MORDRED"` to select the {class}`~skfp.fingerprints.MordredFingerprint`.
