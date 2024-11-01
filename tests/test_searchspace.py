@@ -271,8 +271,8 @@ def test_cardinality_constraints_with_overlapping_parameters():
 
 
 def test_cardinality_constraint_with_invalid_parameter_bounds():
-    """Impose a cardinality constraint on a parameter whose valid area does not
-    include zero raises an error."""  # noqa
+    """Imposing a cardinality constraint on a parameter whose range does not include
+    zero raises an error."""  # noqa
     parameters = (
         NumericalContinuousParameter("c1", (0, 1)),
         NumericalContinuousParameter("c2", (1, 2)),

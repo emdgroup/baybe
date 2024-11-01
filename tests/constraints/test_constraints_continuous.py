@@ -1,14 +1,22 @@
 """Test for imposing continuous constraints."""
 
-import sys
-
 import numpy as np
+import pandas as pd
 import pytest
 from pytest import param
 
 from baybe.constraints import ContinuousLinearConstraint
+from baybe.constraints.continuous import ContinuousCardinalityConstraint
+from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace.core import SearchSpace
+from baybe.targets.numerical import NumericalTarget
 from tests.conftest import run_iterations
-from tests.constraints.test_cardinality_constraint_continuous import _validate_samples
+from tests.constraints.test_cardinality_constraint_continuous import (
+    _validate_cardinality_constrained_batch,
+)
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -71,35 +79,37 @@ def test_inequality3(campaign, n_iterations, batch_size):
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).le(0.301).all()
 
 
-@pytest.mark.slow
-@pytest.mark.parametrize(
-    "parameter_names", [["Conti_finite1", "Conti_finite2", "Conti_finite3"]]
-)
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_5"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_cardinality_constraint(campaign, n_iterations, batch_size):
-    """Test cardinality constraint for both random recommender and botorch
-    recommender."""  # noqa
+@pytest.mark.parametrize("recommender", [RandomRecommender(), BotorchRecommender()])
+def test_cardinality_constraint(recommender):
+    """Cardinality constraints are taken into account by the recommender."""
+    MIN_CARDINALITY = 4
+    MAX_CARDINALITY = 7
+    BATCH_SIZE = 10
 
-    MIN_CARDINALITY = 1
-    MAX_CARDINALITY = 2
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    recommendations = campaign.measurements
-
-    print(recommendations)
-
-    # Assert that conditions listed in_validate_samples() are fulfilled
-    for i_batch in range(2):
-        _validate_samples(
-            recommendations.loc[
-                0 + i_batch * batch_size : (i_batch + 1) * batch_size - 1,
-                ["Conti_finite1", "Conti_finite2", "Conti_finite3"],
-            ],
-            max_cardinality=MAX_CARDINALITY,
-            min_cardinality=MIN_CARDINALITY,
-            batch_size=batch_size,
-            threshold=sys.float_info.min,
+    parameters = [NumericalContinuousParameter(str(i), (0, 1)) for i in range(10)]
+    constraints = [
+        ContinuousCardinalityConstraint(
+            [p.name for p in parameters], MIN_CARDINALITY, MAX_CARDINALITY
         )
+    ]
+    searchspace = SearchSpace.from_product(parameters, constraints)
+
+    if isinstance(recommender, BayesianRecommender):
+        objective = NumericalTarget("t", "MAX").to_objective()
+        measurements = pd.DataFrame(searchspace.continuous.sample_uniform(2))
+        measurements["t"] = np.random.random(len(measurements))
+    else:
+        objective = None
+        measurements = None
+
+    recommendation = recommender.recommend(
+        BATCH_SIZE, searchspace, objective, measurements
+    )
+
+    # Assert that the constraint conditions hold
+    _validate_cardinality_constrained_batch(
+        recommendation, MIN_CARDINALITY, MAX_CARDINALITY, BATCH_SIZE
+    )
 
 
 @pytest.mark.slow

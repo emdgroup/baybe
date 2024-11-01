@@ -14,45 +14,40 @@ from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.searchspace.core import SearchSpace, SubspaceContinuous
 
 
-def _validate_samples(
-    samples: pd.DataFrame,
-    max_cardinality: int,
+def _validate_cardinality_constrained_batch(
+    batch: pd.DataFrame,
     min_cardinality: int,
+    max_cardinality: int,
     batch_size: int,
     threshold: float = 0.0,
 ):
-    """Validate if cardinality-constrained samples fulfill the necessary conditions.
-
-    Conditions to check:
-    * Cardinality is in requested range
-    * The batch contains right number of samples
-    * The samples are free of duplicates (except all zeros)
+    """Validate that a cardinality-constrained batch fulfills the necessary conditions.
 
     Args:
-        samples: Samples to check
-        max_cardinality: Maximum allowed cardinality
-        min_cardinality: Minimum required cardinality
-        batch_size: Requested batch size
+        batch: Batch to validate.
+        min_cardinality: Minimum required cardinality.
+        max_cardinality: Maximum allowed cardinality.
+        batch_size: Requested batch size.
         threshold: Threshold for checking whether a value is treated as zero.
     """
     # Assert that cardinality constraint is fulfilled
-    if threshold == 0.0:
-        # When threshold is zero, abs(value) > threshold is treated as non-zero.
-        n_nonzero = len(samples.columns) - np.sum(samples.abs().le(threshold), axis=1)
-    else:
-        # When threshold is non-zero, abs(value) >= threshold is treated as non-zero.
-        n_nonzero = np.sum(samples.abs().ge(threshold), axis=1)
-
+    n_nonzero = np.sum(~np.isclose(batch, 0.0, atol=threshold), axis=1)
     assert np.all(n_nonzero >= min_cardinality) and np.all(n_nonzero <= max_cardinality)
 
     # Assert that we obtain as many samples as requested
-    assert samples.shape[0] == batch_size
+    assert batch.shape[0] == batch_size
 
-    # If all rows are duplicates of the first row, they must all come from the case
-    # cardinality = 0 (all rows are zeros)
-    all_zero_rows = (samples == 0).all(axis=1)
-    duplicated_rows = samples.duplicated()
-    assert ~np.all(duplicated_rows[1:]) | np.all(all_zero_rows)
+    # Sanity check: If all recommendations in the batch are identical, something is
+    # fishy – unless the cardinality is 0, in which case the entire batch must contain
+    # zeros. Technically, the probability of getting such a degenerate batch
+    # is not zero, hence this is not a strict requirement. However, in earlier BoTorch
+    # versions, this simply happened due to a bug in their sampler:
+    # https://github.com/pytorch/botorch/issues/2351
+    # We thus include this check as a safety net for catching regressions. If it
+    # turns out the check fails because we observe degenerate batches as actual
+    # recommendations, we need to invent something smarter.
+    if len(unique_row := batch.drop_duplicates()) == 1:
+        assert (unique_row.iloc[0] == 0.0).all() and (max_cardinality == 0)
 
 
 # Combinations of cardinalities to be tested
@@ -88,8 +83,10 @@ def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
     subspace = SubspaceContinuous(parameters=parameters, constraints_nonlin=constraints)
     samples = subspace.sample_uniform(BATCH_SIZE)
 
-    # Assert that conditions listed in_validate_samples() are fulfilled
-    _validate_samples(samples, max_cardinality, min_cardinality, BATCH_SIZE)
+    # Assert that the constraint conditions hold
+    _validate_cardinality_constrained_batch(
+        samples, min_cardinality, max_cardinality, BATCH_SIZE
+    )
 
 
 def test_polytope_sampling_with_cardinality_constraint():
@@ -136,9 +133,9 @@ def test_polytope_sampling_with_cardinality_constraint():
 
     samples = searchspace.continuous.sample_uniform(BATCH_SIZE)
 
-    # Assert that conditions listed in_validate_samples() are fulfilled
-    _validate_samples(
-        samples[params_cardinality], MAX_CARDINALITY, MIN_CARDINALITY, BATCH_SIZE
+    # Assert that the constraint conditions hold
+    _validate_cardinality_constrained_batch(
+        samples[params_cardinality], MIN_CARDINALITY, MAX_CARDINALITY, BATCH_SIZE
     )
 
     # Assert that linear equality constraint is fulfilled
