@@ -53,6 +53,7 @@ from baybe.constraints import (
 )
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.searchspace import SubspaceDiscrete
+from baybe.utils.dataframe import pretty_print_df
 
 # Basic example settings:
 
@@ -181,7 +182,13 @@ constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 # its configurations:
 
 space = SubspaceDiscrete.from_product(parameters=parameters, constraints=constraints)
-print(space.exp_rep)
+print(
+    pretty_print_df(
+        space.exp_rep,
+        max_rows=len(space.exp_rep),
+        max_columns=len(space.exp_rep.columns),
+    )
+)
 
 ### Verification of Constraints
 
