@@ -81,6 +81,7 @@ onnx = [
 
 dev = [
     "baybe[chem]",
+    "baybe[diagnostics]",
     "baybe[docs]",
     "baybe[examples]",
     "baybe[lint]",
@@ -92,6 +93,11 @@ dev = [
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
     "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
+]
+
+diagnostics = [
+    "shap>=0.46.0",
+    "lime>=0.2.0.1"
 ]
 
 docs = [
@@ -136,10 +142,6 @@ mypy = [
 
 polars = [
     "polars[pyarrow]>=0.19.19,<2",
-]
-
-diagnostics = [
-    "shap>=0.46.0",
 ]
 
 simulation = [
