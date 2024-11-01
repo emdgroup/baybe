@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 from pytest import param
-from skfp.fingerprints import ECFPFingerprint, RDKit2DDescriptorsFingerprint
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition.base import AcquisitionFunction
@@ -31,7 +30,6 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.chemistry import smiles_to_fingerprint_features
 
 
 def test_objective_class():
@@ -248,8 +246,8 @@ def test_target_transform_interface():
 @pytest.mark.parametrize(
     ("deprecated", "replacement"),
     [
-        param(SubstanceEncoding.MORGAN_FP, ECFPFingerprint, id="morgan"),
-        param(SubstanceEncoding.RDKIT, RDKit2DDescriptorsFingerprint, id="rdkit"),
+        param(SubstanceEncoding.MORGAN_FP, "ECFPFingerprint", id="morgan"),
+        param(SubstanceEncoding.RDKIT, "RDKit2DDescriptorsFingerprint", id="rdkit"),
     ],
 )
 @pytest.mark.skipif(
@@ -257,9 +255,13 @@ def test_target_transform_interface():
 )
 def test_deprecated_encodings(deprecated, replacement):
     """Deprecated encoding raises a warning and uses correct replacement."""
-    path = f"skfp.fingerprints.{replacement.__name__}"
+    import skfp.fingerprints
 
-    with patch(path, wraps=replacement) as patched:
+    from baybe.utils.chemistry import smiles_to_fingerprint_features
+
+    path = f"skfp.fingerprints.{replacement}"
+
+    with patch(path, wraps=getattr(skfp.fingerprints, replacement)) as patched:
         # Assert warning
         with pytest.warns(DeprecationWarning):
             smiles_to_fingerprint_features(["C"], deprecated)

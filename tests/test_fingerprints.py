@@ -4,7 +4,6 @@ import pytest
 
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.parameters.enum import SubstanceEncoding
-from baybe.utils.chemistry import smiles_to_fingerprint_features
 
 test_cases: list[tuple[SubstanceEncoding, dict, dict]] = [
     (enc, {}, {})
@@ -35,6 +34,8 @@ ECFP = SubstanceEncoding.ECFP
 )
 def test_fingerprint_kwargs(encoding, kw_fp, kw_conf):
     """Test all fingerprint computations."""
+    from baybe.utils.chemistry import smiles_to_fingerprint_features
+
     smiles = ["CC(N(C)C)=O", "CCCC#N"]
     x = smiles_to_fingerprint_features(
         smiles=smiles,
@@ -45,13 +46,11 @@ def test_fingerprint_kwargs(encoding, kw_fp, kw_conf):
     )
 
     assert x.shape[0] == len(smiles), (
-        "The number of fingerprint "
-        + "embedding rows does not match "
-        + "the number of molecules."
+        "The number of fingerprint embedding rows does not match the number of "
+        "molecules."
     )
     if "fp_size" in kw_fp:
         assert x.shape[1] == kw_fp["fp_size"], (
-            "The fingerprint dimension "
-            + "parameter was ignored, fingerprints "
-            + "have a wrong number of dimensions."
+            "The fingerprint dimension parameter was ignored, fingerprints have a "
+            "wrong number of dimensions."
         )
