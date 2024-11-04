@@ -1,6 +1,6 @@
 [`SearchSpace`]: baybe.searchspace.core.SearchSpace
 [`Constraint`]: baybe.constraints.base.Constraint
-[`SubstanceParameter`]: baybe.parameters.categorical.SubstanceParameter
+[`SubstanceParameter`]: baybe.parameters.substance.SubstanceParameter
 [`CategoricalParameter`]: baybe.parameters.categorical.CategoricalParameter
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter
 [`CustomDiscreteParameter`]: baybe.parameters.custom.CustomDiscreteParameter
