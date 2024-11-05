@@ -30,6 +30,7 @@ from baybe.searchspace.validation import (
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
+from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
@@ -277,8 +278,6 @@ class SubspaceContinuous(SerialMixin):
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
-        from baybe.utils.numerical import DTypeFloatNumpy
-
         return pd.DataFrame(
             {p.name: p.bounds.to_tuple() for p in self.parameters},
             index=["min", "max"],
