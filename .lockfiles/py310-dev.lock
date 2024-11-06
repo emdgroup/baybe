@@ -609,7 +609,6 @@ prompt-toolkit==3.0.47
     #   jupyter-console
 protobuf==3.20.3
     # via
-    #   baybe (pyproject.toml)
     #   googleapis-common-protos
     #   onnx
     #   onnxconverter-common

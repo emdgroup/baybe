@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Passing a dataframe via the `data` argument to `Target.transform` is no longer
   possible. The data must now be passed as a series as first positional argument.
 
+## [0.11.3] - 2024-11-06
+### Fixed
+- `protobuf` dependency issue, version pin was removed
+
 ## [0.11.2] - 2024-10-11
 ### Added
 - `n_restarts` and `n_raw_samples` keywords to configure continuous optimization
