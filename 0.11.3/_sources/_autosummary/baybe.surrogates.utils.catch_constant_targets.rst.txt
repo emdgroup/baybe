@@ -1,0 +1,6 @@
+baybe.surrogates.utils.catch\_constant\_targets
+===============================================
+
+.. currentmodule:: baybe.surrogates.utils
+
+.. autofunction:: catch_constant_targets

@@ -1,0 +1,35 @@
+SubSelectionCondition
+=====================
+
+.. currentmodule:: baybe.constraints.conditions
+
+.. autoclass:: SubSelectionCondition
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SubSelectionCondition.__init__
+      ~SubSelectionCondition.evaluate
+      ~SubSelectionCondition.from_dict
+      ~SubSelectionCondition.from_json
+      ~SubSelectionCondition.to_dict
+      ~SubSelectionCondition.to_json
+      ~SubSelectionCondition.to_polars
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SubSelectionCondition.selection
+   
+   

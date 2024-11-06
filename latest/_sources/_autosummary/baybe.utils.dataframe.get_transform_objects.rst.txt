@@ -1,6 +1,0 @@
-baybe.utils.dataframe.get\_transform\_objects
-=============================================
-
-.. currentmodule:: baybe.utils.dataframe
-
-.. autofunction:: get_transform_objects

@@ -877,7 +877,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1082,9 +1081,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent                Base     Ligand  Temperature  Concentration
-255  Butyl Ester  Potassium pivalate  BrettPhos        105.0          0.057
-179     p-Xylene      Cesium acetate  BrettPhos        120.0          0.153
+           Solvent               Base                        Ligand  \
+369  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+49   Butyornitrile    Cesium pivalate                 (t-Bu)PhCPhos   
+
+     Temperature  Concentration  
+369         90.0          0.057  
+49         105.0          0.100  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1097,13 +1100,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base     Ligand  Temperature  Concentration  \
-255  Butyl Ester  Potassium pivalate  BrettPhos        105.0          0.057   
-179     p-Xylene      Cesium acetate  BrettPhos        120.0          0.153   
+           Solvent               Base                        Ligand  \
+369  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+49   Butyornitrile    Cesium pivalate                 (t-Bu)PhCPhos   
 
-         yield  
-255   8.148553  
-179  23.929905  
+     Temperature  Concentration      yield  
+369         90.0          0.057  18.412469  
+49         105.0          0.100  32.267592  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

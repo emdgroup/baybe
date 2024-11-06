@@ -876,7 +876,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -999,9 +998,8 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">attr</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">cattrs</span> <span class="kn">import</span> <span class="n">IterableValidationError</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.constraints</span> <span class="kn">import</span> <span class="n">DISCRETE_CONSTRAINTS_FILTERING_ORDER</span><span class="p">,</span> <span class="n">validate_constraints</span>
 <span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">DiscreteConstraint</span>
@@ -1014,6 +1012,7 @@
 <span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">DiscreteParameter</span><span class="p">,</span> <span class="n">Parameter</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.utils</span> <span class="kn">import</span> <span class="n">get_parameters_from_dataframe</span><span class="p">,</span> <span class="n">sort_parameters</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace.validation</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_transform_parameters</span><span class="p">,</span>
     <span class="n">validate_parameter_names</span><span class="p">,</span>
     <span class="n">validate_parameters</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1023,7 +1022,6 @@
 <span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">df_drop_single_value_columns</span><span class="p">,</span>
     <span class="n">fuzzy_row_match</span><span class="p">,</span>
-    <span class="n">get_transform_objects</span><span class="p">,</span>
     <span class="n">pretty_print_df</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.memory</span> <span class="kn">import</span> <span class="n">bytes_to_human_readable</span>
@@ -1111,7 +1109,6 @@
 <span class="sd">    and thereby speed up construction. If not provided, the default hook will derive it</span>
 <span class="sd">    from ``exp_rep``.&quot;&quot;&quot;</span>
 
-    <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;&quot;</span>
@@ -1746,7 +1743,7 @@
         <span class="c1"># &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Deprecation</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Provide the data to be transformed as first positional argument.&quot;</span>
+                <span class="s2">&quot;Provide the dataframe to be transformed as argument to `df`.&quot;</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1774,8 +1771,8 @@
         <span class="c1"># &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; Deprecation</span>
 
         <span class="c1"># Extract the parameters to be transformed</span>
-        <span class="n">parameters</span> <span class="o">=</span> <span class="n">get_transform_objects</span><span class="p">(</span>
-            <span class="n">df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">allow_missing</span><span class="o">=</span><span class="n">allow_missing</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="n">allow_extra</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="n">get_transform_parameters</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">allow_missing</span><span class="p">,</span> <span class="n">allow_extra</span>
         <span class="p">)</span>
 
         <span class="c1"># If the transformed values are not required, return an empty dataframe</span>

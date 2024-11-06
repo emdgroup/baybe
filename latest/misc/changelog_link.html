@@ -877,7 +877,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -996,36 +995,23 @@
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a class="reference external" href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
 and this project adheres to <a class="reference external" href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<section id="unreleased">
-<h2>[Unreleased]<a class="headerlink" href="#unreleased" title="Link to this heading">¶</a></h2>
+<section id="id1">
+<h2>[0.11.3] - 2024-11-06<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<section id="fixed">
+<h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">protobuf</span></code> dependency issue, version pin was removed</p></li>
+</ul>
+</section>
+</section>
+<section id="id2">
+<h2>[0.11.2] - 2024-10-11<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h2>
 <section id="added">
 <h3>Added<a class="headerlink" href="#added" title="Link to this heading">¶</a></h3>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">allow_missing</span></code> and <code class="docutils literal notranslate"><span class="pre">allow_extra</span></code> keyword arguments to <code class="docutils literal notranslate"><span class="pre">Objective.transform</span></code></p></li>
-</ul>
-</section>
-<section id="deprecations">
-<h3>Deprecations<a class="headerlink" href="#deprecations" title="Link to this heading">¶</a></h3>
-<ul class="simple">
-<li><p>Passing a dataframe via the <code class="docutils literal notranslate"><span class="pre">data</span></code> argument to <code class="docutils literal notranslate"><span class="pre">Objective.transform</span></code> is no longer
-possible. The dataframe must now be passed as positional argument.</p></li>
-<li><p>The new <code class="docutils literal notranslate"><span class="pre">allow_extra</span></code> flag is automatically set to <code class="docutils literal notranslate"><span class="pre">True</span></code> in <code class="docutils literal notranslate"><span class="pre">Objective.transform</span></code>
-when left unspecified</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">get_transform_parameters</span></code> has been replaced with <code class="docutils literal notranslate"><span class="pre">get_transform_objects</span></code></p></li>
-<li><p>Passing a dataframe via the <code class="docutils literal notranslate"><span class="pre">data</span></code> argument to <code class="docutils literal notranslate"><span class="pre">Target.transform</span></code> is no longer
-possible. The data must now be passed as a series as first positional argument.</p></li>
-</ul>
-</section>
-</section>
-<section id="id1">
-<h2>[0.11.2] - 2024-10-11<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
-<section id="id2">
-<h3>Added<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">n_restarts</span></code> and <code class="docutils literal notranslate"><span class="pre">n_raw_samples</span></code> keywords to configure continuous optimization
 behavior for <code class="docutils literal notranslate"><span class="pre">BotorchRecommender</span></code></p></li>
 <li><p>User guide for utilities</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">mypy</span></code> rule expecting explicit <code class="docutils literal notranslate"><span class="pre">override</span></code> markers for method overrides</p></li>
 </ul>
 </section>
 <section id="changed">
@@ -1036,38 +1022,38 @@ behavior for <code class="docutils literal notranslate"><span class="pre">Botorc
 dataframe they modified in-place</p></li>
 </ul>
 </section>
-<section id="fixed">
-<h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading">¶</a></h3>
+<section id="id3">
+<h3>Fixed<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Leftover attrs-decorated classes are garbage collected before the subclass tree is
 traversed, avoiding sporadic serialization problems</p></li>
 </ul>
 </section>
 </section>
-<section id="id3">
-<h2>[0.11.1] - 2024-10-01<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h2>
 <section id="id4">
-<h3>Added<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<h2>[0.11.1] - 2024-10-01<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h2>
+<section id="id5">
+<h3>Added<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Continuous linear constraints have been consolidated in the new
 <code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint</span></code> class</p></li>
 </ul>
 </section>
-<section id="id5">
-<h3>Changed<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<section id="id6">
+<h3>Changed<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">get_surrogate</span></code> now also returns the model for transformed single targets or
 desirability objectives</p></li>
 </ul>
 </section>
-<section id="id6">
-<h3>Fixed<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<section id="id7">
+<h3>Fixed<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Unsafe name-based matching of columns in <code class="docutils literal notranslate"><span class="pre">get_comp_rep_parameter_indices</span></code></p></li>
 </ul>
 </section>
-<section id="id7">
-<h3>Deprecations<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<section id="deprecations">
+<h3>Deprecations<a class="headerlink" href="#deprecations" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">ContinuousLinearEqualityConstraint</span></code> and <code class="docutils literal notranslate"><span class="pre">ContinuousLinearInequalityConstraint</span></code>
 replaced by <code class="docutils literal notranslate"><span class="pre">ContinuousLinearConstraint</span></code> with the corresponding <code class="docutils literal notranslate"><span class="pre">operator</span></code> keyword</p></li>
@@ -2181,22 +2167,21 @@ or continuous parameters</p></li>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#unreleased">[Unreleased]</a><ul>
-<li><a class="reference internal" href="#added">Added</a></li>
-<li><a class="reference internal" href="#deprecations">Deprecations</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#id1">[0.11.2] - 2024-10-11</a><ul>
-<li><a class="reference internal" href="#id2">Added</a></li>
-<li><a class="reference internal" href="#changed">Changed</a></li>
+<li><a class="reference internal" href="#id1">[0.11.3] - 2024-11-06</a><ul>
 <li><a class="reference internal" href="#fixed">Fixed</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id3">[0.11.1] - 2024-10-01</a><ul>
-<li><a class="reference internal" href="#id4">Added</a></li>
-<li><a class="reference internal" href="#id5">Changed</a></li>
-<li><a class="reference internal" href="#id6">Fixed</a></li>
-<li><a class="reference internal" href="#id7">Deprecations</a></li>
+<li><a class="reference internal" href="#id2">[0.11.2] - 2024-10-11</a><ul>
+<li><a class="reference internal" href="#added">Added</a></li>
+<li><a class="reference internal" href="#changed">Changed</a></li>
+<li><a class="reference internal" href="#id3">Fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">[0.11.1] - 2024-10-01</a><ul>
+<li><a class="reference internal" href="#id5">Added</a></li>
+<li><a class="reference internal" href="#id6">Changed</a></li>
+<li><a class="reference internal" href="#id7">Fixed</a></li>
+<li><a class="reference internal" href="#deprecations">Deprecations</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#id8">[0.11.0] - 2024-09-09</a><ul>

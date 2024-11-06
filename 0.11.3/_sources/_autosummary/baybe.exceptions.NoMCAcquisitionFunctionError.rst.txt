@@ -1,0 +1,6 @@
+baybe.exceptions.NoMCAcquisitionFunctionError
+=============================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NoMCAcquisitionFunctionError

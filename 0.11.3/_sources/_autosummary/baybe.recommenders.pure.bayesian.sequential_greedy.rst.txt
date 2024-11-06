@@ -1,0 +1,30 @@
+baybe.recommenders.pure.bayesian.sequential\_greedy
+===================================================
+
+.. automodule:: baybe.recommenders.pure.bayesian.sequential_greedy
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      SequentialGreedyRecommender
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,37 @@
+baybe.recommenders.pure.nonpredictive
+=====================================
+
+.. automodule:: baybe.recommenders.pure.nonpredictive
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   base
+
+   clustering
+
+   sampling
+

@@ -876,7 +876,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -994,8 +993,8 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">ge</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
+<span class="kn">from</span> <span class="nn">attr</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">attr.validators</span> <span class="kn">import</span> <span class="n">ge</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
 
 <span class="kn">from</span> <span class="nn">baybe.constraints.deprecation</span> <span class="kn">import</span> <span class="n">structure_constraints</span>
 <span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="p">(</span>
@@ -1144,15 +1143,12 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.CardinalityConstraint.html#baybe.constraints.base.CardinalityConstraint">[docs]</a>
 <span class="nd">@define</span>
 <span class="k">class</span> <span class="nc">CardinalityConstraint</span><span class="p">(</span><span class="n">Constraint</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Abstract base class for cardinality constraints.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for cardinality constraints.</span>
 
 <span class="sd">    Places a constraint on the set of nonzero (i.e. &quot;active&quot;) values among the</span>
-<span class="sd">    specified parameters, bounding it between the two given integers, i.e.</span>
-
-<span class="sd">    .. math::</span>
-<span class="sd">        \text{min_cardinality} \leq |\{p_i : p_i \neq 0\}| \leq \text{max_cardinality}</span>
-
-<span class="sd">    where :math:`\{p_i\}` are the parameters specified for the constraint.</span>
+<span class="sd">    specified parameters, bounding it between the two given integers,</span>
+<span class="sd">        ``min_cardinality`` &lt;= |{p_i : p_i != 0}| &lt;= ``max_cardinality``</span>
+<span class="sd">    where ``{p_i}`` are the parameters specified for the constraint.</span>
 
 <span class="sd">    Note that this can be equivalently regarded as L0-constraint on the vector</span>
 <span class="sd">    containing the specified parameters.</span>

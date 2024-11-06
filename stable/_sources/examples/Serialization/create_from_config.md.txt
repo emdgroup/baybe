@@ -107,7 +107,7 @@ campaign = Campaign.from_config(CONFIG)
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('CCCCC')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
     ________________________________________________________________________________
     [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
     _smiles_to_mordred_features('COCOC')

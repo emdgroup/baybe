@@ -877,7 +877,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1159,13 +1158,16 @@ namespaces for easier user import. For an example, see our
 Basic style and consistency checks are automatically performed via
 <a class="reference external" href="https://pre-commit.com/">pre-commit</a> during development and in our CI pipeline.</p>
 <p>Apart from that, we generally recommend adhering to the following guideline:</p>
-<ul class="simple">
-<li><p>Each function should have a docstring containing:</p>
 <ul>
+<li><p>Each function should have a docstring containing:</p>
+<ul class="simple">
 <li><p>a short one-line summary at the top,</p></li>
 <li><p>an optional extended summary or description below and</p></li>
 <li><p>all relevant sections (<code class="docutils literal notranslate"><span class="pre">Args</span></code>, <code class="docutils literal notranslate"><span class="pre">Raises</span></code>, …).</p></li>
 </ul>
+<p>Potential exceptions are functions whose docstring is to be fully inherited from a
+parent class.
+In this case, use <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">noqa:</span> <span class="pre">D102</span></code> to disable the automatic checks locally.</p>
 </li>
 <li><p>Use type hints (for variables/constants, attributes, function/method signatures, …).
 Avoid repeating type hints in docstrings.</p></li>
@@ -1176,10 +1178,8 @@ respective <a class="reference external" href="https://www.sphinx-doc.org/en/mas
 <li><p>Use double backticks for literals like in <code class="docutils literal notranslate"><span class="pre">``MyString``</span></code>.</p></li>
 </ul>
 </section>
-<section id="writing-classes">
-<h2>Writing classes<a class="headerlink" href="#writing-classes" title="Link to this heading">¶</a></h2>
-<section id="conventions-for-attrs-classes">
-<h3>Conventions for <code class="docutils literal notranslate"><span class="pre">attrs</span></code> classes<a class="headerlink" href="#conventions-for-attrs-classes" title="Link to this heading">¶</a></h3>
+<section id="writing-attrs-classes">
+<h2>Writing <code class="docutils literal notranslate"><span class="pre">attrs</span></code> classes<a class="headerlink" href="#writing-attrs-classes" title="Link to this heading">¶</a></h2>
 <ul>
 <li><p>Place attribute docstrings below the attribute declaration, not in the class
 docstring.
@@ -1211,37 +1211,6 @@ section if applicable. Linter warnings regarding missing attribute docstrings ca
 silenced using <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">noqa:</span> <span class="pre">DOC101,</span> <span class="pre">DOC103</span></code>.</p>
 </li>
 </ul>
-</section>
-<section id="method-overrides">
-<h3>Method overrides<a class="headerlink" href="#method-overrides" title="Link to this heading">¶</a></h3>
-<p>When overriding methods in subclasses, decorate them with <code class="docutils literal notranslate"><span class="pre">&#64;typing_extensions.override</span></code>
-to make the relationship explicit:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
-
-<span class="k">class</span> <span class="nc">Parent</span><span class="p">:</span>
-
-   <span class="k">def</span> <span class="nf">le_method</span><span class="p">():</span>
-<span class="w">      </span><span class="sd">&quot;&quot;&quot;The method of the parent class.&quot;&quot;&quot;</span>
-      <span class="o">...</span>
-
-<span class="k">class</span> <span class="nc">Child</span><span class="p">:</span>
-
-   <span class="nd">@override</span>
-   <span class="k">def</span> <span class="nf">le_method</span><span class="p">():</span>
-<span class="w">      </span><span class="sd">&quot;&quot;&quot;Overridden method of the child class.&quot;&quot;&quot;</span>
-      <span class="o">...</span>
-</pre></div>
-</div>
-<p>Using the decorator provides a type-safe approach for defining inheritance structures
-that eliminates two potential sources of unintended class design:</p>
-<ul class="simple">
-<li><p>An intended override is does not occur because the method names differ between
-the parent and child classes (e.g. if the parent method is renamed)</p></li>
-<li><p>An unintended override occurs because a method name that exists in the parent class
-is used in the child class by mistake.
-In both cases, <code class="docutils literal notranslate"><span class="pre">mypy</span></code> will complain and force you to fix the problem.</p></li>
-</ul>
-</section>
 </section>
 </section>
 
@@ -1307,11 +1276,7 @@ In both cases, <code class="docutils literal notranslate"><span class="pre">mypy
 <li><a class="reference internal" href="#code-design">Code Design</a></li>
 <li><a class="reference internal" href="#extending-baybe-s-functionality">Extending BayBE’s Functionality</a></li>
 <li><a class="reference internal" href="#writing-docstrings">Writing Docstrings</a></li>
-<li><a class="reference internal" href="#writing-classes">Writing classes</a><ul>
-<li><a class="reference internal" href="#conventions-for-attrs-classes">Conventions for <code class="docutils literal notranslate"><span class="pre">attrs</span></code> classes</a></li>
-<li><a class="reference internal" href="#method-overrides">Method overrides</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#writing-attrs-classes">Writing <code class="docutils literal notranslate"><span class="pre">attrs</span></code> classes</a></li>
 </ul>
 </li>
 </ul>

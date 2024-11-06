@@ -1,0 +1,17 @@
+ParameterEncoding
+=================
+
+.. currentmodule:: baybe.parameters.enum
+
+.. autoclass:: ParameterEncoding
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   

@@ -877,7 +877,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1192,7 +1191,7 @@ It also prints what happens to internal data.</p>
     <span class="n">rec</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
     <span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
     <span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
-    <span class="n">desirability</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">campaign</span><span class="o">.</span><span class="n">measurements</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">desirability</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">campaign</span><span class="o">.</span><span class="n">measurements</span><span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">#### ITERATION </span><span class="si">{</span><span class="n">kIter</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> ####&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Recommended measurements with fake measured results:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1205,22 +1204,22 @@ It also prints what happens to internal data.</p>
 
 Recommended measurements with fake measured results:
 
-    Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-182    33   bad        10.0        -3.0  51.439685  23.203002  53.519818
-197    22  good        10.0        -6.0  35.456011  30.512442  52.211228
-200    33  good         4.0        -9.0  38.604473   9.547066  52.236733
+    Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+21     33       good         1.0        -6.0  26.391944  21.795531  54.666509
+244    22  very good        10.0        -9.0  56.240498  72.690237  53.105313
+188    22       good         6.0        -9.0  23.613059  79.066948  54.733233
 
 Internal measurement database with desirability values:
 
-  Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    33   bad        10.0        -3.0  51.439685  23.203002  53.519818   
-1    22  good        10.0        -6.0  35.456011  30.512442  52.211228   
-2    33  good         4.0        -9.0  38.604473   9.547066  52.236733   
+  Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+0    33       good         1.0        -6.0  26.391944  21.795531  54.666509   
+1    22  very good        10.0        -9.0  56.240498  72.690237  53.105313   
+2    22       good         6.0        -9.0  23.613059  79.066948  54.733233   
 
    BatchNr  FitNr  Desirability  
-0        1    NaN      0.724791  
-1        1    NaN      0.753990  
-2        1    NaN      0.800985  
+0        1    NaN      0.597347  
+1        1    NaN      0.661859  
+2        1    NaN      0.472408  
 
 
 
@@ -1229,64 +1228,76 @@ Internal measurement database with desirability values:
 
 Recommended measurements with fake measured results:
 
-      Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-index                                                                         
-60       33      good         2.0        -9.0  68.143202  37.303455  54.618470
-204      33      good         6.0        -9.0  85.770901  18.543343  53.825646
-248      33  very bad         4.0        -9.0  26.244686  57.148336  54.063583
+      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
+index                                                                  
+240      22  very good         8.0        -9.0   4.621243  80.233935   
+228      22   very bad        10.0        -9.0  33.102081  63.796777   
+245      22  very good        10.0        -6.0  85.588560  67.536521   
+
+        Target_3  
+index             
+240    54.141566  
+228    54.104637  
+245    52.414421  
 
 Internal measurement database with desirability values:
 
-  Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    33       bad        10.0        -3.0  51.439685  23.203002  53.519818   
-1    22      good        10.0        -6.0  35.456011  30.512442  52.211228   
-2    33      good         4.0        -9.0  38.604473   9.547066  52.236733   
-3    33      good         2.0        -9.0  68.143202  37.303455  54.618470   
-4    33      good         6.0        -9.0  85.770901  18.543343  53.825646   
-5    33  very bad         4.0        -9.0  26.244686  57.148336  54.063583   
+  Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+0    33       good         1.0        -6.0  26.391944  21.795531  54.666509   
+1    22  very good        10.0        -9.0  56.240498  72.690237  53.105313   
+2    22       good         6.0        -9.0  23.613059  79.066948  54.733233   
+3    22  very good         8.0        -9.0   4.621243  80.233935  54.141566   
+4    22   very bad        10.0        -9.0  33.102081  63.796777  54.104637   
+5    22  very good        10.0        -6.0  85.588560  67.536521  52.414421   
 
    BatchNr  FitNr  Desirability  
-0        1    1.0      0.724791  
-1        1    1.0      0.753990  
-2        1    1.0      0.800985  
-3        2    NaN      0.653312  
-4        2    NaN      0.782198  
-5        2    NaN      0.569437  
+0        1    1.0      0.597347  
+1        1    1.0      0.661859  
+2        1    1.0      0.472408  
+3        2    NaN      0.474536  
+4        2    NaN      0.566973  
+5        2    NaN      0.770075  
 
 
 #### ITERATION 3 ####
 
 Recommended measurements with fake measured results:
 
-      Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-index                                                                     
-189      22  good         6.0        -6.0  82.954874  66.130259  53.294455
-172      33   bad         6.0        -9.0  43.598438  47.410626  51.956613
-205      33  good         6.0        -6.0  39.545093  52.563390  54.320257
+      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
+index                                                                  
+246      22  very good        10.0        -3.0  17.399669  85.807350   
+279      33  very good        10.0        -1.0  66.652095  57.100547   
+144      33         OK         8.0        -9.0  41.558899  37.098060   
+
+        Target_3  
+index             
+246    52.961575  
+279    53.751090  
+144    51.694422  
 
 Internal measurement database with desirability values:
 
-  Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    33       bad        10.0        -3.0  51.439685  23.203002  53.519818   
-1    22      good        10.0        -6.0  35.456011  30.512442  52.211228   
-2    33      good         4.0        -9.0  38.604473   9.547066  52.236733   
-3    33      good         2.0        -9.0  68.143202  37.303455  54.618470   
-4    33      good         6.0        -9.0  85.770901  18.543343  53.825646   
-5    33  very bad         4.0        -9.0  26.244686  57.148336  54.063583   
-6    22      good         6.0        -6.0  82.954874  66.130259  53.294455   
-7    33       bad         6.0        -9.0  43.598438  47.410626  51.956613   
-8    33      good         6.0        -6.0  39.545093  52.563390  54.320257   
+  Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+0    33       good         1.0        -6.0  26.391944  21.795531  54.666509   
+1    22  very good        10.0        -9.0  56.240498  72.690237  53.105313   
+2    22       good         6.0        -9.0  23.613059  79.066948  54.733233   
+3    22  very good         8.0        -9.0   4.621243  80.233935  54.141566   
+4    22   very bad        10.0        -9.0  33.102081  63.796777  54.104637   
+5    22  very good        10.0        -6.0  85.588560  67.536521  52.414421   
+6    22  very good        10.0        -3.0  17.399669  85.807350  52.961575   
+7    33  very good        10.0        -1.0  66.652095  57.100547  53.751090   
+8    33         OK         8.0        -9.0  41.558899  37.098060  51.694422   
 
    BatchNr  FitNr  Desirability  
-0        1    1.0      0.724791  
-1        1    1.0      0.753990  
-2        1    1.0      0.800985  
-3        2    2.0      0.653312  
-4        2    2.0      0.782198  
-5        2    2.0      0.569437  
-6        3    NaN      0.716574  
-7        3    NaN      0.748150  
-8        3    NaN      0.587042  
+0        1    1.0      0.597347  
+1        1    1.0      0.661859  
+2        1    1.0      0.472408  
+3        2    2.0      0.474536  
+4        2    2.0      0.566973  
+5        2    2.0      0.770075  
+6        3    NaN      0.566648  
+7        3    NaN      0.671933  
+8        3    NaN      0.775439  
 </pre></div>
 </div>
 </section>

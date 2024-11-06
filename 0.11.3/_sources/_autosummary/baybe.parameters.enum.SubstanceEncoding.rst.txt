@@ -1,0 +1,25 @@
+SubstanceEncoding
+=================
+
+.. currentmodule:: baybe.parameters.enum
+
+.. autoclass:: SubstanceEncoding
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SubstanceEncoding.MORDRED
+      ~SubstanceEncoding.RDKIT
+      ~SubstanceEncoding.MORGAN_FP
+   
+   

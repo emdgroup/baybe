@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.utils.dataframe.get_transform_objects" href="baybe.utils.dataframe.get_transform_objects.html" /><link rel="prev" title="baybe.utils.dataframe.df_uncorrelated_features" href="baybe.utils.dataframe.df_uncorrelated_features.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.utils.dataframe.pretty_print_df" href="baybe.utils.dataframe.pretty_print_df.html" /><link rel="prev" title="baybe.utils.dataframe.df_uncorrelated_features" href="baybe.utils.dataframe.df_uncorrelated_features.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
         <title>baybe.utils.dataframe.fuzzy_row_match - BayBE documentation</title>
@@ -877,7 +877,6 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -995,7 +994,7 @@
 <h1>baybe.utils.dataframe.fuzzy_row_match<a class="headerlink" href="#baybe-utils-dataframe-fuzzy-row-match" title="Link to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="baybe.utils.dataframe.fuzzy_row_match">
-<span class="sig-prename descclassname"><span class="pre">baybe.utils.dataframe.</span></span><span class="sig-name descname"><span class="pre">fuzzy_row_match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numerical_measurements_must_be_within_tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/utils/dataframe.html#fuzzy_row_match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.utils.dataframe.fuzzy_row_match" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">baybe.utils.dataframe.</span></span><span class="sig-name descname"><span class="pre">fuzzy_row_match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numerical_measurements_must_be_within_tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/utils/dataframe.html#fuzzy_row_match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.utils.dataframe.fuzzy_row_match" title="Link to this definition">¶</a></dt>
 <dd><p>Match row of the right dataframe to the rows of the left dataframe.</p>
 <p>This is useful for validity checks and to automatically match measurements to
 entries in the search space, e.g. to detect which ones have been measured.
@@ -1005,19 +1004,19 @@ whether values outside the tolerance should be accepted.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>left_df</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – The data that serves as lookup reference.</p></li>
-<li><p><strong>right_df</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – The data that should be checked for matching rows in the left
+<li><p><strong>left_df</strong> (<span class="sphinx_autodoc_typehints-type">pd.DataFrame</span>) – The data that serves as lookup reference.</p></li>
+<li><p><strong>right_df</strong> (<span class="sphinx_autodoc_typehints-type">pd.DataFrame</span>) – The data that should be checked for matching rows in the left
 dataframe.</p></li>
-<li><p><strong>parameters</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]</span>) – List of baybe parameter objects that are needed to identify
+<li><p><strong>parameters</strong> (<span class="sphinx_autodoc_typehints-type">Sequence[Parameter]</span>) – List of baybe parameter objects that are needed to identify
 potential tolerances.</p></li>
-<li><p><strong>numerical_measurements_must_be_within_tolerance</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, numerical
+<li><p><strong>numerical_measurements_must_be_within_tolerance</strong> (<span class="sphinx_autodoc_typehints-type">bool</span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, numerical
 parameters are matched with the search space elements only if there is a
 match within the parameter tolerance. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the closest match is
 considered, irrespective of the distance.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Index.html#pandas.Index" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Index</span></code></a></span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type">pd.Index</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The index of the matching rows in <code class="docutils literal notranslate"><span class="pre">left_df</span></code>.</p>
@@ -1038,12 +1037,12 @@ considered, irrespective of the distance.</p></li>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="baybe.utils.dataframe.get_transform_objects.html">
+          <a class="next-page" href="baybe.utils.dataframe.pretty_print_df.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">baybe.utils.dataframe.get_transform_objects</div>
+                <div class="title">baybe.utils.dataframe.pretty_print_df</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

@@ -876,7 +876,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -998,7 +997,6 @@
 <span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">ClusterMixin</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">pairwise_distances</span>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.recommenders.pure.nonpredictive.base</span> <span class="kn">import</span> <span class="n">NonPredictiveRecommender</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpaceType</span><span class="p">,</span> <span class="n">SubspaceDiscrete</span>
@@ -1085,13 +1083,14 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;This line in the code should be unreachable. Sry.&quot;</span><span class="p">)</span>
 
-    <span class="nd">@override</span>
     <span class="k">def</span> <span class="nf">_recommend_discrete</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">subspace_discrete</span><span class="p">:</span> <span class="n">SubspaceDiscrete</span><span class="p">,</span>
         <span class="n">candidates_exp</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+        <span class="c1"># See base class.</span>
+
         <span class="c1"># Fit scaler on entire search space</span>
         <span class="c1"># TODO [Scaling]: scaling should be handled by search space object</span>
         <span class="n">scaler</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
@@ -1117,7 +1116,6 @@
         <span class="c1"># Convert positional indices into DataFrame indices and return result</span>
         <span class="k">return</span> <span class="n">candidates_comp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">selection</span><span class="p">]</span>
 
-    <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Compatibility&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility</span><span class="p">,</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
@@ -1153,14 +1151,13 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the default model parameters.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">:</span> <span class="s2">&quot;k-medoids++&quot;</span><span class="p">}</span>
 
-    <span class="nd">@override</span>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_model_cls</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ClusterMixin</span><span class="p">]:</span>
+        <span class="c1"># See base class.</span>
         <span class="kn">from</span> <span class="nn">sklearn_extra.cluster</span> <span class="kn">import</span> <span class="n">KMedoids</span>
 
         <span class="k">return</span> <span class="n">KMedoids</span>
 
-    <span class="nd">@override</span>
     <span class="k">def</span> <span class="nf">_make_selection_custom</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">ClusterMixin</span><span class="p">,</span>
@@ -1205,14 +1202,13 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the default model parameters.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s2">&quot;n_init&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">}</span>
 
-    <span class="nd">@override</span>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_model_cls</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ClusterMixin</span><span class="p">]:</span>
+        <span class="c1"># See base class.</span>
         <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
 
         <span class="k">return</span> <span class="n">KMeans</span>
 
-    <span class="nd">@override</span>
     <span class="k">def</span> <span class="nf">_make_selection_custom</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">ClusterMixin</span><span class="p">,</span>
@@ -1253,14 +1249,13 @@
     <span class="n">model_cluster_num_parameter_name</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;n_components&quot;</span>
     <span class="c1"># See base class.</span>
 
-    <span class="nd">@override</span>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_get_model_cls</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ClusterMixin</span><span class="p">]:</span>
+        <span class="c1"># See base class.</span>
         <span class="kn">from</span> <span class="nn">sklearn.mixture</span> <span class="kn">import</span> <span class="n">GaussianMixture</span>
 
         <span class="k">return</span> <span class="n">GaussianMixture</span>
 
-    <span class="nd">@override</span>
     <span class="k">def</span> <span class="nf">_make_selection_custom</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">ClusterMixin</span><span class="p">,</span>

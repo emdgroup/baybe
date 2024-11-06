@@ -1,0 +1,39 @@
+NumericalTarget
+===============
+
+.. currentmodule:: baybe.targets.numerical
+
+.. autoclass:: NumericalTarget
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NumericalTarget.__init__
+      ~NumericalTarget.from_dict
+      ~NumericalTarget.from_json
+      ~NumericalTarget.summary
+      ~NumericalTarget.to_dict
+      ~NumericalTarget.to_json
+      ~NumericalTarget.to_objective
+      ~NumericalTarget.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NumericalTarget.mode
+      ~NumericalTarget.bounds
+      ~NumericalTarget.transformation
+      ~NumericalTarget.name
+   
+   

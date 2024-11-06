@@ -1,0 +1,6 @@
+baybe.utils.basic.get\_subclasses
+=================================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: get_subclasses

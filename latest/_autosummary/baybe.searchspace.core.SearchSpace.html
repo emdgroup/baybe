@@ -877,7 +877,6 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1312,10 +1311,10 @@ are dictated by the <code class="docutils literal notranslate"><span class="pre"
 The <code class="docutils literal notranslate"><span class="pre">None</span></code> default value is for temporary backward compatibility only
 and will be removed in a future version.</p></li>
 <li><p><strong>allow_missing</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, each parameter of the space must have
-exactly one corresponding column in the given dataframe. If <code class="docutils literal notranslate"><span class="pre">True</span></code>,
+(exactly) one corresponding column in the given dataframe. If <code class="docutils literal notranslate"><span class="pre">True</span></code>,
 the dataframe may contain only a subset of parameter columns.</p></li>
-<li><p><strong>allow_extra</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]</span>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, each column present in the dataframe must
-correspond to exactly one parameter of the space. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the
+<li><p><strong>allow_extra</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]</span>) – If <code class="docutils literal notranslate"><span class="pre">False</span></code>, every column present in the dataframe must
+correspond to (exactly) one parameter of the space. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the
 dataframe may contain additional non-parameter-related columns, which
 will be ignored.
 The <code class="docutils literal notranslate"><span class="pre">None</span></code> default value is for temporary backward compatibility only

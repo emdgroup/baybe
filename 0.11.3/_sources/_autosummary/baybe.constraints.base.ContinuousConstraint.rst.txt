@@ -1,0 +1,40 @@
+ContinuousConstraint
+====================
+
+.. currentmodule:: baybe.constraints.base
+
+.. autoclass:: ContinuousConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ContinuousConstraint.__init__
+      ~ContinuousConstraint.from_dict
+      ~ContinuousConstraint.from_json
+      ~ContinuousConstraint.summary
+      ~ContinuousConstraint.to_dict
+      ~ContinuousConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ContinuousConstraint.eval_during_augmentation
+      ~ContinuousConstraint.eval_during_creation
+      ~ContinuousConstraint.eval_during_modeling
+      ~ContinuousConstraint.is_continuous
+      ~ContinuousConstraint.is_discrete
+      ~ContinuousConstraint.numerical_only
+      ~ContinuousConstraint.parameters
+   
+   
